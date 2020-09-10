@@ -35,4 +35,3 @@ class ModelInputFormatPreProcessPass : public GraphPass {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_PREDICT_MODEL_FORMAT_PREPROCESS_PASS_H
-

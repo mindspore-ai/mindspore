@@ -26,9 +26,9 @@ namespace mindspore::kernel {
 
 SubGraphOpenCLKernel::~SubGraphOpenCLKernel() { UnInit(); }
 
-int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::tensor::Tensor *> &in_tensors,
+int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
                                         const std::vector<std::vector<kernel::LiteKernel *>> in_kernels,
-                                        std::vector<lite::tensor::Tensor *> *out_tensors,
+                                        std::vector<lite::Tensor *> *out_tensors,
                                         std::vector<OpenCLToFormatParameter *> *out_parameters,
                                         std::vector<LiteKernel *> *out_convert_ops, OpenCLMemType mem_type) {
   out_tensors->clear();
@@ -66,22 +66,22 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::tensor::Tensor *
       (mem_type == OpenCLMemType::IMG) ? in_kernels[i][0]->in_tensors()[0]->GetFormat() : out_ori_format;
     auto src_format =
       (mem_type == OpenCLMemType::IMG) ? in_ori_format : in_kernels[i][0]->out_tensors()[0]->GetFormat();
-    lite::tensor::Tensor *new_tensor = new (std::nothrow) lite::tensor::Tensor();
+    lite::Tensor *new_tensor = new (std::nothrow) lite::Tensor();
     MS_ASSERT(new_tensor);
     if (new_tensor == nullptr) {
       MS_LOG(ERROR) << "SubGraphOpenCLKernel new tensor failed!";
       return RET_ERROR;
     }
     new_tensor->CopyTensor(*in_tensors[i]);
-    if ((dst_format == schema::Format_NCHW || dst_format == schema::Format_NC4HW4) &&
-        (src_format == schema::Format_NHWC || src_format == schema::Format_NHWC4)) {
-      auto &shape = new_tensor->shape();
+    if ((dst_format == schema::Format::Format_NCHW || dst_format == schema::Format::Format_NC4HW4) &&
+        (src_format == schema::Format::Format_NHWC || src_format == schema::Format::Format_NHWC4)) {
+      auto shape = new_tensor->shape();
       std::vector<int> dst_shape{shape[0], shape[3], shape[1], shape[2]};
       new_tensor->set_shape(shape);
     }
-    if ((dst_format == schema::Format_NHWC || dst_format == schema::Format_NHWC4) &&
-        (src_format == schema::Format_NCHW || src_format == schema::Format_NC4HW4)) {
-      auto &shape = new_tensor->shape();
+    if ((dst_format == schema::Format::Format_NHWC || dst_format == schema::Format::Format_NHWC4) &&
+        (src_format == schema::Format::Format_NCHW || src_format == schema::Format::Format_NC4HW4)) {
+      auto shape = new_tensor->shape();
       std::vector<int> dst_shape{shape[0], shape[2], shape[3], shape[1]};
       new_tensor->set_shape(shape);
     }
@@ -193,7 +193,7 @@ int SubGraphOpenCLKernel::UpdateTensorDataType() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   bool is_fp16 = ocl_runtime->GetFp16Enable();
   if (is_fp16 && (in_tensors_[0]->data_type() == kNumberTypeFloat32)) {
-    std::set<lite::tensor::Tensor *> out_set;
+    std::set<lite::Tensor *> out_set;
     out_set.insert(in_tensors_.begin(), in_tensors_.end());
     out_set.insert(out_tensors_.begin(), out_tensors_.end());
     for (auto iv : nodes_) {
@@ -258,14 +258,14 @@ int SubGraphOpenCLKernel::MallocTensorWithReuse() {
   return RET_OK;
 }
 
-int SubGraphOpenCLKernel::GetKernelFromToTensor(const std::vector<lite::tensor::Tensor *> &in_tensors,
+int SubGraphOpenCLKernel::GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,
                                                 const std::vector<kernel::LiteKernel *> &in_kernels,
                                                 std::vector<std::vector<kernel::LiteKernel *>> *out_kernels,
                                                 bool is_from) {
-  std::vector<std::set<lite::tensor::Tensor *>> ksets;
+  std::vector<std::set<lite::Tensor *>> ksets;
   for (auto jv : in_kernels) {
     auto tens = is_from ? jv->in_tensors() : jv->out_tensors();
-    std::set<lite::tensor::Tensor *> kset;
+    std::set<lite::Tensor *> kset;
     kset.insert(tens.begin(), tens.end());
     ksets.emplace_back(kset);
   }
@@ -307,7 +307,7 @@ int SubGraphOpenCLKernel::ReSize() { return RET_OK; }
 int SubGraphOpenCLKernel::Run() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   for (auto &tensor : in_tensors_) {
-    allocator_->UnmapBuffer(tensor->Data());
+    allocator_->UnmapBuffer(tensor->MutableData());
   }
 
   lite::opencl::OpenCLExecutor executor;

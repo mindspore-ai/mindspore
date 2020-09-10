@@ -107,7 +107,7 @@ TEST_F(InferTest, TestConvNode) {
   content = nullptr;
   auto context = new lite::Context;
   context->cpu_bind_mode_ = lite::NO_BIND;
-  context->device_ctx_.type = lite::DT_CPU;
+  context->device_type_ = lite::DT_CPU;
   context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
@@ -130,10 +130,9 @@ TEST_F(InferTest, TestConvNode) {
   memcpy(data, input_data, input_size);
   ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
-  auto outputs = session->GetOutputMapByNode();
+  auto outputs = session->GetOutputs();
   ASSERT_EQ(outputs.size(), 1);
-  ASSERT_EQ(outputs.begin()->second.size(), 1);
-  auto outTensor = outputs.begin()->second.front();
+  auto outTensor = outputs.begin()->second;
   ASSERT_NE(nullptr, outTensor);
   ASSERT_EQ(28 * 28 * 32, outTensor->ElementsNum());
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
@@ -206,7 +205,7 @@ TEST_F(InferTest, TestAddNode) {
   content = nullptr;
   auto context = new lite::Context;
   context->cpu_bind_mode_ = lite::NO_BIND;
-  context->device_ctx_.type = lite::DT_CPU;
+  context->device_type_ = lite::DT_CPU;
   context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
@@ -222,10 +221,9 @@ TEST_F(InferTest, TestAddNode) {
   (void)inTensor1->MutableData();
   ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
-  auto outputs = session->GetOutputMapByNode();
+  auto outputs = session->GetOutputs();
   ASSERT_EQ(outputs.size(), 1);
-  ASSERT_EQ(outputs.begin()->second.size(), 1);
-  auto outTensor = outputs.begin()->second.front();
+  auto outTensor = outputs.begin()->second;
   ASSERT_NE(nullptr, outTensor);
   ASSERT_EQ(28 * 28 * 3, outTensor->ElementsNum());
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
@@ -308,7 +306,7 @@ TEST_F(InferTest, TestParallelExecutor) {
   content = nullptr;
   auto context = new lite::Context;
   context->cpu_bind_mode_ = lite::NO_BIND;
-  context->device_ctx_.type = lite::DT_CPU;
+  context->device_type_ = lite::DT_CPU;
   context->thread_num_ = 4;
   auto session = new SessionWithParallelExecutor();
   session->Init(context);
@@ -325,10 +323,9 @@ TEST_F(InferTest, TestParallelExecutor) {
   (void)inTensor1->MutableData();
   ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
-  auto outputs = session->GetOutputMapByNode();
+  auto outputs = session->GetOutputs();
   ASSERT_EQ(outputs.size(), 1);
-  ASSERT_EQ(outputs.begin()->second.size(), 1);
-  auto outTensor = outputs.begin()->second.front();
+  auto outTensor = outputs.begin()->second;
   ASSERT_NE(nullptr, outTensor);
   ASSERT_EQ(28 * 28 * 3, outTensor->ElementsNum());
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
@@ -349,7 +346,7 @@ TEST_F(InferTest, TestModel) {
   delete[] buf[0];
   auto context = new lite::Context;
   context->cpu_bind_mode_ = lite::NO_BIND;
-  context->device_ctx_.type = lite::DT_CPU;
+  context->device_type_ = lite::DT_CPU;
   context->thread_num_ = 4;
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
@@ -362,7 +359,7 @@ TEST_F(InferTest, TestModel) {
   (void)inTensor->MutableData();
   ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
-  auto outputs = session->GetOutputMapByNode();
+  auto outputs = session->GetOutputs();
   MS_LOG(INFO) << "Passed";
 }
 

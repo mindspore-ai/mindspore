@@ -20,8 +20,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph,
-                                const onnx::NodeProto &onnx_node,
+STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ReshapeParser";
   if (op == nullptr) {
@@ -40,7 +39,7 @@ STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph,
     return RET_NULL_PTR;
   }
 
-  attr->format = schema::Format_NCHW;
+  attr->format = schema::Format::Format_NCHW;
   std::vector<onnx::TensorProto> params;
   for (int i = 0; i < onnx_node.input_size(); ++i) {
     const auto &input_name = onnx_node.input(i);

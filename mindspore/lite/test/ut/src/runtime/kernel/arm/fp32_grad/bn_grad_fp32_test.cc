@@ -29,13 +29,13 @@ namespace mindspore {
 class TestBNGradFp32 : public mindspore::CommonTest {
  public:
   TestBNGradFp32() {}
-  lite::tensor::Tensor *CreateInTensor(std::string file_name, std::vector<int> dim);
+  lite::Tensor *CreateInTensor(std::string file_name, std::vector<int> dim);
 };
 
-lite::tensor::Tensor *TestBNGradFp32::CreateInTensor(std::string file_name, std::vector<int> dim) {
+lite::Tensor *TestBNGradFp32::CreateInTensor(std::string file_name, std::vector<int> dim) {
   size_t input_size = 0;
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_name.c_str(), &input_size));
-  auto tensor = new lite::tensor::Tensor(TypeId::kNumberTypeFloat32, dim);
+  auto tensor = new lite::Tensor(TypeId::kNumberTypeFloat32, dim);
   tensor->SetData(input_data);
   EXPECT_EQ(input_size, tensor->Size());
   return tensor;
@@ -57,15 +57,15 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   auto mean_tensor = CreateInTensor("./test_data/bngrad/save_mean_3.bin", {1, 1, 1, channels});
   auto var_tensor = CreateInTensor("././test_data/bngrad/save_var_3.bin", {1, 1, 1, channels});
   // prepare output tensors
-  lite::tensor::Tensor dx_tensor(TypeId::kNumberTypeFloat32, {batch, height, width, channels});
+  lite::Tensor dx_tensor(TypeId::kNumberTypeFloat32, {batch, height, width, channels});
   dx_tensor.MallocData();
-  lite::tensor::Tensor dscale_tensor(TypeId::kNumberTypeFloat32, {1, 1, 1, channels});
+  lite::Tensor dscale_tensor(TypeId::kNumberTypeFloat32, {1, 1, 1, channels});
   dscale_tensor.MallocData();
-  lite::tensor::Tensor dbias_tensor(TypeId::kNumberTypeFloat32, {1, 1, 1, channels});
+  lite::Tensor dbias_tensor(TypeId::kNumberTypeFloat32, {1, 1, 1, channels});
   dbias_tensor.MallocData();
 
-  std::vector<lite::tensor::Tensor *> inputs = {dy_tensor, x_tensor, scale_tensor, mean_tensor, var_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&dx_tensor, &dscale_tensor, &dbias_tensor};
+  std::vector<lite::Tensor *> inputs = {dy_tensor, x_tensor, scale_tensor, mean_tensor, var_tensor};
+  std::vector<lite::Tensor *> outputs = {&dx_tensor, &dscale_tensor, &dbias_tensor};
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_BNGrad};
 
@@ -86,22 +86,22 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   auto time_avg = cost / loop_count;
   std::cout << "single thread running time : " << time_avg << "us\n";
   std::cout << "==========dx==========\n";
-  auto dx = reinterpret_cast<float *>(outputs[0]->Data());
+  auto dx = reinterpret_cast<float *>(outputs[0]->MutableData());
   for (int i = 0; i < 7; i++) std::cout << dx[i] << " ";
   std::cout << "\n=======dscale=======\n";
-  auto dscale = reinterpret_cast<float *>(outputs[1]->Data());
+  auto dscale = reinterpret_cast<float *>(outputs[1]->MutableData());
   for (int i = 0; i < channels; i++) std::cout << dscale[i] << " ";
   std::cout << "\n";
   int res = mindspore::lite::CompareRelativeOutput(dscale, "./test_data/bngrad/output_dscale_3.bin");
   EXPECT_EQ(res, 0);
   std::cout << "==========dbias==========\n";
-  auto dbias = reinterpret_cast<float *>(outputs[2]->Data());
+  auto dbias = reinterpret_cast<float *>(outputs[2]->MutableData());
   for (int i = 0; i < 3; i++) std::cout << dbias[i] << " ";
   std::cout << "\n";
   res = mindspore::lite::CompareRelativeOutput(dscale, "./test_data/bngrad/output_dscale_3.bin");
   EXPECT_EQ(res, 0);
   for (auto v : inputs) {
-    delete[] reinterpret_cast<float *>(v->Data());
+    delete[] reinterpret_cast<float *>(v->MutableData());
     v->SetData(nullptr);
     // delete v;
   }

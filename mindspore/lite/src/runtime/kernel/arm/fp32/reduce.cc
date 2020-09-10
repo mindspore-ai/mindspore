@@ -112,7 +112,7 @@ int ReduceCPUKernel::Run() {
     return prepare_ret;
   }
   tmp_shape_ = in_tensors_.at(0)->shape();
-  src_data_ = static_cast<float *>(in_tensors_.at(0)->Data());
+  src_data_ = static_cast<float *>(in_tensors_.at(0)->MutableData());
   for (size_t i = 0; i < data_buffers_.size(); ++i) {
     dst_data_ = data_buffers_[i];
     int axis = axes_[i];
@@ -144,7 +144,7 @@ int ReduceCPUKernel::Run() {
     inner_size_ *= tmp_shape_[i];
   }
   axis_size_ = tmp_shape_[last_reduce_axis];
-  dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   auto error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReduceImpl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";

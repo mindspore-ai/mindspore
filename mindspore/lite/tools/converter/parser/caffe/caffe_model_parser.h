@@ -35,7 +35,7 @@ class CaffeModelParser : public ModelParser {
   virtual ~CaffeModelParser();
 
   schema::MetaGraphT *ParseToFb(const std::string &modelFile, const std::string &weightFile,
-                    const QuantType &quantType = QuantType_QUANT_NONE) override;
+                                const QuantType &quantType = QuantType_QUANT_NONE) override;
 
  private:
   STATUS SetOpInputIdx(const caffe::LayerParameter &layer, schema::CNodeT *op, TensorCache *tensorCache);
@@ -46,8 +46,7 @@ class CaffeModelParser : public ModelParser {
 
   STATUS SetAllTensors(const TensorCache &tensorCache, schema::MetaGraphT *subGraphDef);
 
-  STATUS SetGraphTensorIndex(const caffe::NetParameter &proto,
-                             TensorCache *tensorCache,
+  STATUS SetGraphTensorIndex(const caffe::NetParameter &proto, TensorCache *tensorCache,
                              schema::MetaGraphT *subGraphDef);
 
   STATUS ParseLayer(const caffe::NetParameter &proto, const caffe::NetParameter &weight, TensorCache *tensorCache,
@@ -63,4 +62,3 @@ class CaffeModelParser : public ModelParser {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_MODEL_PARSER_H_
-

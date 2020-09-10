@@ -24,10 +24,9 @@ namespace lite {
 STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                           const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                          schema::CNodeT *op,
-                                          std::vector<int32_t> *tensors_id,
+                                          schema::CNodeT *op, std::vector<int32_t> *tensors_id,
                                           std::vector<schema::Format> *tensors_format,
-                                          std::map<int, int>  *tensors_id_map) {
+                                          std::map<int, int> *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteDepthwiseConv2DParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -55,7 +54,7 @@ STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::Operator
   attr->dilateH = tflite_attr->dilation_h_factor;
   attr->dilateW = tflite_attr->dilation_w_factor;
   attr->padMode = GetPadMode(tflite_attr->padding);
-  attr->format = schema::Format_NHWC;
+  attr->format = schema::Format::Format_NHWC;
   attr->activationType = GetActivationFunctionType(tflite_attr->fused_activation_function);
   attr->hasBias = true;
   attr->channelMultiplier = tflite_attr->depth_multiplier;
@@ -83,8 +82,8 @@ STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::Operator
 
   // calculate pad params
   std::vector<int> params;
-  if (getPaddingParam(data_tensor, attr->padMode, attr->strideH, attr->strideW,
-                      attr->kernelH, attr->kernelW, &params) != RET_OK) {
+  if (getPaddingParam(data_tensor, attr->padMode, attr->strideH, attr->strideW, attr->kernelH, attr->kernelW,
+                      &params) != RET_OK) {
     MS_LOG(ERROR) << "get padding params failed";
     return RET_ERROR;
   } else {
@@ -97,19 +96,17 @@ STATUS TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::Operator
   op->primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-             tflite_op->inputs[1], tensors_id->size(), tflite_tensors.size(), schema::Format_KHWC);
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-             tflite_op->inputs[2], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
-              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
+             tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[1], tensors_id->size(),
+             tflite_tensors.size(), schema::Format::Format_KHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[2], tensors_id->size(),
+             tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
+              tflite_tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 
 TfliteNodeRegister g_tfliteDepthwiseConv2DParser("DepthwiseConv2D", new TfliteDepthwiseConv2DParser());
 }  // namespace lite
 }  // namespace mindspore
-
-

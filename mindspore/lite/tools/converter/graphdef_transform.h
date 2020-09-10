@@ -50,4 +50,3 @@ class GraphDefTransform {
 }  // namespace mindspore
 
 #endif
-

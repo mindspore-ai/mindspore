@@ -36,8 +36,8 @@ class ArithmeticGradCPUKernel : public LiteKernel {
   typedef void (ArithmeticGradCPUKernel::*ArithmeticGradOperation)(float *, int, float *, int, float *, int);
 
  public:
-  explicit ArithmeticGradCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  explicit ArithmeticGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                   const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                                    const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), tile_data0(NULL), tile_data1(NULL), tile_data2(NULL) {
     switch (Type()) {

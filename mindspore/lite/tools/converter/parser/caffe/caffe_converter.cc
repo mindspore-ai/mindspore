@@ -18,9 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-CaffeConverter::CaffeConverter() {
-  modelParser = new CaffeModelParser();
-}
+CaffeConverter::CaffeConverter() { modelParser = new CaffeModelParser(); }
 }  // namespace lite
 }  // namespace mindspore
-

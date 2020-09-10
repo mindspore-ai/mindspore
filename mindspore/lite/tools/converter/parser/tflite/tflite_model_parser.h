@@ -41,38 +41,33 @@ class TfliteModelParser : public ModelParser {
 
   ~TfliteModelParser() override;
 
-  schema::MetaGraphT *ParseToFb(const std::string &model_file,
-                    const std::string &weight_file,
-                    const QuantType &quantType = QuantType_QUANT_NONE) override;
+  schema::MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
+                                const QuantType &quantType = QuantType_QUANT_NONE) override;
 
  private:
   std::unique_ptr<tflite::ModelT> ReadTfliteModel(const char *model_path);
 
   STATUS CopyConstTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                              const tflite::TensorT *tflite_tensor,
-                              schema::TensorT *tensor);
+                             const tflite::TensorT *tflite_tensor, schema::TensorT *tensor);
 
-  void SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor,
-                           schema::TensorT *tensor);
+  void SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor, schema::TensorT *tensor);
 
   STATUS ConvertOp(const std::unique_ptr<tflite::ModelT> &tflite_model,
-                   const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                   const QuantType &quant_type,
+                   const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, const QuantType &quant_type,
                    schema::MetaGraphT *sub_graph);
 
   STATUS ConvertTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                        const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                        schema::MetaGraphT *sub_graph);
 
-  STATUS GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                      schema::MetaGraphT *sub_graph);
+  STATUS GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::MetaGraphT *sub_graph);
 
-  STATUS ConvertGroupDepthwiseOp(schema::MetaGraphT* sub_graph);
+  STATUS ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph);
 
  private:
   std::vector<int32_t> tensorsId;
   std::vector<schema::Format> tensorsFormat;
-  std::map<int, int>  tensorsIdMap;
+  std::map<int, int> tensorsIdMap;
   std::vector<schema::TensorT *> tensors;
 
   std::map<std::string, schema::CNodeT *> opMap;
@@ -83,4 +78,3 @@ class TfliteModelParser : public ModelParser {
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MODEL_PARSER_H
-

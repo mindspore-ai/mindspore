@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxFlattenParser::Parse(const onnx::GraphProto &onnx_graph,
-                                const onnx::NodeProto &onnx_node,
+STATUS OnnxFlattenParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx FlattenParser";
   if (op == nullptr) {
@@ -59,4 +58,3 @@ STATUS OnnxFlattenParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxFlattenParser("Flatten", new OnnxFlattenParser());
 }  // namespace lite
 }  // namespace mindspore
-

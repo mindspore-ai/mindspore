@@ -33,17 +33,6 @@ class MS_API MSTensor {
   /// \return Instance of MindSpore Lite MSTensor.
   MSTensor() = default;
 
-  /// \brief Static method to create a MSTensor pointer.
-  ///
-  /// \param[in] data_type Define data type of tensor to be created.
-  /// \param[in] shape Define Shape of tensor to be created.
-  ///
-  /// \note TypeId is defined in mindspore/mindspore/core/ir/dtype/type_id.h. Only number types in TypeId enum are
-  /// suitable for MSTensor.
-  ///
-  /// \return the pointer of MSTensor.
-  static MSTensor *CreateTensor(TypeId data_type, const std::vector<int> &shape);
-
   /// \brief Destructor of MindSpore Lite Model.
   virtual ~MSTensor() = default;
 
@@ -55,24 +44,10 @@ class MS_API MSTensor {
   /// \return MindSpore Lite TypeId of the MindSpore Lite MSTensor.
   virtual TypeId data_type() const = 0;
 
-  /// \brief Set data type for the MindSpore Lite MSTensor.
-  ///
-  /// \param[in] data_type Define MindSpore Lite TypeId to be set in the MindSpore Lite MSTensor.
-  ///
-  /// \return MindSpore Lite TypeId of the MindSpore Lite MSTensor after set.
-  virtual TypeId set_data_type(TypeId data_type) = 0;
-
   /// \brief Get shape of the MindSpore Lite MSTensor.
   ///
   /// \return A vector of int as the shape of the MindSpore Lite MSTensor.
   virtual std::vector<int> shape() const = 0;
-
-  /// \brief Set shape for the MindSpore Lite MSTensor.
-  ///
-  /// \param[in] shape Define a vector of int as shape to be set into the MindSpore Lite MSTensor.
-  ///
-  /// \return size of shape of the MindSpore Lite MSTensor after set.
-  virtual size_t set_shape(const std::vector<int> &shape) = 0;
 
   /// \brief Get size of the dimension of the MindSpore Lite MSTensor index by the parameter index.
   ///
@@ -86,11 +61,6 @@ class MS_API MSTensor {
   /// \return Number of element in MSTensor.
   virtual int ElementsNum() const = 0;
 
-  /// \brief Get hash of the MindSpore Lite MSTensor.
-  ///
-  /// \return Hash of the MindSpore Lite MSTensor.
-  virtual std::size_t hash() const = 0;
-
   /// \brief Get byte size of data in MSTensor.
   ///
   /// \return Byte size of data in MSTensor.
@@ -101,7 +71,7 @@ class MS_API MSTensor {
   /// \note The data pointer can be used to both write and read data in MSTensor.
   ///
   /// \return the pointer points to data in MSTensor.
-  virtual void *MutableData() const = 0;
+  virtual void *MutableData() = 0;
 };
 }  // namespace tensor
 }  // namespace mindspore

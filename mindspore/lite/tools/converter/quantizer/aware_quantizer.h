@@ -34,8 +34,7 @@ struct InputArray {
   int numBits = 8;
   TypeId dataType = TypeId::kTypeUnknown;
 
-  InputArray(float mean, float stdDev,
-             TypeId dataType = TypeId::kNumberTypeFloat) {
+  InputArray(float mean, float stdDev, TypeId dataType = TypeId::kNumberTypeFloat) {
     this->dataType = dataType;
     constexpr float qmin = -128;
     constexpr float qmax = 127;

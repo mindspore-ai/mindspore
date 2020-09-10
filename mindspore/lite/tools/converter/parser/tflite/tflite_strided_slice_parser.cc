@@ -24,10 +24,9 @@ namespace lite {
 STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                        const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                        const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                       schema::CNodeT *op,
-                                       std::vector<int32_t> *tensors_id,
+                                       schema::CNodeT *op, std::vector<int32_t> *tensors_id,
                                        std::vector<schema::Format> *tensors_format,
-                                       std::map<int, int>  *tensors_id_map) {
+                                       std::map<int, int> *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteStridedSliceParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -74,10 +73,10 @@ STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
   op->primitive->value.type = schema::PrimitiveType_StridedSlice;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
-              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
+             tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
+              tflite_tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 

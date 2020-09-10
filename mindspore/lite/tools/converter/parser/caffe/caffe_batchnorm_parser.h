@@ -27,13 +27,10 @@ class CaffeBatchNormParser : public CaffeNodeParser {
  public:
   CaffeBatchNormParser() : CaffeNodeParser("batchnorm") {}
 
-  STATUS Parse(const caffe::LayerParameter &proto,
-               const caffe::LayerParameter &weight,
-               schema::CNodeT *op,
+  STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
                std::vector<schema::TensorT *> *weightVec) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_BATCHNORM_PARSER_H_
-

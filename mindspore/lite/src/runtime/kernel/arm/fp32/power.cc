@@ -55,15 +55,15 @@ int PowerCPUKernel::Run() {
 }
 
 int PowerCPUKernel::RunImpl(int task_id) {
-  auto x_addr = reinterpret_cast<float *>(in_tensors_[0]->Data());
-  auto output_addr = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  auto x_addr = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   auto size = in_tensors_[0]->ElementsNum();
   int stride = UP_DIV(size, thread_count_);
   int len = MSMIN(stride, size - stride * task_id);
   float *exp_addr = nullptr;
   bool broadcast = true;
   if (in_tensors_.size() == 2) {
-    exp_addr = reinterpret_cast<float *>(in_tensors_[1]->Data());
+    exp_addr = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
     broadcast = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
   }
   float *cur_exp = nullptr;

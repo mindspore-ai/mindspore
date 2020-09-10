@@ -168,4 +168,3 @@ class OnnxTanhParser : public OnnxNodeParser {
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ARITHMETIC_OPREATION_PARSER_H
-

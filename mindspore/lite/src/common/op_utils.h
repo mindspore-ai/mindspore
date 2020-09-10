@@ -29,4 +29,3 @@ inline std::string GetOpTypeName(const schema::CNode &opDef) { return schema::En
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_COMMON_OP_UTILS_H_
-

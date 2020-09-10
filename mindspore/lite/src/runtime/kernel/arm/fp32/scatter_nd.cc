@@ -46,12 +46,12 @@ int ScatterNDCPUKernel::ReSize() {
   auto indices = in_tensors_.at(kScatterIndicesIndex);
   auto update = in_tensors_.at(kScatterUpdateIndex);
 
-  update_ptr_ = reinterpret_cast<float *>(update->Data());
-  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  update_ptr_ = reinterpret_cast<float *>(update->MutableData());
+  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
   // check indices shape
   auto shape_rank = shape->ElementsNum();
-  auto shape_data = reinterpret_cast<int *>(shape->Data());
+  auto shape_data = reinterpret_cast<int *>(shape->MutableData());
   auto indice_unit_rank = indices->shape().back();
   if (indice_unit_rank > shape_rank) {
     MS_LOG(ERROR) << "Value of last dimension of indices is greater than shape rank.";
@@ -107,7 +107,7 @@ int ScatterNDCPUKernel::ReSize() {
     num_unit_ *= update_shape[i];
   }
 
-  int *indices_ptr = reinterpret_cast<int *>(indices->Data());
+  int *indices_ptr = reinterpret_cast<int *>(indices->MutableData());
   for (int i = 0; i < num_unit_; i++) {
     int tmp_stride = 0;
     for (int j = 0; j < indice_unit_rank; j++) {
@@ -162,10 +162,9 @@ int ScatterNDCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuScatterNDFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuScatterNDFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_ScatterND);
   if (opParameter == nullptr) {

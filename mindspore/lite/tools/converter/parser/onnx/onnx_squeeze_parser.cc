@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxSqueezeParser::Parse(const onnx::GraphProto &onnx_graph,
-                                const onnx::NodeProto &onnx_node,
+STATUS OnnxSqueezeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx SqueezeParser";
   if (op == nullptr) {
@@ -56,4 +55,3 @@ STATUS OnnxSqueezeParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxSqueezeParser("Squeeze", new OnnxSqueezeParser());
 }  // namespace lite
 }  // namespace mindspore
-

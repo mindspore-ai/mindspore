@@ -91,8 +91,8 @@ int ActivationOpenClKernel::Run() {
   cl_int4 img2d_shape = GetImg2dShape();
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, img2d_shape);
   if (type_ == ActivationType_LEAKY_RELU) {
     ocl_runtime->SetKernelArg(kernel_, arg_idx++, alpha_);
@@ -135,8 +135,8 @@ int ActivationOpenClKernel::GetImageSize(size_t idx, std::vector<size_t> *img_si
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenClActivationFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                      const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *OpenClActivationFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                      const std::vector<lite::Tensor *> &outputs,
                                                       OpParameter *opParameter, const lite::Context *ctx,
                                                       const kernel::KernelKey &desc,
                                                       const mindspore::lite::PrimitiveC *primitive) {

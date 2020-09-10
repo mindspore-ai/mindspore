@@ -39,7 +39,7 @@ ConvolutionDepthwiseCPUKernel::~ConvolutionDepthwiseCPUKernel() {
 int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
   // init weight: k, h, w, c; k == group == output_channel, c == 1
   auto weight_tensor = in_tensors_[kWeightIndex];
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
   int channel = weight_tensor->Batch();
   int pack_weight_size = weight_tensor->Batch() * weight_tensor->Height() * weight_tensor->Width();
 
@@ -59,7 +59,7 @@ int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
 
   memset(bias_data_, 0, channel * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(bias_tensor->Data());
+    auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(float));
   }
 
@@ -111,10 +111,10 @@ int ConvolutionDepthwiseCPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
-  input_ptr_ = reinterpret_cast<float *>(input_tensor->Data());
+  input_ptr_ = reinterpret_cast<float *>(input_tensor->MutableData());
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_ptr_ = reinterpret_cast<float *>(output_tensor->Data());
+  output_ptr_ = reinterpret_cast<float *>(output_tensor->MutableData());
 
   ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConvDwRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
@@ -124,16 +124,15 @@ int ConvolutionDepthwiseCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
 
   auto *weight_tensor = inputs.at(kWeightIndex);
-  auto *restore_data = weight_tensor->Data();
+  auto *restore_data = weight_tensor->MutableData();
   if (primitive->GetQuantType() == schema::QuantType_WeightQuant) {
     ConvolutionBaseCPUKernel::RestoreFilter(inputs.at(kWeightIndex));
   }

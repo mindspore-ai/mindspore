@@ -69,4 +69,3 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
 }
 }  // namespace opt
 }  // namespace mindspore
-

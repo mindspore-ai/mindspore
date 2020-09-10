@@ -54,7 +54,7 @@ namespace {
 constexpr int kSqueezeInputNum = 1;
 constexpr int kSqueezeOutputNum = 1;
 }  // namespace
-int Squeeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int Squeeze::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (kSqueezeInputNum != inputs_.size()) {
     MS_LOG(ERROR) << "Add should has " << kSqueezeInputNum << " inputs";

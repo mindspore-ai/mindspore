@@ -85,8 +85,8 @@ TEST_F(TestActivationFp32, TanhFp32) {
 }
 
 TEST_F(TestActivationFp32, HSwishFp32) {
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   ActivationParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Activation;
@@ -96,7 +96,7 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   std::vector<float> input = {-3.0, -2.0, -1.0, 0.0, 1.0, 5.0, 6.0, 7.0};
   std::vector<int> in_shape = {8};
 
-  lite::tensor::Tensor input0_tensor;
+  lite::Tensor input0_tensor;
   inputs_tensor.push_back(&input0_tensor);
   input0_tensor.SetData(input.data());
   input0_tensor.set_shape(in_shape);
@@ -104,7 +104,7 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   std::vector<float> output(8);
   std::vector<int> output_shape = {8};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
 

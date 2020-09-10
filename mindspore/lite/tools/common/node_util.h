@@ -79,10 +79,10 @@ enum kTransFilterType {
   kKCHW2CKHW  // 20
 };
 
-STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, int32_t* filterK, int32_t* filterC,
-                    int32_t* filterH, int32_t* filterW);
-STATUS SetFilterDim(schema::TensorT *tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
-                    int32_t filterH, int32_t filterW);
+STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, int32_t *filterK, int32_t *filterC,
+                    int32_t *filterH, int32_t *filterW);
+STATUS SetFilterDim(schema::TensorT *tensor, kTransFilterType type, int32_t filterK, int32_t filterC, int32_t filterH,
+                    int32_t filterW);
 
 template <typename T>
 static STATUS TransFilterData(schema::TensorT *tensor, kTransFilterType type, int32_t filterK, int32_t filterC,

@@ -29,17 +29,12 @@ namespace mindspore {
 constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 
 int EnvToInt(const char *env) {
-    if (env == nullptr)
-        return -1;
-    if (strcmp(env, "DEBUG") == 0)
-        return 0;
-    if (strcmp(env, "INFO") == 0)
-        return 1;
-    if (strcmp(env, "WARNING") == 0)
-        return 2;
-    if (strcmp(env, "ERROR") == 0)
-        return 3;
-    return -1;
+  if (env == nullptr) return -1;
+  if (strcmp(env, "DEBUG") == 0) return 0;
+  if (strcmp(env, "INFO") == 0) return 1;
+  if (strcmp(env, "WARNING") == 0) return 2;
+  if (strcmp(env, "ERROR") == 0) return 3;
+  return -1;
 }
 
 bool IsPrint(int level) {
@@ -55,15 +50,15 @@ bool IsPrint(int level) {
 // convert MsLogLevel to corresponding android level
 static int GetAndroidLogLevel(MsLogLevel level) {
   switch (level) {
-     case DEBUG:
-       return ANDROID_LOG_DEBUG;
-     case INFO:
-       return ANDROID_LOG_INFO;
-     case WARNING:
-       return ANDROID_LOG_WARN;
-     case ERROR:
-     default:
-       return ANDROID_LOG_ERROR;
+    case DEBUG:
+      return ANDROID_LOG_DEBUG;
+    case INFO:
+      return ANDROID_LOG_INFO;
+    case WARNING:
+      return ANDROID_LOG_WARN;
+    case ERROR:
+    default:
+      return ANDROID_LOG_ERROR;
   }
 }
 #endif
@@ -114,16 +109,20 @@ static std::string ExceptionTypeToString(ExceptionType type) {
 }
 
 void LogWriter::OutputLog(const std::ostringstream &msg) const {
-if (IsPrint(log_level_)) {
+  if (IsPrint(log_level_)) {
+    std::string sm = "";
+    if (submodule_ != SM_UNKNOWN) {
+      sm = std::to_string(submodule_) + " ";
+    }
 // #ifdef USE_ANDROID_LOG
 #ifdef ENABLE_ARM
-    __android_log_print(GetAndroidLogLevel(log_level_), ANDROID_LOG_TAG, "[%s:%d] %s] %s",  location_.file_,
-                        location_.line_, location_.func_, msg.str().c_str());
+    __android_log_print(GetAndroidLogLevel(log_level_), ANDROID_LOG_TAG, "[%s:%d] %s] %s%s", location_.file_,
+                        location_.line_, location_.func_, sm.c_str(), msg.str().c_str());
 #else
-    printf("%s [%s:%d] %s] %s\n", EnumStrForMsLogLevel(log_level_), location_.file_, location_.line_, location_.func_,
-           msg.str().c_str());
+    printf("%s [%s:%d] %s] %s%s\n", EnumStrForMsLogLevel(log_level_), location_.file_, location_.line_, location_.func_,
+           sm.c_str(), msg.str().c_str());
 #endif
-}
+  }
 }
 
 void LogWriter::operator<(const LogStream &stream) const noexcept {
@@ -155,4 +154,3 @@ void LogWriter::operator^(const LogStream &stream) const {
   throw std::runtime_error(oss.str());
 }
 }  // namespace mindspore
-

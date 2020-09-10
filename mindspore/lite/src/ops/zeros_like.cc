@@ -32,7 +32,7 @@ int ZerosLike::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffe
 }
 #endif
 
-int ZerosLike::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
+int ZerosLike::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);

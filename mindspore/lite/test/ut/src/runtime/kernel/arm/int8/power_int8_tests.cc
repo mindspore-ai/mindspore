@@ -30,8 +30,8 @@ class TestPowerInt8 : public mindspore::CommonTest {
 };
 
 TEST_F(TestPowerInt8, PowerInt8) {
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   PowerParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Power;
@@ -39,17 +39,17 @@ TEST_F(TestPowerInt8, PowerInt8) {
   op_param.scale_ = 1;
   op_param.shift_ = 0;
 
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 0.0156863;
   input_quant_arg.zeroPoint = -128;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 0.0627451;
   output_quant_arg.zeroPoint = -128;
 
   std::vector<int8_t> input = {-64, -1, 63, 127};
   std::vector<int> in_shape = {1, 1, 1, 4};
 
-  lite::tensor::Tensor input0_tensor;
+  lite::Tensor input0_tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   inputs_tensor.push_back(&input0_tensor);
   input0_tensor.SetData(input.data());
@@ -60,7 +60,7 @@ TEST_F(TestPowerInt8, PowerInt8) {
   std::vector<int8_t> output(4);
   std::vector<int> output_shape = {1, 1, 1, 4};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.AddQuantParam(output_quant_arg);
@@ -85,23 +85,23 @@ TEST_F(TestPowerInt8, PowerInt8) {
 }
 
 TEST_F(TestPowerInt8, normal) {
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   PowerParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Power;
   op_param.scale_ = 1;
   op_param.shift_ = 0;
 
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 0.0156863;
   input_quant_arg.zeroPoint = -128;
 
-  lite::tensor::QuantArg exp_quant_arg;
+  lite::QuantArg exp_quant_arg;
   exp_quant_arg.scale = 0.0156863;
   exp_quant_arg.zeroPoint = -128;
 
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 0.0352941;
   output_quant_arg.zeroPoint = -128;
 
@@ -111,7 +111,7 @@ TEST_F(TestPowerInt8, normal) {
   std::vector<int8_t> input1 = {127, 63, -1, -64};
   std::vector<int> in_shape1 = {1, 1, 1, 4};
 
-  lite::tensor::Tensor input0_tensor, input1_tensor;
+  lite::Tensor input0_tensor, input1_tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   inputs_tensor.push_back(&input0_tensor);
   inputs_tensor.push_back(&input1_tensor);
@@ -128,7 +128,7 @@ TEST_F(TestPowerInt8, normal) {
   std::vector<int8_t> output(4);
   std::vector<int> output_shape = {1, 1, 1, 4};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.AddQuantParam(output_quant_arg);

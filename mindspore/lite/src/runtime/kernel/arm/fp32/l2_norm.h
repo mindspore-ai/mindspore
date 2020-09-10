@@ -29,10 +29,8 @@ using mindspore::lite::Context;
 namespace mindspore::kernel {
 class L2NormCPUKernel : public LiteKernel {
  public:
-  L2NormCPUKernel(OpParameter *parameter,
-                  const std::vector<lite::tensor::Tensor *> &inputs,
-                  const std::vector<lite::tensor::Tensor *> &outputs,
-                  const Context *ctx,
+  L2NormCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                  const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                   const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     l2_norm_param_ = reinterpret_cast<L2NormParameter *>(op_parameter_);
@@ -44,7 +42,7 @@ class L2NormCPUKernel : public LiteKernel {
   int Run() override;
 
  private:
-  L2NormParameter * l2_norm_param_;
+  L2NormParameter *l2_norm_param_;
 };
 }  // namespace mindspore::kernel
 

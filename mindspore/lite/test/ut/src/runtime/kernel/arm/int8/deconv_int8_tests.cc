@@ -28,8 +28,8 @@
 using mindspore::lite::DeviceType;
 
 namespace mindspore {
-using mindspore::lite::tensor::QuantArg;
-using mindspore::lite::tensor::Tensor;
+using mindspore::lite::QuantArg;
+using mindspore::lite::Tensor;
 using mindspore::schema::Format_NHWC;
 using mindspore::schema::NodeType_Parameter;
 class TestDeconvInt8 : public mindspore::CommonTest {
@@ -306,31 +306,31 @@ TEST_F(TestDeconvInt8, PostAddTest1) {
   CompareOutputData(out, co_relu6, 50, 1);
 }
 
-int DeConvInt8TestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
+int DeConvInt8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                         ConvParameter *conv_param, int8_t **correct) {
   /* float data from deconv fp32 testcase : DeConvTestInit2 */
   /*   vq = (vi - zp) * s     vi = vq / s + zp */
-  Tensor *in_t = new Tensor(kNumberTypeInt8, {1, 4, 2, 3}, Format_NHWC, NodeType_Parameter);
+  Tensor *in_t = new Tensor(kNumberTypeInt8, {1, 4, 2, 3}, Format_NHWC, lite::TensorCategory(NodeType_Parameter));
   in_t->MallocData();
   int8_t in[] = {6, 43, 38, 24, -8, 12, 41, -24, -20, 41, -19, -6, -26, -6, 23, -31, 34, 45, 8, 45, -39, -27, -48, 12};
-  memcpy(in_t->Data(), in, sizeof(int8_t) * in_t->ElementsNum());
+  memcpy(in_t->MutableData(), in, sizeof(int8_t) * in_t->ElementsNum());
   QuantArg *in_quant_arg = new QuantArg();
   in_quant_arg->zeroPoint = -19, in_quant_arg->scale = 0.31228156;
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
 
-  Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 3, 3, 2}, Format_NHWC, NodeType_Parameter);
+  Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 3, 3, 2}, Format_NHWC, lite::TensorCategory(NodeType_Parameter));
   weight_t->MallocData();
   int8_t weight[] = {66, 89, 98, 74,  95, 86, 125, 95, 105, 83, 116, 94, 90, 80, 86, 59, 72, 92,
                      64, 76, 92, 80,  90, 87, 106, 55, 105, 60, 75,  53, 81, 81, 98, 81, 86, 59,
                      74, 82, 97, 105, 71, 67, 79,  87, 72,  79, 80,  76, 96, 80, 83, 71, 61, 79};
-  memcpy(weight_t->Data(), weight, sizeof(int8_t) * weight_t->ElementsNum());
+  memcpy(weight_t->MutableData(), weight, sizeof(int8_t) * weight_t->ElementsNum());
   QuantArg *w_quant_arg = new QuantArg();
   w_quant_arg->zeroPoint = 83, w_quant_arg->scale = 0.023649725490196;
   weight_t->AddQuantParam(*w_quant_arg);
   inputs_->push_back(weight_t);
 
-  Tensor *out_t = new Tensor(kNumberTypeInt8, {1, 7, 3, 2}, Format_NHWC, NodeType_Parameter);
+  Tensor *out_t = new Tensor(kNumberTypeInt8, {1, 7, 3, 2}, Format_NHWC, lite::TensorCategory(NodeType_Parameter));
   out_t->MallocData();
   QuantArg *out_quant_arg = new QuantArg();
   out_quant_arg->zeroPoint = 31, out_quant_arg->scale = 0.3439215686275;
@@ -350,8 +350,8 @@ int DeConvInt8TestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vecto
 }
 
 TEST_F(TestDeconvInt8, DeConvInt8Test1) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   auto deconv_param = new ConvParameter();
   lite::Context *ctx = new lite::Context;
   ctx->thread_num_ = 1;
@@ -362,7 +362,7 @@ TEST_F(TestDeconvInt8, DeConvInt8Test1) {
 
   deconv->Init();
   deconv->Run();
-  CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->Data()), correct, total_size, 3);
+  CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 3);
 
   delete deconv_param;
   delete deconv;

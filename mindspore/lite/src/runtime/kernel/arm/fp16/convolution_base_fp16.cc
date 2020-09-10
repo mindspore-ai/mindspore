@@ -59,7 +59,7 @@ int ConvolutionBaseFP16CPUKernel::GetExecuteFilter() {
 
   MS_ASSERT(weight_data_type == kNumberTypeFloat32 || weight_data_type == kNumberTypeFloat16);
   if (weight_data_type == kNumberTypeFloat32) {
-    float *origin_weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->Data());
+    float *origin_weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->MutableData());
     size_t fp16_weight_size = input_channel * output_channel * kernel_h * kernel_w * sizeof(float16_t);
     fp16_weight_ = reinterpret_cast<float16_t *>(malloc(fp16_weight_size));
     if (fp16_weight_ == nullptr) {
@@ -71,7 +71,7 @@ int ConvolutionBaseFP16CPUKernel::GetExecuteFilter() {
     }
     execute_weight_ = fp16_weight_;
   } else {
-    auto *origin_weight = reinterpret_cast<float16_t *>(in_tensors_.at(kWeightIndex)->Data());
+    auto *origin_weight = reinterpret_cast<float16_t *>(in_tensors_.at(kWeightIndex)->MutableData());
     execute_weight_ = origin_weight;
     fp16_weight_ = nullptr;
   }
@@ -82,7 +82,7 @@ void ConvolutionBaseFP16CPUKernel::IfCastOutput() {
   if (out_data_type_ == kNumberTypeFloat32) {
     auto out_tensor = out_tensors_.at(kOutputIndex);
     auto out_ele_num = out_tensor->ElementsNum();
-    auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
+    auto output_addr = reinterpret_cast<float *>(out_tensor->MutableData());
     Float16ToFloat32(execute_output_, output_addr, out_ele_num);
   }
 }

@@ -146,7 +146,6 @@ MetaGraphTptr BuildCaffeGraph(schema::PrimitiveType conv_type) {
   input3->data.resize(sizeof(float) * 8 * 5 * 5);
   meta_graph->allTensors.emplace_back(std::move(input3));
 
-
   // final bn output
   auto output = std::make_unique<schema::TensorT>();
   output->nodeType = schema::NodeType::NodeType_Parameter;
@@ -192,7 +191,6 @@ MetaGraphTptr BuildTFGraph(schema::PrimitiveType conv_type) {
   input0->dims = {1, 5, 5, 3};
   input0->offset = -1;
   meta_graph->allTensors.emplace_back(std::move(input0));
-
 
   // input 1: conv_bias
   auto input11 = std::make_unique<schema::TensorT>();

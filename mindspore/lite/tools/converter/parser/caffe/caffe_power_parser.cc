@@ -24,10 +24,8 @@ static const float CAFFE_POWER_DEFAULT_SHIFT = 0.0;
 
 namespace mindspore {
 namespace lite {
-STATUS CaffePowerParser::Parse(const caffe::LayerParameter &proto,
-                               const caffe::LayerParameter &weight,
-                               schema::CNodeT *op,
-                               std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffePowerParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                               schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffePowerParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -44,7 +42,6 @@ STATUS CaffePowerParser::Parse(const caffe::LayerParameter &proto,
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
-
 
   const caffe::PowerParameter powerParam = proto.power_param();
   if (proto.has_power_param()) {
@@ -66,4 +63,3 @@ STATUS CaffePowerParser::Parse(const caffe::LayerParameter &proto,
 CaffeNodeRegistrar g_caffePowerParser("Power", new CaffePowerParser());
 }  // namespace lite
 }  // namespace mindspore
-

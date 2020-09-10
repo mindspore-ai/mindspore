@@ -15,7 +15,7 @@
  */
 #include <vector>
 #include "mindspore/lite/src/lite_kernel.h"
-#include "mindspore/lite/src/ir/tensor.h"
+#include "mindspore/lite/src/tensor.h"
 #include "common/common_test.h"
 #include "nnacl/resize_parameter.h"
 #include "mindspore/lite/src/kernel_registry.h"
@@ -34,10 +34,10 @@ class TestResizeBilinearFp32 : public mindspore::CommonTest {
 
  public:
   float err_tol = 1e-5;
-  lite::tensor::Tensor in_tensor_;
-  lite::tensor::Tensor out_tensor_;
-  std::vector<lite::tensor::Tensor *> inputs_{&in_tensor_};
-  std::vector<lite::tensor::Tensor *> outputs_{&out_tensor_};
+  lite::Tensor in_tensor_;
+  lite::Tensor out_tensor_;
+  std::vector<lite::Tensor *> inputs_{&in_tensor_};
+  std::vector<lite::Tensor *> outputs_{&out_tensor_};
   ResizeParameter param_ = {{}};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Resize};
   lite::Context ctx_ = lite::Context();

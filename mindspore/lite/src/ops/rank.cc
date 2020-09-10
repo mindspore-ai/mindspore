@@ -29,7 +29,7 @@ int Rank::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
   return RET_OK;
 }
 #endif
-int Rank::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int Rank::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);

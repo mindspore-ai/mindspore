@@ -36,16 +36,15 @@ int ZerosLikeCPUKernel::Run() {
     return RET_ERROR;
   }
   auto input = in_tensors_.at(0);
-  auto input_data = reinterpret_cast<float *>(input->Data());
-  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto input_data = reinterpret_cast<float *>(input->MutableData());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   ApproximateZerosLike(input_data, output_data, input->ElementsNum());
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuZerosLikeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuZerosLikeFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "input opParameter is nullptr!";

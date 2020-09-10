@@ -17,7 +17,7 @@
 #include "src/ops/slice.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 namespace lite {
@@ -88,7 +88,7 @@ int Slice::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
 
 std::vector<int> Slice::GetPostProcessBegin() const { return this->begin; }
 std::vector<int> Slice::GetPostProcessSize() const { return this->size; }
-int Slice::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
+int Slice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (inputs.size() != kSliceInputNum || outputs.size() != kSliceOutputNum) {
     MS_LOG(ERROR) << "input size:" << inputs.size() << ",output size:" << outputs.size();

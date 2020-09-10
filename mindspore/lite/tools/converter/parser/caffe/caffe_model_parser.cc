@@ -177,7 +177,7 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
       for (int j = 0; j < layer.input_param().shape(0).dim_size(); j++) {
         msTensor->dims.push_back(layer.input_param().shape(0).dim(j));
       }
-      msTensor->nodeType = schema::NodeType_ValueNode;
+      msTensor->nodeType = schema::NodeType::NodeType_ValueNode;
       msTensor->refCount = 1;
       msTensor->dataType = kNumberTypeFloat32;
       tensorCache->AddTensor(layer.top(0), msTensor.release(), GRAPH_INPUT);
@@ -245,7 +245,7 @@ STATUS CaffeModelParser::GetModelInput(const caffe::NetParameter &proto, TensorC
     for (int j = 0; j < proto.input_dim_size(); j++) {
       msTensor->dims.push_back(proto.input_dim(j));
     }
-    msTensor->refCount = schema::NodeType_ValueNode;
+    msTensor->refCount = schema::NodeType::NodeType_ValueNode;
     msTensor->dataType = kNumberTypeFloat32;
     tensorCache->AddTensor(proto.input(i), msTensor.release(), GRAPH_INPUT);
   }
@@ -256,7 +256,7 @@ STATUS CaffeModelParser::GetModelInput(const caffe::NetParameter &proto, TensorC
     for (int j = 0; j < shape.dim_size(); j++) {
       msTensor->dims.push_back(shape.dim(j));
     }
-    msTensor->refCount = schema::NodeType_ValueNode;
+    msTensor->refCount = schema::NodeType::NodeType_ValueNode;
     msTensor->dataType = kNumberTypeFloat32;
     tensorCache->AddTensor(proto.input(i), msTensor.release(), GRAPH_INPUT);
   }

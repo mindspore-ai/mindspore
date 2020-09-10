@@ -31,7 +31,7 @@ TEST_F(TestTfliteParserFill, OpType) {
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Fill) << "wrong Op Type";
 }
 
-TEST_F(TestTfliteParserFill, AttrValue) {;
+TEST_F(TestTfliteParserFill, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsFill(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsFill();
   std::vector<int32_t> dims = {9};

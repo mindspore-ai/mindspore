@@ -32,8 +32,8 @@
 namespace mindspore::kernel {
 class DeConvolutionFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
-  DeConvolutionFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                             const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  DeConvolutionFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                             const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                              const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {
     matmul_param_ = new (std::nothrow) MatMulParameter();

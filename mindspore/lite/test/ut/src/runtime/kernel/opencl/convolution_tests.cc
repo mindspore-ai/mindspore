@@ -26,7 +26,7 @@
 using mindspore::kernel::ConvolutionOpenCLKernel;
 using mindspore::kernel::LiteKernel;
 using mindspore::kernel::SubGraphOpenCLKernel;
-using mindspore::lite::tensor::Tensor;
+using mindspore::lite::Tensor;
 using mindspore::schema::Format;
 using mindspore::schema::Format_KHWC;
 using mindspore::schema::Format_NC4HW4;
@@ -42,12 +42,12 @@ class TestConvolutionOpenCL : public mindspore::CommonTest {};
 void LoadData(Tensor *tensor, const float *src) {
   if (tensor->data_type() == kNumberTypeFloat16) {
     auto num = tensor->Size() / 2;
-    auto tensor_data = reinterpret_cast<uint16_t *>(tensor->Data());
+    auto tensor_data = reinterpret_cast<uint16_t *>(tensor->MutableData());
     for (int i = 0; i < num; ++i) {
       tensor_data[i] = Float32ToShort(src[i]);
     }
   } else {
-    memcpy(tensor->Data(), src, tensor->Size());
+    memcpy(tensor->MutableData(), src, tensor->Size());
   }
 }
 
@@ -55,12 +55,12 @@ void CompareOutput(Tensor *output, const float *expect_data, const float atol) {
   auto num = (output->data_type() == kNumberTypeFloat16) ? output->Size() / 2 : output->Size() / 4;
   std::vector<float> output_data(num);
   if (output->data_type() == kNumberTypeFloat16) {
-    auto output_data_fp16 = reinterpret_cast<uint16_t *>(output->Data());
+    auto output_data_fp16 = reinterpret_cast<uint16_t *>(output->MutableData());
     for (int i = 0; i < output_data.size(); ++i) {
       output_data[i] = ShortToFloat32((output_data_fp16[i]));
     }
   } else {
-    memcpy(output_data.data(), output->Data(), output->Size());
+    memcpy(output_data.data(), output->MutableData(), output->Size());
   }
 
   printf("output:");
@@ -163,10 +163,10 @@ void TEST_MAIN(const std::string &attr, Format input_format, Format output_forma
   std::vector<int> weight_shape = {param->output_channel_, param->kernel_h_, param->kernel_w_, param->input_channel_};
   std::vector<int> bias_shape = {param->output_channel_};
   std::vector<int> output_shape = {param->output_batch_, param->output_h_, param->output_w_, param->output_channel_};
-  auto input = Tensor(data_type, input_shape, input_format, NodeType_ValueNode);
-  auto weight = Tensor(data_type, weight_shape, Format_KHWC, NodeType_ValueNode);
-  auto bias = Tensor(data_type, bias_shape, Format_KHWC, NodeType_ValueNode);
-  auto output = Tensor(data_type, output_shape, output_format, NodeType_ValueNode);
+  auto input = Tensor(data_type, input_shape, input_format, lite::TensorCategory(NodeType_ValueNode));
+  auto weight = Tensor(data_type, weight_shape, Format_KHWC, lite::TensorCategory(NodeType_ValueNode));
+  auto bias = Tensor(data_type, bias_shape, Format_KHWC, lite::TensorCategory(NodeType_ValueNode));
+  auto output = Tensor(data_type, output_shape, output_format, lite::TensorCategory(NodeType_ValueNode));
 
   MS_LOG(DEBUG) << "allocate memory and initialize weight/bias";
   weight.MallocData();

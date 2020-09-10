@@ -44,8 +44,8 @@ class MulAddFusionPass : public FusionPass {
   STATUS Run(MetaGraphT *graph) override;
 
  protected:
-  static STATUS AddNewScaleNode(MetaGraphT *graph, const std::unique_ptr<CNodeT> &mulNode,
-                                CNodeT* addNode, uint32_t addBiasIndex);
+  static STATUS AddNewScaleNode(MetaGraphT *graph, const std::unique_ptr<CNodeT> &mulNode, CNodeT *addNode,
+                                uint32_t addBiasIndex);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -55,9 +55,7 @@ int PriorBoxCPUKernel::Init() {
   return ReSize();
 }
 
-int PriorBoxCPUKernel::ReSize() {
-  return GeneratePriorBox();
-}
+int PriorBoxCPUKernel::ReSize() { return GeneratePriorBox(); }
 
 int PriorBoxCPUKernel::GeneratePriorBox() {
   const int fmap_w = in_tensors_[0]->Width();
@@ -149,7 +147,7 @@ int PriorBoxCPUKernel::PriorBoxImpl(int task_id) {
   if (output == nullptr) {
     return RET_NULL_PTR;
   }
-  auto ret = PriorBox(src, reinterpret_cast<float *>(output->Data()), output_.size(), task_id, thread_count_);
+  auto ret = PriorBox(src, reinterpret_cast<float *>(output->MutableData()), output_.size(), task_id, thread_count_);
   return ret;
 }
 
@@ -178,10 +176,9 @@ int PriorBoxCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuPriorBoxKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *op_parameter, const Context *ctx,
-                                             const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuPriorBoxKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                             const Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";

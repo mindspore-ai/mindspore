@@ -29,11 +29,9 @@ class SpaceToBatchTestFp32 : public mindspore::CommonTest {
 };
 
 TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest4) {
-  std::vector<float> input = {1,  2,  3,  4,  5,  6,  7,  8,
-                              9, 10, 11, 12, 13, 14, 15, 16};
+  std::vector<float> input = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
   const size_t kOutSize = 16;
-  std::vector<float> expect_out = {1,  2,  3,  4,  9, 10, 11, 12,
-                                   5,  6,  7,  8, 13, 14, 15, 16};
+  std::vector<float> expect_out = {1, 2, 3, 4, 9, 10, 11, 12, 5, 6, 7, 8, 13, 14, 15, 16};
   float out[kOutSize];
   std::vector<int> in_shape = {1, 4, 4, 1};
   std::vector<int> out_shape = {2, 2, 4, 1};
@@ -49,11 +47,9 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest4) {
 }
 
 TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest5) {
-  std::vector<float> input = {1,  2,  3,  4,  5,  6,  7,  8,
-                              9, 10, 11, 12, 13, 14, 15, 16};
+  std::vector<float> input = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
   size_t kOutSize = 16;
-  std::vector<float> expect_out = {1, 3, 5, 7, 9, 11, 13, 15,
-                                   2, 4, 6, 8, 10, 12, 14, 16};
+  std::vector<float> expect_out = {1, 3, 5, 7, 9, 11, 13, 15, 2, 4, 6, 8, 10, 12, 14, 16};
   float out[kOutSize];
   std::vector<int> in_shape = {1, 4, 4, 1};
   std::vector<int> out_shape = {2, 4, 2, 1};
@@ -69,11 +65,9 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest5) {
 }
 
 TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest6) {
-  std::vector<float> input = {1,  2,  3,  4,  5,  6,  7,  8,
-                              9, 10, 11, 12, 13, 14, 15, 16};
+  std::vector<float> input = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
   size_t kOutSize = 16;
-  std::vector<float> expect_out = {1, 3, 9, 11, 2, 4, 10, 12,
-                                   5, 7, 13, 15, 6, 8, 14, 16};
+  std::vector<float> expect_out = {1, 3, 9, 11, 2, 4, 10, 12, 5, 7, 13, 15, 6, 8, 14, 16};
   float out[kOutSize];
   std::vector<int> in_shape = {1, 4, 4, 1};
   std::vector<int> out_shape = {4, 2, 2, 1};
@@ -89,19 +83,13 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest6) {
 }
 
 TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest7) {
-  std::vector<float> input = {1,  11,  2,  12,   3,  13,   4,  14,
-                              5,  15,  6,  16,   7,  17,   8,  18,
-                              9,  19, 10, 110,  11, 111,  12, 112,
-                             10,  11, 20,  12,  30,  13,  40,  14,
-                             50,  15, 60,  16,  70,  17,  80,  18,
-                             13, 113, 14, 114,  15, 115,  16, 116};
+  std::vector<float> input = {1,  11, 2,  12,  3,  13,  4,  14,  5,  15,  6,  16,  7,  17,  8,  18,
+                              9,  19, 10, 110, 11, 111, 12, 112, 10, 11,  20, 12,  30, 13,  40, 14,
+                              50, 15, 60, 16,  70, 17,  80, 18,  13, 113, 14, 114, 15, 115, 16, 116};
   size_t kOutSize = 48;
-  std::vector<float> expect_out = {1,  11,   3,  13,  9,  19,  11, 111,
-                                  50,  15,  70,  17,  2,  12,   4,  14,
-                                  10, 110,  12, 112, 60,  16,  80,  18,
-                                   5,  15,   7,  17, 10,  11,  30,  13,
-                                  13, 113,  15, 115,  6,  16,   8,  18,
-                                  20,  12,  40,  14, 14, 114,  16, 116};
+  std::vector<float> expect_out = {1,  11,  3,  13,  9,  19, 11, 111, 50, 15, 70, 17, 2,  12,  4,  14,
+                                   10, 110, 12, 112, 60, 16, 80, 18,  5,  15, 7,  17, 10, 11,  30, 13,
+                                   13, 113, 15, 115, 6,  16, 8,  18,  20, 12, 40, 14, 14, 114, 16, 116};
   float out[kOutSize];
   std::vector<int> in_shape = {1, 6, 4, 2};
   std::vector<int> out_shape = {4, 3, 2, 2};
@@ -117,11 +105,11 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest7) {
 }
 
 TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest8) {
-  std::vector<float> input = {1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8,
+  std::vector<float> input = {1, -1, 2,  -2,  3,  -3,  4,  -4,  5,  -5,  6,  -6,  7,  -7,  8,  -8,
                               9, -9, 10, -10, 11, -11, 12, -12, 13, -13, 14, -14, 15, -15, 16, -16};
-  std::vector<float> expect_out = {1, -1, 2, -2, 3, -3, 4, -4, 0, 0, 5, -5, 6, -6, 7, -7, 8, -8, 0, 0,
-                                   9, -9, 10, -10, 11, -11, 12, -12, 0, 0, 13, -13, 14, -14, 15, -15, 16, -16, 0, 0,
-                                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  std::vector<float> expect_out = {1,  -1,  2,  -2,  3,  -3, 4,   -4, 0,   0,  5,   -5, 6, -6, 7,   -7, 8,
+                                   -8, 0,   0,  9,   -9, 10, -10, 11, -11, 12, -12, 0,  0, 13, -13, 14, -14,
+                                   15, -15, 16, -16, 0,  0,  0,   0,  0,   0,  0,   0,  0, 0,  0,   0};
   size_t kOutSize = 50;
   float out[kOutSize];
   std::vector<int> in_shape = {1, 4, 4, 2};
@@ -139,14 +127,12 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest8) {
 }
 
 TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest9) {
-  std::vector<float> input = {1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8,
+  std::vector<float> input = {1, -1, 2,  -2,  3,  -3,  4,  -4,  5,  -5,  6,  -6,  7,  -7,  8,  -8,
                               9, -9, 10, -10, 11, -11, 12, -12, 13, -13, 14, -14, 15, -15, 16, -16};
-  std::vector<float> expect_out = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                   0, 0, 1, -1, 2, -2, 3, -3, 4, -4, 0, 0,
-                                   0, 0, 5, -5, 6, -6, 7, -7, 8, -8, 0, 0,
-                                   0, 0, 9, -9, 10, -10, 11, -11, 12, -12, 0, 0,
-                                   0, 0, 13, -13, 14, -14, 15, -15, 16, -16, 0, 0,
-                                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  std::vector<float> expect_out = {0,  0,   0,  0,   0,  0,   0,  0,   0,  0,   0, 0,  0, 0,  1,  -1,  2,  -2,
+                                   3,  -3,  4,  -4,  0,  0,   0,  0,   5,  -5,  6, -6, 7, -7, 8,  -8,  0,  0,
+                                   0,  0,   9,  -9,  10, -10, 11, -11, 12, -12, 0, 0,  0, 0,  13, -13, 14, -14,
+                                   15, -15, 16, -16, 0,  0,   0,  0,   0,  0,   0, 0,  0, 0,  0,  0,   0,  0};
   size_t kOutSize = 72;
   float out[kOutSize];
   std::vector<int> in_shape = {1, 4, 4, 2};
@@ -164,25 +150,17 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest9) {
 }
 
 TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest10) {
-  std::vector<float> input = {1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8,
+  std::vector<float> input = {1, -1, 2,  -2,  3,  -3,  4,  -4,  5,  -5,  6,  -6,  7,  -7,  8,  -8,
                               9, -9, 10, -10, 11, -11, 12, -12, 13, -13, 14, -14, 15, -15, 16, -16};
-  std::vector<float> expect_out = {0, 0, 0, 0, 0, 0,
-                                   0, 0, 6, -6, 8, -8,
-                                   0, 0, 14, -14, 16, -16,
-                                   0, 0, 0, 0, 0, 0,
-                                   5, -5, 7, -7, 0, 0,
-                                   13, -13, 15, -15, 0, 0,
-                                   0, 0, 2, -2, 4, -4,
-                                   0, 0, 10, -10, 12, -12,
-                                   0, 0, 0, 0, 0, 0,
-                                   1, -1, 3, -3, 0, 0,
-                                   9, -9, 11, -11, 0, 0,
-                                   0, 0, 0, 0, 0, 0};
+  std::vector<float> expect_out = {0, 0,  0, 0,  0, 0,  0, 0,  6,  -6,  8,  -8,  0,  0,   14, -14, 16, -16,
+                                   0, 0,  0, 0,  0, 0,  5, -5, 7,  -7,  0,  0,   13, -13, 15, -15, 0,  0,
+                                   0, 0,  2, -2, 4, -4, 0, 0,  10, -10, 12, -12, 0,  0,   0,  0,   0,  0,
+                                   1, -1, 3, -3, 0, 0,  9, -9, 11, -11, 0,  0,   0,  0,   0,  0,   0,  0};
   size_t kOutSize = 72;
   float out[kOutSize];
   float pedding_out[kOutSize];
   std::vector<int> in_shape = {1, 4, 4, 2};
-  std::vector<int> pedding_out_shape = {1, 6, 6, 2};;
+  std::vector<int> pedding_out_shape = {1, 6, 6, 2};
   std::vector<int> out_shape = {4, 3, 3, 2};
   std::vector<int> padding = {1, 1, 1, 1};
   std::vector<float> pedding_h(12, 0);

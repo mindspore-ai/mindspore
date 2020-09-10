@@ -248,7 +248,8 @@ STATUS AwareQuantizer::QuantDetectionPostProcessConstTensor(const schema::MetaGr
   MS_ASSERT(constTensor != nullptr);
   const auto *constData = reinterpret_cast<const float *>(constTensor->data.data());
 
-  if (constTensor->nodeType == schema::NodeType_ValueNode && constTensor->dataType == TypeId::kNumberTypeFloat) {
+  if (constTensor->nodeType == schema::NodeType::NodeType_ValueNode &&
+      constTensor->dataType == TypeId::kNumberTypeFloat) {
     size_t constTensorShapeSize = GetShapeSize(*constTensor);
     std::unique_ptr<QuantParamT> quantParam = GetTensorQuantParam(constTensor);
     if (quantParam == nullptr) {

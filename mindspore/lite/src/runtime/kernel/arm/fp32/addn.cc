@@ -61,13 +61,13 @@ int AddNCPUKernel::Run() {
     return ret;
   }
   elements_num_ = in_tensors_[0]->ElementsNum();
-  auto input0_data = reinterpret_cast<float *>(in_tensors_[0]->Data());
-  auto input1_data = reinterpret_cast<float *>(in_tensors_[1]->Data());
-  auto output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  auto input0_data = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+  auto input1_data = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+  auto output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   if (static_cast<int>(elements_num_) < op_parameter_->thread_num_) {
     ElementAdd(input0_data, input1_data, output_data, elements_num_);
     for (size_t i = 2; i < in_tensors_.size(); ++i) {
-      ElementAdd(reinterpret_cast<float *>(in_tensors_[i]->Data()), output_data, output_data, elements_num_);
+      ElementAdd(reinterpret_cast<float *>(in_tensors_[i]->MutableData()), output_data, output_data, elements_num_);
     }
     return RET_OK;
   }
@@ -80,7 +80,7 @@ int AddNCPUKernel::Run() {
     return RET_ERROR;
   }
   for (size_t i = 2; i < in_tensors_.size(); ++i) {
-    in1_addr_ = reinterpret_cast<float *>(in_tensors_[i]->Data());
+    in1_addr_ = reinterpret_cast<float *>(in_tensors_[i]->MutableData());
     in2_addr_ = output_data;
     ret = ParallelLaunch(THREAD_POOL_DEFAULT, AddNLaunch, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
@@ -91,10 +91,9 @@ int AddNCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuAddNFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *op_parameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuAddNFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                             const lite::Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";

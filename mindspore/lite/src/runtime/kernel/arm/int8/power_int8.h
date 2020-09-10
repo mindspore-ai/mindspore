@@ -24,12 +24,11 @@
 namespace mindspore::kernel {
 class PowerInt8CPUKernel : public PowerBaseCPUKernel {
  public:
-  PowerInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                       const mindspore::lite::PrimitiveC *primitive)
+  PowerInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                     const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                     const mindspore::lite::PrimitiveC *primitive)
       : PowerBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~PowerInt8CPUKernel() {
-  }
+  ~PowerInt8CPUKernel() {}
 
   int Init() override;
   int ReSize() override;

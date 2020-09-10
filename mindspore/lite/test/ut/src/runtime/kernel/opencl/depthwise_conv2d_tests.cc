@@ -81,12 +81,12 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
     delete[] packed_input;
     return;
   }
-  auto tensor_a = lite::tensor::Tensor(TypeId(dtype), shape_in, format);
-  auto tensor_b = lite::tensor::Tensor(TypeId(dtype), shape_filter, schema::Format_NHWC);
-  auto tensor_c = lite::tensor::Tensor(TypeId(dtype), shape_bias, schema::Format_NHWC);
-  auto tensor_d = lite::tensor::Tensor(TypeId(dtype), shape_out, format);
-  std::vector<lite::tensor::Tensor *> inputs{&tensor_a, &tensor_b, &tensor_c};
-  std::vector<lite::tensor::Tensor *> outputs{&tensor_d};
+  auto tensor_a = lite::Tensor(TypeId(dtype), shape_in, format);
+  auto tensor_b = lite::Tensor(TypeId(dtype), shape_filter, schema::Format_NHWC);
+  auto tensor_c = lite::Tensor(TypeId(dtype), shape_bias, schema::Format_NHWC);
+  auto tensor_d = lite::Tensor(TypeId(dtype), shape_out, format);
+  std::vector<lite::Tensor *> inputs{&tensor_a, &tensor_b, &tensor_c};
+  std::vector<lite::Tensor *> outputs{&tensor_d};
 
   // freamework to do!!!
   inputs[1]->SetData(packed_weight);
@@ -102,7 +102,7 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
   pKernel->Init();
 
   std::vector<kernel::LiteKernel *> kernels{pKernel.get()};
-  std::vector<lite::tensor::Tensor *> inputs_{&tensor_a};
+  std::vector<lite::Tensor *> inputs_{&tensor_a};
   auto pGraph = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_, outputs, kernels, kernels, kernels);
   if (pGraph.get() == nullptr) {
     delete[] packed_input;
@@ -112,11 +112,11 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
 
   // freamework to do!!!
   inputs[0]->MallocData(allocator);
-  memcpy(inputs[0]->Data(), packed_input, sizeof(T2) * pack_input_size);
+  memcpy(inputs[0]->MutableData(), packed_input, sizeof(T2) * pack_input_size);
 
   pGraph->Run();
   if (is_compare) {
-    T2 *packed_output = reinterpret_cast<T2 *>(outputs[0]->Data());
+    T2 *packed_output = reinterpret_cast<T2 *>(outputs[0]->MutableData());
     auto packed_correct_data = std::make_unique<T2>(packed_output_size);
     if (packed_correct_data.get() == nullptr) {
       delete[] packed_input;
@@ -552,7 +552,7 @@ TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2Fp32) {
   const size_t wt_size = 576 * 3 * 3;
   float *weight_data = new (std::nothrow) float[wt_size];
   if (weight_data == nullptr) {
-    delete [] input_data;
+    delete[] input_data;
     return;
   }
   memset(weight_data, 0, wt_size);
@@ -588,8 +588,8 @@ TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2Fp32) {
                                       kNumberTypeFloat32, false);
     }
   }
-  delete [] input_data;
-  delete [] weight_data;
+  delete[] input_data;
+  delete[] weight_data;
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

@@ -27,11 +27,11 @@ class TestUnstackFp32 : public mindspore::CommonTest {
 };
 
 TEST_F(TestUnstackFp32, Unstack) {
-  lite::tensor::Tensor in_tensor(kNumberTypeFloat32, {3, 4, 2});
-  lite::tensor::Tensor out_tensor0(kNumberTypeFloat32, {3, 2});
-  lite::tensor::Tensor out_tensor1(kNumberTypeFloat32, {3, 2});
-  lite::tensor::Tensor out_tensor2(kNumberTypeFloat32, {3, 2});
-  lite::tensor::Tensor out_tensor3(kNumberTypeFloat32, {3, 2});
+  lite::Tensor in_tensor(kNumberTypeFloat32, {3, 4, 2});
+  lite::Tensor out_tensor0(kNumberTypeFloat32, {3, 2});
+  lite::Tensor out_tensor1(kNumberTypeFloat32, {3, 2});
+  lite::Tensor out_tensor2(kNumberTypeFloat32, {3, 2});
+  lite::Tensor out_tensor3(kNumberTypeFloat32, {3, 2});
   float input_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24};
   float output_data0[6] = {0};
   float output_data1[6] = {0};
@@ -42,8 +42,8 @@ TEST_F(TestUnstackFp32, Unstack) {
   out_tensor1.SetData(output_data1);
   out_tensor2.SetData(output_data2);
   out_tensor3.SetData(output_data3);
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor0, &out_tensor1, &out_tensor2, &out_tensor3};
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1, &out_tensor2, &out_tensor3};
 
   UnstackParameter parameter = {{}, 4, -2, 3, 4, 2};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Unstack};
@@ -77,10 +77,10 @@ TEST_F(TestUnstackFp32, Unstack) {
 }
 
 TEST_F(TestUnstackFp32, Unstack2) {
-  lite::tensor::Tensor in_tensor(kNumberTypeFloat32, {3, 4, 2});
-  lite::tensor::Tensor out_tensor0(kNumberTypeFloat32, {4, 2});
-  lite::tensor::Tensor out_tensor1(kNumberTypeFloat32, {4, 2});
-  lite::tensor::Tensor out_tensor2(kNumberTypeFloat32, {4, 2});
+  lite::Tensor in_tensor(kNumberTypeFloat32, {3, 4, 2});
+  lite::Tensor out_tensor0(kNumberTypeFloat32, {4, 2});
+  lite::Tensor out_tensor1(kNumberTypeFloat32, {4, 2});
+  lite::Tensor out_tensor2(kNumberTypeFloat32, {4, 2});
   float input_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24};
   float output_data0[8] = {0};
   float output_data1[8] = {0};
@@ -89,8 +89,8 @@ TEST_F(TestUnstackFp32, Unstack2) {
   out_tensor0.SetData(output_data0);
   out_tensor1.SetData(output_data1);
   out_tensor2.SetData(output_data2);
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor0, &out_tensor1, &out_tensor2};
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1, &out_tensor2};
 
   UnstackParameter parameter = {{}, 3, 0, 1, 3, 8};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Unstack};

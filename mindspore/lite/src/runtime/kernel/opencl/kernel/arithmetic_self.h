@@ -28,8 +28,8 @@ namespace mindspore::kernel {
 
 class ArithmeticSelfOpenCLKernel : public OpenCLKernel {
  public:
-  explicit ArithmeticSelfOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                      const std::vector<lite::tensor::Tensor *> &outputs)
+  explicit ArithmeticSelfOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                      const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
 
   ~ArithmeticSelfOpenCLKernel() override{};

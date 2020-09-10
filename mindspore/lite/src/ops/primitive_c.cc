@@ -139,7 +139,6 @@
 #include "src/ops/arithmetic_grad.h"
 #endif
 
-
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -173,10 +172,10 @@ void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
   } else {
     auto inputMin = prim.GetAttr("input_minq");
     auto inputMax = prim.GetAttr("input_maxq");
-    auto inputMinPtr = inputMin->cast<lite::tensor::TensorPtr>();
-    auto inputMaxPtr = inputMax->cast<lite::tensor::TensorPtr>();
-    float *minBuf = static_cast<float *>(inputMinPtr->Data());
-    float *maxBuf = static_cast<float *>(inputMaxPtr->Data());
+    auto inputMinPtr = inputMin->cast<TensorPtr>();
+    auto inputMaxPtr = inputMax->cast<TensorPtr>();
+    float *minBuf = static_cast<float *>(inputMinPtr->data_c());
+    float *maxBuf = static_cast<float *>(inputMaxPtr->data_c());
     quantParam.min = *minBuf;
     quantParam.max = *maxBuf;
   }
@@ -189,13 +188,13 @@ void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
   auto filterMin = prim.GetAttr("filter_minq");
   auto filterMax = prim.GetAttr("filter_maxq");
   if (filterMin != nullptr && filterMax != nullptr) {
-    auto filterMinPtr = filterMin->cast<lite::tensor::TensorPtr>();
-    auto filterMaxPtr = filterMax->cast<lite::tensor::TensorPtr>();
-    float *minBuf = static_cast<float *>(filterMinPtr->Data());
-    float *maxBuf = static_cast<float *>(filterMaxPtr->Data());
+    auto filterMinPtr = filterMin->cast<TensorPtr>();
+    auto filterMaxPtr = filterMax->cast<TensorPtr>();
+    float *minBuf = static_cast<float *>(filterMinPtr->data_c());
+    float *maxBuf = static_cast<float *>(filterMaxPtr->data_c());
     quantParam.min = FLT_MAX;
     quantParam.max = FLT_MIN;
-    for (int i = 0; i < filterMinPtr->DataSize(); ++i) {
+    for (int i = 0; i < filterMinPtr->ElementsNum(); ++i) {
       quantParam.min = (*(minBuf) < quantParam.min) ? (*minBuf) : quantParam.min;
       quantParam.max = (*(maxBuf) > quantParam.max) ? (*maxBuf) : quantParam.max;
       minBuf++;
@@ -218,10 +217,10 @@ void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
   auto outputMin = prim.GetAttr("output_minq");
   auto outputMax = prim.GetAttr("output_maxq");
   if (outputMin != nullptr && outputMax != nullptr) {
-    auto outputMinPtr = outputMin->cast<lite::tensor::TensorPtr>();
-    auto outputMaxPtr = outputMax->cast<lite::tensor::TensorPtr>();
-    float *minBuf = static_cast<float *>(outputMinPtr->Data());
-    float *maxBuf = static_cast<float *>(outputMaxPtr->Data());
+    auto outputMinPtr = outputMin->cast<TensorPtr>();
+    auto outputMaxPtr = outputMax->cast<TensorPtr>();
+    float *minBuf = static_cast<float *>(outputMinPtr->data_c());
+    float *maxBuf = static_cast<float *>(outputMaxPtr->data_c());
     quantParam.min = *minBuf;
     quantParam.max = *maxBuf;
     quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
@@ -326,9 +325,8 @@ std::shared_ptr<PrimitiveC> NewPrimitiveC(const Primitive &prim, const std::vect
   return primc;
 }
 
-std::shared_ptr<PrimitiveC> PrimitiveC::UnPackFromPrimitive(const Primitive &prim,
-                                                            const std::vector<AnfNodePtr> &inputs,
-                                                            const schema::QuantType &quantType) {
+std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
+                                               const schema::QuantType &quantType) {
   const auto &op_type = prim.name();
   if (op_type == "ReLU" || op_type == "ReLU6" || op_type == "Sigmoid") {
     return NewPrimitiveC<Activation>(prim, inputs, quantType);
@@ -399,12 +397,12 @@ std::shared_ptr<PrimitiveC> PrimitiveC::UnPackFromPrimitive(const Primitive &pri
     return NewPrimitiveC<PowerGrad>(prim, inputs, quantType);
 #endif
   } else {
-    MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromPrimitive : " << op_type;
+    MS_LOG(ERROR) << "Unsupported primitive type in Create : " << op_type;
     return nullptr;
   }
 }
 
-PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT *primitive) {
+PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
   MS_ASSERT(primitive != nullptr);
   auto op_type = primitive->value.type;
   switch (op_type) {
@@ -641,14 +639,13 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT
 #endif
 
     default:
-      MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromSchemaPrimitiveT : "
-                    << schema::EnumNamePrimitiveType(op_type);
+      MS_LOG(ERROR) << "Unsupported primitive type in Create : " << schema::EnumNamePrimitiveType(op_type);
       break;
   }
   return nullptr;
 }
 #else
-PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(const schema::Primitive *primitive) {
+PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
   MS_ASSERT(primitive);
   auto op_type = primitive->value_type();
   switch (op_type) {
@@ -877,19 +874,16 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(const schema::Primitive *primi
     case schema::PrimitiveType_MulGrad:
       return NewPrimitiveC<ArithmeticGrad>(primitive);
     case schema::PrimitiveType_DivGrad:
-     return NewPrimitiveC<ArithmeticGrad>(primitive);
+      return NewPrimitiveC<ArithmeticGrad>(primitive);
 #endif
     default:
-      MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromSchemaPrimitive : "
-                    << schema::EnumNamePrimitiveType(op_type);
+      MS_LOG(ERROR) << "Unsupported primitive type in Create : " << schema::EnumNamePrimitiveType(op_type);
       break;
   }
   return nullptr;
 }
-void PrimitiveC::SetQuantType(schema::QuantType quant_type) {
-  this->quant_type_ = quant_type;
-}
-schema::QuantType PrimitiveC::GetQuantType() const { return quant_type_;}
+void PrimitiveC::SetQuantType(schema::QuantType quant_type) { this->quant_type_ = quant_type; }
+schema::QuantType PrimitiveC::GetQuantType() const { return quant_type_; }
 #endif
 
 int PrimitiveC::Type() const {
@@ -906,7 +900,7 @@ bool PrimitiveC::GetInferFlag() const { return this->infer_flag_; }
 
 void PrimitiveC::SetInferFlag(bool flag) { this->infer_flag_ = flag; }
 
-int PrimitiveC::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
+int PrimitiveC::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();

@@ -30,9 +30,9 @@ using mindspore::schema::PrimitiveType_Mul;
 
 namespace mindspore::kernel {
 int MulInt8CPUKernel::Init() {
-  lite::tensor::Tensor *input0 = in_tensors_.at(0);
-  lite::tensor::Tensor *input1 = in_tensors_.at(1);
-  lite::tensor::Tensor *output = out_tensors_.at(0);
+  lite::Tensor *input0 = in_tensors_.at(0);
+  lite::Tensor *input1 = in_tensors_.at(1);
+  lite::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input0);
   MS_ASSERT(input1);
   MS_ASSERT(output);
@@ -67,9 +67,9 @@ int MulInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->Data());
-  input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->Data());
-  output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->Data());
+  input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->MutableData());
+  output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
   elements_num_ = in_tensors_.at(0)->ElementsNum();
   count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
@@ -84,8 +84,8 @@ int MulInt8CPUKernel::Run() {
       tile_para.in_shape1_[i] = in_tensors_.at(1)->DimensionSize(i);
       tile_para.out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
     }
-    TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->Data()),
-                       static_cast<int8_t *>(in_tensors_.at(1)->Data()), input0_data_, input1_data_, &tile_para);
+    TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->MutableData()),
+                       static_cast<int8_t *>(in_tensors_.at(1)->MutableData()), input0_data_, input1_data_, &tile_para);
     ret = ParallelLaunch(THREAD_POOL_DEFAULT, MulInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
@@ -115,9 +115,9 @@ int MulInt8CPUKernel::DoExecute(int task_id) {
   return lite::RET_OK;
 }
 
-kernel::LiteKernel *CpuMulInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                            const std::vector<lite::tensor::Tensor *> &outputs,
-                                            OpParameter *opParameter, const lite::Context *ctx, const KernelKey &desc,
+kernel::LiteKernel *CpuMulInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                            const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                            const lite::Context *ctx, const KernelKey &desc,
                                             const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Mul);

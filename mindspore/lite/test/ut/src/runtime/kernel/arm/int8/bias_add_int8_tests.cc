@@ -30,17 +30,17 @@ class TestBiasAddInt8 : public mindspore::CommonTest {
 };
 
 TEST_F(TestBiasAddInt8, BiasAdd) {
-  lite::tensor::Tensor in_tensor0(kNumberTypeInt8, {1, 2, 3, 2});
-  lite::tensor::Tensor in_tensor1(kNumberTypeInt8, {2});
-  lite::tensor::Tensor out_tensor(kNumberTypeInt8, {1, 2, 3, 2});
+  lite::Tensor in_tensor0(kNumberTypeInt8, {1, 2, 3, 2});
+  lite::Tensor in_tensor1(kNumberTypeInt8, {2});
+  lite::Tensor out_tensor(kNumberTypeInt8, {1, 2, 3, 2});
   int8_t input_data0[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   int8_t input_data1[] = {1, 1};
   int8_t output_data[12] = {0};
   in_tensor0.SetData(input_data0);
   in_tensor1.SetData(input_data1);
   out_tensor.SetData(output_data);
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor0, &in_tensor1};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&in_tensor0, &in_tensor1};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   ArithmeticParameter parameter = {};
   int dims[] = {1, 2, 3, 4};

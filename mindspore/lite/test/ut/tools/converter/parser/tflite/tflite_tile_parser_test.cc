@@ -22,9 +22,7 @@ namespace mindspore {
 class TestTfliteParserTile : public TestTfliteParser {
  public:
   TestTfliteParserTile() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./tile.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./tile.tflite"); }
 };
 
 TEST_F(TestTfliteParserTile, OpType) {

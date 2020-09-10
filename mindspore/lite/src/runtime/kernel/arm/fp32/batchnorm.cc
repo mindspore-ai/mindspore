@@ -64,8 +64,8 @@ int BatchnormCPUKernel::InitConstTensor() {
     FreeMeanAndVariance();
     return RET_ERROR;
   }
-  memcpy(mean_, in_tensors_[1]->Data(), in_tensors_[1]->Size());
-  memcpy(variance_, in_tensors_[2]->Data(), in_tensors_[2]->Size());
+  memcpy(mean_, in_tensors_[1]->MutableData(), in_tensors_[1]->Size());
+  memcpy(variance_, in_tensors_[2]->MutableData(), in_tensors_[2]->Size());
   return RET_OK;
 }
 
@@ -84,7 +84,7 @@ int BatchnormCPUKernel::Run() {
 
 int BatchnormCPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-  BatchNormFp32(in_tensors_.at(0)->Data(), mean_, variance_, param, task_id, out_tensors_.at(0)->Data());
+  BatchNormFp32(in_tensors_.at(0)->MutableData(), mean_, variance_, param, task_id, out_tensors_.at(0)->MutableData());
   return mindspore::lite::RET_OK;
 }
 
@@ -97,10 +97,9 @@ int BatchNormRun(void *cdata, int task_id) {
   return ret;
 }
 
-kernel::LiteKernel *CpuBatchnormKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *opParameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuBatchnormKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                              const lite::Context *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   auto *kernel = new (std::nothrow) BatchnormCPUKernel(opParameter, inputs, outputs, ctx, primitive);

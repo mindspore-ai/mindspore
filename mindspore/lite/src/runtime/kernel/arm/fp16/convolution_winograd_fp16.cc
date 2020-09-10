@@ -159,7 +159,7 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, oc_block_num * oc_block * sizeof(float16_t));
   auto fp16_bias_data = reinterpret_cast<float16_t *>(bias_data_);
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
     for (int i = 0; i < out_channel; ++i) {
       fp16_bias_data[i] = (float16_t)ori_bias[i];
     }
@@ -260,7 +260,7 @@ int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
 
 int ConvolutionWinogradFP16CPUKernel::ConfigInputOutput() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_tensor->SetFormat(schema::Format_NHWC);
+  output_tensor->SetFormat(schema::Format::Format_NHWC);
 
   // choose input transformer function (4x4 unit or 8x8 unit)
   input_trans_func_ = GetInputTransFuncFp16(input_unit_);

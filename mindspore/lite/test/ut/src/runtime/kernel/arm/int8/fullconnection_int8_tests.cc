@@ -23,7 +23,7 @@
 #include "mindspore/lite/src/lite_kernel.h"
 
 namespace mindspore {
-using lite::tensor::Tensor;
+using lite::Tensor;
 class TestFcInt8 : public mindspore::CommonTest {
  public:
   TestFcInt8() {}
@@ -39,19 +39,18 @@ struct TensorInfo {
 };
 
 extern void QuantProcess(float *input, int len, float min, float max, float *scale, int *zero_point, int8_t *output);
-extern lite::tensor::Tensor *MakeQuantTensor(int8_t *data, int len, std::vector<int> *shape, float scale, int zp);
+extern lite::Tensor *MakeQuantTensor(int8_t *data, int len, std::vector<int> *shape, float scale, int zp);
 
-lite::tensor::Tensor *MakeIntTensor(int *data, int len, std::vector<int> *shape) {
-  auto tensor =
-    new lite::tensor::Tensor(kNumberTypeInt32, *shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+lite::Tensor *MakeIntTensor(int *data, int len, std::vector<int> *shape) {
+  auto tensor = new lite::Tensor(kNumberTypeInt32, *shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
   tensor->MallocData();
-  auto tensor_ptr = reinterpret_cast<int *>(tensor->Data());
+  auto tensor_ptr = reinterpret_cast<int *>(tensor->MutableData());
   memcpy(tensor_ptr, data, len * sizeof(int));
   return tensor;
 }
 
-void FcInt8TestInit(std::vector<lite::tensor::Tensor *> *inputs, std::vector<lite::tensor::Tensor *> *outputs,
-                    TensorInfo *in, TensorInfo *weight, TensorInfo *bias, TensorInfo *out) {
+void FcInt8TestInit(std::vector<lite::Tensor *> *inputs, std::vector<lite::Tensor *> *outputs, TensorInfo *in,
+                    TensorInfo *weight, TensorInfo *bias, TensorInfo *out) {
   float in_scale, weight_scale, out_scale;
   int in_zp, weight_zp, out_zp;
   int8_t *in_data = new int8_t[in->len];
@@ -131,8 +130,8 @@ TEST_F(TestFcInt8, fctest1) {
   fc_param->b_transpose_ = true;
   fc_param->has_bias_ = true;
   fc_param->act_type_ = ActType_No;
-  std::vector<lite::tensor::Tensor *> inputs;
-  std::vector<lite::tensor::Tensor *> outputs;
+  std::vector<lite::Tensor *> inputs;
+  std::vector<lite::Tensor *> outputs;
   FcInt8TestInit(&inputs, &outputs, &in_params, &weight_params, &bias_params, &out_params);
   auto ctx = new lite::Context;
   ctx->thread_num_ = 2;
@@ -146,7 +145,7 @@ TEST_F(TestFcInt8, fctest1) {
   int out_zp;
   QuantProcess(correct, out_params.len, out_params.min, out_params.max, &out_scale, &out_zp, nullptr);
   float *out = new float[out_params.len];
-  Dequantize(reinterpret_cast<int8_t *>(outputs[0]->Data()), outputs[0]->ElementsNum(), out_scale, out_zp, out);
+  Dequantize(reinterpret_cast<int8_t *>(outputs[0]->MutableData()), outputs[0]->ElementsNum(), out_scale, out_zp, out);
   CompareOutputData(out, correct, 6, 0.3);
   delete fc;
   for (auto t : inputs) delete t;

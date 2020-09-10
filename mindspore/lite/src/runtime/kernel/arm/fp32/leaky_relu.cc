@@ -62,8 +62,8 @@ int LeakyReluCPUKernel::Run() {
   }
   auto input = in_tensors_.at(0);
   prelu_param_->input_num_ = input->ElementsNum();
-  input_data = reinterpret_cast<float *>(input->Data());
-  output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  input_data = reinterpret_cast<float *>(input->MutableData());
+  output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
   auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, LeakyReluRun, this, context_->thread_num_);
   if (ret != RET_OK) {
@@ -73,10 +73,9 @@ int LeakyReluCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuLeakyReluFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *param, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuLeakyReluFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *param,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "input param is nullptr!";
@@ -90,8 +89,8 @@ kernel::LiteKernel *CpuLeakyReluFp32KernelCreator(const std::vector<lite::tensor
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << param->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(param->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << param->name_
+                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(param->type_));
     delete kernel;
     return nullptr;
   }

@@ -25,20 +25,18 @@ class TestConstantOfShapeFp32 : public mindspore::CommonTest {
   TestConstantOfShapeFp32() {}
 };
 
-int ConstantOfShapeTestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
-                            float *a_ptr, std::vector<int> a_shape) {
-  auto in_t =
-    new lite::tensor::Tensor(kNumberTypeInt32, a_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+int ConstantOfShapeTestInit(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_, float *a_ptr,
+                            std::vector<int> a_shape) {
+  auto in_t = new lite::Tensor(kNumberTypeInt32, a_shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
   in_t->MallocData();
-  memcpy(in_t->Data(), a_ptr, sizeof(float) * in_t->ElementsNum());
+  memcpy(in_t->MutableData(), a_ptr, sizeof(float) * in_t->ElementsNum());
   inputs_->push_back(in_t);
 
   std::vector<int> c_shape(in_t->ElementsNum());
   for (int i = 0; i < c_shape.size(); ++i) {
     c_shape[i] = a_ptr[i];
   }
-  auto out_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, c_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto out_t = new lite::Tensor(kNumberTypeFloat, c_shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -46,8 +44,8 @@ int ConstantOfShapeTestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::v
 }
 
 TEST_F(TestConstantOfShapeFp32, Simple) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   auto param = new ConstantOfShapeParameter();
   param->value_ = 1;
   float a[] = {1, 2, 3, 4};
@@ -61,10 +59,10 @@ TEST_F(TestConstantOfShapeFp32, Simple) {
   op->Init();
   op->Run();
   float correct[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-  float *output = reinterpret_cast<float *>(outputs_[0]->Data());
+  float *output = reinterpret_cast<float *>(outputs_[0]->MutableData());
   for (int i = 0; i < 8; ++i) printf("%f ", output[i]);
   printf("\n");
-  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
+  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
   delete op;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;

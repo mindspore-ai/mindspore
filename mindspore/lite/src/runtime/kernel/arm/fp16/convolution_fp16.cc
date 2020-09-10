@@ -73,7 +73,7 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, oc8 * C8NUM * sizeof(float16_t));
   auto fp16_bias_data = reinterpret_cast<float16_t *>(bias_data_);
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
     for (int i = 0; i < out_channel; ++i) {
       fp16_bias_data[i] = (float16_t)ori_bias[i];
     }
@@ -123,7 +123,7 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
 void ConvolutionFP16CPUKernel::ConfigInputOutput() {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto input_format = input_tensor->GetFormat();
-  schema::Format execute_format = schema::Format_NHWC4;
+  schema::Format execute_format = schema::Format::Format_NHWC4;
   convert_func_ = LayoutTransformFp16(input_format, execute_format);
   if (convert_func_ == nullptr) {
     MS_LOG(ERROR) << "layout convert func is nullptr.";
@@ -212,10 +212,9 @@ int ConvolutionFP16CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const Context *ctx,
-                                             const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                             const Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);

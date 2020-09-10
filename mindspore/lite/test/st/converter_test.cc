@@ -55,4 +55,3 @@ TEST_F(ConverterTest, TestHebing) {
 }
 }  // namespace lite
 }  // namespace mindspore
-

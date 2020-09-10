@@ -21,10 +21,8 @@ static const int32_t CAFFE_SOFTMAX_DEFAULT_AXIS = 1;
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto,
-                                 const caffe::LayerParameter &weight,
-                                 schema::CNodeT *op,
-                                 std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                                 schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeSoftmaxParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -60,4 +58,3 @@ STATUS CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto,
 CaffeNodeRegistrar g_caffeSoftmaxParser("Softmax", new CaffeSoftmaxParser());
 }  // namespace lite
 }  // namespace mindspore
-

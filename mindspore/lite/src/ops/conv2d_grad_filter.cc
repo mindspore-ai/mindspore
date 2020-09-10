@@ -232,7 +232,7 @@ int Conv2DGradFilter::GetActivationType() const {
 
 #endif
 
-int Conv2DGradFilter::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int Conv2DGradFilter::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   if (3 != inputs.size()) {
     MS_LOG(ERROR) << "Conv2d Grad Filter should have 3 inputs";
     return RET_ERROR;
@@ -247,7 +247,7 @@ int Conv2DGradFilter::InferShape(std::vector<tensor::Tensor *> inputs, std::vect
   MS_ASSERT(out != nullptr);
 
   std::vector<int> output_shape;
-  int *out_shape = reinterpret_cast<int *>(in->Data());
+  int *out_shape = reinterpret_cast<int *>(in->MutableData());
   int new_size = in->ElementsNum();
   if (in0->GetFormat() == in->GetFormat()) {
     for (int i = 0; i < new_size; i++) output_shape.push_back(out_shape[i]);

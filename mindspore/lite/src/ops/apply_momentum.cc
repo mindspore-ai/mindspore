@@ -17,7 +17,6 @@
 namespace mindspore {
 namespace lite {
 
-
 #ifdef PRIMITIVE_WRITEABLE
 
 #else
@@ -36,7 +35,7 @@ int ApplyMomentum::UnPackToFlatBuilder(const schema::Primitive *primitive, flatb
 }
 #endif
 
-int ApplyMomentum::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int ApplyMomentum::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   if (5 != inputs.size()) {
     MS_LOG(ERROR) << "ApplyMomentum should have at 5 input tensors";
     return RET_ERROR;

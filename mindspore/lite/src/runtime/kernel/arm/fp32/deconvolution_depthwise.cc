@@ -54,7 +54,7 @@ int DeconvolutionDepthwiseCPUKernel::InitSlideParam() {
 int DeconvolutionDepthwiseCPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_[kWeightIndex];
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
   int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
   int pack_weight_size = C4NUM * OC4 * weight_tensor->Height() * weight_tensor->Width();
 
@@ -73,7 +73,7 @@ int DeconvolutionDepthwiseCPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, C4NUM * OC4 * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
     memcpy(bias_data_, ori_bias, in_tensors_.at(kBiasIndex)->ElementsNum() * sizeof(float));
   }
 
@@ -163,7 +163,7 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto input_addr = reinterpret_cast<float *>(input_tensor->Data());
+  auto input_addr = reinterpret_cast<float *>(input_tensor->MutableData());
 
   if (need_align_) {
     PackNHWCToNHWC4Fp32(input_addr, packed_input_, conv_param_->input_batch_,
@@ -172,7 +172,7 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
     packed_input_ = input_addr;
   }
 
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
   if (!need_align_) {
     memset(output_addr, 0, out_tensors_.at(kOutputIndex)->ElementsNum() * sizeof(float));
     packed_output_ = output_addr;
@@ -193,10 +193,9 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuDeconvDwFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuDeconvDwFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                 const lite::Context *ctx, const kernel::KernelKey &desc,
                                                  const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeDepthwiseConv2D);

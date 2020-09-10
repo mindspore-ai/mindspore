@@ -34,7 +34,7 @@ int TopKCPUKernel::Init() {
 }
 
 int TopKCPUKernel::ReSize() {
-  lite::tensor::Tensor *input = in_tensors_.at(0);
+  lite::Tensor *input = in_tensors_.at(0);
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
   parameter->last_dim_size_ = input->shape()[input->shape().size() - 1];
   parameter->loop_num_ = 1;
@@ -50,9 +50,9 @@ int TopKCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
-  auto output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->Data());
+  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  auto output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->MutableData());
 
   MS_ASSERT(context_->allocator != nullptr);
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
@@ -66,8 +66,8 @@ int TopKCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuTopKFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
+kernel::LiteKernel *CpuTopKFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                              const lite::Context *ctx, const KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {

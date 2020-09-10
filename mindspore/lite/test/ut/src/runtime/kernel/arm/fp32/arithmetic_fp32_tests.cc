@@ -160,7 +160,7 @@ TEST_F(TestArithmeticTestFp32, DivTest) {
 
 TEST_F(TestArithmeticTestFp32, DivTest2) {
   std::vector<float> in0 = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
-  std::vector<float> in1 = {5,  10, 2,  8,  2,  3,  7,  80, 45, 20};
+  std::vector<float> in1 = {5, 10, 2, 8, 2, 3, 7, 80, 45, 20};
   std::vector<float> correct_out = {2, 2, 15, 5, 25, 20, 10, 1, 2, 5};
   constexpr int kOutSize = 10;
   float out[kOutSize];
@@ -457,8 +457,8 @@ TEST_F(TestArithmeticTestFp32, SquaredDifferenceTest) {
 }
 
 TEST_F(TestArithmeticTestFp32, MulFp32) {
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   ArithmeticParameter mul_param;
   mul_param.broadcasting_ = true;
@@ -486,8 +486,8 @@ TEST_F(TestArithmeticTestFp32, MulFp32) {
   std::vector<float> input1 = {0.16771512, 0.7336843, 0.6768286, 0.4453379};
   std::vector<int> input1_shape = {1, 1, 1, 4};
 
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
+  lite::Tensor input0_tensor;
+  lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
   input0_tensor.SetData(input0.data());
   input1_tensor.SetData(input1.data());
@@ -499,7 +499,7 @@ TEST_F(TestArithmeticTestFp32, MulFp32) {
   std::vector<float> output(24);
   std::vector<int> output_shape = {1, 2, 3, 4};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.set_shape(output_shape);
@@ -529,8 +529,8 @@ TEST_F(TestArithmeticTestFp32, MulFp32) {
 }
 
 TEST_F(TestArithmeticTestFp32, MulReluFp32) {
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   ArithmeticParameter mul_param;
   mul_param.broadcasting_ = true;
@@ -559,8 +559,8 @@ TEST_F(TestArithmeticTestFp32, MulReluFp32) {
   std::vector<float> input1 = {0.16771512, 0.7336843, 0.6768286, 0.4453379};
   std::vector<int> input1_shape = {1, 1, 1, 4};
 
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
+  lite::Tensor input0_tensor;
+  lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
   input0_tensor.SetData(input0.data());
   input1_tensor.SetData(input1.data());
@@ -572,7 +572,7 @@ TEST_F(TestArithmeticTestFp32, MulReluFp32) {
   std::vector<float> output(24);
   std::vector<int> output_shape = {1, 2, 3, 4};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.set_shape(output_shape);
@@ -602,8 +602,8 @@ TEST_F(TestArithmeticTestFp32, MulReluFp32) {
 }
 
 TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   ArithmeticParameter mul_param;
   mul_param.broadcasting_ = true;
@@ -632,8 +632,8 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
   std::vector<float> input1 = {0.16771512, 0.7336843, 0.6768286, 0.4453379};
   std::vector<int> input1_shape = {1, 1, 1, 4};
 
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
+  lite::Tensor input0_tensor;
+  lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
   input0_tensor.SetData(input0.data());
   input1_tensor.SetData(input1.data());
@@ -645,7 +645,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
   std::vector<float> output(24);
   std::vector<int> output_shape = {1, 2, 3, 4};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.set_shape(output_shape);
@@ -674,8 +674,8 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
 }
 
 TEST_F(TestArithmeticTestFp32, AddReluFp32) {
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   ArithmeticParameter add_param;
   add_param.broadcasting_ = true;
@@ -704,8 +704,8 @@ TEST_F(TestArithmeticTestFp32, AddReluFp32) {
   std::vector<float> input1 = {0.9035316, 0.022212252, 0.3038014, 0.3478275};
   std::vector<int> input1_shape = {1, 1, 1, 4};
 
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
+  lite::Tensor input0_tensor;
+  lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
   input0_tensor.SetData(input0.data());
   input1_tensor.SetData(input1.data());
@@ -717,7 +717,7 @@ TEST_F(TestArithmeticTestFp32, AddReluFp32) {
   std::vector<float> output(24);
   std::vector<int> output_shape = {1, 2, 3, 4};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.set_shape(output_shape);
@@ -746,8 +746,8 @@ TEST_F(TestArithmeticTestFp32, AddReluFp32) {
 }
 
 TEST_F(TestArithmeticTestFp32, AddRelu6Fp32) {
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   ArithmeticParameter add_param;
   add_param.broadcasting_ = true;
@@ -776,8 +776,8 @@ TEST_F(TestArithmeticTestFp32, AddRelu6Fp32) {
   std::vector<float> input1 = {0.9035316, 0.022212252, 0.3038014, 0.3478275};
   std::vector<int> input1_shape = {1, 1, 1, 4};
 
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
+  lite::Tensor input0_tensor;
+  lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
   input0_tensor.SetData(input0.data());
   input1_tensor.SetData(input1.data());
@@ -789,7 +789,7 @@ TEST_F(TestArithmeticTestFp32, AddRelu6Fp32) {
   std::vector<float> output(24);
   std::vector<int> output_shape = {1, 2, 3, 4};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.set_shape(output_shape);
@@ -817,8 +817,8 @@ TEST_F(TestArithmeticTestFp32, AddRelu6Fp32) {
 }
 
 TEST_F(TestArithmeticTestFp32, DivReluFp32) {
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   ArithmeticParameter div_param;
   div_param.broadcasting_ = true;
@@ -847,8 +847,8 @@ TEST_F(TestArithmeticTestFp32, DivReluFp32) {
   std::vector<float> input1 = {1.6771512, -7.336843, 0.6768286, 4.453379};
   std::vector<int> input1_shape = {1, 1, 1, 4};
 
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
+  lite::Tensor input0_tensor;
+  lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
   input0_tensor.SetData(input0.data());
   input1_tensor.SetData(input1.data());
@@ -860,7 +860,7 @@ TEST_F(TestArithmeticTestFp32, DivReluFp32) {
   std::vector<float> output(24);
   std::vector<int> output_shape = {1, 2, 3, 4};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.set_shape(output_shape);
@@ -890,8 +890,8 @@ TEST_F(TestArithmeticTestFp32, DivReluFp32) {
 }
 
 TEST_F(TestArithmeticTestFp32, DivRelu6Fp32) {
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   ArithmeticParameter div_param;
   div_param.broadcasting_ = true;
@@ -920,8 +920,8 @@ TEST_F(TestArithmeticTestFp32, DivRelu6Fp32) {
   std::vector<float> input1 = {1.6771512, -7.336843, 0.6768286, 4.453379};
   std::vector<int> input1_shape = {1, 1, 1, 4};
 
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
+  lite::Tensor input0_tensor;
+  lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
   input0_tensor.SetData(input0.data());
   input1_tensor.SetData(input1.data());
@@ -933,7 +933,7 @@ TEST_F(TestArithmeticTestFp32, DivRelu6Fp32) {
   std::vector<float> output(24);
   std::vector<int> output_shape = {1, 2, 3, 4};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.set_shape(output_shape);
@@ -961,8 +961,8 @@ TEST_F(TestArithmeticTestFp32, DivRelu6Fp32) {
 }
 
 TEST_F(TestArithmeticTestFp32, EqualFp32) {
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   ArithmeticParameter equal_param;
   equal_param.broadcasting_ = true;
@@ -990,8 +990,8 @@ TEST_F(TestArithmeticTestFp32, EqualFp32) {
   std::vector<float> input1 = {0.16771512, 3.3466918, 0.6768286, 3.2008505};
   std::vector<int> input1_shape = {1, 1, 1, 4};
 
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
+  lite::Tensor input0_tensor;
+  lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
   input0_tensor.SetData(input0.data());
   input1_tensor.SetData(input1.data());
@@ -1003,7 +1003,7 @@ TEST_F(TestArithmeticTestFp32, EqualFp32) {
   std::vector<float> output(24);
   std::vector<int> output_shape = {1, 2, 3, 4};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.set_shape(output_shape);

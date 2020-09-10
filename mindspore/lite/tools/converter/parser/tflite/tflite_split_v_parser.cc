@@ -24,10 +24,8 @@ namespace lite {
 STATUS TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                 schema::CNodeT *op,
-                                 std::vector<int32_t> *tensors_id,
-                                 std::vector<schema::Format> *tensors_format,
-                                 std::map<int, int>  *tensors_id_map) {
+                                 schema::CNodeT *op, std::vector<int32_t> *tensors_id,
+                                 std::vector<schema::Format> *tensors_format, std::map<int, int> *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteSplitVParser";
 
   if (op == nullptr) {
@@ -82,11 +80,11 @@ STATUS TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   op->primitive->value.type = schema::PrimitiveType_Split;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
+             tflite_tensors.size(), schema::Format::Format_NHWC);
   for (size_t i = 0; i < tflite_op->outputs.size(); i++) {
-    AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
-                tflite_op->outputs[i], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+    AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[i], tensors_id->size(),
+                tflite_tensors.size(), schema::Format::Format_NHWC);
   }
   return RET_OK;
 }

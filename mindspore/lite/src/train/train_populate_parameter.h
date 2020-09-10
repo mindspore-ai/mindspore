@@ -21,8 +21,7 @@
 
 namespace mindspore::kernel {
 
-  void PopulateTrainParameters();
-
+void PopulateTrainParameters();
 
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_TRAIN_TRAIN_POPULATE_PARAMETER_H_

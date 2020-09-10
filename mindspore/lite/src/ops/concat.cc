@@ -18,7 +18,7 @@
 #include <memory>
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 namespace lite {
@@ -81,7 +81,7 @@ int Concat::GetN() const { return this->primitive_->value_as_Concat()->n(); }
 namespace {
 constexpr int kConcatOutputNum = 1;
 }
-int Concat::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int Concat::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   if (this->primitive_ == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr!";
     return RET_PARAM_INVALID;

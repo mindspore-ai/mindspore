@@ -27,15 +27,15 @@ enum class OpenCLMemType { BUF, IMG };
 
 struct OpenCLToFormatParameter {
   OpParameter op_parameter;
-  schema::Format src_format{schema::Format_NHWC};
-  schema::Format dst_format{schema::Format_NHWC4};
+  schema::Format src_format{schema::Format::Format_NHWC};
+  schema::Format dst_format{schema::Format::Format_NHWC4};
   OpenCLMemType out_mem_type{OpenCLMemType::IMG};
 };
 
 class OpenCLKernel : public LiteKernel {
  public:
-  explicit OpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                        const std::vector<lite::tensor::Tensor *> &outputs)
+  explicit OpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                        const std::vector<lite::Tensor *> &outputs)
       : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {}
 
   virtual int Init() { return RET_ERROR; }
@@ -56,9 +56,9 @@ class OpenCLKernel : public LiteKernel {
 
  protected:
   OpenCLMemType out_mem_type_{OpenCLMemType::IMG};
-  schema::Format in_ori_format_{schema::Format_NHWC};
-  schema::Format out_ori_format_{schema::Format_NHWC4};
-  schema::Format op_format_{schema::Format_NHWC4};
+  schema::Format in_ori_format_{schema::Format::Format_NHWC};
+  schema::Format out_ori_format_{schema::Format::Format_NHWC4};
+  schema::Format op_format_{schema::Format::Format_NHWC4};
 };
 }  // namespace mindspore::kernel
 

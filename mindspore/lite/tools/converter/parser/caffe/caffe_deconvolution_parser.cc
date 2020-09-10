@@ -19,14 +19,12 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeDeconvolutionParser::ParseGroupDeconvolution(schema::CNodeT *op,
-                                                         schema::DeConv2DT *attr) {
+STATUS CaffeDeconvolutionParser::ParseGroupDeconvolution(schema::CNodeT *op, schema::DeConv2DT *attr) {
   if (attr->group == 1) {
     return RET_OK;
   }
 
-  std::unique_ptr<schema::DeDepthwiseConv2DT> deDepthwiseConv2DParam
-    = std::make_unique<schema::DeDepthwiseConv2DT>();
+  std::unique_ptr<schema::DeDepthwiseConv2DT> deDepthwiseConv2DParam = std::make_unique<schema::DeDepthwiseConv2DT>();
   if (deDepthwiseConv2DParam == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_ERROR;
@@ -53,10 +51,8 @@ STATUS CaffeDeconvolutionParser::ParseGroupDeconvolution(schema::CNodeT *op,
   return RET_OK;
 }
 
-STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto,
-                                       const caffe::LayerParameter &weight,
-                                       schema::CNodeT *op,
-                                       std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                                       schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeDeconvolutionParser";
 
   if (op == nullptr) {
@@ -71,7 +67,7 @@ STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto,
 
   std::unique_ptr<schema::DeConv2DT> attr(new (std::nothrow) schema::DeConv2DT());
 
-  attr->format = schema::Format_NCHW;
+  attr->format = schema::Format::Format_NCHW;
 
   const caffe::ConvolutionParameter convParam = proto.convolution_param();
   CaffeConvBaseParser convParser;
@@ -158,4 +154,3 @@ STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto,
 CaffeNodeRegistrar g_caffeDeconvolutionParser("Deconvolution", new CaffeDeconvolutionParser());
 }  // namespace lite
 }  // namespace mindspore
-

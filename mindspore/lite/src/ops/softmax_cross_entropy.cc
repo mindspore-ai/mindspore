@@ -52,7 +52,7 @@ int SoftmaxCrossEntropy::UnPackToFlatBuilder(const schema::Primitive *primitive,
 }
 #endif
 
-int SoftmaxCrossEntropy::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int SoftmaxCrossEntropy::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   if (1 > outputs.size()) {
     MS_LOG(ERROR) << "SoftmaxCrossEntropy should have at least one output";
     return RET_ERROR;

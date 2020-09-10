@@ -38,16 +38,15 @@ int ApplyMomentumCPUKernel::Run() {
     return prepare_ret;
   }
 
-  auto weight = reinterpret_cast<float *>(in_tensors_[0]->Data());
-  auto accumulate = reinterpret_cast<float *>(in_tensors_[1]->Data());
-  float learning_rate = reinterpret_cast<float *>(in_tensors_[2]->Data())[0];
-  auto gradient = reinterpret_cast<float *>(in_tensors_[3]->Data());
-  float moment = reinterpret_cast<float *>(in_tensors_[4]->Data())[0];
+  auto weight = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+  auto accumulate = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+  float learning_rate = reinterpret_cast<float *>(in_tensors_[2]->MutableData())[0];
+  auto gradient = reinterpret_cast<float *>(in_tensors_[3]->MutableData());
+  float moment = reinterpret_cast<float *>(in_tensors_[4]->MutableData())[0];
   size_t elem_num = in_tensors_[0]->ElementsNum();
 
   // align format
-  if (in_tensors_[3]->shape().size() == 4 &&
-      in_tensors_[3]->GetFormat() == schema::Format_NCHW &&
+  if (in_tensors_[3]->shape().size() == 4 && in_tensors_[3]->GetFormat() == schema::Format_NCHW &&
       in_tensors_[0]->GetFormat() == schema::Format_KHWC) {
     PackNCHWToNHWCFp32(gradient, workspace, in_tensors_[0]->Batch(), in_tensors_[0]->Height() * in_tensors_[0]->Width(),
                        in_tensors_[0]->Channel());
@@ -65,8 +64,8 @@ int ApplyMomentumCPUKernel::Run() {
 int ApplyMomentumCPUKernel::Init() {
   // Only for test with uninitialized Data
   size_t elem_num = in_tensors_[0]->ElementsNum();
-  auto accumulate = reinterpret_cast<float *>(in_tensors_[1]->Data());
-  for (size_t i =0; i < elem_num; i++) accumulate[i] = 0.0;
+  auto accumulate = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+  for (int i = 0; i < elem_num; i++) accumulate[i] = 0.0;
 
   workspace = new float[elem_num];
   return 0;
@@ -83,10 +82,11 @@ OpParameter *PopulateApplyMomentumParameter(const lite::Primitive *primitive) {
 }
 #endif
 
-kernel::LiteKernel *CpuApplyMomentumFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                    const std::vector<lite::tensor::Tensor *> &outputs,
-                                                    OpParameter *opParameter, const lite::Context *ctx,
-                                                    const kernel::KernelKey &desc, const lite::PrimitiveC *primitive) {
+kernel::LiteKernel *CpuApplyMomentumFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                      const std::vector<lite::Tensor *> &outputs,
+                                                      OpParameter *opParameter, const lite::Context *ctx,
+                                                      const kernel::KernelKey &desc,
+                                                      const lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_ApplyMomentum);
   auto *kernel = new (std::nothrow) ApplyMomentumCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   MS_ASSERT(kernel != nullptr);

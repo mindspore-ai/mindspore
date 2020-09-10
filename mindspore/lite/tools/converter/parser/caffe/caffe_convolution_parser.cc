@@ -19,13 +19,11 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeConvolutionParser::ParseGroupConvolution(schema::CNodeT *op,
-                                                   schema::Conv2DT *attr) {
+STATUS CaffeConvolutionParser::ParseGroupConvolution(schema::CNodeT *op, schema::Conv2DT *attr) {
   if (attr->group == 1) {
     return RET_OK;
   }
-  std::unique_ptr<schema::DepthwiseConv2DT> depthwiseConv2DParam
-    = std::make_unique<schema::DepthwiseConv2DT>();
+  std::unique_ptr<schema::DepthwiseConv2DT> depthwiseConv2DParam = std::make_unique<schema::DepthwiseConv2DT>();
   if (depthwiseConv2DParam == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_ERROR;
@@ -53,10 +51,8 @@ STATUS CaffeConvolutionParser::ParseGroupConvolution(schema::CNodeT *op,
   return RET_OK;
 }
 
-STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto,
-                                     const caffe::LayerParameter &weight,
-                                     schema::CNodeT *op,
-                                     std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                                     schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeConvolutionParser";
 
   if (op == nullptr) {
@@ -83,7 +79,7 @@ STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto,
   std::vector<int64_t> pad(4, 0);
   auto status = convParser.ParsePads(convParam, &pad);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "ParsePads for " << proto.name().c_str() <<" failed";
+    MS_LOG(ERROR) << "ParsePads for " << proto.name().c_str() << " failed";
     return RET_ERROR;
   }
   attr->padUp = pad[0];
@@ -159,4 +155,3 @@ STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto,
 CaffeNodeRegistrar g_caffeConvolutionParser("Convolution", new CaffeConvolutionParser());
 }  // namespace lite
 }  // namespace mindspore
-

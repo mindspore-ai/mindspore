@@ -43,17 +43,16 @@ class MatMulBiasAddFusionPass : public FusionPass {
   STATUS Run(MetaGraphT *graph) override;
 
  protected:
-  static STATUS AddFullConnectionBiasTensor(const std::shared_ptr<Path>& matMulPath,
-                                            const std::shared_ptr<Path>& dstPath,
-                                            MetaGraphT *subGraph);
-  STATUS InsertTransposeNode(MetaGraphT *subGraph, const std::shared_ptr<Path>& matMulPath);
+  static STATUS AddFullConnectionBiasTensor(const std::shared_ptr<Path> &matMulPath,
+                                            const std::shared_ptr<Path> &dstPath, MetaGraphT *subGraph);
+  STATUS InsertTransposeNode(MetaGraphT *subGraph, const std::shared_ptr<Path> &matMulPath);
 
  protected:
   bool transA = false;
   bool transB = false;
   size_t id = 0;
 
-  OpDefCopyer TransposeOpCopyer = [](CNodeT *inOpDef) -> std::unique_ptr<CNodeT>  {
+  OpDefCopyer TransposeOpCopyer = [](CNodeT *inOpDef) -> std::unique_ptr<CNodeT> {
     std::unique_ptr<CNodeT> newOpDef(new (std::nothrow) CNodeT);
     if (newOpDef == nullptr) {
       MS_LOG(ERROR) << "new OpDefT failed";
@@ -81,4 +80,3 @@ class MatMulBiasAddFusionPass : public FusionPass {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_PREDICT_MATMUL_BIASADD_FUSION_PASS_H
-

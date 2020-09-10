@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-std::vector<std::string> StringSplit(std::string str, const std::string& pattern) {
+std::vector<std::string> StringSplit(std::string str, const std::string &pattern) {
   std::vector<std::string> result;
   if (str.empty()) {
     return result;
@@ -259,4 +259,3 @@ uint32_t getHwCap(int hwcap_type) {
 #endif
 }  // namespace lite
 }  // namespace mindspore
-

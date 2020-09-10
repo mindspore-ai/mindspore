@@ -37,7 +37,7 @@ int TopKInt8CPUKernel::ReSize() {
     free(parameter->topk_node_list_);
     parameter->topk_node_list_ = nullptr;
   }
-  lite::tensor::Tensor *input = in_tensors_.at(0);
+  lite::Tensor *input = in_tensors_.at(0);
   parameter->last_dim_size_ = input->shape()[input->shape().size() - 1];
   parameter->loop_num_ = 1;
   for (size_t i = 0; i < input->shape().size() - 1; ++i) {
@@ -52,9 +52,9 @@ int TopKInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return ret;
   }
-  int8_t *input_data = reinterpret_cast<int8_t *>(in_tensors_.at(0)->Data());
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
-  int32_t *output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->Data());
+  int8_t *input_data = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
+  int32_t *output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->MutableData());
 
   MS_ASSERT(context_->allocator != nullptr);
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
@@ -68,8 +68,8 @@ int TopKInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuTopKInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
+kernel::LiteKernel *CpuTopKInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                              const lite::Context *ctx, const KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {

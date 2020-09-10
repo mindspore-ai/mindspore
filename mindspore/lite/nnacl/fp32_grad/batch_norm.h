@@ -29,13 +29,11 @@ typedef struct BNGradParameter {
 extern "C" {
 #endif
 
-
 void sumSpatialBatch(const float *in, int size, int ch, float *out);
 void scaleBias(const float *scales, int batch, int n, int size, float *output);
-void normalize(const float *x, const float *mean, const float *invar, int batch, int filters, int spatial,
-               float *out);
-void backwardScale(const float *x, const float *mean, const float *invar, const float *delta, int batch,
-                   int n, int size, float *scale_updates);
+void normalize(const float *x, const float *mean, const float *invar, int batch, int filters, int spatial, float *out);
+void backwardScale(const float *x, const float *mean, const float *invar, const float *delta, int batch, int n,
+                   int size, float *scale_updates);
 void meanVar(const float *in, int batch, int size, int ch, float eps, float *mean, float *invar);
 void meanDelta(float *yt, int size, int ch, float *invar, float *mean_delta);
 void varianceDelta(const float *x, const float *delta, const float *mean, const float *invar, int batch, int ch,

@@ -31,9 +31,9 @@ class OpenCLExecutor : Executor {
 
   int Prepare(const std::vector<kernel::LiteKernel *> &kernels);
 
-  int Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Tensor *> &outputs,
-          std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
-          const session::KernelCallBack &before = nullptr, const session::KernelCallBack &after = nullptr);
+  int Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &outputs, std::vector<kernel::LiteKernel *> &kernels,
+          Allocator *allocator = nullptr, const session::KernelCallBack &before = nullptr,
+          const session::KernelCallBack &after = nullptr);
 
  protected:
   Context *context = nullptr;

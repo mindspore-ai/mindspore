@@ -30,6 +30,7 @@ using mindspore::lite::RET_OK;
 
 using mindspore::schema::PrimitiveType_Add;
 using mindspore::schema::PrimitiveType_Div;
+using mindspore::schema::PrimitiveType_Eltwise;
 using mindspore::schema::PrimitiveType_Equal;
 using mindspore::schema::PrimitiveType_FloorDiv;
 using mindspore::schema::PrimitiveType_FloorMod;
@@ -45,7 +46,6 @@ using mindspore::schema::PrimitiveType_Mul;
 using mindspore::schema::PrimitiveType_NotEqual;
 using mindspore::schema::PrimitiveType_SquaredDifference;
 using mindspore::schema::PrimitiveType_Sub;
-using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
 ARITHMETIC_FUNC_INFO_FP16 arithmetic_fun_table_fp16[] = {
@@ -207,7 +207,8 @@ int ArithmeticFP16CPUKernel::Run() {
     MS_LOG(ERROR) << "ArithmeticsRunFp16 run error error_code[" << ret << "]";
   }
   if (is_output_fp32_) {
-    Float16ToFloat32(output_fp16_, reinterpret_cast<float *>(output_tensor->Data()), output_tensor->ElementsNum());
+    Float16ToFloat32(output_fp16_, reinterpret_cast<float *>(output_tensor->MutableData()),
+                     output_tensor->ElementsNum());
   }
   FreeTmpBuffer();
   return ret;
@@ -228,10 +229,9 @@ void ArithmeticFP16CPUKernel::FreeTmpBuffer() {
   }
 }
 
-kernel::LiteKernel *CpuArithmeticFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                   const std::vector<lite::tensor::Tensor *> &outputs,
-                                                   OpParameter *parameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuArithmeticFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                                   const lite::Context *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "input parameter is null!";

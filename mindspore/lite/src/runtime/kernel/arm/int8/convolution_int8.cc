@@ -77,7 +77,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   int32_t input_zp = conv_param_->conv_quant_arg_.input_quant_args_[0].zp_;
 
   // init weight
-  auto origin_weight = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->Data());
+  auto origin_weight = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->MutableData());
   packed_weight_ = reinterpret_cast<int8_t *>(malloc(pack_weight_size));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_weight_ failed.";
@@ -96,7 +96,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, oc4 * C4NUM * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->Data());
+    auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->MutableData());
     memcpy(bias_data_, ori_bias, output_channel * sizeof(int32_t));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
@@ -164,7 +164,7 @@ int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
   int32_t input_zp = conv_param_->conv_quant_arg_.input_quant_args_[0].zp_;
 
   // init weight
-  auto origin_weight = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->Data());
+  auto origin_weight = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->MutableData());
   packed_weight_ = reinterpret_cast<int8_t *>(malloc(pack_weight_size));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_weight_ failed.";
@@ -183,7 +183,7 @@ int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
   }
   memset(bias_data_, 0, oc4 * C4NUM * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->Data());
+    auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->MutableData());
     memcpy(bias_data_, ori_bias, output_channel * sizeof(int32_t));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
@@ -237,7 +237,7 @@ int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
 
 void ConvolutionInt8CPUKernel::ConfigInputOutput() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_tensor->SetFormat(schema::Format_NHWC);
+  output_tensor->SetFormat(schema::Format::Format_NHWC);
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto ret = CheckLayout(input_tensor);
   if (ret != RET_OK) {
@@ -324,7 +324,7 @@ int ConvolutionInt8CPUKernel::ReSize() {
 }
 
 int ConvolutionInt8CPUKernel::RunImpl(int task_id) {
-  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->MutableData());
   if (support_optimize_) {
     ConvInt8Opt(reinterpret_cast<int8_t *>(nhwc4_input_), packed_input_, packed_weight_,
                 reinterpret_cast<int32_t *>(bias_data_), tmp_dst_, tmp_out_, output_addr, input_sum_, task_id,
@@ -369,7 +369,7 @@ int ConvolutionInt8CPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ori_input_data = input_tensor->Data();
+  auto ori_input_data = input_tensor->MutableData();
   convert_func_(ori_input_data, nhwc4_input_, conv_param_->input_batch_, conv_param_->input_h_ * conv_param_->input_w_,
                 conv_param_->input_channel_);
 
@@ -383,10 +383,9 @@ int ConvolutionInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const Context *ctx,
-                                             const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                             const Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);

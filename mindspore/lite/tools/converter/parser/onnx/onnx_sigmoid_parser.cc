@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxSigmoidParser::Parse(const onnx::GraphProto &onnx_graph,
-                                const onnx::NodeProto &onnx_node,
+STATUS OnnxSigmoidParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx SigmoidParser";
   if (op == nullptr) {
@@ -49,4 +48,3 @@ STATUS OnnxSigmoidParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxSigmoodParser("Sigmoid", new OnnxSigmoidParser());
 }  // namespace lite
 }  // namespace mindspore
-

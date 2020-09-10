@@ -21,8 +21,8 @@
 namespace mindspore::kernel {
 class BatchToSpaceCPUKernel : public BatchToSpaceBaseCPUKernel {
  public:
-  BatchToSpaceCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                        const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  BatchToSpaceCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                        const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                         const mindspore::lite::PrimitiveC *primitive)
       : BatchToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 

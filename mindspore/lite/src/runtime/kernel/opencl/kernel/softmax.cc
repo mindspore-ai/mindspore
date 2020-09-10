@@ -146,11 +146,11 @@ int SoftmaxOpenCLKernel::Run() {
     auto mask_ = GetMaskForLastChannel(channel_size);
     cl_float4 mask = {mask_[0], mask_[1], mask_[2], mask_[3]};
 
-    runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
+    runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
     if (is_image_out_) {
-      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
     } else {
-      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data(), lite::opencl::MemType::BUF);
+      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData(), lite::opencl::MemType::BUF);
     }
     runtime_->SetKernelArg(kernel_, arg_idx++, mask);
     runtime_->SetKernelArg(kernel_, arg_idx++, slices);
@@ -160,11 +160,11 @@ int SoftmaxOpenCLKernel::Run() {
     int slices = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
     cl_int4 input_shape = {in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2], in_tensors_[0]->shape()[3], slices};
 
-    runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
+    runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
     if (is_image_out_) {
-      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
     } else {
-      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data(), lite::opencl::MemType::BUF);
+      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData(), lite::opencl::MemType::BUF);
     }
     runtime_->SetKernelArg(kernel_, arg_idx, input_shape);
     SetWorkGroupSize();
@@ -175,10 +175,9 @@ int SoftmaxOpenCLKernel::Run() {
   return lite::RET_OK;
 }
 
-kernel::LiteKernel *OpenCLSoftMaxKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *OpenCLSoftMaxKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) SoftmaxOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {

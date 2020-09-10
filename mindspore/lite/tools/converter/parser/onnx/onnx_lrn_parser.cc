@@ -19,9 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph,
-                            const onnx::NodeProto &onnx_node,
-                            schema::CNodeT *op) {
+STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx LrnParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -33,8 +31,7 @@ STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph,
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::LocalResponseNormalizationT> attr
-    = std::make_unique<schema::LocalResponseNormalizationT>();
+  std::unique_ptr<schema::LocalResponseNormalizationT> attr = std::make_unique<schema::LocalResponseNormalizationT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
@@ -83,4 +80,3 @@ STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxLrnxParser("Lrn", new OnnxLrnParser());
 }  // namespace lite
 }  // namespace mindspore
-

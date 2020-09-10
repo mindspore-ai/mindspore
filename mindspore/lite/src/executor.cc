@@ -17,10 +17,9 @@
 #include "mindspore/lite/src/executor.h"
 #include "nnacl/pack.h"
 #include "include/errorcode.h"
-#include "src/common/ms_tensor_utils.h"
 
 namespace mindspore::lite {
-int Executor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor::Tensor *> &out_tensors,
+int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
                   std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
                   const session::KernelCallBack &before, const session::KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
@@ -29,11 +28,11 @@ int Executor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor:
       MS_LOG(ERROR) << "Graph input tensor is nullptr";
       return RET_ERROR;
     }
-    if (inTensor->Data() == nullptr) {
+    if (inTensor->MutableData() == nullptr) {
       MS_LOG(ERROR) << "Graph input tensor data is nullptr";
       return RET_ERROR;
     }
-    if (inTensor->GetFormat() != schema::Format_NHWC) {
+    if (inTensor->GetFormat() != schema::Format::Format_NHWC) {
       MS_LOG(ERROR) << "Model input tensor should be NHWC";
       return RET_ERROR;
     }
@@ -47,7 +46,7 @@ int Executor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor:
     MS_ASSERT(nullptr != kernel);
 
     if (before != nullptr) {
-      if (!before(PackToMSTensors(kernel->in_tensors()), PackToMSTensors(kernel->out_tensors()),
+      if (!before(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()),
                   {kernel->name(), kernel->type_str()})) {
         MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->name();
       }
@@ -59,9 +58,8 @@ int Executor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor:
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
       return ret;
     }
-
     if (after != nullptr) {
-      if (!after(PackToMSTensors(kernel->in_tensors()), PackToMSTensors(kernel->out_tensors()),
+      if (!after(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()),
                  {kernel->name(), kernel->type_str()})) {
         MS_LOG(ERROR) << "run kernel after_callback failed, name: " << kernel->name();
       }
@@ -80,7 +78,7 @@ int Executor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor:
   return RET_OK;
 }
 
-int Executor::TransformTensorLayout(tensor::Tensor *tensor, schema::Format dst_format, Allocator *allocator) {
+int Executor::TransformTensorLayout(Tensor *tensor, schema::Format dst_format, Allocator *allocator) {
   MS_ASSERT(nullptr != tensor);
   MS_ASSERT(nullptr != allocator);
   MS_ASSERT(4 == tensor->shape().size());
@@ -96,13 +94,17 @@ int Executor::TransformTensorLayout(tensor::Tensor *tensor, schema::Format dst_f
   return RET_OK;
 }
 
-int Executor::TransformTensorLayoutFp32(tensor::Tensor *tensor, schema::Format dst_format, Allocator *allocator) {
+int Executor::TransformTensorLayoutFp32(Tensor *tensor, schema::Format dst_format, Allocator *allocator) {
   MS_ASSERT(nullptr != tensor);
   MS_ASSERT(nullptr != allocator);
   MS_ASSERT(4 == tensor->shape().size());
   auto src_format = tensor->GetFormat();
-  if (src_format == schema::Format_NC4HW4 && dst_format == schema::Format_NHWC) {
-    auto *src_data = tensor->Data();
+  if (src_format == schema::Format::Format_NC4HW4 && dst_format == schema::Format::Format_NHWC) {
+    auto *src_data = tensor->MutableData();
+    if (src_data == nullptr) {
+      MS_LOG(ERROR) << "MutableData return nullptr";
+      return RET_ERROR;
+    }
     auto *dst_data = allocator->Malloc(tensor->Size());
     if (dst_data == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed";
@@ -114,18 +116,18 @@ int Executor::TransformTensorLayoutFp32(tensor::Tensor *tensor, schema::Format d
     allocator->Free(src_data);
     return RET_OK;
   } else {
-    MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
-                  << schema::EnumNameFormat(dst_format) << " in float32";
+    MS_LOG(ERROR) << "Unsupported layout transform: " << EnumNameFormat(tensor->GetFormat()) << " to "
+                  << EnumNameFormat(dst_format) << " in float32";
     return RET_ERROR;
   }
 }
 
-int Executor::TransformTensorLayoutUint8(tensor::Tensor *tensor, schema::Format dst_format, Allocator *allocator) {
+int Executor::TransformTensorLayoutUint8(Tensor *tensor, schema::Format dst_format, Allocator *allocator) {
   MS_ASSERT(nullptr != tensor);
   MS_ASSERT(nullptr != allocator);
   MS_ASSERT(4 == tensor->shape().size());
-  MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
-                << schema::EnumNameFormat(dst_format) << " in uint8";
+  MS_LOG(ERROR) << "Unsupported layout transform: " << EnumNameFormat(tensor->GetFormat()) << " to "
+                << EnumNameFormat(dst_format) << " in uint8";
   return RET_ERROR;
 }
 }  // namespace mindspore::lite

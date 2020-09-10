@@ -17,19 +17,18 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include "src/ir/tensor.h"
+#include <algorithm>
+#include "src/tensor.h"
 #include "securec/include/securec.h"
 #include "include/errorcode.h"
 
 namespace mindspore {
 namespace lite {
-namespace tensor {
 #define kMaxMallocSize 1024 * 1024 * 100
-Tensor::Tensor(const TypeId data_type, const std::vector<int> &shape, const schema::Format &format,
-               schema::NodeType tensorType)
-    : MetaTensor(data_type, shape), format_(format), tensorType(tensorType) {}
+Tensor::Tensor(const TypeId data_type, const std::vector<int> &shape, const schema::Format &format, Category category)
+    : data_type_(data_type), shape_(shape), format_(format), category_(category) {}
 
-Tensor::Tensor(const Tensor &tensor) : MetaTensor(tensor) {
+Tensor::Tensor(const Tensor &tensor) {
   auto ret = CopyTensor(tensor, true);
   if (0 != ret) {
     MS_LOG(EXCEPTION) << "CopyTensorData error";
@@ -57,7 +56,7 @@ int Tensor::CopyTensorData(const Tensor &srcTensor) {
 int Tensor::CopyTensor(const Tensor &srcTensor, bool copyData) {
   this->data_type_ = srcTensor.data_type_;
   this->shape_ = srcTensor.shape_;
-  this->tensorType = srcTensor.tensorType;
+  this->category_ = srcTensor.category_;
   if (copyData) {
     auto ret = CopyTensorData(srcTensor);
     if (0 != ret) {
@@ -95,39 +94,30 @@ bool Tensor::operator==(const Tensor &tensor) {
   return data_ == tensor.data_ && shape_ == tensor.shape_ && data_type_ == tensor.data_type_;
 }
 
-bool Tensor::operator==(const Value &other) const {
-  if (other.isa<Tensor>()) {
-    auto other_ = static_cast<const Tensor &>(other);
-    return *this == other_;
-  } else {
-    return false;
-  }
-}
-
 int32_t Tensor::Batch() const {
   if (this->shape_.size() != 4 && this->shape_.size() != 2) {
     MS_LOG(ERROR) << "Unsupported tensor shape: " << this->shape().size();
     return -1;
   }
   switch (this->format_) {
-    case schema::Format_NHWC:
-    case schema::Format_NHWC4:
-    case schema::Format_NCHW:
-    case schema::Format_NC4HW4:
-    case schema::Format_KCHW:
-    case schema::Format_KHWC:
-    case schema::Format_NC:
-    case schema::Format_NC4:
+    case schema::Format::Format_NHWC:
+    case schema::Format::Format_NHWC4:
+    case schema::Format::Format_NCHW:
+    case schema::Format::Format_NC4HW4:
+    case schema::Format::Format_KCHW:
+    case schema::Format::Format_KHWC:
+    case schema::Format::Format_NC:
+    case schema::Format::Format_NC4:
       return this->shape_[0];
-    case schema::Format_HWCK:
-    case schema::Format_CHWK:
+    case schema::Format::Format_HWCK:
+    case schema::Format::Format_CHWK:
       return this->shape_[3];
-    case schema::Format_HWKC:
+    case schema::Format::Format_HWKC:
       return this->shape_[2];
-    case schema::Format_CKHW:
+    case schema::Format::Format_CKHW:
       return this->shape_[1];
     default:
-      MS_LOG(ERROR) << "Unsupported format: " << schema::EnumNameFormat(this->format_);
+      MS_LOG(ERROR) << "Unsupported format: " << EnumNameFormat(this->format_);
       return -1;
   }
 }
@@ -138,21 +128,21 @@ int32_t Tensor::Channel() const {
     return -1;
   }
   switch (this->format_) {
-    case schema::Format_NCHW:
-    case schema::Format_KCHW:
-    case schema::Format_NC:
-    case schema::Format_NC4:
+    case schema::Format::Format_NCHW:
+    case schema::Format::Format_KCHW:
+    case schema::Format::Format_NC:
+    case schema::Format::Format_NC4:
       return this->shape_[1];
-    case schema::Format_HWCK:
+    case schema::Format::Format_HWCK:
       return this->shape_[2];
-    case schema::Format_HWKC:
-    case schema::Format_NHWC:
-    case schema::Format_NHWC4:
-    case schema::Format_NC4HW4:
-    case schema::Format_KHWC:
+    case schema::Format::Format_HWKC:
+    case schema::Format::Format_NHWC:
+    case schema::Format::Format_NHWC4:
+    case schema::Format::Format_NC4HW4:
+    case schema::Format::Format_KHWC:
       return this->shape_[3];
-    case schema::Format_CKHW:
-    case schema::Format_CHWK:
+    case schema::Format::Format_CKHW:
+    case schema::Format::Format_CHWK:
       return this->shape_[0];
     default:
       return -1;
@@ -165,23 +155,23 @@ int32_t Tensor::Height() const {
     return -1;
   }
   switch (this->format_) {
-    case schema::Format_NCHW:
-    case schema::Format_KCHW:
-    case schema::Format_CKHW:
+    case schema::Format::Format_NCHW:
+    case schema::Format::Format_KCHW:
+    case schema::Format::Format_CKHW:
       return this->shape_[2];
-    case schema::Format_NHWC:
-    case schema::Format_NHWC4:
-    case schema::Format_NC4HW4:
-    case schema::Format_KHWC:
-    case schema::Format_CHWK:
+    case schema::Format::Format_NHWC:
+    case schema::Format::Format_NHWC4:
+    case schema::Format::Format_NC4HW4:
+    case schema::Format::Format_KHWC:
+    case schema::Format::Format_CHWK:
       return this->shape_[1];
-    case schema::Format_HWCK:
-    case schema::Format_HWKC:
-    case schema::Format_HW:
-    case schema::Format_HW4:
+    case schema::Format::Format_HWCK:
+    case schema::Format::Format_HWKC:
+    case schema::Format::Format_HW:
+    case schema::Format::Format_HW4:
       return this->shape_[0];
     default:
-      MS_LOG(ERROR) << "Unsupported format: " << schema::EnumNameFormat(this->format_);
+      MS_LOG(ERROR) << "Unsupported format: " << EnumNameFormat(this->format_);
       return -1;
   }
 }
@@ -192,20 +182,20 @@ int32_t Tensor::Width() const {
     return -1;
   }
   switch (this->format_) {
-    case schema::Format_NCHW:
-    case schema::Format_KCHW:
-    case schema::Format_CKHW:
+    case schema::Format::Format_NCHW:
+    case schema::Format::Format_KCHW:
+    case schema::Format::Format_CKHW:
       return this->shape_[3];
-    case schema::Format_KHWC:
-    case schema::Format_NHWC:
-    case schema::Format_NHWC4:
-    case schema::Format_NC4HW4:
-    case schema::Format_CHWK:
+    case schema::Format::Format_KHWC:
+    case schema::Format::Format_NHWC:
+    case schema::Format::Format_NHWC4:
+    case schema::Format::Format_NC4HW4:
+    case schema::Format::Format_CHWK:
       return this->shape_[2];
-    case schema::Format_HWCK:
-    case schema::Format_HWKC:
-    case schema::Format_HW:
-    case schema::Format_HW4:
+    case schema::Format::Format_HWCK:
+    case schema::Format::Format_HWKC:
+    case schema::Format::Format_HW:
+    case schema::Format::Format_HW4:
       return this->shape_[1];
     default:
       return -1;
@@ -224,9 +214,9 @@ int32_t Tensor::ElementsC4Num() const {
 
 std::string Tensor::ToString() const {
   std::ostringstream oss;
-  oss << "Format: " << schema::EnumNameFormat(this->format_);
+  oss << "schema::Format: " << EnumNameFormat(this->format_);
   oss << " DataType: " << this->data_type_;
-  oss << " NodeType: " << schema::EnumNameNodeType(this->tensorType);
+  oss << " Category: " << this->category_;
   oss << " Shape:";
   for (auto &dim : this->shape()) {
     oss << " " << dim;
@@ -259,7 +249,7 @@ std::string Tensor::ToString() const {
         return "Data of tensor is nullptr";
       } else {
         for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
-          oss << " " << static_cast<int32_t >(data[i]);
+          oss << " " << static_cast<int32_t>(data[i]);
         }
       }
     } break;
@@ -270,83 +260,14 @@ std::string Tensor::ToString() const {
   return oss.str();
 }
 
-void Tensor::AddQuantParam(const tensor::QuantArg &quant_arg) { this->quant_params_.push_back(quant_arg); }
+void Tensor::AddQuantParam(const QuantArg &quant_arg) { this->quant_params_.push_back(quant_arg); }
 
-std::vector<tensor::QuantArg> Tensor::GetQuantParams() const { return this->quant_params_; }
+std::vector<QuantArg> Tensor::GetQuantParams() const { return this->quant_params_; }
 
-LiteTensor::LiteTensor() { this->tensor_impl_ = new tensor::Tensor(); }
-
-LiteTensor::LiteTensor(TypeId data_type, const std::vector<int> &shape) {
-  this->tensor_impl_ = new tensor::Tensor(data_type, shape);
+std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &src) {
+  std::vector<tensor::MSTensor *> target(src.size());
+  std::transform(src.begin(), src.end(), target.begin(), [](Tensor *t) { return dynamic_cast<tensor::MSTensor *>(t); });
+  return target;
 }
-
-LiteTensor::LiteTensor(tensor::Tensor *tensor_ptr) { this->tensor_impl_ = tensor_ptr; }
-
-TypeId LiteTensor::data_type() const {
-  MS_ASSERT(this->tensor_impl_ != nullptr);
-  return this->tensor_impl_->data_type();
-}
-
-TypeId LiteTensor::set_data_type(TypeId data_type) {
-  MS_ASSERT(this->tensor_impl_ != nullptr);
-  return this->tensor_impl_->set_data_type(data_type);
-}
-
-std::vector<int> LiteTensor::shape() const {
-  MS_ASSERT(this->tensor_impl_ != nullptr);
-  return this->tensor_impl_->shape();
-}
-
-size_t LiteTensor::set_shape(const std::vector<int> &shape) {
-  MS_ASSERT(this->tensor_impl_ != nullptr);
-  return this->tensor_impl_->set_shape(shape);
-}
-
-int LiteTensor::DimensionSize(size_t index) const {
-  MS_ASSERT(this->tensor_impl_ != nullptr);
-  return this->tensor_impl_->DimensionSize(index);
-}
-
-int LiteTensor::ElementsNum() const {
-  MS_ASSERT(this->tensor_impl_ != nullptr);
-  return this->tensor_impl_->ElementsNum();
-}
-
-std::size_t LiteTensor::hash() const {
-  MS_ASSERT(this->tensor_impl_ != nullptr);
-  return this->tensor_impl_->hash();
-}
-
-tensor::Tensor *LiteTensor::tensor() const {
-  MS_ASSERT(this->tensor_impl_ != nullptr);
-  return this->tensor_impl_;
-}
-
-size_t LiteTensor::Size() const {
-  MS_ASSERT(this->tensor_impl_ != nullptr);
-  return this->tensor_impl_->Size();
-}
-
-void *LiteTensor::MutableData() const {
-  MS_ASSERT(this->tensor_impl_ != nullptr);
-  this->tensor_impl_->Prepare();
-  auto data = this->tensor_impl_->Data();
-  if (nullptr == data) {
-    auto ret = tensor_impl_->MallocData();
-    if (0 != ret) {
-      return nullptr;
-    }
-  }
-  return this->tensor_impl_->Data();
-}
-LiteTensor::~LiteTensor() { delete this->tensor_impl_; }
-
-void LiteTensor::SetTensorImpl(tensor::Tensor *tensor) { this->tensor_impl_ = tensor; }
-}  // namespace tensor
 }  // namespace lite
-namespace tensor {
-MSTensor *MSTensor::CreateTensor(TypeId data_type, const std::vector<int> &shape) {
-  return new mindspore::lite::tensor::LiteTensor(data_type, shape);
-}
-}  // namespace tensor
 }  // namespace mindspore

@@ -60,4 +60,3 @@ cl_channel_type ToImageChannelType(TypeId data_type) {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_IMAGE_FORMAT_H_
-

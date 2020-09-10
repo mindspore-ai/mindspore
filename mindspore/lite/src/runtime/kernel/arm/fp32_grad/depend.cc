@@ -28,9 +28,7 @@ using mindspore::schema::PrimitiveType_Depend;
 
 namespace mindspore::kernel {
 
-int DependCPUKernel::Init() {
-  return RET_OK;
-}
+int DependCPUKernel::Init() { return RET_OK; }
 
 int DependCPUKernel::ReSize() { return 0; }
 
@@ -41,22 +39,21 @@ int DependCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto in = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto out = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
   memcpy(out, in, in_tensors_.at(0)->Size());
 #endif
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuDependFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc, const lite::PrimitiveC *primitive) {
+kernel::LiteKernel *CpuDependFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
+                                               const lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Depend);
-  auto *kernel =
-    new (std::nothrow) DependCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) DependCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   MS_ASSERT(kernel != nullptr);
 
   auto ret = kernel->Init();

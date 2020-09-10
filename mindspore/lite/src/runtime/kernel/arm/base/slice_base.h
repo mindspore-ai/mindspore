@@ -24,8 +24,8 @@
 namespace mindspore::kernel {
 class SliceBaseCPUKernel : public LiteKernel {
  public:
-  SliceBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                     const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  SliceBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                     const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     param_ = reinterpret_cast<SliceParameter *>(op_parameter_);

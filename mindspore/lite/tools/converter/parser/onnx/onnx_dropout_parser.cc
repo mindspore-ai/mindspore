@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxDropoutParser::Parse(const onnx::GraphProto &onnx_graph,
-                                const onnx::NodeProto &onnx_node,
+STATUS OnnxDropoutParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx DropoutParser";
   if (op == nullptr) {
@@ -54,4 +53,3 @@ STATUS OnnxDropoutParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxDropoutParser("Dropout", new OnnxDropoutParser());
 }  // namespace lite
 }  // namespace mindspore
-

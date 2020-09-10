@@ -79,7 +79,7 @@ void MatMulOpenCLKernel::PadWeight() {
   padWeight_ = allocator->Malloc(sizeCI.s[1] * sizeCO.s[1] * C4NUM * C4NUM * dtype_size);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
   memset(padWeight_, 0x00, sizeCI.s[1] * sizeCO.s[1] * C4NUM * C4NUM * dtype_size);
-  auto origin_weight = in_tensors_.at(kWeightIndex)->Data();
+  auto origin_weight = in_tensors_.at(kWeightIndex)->MutableData();
   int divCI = sizeCI.s[1];
   int divCO = sizeCO.s[1];
   int co = sizeCO.s[0];
@@ -129,12 +129,12 @@ void MatMulOpenCLKernel::PadWeight() {
   memset(bias_, 0x00, divCO * C4NUM * dtype_size);
   if (in_tensors_.size() >= 3) {
     if (in_tensors_[2]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
-      auto fdata = reinterpret_cast<float *>(in_tensors_[2]->Data());
+      auto fdata = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
       for (int i = 0; i < co; i++) {
         reinterpret_cast<uint16_t *>(bias_)[i] = Float32ToShort(fdata[i]);
       }
     } else {
-      memcpy(bias_, in_tensors_[2]->Data(), co * dtype_size);
+      memcpy(bias_, in_tensors_[2]->MutableData(), co * dtype_size);
     }
   }
   allocator->UnmapBuffer(bias_);
@@ -142,10 +142,10 @@ void MatMulOpenCLKernel::PadWeight() {
 
 int MatMulOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  if (op_format_ == schema::Format_NHWC4) {
+  if (op_format_ == schema::Format::Format_NHWC4) {
     im_dst_x = sizeCO.s[1];
     im_dst_y = 1;
-  } else if (op_format_ == schema::Format_NC4HW4) {
+  } else if (op_format_ == schema::Format::Format_NC4HW4) {
     im_dst_x = 1;
     im_dst_y = sizeCO.s[1];
   } else {
@@ -169,10 +169,10 @@ int MatMulOpenCLKernel::Run() {
   std::vector<size_t> local = {64, 4};
   std::vector<size_t> global = {UP_ROUND(sizeCO.s[1], local[0]), 4};
   int arg_count = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->MutableData());
   ocl_runtime->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
   ocl_runtime->SetKernelArg(kernel_, arg_count++, bias_);
-  ocl_runtime->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->MutableData());
   ocl_runtime->SetKernelArg(kernel_, arg_count++, sizeCI);
   ocl_runtime->SetKernelArg(kernel_, arg_count++, sizeCO);
   ocl_runtime->SetKernelArg(kernel_, arg_count++, hasBias_ ? 1 : 0);
@@ -180,10 +180,9 @@ int MatMulOpenCLKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *opParameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc,
+kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                              const lite::Context *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   bool hasBias = false;
   if (opParameter->type_ == PrimitiveType_FullConnection) {

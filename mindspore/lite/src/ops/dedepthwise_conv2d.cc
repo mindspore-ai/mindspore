@@ -110,8 +110,7 @@ int DeDepthwiseConv2D::GetActivationType() const {
 }
 
 #endif
-int DeDepthwiseConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
-                                  std::vector<lite::tensor::Tensor *> outputs_) {
+int DeDepthwiseConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   if (inputs_.size() != kDoubleNum && inputs_.size() != kMultiNum) {
     MS_LOG(ERROR) << "inputs number is invalid";
     return 1;

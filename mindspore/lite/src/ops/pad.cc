@@ -61,7 +61,7 @@ int Pad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::Fl
 namespace {
 const size_t kInputRank = 4;
 }  // namespace
-int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int Pad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (this->primitive_ == nullptr) {
     return RET_NULL_PTR;

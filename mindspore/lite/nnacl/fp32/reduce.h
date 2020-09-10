@@ -19,7 +19,6 @@
 #include "nnacl/op_base.h"
 #include "nnacl/reduce_parameter.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif

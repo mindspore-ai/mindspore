@@ -40,15 +40,14 @@ int RangeCPUKernel::Run() {
   size_t start = (reinterpret_cast<RangeParameter *>(op_parameter_))->start_;
   size_t limit = (reinterpret_cast<RangeParameter *>(op_parameter_))->limit_;
   size_t delta = (reinterpret_cast<RangeParameter *>(op_parameter_))->delta_;
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   Range(output_ptr, start, limit, delta);
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuRangeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *opParameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuRangeFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                              const lite::Context *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Range);

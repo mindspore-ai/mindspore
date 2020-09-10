@@ -21,10 +21,8 @@ const int32_t CROP_AXIS = 2;
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeCropParser::Parse(const caffe::LayerParameter &proto,
-                              const caffe::LayerParameter &weight,
-                              schema::CNodeT *op,
-                              std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeCropParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                              schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeCropParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -75,4 +73,3 @@ STATUS CaffeCropParser::Parse(const caffe::LayerParameter &proto,
 CaffeNodeRegistrar g_caffeCropParser("Crop", new CaffeCropParser());
 }  // namespace lite
 }  // namespace mindspore
-

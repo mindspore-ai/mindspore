@@ -28,8 +28,8 @@ using mindspore::lite::Context;
 namespace mindspore::kernel {
 class BatchnormInt8CPUKernel : public LiteKernel {
  public:
-  BatchnormInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                         const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+  BatchnormInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                         const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     batchnorm_param_ = reinterpret_cast<BatchNormParameter *>(parameter);

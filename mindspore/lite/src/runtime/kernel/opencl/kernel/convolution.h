@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <string>
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "schema/model_generated.h"
 #include "src/runtime/opencl/opencl_runtime.h"
@@ -29,8 +29,8 @@ namespace mindspore::kernel {
 
 class ConvolutionOpenCLKernel : public OpenCLKernel {
  public:
-  explicit ConvolutionOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                   const std::vector<lite::tensor::Tensor *> &outputs)
+  explicit ConvolutionOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                   const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~ConvolutionOpenCLKernel() override{};
 

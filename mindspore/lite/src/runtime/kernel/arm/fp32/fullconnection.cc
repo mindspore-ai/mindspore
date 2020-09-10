@@ -56,7 +56,7 @@ int FullconnectionCPUKernel::ReSize() {
   bias_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->col_8_ * sizeof(float)));
   memset(bias_ptr_, 0, fc_param_->col_8_ * sizeof(float));
   if (in_tensors_.size() == 3) {
-    memcpy(bias_ptr_, in_tensors_[2]->Data(), fc_param_->col_ * sizeof(float));
+    memcpy(bias_ptr_, in_tensors_[2]->MutableData(), fc_param_->col_ * sizeof(float));
   }
 
   a_c12_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->row_12_ * fc_param_->deep_ * sizeof(float)));
@@ -72,10 +72,10 @@ int FullconnectionCPUKernel::ReSize() {
   }
   memset(b_r8_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(float));
 
-  fc_param_->a_const_ = (in_tensors_[0]->Data() != nullptr);
-  fc_param_->b_const_ = (in_tensors_[1]->Data() != nullptr);
-  if (fc_param_->a_const_) InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->Data()), a_c12_ptr_);
-  if (fc_param_->b_const_) InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_);
+  fc_param_->a_const_ = (in_tensors_[0]->data_c() != nullptr);
+  fc_param_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
+  if (fc_param_->a_const_) InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->MutableData()), a_c12_ptr_);
+  if (fc_param_->b_const_) InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->MutableData()), b_r8_ptr_);
   return RET_OK;
 }
 
@@ -122,9 +122,9 @@ int FullconnectionCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto a_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto b_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
-  c_r_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto a_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto b_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  c_r_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
   if (!fc_param_->a_const_) InitMatrixA(a_ptr, a_c12_ptr_);
   if (!fc_param_->b_const_) InitMatrixB(b_ptr, b_r8_ptr_);

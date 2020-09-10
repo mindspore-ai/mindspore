@@ -52,7 +52,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
   int ow = 2 * w - 1 + 2 * (kw - 1 - pad) - kw + 1;
   std::vector<int> input_shape = {n, h, w, ci};
   auto tensor_x_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), input_shape);
+    std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), input_shape);
   auto tensor_x = tensor_x_ptr.get();
   if (tensor_x == nullptr) {
     MS_LOG(ERROR) << "tensor_x create error.";
@@ -61,7 +61,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
 
   std::vector<int> weight_shape = {co, kh, kw, ci};
   auto tensor_w_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), weight_shape);
+    std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), weight_shape);
   auto tensor_w = tensor_w_ptr.get();
   if (tensor_w == nullptr) {
     MS_LOG(ERROR) << "tensor_w create error.";
@@ -71,7 +71,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
 
   std::vector<int> bias_shape = {co};
   auto tensor_bias_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), bias_shape);
+    std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), bias_shape);
   auto tensor_bias = tensor_bias_ptr.get();
   if (tensor_bias == nullptr) {
     MS_LOG(ERROR) << "tensor_bias create error.";
@@ -81,14 +81,14 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
 
   std::vector<int> out_shape = {1, oh, ow, co};
   auto tensor_out_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), out_shape);
+    std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), out_shape);
   auto tensor_out = tensor_out_ptr.get();
   if (tensor_out == nullptr) {
     MS_LOG(ERROR) << "tensor_out create error.";
     return;
   }
-  std::vector<lite::tensor::Tensor *> inputs{tensor_x, tensor_w, tensor_bias};
-  std::vector<lite::tensor::Tensor *> outputs{tensor_out};
+  std::vector<lite::Tensor *> inputs{tensor_x, tensor_w, tensor_bias};
+  std::vector<lite::Tensor *> outputs{tensor_out};
   auto opParameter_ptr = std::make_unique<ConvParameter>();
   auto opParameter = opParameter_ptr.get();
   if (opParameter == nullptr) {
@@ -115,7 +115,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
 
   inputs[0]->MallocData(allocator);
   std::vector<kernel::LiteKernel *> kernels{op_kernel};
-  std::vector<lite::tensor::Tensor *> inputs_g{tensor_x};
+  std::vector<lite::Tensor *> inputs_g{tensor_x};
   auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_g, outputs, kernels, kernels, kernels);
   auto pGraph = pGraph_ptr.get();
   if (pGraph == nullptr) {
@@ -124,12 +124,12 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
   }
 
   pGraph->Init();
-  memcpy(inputs[0]->Data(), input_data, n * h * w * ci * dtype_size);
+  memcpy(inputs[0]->MutableData(), input_data, n * h * w * ci * dtype_size);
   pGraph->Run();
   if (enable_fp16) {
-    CompareOutput(outputs[0]->Data(), output_data, n * oh * ow * co, static_cast<float16_t>(1e-3), 2e-2);
+    CompareOutput(outputs[0]->MutableData(), output_data, n * oh * ow * co, static_cast<float16_t>(1e-3), 2e-2);
   } else {
-    CompareOutput(outputs[0]->Data(), output_data, n * oh * ow * co, static_cast<float>(1e-5));
+    CompareOutput(outputs[0]->MutableData(), output_data, n * oh * ow * co, static_cast<float>(1e-5));
   }
 
   inputs[0]->SetData(nullptr);

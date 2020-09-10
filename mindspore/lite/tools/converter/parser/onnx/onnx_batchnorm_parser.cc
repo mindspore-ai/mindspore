@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxBatchNormParser::Parse(const onnx::GraphProto &onnx_graph,
-                                  const onnx::NodeProto &onnx_node,
+STATUS OnnxBatchNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                   schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx BatchNormParser";
   if (op == nullptr) {

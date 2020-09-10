@@ -57,8 +57,8 @@ int SliceInt8CPUKernel::Init() {
 int SliceInt8CPUKernel::ReSize() { return SliceBaseCPUKernel::ReSize(); }
 
 int SliceInt8CPUKernel::DoSlice(int task_id) {
-  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_[0]->Data());
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_[0]->MutableData());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
 
   auto ret = SliceInt8(input_data, output_data, param_, task_id);
   if (ret != RET_OK) {
@@ -83,8 +83,8 @@ int SliceInt8CPUKernel::Run() {
     return ret;
   }
 
-  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_[0]->Data());
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_[0]->MutableData());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
 
   if (param_->size_[1] < param_->op_parameter_.thread_num_) {
     ret = SliceInt8NoParallel(input_data, output_data, param_);

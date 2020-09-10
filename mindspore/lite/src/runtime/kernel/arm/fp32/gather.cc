@@ -44,11 +44,11 @@ int GatherCPUKernel::DoGather(int task_id) {
   auto indices_tensor = in_tensors_.at(1);
   auto out_tensor = out_tensors_.at(0);
 
-  auto input_ptr = reinterpret_cast<float *>(input_tensor->Data());
-  auto output_ptr = reinterpret_cast<float *>(out_tensor->Data());
+  auto input_ptr = reinterpret_cast<float *>(input_tensor->MutableData());
+  auto output_ptr = reinterpret_cast<float *>(out_tensor->MutableData());
 
-  auto input_int32 = reinterpret_cast<int32_t *>(input_tensor->Data());
-  auto output_int32 = reinterpret_cast<int32_t *>(out_tensor->Data());
+  auto input_int32 = reinterpret_cast<int32_t *>(input_tensor->MutableData());
+  auto output_int32 = reinterpret_cast<int32_t *>(out_tensor->MutableData());
 
   auto in_shape = input_tensor->shape();
   int in_rank = in_shape.size();
@@ -117,7 +117,7 @@ int GatherCPUKernel::Run() {
   return ret;
 }
 
-int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, lite::tensor::Tensor *indices_tensor) {
+int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, lite::Tensor *indices_tensor) {
   if (!isIndicesInt32) {
     indices_data_ = reinterpret_cast<int32_t *>(context_->allocator->Malloc(sizeof(int32_t) * indices_num));
     if (indices_data_ == nullptr) {
@@ -126,23 +126,22 @@ int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, lit
     }
     if (indices_tensor->data_type() == kNumberTypeInt64) {
       for (int i = 0; i < indices_num; i++) {
-        indices_data_[i] = reinterpret_cast<int64_t *>(indices_tensor->Data())[i];
+        indices_data_[i] = reinterpret_cast<int64_t *>(indices_tensor->MutableData())[i];
       }
     } else {
       for (int i = 0; i < indices_num; i++) {
-        indices_data_[i] = reinterpret_cast<float *>(indices_tensor->Data())[i];
+        indices_data_[i] = reinterpret_cast<float *>(indices_tensor->MutableData())[i];
       }
     }
   } else {
-    indices_data_ = reinterpret_cast<int32_t *>(indices_tensor->Data());
+    indices_data_ = reinterpret_cast<int32_t *>(indices_tensor->MutableData());
   }
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Gather);
   if (opParameter == nullptr) {

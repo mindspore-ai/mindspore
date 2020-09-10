@@ -54,13 +54,13 @@ int ConcatCPUKernel::Run() {
 
   std::vector<std::vector<int>> shapes;
   for (size_t i = 0; i < input_num; ++i) {
-    inputs_addr[i] = in_tensors_[i]->Data();
+    inputs_addr[i] = in_tensors_[i]->MutableData();
     shapes.push_back(in_tensors_[i]->shape());
     inputs_output_shape[i] = shapes[i].data();
   }
   auto output_shape = out_tensors_.at(0)->shape();
   inputs_output_shape[input_num] = output_shape.data();
-  auto output_addr = out_tensors_.at(0)->Data();
+  auto output_addr = out_tensors_.at(0)->MutableData();
 
   Concat(reinterpret_cast<void **>(inputs_addr.data()), input_num, axis_, inputs_output_shape.data(),
          output_shape.size(), output_addr);

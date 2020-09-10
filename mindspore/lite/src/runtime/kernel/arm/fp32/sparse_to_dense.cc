@@ -60,13 +60,13 @@ int SparseToDenseCPUKernel::Run() {
   auto input3 = in_tensors_.at(3);
   auto output0 = out_tensors_.at(0);
 
-  input_data_ = reinterpret_cast<int *>(input->Data());
-  total_number_ = reinterpret_cast<int *>(input1->Data());
-  snum_ = reinterpret_cast<float *>(input2->Data());
-  dnum_ = reinterpret_cast<float *>(input3->Data());
+  input_data_ = reinterpret_cast<int *>(input->MutableData());
+  total_number_ = reinterpret_cast<int *>(input1->MutableData());
+  snum_ = reinterpret_cast<float *>(input2->MutableData());
+  dnum_ = reinterpret_cast<float *>(input3->MutableData());
   sp_num_ = static_cast<int>(input->ElementsNum() / 2);
 
-  output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   std::vector<int> temp_shape = output0->shape();
   output_shape_ = reinterpret_cast<int *>(temp_shape.data());
 
@@ -78,8 +78,8 @@ int SparseToDenseCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuSparseToDenseFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                      const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuSparseToDenseFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                      const std::vector<lite::Tensor *> &outputs,
                                                       OpParameter *opParameter, const lite::Context *ctx,
                                                       const kernel::KernelKey &desc,
                                                       const mindspore::lite::PrimitiveC *primitive) {

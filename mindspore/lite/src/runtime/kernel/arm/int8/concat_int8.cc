@@ -69,7 +69,10 @@ int ConcatInt8CPUKernel::ReSize() {
   concat_param_->input_num_ = input_num;
   concat_param_->input_shapes_ = reinterpret_cast<const int **>(malloc(sizeof(int *) * input_num));
   for (size_t i = 0; i < input_num; i++) {
-    concat_param_->input_shapes_[i] = reinterpret_cast<const int *>(in_tensors_.at(i)->shape().data());
+    auto in_shape = in_tensors_.at(i)->shape();
+    concat_param_->input_shapes_[i] = reinterpret_cast<int *>(malloc(in_shape.size() * sizeof(int)));
+    memcpy(reinterpret_cast<void *>(const_cast<int *>(concat_param_->input_shapes_[i])), in_shape.data(),
+           sizeof(int) * in_shape.size());
   }
 
   before_axis_size = 1;
@@ -79,8 +82,12 @@ int ConcatInt8CPUKernel::ReSize() {
 
   int64_t after_axis_size = 1;
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  size_t output_dim = output_tensor->shape().size();
-  concat_param_->output_shapes_ = output_tensor->shape().data();
+  auto out_shape = output_tensor->shape();
+  size_t output_dim = out_shape.size();
+  concat_param_->output_shapes_ = reinterpret_cast<int *>(malloc(output_dim * sizeof(int)));
+  memcpy(reinterpret_cast<void *>(const_cast<int *>(concat_param_->output_shapes_)), output_tensor->shape().data(),
+         sizeof(int) * output_dim);
+
   for (size_t i = axis_ + 1; i < output_dim; i++) {
     after_axis_size *= concat_param_->output_shapes_[i];
   }
@@ -100,9 +107,9 @@ int ConcatInt8CPUKernel::Run() {
   concat_param_->count_unit_ = count_unit_;
 
   for (int i = 0; i < input_num; i++) {
-    input_data_[i] = static_cast<int8_t *>(in_tensors_.at(i)->Data());
+    input_data_[i] = static_cast<int8_t *>(in_tensors_.at(i)->MutableData());
   }
-  output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
+  output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
   ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConcatInt8Run, this, thread_count_);
 

@@ -44,7 +44,7 @@ int AddN::GetN() const { return this->primitive_->value_as_AddN()->N(); }
 namespace {
 constexpr int kLeastInputNum = 2;
 }
-int AddN::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int AddN::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs.front();
   MS_ASSERT(input != nullptr);

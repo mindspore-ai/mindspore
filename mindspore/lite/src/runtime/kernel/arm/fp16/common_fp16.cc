@@ -18,28 +18,28 @@
 #include "nnacl/fp16/cast_fp16.h"
 
 namespace mindspore::kernel {
-float16_t *ConvertInputFp32toFp16(lite::tensor::Tensor *input, const lite::Context *ctx) {
+float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::Context *ctx) {
   float16_t *fp16_data = nullptr;
   auto data_type = input->data_type();
   if (data_type == kNumberTypeFloat32) {
     auto ele_num = input->ElementsNum();
     fp16_data = reinterpret_cast<float16_t *>(ctx->allocator->Malloc(ele_num * sizeof(float16_t)));
-    auto ori_data = reinterpret_cast<float *>(input->Data());
+    auto ori_data = reinterpret_cast<float *>(input->MutableData());
     Float32ToFloat16(ori_data, fp16_data, ele_num);
   } else {
-    fp16_data = reinterpret_cast<float16_t *>(input->Data());
+    fp16_data = reinterpret_cast<float16_t *>(input->MutableData());
   }
   return fp16_data;
 }
 
-float16_t *MallocOutputFp16(lite::tensor::Tensor *output, const lite::Context *ctx) {
+float16_t *MallocOutputFp16(lite::Tensor *output, const lite::Context *ctx) {
   float16_t *fp16_data = nullptr;
   auto data_type = output->data_type();
   if (data_type == kNumberTypeFloat32) {
     auto ele_num = output->ElementsNum();
     fp16_data = reinterpret_cast<float16_t *>(ctx->allocator->Malloc(ele_num * sizeof(float16_t)));
   } else {
-    fp16_data = reinterpret_cast<float16_t *>(output->Data());
+    fp16_data = reinterpret_cast<float16_t *>(output->MutableData());
   }
   return fp16_data;
 }

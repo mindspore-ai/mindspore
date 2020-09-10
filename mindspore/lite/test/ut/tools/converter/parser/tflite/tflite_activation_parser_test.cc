@@ -110,9 +110,7 @@ TEST_F(TestTfliteParserHardSwish, AttrValue) {
 class TestTfliteParserPrelu : public TestTfliteParser {
  public:
   TestTfliteParserPrelu() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./prelu.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./prelu.tflite"); }
 };
 
 TEST_F(TestTfliteParserPrelu, OpType) {

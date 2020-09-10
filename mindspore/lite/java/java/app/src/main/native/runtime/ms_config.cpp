@@ -30,13 +30,13 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_config_MSConfig_creat
   }
   switch (device_type) {
     case 0:
-      context->device_ctx_.type = mindspore::lite::DT_CPU;
+      context->device_type_ = mindspore::lite::DT_CPU;
       break;
     case 1:
-      context->device_ctx_.type = mindspore::lite::DT_GPU;
+      context->device_type_ = mindspore::lite::DT_GPU;
       break;
     case 2:
-      context->device_ctx_.type = mindspore::lite::DT_NPU;
+      context->device_type_ = mindspore::lite::DT_NPU;
       break;
     default:
       MS_LOGE("Invalid device_type : %d", device_type);

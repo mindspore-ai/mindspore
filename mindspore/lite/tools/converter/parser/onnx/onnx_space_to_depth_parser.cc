@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxSpaceToDepthParser::Parse(const onnx::GraphProto &onnx_graph,
-                                     const onnx::NodeProto &onnx_node,
+STATUS OnnxSpaceToDepthParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                      schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx SpaceToDepthParser";
   if (op == nullptr) {

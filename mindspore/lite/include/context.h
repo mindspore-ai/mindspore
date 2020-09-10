@@ -41,32 +41,10 @@ typedef enum {
   DT_NPU  /**< NPU device type, not supported yet */
 } DeviceType;
 
-/// \brief DeviceContext defined for holding DeviceType.
-typedef struct {
-  DeviceType type; /**< device type */
-} DeviceContext;
-
 /// \brief Context defined for holding environment variables during runtime.
-class MS_API Context {
- public:
-  /// \brief Constructor of MindSpore Lite Context using default value for parameters.
-  ///
-  /// \return Instance of MindSpore Lite Context.
-  Context();
-
-  /// \brief Constructor of MindSpore Lite Context using input value for parameters.
-  ///
-  /// \param[in] thread_num Define the work thread number during the runtime.
-  /// \param[in] allocator Define the allocator for malloc.
-  /// \param[in] device_ctx Define device information during the runtime.
-  Context(int thread_num, std::shared_ptr<Allocator> allocator, DeviceContext device_ctx);
-
-  /// \brief Destructor of MindSpore Lite Context.
-  virtual ~Context();
-
- public:
+struct Context {
   bool float16_priority = false; /**< prior enable float16 inference */
-  DeviceContext device_ctx_{DT_CPU};
+  DeviceType device_type_ = DT_CPU;
   int thread_num_ = 2; /**< thread number config for thread pool */
   std::shared_ptr<Allocator> allocator = nullptr;
   CpuBindMode cpu_bind_mode_ = MID_CPU;

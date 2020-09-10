@@ -61,8 +61,8 @@ int TransposeOpenCLKernel::Init() {
   in_tensors_[0]->SetFormat(op_format_);
   out_tensors_[0]->SetFormat(op_format_);
   if (out_mem_type_ == OpenCLMemType::BUF) {
-    out_ori_format_ = schema::Format_NCHW;
-    out_tensors_[0]->SetFormat(schema::Format_NCHW);
+    out_ori_format_ = schema::Format::Format_NCHW;
+    out_tensors_[0]->SetFormat(schema::Format::Format_NCHW);
   }
 
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
@@ -77,10 +77,10 @@ int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_siz
   int h = out_tensors_[0]->shape()[1];
   int w = out_tensors_[0]->shape()[2];
   int c = out_tensors_[0]->shape()[3];
-  if (op_format_ == schema::Format_NHWC4) {
+  if (op_format_ == schema::Format::Format_NHWC4) {
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = n * h;
-  } else if (op_format_ == schema::Format_NC4HW4) {
+  } else if (op_format_ == schema::Format::Format_NC4HW4) {
     im_dst_x = w;
     im_dst_y = n * UP_DIV(c, C4NUM) * h;
   } else {
@@ -113,11 +113,11 @@ int TransposeOpenCLKernel::Run() {
   cl_int2 HW = {h * w, hw4};
   cl_int2 C = {c, c4};
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
   if (out_mem_type_ == OpenCLMemType::BUF) {
-    ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data(), lite::opencl::MemType::BUF);
+    ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData(), lite::opencl::MemType::BUF);
   } else {
-    ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+    ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
   }
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, HW);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, C);
@@ -127,10 +127,9 @@ int TransposeOpenCLKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLTransposeKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc,
+kernel::LiteKernel *OpenCLTransposeKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                 const lite::Context *ctx, const kernel::KernelKey &desc,
                                                  const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel =
     new (std::nothrow) TransposeOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);

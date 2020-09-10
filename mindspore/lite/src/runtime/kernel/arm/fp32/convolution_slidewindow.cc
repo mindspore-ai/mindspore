@@ -43,7 +43,7 @@ int ConvolutionSWCPUKernel::InitWeightBias() {
   int oc_block_num = UP_DIV(output_channel, C4NUM);
   int pack_weight_size = oc_block_num * oc_block * ic4 * C4NUM * kernel_plane;
 
-  auto origin_weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->Data());
+  auto origin_weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->MutableData());
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed weight failed.";
@@ -67,7 +67,7 @@ int ConvolutionSWCPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, oc_block_num * oc_block * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
     memcpy(bias_data_, ori_bias, output_channel * sizeof(float));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
@@ -92,7 +92,7 @@ int ConvolutionSWCPUKernel::InitTmpBuffer() {
 void ConvolutionSWCPUKernel::ConfigInputOutput() {
   // set output format
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_tensor->SetFormat(schema::Format_NHWC);
+  output_tensor->SetFormat(schema::Format::Format_NHWC);
 }
 
 int ConvolutionSWCPUKernel::Init() {
@@ -153,7 +153,7 @@ int ConvolutionSWCPUKernel::ReSize() {
 }
 
 int ConvolutionSWCPUKernel::RunImpl(int task_id) {
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
   ConvSWFp32(reinterpret_cast<float *>(nhwc4_input_), packed_weight_, reinterpret_cast<float *>(bias_data_),
              tmp_output_block_, output_addr, task_id, conv_param_, slidingWindow_param_);
   return RET_OK;
@@ -183,7 +183,7 @@ int ConvolutionSWCPUKernel::Run() {
     return RET_ERROR;
   }
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ori_input_data = input_tensor->Data();
+  auto ori_input_data = input_tensor->MutableData();
   PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
                       conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
@@ -195,7 +195,7 @@ int ConvolutionSWCPUKernel::Run() {
   }
 
   auto out_tensor = out_tensors_.front();
-  auto out_data = reinterpret_cast<float *>(out_tensor->Data());
+  auto out_data = reinterpret_cast<float *>(out_tensor->MutableData());
   int oc4_res = conv_param_->output_channel_ % C4NUM;
   if (oc4_res != 0) {
     PackNHWC4ToNHWCFp32(tmp_output_block_, out_data, conv_param_->output_batch_,

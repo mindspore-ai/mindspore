@@ -57,5 +57,4 @@ TEST_F(TestTfliteParserLogicalOr, OpType) {
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_LogicalOr) << "wrong Op Type";
 }
 
-
 }  // namespace mindspore

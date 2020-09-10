@@ -73,12 +73,12 @@ int PoolingGradCPUKernel::Run() {
     return prepare_ret;
   }
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
-  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
   if (pool_param->pool_mode_ == PoolMode_MaxPool) {
-    auto dx_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
-    auto dy_ptr = reinterpret_cast<float *>(in_tensors_.at(2)->Data());
+    auto dx_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+    auto dy_ptr = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
     MaxPoolingGrad(input_ptr, dx_ptr, dy_ptr, output_ptr, pool_param);
   } else {
     AvgPoolingGrad(input_ptr, output_ptr, pool_param);
@@ -86,8 +86,8 @@ int PoolingGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuPoolingGradFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                    const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuPoolingGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                    const std::vector<lite::Tensor *> &outputs,
                                                     OpParameter *opParameter, const lite::Context *ctx,
                                                     const kernel::KernelKey &desc,
                                                     const mindspore::lite::PrimitiveC *primitive) {

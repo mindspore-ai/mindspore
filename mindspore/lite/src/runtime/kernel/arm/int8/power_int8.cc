@@ -57,8 +57,8 @@ int PowerInt8CPUKernel::Init() {
 int PowerInt8CPUKernel::ReSize() { return PowerBaseCPUKernel::ReSize(); }
 
 int PowerInt8CPUKernel::DoPower(int task_id) {
-  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_[0]->Data());
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_[0]->MutableData());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
 
   auto size = in_tensors_[0]->ElementsNum();
   int stride = UP_DIV(size, op_parameter_->thread_num_);
@@ -70,7 +70,7 @@ int PowerInt8CPUKernel::DoPower(int task_id) {
     auto exp_quant_args = exp_tensor->GetQuantParams();
     param_->quant_arg_.exp_args_.scale_ = exp_quant_args.front().scale;
     param_->quant_arg_.exp_args_.zp_ = exp_quant_args.front().zeroPoint;
-    exp_ptr = reinterpret_cast<int8_t *>(exp_tensor->Data());
+    exp_ptr = reinterpret_cast<int8_t *>(exp_tensor->MutableData());
     param_->broadcast_ = false;
     if (in_tensors_[0]->Size() != in_tensors_[1]->Size()) {
       MS_LOG(ERROR) << "Power input size  " << in_tensors_[0]->Size() << " is not equal to exponent size  "

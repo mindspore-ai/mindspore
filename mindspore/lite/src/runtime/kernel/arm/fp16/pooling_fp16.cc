@@ -99,17 +99,16 @@ int PoolingFp16CPUKernel::Run() {
   }
   if (out_data_type_ == kNumberTypeFloat32) {
     auto out_ele_num = out_tensor->ElementsNum();
-    auto output_addr = reinterpret_cast<float *>(out_tensor->Data());
+    auto output_addr = reinterpret_cast<float *>(out_tensor->MutableData());
     Float16ToFloat32(fp16_output_, output_addr, out_ele_num);
     context_->allocator->Free(fp16_output_);
   }
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuPoolingFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *opParameter, const Context *ctx,
-                                                const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuPoolingFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                const Context *ctx, const kernel::KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";

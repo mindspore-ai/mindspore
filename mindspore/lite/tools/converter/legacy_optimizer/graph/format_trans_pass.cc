@@ -81,7 +81,7 @@ STATUS FormatTransPass::DoModelInputFormatTrans(schema::MetaGraphT *graph) {
           MS_ASSERT(transNode->inputIndex.size() == 1);
           MS_ASSERT(subGraph->allTensors.size() > transNode->inputIndex.front());
           auto &graphInTensor = graph->allTensors.at(transNode->inputIndex.front());
-          graphInTensor->format = schema::Format_NHWC;
+          graphInTensor->format = schema::Format::Format_NHWC;
           // assume parser not reformat shape
           auto oldDims = graphInTensor->dims;
           graphInTensor->dims = {oldDims[NCHW_N], oldDims[NCHW_H], oldDims[NCHW_W], oldDims[NCHW_C]};

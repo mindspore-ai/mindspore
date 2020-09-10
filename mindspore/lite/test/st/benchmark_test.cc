@@ -27,48 +27,42 @@ class BenchmarkTest : public mindspore::CommonTest {
 
 TEST_F(BenchmarkTest, TestVideo) {
   const char *argv[] = {"./benchmark", "--modelPath=./hiai/hiai_label_and_video.ms",
-                                       "--inDataPath=./hiai/hiai_label_and_video.bin",
-                                       "--calibDataPath=./hiai/hiai_label_and_video.txt"};
+                        "--inDataPath=./hiai/hiai_label_and_video.bin",
+                        "--calibDataPath=./hiai/hiai_label_and_video.txt"};
   auto status = RunBenchmark(4, argv);
   ASSERT_EQ(status, RET_OK);
 }
 
 TEST_F(BenchmarkTest, TestOCR_02) {
   const char *argv[] = {"./benchmark", "--modelPath=./hiai/hiai_cv_focusShootOCRMOdel_02.ms",
-                                       "--inDataPath=./hiai/hiai_cv_focusShootOCRMOdel_02.bin",
-                                       "--calibDataPath=./hiai/hiai_cv_focusShootOCRMOdel_02.txt"};
+                        "--inDataPath=./hiai/hiai_cv_focusShootOCRMOdel_02.bin",
+                        "--calibDataPath=./hiai/hiai_cv_focusShootOCRMOdel_02.txt"};
   auto status = RunBenchmark(4, argv);
   ASSERT_EQ(status, RET_OK);
 }
 
 TEST_F(BenchmarkTest, TestOCR_02_GPU) {
-const char *argv[] = {"./benchmark", "--modelPath=./hiai/model_02.ms",
-                                     "--inDataPath=./hiai/model_02_in.bin",
-                                     "--calibDataPath=./hiai/model_02_out.bin",
-                                     "--device=GPU"};
-auto status = RunBenchmark(5, argv);
-ASSERT_EQ(status, RET_OK);
+  const char *argv[] = {"./benchmark", "--modelPath=./hiai/model_02.ms", "--inDataPath=./hiai/model_02_in.bin",
+                        "--calibDataPath=./hiai/model_02_out.bin", "--device=GPU"};
+  auto status = RunBenchmark(5, argv);
+  ASSERT_EQ(status, RET_OK);
 }
 TEST_F(BenchmarkTest, TestOCR_02_GPU_PERF) {
-const char *argv[] = {"./benchmark", "--modelPath=./hiai/model_02.ms",
-                                     "--inDataPath=./hiai/model_02_in.bin",
-                                     "--device=GPU"};
-auto status = RunBenchmark(4, argv);
-ASSERT_EQ(status, RET_OK);
+  const char *argv[] = {"./benchmark", "--modelPath=./hiai/model_02.ms", "--inDataPath=./hiai/model_02_in.bin",
+                        "--device=GPU"};
+  auto status = RunBenchmark(4, argv);
+  ASSERT_EQ(status, RET_OK);
 }
 
 TEST_F(BenchmarkTest, Test_MV2_GPU) {
-const char *argv[] = {"./benchmark", "--modelPath=./hiai/mobilenet_v2.ms",
-                                     "--inDataPath=./hiai/mobilenet_v2_in.bin",
-                                     "--calibDataPath=./hiai/mobilenet_v2_out.bin",
-                                     "--device=GPU"};
-auto status = RunBenchmark(5, argv);
-ASSERT_EQ(status, RET_OK);
+  const char *argv[] = {"./benchmark", "--modelPath=./hiai/mobilenet_v2.ms", "--inDataPath=./hiai/mobilenet_v2_in.bin",
+                        "--calibDataPath=./hiai/mobilenet_v2_out.bin", "--device=GPU"};
+  auto status = RunBenchmark(5, argv);
+  ASSERT_EQ(status, RET_OK);
 }
 
 TEST_F(BenchmarkTest, Test_MV2_GPU_PERF) {
-  const char *argv[] = {"./benchmark", "--modelPath=./hiai/mobilenet_v2.ms",
-                        "--inDataPath=./hiai/mobilenet_v2_in.bin",
+  const char *argv[] = {"./benchmark", "--modelPath=./hiai/mobilenet_v2.ms", "--inDataPath=./hiai/mobilenet_v2_in.bin",
                         "--device=GPU"};
   auto status = RunBenchmark(4, argv);
   ASSERT_EQ(status, RET_OK);
@@ -76,11 +70,10 @@ TEST_F(BenchmarkTest, Test_MV2_GPU_PERF) {
 
 TEST_F(BenchmarkTest, TestHebing) {
   const char *argv[] = {"./benchmark", "--modelPath=./hiai/model_hebing_3branch.ms",
-                                       "--inDataPath=./hiai/model_hebing_3branch.bin",
-                                       "--calibDataPath=./hiai/model_hebing_3branch.txt"};
+                        "--inDataPath=./hiai/model_hebing_3branch.bin",
+                        "--calibDataPath=./hiai/model_hebing_3branch.txt"};
   auto status = RunBenchmark(4, argv);
   ASSERT_EQ(status, RET_OK);
 }
 }  // namespace lite
 }  // namespace mindspore
-

@@ -309,12 +309,11 @@ int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_na
       "-DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef -DTO_FLT=convert_float  -DTO_FLT4=convert_float4 ";
   }
 
-  auto build_options_ext = std::accumulate(
-    build_options.begin(), build_options.end(), std::string(""),
-    [](const std::string &options, const std::string &option) -> std::string {
-       auto res = options + " " + option;
-       return res;
-       });
+  auto build_options_ext = std::accumulate(build_options.begin(), build_options.end(), std::string(""),
+                                           [](const std::string &options, const std::string &option) -> std::string {
+                                             auto res = options + " " + option;
+                                             return res;
+                                           });
   build_options_str += default_build_opts_;
   // program identifier = program_name + build_options
   std::string build_program_key = program_name + build_options_str + build_options_ext;

@@ -19,9 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph,
-                             const onnx::NodeProto &onnx_node,
-                             schema::CNodeT *op) {
+STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx PoolParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -39,7 +37,7 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph,
     return RET_NULL_PTR;
   }
 
-  attr->format = schema::Format_NCHW;
+  attr->format = schema::Format::Format_NCHW;
   const auto &pool_type = onnx_node.op_type();
   if (pool_type == "MaxPool") {
     attr->poolingMode = schema::PoolMode_MAX_POOLING;

@@ -24,8 +24,8 @@
 namespace mindspore::kernel {
 class ActivationCPUKernel : public LiteKernel {
  public:
-  ActivationCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  ActivationCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
+                      const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(param, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
     type_ = (reinterpret_cast<ActivationParameter *>(param))->type_;

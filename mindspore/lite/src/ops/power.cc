@@ -47,11 +47,11 @@ int Power::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
 }
 #endif
 
-int Power::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int Power::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto x_tensor = inputs[0];
   MS_ASSERT(x_tensor != nullptr);
-  tensor::Tensor *exp_tensor = nullptr;
+  Tensor *exp_tensor = nullptr;
   if (inputs.size() == 2) {
     exp_tensor = inputs[1];
     MS_ASSERT(exp_tensor != nullptr);

@@ -42,4 +42,3 @@ class WorkspacePool {
 }  // namespace predict
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_WORKSPACE_POOL_H_
-

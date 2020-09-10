@@ -64,7 +64,7 @@ int LstmCPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "LstmCPUKernel malloc weight_i_ptr_ error.";
     return RET_ERROR;
   }
-  memcpy(weight_i_ptr_, weight_i->Data(), weight_i->ElementsNum() * sizeof(float));
+  memcpy(weight_i_ptr_, weight_i->MutableData(), weight_i->ElementsNum() * sizeof(float));
 
   auto weight_h = in_tensors_.at(2);
   MS_ASSERT(weight_h != nullptr);
@@ -73,7 +73,7 @@ int LstmCPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "LstmCPUKernel malloc weight_h_ error.";
     return RET_ERROR;
   }
-  memcpy(weight_h_ptr_, weight_h->Data(), weight_h->ElementsNum() * sizeof(float));
+  memcpy(weight_h_ptr_, weight_h->MutableData(), weight_h->ElementsNum() * sizeof(float));
 
   // init bias
   int bias_num = lstm_parm_->bidirectional_ ? 2 * 4 * lstm_parm_->hidden_size_ : 4 * lstm_parm_->hidden_size_;
@@ -83,7 +83,7 @@ int LstmCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
 
-  auto bias_data = reinterpret_cast<float *>(in_tensors_.at(3)->Data());
+  auto bias_data = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData());
   const int state_bias_offset = 4 * lstm_parm_->hidden_size_;
   for (int i = 0; i < state_bias_offset; i++) {
     bias_ptr_[i] = bias_data[i] + bias_data[i + state_bias_offset];
@@ -142,22 +142,22 @@ int LstmCPUKernel::Run() {
   auto output = out_tensors_.at(0);
   MS_ASSERT(output != nullptr);
 
-  auto input_ptr = reinterpret_cast<float *>(input->Data());
-  auto output_ptr = reinterpret_cast<float *>(output->Data());
+  auto input_ptr = reinterpret_cast<float *>(input->MutableData());
+  auto output_ptr = reinterpret_cast<float *>(output->MutableData());
 
   auto output_hidden_state = out_tensors_[1];
-  memcpy(output_hidden_state->Data(), hidden_state->Data(), hidden_state->ElementsNum() * sizeof(float));
+  memcpy(output_hidden_state->MutableData(), hidden_state->MutableData(), hidden_state->ElementsNum() * sizeof(float));
   auto output_cell_state = out_tensors_[2];
-  memcpy(output_cell_state->Data(), cell_state->Data(), cell_state->ElementsNum() * sizeof(float));
+  memcpy(output_cell_state->MutableData(), cell_state->MutableData(), cell_state->ElementsNum() * sizeof(float));
 
   Lstm(output_ptr, input_ptr, weight_i_ptr_, weight_h_ptr_, bias_ptr_,
-       reinterpret_cast<float *>(output_hidden_state->Data()), reinterpret_cast<float *>(output_cell_state->Data()),
-       gate_buffer_, lstm_parm_);
+       reinterpret_cast<float *>(output_hidden_state->MutableData()),
+       reinterpret_cast<float *>(output_cell_state->MutableData()), gate_buffer_, lstm_parm_);
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuLstmKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                         const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
+kernel::LiteKernel *CpuLstmKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                         const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                          const lite::Context *ctx, const kernel::KernelKey &desc,
                                          const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {

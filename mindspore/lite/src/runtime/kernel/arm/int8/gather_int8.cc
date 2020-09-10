@@ -53,9 +53,9 @@ int GatherInt8CPUKernel::DoGather(int task_id) {
   auto indices_tensor = in_tensors_.at(1);
   auto out_tensor = out_tensors_.at(0);
 
-  auto input_ptr = reinterpret_cast<int8_t *>(input_tensor->Data());
-  auto output_ptr = reinterpret_cast<int8_t *>(out_tensor->Data());
-  auto indices_ptr = reinterpret_cast<int32_t *>(out_tensor->Data());
+  auto input_ptr = reinterpret_cast<int8_t *>(input_tensor->MutableData());
+  auto output_ptr = reinterpret_cast<int8_t *>(out_tensor->MutableData());
+  auto indices_ptr = reinterpret_cast<int32_t *>(out_tensor->MutableData());
 
   auto in_shape = input_tensor->shape();
   int in_rank = in_shape.size();
@@ -119,10 +119,9 @@ int GatherInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuGatherInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuGatherInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Gather);
   if (opParameter == nullptr) {

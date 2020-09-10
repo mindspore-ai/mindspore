@@ -36,7 +36,7 @@ enum InsertPlace { kBefore, kAfter };
 
 using NodeIter = std::vector<std::unique_ptr<schema::CNodeT>>::iterator;
 
-using OpDefCopyer = std::function<std::unique_ptr<schema::CNodeT> (schema::CNodeT *)>;
+using OpDefCopyer = std::function<std::unique_ptr<schema::CNodeT>(schema::CNodeT *)>;
 
 OpDefCopyer GetSimpleOpCopyer();
 
@@ -92,4 +92,3 @@ std::string GetModelName(const std::string &modelFile);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_PREDICT_GRAPH_UTIL_H
-

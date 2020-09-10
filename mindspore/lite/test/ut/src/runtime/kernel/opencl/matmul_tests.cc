@@ -42,8 +42,8 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
   int ci = shape[0];
   int co = shape[1];
   std::vector<int> input_shape = {1, ci};
-  auto tensor_x_ptr = std::make_unique<lite::tensor::Tensor>(
-    TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), input_shape, schema::Format_NC);
+  auto tensor_x_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
+                                                     input_shape, schema::Format_NC);
   auto tensor_x = tensor_x_ptr.get();
   if (tensor_x == nullptr) {
     MS_LOG(ERROR) << "tensor_x create error.";
@@ -52,7 +52,7 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
 
   std::vector<int> w_shape = {co, ci};
   auto tensor_w_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), w_shape);
+    std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), w_shape);
   auto tensor_w = tensor_w_ptr.get();
   if (tensor_w == nullptr) {
     MS_LOG(ERROR) << "tensor_w create error.";
@@ -61,15 +61,15 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
   tensor_w->SetData(weight_data);
 
   std::vector<int> out_shape = {1, co};
-  auto tensor_out_ptr = std::make_unique<lite::tensor::Tensor>(
-    TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), out_shape, schema::Format_NC);
+  auto tensor_out_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
+                                                       out_shape, schema::Format_NC);
   auto tensor_out = tensor_out_ptr.get();
   if (tensor_out == nullptr) {
     MS_LOG(ERROR) << "tensor_out create error.";
     return;
   }
-  std::vector<lite::tensor::Tensor *> inputs{tensor_x, tensor_w};
-  std::vector<lite::tensor::Tensor *> outputs{tensor_out};
+  std::vector<lite::Tensor *> inputs{tensor_x, tensor_w};
+  std::vector<lite::Tensor *> outputs{tensor_out};
   auto op_kernel_ptr = std::make_unique<kernel::MatMulOpenCLKernel>(nullptr, inputs, outputs, false);
   auto op_kernel = op_kernel_ptr.get();
   if (op_kernel == nullptr) {
@@ -81,7 +81,7 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
 
   std::vector<kernel::LiteKernel *> kernels{op_kernel};
 
-  std::vector<lite::tensor::Tensor *> inputs_g{tensor_x};
+  std::vector<lite::Tensor *> inputs_g{tensor_x};
   auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_g, outputs, kernels, kernels, kernels);
   auto pGraph = pGraph_ptr.get();
   if (pGraph == nullptr) {
@@ -89,12 +89,12 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
     return;
   }
   pGraph->Init();
-  memcpy(inputs[0]->Data(), input_data, ci * dtype_size);
+  memcpy(inputs[0]->MutableData(), input_data, ci * dtype_size);
   pGraph->Run();
   if (enable_fp16) {
-    CompareOutput(outputs[0]->Data(), output_data, co, static_cast<float16_t>(1e-3), 2e-2);
+    CompareOutput(outputs[0]->MutableData(), output_data, co, static_cast<float16_t>(1e-3), 2e-2);
   } else {
-    CompareOutput(outputs[0]->Data(), output_data, co, static_cast<float>(1e-5));
+    CompareOutput(outputs[0]->MutableData(), output_data, co, static_cast<float>(1e-5));
   }
 
   tensor_x->SetData(nullptr);

@@ -61,7 +61,7 @@ int DeConvolutionCPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, UP_ROUND(output_channel, C4NUM) * sizeof(float));
   if (in_tensors_.size() == 3) {
-    memcpy(bias_data_, in_tensors_[2]->Data(), output_channel * sizeof(float));
+    memcpy(bias_data_, in_tensors_[2]->MutableData(), output_channel * sizeof(float));
   }
 
   size_t weight_pack_size = input_channel * kernel_w_ * kernel_h_ * UP_ROUND(output_channel, C8NUM) * sizeof(float);
@@ -71,7 +71,7 @@ int DeConvolutionCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(weight_ptr_, 0, weight_pack_size);
-  PackNHWCToC8HWN8Fp32(reinterpret_cast<float *>(in_tensors_[1]->Data()), weight_ptr_, input_channel,
+  PackNHWCToC8HWN8Fp32(reinterpret_cast<float *>(in_tensors_[1]->MutableData()), weight_ptr_, input_channel,
                        kernel_w_ * kernel_h_, output_channel);
   return RET_OK;
 }
@@ -181,8 +181,8 @@ int DeConvolutionCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  float *src_in = reinterpret_cast<float *>(in_tensors_[0]->Data());
-  float *src_out = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  float *src_in = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+  float *src_out = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
 
   int error_code = InitRunBuf();
   if (error_code != RET_OK) {
@@ -207,10 +207,9 @@ int DeConvolutionCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2D);

@@ -38,8 +38,7 @@ class OnnxNodeParserRegistry {
 
 class OnnxNodeRegistrar {
  public:
-  OnnxNodeRegistrar(const std::string &name,
-                    OnnxNodeParser *parser) {
+  OnnxNodeRegistrar(const std::string &name, OnnxNodeParser *parser) {
     OnnxNodeParserRegistry::GetInstance()->parsers[name] = parser;
   }
 };
@@ -47,4 +46,3 @@ class OnnxNodeRegistrar {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_NODE_REGISTRY_H
-

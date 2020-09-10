@@ -26,8 +26,8 @@ using mindspore::lite::Context;
 namespace mindspore::kernel {
 class UnsqueezeCPUKernel : public LiteKernel {
  public:
-  UnsqueezeCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                     const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  UnsqueezeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                     const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~UnsqueezeCPUKernel() = default;

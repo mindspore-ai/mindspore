@@ -27,8 +27,8 @@ namespace mindspore::kernel {
 
 class ConcatOpenCLKernel : public OpenCLKernel {
  public:
-  explicit ConcatOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                              const std::vector<lite::tensor::Tensor *> &outputs)
+  explicit ConcatOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                              const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
 
   ~ConcatOpenCLKernel() override{};

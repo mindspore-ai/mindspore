@@ -92,15 +92,15 @@ int ReverseSequenceCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  float *input0 = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  int *input1 = reinterpret_cast<int *>(in_tensors_.at(1)->Data());
-  float *output = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  float *input0 = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  int *input1 = reinterpret_cast<int *>(in_tensors_.at(1)->MutableData());
+  float *output = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   ReverseSequence(input0, input1, output, reinterpret_cast<ReverseSequenceParameter *>(op_parameter_));
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuReverseSequenceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                        const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuReverseSequenceFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                        const std::vector<lite::Tensor *> &outputs,
                                                         OpParameter *parameter, const lite::Context *ctx,
                                                         const KernelKey &desc,
                                                         const mindspore::lite::PrimitiveC *primitive) {

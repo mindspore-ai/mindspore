@@ -56,22 +56,22 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
   }
-  memcpy(scale_, scale->Data(), scale->Size());
-  memcpy(offset_, offset->Data(), offset->Size());
-  memcpy(mean_, mean->Data(), mean->Size());
-  memcpy(variance_, variance->Data(), variance->Size());
+  memcpy(scale_, scale->MutableData(), scale->Size());
+  memcpy(offset_, offset->MutableData(), offset->Size());
+  memcpy(mean_, mean->MutableData(), mean->Size());
+  memcpy(variance_, variance->MutableData(), variance->Size());
   return RET_OK;
 }
 
 int FusedBatchnormCPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-  FusedBatchNormFp32(in_tensors_.at(0)->Data(), scale_, offset_, mean_, variance_, param, task_id,
-                     out_tensors_.at(0)->Data());
+  FusedBatchNormFp32(in_tensors_.at(0)->MutableData(), scale_, offset_, mean_, variance_, param, task_id,
+                     out_tensors_.at(0)->MutableData());
   return mindspore::lite::RET_OK;
 }
 
-kernel::LiteKernel *CpuFusedBatchnormKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                   const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuFusedBatchnormKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                   const std::vector<lite::Tensor *> &outputs,
                                                    OpParameter *op_parameter, const lite::Context *ctx,
                                                    const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {

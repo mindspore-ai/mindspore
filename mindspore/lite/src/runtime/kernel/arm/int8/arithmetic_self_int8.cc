@@ -102,8 +102,8 @@ int ArithmeticSelfInt8CPUKernel::Run() {
   }
   auto input_tensor = in_tensors_.at(0);
   auto out_tensor = out_tensors_.at(0);
-  in_ptr_ = reinterpret_cast<int8_t *>(input_tensor->Data());
-  out_ptr_ = reinterpret_cast<int8_t *>(out_tensor->Data());
+  in_ptr_ = reinterpret_cast<int8_t *>(input_tensor->MutableData());
+  out_ptr_ = reinterpret_cast<int8_t *>(out_tensor->MutableData());
   ret = ParallelLaunch(THREAD_POOL_DEFAULT, ArithmeticSelfInt8Runs, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
@@ -112,8 +112,8 @@ int ArithmeticSelfInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuArithmeticSelfInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuArithmeticSelfInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {

@@ -69,18 +69,18 @@ int UnstackCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  float *input = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  float *input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   size_t out_num = out_tensors_.size();
   for (size_t i = 0; i < out_num; i++) {
-    output_addr_array_[i] = reinterpret_cast<float *>(out_tensors_.at(i)->Data());
+    output_addr_array_[i] = reinterpret_cast<float *>(out_tensors_.at(i)->MutableData());
   }
   Unistack(input, output_addr_array_, reinterpret_cast<UnstackParameter *>(op_parameter_));
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuUnstackFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *parameter, const lite::Context *ctx, const KernelKey &desc,
+kernel::LiteKernel *CpuUnstackFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                                const lite::Context *ctx, const KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter != nullptr);
   MS_ASSERT(desc.type == PrimitiveType_Unstack);

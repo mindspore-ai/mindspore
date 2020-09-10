@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
 
 #include "schema/inner/model_generated.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 #include "src/lite_kernel.h"
 #include "nnacl/op_base.h"
 #include "backend/optimizer/common/optimizer.h"

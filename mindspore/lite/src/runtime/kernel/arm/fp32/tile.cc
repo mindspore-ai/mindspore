@@ -56,15 +56,15 @@ int TileCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
   Tile(input_addr, output_addr, reinterpret_cast<TileParameter *>(op_parameter_));
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuTileFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
+kernel::LiteKernel *CpuTileFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                              const lite::Context *ctx, const KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr || ctx == nullptr) {

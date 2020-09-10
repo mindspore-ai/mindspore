@@ -39,7 +39,7 @@ class SpaceToBatch : public PrimitiveC {
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
-  int InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) override;
+  int InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) override;
 
   std::vector<int> GetBlockShape() const;
   std::vector<int> GetPaddings() const;

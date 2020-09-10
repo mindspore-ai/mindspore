@@ -67,7 +67,7 @@ class FusionPass : public GraphPass {
   bool MatchTree(schema::MetaGraphT *graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
                  std::vector<size_t> &sinkIdes, std::vector<size_t> &pathSinkIdes);
 
-  static bool CheckMatch(schema::MetaGraphT *graph, const std::shared_ptr<PatternOp>& patternOp);
+  static bool CheckMatch(schema::MetaGraphT *graph, const std::shared_ptr<PatternOp> &patternOp);
 
   void MergeNodeAttrFromPost(std::unique_ptr<schema::CNodeT> &dstOp, std::unique_ptr<schema::CNodeT> &postOp,
                              size_t dstOpOutIdx = 0);
@@ -84,4 +84,3 @@ class FusionPass : public GraphPass {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_PREDICT_FUSION_PASS_H
-

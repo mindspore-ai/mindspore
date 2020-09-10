@@ -25,10 +25,8 @@ namespace lite {
 STATUS TfliteLogicalParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                   const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                   const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                  schema::CNodeT *op,
-                                  std::vector<int32_t> *tensors_id,
-                                  std::vector<schema::Format> *tensors_format,
-                                  std::map<int, int>  *tensors_id_map) {
+                                  schema::CNodeT *op, std::vector<int32_t> *tensors_id,
+                                  std::vector<schema::Format> *tensors_format, std::map<int, int> *tensors_id_map) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -72,11 +70,11 @@ STATUS TfliteLogicalParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   }
 
   for (size_t i = 0; i < tflite_op->inputs.size(); i++) {
-    AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-               tflite_op->inputs[i], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+    AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[i], tensors_id->size(),
+               tflite_tensors.size(), schema::Format::Format_NHWC);
   }
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
-              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
+              tflite_tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 

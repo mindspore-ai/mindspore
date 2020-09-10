@@ -61,7 +61,7 @@ int ConstantOfShapeCPUKernel::Run() {
   int thread_num = MSMIN(param_->op_parameter_.thread_num_, param_->element_sz_);
   param_->unit_ = UP_DIV(param_->element_sz_, thread_num);
   param_->op_parameter_.thread_num_ = thread_num;
-  out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->Data());
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConstantOfShapeRun, this, thread_num);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConstantOfShapeRun error error_code[" << ret << "]";
@@ -70,8 +70,8 @@ int ConstantOfShapeCPUKernel::Run() {
   return ret;
 }
 
-kernel::LiteKernel *CpuConstantOfShapeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                        const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuConstantOfShapeFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                        const std::vector<lite::Tensor *> &outputs,
                                                         OpParameter *opParameter, const lite::Context *ctx,
                                                         const kernel::KernelKey &desc,
                                                         const mindspore::lite::PrimitiveC *primitive) {

@@ -20,19 +20,19 @@
 
 namespace mindspore::kernel {
 LayoutConvertor LayoutTransformFp16(schema::Format src_format, schema::Format dst_format) {
-  if (src_format == schema::Format_NHWC && dst_format == schema::Format_NC4HW4) {
+  if (src_format == schema::Format::Format_NHWC && dst_format == schema::Format::Format_NC4HW4) {
     return PackNHWCToNC4HW4Fp16;
-  } else if (src_format == schema::Format_NHWC && dst_format == schema::Format_NHWC4) {
+  } else if (src_format == schema::Format::Format_NHWC && dst_format == schema::Format::Format_NHWC4) {
     return PackNHWCToNHWC4Fp16;
-  } else if (src_format == schema::Format_NC4HW4 && dst_format == schema::Format_NHWC4) {
+  } else if (src_format == schema::Format::Format_NC4HW4 && dst_format == schema::Format::Format_NHWC4) {
     return PackNC4HW4ToNHWC4Fp16;
-  } else if (src_format == schema::Format_NCHW && dst_format == schema::Format_NC4HW4) {
+  } else if (src_format == schema::Format::Format_NCHW && dst_format == schema::Format::Format_NC4HW4) {
     return PackNCHWToNC4HW4Fp16;
-  } else if (src_format == schema::Format_NC4HW4 && dst_format == schema::Format_NHWC) {
+  } else if (src_format == schema::Format::Format_NC4HW4 && dst_format == schema::Format::Format_NHWC) {
     return PackNC4HW4ToNHWCFp16;
   } else {
-    MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(src_format) << " to "
-                  << schema::EnumNameFormat(dst_format);
+    MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(src_format) << " to "
+                  << EnumNameFormat(dst_format);
     return nullptr;
   }
 }

@@ -61,7 +61,7 @@ int Resize::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
 namespace {
 constexpr int kInputRank = 4;
 }  // namespace
-int Resize::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
+int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   if (input == nullptr) {

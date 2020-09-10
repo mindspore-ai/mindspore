@@ -43,4 +43,3 @@ STATUS IsolatedNodeRemovePass::Run(schema::MetaGraphT *graph) {
 }
 }  // namespace lite
 }  // namespace mindspore
-

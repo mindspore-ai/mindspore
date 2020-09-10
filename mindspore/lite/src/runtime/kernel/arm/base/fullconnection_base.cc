@@ -32,8 +32,8 @@ int FullconnectionBaseCPUKernel::Init() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuFullConnectionInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuFullConnectionInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {
@@ -53,7 +53,7 @@ kernel::LiteKernel *CpuFullConnectionInt8KernelCreator(const std::vector<lite::t
   }
   return kernel;
 }
-int RestoreFullconnectWeight(lite::tensor::Tensor *input_tensor) {
+int RestoreFullconnectWeight(lite::Tensor *input_tensor) {
   MS_ASSERT(input_tensor != nullptr);
   if (input_tensor->data_type() != kNumberTypeInt8) {
     MS_LOG(ERROR) << "full connect input type error" << input_tensor->data_type();
@@ -63,8 +63,12 @@ int RestoreFullconnectWeight(lite::tensor::Tensor *input_tensor) {
     MS_LOG(ERROR) << "no quant param";
     return RET_ERROR;
   }
-  const auto* quant_data = static_cast<const int8_t*>(input_tensor->Data());
-  auto* dequant_data = static_cast<float *>(malloc(input_tensor->DataSize() * sizeof(float)));
+  const auto *quant_data = static_cast<const int8_t *>(input_tensor->MutableData());
+  if (quant_data == nullptr) {
+    MS_LOG(ERROR) << "input_tensor MutableData is nullptr.";
+    return RET_ERROR;
+  }
+  auto *dequant_data = static_cast<float *>(malloc(input_tensor->ElementsNum() * sizeof(float)));
   if (dequant_data == nullptr) {
     MS_LOG(ERROR) << "malloc faile";
     return RET_ERROR;
@@ -76,15 +80,15 @@ int RestoreFullconnectWeight(lite::tensor::Tensor *input_tensor) {
       MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->GetQuantParams().size() << channels;
       return RET_ERROR;
     }
-    size_t per_channel_size = input_tensor->DataSize() / channels;
+    size_t per_channel_size = input_tensor->ElementsNum() / channels;
     auto quant_param = input_tensor->GetQuantParams();
     for (size_t i = 0; i < channels; i++) {
       auto param = quant_param.at(i);
       auto scale = param.scale;
       auto zero_point = param.zeroPoint;
       for (size_t j = 0; j < per_channel_size; j++) {
-        dequant_data[per_channel_size * i + j] = static_cast<float>(
-          (quant_data[per_channel_size * i + j] - zero_point) * scale);
+        dequant_data[per_channel_size * i + j] =
+          static_cast<float>((quant_data[per_channel_size * i + j] - zero_point) * scale);
       }
     }
   } else {
@@ -92,22 +96,23 @@ int RestoreFullconnectWeight(lite::tensor::Tensor *input_tensor) {
     auto param = quant_param.front();
     auto scale = param.scale;
     auto zero_point = param.zeroPoint;
-    for (int64_t j = 0; j < input_tensor->DataSize(); j++) {
+    for (int64_t j = 0; j < input_tensor->ElementsNum(); j++) {
       dequant_data[j] = static_cast<float>((quant_data[j] - zero_point) * scale);
     }
   }
   input_tensor->SetData(dequant_data);
   return RET_OK;
 }
-kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
   auto *weight_tensor = inputs.at(kWeightIndex);
-  auto *restore_data = weight_tensor->Data();
+  // data of second tensor of fc may be nullptr
+  auto *restore_data = weight_tensor->data_c();
   if (!weight_tensor->GetQuantParams().empty()) {
     RestoreFullconnectWeight(inputs.at(kWeightIndex));
   }

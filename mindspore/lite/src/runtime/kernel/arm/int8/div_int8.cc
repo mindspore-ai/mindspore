@@ -29,9 +29,9 @@ using mindspore::schema::PrimitiveType_Div;
 namespace mindspore::kernel {
 
 int DivInt8CPUKernel::Init() {
-  lite::tensor::Tensor *input0 = in_tensors_.at(0);
-  lite::tensor::Tensor *input1 = in_tensors_.at(1);
-  lite::tensor::Tensor *output = out_tensors_.at(0);
+  lite::Tensor *input0 = in_tensors_.at(0);
+  lite::Tensor *input1 = in_tensors_.at(1);
+  lite::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input0);
   MS_ASSERT(input1);
   MS_ASSERT(output);
@@ -58,14 +58,12 @@ int DivInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int DivInt8CPUKernel::ReSize() {
-  return RET_OK;
-}
+int DivInt8CPUKernel::ReSize() { return RET_OK; }
 
 int DivInt8CPUKernel::DoExecute(int task_id) {
-  auto input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->Data());
-  auto input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->Data());
-  auto output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->Data());
+  auto input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  auto input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->MutableData());
+  auto output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   auto element_num = out_tensors_[0]->ElementsNum();
 
   MS_ASSERT(op_parameter_->thread_num_ != 0);
@@ -119,9 +117,9 @@ int DivInt8CPUKernel::Run() {
       context_->allocator->Free(tile1_data_);
       return RET_ERROR;
     }
-    TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->Data()),
-                        static_cast<uint8_t *>(in_tensors_.at(1)->Data()), reinterpret_cast<uint8_t *>(tile0_data_),
-                        reinterpret_cast<uint8_t *>(tile1_data_), &tile_para);
+    TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->MutableData()),
+                        static_cast<uint8_t *>(in_tensors_.at(1)->MutableData()),
+                        reinterpret_cast<uint8_t *>(tile0_data_), reinterpret_cast<uint8_t *>(tile1_data_), &tile_para);
   }
   ret = ParallelLaunch(THREAD_POOL_DEFAULT, DivInt8Run, this, op_parameter_->thread_num_);
   if (broadcast_) {
@@ -134,8 +132,8 @@ int DivInt8CPUKernel::Run() {
   return ret;
 }
 
-kernel::LiteKernel *CpuDivInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                            const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
+kernel::LiteKernel *CpuDivInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                            const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                             const lite::Context *ctx, const KernelKey &desc,
                                             const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr || ctx == nullptr) {

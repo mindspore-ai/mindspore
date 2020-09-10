@@ -17,7 +17,7 @@
 #include "src/ops/shape.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 namespace lite {
@@ -26,7 +26,7 @@ namespace {
 constexpr int kShapeInputNum = 1;
 constexpr int kShapeOutputNum = 1;
 }  // namespace
-int Shape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int Shape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   if (inputs_.size() != kShapeInputNum) {
     MS_LOG(ERROR) << "inputs to Shape operator should be 1, but " << inputs_.size() << " is given.";
     return RET_ERROR;
@@ -38,17 +38,13 @@ int Shape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
   auto in_tensor = inputs_.front();
   auto out_tensor = outputs_.front();
   out_tensor->set_data_type(kNumberTypeInt32);
-  out_tensor->SetFormat(schema::Format_NHWC);
+  out_tensor->SetFormat(schema::Format::Format_NHWC);
   if (!GetInferFlag()) {
     return RET_OK;
   }
   std::vector<int> out_shape;
   out_shape.push_back(static_cast<int>(in_tensor->shape().size()));
-  auto ret_shape = out_tensor->set_shape(out_shape);
-  if (ret_shape != 1 || size_t(out_tensor->shape()[0]) != in_tensor->shape().size()) {
-    MS_LOG(ERROR) << "Set shape fails.";
-    return RET_ERROR;
-  }
+  out_tensor->set_shape(out_shape);
   return RET_OK;
 }
 #ifdef PRIMITIVE_WRITEABLE

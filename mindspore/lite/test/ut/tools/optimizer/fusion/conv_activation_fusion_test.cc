@@ -77,8 +77,7 @@ CNodeTptr BuildDepthwiseConv2D() {
   return convNode;
 }
 
-MetaGraphTptr BuildGraph(schema::PrimitiveType conv_type,
-                         schema::ActivationType activation_type) {
+MetaGraphTptr BuildGraph(schema::PrimitiveType conv_type, schema::ActivationType activation_type) {
   auto meta_graph = std::make_shared<schema::MetaGraphT>();
   meta_graph->name = "graph";
   // conv node

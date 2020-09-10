@@ -43,7 +43,7 @@ float EmbeddingLookup::GetMaxNorm() const { return this->primitive_->value_as_Em
 
 #endif
 
-int EmbeddingLookup::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int EmbeddingLookup::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (inputs_.size() < kDoubleNum) {
     MS_LOG(ERROR) << "Embedding Lookup should have at least two inputs";

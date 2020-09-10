@@ -174,7 +174,7 @@ STATUS FusionPass::MatchOnePattern(schema::MetaGraphT *graph, FusionPattern *pat
   return RET_OK;
 }
 
-bool FusionPass::CheckMatch(schema::MetaGraphT *graph, const std::shared_ptr<PatternOp>& patternOp) {
+bool FusionPass::CheckMatch(schema::MetaGraphT *graph, const std::shared_ptr<PatternOp> &patternOp) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(patternOp != nullptr);
   // find included nodes
@@ -204,7 +204,7 @@ bool FusionPass::CheckMatch(schema::MetaGraphT *graph, const std::shared_ptr<Pat
     }
   }
   // all post node of input node should be in path except input node is placeHold
-  for (const auto& inputNode : inputNodes) {
+  for (const auto &inputNode : inputNodes) {
     if (inputNode->isPlaceHold) {
       continue;
     }
@@ -319,4 +319,3 @@ void FusionPass::MergeNodeAttrFromPost(std::unique_ptr<schema::CNodeT> &dstOp, s
                                        size_t dstOpOutIdx) {}
 }  // namespace lite
 }  // namespace mindspore
-

@@ -31,7 +31,7 @@ namespace mindspore::kernel {
 int SliceOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t im_dst_x, im_dst_y;
-  if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+  if (in_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
     im_dst_x = out_tensors_[0]->Width() * CO4;
     im_dst_y = out_tensors_[0]->Height();
   } else {
@@ -123,8 +123,8 @@ int SliceOpenCLKernel::Run() {
   std::vector<size_t> global = {1, OH, OW};
   SlcieGetWorkGroup(global, &local, max_global[0]);
   int arg_cn = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->Data());   // input tensor
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->Data());  // out tensor
+  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->MutableData());   // input tensor
+  ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->MutableData());  // out tensor
   ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape_);
   ocl_runtime->SetKernelArg(kernel_, arg_cn++, size_);
   ocl_runtime->SetKernelArg(kernel_, arg_cn++, begin_);
@@ -134,10 +134,9 @@ int SliceOpenCLKernel::Run() {
   return RET_OK;
 }  // namespace mindspore::kernel
 
-kernel::LiteKernel *OpenCLSliceKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc,
+kernel::LiteKernel *OpenCLSliceKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                             const lite::Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) SliceOpenCLKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {

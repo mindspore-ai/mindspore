@@ -60,7 +60,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType op_type, void *op_node) {
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 2, 2, 3};
   input0->offset = -1;
-  auto input0_data = new(std::nothrow) float[2 * 2 * 3];
+  auto input0_data = new (std::nothrow) float[2 * 2 * 3];
   for (auto i = 0; i < 2 * 2 * 3; i++) {
     input0_data[i] = i;
   }
@@ -77,7 +77,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType op_type, void *op_node) {
   input1->dims = {1, 2, 2, 3};
   input1->offset = -1;
   input1->data.resize(sizeof(float) * 2 * 2 * 3);
-  auto input1_data = new(std::nothrow) float[2 * 2 * 3];
+  auto input1_data = new (std::nothrow) float[2 * 2 * 3];
   for (auto i = 0; i < 2 * 2 * 3; i++) {
     input1_data[i] = i;
   }
@@ -119,7 +119,7 @@ MetaGraphTptr BuildGraphForOneInput(schema::PrimitiveType op_type, void *op_node
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 2, 2, 3};
   input0->offset = -1;
-  auto input0_data = new(std::nothrow) float[2 * 2 * 3];
+  auto input0_data = new (std::nothrow) float[2 * 2 * 3];
   for (auto i = 0; i < 2 * 2 * 3; i++) {
     input0_data[i] = i + 1;
   }
@@ -172,7 +172,7 @@ MetaGraphTptr BuildMixGraph() {
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 2, 2, 3};
   input0->offset = -1;
-  auto input0_data = new(std::nothrow) float[2 * 2 * 3];
+  auto input0_data = new (std::nothrow) float[2 * 2 * 3];
   for (auto i = 0; i < 2 * 2 * 3; i++) {
     input0_data[i] = i;
   }
@@ -189,7 +189,7 @@ MetaGraphTptr BuildMixGraph() {
   input1->dims = {1, 2, 2, 3};
   input1->offset = -1;
   input1->data.resize(sizeof(float) * 2 * 2 * 3);
-  auto input1_data = new(std::nothrow) float[2 * 2 * 3];
+  auto input1_data = new (std::nothrow) float[2 * 2 * 3];
   for (auto i = 0; i < 2 * 2 * 3; i++) {
     input1_data[i] = i;
   }
@@ -205,7 +205,7 @@ MetaGraphTptr BuildMixGraph() {
   add_output->dims = {1, 2, 2, 3};
   add_output->offset = -1;
   add_output->data.resize(sizeof(float) * 2 * 2 * 3);
-  auto add_output_data = new(std::nothrow) float[2 * 2 * 3];
+  auto add_output_data = new (std::nothrow) float[2 * 2 * 3];
   memcpy(add_output->data.data(), add_output_data, 2 * 2 * 3 * sizeof(float));
   delete[] add_output_data;
   meta_graph->allTensors.emplace_back(std::move(add_output));
@@ -218,7 +218,7 @@ MetaGraphTptr BuildMixGraph() {
   input2->dims = {1, 2, 2, 3};
   input2->offset = -1;
   input2->data.resize(sizeof(float) * 2 * 2 * 3);
-  auto input2_data = new(std::nothrow) float[2 * 2 * 3];
+  auto input2_data = new (std::nothrow) float[2 * 2 * 3];
   for (auto i = 0; i < 2 * 2 * 3; i++) {
     input2_data[i] = 10;
   }
@@ -282,7 +282,7 @@ MetaGraphTptr BuildSplitGraph() {
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 2, 2, 3};
   input0->offset = -1;
-  auto input0_data = new(std::nothrow) float[2 * 2 * 3];
+  auto input0_data = new (std::nothrow) float[2 * 2 * 3];
   for (auto i = 0; i < 2 * 2 * 3; i++) {
     input0_data[i] = i;
   }
@@ -299,7 +299,7 @@ MetaGraphTptr BuildSplitGraph() {
   split_output1->dims = {1, 1, 2, 3};
   split_output1->offset = -1;
   split_output1->data.resize(sizeof(float) * 1 * 2 * 3);
-  auto split_output_data1 = new(std::nothrow) float[1 * 2 * 3];
+  auto split_output_data1 = new (std::nothrow) float[1 * 2 * 3];
   memcpy(split_output1->data.data(), split_output_data1, 1 * 2 * 3 * sizeof(float));
   delete[] split_output_data1;
   meta_graph->allTensors.emplace_back(std::move(split_output1));
@@ -312,7 +312,7 @@ MetaGraphTptr BuildSplitGraph() {
   split_output2->dims = {1, 1, 2, 3};
   split_output2->offset = -1;
   split_output2->data.resize(sizeof(float) * 1 * 2 * 3);
-  auto split_output_data2 = new(std::nothrow) float[1 * 2 * 3];
+  auto split_output_data2 = new (std::nothrow) float[1 * 2 * 3];
   memcpy(split_output2->data.data(), split_output_data2, 1 * 2 * 3 * sizeof(float));
   delete[] split_output_data2;
   meta_graph->allTensors.emplace_back(std::move(split_output2));
@@ -325,7 +325,7 @@ MetaGraphTptr BuildSplitGraph() {
   input1->dims = {1, 1, 2, 3};
   input1->offset = -1;
   input1->data.resize(sizeof(float) * 2 * 3);
-  auto input1_data = new(std::nothrow) float[2 * 3];
+  auto input1_data = new (std::nothrow) float[2 * 3];
   for (auto i = 0; i < 2 * 3; i++) {
     input1_data[i] = i;
   }
@@ -341,7 +341,7 @@ MetaGraphTptr BuildSplitGraph() {
   input2->dims = {1, 1, 2, 3};
   input2->offset = -1;
   input2->data.resize(sizeof(float) * 2 * 3);
-  auto input2_data = new(std::nothrow) float[2 * 3];
+  auto input2_data = new (std::nothrow) float[2 * 3];
   for (auto i = 0; i < 2 * 3; i++) {
     input2_data[i] = 10;
   }

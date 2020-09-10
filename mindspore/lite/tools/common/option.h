@@ -117,4 +117,3 @@ class Option {
 }  // namespace mindspore
 
 #endif  // PREDICT_COMMON_OPTION_H_
-

@@ -82,5 +82,3 @@ class Optimizer {
 }  // namespace mindspore
 
 #endif
-
-

@@ -41,9 +41,9 @@ void LoadDataBiasAdd(void *dst, size_t dst_size, const std::string &file_path) {
 }
 
 template <typename T>
-void CompareOutBiasAdd(lite::tensor::Tensor *output_tensor, const std::string &standard_answer_file) {
+void CompareOutBiasAdd(lite::Tensor *output_tensor, const std::string &standard_answer_file) {
   size_t output_size = output_tensor->ElementsNum();
-  auto output_data = reinterpret_cast<T *>(output_tensor->Data());
+  auto output_data = reinterpret_cast<T *>(output_tensor->MutableData());
   auto expect_data = reinterpret_cast<T *>(mindspore::lite::ReadFile(standard_answer_file.c_str(), &output_size));
   constexpr float atol = 0.0002;
   for (int i = 0; i < output_tensor->ElementsNum(); ++i) {
@@ -60,9 +60,9 @@ void CompareOutBiasAdd(lite::tensor::Tensor *output_tensor, const std::string &s
 }
 
 template <typename T>
-void printf_tensor_BiasAdd(const std::string log, mindspore::lite::tensor::Tensor *in_data, int size) {
+void printf_tensor_BiasAdd(const std::string log, mindspore::lite::Tensor *in_data, int size) {
   MS_LOG(INFO) << log;
-  auto input_data = reinterpret_cast<T *>(in_data->Data());
+  auto input_data = reinterpret_cast<T *>(in_data->MutableData());
   for (int i = 0; i < size; ++i) {
     printf("%f ", input_data[i]);
   }
@@ -81,7 +81,7 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   std::vector<int> input_shape = {1, 9};   // need modify
   std::vector<int> output_shape = {1, 9};  // need modify
-  auto tensor_type = schema::NodeType_ValueNode;
+  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
   schema::Format type = schema::Format_NC;        // need modify
   schema::Format op_format = schema::Format_NC4;  // need modify
   int weight_shape = 0;
@@ -90,32 +90,32 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
   } else {
     weight_shape = input_shape[1];
   }
-  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, type, tensor_type);
+  auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, type, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
     return;
   }
-  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, type, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, output_shape, type, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(ERROR) << "new output tensor error!";
     delete input_tensor;
     return;
   }
-  auto *weight_tensor = new (std::nothrow)
-    lite::tensor::Tensor(data_type, std::vector<int>{weight_shape}, schema::Format_NHWC, tensor_type);
+  auto *weight_tensor =
+    new (std::nothrow) lite::Tensor(data_type, std::vector<int>{weight_shape}, schema::Format_NHWC, tensor_type);
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "new weight tensor error!";
     delete output_tensor;
     delete input_tensor;
     return;
   }
-  std::vector<lite::tensor::Tensor *> inputs{input_tensor, weight_tensor};
-  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  std::vector<lite::Tensor *> inputs{input_tensor, weight_tensor};
+  std::vector<lite::Tensor *> outputs{output_tensor};
   auto allocator = ocl_runtime->GetAllocator();
   inputs[0]->MallocData(allocator);
   inputs[1]->MallocData(allocator);
-  LoadDataBiasAdd(input_tensor->Data(), input_tensor->Size(), in_file);
-  LoadDataBiasAdd(weight_tensor->Data(), weight_tensor->Size(), weight_file);
+  LoadDataBiasAdd(input_tensor->MutableData(), input_tensor->Size(), in_file);
+  LoadDataBiasAdd(weight_tensor->MutableData(), weight_tensor->Size(), weight_file);
   if (ocl_runtime->GetFp16Enable()) {
     printf_tensor_BiasAdd<float16_t>("BiasAdd:FP16--input data", inputs[0], input_tensor->ElementsNum());
     printf_tensor_BiasAdd<float16_t>("BiasAdd:FP16--weight data", inputs[1], weight_tensor->ElementsNum());

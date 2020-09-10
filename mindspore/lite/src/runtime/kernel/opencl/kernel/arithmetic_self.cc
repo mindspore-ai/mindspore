@@ -195,8 +195,8 @@ int ArithmeticSelfOpenCLKernel::Run() {
   ArithmeticSelfGetWorkGroup(global, &local, max_global[0]);
 
   int arg_cn = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->MutableData());
   ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
 
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
@@ -204,8 +204,8 @@ int ArithmeticSelfOpenCLKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLArithmeticSelfKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                      const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *OpenCLArithmeticSelfKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                      const std::vector<lite::Tensor *> &outputs,
                                                       OpParameter *opParameter, const lite::Context *ctx,
                                                       const kernel::KernelKey &desc,
                                                       const mindspore::lite::PrimitiveC *primitive) {

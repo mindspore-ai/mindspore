@@ -98,10 +98,10 @@ int PoolingOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
   int h = out_tensors_[0]->shape()[1];
   int w = out_tensors_[0]->shape()[2];
   int c = out_tensors_[0]->shape()[3];
-  if (op_format_ == schema::Format_NHWC4) {
+  if (op_format_ == schema::Format::Format_NHWC4) {
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = n * h;
-  } else if (op_format_ == schema::Format_NC4HW4) {
+  } else if (op_format_ == schema::Format::Format_NC4HW4) {
     im_dst_x = w;
     im_dst_y = n * UP_DIV(c, C4NUM) * h;
   } else {
@@ -135,8 +135,8 @@ int PoolingOpenCLKernel::Run() {
   cl_int2 padding = {parameter_->pad_u_, parameter_->pad_l_};
 
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, output_shape);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, stride);
@@ -153,10 +153,9 @@ int PoolingOpenCLKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLPooling2dKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc,
+kernel::LiteKernel *OpenCLPooling2dKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                 const lite::Context *ctx, const kernel::KernelKey &desc,
                                                  const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) PoolingOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {

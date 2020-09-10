@@ -22,10 +22,8 @@ const uint32_t INNERPRODUCT_PAD_DEFAULT_VALUE = 0;
 
 namespace mindspore {
 namespace lite {
-STATUS CaffePoolingParser::Parse(const caffe::LayerParameter &proto,
-                                 const caffe::LayerParameter &weight,
-                                 schema::CNodeT *op,
-                                 std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffePoolingParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                                 schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffePoolingParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -43,7 +41,7 @@ STATUS CaffePoolingParser::Parse(const caffe::LayerParameter &proto,
     return RET_NULL_PTR;
   }
 
-  attr->format = schema::Format_NCHW;
+  attr->format = schema::Format::Format_NCHW;
 
   const caffe::PoolingParameter poolingParam = proto.pooling_param();
   auto status = ParsePads(poolingParam, attr.get());
@@ -89,8 +87,7 @@ STATUS CaffePoolingParser::Parse(const caffe::LayerParameter &proto,
   return RET_OK;
 }
 
-STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam,
-                                     schema::PoolingT *attr) {
+STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
   if (poolingParam.has_pad_h() && poolingParam.has_pad_w()) {
     if (poolingParam.has_pad()) {
       MS_LOG(ERROR) << "Either pad or pad_h/w should be specified; not both";
@@ -109,8 +106,7 @@ STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam
   return RET_OK;
 }
 
-STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingParam,
-                                        schema::PoolingT *attr) {
+STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
   if (poolingParam.has_stride_h() && poolingParam.has_stride_w()) {
     if (poolingParam.has_stride()) {
       MS_LOG(ERROR) << "Either stride or stride_h/w should be specified; not both";
@@ -125,8 +121,7 @@ STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingPa
   return RET_OK;
 }
 
-STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingParam,
-                                        schema::PoolingT *attr) {
+STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
   if (poolingParam.has_global_pooling() && poolingParam.global_pooling()) {
     if (poolingParam.has_kernel_size() || poolingParam.has_kernel_h() || poolingParam.has_kernel_w()) {
       MS_LOG(ERROR) << "With Global_pooling: true Filter size cannot specified";
@@ -156,8 +151,7 @@ STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingPa
   return RET_OK;
 }
 
-STATUS CaffePoolingParser::ParsePoolingMode(const caffe::PoolingParameter &poolingParam,
-                                            schema::PoolingT *attr) {
+STATUS CaffePoolingParser::ParsePoolingMode(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
   if (poolingParam.pool() == caffe::PoolingParameter::MAX) {
     attr->poolingMode = schema::PoolMode_MAX_POOLING;
   } else if (poolingParam.pool() == caffe::PoolingParameter::AVE) {
@@ -172,4 +166,3 @@ STATUS CaffePoolingParser::ParsePoolingMode(const caffe::PoolingParameter &pooli
 CaffeNodeRegistrar g_caffePoolingParser("Pooling", new CaffePoolingParser());
 }  // namespace lite
 }  // namespace mindspore
-

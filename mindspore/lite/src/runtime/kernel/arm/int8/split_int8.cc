@@ -88,10 +88,10 @@ int SplitInt8CPUKernel::Run() {
     return ret;
   }
   auto in_tensor = in_tensors_.at(kInputIndex);
-  input_ptr_ = reinterpret_cast<int8_t *>(in_tensor->Data());
+  input_ptr_ = reinterpret_cast<int8_t *>(in_tensor->MutableData());
   MS_ASSERT(param->num_split_ == outputs_.size());
   for (int i = 0; i < param->num_split_; i++) {
-    output_ptr_.push_back(reinterpret_cast<int8_t *>(out_tensors_.at(i)->Data()));
+    output_ptr_.push_back(reinterpret_cast<int8_t *>(out_tensors_.at(i)->MutableData()));
   }
 
   ret = ParallelLaunch(THREAD_POOL_DEFAULT, SplitInt8Run, this, thread_n_num_);

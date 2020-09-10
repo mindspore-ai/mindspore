@@ -146,10 +146,10 @@ OpParameter *PopulateConvolutionGradFilterParameter(const mindspore::lite::Primi
 
   auto convg_primitive =
     reinterpret_cast<mindspore::lite::Conv2DGradFilter *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  param->kernel_h_   = convg_primitive->GetKernelH();
-  param->kernel_w_   = convg_primitive->GetKernelW();
-  param->stride_h_   = convg_primitive->GetStrideH();
-  param->stride_w_   = convg_primitive->GetStrideW();
+  param->kernel_h_ = convg_primitive->GetKernelH();
+  param->kernel_w_ = convg_primitive->GetKernelW();
+  param->stride_h_ = convg_primitive->GetStrideH();
+  param->stride_w_ = convg_primitive->GetStrideW();
   param->dilation_h_ = convg_primitive->GetDilateH();
   param->dilation_w_ = convg_primitive->GetDilateW();
   param->pad_u_ = convg_primitive->GetPadUp();
@@ -187,10 +187,10 @@ OpParameter *PopulateConvolutionGradInputParameter(const mindspore::lite::Primit
 
   auto convg_primitive =
     reinterpret_cast<mindspore::lite::Conv2DGradInput *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  param->kernel_h_   = convg_primitive->GetKernelH();
-  param->kernel_w_   = convg_primitive->GetKernelW();
-  param->stride_h_   = convg_primitive->GetStrideH();
-  param->stride_w_   = convg_primitive->GetStrideW();
+  param->kernel_h_ = convg_primitive->GetKernelH();
+  param->kernel_w_ = convg_primitive->GetKernelW();
+  param->stride_h_ = convg_primitive->GetStrideH();
+  param->stride_w_ = convg_primitive->GetStrideW();
   param->dilation_h_ = convg_primitive->GetDilateH();
   param->dilation_w_ = convg_primitive->GetDilateW();
   param->pad_u_ = convg_primitive->GetPadUp();

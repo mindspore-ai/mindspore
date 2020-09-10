@@ -54,8 +54,8 @@ int ReshapeInt8CPUKernel::Run() {
   }
   MS_ASSERT(in_tensors_.size() == 1);
   MS_ASSERT(out_tensors_.size() == 1);
-  input_data_ = static_cast<int8_t *>(in_tensors_.at(kInputIndex)->Data());
-  output_data_ = static_cast<int8_t *>(out_tensors_.at(kOutputIndex)->Data());
+  input_data_ = static_cast<int8_t *>(in_tensors_.at(kInputIndex)->MutableData());
+  output_data_ = static_cast<int8_t *>(out_tensors_.at(kOutputIndex)->MutableData());
 
   elements_num_ = in_tensors_.at(kInputIndex)->ElementsNum();
   count_unit_ = op_parameter_->thread_num_ > 1 ? UP_DIV(elements_num_, op_parameter_->thread_num_) : elements_num_;

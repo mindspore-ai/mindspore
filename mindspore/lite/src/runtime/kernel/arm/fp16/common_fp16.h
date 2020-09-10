@@ -19,9 +19,9 @@
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-float16_t *ConvertInputFp32toFp16(lite::tensor::Tensor *input, const lite::Context *ctx);
+float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::Context *ctx);
 
-float16_t *MallocOutputFp16(lite::tensor::Tensor *output, const lite::Context *ctx);
+float16_t *MallocOutputFp16(lite::Tensor *output, const lite::Context *ctx);
 
 }  // namespace mindspore::kernel
 

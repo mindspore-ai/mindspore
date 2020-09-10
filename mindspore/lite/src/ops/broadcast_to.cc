@@ -56,7 +56,7 @@ constexpr int kBroadcastToInputNum = 1;
 constexpr int kBroadcastToOutputNum = 1;
 }  // namespace
 
-int BroadcastTo::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int BroadcastTo::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   if (inputs.size() != kBroadcastToInputNum || outputs.size() != kBroadcastToOutputNum) {
     MS_LOG(ERROR) << "input size:" << inputs.size() << ", output size:" << outputs.size();
     return RET_PARAM_INVALID;

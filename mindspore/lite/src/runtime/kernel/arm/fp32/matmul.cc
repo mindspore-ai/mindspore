@@ -81,13 +81,13 @@ int MatmulCPUKernel::ReSize() {
   }
   memset(b_r8_ptr_, 0, params_->col_8_ * params_->deep_ * sizeof(float));
 
-  params_->a_const_ = (in_tensors_[0]->Data() != nullptr);
-  params_->b_const_ = (in_tensors_[1]->Data() != nullptr);
+  params_->a_const_ = (in_tensors_[0]->data_c() != nullptr);
+  params_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
   if (params_->a_const_ == true) {
-    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->Data()), a_c12_ptr_);
+    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_c12_ptr_);
   }
   if (params_->b_const_ == true) {
-    InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_);
+    InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_r8_ptr_);
   }
 
   bias_ptr_ = reinterpret_cast<float *>(malloc(params_->col_8_ * sizeof(float)));
@@ -97,7 +97,7 @@ int MatmulCPUKernel::ReSize() {
   }
   memset(bias_ptr_, 0, params_->col_8_ * sizeof(float));
   if (in_tensors_.size() == 3) {
-    memcpy(bias_ptr_, in_tensors_[2]->Data(), params_->col_ * sizeof(float));
+    memcpy(bias_ptr_, in_tensors_[2]->data_c(), params_->col_ * sizeof(float));
   }
 
   return RET_OK;
@@ -163,9 +163,9 @@ int MatmulCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto a_src = reinterpret_cast<float *>(in_tensors_[0]->Data());
-  auto b_src = reinterpret_cast<float *>(in_tensors_[1]->Data());
-  auto c_src = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  auto a_src = reinterpret_cast<float *>(in_tensors_[0]->data_c());
+  auto b_src = reinterpret_cast<float *>(in_tensors_[1]->data_c());
+  auto c_src = reinterpret_cast<float *>(out_tensors_[0]->data_c());
 
   if (params_->a_const_ == false) {
     InitMatrixA(a_src, a_c12_ptr_);

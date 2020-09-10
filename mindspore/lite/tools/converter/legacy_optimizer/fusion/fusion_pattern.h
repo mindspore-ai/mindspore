@@ -37,7 +37,7 @@ struct Path {
 
 // Op description in pattern
 struct PatternOp {
-  std::string id;          // id of op in pattern
+  std::string id;                            // id of op in pattern
   std::vector<schema::PrimitiveType> types;  // type of matchable op
   // only support node with no more than two preNode now
   // avoid loop reference
@@ -64,7 +64,7 @@ struct PatternOp {
     this->path->nodeIdx = -1;
     this->pathSetted = false;
   }
-  static std::shared_ptr<PatternOp> Copy(const std::shared_ptr<PatternOp>& src) {
+  static std::shared_ptr<PatternOp> Copy(const std::shared_ptr<PatternOp> &src) {
     if (src == nullptr) {
       return nullptr;
     }
@@ -98,7 +98,7 @@ class FusionPattern {
 
   FusionPattern &AddPatternOp(const std::string &id, const std::vector<schema::PrimitiveType> &types);
 
-  FusionPattern &AddPatternOp(const std::shared_ptr<PatternOp>& patternOp);
+  FusionPattern &AddPatternOp(const std::shared_ptr<PatternOp> &patternOp);
 
   FusionPattern &RemovePatternOp(const std::string &id);
 
@@ -137,4 +137,3 @@ class FusionPattern {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_PREDICT_FUSION_PATTERN_H
-

@@ -71,7 +71,7 @@ STATUS WeightFormatHardCodePass::Run(MetaGraphT *graph) {
         return RET_ERROR;
     }
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "Format hardCode faild: " << status << ", node: " << node->name;
+      MS_LOG(ERROR) << "schema::Format hardCode faild: " << status << ", node: " << node->name;
       return RET_ERROR;
     }
   }
@@ -89,7 +89,7 @@ STATUS WeightFormatHardCodePass::HardCodeCAFFE(const std::unique_ptr<CNodeT> &no
     case QuantType_QUANT_NONE: {
       if (opType == schema::PrimitiveType_Conv2D || opType == schema::PrimitiveType_DepthwiseConv2D ||
           opType == schema::PrimitiveType_DeConv2D || opType == schema::PrimitiveType_DeDepthwiseConv2D) {
-        weightTensor->format = Format_KCHW;
+        weightTensor->format = schema::Format::Format_KCHW;
       } else {
         MS_LOG(ERROR) << "Unsupported opType: " << EnumNamePrimitiveType(opType) << ", node: " << node->name;
       }
@@ -113,11 +113,11 @@ STATUS WeightFormatHardCodePass::HardCodeONNX(const std::unique_ptr<CNodeT> &nod
     case QuantType_AwareTraining: {
       // sum up from current onnx quant models
       if (opType == PrimitiveType_Conv2D) {
-        weightTensor->format = Format_KHWC;
+        weightTensor->format = schema::Format::Format_KHWC;
       } else if (opType == PrimitiveType_DepthwiseConv2D) {
-        weightTensor->format = Format_CHWK;
+        weightTensor->format = schema::Format::Format_CHWK;
       } else if (opType == PrimitiveType_DeConv2D) {
-        weightTensor->format = Format_CKHW;
+        weightTensor->format = schema::Format::Format_CKHW;
       } else {
         MS_LOG(ERROR) << "Unsupported opType: " << EnumNamePrimitiveType(opType) << ", node: " << node->name;
         return RET_ERROR;
@@ -129,9 +129,9 @@ STATUS WeightFormatHardCodePass::HardCodeONNX(const std::unique_ptr<CNodeT> &nod
       // deconv (C x K/group x kH x kW) group = 1
       // dedepth (C x K/group x kH x kW) group = channelIn ==> (C, multiplier, H, W)
       if (opType == PrimitiveType_Conv2D || opType == PrimitiveType_DepthwiseConv2D) {
-        weightTensor->format = Format_KCHW;
+        weightTensor->format = schema::Format::Format_KCHW;
       } else if (opType == PrimitiveType_DeConv2D) {
-        weightTensor->format = Format_CKHW;
+        weightTensor->format = schema::Format::Format_CKHW;
       } else {
         MS_LOG(ERROR) << "Unsupported opType: " << EnumNamePrimitiveType(opType) << ", node: " << node->name;
         return RET_ERROR;
@@ -155,19 +155,19 @@ STATUS WeightFormatHardCodePass::HardCodeMS(const std::unique_ptr<CNodeT> &node,
   switch (this->quantType) {
     case QuantType_AwareTraining: {
       if (opType == schema::PrimitiveType_Conv2D) {
-        weightTensor->format = schema::Format_KCHW;
+        weightTensor->format = schema::Format::Format_KCHW;
       } else if (opType == PrimitiveType_DepthwiseConv2D) {
-        weightTensor->format = Format_CKHW;
+        weightTensor->format = schema::Format::Format_CKHW;
       } else {
-        weightTensor->format = schema::Format_KCHW;
+        weightTensor->format = schema::Format::Format_KCHW;
       }
     } break;
     case QuantType_QUANT_NONE: {
       // sum up from current ms quant models
       if (opType == PrimitiveType_Conv2D) {
-        weightTensor->format = Format_KCHW;
+        weightTensor->format = schema::Format::Format_KCHW;
       } else if (opType == PrimitiveType_DepthwiseConv2D) {
-        weightTensor->format = Format_CKHW;
+        weightTensor->format = schema::Format::Format_CKHW;
       } else {
         MS_LOG(ERROR) << "Unsupported opType: " << EnumNamePrimitiveType(opType) << ", node: " << node->name;
         return RET_ERROR;
@@ -194,11 +194,11 @@ STATUS WeightFormatHardCodePass::HardCodeTFLITE(const std::unique_ptr<CNodeT> &n
     case QuantType_WeightQuant:
     case QuantType_QUANT_NONE: {
       if (opType == schema::PrimitiveType_Conv2D) {
-        weightTensor->format = schema::Format_KHWC;
+        weightTensor->format = schema::Format::Format_KHWC;
       } else if (opType == schema::PrimitiveType_DepthwiseConv2D) {
-        weightTensor->format = schema::Format_CHWK;
+        weightTensor->format = schema::Format::Format_CHWK;
       } else if (opType == schema::PrimitiveType_DeConv2D) {
-        weightTensor->format = schema::Format_CHWK;
+        weightTensor->format = schema::Format::Format_CHWK;
       } else {
         MS_LOG(ERROR) << "Unsupported opType: " << EnumNamePrimitiveType(opType) << ", node: " << node->name;
         return RET_ERROR;

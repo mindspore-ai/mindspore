@@ -36,8 +36,8 @@ void ComputeStrides(int *shape, int *strides, int ndim);
 namespace mindspore::kernel {
 class DeconvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
-  DeconvolutionDepthwiseFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+  DeconvolutionDepthwiseFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                      const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                                       const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~DeconvolutionDepthwiseFp16CPUKernel() override;

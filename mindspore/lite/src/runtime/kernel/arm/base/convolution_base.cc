@@ -105,10 +105,10 @@ int ConvolutionBaseCPUKernel::CheckResizeValid() {
   return RET_OK;
 }
 
-int ConvolutionBaseCPUKernel::CheckLayout(lite::tensor::Tensor *input_tensor) {
+int ConvolutionBaseCPUKernel::CheckLayout(lite::Tensor *input_tensor) {
   auto data_type = input_tensor->data_type();
   auto input_format = input_tensor->GetFormat();
-  schema::Format execute_format = schema::Format_NHWC4;
+  schema::Format execute_format = schema::Format::Format_NHWC4;
   convert_func_ = LayoutTransform(data_type, input_format, execute_format);
   if (convert_func_ == nullptr) {
     MS_LOG(ERROR) << "layout convert func is nullptr.";
@@ -154,7 +154,7 @@ int ConvolutionBaseCPUKernel::SetIfAsymmetric() {
   uint8_t asymmetric = 0b0;
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   auto filter_ele_num = filter_tensor->ElementsNum();
-  auto filter_data = reinterpret_cast<int8_t *>(filter_tensor->Data());
+  auto filter_data = reinterpret_cast<int8_t *>(filter_tensor->MutableData());
   int min_value = INT8_MAX;
   int max_value = INT8_MIN;
   for (int i = 0; i < filter_ele_num; ++i) {
@@ -326,7 +326,7 @@ int ConvolutionBaseCPUKernel::SetQuantParam() {
 
   return RET_OK;
 }
-int ConvolutionBaseCPUKernel::RestoreFilter(lite::tensor::Tensor *input_tensor) {
+int ConvolutionBaseCPUKernel::RestoreFilter(lite::Tensor *input_tensor) {
   MS_ASSERT(input_tensor != nullptr);
   if (input_tensor->data_type() != kNumberTypeUInt8) {
     MS_LOG(ERROR) << "conv weight input type error" << input_tensor->data_type();
@@ -336,8 +336,8 @@ int ConvolutionBaseCPUKernel::RestoreFilter(lite::tensor::Tensor *input_tensor) 
     MS_LOG(ERROR) << "no quant param";
     return RET_ERROR;
   }
-  const auto* quant_data = static_cast<const uint8_t*>(input_tensor->Data());
-  auto* dequant_data = static_cast<float *>(malloc(input_tensor->DataSize() * sizeof(float)));
+  const auto *quant_data = static_cast<const uint8_t *>(input_tensor->MutableData());
+  auto *dequant_data = static_cast<float *>(malloc(input_tensor->ElementsNum() * sizeof(float)));
   if (dequant_data == nullptr) {
     MS_LOG(ERROR) << "malloc faile";
     return RET_ERROR;
@@ -350,15 +350,15 @@ int ConvolutionBaseCPUKernel::RestoreFilter(lite::tensor::Tensor *input_tensor) 
       free(dequant_data);
       return RET_ERROR;
     }
-    size_t per_channel_size = input_tensor->DataSize() / channels;
+    size_t per_channel_size = input_tensor->ElementsNum() / channels;
     auto quant_param = input_tensor->GetQuantParams();
     for (size_t i = 0; i < channels; i++) {
       auto param = quant_param.at(i);
       auto scale = param.scale;
       auto zero_point = param.zeroPoint;
       for (size_t j = 0; j < per_channel_size; j++) {
-        dequant_data[per_channel_size * i + j] = static_cast<float>(
-          (quant_data[per_channel_size * i + j] - zero_point) * scale);
+        dequant_data[per_channel_size * i + j] =
+          static_cast<float>((quant_data[per_channel_size * i + j] - zero_point) * scale);
       }
     }
   } else {
@@ -366,7 +366,7 @@ int ConvolutionBaseCPUKernel::RestoreFilter(lite::tensor::Tensor *input_tensor) 
     auto param = quant_param.front();
     auto scale = param.scale;
     auto zero_point = param.zeroPoint;
-    for (int64_t j = 0; j < input_tensor->DataSize(); j++) {
+    for (int64_t j = 0; j < input_tensor->ElementsNum(); j++) {
       dequant_data[j] = static_cast<float>((quant_data[j] - zero_point) * scale);
     }
   }

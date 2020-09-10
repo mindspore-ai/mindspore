@@ -23,12 +23,12 @@ namespace mindspore {
 namespace lite {
 schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
   std::unique_ptr<schema::TensorT> weight = std::make_unique<schema::TensorT>();
-  weight->format = schema::Format_NCHW;
+  weight->format = schema::Format::Format_NCHW;
   std::vector<int32_t> shapeVec;
   ConvertShape(proto, &shapeVec);
   weight->dims = shapeVec;
   weight->dataType = kNumberTypeFloat32;
-  weight->nodeType = schema::NodeType_ValueNode;
+  weight->nodeType = schema::NodeType::NodeType_ValueNode;
 
   // cal Weight num
   int count = 1;
@@ -62,8 +62,7 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
       buf[i] = proto.double_data(i);
     }
     weight->data.resize(count * sizeof(float));
-    ::memcpy_s(weight->data.data(), count * sizeof(float),
-               reinterpret_cast<uint8_t *>(buf.get()),
+    ::memcpy_s(weight->data.data(), count * sizeof(float), reinterpret_cast<uint8_t *>(buf.get()),
                count * sizeof(float));
   } else {
     // datatype float
@@ -81,8 +80,7 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
   return weight.release();
 }
 
-STATUS ConvertShape(const caffe::BlobProto &proto,
-                    std::vector<int32_t> *shape) {
+STATUS ConvertShape(const caffe::BlobProto &proto, std::vector<int32_t> *shape) {
   shape->clear();
 
   if (proto.has_num() || proto.has_channels() || proto.has_height() || proto.has_width()) {
@@ -99,4 +97,3 @@ STATUS ConvertShape(const caffe::BlobProto &proto,
 }
 }  // namespace lite
 }  // namespace mindspore
-

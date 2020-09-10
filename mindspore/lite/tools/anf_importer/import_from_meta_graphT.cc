@@ -31,7 +31,7 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
     auto &tensor = meta_graph_->allTensors.at(i);
     MS_ASSERT(tensor != nullptr);
     // converter weight and graph input into parameter node
-    if (tensor->nodeType != schema::NodeType_ValueNode) {
+    if (tensor->nodeType != schema::NodeType::NodeType_ValueNode) {
       continue;
     }
     MS_ASSERT(tensor->dims() != nullptr);
@@ -69,7 +69,7 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
 ValueNodePtr AnfImporterFromMetaGraphT::ConvertPrimitive(const std::unique_ptr<schema::CNodeT> &cNode) {
   MS_ASSERT(nullptr != meta_graph_);
   MS_ASSERT(nullptr != cNode);
-  auto primitiveCValue = PrimitiveC::UnPackFromSchemaPrimitiveT(cNode->primitive.release());
+  auto primitiveCValue = PrimitiveC::Create(cNode->primitive.release());
   cNode->primitive = nullptr;
   // add quant parameter
   if (cNode->quantType != schema::QuantType_PostTraining) {

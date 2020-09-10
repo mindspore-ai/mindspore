@@ -49,4 +49,3 @@ class FormatTransFusionPass : public FusionPass {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_PREDICT_FORMAT_TRANS_FUSION_PASS_H
-

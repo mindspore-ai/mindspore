@@ -17,7 +17,7 @@
 #include "src/ops/gather.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 namespace lite {
@@ -48,7 +48,7 @@ int Gather::GetBatchDims() const { return this->primitive_->value_as_Gather()->b
 
 #endif
 
-int Gather::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int Gather::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (inputs_.size() != kDoubleNum) {
     MS_LOG(ERROR) << "Gather should have two inputs";

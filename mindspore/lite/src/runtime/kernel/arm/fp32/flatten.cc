@@ -49,16 +49,15 @@ int FlattenCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input = reinterpret_cast<float *>(in_tensors_[0]->Data());
-  auto output = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  auto input = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+  auto output = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   Flatten(input, output, flatten_param_);
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuFlattenFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *opParameter, const lite::Context *ctx,
-                                                const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuFlattenFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                const lite::Context *ctx, const kernel::KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   if (opParameter == nullptr) {

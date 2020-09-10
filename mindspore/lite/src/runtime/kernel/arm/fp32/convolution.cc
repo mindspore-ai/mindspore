@@ -49,7 +49,7 @@ int ConvolutionCPUKernel::InitWeightBias() {
   oc_block_num = UP_DIV(out_channel, C8NUM);
   int pack_weight_size = oc_block_num * oc_block * ic4 * C4NUM * kernel_plane;
 
-  auto origin_weight = reinterpret_cast<float *>(filter_tensor->Data());
+  auto origin_weight = reinterpret_cast<float *>(filter_tensor->MutableData());
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed weight failed.";
@@ -66,7 +66,7 @@ int ConvolutionCPUKernel::InitWeightBias() {
   memset(bias_data_, 0, oc_block_num * oc_block * sizeof(float));
 
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
     memcpy(bias_data_, ori_bias, out_channel * sizeof(float));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
@@ -81,6 +81,7 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
   int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   size_t nhwc4_input_size =
     ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);
+  MS_ASSERT(nullptr != ctx_->allocator);
   nhwc4_input_ = ctx_->allocator->Malloc(nhwc4_input_size);
   if (nhwc4_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc nhwc4 input failed.";
@@ -110,7 +111,7 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
 void ConvolutionCPUKernel::ConfigInputOutput() {
   // set output format
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_tensor->SetFormat(schema::Format_NHWC);
+  output_tensor->SetFormat(schema::Format::Format_NHWC);
 
   // #ifdef ENABLE_ARM32
   //   gemm_func_ = IndirectGemmFp32_8x4;
@@ -152,7 +153,7 @@ int ConvolutionCPUKernel::RunImpl(int task_id) {
     MS_LOG(ERROR) << "gemm_func is nullptr.";
     return RET_ERROR;
   }
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
   ConvFp32(reinterpret_cast<float *>(nhwc4_input_), packed_input_, packed_weight_,
            reinterpret_cast<float *>(bias_data_), tmp_output_block_, output_addr, task_id, conv_param_, gemm_func_);
   return RET_OK;
@@ -182,7 +183,7 @@ int ConvolutionCPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ori_input_data = input_tensor->Data();
+  auto ori_input_data = input_tensor->MutableData();
   PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
                       conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
@@ -209,10 +210,9 @@ bool CheckIfUseSlideWindow(ConvParameter *conv_param) {
   return false;
 }
 
-kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *op_parameter, const Context *ctx,
-                                             const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                             const Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
@@ -235,7 +235,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
   }
 
   auto *weight_tensor = inputs.at(kWeightIndex);
-  auto *restore_data = weight_tensor->Data();
+  auto *restore_data = weight_tensor->MutableData();
   if (primitive->GetQuantType() == schema::QuantType_WeightQuant) {
     ConvolutionBaseCPUKernel::RestoreFilter(inputs.at(kWeightIndex));
   }

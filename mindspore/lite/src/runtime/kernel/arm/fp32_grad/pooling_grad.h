@@ -29,12 +29,11 @@ using mindspore::schema::RoundMode;
 
 class PoolingGradCPUKernel : public LiteKernel {
  public:
-  explicit PoolingGradCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  explicit PoolingGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                                 const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~PoolingGradCPUKernel() override = default;
-
 
   int Init() override;
   int ReSize() override;

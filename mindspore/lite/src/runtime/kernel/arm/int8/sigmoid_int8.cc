@@ -31,8 +31,8 @@ using mindspore::schema::ActivationType_SIGMOID;
 
 namespace mindspore::kernel {
 int SigmoidInt8CPUKernel::Init() {
-  lite::tensor::Tensor *input = in_tensors_.at(0);
-  lite::tensor::Tensor *output = out_tensors_.at(0);
+  lite::Tensor *input = in_tensors_.at(0);
+  lite::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input);
   MS_ASSERT(output);
 
@@ -68,8 +68,8 @@ void SigmoidInt8CPUKernel::MultiplierInt32ToInt16(int32_t input, int16_t *output
 int SigmoidInt8CPUKernel::ReSize() { return RET_OK; }
 
 int SigmoidInt8CPUKernel::DoActivation(int task_id) {
-  auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->Data());
-  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
+  auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   auto length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, op_parameter_->thread_num_);

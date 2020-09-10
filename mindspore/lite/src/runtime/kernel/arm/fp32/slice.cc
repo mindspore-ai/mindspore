@@ -75,8 +75,8 @@ int SliceCPUKernel::Init() {
 }
 
 int SliceCPUKernel::SliceParallelRun(int thread_id) {
-  const float *input_data = reinterpret_cast<const float *>(in_tensors_[0]->Data());
-  float *output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  const float *input_data = reinterpret_cast<const float *>(in_tensors_[0]->MutableData());
+  float *output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   SliceParameter *param = reinterpret_cast<SliceParameter *>(op_parameter_);
   DoSlice(input_data, output_data, param, thread_id);
   return RET_OK;
@@ -100,8 +100,8 @@ int SliceCPUKernel::Run() {
     PadSliceParameterTo4D(param);
   }
 
-  const float *input_data = reinterpret_cast<const float *>(in_tensors_[0]->Data());
-  float *output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  const float *input_data = reinterpret_cast<const float *>(in_tensors_[0]->MutableData());
+  float *output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   if (param->size_[1] < param->op_parameter_.thread_num_) {
     DoSliceNoParallel(input_data, output_data, param);
     return RET_OK;

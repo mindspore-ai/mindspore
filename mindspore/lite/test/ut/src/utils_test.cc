@@ -36,11 +36,11 @@ TEST_F(UtilsTest, TestSubgraph) {
   auto kernel1 = std::make_shared<kernel::LiteKernel>();
   auto kernel2 = std::make_shared<kernel::LiteKernel>();
 
-  auto tensor0 = std::make_shared<lite::tensor::Tensor>();
-  auto tensor1 = std::make_shared<lite::tensor::Tensor>();
-  auto tensor2 = std::make_shared<lite::tensor::Tensor>();
-  auto tensor3 = std::make_shared<lite::tensor::Tensor>();
-  auto tensor4 = std::make_shared<lite::tensor::Tensor>();
+  auto tensor0 = std::make_shared<lite::Tensor>();
+  auto tensor1 = std::make_shared<lite::Tensor>();
+  auto tensor2 = std::make_shared<lite::Tensor>();
+  auto tensor3 = std::make_shared<lite::Tensor>();
+  auto tensor4 = std::make_shared<lite::Tensor>();
 
   kernel0->AddOutKernel(kernel1.get());
   kernel1->AddInKernel(kernel0.get());

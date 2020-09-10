@@ -30,8 +30,8 @@ class TestSoftmaxInt8 : public mindspore::CommonTest {
 };
 
 TEST_F(TestSoftmaxInt8, SoftmaxInt8) {
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   SoftmaxParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_SoftMax;
@@ -42,10 +42,10 @@ TEST_F(TestSoftmaxInt8, SoftmaxInt8) {
   op_param.input_shape_[2] = 3;
   op_param.input_shape_[3] = 4;
 
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 0.0352941;
   input_quant_arg.zeroPoint = -128;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 0.00392157;
   output_quant_arg.zeroPoint = -128;
 
@@ -53,7 +53,7 @@ TEST_F(TestSoftmaxInt8, SoftmaxInt8) {
                                -100, -71, -43, -15, 14,  42,  70, 99, 42, 70, 99, 127};
   std::vector<int> in_shape = {1, 2, 3, 4};
 
-  lite::tensor::Tensor input0_tensor;
+  lite::Tensor input0_tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   inputs_tensor.push_back(&input0_tensor);
   input0_tensor.SetData(input.data());
@@ -64,7 +64,7 @@ TEST_F(TestSoftmaxInt8, SoftmaxInt8) {
   std::vector<int8_t> output(24);
   std::vector<int> output_shape = {1, 2, 3, 4};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.AddQuantParam(output_quant_arg);

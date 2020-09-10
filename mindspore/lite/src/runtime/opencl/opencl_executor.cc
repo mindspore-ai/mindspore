@@ -17,14 +17,13 @@
 #include "src/runtime/opencl/opencl_executor.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "nnacl/pack.h"
-#include "src/common/ms_tensor_utils.h"
 #include "include/errorcode.h"
 
 namespace mindspore::lite::opencl {
 
 int OpenCLExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) { return RET_OK; }
 
-int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Tensor *> &outputs,
+int OpenCLExecutor::Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &outputs,
                         std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
                         const session::KernelCallBack &before, const session::KernelCallBack &after) {
   kernel::LiteKernelUtil::InitTensorRefCount(kernels);
@@ -34,7 +33,7 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
     callbackParam.name_callback_param = kernel->name();
 
     if (before != nullptr) {
-      if (!before(PackToMSTensors(kernel->in_tensors()), PackToMSTensors(kernel->out_tensors()), callbackParam)) {
+      if (!before(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()), callbackParam)) {
         MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->name();
       }
     }
@@ -60,7 +59,7 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
     }
 
     if (after != nullptr) {
-      if (!after(PackToMSTensors(kernel->in_tensors()), PackToMSTensors(kernel->out_tensors()), callbackParam)) {
+      if (!after(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()), callbackParam)) {
         MS_LOG(ERROR) << "run kernel after_callback failed, name: " << kernel->name();
       }
     }

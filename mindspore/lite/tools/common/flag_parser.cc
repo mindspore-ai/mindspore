@@ -135,7 +135,7 @@ Option<std::string> FlagParser::InnerParseFlags(std::multimap<std::string, Optio
 
 void Replaceall(std::string *str, const std::string &oldValue, const std::string &newValue) {
   if (str == nullptr) {
-     MS_LOG(ERROR) << "Input str is nullptr";
+    MS_LOG(ERROR) << "Input str is nullptr";
     return;
   }
   while (true) {
@@ -178,4 +178,3 @@ std::string FlagParser::Usage(const Option<std::string> &usgMsg) const {
 }
 }  // namespace lite
 }  // namespace mindspore
-

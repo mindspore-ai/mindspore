@@ -40,7 +40,7 @@ size_t EnumElement(int *shape, int n_dims) {
   }
   return total;
 }
-}
+}  // namespace
 
 int SpaceToBatchCPUKernel::Init() {
   SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
@@ -73,7 +73,7 @@ void SpaceToBatchCPUKernel::FreeTmpBuffer() {
 }
 
 int SpaceToBatchCPUKernel::ReSize() {
-  if (in_tensors_[0]->GetFormat() != schema::Format_NHWC) {
+  if (in_tensors_[0]->GetFormat() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_batch only support NHWC now!";
     return RET_FORMAT_ERR;
   }
@@ -102,8 +102,7 @@ int SpaceToBatchCPUKernel::ReSize() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  pedding_input_ =
-      reinterpret_cast<float *>(context_->allocator->Malloc(num_elements_padded * sizeof(float)));
+  pedding_input_ = reinterpret_cast<float *>(context_->allocator->Malloc(num_elements_padded * sizeof(float)));
   if (pedding_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc pedding buffer fail!";
     return RET_ERROR;
@@ -121,14 +120,14 @@ int SpaceToBatchCPUKernel::Run() {
   }
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
-  const float *input_ptr_ = reinterpret_cast<const float *>(input->Data());
-  float *output_ptr_ = reinterpret_cast<float *>(output->Data());
+  const float *input_ptr_ = reinterpret_cast<const float *>(input->MutableData());
+  float *output_ptr_ = reinterpret_cast<float *>(output->MutableData());
   SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
   auto in_shape = input->shape();
   auto out_shape = output->shape();
   if (param->need_paddings_) {
-    DoSpaceToBatchPaddingNHWC(input_ptr_, pedding_input_, in_shape.data(), param->paddings_,
-                              padded_in_shape_.data(), pedding_h_data_, pedding_w_data_);
+    DoSpaceToBatchPaddingNHWC(input_ptr_, pedding_input_, in_shape.data(), param->paddings_, padded_in_shape_.data(),
+                              pedding_h_data_, pedding_w_data_);
     DoSpaceToBatchNHWC(pedding_input_, output_ptr_, param, padded_in_shape_.data(), out_shape.data());
     return RET_OK;
   } else {
@@ -137,10 +136,9 @@ int SpaceToBatchCPUKernel::Run() {
   }
 }  // namespace mindspore::kernel
 
-kernel::LiteKernel *CpuSpaceToBatchFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                     const std::vector<lite::tensor::Tensor *> &outputs,
-                                                     OpParameter *param, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuSpaceToBatchFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                     const std::vector<lite::Tensor *> &outputs, OpParameter *param,
+                                                     const lite::Context *ctx, const kernel::KernelKey &desc,
                                                      const mindspore::lite::PrimitiveC *primitive) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "Input param is nullptr!";
@@ -155,8 +153,8 @@ kernel::LiteKernel *CpuSpaceToBatchFp32KernelCreator(const std::vector<lite::ten
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << param->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(param->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << param->name_
+                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(param->type_));
     return nullptr;
   }
   return kernel;

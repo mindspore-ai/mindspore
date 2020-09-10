@@ -25,39 +25,33 @@ class TestPowerFp32 : public mindspore::CommonTest {
   TestPowerFp32() {}
 };
 
-int PowerTestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
-                  float *a_ptr, float *b_ptr, std::vector<int> a_shape, std::vector<int> b_shape,
-                  std::vector<int> c_shape) {
-  auto in_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, a_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+int PowerTestInit(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_, float *a_ptr,
+                  float *b_ptr, std::vector<int> a_shape, std::vector<int> b_shape, std::vector<int> c_shape) {
+  auto in_t = new lite::Tensor(kNumberTypeFloat, a_shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
   in_t->MallocData();
-  memcpy(in_t->Data(), a_ptr, sizeof(float) * in_t->ElementsNum());
+  memcpy(in_t->MutableData(), a_ptr, sizeof(float) * in_t->ElementsNum());
   inputs_->push_back(in_t);
 
-  auto weight_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, b_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto weight_t = new lite::Tensor(kNumberTypeFloat, b_shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
   weight_t->MallocData();
-  memcpy(weight_t->Data(), b_ptr, sizeof(float) * weight_t->ElementsNum());
+  memcpy(weight_t->MutableData(), b_ptr, sizeof(float) * weight_t->ElementsNum());
   inputs_->push_back(weight_t);
 
-  auto out_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, c_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto out_t = new lite::Tensor(kNumberTypeFloat, c_shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
   return out_t->ElementsNum();
 }
 
-int PowerTestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
-                   float *a_ptr, std::vector<int> a_shape, std::vector<int> c_shape) {
-  auto in_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, a_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+int PowerTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_, float *a_ptr,
+                   std::vector<int> a_shape, std::vector<int> c_shape) {
+  auto in_t = new lite::Tensor(kNumberTypeFloat, a_shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
   in_t->MallocData();
-  memcpy(in_t->Data(), a_ptr, sizeof(float) * in_t->ElementsNum());
+  memcpy(in_t->MutableData(), a_ptr, sizeof(float) * in_t->ElementsNum());
   inputs_->push_back(in_t);
 
-  auto out_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, c_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto out_t = new lite::Tensor(kNumberTypeFloat, c_shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -65,8 +59,8 @@ int PowerTestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lit
 }
 
 TEST_F(TestPowerFp32, Simple) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   auto param = new PowerParameter();
   param->scale_ = 1;
   param->shift_ = 0;
@@ -83,16 +77,16 @@ TEST_F(TestPowerFp32, Simple) {
   op->Init();
   op->Run();
   float correct[] = {1, 64, 2187, 65536};
-  float *output = reinterpret_cast<float *>(outputs_[0]->Data());
-  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
+  float *output = reinterpret_cast<float *>(outputs_[0]->MutableData());
+  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
   delete op;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
 }
 
 TEST_F(TestPowerFp32, Broadcast) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   auto param = new PowerParameter();
   param->power_ = 2;
   param->scale_ = 1;
@@ -108,7 +102,7 @@ TEST_F(TestPowerFp32, Broadcast) {
   op->Init();
   op->Run();
   float correct[] = {1, 4, 9, 16};
-  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
+  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
   delete op;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;

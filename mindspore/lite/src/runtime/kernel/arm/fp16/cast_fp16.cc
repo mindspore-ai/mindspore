@@ -65,14 +65,14 @@ int CastFp16CPUKernel::DoCast(int thread_id) {
   }
 
   auto offset = thread_id * stride_;
-  auto output_data = out_tensors_.at(0)->Data();
+  auto output_data = out_tensors_.at(0)->MutableData();
   switch (input->data_type()) {
     case kNumberTypeFloat32:
-      Float32ToFloat16(reinterpret_cast<float *>(input->Data()) + offset,
+      Float32ToFloat16(reinterpret_cast<float *>(input->MutableData()) + offset,
                        reinterpret_cast<float16_t *>(output_data) + offset, data_num);
       break;
     case kNumberTypeFloat16:
-      Float16ToFloat32(reinterpret_cast<float16_t *>(input->Data()) + offset,
+      Float16ToFloat32(reinterpret_cast<float16_t *>(input->MutableData()) + offset,
                        reinterpret_cast<float *>(output_data) + offset, data_num);
       break;
     default:
@@ -94,10 +94,9 @@ int CastFp16CPUKernel::Run() {
   return ParallelLaunch(THREAD_POOL_DEFAULT, CastRun, this, op_parameter_->thread_num_);
 }
 
-kernel::LiteKernel *CpuCastFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuCastFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                             const lite::Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";

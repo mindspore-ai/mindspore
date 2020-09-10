@@ -26,8 +26,8 @@ namespace mindspore::kernel {
 
 class DepthwiseConv2dOpenCLKernel : public OpenCLKernel {
  public:
-  explicit DepthwiseConv2dOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                       const std::vector<lite::tensor::Tensor *> &outputs)
+  explicit DepthwiseConv2dOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                       const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs), packed_weight_(nullptr), bias_data_(nullptr), kernel_(nullptr) {}
 
   ~DepthwiseConv2dOpenCLKernel() override{};

@@ -26,11 +26,8 @@ class OnnxDropoutParser : public OnnxNodeParser {
  public:
   OnnxDropoutParser() : OnnxNodeParser("Dropout") {}
 
-  STATUS Parse(const onnx::GraphProto &onnx_graph,
-               const onnx::NodeProto &onnx_node,
-               schema::CNodeT *op) override;
+  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_DROPOUT_PARSER_H
-

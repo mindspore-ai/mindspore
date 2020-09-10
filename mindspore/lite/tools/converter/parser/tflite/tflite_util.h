@@ -40,17 +40,11 @@ std::string GetMSOpType(tflite::BuiltinOperator tfliteOpType);
 
 TypeId GetTfliteDataType(const tflite::TensorType &tflite_data_type);
 
-STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor,
-                       schema::PadMode pad_mode,
-                       int strideH, int strideW,
-                       int windowH, int windowW,
-                       std::vector<int> *params);
+STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, schema::PadMode pad_mode, int strideH,
+                       int strideW, int windowH, int windowW, std::vector<int> *params);
 
-void Split(const std::string &src_str,
-           std::vector<std::string> *dst_str,
-           const std::string &chr);
+void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);
 }  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_UTIL_H
-

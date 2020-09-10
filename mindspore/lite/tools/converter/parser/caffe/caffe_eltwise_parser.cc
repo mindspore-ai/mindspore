@@ -23,10 +23,8 @@ const float ELTWISE_SUM_COEFF_EPSILON = 1e-5;
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto,
-                                 const caffe::LayerParameter &weight,
-                                 schema::CNodeT *op,
-                                 std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                                 schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeEltwiseParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";

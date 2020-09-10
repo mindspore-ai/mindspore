@@ -27,8 +27,8 @@ namespace mindspore::kernel {
 
 class BatchNormOpenCLKernel : public OpenCLKernel {
  public:
-  explicit BatchNormOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                 const std::vector<lite::tensor::Tensor *> &outputs)
+  explicit BatchNormOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                 const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
 
   ~BatchNormOpenCLKernel() override{};

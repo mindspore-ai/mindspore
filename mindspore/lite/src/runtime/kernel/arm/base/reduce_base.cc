@@ -102,7 +102,7 @@ int ReduceBaseCPUKernel::Init() {
   if (in_tensors_.size() > 1) {
     auto axes_ptr = in_tensors_.at(1);
     num_axes_ = axes_ptr->ElementsNum();
-    memcpy(axes_, axes_ptr->Data(), axes_ptr->Size());
+    memcpy(axes_, axes_ptr->MutableData(), axes_ptr->Size());
   } else {
     num_axes_ = reduce_param->num_axes_;
     memcpy(axes_, reduce_param->axes_, sizeof(reduce_param->axes_));
@@ -122,10 +122,9 @@ int ReduceBaseCPUKernel::Init() {
 
 int ReduceBaseCPUKernel::ReSize() { return CheckParameters(); }
 
-kernel::LiteKernel *CpuReduceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuReduceFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Reduce);
@@ -152,10 +151,9 @@ kernel::LiteKernel *CpuReduceFp32KernelCreator(const std::vector<lite::tensor::T
   return kernel;
 }
 
-kernel::LiteKernel *CpuMeanFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuMeanFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                             const lite::Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Mean);
@@ -182,10 +180,9 @@ kernel::LiteKernel *CpuMeanFp32KernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-kernel::LiteKernel *CpuReduceInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuReduceInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Reduce);

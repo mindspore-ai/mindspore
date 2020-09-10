@@ -23,8 +23,8 @@
 namespace mindspore::kernel {
 class DepthToSpaceInt8CPUKernel : public DepthToSpaceBaseCPUKernel {
  public:
-  DepthToSpaceInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                            const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  DepthToSpaceInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                            const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                             const mindspore::lite::PrimitiveC *primitive)
       : DepthToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 

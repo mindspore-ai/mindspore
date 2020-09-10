@@ -36,15 +36,15 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   std::string input_path = "./test_data/operators/biasgradfp32_1_dy_10_28_28_7.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_dy({10, 28, 28, 7});
-  lite::tensor::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
+  lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.SetData(input_data);
 
-  std::vector<lite::tensor::Tensor *> inputs = {&dy_tensor};
+  std::vector<lite::Tensor *> inputs = {&dy_tensor};
   auto output_data = new float[7];
   std::vector<int> dim_dw = {7};
-  lite::tensor::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
+  lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
   dw_tensor.SetData(output_data);
-  std::vector<lite::tensor::Tensor *> outputs = {&dw_tensor};
+  std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_BiasGrad};
 
@@ -61,7 +61,7 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   std::string output_path = "./test_data/operators/biasgradfp32_1_db_7.bin";
   lite::CompareOutput(output_data, output_path);
 
-  delete [] input_data;
+  delete[] input_data;
   delete[] output_data;
   // delete bias_param;
   dy_tensor.SetData(nullptr);

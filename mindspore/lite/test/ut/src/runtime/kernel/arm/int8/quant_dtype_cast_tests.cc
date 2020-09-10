@@ -31,7 +31,7 @@ class QuantDTypeCastTestFp32 : public mindspore::CommonTest {
 };
 
 TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
-  const lite::tensor::QuantArg quant_arg{0.21176, 5};
+  const lite::QuantArg quant_arg{0.21176, 5};
   QuantDTypeCastParameter param;
   param.srcT = kNumberTypeInt8;
   param.dstT = kNumberTypeFloat32;
@@ -39,14 +39,14 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
 
   std::vector<int8_t> input = {10, 14, 29, 33, 52, 99, 19, 43, 90, 52, 19, 24, 57, 127, 76, 123};
   std::vector<int> in_shape = {1, 4, 4, 1};
-  lite::tensor::Tensor input_tensor;
+  lite::Tensor input_tensor;
   input_tensor.SetData(input.data());
   input_tensor.set_shape(in_shape);
   input_tensor.set_data_type(kNumberTypeInt8);
   input_tensor.SetFormat(schema::Format_NHWC);
 
   input_tensor.AddQuantParam(quant_arg);
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
   inputs_tensor.emplace_back(&input_tensor);
 
   const int out_size = 16;
@@ -54,12 +54,12 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
                           20.1172, 12.07032, 5.082240, 6.14104, 13.12912, 27.95232, 17.15256, 27.10528};
   std::vector<float> output(16);
   std::vector<int> out_shape = {1, 4, 4, 1};
-  lite::tensor::Tensor output_tensor;
+  lite::Tensor output_tensor;
   output_tensor.SetData(output.data());
   output_tensor.set_shape(out_shape);
   output_tensor.set_data_type(kNumberTypeFloat32);
   // output_tensor.SetFormat(schema::Format_NHWC);
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
   outputs_tensor.emplace_back(&output_tensor);
 
   lite::Context ctx;
@@ -80,32 +80,32 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
 }
 
 TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest2) {
-  const lite::tensor::QuantArg quant_arg = {0.3515625, -57};
+  const lite::QuantArg quant_arg = {0.3515625, -57};
   QuantDTypeCastParameter param;
   param.op_parameter_.type_ = schema::PrimitiveType_QuantDTypeCast;
   param.dstT = kNumberTypeInt8;
   param.srcT = kNumberTypeFloat32;
   std::vector<float> input = {1, 2, 5, 6, 10, -20, 3, 8, 18, 10, 3, 4, 11, 16, 15, 25};
   std::vector<int> in_shape = {1, 4, 4, 1};
-  lite::tensor::Tensor input_tensor;
+  lite::Tensor input_tensor;
   input_tensor.SetData(input.data());
   input_tensor.set_shape(in_shape);
   // input_tensor.SetFormat(schema::Format_NHWC);
   input_tensor.set_data_type(kNumberTypeFloat32);
   input_tensor.AddQuantParam(quant_arg);
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
   inputs_tensor.emplace_back(&input_tensor);
 
   const int out_size = 16;
   int8_t expect_out[16] = {-54, -51, -43, -40, -29, -114, -48, -34, -6, -29, -48, -46, -26, -11, -14, 14};
   std::vector<int8_t> output(16);
   std::vector<int> out_shape = {1, 4, 4, 1};
-  lite::tensor::Tensor output_tensor;
+  lite::Tensor output_tensor;
   output_tensor.SetData(output.data());
   output_tensor.set_shape(out_shape);
   output_tensor.SetFormat(schema::Format_NHWC);
   output_tensor.set_data_type(kNumberTypeInt8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
   outputs_tensor.emplace_back(&output_tensor);
 
   lite::Context ctx;

@@ -53,8 +53,7 @@ STATUS TfliteModelParser::CopyConstTensorData(const std::vector<std::unique_ptr<
   auto buffer_idx = tflite_tensor->buffer;
   if (!tflite_model_buffer[buffer_idx]->data.empty()) {
     tensor->data.resize(data_size);
-    if (memcpy_s(tensor->data.data(), tensor->data.size(),
-                 tflite_model_buffer[buffer_idx]->data.data(),
+    if (memcpy_s(tensor->data.data(), tensor->data.size(), tflite_model_buffer[buffer_idx]->data.data(),
                  tflite_model_buffer[buffer_idx]->data.size())) {
       MS_LOG(ERROR) << "memcpy tensor data failed";
       return RET_ERROR;
@@ -167,7 +166,7 @@ STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT>
 
     // set tensor attr
     if (isInput || isConst) {
-      tensor->nodeType = schema::NodeType_ValueNode;
+      tensor->nodeType = schema::NodeType::NodeType_ValueNode;
     } else {
       tensor->nodeType = schema::NodeType_Parameter;
     }
@@ -280,7 +279,7 @@ STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph)
           if (weight_tensor->dataType == TypeId::kNumberTypeUInt8) {
             auto status = TransFilterFormat<uint8_t>(weight_tensor.get(), kKHWC2CHWK);
             if (status != RET_OK) {
-              MS_LOG(ERROR) << "Trans depthwiseConv Filter Format failed.";
+              MS_LOG(ERROR) << "Trans depthwiseConv Filter schema::Format failed.";
               return RET_ERROR;
             }
           } else if (weight_tensor->dataType == kNumberTypeFloat32 || weight_tensor->dataType == kNumberTypeFloat) {
@@ -293,7 +292,7 @@ STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph)
             MS_LOG(ERROR) << "The dataType of weight tensor is unsupported.";
             return RET_ERROR;
           }
-          weight_tensor->format = schema::Format_CHWK;
+          weight_tensor->format = schema::Format::Format_CHWK;
         }
       }
     }

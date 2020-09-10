@@ -96,10 +96,9 @@ bool KernelRegistry::Merge(const std::unordered_map<KernelKey, KernelCreator> &n
 
 const kernel::KernelCreator *KernelRegistry::GetCreatorArrays() { return creator_arrays_; }
 
-kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<tensor::Tensor *> &in_tensors,
-                                              const std::vector<tensor::Tensor *> &out_tensors,
-                                              const PrimitiveC *primitive, const Context *ctx,
-                                              const kernel::KernelKey &key) {
+kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors,
+                                              const std::vector<Tensor *> &out_tensors, const PrimitiveC *primitive,
+                                              const Context *ctx, const kernel::KernelKey &key) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != ctx);
   auto parameter = kernel::PopulateParameter(primitive);

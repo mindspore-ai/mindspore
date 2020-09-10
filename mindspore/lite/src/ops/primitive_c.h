@@ -28,7 +28,7 @@
 #include "schema/model_generated.h"
 #endif
 
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 
@@ -42,6 +42,7 @@ constexpr uint32_t kDimension_4d = 4;
 const std::set<int> kSupportDataType = {kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat16};
 
 #ifdef PRIMITIVE_WRITEABLE
+using TensorPtr = std::shared_ptr<mindspore::tensor::Tensor>;
 constexpr int kAnfPopulaterOne = 1;
 constexpr int kAnfPopulaterTwo = 2;
 constexpr int kAnfPopulaterThree = 3;
@@ -102,20 +103,18 @@ class PrimitiveC : public mindspore::Primitive {
 
   schema::QuantType GetQuantType() const;
 
-  virtual int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_);
+  virtual int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_);
 
   bool GetInferFlag() const;
 
   void SetInferFlag(bool flag);
 
-  static PrimitiveC *UnPackFromSchemaPrimitive(mindspore::schema::Primitive *primitive) {
-    return UnPackFromSchemaPrimitiveT(primitive->UnPack());
-  }
+  static PrimitiveC *Create(mindspore::schema::Primitive *primitive) { return Create(primitive->UnPack()); }
 
-  static PrimitiveC *UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT *primitive);
+  static PrimitiveC *Create(mindspore::schema::PrimitiveT *primitive);
 
-  static std::shared_ptr<PrimitiveC> UnPackFromPrimitive(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
-                                                         const schema::QuantType &quantType);
+  static std::shared_ptr<PrimitiveC> Create(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
+                                            const schema::QuantType &quantType);
   void PopulaterQuantParam(const Primitive &prim, std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
                            std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam);
   void CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax);
@@ -143,13 +142,13 @@ class PrimitiveC {
 
   virtual ~PrimitiveC() { free(this->primitive_buf_); }
 
-  static PrimitiveC *UnPackFromSchemaPrimitive(const schema::Primitive *primitive);
+  static PrimitiveC *Create(const schema::Primitive *primitive);
 
   bool GetInferFlag() const;
 
   void SetInferFlag(bool flag);
 
-  virtual int InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs);
+  virtual int InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs);
 
   int Type() const;
 

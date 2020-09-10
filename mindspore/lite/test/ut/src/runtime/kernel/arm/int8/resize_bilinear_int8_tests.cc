@@ -17,14 +17,14 @@
 #include <iostream>
 #include "schema/inner/model_generated.h"
 #include "include/context.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "nnacl/int8/resize.h"
 
 namespace mindspore {
-using mindspore::lite::tensor::QuantArg;
-using mindspore::lite::tensor::Tensor;
+using mindspore::lite::QuantArg;
+using mindspore::lite::Tensor;
 
 class TestResizeBilinearInt8 : public mindspore::CommonTest {
  public:
@@ -33,11 +33,11 @@ class TestResizeBilinearInt8 : public mindspore::CommonTest {
   void Prepare(const std::vector<int> &in_shape, const std::vector<int> &out_shape, int8_t *input_data,
                int8_t *output_data, const QuantArg quant_in, const QuantArg quant_out, const bool align_corners,
                const int thread_num);
-  std::vector<lite::tensor::Tensor *> inputs;
-  std::vector<lite::tensor::Tensor *> outputs;
+  std::vector<lite::Tensor *> inputs;
+  std::vector<lite::Tensor *> outputs;
   ResizeParameter param_ = {};
-  lite::tensor::Tensor in_tensor;
-  lite::tensor::Tensor out_tensor;
+  lite::Tensor in_tensor;
+  lite::Tensor out_tensor;
 
   kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Resize};
   kernel::KernelCreator creator_ = nullptr;
@@ -84,8 +84,8 @@ TEST_F(TestResizeBilinearInt8, Bilinear0) {
   int8_t output_data[16] = {0};
   std::vector<int> in_shape = {1, 2, 2, 1};
   std::vector<int> out_shape = {1, 4, 4, 1};
-  const lite::tensor::QuantArg quant_in = {0.005f, 0};
-  const lite::tensor::QuantArg quant_out = {0.008f, 0};
+  const lite::QuantArg quant_in = {0.005f, 0};
+  const lite::QuantArg quant_out = {0.008f, 0};
   bool align_corners = false;
   int thread_num = 1;
   int8_t expect[16] = {0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 2, 2, 2};
@@ -103,8 +103,8 @@ TEST_F(TestResizeBilinearInt8, Bilinear1) {
   int8_t input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
                          20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39};
   int8_t output_data[160] = {0};
-  const lite::tensor::QuantArg quant_in = {0.005f, 0};
-  const lite::tensor::QuantArg quant_out = {0.008f, 0};
+  const lite::QuantArg quant_in = {0.005f, 0};
+  const lite::QuantArg quant_out = {0.008f, 0};
   int thread_num = 1;
   bool align_corners = false;
   int8_t expect[160] = {0,  1,  1,  2,  2,  2,  2,  3,  3,  4,  3,  4,  4,  5,  6,  3,  4,  4,  5,  6,  3,  4,  4,
@@ -129,8 +129,8 @@ TEST_F(TestResizeBilinearInt8, Bilinear2) {
                          20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39};
   int8_t output_data[160] = {0};
 
-  const lite::tensor::QuantArg quant_in = {0.005f, 0};
-  const lite::tensor::QuantArg quant_out = {0.008f, 0};
+  const lite::QuantArg quant_in = {0.005f, 0};
+  const lite::QuantArg quant_out = {0.008f, 0};
   int thread_num = 2;
   bool align_corners = true;
   int8_t expect[160] = {0,  1,  1,  2,  2,  1,  2,  2,  3,  4,  2,  3,  3,  4,  5,  3,  4,  4,  5,  6,  2,  3,  3,
@@ -155,8 +155,8 @@ TEST_F(TestResizeBilinearInt8, Bilinear3) {
                          20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39};
   int8_t output_data[160] = {0};
 
-  const lite::tensor::QuantArg quant_in = {0.005f, 2};
-  const lite::tensor::QuantArg quant_out = {0.005f, 2};
+  const lite::QuantArg quant_in = {0.005f, 2};
+  const lite::QuantArg quant_out = {0.005f, 2};
   int thread_num = 2;
   bool align_corners = true;
   int8_t expect[160] = {0,  1,  2,  3,  4,  2,  3,  4,  5,  6,  3,  4,  5,  6,  7,  5,  6,  7,  8,  9,  3,  4,  5,

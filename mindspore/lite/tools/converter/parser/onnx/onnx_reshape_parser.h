@@ -26,11 +26,8 @@ class OnnxReshapeParser : public OnnxNodeParser {
  public:
   OnnxReshapeParser() : OnnxNodeParser("Reshape") {}
 
-  STATUS Parse(const onnx::GraphProto &onnx_graph,
-               const onnx::NodeProto &onnx_node,
-               schema::CNodeT *op) override;
+  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_RESHAPE_PARSER_H
-

@@ -24,11 +24,11 @@
 namespace mindspore::kernel {
 class ConvolutionTrainCPUKernel : public LiteKernel {
  public:
-  explicit ConvolutionTrainCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                          const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                                          const lite::PrimitiveC *primitive)
+  explicit ConvolutionTrainCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                     const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                                     const lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionTrainCPUKernel() override { delete [] workspace; }
+  ~ConvolutionTrainCPUKernel() override { delete[] workspace; }
 
   int Init() override;
   int ReSize() override;
@@ -38,10 +38,10 @@ class ConvolutionTrainCPUKernel : public LiteKernel {
   float *workspace;
 };
 
-kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc, const lite::PrimitiveC *primitive);
+kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                  const lite::PrimitiveC *primitive);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_CONVOLUTION_H_

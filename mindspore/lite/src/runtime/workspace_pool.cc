@@ -152,4 +152,3 @@ WorkspacePool::~WorkspacePool() {
 }
 }  // namespace predict
 }  // namespace mindspore
-

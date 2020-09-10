@@ -40,8 +40,8 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
     auto mean_fp16 = context_->allocator->Malloc(mean->ElementsNum() * sizeof(float16_t));
     auto variance_fp16 = context_->allocator->Malloc(variance->ElementsNum() * sizeof(float16_t));
     auto output_fp16 = context_->allocator->Malloc(output->ElementsNum() * sizeof(float16_t));
-    if (input_fp16 == nullptr || scale_fp16 == nullptr || offset_fp16 == nullptr ||
-        mean_fp16 == nullptr || variance_fp16 == nullptr || output_fp16 == nullptr) {
+    if (input_fp16 == nullptr || scale_fp16 == nullptr || offset_fp16 == nullptr || mean_fp16 == nullptr ||
+        variance_fp16 == nullptr || output_fp16 == nullptr) {
       context_->allocator->Free(input_fp16);
       context_->allocator->Free(scale_fp16);
       context_->allocator->Free(offset_fp16);
@@ -49,19 +49,18 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
       context_->allocator->Free(variance_fp16);
       context_->allocator->Free(output_fp16);
     }
-    Float32ToFloat16(reinterpret_cast<float *>(input->Data()),
-                     reinterpret_cast<float16_t *>(input_fp16), input->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(scale->Data()),
-                     reinterpret_cast<float16_t *>(scale_fp16), scale->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(offset->Data()),
-                     reinterpret_cast<float16_t *>(offset_fp16), offset->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(mean->Data()),
-                     reinterpret_cast<float16_t *>(mean_fp16), mean->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(variance->Data()),
-                     reinterpret_cast<float16_t *>(variance_fp16), variance->ElementsNum());
+    Float32ToFloat16(reinterpret_cast<float *>(input->MutableData()), reinterpret_cast<float16_t *>(input_fp16),
+                     input->ElementsNum());
+    Float32ToFloat16(reinterpret_cast<float *>(scale->MutableData()), reinterpret_cast<float16_t *>(scale_fp16),
+                     scale->ElementsNum());
+    Float32ToFloat16(reinterpret_cast<float *>(offset->MutableData()), reinterpret_cast<float16_t *>(offset_fp16),
+                     offset->ElementsNum());
+    Float32ToFloat16(reinterpret_cast<float *>(mean->MutableData()), reinterpret_cast<float16_t *>(mean_fp16),
+                     mean->ElementsNum());
+    Float32ToFloat16(reinterpret_cast<float *>(variance->MutableData()), reinterpret_cast<float16_t *>(variance_fp16),
+                     variance->ElementsNum());
 
-    FusedBatchNormFp16(input_fp16, scale_fp16, offset_fp16, mean_fp16, variance_fp16, param, task_id,
-                       output_fp16);
+    FusedBatchNormFp16(input_fp16, scale_fp16, offset_fp16, mean_fp16, variance_fp16, param, task_id, output_fp16);
 
     Float16ToFloat32(reinterpret_cast<float16_t *>(output_fp16), reinterpret_cast<float *>(output),
                      output->ElementsNum());
@@ -73,13 +72,13 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
     context_->allocator->Free(output_fp16);
     return mindspore::lite::RET_OK;
   }
-  FusedBatchNormFp16(in_tensors_.at(0)->Data(), scale_, offset_, mean_, variance_, param, task_id,
-                     out_tensors_.at(0)->Data());
+  FusedBatchNormFp16(in_tensors_.at(0)->MutableData(), scale_, offset_, mean_, variance_, param, task_id,
+                     out_tensors_.at(0)->MutableData());
   return mindspore::lite::RET_OK;
 }
 
-kernel::LiteKernel *CpuFusedBatchnormFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuFusedBatchnormFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *op_parameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {

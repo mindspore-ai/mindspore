@@ -25,23 +25,19 @@ class TestROIPoolingFp32 : public mindspore::CommonTest {
   TestROIPoolingFp32() {}
 };
 
-int ROIPoolingTestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
-                       float *a_ptr, float *b_ptr, std::vector<int> a_shape, std::vector<int> b_shape,
-                       std::vector<int> c_shape) {
-  auto in_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, a_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+int ROIPoolingTestInit(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_, float *a_ptr,
+                       float *b_ptr, std::vector<int> a_shape, std::vector<int> b_shape, std::vector<int> c_shape) {
+  auto in_t = new lite::Tensor(kNumberTypeFloat, a_shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
   in_t->MallocData();
-  memcpy(in_t->Data(), a_ptr, sizeof(float) * in_t->ElementsNum());
+  memcpy(in_t->MutableData(), a_ptr, sizeof(float) * in_t->ElementsNum());
   inputs_->push_back(in_t);
 
-  auto roi_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, b_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto roi_t = new lite::Tensor(kNumberTypeFloat, b_shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
   roi_t->MallocData();
-  memcpy(roi_t->Data(), b_ptr, sizeof(float) * roi_t->ElementsNum());
+  memcpy(roi_t->MutableData(), b_ptr, sizeof(float) * roi_t->ElementsNum());
   inputs_->push_back(roi_t);
 
-  auto out_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, c_shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto out_t = new lite::Tensor(kNumberTypeFloat, c_shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -49,8 +45,8 @@ int ROIPoolingTestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector
 }
 
 TEST_F(TestROIPoolingFp32, Simple) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   auto param = new ROIPoolingParameter();
   param->scale_ = 1;
   param->pooledW_ = 2;
@@ -69,10 +65,10 @@ TEST_F(TestROIPoolingFp32, Simple) {
   op->Init();
   op->Run();
   float correct[] = {25, 31, 34, 35, 25, 31, 34, 35};
-  float *output = reinterpret_cast<float *>(outputs_[0]->Data());
+  float *output = reinterpret_cast<float *>(outputs_[0]->MutableData());
   for (int i = 0; i < 8; ++i) printf("%f ", output[i]);
   printf("\n");
-  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
+  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
   delete op;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;

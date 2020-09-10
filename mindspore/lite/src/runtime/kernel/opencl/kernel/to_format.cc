@@ -37,9 +37,10 @@ int ToFormatOpenCLKernel::Init() {
   auto parameter = reinterpret_cast<OpenCLToFormatParameter *>(op_parameter_);
   out_mem_type_ = parameter->out_mem_type;
   std::string program_name = "to_format";
-  std::map<schema::Format, std::string> format_str{{schema::Format_NCHW, "NCHW"},     {schema::Format_NHWC, "NHWC"},
-                                                   {schema::Format_NC4HW4, "NC4HW4"}, {schema::Format_NC4, "NHWC4"},
-                                                   {schema::Format_NC, "NHWC"},       {schema::Format_NHWC4, "NHWC4"}};
+  std::map<schema::Format, std::string> format_str{
+    {schema::Format::Format_NCHW, "NCHW"},     {schema::Format::Format_NHWC, "NHWC"},
+    {schema::Format::Format_NC4HW4, "NC4HW4"}, {schema::Format::Format_NC4, "NHWC4"},
+    {schema::Format::Format_NC, "NHWC"},       {schema::Format::Format_NHWC4, "NHWC4"}};
   std::string kernel_name =
     "to_format_" + format_str[in_tensors_[0]->GetFormat()] + "_to_" + format_str[out_tensors_[0]->GetFormat()];
   std::map<TypeId, std::string> dtype_str{
@@ -75,18 +76,20 @@ int ToFormatOpenCLKernel::InitNHWCShape() {
     nhwc_shape_ = {n, h, w, c};
     return RET_OK;
   }
-  if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4 || out_tensors_[0]->GetFormat() == schema::Format_NHWC4 ||
-      out_tensors_[0]->GetFormat() == schema::Format_NHWC) {
+  if (out_tensors_[0]->GetFormat() == schema::Format::Format_NC4HW4 ||
+      out_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4 ||
+      out_tensors_[0]->GetFormat() == schema::Format::Format_NHWC) {
     n = shapex[0];
     h = shapex[1];
     w = shapex[2];
     c = shapex[3];
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NCHW) {
+  } else if (out_tensors_[0]->GetFormat() == schema::Format::Format_NCHW) {
     n = shapex[0];
     h = shapex[2];
     w = shapex[3];
     c = shapex[1];
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4 || out_tensors_[0]->GetFormat() == schema::Format_NC) {
+  } else if (out_tensors_[0]->GetFormat() == schema::Format::Format_NC4 ||
+             out_tensors_[0]->GetFormat() == schema::Format::Format_NC) {
     n = shapex[0];
     h = 1;
     w = 1;
@@ -115,19 +118,19 @@ int ToFormatOpenCLKernel::GetLocalSize(size_t idx, const std::vector<size_t> &gl
 
 int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
+  if (out_tensors_[0]->GetFormat() == schema::Format::Format_NC4HW4) {
     int c = nhwc_shape_[3];
     int h = nhwc_shape_[1];
     int w = nhwc_shape_[2];
     im_dst_y = nhwc_shape_[0] * h * UP_DIV(c, C4NUM);
     im_dst_x = w;
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+  } else if (out_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
     int h = nhwc_shape_[0] * nhwc_shape_[1];
     int w = nhwc_shape_[2];
     int c = nhwc_shape_[3];
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = h;
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
+  } else if (out_tensors_[0]->GetFormat() == schema::Format::Format_NC4) {
     int c = nhwc_shape_[3];
     im_dst_x = UP_DIV(c, C4NUM);
     im_dst_y = 1;
@@ -156,18 +159,17 @@ int ToFormatOpenCLKernel::Run() {
   cl_int4 gsize{(cl_int)global[0], (cl_int)global[1], (cl_int)global[2], 1};
   auto src_mem_type = (out_mem_type_ == OpenCLMemType::IMG) ? lite::opencl::MemType::BUF : lite::opencl::MemType::IMG;
   auto dst_mem_type = (out_mem_type_ == OpenCLMemType::IMG) ? lite::opencl::MemType::IMG : lite::opencl::MemType::BUF;
-  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->Data(), src_mem_type);
-  ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->Data(), dst_mem_type);
+  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->MutableData(), src_mem_type);
+  ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->MutableData(), dst_mem_type);
   ocl_runtime->SetKernelArg(kernel_, 2, gsize);
   ocl_runtime->SetKernelArg(kernel_, 3, shape);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLToFormatKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *opParameter, const lite::Context *ctx,
-                                                const kernel::KernelKey &desc,
+kernel::LiteKernel *OpenCLToFormatKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                const lite::Context *ctx, const kernel::KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) ToFormatOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {

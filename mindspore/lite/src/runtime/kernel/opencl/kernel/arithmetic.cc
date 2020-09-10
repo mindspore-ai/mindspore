@@ -48,11 +48,11 @@ std::vector<size_t> ArithmeticOpenCLKernel::InitGlobalSize() const {
 
 void ArithmeticOpenCLKernel::Image2dGetWorkGroupSize() {
   local_size_ = {16, 16};
-  if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+  if (out_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
     size_t H = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
     size_t W = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
     global_size_ = {W, H};
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
+  } else if (out_tensors_[0]->GetFormat() == schema::Format::Format_NC4) {
     size_t H = out_tensors_[0]->Batch();
     size_t W = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
     global_size_ = {W, H};
@@ -68,10 +68,10 @@ void ArithmeticOpenCLKernel::BufferGetWorkGroupSize() {
 
 int ArithmeticOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+  if (out_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
     im_dst_x = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
     im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
+  } else if (out_tensors_[0]->GetFormat() == schema::Format::Format_NC4) {
     im_dst_y = out_tensors_[0]->Batch();
     im_dst_x = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   } else {
@@ -92,11 +92,12 @@ int ArithmeticOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_si
 int ArithmeticOpenCLKernel::InitBuffer() {
   const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
   if (!arithmetic_parameter->broadcasting_) {
-    if (in_tensors_[1]->TensorType() == schema::NodeType_ValueNode && in_tensors_[1]->Data() != nullptr) {
+    if (in_tensors_[1]->category() == lite::Tensor::Category::CONST && in_tensors_[1]->MutableData() != nullptr) {
       auto allocatdor = runtime_->GetAllocator();
       std::vector<size_t> img_size;
       GetImageSize(0, &img_size);
-      weight_ptr_ = allocatdor->CreateImageFromHost(in_tensors_[1]->Data(), in_tensors_[1]->ElementsNum(), img_size);
+      weight_ptr_ =
+        allocatdor->CreateImageFromHost(in_tensors_[1]->MutableData(), in_tensors_[1]->ElementsNum(), img_size);
       return RET_OK;
     }
   }
@@ -107,8 +108,8 @@ int ArithmeticOpenCLKernel::Init() {
   std::string kernel_name;
 
   const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
-  if (arithmetic_parameter->broadcasting_ && in_tensors_[1]->TensorType() == schema::NodeType_ValueNode &&
-      in_tensors_[1]->Data() != nullptr) {
+  if (arithmetic_parameter->broadcasting_ && in_tensors_[1]->category() == lite::Tensor::Category::CONST &&
+      in_tensors_[1]->MutableData() != nullptr) {
     element_flag_ = false;
     kernel_name = "BoardcastArith";
   } else {
@@ -151,14 +152,14 @@ int ArithmeticOpenCLKernel::Init() {
     return error_code;
   }
 
-  auto format = schema::Format_NHWC4;
+  auto format = schema::Format::Format_NHWC4;
   if (arithmetic_parameter->ndim_ == 2) {
-    format = schema::Format_NC4;
+    format = schema::Format::Format_NC4;
   }
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
   in_tensors_[0]->SetFormat(format);
-  if (element_flag_ && in_tensors_[1]->TensorType() != schema::NodeType_ValueNode) {
+  if (element_flag_ && in_tensors_[1]->category() != lite::Tensor::Category::CONST) {
     in_tensors_[1]->SetFormat(format);
   }
   out_tensors_[0]->SetFormat(format);
@@ -171,12 +172,12 @@ int ArithmeticOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
 
   int arg_idx = 0;
-  runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
+  runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
   if (element_flag_) {
-    void *weight = weight_ptr_ == nullptr ? in_tensors_[1]->Data() : weight_ptr_;
+    void *weight = weight_ptr_ == nullptr ? in_tensors_[1]->MutableData() : weight_ptr_;
     runtime_->SetKernelArg(kernel_, arg_idx++, weight);
   } else {
-    float value = static_cast<float *>(in_tensors_[1]->Data())[0];
+    float value = static_cast<float *>(in_tensors_[1]->MutableData())[0];
     switch (op_parameter_->type_) {
       case PrimitiveType_Mul:
         weight_ = value;
@@ -197,14 +198,14 @@ int ArithmeticOpenCLKernel::Run() {
     runtime_->SetKernelArg(kernel_, arg_idx++, weight_);
     runtime_->SetKernelArg(kernel_, arg_idx++, bias_);
   }
-  runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+  runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
 
   int H = 0;
   int W = 0;
-  if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+  if (out_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
     H = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
     W = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
+  } else if (out_tensors_[0]->GetFormat() == schema::Format::Format_NC4) {
     H = out_tensors_[0]->Batch();
     W = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   } else {
@@ -217,15 +218,14 @@ int ArithmeticOpenCLKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLBiasAddKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc, const lite::PrimitiveC *primitive);
+kernel::LiteKernel *OpenCLBiasAddKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
+                                               const lite::PrimitiveC *primitive);
 
-kernel::LiteKernel *OpenCLArithmeticKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *OpenCLArithmeticKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(opParameter);
   if (arithmetic_parameter->broadcasting_) {

@@ -128,8 +128,8 @@ int PadInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  in_data_ = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
-  out_data_ = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
+  in_data_ = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
+  out_data_ = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
 
   memset(out_data_, pad_param_->pad_quant_arg_.constant_value_[0], out_tensors_[0]->ElementsNum() * sizeof(int8_t));
   int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, PadInt8Impl, this, context_->thread_num_);

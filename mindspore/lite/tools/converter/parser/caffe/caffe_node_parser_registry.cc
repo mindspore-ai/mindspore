@@ -43,4 +43,3 @@ CaffeNodeParser *CaffeNodeParserRegistry::GetNodeParser(const std::string &name)
 }
 }  // namespace lite
 }  // namespace mindspore
-

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #include "mindspore/lite/tools/converter/quantizer/quant_cast.h"
 #include <memory>
 #include <vector>
@@ -54,7 +53,7 @@ STATUS QuantCast::Run(FuncGraphPtr graph) {
     if (first) {
       if (curnode_quant_type == schema::QuantType_PostTraining && inputDataDType == kNumberTypeFloat32) {
         auto value_node =
-            NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8, primitive_c->GetInputQuantParams().front());
+          NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8, primitive_c->GetInputQuantParams().front());
         std::vector<AnfNodePtr> op_inputs = {value_node, cnode->input(1)};
         auto quant_cast_cnode = graph->NewCNode(op_inputs);
         quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_quant_cast");
@@ -84,10 +83,10 @@ STATUS QuantCast::Run(FuncGraphPtr graph) {
         ValueNodePtr value_node = nullptr;
         if (curnode_quant_type == schema::QuantType_PostTraining &&
             input_cnode_quant_type == schema::QuantType_QUANT_NONE) {
-          value_node = NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8,
-                                             primitive_c->GetInputQuantParams().front());
+          value_node =
+            NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8, primitive_c->GetInputQuantParams().front());
         } else if (curnode_quant_type == schema::QuantType_QUANT_NONE &&
-            input_cnode_quant_type == schema::QuantType_PostTraining) {
+                   input_cnode_quant_type == schema::QuantType_PostTraining) {
           value_node = NewQuantCastValueNode(kNumberTypeInt8, kNumberTypeFloat32,
                                              input_cnode_primitive_c->GetInputQuantParams().front());
         }

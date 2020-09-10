@@ -80,4 +80,3 @@ STATUS CaffeInspector::SetTopsAndBottoms() {
 }
 }  // namespace lite
 }  // namespace mindspore
-

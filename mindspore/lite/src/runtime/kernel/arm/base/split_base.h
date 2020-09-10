@@ -26,8 +26,8 @@ using mindspore::lite::Context;
 namespace mindspore::kernel {
 class SplitBaseCPUKernel : public LiteKernel {
  public:
-  SplitBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+  SplitBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                     const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     param = reinterpret_cast<SplitParameter *>(op_parameter_);

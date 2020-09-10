@@ -76,7 +76,7 @@ int FullconnectionFP16CPUKernel::ReSize() {
   }
   memset(b_pack_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(float16_t));
 
-  InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_pack_ptr_);
+  InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->MutableData()), b_pack_ptr_);
   if (in_tensors_.size() == 3) {
     bias_ptr_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(fc_param_->col_8_ * sizeof(float16_t)));
     if (bias_ptr_ == nullptr) {
@@ -84,7 +84,7 @@ int FullconnectionFP16CPUKernel::ReSize() {
       return RET_MEMORY_FAILED;
     }
     memset(bias_ptr_, 0, fc_param_->col_8_ * sizeof(float16_t));
-    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->Data()), bias_ptr_, fc_param_->col_);
+    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->MutableData()), bias_ptr_, fc_param_->col_);
   }
 
   if (out_tensors_[0]->data_type() == kNumberTypeFloat32) {
@@ -147,24 +147,24 @@ int FullconnectionFP16CPUKernel::Run() {
   if (out_tensor->data_type() == kNumberTypeFloat32) {
     output_ptr_ = output_fp16_;
   } else {
-    output_ptr_ = reinterpret_cast<float16_t *>(out_tensor->Data());
+    output_ptr_ = reinterpret_cast<float16_t *>(out_tensor->MutableData());
   }
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->Data()), a_pack_ptr_);
+    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->MutableData()), a_pack_ptr_);
   } else {
-    InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->Data()), a_pack_ptr_);
+    InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->MutableData()), a_pack_ptr_);
   }
   ParallelLaunch(THREAD_POOL_DEFAULT, FcFP16Run, this, thread_count_);
   if (out_tensor->data_type() == kNumberTypeFloat32) {
     auto size = out_tensor->ElementsNum();
-    auto out_tensor_data = reinterpret_cast<float *>(out_tensor->Data());
+    auto out_tensor_data = reinterpret_cast<float *>(out_tensor->MutableData());
     Float16ToFloat32(output_fp16_, out_tensor_data, size);
   }
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuFullConnectionFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuFullConnectionFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {

@@ -44,7 +44,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // init weight: int8 -> int16
   // o, h, w, i -> o/8, h, w, i, 8; o == group, i == 1
   auto weight_tensor = in_tensors_[kWeightIndex];
-  auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->Data());
+  auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
   int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
   int pack_weight_size = C4NUM * OC4 * weight_tensor->Height() * weight_tensor->Width();
   packed_weight_ = reinterpret_cast<int16_t *>(malloc(pack_weight_size * sizeof(int16_t)));
@@ -63,7 +63,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, C4NUM * OC4 * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
-    auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->Data());
+    auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->MutableData());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(int32_t));
   }
   conv_param_->thread_num_ = MSMIN(thread_count_, OC4);
@@ -187,10 +187,10 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
 
   // pack input, assume input format: NHWC -> NHWC4
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto input_addr = reinterpret_cast<int8_t *>(input_tensor->Data());
+  auto input_addr = reinterpret_cast<int8_t *>(input_tensor->MutableData());
   PackDepthwiseInt8Input(input_addr, packed_input_, conv_param_);
 
-  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->MutableData());
   if (!need_align_) {
     memset(output_addr, 0, out_tensors_.at(kOutputIndex)->ElementsNum() * sizeof(int8_t));
     packed_output_ = output_addr;
@@ -212,10 +212,9 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuDeconvDwInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuDeconvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                 const lite::Context *ctx, const kernel::KernelKey &desc,
                                                  const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeDepthwiseConv2D);

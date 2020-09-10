@@ -21,4 +21,3 @@ int main(int argc, const char **argv) {
   MS_LOG(INFO) << mindspore::lite::Version();
   return mindspore::lite::RunBenchmark(argc, argv);
 }
-

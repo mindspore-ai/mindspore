@@ -319,11 +319,11 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test8_8) {
   CompareOutputData(out, no, 64, 0.0001);
 }
 
-int DeConvTestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
+int DeConvTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                     ConvParameter *conv_param, float **correct) {
   std::vector<int> in_dims_nhwc = {1, 5, 7, 2};
-  lite::tensor::Tensor *in_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, in_dims_nhwc, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  lite::Tensor *in_t =
+    new lite::Tensor(kNumberTypeFloat, in_dims_nhwc, schema::Format_NHWC, lite::Tensor::Category::CONST);
   in_t->MallocData();
   float in_nchw[] = {
     0.39451003, 0.15045597,  0.5367726,   0.62690735, 0.113554195, 0.5402554,  0.5522764,  0.044319753, 0.25721782,
@@ -334,12 +334,12 @@ int DeConvTestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
     0.2642501,  0.29840338,  0.38820496,  0.37829784, 0.105839334, 0.07713295, 0.45629853, 0.9290373,   0.56323594,
     0.59976774, 0.48325357,  0.102543674, 0.35449505, 0.3158472,   0.02927611, 0.44739273, 0.0516185,   0.12340133,
     0.13908496, 0.54970616,  0.74672216,  0.673308,   0.6400629,   0.26790652, 0.98673576}; /* nhwc */
-  PackNCHWToNHWCFp32(in_nchw, in_t->Data(), in_t->Batch(), in_t->Width() * in_t->Height(), in_t->Channel());
+  PackNCHWToNHWCFp32(in_nchw, in_t->MutableData(), in_t->Batch(), in_t->Width() * in_t->Height(), in_t->Channel());
   inputs_->push_back(in_t);
 
   std::vector<int> weight_dims_nhwc = {2, 3, 3, 6};
-  lite::tensor::Tensor *weight_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, weight_dims_nhwc, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  lite::Tensor *weight_t =
+    new lite::Tensor(kNumberTypeFloat, weight_dims_nhwc, schema::Format_NHWC, lite::Tensor::Category::CONST);
   weight_t->MallocData();
   float weight_nchw[] = {
     0.061163727,  -0.06261389,  0.07708351,  -0.019354159, -0.3859104,  -0.082844816, -0.21268463,  -0.15746808,
@@ -356,20 +356,19 @@ int DeConvTestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
     -0.2570391,   -0.013280135, 0.24033138,  -0.08921211,  0.2722501,   0.24916205,   -0.20001566,  -0.11610521,
     0.06060236,   0.10848369,   -0.4512424,  0.023834296,  0.1643943,   -0.25290534,  0.066953085,  -0.11685201,
     -0.4159784,   0.37839416,   -0.11141268, -0.15986018}; /* nhwc */
-  PackNCHWToNHWCFp32(weight_nchw, weight_t->Data(), weight_t->Batch(), weight_t->Width() * weight_t->Height(),
+  PackNCHWToNHWCFp32(weight_nchw, weight_t->MutableData(), weight_t->Batch(), weight_t->Width() * weight_t->Height(),
                      weight_t->Channel());
   inputs_->push_back(weight_t);
 
-  lite::tensor::Tensor *bias_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, {6}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  lite::Tensor *bias_t = new lite::Tensor(kNumberTypeFloat, {6}, schema::Format_NHWC, lite::Tensor::Category::CONST);
   bias_t->MallocData();
   float bias[] = {-0.19064677, -0.0034778118, 0.63741624, -1.0311537, -1.0288948, 0.71384084};
-  memcpy(bias_t->Data(), bias, sizeof(float) * 6);
+  memcpy(bias_t->MutableData(), bias, sizeof(float) * 6);
   inputs_->push_back(bias_t);
 
   std::vector<int> output_nhwc_dims = {1, 9, 13, 6};
-  lite::tensor::Tensor *out_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, output_nhwc_dims, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  lite::Tensor *out_t =
+    new lite::Tensor(kNumberTypeFloat, output_nhwc_dims, schema::Format_NHWC, lite::Tensor::Category::CONST);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -473,8 +472,8 @@ int DeConvTestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
 }
 
 TEST_F(TestDeConvolutionFp32, DeConvTest1) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   ConvParameter *deconv_param = new ConvParameter();
   lite::Context *ctx = new lite::Context();
   ctx->thread_num_ = 1;
@@ -486,7 +485,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest1) {
   deconv->Init();
   deconv->Run();
 
-  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
+  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
   delete deconv_param;
   delete deconv;
   for (auto t : inputs_) delete t;
@@ -494,19 +493,17 @@ TEST_F(TestDeConvolutionFp32, DeConvTest1) {
   free(correct);
 }
 
-int DeConvTestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
+int DeConvTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                     ConvParameter *conv_param, float **correct) {
-  auto *in_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, {1, 4, 2, 3}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto *in_t = new lite::Tensor(kNumberTypeFloat, {1, 4, 2, 3}, schema::Format_NHWC, lite::Tensor::Category::CONST);
   in_t->MallocData();
   float in[] = {7.7566547,   19.250782, 17.923292,   13.584222, 3.3293908,  9.734102,   18.83455,  -1.5142503,
                 -0.29382008, 18.686155, 0.087307654, 4.2010098, -2.2539594, 4.1795673,  13.142356, -3.5939367,
                 16.505789,   19.899279, 8.556229,    19.969376, -6.2355065, -2.3804698, -9.027744, 9.5542}; /* nhwc */
-  memcpy(in_t->Data(), in, sizeof(float) * in_t->ElementsNum());
+  memcpy(in_t->MutableData(), in, sizeof(float) * in_t->ElementsNum());
   inputs_->push_back(in_t);
 
-  auto *weight_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, {3, 3, 3, 2}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto *weight_t = new lite::Tensor(kNumberTypeFloat, {3, 3, 3, 2}, schema::Format_NHWC, lite::Tensor::Category::CONST);
   weight_t->MallocData();
   float weight[] = {-0.39557076, 0.15087655,  0.35216075,  -0.20893791, 0.28683448,  0.08006268,  0.9830812,
                     0.27212173,  0.5171944,   -0.0014505,  0.78694165,  0.25425306,  0.16605458,  -0.06127124,
@@ -516,12 +513,11 @@ int DeConvTestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
                     -0.5730523,  -0.21037689, -0.01435696, 0.33056936,  0.51348346,  -0.28136733, -0.36971128,
                     -0.10048455, 0.09297352,  -0.27097073, -0.08646037, -0.06631696, -0.1684566,  0.31797925,
                     -0.06270258, 0.00119315,  -0.2821196,  -0.5166795,  -0.09961014}; /* nhwc */
-  memcpy(weight_t->Data(), weight, sizeof(float) * weight_t->ElementsNum());
+  memcpy(weight_t->MutableData(), weight, sizeof(float) * weight_t->ElementsNum());
   inputs_->push_back(weight_t);
 
   std::vector<int> out_nhwc_dims = {1, 7, 3, 2};
-  auto *out_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, out_nhwc_dims, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto *out_t = new lite::Tensor(kNumberTypeFloat, out_nhwc_dims, schema::Format_NHWC, lite::Tensor::Category::CONST);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -542,8 +538,8 @@ int DeConvTestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
 }
 
 TEST_F(TestDeConvolutionFp32, DeConvTest2) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   auto deconv_param = new ConvParameter();
   float *correct;
   int total_size = DeConvTestInit2(&inputs_, &outputs_, deconv_param, &correct);
@@ -554,7 +550,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest2) {
 
   deconv->Init();
   deconv->Run();
-  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
+  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
 
   delete deconv;
   for (auto t : inputs_) delete t;
@@ -562,33 +558,32 @@ TEST_F(TestDeConvolutionFp32, DeConvTest2) {
   free(correct);
 }
 
-int DeConvTestInit3(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
+int DeConvTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                     ConvParameter *conv_param, float **correct) {
   std::vector<int> in_dims_nhwc = {1, 3, 3, 2};
-  auto *in_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, in_dims_nhwc, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto *in_t = new lite::Tensor(kNumberTypeFloat, in_dims_nhwc, schema::Format_NHWC, lite::Tensor::Category::CONST);
   in_t->MallocData();
   float in_nchw[] = {0.10411751, 0.24034509, 0.71456534, 0.75286126, 0.9778457,  0.21043599,
                      0.26498786, 0.6701024,  0.9744634,  0.49075702, 0.03877404, 0.48646277,
                      0.5473929,  0.32438126, 0.87553847, 0.75820315, 0.86666644, 0.4852329};
-  PackNCHWToNHWCFp32(in_nchw, reinterpret_cast<float *>(in_t->Data()), in_t->Batch(), in_t->Width() * in_t->Height(),
-                     in_t->Channel());
+  PackNCHWToNHWCFp32(in_nchw, reinterpret_cast<float *>(in_t->MutableData()), in_t->Batch(),
+                     in_t->Width() * in_t->Height(), in_t->Channel());
   inputs_->push_back(in_t);
 
   std::vector<int> w_dims_nhwc = {2, 2, 2, 2};
-  auto *weight_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, w_dims_nhwc, schema::Format_NHWC, schema::NodeType_Parameter);
+  auto *weight_t = new lite::Tensor(kNumberTypeFloat, w_dims_nhwc, schema::Format_NHWC,
+                                    lite::TensorCategory(schema::NodeType_Parameter));
   weight_t->MallocData();
   float w_nchw[] = {-0.108016446, -0.44254777, 0.29249913, 0.18764605, 1.1250675,   0.29441583,
                     -0.34362152,  0.7557833,   0.16503833, 0.2418737,  -0.26612744, 0.5072577,
                     -0.4284475,   0.2215941,   0.9273913,  0.34634787};
-  PackNCHWToNHWCFp32(w_nchw, weight_t->Data(), weight_t->Batch(), weight_t->Width() * weight_t->Height(),
+  PackNCHWToNHWCFp32(w_nchw, weight_t->MutableData(), weight_t->Batch(), weight_t->Width() * weight_t->Height(),
                      weight_t->Channel());
   inputs_->push_back(weight_t);
 
   std::vector<int> out_dims_nhwc = {1, 9, 9, 2};
-  auto *out_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, out_dims_nhwc, schema::Format_NC4HW4, schema::NodeType_Parameter);
+  auto *out_t = new lite::Tensor(kNumberTypeFloat, out_dims_nhwc, schema::Format_NC4HW4,
+                                 lite::TensorCategory(schema::NodeType_Parameter));
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -621,8 +616,8 @@ int DeConvTestInit3(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
 }
 
 TEST_F(TestDeConvolutionFp32, DeConvTest3) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   auto deconv_param = new ConvParameter();
   float *correct;
   int total_size = DeConvTestInit3(&inputs_, &outputs_, deconv_param, &correct);
@@ -633,7 +628,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest3) {
 
   deconv->Init();
   deconv->Run();
-  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
+  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
 
   delete deconv;
   for (auto t : inputs_) delete t;
@@ -641,39 +636,35 @@ TEST_F(TestDeConvolutionFp32, DeConvTest3) {
   free(correct);
 }
 
-int DeConvTestInit4(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
+int DeConvTestInit4(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                     ConvParameter *conv_param, float **correct) {
   size_t buffer_size;
   std::vector<int> in_nhwc_dims = {1, 300, 300, 30};
-  auto *in_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, in_nhwc_dims, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto *in_t = new lite::Tensor(kNumberTypeFloat, in_nhwc_dims, schema::Format_NHWC, lite::Tensor::Category::CONST);
   in_t->MallocData();
   std::string in_nhwc_path = "./deconv/deconv_fp32_nhwc_input1.bin";
   auto in_nhwc = reinterpret_cast<float *>(mindspore::lite::ReadFile(in_nhwc_path.c_str(), &buffer_size));
-  memcpy(in_t->Data(), in_nhwc, buffer_size);
+  memcpy(in_t->MutableData(), in_nhwc, buffer_size);
   inputs_->push_back(in_t);
 
   std::vector<int> w_nhwc_dims = {30, 3, 3, 40};
-  auto *weight_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, w_nhwc_dims, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto *weight_t = new lite::Tensor(kNumberTypeFloat, w_nhwc_dims, schema::Format_NHWC, lite::Tensor::Category::CONST);
   weight_t->MallocData();
   std::string weight_path = "./deconv/deconv_fp32_nchw_weight1.bin";
   auto weight_nchw = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &buffer_size));
-  PackNCHWToNHWCFp32(weight_nchw, weight_t->Data(), weight_t->Batch(), weight_t->Width() * weight_t->Height(),
+  PackNCHWToNHWCFp32(weight_nchw, weight_t->MutableData(), weight_t->Batch(), weight_t->Width() * weight_t->Height(),
                      weight_t->Channel());
   inputs_->push_back(weight_t);
 
-  auto *bias_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, {40}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto *bias_t = new lite::Tensor(kNumberTypeFloat, {40}, schema::Format_NHWC, lite::Tensor::Category::CONST);
   bias_t->MallocData();
   std::string bias_path = "./deconv/deconv_fp32_nchw_bias1.bin";
   auto bias = mindspore::lite::ReadFile(bias_path.c_str(), &buffer_size);
-  memcpy(bias_t->Data(), bias, buffer_size);
+  memcpy(bias_t->MutableData(), bias, buffer_size);
   inputs_->push_back(bias_t);
 
   std::vector<int> out_nhwc_dims = {1, 302, 302, 40};
-  auto *out_t =
-    new lite::tensor::Tensor(kNumberTypeFloat, out_nhwc_dims, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  auto *out_t = new lite::Tensor(kNumberTypeFloat, out_nhwc_dims, schema::Format_NHWC, lite::Tensor::Category::CONST);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -692,8 +683,8 @@ int DeConvTestInit4(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
 }
 
 TEST_F(TestDeConvolutionFp32, DeConvTest4) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   auto deconv_param = new ConvParameter();
   float *correct;
   int total_size = DeConvTestInit4(&inputs_, &outputs_, deconv_param, &correct);
@@ -704,7 +695,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest4) {
 
   deconv->Init();
   deconv->Run();
-  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
+  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
 
   /* running warm up */
   for (int i = 0; i < 0; i++) {

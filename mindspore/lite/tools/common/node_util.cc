@@ -26,13 +26,19 @@ namespace mindspore {
 namespace lite {
 static const std::vector<schema::PrimitiveType> nhwcOpList = {
 #ifdef SUPPORT_TRAIN
-  schema::PrimitiveType_Conv2DGradFilter, schema::PrimitiveType_Conv2DGradInput,
-  schema::PrimitiveType_PoolingGrad, schema::PrimitiveType_BiasGrad,
+  schema::PrimitiveType_Conv2DGradFilter,
+  schema::PrimitiveType_Conv2DGradInput,
+  schema::PrimitiveType_PoolingGrad,
+  schema::PrimitiveType_BiasGrad,
 #endif
-  schema::PrimitiveType_Conv2D,          schema::PrimitiveType_DeConv2D,
-  schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_DeDepthwiseConv2D,
-  schema::PrimitiveType_Pooling,         schema::PrimitiveType_Resize,
-  schema::PrimitiveType_BatchNorm,       schema::PrimitiveType_FusedBatchNorm,
+  schema::PrimitiveType_Conv2D,
+  schema::PrimitiveType_DeConv2D,
+  schema::PrimitiveType_DepthwiseConv2D,
+  schema::PrimitiveType_DeDepthwiseConv2D,
+  schema::PrimitiveType_Pooling,
+  schema::PrimitiveType_Resize,
+  schema::PrimitiveType_BatchNorm,
+  schema::PrimitiveType_FusedBatchNorm,
   schema::PrimitiveType_PReLU};
 
 static const std::vector<schema::PrimitiveType> fp32FullOpList = {
@@ -58,8 +64,8 @@ static const std::vector<schema::PrimitiveType> int8OpList = {
   schema::PrimitiveType_MatMul};
 
 static const std::vector<schema::PrimitiveType> needInsertOpList = {
-  schema::PrimitiveType_Eltwise, schema::PrimitiveType_Activation,
-  schema::PrimitiveType_Concat, schema::PrimitiveType_Power};
+  schema::PrimitiveType_Eltwise, schema::PrimitiveType_Activation, schema::PrimitiveType_Concat,
+  schema::PrimitiveType_Power};
 
 std::vector<schema::PrimitiveType> GetInsertOpList() { return needInsertOpList; }
 
@@ -71,8 +77,8 @@ std::vector<schema::PrimitiveType> GetUint8NhwcOpList() { return int8NeedNhwcOpL
 
 std::vector<schema::PrimitiveType> GetUint8OpList() { return int8OpList; }
 
-STATUS NodeUtils::ConvertDims(mindspore::lite::Format src_format, const std::vector<int32_t> &src_dims,
-                              mindspore::lite::Format dst_format, std::vector<int32_t> *dst_dims) {
+STATUS NodeUtils::ConvertDims(mindspore::schema::Format src_format, const std::vector<int32_t> &src_dims,
+                              mindspore::schema::Format dst_format, std::vector<int32_t> *dst_dims) {
   if ((src_dims.size() != DIM_DEFAULT_SIZE && src_dims.size() != 3) || src_format == dst_format) {
     MS_LOG(ERROR) << "Convert format , src size " << src_dims.size()
                   << " <3 or src format is equal to dst format,not need convert";
@@ -82,10 +88,10 @@ STATUS NodeUtils::ConvertDims(mindspore::lite::Format src_format, const std::vec
 
   std::vector<int32_t> nchw_dim;
   switch (src_format) {
-    case Format_NCHW:
+    case schema::Format::Format_NCHW:
       nchw_dim = src_dims;
       break;
-    case Format_NHWC:
+    case schema::Format::Format_NHWC:
       if (src_dims.size() == DIM_DEFAULT_SIZE) {
         nchw_dim.push_back(src_dims[NHWC_N]);
         nchw_dim.push_back(src_dims[NHWC_C]);
@@ -98,7 +104,7 @@ STATUS NodeUtils::ConvertDims(mindspore::lite::Format src_format, const std::vec
       }
       break;
     default:
-      MS_LOG(ERROR) << "Not support src format: " << schema::EnumNameFormat(src_format);
+      MS_LOG(ERROR) << "Not support src format: " << EnumNameFormat(src_format);
       return RET_ERROR;
   }
 
@@ -108,10 +114,10 @@ STATUS NodeUtils::ConvertDims(mindspore::lite::Format src_format, const std::vec
   }
 
   switch (dst_format) {
-    case Format_NCHW:
+    case schema::Format::Format_NCHW:
       *dst_dims = nchw_dim;
       break;
-    case Format_NHWC:
+    case schema::Format::Format_NHWC:
       if (src_dims.size() == DIM_DEFAULT_SIZE) {
         dst_dims->push_back(nchw_dim[NCHW_N]);
         dst_dims->push_back(nchw_dim[NCHW_H]);
@@ -126,8 +132,8 @@ STATUS NodeUtils::ConvertDims(mindspore::lite::Format src_format, const std::vec
   return RET_OK;
 }
 
-STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, int32_t* filterK, int32_t* filterC,
-                           int32_t* filterH, int32_t* filterW) {
+STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, int32_t *filterK, int32_t *filterC,
+                    int32_t *filterH, int32_t *filterW) {
   MS_ASSERT(oriDims.size() == 4);
   if (type == kKCHW2HWCK || type == kKCHW2HWKC || type == kKCHW2KHWC || type == kKCHW2CKHW) {
     *filterK = oriDims.at(KCHW_K);
@@ -171,8 +177,8 @@ STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, 
   return RET_OK;
 }
 
-STATUS SetFilterDim(schema::TensorT *tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
-                           int32_t filterH, int32_t filterW) {
+STATUS SetFilterDim(schema::TensorT *tensor, kTransFilterType type, int32_t filterK, int32_t filterC, int32_t filterH,
+                    int32_t filterW) {
   MS_ASSERT(tensor != nullptr);
   if (type == kKCHW2HWCK || type == kCKHW2HWCK || type == kNHWC2HWCK || type == kKHWC2HWCK || type == kCHWK2HWCK) {
     tensor->dims = {filterH, filterW, filterC, filterK};
@@ -206,9 +212,9 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
   auto dataType = tensor->dataType;
   STATUS status;
   switch (dstFormat) {
-    case schema::Format_KHWC: {
+    case schema::Format::Format_KHWC: {
       switch (srcFormat) {
-        case schema::Format_KCHW:
+        case schema::Format::Format_KCHW:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kKCHW2KHWC);
           } else if (dataType == kNumberTypeUInt8) {
@@ -220,7 +226,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_CKHW:
+        case schema::Format::Format_CKHW:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kCKHW2KHWC);
           } else if (dataType == kNumberTypeUInt8) {
@@ -232,7 +238,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_CHWK:
+        case schema::Format::Format_CHWK:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kCHWK2KHWC);
           } else if (dataType == kNumberTypeUInt8) {
@@ -244,17 +250,17 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_KHWC:
+        case schema::Format::Format_KHWC:
           return RET_OK;
         default:
-          MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(srcFormat) << " to "
-                        << schema::EnumNameFormat(dstFormat);
+          MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(srcFormat) << " to "
+                        << EnumNameFormat(dstFormat);
           return RET_ERROR;
       }
     } break;
-    case schema::Format_HWCK: {
+    case schema::Format::Format_HWCK: {
       switch (srcFormat) {
-        case schema::Format_KCHW:
+        case schema::Format::Format_KCHW:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kKCHW2HWCK);
           } else if (dataType == kNumberTypeUInt8) {
@@ -266,7 +272,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_KHWC:
+        case schema::Format::Format_KHWC:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kKHWC2HWCK);
           } else if (dataType == kNumberTypeUInt8) {
@@ -278,7 +284,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_CKHW:
+        case schema::Format::Format_CKHW:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kCKHW2HWCK);
           } else if (dataType == kNumberTypeUInt8) {
@@ -290,7 +296,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_CHWK:
+        case schema::Format::Format_CHWK:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kCHWK2HWCK);
           } else if (dataType == kNumberTypeUInt8) {
@@ -302,19 +308,19 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_HWCK:
+        case schema::Format::Format_HWCK:
           return RET_OK;
         default:
-          MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(srcFormat) << " to "
-                        << schema::EnumNameFormat(dstFormat);
+          MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(srcFormat) << " to "
+                        << EnumNameFormat(dstFormat);
           return RET_ERROR;
       }
     } break;
-    case schema::Format_KCHW: {
+    case schema::Format::Format_KCHW: {
       switch (srcFormat) {
-        case schema::Format_KCHW:
+        case schema::Format::Format_KCHW:
           return RET_OK;
-        case schema::Format_HWCK:
+        case schema::Format::Format_HWCK:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kHWCK2KCHW);
           } else if (dataType == kNumberTypeUInt8) {
@@ -326,7 +332,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_HWKC:
+        case schema::Format::Format_HWKC:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kHWKC2KCHW);
           } else if (dataType == kNumberTypeUInt8) {
@@ -338,7 +344,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_KHWC:
+        case schema::Format::Format_KHWC:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kKHWC2KCHW);
           } else if (dataType == kNumberTypeUInt8) {
@@ -350,7 +356,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_CKHW:
+        case schema::Format::Format_CKHW:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kCKHW2KCHW);
           } else if (dataType == kNumberTypeUInt8) {
@@ -362,7 +368,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_CHWK:
+        case schema::Format::Format_CHWK:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kCHWK2KCHW);
           } else if (dataType == kNumberTypeUInt8) {
@@ -375,14 +381,14 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
           }
           break;
         default:
-          MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(srcFormat) << " to "
-                        << schema::EnumNameFormat(dstFormat);
+          MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(srcFormat) << " to "
+                        << EnumNameFormat(dstFormat);
           return RET_ERROR;
       }
     } break;
-    case schema::Format_CKHW: {
+    case schema::Format::Format_CKHW: {
       switch (srcFormat) {
-        case schema::Format_HWCK:
+        case schema::Format::Format_HWCK:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kHWCK2CKHW);
           } else if (dataType == kNumberTypeUInt8) {
@@ -394,7 +400,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_HWKC:
+        case schema::Format::Format_HWKC:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kHWKC2CKHW);
           } else if (dataType == kNumberTypeUInt8) {
@@ -406,7 +412,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_KCHW:
+        case schema::Format::Format_KCHW:
           if (dataType == kNumberTypeFloat32) {
             status = TransFilterFormat<float>(tensor, kKCHW2CKHW);
           } else if (dataType == kNumberTypeUInt8) {
@@ -418,17 +424,17 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
             return RET_ERROR;
           }
           break;
-        case schema::Format_CKHW:
+        case schema::Format::Format_CKHW:
           return RET_OK;
         default:
-          MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(srcFormat) << " to "
-                        << schema::EnumNameFormat(dstFormat);
+          MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(srcFormat) << " to "
+                        << EnumNameFormat(dstFormat);
           return RET_ERROR;
       }
     } break;
     default:
-      MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(srcFormat) << " to "
-                    << schema::EnumNameFormat(dstFormat);
+      MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(srcFormat) << " to "
+                    << EnumNameFormat(dstFormat);
       return RET_ERROR;
   }
   if (status != RET_OK) {

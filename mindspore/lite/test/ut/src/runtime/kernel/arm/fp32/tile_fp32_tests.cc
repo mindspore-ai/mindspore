@@ -27,14 +27,14 @@ class TestTileFp32 : public mindspore::CommonTest {
 };
 
 TEST_F(TestTileFp32, Tile) {
-  lite::tensor::Tensor in_tensor(kNumberTypeFloat32, {2, 2});
-  lite::tensor::Tensor out_tensor(kNumberTypeFloat32, {4, 6});
+  lite::Tensor in_tensor(kNumberTypeFloat32, {2, 2});
+  lite::Tensor out_tensor(kNumberTypeFloat32, {4, 6});
   float input_data[] = {1, 2, 3, 4};
   float output_data[24] = {0};
   in_tensor.SetData(input_data);
   out_tensor.SetData(output_data);
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   TileParameter parameter = {0};
   parameter.in_dim_ = 2;

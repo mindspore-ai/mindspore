@@ -95,12 +95,12 @@ int EmbeddingLookupCPUKernel::Run() {
 
   int dest_loc = 0;
   for (size_t i = 0; i < in_tensors_.size() - 1; i++) {
-    auto input_t = reinterpret_cast<float *>(in_tensors_.at(i)->Data());
+    auto input_t = reinterpret_cast<float *>(in_tensors_.at(i)->MutableData());
     memcpy(input_addr_ + dest_loc, input_t, sizeof(float) * in_tensors_.at(i)->ElementsNum());
     dest_loc += in_tensors_.at(i)->ElementsNum();
   }
-  output_addr_ = reinterpret_cast<float *>(out_tensors_.front()->Data());
-  ids_addr_ = reinterpret_cast<int *>(in_tensors_.back()->Data());
+  output_addr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
+  ids_addr_ = reinterpret_cast<int *>(in_tensors_.back()->MutableData());
 
   auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, EmbeddingLookupRun, this, embedding_lookup_parameter_->thread_num);
   context_->allocator->Free(input_addr_);
@@ -111,8 +111,8 @@ int EmbeddingLookupCPUKernel::Run() {
   return ret;
 }
 
-kernel::LiteKernel *CpuEmbeddingLookupFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                        const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuEmbeddingLookupFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                        const std::vector<lite::Tensor *> &outputs,
                                                         OpParameter *parameter, const lite::Context *ctx,
                                                         const KernelKey &desc,
                                                         const mindspore::lite::PrimitiveC *primitive) {

@@ -38,7 +38,7 @@ int ActivationFp16CPUKernel::Init() { return RET_OK; }
 int ActivationFp16CPUKernel::ReSize() { return RET_OK; }
 
 int ActivationFp16CPUKernel::MallocTmpBuffer() {
-  fp16_input_  = ConvertInputFp32toFp16(in_tensors_.at(0), context_);
+  fp16_input_ = ConvertInputFp32toFp16(in_tensors_.at(0), context_);
   if (fp16_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_ERROR;
@@ -124,16 +124,15 @@ int ActivationFp16CPUKernel::Run() {
 
   auto out_tensor = out_tensors_.at(0);
   if (out_tensor->data_type() == kNumberTypeFloat32) {
-    Float16ToFloat32(fp16_output_, reinterpret_cast<float *>(out_tensor->Data()), out_tensor->ElementsNum());
+    Float16ToFloat32(fp16_output_, reinterpret_cast<float *>(out_tensor->MutableData()), out_tensor->ElementsNum());
   }
   FreeTmpBuffer();
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuActivationFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                   const std::vector<lite::tensor::Tensor *> &outputs,
-                                                   OpParameter *opParameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuActivationFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                   const lite::Context *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Activation);

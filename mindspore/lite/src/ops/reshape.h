@@ -40,12 +40,12 @@ class Reshape : public PrimitiveC {
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
-  int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
+  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   int GetFormat() const;
   std::vector<int64_t> GetShape() const;
 
  private:
-  int CalNewShape(const lite::tensor::Tensor *in_tensor, std::vector<int> *out_shape) const;
+  int CalNewShape(const lite::Tensor *in_tensor, std::vector<int> *out_shape) const;
 };
 }  // namespace lite
 }  // namespace mindspore

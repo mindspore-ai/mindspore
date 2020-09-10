@@ -31,7 +31,7 @@ STATUS TopologicalSortPass::Run(schema::MetaGraphT *graph) {
   std::vector<size_t> sinkedTensorIdxes;
   // put all const tensor index into sinkedTensorIdxes
   for (size_t i = 0; i < graph->allTensors.size(); i++) {
-    if (graph->allTensors.at(i)->nodeType == schema::NodeType_ValueNode) {
+    if (graph->allTensors.at(i)->nodeType == schema::NodeType::NodeType_ValueNode) {
       sinkedTensorIdxes.insert(sinkedTensorIdxes.end(), i);
     }
   }
@@ -79,4 +79,3 @@ bool TopologicalSortPass::IsNodeNonDepend(const std::unique_ptr<schema::CNodeT> 
 }
 }  // namespace lite
 }  // namespace mindspore
-

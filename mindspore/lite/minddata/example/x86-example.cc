@@ -28,28 +28,28 @@ using mindspore::dataset::api::Cifar10;
 using mindspore::dataset::api::RandomSampler;
 
 int main() {
-    MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10Dataset.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10Dataset.";
 
-    // Create a Cifar10 Dataset
-    std::string folder_path = "./testCifar10Data/";
-    std::shared_ptr<Dataset> ds = Cifar10(folder_path, RandomSampler(false, 10));
+  // Create a Cifar10 Dataset
+  std::string folder_path = "./testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, RandomSampler(false, 10));
 
-    // Create an iterator over the result of the above dataset
-    // This will trigger the creation of the Execution Tree and launch it.
-    std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
 
-    // Iterate the dataset and get each row
-    std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
     iter->GetNextRow(&row);
+  }
 
-    uint64_t i = 0;
-    while (row.size() != 0) {
-        i++;
-        auto image = row["image"];
-        MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-        iter->GetNextRow(&row);
-    }
-
-    // Manually terminate the pipeline
-    iter->Stop();
+  // Manually terminate the pipeline
+  iter->Stop();
 }

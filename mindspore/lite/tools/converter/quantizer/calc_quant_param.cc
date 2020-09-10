@@ -77,7 +77,8 @@ int QuantParamCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
     MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(i));
 
     MS_ASSERT(tensor != nullptr);
-    if (tensor->refCount == schema::NodeType_ValueNode && !IsContain(graph->inputIndex, node.inputIndex.at(i))) {
+    if (tensor->refCount == schema::NodeType::NodeType_ValueNode &&
+        !IsContain(graph->inputIndex, node.inputIndex.at(i))) {
       auto status = ComputeConstQuantParam((*tensor), quantParam.get());
       if (status != RET_OK) {
         MS_LOG(WARNING) << "ComputeConstQuantParam failed: " << status;

@@ -29,7 +29,7 @@ class TestToFormatOpenCL : public mindspore::CommonTest {
 };
 
 TEST_F(TestToFormatOpenCL, ToFormatNHWC2NCHW) {
-    auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
   int h = 64;
@@ -43,22 +43,21 @@ TEST_F(TestToFormatOpenCL, ToFormatNHWC2NCHW) {
     return;
   }
   std::vector<int> input_shape = {1, h, w, c};
-  auto tensor_x_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), input_shape, schema::Format_NHWC4);
+  auto tensor_x_ptr = std::make_unique<lite::Tensor>(TypeId(kNumberTypeFloat32), input_shape, schema::Format_NHWC4);
   auto tensor_x = tensor_x_ptr.get();
   if (tensor_x == nullptr) {
     MS_LOG(ERROR) << "tensor_x create error.";
     return;
   }
   std::vector<int> out_shape = {1, c, h, w};
-  auto tensor_out_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), out_shape);
+  auto tensor_out_ptr = std::make_unique<lite::Tensor>(TypeId(kNumberTypeFloat32), out_shape);
   auto tensor_out = tensor_out_ptr.get();
   if (tensor_out == nullptr) {
     MS_LOG(ERROR) << "tensor_out create error.";
     return;
   }
-  std::vector<lite::tensor::Tensor *> inputs{tensor_x};
-  std::vector<lite::tensor::Tensor *> outputs{tensor_out};
+  std::vector<lite::Tensor *> inputs{tensor_x};
+  std::vector<lite::Tensor *> outputs{tensor_out};
   auto arith_kernel_ptr = std::make_unique<kernel::ToFormatOpenCLKernel>(nullptr, inputs, outputs);
   auto arith_kernel = arith_kernel_ptr.get();
   if (arith_kernel == nullptr) {
@@ -77,7 +76,7 @@ TEST_F(TestToFormatOpenCL, ToFormatNHWC2NCHW) {
     return;
   }
   pGraph->Init();
-  memcpy(inputs[0]->Data(), input_data, input_size);
+  memcpy(inputs[0]->MutableData(), input_data, input_size);
   pGraph->Run();
 
   size_t output_size;
@@ -88,7 +87,7 @@ TEST_F(TestToFormatOpenCL, ToFormatNHWC2NCHW) {
     return;
   }
   printf("==================output data=================\n");
-  float *output_data = reinterpret_cast<float *>(tensor_out->Data());
+  float *output_data = reinterpret_cast<float *>(tensor_out->MutableData());
   std::cout << std::endl;
   int size_n = h * w * c;
   size_n = size_n > 100 ? 100 : size_n;

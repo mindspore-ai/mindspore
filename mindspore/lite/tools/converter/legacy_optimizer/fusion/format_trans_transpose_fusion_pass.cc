@@ -81,7 +81,7 @@ STATUS FormatTransPermuteFusionPass::DoFusion(schema::MetaGraphT *graph, const s
                                               std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) {
   MS_ASSERT(graph != nullptr);
   if (matchedPath.size() != kFormatTransTransposeMatchPathLen) {
-    MS_LOG(ERROR) << "Format-Transform-Transpose-Fusion should have " << kFormatTransTransposeMatchPathLen
+    MS_LOG(ERROR) << "schema::Format-Transform-Transpose-Fusion should have " << kFormatTransTransposeMatchPathLen
                   << " NodeIndex in matchedPair";
     return RET_PARAM_INVALID;
   }

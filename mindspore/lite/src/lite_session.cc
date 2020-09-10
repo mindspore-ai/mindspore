@@ -34,9 +34,8 @@ namespace mindspore {
 namespace lite {
 
 static std::vector<schema::PrimitiveType> packed_op = {
-  schema::PrimitiveType_Conv2D,          schema::PrimitiveType_DeConv2D,
-  schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_DeDepthwiseConv2D,
-  schema::PrimitiveType_MatMul};
+  schema::PrimitiveType_Conv2D, schema::PrimitiveType_DeConv2D, schema::PrimitiveType_DepthwiseConv2D,
+  schema::PrimitiveType_DeDepthwiseConv2D, schema::PrimitiveType_MatMul};
 
 // this method will not check whether tensor_idx is a weight tensor index, caller should ensure this.
 static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor_idx) {
@@ -63,7 +62,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
     if (srcTensor->dims() == nullptr) {
       MS_LOG(DEBUG) << "Dims of " << i << "th tensor is nullptr";
     } else {
-      if (srcTensor->nodeType() == schema::NodeType_ValueNode) {
+      if (TensorCategory(srcTensor) == Tensor::Category::CONST) {
         for (size_t j = 0; j < srcTensor->dims()->size(); j++) {
           shape.push_back(srcTensor->dims()->data()[j]);
         }
@@ -71,12 +70,12 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
     }
     int dataType = srcTensor->dataType();
     auto *dstTensor =
-      new (std::nothrow) tensor::Tensor(TypeId(dataType), shape, srcTensor->format(), srcTensor->nodeType());
+      new (std::nothrow) Tensor(TypeId(dataType), shape, srcTensor->format(), TensorCategory(srcTensor));
     if (dstTensor == nullptr) {
       MS_LOG(ERROR) << "new " << i << "th tensor failed";
       return RET_NULL_PTR;
     }
-    if (srcTensor->nodeType() == schema::NodeType_ValueNode && srcTensor->data() != nullptr &&
+    if (TensorCategory(srcTensor) == Tensor::Category::CONST && srcTensor->data() != nullptr &&
         srcTensor->data()->size() > 0) {
       if (shape.empty()) {
         shape.push_back(1);
@@ -84,12 +83,12 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       }
       MS_ASSERT(dstTensor->Size() == srcTensor->data()->size());
       if (WeightTensorNeedCopy(model, i)) {
-        auto ret = dstTensor->MallocData();
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "Malloc data for " << i << "th tensor failed";
+        auto dst_data = dstTensor->MutableData();
+        if (dst_data == nullptr) {
+          MS_LOG(ERROR) << "MutableData from " << i << "th tensor is nullptr";
           return RET_ERROR;
         }
-        memcpy(dstTensor->Data(), srcTensor->data()->data(), dstTensor->Size());
+        memcpy(dst_data, srcTensor->data()->data(), dstTensor->Size());
         copyed_tensor_idxes_.emplace_back(i);
       } else {
         dstTensor->SetData(const_cast<unsigned char *>(srcTensor->data()->data()));
@@ -98,7 +97,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
     auto quant_params = srcTensor->quantParams();
     if (quant_params != nullptr) {
       for (size_t j = 0; j < quant_params->size(); j++) {
-        tensor::QuantArg quant_arg{};
+        QuantArg quant_arg{};
         quant_arg.scale = quant_params->Get(j)->scale();
         quant_arg.zeroPoint = quant_params->Get(j)->zeroPoint();
         dstTensor->AddQuantParam(quant_arg);
@@ -126,7 +125,7 @@ void LiteSession::InitGraphInputMSTensors() {
   MS_ASSERT(this->input_vec_.empty());
   for (auto &input_tensor : this->inputs_) {
     MS_ASSERT(input_tensor != nullptr);
-    this->input_vec_.emplace_back(new lite::tensor::LiteTensor(input_tensor));
+    this->input_vec_.emplace_back(input_tensor);
   }
 }
 
@@ -168,13 +167,11 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
       }
       MS_ASSERT(in_tensor_index < this->tensors_.size());
       auto *in_tensor = this->tensors_.at(in_tensor_index);
-      MS_ASSERT(in_tensor != nullptr);
-      auto *ms_tensor = new (std::nothrow) tensor::LiteTensor(in_tensor);
-      if (ms_tensor == nullptr) {
-        MS_LOG(ERROR) << "new lite tensor fail!";
+      if (in_tensor == nullptr) {
+        MS_LOG(ERROR) << "in_tensor is null!";
         return;
       }
-      this->input_map_[in_node->name_].emplace_back(ms_tensor);
+      this->input_map_[in_node->name_].emplace_back(in_tensor);
     }
   }
 }
@@ -202,13 +199,11 @@ void LiteSession::InitGraphOutputNodeMap(const lite::Model *model) {
       }
       MS_ASSERT(out_tensor_index < this->tensors_.size());
       auto *out_tensor = this->tensors_.at(out_tensor_index);
-      MS_ASSERT(out_tensor != nullptr);
-      auto *ms_tensor = new (std::nothrow) tensor::LiteTensor(out_tensor);
-      if (ms_tensor == nullptr) {
-        MS_LOG(ERROR) << "new lite tensor fail!";
+      if (out_tensor == nullptr) {
+        MS_LOG(ERROR) << "out_tensor is null!";
         return;
       }
-      this->output_node_map_[out_node->name_].emplace_back(ms_tensor);
+      this->output_node_map_[out_node->name_].emplace_back(out_tensor);
     }
   }
 }
@@ -230,13 +225,11 @@ void LiteSession::InitGraphOutputTensorMap(const lite::Model *model) {
     size_t graph_out_index = model->output_indices_[i];
     MS_ASSERT(graph_out_index < this->tensors_.size());
     auto *out_tensor = this->tensors_.at(graph_out_index);
-    MS_ASSERT(out_tensor != nullptr);
-    auto *ms_tensor = new (std::nothrow) tensor::LiteTensor(out_tensor);
-    if (ms_tensor == nullptr) {
-      MS_LOG(ERROR) << "new lite tensor fail!";
+    if (out_tensor == nullptr) {
+      MS_LOG(ERROR) << "out_tensor is null!";
       return;
     }
-    this->output_tensor_map_.insert(std::make_pair(std::to_string(graph_out_index), ms_tensor));
+    this->output_tensor_map_.insert(std::make_pair(std::to_string(graph_out_index), out_tensor));
   }
 }
 
@@ -291,13 +284,20 @@ int LiteSession::RunGraph(const session::KernelCallBack &before, const session::
 
 int LiteSession::Init(Context *context) {
   MS_ASSERT(nullptr != context);
-  this->context_ = new (std::nothrow) Context(context->thread_num_, context->allocator, context->device_ctx_);
+  this->context_ = new (std::nothrow) Context();
   if (this->context_ == nullptr) {
     MS_LOG(ERROR) << "new context failed";
     return RET_MEMORY_FAILED;
   }
+  // context->thread_num_, context->allocator, context->device_ctx
+  this->context_->thread_num_ = context->thread_num_;
+  this->context_->allocator = context->allocator;
+  this->context_->device_type_ = context->device_type_;
   this->context_->float16_priority = context->float16_priority;
   this->context_->cpu_bind_mode_ = context->cpu_bind_mode_;
+  if (context_->allocator == nullptr) {
+    context_->allocator = Allocator::Create();
+  }
   ConfigThreadPool(THREAD_POOL_DEFAULT, context->thread_num_, context->cpu_bind_mode_);
   auto ret = KernelRegistry::GetInstance()->Init();
   if (ret != RET_OK) {
@@ -305,7 +305,7 @@ int LiteSession::Init(Context *context) {
     return ret;
   }
 #if SUPPORT_GPU
-  if (context_->device_ctx_.type == DT_GPU) {
+  if (context_->device_type_ == DT_GPU) {
     auto opencl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
     opencl_runtime->Init();
     MS_LOG(INFO) << "Init OpenCL runtime.";
@@ -330,46 +330,22 @@ LiteSession::~LiteSession() {
     auto *tensor = tensors_.at(i);
     MS_ASSERT(tensor != nullptr);
     // data of weight tensor of node in packed_op can not be to free, we will free weight data when freeing meta_graph
-    if (tensor->TensorType() == schema::NodeType_ValueNode && !IsContain(this->inputs_, tensor) &&
+    if (tensor->category() == Tensor::Category::CONST && !IsContain(this->inputs_, tensor) &&
         !IsContain(copyed_tensor_idxes_, i)) {
       tensor->SetData(nullptr);
     }
     delete tensor;
   }
-  // tensor::Tensor * in input_map output_map are freed in tensors
-  for (auto iter : this->input_map_) {
-    for (auto *ms_tensor : iter.second) {
-      ((tensor::LiteTensor *)ms_tensor)->SetTensorImpl(nullptr);
-      delete ms_tensor;
-    }
-    iter.second.clear();
-  }
+  // Tensor * in input_map output_map are freed in tensors
   input_map_.clear();
-  for (auto iter : this->output_node_map_) {
-    for (auto *ms_tensor : iter.second) {
-      ((tensor::LiteTensor *)ms_tensor)->SetTensorImpl(nullptr);
-      delete ms_tensor;
-    }
-    iter.second.clear();
-  }
   output_node_map_.clear();
-  for (auto iter : this->output_tensor_map_) {
-    ((tensor::LiteTensor *)(iter.second))->SetTensorImpl(nullptr);
-    delete (iter.second);
-  }
   output_tensor_map_.clear();
+  input_vec_.clear();
   for (auto *kernel : kernels_) {
     delete kernel;
   }
-  for (auto *ms_tensor : input_vec_) {
-    if (ms_tensor != nullptr) {
-      ((tensor::LiteTensor *)ms_tensor)->SetTensorImpl(nullptr);
-      delete ms_tensor;
-    }
-  }
-  input_vec_.clear();
 #if SUPPORT_GPU
-  if (context_->device_ctx_.type == DT_GPU) {
+  if (context_->device_type_ == DT_GPU) {
     lite::opencl::OpenCLRuntime::DeleteInstance();
   }
 #endif
@@ -386,10 +362,6 @@ std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputsByName(const st
     return empty_ret;
   }
   return ret->second;
-}
-
-std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> LiteSession::GetOutputMapByNode() const {
-  return this->output_node_map_;
 }
 
 std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputsByNodeName(const std::string &node_name) const {
@@ -413,7 +385,7 @@ mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const std::strin
   return ret->second;
 }
 
-std::unordered_map<std::string, mindspore::tensor::MSTensor *> LiteSession::GetOutputMapByTensor() const {
+std::unordered_map<std::string, mindspore::tensor::MSTensor *> LiteSession::GetOutputs() const {
   return this->output_tensor_map_;
 }
 
@@ -434,7 +406,7 @@ int LiteSession::ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &
 }
 
 int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs) {
-  std::vector<tensor::Tensor *> inputs_old(inputs_);
+  std::vector<Tensor *> inputs_old(inputs_);
   auto ret = ResizeInputs(inputs);
   if (ret != RET_OK) {
     inputs_ = inputs_old;

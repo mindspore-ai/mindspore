@@ -27,25 +27,18 @@ class CaffePoolingParser : public CaffeNodeParser {
  public:
   CaffePoolingParser() : CaffeNodeParser("pooling") {}
 
-  STATUS Parse(const caffe::LayerParameter &proto,
-               const caffe::LayerParameter &weight,
-               schema::CNodeT *op,
+  STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
                std::vector<schema::TensorT *> *weightVec) override;
 
-  STATUS ParsePads(const caffe::PoolingParameter &poolingParam,
-                   schema::PoolingT *attr);
+  STATUS ParsePads(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr);
 
-  STATUS ParseStrides(const caffe::PoolingParameter &poolingParam,
-                      schema::PoolingT *attr);
+  STATUS ParseStrides(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr);
 
-  STATUS ParseWindows(const caffe::PoolingParameter &poolingParam,
-                      schema::PoolingT *attr);
+  STATUS ParseWindows(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr);
 
-  STATUS ParsePoolingMode(const caffe::PoolingParameter &poolingParam,
-                          schema::PoolingT *attr);
+  STATUS ParsePoolingMode(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr);
 };
 }  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_POOLING_PARSER_H_
-

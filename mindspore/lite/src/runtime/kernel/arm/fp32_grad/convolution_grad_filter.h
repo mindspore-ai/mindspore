@@ -1,4 +1,4 @@
- /**
+/**
  * Copyright 2019 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,11 +24,11 @@
 namespace mindspore::kernel {
 class ConvolutionGradFilterCPUKernel : public LiteKernel {
  public:
-  explicit ConvolutionGradFilterCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                          const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  explicit ConvolutionGradFilterCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                          const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                                           const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionGradFilterCPUKernel() override { delete [] workspace; }
+  ~ConvolutionGradFilterCPUKernel() override { delete[] workspace; }
 
   int Init() override;
   int ReSize() override;
@@ -37,7 +37,6 @@ class ConvolutionGradFilterCPUKernel : public LiteKernel {
  private:
   float *workspace = nullptr;
 };
-
 
 }  // namespace mindspore::kernel
 
