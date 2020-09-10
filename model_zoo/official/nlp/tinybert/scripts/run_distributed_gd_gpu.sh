@@ -38,5 +38,5 @@ mpirun --allow-run-as-root -n $RANK_SIZE \
 	--data_dir=$DATA_DIR \
 	--schema_dir=$SCHEMA_DIR \
 	--dataset_type="tfrecord" \
-	--enable_data_sink=False \
+	--enable_data_sink="false" \
 	--load_teacher_ckpt_path=$TEACHER_CKPT_PATH > log.txt 2>&1 &
