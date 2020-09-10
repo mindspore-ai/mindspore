@@ -20,7 +20,7 @@
 #include "src/lite_kernel.h"
 
 #include "include/context.h"
-#include "nnacl/sparse_to_dense.h"
+#include "mindspore/lite/nnacl/fp32/sparse_to_dense.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 using mindspore::lite::Context;
@@ -32,28 +32,34 @@ class SparseToDenseCPUKernel : public LiteKernel {
                          const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
-    s2d_param_ = (reinterpret_cast<SparseToDenseParameter *>(op_parameter_));
+    s2d_param = (reinterpret_cast<SparseToDenseParameter *>(op_parameter_));
+    s2d_param->thread_num_ = thread_count_;
   }
   ~SparseToDenseCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return 0; }
+  int ReSize() override;
   int Run() override;
   int DoExcute(int task_id);
+  int GenerateIndices();
+  int IndicesValidCheck();
 
  protected:
   const Context *ctx_;
   int thread_count_;
-  SparseToDenseParameter *s2d_param_;
+  SparseToDenseParameter *s2d_param;
 
  private:
-  int *input_data_;
-  int *total_number_;
-  int sp_num_;
-  float *snum_;
-  float *dnum_;
-  float *output_data;
-  int *output_shape_;
+  int **sparse_indices_vect = nullptr;
+  float *sparse_values = nullptr;
+  float default_value;
+  bool isScalar = false;
+  int index_num;
+  int index_dim;
+  float *output_data = nullptr;
+  int output_shape[4];
+  int output_num;
+  int64_t count_unit_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPARSETODENSE_H_
