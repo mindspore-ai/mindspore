@@ -16,36 +16,60 @@
 
 #include "nnacl/l2_norm.h"
 #include <math.h>
+#include "nnacl/errorcode.h"
 
-int L2NormFp32(const float *input_ptr, float *output_ptr,
-               L2NormParameter *param) {
-  int *axis = param->axis_;
-  size_t axis_num = param->axis_num_;
-  float epsilon = param->epsilon_;
-  int shape_num = param->shape_num_;
-
-  // default case, axis is set default
-  if (shape_num == axis_num) {
-    bool default_case_flag = true;
-    for (int i = 0; i < axis_num; i++) {
-      if (axis[i] != i) {
-        default_case_flag = false;
-      }
-    }
-    if (default_case_flag) {
-      int data_num = param->data_num_;
-      float sum = 0;
-      for (int i = 0; i < data_num; i++) {
-        sum = sum + input_ptr[i] * input_ptr[i];
-      }
-      float res = sqrt(sum > epsilon ? sum : epsilon);
-      for (int i = 0; i < data_num; i++) {
-        output_ptr[i] = input_ptr[i] / res;
-      }
-      return 0;
-    }
-  } else {
-    return -1;
+int CalcThreadSquareSum(const float *input_ptr, float *sum, int begin, int end) {
+  *sum = 0.0f;
+  int i;
+  for (i = begin; i < end; ++i) {
+    *sum += input_ptr[i] * input_ptr[i];
   }
-  return 0;
+  return NNACL_OK;
+}
+
+int ThreadDivSqrtSum(const float *input_ptr, float *output_ptr, const L2NormParameter *param, const float sqrt_sum,
+                     const int begin, const int end) {
+  bool is_relu = param->act_type_ == ActType_Relu;
+  bool is_relu6 = param->act_type_ == ActType_Relu6;
+  int i;
+  for (i = begin; i < end; i++) {
+    float tmp = input_ptr[i] / sqrt_sum;
+    if (is_relu) {
+      output_ptr[i] = MSMAX(0, tmp);
+    } else if (is_relu6) {
+      output_ptr[i] = MSMIN(6, MSMAX(0, tmp));
+    } else {
+      output_ptr[i] = tmp;
+    }
+  }
+  return NNACL_OK;
+}
+
+int ThreadTrailingAxis(const float *input_ptr, float *output_ptr, const L2NormParameter *param, const int begin,
+                       const int end) {
+  bool is_relu = param->act_type_ == ActType_Relu;
+  bool is_relu6 = param->act_type_ == ActType_Relu6;
+
+  const int c = param->shape_[param->shape_num_ - 1];
+  int i = 0;
+  for (i = begin; i < end; ++i) {
+    float square_sum = 0.0f;
+    int j = 0;
+    for (j = 0; j < c; ++j) {
+      const float val = input_ptr[i * c + j];
+      square_sum += val * val;
+    }
+    float sqrt_sum = sqrt(square_sum > param->epsilon_ ? square_sum : param->epsilon_);
+    for (j = 0; j < c; ++j) {
+      float tmp = input_ptr[i * c + j] / sqrt_sum;
+      if (is_relu) {
+        output_ptr[i * c + j] = MSMAX(0, tmp);
+      } else if (is_relu6) {
+        output_ptr[i * c + j] = MSMIN(6, MSMAX(0, tmp));
+      } else {
+        output_ptr[i * c + j] = tmp;
+      }
+    }
+  }
+  return NNACL_OK;
 }

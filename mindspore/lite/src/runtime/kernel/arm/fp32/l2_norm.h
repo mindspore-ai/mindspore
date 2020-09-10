@@ -35,14 +35,29 @@ class L2NormCPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     l2_norm_param_ = reinterpret_cast<L2NormParameter *>(op_parameter_);
   }
-  ~L2NormCPUKernel();
+  ~L2NormCPUKernel() {
+    FreeTmpBuffer();
+    if (l2_norm_param_->axis_ != nullptr) {
+      free(l2_norm_param_->axis_);
+    }
+  }
+
+  int CalcSquareSum(int task_id);
+  int DivSqrtSum(int task_id);
+  int CalcL2NormTrailingAxis(int task_id);
 
   int Init() override;
-  int ReSize() override { return 0; }
+  int ReSize() override;
   int Run() override;
 
  private:
+  int MallocTmpBuffer();
+  void FreeTmpBuffer();
   L2NormParameter *l2_norm_param_;
+  float sqrt_sum_;
+  float *input_ptr_;
+  float *output_ptr_;
+  float *tmp_sum_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

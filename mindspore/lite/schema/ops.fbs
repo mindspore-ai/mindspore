@@ -773,6 +773,7 @@ table FloorMod {
 table L2Norm {
     axis: [int];
     epsilon: float;
+    activationType: ActivationType;
 }
 
 table LogicalAnd {

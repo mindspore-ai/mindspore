@@ -34,6 +34,7 @@ class L2Norm : public PrimitiveC {
   explicit L2Norm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(const std::vector<int> &axis);
   void SetEpsilon(float epsilon);
+  void SetActivationType(int activationType);
 #else
   L2Norm() = default;
 
@@ -41,6 +42,7 @@ class L2Norm : public PrimitiveC {
 #endif
   std::vector<int> GetAxis() const;
   float GetEpsilon() const;
+  int GetActivationType() const;
 };
 }  // namespace lite
 }  // namespace mindspore

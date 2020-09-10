@@ -21,7 +21,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int L2NormFp32(const float *input_ptr, float *output_ptr, L2NormParameter *param);
+int CalcThreadSquareSum(const float *input_ptr, float *sum, int begin, int end);
+int ThreadDivSqrtSum(const float *input_ptr, float *output_ptr, const L2NormParameter *param, const float sqrt_sum,
+                     const int begin, const int end);
+int ThreadTrailingAxis(const float *input_ptr, float *output_ptr, const L2NormParameter *param, const int begin,
+                       const int end);
 #ifdef __cplusplus
 }
 #endif
