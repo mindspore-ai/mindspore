@@ -202,9 +202,9 @@ class WideDeepModel(nn.Cell):
             self.dense_layer_1.dropout.dropout.set_strategy(((1, get_group_size()),))
             self.dense_layer_1.matmul.set_strategy(((1, get_group_size()), (get_group_size(), 1)))
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim,
-                                                           slice_mode=nn.EmbeddingLookUpSplitMode.TABLE_COLUMN_SLICE)
+                                                           slice_mode=nn.EmbeddingLookup.TABLE_COLUMN_SLICE)
             self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1,
-                                                           slice_mode=nn.EmbeddingLookUpSplitMode.TABLE_ROW_SLICE)
+                                                           slice_mode=nn.EmbeddingLookup.TABLE_ROW_SLICE)
             self.deep_mul.set_strategy(((1, 1, get_group_size()), (1, 1, 1)))
             self.deep_reshape.add_prim_attr("skip_redistribution", True)
             self.reduce_sum.add_prim_attr("cross_batch", True)
@@ -212,10 +212,10 @@ class WideDeepModel(nn.Cell):
         elif is_auto_parallel and host_device_mix and is_field_slice and config.full_batch and config.manual_shape:
             manual_shapes = tuple((s[0] for s in config.manual_shape))
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim,
-                                                           slice_mode=nn.EmbeddingLookUpSplitMode.FIELD_SLICE,
+                                                           slice_mode=nn.EmbeddingLookup.FIELD_SLICE,
                                                            manual_shapes=manual_shapes)
             self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1,
-                                                           slice_mode=nn.EmbeddingLookUpSplitMode.FIELD_SLICE,
+                                                           slice_mode=nn.EmbeddingLookup.FIELD_SLICE,
                                                            manual_shapes=manual_shapes)
             self.deep_mul.set_strategy(((1, get_group_size(), 1), (1, get_group_size(), 1)))
             self.wide_mul.set_strategy(((1, get_group_size(), 1), (1, get_group_size(), 1)))
