@@ -49,6 +49,7 @@ class PassGroup {
   bool Run(const FuncGraphPtr &func_graph, const std::vector<PythonPassPtr> &passes, const MatchResultPtr &res) const;
   std::string name() const { return name_; }
   void SetRunOnlyOnce(bool run_only_once) { run_only_once_ = run_only_once; }
+  size_t size() { return passes_.size(); }
 
  private:
   const std::string name_;

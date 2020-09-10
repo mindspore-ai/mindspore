@@ -19,8 +19,8 @@ import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
-from mindspore.graph_utils.python_pass import registe_pass, unregiste_pass, _set_renorm, gen_new_parameter,\
-    cancel_new_parameter, _set_reopt
+from mindspore.graph_utils.python_pass import registe_pass, unregiste_pass, set_renorm, gen_new_parameter,\
+    cancel_new_parameter, set_reopt
 from mindspore.common.api import _generate_pip_args
 from mindspore._c_expression import generate_key, Executor_
 from mindspore.graph_utils.graph_pattern import OneOf, Prim, Call, NoneOf, Any, NewTensor, NewParameter, Imm
@@ -157,8 +157,8 @@ def test_isnot_pattern_0():
     Test IsNot pattern which expresses the IsNot semantics.
     Case: IsNot pass failed to match
     """
-    _set_renorm(False)
-    _set_reopt(False)
+    set_renorm(False)
+    set_reopt(False)
     class ConvBN(nn.Cell):
         def __init__(self):
             super(ConvBN, self).__init__()
@@ -202,7 +202,7 @@ def test_isnot_pattern_0():
     unregiste_pass(bn_pass)
     assert "ReLU6" not in transformed_repr
     assert "Softmax" in transformed_repr
-    _set_renorm(True)
+    set_renorm(True)
 
 def test_isnot_pattern_1():
     """
@@ -234,8 +234,8 @@ def test_newtensor_pattern():
     """
     Test NewTensor pattern in the target
     """
-    _set_renorm(False)
-    _set_reopt(False)
+    set_renorm(False)
+    set_reopt(False)
     inputs = Tensor(np.ones([42]), mindspore.float16)
     softmax_model = nn.Softmax()
 
@@ -252,7 +252,7 @@ def test_newtensor_pattern():
     unregiste_pass(softmax_addn_pass)
     assert "AddN" in transformed_repr
     assert "Softmax" not in transformed_repr
-    _set_renorm(True)
+    set_renorm(True)
 
 def test_newparameter_pattern():
     """
@@ -261,8 +261,8 @@ def test_newparameter_pattern():
     inputs = Tensor(np.ones([42]), mindspore.float16)
     softmax_model = nn.Softmax()
 
-    _set_renorm(False)
-    _set_reopt(False)
+    set_renorm(False)
+    set_reopt(False)
     @registe_pass(requires_grad=False, run_only_once=True)
     def softmax_addn_pass():
         x = Any()
@@ -288,8 +288,8 @@ def test_imm_target():
     inputs = Tensor(np.ones([42]), mindspore.float16)
     softmax_model = nn.Softmax()
 
-    _set_renorm(False)
-    _set_reopt(False)
+    set_renorm(False)
+    set_reopt(False)
     @registe_pass(requires_grad=False, run_only_once=True)
     def softmax_pass():
         x = Any()
@@ -313,8 +313,8 @@ def test_gen_new_parameter():
 
     default_tensor = Tensor(np.ones((4, 4)), mindspore.float32)
     new_para = NewParameter("Merlin", default_tensor)
-    _set_renorm(False)
-    _set_reopt(False)
+    set_renorm(False)
+    set_reopt(False)
     gen_new_parameter(new_para)
     @registe_pass(requires_grad=False, run_only_once=True)
     def softmax_make_tuple_pass():

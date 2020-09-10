@@ -23,8 +23,8 @@ __all__ = [
     "unregiste_pass",
     "gen_new_parameter",
     "cancel_new_parameter",
-    "_set_renorm",
-    "_set_reopt"
+    "set_renorm",
+    "set_reopt"
 ]
 class PyPassManager(PyPassManager_):
     r"""
@@ -162,7 +162,7 @@ def cancel_new_parameter(pattern):
     ppm = PyPassManager()
     ppm.unregiste(pattern.para_name)
 
-def _set_renorm(should_renorm):
+def set_renorm(should_renorm):
     """
     Set whether or not to do renormalization after modified graph in python pass(es).
 
@@ -176,7 +176,7 @@ def _set_renorm(should_renorm):
     ppm = PyPassManager()
     ppm.set_renorm(should_renorm)
 
-def _set_reopt(do_reopt):
+def set_reopt(do_reopt):
     """
     Set whether or not to do optimization after modified graph in python pass(es).
 
