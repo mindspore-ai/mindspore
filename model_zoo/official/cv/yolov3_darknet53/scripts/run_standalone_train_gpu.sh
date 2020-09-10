@@ -62,7 +62,7 @@ echo "start training for device $DEVICE_ID"
 env > env.log
 
 python train.py \
-    --device_targe="GPU" \
+    --device_target="GPU" \
     --data_dir=$DATASET_PATH \
     --pretrained_backbone=$PRETRAINED_BACKBONE \
     --is_distributed=0 \
