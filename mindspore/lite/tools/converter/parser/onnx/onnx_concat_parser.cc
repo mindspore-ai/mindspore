@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxConcatParser::Parse(const onnx::GraphProto &onnx_graph,
-                               const onnx::NodeProto &onnx_node,
+STATUS OnnxConcatParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ConcatParser";
   if (op == nullptr) {
@@ -54,4 +53,3 @@ STATUS OnnxConcatParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxConcatParser("Concat", new OnnxConcatParser());
 }  // namespace lite
 }  // namespace mindspore
-

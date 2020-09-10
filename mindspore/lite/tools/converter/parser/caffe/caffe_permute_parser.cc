@@ -19,10 +19,8 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffePermuteParser::Parse(const caffe::LayerParameter &proto,
-                                 const caffe::LayerParameter &weight,
-                                 schema::CNodeT *op,
-                                 std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffePermuteParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                                 schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffePermuteParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -57,4 +55,3 @@ STATUS CaffePermuteParser::Parse(const caffe::LayerParameter &proto,
 CaffeNodeRegistrar g_caffePermuteParser("Permute", new CaffePermuteParser());
 }  // namespace lite
 }  // namespace mindspore
-

@@ -52,8 +52,7 @@ bool FullConnection::GetUseAxis() const { return this->primitive_->value_as_Full
 int FullConnection::GetActivationType() const { return this->primitive_->value_as_FullConnection()->activationType(); }
 
 #endif
-int FullConnection::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
-                               std::vector<lite::tensor::Tensor *> outputs_) {
+int FullConnection::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input0 = inputs_.front();
   MS_ASSERT(input0 != nullptr);

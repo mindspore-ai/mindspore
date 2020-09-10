@@ -19,9 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxEluParser::Parse(const onnx::GraphProto &onnx_graph,
-                            const onnx::NodeProto &onnx_node,
-                            schema::CNodeT *op) {
+STATUS OnnxEluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx EluParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -40,7 +38,7 @@ STATUS OnnxEluParser::Parse(const onnx::GraphProto &onnx_graph,
   }
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
-    const auto& attribute_name = onnx_node_attr.name();
+    const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "alpha") {
       attr->alpha = onnx_node_attr.f();
     }
@@ -54,4 +52,3 @@ STATUS OnnxEluParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxEluParser("Elu", new OnnxEluParser());
 }  // namespace lite
 }  // namespace mindspore
-

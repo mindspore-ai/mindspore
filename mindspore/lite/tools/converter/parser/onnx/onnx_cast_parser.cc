@@ -19,9 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph,
-                             const onnx::NodeProto &onnx_node,
-                             schema::CNodeT *op) {
+STATUS OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx CastParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -54,4 +52,3 @@ STATUS OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxCastParser("Cast", new OnnxCastParser());
 }  // namespace lite
 }  // namespace mindspore
-

@@ -50,22 +50,22 @@ void PReluOpenCLKernel::InitBuffer() {
   if (enable_fp16_) {
     if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
       auto PReluWeight_fp16 = reinterpret_cast<uint16_t *>(PReluWeight_);
-      auto in_tensor_data_fp32 = reinterpret_cast<float *>(in_tensors_[1]->Data());
+      auto in_tensor_data_fp32 = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
       for (int i = 0; i < elem_num; i++) {
         PReluWeight_fp16[i] = Float32ToShort(in_tensor_data_fp32[i]);
       }
     } else {
-      memcpy(PReluWeight_, in_tensors_[1]->Data(), elem_num * fp_size);
+      memcpy(PReluWeight_, in_tensors_[1]->MutableData(), elem_num * fp_size);
     }
   } else {
     if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
       auto PReluWeight_fp32 = reinterpret_cast<float *>(PReluWeight_);
-      auto in_tensor_data_fp16 = reinterpret_cast<uint16_t *>(in_tensors_[1]->Data());
+      auto in_tensor_data_fp16 = reinterpret_cast<uint16_t *>(in_tensors_[1]->MutableData());
       for (int i = 0; i < elem_num; i++) {
         PReluWeight_fp32[i] = ShortToFloat32(in_tensor_data_fp16[i]);
       }
     } else {
-      memcpy(PReluWeight_, in_tensors_[1]->Data(), elem_num * fp_size);
+      memcpy(PReluWeight_, in_tensors_[1]->MutableData(), elem_num * fp_size);
     }
   }
   allocator->UnmapBuffer(PReluWeight_);
@@ -108,10 +108,10 @@ int PReluOpenCLKernel::Init() {
 int PReluOpenCLKernel::Run() {
   MS_LOG(DEBUG) << op_parameter_->name_ << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  std::map<schema::Format, int> data_type{{schema::Format_NHWC4, 1}, {schema::Format_NC4HW4, 2}};
+  std::map<schema::Format, int> data_type{{schema::Format::Format_NHWC4, 1}, {schema::Format::Format_NC4HW4, 2}};
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape_);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, PReluWeight_);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, data_type[op_format_]);
@@ -132,9 +132,9 @@ int PReluOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
     img_dtype = CL_HALF_FLOAT;
   }
   global_shape_ = input_shape_;
-  if (op_format_ == schema::Format_NC4HW4) {
+  if (op_format_ == schema::Format::Format_NC4HW4) {
     global_shape_.s[1] = UP_DIV(input_shape_.s[3], C4NUM) * input_shape_.s[1];
-  } else if (op_format_ == schema::Format_NHWC4) {
+  } else if (op_format_ == schema::Format::Format_NHWC4) {
     global_shape_.s[2] = UP_DIV(input_shape_.s[3], C4NUM) * input_shape_.s[2];
   } else {
     MS_LOG(ERROR) << "op_format_:" << op_format_ << " is do not support!";
@@ -147,10 +147,10 @@ int PReluOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLPReluKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc, const lite::PrimitiveC *primitive) {
+kernel::LiteKernel *OpenCLPReluKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                             const lite::Context *ctx, const kernel::KernelKey &desc,
+                                             const lite::PrimitiveC *primitive) {
   if (inputs.empty()) {
     MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << inputs.size();
     return nullptr;

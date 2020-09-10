@@ -24,10 +24,8 @@ namespace lite {
 STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                 schema::CNodeT *op,
-                                 std::vector<int32_t> *tensors_id,
-                                 std::vector<schema::Format> *tensors_format,
-                                 std::map<int, int>  *tensors_id_map) {
+                                 schema::CNodeT *op, std::vector<int32_t> *tensors_id,
+                                 std::vector<schema::Format> *tensors_format, std::map<int, int> *tensors_id_map) {
   MS_LOG(DEBUG) << "parse tflite Transpose_Conv parser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -57,7 +55,7 @@ STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   attr->dilateH = 1;
   attr->dilateW = 1;
   attr->padMode = GetPadMode(tflite_attr->padding);
-  attr->format = schema::Format_NHWC;
+  attr->format = schema::Format::Format_NHWC;
   attr->activationType = schema::ActivationType_NO_ACTIVATION;
   attr->hasBias = true;
 
@@ -78,8 +76,8 @@ STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   auto data_index = tflite_op->inputs[2];
   const auto &data_tensor = tflite_tensors[data_index];
   std::vector<int> params;
-  if (getPaddingParam(data_tensor, attr->padMode, attr->strideH,
-                      attr->strideW, attr->kernelH, attr->kernelW, &params) != RET_OK) {
+  if (getPaddingParam(data_tensor, attr->padMode, attr->strideH, attr->strideW, attr->kernelH, attr->kernelW,
+                      &params) != RET_OK) {
     MS_LOG(ERROR) << "get padding params failed";
     return RET_ERROR;
   } else {
@@ -92,16 +90,15 @@ STATUS TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   op->primitive->value.type = schema::PrimitiveType_DeConv2D;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-             tflite_op->inputs[2], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-             tflite_op->inputs[1], tensors_id->size(), tflite_tensors.size(), schema::Format_KHWC);
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
-              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[2], tensors_id->size(),
+             tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[1], tensors_id->size(),
+             tflite_tensors.size(), schema::Format::Format_KHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
+              tflite_tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 
 TfliteNodeRegister g_tfliteDeConv2DParser("DeConv2D", new TfliteDeConvParser());
 }  // namespace lite
 }  // namespace mindspore
-

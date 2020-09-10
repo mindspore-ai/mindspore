@@ -66,7 +66,7 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
   }
   std::vector<int> sizes(starts.size(), -1);
   for (size_t i = 0; i < starts.size(); ++i) {
-      sizes[i] = (ends[i] < 0 ? ends[i] : ends[i] - starts[i]);
+    sizes[i] = (ends[i] < 0 ? ends[i] : ends[i] - starts[i]);
   }
   attr->axes = axes;
   attr->begin = starts;

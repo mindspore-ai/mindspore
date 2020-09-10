@@ -27,7 +27,7 @@
 
 #include "ir/visitor.h"
 #include "ir/func_graph.h"
- #include "utils/label.h"
+#include "utils/label.h"
 #include "utils/log_adapter.h"
 #include "src/common/utils.h"
 
@@ -147,4 +147,3 @@ std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root, const Incl
   return DeepLinkedGraphSearcher(include).Search(root);
 }
 }  // namespace mindspore
-

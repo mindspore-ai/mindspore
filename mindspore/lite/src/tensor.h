@@ -20,42 +20,66 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "ir/meta_tensor.h"
+#include <numeric>
+#include <functional>
 #include "include/ms_tensor.h"
-#include "ir/dtype/type_id.h"
 #include "src/runtime/allocator.h"
+#include "ir/dtype/type_id.h"
+#include "utils/log_adapter.h"
 #include "schema/model_generated.h"
 
 namespace mindspore {
 namespace lite {
-namespace tensor {
+
 struct QuantArg {
   double scale;
   int32_t zeroPoint;
 };
 
-class Tensor : public mindspore::tensor::MetaTensor {
+class Tensor : public mindspore::tensor::MSTensor {
  public:
-  Tensor() : MetaTensor() {}
+  enum Category {
+    CONST,  // weight tensor
+    VAR     // activation tensor
+  };
+  Tensor() = default;
 
-  Tensor(const TypeId data_type, const std::vector<int> &shape, const schema::Format &format = schema::Format_NHWC,
-         schema::NodeType tensorType = schema::NodeType_Parameter);
+  Tensor(const TypeId data_type, const std::vector<int> &shape,
+         const schema::Format &format = schema::Format::Format_NHWC, Category category = VAR);
 
   Tensor(const Tensor &tensor);
 
-  ~Tensor() override;
+  virtual ~Tensor();
 
   int CopyTensorData(const Tensor &srcTensor);
 
   int CopyTensor(const Tensor &srcTensor, bool copyData = false);
 
-  MS_DECLARE_PARENT(Tensor, MetaTensor)
-
   virtual Tensor &operator=(const Tensor &tensor);
 
   virtual bool operator==(const Tensor &tensor);
 
-  bool operator==(const Value &other) const override;
+  TypeId data_type() const override { return data_type_; }
+
+  void set_data_type(TypeId data_type) { data_type_ = data_type; }
+
+  std::vector<int> shape() const override { return shape_; }
+
+  void set_shape(const std::vector<int> &shape) { shape_ = shape; }
+
+  int DimensionSize(size_t index) const override {
+    int dim_size = -1;
+    if (index < shape_.size()) {
+      dim_size = shape_[index];
+    } else {
+      MS_LOG(ERROR) << "Dimension index is wrong: " << index;
+    }
+    return dim_size;
+  }
+
+  int ElementsNum() const override {
+    return std::accumulate(shape_.begin(), shape_.end(), 1LL, std::multiplies<int>());
+  }
 
   int32_t Batch() const;
 
@@ -67,9 +91,7 @@ class Tensor : public mindspore::tensor::MetaTensor {
 
   int32_t ElementsC4Num() const;
 
-  int DataSize() const { return this->ElementsNum(); }
-
-  size_t Size() const {
+  size_t Size() const override {
     size_t size = 0;
     switch (this->data_type_) {
       case kNumberTypeFloat64:
@@ -113,8 +135,8 @@ class Tensor : public mindspore::tensor::MetaTensor {
         MS_LOG(ERROR) << "Not support the type: " << this->data_type_;
         return 0;
     }
-    size *= (format_ == schema::Format_NC4HW4 || format_ == schema::Format_NHWC4) ? ElementsC4Num()
-                                                                                  : MetaTensor::ElementsNum();
+    size *= (format_ == schema::Format::Format_NC4HW4 || format_ == schema::Format::Format_NHWC4) ? ElementsC4Num()
+                                                                                                  : ElementsNum();
 
     return size;
   }
@@ -156,11 +178,21 @@ class Tensor : public mindspore::tensor::MetaTensor {
     return 0;
   }
 
-  void *Data() { return data_; }
+  void *MutableData() override {
+    if (this->data_ == nullptr) {
+      auto ret = this->MallocData();
+      if (ret != 0) {
+        MS_LOG(WARNING) << "Malloc data failed";
+      }
+    }
+    return this->data_;
+  }
+
+  void *data_c() const { return data_; }
 
   void SetData(void *data) { this->data_ = data; }
 
-  schema::NodeType TensorType() { return this->tensorType; }
+  Category category() { return this->category_; }
 
   void SetFormat(schema::Format format) { this->format_ = format; }
 
@@ -172,11 +204,11 @@ class Tensor : public mindspore::tensor::MetaTensor {
 
   void decRefCount() { this->refCount--; }
 
-  std::string ToString() const override;
+  std::string ToString() const;
 
-  void AddQuantParam(const tensor::QuantArg &quant_arg);
+  void AddQuantParam(const QuantArg &quant_arg);
 
-  std::vector<tensor::QuantArg> GetQuantParams() const;
+  std::vector<QuantArg> GetQuantParams() const;
 
   void Prepare() {
     if (allocator_ != nullptr) {
@@ -187,52 +219,24 @@ class Tensor : public mindspore::tensor::MetaTensor {
  protected:
   void *data_ = nullptr;
   void *device_data_ = nullptr;
+  TypeId data_type_;
+  std::vector<int> shape_;
   schema::Format format_;
-  schema::NodeType tensorType;
+  Category category_;
   size_t refCount = 0;
-  std::vector<tensor::QuantArg> quant_params_;
+  std::vector<QuantArg> quant_params_;
   mindspore::lite::Allocator *allocator_ = nullptr;
 };
 
-class LiteTensor : public mindspore::tensor::MSTensor {
- public:
-  LiteTensor();
-
-  LiteTensor(TypeId data_type, const std::vector<int> &shape);
-
-  explicit LiteTensor(tensor::Tensor *tensor_ptr);
-
-  ~LiteTensor() override;
-
-  TypeId data_type() const override;
-
-  TypeId set_data_type(TypeId data_type) override;
-
-  std::vector<int> shape() const override;
-
-  size_t set_shape(const std::vector<int> &shape) override;
-
-  int DimensionSize(size_t index) const override;
-
-  int ElementsNum() const override;
-
-  std::size_t hash() const override;
-
-  tensor::Tensor *tensor() const;
-
-  size_t Size() const override;
-
-  void *MutableData() const override;
-
-  void SetTensorImpl(tensor::Tensor *tensor);
-
- protected:
-  tensor::Tensor *tensor_impl_;
-};
-
-using TensorPtr = std::shared_ptr<tensor::Tensor>;
-}  // namespace tensor
+inline Tensor::Category TensorCategory(const schema::Tensor *tensor) {
+  return (tensor->nodeType() == schema::NodeType::NodeType_ValueNode) ? Tensor::Category::CONST : Tensor::Category::VAR;
+}
+inline Tensor::Category TensorCategory(const schema::NodeType type) {
+  return (type == schema::NodeType::NodeType_ValueNode) ? Tensor::Category::CONST : Tensor::Category::VAR;
+}
+std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &src);
 }  // namespace lite
 }  // namespace mindspore
 
+using TensorPtr = std::shared_ptr<mindspore::lite::Tensor>;
 #endif  // MINDSPORE_LITE_SRC_IR_TENSOR_H_

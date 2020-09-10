@@ -22,9 +22,7 @@ namespace mindspore {
 class TestTfliteParserSoftmax : public TestTfliteParser {
  public:
   TestTfliteParserSoftmax() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./softmax.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./softmax.tflite"); }
 };
 
 TEST_F(TestTfliteParserSoftmax, OpType) {

@@ -60,7 +60,7 @@ class DepthwiseConv2D : public PrimitiveC {
 #endif
 
  public:
-  int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
+  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   int GetFormat() const;
   int GetChannelIn() const;
   int GetChannelMultiplier() const;

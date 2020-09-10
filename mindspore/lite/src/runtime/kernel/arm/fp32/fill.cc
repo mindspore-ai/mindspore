@@ -74,9 +74,9 @@ int FillCPUKernel::Run() {
   }
   auto fillData = in_tensors_.at(in_tensors_.size() - 1);
   auto output = out_tensors_.front();
-  auto fill_data = reinterpret_cast<float *>(fillData->Data());
+  auto fill_data = reinterpret_cast<float *>(fillData->MutableData());
   src_data_ = fill_data[0];
-  out_ptr_ = reinterpret_cast<float *>(output->Data());
+  out_ptr_ = reinterpret_cast<float *>(output->MutableData());
   auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, FillRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FillRun error error_code[" << ret << "]";
@@ -85,10 +85,9 @@ int FillCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuFillFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuFillFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                             const lite::Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   if (opParameter == nullptr) {

@@ -1,70 +1,24 @@
 add_definitions(-DPRIMITIVE_WRITEABLE)
-set(CORE_SRC
-        ${CORE_SRC}
-        #core / abstract
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/abstract_function.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/analysis_context.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/param_validator.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/abstract_value.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/dshape.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/utils.cc
-        #core / base
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/base/base_ref.cc
-        #core / ir
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/anf.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/anf_extends.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/meta_func_graph.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/func_graph.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/graph_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/func_graph_cloner.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/func_graph_extends.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/primitive.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/tensor.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/visitor.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/meta_tensor_extends.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype_extends.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/named.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/scope.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/value.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/value_extends.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/ref.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/tensor_type.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/container.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/empty.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/number.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/ref.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/type.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/type_extends.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/any.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/symbolic.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/misc.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/flags.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/trace_base.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/trace_info.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/label.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/info.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/profile.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/ms_context.cc
+string(REPLACE    " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
+file (GLOB_RECURSE CORE_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/*.cc
         )
+list(REMOVE_ITEM CORE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/log_adapter.cc)
+list(REMOVE_ITEM CORE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/graph_utils_extends.cc)
+
 set(CCSRC_SRC
-        ## ccsrc
-        ${CCSRC_DIR}/debug/draw.cc
-        ${CCSRC_DIR}/pybind_api/export_flags.cc
-        ${CCSRC_DIR}/utils/context/context_extends.cc
-        ${CCSRC_DIR}/frontend/parallel/costmodel_context.cc
         ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
 )
 
+
 if (WIN32)
     set(LITE_SRC
             #src
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ir/tensor.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/tensor.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/model.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/context.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/lite_session.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/kernel_registry.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_util.cc
@@ -75,7 +29,6 @@ if (WIN32)
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/executor.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/scheduler.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/lite_kernel.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/ms_tensor_utils.cc
             ${CMAKE_CURRENT_SOURCE_DIR}../../nnacl/pack.c
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/populate_parameter.cc
             )
@@ -124,13 +77,11 @@ set(LITE_SRC
         ${SRC_DIR}/common/graph_utils_extends.cc
         ${SRC_DIR}/common/log_adapter.cc
         ${SRC_DIR}/common/graph_util.cc
-        ${SRC_DIR}/common/ms_tensor_utils.cc
         ${SRC_DIR}/runtime/allocator.cc
         ${SRC_DIR}/runtime/runtime_api.cc
         ${SRC_DIR}/runtime/thread_pool.c
         ${SRC_DIR}/runtime/workspace_pool.cc
-        ${SRC_DIR}/ir/tensor.cc
-        ${SRC_DIR}/context.cc
+        ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/kernel_registry.cc
         ${SRC_DIR}/lite_kernel.cc
         ${SRC_DIR}/populate_parameter.cc

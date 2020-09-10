@@ -21,7 +21,7 @@
 #include "mindspore/lite/nnacl/crop_parameter.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
-#include "mindspore/lite/src/ir/tensor.h"
+#include "mindspore/lite/src/tensor.h"
 
 namespace mindspore {
 
@@ -39,25 +39,25 @@ TEST_F(TestCropInt8, crop_1d_axis0_offset0_quant0_thread2) {
   const int output_size = 7;
   int8_t output[7];
   std::vector<int> output_shape = {7};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  std::vector<lite::Tensor *> outputs_tensor(1);
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
@@ -102,25 +102,25 @@ TEST_F(TestCropInt8, crop_2d_axis1_offset0_quant0_thread2) {
   const int output_size = 14;
   int8_t output[14];
   std::vector<int> output_shape = {2, 7};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  std::vector<lite::Tensor *> outputs_tensor(1);
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
@@ -165,25 +165,25 @@ TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread0) {
   const int output_size = 2;
   int8_t output[2];
   std::vector<int> output_shape = {2, 1, 1};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  std::vector<lite::Tensor *> outputs_tensor(1);
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
@@ -229,25 +229,25 @@ TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread2) {
   const int output_size = 14;
   int8_t output[14];
   std::vector<int> output_shape = {2, 7, 1};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  std::vector<lite::Tensor *> outputs_tensor(1);
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
@@ -292,25 +292,25 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread0) {
   const int output_size = 1;
   int8_t output[1];
   std::vector<int> output_shape = {1, 1, 1, 1};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  std::vector<lite::Tensor *> outputs_tensor(1);
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
@@ -355,25 +355,25 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset0_quant0_thread0) {
   const int output_size = 2;
   int8_t output[2];
   std::vector<int> output_shape = {2, 1, 1, 1};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  std::vector<lite::Tensor *> outputs_tensor(1);
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
@@ -418,25 +418,25 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant0_thread0) {
   const int output_size = 4;
   int8_t output[4];
   std::vector<int> output_shape = {1, 1, 2, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  std::vector<lite::Tensor *> outputs_tensor(1);
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
@@ -484,25 +484,25 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant1_thread0) {
   const int output_size = 4;
   int8_t output[4];
   std::vector<int> output_shape = {1, 1, 2, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 2.0;
   output_quant_arg.zeroPoint = 0;
 
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  std::vector<lite::Tensor *> outputs_tensor(1);
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
@@ -552,25 +552,25 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread2) {
   const int output_size = 7;
   int8_t output[7];
   std::vector<int> output_shape = {1, 7, 1, 1};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  std::vector<lite::Tensor *> outputs_tensor(1);
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
@@ -617,25 +617,25 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread3) {
   const int output_size = 7;
   int8_t output[7];
   std::vector<int> output_shape = {1, 7, 1, 1};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  std::vector<lite::Tensor *> outputs_tensor(1);
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);

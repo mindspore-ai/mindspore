@@ -30,8 +30,8 @@ class ReduceFp16CPUKernel : public ReduceBaseCPUKernel {
                          const int *src_shape, float16_t *dst_data, const int tid, const int thread_num);
 
  public:
-  ReduceFp16CPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  ReduceFp16CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
+                      const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
       : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive) {}
   ~ReduceFp16CPUKernel() = default;

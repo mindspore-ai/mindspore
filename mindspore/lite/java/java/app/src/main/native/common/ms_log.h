@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #ifndef MINDSPORE_LITE_JAVA_SRC_COMMON_MS_LOG_H
 #define MINDSPORE_LITE_JAVA_SRC_COMMON_MS_LOG_H
 

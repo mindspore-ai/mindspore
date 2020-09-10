@@ -75,7 +75,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_[kWeightIndex];
   int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
   int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
 
   packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
@@ -94,7 +94,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, C8NUM * OC8 * sizeof(float16_t));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
-    auto ori_bias = reinterpret_cast<float *>(bias_tensor->Data());
+    auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
     for (int i = 0; i < bias_tensor->ElementsNum(); i++) {
       reinterpret_cast<float *>(bias_data_)[i] = (float16_t)ori_bias[i];
     }
@@ -195,10 +195,9 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuDeconvDwFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuDeconvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                 const lite::Context *ctx, const kernel::KernelKey &desc,
                                                  const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeDepthwiseConv2D);

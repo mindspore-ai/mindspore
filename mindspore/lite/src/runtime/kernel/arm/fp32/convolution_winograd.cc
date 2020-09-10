@@ -124,7 +124,7 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "Malloc filter matrix failed.";
     return RET_ERROR;
   }
-  auto weight_data = reinterpret_cast<float *>(filter_tensor->Data());
+  auto weight_data = reinterpret_cast<float *>(filter_tensor->MutableData());
   ret = WinogradFilterTransform(weight_data, trans_weight_, kernel_unit_, input_unit_, conv_param_, oc_block);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "winograd filter transfrom failed.";
@@ -136,7 +136,7 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
   bias_data_ = reinterpret_cast<float *>(malloc(new_bias_size));
   memset(bias_data_, 0, new_bias_size);
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias_addr = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
+    auto ori_bias_addr = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
     memcpy(bias_data_, ori_bias_addr, out_channel * sizeof(float));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
@@ -243,7 +243,7 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
 
 int ConvolutionWinogradCPUKernel::ConfigInputOutput() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_tensor->SetFormat(schema::Format_NHWC);
+  output_tensor->SetFormat(schema::Format::Format_NHWC);
 
   // choose input transformer function (4x4 unit or 8x8 unit)
   input_trans_func_ = GetInputTransFunc(input_unit_);
@@ -344,7 +344,7 @@ int ConvolutionWinogradImpl(void *cdata, int task_id) {
 
 int ConvolutionWinogradCPUKernel::PostProcess() {
   auto out_tensor = out_tensors_.front();
-  auto out_data = reinterpret_cast<float *>(out_tensor->Data());
+  auto out_data = reinterpret_cast<float *>(out_tensor->MutableData());
   auto act_type = conv_param_->act_type_;
   switch (act_type) {
     case ActType_No:
@@ -380,7 +380,7 @@ int ConvolutionWinogradCPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ori_input_data = input_tensor->Data();
+  auto ori_input_data = input_tensor->MutableData();
   PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
                       conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 

@@ -22,9 +22,7 @@ namespace mindspore {
 class TestTfliteParserReverseSequence : public TestTfliteParser {
  public:
   TestTfliteParserReverseSequence() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./reverse_sequence.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./reverse_sequence.tflite"); }
 };
 
 TEST_F(TestTfliteParserReverseSequence, OpType) {

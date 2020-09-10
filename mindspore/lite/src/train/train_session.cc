@@ -19,7 +19,7 @@
 #include "utils/log_adapter.h"
 #include "include/context.h"
 #include "src/common/utils.h"
-#include "mindspore/lite/src/ir/tensor.h"
+#include "mindspore/lite/src/tensor.h"
 #include "src/train/loss_kernel.h"
 #include "src/train/train_populate_parameter.h"
 #include "src/runtime/runtime_api.h"
@@ -43,28 +43,24 @@ int TrainSession::CompileGraph(lite::Model *model) {
   return LiteSession::CompileGraph(model);
 }
 
-void* TrainSession::ExportToBuf(void* buf, size_t *len) const {
-//  auto train_model_impl = (dynamic_cast<lite::train::TrainModelImpl*>(model_->model_impl()));
-//  return train_model_impl->ExportToBuf(buf, len);
+void *TrainSession::ExportToBuf(void *buf, size_t *len) const {
+  //  auto train_model_impl = (dynamic_cast<lite::train::TrainModelImpl*>(model_->model_impl()));
+  //  return train_model_impl->ExportToBuf(buf, len);
   return nullptr;
 }
 
-
 int TrainSession::RunGraph(const session::KernelCallBack &before, const session::KernelCallBack &after) {
-  auto ms_output_tensors = GetOutputs();
+  auto ms_output_tensors = GetOutputMap();
   this->outputs_.clear();
   for (auto ms_tensors : ms_output_tensors)
-    for (auto ms_tensor : ms_tensors.second)
-    this->outputs_.push_back((dynamic_cast<lite::tensor::LiteTensor*>(ms_tensor))->tensor());
-  if (train_mode_)
-    return LiteSession::RunGraph(before, after);
+    for (auto ms_tensor : ms_tensors.second) this->outputs_.push_back((dynamic_cast<lite::Tensor *>(ms_tensor)));
+  if (train_mode_) return LiteSession::RunGraph(before, after);
 
   // object is expected to run only inference part of graph
   // prepare a lit of kernels till the loss function -- temporary solution
   std::vector<kernel::LiteKernel *> infference_kernels;
   for (auto kernel : this->kernels_) {
-    if (dynamic_cast<const kernel::LossKernel*>(kernel) != nullptr)
-      break;
+    if (dynamic_cast<const kernel::LossKernel *>(kernel) != nullptr) break;
     infference_kernels.push_back(kernel);
   }
 
@@ -76,8 +72,8 @@ int TrainSession::RunGraph(const session::KernelCallBack &before, const session:
   if (before == nullptr && after == nullptr) {
     return executor.Run(this->inputs_, this->outputs_, infference_kernels, this->context_->allocator.get());
   } else {
-    return executor.Run(this->inputs_, this->outputs_, infference_kernels, this->context_->allocator.get(),
-           before, after);
+    return executor.Run(this->inputs_, this->outputs_, infference_kernels, this->context_->allocator.get(), before,
+                        after);
   }
 }
 
@@ -89,8 +85,8 @@ void TrainSession::train() {
   train_mode_ = true;
   ext_output_map_.clear();
   for (auto kernel : this->kernels_) {
-    if (dynamic_cast<const kernel::LossKernel*>(kernel) != nullptr) {
-      auto *ms_tensor = new lite::tensor::LiteTensor(kernel->out_tensors().at(0));
+    if (dynamic_cast<const kernel::LossKernel *>(kernel) != nullptr) {
+      auto *ms_tensor = new lite::Tensor(*kernel->out_tensors().at(0));
       ext_output_map_[kernel->name()].emplace_back(ms_tensor);
     }
   }
@@ -102,26 +98,24 @@ void TrainSession::eval() {
     kernel->eval();
   }
   train_mode_ = false;
-  kernel::LiteKernel* last_kernel = nullptr;
+  kernel::LiteKernel *last_kernel = nullptr;
   // We should get in_kernels and then get all last kernels
   ext_output_map_ = output_node_map_;
   for (auto kernel : this->kernels_) {
-    if ((dynamic_cast<const kernel::LossKernel*>(kernel) != nullptr) &&
-        (last_kernel != nullptr)) {
-      auto *ms_tensor = new lite::tensor::LiteTensor(last_kernel->out_tensors().at(0));
+    if ((dynamic_cast<const kernel::LossKernel *>(kernel) != nullptr) && (last_kernel != nullptr)) {
+      auto *ms_tensor = new lite::Tensor(*last_kernel->out_tensors().at(0));
       ext_output_map_[last_kernel->name()].emplace_back(ms_tensor);
     }
     last_kernel = kernel;
   }
 }
 
-std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> TrainSession::GetOutputs() const {
+std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> TrainSession::GetOutputMap() const {
   return ext_output_map_;
 }
 std::vector<tensor::MSTensor *> TrainSession::GetOutputsByName(const std::string &name) const {
   auto ret_vect = LiteSession::GetOutputsByNodeName(name);  // TODO(emir):  GetOutputsByTensorName?
-  if (ret_vect.size() > 0)
-    return ret_vect;
+  if (ret_vect.size() > 0) return ret_vect;
   auto ret = ext_output_map_.find(name);
   if (ret == ext_output_map_.end()) {
     MS_LOG(WARNING) << "Node  " << name << " is not an output node";
@@ -130,7 +124,5 @@ std::vector<tensor::MSTensor *> TrainSession::GetOutputsByName(const std::string
   }
   return ret->second;
 }
-
-
 
 }  // namespace mindspore::session

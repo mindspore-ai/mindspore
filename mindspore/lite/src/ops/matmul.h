@@ -45,7 +45,7 @@ class MatMul : public PrimitiveC {
 #endif
 
  public:
-  int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
+  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   bool GetTransposeA() const;
   bool GetTransposeB() const;
 };

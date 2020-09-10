@@ -114,7 +114,7 @@ namespace {
 constexpr size_t kInputSize = 1;
 constexpr size_t kOutputSize = 1;
 }  // namespace
-int Reduce::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int Reduce::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   if (inputs_.size() < kInputSize || outputs_.size() != kOutputSize) {
     return RET_ERROR;
   }

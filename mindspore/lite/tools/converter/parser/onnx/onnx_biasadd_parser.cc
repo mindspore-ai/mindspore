@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxBiasAddParser::Parse(const onnx::GraphProto &onnx_graph,
-                                const onnx::NodeProto &onnx_node,
+STATUS OnnxBiasAddParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx BiasAddParser";
   if (op == nullptr) {
@@ -50,4 +49,3 @@ STATUS OnnxBiasAddParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxBiasAddParser("BiasAdd", new OnnxBiasAddParser());
 }  // namespace lite
 }  // namespace mindspore
-

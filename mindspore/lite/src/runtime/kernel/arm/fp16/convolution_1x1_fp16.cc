@@ -96,9 +96,9 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
   if (in_tensors_.size() == 3) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     if (bias_tensor->data_type() == kNumberTypeFloat16) {
-      memcpy(bias_data_, bias_tensor->Data(), output_channel * sizeof(float16_t));
+      memcpy(bias_data_, bias_tensor->MutableData(), output_channel * sizeof(float16_t));
     } else {
-      Float32ToFloat16(reinterpret_cast<float *>(bias_tensor->Data()), reinterpret_cast<float16_t *>(bias_data_),
+      Float32ToFloat16(reinterpret_cast<float *>(bias_tensor->MutableData()), reinterpret_cast<float16_t *>(bias_data_),
                        output_channel);
     }
   }
@@ -110,7 +110,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(weight_ptr_, 0, size);
-  ColMajor2Row8MajorFp16(weight_tensor->Data(), weight_ptr_, input_channel, output_channel,
+  ColMajor2Row8MajorFp16(weight_tensor->MutableData(), weight_ptr_, input_channel, output_channel,
                          weight_tensor->data_type() == kNumberTypeFloat16);
   return RET_OK;
 }

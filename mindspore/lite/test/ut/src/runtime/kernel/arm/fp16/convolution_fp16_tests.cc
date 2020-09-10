@@ -144,7 +144,7 @@ TEST_F(TestConvolutionFp16, ConvTest1) {
     fp16_input_data[i] = static_cast<float16_t>(input_data[i]);
   }
 
-  auto nhwc4_input_data = reinterpret_cast<float16_t *>(malloc(i_h * i_w * ic4 * C4NUM* sizeof(float16_t)));
+  auto nhwc4_input_data = reinterpret_cast<float16_t *>(malloc(i_h * i_w * ic4 * C4NUM * sizeof(float16_t)));
   PackNHWCToNHWC4Fp32(fp16_input_data, nhwc4_input_data, 1, i_h * i_w, in_channel);
 
   std::cout << "==============fp16 input data===========" << std::endl;

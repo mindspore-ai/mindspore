@@ -122,7 +122,7 @@ constexpr int kPriorBoxN = 1;
 constexpr int kPriorBoxW = 1;
 constexpr int kPriorBoxC = 2;
 }  // namespace
-int PriorBox::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int PriorBox::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(param != nullptr);
   auto input = inputs_.at(0);
   MS_ASSERT(input != nullptr);

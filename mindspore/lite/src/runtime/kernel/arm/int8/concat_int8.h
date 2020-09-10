@@ -28,8 +28,8 @@ using mindspore::lite::Context;
 namespace mindspore::kernel {
 class ConcatInt8CPUKernel : public ConcatBaseCPUKernel {
  public:
-  ConcatInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+  ConcatInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                      const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
       : ConcatBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ConcatInt8CPUKernel() override {

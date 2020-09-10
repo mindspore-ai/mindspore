@@ -78,7 +78,7 @@ int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
   }
   memset(bias_data_, 0, size);
   if (in_tensors_.size() == 3) {
-    memcpy(bias_data_, in_tensors_[kBiasIndex]->Data(), output_channel * sizeof(float));
+    memcpy(bias_data_, in_tensors_[kBiasIndex]->MutableData(), output_channel * sizeof(float));
   }
 
   size = input_channel * UP_ROUND(output_channel, C8NUM) * sizeof(float);
@@ -88,7 +88,8 @@ int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
     return RET_ERROR;
   }
   memset(weight_ptr_, 0, size);
-  RowMajor2Col8Major(reinterpret_cast<float *>(filter_tensor->Data()), weight_ptr_, output_channel, input_channel);
+  RowMajor2Col8Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
+                     input_channel);
   return RET_OK;
 }
 
@@ -165,8 +166,8 @@ int Convolution1x1CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto src_in = reinterpret_cast<float *>(in_tensors_[0]->Data());
-  auto src_out = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  auto src_in = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+  auto src_out = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
 
   pack_input_ =
     reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_12_ * matmul_param_->deep_ * sizeof(float)));

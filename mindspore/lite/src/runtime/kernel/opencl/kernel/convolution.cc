@@ -38,7 +38,7 @@ int ConvolutionOpenCLKernel::Init() {
   init_count++;
   use_fp16_ = ocl_runtime->GetFp16Enable();
 
-  if (op_format_ != schema::Format_NHWC4 && op_format_ != schema::Format_NC4HW4) {
+  if (op_format_ != schema::Format::Format_NHWC4 && op_format_ != schema::Format::Format_NC4HW4) {
     MS_LOG(ERROR) << "op_format_ " << op_format_ << " not support!";
   }
   in_ori_format_ = in_tensors_[0]->GetFormat();
@@ -78,7 +78,8 @@ int ConvolutionOpenCLKernel::Init() {
     ocl_runtime->BuildKernel(kernel_36to4x4, program_name, "Winograd36To4x4", build_options);
   } else {
     std::string program_name = "convolution" + std::to_string(init_count);
-    std::string source = op_format_ == schema::Format_NHWC4 ? CodeGenConvolutionNHWC4() : CodeGenConvolutionNC4HW4();
+    std::string source =
+      op_format_ == schema::Format::Format_NHWC4 ? CodeGenConvolutionNHWC4() : CodeGenConvolutionNC4HW4();
     ocl_runtime->LoadSource(program_name, source);
     ocl_runtime->BuildKernel(kernel_conv, program_name, "Convolution", build_options);
   }
@@ -127,8 +128,8 @@ int ConvolutionOpenCLKernel::InitBuffer() {
   allocator->MapBuffer(packed_weight_, CL_MAP_WRITE, nullptr, true);
   memset(packed_weight_, 0x00, packed_weight_size);
   auto weight_tensor = in_tensors_[1];
-  auto origin_weight_fp32 = reinterpret_cast<float *>(weight_tensor->Data());
-  auto origin_weight_fp16 = reinterpret_cast<uint16_t *>(weight_tensor->Data());
+  auto origin_weight_fp32 = reinterpret_cast<float *>(weight_tensor->MutableData());
+  auto origin_weight_fp16 = reinterpret_cast<uint16_t *>(weight_tensor->MutableData());
 
   if (use_winograd_) {
     // weight: OHWI -> O66I -> O/8 6 6 I/4 O2 I4 O4
@@ -221,7 +222,7 @@ int ConvolutionOpenCLKernel::InitBuffer() {
   packed_bias_ = allocator->Malloc(packed_bias_size);
   allocator->MapBuffer(packed_bias_, CL_MAP_WRITE, nullptr, true);
   memset(packed_bias_, 0x00, packed_bias_size);
-  memcpy(packed_bias_, bias_tensor->Data(), CO * sizeof_FLT);
+  memcpy(packed_bias_, bias_tensor->MutableData(), CO * sizeof_FLT);
   allocator->UnmapBuffer(packed_bias_);
 
   return RET_OK;
@@ -229,7 +230,7 @@ int ConvolutionOpenCLKernel::InitBuffer() {
 
 int ConvolutionOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+  if (in_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
     if (out_tensors_[0]->Width() * CO_SLICES < 65536) {
       {
         im_dst_x = out_tensors_[0]->Width() * CO_SLICES;
@@ -260,7 +261,7 @@ int ConvolutionOpenCLKernel::Run() {
     arg_cn = 0;
     cl_int4 _4x4to36_in_shape = {1, IH, IW, CI_SLICES};
     cl_int4 _4x4to36_out_shape = {1, 36, TILES_XY, CI_SLICES};
-    ocl_runtime->SetKernelArg(kernel_4x4to36, arg_cn++, in_tensors_[0]->Data(), lite::opencl::MemType::IMG);
+    ocl_runtime->SetKernelArg(kernel_4x4to36, arg_cn++, in_tensors_[0]->MutableData(), lite::opencl::MemType::IMG);
     ocl_runtime->SetKernelArg(kernel_4x4to36, arg_cn++, winograd_mem0_, lite::opencl::MemType::IMG);
     ocl_runtime->SetKernelArg(kernel_4x4to36, arg_cn++, _4x4to36_in_shape);
     ocl_runtime->SetKernelArg(kernel_4x4to36, arg_cn++, _4x4to36_out_shape);
@@ -278,17 +279,17 @@ int ConvolutionOpenCLKernel::Run() {
     cl_int4 _36to4x4_in_shape = {1, 16, TILES_XY, CO_SLICES};
     cl_int4 _36to4x4_out_shape = {1, OH, OW, CO_SLICES};
     ocl_runtime->SetKernelArg(kernel_36to4x4, arg_cn++, winograd_mem1_, lite::opencl::MemType::IMG);
-    ocl_runtime->SetKernelArg(kernel_36to4x4, arg_cn++, out_tensors_[0]->Data(), lite::opencl::MemType::IMG);
+    ocl_runtime->SetKernelArg(kernel_36to4x4, arg_cn++, out_tensors_[0]->MutableData(), lite::opencl::MemType::IMG);
     ocl_runtime->SetKernelArg(kernel_36to4x4, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
     ocl_runtime->SetKernelArg(kernel_36to4x4, arg_cn++, _36to4x4_in_shape);
     ocl_runtime->SetKernelArg(kernel_36to4x4, arg_cn++, _36to4x4_out_shape);
   } else {
     arg_cn = 0;
-    ocl_runtime->SetKernelArg(kernel_conv, arg_cn++, in_tensors_[0]->Data(), lite::opencl::MemType::IMG);
-    ocl_runtime->SetKernelArg(kernel_conv, arg_cn++, out_tensors_[0]->Data(), lite::opencl::MemType::IMG);
+    ocl_runtime->SetKernelArg(kernel_conv, arg_cn++, in_tensors_[0]->MutableData(), lite::opencl::MemType::IMG);
+    ocl_runtime->SetKernelArg(kernel_conv, arg_cn++, out_tensors_[0]->MutableData(), lite::opencl::MemType::IMG);
     ocl_runtime->SetKernelArg(kernel_conv, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
     ocl_runtime->SetKernelArg(kernel_conv, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
-    if (op_format_ == schema::Format_NC4HW4) {
+    if (op_format_ == schema::Format::Format_NC4HW4) {
       cl_int4 input_shape = {1, IH, IW, CI_SLICES};
       cl_int4 output_shape = {1, OH, OW, CO_SLICES};
       ocl_runtime->SetKernelArg(kernel_conv, arg_cn++, input_shape);
@@ -606,12 +607,12 @@ std::string ConvolutionOpenCLKernel::CodeGenWinograd4x4To36() {
     "    {\n"
     "        int y_idx = tile_y * 4 - PAD + y;\n";
 
-  if (op_format_ == schema::Format_NHWC4) {
+  if (op_format_ == schema::Format::Format_NHWC4) {
     code +=
       "        for (int x = 0; x < 6; x++)\n"
       "        {\n"
       "             int x_idx = (tile_x * 4 - PAD + x) * SLICES + slice;\n";
-  } else if (op_format_ == schema::Format_NC4HW4) {
+  } else if (op_format_ == schema::Format::Format_NC4HW4) {
     code +=
       "        if(y_idx < 0 || y_idx >= IH)\n"
       "        {\n"
@@ -787,9 +788,9 @@ std::string ConvolutionOpenCLKernel::CodeGenWinograd36To4x4() {
     "        int tile_x = tile_xy % TILE_X * 4;\n"
     "        int tile_y = tile_xy / TILE_X * 4;\n";
 
-  if (op_format_ == schema::Format_NHWC4) {
+  if (op_format_ == schema::Format::Format_NHWC4) {
     code += "        WRITE_IMAGE(output, (int2)((tile_x + x) * SLICES + slice, tile_y + row), acc);\n";
-  } else if (op_format_ == schema::Format_NC4HW4) {
+  } else if (op_format_ == schema::Format::Format_NC4HW4) {
     code += "        WRITE_IMAGE(output, (int2)(tile_x + x, slice * OH + tile_y + row), acc);\n";
   }
 
@@ -822,7 +823,7 @@ int ConvolutionOpenCLKernel::SetGlobalLocalConv(std::vector<size_t> *global, std
     local_h = global_h / 2;
   }
 
-  if (op_format_ == schema::Format_NHWC4) {
+  if (op_format_ == schema::Format::Format_NHWC4) {
     if (OW * CO_SLICES > 65536) {
       local_w = 4;
     }
@@ -837,7 +838,7 @@ int ConvolutionOpenCLKernel::SetGlobalLocalConv(std::vector<size_t> *global, std
   local->push_back(local_h);
   local->push_back(local_c);
 
-  if (op_format_ == schema::Format_NC4HW4) {
+  if (op_format_ == schema::Format::Format_NC4HW4) {
     // calculate 2 FLT4 along width per work-item
     global->at(0) = UP_DIV(global->at(0), 2);
     if (local->at(0) > global->at(0)) {
@@ -848,10 +849,9 @@ int ConvolutionOpenCLKernel::SetGlobalLocalConv(std::vector<size_t> *global, std
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                   const std::vector<lite::tensor::Tensor *> &outputs,
-                                                   OpParameter *opParameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc,
+kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                   const lite::Context *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel =
     new (std::nothrow) ConvolutionOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);

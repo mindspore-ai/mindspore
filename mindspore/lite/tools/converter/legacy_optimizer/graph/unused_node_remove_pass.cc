@@ -47,4 +47,3 @@ STATUS UnusedNodeRemovePass::Run(schema::MetaGraphT *graph) {
 }
 }  // namespace lite
 }  // namespace mindspore
-

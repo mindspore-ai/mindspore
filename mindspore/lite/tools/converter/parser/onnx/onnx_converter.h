@@ -34,4 +34,3 @@ class OnnxConverter : public Converter {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_CONVERTER_H
-

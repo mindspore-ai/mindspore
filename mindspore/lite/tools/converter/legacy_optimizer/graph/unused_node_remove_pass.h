@@ -34,4 +34,3 @@ class UnusedNodeRemovePass : public GraphPass {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_PREDICT_UNUSED_NODE_REMOVE_PASS_H
-

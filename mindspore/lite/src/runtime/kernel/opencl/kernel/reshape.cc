@@ -75,10 +75,10 @@ int ReshapeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
     w = shapex[2];
     c = shapex[3];
   }
-  if (op_format_ == schema::Format_NHWC4) {
+  if (op_format_ == schema::Format::Format_NHWC4) {
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = n * h;
-  } else if (op_format_ == schema::Format_NC4HW4) {
+  } else if (op_format_ == schema::Format::Format_NC4HW4) {
     im_dst_x = w;
     im_dst_y = n * UP_DIV(c, C4NUM) * h;
   } else {
@@ -115,18 +115,17 @@ int ReshapeOpenCLKernel::Run() {
   cl_int4 size = {h, w, c4, 1};
   cl_int4 size_out = {oh, ow, c4, 1};
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, size);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, size_out);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLReshapeKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *OpenCLReshapeKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) ReshapeOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {

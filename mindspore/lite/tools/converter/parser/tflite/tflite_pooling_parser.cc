@@ -25,10 +25,8 @@ namespace lite {
 STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                   const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                   const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                  schema::CNodeT *op,
-                                  std::vector<int32_t> *tensors_id,
-                                  std::vector<schema::Format> *tensors_format,
-                                  std::map<int, int>  *tensors_id_map) {
+                                  schema::CNodeT *op, std::vector<int32_t> *tensors_id,
+                                  std::vector<schema::Format> *tensors_format, std::map<int, int> *tensors_id_map) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -66,7 +64,7 @@ STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   attr->strideW = tflite_attr->stride_w;
   attr->strideH = tflite_attr->stride_h;
   attr->padMode = GetPadMode(tflite_attr->padding);
-  attr->format = schema::Format_NHWC;
+  attr->format = schema::Format::Format_NHWC;
 
   attr->global = false;
   attr->roundMode = schema::RoundMode_FLOOR;
@@ -76,8 +74,8 @@ STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   auto data_index = tflite_op->inputs[0];
   const auto &data_tensor = tflite_tensors[data_index];
   std::vector<int> params;
-  if (getPaddingParam(data_tensor, attr->padMode, attr->strideH,
-                      attr->strideW, attr->windowH, attr->windowW, &params) != RET_OK) {
+  if (getPaddingParam(data_tensor, attr->padMode, attr->strideH, attr->strideW, attr->windowH, attr->windowW,
+                      &params) != RET_OK) {
     MS_LOG(ERROR) << "get padding params failed";
     return RET_ERROR;
   } else {
@@ -90,10 +88,10 @@ STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   op->primitive->value.type = schema::PrimitiveType_Pooling;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
-              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
+             tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
+              tflite_tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 
@@ -101,5 +99,3 @@ TfliteNodeRegister g_tfliteMeanPoolingParser("MeanPooling", new TfliteMeanPoolin
 TfliteNodeRegister g_tfliteMaxPoolingParser("MaxPooling", new TfliteMaxPoolingParser());
 }  // namespace lite
 }  // namespace mindspore
-
-

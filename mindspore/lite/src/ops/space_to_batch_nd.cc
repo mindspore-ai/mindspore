@@ -78,15 +78,14 @@ int SpaceToBatchND::UnPackToFlatBuilder(const schema::Primitive *primitive, flat
 
 #endif  // PRIMITIVE_WRITEABLE
 
-int SpaceToBatchND::InferShape(std::vector<lite::tensor::Tensor *> inputs,
-                               std::vector<lite::tensor::Tensor *> outputs) {
+int SpaceToBatchND::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   if (outputs.size() != kSpaceToBatchNDOutputNum || inputs.size() != kSpaceToBatchNDInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
     return 1;
   }
 
   auto input = inputs.at(0);
-  if (input->GetFormat() != schema::Format_NHWC) {
+  if (input->GetFormat() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_batch_nd only support NHWC now!";
     return RET_ERROR;
   }

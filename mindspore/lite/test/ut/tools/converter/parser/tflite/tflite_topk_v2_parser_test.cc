@@ -22,9 +22,7 @@ namespace mindspore {
 class TestTfliteParserTopKV2 : public TestTfliteParser {
  public:
   TestTfliteParserTopKV2() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./topk_v2.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./topk_v2.tflite"); }
 };
 
 TEST_F(TestTfliteParserTopKV2, OpType) {

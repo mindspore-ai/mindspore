@@ -45,7 +45,7 @@ int SpaceToDepthCPUKernel::Init() {
 }
 
 int SpaceToDepthCPUKernel::ReSize() {
-  if (in_tensors_[0]->GetFormat() != schema::Format_NHWC) {
+  if (in_tensors_[0]->GetFormat() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
     return RET_FORMAT_ERR;
   }
@@ -90,9 +90,9 @@ int SpaceToDepthCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  input_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->Data());
-  output_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->Data());
-  if (in_tensors_[0]->GetFormat() == schema::Format_NHWC) {
+  input_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+  output_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
+  if (in_tensors_[0]->GetFormat() == schema::Format::Format_NHWC) {
     ret = ParallelLaunch(THREAD_POOL_DEFAULT, SpaceToDepthRun, this, thread_h_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SpaceToDepth error error_code[" << ret << "]";
@@ -106,8 +106,8 @@ int SpaceToDepthCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuSpaceToDepthFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                     const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuSpaceToDepthFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                     const std::vector<lite::Tensor *> &outputs,
                                                      OpParameter *opParameter, const lite::Context *ctx,
                                                      const kernel::KernelKey &desc,
                                                      const mindspore::lite::PrimitiveC *primitive) {

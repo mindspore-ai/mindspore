@@ -27,8 +27,8 @@ using mindspore::lite::Context;
 namespace mindspore::kernel {
 class ConcatBaseCPUKernel : public LiteKernel {
  public:
-  ConcatBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+  ConcatBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                      const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     concat_param_ = reinterpret_cast<ConcatParameter *>(op_parameter_);

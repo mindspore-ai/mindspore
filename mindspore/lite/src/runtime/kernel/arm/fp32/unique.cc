@@ -33,9 +33,9 @@ int UniqueCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto output0 = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
-  auto output1 = reinterpret_cast<int *>(out_tensors_.at(1)->Data());
+  auto input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto output0 = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  auto output1 = reinterpret_cast<int *>(out_tensors_.at(1)->MutableData());
 
   int output0_len = 0;
   Unique(input, in_tensors_.at(0)->ElementsNum(), output0, &output0_len, output1);
@@ -46,9 +46,9 @@ int UniqueCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuUniqueFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *parameter, const lite::Context *ctx, const KernelKey &desc,
+kernel::LiteKernel *CpuUniqueFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                               const lite::Context *ctx, const KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter);
   MS_ASSERT(desc.type == PrimitiveType_Unique);

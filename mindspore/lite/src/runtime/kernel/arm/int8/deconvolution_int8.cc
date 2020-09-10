@@ -142,7 +142,7 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
   }
   memset(bias_data_, 0, size);
   if (in_tensors_.size() == 3) {
-    memcpy(bias_data_, in_tensors_[0]->Data(), conv_param_->output_channel_ * sizeof(int32_t));
+    memcpy(bias_data_, in_tensors_[0]->MutableData(), conv_param_->output_channel_ * sizeof(int32_t));
   }
 
   size = UP_ROUND(conv_param_->output_channel_, C4NUM) * UP_ROUND(conv_param_->input_channel_, C16NUM) *
@@ -153,9 +153,9 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
     return RET_ERROR;
   }
   memset(weight_ptr_, static_cast<int8_t>(conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_), size);
-  DeConvWeightTransInt8(reinterpret_cast<int8_t *>(in_tensors_[1]->Data()), weight_ptr_, conv_param_->input_channel_,
-                        conv_param_->output_channel_, conv_param_->kernel_h_ * conv_param_->kernel_w_,
-                        support_optimize_);
+  DeConvWeightTransInt8(reinterpret_cast<int8_t *>(in_tensors_[1]->MutableData()), weight_ptr_,
+                        conv_param_->input_channel_, conv_param_->output_channel_,
+                        conv_param_->kernel_h_ * conv_param_->kernel_w_, support_optimize_);
 
   size = UP_ROUND(conv_param_->output_channel_, C4NUM) * conv_param_->kernel_h_ * conv_param_->kernel_w_;
   weight_sum_ = reinterpret_cast<int32_t *>(malloc(size * sizeof(int32_t)));
@@ -265,8 +265,8 @@ int DeConvInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  int8_t *src_in = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
-  int8_t *src_out = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
+  int8_t *src_in = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
+  int8_t *src_out = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
 
   int error_code = InitRunBuf();
   if (error_code != RET_OK) {
@@ -293,10 +293,9 @@ int DeConvInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2D);

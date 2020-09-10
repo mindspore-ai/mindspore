@@ -10,79 +10,44 @@ string(REPLACE " -Werror " " " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-### anf src
-set(ANF_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/meta_tensor.cc
-        ${CORE_DIR}/gvar/logging_level.cc
-        ${CORE_DIR}/gvar/typeid_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../core/base/base.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/log_adapter.cc
-        )
+
 
 if(BUILD_CONVERTER)
-    set(ANF_SRC
-            ${ANF_SRC}
-            # core/base
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/base/base_ref.cc
-            # core/ir
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/anf.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/anf_extends.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/meta_func_graph.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/func_graph.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/graph_utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/func_graph_cloner.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/func_graph_extends.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/manager.cc
+file (GLOB_RECURSE CORE_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../core/*.cc
+        )
+set(CCSRC_SRC
+        ## ccsrc
+        ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
+        ${CCSRC_DIR}/backend/optimizer/common/visit.cc
+        ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
+        )
+else(BUILD_CONVERTER)
+    set(CORE_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/dshape.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/abstract_value.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/abstract_function.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/primitive.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/tensor.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/visitor.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/meta_tensor_extends.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype_extends.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/named.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/scope.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/value.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/value_extends.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/ref.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/tensor_type.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype_extends.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/container.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/empty.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/number.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/ref.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/type.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/empty.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/tensor_type.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/type_extends.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/any.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/symbolic.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/misc.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/trace_base.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/trace_info.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/label.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/info.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/profile.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/ms_context.cc
-            # core/abstract
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/abstract_function.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/analysis_context.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/param_validator.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/abstract_value.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/dshape.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/utils.cc
-            ## ccsrc
-            ${CCSRC_DIR}/debug/draw.cc
-            ${CCSRC_DIR}/pybind_api/export_flags.cc
-            ${CCSRC_DIR}/utils/context/context_extends.cc
-            ${CCSRC_DIR}/frontend/parallel/costmodel_context.cc
-            ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
-            ${CCSRC_DIR}/backend/optimizer/common/visit.cc
-            ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/graph_utils_extends.cc
-            )
-else()
-    set(ANF_SRC
-            ${ANF_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../src/ir/meta_tensor_extends.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/number.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/gvar/logging_level.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/gvar/typeid_manager.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/base/base.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/base/base_ref.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/log_adapter.cc
             )
 endif()
+
 ### cpu kernel
 file(GLOB KERNEL_OP_SRC
         ${LITE_DIR}/src/runtime/kernel/arm/base/*.cc
@@ -176,7 +141,8 @@ endif()
 ### runtime framework
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
 set(TEST_LITE_SRC
-        ${ANF_SRC}
+        ${CORE_SRC}
+        ${CCSRC_SRC}
         ${OPS_SRC}
         ${KERNEL_OP_SRC}
         ${LITE_DIR}/src/runtime/allocator.cc
@@ -184,9 +150,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/runtime/thread_pool.c
         ${LITE_DIR}/src/runtime/workspace_pool.cc
         ${LITE_DIR}/src/runtime/parallel_executor.cc
-        ${LITE_DIR}/src/ir/tensor.cc
-#        ${LITE_DIR}/src/ir/primitive_t_value.cc
-        ${LITE_DIR}/src/context.cc
+        ${LITE_DIR}/src/tensor.cc
         ${LITE_DIR}/src/executor.cc
         ${LITE_DIR}/src/kernel_registry.cc
         ${LITE_DIR}/src/lite_kernel.cc
@@ -198,7 +162,6 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/common/file_utils.cc
         ${LITE_DIR}/src/common/file_utils_ext.cc
         ${LITE_DIR}/src/common/utils.cc
-        ${LITE_DIR}/src/common/ms_tensor_utils.cc
         ${LITE_DIR}/tools/common/graph_util.cc
         ${LITE_DIR}/tools/common/tensor_util.cc
         ${LITE_DIR}/tools/common/node_util.cc
@@ -312,6 +275,7 @@ set(TEST_SRC
     ${TEST_DIR}/ut/src/runtime/kernel/arm/common/pack_tests.cc
     ${TEST_DIR}/ut/src/infer_test.cc
     ${TEST_DIR}/ut/src/utils_test.cc
+    #${TEST_DIR}/ut/internal/infer_test.cc
 )
 
 if (SUPPORT_TRAIN)
@@ -362,6 +326,10 @@ endif ()
 add_executable(lite-test ${TEST_SRC})
 
 target_link_libraries(lite-test dl ${GTEST_LIBRARY})
+if (PLATFORM_ARM64)
+    target_link_libraries(lite-test mslite_internal)
+endif()
+
 if (BUILD_MINDDATA STREQUAL "lite")
     target_link_libraries(lite-test
            minddata-lite

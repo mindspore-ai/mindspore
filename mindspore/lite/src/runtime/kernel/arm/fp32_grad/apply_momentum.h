@@ -24,18 +24,18 @@
 namespace mindspore::kernel {
 class ApplyMomentumCPUKernel : public LiteKernel {
  public:
-  explicit ApplyMomentumCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                                const mindspore::lite::PrimitiveC *primitive)
+  explicit ApplyMomentumCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                  const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                                  const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ApplyMomentumCPUKernel() override {delete [] workspace;}
+  ~ApplyMomentumCPUKernel() override { delete[] workspace; }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
  private:
-    float *workspace;
+  float *workspace;
 };
 
 // OpParameter *PopulateApplyMomentumParameter(const lite::Primitive *primitive);

@@ -27,8 +27,8 @@ namespace mindspore::kernel {
 
 class ActivationOpenClKernel : public OpenCLKernel {
  public:
-  explicit ActivationOpenClKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                  const std::vector<lite::tensor::Tensor *> &outputs)
+  explicit ActivationOpenClKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                  const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {
     type_ = (reinterpret_cast<ActivationParameter *>(parameter))->type_;
     alpha_ = (reinterpret_cast<ActivationParameter *>(parameter))->alpha_;

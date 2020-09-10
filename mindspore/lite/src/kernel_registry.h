@@ -44,9 +44,8 @@ class KernelRegistry {
   void RegKernel(const kernel::KERNEL_ARCH arch, const TypeId data_type, const schema::PrimitiveType type,
                  kernel::KernelCreator creator);
   bool Merge(const std::unordered_map<kernel::KernelKey, kernel::KernelCreator> &newCreators);
-  kernel::LiteKernel *GetKernel(const std::vector<tensor::Tensor *> &in_tensors,
-                                const std::vector<tensor::Tensor *> &out_tensors, const PrimitiveC *primitive,
-                                const Context *ctx, const kernel::KernelKey &key);
+  kernel::LiteKernel *GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                                const PrimitiveC *primitive, const Context *ctx, const kernel::KernelKey &key);
 
  protected:
   static const int device_type_length_{kKernelArch_MAX - kKernelArch_MIN + 1};

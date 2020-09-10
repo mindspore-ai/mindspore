@@ -17,12 +17,11 @@
 #include "src/ops/arithmetic_grad.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 namespace lite {
-int ArithmeticGrad::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
-                               std::vector<lite::tensor::Tensor *> outputs_) {
+int ArithmeticGrad::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   if (inputs_.size() != 3) {
     MS_LOG(ERROR) << "The number of input must be 3";
     return RET_ERROR;

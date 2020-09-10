@@ -29,10 +29,8 @@ namespace mindspore {
 namespace lite {
 using STATUS = int;
 
-STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto,
-                                   const caffe::LayerParameter &weight,
-                                   schema::CNodeT *op,
-                                   std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                                   schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeBatchNormParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -53,21 +51,20 @@ STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto,
   const caffe::BatchNormParameter batchNormParam = proto.batch_norm_param();
   // check bottom size
   if (proto.bottom_size() != CAFFE_BATCHNORMAL_BOTTOM_SIZE) {
-    MS_LOG(ERROR) << "Layer " << proto.name().c_str() << "bottom numbers is error, it must be " \
+    MS_LOG(ERROR) << "Layer " << proto.name().c_str() << "bottom numbers is error, it must be "
                   << CAFFE_BATCHNORMAL_BOTTOM_SIZE << "but is " << proto.bottom_size();
     return RET_ERROR;
   }
 
   // check top size
   if (proto.top_size() != CAFFE_BATCHNORMAL_TOP_SIZE) {
-    MS_LOG(ERROR) << "Layer " << proto.name().c_str() << "top numbers is error, it must be " \
+    MS_LOG(ERROR) << "Layer " << proto.name().c_str() << "top numbers is error, it must be "
                   << CAFFE_BATCHNORMAL_TOP_SIZE << "but is " << proto.top_size();
     return RET_ERROR;
   }
 
   if (batchNormParam.has_eps()) {
-    if (fabs(CAFFE_BATCH_NORM_ESP_DEFAULT_FLOAT - batchNormParam.eps())
-        < CAFFE_BATCH_NORM_ESP_DEFAULT_DIFF_FLOAT) {
+    if (fabs(CAFFE_BATCH_NORM_ESP_DEFAULT_FLOAT - batchNormParam.eps()) < CAFFE_BATCH_NORM_ESP_DEFAULT_DIFF_FLOAT) {
       attr->epsilon = CAFFE_BATCH_NORM_ESP_DEFAULT_FLOAT;
     } else {
       auto tmpAuto = batchNormParam.eps();

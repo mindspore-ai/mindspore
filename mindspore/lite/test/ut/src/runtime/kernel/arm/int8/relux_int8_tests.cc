@@ -29,21 +29,21 @@ class TestReluXInt8 : public mindspore::CommonTest {
 };
 
 TEST_F(TestReluXInt8, Relu) {
-  lite::tensor::Tensor in_tensor(kNumberTypeInt8, {2, 2});
-  lite::tensor::Tensor out_tensor(kNumberTypeInt8, {2, 2});
+  lite::Tensor in_tensor(kNumberTypeInt8, {2, 2});
+  lite::Tensor out_tensor(kNumberTypeInt8, {2, 2});
 
   int8_t input_data[] = {-102, 25, -51, 89};  // -0.8 0.2 -0.4 0.7
   int8_t output_data[4] = {0};
   in_tensor.SetData(input_data);
   out_tensor.SetData(output_data);
 
-  const lite::tensor::QuantArg quant_in = {0.00784314f, 0};  // -1.0--1.0 ->
-  const lite::tensor::QuantArg quant_out = {0.00784314f, 0};
+  const lite::QuantArg quant_in = {0.00784314f, 0};  // -1.0--1.0 ->
+  const lite::QuantArg quant_out = {0.00784314f, 0};
   in_tensor.AddQuantParam(quant_in);
   out_tensor.AddQuantParam(quant_out);
 
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   ActivationParameter parameter = {0};
   parameter.op_parameter_.type_ = schema::PrimitiveType_Activation;
@@ -71,8 +71,8 @@ TEST_F(TestReluXInt8, Relu) {
 }
 
 TEST_F(TestReluXInt8, Relu6) {
-  lite::tensor::Tensor in_tensor(kNumberTypeInt8, {2, 4});
-  lite::tensor::Tensor out_tensor(kNumberTypeInt8, {2, 4});
+  lite::Tensor in_tensor(kNumberTypeInt8, {2, 4});
+  lite::Tensor out_tensor(kNumberTypeInt8, {2, 4});
 
   // -2.5f, -1.5f, 1.25f, 3.0f, 4.5f, 6.0f, 6.5f, 9.0f
   int8_t input_data[] = {-118, -98, -44, -10, 19, 49, 59, 108};
@@ -80,13 +80,13 @@ TEST_F(TestReluXInt8, Relu6) {
   in_tensor.SetData(input_data);
   out_tensor.SetData(output_data);
 
-  const lite::tensor::QuantArg quant_in = {0.0509804f, -69};    // -3.0 -- 10.0
-  const lite::tensor::QuantArg quant_out = {0.0392157f, -128};  // 0.0 -- 10.0
+  const lite::QuantArg quant_in = {0.0509804f, -69};    // -3.0 -- 10.0
+  const lite::QuantArg quant_out = {0.0392157f, -128};  // 0.0 -- 10.0
   in_tensor.AddQuantParam(quant_in);
   out_tensor.AddQuantParam(quant_out);
 
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   ActivationParameter parameter = {0};
   parameter.op_parameter_.type_ = schema::PrimitiveType_Activation;

@@ -94,7 +94,7 @@ int ArithmeticCPUKernel::ReSize() {
             break;
         }
         break;
-        case PrimitiveType_Div:
+      case PrimitiveType_Div:
         switch (arithmeticParameter_->activation_type_) {
           case schema::ActivationType_RELU:
             arithmeticParameter_->broadcasting_ = false;
@@ -118,7 +118,7 @@ int ArithmeticCPUKernel::ReSize() {
 }
 
 int ArithmeticCPUKernel::BroadcastRun(float *input0, float *input1, float *output, int dim, int out_count,
-                                        int out_thread_stride) {
+                                      int out_thread_stride) {
   if (dim > break_pos_) {
     return arithmetic_run_(input0 + out_thread_stride, input1 + out_thread_stride, output + out_thread_stride,
                            out_count);
@@ -128,8 +128,8 @@ int ArithmeticCPUKernel::BroadcastRun(float *input0, float *input1, float *outpu
     int pos1_ = arithmeticParameter_->in_shape1_[dim] == 1 ? 0 : i;
     int error_code =
       BroadcastRun(input0 + pos0_ * arithmeticParameter_->in_strides0_[dim],
-                     input1 + pos1_ * arithmeticParameter_->in_strides1_[dim],
-                     output + i * arithmeticParameter_->out_strides_[dim], dim + 1, out_count, out_thread_stride);
+                   input1 + pos1_ * arithmeticParameter_->in_strides1_[dim],
+                   output + i * arithmeticParameter_->out_strides_[dim], dim + 1, out_count, out_thread_stride);
     if (error_code != RET_OK) {
       return error_code;
     }
@@ -138,9 +138,9 @@ int ArithmeticCPUKernel::BroadcastRun(float *input0, float *input1, float *outpu
 }
 
 int ArithmeticCPUKernel::DoArithmetic(int task_id) {
-  auto input0_data = reinterpret_cast<float *>(in_tensors_[0]->Data());
-  auto input1_data1 = reinterpret_cast<float *>(in_tensors_[1]->Data());
-  auto output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  auto input0_data = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+  auto input1_data1 = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+  auto output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   auto element_num = out_tensors_[0]->ElementsNum();
 
   MS_ASSERT(thread_count_ != 0);
@@ -218,10 +218,9 @@ int ArithmeticCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuArithmeticFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                   const std::vector<lite::tensor::Tensor *> &outputs,
-                                                   OpParameter *parameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuArithmeticFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                                   const lite::Context *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter != nullptr);
   auto kernel = new (std::nothrow) ArithmeticCPUKernel(parameter, inputs, outputs, ctx, primitive);

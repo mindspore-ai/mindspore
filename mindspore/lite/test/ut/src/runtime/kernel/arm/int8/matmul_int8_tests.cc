@@ -46,23 +46,22 @@ void QuantProcess(float *input, int len, float min, float max, float *scale, int
   }
 }
 
-lite::tensor::Tensor *MakeQuantTensor(int8_t *data, int len, std::vector<int> *shape, float scale, int zp) {
-  auto tensor =
-    new lite::tensor::Tensor(kNumberTypeInt8, *shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+lite::Tensor *MakeQuantTensor(int8_t *data, int len, std::vector<int> *shape, float scale, int zp) {
+  auto tensor = new lite::Tensor(kNumberTypeInt8, *shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
   tensor->MallocData();
   if (data) {
-    auto tensor_ptr = reinterpret_cast<int8_t *>(tensor->Data());
+    auto tensor_ptr = reinterpret_cast<int8_t *>(tensor->MutableData());
     memcpy(tensor_ptr, data, len * sizeof(int8_t));
   }
-  auto quant_arg = new mindspore::lite::tensor::QuantArg();
+  auto quant_arg = new mindspore::lite::QuantArg();
   quant_arg->zeroPoint = zp;
   quant_arg->scale = scale;
   tensor->AddQuantParam(*quant_arg);
   return tensor;
 }
 
-void MMInt8TestInit(std::vector<lite::tensor::Tensor *> *inputs, std::vector<lite::tensor::Tensor *> *outputs,
-                    TensorInfo *in, TensorInfo *weight, TensorInfo *out) {
+void MMInt8TestInit(std::vector<lite::Tensor *> *inputs, std::vector<lite::Tensor *> *outputs, TensorInfo *in,
+                    TensorInfo *weight, TensorInfo *out) {
   float in_scale, weight_scale, out_scale;
   int in_zp, weight_zp, out_zp;
   int8_t *in_data = new int8_t[in->len];
@@ -171,8 +170,8 @@ TEST_F(TestMatmulInt8, mmtest1) {
   matmul_param->a_transpose_ = false;
   matmul_param->b_transpose_ = true;
   matmul_param->has_bias_ = false;
-  std::vector<lite::tensor::Tensor *> inputs;
-  std::vector<lite::tensor::Tensor *> outputs;
+  std::vector<lite::Tensor *> inputs;
+  std::vector<lite::Tensor *> outputs;
   MMInt8TestInit(&inputs, &outputs, &in_params, &weight_params, &out_params);
   auto ctx = new lite::Context;
   ctx->thread_num_ = 1;
@@ -185,7 +184,7 @@ TEST_F(TestMatmulInt8, mmtest1) {
   int out_zp;
   QuantProcess(correct, out_params.len, out_params.min, out_params.max, &out_scale, &out_zp, nullptr);
   float *out = new float[out_params.len];
-  Dequantize(reinterpret_cast<int8_t *>(outputs[0]->Data()), outputs[0]->ElementsNum(), out_scale, out_zp, out);
+  Dequantize(reinterpret_cast<int8_t *>(outputs[0]->MutableData()), outputs[0]->ElementsNum(), out_scale, out_zp, out);
   CompareOutputData(out, correct, 6, 0.3);
   delete mm;
   for (auto t : inputs) delete t;
@@ -287,8 +286,8 @@ TEST_F(TestMatmulInt8, mmtest2) {
   matmul_param->a_transpose_ = false;
   matmul_param->b_transpose_ = false;
   matmul_param->has_bias_ = false;
-  std::vector<lite::tensor::Tensor *> inputs;
-  std::vector<lite::tensor::Tensor *> outputs;
+  std::vector<lite::Tensor *> inputs;
+  std::vector<lite::Tensor *> outputs;
   MMInt8TestInit(&inputs, &outputs, &in_params, &weight_params, &out_params);
   auto ctx = new lite::Context;
   ctx->thread_num_ = 2;
@@ -301,7 +300,7 @@ TEST_F(TestMatmulInt8, mmtest2) {
   int out_zp;
   QuantProcess(correct, out_params.len, out_params.min, out_params.max, &out_scale, &out_zp, nullptr);
   float *out = new float[out_params.len];
-  Dequantize(reinterpret_cast<int8_t *>(outputs[0]->Data()), outputs[0]->ElementsNum(), out_scale, out_zp, out);
+  Dequantize(reinterpret_cast<int8_t *>(outputs[0]->MutableData()), outputs[0]->ElementsNum(), out_scale, out_zp, out);
   CompareOutputData(out, correct, 6, 0.6);
   delete mm;
   for (auto t : inputs) delete t;

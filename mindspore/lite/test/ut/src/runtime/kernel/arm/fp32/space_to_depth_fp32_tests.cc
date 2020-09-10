@@ -50,24 +50,24 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest1) {
 TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest2) {
   std::vector<float> input = {1, 2, 5, 6, 10, 20, 3, 8, 18, 10, 3, 4, 11, 55, 15, 25};
   std::vector<int> in_shape = {1, 4, 4, 1};
-  lite::tensor::Tensor input_tensor;
+  lite::Tensor input_tensor;
   input_tensor.SetData(input.data());
   input_tensor.set_shape(in_shape);
   input_tensor.SetFormat(schema::Format_NHWC);
   input_tensor.set_data_type(kNumberTypeFloat32);
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
   inputs_tensor.push_back(&input_tensor);
 
   const int out_size = 16;
   float expect_out[16] = {1, 2, 10, 20, 5, 6, 3, 8, 18, 10, 11, 55, 3, 4, 15, 25};
   std::vector<float> output(16);
   std::vector<int> out_shape = {1, 2, 2, 4};
-  lite::tensor::Tensor output_tensor;
+  lite::Tensor output_tensor;
   output_tensor.SetData(output.data());
   output_tensor.set_shape(out_shape);
   output_tensor.SetFormat(schema::Format_NHWC);
   output_tensor.set_data_type(kNumberTypeFloat32);
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
   outputs_tensor.push_back(&output_tensor);
 
   SpaceToDepthParameter op_param;

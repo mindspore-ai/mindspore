@@ -45,8 +45,8 @@ int BatchToSpaceCPUKernel::Run() {
   }
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
-  const float *input_data = reinterpret_cast<const float *>(input->Data());
-  float *output_data = reinterpret_cast<float *>(output->Data());
+  const float *input_data = reinterpret_cast<const float *>(input->MutableData());
+  float *output_data = reinterpret_cast<float *>(output->MutableData());
   auto in_shape = input->shape();
   auto out_shape = output->shape();
   BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);

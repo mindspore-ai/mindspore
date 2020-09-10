@@ -52,7 +52,7 @@ TEST_F(TestSliceOpenCLfp32, Slicefp32input_dim4) {
   std::vector<int> begin = {0, 2, 3, 3};
   std::vector<int> size = {1, 10, 10, 13};
   auto data_type = kNumberTypeFloat32;
-  auto tensor_type = schema::NodeType_ValueNode;
+  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
 
   // get the input from .bin
   size_t input_size, output_size;
@@ -61,21 +61,19 @@ TEST_F(TestSliceOpenCLfp32, Slicefp32input_dim4) {
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   auto correct_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(output_path.c_str(), &output_size));
   MS_LOG(INFO) << " construct tensors ";
-  lite::tensor::Tensor *tensor_data =
-    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
+  lite::Tensor *tensor_data = new (std::nothrow) lite::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
   if (tensor_data == nullptr) {
     MS_LOG(INFO) << " init tensor failed ";
     return;
   }
-  auto *output_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, output_shape, schema::Format_NHWC, tensor_type);
   if (output_tensor == nullptr) {
     delete tensor_data;
     MS_LOG(INFO) << " init tensor failed ";
     return;
   }
-  std::vector<lite::tensor::Tensor *> inputs = {tensor_data};
-  std::vector<lite::tensor::Tensor *> outputs = {output_tensor};
+  std::vector<lite::Tensor *> inputs = {tensor_data};
+  std::vector<lite::Tensor *> outputs = {output_tensor};
 
   MS_LOG(INFO) << "setting  SliceParameter ";
   auto param = new (std::nothrow) SliceParameter();
@@ -132,12 +130,12 @@ TEST_F(TestSliceOpenCLfp32, Slicefp32input_dim4) {
   sub_graph->Init();
 
   MS_LOG(INFO) << " init tensors ";
-  memcpy(inputs[0]->Data(), input_data, input_size);
+  memcpy(inputs[0]->MutableData(), input_data, input_size);
 
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
 
-  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->Data());
+  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->MutableData());
   CompareOutputData1(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
   for (auto tensor : inputs) {
     delete tensor;
@@ -161,7 +159,7 @@ TEST_F(TestSliceOpenCLfp16, Slicefp16input_dim4) {
   std::vector<int> begin = {0, 1, 1, 7};
   std::vector<int> size = {1, 255, 255, 15};
   auto data_type = kNumberTypeFloat16;
-  auto tensor_type = schema::NodeType_ValueNode;
+  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
 
   // get the input from .bin
   size_t input_size, output_size;
@@ -171,21 +169,19 @@ TEST_F(TestSliceOpenCLfp16, Slicefp16input_dim4) {
   auto correct_data = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(output_path.c_str(), &output_size));
 
   MS_LOG(INFO) << " construct tensors ";
-  lite::tensor::Tensor *tensor_data =
-    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
+  lite::Tensor *tensor_data = new (std::nothrow) lite::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
   if (tensor_data == nullptr) {
     MS_LOG(INFO) << " init tensor failed ";
     return;
   }
-  auto *output_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
   if (output_tensor == nullptr) {
     delete tensor_data;
     MS_LOG(INFO) << " init tensor failed ";
     return;
   }
-  std::vector<lite::tensor::Tensor *> inputs = {tensor_data};
-  std::vector<lite::tensor::Tensor *> outputs = {output_tensor};
+  std::vector<lite::Tensor *> inputs = {tensor_data};
+  std::vector<lite::Tensor *> outputs = {output_tensor};
 
   MS_LOG(INFO) << " setting  SliceParameter ";
   auto param = new (std::nothrow) SliceParameter();
@@ -242,12 +238,12 @@ TEST_F(TestSliceOpenCLfp16, Slicefp16input_dim4) {
   sub_graph->Init();
 
   MS_LOG(INFO) << " init tensors ";
-  memcpy(inputs[0]->Data(), input_data, input_size);
+  memcpy(inputs[0]->MutableData(), input_data, input_size);
 
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
 
-  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->Data());
+  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
   CompareOutputData1(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
   for (auto tensor : inputs) {
     delete tensor;

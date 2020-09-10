@@ -34,8 +34,8 @@ TEST_F(TestBatchnormInt8, FusedTest) {
   std::vector<int8_t> in_data2 = {8, 33};
   std::vector<int8_t> in_data3 = {35, 55};
   std::vector<int8_t> in_data4 = {2, 3};
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   BatchNormParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_FusedBatchNorm;
@@ -44,30 +44,30 @@ TEST_F(TestBatchnormInt8, FusedTest) {
 
   std::vector<int> shape = {1, 1, 6, 2};
 
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 0.1;
   input_quant_arg.zeroPoint = 1;
-  lite::tensor::QuantArg input_quant_arg_1;
+  lite::QuantArg input_quant_arg_1;
   input_quant_arg_1.scale = 0.5;
   input_quant_arg_1.zeroPoint = 2;
-  lite::tensor::QuantArg input_quant_arg_2;
+  lite::QuantArg input_quant_arg_2;
   input_quant_arg_2.scale = 0.02;
   input_quant_arg_2.zeroPoint = 3;
-  lite::tensor::QuantArg input_quant_arg_3;
+  lite::QuantArg input_quant_arg_3;
   input_quant_arg_3.scale = 0.5;
   input_quant_arg_3.zeroPoint = 15;
-  lite::tensor::QuantArg input_quant_arg_4;
+  lite::QuantArg input_quant_arg_4;
   input_quant_arg_4.scale = 0.25;
   input_quant_arg_4.zeroPoint = 1;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 0.8;
   output_quant_arg.zeroPoint = 0;
 
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
-  lite::tensor::Tensor input2_tensor;
-  lite::tensor::Tensor input3_tensor;
-  lite::tensor::Tensor input4_tensor;
+  lite::Tensor input0_tensor;
+  lite::Tensor input1_tensor;
+  lite::Tensor input2_tensor;
+  lite::Tensor input3_tensor;
+  lite::Tensor input4_tensor;
   inputs_tensor.push_back(&input0_tensor);
   inputs_tensor.push_back(&input1_tensor);
   inputs_tensor.push_back(&input2_tensor);
@@ -92,7 +92,7 @@ TEST_F(TestBatchnormInt8, FusedTest) {
   std::vector<int8_t> output(12);
   // std::vector<int8_t> corr_out = {-18, -22, -16, -21, -14, -19, -22, -34, -24, -35, -26, -36 };
   std::vector<int8_t> corr_out = {-22, -28, -20, -26, -17, -24, -28, -42, -30, -44, -33, -46};
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.set_shape(shape);
@@ -130,8 +130,8 @@ TEST_F(TestBatchnormInt8, BNTest) {
   std::vector<int8_t> in_data = {11, 41, 21, 51, 31, 61, -11, -41, -21, -51, -31, -61};
   std::vector<int8_t> in_data1 = {4, 14};
   std::vector<int8_t> in_data2 = {29, 39};
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   BatchNormParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_BatchNorm;
@@ -140,22 +140,22 @@ TEST_F(TestBatchnormInt8, BNTest) {
 
   std::vector<int> shape = {1, 1, 6, 2};
 
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 0.1;
   input_quant_arg.zeroPoint = 1;
-  lite::tensor::QuantArg input_quant_arg_1;
+  lite::QuantArg input_quant_arg_1;
   input_quant_arg_1.scale = 0.05;
   input_quant_arg_1.zeroPoint = 2;
-  lite::tensor::QuantArg input_quant_arg_2;
+  lite::QuantArg input_quant_arg_2;
   input_quant_arg_2.scale = 0.1;
   input_quant_arg_2.zeroPoint = -1;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 0.5;
   output_quant_arg.zeroPoint = 0;
 
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
-  lite::tensor::Tensor input2_tensor;
+  lite::Tensor input0_tensor;
+  lite::Tensor input1_tensor;
+  lite::Tensor input2_tensor;
   inputs_tensor.push_back(&input0_tensor);
   inputs_tensor.push_back(&input1_tensor);
   inputs_tensor.push_back(&input2_tensor);
@@ -172,7 +172,7 @@ TEST_F(TestBatchnormInt8, BNTest) {
   std::vector<int8_t> output(12);
   std::vector<int8_t> corr_out = {1, 3, 2, 4, 3, 5, -2, -5, -3, -6, -4, -7};
 
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.set_shape(shape);

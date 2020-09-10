@@ -46,4 +46,3 @@ int RunConverter(int argc, const char **argv);
 }  // namespace mindspore
 
 #endif
-

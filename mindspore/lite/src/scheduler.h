@@ -27,27 +27,24 @@ namespace mindspore::lite {
 class Scheduler {
  public:
   explicit Scheduler(const Context *ctx) { context_ = const_cast<Context *>(ctx); }
-  int Schedule(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
-               std::vector<kernel::LiteKernel *> *kernels);
+  int Schedule(const lite::Model *model, std::vector<Tensor *> *tensors, std::vector<kernel::LiteKernel *> *kernels);
 
   int ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels);
 
  protected:
-  kernel::LiteKernel *ScheduleNode(const std::vector<tensor::Tensor *> &in_tensors,
-                                   const std::vector<tensor::Tensor *> &out_tensors,
-                                   const mindspore::lite::PrimitiveC *primitive,
-                                   const Model::Node *cnode);
+  kernel::LiteKernel *ScheduleNode(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                                   const mindspore::lite::PrimitiveC *primitive, const Model::Node *cnode);
 
  private:
-  int InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
+  int InitOp2Kernel(const lite::Model *model, std::vector<Tensor *> *tensors,
                     std::vector<kernel::LiteKernel *> *kernels);
-  int InferShape(const lite::Model *model, std::vector<tensor::Tensor *> *tensors);
+  int InferShape(const lite::Model *model, std::vector<Tensor *> *tensors);
 
   // construct SubGraphKernel for each kernel-group in markedKernelGroup
   void ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels);
 
   kernel::LiteKernel *CreateSubKernel(const std::vector<kernel::LiteKernel *> &kernels, kernel::KERNEL_ARCH arch);
-  TypeId GetFirstFp32Fp16OrInt8Type(const std::vector<tensor::Tensor *> &in_tensors);
+  TypeId GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_tensors);
   void SetKernelTensorDataType(kernel::LiteKernel *kernel);
 
  protected:

@@ -128,11 +128,11 @@ void Conv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT
   auto attr = std::make_unique<schema::DepthwiseConv2DT>();
   auto format = GetValue<std::string>(prim.GetAttr("data_format"));
   if (format == "NCHW") {
-    attr->format = schema::Format_NCHW;
+    attr->format = schema::Format::Format_NCHW;
   } else if (format == "NHWC") {
-    attr->format = schema::Format_NHWC;
+    attr->format = schema::Format::Format_NHWC;
   } else {
-    attr->format = schema::Format_NUM_OF_FORMAT;
+    attr->format = schema::Format::Format_NUM_OF_FORMAT;
   }
   auto pad_list = GetValue<std::vector<int>>(prim.GetAttr("pad_list"));
   attr->padUp = pad_list[0];
@@ -191,11 +191,11 @@ void Conv2D::PopulaterConv2DSingleGroup(const Primitive &prim, schema::Primitive
   attr->group = group;
   auto format = GetValue<std::string>(prim.GetAttr("data_format"));
   if (format == "NCHW") {
-    attr->format = schema::Format_NCHW;
+    attr->format = schema::Format::Format_NCHW;
   } else if (format == "NHWC") {
-    attr->format = schema::Format_NHWC;
+    attr->format = schema::Format::Format_NHWC;
   } else {
-    attr->format = schema::Format_NUM_OF_FORMAT;
+    attr->format = schema::Format::Format_NUM_OF_FORMAT;
   }
   auto pad_list = GetValue<std::vector<int>>(prim.GetAttr("pad_list"));
   attr->padUp = pad_list[0];
@@ -346,7 +346,7 @@ void Conv2D::ConvInferShape(int input_h, int input_w, int *output_h, int *output
   }
 }
 
-int Conv2D::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int Conv2D::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   if (inputs_.size() != 2 && inputs_.size() != 3) {
     MS_LOG(ERROR) << "Add should has two or three inputs";
     return RET_ERROR;

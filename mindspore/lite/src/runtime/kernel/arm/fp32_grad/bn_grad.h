@@ -21,16 +21,13 @@
 #include "src/lite_kernel.h"
 #include "ir/anf.h"
 
-
 namespace mindspore::kernel {
-
-
 
 class BNGradCPUKernel : public LiteKernel {
  public:
-  explicit BNGradCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                                const mindspore::lite::PrimitiveC *primitive)
+  explicit BNGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                           const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                           const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~BNGradCPUKernel() override { delete workspace; }
 

@@ -33,8 +33,8 @@ namespace lite {
 namespace quant {
 class WeightQuantizer : public Quantizer {
  public:
-  WeightQuantizer(FuncGraphPtr graph, const std::string& weightSize,
-                  const std::string& covWeightChannelThreshold, const std::string& bitNum);
+  WeightQuantizer(FuncGraphPtr graph, const std::string &weightSize, const std::string &covWeightChannelThreshold,
+                  const std::string &bitNum);
 
   ~WeightQuantizer() = default;
 
@@ -50,4 +50,3 @@ class WeightQuantizer : public Quantizer {
 }  // namespace lite
 }  // namespace mindspore
 #endif
-

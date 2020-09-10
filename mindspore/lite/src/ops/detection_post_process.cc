@@ -144,8 +144,7 @@ namespace {
 constexpr int kDetectionPostProcessOutputNum = 4;
 constexpr int kDetectionPostProcessInputNum = 3;
 }  // namespace
-int DetectionPostProcess::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
-                                     std::vector<lite::tensor::Tensor *> outputs_) {
+int DetectionPostProcess::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   if (outputs_.size() != kDetectionPostProcessOutputNum || inputs_.size() != kDetectionPostProcessInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs_.size() << ",input size: " << inputs_.size();
     return RET_PARAM_INVALID;

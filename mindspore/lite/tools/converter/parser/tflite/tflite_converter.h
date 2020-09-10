@@ -36,4 +36,3 @@ class TfliteConverter : public Converter {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_CONVERTER_H_
-

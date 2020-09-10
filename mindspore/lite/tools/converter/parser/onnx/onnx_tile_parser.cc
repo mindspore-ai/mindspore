@@ -19,9 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxTileParser::Parse(const onnx::GraphProto &onnx_graph,
-                             const onnx::NodeProto &onnx_node,
-                             schema::CNodeT *op) {
+STATUS OnnxTileParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx TileParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";

@@ -49,7 +49,7 @@ constexpr int kSpaceToDepthOutputNum = 1;
 constexpr int kSpaceToDepthInputNum = 1;
 }  // namespace
 
-int SpaceToDepth::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
+int SpaceToDepth::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (outputs.size() != kSpaceToDepthOutputNum || inputs.size() != kSpaceToDepthInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
@@ -57,7 +57,7 @@ int SpaceToDepth::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
   }
 
   auto input = inputs.at(0);
-  if (input->GetFormat() != schema::Format_NHWC) {
+  if (input->GetFormat() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
     return 1;
   }

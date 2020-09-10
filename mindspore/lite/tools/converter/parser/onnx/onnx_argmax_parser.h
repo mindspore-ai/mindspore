@@ -26,11 +26,8 @@ class OnnxArgMaxParser : public OnnxNodeParser {
  public:
   OnnxArgMaxParser() : OnnxNodeParser("ArgMax") {}
 
-  STATUS Parse(const onnx::GraphProto &onnx_graph,
-               const onnx::NodeProto &onnx_node,
-               schema::CNodeT *op) override;
+  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MMINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ARGMAX_PARSER_H
-

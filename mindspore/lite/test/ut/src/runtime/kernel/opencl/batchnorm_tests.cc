@@ -43,7 +43,7 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   std::vector<int> input_shape = {1, 256, 256, 48};
   std::vector<int> output_shape = {1, 256, 256, 48};
   auto data_type = kNumberTypeFloat32;
-  auto tensor_type = schema::NodeType_ValueNode;
+  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
 
   // get the input from .bin
   size_t input_size, output_size;
@@ -62,23 +62,21 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   auto offset_data = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(offset_path.c_str(), &offset_size));
 
   MS_LOG(INFO) << " construct tensors ";
-  lite::tensor::Tensor *tensor_data =
-    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
-  lite::tensor::Tensor *tensor_mean =
-    new (std::nothrow) lite::tensor::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
-  lite::tensor::Tensor *tensor_var =
-    new (std::nothrow) lite::tensor::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
-  lite::tensor::Tensor *tensor_scale =
-    new (std::nothrow) lite::tensor::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
-  lite::tensor::Tensor *tensor_offset =
-    new (std::nothrow) lite::tensor::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
+  lite::Tensor *tensor_data = new (std::nothrow) lite::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
+  lite::Tensor *tensor_mean =
+    new (std::nothrow) lite::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
+  lite::Tensor *tensor_var =
+    new (std::nothrow) lite::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
+  lite::Tensor *tensor_scale =
+    new (std::nothrow) lite::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
+  lite::Tensor *tensor_offset =
+    new (std::nothrow) lite::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
   if (tensor_data == nullptr || tensor_mean == nullptr || tensor_var == nullptr || tensor_scale == nullptr ||
       tensor_offset == nullptr) {
     MS_LOG(INFO) << " init tensor failed ";
     return;
   }
-  auto *output_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(INFO) << " init tensor failed ";
     delete tensor_data;
@@ -88,8 +86,8 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
     delete tensor_offset;
     return;
   }
-  std::vector<lite::tensor::Tensor *> inputs = {tensor_data, tensor_scale, tensor_offset, tensor_mean, tensor_var};
-  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  std::vector<lite::Tensor *> inputs = {tensor_data, tensor_scale, tensor_offset, tensor_mean, tensor_var};
+  std::vector<lite::Tensor *> outputs{output_tensor};
 
   MS_LOG(INFO) << " initialize tensors ";
   auto param = new (std::nothrow) BatchNormParameter();
@@ -132,15 +130,15 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   }
   sub_graph->Init();
   MS_LOG(INFO) << " init tensors ";
-  memcpy(inputs[0]->Data(), input_data, input_size);
-  memcpy(inputs[1]->Data(), scale_data, scale_size);
-  memcpy(inputs[2]->Data(), offset_data, offset_size);
-  memcpy(inputs[3]->Data(), mean_data, mean_size);
-  memcpy(inputs[4]->Data(), var_data, var_size);
+  memcpy(inputs[0]->MutableData(), input_data, input_size);
+  memcpy(inputs[1]->MutableData(), scale_data, scale_size);
+  memcpy(inputs[2]->MutableData(), offset_data, offset_size);
+  memcpy(inputs[3]->MutableData(), mean_data, mean_size);
+  memcpy(inputs[4]->MutableData(), var_data, var_size);
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
 
-  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->Data());
+  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
   CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.01);
   for (auto tensor : inputs) {
     delete tensor;
@@ -162,7 +160,7 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   std::vector<int> input_shape = {1, 256, 256, 47};
   std::vector<int> output_shape = {1, 256, 256, 47};
   auto data_type = kNumberTypeFloat32;
-  auto tensor_type = schema::NodeType_ValueNode;
+  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
 
   // get the input from .bin
   size_t input_size, output_size;
@@ -181,23 +179,21 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   auto offset_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(offset_path.c_str(), &offset_size));
 
   MS_LOG(INFO) << " construct tensors ";
-  lite::tensor::Tensor *tensor_data =
-    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
-  lite::tensor::Tensor *tensor_mean =
-    new (std::nothrow) lite::tensor::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
-  lite::tensor::Tensor *tensor_var =
-    new (std::nothrow) lite::tensor::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
-  lite::tensor::Tensor *tensor_scale =
-    new (std::nothrow) lite::tensor::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
-  lite::tensor::Tensor *tensor_offset =
-    new (std::nothrow) lite::tensor::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
+  lite::Tensor *tensor_data = new (std::nothrow) lite::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
+  lite::Tensor *tensor_mean =
+    new (std::nothrow) lite::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
+  lite::Tensor *tensor_var =
+    new (std::nothrow) lite::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
+  lite::Tensor *tensor_scale =
+    new (std::nothrow) lite::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
+  lite::Tensor *tensor_offset =
+    new (std::nothrow) lite::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
   if (tensor_data == nullptr || tensor_mean == nullptr || tensor_var == nullptr || tensor_scale == nullptr ||
       tensor_offset == nullptr) {
     MS_LOG(INFO) << " init tensor failed ";
     return;
   }
-  auto *output_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, output_shape, schema::Format_NHWC, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(INFO) << " init tensor failed ";
     delete tensor_data;
@@ -207,8 +203,8 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
     delete tensor_offset;
     return;
   }
-  std::vector<lite::tensor::Tensor *> inputs = {tensor_data, tensor_scale, tensor_offset, tensor_mean, tensor_var};
-  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  std::vector<lite::Tensor *> inputs = {tensor_data, tensor_scale, tensor_offset, tensor_mean, tensor_var};
+  std::vector<lite::Tensor *> outputs{output_tensor};
 
   MS_LOG(INFO) << " initialize tensors ";
   auto param = new (std::nothrow) BatchNormParameter();
@@ -251,15 +247,15 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   }
   sub_graph->Init();
   MS_LOG(INFO) << " init tensors ";
-  memcpy(inputs[0]->Data(), input_data, input_size);
-  memcpy(inputs[1]->Data(), scale_data, scale_size);
-  memcpy(inputs[2]->Data(), offset_data, offset_size);
-  memcpy(inputs[3]->Data(), mean_data, mean_size);
-  memcpy(inputs[4]->Data(), var_data, var_size);
+  memcpy(inputs[0]->MutableData(), input_data, input_size);
+  memcpy(inputs[1]->MutableData(), scale_data, scale_size);
+  memcpy(inputs[2]->MutableData(), offset_data, offset_size);
+  memcpy(inputs[3]->MutableData(), mean_data, mean_size);
+  memcpy(inputs[4]->MutableData(), var_data, var_size);
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
 
-  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->Data());
+  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->MutableData());
   CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
   for (auto tensor : inputs) {
     delete tensor;

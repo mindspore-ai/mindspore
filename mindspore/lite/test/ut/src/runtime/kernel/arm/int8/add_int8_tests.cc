@@ -28,9 +28,9 @@ class TestQuantizedAdd : public mindspore::CommonTest {
 };
 
 TEST_F(TestQuantizedAdd, Add) {
-  lite::tensor::Tensor in_tensor0(kNumberTypeInt8, {1, 1, 2, 5});
-  lite::tensor::Tensor in_tensor1(kNumberTypeInt8, {1, 1, 2, 5});
-  lite::tensor::Tensor out_tensor(kNumberTypeInt8, {1, 1, 2, 5});
+  lite::Tensor in_tensor0(kNumberTypeInt8, {1, 1, 2, 5});
+  lite::Tensor in_tensor1(kNumberTypeInt8, {1, 1, 2, 5});
+  lite::Tensor out_tensor(kNumberTypeInt8, {1, 1, 2, 5});
 
   int8_t input_data0[] = {-102, 25, -51, 89, -102, 25, -51, 89, -102, 25};  // -0.8 0.2 -0.4 0.7
   int8_t input_data1[] = {38, 51, 64, -102, 38, 51, 64, -102, 38, 51};      // 0.3 0.4 0.5 -0.8
@@ -39,15 +39,15 @@ TEST_F(TestQuantizedAdd, Add) {
   in_tensor1.SetData(input_data1);
   out_tensor.SetData(output_data);
 
-  const lite::tensor::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
-  const lite::tensor::QuantArg quant_in1 = {0.00784314f, 0};
-  const lite::tensor::QuantArg quant_out = {0.00784314f, 0};
+  const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
+  const lite::QuantArg quant_in1 = {0.00784314f, 0};
+  const lite::QuantArg quant_out = {0.00784314f, 0};
   in_tensor0.AddQuantParam(quant_in0);
   in_tensor1.AddQuantParam(quant_in1);
   out_tensor.AddQuantParam(quant_out);
 
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor0, &in_tensor1};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&in_tensor0, &in_tensor1};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   OpParameter parameter = {};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Add};

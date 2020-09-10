@@ -27,17 +27,17 @@ class TestTopKFp32 : public mindspore::CommonTest {
 };
 
 TEST_F(TestTopKFp32, TopK) {
-  lite::tensor::Tensor in_tensor(kNumberTypeFloat32, {2, 2, 3});
-  lite::tensor::Tensor out_tensor0(kNumberTypeFloat32, {2, 2, 2});
-  lite::tensor::Tensor out_tensor1(kNumberTypeInt32, {2, 2, 2});
-  float input_data[] = {1, 2, 3,   6, 5, 4,   9, 8, 7,   10, 12, 11};
+  lite::Tensor in_tensor(kNumberTypeFloat32, {2, 2, 3});
+  lite::Tensor out_tensor0(kNumberTypeFloat32, {2, 2, 2});
+  lite::Tensor out_tensor1(kNumberTypeInt32, {2, 2, 2});
+  float input_data[] = {1, 2, 3, 6, 5, 4, 9, 8, 7, 10, 12, 11};
   float output_data0[8] = {0};
   int32_t output_data1[8] = {0};
   in_tensor.SetData(input_data);
   out_tensor0.SetData(output_data0);
   out_tensor1.SetData(output_data1);
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor0, &out_tensor1};
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1};
 
   TopkParameter parameter = {{}, 3, 4, 2, true};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_TopK};
@@ -52,8 +52,8 @@ TEST_F(TestTopKFp32, TopK) {
   auto ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
-  float expect0[] = {3, 2,   6, 5,   9, 8,   12, 11};
-  int32_t expect1[] = {2, 1,   0, 1,   0, 1,   1, 2};
+  float expect0[] = {3, 2, 6, 5, 9, 8, 12, 11};
+  int32_t expect1[] = {2, 1, 0, 1, 0, 1, 1, 2};
   for (int i = 0; i < 8; ++i) {
     EXPECT_EQ(output_data0[i], expect0[i]);
     EXPECT_EQ(output_data1[i], expect1[i]);

@@ -91,7 +91,7 @@ STATUS OnnxModelParser::SetGraphConstTensor(const onnx::GraphProto &onnx_graph, 
   return RET_OK;
 }
 
-STATUS OnnxModelParser::AddValueInfo(const onnx::ValueInfoProto &proto, const std::string &name, const TensorType &type,
+STATUS OnnxModelParser::AddValueInfo(const onnx::ValueInfoProto &proto, const std::string &name, const Category &type,
                                      TensorCache *tensor_cache, int *index) {
   auto data_type = GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(proto.type().tensor_type().elem_type()));
   if (data_type == kTypeUnknown) {
@@ -106,13 +106,13 @@ STATUS OnnxModelParser::AddValueInfo(const onnx::ValueInfoProto &proto, const st
   }
   tensor->dataType = data_type;
   tensor->dims = GetDimsFromOnnxValue(proto);
-  tensor->format = schema::Format_NCHW;
-  tensor->nodeType = schema::NodeType_ValueNode;
+  tensor->format = schema::Format::Format_NCHW;
+  tensor->nodeType = schema::NodeType::NodeType_ValueNode;
   *index = tensor_cache->AddTensor(name, tensor.release(), type);
   return RET_OK;
 }
 
-STATUS OnnxModelParser::AddTensorProto(const onnx::TensorProto &proto, const std::string &name, const TensorType &type,
+STATUS OnnxModelParser::AddTensorProto(const onnx::TensorProto &proto, const std::string &name, const Category &type,
                                        TensorCache *tensor_cache, int *index) {
   auto data_type = GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(proto.data_type()));
   if (data_type == kTypeUnknown) {
@@ -127,8 +127,8 @@ STATUS OnnxModelParser::AddTensorProto(const onnx::TensorProto &proto, const std
   }
   tensor->dataType = data_type;
   std::copy(proto.dims().begin(), proto.dims().end(), std::back_inserter(tensor->dims));
-  tensor->format = schema::Format_NCHW;
-  tensor->nodeType = schema::NodeType_ValueNode;
+  tensor->format = schema::Format::Format_NCHW;
+  tensor->nodeType = schema::NodeType::NodeType_ValueNode;
   if (CopyOnnxTensorData(proto, tensor.get())) {
     MS_LOG(ERROR) << "copy onnx data failed";
     return RET_ERROR;
@@ -206,8 +206,8 @@ STATUS OnnxModelParser::ParseOnnxGivenFillNode(const onnx::NodeProto &onnx_node,
       std::for_each(shape.begin(), shape.end(), [](int sh) { MS_LOG(DEBUG) << "shape: " << sh; });
     }
     tensor->dims = shape;
-    tensor->format = schema::Format_NUM_OF_FORMAT;
-    tensor->nodeType = schema::NodeType_ValueNode;
+    tensor->format = schema::Format::Format_NUM_OF_FORMAT;
+    tensor->nodeType = schema::NodeType::NodeType_ValueNode;
     iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                         [](const onnx::AttributeProto &attr) { return attr.name() == "values"; });
     // copy GivenIntTensorFill node value to tensor

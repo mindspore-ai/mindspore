@@ -27,8 +27,8 @@ namespace mindspore::kernel {
 
 class MatMulOpenCLKernel : public OpenCLKernel {
  public:
-  explicit MatMulOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                              const std::vector<lite::tensor::Tensor *> &outputs, bool hasBias)
+  explicit MatMulOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                              const std::vector<lite::Tensor *> &outputs, bool hasBias)
       : OpenCLKernel(parameter, inputs, outputs) {
     hasBias_ = hasBias;
   }

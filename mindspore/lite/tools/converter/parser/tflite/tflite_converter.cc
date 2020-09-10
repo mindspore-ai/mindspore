@@ -18,9 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-TfliteConverter::TfliteConverter() {
-  modelParser = new TfliteModelParser();
-}
+TfliteConverter::TfliteConverter() { modelParser = new TfliteModelParser(); }
 }  // namespace lite
 }  // namespace mindspore
-

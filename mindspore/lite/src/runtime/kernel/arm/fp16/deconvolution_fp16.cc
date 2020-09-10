@@ -68,8 +68,8 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, UP_ROUND(conv_param_->output_channel_, C4NUM) * sizeof(float16_t));
   if (in_tensors_.size() == 3) {
-    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->Data()), reinterpret_cast<float16_t *>(bias_data_),
-                     conv_param_->output_channel_);
+    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->MutableData()),
+                     reinterpret_cast<float16_t *>(bias_data_), conv_param_->output_channel_);
   }
 
   size_t weight_pack_size = conv_param_->input_channel_ * conv_param_->kernel_w_ * conv_param_->kernel_h_ *
@@ -80,7 +80,7 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(execute_weight_, 0, weight_pack_size);
-  PackNHWCFp32ToC8HWN8Fp16(reinterpret_cast<float *>(in_tensors_[1]->Data()), execute_weight_,
+  PackNHWCFp32ToC8HWN8Fp16(reinterpret_cast<float *>(in_tensors_[1]->MutableData()), execute_weight_,
                            conv_param_->input_channel_, kernel_plane_, conv_param_->output_channel_);
   return RET_OK;
 }
@@ -204,10 +204,9 @@ int DeConvolutionFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2D);

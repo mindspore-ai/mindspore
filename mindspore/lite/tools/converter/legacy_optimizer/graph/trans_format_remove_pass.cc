@@ -19,11 +19,11 @@
 #include "utils/log_adapter.h"
 #include "include/errorcode.h"
 #include "tools/common/graph_util.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 #include "src/ops/primitive_c.h"
 
-using mindspore::lite::tensor::Tensor;
 using mindspore::lite::PrimitiveC;
+using mindspore::lite::Tensor;
 namespace mindspore {
 namespace lite {
 STATUS TransOpRemovePass::Run(MetaGraphT *graph) {

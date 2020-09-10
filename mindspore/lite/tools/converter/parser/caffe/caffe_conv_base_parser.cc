@@ -26,8 +26,7 @@ static const int CAFFE_CONV_BIAS_DIM_NUM = 1;
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convParam,
-                                      std::vector<int64_t> *pad) {
+STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convParam, std::vector<int64_t> *pad) {
   /**
    *  padUp = padH;
    *  padDown = padH;
@@ -74,8 +73,7 @@ STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convPar
   return RET_OK;
 }
 
-STATUS CaffeConvBaseParser::ParseStrides(const caffe::ConvolutionParameter &convParam,
-                                         std::vector<int64_t> *stride) {
+STATUS CaffeConvBaseParser::ParseStrides(const caffe::ConvolutionParameter &convParam, std::vector<int64_t> *stride) {
   if (convParam.has_stride_h() || convParam.has_stride_w()) {
     if (convParam.stride_size() != 0) {
       MS_LOG(ERROR) << "Either stride or stride_h/w should be specified; not both";
@@ -119,8 +117,7 @@ STATUS CaffeConvBaseParser::ParseDilations(const caffe::ConvolutionParameter &co
   return RET_OK;
 }
 
-STATUS CaffeConvBaseParser::ParseKernels(const caffe::ConvolutionParameter &convParam,
-                                         std::vector<int64_t> *kernel) {
+STATUS CaffeConvBaseParser::ParseKernels(const caffe::ConvolutionParameter &convParam, std::vector<int64_t> *kernel) {
   if (convParam.has_kernel_h() || convParam.has_kernel_w()) {
     if (convParam.kernel_size_size() != 0) {
       MS_LOG(ERROR) << "Either kernel_size or kernel_h/w should be specified; not both.";
@@ -149,8 +146,7 @@ STATUS CaffeConvBaseParser::ParseKernels(const caffe::ConvolutionParameter &conv
   return RET_OK;
 }
 
-int CaffeConvBaseParser::ParseGroup(const caffe::ConvolutionParameter &convParam,
-                                    const std::string &layerType) {
+int CaffeConvBaseParser::ParseGroup(const caffe::ConvolutionParameter &convParam, const std::string &layerType) {
   // group default 1
   int group = 0;
   if (convParam.has_group()) {
@@ -162,7 +158,7 @@ int CaffeConvBaseParser::ParseGroup(const caffe::ConvolutionParameter &convParam
 }
 
 int CaffeConvBaseParser::ParseChannelOut(const caffe::ConvolutionParameter &convParam, int32_t *channelOut) {
-    MS_ASSERT(channelOut != nullptr);
+  MS_ASSERT(channelOut != nullptr);
   if (!convParam.has_num_output()) {
     MS_LOG(ERROR) << "Parse num_output for failed.";
     return RET_ERROR;
@@ -175,7 +171,7 @@ STATUS CaffeConvBaseParser::ParseWeight(const caffe::LayerParameter &weight,
                                         std::vector<schema::TensorT *> *weightVec) {
   // Layer must have Filter
   if (weight.blobs_size() == 0) {
-    MS_LOG(ERROR) << "No filter data in layer " <<  weight.name().c_str();
+    MS_LOG(ERROR) << "No filter data in layer " << weight.name().c_str();
     return RET_ERROR;
   }
 
@@ -197,7 +193,7 @@ STATUS CaffeConvBaseParser::ParseWeight(const caffe::LayerParameter &weight,
 
     std::vector<int32_t> shape = bias->dims;
     if (shape.size() != CAFFE_CONV_BIAS_DIM_NUM) {
-      MS_LOG(ERROR) << "Bias dim-num of layer "<< weight.name().c_str() << " is not supported";
+      MS_LOG(ERROR) << "Bias dim-num of layer " << weight.name().c_str() << " is not supported";
       return RET_ERROR;
     }
     weightVec->push_back(bias);
@@ -206,4 +202,3 @@ STATUS CaffeConvBaseParser::ParseWeight(const caffe::LayerParameter &weight,
 }
 }  // namespace lite
 }  // namespace mindspore
-

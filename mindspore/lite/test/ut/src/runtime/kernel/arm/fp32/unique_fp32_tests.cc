@@ -27,17 +27,17 @@ class TestUniqueFp32 : public mindspore::CommonTest {
 };
 
 TEST_F(TestUniqueFp32, Unique) {
-  lite::tensor::Tensor in_tensor(kNumberTypeFloat32, {9});
-  lite::tensor::Tensor out_tensor0(kNumberTypeFloat32, {9});
-  lite::tensor::Tensor out_tensor1(kNumberTypeInt32, {9});
+  lite::Tensor in_tensor(kNumberTypeFloat32, {9});
+  lite::Tensor out_tensor0(kNumberTypeFloat32, {9});
+  lite::Tensor out_tensor1(kNumberTypeInt32, {9});
   float input_data[] = {1, 1, 2, 4, 4, 4, 7, 8, 8};
   float output_data0[9] = {0};
   int output_data1[9] = {0};
   in_tensor.SetData(input_data);
   out_tensor0.SetData(output_data0);
   out_tensor1.SetData(output_data1);
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor0, &out_tensor1};
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1};
 
   OpParameter parameter = {0};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Unique};

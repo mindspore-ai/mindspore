@@ -26,9 +26,9 @@
 namespace mindspore::kernel {
 class DependCPUKernel : public LiteKernel {
  public:
-  explicit DependCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                             const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                             const lite::PrimitiveC *primitive)
+  explicit DependCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                           const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                           const lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     param = parameter;
   }

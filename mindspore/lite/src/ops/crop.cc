@@ -56,7 +56,7 @@ namespace {
 constexpr int kCropOutputNum = 1;
 constexpr int kCropInputNum = 2;
 }  // namespace
-int Crop::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int Crop::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   if (outputs.size() != kCropOutputNum || inputs.size() != kCropInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
     return RET_PARAM_INVALID;

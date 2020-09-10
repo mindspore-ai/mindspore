@@ -77,4 +77,3 @@ class DefaultAllocator : public Allocator {
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_ALLOCATOR_H_
-

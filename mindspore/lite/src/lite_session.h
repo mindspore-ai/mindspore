@@ -28,6 +28,7 @@
 #include "include/context.h"
 #include "schema/model_generated.h"
 #include "src/executor.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 namespace lite {
@@ -50,15 +51,13 @@ class LiteSession : public session::LiteSession {
   int RunGraph(const session::KernelCallBack &before = nullptr,
                const session::KernelCallBack &after = nullptr) override;
 
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> GetOutputMapByNode() const override;
-
   std::vector<mindspore::tensor::MSTensor *> GetOutputsByNodeName(const std::string &node_name) const override;
 
   std::vector<std::string> GetOutputTensorNames() const override;
 
   mindspore::tensor::MSTensor *GetOutputByTensorName(const std::string &tensor_name) const override;
 
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputMapByTensor() const override;
+  std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputs() const override;
 
   int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs) override;
 
@@ -86,12 +85,12 @@ class LiteSession : public session::LiteSession {
  protected:
   Context *context_ = nullptr;
   std::vector<kernel::LiteKernel *> kernels_;
-  std::vector<tensor::Tensor *> tensors_;
+  std::vector<Tensor *> tensors_;
   std::vector<size_t> copyed_tensor_idxes_;
   // graph input tensors
-  std::vector<tensor::Tensor *> inputs_;
+  std::vector<Tensor *> inputs_;
   // graph output tensors
-  std::vector<tensor::Tensor *> outputs_;
+  std::vector<Tensor *> outputs_;
   // graph input MSTensors
   std::vector<mindspore::tensor::MSTensor *> input_vec_;
   // graph input node name -- input tensors

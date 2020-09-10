@@ -17,7 +17,7 @@
 #include "src/ops/constant_of_shape.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 
 namespace mindspore::lite {
 namespace {
@@ -47,7 +47,7 @@ float ConstantOfShape::GetValue() const { return this->primitive_->value_as_Cons
 
 #endif
 
-int ConstantOfShape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int ConstantOfShape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   if (inputs_.size() != kShapeInputNum) {
     MS_LOG(ERROR) << "inputs to ConstantOfShape operator should be 1, but " << inputs_.size() << " is given.";
     return RET_ERROR;
@@ -67,7 +67,7 @@ int ConstantOfShape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vect
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto in_data = reinterpret_cast<int *>(in_tensor->Data());
+  auto in_data = reinterpret_cast<int *>(in_tensor->MutableData());
   int size = in_tensor->ElementsNum();
   std::vector<int> out_shape(size);
   for (int i = 0; i < size; ++i) {

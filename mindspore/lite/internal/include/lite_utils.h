@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-#include "ir/meta_tensor.h"
+#ifndef MINDSPORE_LITE_INTERNAL_INCLUDE_LITE_UTILS_H_
+#define MINDSPORE_LITE_INTERNAL_INCLUDE_LITE_UTILS_H_
+#include <vector>
+#include <string>
 
-namespace mindspore {
-namespace tensor {
-abstract::AbstractBasePtr MetaTensor::ToAbstract() {
-  MS_LOG(ERROR) << "MetaTensor ToAbstract is not implemented";
-  return nullptr;
-}
-TypePtr MetaTensor::Dtype() const { return nullptr; }
-}  // namespace tensor
-}  // namespace mindspore
+struct MSTensor;
+struct Node;
+using TensorPtrVector = std::vector<MSTensor *>;
+using Uint32Vector = std::vector<uint32_t>;
+using String = std::string;
+using StringVector = std::vector<std::string>;
+using ShapeVector = std::vector<int>;
+using NodePtrVector = std::vector<struct Node *>;
 
+#endif  // MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_

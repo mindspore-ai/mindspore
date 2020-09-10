@@ -25,10 +25,8 @@ namespace lite {
 STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                 schema::CNodeT *op,
-                                 std::vector<int32_t> *tensors_id,
-                                 std::vector<schema::Format> *tensors_format,
-                                 std::map<int, int>  *tensors_id_map) {
+                                 schema::CNodeT *op, std::vector<int32_t> *tensors_id,
+                                 std::vector<schema::Format> *tensors_format, std::map<int, int> *tensors_id_map) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -57,7 +55,7 @@ STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     }
     attr->alignCorners = tfliteAttr->align_corners;
     attr->method = schema::ResizeMethod_BILINEAR;
-  }  else if (std::strcmp(node_name, "NearestNeighbor") == 0) {
+  } else if (std::strcmp(node_name, "NearestNeighbor") == 0) {
     MS_LOG(DEBUG) << "parse TfliteResizeNearestNeighborParser";
     const auto &tfliteAttr = tflite_op->builtin_options.AsResizeNearestNeighborOptions();
     if (tfliteAttr == nullptr) {
@@ -71,7 +69,7 @@ STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_ERROR;
   }
 
-  attr->format = schema::Format_NHWC;
+  attr->format = schema::Format::Format_NHWC;
   attr->preserveAspectRatio = false;
 
   auto tfliteResizeTensorIndex = tflite_op->inputs[1];
@@ -95,17 +93,14 @@ STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   op->primitive->value.type = schema::PrimitiveType_Resize;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
-              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
+             tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
+              tflite_tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 
 TfliteNodeRegister g_tfliteResizeBilinearParser("ResizeBilinear", new TfliteResizeBilinearParser());
-TfliteNodeRegister g_tfliteResizeNearestNeighborParser("NearestNeighbor",
-                                                       new TfliteResizeNearestNeighborParser());
+TfliteNodeRegister g_tfliteResizeNearestNeighborParser("NearestNeighbor", new TfliteResizeNearestNeighborParser());
 }  // namespace lite
 }  // namespace mindspore
-
-

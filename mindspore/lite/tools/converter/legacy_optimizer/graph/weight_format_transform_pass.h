@@ -33,7 +33,7 @@ class WeightFormatTransformPass : public GraphPass {
 
   void SetFmkType(converter::FmkType fmkType);
 
-  void SetDstFormat(Format format);
+  void SetDstFormat(schema::Format format);
 
   STATUS Run(MetaGraphT *graph) override;
 
@@ -45,7 +45,7 @@ class WeightFormatTransformPass : public GraphPass {
  private:
   QuantType quantType = QuantType_QUANT_NONE;
   converter::FmkType fmkType = converter::FmkType_TF;
-  Format dstFormat = Format_NUM_OF_FORMAT;
+  schema::Format dstFormat = schema::Format::Format_NUM_OF_FORMAT;
 };
 }  // namespace lite
 }  // namespace mindspore

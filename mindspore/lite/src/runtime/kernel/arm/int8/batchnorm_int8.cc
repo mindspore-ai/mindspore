@@ -47,8 +47,8 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
   auto variance = in_tensors_[2];
   auto output = out_tensors_[0];
 
-  auto mean_ptr = reinterpret_cast<int8_t *>(mean->Data());
-  auto var_ptr = reinterpret_cast<int8_t *>(variance->Data());
+  auto mean_ptr = reinterpret_cast<int8_t *>(mean->MutableData());
+  auto var_ptr = reinterpret_cast<int8_t *>(variance->MutableData());
   alpha_addr_ = reinterpret_cast<float *>(malloc(mean->ElementsNum() * sizeof(float)));
   if (alpha_addr_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -88,10 +88,10 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
   auto variance = in_tensors_[4];
   auto output = out_tensors_[0];
 
-  auto scale_ptr = reinterpret_cast<int8_t *>(scale->Data());
-  auto offset_ptr = reinterpret_cast<int8_t *>(offset->Data());
-  auto mean_ptr = reinterpret_cast<int8_t *>(mean->Data());
-  auto var_ptr = reinterpret_cast<int8_t *>(variance->Data());
+  auto scale_ptr = reinterpret_cast<int8_t *>(scale->MutableData());
+  auto offset_ptr = reinterpret_cast<int8_t *>(offset->MutableData());
+  auto mean_ptr = reinterpret_cast<int8_t *>(mean->MutableData());
+  auto var_ptr = reinterpret_cast<int8_t *>(variance->MutableData());
 
   alpha_addr_ = reinterpret_cast<float *>(malloc(mean->ElementsNum() * sizeof(float)));
   if (alpha_addr_ == nullptr) {
@@ -190,8 +190,8 @@ int BatchnormInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail! Ret error code: " << prepare_ret;
     return prepare_ret;
   }
-  in_addr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->Data());
-  out_addr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
+  in_addr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  out_addr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
   int ret = ParallelLaunch(THREAD_POOL_DEFAULT, BatchNormInt8Run, this, batchnorm_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
@@ -201,10 +201,9 @@ int BatchnormInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuBatchnormInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuBatchnormInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BatchNorm);

@@ -53,7 +53,7 @@ static int RunKernel(void *data, int index) {
   return 0;
 }
 
-int ParallelExecutor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor::Tensor *> &out_tensors,
+int ParallelExecutor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
                           std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
                           const session::KernelCallBack &before, const session::KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
@@ -62,7 +62,7 @@ int ParallelExecutor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector
       MS_LOG(ERROR) << "Graph input tensor is nullptr";
       return RET_ERROR;
     }
-    if (inTensor->GetFormat() != schema::Format_NHWC) {
+    if (inTensor->GetFormat() != schema::Format::Format_NHWC) {
       MS_LOG(ERROR) << "Model input tensor should be NHWC";
       return RET_ERROR;
     }

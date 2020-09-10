@@ -68,10 +68,13 @@ int ArgMinMaxBaseCPUKernel::ReSize() {
 }
 
 int ArgMinMaxBaseCPUKernel::Run() {
-  auto input_data = in_tensors_.at(0)->Data();
-  auto output_data = out_tensors_.at(0)->Data();
+  auto input_data = in_tensors_.at(0)->MutableData();
+  auto output_data = out_tensors_.at(0)->MutableData();
 
-  auto shape = in_tensors_.at(0)->shape().data();
+  auto in_tensor = in_tensors_.at(0)->shape();
+  auto shape = reinterpret_cast<int *>(malloc(in_tensor.size() * sizeof(int)));
+  memcpy(shape, in_tensor.data(), in_tensor.size() * sizeof(int));
+
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   MS_ASSERT(context_->allocator != nullptr);
   if (param->topk_ > 1 || param->keep_dims_) {
@@ -88,10 +91,9 @@ int ArgMinMaxBaseCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuArgMinMaxInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *op_parameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuArgMinMaxInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
@@ -113,10 +115,9 @@ kernel::LiteKernel *CpuArgMinMaxInt8KernelCreator(const std::vector<lite::tensor
   return kernel;
 }
 
-kernel::LiteKernel *CpuArgMinMaxFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *op_parameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuArgMinMaxFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";

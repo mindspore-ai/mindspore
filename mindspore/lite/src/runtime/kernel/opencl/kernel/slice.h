@@ -27,8 +27,8 @@ namespace mindspore::kernel {
 
 class SliceOpenCLKernel : public OpenCLKernel {
  public:
-  explicit SliceOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                             const std::vector<lite::tensor::Tensor *> &outputs)
+  explicit SliceOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                             const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
 
   ~SliceOpenCLKernel() override{};

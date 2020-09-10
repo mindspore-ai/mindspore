@@ -22,7 +22,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-using mindspore::lite::tensor::Tensor;
+using mindspore::lite::Tensor;
 
 class TestEluFp32 : public mindspore::CommonTest {
  public:
@@ -30,13 +30,13 @@ class TestEluFp32 : public mindspore::CommonTest {
 };
 
 void EluTestInit(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outputs_, EluParameter *elu_param) {
-  Tensor *in_t_first = new Tensor(kNumberTypeFloat32, {6, 2}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  Tensor *in_t_first = new Tensor(kNumberTypeFloat32, {6, 2}, schema::Format_NHWC, lite::Tensor::Category::CONST);
   in_t_first->MallocData();
   float in_first[] = {-1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 0};
-  memcpy(in_t_first->Data(), in_first, sizeof(float) * in_t_first->ElementsNum());
+  memcpy(in_t_first->MutableData(), in_first, sizeof(float) * in_t_first->ElementsNum());
   inputs_->push_back(in_t_first);
 
-  Tensor *outputs_t = new Tensor(kNumberTypeFloat32, {6, 2}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  Tensor *outputs_t = new Tensor(kNumberTypeFloat32, {6, 2}, schema::Format_NHWC, lite::Tensor::Category::CONST);
   outputs_t->MallocData();
   outputs_->push_back(outputs_t);
 
@@ -62,7 +62,7 @@ TEST_F(TestEluFp32, EluTest) {
     std::cout << outputs_.front()->shape()[i] << ' ';
   }
   std::cout << std::endl;
-  float *out = reinterpret_cast<float *>(outputs_.front()->Data());
+  float *out = reinterpret_cast<float *>(outputs_.front()->MutableData());
   for (int i = 0; i < outputs_.front()->ElementsNum(); ++i) {
     std::cout << out[i] << ' ';
   }

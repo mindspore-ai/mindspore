@@ -74,8 +74,8 @@ int ExpCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  input_addr_ = reinterpret_cast<float *>(in_tensors_.front()->Data());
-  output_addr_ = reinterpret_cast<float *>(out_tensors_.front()->Data());
+  input_addr_ = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
+  output_addr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   exp_parameter_->element_num_ = in_tensors_.front()->ElementsNum();
 
   auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, ExpRun, this, exp_parameter_->thread_num_);
@@ -86,8 +86,8 @@ int ExpCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuExpFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                            const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
+kernel::LiteKernel *CpuExpFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                            const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                             const lite::Context *ctx, const KernelKey &desc,
                                             const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr || ctx == nullptr) {

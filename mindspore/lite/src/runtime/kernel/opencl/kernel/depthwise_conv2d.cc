@@ -47,7 +47,7 @@ int DepthwiseConv2dOpenCLKernel::Init() {
   auto in_format = op_format_;
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
-  if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4) {
+  if (in_format != schema::Format::Format_NHWC4 && in_format != schema::Format::Format_NC4HW4) {
     MS_LOG(ERROR) << "input format(" << in_format << ") "
                   << "format not support!";
     return RET_ERROR;
@@ -59,9 +59,9 @@ int DepthwiseConv2dOpenCLKernel::Init() {
   } else {
     kernel_name += "_IMG";
   }
-  if (in_format == schema::Format_NC4HW4) {
+  if (in_format == schema::Format::Format_NC4HW4) {
     kernel_name += "_NC4HW4";
-  } else if (in_format == schema::Format_NHWC4) {
+  } else if (in_format == schema::Format::Format_NHWC4) {
     kernel_name += "_NHWC4";
   }
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
@@ -89,7 +89,7 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
   bool is_fp16 = ocl_runtime->GetFp16Enable();
 
   // weight: o, h, w, i; o == group, i == 1
-  void *origin_weight = in_tensors_.at(kWeightIndex)->Data();
+  void *origin_weight = in_tensors_.at(kWeightIndex)->MutableData();
   int CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   int pack_weight_size = C4NUM * CO4 * parameter->kernel_h_ * parameter->kernel_w_;
 
@@ -115,7 +115,7 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
       PackNCHWToNC4HW4<float, float>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
     } else {
       MS_LOG(ERROR) << "Only support float16/float32, actual data type " << in_tensors_.at(kWeightIndex)->data_type();
-        return RET_ERROR;
+      return RET_ERROR;
     }
   }
 
@@ -130,7 +130,7 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
     bias_data_ = allocator->MapBuffer(bias_data_, CL_MAP_WRITE, nullptr, true);
     size_t up_co_size = C4NUM * CO4 * dtype_size;
     memset(bias_data_, 0, up_co_size);
-    auto ori_bias = in_tensors_.at(kBiasIndex)->Data();
+    auto ori_bias = in_tensors_.at(kBiasIndex)->MutableData();
     memcpy(bias_data_, ori_bias, out_tensors_[0]->Channel() * dtype_size);
     allocator->UnmapBuffer(bias_data_);
   } else {
@@ -144,7 +144,7 @@ int DepthwiseConv2dOpenCLKernel::ReSize() { return RET_OK; }
 int DepthwiseConv2dOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t im_dst_x, im_dst_y;
-  if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+  if (in_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
     im_dst_x = out_tensors_[0]->Width() * CO4;
     im_dst_y = out_tensors_[0]->Height();
   } else {
@@ -197,10 +197,10 @@ int DepthwiseConv2dOpenCLKernel::Run() {
                       (cl_int)out_tensors_[0]->Batch()};
 
   int arg_cnt = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->MutableData());
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, packed_weight_, lite::opencl::MemType::BUF);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, bias_data_, lite::opencl::MemType::BUF);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->MutableData());
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, kernel_size);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, stride);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, padding);
@@ -213,8 +213,8 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLDepthwiseConv2dKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *OpenCLDepthwiseConv2dKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {

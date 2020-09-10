@@ -27,7 +27,7 @@ void WeightFormatTransformPass::SetQuantType(QuantType quantType) { this->quantT
 
 void WeightFormatTransformPass::SetFmkType(converter::FmkType fmkType) { this->fmkType = fmkType; }
 
-void WeightFormatTransformPass::SetDstFormat(Format format) { this->dstFormat = format; }
+void WeightFormatTransformPass::SetDstFormat(schema::Format format) { this->dstFormat = format; }
 
 STATUS WeightFormatTransformPass::Run(MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
@@ -73,8 +73,8 @@ STATUS WeightFormatTransformPass::QuantDataFormatTrans(MetaGraphT *graph) {
       if (status == RET_OK) {
         weightTensor->format = curDstFormat;
       } else {
-        MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To"
-                        << EnumNameFormat(curDstFormat) << " failed, node : " << node->name;
+        MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To" << EnumNameFormat(curDstFormat)
+                      << " failed, node : " << node->name;
         return ERROR;
       }
     }
@@ -100,35 +100,35 @@ STATUS WeightFormatTransformPass::NonQuantDataFormatTrans(MetaGraphT *graph) {
     STATUS status;
     if (opType == PrimitiveType_Conv2D || opType == PrimitiveType_DepthwiseConv2D ||
         opType == schema::PrimitiveType_DeConv2D) {
-      Format curDstFormat;
-      if (this->dstFormat == Format_NUM_OF_FORMAT) {
-        curDstFormat = Format_KHWC;
+      schema::Format curDstFormat;
+      if (this->dstFormat == schema::Format::Format_NUM_OF_FORMAT) {
+        curDstFormat = schema::Format::Format_KHWC;
       } else {
         curDstFormat = this->dstFormat;
       }
       status = TransFilterFormat(weightTensor.get(), curDstFormat);
       if (status == RET_OK) {
-        //          node->attr.AsConv2D()->format = Format_NCHW;
+        //          node->attr.AsConv2D()->format = schema::Format::Format_NCHW;
         weightTensor->format = curDstFormat;
       } else {
-        MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To"
-                        << EnumNameFormat(curDstFormat) << " failed, node : " << node->name;
+        MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To" << EnumNameFormat(curDstFormat)
+                      << " failed, node : " << node->name;
         return ERROR;
       }
     } else {  // weight should be CKHW
-      Format curDstFormat;
-      if (this->dstFormat == Format_NUM_OF_FORMAT) {
-        curDstFormat = Format_KHWC;
+      schema::Format curDstFormat;
+      if (this->dstFormat == schema::Format::Format_NUM_OF_FORMAT) {
+        curDstFormat = schema::Format::Format_KHWC;
       } else {
         curDstFormat = this->dstFormat;
       }
       status = TransFilterFormat(weightTensor.get(), curDstFormat);
       if (status == RET_OK) {
-        //          node->attr.AsDepthwiseConv2D()->format = Format_NCHW;
+        //          node->attr.AsDepthwiseConv2D()->format = schema::Format::Format_NCHW;
         weightTensor->format = curDstFormat;
       } else {
-        MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To"
-                        << EnumNameFormat(curDstFormat) << " failed, node : " << node->name;
+        MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To" << EnumNameFormat(curDstFormat)
+                      << " failed, node : " << node->name;
         return ERROR;
       }
     }

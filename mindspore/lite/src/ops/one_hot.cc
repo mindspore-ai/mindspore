@@ -45,7 +45,7 @@ int OneHot::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
 namespace {
 constexpr size_t kOneHotInputNum = 4;
 }
-int OneHot::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int OneHot::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   if (this->primitive_ == nullptr) {
     return RET_NULL_PTR;
   }
@@ -60,7 +60,7 @@ int OneHot::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor:
   if (depth_tensor == nullptr) {
     return RET_NULL_PTR;
   }
-  const int *depth = static_cast<int *>(depth_tensor->Data());
+  const int *depth = static_cast<int *>(depth_tensor->MutableData());
   auto input = inputs.front();
   if (input == nullptr) {
     return RET_NULL_PTR;

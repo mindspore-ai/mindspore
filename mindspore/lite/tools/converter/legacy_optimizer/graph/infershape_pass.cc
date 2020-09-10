@@ -18,44 +18,43 @@
 #include <vector>
 #include "utils/log_adapter.h"
 #include "include/errorcode.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 #include "src/ops/primitive_c.h"
 
 using mindspore::lite::PrimitiveC;
-using mindspore::lite::tensor::Tensor;
+using mindspore::lite::Tensor;
 namespace mindspore {
 namespace lite {
 namespace {
-std::vector<tensor::Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::vector<uint32_t> &tensor_indexs,
-                                                        const schema::PrimitiveType node_type) {
-  std::vector<tensor::Tensor *> lite_tensors;
+std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::vector<uint32_t> &tensor_indexs,
+                                                const schema::PrimitiveType node_type) {
+  std::vector<Tensor *> lite_tensors;
   for (size_t i = 0; i < tensor_indexs.size(); i++) {
     auto &tensorT = graph->allTensors.at(tensor_indexs[i]);
     auto tensor_shape = tensorT->dims;
-    auto lite_tensor =
-      std::make_unique<tensor::Tensor>(TypeId(tensorT->dataType), tensor_shape, tensorT->format, tensorT->nodeType);
+    auto lite_tensor = std::make_unique<Tensor>(TypeId(tensorT->dataType), tensor_shape, tensorT->format,
+                                                TensorCategory(tensorT->nodeType));
     if (lite_tensor == nullptr) {
       MS_LOG(ERROR) << "lite tensor is nullptr";
-      return std::vector<tensor::Tensor *>();
+      return std::vector<Tensor *>();
     }
     // reshape op must get tensor data to infershape
     if (node_type == schema::PrimitiveType_Reshape && i == 1 && tensorT->nodeType == NodeType_ValueNode) {
       auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
       // when tensorT as param input
       if (lite_tensor_size == 0) {
-        return std::vector<tensor::Tensor *>();
+        return std::vector<Tensor *>();
       }
-      auto tensor_data = std::unique_ptr<char[]>(new (std::nothrow) char[lite_tensor_size / sizeof(char)]);
-      if (tensor_data == nullptr) {
-        MS_LOG(ERROR) << "tensor_data is nullptr";
-        return std::vector<tensor::Tensor *>();
+      auto ret = lite_tensor->MallocData();
+      if (ret != 0) {
+        MS_LOG(ERROR) << "Malloc tensor data failed";
+        return std::vector<Tensor *>();
       }
-      auto ret = memcpy_s(tensor_data.get(), lite_tensor_size, tensorT->data.data(), lite_tensor_size);
+      ret = memcpy_s(lite_tensor->MutableData(), lite_tensor->Size(), tensorT->data.data(), lite_tensor_size);
       if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy error: " << ret;
-        return std::vector<tensor::Tensor *>();
+        return std::vector<Tensor *>();
       }
-      lite_tensor->SetData(tensor_data.release());
       lite_tensors.emplace_back(lite_tensor.release());
       continue;
     }
@@ -83,7 +82,7 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
       MS_LOG(ERROR) << "copy primitiveT error";
       return RET_ERROR;
     }
-    auto primitiveC = std::shared_ptr<PrimitiveC>(PrimitiveC::UnPackFromSchemaPrimitiveT(primitiveT.release()));
+    auto primitiveC = std::shared_ptr<PrimitiveC>(PrimitiveC::Create(primitiveT.release()));
     if (primitiveC == nullptr) {
       MS_LOG(ERROR) << "unpack primitiveT error";
       return RET_ERROR;

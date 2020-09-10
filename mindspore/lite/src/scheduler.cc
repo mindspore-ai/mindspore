@@ -27,7 +27,7 @@
 #endif
 
 namespace mindspore::lite {
-int Scheduler::Schedule(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
+int Scheduler::Schedule(const lite::Model *model, std::vector<Tensor *> *tensors,
                         std::vector<kernel::LiteKernel *> *kernels) {
   // 1. op ---> kernel
   // 2. sub graph
@@ -62,8 +62,8 @@ int Scheduler::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
       MS_LOG(ERROR) << "kernel(" << kernels[i]->name() << ")'s primitive is nullptr!";
       return RET_ERROR;
     }
-    std::vector<tensor::Tensor *> &inputs = kernels[i]->in_tensors();
-    std::vector<tensor::Tensor *> &outputs = kernels[i]->out_tensors();
+    std::vector<Tensor *> &inputs = kernels[i]->in_tensors();
+    std::vector<Tensor *> &outputs = kernels[i]->out_tensors();
     auto ret = primitive->InferShape(inputs, outputs);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "InferShape failed, name: " << kernels[i]->name() << ", ret = " << ret;
@@ -78,7 +78,7 @@ int Scheduler::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
   return RET_OK;
 }
 
-int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *> *tensors) {
+int Scheduler::InferShape(const lite::Model *model, std::vector<Tensor *> *tensors) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(tensors != nullptr);
   bool infer_shape_interrupt = false;
@@ -86,8 +86,8 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *
   for (uint32_t i = 0; i < kernelCount; ++i) {
     auto node = model->nodes_[i];
     MS_ASSERT(node != nullptr);
-    std::vector<tensor::Tensor *> inputs;
-    std::vector<tensor::Tensor *> outputs;
+    std::vector<Tensor *> inputs;
+    std::vector<Tensor *> outputs;
     auto in_size = node->input_indices_.size();
     for (size_t j = 0; j < in_size; ++j) {
       inputs.emplace_back(tensors->at(node->input_indices_[j]));
@@ -105,14 +105,12 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *
     auto ret = primitive->InferShape(inputs, outputs);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name_
-                   << ", type: "
-                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()))
+                   << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()))
                    << "flag set to false.";
       primitive->SetInferFlag(false);
       infer_shape_interrupt = true;
     } else if (ret != RET_OK) {
-      MS_LOG(ERROR) << "InferShape failed, name: " << node->name_
-                    << ", type: "
+      MS_LOG(ERROR) << "InferShape failed, name: " << node->name_ << ", type: "
                     << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()));
       return RET_INFER_ERR;
     }
@@ -121,7 +119,7 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *
   return RET_OK;
 }
 
-int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
+int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<Tensor *> *tensors,
                              std::vector<kernel::LiteKernel *> *kernels) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(tensors != nullptr);
@@ -130,8 +128,8 @@ int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tenso
   for (uint32_t i = 0; i < kernelCount; ++i) {
     auto node = model->nodes_[i];
     MS_ASSERT(node != nullptr);
-    std::vector<tensor::Tensor *> inputs;
-    std::vector<tensor::Tensor *> outputs;
+    std::vector<Tensor *> inputs;
+    std::vector<Tensor *> outputs;
     auto in_size = node->input_indices_.size();
     for (size_t j = 0; j < in_size; ++j) {
       inputs.emplace_back(tensors->at(node->input_indices_[j]));
@@ -144,8 +142,7 @@ int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tenso
     MS_ASSERT(primitive != nullptr);
     auto *kernel = this->ScheduleNode(inputs, outputs, primitive, node);
     if (kernel == nullptr) {
-      MS_LOG(ERROR) << "ScheduleNode return nullptr, name: " << node->name_
-                    << ", type: "
+      MS_LOG(ERROR) << "ScheduleNode return nullptr, name: " << node->name_ << ", type: "
                     << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()));
       return RET_ERROR;
     }
@@ -188,7 +185,7 @@ void Scheduler::ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels) {
           tensor->set_allocator(context_->allocator.get());
         }
       }
-      std::vector<tensor::Tensor *> output_tensor = kernel::LiteKernelUtil::SubgraphOutputTensors(temp_kernels);
+      std::vector<Tensor *> output_tensor = kernel::LiteKernelUtil::SubgraphOutputTensors(temp_kernels);
       for (auto tensor : output_tensor) {
         if (context_->float16_priority && tensor->data_type() == kNumberTypeFloat16) {
           tensor->set_data_type(kNumberTypeFloat32);
@@ -212,8 +209,8 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
   kernel::LiteKernel *sub_kernel = nullptr;
 #if SUPPORT_GPU
   if (arch == kernel::KERNEL_ARCH::kGPU) {
-    std::vector<tensor::Tensor *> input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
-    std::vector<tensor::Tensor *> output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
+    std::vector<Tensor *> input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
+    std::vector<Tensor *> output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
     std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputKernels(kernels);
     std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputKernels(kernels);
     sub_kernel =
@@ -228,13 +225,13 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
   return sub_kernel;
 }
 
-kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> &in_tensors,
-                                            const std::vector<tensor::Tensor *> &out_tensors,
+kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<Tensor *> &in_tensors,
+                                            const std::vector<Tensor *> &out_tensors,
                                             const mindspore::lite::PrimitiveC *primitive, const Model::Node *node) {
   MS_ASSERT(primitive != nullptr);
   TypeId data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(primitive->Type())};
-  if (context_->device_ctx_.type == DT_GPU) {
+  if (context_->device_type_ == DT_GPU) {
     desc.arch = kernel::KERNEL_ARCH::kGPU;
     auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
     if (kernel != nullptr) {
@@ -242,8 +239,8 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
       return kernel;
     } else {
       MS_LOG(ERROR) << "Not supported GPU Op "
-                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type())) << " "
-                   << node->name_;
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type())) << " "
+                    << node->name_;
     }
   }
 
@@ -272,7 +269,7 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
   return nullptr;
 }
 
-TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<tensor::Tensor *> &in_tensors) {
+TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_tensors) {
   for (const auto &tensor : in_tensors) {
     auto dtype = tensor->data_type();
     if (dtype == kNumberTypeFloat32 || dtype == kNumberTypeFloat16 || dtype == kNumberTypeInt8) {
@@ -294,7 +291,7 @@ void Scheduler::SetKernelTensorDataType(kernel::LiteKernel *kernel) {
     }
   } else if (kernel->desc().data_type == kNumberTypeFloat32) {
     for (auto tensor : kernel->in_tensors()) {
-      if (tensor->TensorType() != schema::NodeType_ValueNode && tensor->data_type() == kNumberTypeFloat16) {
+      if (tensor->category() != Tensor::Category::CONST && tensor->data_type() == kNumberTypeFloat16) {
         tensor->set_data_type(kNumberTypeFloat32);
       }
     }

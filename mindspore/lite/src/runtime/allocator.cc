@@ -122,4 +122,3 @@ void DefaultAllocator::Clear() {
   UnLock();
 }
 }  // namespace mindspore::lite
-

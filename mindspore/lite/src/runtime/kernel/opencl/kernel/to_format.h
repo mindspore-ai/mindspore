@@ -26,8 +26,8 @@
 namespace mindspore::kernel {
 class ToFormatOpenCLKernel : public OpenCLKernel {
  public:
-  explicit ToFormatOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                const std::vector<lite::tensor::Tensor *> &outputs)
+  explicit ToFormatOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~ToFormatOpenCLKernel() override{};
 

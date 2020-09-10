@@ -96,13 +96,13 @@ int RunOneHot(void *cdata, int task_id) {
 }
 
 int OneHotCPUKernel::OneHotImpl(int task_id) {
-  auto indices_data = static_cast<int *>(in_tensors_.at(0)->Data());
+  auto indices_data = static_cast<int *>(in_tensors_.at(0)->MutableData());
   auto output = out_tensors_.at(0);
   if (output == nullptr) {
     MS_LOG(ERROR) << "OneHot output nullptr";
     return RET_NULL_PTR;
   }
-  auto output_data = static_cast<float *>(output->Data());
+  auto output_data = static_cast<float *>(output->MutableData());
 
   auto ret = GetParams();
   if (ret != RET_OK) {
@@ -126,7 +126,7 @@ int OneHotCPUKernel::GetParams() {
     MS_LOG(ERROR) << "OneHot inputs[1] depth nullptr";
     return RET_NULL_PTR;
   }
-  const int *depth = static_cast<int *>(depth_tensor->Data());
+  const int *depth = static_cast<int *>(depth_tensor->MutableData());
   if (depth == nullptr) {
     return RET_NULL_PTR;
   }
@@ -137,7 +137,7 @@ int OneHotCPUKernel::GetParams() {
     MS_LOG(ERROR) << "OneHot inputs[2] on_value nullptr";
     return RET_NULL_PTR;
   }
-  const float *on_value = static_cast<float *>(on_value_tensor->Data());
+  const float *on_value = static_cast<float *>(on_value_tensor->MutableData());
   if (on_value == nullptr) {
     return RET_NULL_PTR;
   }
@@ -148,7 +148,7 @@ int OneHotCPUKernel::GetParams() {
     MS_LOG(ERROR) << "OneHot inputs[3] off_value nullptr";
     return RET_NULL_PTR;
   }
-  const float *off_value = static_cast<float *>(off_value_tensor->Data());
+  const float *off_value = static_cast<float *>(off_value_tensor->MutableData());
   if (off_value == nullptr) {
     return RET_NULL_PTR;
   }
@@ -174,10 +174,9 @@ int OneHotCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuOneHotFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuOneHotFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "OneHot opParameter nullptr.";

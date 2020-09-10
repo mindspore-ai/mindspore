@@ -94,14 +94,12 @@ int ArithmeticInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int ArithmeticInt8CPUKernel::ReSize() {
-  return RET_OK;
-}
+int ArithmeticInt8CPUKernel::ReSize() { return RET_OK; }
 
 int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
-  auto input0_data = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
-  auto input1_data1 = reinterpret_cast<int8_t *>(in_tensors_[1]->Data());
-  auto output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
+  auto input0_data = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
+  auto input1_data1 = reinterpret_cast<int8_t *>(in_tensors_[1]->MutableData());
+  auto output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
   auto element_num = out_tensors_[0]->ElementsNum();
   auto param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
   if (param->broadcasting_ && arithmetic_run_ != nullptr) {
@@ -139,8 +137,8 @@ int ArithmeticInt8CPUKernel::Run() {
   }
   auto param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
   if (param->broadcasting_) {
-    auto input_data0 = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
-    auto input_data1 = reinterpret_cast<int8_t *>(in_tensors_[1]->Data());
+    auto input_data0 = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
+    auto input_data1 = reinterpret_cast<int8_t *>(in_tensors_[1]->MutableData());
     tile_data0_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(out_tensors_[0]->Size()));
     tile_data1_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(out_tensors_[0]->Size()));
     if (tile_data0_ == nullptr || tile_data1_ == nullptr) {
@@ -162,10 +160,9 @@ int ArithmeticInt8CPUKernel::Run() {
   return ret;
 }
 
-kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                   const std::vector<lite::tensor::Tensor *> &outputs,
-                                                   OpParameter *parameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                                   const lite::Context *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "Input parameter is null!";

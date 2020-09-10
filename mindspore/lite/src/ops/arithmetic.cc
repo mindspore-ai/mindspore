@@ -17,11 +17,11 @@
 #include "src/ops/arithmetic.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 namespace lite {
-int Arithmetic::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
+int Arithmetic::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (inputs_.size() != kDoubleNum) {
     MS_LOG(ERROR) << "The number of input must be " << kDoubleNum;

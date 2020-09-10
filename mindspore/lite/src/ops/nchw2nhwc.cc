@@ -31,13 +31,13 @@ int Nchw2Nhwc::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffe
 }
 #endif
 
-int Nchw2Nhwc::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
+int Nchw2Nhwc::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  output->SetFormat(schema::Format_NHWC);
+  output->SetFormat(schema::Format::Format_NHWC);
   output->set_data_type(input->data_type());
   if (!GetInferFlag()) {
     return RET_OK;

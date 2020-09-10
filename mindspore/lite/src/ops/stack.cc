@@ -60,7 +60,7 @@ namespace {
 constexpr int kStackOutputNum = 1;
 constexpr int kStackMinInputNum = 1;
 }  // namespace
-int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int Stack::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (outputs.size() != kStackOutputNum) {
     MS_LOG(ERROR) << "Invalid output size:" << outputs.size();

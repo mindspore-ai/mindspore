@@ -38,22 +38,21 @@ int Nhwc2NchwCPUKernel::Run() {
 
   if (input->shape().size() == 4) {
     if (input->data_type() == kNumberTypeFloat32) {
-      PackNHWCToNCHWFp32(input->Data(), output->Data(), output->Batch(), output->Height() * output->Width(),
-                         output->Channel());
+      PackNHWCToNCHWFp32(input->MutableData(), output->MutableData(), output->Batch(),
+                         output->Height() * output->Width(), output->Channel());
     } else if (input->data_type() == kNumberTypeInt8) {
-      PackNHWCToNCHWInt8(input->Data(), output->Data(), output->Batch(), output->Height() * output->Width(),
-                         output->Channel());
+      PackNHWCToNCHWInt8(input->MutableData(), output->MutableData(), output->Batch(),
+                         output->Height() * output->Width(), output->Channel());
     }
   } else {
-    memcpy(output->Data(), input->Data(), input->ElementsNum() * sizeof(float));
+    memcpy(output->MutableData(), input->MutableData(), input->ElementsNum() * sizeof(float));
   }
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuNhwc2NchwFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuNhwc2NchwFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Nhwc2Nchw);

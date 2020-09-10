@@ -34,7 +34,7 @@ int DetectionPostProcessCPUKernel::Init() {
     const auto quant_params = anchor_tensor->GetQuantParams();
     const double scale = quant_params.at(0).scale;
     const int32_t zp = quant_params.at(0).zeroPoint;
-    auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->Data());
+    auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->MutableData());
     auto anchor_fp32 = new (std::nothrow) float[anchor_tensor->ElementsNum()];
     if (anchor_fp32 == nullptr) {
       MS_LOG(ERROR) << "Malloc anchor failed";
@@ -50,7 +50,7 @@ int DetectionPostProcessCPUKernel::Init() {
       MS_LOG(ERROR) << "Malloc anchor failed";
       return RET_ERROR;
     }
-    memcpy(parameter->anchors_, anchor_tensor->Data(), anchor_tensor->Size());
+    memcpy(parameter->anchors_, anchor_tensor->MutableData(), anchor_tensor->Size());
   } else {
     MS_LOG(ERROR) << "unsupported anchor data type " << anchor_tensor->data_type();
     return RET_ERROR;
@@ -60,7 +60,7 @@ int DetectionPostProcessCPUKernel::Init() {
 
 DetectionPostProcessCPUKernel::~DetectionPostProcessCPUKernel() {
   DetectionPostProcessParameter *parameter = reinterpret_cast<DetectionPostProcessParameter *>(op_parameter_);
-  delete [](parameter->anchors_);
+  delete[](parameter->anchors_);
 }
 
 int DetectionPostProcessCPUKernel::ReSize() { return RET_OK; }
@@ -71,14 +71,14 @@ int DetectionPostProcessCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input_boxes = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto input_scores = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
+  auto input_boxes = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto input_scores = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
 
   // output_classes and output_num use float type now
-  auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
-  auto output_classes = reinterpret_cast<float *>(out_tensors_.at(1)->Data());
-  auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->Data());
-  auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->Data());
+  auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  auto output_classes = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
+  auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->MutableData());
+  auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->MutableData());
 
   MS_ASSERT(context_->allocator != nullptr);
   const int num_boxes = in_tensors_.at(0)->shape()[1];
@@ -109,8 +109,8 @@ int DetectionPostProcessCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuDetectionPostProcessFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                             const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuDetectionPostProcessFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                             const std::vector<lite::Tensor *> &outputs,
                                                              OpParameter *opParameter, const lite::Context *ctx,
                                                              const kernel::KernelKey &desc,
                                                              const mindspore::lite::PrimitiveC *primitive) {

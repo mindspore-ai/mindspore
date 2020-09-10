@@ -38,7 +38,7 @@ class Arithmetic : public PrimitiveC {
     return RET_ERROR;
   }
 #endif
-  int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
+  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   bool Broadcasting() { return this->broadcasting_; }
   int NDims() { return this->ndim_; }
   std::vector<int> InShape0() { return this->in_shape0_; }

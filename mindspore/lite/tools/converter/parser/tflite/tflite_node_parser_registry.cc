@@ -43,4 +43,3 @@ TfliteNodeParser *TfliteNodeParserRegistry::GetNodeParser(const std::string &nam
 }
 }  // namespace lite
 }  // namespace mindspore
-

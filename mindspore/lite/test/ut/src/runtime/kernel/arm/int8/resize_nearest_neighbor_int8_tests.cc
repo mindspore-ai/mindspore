@@ -17,14 +17,14 @@
 #include <iostream>
 #include "schema/inner/model_generated.h"
 #include "include/context.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "nnacl/int8/resize.h"
 
 namespace mindspore {
-using mindspore::lite::tensor::QuantArg;
-using mindspore::lite::tensor::Tensor;
+using mindspore::lite::QuantArg;
+using mindspore::lite::Tensor;
 
 class TestResizeNearestNeighborInt8 : public mindspore::CommonTest {
  public:
@@ -34,11 +34,11 @@ class TestResizeNearestNeighborInt8 : public mindspore::CommonTest {
                const int thread_num);
   void TearDown() override;
 
-  std::vector<lite::tensor::Tensor *> inputs;
-  std::vector<lite::tensor::Tensor *> outputs;
+  std::vector<lite::Tensor *> inputs;
+  std::vector<lite::Tensor *> outputs;
   ResizeParameter param_ = {};
-  lite::tensor::Tensor in_tensor;
-  lite::tensor::Tensor out_tensor;
+  lite::Tensor in_tensor;
+  lite::Tensor out_tensor;
 
   kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Resize};
   kernel::KernelCreator creator_ = nullptr;

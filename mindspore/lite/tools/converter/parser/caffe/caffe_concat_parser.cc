@@ -21,10 +21,8 @@ const int32_t CONCAT_DEFAULT_AXIS = 1;
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto,
-                                const caffe::LayerParameter &weight,
-                                schema::CNodeT *op,
-                                std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                                schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeConcatParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -75,4 +73,3 @@ STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto,
 CaffeNodeRegistrar g_caffeConcatParser("Concat", new CaffeConcatParser());
 }  // namespace lite
 }  // namespace mindspore
-

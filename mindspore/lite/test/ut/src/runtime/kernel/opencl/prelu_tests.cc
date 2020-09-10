@@ -43,8 +43,8 @@ void LoadDataPRelu(void *dst, size_t dst_size, const std::string &file_path) {
 }
 
 template <typename T>
-void CompareOutPRelu(lite::tensor::Tensor *output_tensor, const std::string &standard_answer_file) {
-  auto *output_data = reinterpret_cast<T *>(output_tensor->Data());
+void CompareOutPRelu(lite::Tensor *output_tensor, const std::string &standard_answer_file) {
+  auto *output_data = reinterpret_cast<T *>(output_tensor->MutableData());
   size_t output_size = output_tensor->Size();
   auto expect_data = reinterpret_cast<T *>(mindspore::lite::ReadFile(standard_answer_file.c_str(), &output_size));
   constexpr float atol = 0.0002;
@@ -62,9 +62,9 @@ void CompareOutPRelu(lite::tensor::Tensor *output_tensor, const std::string &sta
 }
 
 template <typename T>
-void printf_tensor_Prelu(const std::string &log, mindspore::lite::tensor::Tensor *in_data, int size) {
+void printf_tensor_Prelu(const std::string &log, mindspore::lite::Tensor *in_data, int size) {
   MS_LOG(INFO) << log;
-  auto input_data = reinterpret_cast<T *>(in_data->Data());
+  auto input_data = reinterpret_cast<T *>(in_data->MutableData());
   for (int i = 0; i < size; ++i) {
     printf("%f ", input_data[i]);
   }
@@ -87,34 +87,34 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   schema::Format format = schema::Format_NHWC;
   schema::Format op_format = schema::Format_NC4HW4;
-  auto tensor_type = schema::NodeType_ValueNode;
-  auto input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
+  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input_tensor error!";
     return;
   }
-  auto output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
+  auto output_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(ERROR) << "new output_tensor error";
     delete input_tensor;
     return;
   }
-  auto weight_tensor = new (std::nothrow)
-    lite::tensor::Tensor(data_type, std::vector<int>{input_shape[3]}, schema::Format_NHWC, tensor_type);
+  auto weight_tensor =
+    new (std::nothrow) lite::Tensor(data_type, std::vector<int>{input_shape[3]}, schema::Format_NHWC, tensor_type);
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "new weight_tensor error";
     delete input_tensor;
     delete output_tensor;
     return;
   }
-  std::vector<lite::tensor::Tensor *> inputs{input_tensor, weight_tensor};
-  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  std::vector<lite::Tensor *> inputs{input_tensor, weight_tensor};
+  std::vector<lite::Tensor *> outputs{output_tensor};
   inputs[0]->MallocData(allocator);
   inputs[1]->MallocData(allocator);
 
   MS_LOG(INFO) << "initialize input data";
-  LoadDataPRelu(input_tensor->Data(), input_tensor->Size(), in_file);
-  LoadDataPRelu(weight_tensor->Data(), weight_tensor->Size(), weight_file);
+  LoadDataPRelu(input_tensor->MutableData(), input_tensor->Size(), in_file);
+  LoadDataPRelu(weight_tensor->MutableData(), weight_tensor->Size(), weight_file);
   if (ocl_runtime->GetFp16Enable()) {
     printf_tensor_Prelu<float16_t>("PRELU:FP16--input data", input_tensor, inputs[0]->ElementsNum());
     printf_tensor_Prelu<float16_t>("PRELU:FP16--weight data", weight_tensor, weight_tensor->ElementsNum());

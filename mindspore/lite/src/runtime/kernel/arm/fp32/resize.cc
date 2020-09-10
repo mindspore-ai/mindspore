@@ -147,11 +147,11 @@ int ResizeImpl(void *cdata, int task_id) {
 
 int ResizeCPUKernel::RunImpl(int task_id) {
   auto input = in_tensors_.at(0);
-  auto input_data = reinterpret_cast<float *>(input->Data());
+  auto input_data = reinterpret_cast<float *>(input->MutableData());
   if (input_data == nullptr) {
     return RET_NULL_PTR;
   }
-  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   if (output_data == nullptr) {
     return RET_NULL_PTR;
   }

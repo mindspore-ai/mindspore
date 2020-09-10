@@ -37,9 +37,9 @@ int ActivationGradCPUKernel::Init() { return RET_OK; }
 int ActivationGradCPUKernel::ReSize() { return RET_OK; }
 
 int ActivationGradCPUKernel::DoActivation(int task_id) {
-  auto yt_addr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto input_addr = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto yt_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto input_addr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   int length = in_tensors_.at(0)->ElementsNum();
 
   auto error_code = RET_OK;
@@ -93,8 +93,8 @@ int ActivationGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuActivationGradFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuActivationGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {

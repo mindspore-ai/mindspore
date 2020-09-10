@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_COMMON_FILE_UTILS_EXT_H_
 #include <string>
 
-
 namespace mindspore {
 namespace lite {
 int CompareRelativeOutput(float *output_data, std::string file_path);

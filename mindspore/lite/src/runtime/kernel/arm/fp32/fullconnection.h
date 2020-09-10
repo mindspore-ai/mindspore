@@ -28,8 +28,8 @@ using mindspore::lite::Context;
 namespace mindspore::kernel {
 class FullconnectionCPUKernel : public FullconnectionBaseCPUKernel {
  public:
-  FullconnectionCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                          const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+  FullconnectionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                          const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                           const mindspore::lite::PrimitiveC *primitive)
       : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~FullconnectionCPUKernel() override;

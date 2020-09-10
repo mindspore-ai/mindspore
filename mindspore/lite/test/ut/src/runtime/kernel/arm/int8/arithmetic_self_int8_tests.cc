@@ -21,7 +21,7 @@
 #include "mindspore/lite/nnacl/arithmetic_self_parameter.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
-#include "mindspore/lite/src/ir/tensor.h"
+#include "mindspore/lite/src/tensor.h"
 
 namespace mindspore {
 
@@ -39,28 +39,28 @@ TEST_F(TestArithmeticSelfInt8, floor_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -98,28 +98,28 @@ TEST_F(TestArithmeticSelfInt8, floor_quant1_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 0.8;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.5;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -157,28 +157,28 @@ TEST_F(TestArithmeticSelfInt8, round_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -216,28 +216,28 @@ TEST_F(TestArithmeticSelfInt8, round_quant1_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 0.8;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.5;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -275,28 +275,28 @@ TEST_F(TestArithmeticSelfInt8, ceil_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -334,28 +334,28 @@ TEST_F(TestArithmeticSelfInt8, ceil_quant1_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 0.8;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.5;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -393,28 +393,28 @@ TEST_F(TestArithmeticSelfInt8, abs_quant0_thread0) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -452,28 +452,28 @@ TEST_F(TestArithmeticSelfInt8, abs_quant1_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 0.8;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.5;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -511,28 +511,28 @@ TEST_F(TestArithmeticSelfInt8, sin_quant0_thread2) {
   const int output_size = 4;
   int8_t output[4];
   std::vector<int> output_shape = {2, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -570,28 +570,28 @@ TEST_F(TestArithmeticSelfInt8, cos_quant0_thread2) {
   const int output_size = 4;
   int8_t output[4];
   std::vector<int> output_shape = {2, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -629,28 +629,28 @@ TEST_F(TestArithmeticSelfInt8, log_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -688,28 +688,28 @@ TEST_F(TestArithmeticSelfInt8, sqrt_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -747,28 +747,28 @@ TEST_F(TestArithmeticSelfInt8, rsqrt_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -806,28 +806,28 @@ TEST_F(TestArithmeticSelfInt8, square_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -865,28 +865,28 @@ TEST_F(TestArithmeticSelfInt8, square_quant1_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 0.8;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.5;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;
@@ -924,28 +924,28 @@ TEST_F(TestArithmeticSelfInt8, logical_not_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
   TypeId tid_int8 = kNumberTypeInt8;
-  lite::tensor::Tensor *input_tensor1 = new lite::tensor::Tensor;
+  lite::Tensor *input_tensor1 = new lite::Tensor;
   input_tensor1->SetData(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> inputs_tensor(1);
+  std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = input_tensor1;
 
-  lite::tensor::Tensor *output0_tensor = new lite::tensor::Tensor;
+  lite::Tensor *output0_tensor = new lite::Tensor;
   output0_tensor->SetData(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
-  std::vector<lite::tensor::Tensor *> outputs_tensor(1);
+  std::vector<lite::Tensor *> outputs_tensor(1);
   outputs_tensor[0] = output0_tensor;
 
   ArithmeticSelfParameter op_param;

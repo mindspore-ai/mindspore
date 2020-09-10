@@ -54,10 +54,10 @@ class OnnxModelParser : public ModelParser {
 
   STATUS SetGraphOutputTensor(const onnx::GraphProto &onnx_graph, schema::MetaGraphT *graph, TensorCache *tensor_cache);
 
-  STATUS AddValueInfo(const onnx::ValueInfoProto &proto, const std::string &name, const TensorType &type,
+  STATUS AddValueInfo(const onnx::ValueInfoProto &proto, const std::string &name, const Category &type,
                       TensorCache *tensor_cache, int *index);
 
-  STATUS AddTensorProto(const onnx::TensorProto &proto, const std::string &name, const TensorType &type,
+  STATUS AddTensorProto(const onnx::TensorProto &proto, const std::string &name, const Category &type,
                         TensorCache *tensor_cache, int *index);
 
   STATUS ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,

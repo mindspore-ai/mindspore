@@ -26,7 +26,7 @@ constexpr int kScatterShapeIndex = 0;
 constexpr int kScatterIndicesIndex = 1;
 constexpr int kScatterUpdateIndex = 2;
 }  // namespace
-int ScatterND::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int ScatterND::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   if (inputs_.size() != kScatterNDInputNum) {
     MS_LOG(ERROR) << "inputs number is not equal to " << kScatterNDInputNum;
     return RET_ERROR;
@@ -56,8 +56,8 @@ int ScatterND::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto shape_data = reinterpret_cast<int *>(shape->Data());
-  std::vector<int> out_shape(shape_data, shape_data + shape->DataSize());
+  auto shape_data = reinterpret_cast<int *>(shape->MutableData());
+  std::vector<int> out_shape(shape_data, shape_data + shape->ElementsNum());
   output->set_shape(out_shape);
   return RET_OK;
 }

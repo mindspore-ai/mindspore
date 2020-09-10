@@ -29,9 +29,9 @@ using mindspore::schema::PrimitiveType_Add;
 
 namespace mindspore::kernel {
 int QuantizedAddCPUKernel::Init() {
-  lite::tensor::Tensor *input0 = in_tensors_.at(0);
-  lite::tensor::Tensor *input1 = in_tensors_.at(1);
-  lite::tensor::Tensor *output = out_tensors_.at(0);
+  lite::Tensor *input0 = in_tensors_.at(0);
+  lite::Tensor *input1 = in_tensors_.at(1);
+  lite::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input0);
   MS_ASSERT(input1);
   MS_ASSERT(output);
@@ -81,9 +81,9 @@ int QuantizedAddCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->Data());
-  input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->Data());
-  output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->Data());
+  input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->MutableData());
+  output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
   elements_num_ = in_tensors_.at(0)->ElementsNum();
   count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
@@ -99,9 +99,10 @@ int QuantizedAddCPUKernel::Run() {
       tile_para.in_shape1_[i] = in_tensors_.at(1)->DimensionSize(i);
       tile_para.out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
     }
-    TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->Data()),
-                        static_cast<uint8_t *>(in_tensors_.at(1)->Data()), reinterpret_cast<uint8_t *>(input0_data_),
-                        reinterpret_cast<uint8_t *>(input1_data_), &tile_para);
+    TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->MutableData()),
+                        static_cast<uint8_t *>(in_tensors_.at(1)->MutableData()),
+                        reinterpret_cast<uint8_t *>(input0_data_), reinterpret_cast<uint8_t *>(input1_data_),
+                        &tile_para);
     ret = ParallelLaunch(THREAD_POOL_DEFAULT, AddInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
@@ -128,8 +129,8 @@ int QuantizedAddCPUKernel::DoExecute(int tId) {
   return lite::RET_OK;
 }
 
-kernel::LiteKernel *CpuAddInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                            const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
+kernel::LiteKernel *CpuAddInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                            const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                             const lite::Context *ctx, const KernelKey &desc,
                                             const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr || ctx == nullptr) {

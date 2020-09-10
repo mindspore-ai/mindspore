@@ -44,7 +44,8 @@ TEST_F(MindDataTestEager, Test1) {
   Path base_dir = Path(in_dir);
   MS_LOG(WARNING) << base_dir.toString() << ".";
   if (!base_dir.IsDirectory() || !base_dir.Exists()) {
-    MS_LOG(INFO) << "Input dir is not a directory or doesn't exist" << ".";
+    MS_LOG(INFO) << "Input dir is not a directory or doesn't exist"
+                 << ".";
   }
   auto t_start = std::chrono::high_resolution_clock::now();
   // check if output_dir exists and create it if it does not exist
@@ -66,6 +67,6 @@ TEST_F(MindDataTestEager, Test1) {
     EXPECT_EQ(image->DimensionSize(1), 224);
   }
   auto t_end = std::chrono::high_resolution_clock::now();
-  double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
+  double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
   MS_LOG(INFO) << "duration: " << elapsed_time_ms << " ms\n";
 }

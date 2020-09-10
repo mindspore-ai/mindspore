@@ -31,11 +31,9 @@ class TfliteFullyConnectedParser : public TfliteNodeParser {
 
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-               schema::CNodeT *op,
-               std::vector<int32_t> *tensors_id,
-               std::vector<schema::Format> *tensors_format,
-               std::map<int, int>  *tensors_id_map) override;
+               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer, schema::CNodeT *op,
+               std::vector<int32_t> *tensors_id, std::vector<schema::Format> *tensors_format,
+               std::map<int, int> *tensors_id_map) override;
 };
 
 class TfliteFakeQuantParser : public TfliteFullyConnectedParser {
@@ -46,4 +44,3 @@ class TfliteFakeQuantParser : public TfliteFullyConnectedParser {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_FULLY_CONNECTED_PARSER_H
-

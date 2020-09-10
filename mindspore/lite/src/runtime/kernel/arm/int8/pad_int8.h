@@ -26,8 +26,8 @@
 namespace mindspore::kernel {
 class PadInt8CPUKernel : public LiteKernel {
  public:
-  explicit PadInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                            const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  explicit PadInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                            const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                             const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     op_parameter_->thread_num_ = ctx->thread_num_;

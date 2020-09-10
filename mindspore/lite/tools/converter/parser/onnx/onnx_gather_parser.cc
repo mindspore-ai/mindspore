@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxGatherParser::Parse(const onnx::GraphProto &onnx_graph,
-                               const onnx::NodeProto &onnx_node,
+STATUS OnnxGatherParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx GatherParser";
   if (op == nullptr) {
@@ -40,7 +39,7 @@ STATUS OnnxGatherParser::Parse(const onnx::GraphProto &onnx_graph,
   }
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
-    const auto& attribute_name = onnx_node_attr.name();
+    const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {
       attr->axis = static_cast<int32_t>(onnx_node_attr.i());
     }
@@ -54,4 +53,3 @@ STATUS OnnxGatherParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxGatherParser("Gather", new OnnxGatherParser());
 }  // namespace lite
 }  // namespace mindspore
-

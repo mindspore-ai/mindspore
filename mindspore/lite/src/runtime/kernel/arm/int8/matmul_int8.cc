@@ -127,9 +127,9 @@ int MatmulInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto a_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
-  auto b_ptr = reinterpret_cast<int8_t *>(in_tensors_[1]->Data());
-  auto c_ptr = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
+  auto a_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
+  auto b_ptr = reinterpret_cast<int8_t *>(in_tensors_[1]->MutableData());
+  auto c_ptr = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
   auto a_stride = params_->row_ * params_->deep_;
   auto b_stride = params_->deep_ * params_->col_;
   auto c_stride = params_->row_ * params_->col_;

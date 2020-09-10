@@ -33,15 +33,15 @@ class ModelParser {
   virtual ~ModelParser() {}
 
   FuncGraphPtr Parse(const std::string &modelFile, const std::string &weightFile,
-                                    const QuantType &quantType = QuantType_QUANT_NONE) {
+                     const QuantType &quantType = QuantType_QUANT_NONE) {
     auto *meta_graph = ParseToFb(modelFile, weightFile, quantType);
     auto func_graph = this->Fb2Anf(meta_graph);
-    delete(meta_graph);
+    delete (meta_graph);
     return func_graph;
   }
 
   virtual schema::MetaGraphT *ParseToFb(const std::string &modelFile, const std::string &weightFile,
-                             const QuantType &quantType = QuantType_QUANT_NONE) = 0;
+                                        const QuantType &quantType = QuantType_QUANT_NONE) = 0;
 
  public:
   static FuncGraphPtr Fb2Anf(schema::MetaGraphT *meta_graph) {
@@ -59,5 +59,3 @@ class ModelParser {
 }  // namespace mindspore::lite
 
 #endif
-
-

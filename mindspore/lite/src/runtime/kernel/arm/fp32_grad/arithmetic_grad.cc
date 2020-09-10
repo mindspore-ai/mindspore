@@ -112,16 +112,16 @@ void ArithmeticGradCPUKernel::ArithmeticGradSub(float *dy, int dy_size, float *d
 
 void ArithmeticGradCPUKernel::ArithmeticGradMul(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                 int dx2_size) {
-  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->Data());
-  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->Data());
+  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
   ElementMul(dy, x1_data, dx2, dy_size);
   ElementMul(dy, x2_data, dx1, dy_size);
 }
 
 void ArithmeticGradCPUKernel::ArithmeticGradMul1L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                   int dx2_size) {
-  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->Data());
-  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->Data());
+  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
   ElementMul(dy, x1_data, tile_data0, dy_size);
   ReduceSumByAxes(tile_data0, arithmeticParameter_->in_shape0_, dx2, arithmeticParameter_->in_shape1_,
                   arithmeticParameter_->ndim_);
@@ -131,8 +131,8 @@ void ArithmeticGradCPUKernel::ArithmeticGradMul1L(float *dy, int dy_size, float 
 
 void ArithmeticGradCPUKernel::ArithmeticGradMul2L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                   int dx2_size) {
-  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->Data());
-  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->Data());
+  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
   ElementMul(dy, x2_data, tile_data0, dy_size);
   ReduceSumByAxes(tile_data0, arithmeticParameter_->in_shape0_, dx1, arithmeticParameter_->in_shape1_,
                   arithmeticParameter_->ndim_);
@@ -142,16 +142,16 @@ void ArithmeticGradCPUKernel::ArithmeticGradMul2L(float *dy, int dy_size, float 
 
 void ArithmeticGradCPUKernel::ArithmeticGradDiv(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                 int dx2_size) {
-  auto x1 = reinterpret_cast<float *>(in_tensors_[1]->Data());
-  auto x2 = reinterpret_cast<float *>(in_tensors_[2]->Data());
+  auto x1 = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+  auto x2 = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
   ElementDiv(dy, x2, dx1, dy_size);
   ElementMulAndDivNegSquare(dy, x1, x2, dx2, dy_size);
 }
 
 void ArithmeticGradCPUKernel::ArithmeticGradDiv1L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                   int dx2_size) {
-  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->Data());
-  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->Data());
+  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
 
   ElementMul(x2_data, x2_data, dx2, dx2_size);
   ElementMul(x1_data, dy, dx1, dy_size);  // use dx1 buffer
@@ -168,8 +168,8 @@ void ArithmeticGradCPUKernel::ArithmeticGradDiv1L(float *dy, int dy_size, float 
 
 void ArithmeticGradCPUKernel::ArithmeticGradDiv2L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                   int dx2_size) {
-  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->Data());
-  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->Data());
+  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
 
   // dx1 = dy/x2
   ElementDiv(dy, x2_data, tile_data0, dy_size);  // first multiply into temp
@@ -184,9 +184,9 @@ void ArithmeticGradCPUKernel::ArithmeticGradDiv2L(float *dy, int dy_size, float 
 int ArithmeticGradCPUKernel::ReSize() { return RET_OK; }
 
 int ArithmeticGradCPUKernel::Run() {
-  auto dy = reinterpret_cast<float *>(in_tensors_[0]->Data());
-  auto dx1 = reinterpret_cast<float *>(out_tensors_[0]->Data());
-  auto dx2 = reinterpret_cast<float *>(out_tensors_[1]->Data());
+  auto dy = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+  auto dx1 = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
+  auto dx2 = reinterpret_cast<float *>(out_tensors_[1]->MutableData());
 
   size_t dy_size = in_tensors_.at(0)->ElementsNum();
   size_t dx1_size = out_tensors_.at(0)->ElementsNum();
@@ -195,8 +195,8 @@ int ArithmeticGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuArithmeticGradFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuArithmeticGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {

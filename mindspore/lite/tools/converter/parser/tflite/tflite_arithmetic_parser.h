@@ -31,11 +31,9 @@ class TfliteDoubleInputOpParser : public TfliteNodeParser {
 
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-               schema::CNodeT *op,
-               std::vector<int32_t> *tensors_id,
-               std::vector<schema::Format> *tensors_format,
-               std::map<int, int>  *tensors_id_map) override;
+               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer, schema::CNodeT *op,
+               std::vector<int32_t> *tensors_id, std::vector<schema::Format> *tensors_format,
+               std::map<int, int> *tensors_id_map) override;
 };
 
 class TfliteAddParser : public TfliteDoubleInputOpParser {
@@ -93,18 +91,15 @@ class TfliteMinimumParser : public TfliteDoubleInputOpParser {
   TfliteMinimumParser() : TfliteDoubleInputOpParser() {}
 };
 
-
 class TfliteSingleInputOpParser : public TfliteNodeParser {
  public:
   TfliteSingleInputOpParser() : TfliteNodeParser("node_name") {}
 
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-               schema::CNodeT *op,
-               std::vector<int32_t> *tensors_id,
-               std::vector<schema::Format> *tensors_format,
-               std::map<int, int>  *tensors_id_map) override;
+               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer, schema::CNodeT *op,
+               std::vector<int32_t> *tensors_id, std::vector<schema::Format> *tensors_format,
+               std::map<int, int> *tensors_id_map) override;
 };
 
 class TfliteAbsParser : public TfliteSingleInputOpParser {
@@ -162,18 +157,15 @@ class TfliteFloorParser : public TfliteSingleInputOpParser {
   TfliteFloorParser() : TfliteSingleInputOpParser() {}
 };
 
-
 class TfliteCompareOpParser : public TfliteNodeParser {
  public:
   TfliteCompareOpParser() : TfliteNodeParser("node_name") {}
 
   STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-               schema::CNodeT *op,
-               std::vector<int32_t> *tensors_id,
-               std::vector<schema::Format> *tensors_format,
-               std::map<int, int>  *tensors_id_map) override;
+               const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer, schema::CNodeT *op,
+               std::vector<int32_t> *tensors_id, std::vector<schema::Format> *tensors_format,
+               std::map<int, int> *tensors_id_map) override;
 };
 
 class TfliteEqualParser : public TfliteCompareOpParser {
@@ -209,4 +201,3 @@ class TfliteLessEqualParser : public TfliteCompareOpParser {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_ARITHMETIC_PARSER_H
-

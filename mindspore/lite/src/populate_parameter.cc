@@ -1210,7 +1210,7 @@ OpParameter *PopulateSpaceToDepthParameter(const mindspore::lite::PrimitiveC *pr
   auto param = reinterpret_cast<mindspore::lite::SpaceToDepth *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   space_depth_param->op_parameter_.type_ = primitive->Type();
   space_depth_param->block_size_ = param->GetBlockSize();
-  if (param->GetFormat() != schema::Format_NHWC) {
+  if (param->GetFormat() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "Currently only NHWC format is supported.";
     free(space_depth_param);
     return nullptr;
@@ -1699,9 +1699,8 @@ PopulateParameterFunc PopulateParameterRegistry::GetParameterFunc(int type) {
 }
 
 int PopulateParameterRegistry::AddPopulateParameterFunc(const schema::PrimitiveType &type, PopulateParameterFunc func) {
-  if ((type <  schema::PrimitiveType_MIN)|| (type > schema::PrimitiveType_MAX))
-    return -1;
-  populate_parameter_funcs_[type]  = func;
+  if ((type < schema::PrimitiveType_MIN) || (type > schema::PrimitiveType_MAX)) return -1;
+  populate_parameter_funcs_[type] = func;
   return 0;
 }
 

@@ -31,4 +31,3 @@ class ConvBiasaddFusion : public PatternProcessPass {
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONV_BIASADD_FUSION_H_
-

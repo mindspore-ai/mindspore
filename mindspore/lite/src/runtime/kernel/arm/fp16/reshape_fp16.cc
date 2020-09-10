@@ -38,8 +38,8 @@ int ReshapeFp16CPUKernel::Run() {
   }
   auto in_tensor = in_tensors_.at(kInputIndex);
   auto out_tensor = out_tensors_.at(kOutputIndex);
-  auto input_ptr = in_tensor->Data();
-  auto output_ptr = out_tensor->Data();
+  auto input_ptr = in_tensor->MutableData();
+  auto output_ptr = out_tensor->MutableData();
   size_t data_size = out_tensor->Size();
 
   auto in_datatype = in_tensor->data_type();
@@ -51,7 +51,7 @@ int ReshapeFp16CPUKernel::Run() {
         MS_LOG(ERROR) << "malloc in tensor fail!";
         return mindspore::lite::RET_MEMORY_FAILED;
       }
-      Float32ToFloat16(reinterpret_cast<float *>(in_tensor->Data()), reinterpret_cast<float16_t *>(input_ptr),
+      Float32ToFloat16(reinterpret_cast<float *>(in_tensor->MutableData()), reinterpret_cast<float16_t *>(input_ptr),
                        in_tensor->ElementsNum());
     } else if ((in_datatype == kNumberTypeFloat16 && out_datatype == kNumberTypeFloat32)) {
       input_ptr = context_->allocator->Malloc(in_tensor->ElementsNum() * sizeof(float));
@@ -59,7 +59,7 @@ int ReshapeFp16CPUKernel::Run() {
         MS_LOG(ERROR) << "malloc in tensor fail!";
         return mindspore::lite::RET_MEMORY_FAILED;
       }
-      Float16ToFloat32(reinterpret_cast<float16_t *>(in_tensor->Data()), reinterpret_cast<float *>(input_ptr),
+      Float16ToFloat32(reinterpret_cast<float16_t *>(in_tensor->MutableData()), reinterpret_cast<float *>(input_ptr),
                        in_tensor->ElementsNum());
     } else {
       MS_LOG(ERROR) << "unsupported data type, in_datatype: " << in_datatype << ",out_datatype: " << out_datatype;
@@ -74,10 +74,9 @@ int ReshapeFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuReshapeFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *opParameter, const Context *ctx,
-                                                const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuReshapeFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                const Context *ctx, const kernel::KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";

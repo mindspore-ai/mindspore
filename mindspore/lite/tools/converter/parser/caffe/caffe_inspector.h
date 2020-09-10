@@ -53,4 +53,3 @@ using CaffeInspectorPtr = std::shared_ptr<CaffeInspector>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_INSPECTOR_H_
-

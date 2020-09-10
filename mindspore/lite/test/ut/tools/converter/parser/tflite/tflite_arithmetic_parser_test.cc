@@ -99,9 +99,7 @@ TEST_F(TestTfliteParserFloorMod, OpType) {
 class TestTfliteParserRealDiv : public TestTfliteParser {
  public:
   TestTfliteParserRealDiv() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./realdiv.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./realdiv.tflite"); }
 };
 
 TEST_F(TestTfliteParserRealDiv, OpType) {
@@ -114,9 +112,7 @@ TEST_F(TestTfliteParserRealDiv, OpType) {
 class TestTfliteParserSquaredDifference : public TestTfliteParser {
  public:
   TestTfliteParserSquaredDifference() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./squared_difference.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./squared_difference.tflite"); }
 };
 
 TEST_F(TestTfliteParserSquaredDifference, OpType) {
@@ -124,7 +120,7 @@ TEST_F(TestTfliteParserSquaredDifference, OpType) {
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_SquaredDifference)
-            << "wrong Op Type";
+    << "wrong Op Type";
 }
 
 class TestTfliteParserPow : public TestTfliteParser {
@@ -282,9 +278,7 @@ TEST_F(TestTfliteParserLog, OpType) {
 class TestTfliteParserRound : public TestTfliteParser {
  public:
   TestTfliteParserRound() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./round.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./round.tflite"); }
 };
 
 TEST_F(TestTfliteParserRound, OpType) {
@@ -323,9 +317,7 @@ TEST_F(TestTfliteParserFloor, OpType) {
 class TestTfliteParserEqual : public TestTfliteParser {
  public:
   TestTfliteParserEqual() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./equal.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./equal.tflite"); }
 };
 
 TEST_F(TestTfliteParserEqual, OpType) {
@@ -338,9 +330,7 @@ TEST_F(TestTfliteParserEqual, OpType) {
 class TestTfliteParserNotEqual : public TestTfliteParser {
  public:
   TestTfliteParserNotEqual() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./not_equal.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./not_equal.tflite"); }
 };
 
 TEST_F(TestTfliteParserNotEqual, OpType) {
@@ -353,9 +343,7 @@ TEST_F(TestTfliteParserNotEqual, OpType) {
 class TestTfliteParserGreater : public TestTfliteParser {
  public:
   TestTfliteParserGreater() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./greater.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./greater.tflite"); }
 };
 
 TEST_F(TestTfliteParserGreater, OpType) {
@@ -368,9 +356,7 @@ TEST_F(TestTfliteParserGreater, OpType) {
 class TestTfliteParserGreaterEqual : public TestTfliteParser {
  public:
   TestTfliteParserGreaterEqual() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./greater_equal.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./greater_equal.tflite"); }
 };
 
 TEST_F(TestTfliteParserGreaterEqual, OpType) {
@@ -383,9 +369,7 @@ TEST_F(TestTfliteParserGreaterEqual, OpType) {
 class TestTfliteParserLess : public TestTfliteParser {
  public:
   TestTfliteParserLess() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./less.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./less.tflite"); }
 };
 
 TEST_F(TestTfliteParserLess, OpType) {
@@ -398,9 +382,7 @@ TEST_F(TestTfliteParserLess, OpType) {
 class TestTfliteParserLessEqual : public TestTfliteParser {
  public:
   TestTfliteParserLessEqual() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./less_equal.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./less_equal.tflite"); }
 };
 
 TEST_F(TestTfliteParserLessEqual, OpType) {

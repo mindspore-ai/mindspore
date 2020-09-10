@@ -43,9 +43,7 @@ int SoftmaxFp16CPUKernel::Init() {
   return ReSize();
 }
 
-int SoftmaxFp16CPUKernel::ReSize() {
-  return SoftmaxBaseCPUKernel::ReSize();
-}
+int SoftmaxFp16CPUKernel::ReSize() { return SoftmaxBaseCPUKernel::ReSize(); }
 
 int SoftmaxFp16CPUKernel::MallocTmpBuffer() {
   auto n_dim = softmax_param_->n_dim_;
@@ -120,16 +118,15 @@ int SoftmaxFp16CPUKernel::Run() {
   SoftmaxFp16(input_fp16_, output_fp16_, sum_data_, softmax_param_);
   auto out_tensor = out_tensors_.at(kOutputIndex);
   if (out_tensor->data_type() == kNumberTypeFloat32) {
-    Float16ToFloat32(output_fp16_, reinterpret_cast<float *>(out_tensor->Data()), out_tensor->ElementsNum());
+    Float16ToFloat32(output_fp16_, reinterpret_cast<float *>(out_tensor->MutableData()), out_tensor->ElementsNum());
   }
   FreeTmpBuffer();
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuSoftmaxFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *opParameter, const lite::Context *ctx,
-                                                const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuSoftmaxFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                const lite::Context *ctx, const kernel::KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";

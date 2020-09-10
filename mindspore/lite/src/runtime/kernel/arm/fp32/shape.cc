@@ -42,22 +42,21 @@ int ShapeCPUKernel::Run() {
     MS_LOG(ERROR) << "null pointer dereferencing.";
     return RET_ERROR;
   }
-  if (in_tensor->Data() == nullptr || out_tensor->Data() == nullptr) {
+  if (in_tensor->MutableData() == nullptr || out_tensor->MutableData() == nullptr) {
     MS_LOG(ERROR) << "null pointer dereferencing.";
     return RET_ERROR;
   }
 
   for (size_t i = 0; i < in_tensor->shape().size(); i++) {
-    reinterpret_cast<int *>(out_tensor->Data())[i] = in_tensor->shape()[i];
+    reinterpret_cast<int *>(out_tensor->MutableData())[i] = in_tensor->shape()[i];
   }
 
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuShapeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *opParameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuShapeFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                              const lite::Context *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Shape);
   if (opParameter == nullptr) {

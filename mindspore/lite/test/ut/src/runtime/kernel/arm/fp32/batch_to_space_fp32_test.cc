@@ -25,7 +25,6 @@ class BatchToSpaceTestFp32 : public mindspore::CommonTest {
   BatchToSpaceTestFp32() = default;
 };
 
-
 TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest1) {
   float input[12] = {10, 30, 90, 2, 20, 120, 5, 50, 150, 6, 16, 160};
   constexpr int kOutSize = 12;
@@ -84,8 +83,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_2) {
   float input[32] = {1, 10, 3, 30, 9,  90,  11, 110, 2, 20, 4, 40, 10, 100, 12, 120,
                      5, 50, 7, 70, 13, 130, 15, 150, 6, 60, 8, 80, 14, 140, 16, 160};
   constexpr int kOutSize = 12;
-  float expect_out[kOutSize] = {6,  60,  7,  70,  8,  80,
-                                10, 100, 11, 110, 12, 120};
+  float expect_out[kOutSize] = {6, 60, 7, 70, 8, 80, 10, 100, 11, 110, 12, 120};
 
   float output[kOutSize];
   int in_shape[4] = {4, 2, 2, 2};
@@ -129,8 +127,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_3) {
                      21, 10, 23, 30, 29,  90,  211, 110, 22, 20, 24, 40, 210, 100, 212, 120,
                      25, 50, 27, 70, 213, 130, 215, 150, 26, 60, 28, 80, 214, 140, 216, 160};
   constexpr int kOutSize = 16;
-  float expect_out[kOutSize] = {9,  90,  13, 130, 29,  90,  213, 130,
-                                10, 100, 14, 140, 210, 100, 214, 140};
+  float expect_out[kOutSize] = {9, 90, 13, 130, 29, 90, 213, 130, 10, 100, 14, 140, 210, 100, 214, 140};
 
   float output[kOutSize];
   int in_shape[4] = {8, 2, 2, 2};
@@ -177,9 +174,8 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_4) {
                      214, 140, 216, 160, 31,  10,  33,  30,  39, 90,  311, 110, 32,  20,  34,  40,  310, 100, 312, 120,
                      35,  50,  37,  70,  313, 130, 315, 150, 36, 60,  38,  80,  314, 140, 316, 160};
   constexpr int kOutSize = 24;
-  float expect_out[kOutSize] = {
-    25,  50,  23,  30,  35,  50,  33,  30,
-    13, 130, 11, 110,  26,  60,  24,  40, 36,  60,  34,  40, 14, 140, 12, 120};
+  float expect_out[kOutSize] = {25, 50, 23, 30, 35, 50, 33, 30, 13, 130, 11, 110,
+                                26, 60, 24, 40, 36, 60, 34, 40, 14, 140, 12, 120};
 
   float output[kOutSize];
   int in_shape[4] = {12, 2, 2, 2};

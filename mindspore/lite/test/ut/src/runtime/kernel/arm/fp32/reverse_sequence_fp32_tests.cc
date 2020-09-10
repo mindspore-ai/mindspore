@@ -27,9 +27,9 @@ class TestReverseSequenceFp32 : public mindspore::CommonTest {
 };
 
 TEST_F(TestReverseSequenceFp32, BatchLessSeq) {
-  lite::tensor::Tensor in_tensor0(kNumberTypeFloat32, {2, 3, 4, 2});
-  lite::tensor::Tensor in_tensor1(kNumberTypeInt32, {3});
-  lite::tensor::Tensor out_tensor(kNumberTypeFloat32, {2, 3, 4, 2});
+  lite::Tensor in_tensor0(kNumberTypeFloat32, {2, 3, 4, 2});
+  lite::Tensor in_tensor1(kNumberTypeInt32, {3});
+  lite::Tensor out_tensor(kNumberTypeFloat32, {2, 3, 4, 2});
   float input_data0[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
                          16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
                          32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47};
@@ -38,8 +38,8 @@ TEST_F(TestReverseSequenceFp32, BatchLessSeq) {
   in_tensor0.SetData(input_data0);
   in_tensor1.SetData(input_data1);
   out_tensor.SetData(output_data);
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor0, &in_tensor1};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&in_tensor0, &in_tensor1};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   ReverseSequenceParameter parameter = {0};
   parameter.batch_axis_ = 1;
@@ -70,9 +70,9 @@ TEST_F(TestReverseSequenceFp32, BatchLessSeq) {
 }
 
 TEST_F(TestReverseSequenceFp32, BatchGreaterSeq) {
-  lite::tensor::Tensor in_tensor0(kNumberTypeFloat32, {2, 3, 4, 2});
-  lite::tensor::Tensor in_tensor1(kNumberTypeInt32, {4});
-  lite::tensor::Tensor out_tensor(kNumberTypeFloat32, {2, 3, 4, 2});
+  lite::Tensor in_tensor0(kNumberTypeFloat32, {2, 3, 4, 2});
+  lite::Tensor in_tensor1(kNumberTypeInt32, {4});
+  lite::Tensor out_tensor(kNumberTypeFloat32, {2, 3, 4, 2});
   float input_data0[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
                          16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
                          32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47};
@@ -81,8 +81,8 @@ TEST_F(TestReverseSequenceFp32, BatchGreaterSeq) {
   in_tensor0.SetData(input_data0);
   in_tensor1.SetData(input_data1);
   out_tensor.SetData(output_data);
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor0, &in_tensor1};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&in_tensor0, &in_tensor1};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   ReverseSequenceParameter parameter = {0};
   parameter.batch_axis_ = 2;
@@ -113,9 +113,9 @@ TEST_F(TestReverseSequenceFp32, BatchGreaterSeq) {
 }
 
 TEST_F(TestReverseSequenceFp32, BatchSeqNotAdjacent) {
-  lite::tensor::Tensor in_tensor0(kNumberTypeFloat32, {2, 3, 4, 2});
-  lite::tensor::Tensor in_tensor1(kNumberTypeInt32, {2});
-  lite::tensor::Tensor out_tensor(kNumberTypeFloat32, {2, 3, 4, 2});
+  lite::Tensor in_tensor0(kNumberTypeFloat32, {2, 3, 4, 2});
+  lite::Tensor in_tensor1(kNumberTypeInt32, {2});
+  lite::Tensor out_tensor(kNumberTypeFloat32, {2, 3, 4, 2});
   float input_data0[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
                          16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
                          32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47};
@@ -124,8 +124,8 @@ TEST_F(TestReverseSequenceFp32, BatchSeqNotAdjacent) {
   in_tensor0.SetData(input_data0);
   in_tensor1.SetData(input_data1);
   out_tensor.SetData(output_data);
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor0, &in_tensor1};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&in_tensor0, &in_tensor1};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   ReverseSequenceParameter parameter = {0};
   parameter.batch_axis_ = 0;

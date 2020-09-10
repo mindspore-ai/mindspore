@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #ifndef MINDSPORE_LITE_JAVA_SRC_COMMON_JNI_UTILS_H
 #define MINDSPORE_LITE_JAVA_SRC_COMMON_JNI_UTILS_H
 

@@ -21,8 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-bool OnnxDeConvParser::ParseGroupDeConvolution(const std::unique_ptr<schema::DeConv2DT> &attr,
-                                               schema::CNodeT *op) {
+bool OnnxDeConvParser::ParseGroupDeConvolution(const std::unique_ptr<schema::DeConv2DT> &attr, schema::CNodeT *op) {
   if (attr == nullptr || attr->group != attr->channelOut) {
     return false;
   }
@@ -53,8 +52,7 @@ bool OnnxDeConvParser::ParseGroupDeConvolution(const std::unique_ptr<schema::DeC
   return true;
 }
 
-STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph,
-                               const onnx::NodeProto &onnx_node,
+STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx DeConvParser";
   if (op == nullptr) {
@@ -118,7 +116,7 @@ STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph,
       attr->strideH = static_cast<int32_t>(onnx_node_attr.ints(1));
     } else if (onnx_node_attr.name() == "order") {
       if (onnx_node_attr.s() == "NHWC") {
-        attr->format = schema::Format_NHWC;
+        attr->format = schema::Format::Format_NHWC;
       } else {
         MS_LOG(ERROR) << "Unsupported format: " << onnx_node_attr.s().c_str();
         return RET_ERROR;
@@ -143,7 +141,7 @@ STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph,
   attr->channelIn = weight_shape[0];
   attr->channelOut = weight_shape[1] * attr->group;
 
-  attr->format = schema::Format_NCHW;
+  attr->format = schema::Format::Format_NCHW;
   attr->hasBias = onnx_node.input().size() == 3;
 
   if (attr->group != 1) {

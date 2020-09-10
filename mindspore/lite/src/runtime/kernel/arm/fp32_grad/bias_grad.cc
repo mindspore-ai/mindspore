@@ -51,8 +51,8 @@ int BiasGradCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto in = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto out = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
   size_t nhw_size = 1;
   size_t channels = bias_param->in_shape0_[bias_param->ndim_ - 1];  // C in NHWC
@@ -69,10 +69,9 @@ int BiasGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuBiasGradFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuBiasGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                 const lite::Context *ctx, const kernel::KernelKey &desc,
                                                  const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BiasGrad);

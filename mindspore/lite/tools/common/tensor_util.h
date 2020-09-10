@@ -29,14 +29,14 @@
 
 namespace mindspore {
 namespace lite {
-using schema::TensorT;
-using schema::MetaGraphT;
 using schema::CNodeT;
-using schema::QuantParamT;
 using schema::Format;
 using schema::FusedBatchNormT;
-using schema::Format_NCHW;
-using schema::Format_NHWC;
+using schema::MetaGraphT;
+using schema::QuantParamT;
+using schema::TensorT;
+using schema::Format::Format_NCHW;
+using schema::Format::Format_NHWC;
 using STATUS = int;
 
 std::unique_ptr<QuantParamT> GetTensorQuantParam(const std::unique_ptr<TensorT> &tensor);
@@ -56,11 +56,11 @@ size_t GetRefCount(schema::MetaGraphT *graphT, uint32_t tensorIdx);
 std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schema::QuantParamT> &srcQuantParam);
 
 std::unique_ptr<schema::QuantParamT> CopyQuantParamArrayT(
-        const std::unique_ptr<schema::QuantParamT> &srcQuantParamArray);
+  const std::unique_ptr<schema::QuantParamT> &srcQuantParamArray);
 
 using MSGraphDefTPtr = std::shared_ptr<schema::MetaGraphT>;
 
-enum TensorType { CONST = 0, GRAPH_INPUT = 1, OP_OUTPUT = 2, TF_CONST = 3 };
+enum Category { CONST = 0, GRAPH_INPUT = 1, OP_OUTPUT = 2, TF_CONST = 3 };
 
 class TensorCache {
  public:
@@ -68,9 +68,9 @@ class TensorCache {
 
   ~TensorCache() { tensors.clear(); }
 
-  int AddTensor(const std::string &name, TensorT *tensor, int TensorType) {
+  int AddTensor(const std::string &name, TensorT *tensor, int Category) {
     index++;
-    if (TensorType == CONST || TensorType == TF_CONST || TensorType == GRAPH_INPUT) {
+    if (Category == CONST || Category == TF_CONST || Category == GRAPH_INPUT) {
       tensor->refCount = 1;
       tensor->nodeType = schema::NodeType_ValueNode;
     } else {
@@ -78,11 +78,11 @@ class TensorCache {
     }
     tensors.push_back(tensor);
 
-    if (TensorType == GRAPH_INPUT) {
+    if (Category == GRAPH_INPUT) {
       graphInputs.push_back(index);
     }
 
-    if (TensorType == GRAPH_INPUT || TensorType == OP_OUTPUT || TensorType == TF_CONST) {
+    if (Category == GRAPH_INPUT || Category == OP_OUTPUT || Category == TF_CONST) {
       UpdateTensorIndex(name, index);
     }
     return index;
@@ -121,4 +121,3 @@ class TensorCache {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_PREDICT_TENSOR_UTIL_H
-

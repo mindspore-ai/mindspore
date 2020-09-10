@@ -39,7 +39,6 @@ class NetworkTest : public mindspore::CommonTest {
   NetworkTest() {}
 };
 
-
 //             INPUT(0)
 //                V
 //        +-------------+
@@ -74,7 +73,6 @@ class NetworkTest : public mindspore::CommonTest {
 //        +-------------+               |
 //               V dw(9)                |
 //               +-----------Update-----+
-
 
 TEST_F(NetworkTest, tuning_layer) {
   const int BATCH_SIZE = 32;
@@ -369,7 +367,7 @@ TEST_F(NetworkTest, tuning_layer) {
   meta_graph.reset();
   content = nullptr;
   auto context = new lite::Context;
-  context->device_ctx_.type = lite::DT_CPU;
+  context->device_type_ = lite::DT_CPU;
   context->cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
   auto session = new session::TrainSession();
@@ -446,24 +444,20 @@ TEST_F(NetworkTest, tuning_layer) {
 }
 
 int32_t fileIterator(mindspore::session::TrainSession *session, const std::string &path,
- std::function<int32_t(mindspore::session::TrainSession *session,
-  const std::string &)> cb) {
+                     std::function<int32_t(mindspore::session::TrainSession *session, const std::string &)> cb) {
   int32_t res = 0;
   if (auto dir = opendir(path.c_str())) {
     while (auto f = readdir(dir)) {
       if (f->d_name[0] == '.') continue;
       if (f->d_type == DT_DIR) fileIterator(session, path + f->d_name + "/", cb);
 
-      if (f->d_type == DT_REG)
-       res |= cb(session, path + f->d_name);
+      if (f->d_type == DT_REG) res |= cb(session, path + f->d_name);
     }
     closedir(dir);
   }
   return res;
 }
-void replaceExt(const std::string &src, std::string *dst) {
-  *dst = src.substr(0, src.find_last_of('.')) + ".emb";
-}
+void replaceExt(const std::string &src, std::string *dst) { *dst = src.substr(0, src.find_last_of('.')) + ".emb"; }
 
 int32_t runEffNet(mindspore::session::TrainSession *session, const std::string &in, const std::string &out) {
   // setup input
@@ -474,7 +468,7 @@ int32_t runEffNet(mindspore::session::TrainSession *session, const std::string &
   float *data = reinterpret_cast<float *>(inTensor->MutableData());
 
   size_t input_size;
-  float *in_buf =  reinterpret_cast<float *>(lite::ReadFile(in.c_str(), &input_size));
+  float *in_buf = reinterpret_cast<float *>(lite::ReadFile(in.c_str(), &input_size));
   // ASSERT_NE(nullptr, data);
   auto input_data = reinterpret_cast<float *>(in_buf);
   // ASSERT_EQ(input_size, inTensor->Size());
@@ -484,7 +478,7 @@ int32_t runEffNet(mindspore::session::TrainSession *session, const std::string &
   session->RunGraph();
 
   // compare outputs
-  auto outputs = session->GetOutputs();
+  auto outputs = session->GetOutputMap();
   auto output = ((outputs.begin())->second);
   float *output_data = reinterpret_cast<float *>(output.at(0)->MutableData());
 
@@ -498,10 +492,9 @@ TEST_F(NetworkTest, efficient_net) {
   ReadFile(net.c_str(), &net_size, &buf);
   auto model = lite::Model::Import(buf, net_size);
   auto context = new lite::Context;
-  context->device_ctx_.type = lite::DT_CPU;
+  context->device_type_ = lite::DT_CPU;
   context->cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
-
 
   auto session = new mindspore::session::TrainSession();
   ASSERT_NE(session, nullptr);

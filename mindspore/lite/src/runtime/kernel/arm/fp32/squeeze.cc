@@ -40,12 +40,12 @@ int SqueezeCPUKernel::Run() {
 
   size_t data_size = in_tensors_.front()->Size();
   if (in_tensors_.front()->data_type() == kNumberTypeInt32) {
-    auto input_ptr = reinterpret_cast<int32_t *>(in_tensors_.front()->Data());
-    auto output_ptr = reinterpret_cast<int32_t *>(out_tensors_.front()->Data());
+    auto input_ptr = reinterpret_cast<int32_t *>(in_tensors_.front()->MutableData());
+    auto output_ptr = reinterpret_cast<int32_t *>(out_tensors_.front()->MutableData());
     ret = DoSqueezeInt32(input_ptr, output_ptr, data_size);
   } else {
-    auto input_ptr = reinterpret_cast<float *>(in_tensors_.front()->Data());
-    auto output_ptr = reinterpret_cast<float *>(out_tensors_.front()->Data());
+    auto input_ptr = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
+    auto output_ptr = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
     ret = DoSqueeze(input_ptr, output_ptr, data_size);
   }
 
@@ -56,10 +56,9 @@ int SqueezeCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuSqueezeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *parameter, const lite::Context *ctx,
-                                                const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuSqueezeFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                                const lite::Context *ctx, const kernel::KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Squeeze);
   if (parameter == nullptr) {

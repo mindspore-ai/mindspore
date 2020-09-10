@@ -27,8 +27,8 @@ namespace mindspore::kernel {
 
 class SoftmaxOpenCLKernel : public OpenCLKernel {
  public:
-  explicit SoftmaxOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                               const std::vector<lite::tensor::Tensor *> &outputs)
+  explicit SoftmaxOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                               const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {
     parameter_ = reinterpret_cast<SoftmaxParameter *>(parameter);
   }

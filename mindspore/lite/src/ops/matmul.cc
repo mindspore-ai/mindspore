@@ -88,7 +88,7 @@ int MatMul::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
 
 #endif
 
-int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int MatMul::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input0 = inputs_.front();
   MS_ASSERT(input0 != nullptr);

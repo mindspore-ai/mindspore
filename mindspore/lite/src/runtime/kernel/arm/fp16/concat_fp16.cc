@@ -111,14 +111,14 @@ int ConcatFp16CPUKernel::Run() {
   for (size_t i = 0; i < input_num; ++i) {
     const auto in_tensor = in_tensors_[i];
     if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
-      auto in_tensor_data = reinterpret_cast<float *>(in_tensor->Data());
+      auto in_tensor_data = reinterpret_cast<float *>(in_tensor->MutableData());
       if (in_tensor_data == nullptr) {
         MS_LOG(ERROR) << "got nullptr when cast in_tensor to float ptr";
         return RET_ERROR;
       }
       Float32ToFloat16(in_tensor_data, fp16_inputs_[i], in_tensor->ElementsNum());
     } else {
-      fp16_inputs_[i] = reinterpret_cast<float16_t *>(in_tensor->Data());
+      fp16_inputs_[i] = reinterpret_cast<float16_t *>(in_tensor->MutableData());
     }
 
     shapes.push_back(in_tensors_[i]->shape());
@@ -126,9 +126,9 @@ int ConcatFp16CPUKernel::Run() {
   }
   auto output_shape = out_tensors_.at(0)->shape();
   inputs_output_shape[input_num] = output_shape.data();
-  auto output_addr = out_tensors_.at(0)->Data();
+  auto output_addr = out_tensors_.at(0)->MutableData();
   if (out_tensors_.at(0)->data_type() == kNumberTypeFloat16) {
-    fp16_output_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->Data());
+    fp16_output_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->MutableData());
   }
 
   ConcatFp16(reinterpret_cast<void **>(fp16_inputs_.data()), input_num, axis_, inputs_output_shape.data(),
@@ -141,10 +141,9 @@ int ConcatFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuConcatFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuConcatFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";

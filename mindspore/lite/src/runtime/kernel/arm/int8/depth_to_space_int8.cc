@@ -58,8 +58,8 @@ int DepthToSpaceInt8CPUKernel::Run() {
   }
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
-  const int8_t *input_data = reinterpret_cast<const int8_t *>(input->Data());
-  int8_t *output_data = reinterpret_cast<int8_t *>(output->Data());
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(input->MutableData());
+  int8_t *output_data = reinterpret_cast<int8_t *>(output->MutableData());
   auto in_shape = input->shape();
   DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(op_parameter_);
   if (in_quant_arg_.scale_ == out_quant_arg_.scale_ && in_quant_arg_.zp_ == out_quant_arg_.zp_) {

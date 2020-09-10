@@ -31,21 +31,21 @@ class TestHSwishInt8 : public mindspore::CommonTest {
 };
 
 TEST_F(TestHSwishInt8, HSwish) {
-  lite::tensor::Tensor in_tensor(kNumberTypeInt8, {4, 4});
-  lite::tensor::Tensor out_tensor(kNumberTypeInt8, {4, 4});
+  lite::Tensor in_tensor(kNumberTypeInt8, {4, 4});
+  lite::Tensor out_tensor(kNumberTypeInt8, {4, 4});
 
   int8_t input_data[] = {-116, -105, -93, -35, 23, 35, 46, 104};  // -3.5f, -3.0f, -2.5f, 0.f, 2.5f, 3.0f, 3.5f, 6.0f
   int8_t output_data[8] = {0};
   in_tensor.SetData(input_data);
   out_tensor.SetData(output_data);
 
-  const lite::tensor::QuantArg quant_in = {0.0431373f, -35};   // -4.0 -- 7.0
-  const lite::tensor::QuantArg quant_out = {0.0392157f, -52};  // -3.0 -- 7.0
+  const lite::QuantArg quant_in = {0.0431373f, -35};   // -4.0 -- 7.0
+  const lite::QuantArg quant_out = {0.0392157f, -52};  // -3.0 -- 7.0
   in_tensor.AddQuantParam(quant_in);
   out_tensor.AddQuantParam(quant_out);
 
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   ActivationParameter parameter = {0};
   parameter.op_parameter_.type_ = schema::PrimitiveType_Activation;

@@ -36,8 +36,8 @@ int ActivationCPUKernel::Init() { return RET_OK; }
 int ActivationCPUKernel::ReSize() { return RET_OK; }
 
 int ActivationCPUKernel::DoActivation(int task_id) {
-  auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   auto length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, thread_count_);
@@ -91,10 +91,9 @@ int ActivationCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuActivationFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                   const std::vector<lite::tensor::Tensor *> &outputs,
-                                                   OpParameter *opParameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuActivationFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                   const lite::Context *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Activation);

@@ -47,9 +47,9 @@ int BiasCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto in = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto bias = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
-  auto out = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto bias = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   MS_ASSERT(context_->allocator != nullptr);
   float *tile_in = reinterpret_cast<float *>(context_->allocator->Malloc(data_size * sizeof(float)));
@@ -74,8 +74,8 @@ int BiasCPUKernel::Init() {
   return ReSize();
 }
 
-kernel::LiteKernel *CpuBiasFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
+kernel::LiteKernel *CpuBiasFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                              const lite::Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter != nullptr);

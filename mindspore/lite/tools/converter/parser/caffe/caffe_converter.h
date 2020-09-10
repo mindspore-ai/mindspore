@@ -33,4 +33,3 @@ class CaffeConverter : public Converter {
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_CONVERTER_H_
-

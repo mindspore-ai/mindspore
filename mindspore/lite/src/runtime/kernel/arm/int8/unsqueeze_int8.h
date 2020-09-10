@@ -27,8 +27,8 @@ using mindspore::lite::Context;
 namespace mindspore::kernel {
 class Unsqueezeint8CPUKernel : public LiteKernel {
  public:
-  Unsqueezeint8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                         const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+  Unsqueezeint8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                         const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
     Unsq_para_ = reinterpret_cast<UnSqueezeParameter *>(op_parameter_);

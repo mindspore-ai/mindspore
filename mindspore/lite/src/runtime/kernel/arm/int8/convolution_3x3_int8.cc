@@ -90,7 +90,7 @@ int Convolution3x3Int8CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(transformed_filter_addr_, 0, transformed_size);
-  auto weight_data = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->Data());
+  auto weight_data = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->MutableData());
   ProcessFilterUint8(weight_data, transformed_filter_addr_, conv_param_);
 
   // init bias
@@ -102,7 +102,7 @@ int Convolution3x3Int8CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, new_bias_size);
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias_addr = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->Data());
+    auto ori_bias_addr = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->MutableData());
     memcpy(bias_data_, ori_bias_addr, output_channel * sizeof(int32_t));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
@@ -150,7 +150,7 @@ int Convolution3x3Int8CPUKernel::InitTmpBuffer() {
 
 void Convolution3x3Int8CPUKernel::ConfigInputOutput() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_tensor->SetFormat(schema::Format_NHWC);
+  output_tensor->SetFormat(schema::Format::Format_NHWC);
 }
 
 int Convolution3x3Int8CPUKernel::Init() {
@@ -204,7 +204,7 @@ int Convolution3x3Int8CPUKernel::ReSize() {
 }
 
 int Convolution3x3Int8CPUKernel::RunImpl(int task_id) {
-  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->Data());
+  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->MutableData());
   Conv3x3Int8(input_data_, transformed_filter_addr_, reinterpret_cast<int32_t *>(bias_data_), output_addr, tile_buffer_,
               block_unit_buffer_, tmp_dst_buffer_, tmp_out_, task_id, conv_param_);
   return RET_OK;
@@ -232,7 +232,7 @@ int Convolution3x3Int8CPUKernel::Run() {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
     return RET_ERROR;
   }
-  auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(kInputIndex)->Data());
+  auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(kInputIndex)->MutableData());
   PackInputToC8Int8(input_addr, input_data_, conv_param_);
 
   int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, Convolution3x3Int8Impl, this, thread_count_);
@@ -243,7 +243,7 @@ int Convolution3x3Int8CPUKernel::Run() {
   }
   // get real output
   auto out_tensor = out_tensors_.front();
-  auto out_data = reinterpret_cast<int8_t *>(out_tensor->Data());
+  auto out_data = reinterpret_cast<int8_t *>(out_tensor->MutableData());
   PackNC4HW4ToNHWCInt8(tmp_out_, out_data, conv_param_->output_batch_, conv_param_->output_h_ * conv_param_->output_w_,
                        conv_param_->output_channel_);
   FreeTmpBuffer();

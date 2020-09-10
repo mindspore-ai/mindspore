@@ -78,9 +78,9 @@ int ConvolutionGradFilterCPUKernel::Run() {
   auto *input_x = in_tensors_.at(1);
   auto *out_dw = out_tensors_.at(0);
 
-  auto x_addr = reinterpret_cast<float *>(input_x->Data());
-  auto dy_addr = reinterpret_cast<float *>(input_dy->Data());
-  auto dw_addr = reinterpret_cast<float *>(out_dw->Data());
+  auto x_addr = reinterpret_cast<float *>(input_x->MutableData());
+  auto dy_addr = reinterpret_cast<float *>(input_dy->MutableData());
+  auto dw_addr = reinterpret_cast<float *>(out_dw->MutableData());
 
   int i, j;
   int nweights = out_dw->ElementsNum();
@@ -159,8 +159,8 @@ OpParameter *PopulateConvolutionGradFilterParameter(const lite::Primitive *primi
   return reinterpret_cast<OpParameter *>(param);
 }
 #endif
-kernel::LiteKernel *CpuConvGradFilterFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuConvGradFilterFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {

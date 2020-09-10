@@ -28,17 +28,13 @@ class CaffeDeconvolutionParser : public CaffeNodeParser {
  public:
   CaffeDeconvolutionParser() : CaffeNodeParser("deconvolution") {}
 
-  STATUS Parse(const caffe::LayerParameter &proto,
-               const caffe::LayerParameter &weight,
-               schema::CNodeT *op,
+  STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
                std::vector<schema::TensorT *> *weightVec) override;
 
  private:
-  STATUS ParseGroupDeconvolution(schema::CNodeT *op,
-                                 schema::DeConv2DT *attr);
+  STATUS ParseGroupDeconvolution(schema::CNodeT *op, schema::DeConv2DT *attr);
 };
 }  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_DECONVOLUTION_PARSER_H_
-

@@ -26,11 +26,11 @@ namespace mindspore::kernel {
 
 class TransposeCPUKernel : public LiteKernel {
  public:
-  explicit TransposeCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
-                              const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  explicit TransposeCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
+                              const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                               const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(param, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_)  {}
-  ~TransposeCPUKernel() override = default;
+      : LiteKernel(param, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_) {}
+  ~TransposeCPUKernel() override;
 
   int Init() override;
   int ReSize() override;
@@ -44,8 +44,8 @@ class TransposeCPUKernel : public LiteKernel {
   int num_unit_;
   float *in_data_;
   float *out_data_;
-  int *in_shape_;
-  int *out_shape_;
+  int *in_shape_ = nullptr;
+  int *out_shape_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

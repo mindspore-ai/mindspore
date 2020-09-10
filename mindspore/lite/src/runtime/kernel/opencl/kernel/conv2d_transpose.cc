@@ -79,7 +79,7 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
   padWeight_ = allocator->Malloc(div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
   memset(padWeight_, 0x00, div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
-  auto origin_weight = in_tensors_.at(kWeightIndex)->Data();
+  auto origin_weight = in_tensors_.at(kWeightIndex)->MutableData();
   auto weight_dtype = in_tensors_.at(kWeightIndex)->data_type();
   int index = 0;
   for (int co_i = 0; co_i < div_co; co_i++) {
@@ -129,12 +129,12 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
   auto bias_dtype = in_tensors_[2]->data_type();
   if (in_tensors_.size() >= 3) {
     if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
-      auto fdata = reinterpret_cast<float *>(in_tensors_[2]->Data());
+      auto fdata = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
       for (int i = 0; i < co; i++) {
         reinterpret_cast<uint16_t *>(bias_)[i] = Float32ToShort(fdata[i]);
       }
     } else {
-      memcpy(bias_, in_tensors_[2]->Data(), co * data_size);
+      memcpy(bias_, in_tensors_[2]->MutableData(), co * data_size);
     }
   }
   allocator->UnmapBuffer(bias_);
@@ -146,10 +146,10 @@ int Conv2dTransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *i
   int h = out_tensors_[0]->shape()[1];
   int w = out_tensors_[0]->shape()[2];
   int c = out_tensors_[0]->shape()[3];
-  if (op_format_ == schema::Format_NHWC4) {
+  if (op_format_ == schema::Format::Format_NHWC4) {
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = n * h;
-  } else if (op_format_ == schema::Format_NC4HW4) {
+  } else if (op_format_ == schema::Format::Format_NC4HW4) {
     im_dst_x = w;
     im_dst_y = n * UP_DIV(c, C4NUM) * h;
   } else {
@@ -191,10 +191,10 @@ int Conv2dTransposeOpenCLKernel::Run() {
   cl_int4 src_size = {h, w, UP_DIV(ci, C4NUM), 1};
   cl_int4 dst_size = {oh, ow, UP_DIV(co, C4NUM), 1};
   int arg_cnt = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->MutableData());
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, padWeight_, lite::opencl::MemType::BUF);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, bias_);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->MutableData());
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, kernel_size);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, stride);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, padding);
@@ -204,8 +204,8 @@ int Conv2dTransposeOpenCLKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLConv2dTransposeKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *OpenCLConv2dTransposeKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {

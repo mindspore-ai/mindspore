@@ -22,9 +22,7 @@ namespace mindspore {
 class TestTfliteParserSpaceToDepth : public TestTfliteParser {
  public:
   TestTfliteParserSpaceToDepth() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./space_to_depth.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./space_to_depth.tflite"); }
 };
 
 TEST_F(TestTfliteParserSpaceToDepth, OpType) {

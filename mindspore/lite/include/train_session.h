@@ -25,9 +25,7 @@ namespace mindspore {
 namespace lite {
 struct Model;
 }
-namespace lite::tensor {
-class Tensor;
-}
+
 namespace session {
 
 class TrainSession : public lite::LiteSession {
@@ -40,9 +38,10 @@ class TrainSession : public lite::LiteSession {
 
   int CompileGraph(lite::Model *model) override;
   virtual void ReplaceOps();
-  virtual void* ExportToBuf(void* buf, size_t* len) const;
+  virtual void *ExportToBuf(void *buf, size_t *len) const;
 
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> GetOutputs() const;
+  // todo: output tensors by tensor name
+  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> GetOutputMap() const;
   std::vector<tensor::MSTensor *> GetOutputsByName(const std::string &node_name) const;
 
   virtual void train();
@@ -51,10 +50,9 @@ class TrainSession : public lite::LiteSession {
   bool is_eval() { return train_mode_ == false; }
 
  protected:
-  bool  train_mode_ = false;
-  lite::Model* model_ = nullptr;
+  bool train_mode_ = false;
+  lite::Model *model_ = nullptr;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> ext_output_map_;
-
 
   // private:
 };

@@ -54,14 +54,14 @@ int BroadcastToCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
   return BroadcastTo(input_data, &shape_info_, output_data);
 }
 
-kernel::LiteKernel *CpuBroadcastToFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                    const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuBroadcastToFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                    const std::vector<lite::Tensor *> &outputs,
                                                     OpParameter *op_parameter, const lite::Context *ctx,
                                                     const kernel::KernelKey &desc,
                                                     const mindspore::lite::PrimitiveC *primitive) {

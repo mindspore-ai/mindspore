@@ -19,10 +19,9 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxArgMaxParser::Parse(const onnx::GraphProto &onnx_graph,
-                               const onnx::NodeProto &onnx_node,
+STATUS OnnxArgMaxParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
-  MS_LOG(DEBUG)  << "onnx ArgMaxParser";
+  MS_LOG(DEBUG) << "onnx ArgMaxParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -56,4 +55,3 @@ STATUS OnnxArgMaxParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxArgMaxParser("ArgMax", new OnnxArgMaxParser());
 }  // namespace lite
 }  // namespace mindspore
-

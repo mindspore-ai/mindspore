@@ -132,7 +132,7 @@ int SqueezeInt8CPUKernel::Run() {
     inputs_array[i] = reinterpret_cast<int8_t *>(malloc(sizeof(int8_t) * input_size));
     auto input_type = in_tensors_[i]->data_type();
     if (input_type == kNumberTypeUInt8) {
-      uint8_t *input_tmp = reinterpret_cast<uint8_t *>(in_tensors_[i]->Data());
+      uint8_t *input_tmp = reinterpret_cast<uint8_t *>(in_tensors_[i]->MutableData());
       for (int j = 0; j < input_size; j++) {
         inputs_array[i][j] = (int8_t)(input_tmp[j] - 128);
       }
@@ -141,10 +141,10 @@ int SqueezeInt8CPUKernel::Run() {
       }
       quant_Squeeze_parm_->out_quant_args_.zp_ -= 128;
     } else {
-      ::memcpy(inputs_array[i], in_tensors_.at(i)->Data(), sizeof(int8_t) * input_size);
+      ::memcpy(inputs_array[i], in_tensors_.at(i)->MutableData(), sizeof(int8_t) * input_size);
     }
   }
-  int8_t *output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
+  int8_t *output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   auto output_type = out_tensors_[0]->data_type();
   if (output_type == kNumberTypeUInt8) {
     auto output_size = quant_Squeeze_parm_->output_size_;
@@ -174,8 +174,8 @@ int SqueezeInt8Run(void *cdata, int task_id) {
 int SqueezeInt8CPUKernel::DoExecute(int task_id) {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto out_tensor = out_tensors_.at(kOutputIndex);
-  int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->Data());
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->Data());
+  int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->MutableData());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->MutableData());
 
   size_t data_size = in_tensors_.front()->Size();
   Squeeze(&input_data, output_data, task_id, quant_Squeeze_parm_, para_, data_size);

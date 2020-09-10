@@ -21,9 +21,8 @@
 #include <algorithm>
 #include <vector>
 #include <utility>
-
+#include "src/tensor.h"
 #include "ir/dtype/type_id.h"
-#include "schema/inner/model_generated.h"
 
 namespace mindspore {
 class ParamValueLite : public Value {
@@ -66,7 +65,7 @@ class ParamValueLite : public Value {
  private:
   void *tensor_addr_ = nullptr;
   size_t tensor_size_ = 0;
-  int format_ = schema::Format_KCHW;
+  int format_ = schema::Format::Format_KCHW;
   std::vector<int> tensor_shape_{};
   TypeId type_id_ = TypeId::kNumberTypeFloat32;
 };

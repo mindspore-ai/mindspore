@@ -19,9 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph,
-                            const onnx::NodeProto &onnx_node,
-                            schema::CNodeT *op) {
+STATUS OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx PadParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -49,8 +47,8 @@ STATUS OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph,
         attr->paddings[i * 2 + 1] = static_cast<int32_t>(onnx_node_attr.ints(i + size / 2));
       }
     } else if (attribute_name == "mode") {
-      const auto &mode =  onnx_node_attr.s();
-      if  (mode == "constant") {
+      const auto &mode = onnx_node_attr.s();
+      if (mode == "constant") {
         attr->paddingMode = schema::PaddingMode_CONSTANT;
       } else if (mode == "reflect") {
         attr->paddingMode = schema::PaddingMode_REFLECT;
@@ -68,4 +66,3 @@ STATUS OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxPadParser("Pad", new OnnxPadParser());
 }  // namespace lite
 }  // namespace mindspore
-

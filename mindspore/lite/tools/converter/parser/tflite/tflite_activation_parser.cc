@@ -25,10 +25,8 @@ namespace lite {
 STATUS TfliteActivationParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                      const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                      const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                     schema::CNodeT *op,
-                                     std::vector<int32_t> *tensors_id,
-                                     std::vector<schema::Format> *tensors_format,
-                                     std::map<int, int>  *tensors_id_map) {
+                                     schema::CNodeT *op, std::vector<int32_t> *tensors_id,
+                                     std::vector<schema::Format> *tensors_format, std::map<int, int> *tensors_id_map) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -48,22 +46,22 @@ STATUS TfliteActivationParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
   std::vector<std::string> node_name_str;
   Split(op->name, &node_name_str, "-");
   const char *node_name = node_name_str.data()->c_str();
-  if (std::strcmp(node_name,  "Relu") == 0) {
+  if (std::strcmp(node_name, "Relu") == 0) {
     MS_LOG(DEBUG) << "parse TfliteReluParser";
     attr->type = schema::ActivationType_RELU;
-  } else if (std::strcmp(node_name,  "Relu6") == 0) {
+  } else if (std::strcmp(node_name, "Relu6") == 0) {
     MS_LOG(DEBUG) << "parse TfliteRelu6Parser";
     attr->type = schema::ActivationType_RELU6;
-  } else if (std::strcmp(node_name,  "Tanh") == 0) {
+  } else if (std::strcmp(node_name, "Tanh") == 0) {
     MS_LOG(DEBUG) << "parse TfliteTanhParser";
     attr->type = schema::ActivationType_TANH;
-  } else if (std::strcmp(node_name,  "Logistic") == 0) {
+  } else if (std::strcmp(node_name, "Logistic") == 0) {
     MS_LOG(DEBUG) << "parse TfliteLogisticParser";
     attr->type = schema::ActivationType_SIGMOID;
-  } else if (std::strcmp(node_name,  "HardSwish") == 0) {
+  } else if (std::strcmp(node_name, "HardSwish") == 0) {
     MS_LOG(DEBUG) << "parse TfliteHardSwishParser";
     attr->type = schema::ActivationType_HSWISH;
-  } else if (std::strcmp(node_name,  "LeakyRelu") == 0) {
+  } else if (std::strcmp(node_name, "LeakyRelu") == 0) {
     const auto &tflite_attr = tflite_op->builtin_options.AsLeakyReluOptions();
     if (tflite_attr == nullptr) {
       MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
@@ -76,10 +74,10 @@ STATUS TfliteActivationParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
   op->primitive->value.type = schema::PrimitiveType_Activation;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
-              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
+             tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
+              tflite_tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 

@@ -17,13 +17,13 @@
 #include "schema/inner/model_generated.h"
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "nnacl/fp32/reduce.h"
 
 namespace mindspore {
-using mindspore::lite::tensor::QuantArg;
-using mindspore::lite::tensor::Tensor;
+using mindspore::lite::QuantArg;
+using mindspore::lite::Tensor;
 using mindspore::schema::ReduceMode;
 using mindspore::schema::ReduceMode_ReduceMax;
 using mindspore::schema::ReduceMode_ReduceMean;

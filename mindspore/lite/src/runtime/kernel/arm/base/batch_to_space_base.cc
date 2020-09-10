@@ -40,15 +40,15 @@ int BatchToSpaceBaseCPUKernel::Init() {
 }
 
 int BatchToSpaceBaseCPUKernel::ReSize() {
-  if (in_tensors_[0]->GetFormat() != schema::Format_NHWC) {
+  if (in_tensors_[0]->GetFormat() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "batch_to_space only support NHWC now!";
     return RET_FORMAT_ERR;
   }
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuBatchToSpaceInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                     const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuBatchToSpaceInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                     const std::vector<lite::Tensor *> &outputs,
                                                      OpParameter *op_parameter, const lite::Context *ctx,
                                                      const kernel::KernelKey &desc,
                                                      const mindspore::lite::PrimitiveC *primitive) {
@@ -73,8 +73,8 @@ kernel::LiteKernel *CpuBatchToSpaceInt8KernelCreator(const std::vector<lite::ten
   return kernel;
 }
 
-kernel::LiteKernel *CpuBatchToSpaceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                     const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuBatchToSpaceFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                     const std::vector<lite::Tensor *> &outputs,
                                                      OpParameter *op_parameter, const lite::Context *ctx,
                                                      const kernel::KernelKey &desc,
                                                      const mindspore::lite::PrimitiveC *primitive) {

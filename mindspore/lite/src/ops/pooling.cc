@@ -86,11 +86,11 @@ int Pooling::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
 
     auto format = GetValue<std::string>(prim.GetAttr("data_format"));
     if (format == "NCHW") {
-      attr->format = schema::Format_NCHW;
+      attr->format = schema::Format::Format_NCHW;
     } else if (format == "NHWC") {
-      attr->format = schema::Format_NHWC;
+      attr->format = schema::Format::Format_NHWC;
     } else {
-      attr->format = schema::Format_NUM_OF_FORMAT;
+      attr->format = schema::Format::Format_NUM_OF_FORMAT;
     }
 
     auto pad_mode = GetValue<std::string>(prim.GetAttr("padding"));
@@ -160,14 +160,14 @@ int Pooling::PadDown() const { return this->pad_d_; }
 int Pooling::PadLeft() const { return this->pad_l_; }
 int Pooling::PadRight() const { return this->pad_r_; }
 
-int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int Pooling::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   output->set_data_type(input->data_type());
-  output->SetFormat(schema::Format_NHWC);
+  output->SetFormat(schema::Format::Format_NHWC);
   if (!GetInferFlag()) {
     return RET_OK;
   }

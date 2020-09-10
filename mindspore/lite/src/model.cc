@@ -30,7 +30,7 @@ bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model) {
     }
     auto c_node = meta_graph->nodes()->GetAs<schema::CNode>(i);
     auto src_prim = c_node->primitive();
-    node->primitive_ = PrimitiveC::UnPackFromSchemaPrimitive(const_cast<schema::Primitive *>(src_prim));
+    node->primitive_ = PrimitiveC::Create(const_cast<schema::Primitive *>(src_prim));
     if (node->primitive_ == nullptr) {
       MS_LOG(ERROR) << "unpack primitive == nullptr!";
       return false;
@@ -56,7 +56,7 @@ bool ConvertTensors(const schema::MetaGraph *meta_graph, Model *model) {
   for (uint32_t i = 0; i < tensor_count; ++i) {
     auto *tensor = meta_graph->allTensors()->GetAs<schema::Tensor>(i);
     if (tensor == nullptr) {
-      MS_LOG(ERROR) <<  i << "th tensor in model is nullptr";
+      MS_LOG(ERROR) << i << "th tensor in model is nullptr";
       return false;
     }
     model->all_tensors_.push_back(const_cast<mindspore::schema::Tensor *>(tensor));

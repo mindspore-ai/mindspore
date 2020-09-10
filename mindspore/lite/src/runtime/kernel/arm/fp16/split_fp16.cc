@@ -83,18 +83,18 @@ int SplitFp16CPUKernel::Run() {
   if (in_tensor->data_type() == kNumberTypeFloat32) {
     input_ptr_ =
       reinterpret_cast<float16_t *>(context_->allocator->Malloc(in_tensor->ElementsNum() * sizeof(float16_t)));
-    Float32ToFloat16(reinterpret_cast<float *>(in_tensor->Data()), input_ptr_, in_tensor->ElementsNum());
+    Float32ToFloat16(reinterpret_cast<float *>(in_tensor->MutableData()), input_ptr_, in_tensor->ElementsNum());
   } else {
-    input_ptr_ = reinterpret_cast<float16_t *>(in_tensor->Data());
+    input_ptr_ = reinterpret_cast<float16_t *>(in_tensor->MutableData());
   }
   for (int i = 0; i < param->num_split_; i++) {
     if (in_tensor->data_type() == kNumberTypeFloat32) {
       output_ptr_[i] = reinterpret_cast<float16_t *>(
         context_->allocator->Malloc(out_tensors_.at(i)->ElementsNum() * sizeof(float16_t)));
-      Float32ToFloat16(reinterpret_cast<float *>(out_tensors_.at(i)->Data()), output_ptr_[i],
+      Float32ToFloat16(reinterpret_cast<float *>(out_tensors_.at(i)->MutableData()), output_ptr_[i],
                        out_tensors_.at(i)->ElementsNum());
     } else {
-      output_ptr_[i] = reinterpret_cast<float16_t *>(out_tensors_.at(i)->Data());
+      output_ptr_[i] = reinterpret_cast<float16_t *>(out_tensors_.at(i)->MutableData());
     }
   }
   ret = ParallelLaunch(THREAD_POOL_DEFAULT, SplitRun, this, thread_n_num_);
@@ -115,10 +115,9 @@ int SplitFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuSplitFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *opParameter, const Context *ctx,
-                                              const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuSplitFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                              const Context *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";

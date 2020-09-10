@@ -42,9 +42,7 @@ int ArgMinMaxCPUKernel::Init() {
   return ReSize();
 }
 
-int ArgMinMaxCPUKernel::ReSize() {
-  return ArgMinMaxBaseCPUKernel::ReSize();
-}
+int ArgMinMaxCPUKernel::ReSize() { return ArgMinMaxBaseCPUKernel::ReSize(); }
 
 int ArgMinMaxCPUKernel::Run() {
   auto ret = Prepare();

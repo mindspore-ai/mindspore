@@ -24,7 +24,7 @@
 #include "src/ops/quant_dtype_cast.h"
 #include "abstract/abstract_value.h"
 #include "mindspore/core/ir/primitive.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 #include "src/param_value_lite.h"
 #include "src/common/utils.h"
 
@@ -69,7 +69,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   auto input_quant_params = primitive->GetInputQuantParams();
   auto node_type = (schema::PrimitiveType)primitive->Type();
   if (input_quant_params.empty()) {
-    MS_LOG(WARNING) << "node: " << dst_node->name << " input quant params is empty";
+    MS_LOG(DEBUG) << "node: " << dst_node->name << " input quant params is empty";
     return RET_OK;
   }
   for (size_t i = 0; i < input_quant_params.size(); i++) {
@@ -298,16 +298,16 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
   auto valueNode = input_anode->cast<ValueNodePtr>();
   auto paramTensor = std::make_unique<schema::TensorT>();
   auto value = valueNode->value();
-  if (value->isa<lite::tensor::Tensor>()) {
+  if (value->isa<tensor::Tensor>()) {
     auto valueAbstract = valueNode->abstract();
     auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(valueAbstract);
     auto typePtr = abstractTensor->element()->GetTypeTrack();
     paramTensor->dataType = typePtr->type_id();
     paramTensor->dims = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
-    paramTensor->nodeType = schema::NodeType_ValueNode;
-    auto data = value->cast<lite::tensor::TensorPtr>();
+    paramTensor->nodeType = schema::NodeType::NodeType_ValueNode;
+    auto data = value->cast<tensor::TensorPtr>();
     paramTensor->data.resize(data->Size());
-    memcpy(paramTensor->data.data(), data->Data(), data->Size());
+    memcpy(paramTensor->data.data(), data->data_c(), data->Size());
     node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
     output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
     meta_graphT->allTensors.emplace_back(std::move(paramTensor));
@@ -317,7 +317,7 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
     auto typePtr = abstractScalar->GetTypeTrack();
     paramTensor->dataType = typePtr->type_id();
     paramTensor->dims = {1};
-    paramTensor->nodeType = schema::NodeType_ValueNode;
+    paramTensor->nodeType = schema::NodeType::NodeType_ValueNode;
     auto data = value->cast<mindspore::Int32ImmPtr>();
     paramTensor->data.emplace_back(data->value());
     node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();

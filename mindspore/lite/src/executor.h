@@ -30,16 +30,16 @@ class Executor {
 
   virtual int Prepare(std::vector<kernel::LiteKernel *> &kernels) { return 0; }
 
-  virtual int Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor::Tensor *> &out_tensors,
-          std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
-          const session::KernelCallBack &before = nullptr, const session::KernelCallBack &after = nullptr);
+  virtual int Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
+                  std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
+                  const session::KernelCallBack &before = nullptr, const session::KernelCallBack &after = nullptr);
 
  protected:
-  int TransformTensorLayoutFp32(tensor::Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
+  int TransformTensorLayoutFp32(Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
 
-  int TransformTensorLayoutUint8(tensor::Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
+  int TransformTensorLayoutUint8(Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
 
-  int TransformTensorLayout(tensor::Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
+  int TransformTensorLayout(Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
 };
 
 }  // namespace mindspore::lite

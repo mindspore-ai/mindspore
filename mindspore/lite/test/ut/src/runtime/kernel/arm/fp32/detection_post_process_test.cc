@@ -27,38 +27,38 @@ class TestDetectionPostProcessFp32 : public mindspore::CommonTest {
   TestDetectionPostProcessFp32() {}
 };
 
-void DetectionPostProcessTestInit(std::vector<lite::tensor::Tensor *> *inputs_,
-                                  std::vector<lite::tensor::Tensor *> *outputs_, DetectionPostProcessParameter *param) {
+void DetectionPostProcessTestInit(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
+                                  DetectionPostProcessParameter *param) {
   std::string input_boxes_path = "./test_data/detectionPostProcess/input_boxes.bin";
   size_t input_boxes_size;
   auto input_boxes_data =
     reinterpret_cast<float *>(mindspore::lite::ReadFile(input_boxes_path.c_str(), &input_boxes_size));
-  auto *input_boxes = new lite::tensor::Tensor;
+  auto *input_boxes = new lite::Tensor;
   input_boxes->set_data_type(kNumberTypeFloat32);
   input_boxes->SetFormat(schema::Format_NHWC);
   input_boxes->set_shape({1, 1917, 4});
   input_boxes->MallocData();
-  memcpy(input_boxes->Data(), input_boxes_data, input_boxes_size);
+  memcpy(input_boxes->MutableData(), input_boxes_data, input_boxes_size);
   inputs_->push_back(input_boxes);
 
   std::string input_scores_path = "./test_data/detectionPostProcess/input_scores.bin";
   size_t input_scores_size;
   auto input_scores_data =
     reinterpret_cast<float *>(mindspore::lite::ReadFile(input_scores_path.c_str(), &input_scores_size));
-  auto *input_scores = new lite::tensor::Tensor;
+  auto *input_scores = new lite::Tensor;
   input_scores->set_data_type(kNumberTypeFloat32);
   input_scores->SetFormat(schema::Format_NHWC);
   input_scores->set_shape({1, 1917, 91});
   input_scores->MallocData();
-  memcpy(input_scores->Data(), input_scores_data, input_scores_size);
+  memcpy(input_scores->MutableData(), input_scores_data, input_scores_size);
   inputs_->push_back(input_scores);
 
   std::string input_anchors_path = "./test_data/detectionPostProcess/input_anchors.bin";
   size_t input_anchors_size;
   auto input_anchors_data =
     reinterpret_cast<uint8_t *>(mindspore::lite::ReadFile(input_anchors_path.c_str(), &input_anchors_size));
-  auto *input_anchors = new lite::tensor::Tensor;
-  lite::tensor::QuantArg quant_arg;
+  auto *input_anchors = new lite::Tensor;
+  lite::QuantArg quant_arg;
   quant_arg.zeroPoint = 0;
   quant_arg.scale = 0.00645306;
   input_anchors->AddQuantParam(quant_arg);
@@ -66,36 +66,36 @@ void DetectionPostProcessTestInit(std::vector<lite::tensor::Tensor *> *inputs_,
   input_anchors->SetFormat(schema::Format_NHWC);
   input_anchors->set_shape({1917, 4});
   input_anchors->MallocData();
-  memcpy(input_anchors->Data(), input_anchors_data, input_anchors_size);
+  memcpy(input_anchors->MutableData(), input_anchors_data, input_anchors_size);
   inputs_->push_back(input_anchors);
 
-  auto *output_boxes = new lite::tensor::Tensor;
+  auto *output_boxes = new lite::Tensor;
   output_boxes->set_data_type(kNumberTypeFloat32);
   output_boxes->set_shape({1, 10, 4});
   output_boxes->SetFormat(schema::Format_NHWC);
   output_boxes->MallocData();
-  memset(output_boxes->Data(), 0, output_boxes->ElementsNum() * sizeof(float));
+  memset(output_boxes->MutableData(), 0, output_boxes->ElementsNum() * sizeof(float));
 
-  auto *output_classes = new lite::tensor::Tensor;
+  auto *output_classes = new lite::Tensor;
   output_classes->set_data_type(kNumberTypeFloat32);
   output_classes->set_shape({1, 10});
   output_classes->SetFormat(schema::Format_NHWC);
   output_classes->MallocData();
-  memset(output_classes->Data(), 0, output_classes->ElementsNum() * sizeof(float));
+  memset(output_classes->MutableData(), 0, output_classes->ElementsNum() * sizeof(float));
 
-  auto *output_scores = new lite::tensor::Tensor;
+  auto *output_scores = new lite::Tensor;
   output_scores->set_data_type(kNumberTypeFloat32);
   output_scores->set_shape({1, 10});
   output_scores->SetFormat(schema::Format_NHWC);
   output_scores->MallocData();
-  memset(output_scores->Data(), 0, output_scores->ElementsNum() * sizeof(float));
+  memset(output_scores->MutableData(), 0, output_scores->ElementsNum() * sizeof(float));
 
-  auto *output_num_det = new lite::tensor::Tensor;
+  auto *output_num_det = new lite::Tensor;
   output_num_det->set_data_type(kNumberTypeFloat32);
   output_num_det->set_shape({1});
   output_num_det->SetFormat(schema::Format_NHWC);
   output_num_det->MallocData();
-  memset(output_num_det->Data(), 0, output_num_det->ElementsNum() * sizeof(float));
+  memset(output_num_det->MutableData(), 0, output_num_det->ElementsNum() * sizeof(float));
 
   outputs_->push_back(output_boxes);
   outputs_->push_back(output_classes);
@@ -117,8 +117,8 @@ void DetectionPostProcessTestInit(std::vector<lite::tensor::Tensor *> *inputs_,
 }
 
 TEST_F(TestDetectionPostProcessFp32, Fast) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   auto param = new DetectionPostProcessParameter();
   DetectionPostProcessTestInit(&inputs_, &outputs_, param);
   auto ctx = new lite::Context;
@@ -128,28 +128,28 @@ TEST_F(TestDetectionPostProcessFp32, Fast) {
   op->Init();
   op->Run();
 
-  float *output_boxes = reinterpret_cast<float *>(outputs_[0]->Data());
+  float *output_boxes = reinterpret_cast<float *>(outputs_[0]->MutableData());
   size_t output_boxes_size;
   std::string output_boxes_path = "./test_data/detectionPostProcess/output_0.bin";
   auto correct_boxes =
     reinterpret_cast<float *>(mindspore::lite::ReadFile(output_boxes_path.c_str(), &output_boxes_size));
   CompareOutputData(output_boxes, correct_boxes, outputs_[0]->ElementsNum(), 0.0001);
 
-  float *output_classes = reinterpret_cast<float *>(outputs_[1]->Data());
+  float *output_classes = reinterpret_cast<float *>(outputs_[1]->MutableData());
   size_t output_classes_size;
   std::string output_classes_path = "./test_data/detectionPostProcess/output_1.bin";
   auto correct_classes =
     reinterpret_cast<float *>(mindspore::lite::ReadFile(output_classes_path.c_str(), &output_classes_size));
   CompareOutputData(output_classes, correct_classes, outputs_[1]->ElementsNum(), 0.0001);
 
-  float *output_scores = reinterpret_cast<float *>(outputs_[2]->Data());
+  float *output_scores = reinterpret_cast<float *>(outputs_[2]->MutableData());
   size_t output_scores_size;
   std::string output_scores_path = "./test_data/detectionPostProcess/output_2.bin";
   auto correct_scores =
     reinterpret_cast<float *>(mindspore::lite::ReadFile(output_scores_path.c_str(), &output_scores_size));
   CompareOutputData(output_scores, correct_scores, outputs_[2]->ElementsNum(), 0.0001);
 
-  float *output_num_det = reinterpret_cast<float *>(outputs_[3]->Data());
+  float *output_num_det = reinterpret_cast<float *>(outputs_[3]->MutableData());
   size_t output_num_det_size;
   std::string output_num_det_path = "./test_data/detectionPostProcess/output_3.bin";
   auto correct_num_det =

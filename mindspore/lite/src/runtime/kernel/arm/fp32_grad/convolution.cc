@@ -61,9 +61,9 @@ int ConvolutionTrainCPUKernel::Run() {
   auto *input_w = in_tensors_.at(kWeightIndex);
   auto *out_y = out_tensors_.at(kOutputIndex);
 
-  auto x_addr = reinterpret_cast<float *>(input_x->Data());
-  auto y_addr = reinterpret_cast<float *>(out_y->Data());
-  auto w_addr = reinterpret_cast<float *>(input_w->Data());
+  auto x_addr = reinterpret_cast<float *>(input_x->MutableData());
+  auto y_addr = reinterpret_cast<float *>(out_y->MutableData());
+  auto w_addr = reinterpret_cast<float *>(input_w->MutableData());
 
   int i, j;
   int nweights = input_w->ElementsNum();
@@ -98,10 +98,10 @@ int ConvolutionTrainCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc, const lite::PrimitiveC *primitive) {
+kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                  const lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
 

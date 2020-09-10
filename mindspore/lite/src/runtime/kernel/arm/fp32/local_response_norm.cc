@@ -36,8 +36,8 @@ int LocalResponseNormCPUKernel::ReSize() { return RET_OK; }
 int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) {
   auto input_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
-  auto input_ptr = reinterpret_cast<float *>(input_tensor->Data());
-  auto output_ptr = reinterpret_cast<float *>(out_tensor->Data());
+  auto input_ptr = reinterpret_cast<float *>(input_tensor->MutableData());
+  auto output_ptr = reinterpret_cast<float *>(out_tensor->MutableData());
 
   auto in_shape = input_tensor->shape();
   MS_ASSERT(in_shape.size() == 4);
@@ -87,8 +87,8 @@ int LocalResponseNormCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuLocalResponseNormFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                          const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuLocalResponseNormFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                          const std::vector<lite::Tensor *> &outputs,
                                                           OpParameter *opParameter, const lite::Context *ctx,
                                                           const kernel::KernelKey &desc,
                                                           const mindspore::lite::PrimitiveC *primitive) {

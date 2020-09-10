@@ -33,20 +33,15 @@ class OnnxNodeParser {
 
   virtual ~OnnxNodeParser() = default;
 
-  virtual STATUS Parse(const onnx::GraphProto &onnx_graph,
-                       const onnx::NodeProto &onnx_node,
-                       schema::CNodeT *op) = 0;
+  virtual STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) = 0;
 
  protected:
   schema::PadMode GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr);
 
-  void Split(const std::string &src_str,
-             std::vector<std::string> *dst_str,
-             const std::string &chr);
+  void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);
 
   const std::string &name;
 };
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_NODE_PARSER_H
-

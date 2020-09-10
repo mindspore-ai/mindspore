@@ -23,12 +23,11 @@
 namespace mindspore::kernel {
 class TopKCPUKernel : public LiteKernel {
  public:
-  explicit TopKCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                         const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  explicit TopKCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                         const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~TopKCPUKernel() override {
-  }
+  ~TopKCPUKernel() override {}
 
   int Init() override;
   int ReSize() override;

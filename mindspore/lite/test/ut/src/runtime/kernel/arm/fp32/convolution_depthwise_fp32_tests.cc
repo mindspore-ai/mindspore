@@ -51,49 +51,49 @@ void InitConvDwParam(ConvParameter *conv_param) {
   conv_param->pad_l_ = 1;
 }
 
-void InitConvDwCreator(std::vector<lite::tensor::Tensor *> *inputs, std::vector<lite::tensor::Tensor *> *outputs,
+void InitConvDwCreator(std::vector<lite::Tensor *> *inputs, std::vector<lite::Tensor *> *outputs,
                        const ConvParameter *conv_param) {
   // prepare input, format NHWC
   size_t input_size;
   std::string input_path = "./test_data/convDw/convDwfp32_input.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
 
-  auto *input = new lite::tensor::Tensor;
+  auto *input = new lite::Tensor;
   input->set_data_type(kNumberTypeFloat32);
   input->SetFormat(schema::Format_NHWC);
   input->set_shape({conv_param->input_batch_, conv_param->input_h_, conv_param->input_w_, conv_param->input_channel_});
   input->MallocData();
-  memcpy(input->Data(), input_data, input_size);
+  memcpy(input->MutableData(), input_data, input_size);
 
   // prepare weight, format co kh kw ci, ci = 1
   size_t weight_size;
   std::string weight_path = "./test_data/convDw/convDwfp32_weight.bin";
   auto weight_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &weight_size));
 
-  auto *weight = new lite::tensor::Tensor;
+  auto *weight = new lite::Tensor;
   weight->set_data_type(kNumberTypeFloat32);
   weight->set_shape({conv_param->output_channel_, conv_param->kernel_h_, conv_param->kernel_w_, 1});
   weight->MallocData();
-  memcpy(weight->Data(), weight_data, weight_size);
+  memcpy(weight->MutableData(), weight_data, weight_size);
 
   // prepare bias
-  auto *bias = new lite::tensor::Tensor;
+  auto *bias = new lite::Tensor;
   bias->set_data_type(kNumberTypeFloat32);
   bias->set_shape({conv_param->output_channel_});
   bias->MallocData();
-  memset(bias->Data(), 0, bias->ElementsNum() * sizeof(float));
+  memset(bias->MutableData(), 0, bias->ElementsNum() * sizeof(float));
 
   inputs->push_back(input);
   inputs->push_back(weight);
   inputs->push_back(bias);
 
-  auto *output = new lite::tensor::Tensor;
+  auto *output = new lite::Tensor;
   output->set_data_type(kNumberTypeFloat32);
   output->set_shape(
     {conv_param->output_batch_, conv_param->output_h_, conv_param->output_w_, conv_param->output_channel_});
   output->SetFormat(schema::Format_NHWC);
   output->MallocData();
-  memset(output->Data(), 0, output->ElementsNum() * sizeof(float));
+  memset(output->MutableData(), 0, output->ElementsNum() * sizeof(float));
   outputs->push_back(output);
 }
 
@@ -107,22 +107,22 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Accuracy) {
   ctx->thread_num_ = 4;
 
   // init tensor
-  std::vector<lite::tensor::Tensor *> inputs;
-  std::vector<lite::tensor::Tensor *> outputs;
+  std::vector<lite::Tensor *> inputs;
+  std::vector<lite::Tensor *> outputs;
   InitConvDwCreator(&inputs, &outputs, conv_param);
 
   // register op
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_DepthwiseConv2D};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  kernel::LiteKernel *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), ctx, desc,
-                                       nullptr);
+  kernel::LiteKernel *kernel =
+    creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
   // op run
   kernel->Run();
 
   std::cout << "==================output data=================" << std::endl;
-  auto output_ptr = reinterpret_cast<float *>(outputs[0]->Data());
+  auto output_ptr = reinterpret_cast<float *>(outputs[0]->MutableData());
   for (int i = 0; i < 20; i++) {
     std::cout << output_ptr[i] << ", ";
   }
@@ -158,16 +158,16 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Performance) {
   ctx->thread_num_ = 1;
 
   // init tensor
-  std::vector<lite::tensor::Tensor *> inputs;
-  std::vector<lite::tensor::Tensor *> outputs;
+  std::vector<lite::Tensor *> inputs;
+  std::vector<lite::Tensor *> outputs;
   InitConvDwCreator(&inputs, &outputs, conv_param);
 
   // register op
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_DepthwiseConv2D};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  kernel::LiteKernel *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), ctx, desc,
-                                       nullptr);
+  kernel::LiteKernel *kernel =
+    creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
 
   /* running warm up */

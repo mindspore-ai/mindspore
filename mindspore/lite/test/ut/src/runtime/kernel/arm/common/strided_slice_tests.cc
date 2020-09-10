@@ -45,14 +45,14 @@ void InitStridedSliceParam(StridedSliceParameter *strided_slice_param) {
 }
 
 TEST_F(TestStridedSlice, StridedSlice) {
-  lite::tensor::Tensor in_tensor(kNumberTypeFloat32, {1, 2, 4});
-  lite::tensor::Tensor out_tensor(kNumberTypeFloat32, {1, 1, 2});
+  lite::Tensor in_tensor(kNumberTypeFloat32, {1, 2, 4});
+  lite::Tensor out_tensor(kNumberTypeFloat32, {1, 1, 2});
   float input_data[] = {0.2390374, 0.92039955, 0.05051243, 0.49574447, 0.8355223, 0.02647042, 0.08811307, 0.4566604};
   float output_data[2] = {0};
   in_tensor.SetData(input_data);
   out_tensor.SetData(output_data);
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   StridedSliceParameter parameter = {0};
   InitStridedSliceParam(&parameter);
@@ -77,15 +77,14 @@ TEST_F(TestStridedSlice, StridedSlice) {
 }
 
 TEST_F(TestStridedSlice, StridedSliceInt8) {
-  lite::tensor::Tensor in_tensor(kNumberTypeInt8, {2, 3, 4});
-  lite::tensor::Tensor out_tensor(kNumberTypeInt8, {2, 3, 4});
-  int8_t input_data[] = {-12, -11, -10, -9,   -8, -7, -6, -5,   -4, -3, -2, -1,
-                          1,  2,  3, 4,       5, 6, 7, 8,       9, 10, 11, 12};
+  lite::Tensor in_tensor(kNumberTypeInt8, {2, 3, 4});
+  lite::Tensor out_tensor(kNumberTypeInt8, {2, 3, 4});
+  int8_t input_data[] = {-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   int8_t output_data[4] = {0};
   in_tensor.SetData(input_data);
   out_tensor.SetData(output_data);
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   StridedSliceParameter parameter = {0};
   parameter.begins_[0] = 0;

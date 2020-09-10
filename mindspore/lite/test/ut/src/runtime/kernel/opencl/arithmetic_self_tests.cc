@@ -55,15 +55,15 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
 
   std::vector<int> shape = {1, 19, 19, 96};
   auto data_type = kNumberTypeFloat16;
-  auto tensor_type = schema::NodeType_ValueNode;
-  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
-  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
+  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
   if (input_tensor == nullptr || output_tensor == nullptr) {
     MS_LOG(INFO) << " new input_tensor or output_tensor failed ";
     return;
   }
-  std::vector<lite::tensor::Tensor *> inputs{input_tensor};
-  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  std::vector<lite::Tensor *> inputs{input_tensor};
+  std::vector<lite::Tensor *> outputs{output_tensor};
 
   MS_LOG(INFO) << " initialize param ";
   auto param = new (std::nothrow) ArithmeticSelfParameter();
@@ -114,11 +114,11 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
   }
   sub_graph->Init();
   MS_LOG(INFO) << " initialize input data ";
-  memcpy(inputs[0]->Data(), input_data1, input1_size);
+  memcpy(inputs[0]->MutableData(), input_data1, input1_size);
 
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
-  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->Data());
+  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
   CompareOutputData1(input_data1, output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
     delete tensor;

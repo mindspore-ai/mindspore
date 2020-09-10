@@ -46,4 +46,3 @@ class TfliteNodeRegister {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_NODE_PARSER_REGISTRY_H
-

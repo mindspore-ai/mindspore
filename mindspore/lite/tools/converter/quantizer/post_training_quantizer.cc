@@ -27,7 +27,7 @@
 #include <vector>
 #include <fstream>
 #include "schema/inner/model_generated.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "utils/log_adapter.h"
@@ -349,6 +349,10 @@ STATUS Calibrator::GenerateInputData(int index, mindspore::tensor::MSTensor *ten
   size_t size;
   char *bin_buf = ReadFile(path.c_str(), &size);
   auto data = tensor->MutableData();
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "Get tensor MutableData return nullptr";
+    return RET_ERROR;
+  }
   if (size != tensor->Size()) {
     MS_LOG(ERROR) << "the input data is not consistent with model input, file_size: " << size
                   << " input tensor size: " << tensor->Size();
@@ -359,6 +363,7 @@ STATUS Calibrator::GenerateInputData(int index, mindspore::tensor::MSTensor *ten
     MS_LOG(ERROR) << "memcpy_s error: " << ret;
     return RET_ERROR;
   }
+  delete[] bin_buf;
   return RET_OK;
 }
 
@@ -528,9 +533,8 @@ STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<P
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_ERROR;
   }
-  auto status =
-    QuantFilter<int8_t>(paramValue, primitive_c, QuantType_PostTraining, quant_max,
-      quant_min, bit_num, perchanel, depthwise);
+  auto status = QuantFilter<int8_t>(paramValue, primitive_c, QuantType_PostTraining, quant_max, quant_min, bit_num,
+                                    perchanel, depthwise);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -955,7 +959,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr funcGraph) {
   auto model = lite::Model::Import(content, size);
 
   Context ctx;
-  ctx.device_ctx_.type = DT_CPU;
+  ctx.device_type_ = DT_CPU;
   ctx.thread_num_ = calibrator_->GetThreadNum();
   ctx.cpu_bind_mode_ = MID_CPU;
 

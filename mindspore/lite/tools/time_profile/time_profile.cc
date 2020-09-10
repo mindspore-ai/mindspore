@@ -114,7 +114,7 @@ int TimeProfile::InitSession() {
 
   auto ctx = new lite::Context;
   ctx->cpu_bind_mode_ = static_cast<CpuBindMode>(_flags->cpu_bind_mode_);
-  ctx->device_ctx_.type = lite::DT_CPU;
+  ctx->device_type_ = lite::DT_CPU;
   ctx->thread_num_ = _flags->num_threads_;
   ctx->float16_priority = _flags->fp16_priority;
   session_ = session::LiteSession::CreateSession(ctx);
@@ -359,7 +359,7 @@ int TimeProfile::RunTimeProfile() {
       delete model;
       return RET_ERROR;
     }
-    auto outputs = session_->GetOutputMapByNode();
+    auto outputs = session_->GetOutputs();
 
     uint64_t run_end = GetTimeUs();
     uint64_t time = run_end - run_begin;

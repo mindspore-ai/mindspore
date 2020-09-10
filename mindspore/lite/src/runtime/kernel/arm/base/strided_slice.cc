@@ -59,7 +59,8 @@ int StridedSliceCPUKernel::Run() {
   MS_ASSERT(input);
   MS_ASSERT(output);
 
-  ret = DoStridedSlice(input->Data(), output->Data(), reinterpret_cast<StridedSliceParameter *>(op_parameter_));
+  ret = DoStridedSlice(input->MutableData(), output->MutableData(),
+                       reinterpret_cast<StridedSliceParameter *>(op_parameter_));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StridedSlice error error_code[" << ret << "]";
     return RET_ERROR;
@@ -67,10 +68,9 @@ int StridedSliceCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuStridedSliceKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuStridedSliceKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                 const lite::Context *ctx, const kernel::KernelKey &desc,
                                                  const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_StridedSlice);
   if (opParameter == nullptr) {

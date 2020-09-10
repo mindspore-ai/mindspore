@@ -62,8 +62,8 @@ int EluCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  input_addr = reinterpret_cast<float *>(in_tensors_.front()->Data());
-  output_addr = reinterpret_cast<float *>(out_tensors_.front()->Data());
+  input_addr = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
+  output_addr = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
 
   auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, EluRun, this, elu_parameter_->thread_num_);
   if (ret != RET_OK) {
@@ -73,8 +73,8 @@ int EluCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuEluFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                            const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
+kernel::LiteKernel *CpuEluFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                            const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                             const lite::Context *ctx, const KernelKey &desc,
                                             const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr || ctx == nullptr) {

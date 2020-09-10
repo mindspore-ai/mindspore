@@ -47,7 +47,7 @@ void BiasAddOpenCLKernel::InitBuffer() {
   BiasAdd_ = allocator->Malloc(div_ci * C4NUM * fp_size, img_size);
   BiasAdd_ = allocator->MapBuffer(BiasAdd_, CL_MAP_WRITE, nullptr, true);
   memset(BiasAdd_, 0x00, div_ci * C4NUM * fp_size);
-  memcpy(BiasAdd_, in_tensors_[1]->Data(), C * fp_size);
+  memcpy(BiasAdd_, in_tensors_[1]->MutableData(), C * fp_size);
   allocator->UnmapBuffer(BiasAdd_);
 }
 
@@ -92,9 +92,9 @@ int BiasAddOpenCLKernel::Run() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   int arg_idx = 0;
   std::map<schema::Format, int> data_type{
-    {schema::Format_NC4, 1}, {schema::Format_NHWC4, 2}, {schema::Format_NC4HW4, 3}};
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+    {schema::Format::Format_NC4, 1}, {schema::Format::Format_NHWC4, 2}, {schema::Format::Format_NC4HW4, 3}};
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape_);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, BiasAdd_);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, data_type[op_format_]);
@@ -110,14 +110,14 @@ int BiasAddOpenCLKernel::Run() {
 
 cl_int4 BiasAddOpenCLKernel::GetGlobalshape() {
   cl_int4 global_shape = input_shape_;
-  if (op_format_ == schema::Format_NC4) {
+  if (op_format_ == schema::Format::Format_NC4) {
     global_shape.s[1] = global_shape.s[2];
     global_shape.s[2] = UP_DIV(global_shape.s[3], C4NUM);
   }
-  if (op_format_ == schema::Format_NC4HW4) {
+  if (op_format_ == schema::Format::Format_NC4HW4) {
     global_shape.s[1] = UP_DIV(global_shape.s[3], C4NUM) * global_shape.s[1];  // c / 4 * H
   }
-  if (op_format_ == schema::Format_NHWC4) {
+  if (op_format_ == schema::Format::Format_NHWC4) {
     global_shape.s[2] = UP_DIV(global_shape.s[3], C4NUM) * global_shape.s[2];
   }
   return global_shape;
@@ -136,10 +136,10 @@ int BiasAddOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLBiasAddKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc, const lite::PrimitiveC *primitive) {
+kernel::LiteKernel *OpenCLBiasAddKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
+                                               const lite::PrimitiveC *primitive) {
   if (inputs.size() == 0) {
     MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << inputs.size();
     return nullptr;

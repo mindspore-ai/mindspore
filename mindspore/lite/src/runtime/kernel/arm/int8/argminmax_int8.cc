@@ -56,8 +56,8 @@ int ArgMinMaxInt8CPUKernel::Run() {
   }
   auto input = in_tensors_.at(0);
 
-  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_.at(0)->Data());
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_.at(0)->MutableData());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
   auto in_shape = input->shape().data();
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);

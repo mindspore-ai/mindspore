@@ -19,10 +19,8 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeReshapeParser::Parse(const caffe::LayerParameter &proto,
-                                 const caffe::LayerParameter &weight,
-                                 schema::CNodeT *op,
-                                 std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeReshapeParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                                 schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeReshapeParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -40,7 +38,7 @@ STATUS CaffeReshapeParser::Parse(const caffe::LayerParameter &proto,
     return RET_NULL_PTR;
   }
 
-  attr->format = schema::Format_NCHW;
+  attr->format = schema::Format::Format_NCHW;
 
   const caffe::ReshapeParameter reshapeParam = proto.reshape_param();
   if (!reshapeParam.has_shape()) {
@@ -62,4 +60,3 @@ STATUS CaffeReshapeParser::Parse(const caffe::LayerParameter &proto,
 CaffeNodeRegistrar g_caffeReshapeParser("Reshape", new CaffeReshapeParser());
 }  // namespace lite
 }  // namespace mindspore
-

@@ -57,9 +57,7 @@ int ReduceFp16CPUKernel::Init() {
   return ReSize();
 }
 
-int ReduceFp16CPUKernel::ReSize() {
-  return ReduceBaseCPUKernel::ReSize();
-}
+int ReduceFp16CPUKernel::ReSize() { return ReduceBaseCPUKernel::ReSize(); }
 
 int ReduceFp16CPUKernel::CallReduceUnit(int task_id) {
   auto ret = reducer_(outer_size_, inner_size_, axis_size_, fp16_src_data_, tmp_shape_.data(), fp16_dst_data_, task_id,
@@ -93,10 +91,10 @@ int ReduceFp16CPUKernel::Run() {
   tmp_shape_ = in_tensors_.at(0)->shape();
   auto in_tensor = in_tensors_.at(0);
   if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
-    auto input_data = reinterpret_cast<float *>(in_tensor->Data());
+    auto input_data = reinterpret_cast<float *>(in_tensor->MutableData());
     Float32ToFloat16(input_data, fp16_input_, in_tensor->ElementsNum());
   } else {
-    fp16_input_ = reinterpret_cast<float16_t *>(in_tensor->Data());
+    fp16_input_ = reinterpret_cast<float16_t *>(in_tensor->MutableData());
   }
 
   fp16_src_data_ = fp16_input_;
@@ -124,10 +122,10 @@ int ReduceFp16CPUKernel::Run() {
 
   auto out_tensor = out_tensors_.at(0);
   if (out_tensor->data_type() == kNumberTypeFloat32 || out_tensor->data_type() == kNumberTypeFloat) {
-    dst_data_ = reinterpret_cast<float *>(out_tensor->Data());
+    dst_data_ = reinterpret_cast<float *>(out_tensor->MutableData());
     Float16ToFloat32(fp16_dst_data_, dst_data_, out_tensor->ElementsNum());
   } else {
-    memcpy(out_tensor->Data(), fp16_dst_data_, out_tensor->ElementsNum() * sizeof(float16_t));
+    memcpy(out_tensor->MutableData(), fp16_dst_data_, out_tensor->ElementsNum() * sizeof(float16_t));
   }
 
   FreeTmpBuffer();
@@ -183,10 +181,9 @@ int ReduceFp16CPUKernel::MallocTmpBuffer() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuReduceFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuReduceFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Reduce);
@@ -213,10 +210,9 @@ kernel::LiteKernel *CpuReduceFp16KernelCreator(const std::vector<lite::tensor::T
   return kernel;
 }
 
-kernel::LiteKernel *CpuMeanFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuMeanFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                             const lite::Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Mean);

@@ -24,8 +24,8 @@
 namespace mindspore::kernel {
 class SigmoidInt8CPUKernel : public LiteKernel {
  public:
-  SigmoidInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  SigmoidInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                       const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~SigmoidInt8CPUKernel() override = default;

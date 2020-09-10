@@ -26,9 +26,8 @@
 #include "src/common//utils.h"
 
 namespace mindspore::lite {
-kernel::LiteKernel *GetOpenCLKernel(const std::vector<tensor::Tensor *> &in_tensors,
-                                    const std::vector<tensor::Tensor *> &out_tensors, OpParameter *parameter,
-                                    const Context *ctx, const kernel::KernelKey &key);
+kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                                    OpParameter *parameter, const Context *ctx, const kernel::KernelKey &key);
 }
 
 namespace mindspore::kernel {
@@ -91,8 +90,7 @@ std::vector<size_t> GetCommonLocalSize(const std::vector<size_t> &global, int ma
 std::string CLErrorCode(cl_int error_code);
 
 template <class T1, class T2>
-void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane, int channel,
-                      const std::function<T2(T1)> &to_dtype) {
+void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane, int channel, const std::function<T2(T1)> &to_dtype) {
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {
     int src_offset = b * plane * channel;
@@ -105,15 +103,13 @@ void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane, int channel,
       for (int k = 0; k < plane; k++) {
         int src_kernel_offset = src_c_offset + k;
         int dst_kernel_offset = dst_c_offset + C4NUM * k + c4_block_rem;
-        (static_cast<T2 *>(dst) + dst_kernel_offset)[0] =
-          to_dtype((static_cast<T1 *>(src) + src_kernel_offset)[0]);
+        (static_cast<T2 *>(dst) + dst_kernel_offset)[0] = to_dtype((static_cast<T1 *>(src) + src_kernel_offset)[0]);
       }
     }
   }
 }
 template <class T1, class T2>
-void PackNHWCToNHWC4(void *src, void *dst, int batch, int plane, int channel,
-                     const std::function<T2(T1)> &to_dtype) {
+void PackNHWCToNHWC4(void *src, void *dst, int batch, int plane, int channel, const std::function<T2(T1)> &to_dtype) {
   int c4 = UP_DIV(channel, C4NUM);
   int nhwc4_batch_unit_offset = c4 * C4NUM * plane;
   int ic_remainder_ = channel % C4NUM;
@@ -137,8 +133,7 @@ void PackNHWCToNHWC4(void *src, void *dst, int batch, int plane, int channel,
   }
 }
 template <class T1, class T2>
-void PackNHWCToNC4HW4(void *src, void *dst, int batch, int plane, int channel,
-                      const std::function<T2(T1)> &to_dtype) {
+void PackNHWCToNC4HW4(void *src, void *dst, int batch, int plane, int channel, const std::function<T2(T1)> &to_dtype) {
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {
     int src_oc_offset = b * plane * channel;

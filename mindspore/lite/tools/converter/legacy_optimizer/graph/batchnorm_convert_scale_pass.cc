@@ -43,7 +43,7 @@ constexpr const float EPS = 1e-8;
 constexpr const float EPS_DEFAULT_FLOAT = 1e-8;
 constexpr const float POW_NUM = 0.5;
 constexpr const int32_t NCHW_DIM_C = 1;
-}
+}  // namespace
 
 STATUS BatchNormConvertScalePass::Run(MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
@@ -94,14 +94,14 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(bnNode != nullptr);
   GetTransParam(graph, bnNode);
-  newScaleWeightTensor = std::unique_ptr<TensorT>(new(std::nothrow) TensorT);
+  newScaleWeightTensor = std::unique_ptr<TensorT>(new (std::nothrow) TensorT);
   if (newScaleWeightTensor == nullptr) {
     MS_LOG(ERROR) << "new weightTensor failed";
     return RET_ERROR;
   }
   newScaleWeightTensor->dataType = bnMeanTensor->dataType;
   newScaleWeightTensor->format = bnMeanTensor->format;
-  newScaleWeightTensor->refCount = schema::NodeType_ValueNode;
+  newScaleWeightTensor->refCount = schema::NodeType::NodeType_ValueNode;
   newScaleWeightTensor->dims = bnMeanTensor->dims;
   auto weightShapeSize = GetShapeSize(*bnMeanTensor);
   newScaleWeightTensor->data.resize(weightShapeSize * sizeof(float));
@@ -116,7 +116,7 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
     return RET_ERROR;
   }
 
-  newScaleBiasTensor = std::unique_ptr<TensorT>(new(std::nothrow) TensorT);
+  newScaleBiasTensor = std::unique_ptr<TensorT>(new (std::nothrow) TensorT);
   if (newScaleBiasTensor == nullptr) {
     MS_LOG(ERROR) << "new weightTensor failed";
     return RET_ERROR;
@@ -124,7 +124,7 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
   newScaleBiasTensor->dataType = bnMeanTensor->dataType;
   newScaleBiasTensor->format = bnMeanTensor->format;
 
-  newScaleBiasTensor->refCount = schema::NodeType_ValueNode;
+  newScaleBiasTensor->refCount = schema::NodeType::NodeType_ValueNode;
   newScaleBiasTensor->dims = bnMeanTensor->dims;
   weightShapeSize = GetShapeSize(*bnMeanTensor);
   newScaleBiasTensor->data.resize(weightShapeSize * sizeof(float));
@@ -168,8 +168,8 @@ STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::un
     MS_LOG(ERROR) << "GetBnEpsilon failed";
     return status;
   }
-  this->transScale = new(std::nothrow) float[bnChannel];
-  this->transBias = new(std::nothrow) float[bnChannel];
+  this->transScale = new (std::nothrow) float[bnChannel];
+  this->transBias = new (std::nothrow) float[bnChannel];
   // cal transScale, tf : scale/sqrt(variance + eps); caffe : 1/sqrt(variance + eps)
   if (memcpy_s(transScale, bnChannel * sizeof(float), varianceData, bnChannel * sizeof(float)) != 0) {
     MS_LOG(ERROR) << "memcpy_s transScale error";

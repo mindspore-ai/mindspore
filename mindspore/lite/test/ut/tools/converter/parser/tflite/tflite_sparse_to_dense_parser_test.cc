@@ -22,9 +22,7 @@ namespace mindspore {
 class TestTfliteParserSparseToDense : public TestTfliteParser {
  public:
   TestTfliteParserSparseToDense() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./sparse_to_dense.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./sparse_to_dense.tflite"); }
 };
 
 TEST_F(TestTfliteParserSparseToDense, OpType) {

@@ -28,8 +28,8 @@ using mindspore::lite::Context;
 namespace mindspore::kernel {
 class ReshapeInt8CPUKernel : public ReshapeBaseCPUKernel {
  public:
-  ReshapeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+  ReshapeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                       const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
       : ReshapeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ReshapeInt8CPUKernel() = default;

@@ -19,7 +19,7 @@
 #include <algorithm>
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 namespace lite {
@@ -102,7 +102,7 @@ int Reshape::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
 }
 #endif
 
-int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_shape) const {
+int Reshape::CalNewShape(const Tensor *in_tensor, std::vector<int> *out_shape) const {
   size_t in_shape_size = 1;
   for (size_t i = 0; i < in_tensor->shape().size(); i++) {
     in_shape_size *= in_tensor->shape()[i];
@@ -137,7 +137,7 @@ int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_
   return RET_OK;
 }
 template <typename T>
-void CalShape(const T *data, const std::vector<tensor::Tensor *> &inputs, std::vector<int> *out_shape, int shape_size) {
+void CalShape(const T *data, const std::vector<Tensor *> &inputs, std::vector<int> *out_shape, int shape_size) {
   int input_count = inputs[0]->ElementsNum();
   int index = 0;
   int size = 1;
@@ -153,7 +153,7 @@ void CalShape(const T *data, const std::vector<tensor::Tensor *> &inputs, std::v
     (*out_shape)[index] = input_count / size;
   }
 }
-int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int Reshape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
@@ -169,30 +169,30 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   std::vector<int> out_shape;
   if (inputs_.size() == kDoubleNum) {
     auto shape_tensor = inputs_.at(1);
-    if (shape_tensor->Data() == nullptr) {
+    if (shape_tensor->MutableData() == nullptr) {
       MS_LOG(INFO) << "Do infer shape in runtime.";
       return RET_INFER_INVALID;
     }
     size_t shape_size = shape_tensor->ElementsNum();
     switch (shape_tensor->data_type()) {
       case kNumberTypeInt8: {
-        auto data = reinterpret_cast<int8_t *>(shape_tensor->Data());
+        auto data = reinterpret_cast<int8_t *>(shape_tensor->MutableData());
         CalShape<int8_t>(data, inputs_, &out_shape, shape_size);
       } break;
       case kNumberTypeInt32: {
-        auto data = reinterpret_cast<int32_t *>(shape_tensor->Data());
+        auto data = reinterpret_cast<int32_t *>(shape_tensor->MutableData());
         CalShape<int32_t>(data, inputs_, &out_shape, shape_size);
       } break;
       case kNumberTypeInt64: {
-        auto data = reinterpret_cast<int64_t *>(shape_tensor->Data());
+        auto data = reinterpret_cast<int64_t *>(shape_tensor->MutableData());
         CalShape<int64_t>(data, inputs_, &out_shape, shape_size);
       } break;
       case kNumberTypeFloat: {
-        auto data = reinterpret_cast<float *>(shape_tensor->Data());
+        auto data = reinterpret_cast<float *>(shape_tensor->MutableData());
         CalShape<float>(data, inputs_, &out_shape, shape_size);
       } break;
       case kNumberTypeUInt32: {
-        auto data = reinterpret_cast<uint32_t *>(shape_tensor->Data());
+        auto data = reinterpret_cast<uint32_t *>(shape_tensor->MutableData());
         CalShape<uint32_t>(data, inputs_, &out_shape, shape_size);
       } break;
       default: {

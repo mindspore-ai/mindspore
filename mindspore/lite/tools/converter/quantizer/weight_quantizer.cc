@@ -65,8 +65,8 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
     bool depthwise = op_type == schema::PrimitiveType_DepthwiseConv2D ? true : false;
 
     ParamValueLitePtr param_value = std::static_pointer_cast<ParamValueLite>(param_node->default_param());
-    auto status = QuantFilter<uint8_t>(param_value, primitive_c, QuantType_WeightQuant, 255, 0,
-      bitNum, true, depthwise);
+    auto status =
+      QuantFilter<uint8_t>(param_value, primitive_c, QuantType_WeightQuant, 255, 0, bitNum, true, depthwise);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;
@@ -104,9 +104,9 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
         param_node = inputNode->cast<ParameterPtr>();
         if ((param_node != nullptr) && (param_node->has_default() == true)) {
           param_value = std::static_pointer_cast<ParamValueLite>(param_node->default_param());
-          if ((param_value == nullptr) || (param_value->tensor_size() == 0)
-              || (param_value->tensor_addr() == nullptr)
-              || (param_value->tensor_type() != mindspore::kNumberTypeFloat32)) {
+          if ((param_value == nullptr) || (param_value->tensor_size() == 0) ||
+              (param_value->tensor_addr() == nullptr) ||
+              (param_value->tensor_type() != mindspore::kNumberTypeFloat32)) {
             param_value = nullptr;
             continue;
           } else {
@@ -117,7 +117,7 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
     }
     if (param_value == nullptr) {
       MS_LOG(ERROR) << "No valid input param node !";
-      return RET_ERROR;;
+      return RET_ERROR;
     }
 
     auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(node->input(0));
@@ -170,4 +170,3 @@ STATUS WeightQuantizer::DoQuantize(FuncGraphPtr funcGraph) {
 }  // namespace quant
 }  // namespace lite
 }  // namespace mindspore
-

@@ -76,11 +76,11 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
 
   auto format = GetValue<std::string>(prim.GetAttr("data_format"));
   if (format == "NCHW") {
-    attr->format = schema::Format_NCHW;
+    attr->format = schema::Format::Format_NCHW;
   } else if (format == "NHWC") {
-    attr->format = schema::Format_NHWC;
+    attr->format = schema::Format::Format_NHWC;
   } else {
-    attr->format = schema::Format_NUM_OF_FORMAT;
+    attr->format = schema::Format::Format_NUM_OF_FORMAT;
   }
   auto pad_list = GetValue<std::vector<int>>(prim.GetAttr("pads"));
   attr->padUp = pad_list[0];
@@ -188,8 +188,7 @@ int DepthwiseConv2D::GetActivationType() const {
 }
 
 #endif
-int DepthwiseConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
-                                std::vector<lite::tensor::Tensor *> outputs_) {
+int DepthwiseConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   if (inputs_.size() != kDoubleNum && inputs_.size() != kMultiNum) {
     MS_LOG(ERROR) << "inputs number is invalid";
     return 1;

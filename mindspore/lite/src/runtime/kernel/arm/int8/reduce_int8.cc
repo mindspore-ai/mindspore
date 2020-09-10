@@ -82,7 +82,8 @@ int ReduceInt8CPUKernel::Init() {
       last_reducer_ = ReduceSumSquareLastAxis;
       break;
     }
-    default:MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << mode_;
+    default:
+      MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << mode_;
       return RET_ERROR;
   }
   if (!InferShapeDone()) {
@@ -92,8 +93,8 @@ int ReduceInt8CPUKernel::Init() {
 }
 
 int ReduceInt8CPUKernel::CalculateQuantArgs() {
-  lite::tensor::Tensor *input = in_tensors_.at(0);
-  lite::tensor::Tensor *output = out_tensors_.at(0);
+  lite::Tensor *input = in_tensors_.at(0);
+  lite::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input);
   MS_ASSERT(output);
 
@@ -115,7 +116,7 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
     for (auto i = 0; i < num_axes_; i++) {
       auto axis = axes_[i];
       double reciprocal = 1.0 / in_tensors_.at(0)->shape()[axis];
-      QuantMulArg *qm = new(std::nothrow) QuantMulArg;
+      QuantMulArg *qm = new (std::nothrow) QuantMulArg;
       if (qm == nullptr) {
         MS_LOG(ERROR) << "Reduce new QuantMulArg failed.";
         return RET_NULL_PTR;
@@ -133,7 +134,7 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
   if (mode_ == static_cast<int>(schema::ReduceMode_ReduceProd)) {
     for (auto i = 0; i < num_axes_; i++) {
       int axis_size = in_tensors_.at(0)->shape()[axes_[i]];
-      QuantMulArg *qm = new(std::nothrow) QuantMulArg;
+      QuantMulArg *qm = new (std::nothrow) QuantMulArg;
       if (qm == nullptr) {
         MS_LOG(ERROR) << "ReduceProd new QuantMulArg failed.";
         return RET_NULL_PTR;
@@ -151,7 +152,7 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
   // scale_in * scale_in/scale_out
   if (mode_ == static_cast<int>(schema::ReduceMode_ReduceSumSquare)) {
     for (auto i = 0; i < num_axes_ - 1; i++) {
-      QuantMulArg *qm = new(std::nothrow) QuantMulArg;
+      QuantMulArg *qm = new (std::nothrow) QuantMulArg;
       if (qm == nullptr) {
         MS_LOG(ERROR) << "ReduceProd new QuantMultiplier failed.";
         return RET_NULL_PTR;
@@ -163,7 +164,7 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
       sum_square_multipliers_.push_back(qm);
     }
 
-    QuantMulArg *qm = new(std::nothrow) QuantMulArg;
+    QuantMulArg *qm = new (std::nothrow) QuantMulArg;
     if (qm == nullptr) {
       MS_LOG(ERROR) << "ReduceProd new QuantMultiplier failed.";
       return RET_NULL_PTR;
@@ -202,7 +203,7 @@ int ReduceInt8CPUKernel::MallocTmpBuffer() {
   if (begin_src_data_ == nullptr) {
     return RET_NULL_PTR;
   }
-  auto input_data = reinterpret_cast<int8_t *>(input->Data());
+  auto input_data = reinterpret_cast<int8_t *>(input->MutableData());
   for (auto i = 0; i < input->ElementsNum(); i++) {
     begin_src_data_[i] = static_cast<int32_t>(input_data[i]);
   }
@@ -319,7 +320,7 @@ int ReduceInt8CPUKernel::Run() {
     inner_size_ *= tmp_shape_[i];
   }
   axis_size_ = tmp_shape_[last_reduce_axis];
-  last_dst_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
+  last_dst_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   is_last_axis_ = true;
   auto error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReduceInt8Impl, this, context_->thread_num_);
   if (error_code != RET_OK) {
@@ -336,14 +337,7 @@ int ReduceInt8CPUKernel::CallReduceUnit(int task_id) {
   int ret;
   if (!is_last_axis_) {
     ret =
-        reducer_(outer_size_,
-                 inner_size_,
-                 axis_size_,
-                 src_data_,
-                 dst_data_,
-                 &quant_arg_,
-                 task_id,
-                 context_->thread_num_);
+      reducer_(outer_size_, inner_size_, axis_size_, src_data_, dst_data_, &quant_arg_, task_id, context_->thread_num_);
   } else {
     ret = last_reducer_(outer_size_, inner_size_, axis_size_, src_data_, last_dst_data_, &quant_arg_, task_id,
                         context_->thread_num_);

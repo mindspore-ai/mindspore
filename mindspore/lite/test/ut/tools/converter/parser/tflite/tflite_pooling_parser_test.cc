@@ -22,9 +22,7 @@ namespace mindspore {
 class TestTfliteParserMaxPooling : public TestTfliteParser {
  public:
   TestTfliteParserMaxPooling() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./max_pooling.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./max_pooling.tflite"); }
 };
 
 TEST_F(TestTfliteParserMaxPooling, OpType) {
@@ -55,9 +53,7 @@ TEST_F(TestTfliteParserMaxPooling, AttrValue) {
 class TestTfliteParserAvgPooling : public TestTfliteParser {
  public:
   TestTfliteParserAvgPooling() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./avg_pooling.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./avg_pooling.tflite"); }
 };
 
 TEST_F(TestTfliteParserAvgPooling, OpType) {

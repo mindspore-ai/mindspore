@@ -301,7 +301,7 @@ STATUS BatchNormFoldFusionPass::CheckPath(MetaGraphT *graph,
 STATUS BatchNormFoldFusionPass::GenNewWeightTensor() {
   MS_ASSERT(oldWeightTensor != nullptr);
   MS_ASSERT(oldWeightTensor->dataType == DataType_DT_FLOAT);
-  MS_ASSERT(oldWeightTensor->refCount == schema::NodeType_ValueNode);
+  MS_ASSERT(oldWeightTensor->refCount == schema::NodeType::NodeType_ValueNode);
   auto weightShape = oldWeightTensor->dims;
   if (weightShape.size() != 4) {
     MS_LOG(ERROR) << "shape of weight should be 4 dims, got " << weightShape.size() << " dims";
@@ -319,7 +319,7 @@ STATUS BatchNormFoldFusionPass::GenNewWeightTensor() {
   }
   newWeightTensor->dataType = oldWeightTensor->dataType;
   newWeightTensor->format = oldWeightTensor->format;
-  newWeightTensor->refCount = schema::NodeType_ValueNode;
+  newWeightTensor->refCount = schema::NodeType::NodeType_ValueNode;
   newWeightTensor->dims = weightShape;
   newWeightTensor->data.resize(weightShapeSize * sizeof(float));
   void *oldWeightData = oldWeightTensor->data.data();
@@ -349,8 +349,8 @@ STATUS BatchNormFoldFusionPass::GenNewBiasTensor() {  // bias has no quant
     return RET_ERROR;
   }
   newBiasTensor->dataType = 0;
-  newBiasTensor->format = Format_NUM_OF_FORMAT;
-  newBiasTensor->refCount = schema::NodeType_ValueNode;
+  newBiasTensor->format = schema::Format::Format_NUM_OF_FORMAT;
+  newBiasTensor->refCount = schema::NodeType::NodeType_ValueNode;
   newBiasTensor->dims = biasShape;
   newBiasTensor->data.resize(channelOut * sizeof(float));
   void *newBiasData = newBiasTensor->data.data();
@@ -496,4 +496,3 @@ BatchNormFoldFusionPass::~BatchNormFoldFusionPass() {
 }
 }  // namespace lite
 }  // namespace mindspore
-

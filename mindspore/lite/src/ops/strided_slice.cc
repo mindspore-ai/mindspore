@@ -182,7 +182,7 @@ void StridedSlice::ApplyEndMask() {
   }
 }
 
-int StridedSlice::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
+int StridedSlice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (outputs.size() != kStridedSliceOutputNum) {
     MS_LOG(ERROR) << "Invalid output size:" << outputs.size();

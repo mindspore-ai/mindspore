@@ -23,8 +23,8 @@
 namespace mindspore::kernel {
 class TileCPUKernel : public LiteKernel {
  public:
-  explicit TileCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                         const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  explicit TileCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                         const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~TileCPUKernel() override {}

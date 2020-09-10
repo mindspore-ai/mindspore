@@ -36,7 +36,7 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   std::string input_path = "./test_data/operators/sce_fp32_1_y_6_4.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_y({6, 4});
-  lite::tensor::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
+  lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
   y_tensor.SetData(input_data);
 
   std::string label_path = "./test_data/operators/sce_fp32_1_l_6.bin";
@@ -45,19 +45,19 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   for (int i = 0; i < 6; i++) labels[i] = static_cast<int>(ll_labels[i]);
 
   std::vector<int> dim_l({6});
-  lite::tensor::Tensor l_tensor(TypeId::kNumberTypeInt32, dim_l);
+  lite::Tensor l_tensor(TypeId::kNumberTypeInt32, dim_l);
   l_tensor.SetData(labels);
 
-  std::vector<lite::tensor::Tensor *> inputs = {&y_tensor, &l_tensor};
+  std::vector<lite::Tensor *> inputs = {&y_tensor, &l_tensor};
 
   auto loss = new float[1];
   std::vector<int> dim_dw({1});
-  lite::tensor::Tensor loss_tensor(TypeId::kNumberTypeFloat32, dim_dw);
+  lite::Tensor loss_tensor(TypeId::kNumberTypeFloat32, dim_dw);
   loss_tensor.SetData(loss);
   auto grad = new float[24];
-  lite::tensor::Tensor grad_tensor(TypeId::kNumberTypeFloat32, dim_y);
+  lite::Tensor grad_tensor(TypeId::kNumberTypeFloat32, dim_y);
   grad_tensor.SetData(grad);
-  std::vector<lite::tensor::Tensor *> outputs = {&loss_tensor, &grad_tensor};
+  std::vector<lite::Tensor *> outputs = {&loss_tensor, &grad_tensor};
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_SoftmaxCrossEntropy};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);

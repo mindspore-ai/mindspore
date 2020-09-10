@@ -31,4 +31,3 @@ inline std::string GetCNodeTTypeName(const schema::CNodeT &cNodeT) {
 }  // namespace mindspore
 
 #endif  // PREDICT_CONVERTER_COMMON_OP_UTILS_H_
-

@@ -35,4 +35,3 @@ class Storage {
 }  // namespace mindspore
 
 #endif  // PREDICT_COMMON_STORAGE_H_
-

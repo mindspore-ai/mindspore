@@ -36,10 +36,10 @@ int BatchnormFp16CPUKernel::InitConstTensor() {
       FreeMeanAndVariance();
       return RET_ERROR;
     }
-    Float32ToFloat16(reinterpret_cast<float *>(mean_fp32->Data()),
-                     reinterpret_cast<float16_t *>(mean_), mean_fp32->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(variance_fp32->Data()),
-                     reinterpret_cast<float16_t *>(variance_), variance_fp32->ElementsNum());
+    Float32ToFloat16(reinterpret_cast<float *>(mean_fp32->MutableData()), reinterpret_cast<float16_t *>(mean_),
+                     mean_fp32->ElementsNum());
+    Float32ToFloat16(reinterpret_cast<float *>(variance_fp32->MutableData()), reinterpret_cast<float16_t *>(variance_),
+                     variance_fp32->ElementsNum());
   } else {
     BatchnormCPUKernel::InitConstTensor();
   }
@@ -67,7 +67,7 @@ int BatchnormFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }
   if (is_output_fp32_) {
-    Float16ToFloat32(output_, reinterpret_cast<float *>(output_tensor->Data()), output_tensor->ElementsNum());
+    Float16ToFloat32(output_, reinterpret_cast<float *>(output_tensor->MutableData()), output_tensor->ElementsNum());
   }
   FreeInputAndOutput();
   return ret;
@@ -90,10 +90,9 @@ void BatchnormFp16CPUKernel::FreeInputAndOutput() {
   }
 }
 
-kernel::LiteKernel *CpuBatchnormFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuBatchnormFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) BatchnormFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {

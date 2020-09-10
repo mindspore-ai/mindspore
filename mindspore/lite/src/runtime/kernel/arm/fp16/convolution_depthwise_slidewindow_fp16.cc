@@ -65,7 +65,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_[kWeightIndex];
   int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
   int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
 
   packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
@@ -85,7 +85,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitWeightBias() {
   auto bias_fp16 = reinterpret_cast<float16_t *>(bias_data_);
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
-    auto ori_bias = reinterpret_cast<float *>(bias_tensor->Data());
+    auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
     for (int i = 0; i < bias_tensor->ElementsNum(); i++) {
       bias_fp16[i] = (float16_t)ori_bias[i];
     }

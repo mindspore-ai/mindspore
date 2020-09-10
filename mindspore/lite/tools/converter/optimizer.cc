@@ -78,4 +78,3 @@ STATUS Optimizer::Run(schema::MetaGraphT *graphDefT) {
 }
 }  // namespace lite
 }  // namespace mindspore
-

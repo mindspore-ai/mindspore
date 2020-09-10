@@ -45,8 +45,8 @@ int CropCPUKernel::Init() { return RET_OK; }
 int CropCPUKernel::CropParallelRun(int thread_id) {
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
-  float *input_data = reinterpret_cast<float *>(input->Data());
-  float *output_data = reinterpret_cast<float *>(output->Data());
+  float *input_data = reinterpret_cast<float *>(input->MutableData());
+  float *output_data = reinterpret_cast<float *>(output->MutableData());
   auto param = reinterpret_cast<CropParameter *>(op_parameter_);
   Crop4D(input_data, output_data, input->shape().data(), output->shape().data(), param, thread_id);
   return RET_OK;
@@ -62,8 +62,8 @@ int CropCPUKernel::Run() {
   auto output = out_tensors_[0];
   auto param = reinterpret_cast<CropParameter *>(op_parameter_);
   if (output->shape()[1] < param->op_parameter_.thread_num_) {
-    float *input_data = reinterpret_cast<float *>(input->Data());
-    float *output_data = reinterpret_cast<float *>(output->Data());
+    float *input_data = reinterpret_cast<float *>(input->MutableData());
+    float *output_data = reinterpret_cast<float *>(output->MutableData());
     Crop4DNoParallel(input_data, output_data, input->shape().data(), output->shape().data(), param);
     return RET_OK;
   }

@@ -114,8 +114,8 @@ int PReluCPUKernel::Run() {
   }
   MS_ASSERT(in_shape.size() >= 2);
   auto input_tensor = in_tensors_[0];
-  ori_input_ = reinterpret_cast<float *>(input_tensor->Data());
-  output_data_ = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
+  ori_input_ = reinterpret_cast<float *>(input_tensor->MutableData());
+  output_data_ = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
 
   if (prelu_param_->channelShared) {
     auto ret = ProcessShareChannelInput();
@@ -133,7 +133,7 @@ int PReluCPUKernel::Run() {
 
   // negative slope tensor
   auto negative_slope_tensor = in_tensors_.at(1);
-  prelu_param_->slope_ = reinterpret_cast<float *>(negative_slope_tensor->Data());
+  prelu_param_->slope_ = reinterpret_cast<float *>(negative_slope_tensor->MutableData());
 
   auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, PReluRun, this, prelu_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
@@ -147,8 +147,8 @@ int PReluCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                              const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *param,
+kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *param,
                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   if (param == nullptr) {

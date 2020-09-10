@@ -60,10 +60,10 @@ int WhereCPUKernel::Run() {
   int num1_ = input1->ElementsNum();
   int num2_ = input2->ElementsNum();
 
-  input_data = reinterpret_cast<bool *>(input->Data());
-  input_data1 = reinterpret_cast<float *>(input1->Data());
-  input_data2 = reinterpret_cast<float *>(input2->Data());
-  output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  input_data = reinterpret_cast<bool *>(input->MutableData());
+  input_data1 = reinterpret_cast<float *>(input1->MutableData());
+  input_data2 = reinterpret_cast<float *>(input2->MutableData());
+  output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   int num_max = num > num1_ ? num : (num1_ > num2_ ? num1_ : num2_);
   where_param_->num_ = num;
   where_param_->num1_ = num1_;
@@ -87,10 +87,9 @@ int WhereCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuWhereFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *opParameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuWhereFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                              const lite::Context *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "input opParameter is nullptr!";

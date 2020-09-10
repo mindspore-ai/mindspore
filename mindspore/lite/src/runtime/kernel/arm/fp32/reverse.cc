@@ -130,8 +130,8 @@ int ReverseCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  in_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->Data());
-  out_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  in_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   ret = ParallelLaunch(THREAD_POOL_DEFAULT, ReverseRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Reverse run error error_code[" << ret << "]";
@@ -140,10 +140,9 @@ int ReverseCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuReverseFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                                OpParameter *opParameter, const lite::Context *ctx,
-                                                const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuReverseFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                const lite::Context *ctx, const kernel::KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "opParameter is NULL! ";

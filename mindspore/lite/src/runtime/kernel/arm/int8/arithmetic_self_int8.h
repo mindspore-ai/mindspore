@@ -42,8 +42,8 @@ class ArithmeticSelfInt8CPUKernel : public LiteKernel {
   typedef int (*ArithmeticSelfInt8Run)(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
  public:
-  explicit ArithmeticSelfInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+  explicit ArithmeticSelfInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                       const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                                        const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
     switch (parameter->type_) {

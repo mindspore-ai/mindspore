@@ -40,7 +40,7 @@ ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() {
 int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // init weight, int8 -> int16
   auto weight_tensor = in_tensors_[kWeightIndex];
-  auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->Data());
+  auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
   int channel = weight_tensor->Batch();
   int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
   auto tmp_weight = reinterpret_cast<int8_t *>(malloc(pack_weight_size * sizeof(int8_t)));
@@ -70,7 +70,7 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, channel * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
-    auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->Data());
+    auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->MutableData());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(int32_t));
   }
 
@@ -145,10 +145,10 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
-  input_ptr_ = reinterpret_cast<int8_t *>(input_tensor->Data());
+  input_ptr_ = reinterpret_cast<int8_t *>(input_tensor->MutableData());
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_ptr_ = reinterpret_cast<int8_t *>(output_tensor->Data());
+  output_ptr_ = reinterpret_cast<int8_t *>(output_tensor->MutableData());
 
   ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConvDwInt8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
@@ -160,10 +160,9 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);

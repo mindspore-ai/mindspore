@@ -28,16 +28,16 @@ STATUS ModelInputFormatPreProcessPass::Run(schema::MetaGraphT *graph) {
   for (auto inputIndex : graph->inputIndex) {
     if (graph->allTensors[inputIndex]->dims.size() == 4) {
       std::vector<int32_t> tmpDims(graph->allTensors[inputIndex]->dims);
-      auto status =
-        NodeUtils::ConvertDims(schema::Format_NCHW, tmpDims, schema::Format_NHWC, &graph->allTensors[inputIndex]->dims);
+      auto status = NodeUtils::ConvertDims(schema::Format::Format_NCHW, tmpDims, schema::Format::Format_NHWC,
+                                           &graph->allTensors[inputIndex]->dims);
       if (status == RET_OK) {
-        graph->allTensors[inputIndex]->format = schema::Format_NHWC;
+        graph->allTensors[inputIndex]->format = schema::Format::Format_NHWC;
       } else {
         MS_LOG(ERROR) << "ConvertDims from NHWC to NCHW error: " << status;
         return RET_ERROR;
       }
     } else {
-      graph->allTensors[inputIndex]->format = schema::Format_NHWC;
+      graph->allTensors[inputIndex]->format = schema::Format::Format_NHWC;
     }
   }
   return RET_OK;

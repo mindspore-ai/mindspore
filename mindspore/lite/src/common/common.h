@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_COMMON_COMMON_H_
 
 #include <string>
-#include "schema/model_generated.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 namespace lite {
@@ -51,9 +51,8 @@ static const char CALIB_NORM[] = "NORM";
 // dims
 static const int32_t DIM_DEFAULT_SIZE = 4;
 
-static const schema::Format DEFAULT_FORMAT = schema::Format_NCHW;
+static const schema::Format DEFAULT_FORMAT = schema::Format::Format_NCHW;
 }  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_COMMON_COMMON_H_
-

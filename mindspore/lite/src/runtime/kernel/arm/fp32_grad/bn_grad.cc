@@ -93,12 +93,12 @@ int BNGradCPUKernel::Run() {
   float *variance_delta = mean_delta + channels;
   float *mean_add_delta = variance_delta + channels;
 
-  float *x = reinterpret_cast<float *>(input_x->Data());
-  float *yt = reinterpret_cast<float *>(input_yt->Data());
-  float *scale = reinterpret_cast<float *>(input_scale->Data());
-  float *dx = reinterpret_cast<float *>(output_dx->Data());
-  float *dscale = reinterpret_cast<float *>(output_scale->Data());
-  float *dbias = reinterpret_cast<float *>(output_bias->Data());
+  float *x = reinterpret_cast<float *>(input_x->MutableData());
+  float *yt = reinterpret_cast<float *>(input_yt->MutableData());
+  float *scale = reinterpret_cast<float *>(input_scale->MutableData());
+  float *dx = reinterpret_cast<float *>(output_dx->MutableData());
+  float *dscale = reinterpret_cast<float *>(output_scale->MutableData());
+  float *dbias = reinterpret_cast<float *>(output_bias->MutableData());
 
   std::copy(yt, yt + batch * channels * spatial, dx);
   meanVar(x, batch, spatial, channels, eps, mean, invar);
@@ -114,10 +114,9 @@ int BNGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuBNGradFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                               const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *opParameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuBNGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BNGrad);

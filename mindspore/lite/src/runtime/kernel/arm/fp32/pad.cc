@@ -82,8 +82,8 @@ int PadCPUKernel::RunImpl(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
 
-  auto input_data = reinterpret_cast<float *>(input->Data());
-  auto output_data = reinterpret_cast<float *>(output->Data());
+  auto input_data = reinterpret_cast<float *>(input->MutableData());
+  auto output_data = reinterpret_cast<float *>(output->MutableData());
 
   Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
 
@@ -97,9 +97,9 @@ int PadCPUKernel::Run() {
     return prepare_ret;
   }
   auto output = out_tensors_.at(0);
-  int output_size = output->DataSize();
+  int output_size = output->ElementsNum();
 
-  auto output_data = reinterpret_cast<float *>(output->Data());
+  auto output_data = reinterpret_cast<float *>(output->MutableData());
   memset(output_data, 0, output_size * sizeof(float));
 
   int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, PadImpl, this, context_->thread_num_);

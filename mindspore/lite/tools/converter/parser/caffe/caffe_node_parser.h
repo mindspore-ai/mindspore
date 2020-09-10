@@ -34,9 +34,7 @@ class CaffeNodeParser {
 
   virtual ~CaffeNodeParser() {}
 
-  virtual int Parse(const caffe::LayerParameter &proto,
-                    const caffe::LayerParameter &weight,
-                    schema::CNodeT *op,
+  virtual int Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
                     std::vector<schema::TensorT *> *weightVec) = 0;
 
  protected:
@@ -45,10 +43,8 @@ class CaffeNodeParser {
 
 schema::TensorT *ConvertWeight(const caffe::BlobProto &proto);
 
-STATUS ConvertShape(const caffe::BlobProto &proto,
-                    std::vector<int32_t> *shape);
+STATUS ConvertShape(const caffe::BlobProto &proto, std::vector<int32_t> *shape);
 }  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_NODE_PARSER_H_
-

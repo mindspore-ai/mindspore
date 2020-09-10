@@ -32,7 +32,7 @@
 #include "ir/func_graph.h"
 #include "schema/inner/model_generated.h"
 #include "securec/include/securec.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 #include "src/param_value_lite.h"
 #include "tools/converter/parser/onnx/onnx.pb.h"
 #include "utils/log_adapter.h"
@@ -54,16 +54,16 @@ enum ParseForm : int {
 };
 
 static std::map<std::string, ParseForm> kParseTypeSwitchMap{
-    {"type", FORM_PARSE_TYPE}, {"scalar", FORM_PARSE_SCALAR}, {"tensor", FORM_PARSE_TENSOR}};
+  {"type", FORM_PARSE_TYPE}, {"scalar", FORM_PARSE_SCALAR}, {"tensor", FORM_PARSE_TENSOR}};
 
 static std::unordered_map<int, TypeId> kDefaultValueSwitchMap{
-    {onnx::TensorProto_DataType_BOOL, kNumberTypeBool}, {onnx::TensorProto_DataType_INT8, kNumberTypeInt8},
-    {onnx::TensorProto_DataType_INT16, kNumberTypeInt16}, {onnx::TensorProto_DataType_INT32, kNumberTypeInt32},
-    {onnx::TensorProto_DataType_INT64, kNumberTypeInt64}, {onnx::TensorProto_DataType_UINT8, kNumberTypeUInt8},
-    {onnx::TensorProto_DataType_UINT16, kNumberTypeUInt16}, {onnx::TensorProto_DataType_UINT32, kNumberTypeUInt32},
-    {onnx::TensorProto_DataType_UINT64, kNumberTypeUInt64}, {onnx::TensorProto_DataType_FLOAT16, kNumberTypeFloat16},
-    {onnx::TensorProto_DataType_FLOAT, kNumberTypeFloat32}, {onnx::TensorProto_DataType_DOUBLE, kNumberTypeFloat64},
-    {onnx::TensorProto_DataType_STRING, kObjectTypeString},
+  {onnx::TensorProto_DataType_BOOL, kNumberTypeBool},     {onnx::TensorProto_DataType_INT8, kNumberTypeInt8},
+  {onnx::TensorProto_DataType_INT16, kNumberTypeInt16},   {onnx::TensorProto_DataType_INT32, kNumberTypeInt32},
+  {onnx::TensorProto_DataType_INT64, kNumberTypeInt64},   {onnx::TensorProto_DataType_UINT8, kNumberTypeUInt8},
+  {onnx::TensorProto_DataType_UINT16, kNumberTypeUInt16}, {onnx::TensorProto_DataType_UINT32, kNumberTypeUInt32},
+  {onnx::TensorProto_DataType_UINT64, kNumberTypeUInt64}, {onnx::TensorProto_DataType_FLOAT16, kNumberTypeFloat16},
+  {onnx::TensorProto_DataType_FLOAT, kNumberTypeFloat32}, {onnx::TensorProto_DataType_DOUBLE, kNumberTypeFloat64},
+  {onnx::TensorProto_DataType_STRING, kObjectTypeString},
 };
 
 std::shared_ptr<ValueTuple> ParserScalarAttrValue(const std::string &attr_name,
@@ -124,8 +124,8 @@ std::shared_ptr<ValueTuple> ParserScalarAttrValue(const std::string &attr_name,
   return {};
 }
 
-std::shared_ptr<abstract::AbstractTuple>
-ParserAttrShape(const std::string &attr_name, const std::unordered_map<string, abstract::AbstractTensorPtr> &kv) {
+std::shared_ptr<abstract::AbstractTuple> ParserAttrShape(
+  const std::string &attr_name, const std::unordered_map<string, abstract::AbstractTensorPtr> &kv) {
   std::string str = attr_name;
   auto replace = [&](const string &orgStr, const string &newStr) {
     std::string::size_type pos(0);
@@ -235,12 +235,12 @@ bool AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &nod
   node->set_abstract(abstract_tensor);
 
   if (default_para_map_.find(value_proto.name()) != default_para_map_.end()) {
-    tensor::Tensor *tensor_info = new tensor::Tensor(kDefaultValueSwitchMap[tensor_typeproto.elem_type()], shape);
+    Tensor *tensor_info = new Tensor(kDefaultValueSwitchMap[tensor_typeproto.elem_type()], shape);
     MS_EXCEPTION_IF_NULL(tensor_info);
     tensor_info->MallocData();
     const onnx::TensorProto initialize_proto = default_para_map_[value_proto.name()];
     std::string initial_data = initialize_proto.raw_data();
-    auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->Data());
+    auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->MutableData());
     MS_EXCEPTION_IF_NULL(tensor_data_buf);
     tensor_info->SetData(nullptr);
     auto ret = memcpy_s(tensor_data_buf, tensor_info->Size(), initial_data.data(), initial_data.size());
@@ -325,7 +325,8 @@ ValuePtr AnfImporterFromProtobuf::ObtainCNodeAttrInScalarForm(const onnx::Tensor
     case onnx::TensorProto_DataType_BOOL: {
       return ParseAttrInScalar_int32_bool(attr_tensor);
     }
-    default:MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_tensor_type;
+    default:
+      MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_tensor_type;
       return {};
   }
   return {};
@@ -343,8 +344,7 @@ bool AnfImporterFromProtobuf::ObtainCNodeAttrInTensorForm(const PrimitivePtr &pr
       shape.push_back(attr_tensor.dims(i));
     }
     tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
-    tensor_info->MallocData();
-    auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->Data());
+    auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
     ret = memcpy_s(tensor_data_buf, tensor_info->Size(), tensor_buf.data(), tensor_buf.size());
     prim->set_attr(attr_name, MakeValue(tensor_info));
   } else {
@@ -400,7 +400,8 @@ bool AnfImporterFromProtobuf::GetAttrValueForCNode(const PrimitivePtr &prim, con
       case FORM_PARSE_TENSOR: {
         return ObtainCNodeAttrInTensorForm(prim, attr_name, attr_tensor);
       }
-      default:MS_LOG(ERROR) << "parse attr type don't support input of ref_attr_name";
+      default:
+        MS_LOG(ERROR) << "parse attr type don't support input of ref_attr_name";
         return false;
     }
   }
@@ -424,9 +425,8 @@ bool AnfImporterFromProtobuf::ObtainValueNodeInTensorForm(const std::string &val
     shape.push_back(attr_tensor.dims(i));
   }
   tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
-  tensor_info->MallocData();
   const std::string &tensor_buf = attr_tensor.raw_data();
-  auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->Data());
+  auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   auto ret = memcpy_s(tensor_data_buf, tensor_info->Size(), tensor_buf.data(), tensor_buf.size());
   if (EOK != ret) {
     MS_LOG(ERROR) << "memcpy_s error";
@@ -486,7 +486,8 @@ bool AnfImporterFromProtobuf::GetAttrValueForValueNode(const std::string &value_
       case FORM_PARSE_TENSOR: {
         return ObtainValueNodeInTensorForm(value_node_name, attr_tensor);
       }
-      default:MS_LOG(ERROR) << "parse attr type don't support input of ref_attr_name";
+      default:
+        MS_LOG(ERROR) << "parse attr type don't support input of ref_attr_name";
         return false;
     }
   }
@@ -517,8 +518,8 @@ bool AnfImporterFromProtobuf::BuildValueNodeForFuncGraph(const onnx::NodeProto &
   return GetAttrValueForValueNode(value_node_name, attr_proto);
 }
 
-std::unordered_map<std::string, abstract::AbstractTensorPtr>
-AnfImporterFromProtobuf::GetAbstractForCNode(const onnx::AttributeProto &attr_proto) {
+std::unordered_map<std::string, abstract::AbstractTensorPtr> AnfImporterFromProtobuf::GetAbstractForCNode(
+  const onnx::AttributeProto &attr_proto) {
   std::unordered_map<std::string, abstract::AbstractTensorPtr> kv;
   for (int i = 0; i < attr_proto.tensors_size(); i++) {
     std::vector<int> shape_vec;
@@ -572,7 +573,7 @@ CNodePtr AnfImporterFromProtobuf::BuildCNodeForFuncGraph(const FuncGraphPtr &out
     }
     inputs.push_back(anfnode_build_map_[input_name]);
   }
-  auto primitivec_ptr = PrimitiveC::UnPackFromPrimitive(*prim, inputs, quantType);
+  auto primitivec_ptr = PrimitiveC::Create(*prim, inputs, quantType);
   if (primitivec_ptr == nullptr) {
     MS_LOG(ERROR) << "Create PrimitiveC return nullptr, " << prim->name();
     return nullptr;
@@ -745,7 +746,7 @@ int AnfImporterFromProtobuf::Import(const schema::QuantType &quantType) {
 
 onnx::ModelProto *AnfImporterFromProtobuf::ReadOnnxFromBinary(const std::string &model_path) {
   auto onnx_model = new onnx::ModelProto;
-  if (ReadProtoFromBinaryFile((const char *) model_path.c_str(), onnx_model) != RET_OK) {
+  if (ReadProtoFromBinaryFile((const char *)model_path.c_str(), onnx_model) != RET_OK) {
     MS_LOG(ERROR) << "Read onnx model file failed, model path: " << model_path;
     return nullptr;
   }

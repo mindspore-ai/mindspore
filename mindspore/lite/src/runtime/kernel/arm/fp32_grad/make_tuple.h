@@ -26,9 +26,9 @@
 namespace mindspore::kernel {
 class MakeTupleCPUKernel : public LiteKernel {
  public:
-  explicit MakeTupleCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                             const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                             const lite::Primitive *primitive)
+  explicit MakeTupleCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                              const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                              const lite::Primitive *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     param = parameter;
   }

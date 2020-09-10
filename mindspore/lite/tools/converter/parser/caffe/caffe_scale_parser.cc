@@ -22,10 +22,8 @@ const int32_t DIM_DEFAULT_SIZE = 4;
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto,
-                               const caffe::LayerParameter &weight,
-                               schema::CNodeT *op,
-                               std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
+                               schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeScaleParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";

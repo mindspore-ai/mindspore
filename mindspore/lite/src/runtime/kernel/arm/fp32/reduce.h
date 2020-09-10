@@ -31,8 +31,8 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
                          const int *src_shape, float *dst_data, const int tid, const int thread_num);
 
  public:
-  ReduceCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
-                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  ReduceCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
+                  const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                   const mindspore::lite::PrimitiveC *primitive)
       : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive) {}
   ~ReduceCPUKernel() {

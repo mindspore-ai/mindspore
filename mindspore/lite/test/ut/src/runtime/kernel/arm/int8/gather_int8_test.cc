@@ -30,8 +30,8 @@ class TestGatherInt8 : public mindspore::CommonTest {
 TEST_F(TestGatherInt8, GatherTest) {
   std::vector<int8_t> in_data = {11, 41, 21, 51, 31, 61, -11, -41, -21, -51, -31, -61};
   std::vector<int8_t> in_data1 = {4, 2};
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
 
   GatherParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Gather;
@@ -39,18 +39,18 @@ TEST_F(TestGatherInt8, GatherTest) {
   op_param.batchDims_ = 1;
   std::vector<int> shape = {2, 1, 3, 2};
 
-  lite::tensor::QuantArg input_quant_arg;
+  lite::QuantArg input_quant_arg;
   input_quant_arg.scale = 0.1;
   input_quant_arg.zeroPoint = 1;
-  lite::tensor::QuantArg input_quant_arg_1;
+  lite::QuantArg input_quant_arg_1;
   input_quant_arg_1.scale = 0.5;
   input_quant_arg_1.zeroPoint = 2;
-  lite::tensor::QuantArg output_quant_arg;
+  lite::QuantArg output_quant_arg;
   output_quant_arg.scale = 0.1;
   output_quant_arg.zeroPoint = 1;
 
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
+  lite::Tensor input0_tensor;
+  lite::Tensor input1_tensor;
 
   inputs_tensor.push_back(&input0_tensor);
   inputs_tensor.push_back(&input1_tensor);
@@ -67,7 +67,7 @@ TEST_F(TestGatherInt8, GatherTest) {
   std::vector<int8_t> output(12);
   // std::vector<int8_t> corr_out = {-18, -22, -16, -21, -14, -19, -22, -34, -24, -35, -26, -36 };
   std::vector<int8_t> corr_out = {-11, -41, -21, -51, -31, -61, 11, 41, 21, 51, 31, 61};
-  lite::tensor::Tensor output0_tensor;
+  lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.SetData(output.data());
   output0_tensor.set_shape(shape);

@@ -70,7 +70,7 @@ int GatherNdCPUKernel::ReSize() {
   auto in_shape = in_tensors_.front()->shape();
   int in_rank = in_shape.size();
   int idx_lastshape = indices_shape[indices_rank - 1];
-  auto indices_ptr = reinterpret_cast<int *>(indices_tensor->Data());
+  auto indices_ptr = reinterpret_cast<int *>(indices_tensor->MutableData());
   area_ = 1;
   for (int i = idx_lastshape; i < in_rank; ++i) {
     area_ *= in_shape[i];
@@ -121,8 +121,8 @@ int GatherNdCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->Data());
-  out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->Data());
+  in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, GatherNdRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "gatherNd error error_code[" << ret << "]";
@@ -131,10 +131,9 @@ int GatherNdCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuGatherNdFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                 const std::vector<lite::tensor::Tensor *> &outputs,
-                                                 OpParameter *opParameter, const lite::Context *ctx,
-                                                 const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuGatherNdFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                 const lite::Context *ctx, const kernel::KernelKey &desc,
                                                  const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_GatherNd);

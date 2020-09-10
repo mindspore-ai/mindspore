@@ -174,7 +174,7 @@ int Benchmark::CompareOutput() {
   for (const auto &calibTensor : calibData) {
     std::string nodeOrTensorName = calibTensor.first;
     auto tensors = session->GetOutputsByNodeName(nodeOrTensorName);
-    const mindspore::tensor::MSTensor *tensor = nullptr;
+    mindspore::tensor::MSTensor *tensor = nullptr;
     if (tensors.empty() || tensors.size() != 1) {
       MS_LOG(INFO) << "Cannot find output node: " << nodeOrTensorName
                    << " or node has more than one output tensor, switch to GetOutputByTensorName";
@@ -370,11 +370,11 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
     return RET_ERROR;
   }
   if (_flags->device == "CPU") {
-    context->device_ctx_.type = lite::DT_CPU;
+    context->device_type_ = lite::DT_CPU;
   } else if (_flags->device == "GPU") {
-    context->device_ctx_.type = lite::DT_GPU;
+    context->device_type_ = lite::DT_GPU;
   } else {
-    context->device_ctx_.type = lite::DT_NPU;
+    context->device_type_ = lite::DT_NPU;
   }
 
   if (_flags->cpuBindMode == -1) {

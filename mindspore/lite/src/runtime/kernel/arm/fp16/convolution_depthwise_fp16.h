@@ -34,8 +34,8 @@ void ConvDwFp16(float16_t *output_data, const float16_t *input_data, const float
 namespace mindspore::kernel {
 class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
-  ConvolutionDepthwiseFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+  ConvolutionDepthwiseFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                    const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                                     const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ConvolutionDepthwiseFp16CPUKernel() override;

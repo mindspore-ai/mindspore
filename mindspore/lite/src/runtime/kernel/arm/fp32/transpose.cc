@@ -53,7 +53,26 @@ int TransposeCPUKernel::ReSize() {
     param->strides_[i] = in_shape[i + 1] * param->strides_[i + 1];
     param->out_strides_[i] = out_shape[i + 1] * param->out_strides_[i + 1];
   }
+  if (this->in_shape_ != nullptr) {
+    free(this->in_shape_);
+  }
+  if (this->out_shape_ != nullptr) {
+    free(this->out_shape_);
+  }
+  in_shape_ = reinterpret_cast<int *>(malloc(in_shape.size() * sizeof(int)));
+  out_shape_ = reinterpret_cast<int *>(malloc(out_shape.size() * sizeof(int)));
+  memcpy(in_shape_, in_shape.data(), in_shape.size() * sizeof(int));
+  memcpy(out_shape_, out_shape.data(), in_shape.size() * sizeof(int));
   return RET_OK;
+}
+
+TransposeCPUKernel::~TransposeCPUKernel() {
+  if (this->in_shape_ != nullptr) {
+    free(this->in_shape_);
+  }
+  if (this->out_shape_ != nullptr) {
+    free(this->out_shape_);
+  }
 }
 
 int TransposeCPUKernel::TransposeParallel(int task_id) {
@@ -96,10 +115,8 @@ int TransposeCPUKernel::Run() {
     MS_LOG(ERROR) << "null pointer dreferencing.";
     return RET_ERROR;
   }
-  in_data_ = reinterpret_cast<float *>(in_tensor->Data());
-  out_data_ = reinterpret_cast<float *>(out_tensor->Data());
-  in_shape_ = const_cast<int *>(in_tensor->shape().data());
-  out_shape_ = const_cast<int *>(out_tensor->shape().data());
+  in_data_ = reinterpret_cast<float *>(in_tensor->MutableData());
+  out_data_ = reinterpret_cast<float *>(out_tensor->MutableData());
 
   ret = ParallelLaunch(THREAD_POOL_DEFAULT, TransposeRun, this, thread_h_num_);
   if (ret != RET_OK) {
@@ -109,10 +126,9 @@ int TransposeCPUKernel::Run() {
   return ret;
 }  // namespace mindspore::kernel
 
-kernel::LiteKernel *CpuTransposeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuTransposeFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Transpose);
   if (opParameter == nullptr) {

@@ -58,8 +58,8 @@ int Unsqueezeint8CPUKernel::DoUnsqueeze(int task_id) {
     return RET_OK;
   }
 
-  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.front()->Data());
-  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.front()->Data());
+  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.front()->MutableData());
+  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.front()->MutableData());
   size_t data_size = out_tensors_.front()->Size();
 
   int ret = Int8Unsqueeze(input_ptr, output_ptr, Unsq_para_, data_size, task_id);
@@ -86,8 +86,8 @@ int Unsqueezeint8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   ret = ParallelLaunch(THREAD_POOL_DEFAULT, UnsqueezeIn8Run, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error error_code[" << ret << "]";
@@ -96,10 +96,9 @@ int Unsqueezeint8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuUnsqueezeInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuUnsqueezeInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Unsqueeze);

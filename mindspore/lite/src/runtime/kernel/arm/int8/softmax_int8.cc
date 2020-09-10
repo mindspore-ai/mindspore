@@ -62,16 +62,14 @@ int SoftmaxInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int SoftmaxInt8CPUKernel::ReSize() {
-  return SoftmaxBaseCPUKernel::ReSize();
-}
+int SoftmaxInt8CPUKernel::ReSize() { return SoftmaxBaseCPUKernel::ReSize(); }
 
 int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
   MS_ASSERT(in_tensors_.size() == 1);
   MS_ASSERT(out_tensors_.size() == 1);
 
-  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->Data());
-  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
+  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
   int outter_size = 1, inner_size = 1;
   for (int i = 0; i < softmax_param_->axis_; i++) {

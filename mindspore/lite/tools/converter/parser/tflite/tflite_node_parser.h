@@ -40,17 +40,12 @@ class TfliteNodeParser {
 
   virtual STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                        const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                       const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                       schema::CNodeT *op,
-                       std::vector<int32_t> *tensors_id,
-                       std::vector<schema::Format> *tensors_format,
-                       std::map<int, int>  *tensors_id_map) = 0;
+                       const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer, schema::CNodeT *op,
+                       std::vector<int32_t> *tensors_id, std::vector<schema::Format> *tensors_format,
+                       std::map<int, int> *tensors_id_map) = 0;
 
-  void AddOpInput(schema::CNodeT *op,
-                  std::vector<int32_t> *tensors_id,
-                  std::vector<schema::Format> *tensors_format,
-                  std::map<int, int> *tensors_id_map,
-                  int idx, int new_idx, int total,  schema::Format format) {
+  void AddOpInput(schema::CNodeT *op, std::vector<int32_t> *tensors_id, std::vector<schema::Format> *tensors_format,
+                  std::map<int, int> *tensors_id_map, int idx, int new_idx, int total, schema::Format format) {
     auto iter = tensors_id_map->find(idx);
     if (iter != tensors_id_map->end()) {
       op->inputIndex.emplace_back(iter->second);
@@ -65,11 +60,8 @@ class TfliteNodeParser {
     }
   }
 
-  void AddOpOutput(schema::CNodeT *op,
-                  std::vector<int32_t> *tensors_id,
-                  std::vector<schema::Format> *tensors_format,
-                  std::map<int, int> *tensors_id_map,
-                  int idx, int new_idx, int total, schema::Format format) {
+  void AddOpOutput(schema::CNodeT *op, std::vector<int32_t> *tensors_id, std::vector<schema::Format> *tensors_format,
+                   std::map<int, int> *tensors_id_map, int idx, int new_idx, int total, schema::Format format) {
     auto iter = tensors_id_map->find(idx);
     if (iter != tensors_id_map->end()) {
       op->outputIndex.emplace_back(iter->second);
@@ -85,8 +77,7 @@ class TfliteNodeParser {
   }
 
   template <typename T>
-  STATUS GetTfliteData(const int32_t tensor_index,
-                       const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+  STATUS GetTfliteData(const int32_t tensor_index, const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                        const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                        std::vector<T> &attr_data) {
     int32_t count = 1;
@@ -158,14 +149,10 @@ class TfliteNodeParser {
  protected:
   const std::string &name;
   std::map<int, TypeId> dtype_map = {
-    {tflite::TensorType_FLOAT64, TypeId::kNumberTypeFloat64},
-    {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32},
-    {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16},
-    {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},
-    {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},
-    {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},
-    {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
-    {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
+    {tflite::TensorType_FLOAT64, TypeId::kNumberTypeFloat64}, {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32},
+    {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16}, {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},
+    {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},     {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},
+    {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},       {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
     {tflite::TensorType_BOOL, TypeId::kNumberTypeBool},
   };
 };

@@ -18,7 +18,7 @@
 #include "src/common/common.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 namespace lite {
@@ -74,7 +74,7 @@ constexpr int kBlockShapeSize = 2;
 constexpr int kCropsSize = 4;
 }  // namespace
 
-int BatchToSpace::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
+int BatchToSpace::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (outputs.size() != kBatchToSpaceOutputNum || inputs.size() != kBatchToSpaceInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
@@ -82,7 +82,7 @@ int BatchToSpace::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
   }
 
   auto input = inputs.at(0);
-  if (input->GetFormat() != schema::Format_NHWC) {
+  if (input->GetFormat() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "batch_to_space only support NHWC now!";
     return RET_FORMAT_ERR;
   }

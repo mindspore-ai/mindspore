@@ -66,8 +66,8 @@ class AnfImporterFromProtobuf : public AnfImporter {
   bool ObtainValueNodeInTensorForm(const string &value_node_name, const onnx::TensorProto &attr_tensor);
   bool GetAttrValueForValueNode(const std::string &value_node_name, const onnx::AttributeProto &attr_proto);
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const onnx::TensorProto &attr_tensor);
-  std::unordered_map<std::string,
-                     abstract::AbstractTensorPtr> GetAbstractForCNode(const onnx::AttributeProto &attr_proto);
+  std::unordered_map<std::string, abstract::AbstractTensorPtr> GetAbstractForCNode(
+    const onnx::AttributeProto &attr_proto);
 
  private:
   std::string producer_name_;

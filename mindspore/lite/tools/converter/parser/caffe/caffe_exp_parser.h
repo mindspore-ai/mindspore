@@ -27,9 +27,7 @@ class CaffeExpParser : public CaffeNodeParser {
  public:
   CaffeExpParser() : CaffeNodeParser("exp") {}
 
-  STATUS Parse(const caffe::LayerParameter &proto,
-               const caffe::LayerParameter &weight,
-               schema::CNodeT *op,
+  STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
                std::vector<schema::TensorT *> *weightVec) override;
 };
 }  // namespace lite

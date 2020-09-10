@@ -66,15 +66,15 @@ int CastCPUKernel::DoCast(int thread_id) {
 
   auto offset = thread_id * stride_;
   auto output = out_tensors_.at(0);
-  auto output_data = output->Data();
+  auto output_data = output->MutableData();
   auto input_data_type = input->data_type();
   auto output_data_type = output->data_type();
   if (output_data_type != kNumberTypeFloat32) {
     if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt32) {
-      Float32ToInt32(reinterpret_cast<float *>(input->Data()) + offset,
+      Float32ToInt32(reinterpret_cast<float *>(input->MutableData()) + offset,
                      reinterpret_cast<int32_t *>(output_data) + offset, data_num);
     } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeFloat16) {
-      Float32ToFp16(reinterpret_cast<float *>(input->Data()) + offset,
+      Float32ToFp16(reinterpret_cast<float *>(input->MutableData()) + offset,
                     reinterpret_cast<uint16_t *>(output_data) + offset, data_num);
     } else {
       MS_LOG(ERROR) << "Unsupported datatype from " << input_data_type << " to " << output_data_type;
@@ -83,15 +83,15 @@ int CastCPUKernel::DoCast(int thread_id) {
   } else {
     switch (input_data_type) {
       case kNumberTypeUInt8:
-        Uint8ToFloat32(reinterpret_cast<uint8_t *>(input->Data()) + offset,
+        Uint8ToFloat32(reinterpret_cast<uint8_t *>(input->MutableData()) + offset,
                        reinterpret_cast<float *>(output_data) + offset, data_num);
         break;
       case kNumberTypeInt32:
-        Int32ToFloat32(reinterpret_cast<int32_t *>(input->Data()) + offset,
+        Int32ToFloat32(reinterpret_cast<int32_t *>(input->MutableData()) + offset,
                        reinterpret_cast<float *>(output_data) + offset, data_num);
         break;
       case kNumberTypeFloat16:
-        Fp16ToFloat32(reinterpret_cast<uint16_t *>(input->Data()) + offset,
+        Fp16ToFloat32(reinterpret_cast<uint16_t *>(input->MutableData()) + offset,
                       reinterpret_cast<float *>(output_data) + offset, data_num);
         break;
       default:
@@ -114,10 +114,9 @@ int CastCPUKernel::Run() {
   return ParallelLaunch(THREAD_POOL_DEFAULT, CastRun, this, op_parameter_->thread_num_);
 }
 
-kernel::LiteKernel *CpuCastFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuCastFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                             const lite::Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";

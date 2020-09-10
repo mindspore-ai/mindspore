@@ -32,7 +32,7 @@ namespace mindspore {
 namespace lite {
 const int USEC = 1000000;
 const int MSEC = 1000;
-std::vector<std::string> StringSplit(std::string str, const std::string& pattern);
+std::vector<std::string> StringSplit(std::string str, const std::string &pattern);
 
 uint64_t GetTimeUs(void);
 
@@ -190,4 +190,3 @@ inline Option<bool> GenericParseValue(const std::string &value) {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_COMMON_UTILS_H_
-

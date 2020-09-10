@@ -73,7 +73,7 @@ constexpr int kBlockSizesSize = 2;
 constexpr int kPaddingsSize = 4;
 }  // namespace
 
-int SpaceToBatch::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
+int SpaceToBatch::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (outputs.size() != kSpaceToBatchNDOutputNum || inputs.size() != kSpaceToBatchNDInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
@@ -81,7 +81,7 @@ int SpaceToBatch::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
   }
 
   auto input = inputs.at(0);
-  if (input->GetFormat() != schema::Format_NHWC) {
+  if (input->GetFormat() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_batch only support NHWC now!";
     return 1;
   }

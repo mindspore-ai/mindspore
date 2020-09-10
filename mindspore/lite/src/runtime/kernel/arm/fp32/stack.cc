@@ -50,33 +50,32 @@ int StackCPUKernel::Run() {
   size_t inputs_num = in_tensors_.size();
   auto input0 = in_tensors_[0];
   if (inputs_num == 1) {
-    auto *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
-    DoStackOneInput(reinterpret_cast<const int8_t *>(input0->Data()), output_data, input0->Size());
+    auto *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
+    DoStackOneInput(reinterpret_cast<const int8_t *>(input0->MutableData()), output_data, input0->Size());
     return RET_OK;
   }
   auto input0_shape = in_tensors_[0]->shape();
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32 || in_tensors_[0]->data_type() == kNumberTypeFloat) {
-    auto *output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
+    auto *output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
     float *inputs[inputs_num];
     for (size_t i = 0; i < inputs_num; ++i) {
-      inputs[i] = reinterpret_cast<float *>(in_tensors_[i]->Data());
+      inputs[i] = reinterpret_cast<float *>(in_tensors_[i]->MutableData());
     }
     DoStack(inputs, inputs_num, input0_shape.data(), input0_shape.size(), axis_, output_data);
   } else {
-    auto *output_data = reinterpret_cast<int32_t *>(out_tensors_[0]->Data());
+    auto *output_data = reinterpret_cast<int32_t *>(out_tensors_[0]->MutableData());
     int32_t *inputs[inputs_num];
     for (size_t i = 0; i < inputs_num; ++i) {
-      inputs[i] = reinterpret_cast<int32_t *>(in_tensors_[i]->Data());
+      inputs[i] = reinterpret_cast<int32_t *>(in_tensors_[i]->MutableData());
     }
     DoStackInt32(inputs, inputs_num, input0_shape.data(), input0_shape.size(), axis_, output_data);
   }
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuStackFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *op_parameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuStackFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                              const lite::Context *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";

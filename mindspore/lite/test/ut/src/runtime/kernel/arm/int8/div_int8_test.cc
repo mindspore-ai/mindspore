@@ -29,9 +29,9 @@ class TestDivInt8 : public mindspore::CommonTest {
 };
 
 TEST_F(TestDivInt8, DivInt8) {
-  lite::tensor::Tensor in_tensor0(kNumberTypeInt8, {1, 1, 2, 5});
-  lite::tensor::Tensor in_tensor1(kNumberTypeInt8, {1, 1, 2, 5});
-  lite::tensor::Tensor out_tensor(kNumberTypeInt8, {1, 1, 2, 5});
+  lite::Tensor in_tensor0(kNumberTypeInt8, {1, 1, 2, 5});
+  lite::Tensor in_tensor1(kNumberTypeInt8, {1, 1, 2, 5});
+  lite::Tensor out_tensor(kNumberTypeInt8, {1, 1, 2, 5});
 
   int8_t input_data0[] = {105, 35, -27, 0, -63, 99, 16, 45, 67, -49};
   int8_t input_data1[] = {126, -38, -115, 106, -98, 119, 103, 81, -114, 68};
@@ -40,15 +40,15 @@ TEST_F(TestDivInt8, DivInt8) {
   in_tensor1.SetData(input_data1);
   out_tensor.SetData(output_data);
 
-  const lite::tensor::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
-  const lite::tensor::QuantArg quant_in1 = {0.00784314f, 0};
-  const lite::tensor::QuantArg quant_out = {0.00784314f, 0};
+  const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
+  const lite::QuantArg quant_in1 = {0.00784314f, 0};
+  const lite::QuantArg quant_out = {0.00784314f, 0};
   in_tensor0.AddQuantParam(quant_in0);
   in_tensor1.AddQuantParam(quant_in1);
   out_tensor.AddQuantParam(quant_out);
 
-  std::vector<lite::tensor::Tensor *> inputs = {&in_tensor0, &in_tensor1};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&in_tensor0, &in_tensor1};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   OpParameter parameter = {};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Div};

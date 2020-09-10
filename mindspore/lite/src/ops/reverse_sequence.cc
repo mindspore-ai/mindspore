@@ -47,7 +47,7 @@ int ReverseSequence::UnPackToFlatBuilder(const schema::Primitive *primitive, fla
 }
 #endif
 
-int ReverseSequence::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int ReverseSequence::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   auto input = inputs.front();
   auto output = outputs.front();
   MS_ASSERT(input != nullptr);

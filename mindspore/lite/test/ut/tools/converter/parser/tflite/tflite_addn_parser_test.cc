@@ -22,9 +22,7 @@ namespace mindspore {
 class TestTfliteParserAddN : public TestTfliteParser {
  public:
   TestTfliteParserAddN() = default;
-  void SetUp() override {
-    meta_graph = LoadAndConvert("./addn.tflite");
-  }
+  void SetUp() override { meta_graph = LoadAndConvert("./addn.tflite"); }
 };
 
 TEST_F(TestTfliteParserAddN, OpType) {

@@ -44,7 +44,7 @@ int Unstack::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
 }
 #endif
 
-int Unstack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int Unstack::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   auto input = inputs.at(0);
   MS_ASSERT(input != nullptr);
   auto input_shape = input->shape();

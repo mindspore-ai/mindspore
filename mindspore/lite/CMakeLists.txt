@@ -53,6 +53,7 @@ set(CORE_DIR ${TOP_DIR}/mindspore/core)
 set(CCSRC_DIR ${TOP_DIR}/mindspore/ccsrc)
 include_directories(${TOP_DIR})
 include_directories(${CORE_DIR})
+include_directories(${CORE_DIR}/ir)
 include_directories(${CCSRC_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/kernel/arm)
@@ -96,7 +97,6 @@ else ()
         set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,relro,-z,now -Wl,-z,noexecstack ${CMAKE_SHARED_LINKER_FLAGS}")
         set(CMAKE_EXE_LINKER_FLAGS "-Wl,-z,relro,-z,now -Wl,-z,noexecstack ${CMAKE_EXE_LINKER_FLAGS}")
     endif()
-    string(REPLACE    " -g " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif ()
 
 if (BUILD_DEVICE)
@@ -128,12 +128,6 @@ if (WIN32)
     add_compile_definitions(BUILDING_DLL)
 endif ()
 
-set(CORE_SRC
-        ${CORE_DIR}/ir/meta_tensor.cc
-        ${CORE_DIR}/gvar/logging_level.cc
-        ${CORE_DIR}/gvar/typeid_manager.cc
-        ${CORE_DIR}/base/base.cc
-        )
 if (BUILD_CONVERTER)
     if (PLATFORM_ARM64 OR PLATFORM_ARM32)
         MESSAGE(FATAL_ERROR "Cannot build converter in arm platform")
@@ -224,6 +218,7 @@ endif ()
 
 if (BUILD_DEVICE)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/internal)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/nnacl)
     if (NOT WIN32)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/benchmark)

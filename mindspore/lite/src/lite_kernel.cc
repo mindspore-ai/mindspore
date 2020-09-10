@@ -101,10 +101,9 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphOutputKernels(
   return output_kernels;
 }
 
-std::vector<lite::tensor::Tensor *> LiteKernelUtil::SubgraphInputTensors(
-  const std::vector<kernel::LiteKernel *> &kernels) {
-  std::vector<lite::tensor::Tensor *> input_tensors;
-  std::vector<lite::tensor::Tensor *> all_output_tensors;
+std::vector<lite::Tensor *> LiteKernelUtil::SubgraphInputTensors(const std::vector<kernel::LiteKernel *> &kernels) {
+  std::vector<lite::Tensor *> input_tensors;
+  std::vector<lite::Tensor *> all_output_tensors;
   for (const auto &kernel : kernels) {
     all_output_tensors.insert(all_output_tensors.end(), kernel->out_tensors().begin(), kernel->out_tensors().end());
   }
@@ -112,7 +111,7 @@ std::vector<lite::tensor::Tensor *> LiteKernelUtil::SubgraphInputTensors(
   for (const auto &kernel : input_kernels) {
     for (const auto &tensor : kernel->in_tensors()) {
       auto iter = std::find(all_output_tensors.begin(), all_output_tensors.end(), tensor);
-      if (iter == all_output_tensors.end() && tensor->Data() == nullptr) {
+      if (iter == all_output_tensors.end() && tensor->data_c() == nullptr) {
         input_tensors.emplace_back(tensor);
       }
     }
@@ -120,10 +119,9 @@ std::vector<lite::tensor::Tensor *> LiteKernelUtil::SubgraphInputTensors(
   return input_tensors;
 }
 
-std::vector<lite::tensor::Tensor *> LiteKernelUtil::SubgraphOutputTensors(
-  const std::vector<kernel::LiteKernel *> &kernels) {
-  std::vector<lite::tensor::Tensor *> output_tensors;
-  std::vector<lite::tensor::Tensor *> all_input_tensors;
+std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vector<kernel::LiteKernel *> &kernels) {
+  std::vector<lite::Tensor *> output_tensors;
+  std::vector<lite::Tensor *> all_input_tensors;
   for (const auto &kernel : kernels) {
     all_input_tensors.insert(all_input_tensors.end(), kernel->in_tensors().begin(), kernel->in_tensors().end());
   }
@@ -165,5 +163,5 @@ void LiteKernelUtil::InitTensorRefCount(std::vector<kernel::LiteKernel *> &kerne
   }
 }
 
-int LiteKernelUtil::SetInput(LiteKernel &kernelMod, std::vector<lite::tensor::Tensor *> inputs) { return -1; }
+int LiteKernelUtil::SetInput(LiteKernel &kernelMod, std::vector<lite::Tensor *> inputs) { return -1; }
 }  // namespace mindspore::kernel

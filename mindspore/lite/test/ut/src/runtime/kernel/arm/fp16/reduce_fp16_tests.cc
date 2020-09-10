@@ -31,10 +31,10 @@ class TestReduceFp16 : public mindspore::CommonTest {
 
  public:
   float err_tol = 1e-5;
-  lite::tensor::Tensor in_tensor_;
-  lite::tensor::Tensor out_tensor_;
-  std::vector<lite::tensor::Tensor *> inputs_{&in_tensor_};
-  std::vector<lite::tensor::Tensor *> outputs_{&out_tensor_};
+  lite::Tensor in_tensor_;
+  lite::Tensor out_tensor_;
+  std::vector<lite::Tensor *> inputs_{&in_tensor_};
+  std::vector<lite::Tensor *> outputs_{&out_tensor_};
   ReduceParameter param_ = {{}};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat16, schema::PrimitiveType_Reduce};
   lite::Context ctx_ = lite::Context();

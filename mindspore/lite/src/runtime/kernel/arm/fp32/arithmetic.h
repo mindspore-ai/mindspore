@@ -47,8 +47,8 @@ class ArithmeticCPUKernel : public LiteKernel {
                                   ArithmeticParameter *param);
 
  public:
-  ArithmeticCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+  ArithmeticCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                      const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
     arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(parameter);

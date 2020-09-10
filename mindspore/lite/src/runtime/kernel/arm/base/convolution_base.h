@@ -37,8 +37,8 @@ static constexpr int kPerTensor = 1;
 namespace mindspore::kernel {
 class ConvolutionBaseCPUKernel : public LiteKernel {
  public:
-  ConvolutionBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                           const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+  ConvolutionBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                           const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                            const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     op_parameter_->thread_num_ = ctx->thread_num_;
@@ -49,7 +49,7 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override { return 0; }
   int Run() override { return 0; }
-  virtual int CheckLayout(lite::tensor::Tensor *input_tensor);
+  virtual int CheckLayout(lite::Tensor *input_tensor);
   int SetIfAsymmetric();
   int SetIfPerChannel();
   int MallocQuantParam();
@@ -60,7 +60,7 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   int SetQuantMultiplier();
   int CheckResizeValid();
   void FreeQuantParam();
-  static int RestoreFilter(lite::tensor::Tensor *input_tensor);
+  static int RestoreFilter(lite::Tensor *input_tensor);
 
  protected:
   int tile_num_;

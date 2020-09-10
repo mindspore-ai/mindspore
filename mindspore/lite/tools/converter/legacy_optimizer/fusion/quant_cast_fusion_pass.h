@@ -48,4 +48,3 @@ class QuantCastFusionPass : public FusionPass {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_PREDICT_QUANT_CAST_FUSION_PASS_H
-

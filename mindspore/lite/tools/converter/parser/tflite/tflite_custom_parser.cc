@@ -47,7 +47,7 @@ STATUS TfliteCustomParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
 
   const auto &custom_attr = tflite_op->custom_options;
   auto attr_map = flexbuffers::GetRoot(custom_attr).AsMap();
-  attr->format = schema::Format_NHWC;
+  attr->format = schema::Format::Format_NHWC;
   attr->inputSize = tflite_op->inputs.size();
   attr->hScale = attr_map["h_scale"].AsFloat();
   attr->wScale = attr_map["w_scale"].AsFloat();

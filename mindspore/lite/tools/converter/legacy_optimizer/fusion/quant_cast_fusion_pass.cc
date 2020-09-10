@@ -35,8 +35,8 @@ STATUS QuantCastFusionPass::DoFusion(MetaGraphT *graph, const std::string &patte
                                      std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) {
   MS_ASSERT(graph != nullptr);
   if (matchedPath.size() != kQuantCastMatchPathLen2 && matchedPath.size() != kQuantCastMatchPathLen3) {
-    MS_LOG(ERROR) << "QuantDtypeCastFusion should have " << kQuantCastMatchPathLen2 << " or " <<
-     kQuantCastMatchPathLen3 << " NodeIndex in matchedPair";
+    MS_LOG(ERROR) << "QuantDtypeCastFusion should have " << kQuantCastMatchPathLen2 << " or " << kQuantCastMatchPathLen3
+                  << " NodeIndex in matchedPair";
     return RET_PARAM_INVALID;
   }
 
@@ -134,5 +134,3 @@ STATUS QuantCastFusionPass::DefinePattern() {
 }
 }  // namespace lite
 }  // namespace mindspore
-
-

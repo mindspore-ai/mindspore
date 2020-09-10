@@ -22,7 +22,7 @@
 #include "mindspore/lite/src/runtime/kernel/arm/int8/convolution_1x1_int8.h"
 
 namespace mindspore {
-using lite::tensor::Tensor;
+using lite::Tensor;
 class TestConv1x1Int8 : public mindspore::CommonTest {
  public:
   TestConv1x1Int8() {}
@@ -69,37 +69,36 @@ TEST_F(TestConv1x1Int8, Input1x1PrePack2) {
   delete conv_param;
 }
 
-int Conv1x1Int8TestInit1_perchannel(std::vector<lite::tensor::Tensor *> *inputs_,
-                                    std::vector<lite::tensor::Tensor *> *outputs_, ConvParameter *conv_param,
-                                    int8_t **correct) {
-  Tensor *in_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 4}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
-  auto in_quant_arg = new mindspore::lite::tensor::QuantArg();
+int Conv1x1Int8TestInit1_perchannel(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
+                                    ConvParameter *conv_param, int8_t **correct) {
+  Tensor *in_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 4}, schema::Format_NHWC, lite::Tensor::Category::CONST);
+  auto in_quant_arg = new mindspore::lite::QuantArg();
   in_quant_arg->zeroPoint = -42, in_quant_arg->scale = 0.117647;
   in_t->AddQuantParam(*in_quant_arg);
   in_t->MallocData();
   int8_t in[] = {62,  -14, 88, 2,   -35, 43,  83,  -111, 75,  26, 14,  -121,
                  -78, 56,  37, -31, 15,  -75, -10, -115, -71, 74, -65, -15};
-  memcpy(in_t->Data(), in, in_t->ElementsNum() * sizeof(int8_t));
+  memcpy(in_t->MutableData(), in, in_t->ElementsNum() * sizeof(int8_t));
   inputs_->push_back(in_t);
 
-  Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 1, 1, 4}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 1, 1, 4}, schema::Format_NHWC, lite::Tensor::Category::CONST);
   weight_t->MallocData();
-  auto weight_quant_arg1 = new mindspore::lite::tensor::QuantArg();
+  auto weight_quant_arg1 = new mindspore::lite::QuantArg();
   weight_quant_arg1->zeroPoint = 66, weight_quant_arg1->scale = 0.96439215686275;
-  auto weight_quant_arg2 = new mindspore::lite::tensor::QuantArg();
+  auto weight_quant_arg2 = new mindspore::lite::QuantArg();
   weight_quant_arg2->zeroPoint = 33, weight_quant_arg2->scale = 0.76439215686275;
-  auto weight_quant_arg3 = new mindspore::lite::tensor::QuantArg();
+  auto weight_quant_arg3 = new mindspore::lite::QuantArg();
   weight_quant_arg3->zeroPoint = -20, weight_quant_arg3->scale = 0.99117647;
   weight_t->AddQuantParam(*weight_quant_arg1);
   weight_t->AddQuantParam(*weight_quant_arg2);
   weight_t->AddQuantParam(*weight_quant_arg3);
   int8_t weight[] = {65, 67, 65, 65, 32, 33, 34, 33, -19, -20, -19, -20};
-  memcpy(weight_t->Data(), weight, weight_t->ElementsNum() * sizeof(int8_t));
+  memcpy(weight_t->MutableData(), weight, weight_t->ElementsNum() * sizeof(int8_t));
   inputs_->push_back(weight_t);
 
-  Tensor *out_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 3}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  Tensor *out_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 3}, schema::Format_NHWC, lite::Tensor::Category::CONST);
   out_t->MallocData();
-  auto output_quant_arg = new mindspore::lite::tensor::QuantArg();
+  auto output_quant_arg = new mindspore::lite::QuantArg();
   output_quant_arg->zeroPoint = 7, output_quant_arg->scale = 0.294321233;
   out_t->AddQuantParam(*output_quant_arg);
   outputs_->push_back(out_t);
@@ -117,8 +116,8 @@ int Conv1x1Int8TestInit1_perchannel(std::vector<lite::tensor::Tensor *> *inputs_
 }
 
 TEST_F(TestConv1x1Int8, Conv1x1TestPerChannel) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   auto conv_param = new ConvParameter();
   int8_t *correct;
   auto ctx = new lite::Context;
@@ -129,7 +128,7 @@ TEST_F(TestConv1x1Int8, Conv1x1TestPerChannel) {
 
   conv1x1->Init();
   conv1x1->Run();
-  CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->Data()), correct, total_size, 70);
+  CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 70);
 
   delete conv1x1;
   for (auto t : inputs_) delete t;
@@ -137,10 +136,10 @@ TEST_F(TestConv1x1Int8, Conv1x1TestPerChannel) {
   free(correct);
 }
 
-int Conv1x1Int8TestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
+int Conv1x1Int8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                          ConvParameter *conv_param, int8_t **correct) {
-  Tensor *in_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 4}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
-  auto in_quant_arg = new mindspore::lite::tensor::QuantArg();
+  Tensor *in_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 4}, schema::Format_NHWC, lite::Tensor::Category::CONST);
+  auto in_quant_arg = new mindspore::lite::QuantArg();
   in_quant_arg->zeroPoint = -42, in_quant_arg->scale = 0.117647;
   in_t->AddQuantParam(*in_quant_arg);
   in_t->MallocData();
@@ -148,23 +147,23 @@ int Conv1x1Int8TestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vect
                 13.71383,  8.055829,   6.5845337, -9.25232,  -4.24519,   11.550042, 9.262012,   1.2780352,
                 6.7263746, -3.9301445, 3.764492,  -8.602078, -3.3558068, 13.619035, -2.6694393, 3.2008505};
   Quantize(in, in_t->ElementsNum(), in_quant_arg->scale, in_quant_arg->zeroPoint,
-           reinterpret_cast<int8_t *>(in_t->Data()));
+           reinterpret_cast<int8_t *>(in_t->MutableData()));
   inputs_->push_back(in_t);
 
-  Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 1, 1, 4}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
-  auto weight_quant_arg = new mindspore::lite::tensor::QuantArg();
+  Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 1, 1, 4}, schema::Format_NHWC, lite::Tensor::Category::CONST);
+  auto weight_quant_arg = new mindspore::lite::QuantArg();
   weight_quant_arg->zeroPoint = 66, weight_quant_arg->scale = 0.036439215686275;
   weight_t->AddQuantParam(*weight_quant_arg);
   weight_t->MallocData();
   float weight[] = {-0.7308652, 0.5257509,  -0.87825793, -1.123181,   -1.2206168, 0.562695,
                     1.5382664,  -0.5020635, 0.8591602,   -0.26410004, 1.1262615,  0.073132955};
   Quantize(weight, weight_t->ElementsNum(), weight_quant_arg->scale, weight_quant_arg->zeroPoint,
-           reinterpret_cast<int8_t *>(weight_t->Data()));
+           reinterpret_cast<int8_t *>(weight_t->MutableData()));
   inputs_->push_back(weight_t);
 
-  Tensor *out_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 3}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  Tensor *out_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 3}, schema::Format_NHWC, lite::Tensor::Category::CONST);
   out_t->MallocData();
-  auto output_quant_arg = new mindspore::lite::tensor::QuantArg();
+  auto output_quant_arg = new mindspore::lite::QuantArg();
   output_quant_arg->zeroPoint = 7, output_quant_arg->scale = 0.234321233;
   out_t->AddQuantParam(*output_quant_arg);
   outputs_->push_back(out_t);
@@ -184,8 +183,8 @@ int Conv1x1Int8TestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vect
 }
 
 TEST_F(TestConv1x1Int8, Conv1x1Int8Test1) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   auto conv_param = new ConvParameter();
   int8_t *correct;
   auto ctx = new lite::Context;
@@ -196,7 +195,7 @@ TEST_F(TestConv1x1Int8, Conv1x1Int8Test1) {
 
   conv1x1->Init();
   conv1x1->Run();
-  CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->Data()), correct, total_size, 2);
+  CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 2);
 
   delete conv1x1;
   for (auto t : inputs_) delete t;
@@ -204,42 +203,42 @@ TEST_F(TestConv1x1Int8, Conv1x1Int8Test1) {
   free(correct);
 }
 
-int Conv1x1Int8TestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
+int Conv1x1Int8TestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                          ConvParameter *conv_param, int8_t **correct) {
   size_t buffer_size;
-  Tensor *in_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 4}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
-  auto in_quant_arg = new mindspore::lite::tensor::QuantArg();
+  Tensor *in_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 4}, schema::Format_NHWC, lite::Tensor::Category::CONST);
+  auto in_quant_arg = new mindspore::lite::QuantArg();
   in_quant_arg->zeroPoint = -42, in_quant_arg->scale = 0.117647;
   in_t->AddQuantParam(*in_quant_arg);
   in_t->MallocData();
   std::string input_path = "./input";
   auto input = mindspore::lite::ReadFile(input_path.c_str(), &buffer_size);
-  memcpy(in_t->Data(), input, buffer_size);
+  memcpy(in_t->MutableData(), input, buffer_size);
   inputs_->push_back(in_t);
   delete[] input;
 
-  Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 1, 1, 4}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
-  auto weight_quant_arg = new mindspore::lite::tensor::QuantArg();
+  Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 1, 1, 4}, schema::Format_NHWC, lite::Tensor::Category::CONST);
+  auto weight_quant_arg = new mindspore::lite::QuantArg();
   weight_quant_arg->zeroPoint = 66, weight_quant_arg->scale = 0.036439215686275;
   weight_t->AddQuantParam(*weight_quant_arg);
   weight_t->MallocData();
   std::string weight_path = "./weight";
   auto weight = mindspore::lite::ReadFile(weight_path.c_str(), &buffer_size);
-  memcpy(weight_t->Data(), weight, buffer_size);
+  memcpy(weight_t->MutableData(), weight, buffer_size);
   inputs_->push_back(weight_t);
   delete[] weight;
 
-  Tensor *bias_t = new Tensor(kNumberTypeInt32, {4}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  Tensor *bias_t = new Tensor(kNumberTypeInt32, {4}, schema::Format_NHWC, lite::Tensor::Category::CONST);
   weight_t->MallocData();
   std::string bias_path = "./bias";
   auto bias = mindspore::lite::ReadFile(bias_path.c_str(), &buffer_size);
-  memcpy(bias_t->Data(), bias, buffer_size);
+  memcpy(bias_t->MutableData(), bias, buffer_size);
   inputs_->push_back(bias_t);
   delete[] bias;
 
-  Tensor *out_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 3}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  Tensor *out_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 3}, schema::Format_NHWC, lite::Tensor::Category::CONST);
   out_t->MallocData();
-  auto output_quant_arg = new mindspore::lite::tensor::QuantArg();
+  auto output_quant_arg = new mindspore::lite::QuantArg();
   output_quant_arg->zeroPoint = 7, output_quant_arg->scale = 0.234321233;
   out_t->AddQuantParam(*output_quant_arg);
   outputs_->push_back(out_t);
@@ -259,8 +258,8 @@ int Conv1x1Int8TestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vect
 }
 
 TEST_F(TestConv1x1Int8, Conv1x1Int8Test2) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
   auto conv_param = new ConvParameter();
   int8_t *correct;
   auto ctx = new lite::Context;
@@ -271,7 +270,7 @@ TEST_F(TestConv1x1Int8, Conv1x1Int8Test2) {
 
   conv1x1->Init();
   conv1x1->Run();
-  CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->Data()), correct, total_size, 2);
+  CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 2);
 
   delete conv1x1;
   for (auto t : inputs_) delete t;

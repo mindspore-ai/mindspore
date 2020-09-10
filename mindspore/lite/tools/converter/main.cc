@@ -17,4 +17,3 @@
 #include "tools/converter/converter.h"
 
 int main(int argc, const char **argv) { return mindspore::lite::RunConverter(argc, argv); }
-

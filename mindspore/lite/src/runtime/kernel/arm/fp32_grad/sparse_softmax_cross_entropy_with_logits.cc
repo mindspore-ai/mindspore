@@ -81,12 +81,12 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
     return ret;
   }
 
-  auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto labels = reinterpret_cast<int *>(in_tensors_.at(1)->Data());
-  float *out = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto labels = reinterpret_cast<int *>(in_tensors_.at(1)->MutableData());
+  float *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   float *grads = NULL;
   if (is_train() && out_tensors_.size() > 1) {
-    grads = reinterpret_cast<float *>(out_tensors_.at(1)->Data());
+    grads = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
   }
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   float *losses = new (std::nothrow) float[data_size];
@@ -143,8 +143,8 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuSoftmaxCrossEntropyFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                            const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuSoftmaxCrossEntropyFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                            const std::vector<lite::Tensor *> &outputs,
                                                             OpParameter *opParameter, const lite::Context *ctx,
                                                             const kernel::KernelKey &desc,
                                                             const mindspore::lite::PrimitiveC *primitive) {

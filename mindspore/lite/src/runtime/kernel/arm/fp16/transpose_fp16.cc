@@ -150,13 +150,13 @@ int TransposeFp16CPUKernel::Run() {
   }
 
   if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
-    in_data_ = reinterpret_cast<float *>(in_tensor->Data());
+    in_data_ = reinterpret_cast<float *>(in_tensor->MutableData());
     Float32ToFloat16(in_data_, fp16_in_data_, in_tensor->ElementsNum());
   } else {
-    fp16_in_data_ = reinterpret_cast<float16_t *>(in_tensor->Data());
+    fp16_in_data_ = reinterpret_cast<float16_t *>(in_tensor->MutableData());
   }
   if (out_tensor->data_type() == kNumberTypeFloat16) {
-    fp16_out_data_ = reinterpret_cast<float16_t *>(out_tensor->Data());
+    fp16_out_data_ = reinterpret_cast<float16_t *>(out_tensor->MutableData());
   }
 
   in_shape_ = const_cast<int *>(in_tensor->shape().data());
@@ -170,7 +170,7 @@ int TransposeFp16CPUKernel::Run() {
   }
 
   if (out_tensor->data_type() == kNumberTypeFloat || out_tensor->data_type() == kNumberTypeFloat32) {
-    out_data_ = reinterpret_cast<float *>(out_tensor->Data());
+    out_data_ = reinterpret_cast<float *>(out_tensor->MutableData());
     Float16ToFloat32(fp16_out_data_, out_data_, out_tensor->ElementsNum());
   }
   FreeFp16Buffer();
@@ -178,10 +178,9 @@ int TransposeFp16CPUKernel::Run() {
   return ret;
 }
 
-kernel::LiteKernel *CpuTransposeFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuTransposeFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Transpose);
   if (opParameter == nullptr) {

@@ -43,7 +43,7 @@ int Lstm::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
 
 const int kLstmInputNum = 6;
 const int kLstmOutputNum = 3;
-int Lstm::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int Lstm::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (inputs_.size() != kLstmInputNum || outputs_.size() != kLstmOutputNum) {
     MS_LOG(ERROR) << "OpLstm inputs or outputs size error.";

@@ -21,9 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxReluParser::Parse(const onnx::GraphProto &onnx_graph,
-                             const onnx::NodeProto &onnx_node,
-                             schema::CNodeT *op) {
+STATUS OnnxReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ReluParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";

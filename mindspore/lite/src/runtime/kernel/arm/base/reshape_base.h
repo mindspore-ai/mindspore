@@ -26,8 +26,8 @@ using mindspore::lite::Context;
 namespace mindspore::kernel {
 class ReshapeBaseCPUKernel : public LiteKernel {
  public:
-  ReshapeBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+  ReshapeBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                       const std::vector<lite::Tensor *> &outputs, const Context *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx) {
     reshape_param_ = reinterpret_cast<ReshapeParameter *>(op_parameter_);

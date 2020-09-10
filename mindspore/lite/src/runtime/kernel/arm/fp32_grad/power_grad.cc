@@ -31,9 +31,9 @@ int PowerGradCPUKernel::Init() { return RET_OK; }
 int PowerGradCPUKernel::ReSize() { return RET_OK; }
 
 int PowerGradCPUKernel::Run() {
-  auto dy_addr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  auto x_addr = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
-  auto dx_addr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto dy_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto x_addr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  auto dx_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   auto size = in_tensors_.at(0)->ElementsNum();
 
   float exp = power_ - 1;
@@ -47,11 +47,9 @@ int PowerGradCPUKernel::Run() {
   return RET_OK;
 }
 
-
-kernel::LiteKernel *CpuPowerGradFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                  const std::vector<lite::tensor::Tensor *> &outputs,
-                                                  OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc,
+kernel::LiteKernel *CpuPowerGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_PowerGrad);

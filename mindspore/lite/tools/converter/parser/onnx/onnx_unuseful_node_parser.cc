@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxUnusefulNodeParser::Parse(const onnx::GraphProto &onnx_graph,
-                                     const onnx::NodeProto &onnx_node,
+STATUS OnnxUnusefulNodeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                      schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx UnusefulNodeParser";
   if (op == nullptr) {
@@ -60,4 +59,3 @@ OnnxNodeRegistrar g_onnxInt8QuantizeParser("Int8Quantize", new OnnxUnusefulNodeP
 OnnxNodeRegistrar g_onnxInt8DequantizeParser("Int8Dequantize", new OnnxUnusefulNodeParser());
 }  // namespace lite
 }  // namespace mindspore
-

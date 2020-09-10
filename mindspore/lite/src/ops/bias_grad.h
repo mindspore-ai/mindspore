@@ -38,7 +38,7 @@ class BiasGrad : public PrimitiveC {
   BiasGrad() = default;
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
-  int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
+  int InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) override;
 #endif
   std::vector<int> GetAxis() const;
 };

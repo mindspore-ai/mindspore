@@ -44,7 +44,7 @@ int TopK::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
 }
 #endif
 
-int TopK::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int TopK::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (inputs_.size() != kSingleNum || outputs_.size() != kDoubleNum) {
     MS_LOG(ERROR) << "input size: " << inputs_.size() << ", output size: " << outputs_.size();

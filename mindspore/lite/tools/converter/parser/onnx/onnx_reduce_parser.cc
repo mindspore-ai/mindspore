@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph,
-                               const onnx::NodeProto &onnx_node,
+STATUS OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ReduceParser";
   if (op == nullptr) {
@@ -77,4 +76,3 @@ OnnxNodeRegistrar g_onnxReduceSumParser("ReduceSum", new OnnxReduceParser());
 OnnxNodeRegistrar g_onnxReduceSumSquareParser("ReduceSumSquare", new OnnxReduceParser());
 }  // namespace lite
 }  // namespace mindspore
-

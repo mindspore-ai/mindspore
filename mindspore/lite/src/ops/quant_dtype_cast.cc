@@ -44,7 +44,7 @@ int QuantDTypeCast::UnPackToFlatBuilder(const schema::Primitive *primitive, flat
 }
 #endif
 
-int QuantDTypeCast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int QuantDTypeCast::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);

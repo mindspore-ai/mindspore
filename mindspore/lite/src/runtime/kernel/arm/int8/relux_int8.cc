@@ -28,8 +28,8 @@ using mindspore::schema::ActivationType_RELU;
 
 namespace mindspore::kernel {
 int ReluXInt8CPUKernel::Init() {
-  lite::tensor::Tensor *input = in_tensors_.at(0);
-  lite::tensor::Tensor *output = out_tensors_.at(0);
+  lite::Tensor *input = in_tensors_.at(0);
+  lite::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input);
   MS_ASSERT(output);
 
@@ -47,8 +47,8 @@ int ReluXInt8CPUKernel::Init() {
 int ReluXInt8CPUKernel::ReSize() { return RET_OK; }
 
 int ReluXInt8CPUKernel::DoActivation(int task_id) {
-  auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->Data());
-  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
+  auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   auto length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, op_parameter_->thread_num_);

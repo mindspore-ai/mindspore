@@ -67,7 +67,7 @@ int QuantDTypeCastCPUKernel::Init() {
 
 int QuantDTypeCastCPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
-  num_unit_ = static_cast<int>(in_tensor->DataSize());
+  num_unit_ = static_cast<int>(in_tensor->ElementsNum());
   thread_n_num_ = MSMIN(thread_num_, num_unit_);
   thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
   return RET_OK;
@@ -112,11 +112,11 @@ int QuantDTypeCastCPUKernel::Run() {
     return prepare_ret;
   }
   if (inverse_) {
-    int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
-    float32_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->Data());
+    int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
+    float32_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   } else {
-    float32_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->Data());
-    int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
+    float32_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+    int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
   }
 
   auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, QuantDTypeCastRun, this, thread_n_num_);
@@ -128,8 +128,8 @@ int QuantDTypeCastCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuQuantDTypeCastFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                       const std::vector<lite::tensor::Tensor *> &outputs,
+kernel::LiteKernel *CpuQuantDTypeCastFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {

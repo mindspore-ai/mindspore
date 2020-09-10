@@ -65,14 +65,14 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
   auto allocator = ocl_runtime->GetAllocator();
 
   bool is_bias_add = shape_b.empty();
-  auto tensorType = schema::NodeType_ValueNode;
+  auto tensorType = lite::TensorCategory(schema::NodeType_ValueNode);
 
-  lite::tensor::Tensor *tensor_a =
-    new (std::nothrow) lite::tensor::Tensor(kNumberTypeFloat32, shape_a, schema::Format_NHWC4, tensorType);
-  lite::tensor::Tensor *tensor_b =
-    new (std::nothrow) lite::tensor::Tensor(kNumberTypeFloat32, shape_b, schema::Format_NHWC4, tensorType);
-  lite::tensor::Tensor *tensor_c =
-    new (std::nothrow) lite::tensor::Tensor(kNumberTypeFloat32, shape_a, schema::Format_NHWC4, tensorType);
+  lite::Tensor *tensor_a =
+    new (std::nothrow) lite::Tensor(kNumberTypeFloat32, shape_a, schema::Format_NHWC4, tensorType);
+  lite::Tensor *tensor_b =
+    new (std::nothrow) lite::Tensor(kNumberTypeFloat32, shape_b, schema::Format_NHWC4, tensorType);
+  lite::Tensor *tensor_c =
+    new (std::nothrow) lite::Tensor(kNumberTypeFloat32, shape_a, schema::Format_NHWC4, tensorType);
   if (tensor_a == nullptr || tensor_b == nullptr || tensor_c == nullptr) {
     MS_LOG(ERROR) << "Create tensor failed!";
     delete tensor_a;
@@ -110,14 +110,14 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
     ElementAdd(data_a, data_b, data_c_cpu, element_num);
   }
 
-  std::vector<lite::tensor::Tensor *> inputs = {tensor_a};
+  std::vector<lite::Tensor *> inputs = {tensor_a};
   if (!is_bias_add) {
     inputs.push_back(tensor_b);
   } else {
     tensor_b->MallocData();
-    memcpy(tensor_b->Data(), data_b, sizeof(float));
+    memcpy(tensor_b->MutableData(), data_b, sizeof(float));
   }
-  std::vector<lite::tensor::Tensor *> outputs = {tensor_c};
+  std::vector<lite::Tensor *> outputs = {tensor_c};
 
   ArithmeticParameter *param = new (std::nothrow) ArithmeticParameter();
   if (param == nullptr) {
@@ -134,7 +134,7 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
   param->ndim_ = 4;
   param->op_parameter_.type_ = PrimitiveType_Add;
 
-  std::vector<lite::tensor::Tensor *> arithmetic_inputs = {tensor_a, tensor_b};
+  std::vector<lite::Tensor *> arithmetic_inputs = {tensor_a, tensor_b};
   lite::Context ctx;
   auto *arith_kernel =
     new kernel::ArithmeticOpenCLKernel(reinterpret_cast<OpParameter *>(param), arithmetic_inputs, outputs, &ctx);
@@ -170,19 +170,19 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
   }
   kernel->Init();
 
-  memcpy(inputs[0]->Data(), data_a, sizeof(float) * element_num);
+  memcpy(inputs[0]->MutableData(), data_a, sizeof(float) * element_num);
   if (!is_bias_add) {
-    memcpy(inputs[1]->Data(), data_b, sizeof(float) * element_num_b);
+    memcpy(inputs[1]->MutableData(), data_b, sizeof(float) * element_num_b);
   }
 
   kernel->Run();
 
-  memcpy(data_c_ocl, outputs[0]->Data(), sizeof(float) * element_num);
+  memcpy(data_c_ocl, outputs[0]->MutableData(), sizeof(float) * element_num);
 
   LogData(data_a, 10, "Data A : ");
   LogData(data_b, tensor_b->shape().empty() ? 1 : 10, "Data B : ");
   LogData(data_c_cpu, 10, "Expect compute : ");
-  LogData(outputs[0]->Data(), 10, "OpenCL compute : ");
+  LogData(outputs[0]->MutableData(), 10, "OpenCL compute : ");
   bool cmp = DataCompare(data_c_cpu, data_c_ocl, element_num);
   MS_LOG(INFO) << "Compare " << (cmp ? "success!" : "failed!");
   EXPECT_EQ(true, cmp);

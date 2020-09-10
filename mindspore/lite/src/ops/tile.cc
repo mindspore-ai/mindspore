@@ -66,7 +66,7 @@ int Tile::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
 }
 #endif
 
-int Tile::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int Tile::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);

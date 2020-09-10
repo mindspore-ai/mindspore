@@ -120,22 +120,22 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
   std::string input_path = "./test_data/pooling/avgpoolgradfp32_1_dy_1_28_28_3.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_dy({1, 28, 28, 3});
-  lite::tensor::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
+  lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.SetData(input_data);
 
   std::string input1_path = "./test_data/pooling/avgpoolgradfp32_1_x_1_28_28_3.bin";
   auto input1_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1_path.c_str(), &input_size));
   std::vector<int> dim_x({1, 28, 28, 3});
-  lite::tensor::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.SetData(input1_data);
 
-  std::vector<lite::tensor::Tensor *> inputs = {&dy_tensor, &x_tensor};
+  std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
 
   auto output_data = new float[output_data_size];
   std::vector<int> dim_dx({1, 28, 28, 3});
-  lite::tensor::Tensor dx_tensor(TypeId::kNumberTypeFloat32, dim_dx);
+  lite::Tensor dx_tensor(TypeId::kNumberTypeFloat32, dim_dx);
   dx_tensor.SetData(output_data);
-  std::vector<lite::tensor::Tensor *> outputs = {&dx_tensor};
+  std::vector<lite::Tensor *> outputs = {&dx_tensor};
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
 
@@ -182,22 +182,22 @@ TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
   std::string input_path = "./test_data/pooling/avgpoolgradfp32_1_dy_3_28_28_3.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_dy({1, 28, 28, 3});
-  lite::tensor::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
+  lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.SetData(input_data);
 
   std::string input1_path = "./test_data/pooling/avgpoolgradfp32_1_x_3_28_28_3.bin";
   auto input1_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1_path.c_str(), &input_size));
   std::vector<int> dim_x({1, 28, 28, 3});
-  lite::tensor::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.SetData(input1_data);
 
-  std::vector<lite::tensor::Tensor *> inputs = {&dy_tensor, &x_tensor};
+  std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
 
   auto output_data = new float[output_data_size];
   std::vector<int> dim_dx({1, 28, 28, 3});
-  lite::tensor::Tensor dx_tensor(TypeId::kNumberTypeFloat32, dim_dx);
+  lite::Tensor dx_tensor(TypeId::kNumberTypeFloat32, dim_dx);
   dx_tensor.SetData(output_data);
-  std::vector<lite::tensor::Tensor *> outputs = {&dx_tensor};
+  std::vector<lite::Tensor *> outputs = {&dx_tensor};
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
 
@@ -245,21 +245,21 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
   auto x_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/avgpoolgradfp32_s2_x_3_28_28_3.bin", &input_size));
   std::vector<int> dim_x({pool->output_batch_, pool->input_h_, pool->input_w_, pool->input_channel_});
-  lite::tensor::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.SetData(x_data);
 
   auto yt_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/avgpoolgradfp32_s2_dy_3_28_28_3.bin", &input_size));
   std::vector<int> dim_y({pool->output_batch_, pool->output_h_, pool->output_w_, pool->output_channel_});
-  lite::tensor::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
+  lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.SetData(yt_data);
 
   auto out_data = new float[y_data_size];
-  lite::tensor::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
   out_tensor.SetData(out_data);
 
-  std::vector<lite::tensor::Tensor *> inputs = {&yt_tensor, &x_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&yt_tensor, &x_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
   // ----------------------------------------
   kernel::KernelKey pool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto pool_creator = lite::KernelRegistry::GetInstance()->GetCreator(pool_desc);
@@ -308,21 +308,21 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
   auto x_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/avgpoolgradfp32_s3_x_3_28_28_3.bin", &input_size));
   std::vector<int> dim_x({pool->output_batch_, pool->input_h_, pool->input_w_, pool->input_channel_});
-  lite::tensor::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.SetData(x_data);
 
   auto yt_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/avgpoolgradfp32_s3_dy_3_28_28_3.bin", &input_size));
   std::vector<int> dim_y({pool->output_batch_, pool->output_h_, pool->output_w_, pool->output_channel_});
-  lite::tensor::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
+  lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.SetData(yt_data);
 
   auto out_data = new float[y_data_size];
-  lite::tensor::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
   out_tensor.SetData(out_data);
 
-  std::vector<lite::tensor::Tensor *> inputs = {&yt_tensor, &x_tensor};
-  std::vector<lite::tensor::Tensor *> outputs = {&out_tensor};
+  std::vector<lite::Tensor *> inputs = {&yt_tensor, &x_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
   // ----------------------------------------
   kernel::KernelKey pool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto pool_creator = lite::KernelRegistry::GetInstance()->GetCreator(pool_desc);
@@ -433,20 +433,20 @@ TEST_F(TestPoolingGradFp32, MaxPoolingKernelGradFp32) {
   auto x_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_2_x_1_30_30_3.bin", &input_size));
   std::vector<int> dim_x({1, 30, 30, 3});
-  lite::tensor::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.SetData(x_data);
-  std::vector<lite::tensor::Tensor *> maxpool_inputs = {&x_tensor};
+  std::vector<lite::Tensor *> maxpool_inputs = {&x_tensor};
 
   auto y_data = new float[y_data_size];
   std::vector<int> dim_y({1, 10, 10, 3});
-  lite::tensor::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
+  lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
   y_tensor.SetData(y_data);
 
   auto ind_data = new int[y_data_size];
-  lite::tensor::Tensor ind_tensor(TypeId::kNumberTypeInt32, dim_y);
+  lite::Tensor ind_tensor(TypeId::kNumberTypeInt32, dim_y);
   ind_tensor.SetData(ind_data);
 
-  std::vector<lite::tensor::Tensor *> maxpool_outputs = {&y_tensor, &ind_tensor};
+  std::vector<lite::Tensor *> maxpool_outputs = {&y_tensor, &ind_tensor};
 
   kernel::KernelKey maxpool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Pooling};
   auto maxpool_creator = lite::KernelRegistry::GetInstance()->GetCreator(maxpool_desc);
@@ -481,7 +481,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolingKernelGradFp32) {
   auto dy_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_2_dy_1_10_10_3.bin", &input_size));
   std::vector<int> dim_dy({1, 3, 10, 10});
-  lite::tensor::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
+  lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.SetData(dy_data);
 
 #if 0
@@ -491,17 +491,17 @@ TEST_F(TestPoolingGradFp32, MaxPoolingKernelGradFp32) {
   for (int i=0; i < output_data_size; i++)
     i_data[i] = static_cast<int>(ill_data[i]);
   std::vector<int> dim_ind({1, 3, 10, 10});
-  lite::tensor::Tensor ind_tensor(TypeId::kNumberTypeInt32, dim_ind);
+  lite::Tensor ind_tensor(TypeId::kNumberTypeInt32, dim_ind);
   ind_tensor.SetData(i_data);
 #endif
 
-  std::vector<lite::tensor::Tensor *> inputs = {&dy_tensor, &ind_tensor};
+  std::vector<lite::Tensor *> inputs = {&dy_tensor, &ind_tensor};
 
   auto output_data = new float[output_data_size];
   std::vector<int> dim_dx({1, 3, 30, 30});
-  lite::tensor::Tensor dx_tensor(TypeId::kNumberTypeFloat32, dim_dx);
+  lite::Tensor dx_tensor(TypeId::kNumberTypeFloat32, dim_dx);
   dx_tensor.SetData(output_data);
-  std::vector<lite::tensor::Tensor *> outputs = {&dx_tensor};
+  std::vector<lite::Tensor *> outputs = {&dx_tensor};
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -539,26 +539,26 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
   auto x_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_1_x_3_28_28_3.bin", &input_size));
   std::vector<int> dim_x({3, 28, 28, 3});
-  lite::tensor::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.SetData(x_data);
 
   auto y_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_1_dx_3_28_28_3.bin", &input_size));
   std::vector<int> dim_y({3, 28, 28, 3});
-  lite::tensor::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
+  lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
   y_tensor.SetData(y_data);
 
   auto yt_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_1_dy_3_28_28_3.bin", &input_size));
-  lite::tensor::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
+  lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.SetData(yt_data);
 
   auto out_data = new float[y_data_size];
-  lite::tensor::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
   out_tensor.SetData(out_data);
 
-  std::vector<lite::tensor::Tensor *> maxpool_inputs = {&x_tensor, &y_tensor, &yt_tensor};
-  std::vector<lite::tensor::Tensor *> maxpool_outputs = {&out_tensor};
+  std::vector<lite::Tensor *> maxpool_inputs = {&x_tensor, &y_tensor, &yt_tensor};
+  std::vector<lite::Tensor *> maxpool_outputs = {&out_tensor};
   // ----------------------------------------
   kernel::KernelKey maxpool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto maxpool_creator = lite::KernelRegistry::GetInstance()->GetCreator(maxpool_desc);
@@ -611,26 +611,26 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
   auto x_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s2_x_3_28_28_3.bin", &input_size));
   std::vector<int> dim_x({maxpool->output_batch_, maxpool->input_h_, maxpool->input_w_, maxpool->input_channel_});
-  lite::tensor::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.SetData(x_data);
 
   auto y_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s2_dx_3_28_28_3.bin", &input_size));
   std::vector<int> dim_y({maxpool->output_batch_, maxpool->output_h_, maxpool->output_w_, maxpool->output_channel_});
-  lite::tensor::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
+  lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
   y_tensor.SetData(y_data);
 
   auto yt_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s2_dy_3_28_28_3.bin", &input_size));
-  lite::tensor::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
+  lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.SetData(yt_data);
 
   auto out_data = new float[y_data_size];
-  lite::tensor::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
   out_tensor.SetData(out_data);
 
-  std::vector<lite::tensor::Tensor *> maxpool_inputs = {&x_tensor, &y_tensor, &yt_tensor};
-  std::vector<lite::tensor::Tensor *> maxpool_outputs = {&out_tensor};
+  std::vector<lite::Tensor *> maxpool_inputs = {&x_tensor, &y_tensor, &yt_tensor};
+  std::vector<lite::Tensor *> maxpool_outputs = {&out_tensor};
   // ----------------------------------------
   kernel::KernelKey maxpool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto maxpool_creator = lite::KernelRegistry::GetInstance()->GetCreator(maxpool_desc);
@@ -683,26 +683,26 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
   auto x_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s3_x_3_28_28_3.bin", &input_size));
   std::vector<int> dim_x({maxpool->output_batch_, maxpool->input_h_, maxpool->input_w_, maxpool->input_channel_});
-  lite::tensor::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.SetData(x_data);
 
   auto y_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s3_dx_3_28_28_3.bin", &input_size));
   std::vector<int> dim_y({maxpool->output_batch_, maxpool->output_h_, maxpool->output_w_, maxpool->output_channel_});
-  lite::tensor::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
+  lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
   y_tensor.SetData(y_data);
 
   auto yt_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s3_dy_3_28_28_3.bin", &input_size));
-  lite::tensor::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
+  lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.SetData(yt_data);
 
   auto out_data = new float[y_data_size];
-  lite::tensor::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  lite::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
   out_tensor.SetData(out_data);
 
-  std::vector<lite::tensor::Tensor *> maxpool_inputs = {&x_tensor, &y_tensor, &yt_tensor};
-  std::vector<lite::tensor::Tensor *> maxpool_outputs = {&out_tensor};
+  std::vector<lite::Tensor *> maxpool_inputs = {&x_tensor, &y_tensor, &yt_tensor};
+  std::vector<lite::Tensor *> maxpool_outputs = {&out_tensor};
   // ----------------------------------------
   kernel::KernelKey maxpool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto maxpool_creator = lite::KernelRegistry::GetInstance()->GetCreator(maxpool_desc);

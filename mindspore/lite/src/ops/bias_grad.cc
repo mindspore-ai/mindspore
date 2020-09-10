@@ -75,7 +75,7 @@ std::vector<int> BiasGrad::GetAxis() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-int BiasGrad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int BiasGrad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   if (1 != inputs.size()) {
     MS_LOG(ERROR) << "BiasGrad should have one input";
     return RET_ERROR;
@@ -99,7 +99,6 @@ int BiasGrad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tenso
 
   return RET_OK;
 }
-
 
 #endif
 }  // namespace lite
