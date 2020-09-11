@@ -24,6 +24,7 @@ namespace opt {
 const std::set<std::pair<string, string>> invalid_formats_pair = {{kOpFormat_C1HWNCoC0, kOpFormat_NCHW},
                                                                   {kOpFormat_NCHW, kOpFormat_C1HWNCoC0},
                                                                   {kOpFormat_C1HWNCoC0, kOpFormat_DEFAULT},
+                                                                  {kOpFormat_DEFAULT, kOpFormat_FRACTAL_ZN_LSTM},
                                                                   {kOpFormat_DEFAULT, kOpFormat_C1HWNCoC0}};
 
 bool TransDataSplit::Run(const FuncGraphPtr &func_graph) {
@@ -64,12 +65,13 @@ bool TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &n
   AnfNodePtr new_transdata_node = nullptr;
   AnfNodePtr new_transpose_node = nullptr;
   AnfNodePtr new_replace_node = nullptr;
+  auto padding_axis = AnfAlgo::GetOutputReshapeType(node, 0);
   // if output_format=default transdata need split transdata->transpose else transpose->transdata
   if (output_format == kOpFormat_DEFAULT || output_format == kOpFormat_NCHW) {
     // trans input_format to hwcn
     new_transdata_node = NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), kernel_select_,
                                         false, prim::KPrimTransData->name());
-    RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transdata_node);
+    RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transdata_node, padding_axis);
     // trans hwcn to default_format
     new_transpose_node =
       NewTransOpNode(func_graph, new_transdata_node, kernel_select_, false, prim::kPrimTranspose->name());
@@ -86,7 +88,7 @@ bool TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &n
     // trans hwcn to output_format
     new_transdata_node =
       NewTransOpNode(func_graph, new_transpose_node, kernel_select_, false, prim::KPrimTransData->name());
-    RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, new_transdata_node);
+    RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, new_transdata_node, padding_axis);
     new_transdata_node->set_abstract(node->abstract());
     new_replace_node = new_transdata_node;
   }

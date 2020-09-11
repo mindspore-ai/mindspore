@@ -129,6 +129,10 @@ trans_data_op_info = TBERegOp("TransData") \
     .dtype_format(DataType.F16_FracZ, DataType.F16_HWCN) \
     .dtype_format(DataType.F16_HWCN, DataType.F16_FracNZ) \
     .dtype_format(DataType.F32_HWCN, DataType.F16_FracNZ) \
+    .dtype_format(DataType.F16_HWCN, DataType.F16_FracZNLSTM) \
+    .dtype_format(DataType.F32_HWCN, DataType.F32_FracZNLSTM) \
+    .dtype_format(DataType.F16_FracZNLSTM, DataType.F16_HWCN) \
+    .dtype_format(DataType.F32_FracZNLSTM, DataType.F32_HWCN) \
     .get_op_info()
 
 

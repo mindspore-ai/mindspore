@@ -619,6 +619,7 @@ class DataType:
     F16_NHWC = ("float16", "NHWC")
     F16_HWCN = ("float16", "HWCN")
     F16_NDHWC = ("float16", "NDHWC")
+    F16_FracZNLSTM = ("float16", "FRACTAL_ZN_LSTM")
 
     F32_None = ("float32", "")
     F32_Default = ("float32", "DefaultFormat")
@@ -630,6 +631,7 @@ class DataType:
     F32_NHWC = ("float32", "NHWC")
     F32_HWCN = ("float32", "HWCN")
     F32_NDHWC = ("float32", "NDHWC")
+    F32_FracZNLSTM = ("float32", "FRACTAL_ZN_LSTM")
 
     F64_None = ("float64", "")
     F64_Default = ("float64", "DefaultFormat")

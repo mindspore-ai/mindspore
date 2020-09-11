@@ -30,7 +30,7 @@ basic_lstm_cell_op_info = TBERegOp("BasicLSTMCell") \
     .input(0, "x", False, "required", "all") \
     .input(1, "h", False, "required", "all") \
     .input(2, "c", False, "required", "all") \
-    .input(3, "w", False, "required", "all") \
+    .input(3, "w", False, "required", "all", reshape_type="CN") \
     .input(4, "b", False, "required", "all") \
     .input(5, "mask", False, "optional", "all") \
     .output(0, "ct", False, "required", "all") \
@@ -40,11 +40,11 @@ basic_lstm_cell_op_info = TBERegOp("BasicLSTMCell") \
     .output(4, "ft", False, "optional", "all") \
     .output(5, "ot", False, "optional", "all") \
     .output(6, "tanhct", False, "optional", "all") \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F32_FracNZ, DataType.F16_FracZ,
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F32_FracNZ, DataType.F16_FracZNLSTM,
                   DataType.F32_Default, DataType.U8_Default, DataType.F32_FracNZ, DataType.F16_FracNZ,
                   DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ,
                   DataType.F32_FracNZ) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracZ,
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracZNLSTM,
                   DataType.F16_Default, DataType.U8_Default, DataType.F16_FracNZ, DataType.F16_FracNZ,
                   DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
                   DataType.F16_FracNZ) \

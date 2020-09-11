@@ -216,6 +216,9 @@ constexpr auto kReduceMinOpName = "ReduceMin";
 constexpr auto kReduceMaxOpName = "ReduceMax";
 constexpr auto kFusedWeightScaleApplyMomentum = "FusedWeightScaleApplyMomentum";
 constexpr auto kFusedScaleApplyMomentum = "FusedScaleApplyMomentum";
+constexpr auto kBasicLSTMCellWeightGradOpName = "BasicLSTMCellWeightGrad";
+constexpr auto kBasicLSTMCellInputGradOpName = "BasicLSTMCellInputGrad";
+constexpr auto kBasicLSTMCellOpName = "BasicLSTMCell";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -344,10 +347,11 @@ constexpr auto kOpFormat_C1HWNCoC0 = "C1HWNCoC0";
 constexpr auto kOpFormat_NC1HWC0_C04 = "NC1HWC0_C04";
 constexpr auto kOpFormat_FRACTAL_Z_C04 = "FRACTAL_Z_C04";
 constexpr auto kOpFormat_NDHWC = "NDHWC";
+constexpr auto kOpFormat_FRACTAL_ZN_LSTM = "FRACTAL_ZN_LSTM";
 const std::set<std::string> kOpFormatList = {
-  kOpFormat_DEFAULT,     kOpFormat_NC1KHKWHWC0,   kOpFormat_ND,     kOpFormat_NCHW,      kOpFormat_NHWC,
-  kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z, kOpFormat_C1HWNCoC0, kOpFormat_FRAC_NZ,
-  kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDHWC};
+  kOpFormat_DEFAULT,     kOpFormat_NC1KHKWHWC0,   kOpFormat_ND,     kOpFormat_NCHW,           kOpFormat_NHWC,
+  kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z, kOpFormat_C1HWNCoC0,      kOpFormat_FRAC_NZ,
+  kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDHWC,  kOpFormat_FRACTAL_ZN_LSTM};
 const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN};
 const std::set<std::string> kOptOperatorSet = {
   kMomentumOpName,
@@ -373,9 +377,9 @@ const std::set<std::string> kOptOperatorSet = {
   kPullOpName,
 };
 
-const std::set<std::string> kHWSpecialFormatSet = {kOpFormat_FRAC_Z,       kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
-                                                   kOpFormat_FRAC_NZ,      kOpFormat_C1HWNCoC0,   kOpFormat_NC1HWC0_C04,
-                                                   kOpFormat_FRACTAL_Z_C04};
+const std::set<std::string> kHWSpecialFormatSet = {
+  kOpFormat_FRAC_Z,    kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,       kOpFormat_FRAC_NZ,
+  kOpFormat_C1HWNCoC0, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_FRACTAL_ZN_LSTM};
 
 const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
 

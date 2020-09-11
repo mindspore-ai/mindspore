@@ -25,7 +25,7 @@ basic_lstm_cell_input_grad_op_info = TBERegOp("BasicLSTMCellInputGrad") \
     .attr("keep_prob", "optional", "float", "all") \
     .partial_flag(True) \
     .input(0, "dgate", False, "required", "all") \
-    .input(1, "w", False, "required", "all") \
+    .input(1, "w", False, "required", "all", reshape_type="NC") \
     .input(2, "dropout_mask", False, "optional", "all") \
     .output(0, "dxt", False, "required", "all") \
     .output(1, "dht", False, "required", "all") \

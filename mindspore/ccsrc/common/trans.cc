@@ -56,7 +56,7 @@ inline void SetData(size_t size, bool pad_zero, size_t src_idx, size_t dst_idx, 
 template <typename T>
 T DivCeil(T n1, T n2) {
   if (n2 != 0) {
-    return (n1 - 1) / n2 + 1;
+    return (n1 + n2 - 1) / n2;
   }
   return 0;
 }
@@ -441,6 +441,17 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
     auto w1 = (shape[shape.size() - 1] - 1) / kCubeSize + 1;
     device_shape.push_back(w1);
     device_shape.push_back(h1);
+    device_shape.push_back(kCubeSize);
+    device_shape.push_back(kCubeSize);
+    return device_shape;
+  } else if (format == kOpFormat_FRACTAL_ZN_LSTM) {
+    const size_t c0 = 4;
+    const size_t h = shape.at(kN) / c0;
+    const size_t i = shape.at(kC) - h;
+    const size_t first = DivCeil(i, kCubeSize) + DivCeil(h, kCubeSize);
+    const size_t second = c0 * DivCeil(h, kCubeSize);
+    device_shape.push_back(first);
+    device_shape.push_back(second);
     device_shape.push_back(kCubeSize);
     device_shape.push_back(kCubeSize);
     return device_shape;

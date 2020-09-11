@@ -60,6 +60,7 @@
 #include "backend/optimizer/ascend/ir_fusion/confusion_mul_grad_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/softmax_grad_ext_fusion.h"
 #include "backend/optimizer/ascend/format_type/insert_trans_op.h"
+#include "backend/optimizer/ascend/format_type/insert_transpose_for_basiclstm_op.h"
 #include "backend/optimizer/ascend/format_type/rectify_do_mask_kernel_info.h"
 #include "backend/optimizer/ascend/format_type/chang_axis_of_reduce_kernel.h"
 #include "backend/optimizer/ascend/format_type/split_unsupported_transdata.h"
@@ -286,6 +287,9 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   }
   ir_fusion_pm->AddPass(std::make_shared<InsertMemcpyAsyncForHcclOp>());
   ir_fusion_pm->AddPass(std::make_shared<AddInputToOutput>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertTranspose>());
+  ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
+  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
