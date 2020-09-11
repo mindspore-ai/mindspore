@@ -90,7 +90,7 @@ int Gather::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   }
   std::vector<int> out_shape{in_shape};
   out_shape.erase(out_shape.begin() + axis);
-  for (int i = 0; i < indices_rank; i++) {
+  for (int i = indices_rank - 1; i >= 0; --i) {
     out_shape.insert(out_shape.begin() + axis + i, indices_shape[i]);
   }
   output->set_shape(out_shape);
