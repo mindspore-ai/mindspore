@@ -22,7 +22,7 @@
 #include <utility>
 #include <memory>
 #include <map>
-#include "utils/base_ref_extends.h"
+
 #include "backend/session/session_context.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -30,7 +30,6 @@
 #include "ir/tensor.h"
 #include "utils/any.h"
 #include "utils/contract.h"
-#include "pipeline/pynative/pynative_execute.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
 #ifdef ENABLE_DEBUGGER
@@ -47,7 +46,12 @@ using CallBackFunc = uint32_t (*)(uint32_t graph_id,
 using AnyList = std::vector<Any>;
 using AnyListPtr = std::shared_ptr<AnyList>;
 
-using OpRunInfo = pynative::OpExecInfo;
+struct OpRunInfo {
+  std::string op_name;
+  PrimitivePtr primitive;
+  AbstractBasePtr abstract;
+  ValuePtr value = nullptr;
+};
 using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
 class Executor;
 class SessionBasic : public std::enable_shared_from_this<SessionBasic> {

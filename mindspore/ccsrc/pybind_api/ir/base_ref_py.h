@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_UTILS_BASE_REF_PY_H_
-#define MINDSPORE_CCSRC_UTILS_BASE_REF_PY_H_
+#ifndef MINDSPORE_CCSRC_PYBIND_API_IR_BASE_REF_PY_H_
+#define MINDSPORE_CCSRC_PYBIND_API_IR_BASE_REF_PY_H_
 
 #include <memory>
+#include <string>
+#include <utility>
 
 #include "pybind11/pybind11.h"
+#include "base/base_ref.h"
 
 namespace py = pybind11;
 
@@ -26,6 +29,24 @@ namespace mindspore {
 class PyObjectRef;
 inline std::shared_ptr<PyObjectRef> MakeNode(const py::object &a) { return std::make_shared<PyObjectRef>(a); }
 inline std::shared_ptr<PyObjectRef> MakeNode(const py::tuple &a) { return std::make_shared<PyObjectRef>(a); }
+
+class PyObjectRef : public BaseRef {
+ public:
+  explicit PyObjectRef(const py::object &py_object) : BaseRef(), object_(py_object) {}
+  explicit PyObjectRef(const py::tuple &tuple_obj) : BaseRef(), object_(tuple_obj) {}
+
+  ~PyObjectRef() override = default;
+
+  std::shared_ptr<Base> copy() const override { return std::make_shared<PyObjectRef>(object_); }
+  MS_DECLARE_PARENT(PyObjectRef, BaseRef)
+
+  uint32_t type() const override { return tid(); }
+  std::string ToString() const override { return py::str(object_); }
+  bool operator==(const BaseRef &other) const override;
+  bool operator==(const PyObjectRef &other) const;
+
+  py::object object_;
+};
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_UTILS_BASE_REF_PY_H_
+#endif  // MINDSPORE_CCSRC_PYBIND_API_IR_BASE_REF_PY_H_

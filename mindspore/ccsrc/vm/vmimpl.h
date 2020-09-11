@@ -27,6 +27,7 @@
 #include "ir/anf.h"
 #include "ir/manager.h"
 #include "ir/tensor.h"
+#include "pybind_api/ir/base_ref_py.h"
 
 namespace mindspore {
 namespace compile {

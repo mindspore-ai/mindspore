@@ -34,7 +34,6 @@
 #include "utils/context/context_extends.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils_py.h"
-#include "utils/base_ref_extends.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/operator/composite/do_signature.h"
@@ -605,21 +604,13 @@ py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   ConstructInputTensor(op_exec_info, &tensors_mask, &input_tensors);
   // get graph info for checking it whether existing in the cache
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info, input_tensors);
-  session->BuildOpAsync(op_exec_info.get(), graph_info, input_tensors, tensors_mask);
+  session::OpRunInfo op_run_info = {op_exec_info->op_name, op_exec_info->py_primitive, op_exec_info->abstract,
+                                    op_exec_info->value};
+  session->BuildOpAsync(&op_run_info, graph_info, input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, &input_tensors);
-
   VectorRef outputs;
-  session->RunOpAsync(op_exec_info.get(), graph_info, input_tensors, &outputs);
-
-  // Trans output to tuple
-  auto output_tensors = TransformBaseRefListToTuple(outputs);
-  if (!utils::isa<PyObjectRef>(output_tensors) ||
-      !py::isinstance<py::tuple>(utils::cast<PyObjectRef>(output_tensors).object_)) {
-    MS_EXCEPTION(NotSupportError) << "The output tensors should be a tuple !";
-  }
-  py::object tuple_obj = utils::cast<PyObjectRef>(output_tensors).object_;
-  py::tuple result = py::cast<py::tuple>(tuple_obj);
-
+  session->RunOpAsync(&op_run_info, graph_info, input_tensors, &outputs);
+  auto result = BaseRefToPyData(outputs);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   *status = PYNATIVE_SUCCESS;
   MS_LOG(INFO) << "End run op[" << op_exec_info->op_name << "] with backend policy ms";

@@ -29,6 +29,8 @@
 #include "utils/any.h"
 #include "utils/profile.h"
 #include "ir/manager.h"
+
+#include "pipeline/jit/resource_base.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 
@@ -49,37 +51,6 @@ using BuiltInTypeMap = std::unordered_map<int, std::unordered_map<std::string, A
 BuiltInTypeMap &GetMethodMap();
 
 BuiltInTypeMap &GetAttrMap();
-
-class ResourceBase {
- public:
-  ResourceBase() { manager_ = MakeManager(); }
-
-  virtual ~ResourceBase() = default;
-
-  FuncGraphManagerPtr manager() { return manager_; }
-  // set a manager defined outside which will not manage the graphs.
-  void set_manager(const FuncGraphManagerPtr &manager) { manager_ = manager; }
-
-  std::unordered_map<std::string, Any> &results() { return results_; }
-
-  void SetResult(const std::string &key, const Any &value) { results_[key] = value; }
-
-  Any GetResult(const std::string &key) {
-    if (results_.count(key) == 0) {
-      MS_LOG(EXCEPTION) << "this key is not in resource list:" << key;
-    }
-    return results_[key];
-  }
-
-  bool HasResult(const std::string &key) const { return results_.count(key) != 0; }
-
-  std::unordered_map<std::string, Any> results_;
-
- protected:
-  FuncGraphManagerPtr manager_;
-};
-
-using ResourceBasePtr = std::shared_ptr<pipeline::ResourceBase>;
 
 class Resource : public ResourceBase {
  public:

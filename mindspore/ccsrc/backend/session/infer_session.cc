@@ -17,6 +17,8 @@
 #include "backend/session/infer_session.h"
 #include <memory>
 #include <algorithm>
+#include <fstream>
+
 #include "include/inference.h"
 #include "utils/load_onnx/anf_converter.h"
 #include "backend/session/session_basic.h"
@@ -26,6 +28,8 @@
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "utils/context/context_extends.h"
 #include "runtime/device/kernel_runtime_manager.h"
+
+#include "pybind11/pybind11.h"
 
 #ifdef ENABLE_D
 #include "utils/ms_context.h"

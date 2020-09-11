@@ -21,8 +21,8 @@
 #include "pipeline/jit/parse/python_adapter.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#include "utils/base_ref_extends.h"
 #include "utils/convert_utils_py.h"
+#include "pybind_api/ir/base_ref_py.h"
 
 namespace mindspore {
 py::function GetBpropFunctionByObj(py::object obj) {

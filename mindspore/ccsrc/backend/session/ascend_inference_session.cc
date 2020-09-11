@@ -24,7 +24,6 @@
 #include "utils/ms_utils.h"
 #include "common/trans.h"
 #include "utils/config_manager.h"
-#include "utils/base_ref_extends.h"
 
 namespace mindspore {
 namespace session {

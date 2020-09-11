@@ -20,6 +20,7 @@
 #include <set>
 #include <string>
 #include <list>
+
 #include "base/core_ops.h"
 #include "ir/tensor.h"
 #include "ir/anf.h"
@@ -33,15 +34,14 @@
 #include "runtime/device/kernel_adjust.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/dump_proto.h"
 #include "utils/ms_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/config_manager.h"
-#include "utils/base_ref_extends.h"
 #include "debug/tensor_load.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
+#include "debug/anf_ir_dump.h"
+#include "debug/dump_proto.h"
 
 namespace mindspore {
 namespace session {
