@@ -18,7 +18,7 @@
 #include <android/log.h>
 #include <iostream>
 #include <string>
-#include "include/MindSpore/errorcode.h"
+#include "include/errorcode.h"
 
 #define MS_PRINT(format, ...) __android_log_print(ANDROID_LOG_INFO, "MSJNI", format, ##__VA_ARGS__)
 
@@ -53,8 +53,6 @@ int MSNetWork::ReleaseNets(void) {
 //    delete model;
   return 0;
 }
-
-const int MSNetWork::RET_CATEGORY_SUM = 601;
 
 const char *MSNetWork::labels_name_map[MSNetWork::RET_CATEGORY_SUM] = {
     {"Tortoise"}, {"Container"}, {"Magpie"}, {"Seaturtle"}, {"Football"}, {"Ambulance"}, {"Ladder"},

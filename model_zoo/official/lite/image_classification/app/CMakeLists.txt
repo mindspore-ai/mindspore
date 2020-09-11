@@ -6,37 +6,26 @@
 cmake_minimum_required(VERSION 3.4.1)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
-set(libs  ${CMAKE_SOURCE_DIR}/libs)
-
-
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  ${CMAKE_SOURCE_DIR}/libs/${ANDROID_ABI})
 
+set(MINDSPORELITE_VERSION  mindspore-lite-0.7.0-minddata-arm64-cpu)
 
 # ============== Set MindSpore Dependencies. =============
-include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/include)
-include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/include/MindSpore)
-include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/include/MindSpore/flatbuffers)
-include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/include/MindSpore/ir/dtype)
-include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/include/MindSpore/schema)
+include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp)
+include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/third_party/flatbuffers/include)
+include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION})
+include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/include)
+include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/include/ir/dtype)
+include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/include/schema)
 
 add_library(mindspore-lite SHARED IMPORTED )
+add_library(minddata-lite SHARED IMPORTED )
 
 set_target_properties(mindspore-lite PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_SOURCE_DIR}/libs/${ANDROID_ABI}/libmindspore-lite.so)
+        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libmindspore-lite.so)
+set_target_properties(minddata-lite PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libminddata-lite.so)
 # --------------- MindSpore Lite set End. --------------------
-
-
-
-# =============== Set OpenCV Dependencies ===================
-
-include_directories(${CMAKE_SOURCE_DIR}/opencv/sdk/native/jni/include/)
-
-add_library(lib-opencv SHARED IMPORTED )
-
-set_target_properties(lib-opencv PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_SOURCE_DIR}/libs/${ANDROID_ABI}/libopencv_java4.so)
-
-# --------------- OpenCV set End. ---------------------------
 
 
 # Creates and names a library, sets it as either STATIC
@@ -79,10 +68,8 @@ add_definitions(-DMNN_USE_LOGCAT)
 target_link_libraries( # Specifies the target library.
         mlkit-label-MS
 
-        # --- opencv ---
-        lib-opencv
-
         # --- mindspore ---
+        minddata-lite
         mindspore-lite
 
         # --- other dependencies.---
