@@ -81,6 +81,40 @@ Status IteratorBase::FetchNextTensorRow(TensorRow *out_row) {
   return Status::OK();
 }
 
+Status IteratorBase::GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *vec) {
+  CHECK_FAIL_RETURN_UNEXPECTED(vec != nullptr && vec->empty(), "vec is null or non-empty.");
+
+  TensorRow curr_row;
+
+  RETURN_IF_NOT_OK(FetchNextTensorRow(&curr_row));
+  RETURN_OK_IF_TRUE(curr_row.empty());
+
+  size_t num_cols = curr_row.size();  // num_cols is non-empty.
+  if (col_name_id_map_.empty()) col_name_id_map_ = this->GetColumnNameMap();
+  // order the column names according to their ids
+  if (column_order_.empty()) {
+    const int32_t invalid_col_id = -1;
+    column_order_.resize(num_cols, {std::string(), invalid_col_id});
+    for (const auto itr : col_name_id_map_) {
+      int32_t ind = itr.second;
+      CHECK_FAIL_RETURN_UNEXPECTED(ind < num_cols && ind >= 0, "column id out of bounds.");
+      column_order_[ind] = std::make_pair(itr.first, ind);
+    }
+    // error check, make sure the ids in col_name_id_map are continuous and starts from 0
+    for (const auto &col : column_order_) {
+      CHECK_FAIL_RETURN_UNEXPECTED(col.second != invalid_col_id, "column ids are not continuous.");
+    }
+  }
+
+  vec->reserve(num_cols);
+
+  for (const auto &col : column_order_) {
+    vec->emplace_back(std::make_pair(col.first, curr_row[col.second]));
+  }
+
+  return Status::OK();
+}
+
 // Constructor of the DatasetIterator
 DatasetIterator::DatasetIterator(std::shared_ptr<ExecutionTree> exe_tree)
     : IteratorBase(),

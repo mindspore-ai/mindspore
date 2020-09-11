@@ -19,12 +19,14 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
-#include "minddata/dataset/util/status.h"
+
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/perf/dataset_iterator_tracing.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -61,6 +63,11 @@ class IteratorBase {
   // @return A unordered map from column name to shared pointer to Tensor.
   Status GetNextAsMap(TensorMap *out_map);
 
+  /// \breif return column_name, tensor pair in the order of its column id.
+  /// \param[out] vec
+  /// \return Error code
+  Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *vec);
+
   // Getter
   // @return T/F if this iterator is completely done after getting an eof
   bool eof_handled() const { return eof_handled_; }
@@ -73,6 +80,7 @@ class IteratorBase {
   std::unique_ptr<DataBuffer> curr_buffer_;  // holds the current buffer
   bool eof_handled_;                         // T/F if this op got an eof
   std::unordered_map<std::string, int32_t> col_name_id_map_;
+  std::vector<std::pair<std::string, int32_t>> column_order_;  // key: column name, val: column id
 };
 
 // The DatasetIterator derived class is for fetching rows off the end/root of the execution tree.
