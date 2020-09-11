@@ -91,6 +91,7 @@ enum LPixelType {
   RGBA = 2,
   RGBA2GRAY = 3,
   RGBA2BGR = 4,
+  RGBA2RGB = 5,
 };
 
 class LDataType {
