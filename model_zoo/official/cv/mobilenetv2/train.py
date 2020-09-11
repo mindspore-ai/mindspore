@@ -108,10 +108,6 @@ if __name__ == '__main__':
                 losses.append(network(feature, label).asnumpy())
             epoch_mseconds = (time.time()-epoch_start) * 1000
             per_step_mseconds = epoch_mseconds / step_size
-            # lr cause to pynative, but cpu doesn't support this mode
-            # print("\r epoch[{}], iter[{}] cost: {:5.3f}, per step time: {:5.3f}, avg loss: {:5.3f}, lr: {}"\
-            # .format(epoch + 1, step_step, epoch_mseconds, per_step_mseconds, np.mean(np.array(losses)), \
-            #     lr[(epoch+1)*step_size - 1]), end="")
             print("\r epoch[{}], iter[{}] cost: {:5.3f}, per step time: {:5.3f}, avg loss: {:5.3f}"\
             .format(epoch + 1, step_size, epoch_mseconds, per_step_mseconds, np.mean(np.array(losses))), \
                 end="")
