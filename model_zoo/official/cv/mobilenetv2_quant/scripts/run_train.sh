@@ -82,13 +82,20 @@ run_ascend(){
     fi
 
 
-    rank_file_name=${2##*/}
-    IFS='_' read -ra array <<<"${rank_file_name}"
-    device_id_list=${array[2]}
-    first_device=${device_id_list:0:1}
+
+    #rank_file_name=${2##*/}
+    #IFS='_' read -ra array <<<"${rank_file_name}"
+    #device_id_list=${array[2]}
+    #first_device=${device_id_list:0:1}
     #last_device=${device_list:${#device_list}-1:1}
-    device_num=${#device_id_list}
-    
+    #device_num=${#device_id_list}
+    cat $2 | awk -F "[device_id]" '/device_id/{print$0}' >temp.log
+    array=$(cat temp.log | awk -F "[:]" '/device_id/{print$2}')
+    rm temp.log
+    IFS=" " read -ra device_list <<<$array
+    first_device=${device_list[0]:1:1}
+    device_num=${#device_list[*]}
+
     ulimit -u unlimited
     export DEVICE_NUM=${device_num}
     export RANK_SIZE=${device_num}
@@ -188,3 +195,4 @@ elif [ $1 = "GPU" ] ; then
 else
     echo "Unsupported device target: $1"
 fi;
+
