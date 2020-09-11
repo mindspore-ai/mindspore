@@ -157,6 +157,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // Find if any operation overflow happened and return their names
   std::vector<std::string> CheckOpOverflow();
 
+  // Check if the port is valid
+  bool CheckPort(const char *port);
+
   // class members
   std::unique_ptr<GrpcClient> grpc_client_;
   std::unique_ptr<DebugServices> debug_services_;
