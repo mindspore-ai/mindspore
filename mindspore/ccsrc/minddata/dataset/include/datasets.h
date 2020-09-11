@@ -62,7 +62,7 @@ class Cifar100Dataset;
 class CLUEDataset;
 class CocoDataset;
 class CSVDataset;
-class CsvBase;
+struct CsvBase;
 class ImageFolderDataset;
 #ifndef ENABLE_ANDROID
 class ManifestDataset;
