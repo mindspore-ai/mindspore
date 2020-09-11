@@ -295,7 +295,7 @@ def test_train_32k_8p(batch_size=32, num_classes=32768):
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(5, dataset, dataset_sink_mode=False)
-    strategies = _executor._get_strategy(model._train_network)
+    strategies = _executor._get_shard_strategy(model._train_network)
     for (k, v) in strategies.items():
         if re.search('Conv2D-op', k) is not None:
             assert v[0][0] == dev_num
@@ -671,7 +671,7 @@ def test_train_64k_8p(batch_size=32, num_classes=65536):  # 1048576 #131072 #327
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(5, dataset, dataset_sink_mode=False)
-    strategies = _executor._get_strategy(model._train_network)
+    strategies = _executor._get_shard_strategy(model._train_network)
     for (k, v) in strategies.items():
         if re.search('Conv2D-op', k) is not None:
             assert v[0][0] == dev_num
@@ -698,7 +698,7 @@ def test_train_8k_8p_gpu(batch_size=32, num_classes=8192):
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(5, dataset, dataset_sink_mode=False)
-    strategies = _executor._get_strategy(model._train_network)
+    strategies = _executor._get_shard_strategy(model._train_network)
     for (k, v) in strategies.items():
         if re.search('Conv2D-op', k) is not None:
             assert v[0][0] == dev_num
@@ -724,7 +724,7 @@ def test_train_4k_8p_gpu(batch_size=32, num_classes=4096):
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(5, dataset, dataset_sink_mode=False)
-    strategies = _executor._get_strategy(model._train_network)
+    strategies = _executor._get_shard_strategy(model._train_network)
     for (k, v) in strategies.items():
         if re.search('Conv2D-op', k) is not None:
             assert v[0][0] == dev_num

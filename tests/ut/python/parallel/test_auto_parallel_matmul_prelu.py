@@ -75,7 +75,7 @@ def test_matmul_prelu():
     reset_op_id()
 
     _executor.compile(net, x, y, b, phase='train')
-    strategies = _executor._get_strategy(net)
+    strategies = _executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('PReLU-op', k) is not None:
             assert v == [[16, 1, 1, 1], [1]]

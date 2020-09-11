@@ -69,7 +69,7 @@ def test_common_parameter():
     reset_op_id()
 
     _executor.compile(net, x, y, phase='train')
-    strategies = _executor._get_strategy(net)
+    strategies = _executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('MatMul-op', k) is not None:
             assert v == [[8, 1], [1, 1]]

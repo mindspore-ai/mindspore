@@ -62,7 +62,7 @@ def test_auto_parallel_assign_sub_with_ref_key():
     reset_op_id()
 
     _executor.compile(net, x, phase="train")
-    strategies = _executor._get_strategy(net)
+    strategies = _executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('PReLU-op', k) is not None:
             assert v == [[1, 1, 1, 8], [1]]
