@@ -58,3 +58,15 @@ __kernel void Sigmoid(__read_only image2d_t input, __write_only image2d_t output
   tmp.w = 1.0f / (1.0f + exp(-in_c4.w));
   WRITE_IMAGE(output, (int2)(X, Y), tmp);
 }
+
+__kernel void Tanh(__read_only image2d_t input, __write_only image2d_t output, int4 input_shape) {
+  int Y = get_global_id(0);
+  int X = get_global_id(1);
+  if (X >= input_shape.z || Y >= input_shape.y) return;
+  FLT4 in_c4 = READ_IMAGE(input, smp_zero, (int2)(X, Y));
+  in_c4.x = (exp(in_c4.x) - exp(-in_c4.x)) / (exp(in_c4.x) + exp(-in_c4.x));
+  in_c4.y = (exp(in_c4.y) - exp(-in_c4.y)) / (exp(in_c4.y) + exp(-in_c4.y));
+  in_c4.z = (exp(in_c4.z) - exp(-in_c4.z)) / (exp(in_c4.z) + exp(-in_c4.z));
+  in_c4.w = (exp(in_c4.w) - exp(-in_c4.w)) / (exp(in_c4.w) + exp(-in_c4.w));
+  WRITE_IMAGE(output, (int2)(X, Y), in_c4);
+}

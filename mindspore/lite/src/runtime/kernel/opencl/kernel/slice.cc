@@ -132,7 +132,7 @@ int SliceOpenCLKernel::Run() {
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
 
   return RET_OK;
-}  // namespace mindspore::kernel
+}
 
 kernel::LiteKernel *OpenCLSliceKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,

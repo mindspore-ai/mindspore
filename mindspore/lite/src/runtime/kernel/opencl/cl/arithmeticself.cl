@@ -97,38 +97,6 @@ __kernel void ArithmeticSelf_ElementSin_NC4HW4(__read_only image2d_t input0, __w
   WRITE_IMAGE(output, (int2)((Y), (Z * output_shape.y + X)), result);
 }
 
-__kernel void ArithmeticSelf_ElementTanh_NHWC4(__read_only image2d_t input0, __write_only image2d_t output,
-                                               int4 output_shape) {
-  int X = get_global_id(0);  // N*H
-  int Y = get_global_id(1);  // W
-  int Z = get_global_id(2);  // c/4
-  if (X >= output_shape.x * output_shape.y || Y >= output_shape.z || Z >= output_shape.w) {
-    return;
-  }
-  FLT4 result = READ_IMAGE(input0, smp_none, (int2)((Y)*output_shape.w + Z, (X)));
-  result.x = tanh(result.x);
-  result.y = tanh(result.y);
-  result.z = tanh(result.z);
-  result.w = tanh(result.w);
-  WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (X)), result);
-}
-
-__kernel void ArithmeticSelf_ElementTanh_NC4HW4(__read_only image2d_t input0, __write_only image2d_t output,
-                                                int4 output_shape) {
-  int X = get_global_id(0);  // N*H
-  int Y = get_global_id(1);  // W
-  int Z = get_global_id(2);  // c/4
-  if (X >= output_shape.x * output_shape.y || Y >= output_shape.z || Z >= output_shape.w) {
-    return;
-  }
-  FLT4 result = READ_IMAGE(input0, smp_none, (int2)((Y), (Z * output_shape.y + X)));
-  result.x = tanh(result.x);
-  result.y = tanh(result.y);
-  result.z = tanh(result.z);
-  result.w = tanh(result.w);
-  WRITE_IMAGE(output, (int2)((Y), (Z * output_shape.y + X)), result);
-}
-
 __kernel void ArithmeticSelf_ElementNeg_NHWC4(__read_only image2d_t input0, __write_only image2d_t output,
                                               int4 output_shape) {
   int X = get_global_id(0);  // N*H
