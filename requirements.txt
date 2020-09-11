@@ -15,3 +15,4 @@ sklearn >= 0.0              # for st test
 pandas >= 1.0.2             # for ut test
 bs4
 astunparse
+packaging

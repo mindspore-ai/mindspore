@@ -26,6 +26,7 @@ from setuptools.command.build_py import build_py
 version = '0.7.0'
 
 backend_policy = os.getenv('BACKEND_POLICY')
+device_target = os.getenv('BACKEND_TARGET')
 commit_id = os.getenv('COMMIT_ID').replace("\n", "")
 package_name = os.getenv('MS_PACKAGE_NAME').replace("\n", "")
 
@@ -54,8 +55,32 @@ def _write_commit_file(file):
     file.write("__commit_id__ = '{}'\n".format(commit_id))
 
 
+def _write_package_name(file):
+    file.write("__package_name__ = '{}'\n".format(package_name))
+
+
+def _write_device_target(file):
+    file.write("__device_target__ = '{}'\n".format(device_target))
+
+
 def build_dependencies():
     """generate python file"""
+    target = os.path.join(pkg_dir, 'mindspore', 'device_target.py')
+    with open(target, 'w') as f:
+        _write_device_target(f)
+
+    target = os.path.join(pwd, 'mindspore', 'device_target.py')
+    with open(target, 'w') as f:
+        _write_device_target(f)
+
+    package_info = os.path.join(pkg_dir, 'mindspore', 'package_name.py')
+    with open(package_info, 'w') as f:
+        _write_package_name(f)
+
+    package_info = os.path.join(pwd, 'mindspore', 'package_name.py')
+    with open(package_info, 'w') as f:
+        _write_package_name(f)
+
     version_file = os.path.join(pkg_dir, 'mindspore', 'version.py')
     with open(version_file, 'w') as f:
         _write_version(f)
@@ -93,7 +118,8 @@ required_package = [
     'sympy >= 1.4',
     'cffi >= 1.13.2',
     'decorator >= 4.4.0',
-    'astunparse >= 1.6.3'
+    'astunparse >= 1.6.3',
+    'packaging'
 ]
 
 package_data = {
