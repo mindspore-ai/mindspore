@@ -70,7 +70,13 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
-
+  // set default params
+  attr->strideH = 1;
+  attr->strideW = 1;
+  attr->dilateH = 1;
+  attr->dilateW = 1;
+  attr->group = 1;
+  attr->padMode = schema::PadMode_NOTSET;
   // set opdef each attr params
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "group") {
@@ -165,7 +171,7 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     attr->activationType = schema::ActivationType_NO_ACTIVATION;
   }
 
-  if (attr->group != 1) {
+  if (attr->group == attr->channelOut) {
     if (!ParseGroupConvolution(attr, op)) {
       MS_LOG(ERROR) << "Convert Convolution to Depthwise failed";
       return RET_ERROR;

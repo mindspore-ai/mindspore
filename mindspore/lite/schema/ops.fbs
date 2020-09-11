@@ -549,6 +549,7 @@ table NetOutput {
 }
 
 table MatMul {
+    broadcast : bool = false;
     transposeA : bool = false;
     transposeB : bool = false;
 }

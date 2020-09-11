@@ -122,6 +122,7 @@
 #include "src/ops/l2_norm.h"
 #include "src/ops/sparse_to_dense.h"
 #include "src/ops/detection_post_process.h"
+#include "src/ops/dropout.h"
 #ifdef PRIMITIVE_WRITEABLE
 #include "tools/converter/quantizer/quantize_util.h"
 #endif
@@ -617,6 +618,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new SparseToDense(primitive);
     case schema::PrimitiveType_DetectionPostProcess:
       return new DetectionPostProcess(primitive);
+    case schema::PrimitiveType_Dropout:
+      return new Dropout(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
@@ -866,6 +869,8 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
       return NewPrimitiveC<SparseToDense>(primitive);
     case schema::PrimitiveType_DetectionPostProcess:
       return NewPrimitiveC<DetectionPostProcess>(primitive);
+    case schema::PrimitiveType_Dropout:
+      return NewPrimitiveC<Dropout>(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
