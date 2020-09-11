@@ -33,12 +33,10 @@ extern "C" {
 #endif
 // for fp32 winograd input/output transform
 void WinogradInputTransform(const float *input_data, float *trans_input, float *tmp_data, int cal_num,
-                            int out_tile_index, int out_w_block_num, ConvParameter *conv_param,
-                            InputTransformUnitFunc input_trans_func);
+                            int out_tile_index, int out_w_block_num, ConvParameter *conv_param, InputTransFunc func);
 
 void WinogradOutputTransform(const float *gemm_out, float *tmp_out_data, const float *bias_data, int cal_num,
-                             int out_tile_index, int output_unit_num, ConvParameter *conv_param,
-                             OutputTransformUnitFunc output_trans_func);
+                             int out_tile_index, int output_unit_num, ConvParameter *conv_param, OutputTransFunc func);
 
 // for fp32 convolution 3x3 filter/input/output transform
 void Conv3x3Fp32InputUnit(const float *tmp_data, float *trans_input_data, size_t step);

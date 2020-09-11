@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/fp16/matrix_fp16.h"
 
-namespace mindspore::kernel {
+#ifndef MINDSPORE_LITE_NNACL_FP16_MATRIX_FP16_H_
+#define MINDSPORE_LITE_NNACL_FP16_MATRIX_FP16_H_
 
-void MatrixMultiplyFp16(const float16_t *matrix_a, const float16_t *matrix_b, float16_t *matrix_c, int m, int k, int n,
-                        bool row) {
-  // row-major implementation
-  int count = 0;
-  for (int h = 0; h < m; h++) {
-    int h_offset = h * k;
-    for (int w = 0; w < n; w++) {
-      float16_t res = 0;
-      for (int i = 0; i < k; i++) {
-        res += *(matrix_a + h_offset + i) * *(matrix_b + w + i * n);
-      }
-      *(matrix_c + count) = res;
-      count++;
-    }
-  }
+#include <arm_neon.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void MatrixMultiplyFp16(const float16_t *matrix_a, const float16_t *matrix_b, float16_t *matrix_c, int m, int k, int n);
+
+void MatrixMultiplyVecFp16(const float16x8_t *matrix_a, const float16x8_t *matrix_b, float16x8_t *matrix_c,
+                           const float16_t *bias, int m, int k, int n);
+#ifdef __cplusplus
 }
-}  // namespace mindspore::kernel
+#endif
+
+#endif  // MINDSPORE_LITE_NNACL_FP16_MATRIX_FP16_H_

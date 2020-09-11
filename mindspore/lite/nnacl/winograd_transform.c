@@ -18,8 +18,7 @@
 
 // fp32 conv winograd
 void WinogradInputTransform(const float *input_data, float *trans_input, float *tmp_data, int cal_num,
-                            int out_tile_index, int out_w_block_num, ConvParameter *conv_param,
-                            InputTransformUnitFunc input_trans_func) {
+                            int out_tile_index, int out_w_block_num, ConvParameter *conv_param, InputTransFunc func) {
   int input_unit = conv_param->input_unit_;
   int output_unit = conv_param->output_unit_;
   int in_channel = conv_param->input_channel_;
@@ -31,6 +30,7 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
   if (out_w_block_num == 0) {
     return;
   }
+
   for (int c = 0; c < cal_num; c++) {  // actual tiled number
     int src_x_s = (out_tile_index % out_w_block_num) * output_unit - pad_w;
     int src_y_s = (out_tile_index / out_w_block_num) * output_unit - pad_h;
@@ -70,15 +70,15 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
       int dst_ic4_offset = dst_plane_offset + ic * C4NUM;
       size_t dst_step = C12NUM * ic4 * C4NUM;
       float *trans_input_ptr = trans_input + dst_ic4_offset;
-      input_trans_func(tmp_data, trans_input_ptr, C4NUM, dst_step);
+      func(tmp_data, trans_input_ptr, C4NUM, dst_step);
+      //      GeneralInputTransformUnit(tmp_data, trans_input_ptr, matrix_b, matrix_bt, C4NUM, dst_step, input_unit);
     }
     out_tile_index++;
   }  // cal_tile_num loop
 }
 
 void WinogradOutputTransform(const float *gemm_out, float *tmp_out_data, const float *bias_data, int cal_num,
-                             int out_tile_index, int output_unit_num, ConvParameter *conv_param,
-                             OutputTransformUnitFunc output_trans_func) {
+                             int out_tile_index, int output_unit_num, ConvParameter *conv_param, OutputTransFunc func) {
   int output_unit = conv_param->output_unit_;
   int output_w = conv_param->output_w_;
   int output_h = conv_param->output_h_;
@@ -106,7 +106,9 @@ void WinogradOutputTransform(const float *gemm_out, float *tmp_out_data, const f
       const float *src_ptr = gemm_out + src_oc4_offset;
       const float *bias_ptr = bias_data + j * C4NUM;
       float *dst_ptr = tmp_out_data + dst_oc4_offset;
-      output_trans_func(src_ptr, dst_ptr, bias_ptr, C8NUM, output_w_unit_block * output_unit);
+      func(src_ptr, dst_ptr, bias_ptr, C8NUM, output_w_unit_block * output_unit);
+      //      GeneralOutputTransformUnit(src_ptr, dst_ptr, bias_ptr, matrix_a, matrix_at, C8NUM,
+      //                                 output_w_unit_block * output_unit, input_unit, output_unit);
     }
     out_tile_index++;
   }
@@ -865,7 +867,7 @@ void Conv3x3Int8InputUnit(int16_t *tmp_data, int16_t *trans_input_data, size_t s
 }
 
 void Conv3x3Int8InputTransform(const int16_t *input_data, int16_t *trans_input, int16_t *tmp_data, int start_index,
-                                int real_cal_num, int out_w_block, ConvParameter *conv_param) {
+                               int real_cal_num, int out_w_block, ConvParameter *conv_param) {
   // input data format : nhwc
   int input_channel = conv_param->input_channel_;
   int input_width = conv_param->input_w_;
@@ -1176,7 +1178,7 @@ void Conv3x3Int8FilterTransform(const int16_t *weight_data, int16_t *trans_weigh
 }
 
 void Conv3x3Int8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, int8_t *output_data, bool h_not_bound,
-                            bool w_not_bound, int output_w, int real_num, int oc_start, ConvParameter *conv_param) {
+                           bool w_not_bound, int output_w, int real_num, int oc_start, ConvParameter *conv_param) {
   int32_t *left_shift = conv_param->conv_quant_arg_.left_shift_;
   int32_t *right_shift = conv_param->conv_quant_arg_.right_shift_;
   int32_t *quant_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
@@ -1457,7 +1459,7 @@ void Conv3x3Int8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, in
 }
 
 void Conv3x3Int8OutputTransform(const int32_t *gemm_out, int8_t *out_data, const int32_t *bias_data, int start_index,
-                                 int real_cal_num, int out_w_block, ConvParameter *conv_param) {
+                                int real_cal_num, int out_w_block, ConvParameter *conv_param) {
   int output_channel = conv_param->output_channel_;
   int output_w = conv_param->output_w_;
   int output_h = conv_param->output_h_;
@@ -1484,7 +1486,7 @@ void Conv3x3Int8OutputTransform(const int32_t *gemm_out, int8_t *out_data, const
       bool w_not_bound = out_w_index * OUPUT_UNIT + 1 < output_w;
       bool h_not_bound = out_h_index * OUPUT_UNIT + 1 < output_h;
       Conv3x3Int8OutputUnit(src_ptr, bias_ptr, dst_ptr, h_not_bound, w_not_bound, output_w, real_num, j * C4NUM,
-                             conv_param);
+                            conv_param);
     }
   }
 }

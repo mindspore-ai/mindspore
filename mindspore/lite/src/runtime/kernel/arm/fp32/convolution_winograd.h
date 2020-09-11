@@ -19,10 +19,9 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-
 #include "nnacl/winograd_transform.h"
+#include "nnacl/minimal_filtering_generator.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "src/runtime/kernel/arm/base/matrix.h"
 
 namespace mindspore::kernel {
 class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
@@ -35,7 +34,7 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
         trans_weight_(nullptr) {}
   ~ConvolutionWinogradCPUKernel() override {
     if (trans_weight_ != nullptr) {
-      delete trans_weight_;
+      free(trans_weight_);
       trans_weight_ = nullptr;
     }
   };
@@ -44,10 +43,10 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
   int RunImpl(int task_id);
   int InitWeightBias();
-  int MallocFilterMatrix(int oc_block, int oc_block_num);
   int InitTmpBuffer();
   int ConfigInputOutput();
   int PostProcess();
+  int WinogradFilterTransform(const float *weight_data, float *matrix_g, float *matrix_gt, int oc_block);
 
  private:
   void FreeTmpBuffer() {
@@ -80,13 +79,12 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   float *gemm_out_ = nullptr;
   float *tmp_out_data_ = nullptr;
   float *col_buffer_ = nullptr;
-  Matrix *trans_weight_ = nullptr;
-  InputTransformUnitFunc input_trans_func_;
-  OutputTransformUnitFunc output_trans_func_;
+  float *trans_weight_ = nullptr;
   TmpBufferAddress tmp_buffer_address_list_[5];
+  InputTransFunc in_func_;
+  OutputTransFunc out_func_;
   GEMM_FUNC_FP32 gemm_func_ = nullptr;
 };
-int WinogradFilterTransform(const float *weight_data, Matrix *trans_weight, int kernel_unit, int input_unit,
-                            ConvParameter *conv_param, int oc_block);
+
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_WINOGRAD_H_

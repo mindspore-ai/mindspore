@@ -569,8 +569,8 @@ void Conv3x3Fp16OutputTransform(const float16_t *gemm_out, float16_t *out_data, 
 
 // fp16 common winograd
 void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_input, float16_t *tmp_data, int cal_num,
-                                int out_tile_index, int out_w_block_num, ConvParameter *conv_param,
-                                InputTransformUnitFp16Func input_trans_func) {
+                                int out_tile_index, int out_w_block_num, ConvParameter *conv_param, float16_t *matrix_b,
+                                float16_t *matrix_bt) {
   const int tile_num = 16;
   int input_unit = conv_param->input_unit_;
   int output_unit = conv_param->output_unit_;
@@ -622,7 +622,7 @@ void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_in
       int dst_ic8_offset = dst_plane_offset + ic * tile_num * C8NUM;
       size_t dst_step = ic8 * C8NUM * tile_num;
       float16_t *trans_input_ptr = trans_input + dst_ic8_offset;
-      input_trans_func(tmp_data, trans_input_ptr, C8NUM, dst_step);
+      GeneralInputTransformUnitFp16(tmp_data, trans_input_ptr, matrix_b, matrix_bt, C8NUM, dst_step, input_unit);
     }
     out_tile_index++;
   }  // cal_tile_num loop
@@ -630,7 +630,7 @@ void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_in
 
 void WinogradOutputTransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
                                  int cal_num, int out_tile_index, int output_unit_num, ConvParameter *conv_param,
-                                 OutputTransformUnitFp16Func output_trans_func) {
+                                 float16_t *matrix_a, float16_t *matrix_at) {
   int output_unit = conv_param->output_unit_;
   int output_w = conv_param->output_w_;
   int output_h = conv_param->output_h_;
@@ -655,7 +655,8 @@ void WinogradOutputTransformFp16(const float16_t *gemm_out, float16_t *tmp_out_d
       const float16_t *src_ptr = gemm_out + src_oc8_offset;
       const float16_t *bias_ptr = bias_data + j * C8NUM;
       float16_t *dst_ptr = tmp_out_data + dst_oc8_offset;
-      output_trans_func(src_ptr, dst_ptr, bias_ptr, C8NUM, output_w_unit_block * output_unit);
+      GeneralOutputTransformUnitFp16(src_ptr, dst_ptr, bias_ptr, matrix_a, matrix_at, C8NUM,
+                                     output_w_unit_block * output_unit, input_unit, output_unit);
     }
     out_tile_index++;
   }
