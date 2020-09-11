@@ -62,19 +62,19 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_2input_dim4_axis3) {
   constexpr int INPUT_NUM = 2;
   std::array<std::vector<int>, INPUT_NUM> input_shapes = {std::vector<int>{1, 19, 19, 96},
                                                           std::vector<int>{1, 19, 19, 96}};
-  std::vector<int> output_shape = {2, 19, 19, 96};
+  std::vector<int> output_shape = {1, 19, 19, 192};
   auto data_type = kNumberTypeFloat16;
   auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
   std::vector<lite::Tensor *> inputs;
   for (auto &shape : input_shapes) {
-    auto input_temp = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC4, tensor_type);
+    auto input_temp = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
     inputs.push_back(input_temp);
     if (input_temp == nullptr) {
       MS_LOG(INFO) << " new input_tensor failed ";
       return;
     }
   }
-  auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, output_shape, schema::Format_NHWC, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(INFO) << " new output_tensor failed ";
     for (auto tensor : inputs) {
@@ -97,7 +97,7 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_2input_dim4_axis3) {
     }
     return;
   }
-  param->axis_ = 0;
+  param->axis_ = 3;
   auto *concat_kernel =
     new (std::nothrow) kernel::ConcatOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   if (concat_kernel == nullptr) {
@@ -111,6 +111,7 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_2input_dim4_axis3) {
     delete param;
     return;
   }
+  concat_kernel->SetFormatType(schema::Format_NC4HW4);
   concat_kernel->Init();
   // to do allocate memory for inputs and outputs
   for (auto &input_tensor : inputs) {
@@ -229,8 +230,9 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_2input_dim4_axis3) {
     delete param;
     return;
   }
+  concat_kernel->SetFormatType(schema::Format_NC4HW4);
   concat_kernel->Init();
-  // to do allocate memory for inputs and outputs
+  // to do allocate memory for inputs
   for (auto &input_tensor : inputs) {
     input_tensor->MallocData(allocator);
   }
