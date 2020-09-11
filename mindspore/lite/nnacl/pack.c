@@ -965,6 +965,45 @@ void PackNHWC4ToNHWCInt8(const void *src, void *dst, int batch, int plane, int c
   }
 }
 
+void PackNHWCToNHWC8Int8(const void *src, void *dst, int batch, int plane, int channel) {
+  int c8 = UP_DIV(channel, C8NUM);
+  int nhwc8_batch_unit_offset = c8 * C8NUM * plane;
+  int ic_remainder_ = channel % C8NUM;
+  if (ic_remainder_ != 0) {
+    int nhwc8_batch_offset = 0;
+    for (int b = 0; b < batch; b++) {
+      int batch_offset = b * channel * plane;
+      for (int i = 0; i < plane; i++) {
+        memcpy((int8_t *)dst + nhwc8_batch_offset + i * c8 * C8NUM, (int8_t *)src + batch_offset + i * channel,
+               channel);
+      }
+      nhwc8_batch_offset += nhwc8_batch_unit_offset;
+    }
+  } else {
+    size_t ori_input_size = batch * plane * channel;
+    memcpy((int8_t *)dst, (int8_t *)src, ori_input_size);
+  }
+}
+
+void PackNHWC8ToNHWCInt8(const void *src, void *dst, int batch, int plane, int channel) {
+  int c8 = UP_DIV(channel, C8NUM);
+  int nhwc8_batch_unit_offset = c8 * C8NUM * plane;
+  int ic_remainder_ = channel % C8NUM;
+  if (ic_remainder_ != 0) {
+    for (int b = 0; b < batch; b++) {
+      int batch_offset = b * channel * plane;
+      int nhwc8_batch_offset = b * nhwc8_batch_unit_offset;
+      for (int i = 0; i < plane; i++) {
+        memcpy((int8_t *)dst + batch_offset + i * channel, (int8_t *)src + nhwc8_batch_offset + i * c8 * C8NUM,
+               channel);
+      }
+    }
+  } else {
+    size_t ori_input_size = batch * plane * channel;
+    memcpy((int8_t *)dst, (int8_t *)src, ori_input_size);
+  }
+}
+
 void PackNCHWToNHWC4Int8(const void *src, void *dst, int batch, int plane, int channel) {
   int nhwc4_batch_offset = 0;
   int c4 = UP_DIV(channel, C4NUM);
@@ -1269,6 +1308,25 @@ void PackDepthwiseInt8Input(const int8_t *src, int16_t *dst, const ConvParameter
 
 void PackDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight_, int plane, int channel,
                              ConvQuantArg *quant_qrg) {
+  int weight_zp = quant_qrg->filter_quant_args_[0].zp_;
+  for (int c = 0; c < channel; c++) {
+    if (quant_qrg->per_channel_ & FILTER_PER_CHANNEL) {
+      weight_zp = quant_qrg->filter_quant_args_[c].zp_;
+    }
+    int c8_block_num = c / C8NUM;
+    int c8_block_rem = c % C8NUM;
+    const int8_t *src_c = origin_weight + c * plane;
+    int16_t *dst_c = packed_weight_ + c8_block_num * plane * C8NUM;
+    for (int k = 0; k < plane; k++) {
+      const int8_t *src_kernel = src_c + k;
+      int16_t *dst_kernel = dst_c + C8NUM * k + c8_block_rem;
+      *dst_kernel = (int16_t)(src_kernel[0] - weight_zp);
+    }
+  }
+}
+
+void PackDeconvDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight_, int plane, int channel,
+                                   ConvQuantArg *quant_qrg) {
   int weight_zp = quant_qrg->filter_quant_args_[0].zp_;
   for (int c = 0; c < channel; c++) {
     if (quant_qrg->per_channel_ & FILTER_PER_CHANNEL) {

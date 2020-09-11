@@ -40,11 +40,21 @@ class ConvolutionDepthwiseSWInt8CPUKernel : public ConvolutionBaseCPUKernel {
   int Execute(int task_id);
 
  private:
+  int ReinitQuantParam();
+  int ReinitFreeBefore();
+  void FreeTmpQuant();
+
   SlidingWindowParam *sliding = nullptr;
   int16_t *packed_weight_ = nullptr;
-  int16_t *packed_input_ = nullptr;
+  int8_t *packed_input_ = nullptr;
   int8_t *packed_output_ = nullptr;
   bool need_align_ = false;
+
+  int8_t *input_zp_ = nullptr;
+  float *input_scale_ = nullptr;
+  float *weight_scale_ = nullptr;
+  int32_t *output_zp_ = nullptr;
+  float *output_scale_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
