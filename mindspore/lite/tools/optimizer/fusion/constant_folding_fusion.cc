@@ -174,7 +174,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
   CheckIfFuncGraphIsNull(func_graph);
   CheckIfAnfNodeIsNull(node);
   if (!node->isa<CNode>()) {
-    return node;
+    return nullptr;
   }
   auto any_node = node->cast<CNodePtr>();
   CheckIfCNodeIsNull(any_node);
@@ -191,7 +191,6 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       continue;
     }
     changed = true;
-    MS_LOG(INFO) << "Begin fold node:" << input_node->fullname_with_scope();
     auto output_nums = GetOutputTensorNum(input_cnode);
     std::vector<Tensor *> output_tensors{output_nums, new Tensor()};
     auto lite_primitive = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
@@ -254,6 +253,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       MS_LOG(ERROR) << "constant_folding replace cnode failed";
       return nullptr;
     }
+    MS_LOG(DEBUG) << "fold node:" << input_node->fullname_with_scope() << " success ";
     FreeTensors(&input_tensors, &output_tensors);
     delete (lite_kernel);
   }

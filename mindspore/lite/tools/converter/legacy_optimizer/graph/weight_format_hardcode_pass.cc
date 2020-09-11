@@ -170,7 +170,9 @@ STATUS WeightFormatHardCodePass::HardCodeMS(const std::unique_ptr<CNodeT> &node,
       if (opType == PrimitiveType_Conv2D) {
         weightTensor->format = schema::Format::Format_KCHW;
       } else if (opType == PrimitiveType_DepthwiseConv2D) {
-        weightTensor->format = schema::Format::Format_CKHW;
+        weightTensor->format = Format_CKHW;
+      } else if (opType == PrimitiveType_DeConv2D) {
+        weightTensor->format = Format_KCHW;
       } else {
         MS_LOG(ERROR) << "Unsupported opType: " << EnumNamePrimitiveType(opType) << ", node: " << node->name;
         return RET_ERROR;

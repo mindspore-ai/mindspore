@@ -31,6 +31,7 @@ class Log : public ArithmeticSelf {
   MS_DECLARE_PARENT(Log, ArithmeticSelf);
   Log() = default;
   explicit Log(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   Log() = default;
 
