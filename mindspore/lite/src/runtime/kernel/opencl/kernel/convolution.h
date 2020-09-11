@@ -42,27 +42,35 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
  private:
   bool use_fp16_ = false;
 
-  int CI;
-  int IH;
-  int IW;
-  int CO;
-  int OH;
-  int OW;
-  int CI_SLICES;
-  int CO_SLICES;
+  int CI_{};
+  int IH_{};
+  int IW_{};
+  int CO_{};
+  int OH_{};
+  int OW_{};
+  int CI_SLICES_{};
+  int CO_SLICES_{};
+  int KH_{};
+  int KW_{};
   void *packed_weight_ = nullptr;
   void *packed_bias_ = nullptr;
 
   bool use_winograd_ = false;
-  int TILES_X;
-  int TILES_Y;
-  int TILES_XY;
+  int TILES_X_{};
+  int TILES_Y_{};
+  int TILES_XY_{};
   void *winograd_mem0_ = nullptr;
   void *winograd_mem1_ = nullptr;
 
-  cl::Kernel kernel_4x4to36;
-  cl::Kernel kernel_conv;
-  cl::Kernel kernel_36to4x4;
+  cl::Kernel kernel_4x4to36_;
+  cl::Kernel kernel_conv_;
+  cl::Kernel kernel_36to4x4_;
+
+  int InitWeight();
+  int InitBias();
+  int RearrangeWinogradWeight();
+  template <typename SRC_T, typename DST_T>
+  int OHWI2OHWIOGroupI4O4(void *weight_OHWI, size_t KH, size_t KW, size_t OGroup);
 
   std::string CodeGenConvolutionNHWC4();
   std::string CodeGenConvolutionNC4HW4();
@@ -72,16 +80,18 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
   std::string CodeGenWinograd36To4x4();
   int SetGlobalLocalConv(std::vector<size_t> *global, std::vector<size_t> *local);
 
+  size_t sizeof_FLT() const { return use_fp16_ ? sizeof(float16_t) : sizeof(float); }
+
   bool UseWinograd4x4To6x6() {
     auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
     const bool attr_valid = param->kernel_h_ == 3 && param->kernel_w_ == 3 && param->dilation_h_ == 1 &&
                             param->dilation_w_ == 1 && param->stride_h_ == 1 && param->stride_w_ == 1;
-    const bool channel_good = CI_SLICES >= 12 && CO_SLICES >= 12;
-    const bool hw_good = TILES_X * TILES_Y >= 16;
+    const bool channel_good = CI_SLICES_ >= 12 && CO_SLICES_ >= 12;
+    const bool hw_good = TILES_X_ * TILES_Y_ >= 16;
     return attr_valid && channel_good && hw_good;
   }
 
-  std::vector<float> MatrixMultiply(const std::vector<float> &A, const std::vector<float> &B, int M, int N, int K) {
+  static std::vector<float> MatrixMultiply(const float A[], const float B[], int M, int N, int K) {
     std::vector<float> C(M * K);
     for (int i = 0; i < M; ++i) {
       for (int j = 0; j < K; ++j) {
