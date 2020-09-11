@@ -51,6 +51,7 @@ const char END[] = "end";
 const char SIZE[] = "size";
 const char USE_NESTEROV[] = "use_nesterov";
 const char GROUP[] = "group";
+enum OperateType { ADD = 0, SUB, MUL, DIV, SQUARE, SQRT };
 
 class CPUKernel : public kernel::KernelMod {
  public:
