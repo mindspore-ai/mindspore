@@ -80,7 +80,7 @@ int MatMul::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
     MS_LOG(ERROR) << "value_as_MatMul return nullptr";
     return RET_ERROR;
   }
-  auto val_offset = schema::CreateMatMul(*fbb, attr->transposeA(), attr->transposeB());
+  auto val_offset = schema::CreateMatMul(*fbb, attr->broadcast(), attr->transposeA(), attr->transposeB());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_MatMul, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;

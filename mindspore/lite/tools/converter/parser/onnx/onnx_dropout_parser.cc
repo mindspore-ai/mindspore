@@ -41,7 +41,7 @@ STATUS OnnxDropoutParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "ratio") {
-      attr->ratio = static_cast<int32_t>(onnx_node_attr.i());
+      attr->ratio = static_cast<float>(onnx_node_attr.f());
     }
   }
 

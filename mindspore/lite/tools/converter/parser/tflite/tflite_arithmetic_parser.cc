@@ -144,7 +144,7 @@ STATUS TfliteDoubleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
       MS_LOG(ERROR) << "new op failed";
       return RET_NULL_PTR;
     }
-    attr->power = 0.0f;
+    attr->power = 1.0f;
     attr->scale = 1.0f;
     attr->shift = 0.0f;
     op->primitive->value.type = schema::PrimitiveType_Power;

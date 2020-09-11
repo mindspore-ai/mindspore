@@ -38,25 +38,21 @@ std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::ve
       MS_LOG(ERROR) << "lite tensor is nullptr";
       return std::vector<Tensor *>();
     }
-    // reshape op must get tensor data to infershape
-    if (node_type == schema::PrimitiveType_Reshape && i == 1 && tensorT->nodeType == NodeType_ValueNode) {
-      auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
-      // when tensorT as param input
-      if (lite_tensor_size == 0) {
-        return std::vector<Tensor *>();
-      }
-      auto ret = lite_tensor->MallocData();
-      if (ret != 0) {
-        MS_LOG(ERROR) << "Malloc tensor data failed";
-        return std::vector<Tensor *>();
-      }
-      ret = memcpy_s(lite_tensor->MutableData(), lite_tensor->Size(), tensorT->data.data(), lite_tensor_size);
-      if (ret != EOK) {
-        MS_LOG(ERROR) << "memcpy error: " << ret;
-        return std::vector<Tensor *>();
-      }
+    auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
+    // when tensorT as param input
+    if (lite_tensor_size == 0) {
       lite_tensors.emplace_back(lite_tensor.release());
       continue;
+    }
+    auto ret = lite_tensor->MallocData();
+    if (ret != 0) {
+      MS_LOG(ERROR) << "Malloc tensor data failed";
+      return std::vector<Tensor *>();
+    }
+    ret = memcpy_s(lite_tensor->MutableData(), lite_tensor->Size(), tensorT->data.data(), lite_tensor_size);
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy error: " << ret;
+      return std::vector<Tensor *>();
     }
     lite_tensors.emplace_back(lite_tensor.release());
   }
