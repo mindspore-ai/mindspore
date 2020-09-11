@@ -28,6 +28,8 @@
 #include "src/tensor.h"
 #include "include/errorcode.h"
 
+static constexpr int kPerTensor = 1;
+
 // using mindspore::kernel::AddressPtr;
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -202,6 +204,8 @@ class LiteKernelUtil {
   static void InitTensorRefCount(std::vector<kernel::LiteKernel *> &kernels);
 
   static int SetInput(LiteKernel &kernelMod, std::vector<lite::Tensor *> inputs);
+
+  static float *DequantWeight(lite::Tensor *input_tensor);
 };
 }  // namespace mindspore::kernel
 

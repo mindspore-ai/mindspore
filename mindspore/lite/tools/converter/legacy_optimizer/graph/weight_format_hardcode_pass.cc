@@ -86,6 +86,7 @@ STATUS WeightFormatHardCodePass::HardCodeCAFFE(const std::unique_ptr<CNodeT> &no
   MS_ASSERT(node->primitive != nullptr);
   auto opType = node->primitive->value.type;
   switch (this->quantType) {
+    case QuantType_WeightQuant:
     case QuantType_QUANT_NONE: {
       if (opType == schema::PrimitiveType_Conv2D || opType == schema::PrimitiveType_DepthwiseConv2D ||
           opType == schema::PrimitiveType_DeConv2D || opType == schema::PrimitiveType_DeDepthwiseConv2D) {
@@ -123,6 +124,7 @@ STATUS WeightFormatHardCodePass::HardCodeONNX(const std::unique_ptr<CNodeT> &nod
         return RET_ERROR;
       }
     } break;
+    case QuantType_WeightQuant:
     case QuantType_QUANT_NONE: {
       // conv (K x C/group x kH x kW) group = 1
       // depth (K x C/group x kH x kW) group = channelOut ==> (K, multiplier, H, W)
@@ -162,6 +164,7 @@ STATUS WeightFormatHardCodePass::HardCodeMS(const std::unique_ptr<CNodeT> &node,
         weightTensor->format = schema::Format::Format_KCHW;
       }
     } break;
+    case QuantType_WeightQuant:
     case QuantType_QUANT_NONE: {
       // sum up from current ms quant models
       if (opType == PrimitiveType_Conv2D) {

@@ -32,7 +32,6 @@
 using mindspore::lite::Context;
 using mindspore::schema::PadMode;
 using mindspore::schema::QuantType;
-static constexpr int kPerTensor = 1;
 
 namespace mindspore::kernel {
 class ConvolutionBaseCPUKernel : public LiteKernel {
@@ -60,7 +59,6 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   int SetQuantMultiplier();
   int CheckResizeValid();
   void FreeQuantParam();
-  static int RestoreFilter(lite::Tensor *input_tensor);
 
  protected:
   int tile_num_;

@@ -657,8 +657,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new PowerGrad(primitive);
     case schema::PrimitiveType_BNGradInput:
       return new BNGradInput(primitive);
-    case schema::PrimitiveType_SoftmaxCrossEntroy:
-      return new SoftmaxCrossEntroy(primitive);
+    case schema::PrimitiveType_SoftmaxCrossEntropy:
+      return new SoftmaxCrossEntropy(primitive);
     case schema::PrimitiveType_Depend:
       return new Depend(primitive);
     case schema::PrimitiveType_FlattenGrad:

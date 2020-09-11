@@ -72,7 +72,7 @@ ValueNodePtr AnfImporterFromMetaGraphT::ConvertPrimitive(const std::unique_ptr<s
   auto primitiveCValue = PrimitiveC::Create(cNode->primitive.release());
   cNode->primitive = nullptr;
   // add quant parameter
-  if (cNode->quantType != schema::QuantType_PostTraining) {
+  if (cNode->quantType != schema::QuantType_PostTraining && cNode->quantType != schema::QuantType_WeightQuant) {
     primitiveCValue->SetQuantType(cNode->quantType);
     for (int index : cNode->inputIndex) {
       if (meta_graph_->allTensors[index]->quantParams.size() > 0) {

@@ -64,10 +64,15 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
         return nullptr;
       }
     } else if (config->quantType == schema::QuantType_WeightQuant) {
+      auto bitNum = static_cast<size_t>(std::stoull(config->bitNum));
+      if (bitNum != quant::UINT8_QUANTIZATION) {
+        MS_LOG(ERROR) << "Current Only Support 8 bit weight quant";
+        return nullptr;
+      }
       this->mQuantizer = std::make_unique<quant::WeightQuantizer>(
         new_graph, config->quantSize, config->convWeightQuantChannelThreshold, config->bitNum);
       if (mQuantizer == nullptr) {
-        MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
+        MS_LOG(ERROR) << "New WeightQuantizer failed";
         return nullptr;
       }
     }

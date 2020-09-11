@@ -21,7 +21,6 @@
 #include "src/lite_kernel.h"
 #include "nnacl/fp32/scale.h"
 
-static constexpr int kPerTensor = 1;
 namespace mindspore::kernel {
 
 class ScaleCPUKernel : public LiteKernel {
