@@ -45,8 +45,14 @@ struct Model {
   /// \return Pointer of MindSpore Lite Model.
   static Model *Import(const char *model_buf, size_t size);
 
-  /// \brief Free all the temporary buffer
+  /// \brief Free meta graph temporary buffer
   void Free();
+
+  /// \brief Free all temporay buffer
+  void Destroy();
+
+  /// \brief Model destruct, free all memory
+  ~Model();
 };
 }  // namespace mindspore::lite
 

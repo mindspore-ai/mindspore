@@ -120,6 +120,7 @@
 #include "src/ops/quant.h"
 #include "src/ops/tuple_get_item.h"
 #include "src/ops/l2_norm.h"
+#include "src/ops/neg.h"
 #include "src/ops/sparse_to_dense.h"
 #include "src/ops/detection_post_process.h"
 #include "src/ops/dropout.h"
@@ -128,6 +129,7 @@
 #endif
 
 #ifdef SUPPORT_TRAIN
+#include "src/ops/neg_grad.h"
 #include "src/ops/activation_grad.h"
 #include "src/ops/apply_momentum.h"
 #include "src/ops/bias_grad.h"
@@ -141,6 +143,7 @@
 #include "src/ops/arithmetic_grad.h"
 #include "src/ops/depend.h"
 #include "src/ops/flatten_grad.h"
+#include "src/ops/log_grad.h"
 #endif
 
 namespace mindspore {
@@ -383,6 +386,10 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<BiasGrad>(prim, inputs, quantType);
   } else if (op_type == "ApplyMomentum") {
     return NewPrimitiveC<ApplyMomentum>(prim, inputs, quantType);
+  } else if (op_type == "NegGrad") {
+    return NewPrimitiveC<NegGrad>(prim, inputs, quantType);
+  } else if (op_type == "LogGrad") {
+    return NewPrimitiveC<LogGrad>(prim, inputs, quantType);
   } else if (op_type == "BatchNormGrad") {
     return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
   } else if (op_type == "Conv2DGradInput") {
@@ -620,6 +627,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new DetectionPostProcess(primitive);
     case schema::PrimitiveType_Dropout:
       return new Dropout(primitive);
+    case schema::PrimitiveType_Neg:
+      return new Neg(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
@@ -654,6 +663,10 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new Depend(primitive);
     case schema::PrimitiveType_FlattenGrad:
       return new FlattenGrad(primitive);
+    case schema::PrimitiveType_NegGrad:
+      return new NegGrad(primitive);
+    case schema::PrimitiveType_LogGrad:
+      return new LogGrad(primitive);
 #endif
 
     default:
@@ -755,6 +768,8 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
       return NewPrimitiveC<Cos>(primitive);
     case schema::PrimitiveType_Log:
       return NewPrimitiveC<Log>(primitive);
+    case schema::PrimitiveType_Neg:
+      return NewPrimitiveC<Neg>(primitive);
     case schema::PrimitiveType_Sqrt:
       return NewPrimitiveC<Sqrt>(primitive);
     case schema::PrimitiveType_Rsqrt:
@@ -895,6 +910,10 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
       return NewPrimitiveC<ArithmeticGrad>(primitive);
     case schema::PrimitiveType_DivGrad:
       return NewPrimitiveC<ArithmeticGrad>(primitive);
+    case schema::PrimitiveType_NegGrad:
+      return NewPrimitiveC<NegGrad>(primitive);
+    case schema::PrimitiveType_LogGrad:
+      return NewPrimitiveC<LogGrad>(primitive);
 #endif
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in Create : " << schema::EnumNamePrimitiveType(op_type);

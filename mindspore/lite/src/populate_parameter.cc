@@ -113,6 +113,7 @@
 #include "src/ops/round.h"
 #include "src/ops/sparse_to_dense.h"
 #include "src/ops/l2_norm.h"
+#include "src/ops/neg.h"
 #include "src/ops/detection_post_process.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/arg_min_max.h"
@@ -1632,6 +1633,9 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Sin] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_Exp] = PopulateExpParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Log] = PopulateArithmeticSelf;
+  populate_parameter_funcs_[schema::PrimitiveType_Neg] = PopulateArithmeticSelf;
+  populate_parameter_funcs_[schema::PrimitiveType_NegGrad] = PopulateArithmeticSelf;
+  populate_parameter_funcs_[schema::PrimitiveType_LogGrad] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_Square] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_Sqrt] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_Rsqrt] = PopulateArithmeticSelf;

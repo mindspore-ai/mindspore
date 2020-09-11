@@ -47,6 +47,8 @@ int ElementRound(float *input, float *output, int element_size);
 int ElementFloor(float *input, float *output, int element_size);
 
 int ElementCeil(float *input, float *output, int number);
+
+int ElementNegative(float *input, float *output, int element_size);
 #ifdef __cplusplus
 }
 #endif

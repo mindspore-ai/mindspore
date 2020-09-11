@@ -36,6 +36,7 @@ using mindspore::schema::PrimitiveType_Rsqrt;
 using mindspore::schema::PrimitiveType_Sin;
 using mindspore::schema::PrimitiveType_Sqrt;
 using mindspore::schema::PrimitiveType_Square;
+using mindspore::schema::PrimitiveType_Neg;
 static constexpr int kPerTensor = 1;
 
 namespace mindspore::kernel {
@@ -80,6 +81,9 @@ class ArithmeticSelfCPUKernel : public LiteKernel {
         break;
       case PrimitiveType_Round:
         arithmeticSelf_run_ = ElementRound;
+        break;
+      case PrimitiveType_Neg:
+        arithmeticSelf_run_ = ElementNegative;
         break;
       default:
         break;
