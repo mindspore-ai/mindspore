@@ -481,6 +481,9 @@ table Abs {
 table Neg {
 }
 
+table NegGrad {
+}
+
 table Exp {
     base : float = -1.0;
     scale : float = 1.0;
@@ -503,6 +506,9 @@ table Ceil {
 }
 
 table Log {
+}
+
+table LogGrad {
 }
 
 table Tan {
@@ -745,6 +751,11 @@ table DepthToSpace {
 
 
 table BatchToSpace {
+    blockShape: [int];
+    crops: [int];
+}
+
+table BatchToSpaceND {
     blockShape: [int];
     crops: [int];
 }

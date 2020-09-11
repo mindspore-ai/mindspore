@@ -124,12 +124,21 @@ void Model::Free() {
     free(this->buf);
     this->buf = nullptr;
   }
+}
+
+void Model::Destroy() {
+  Free();
   auto nodes_size = this->nodes_.size();
   for (size_t i = 0; i < nodes_size; ++i) {
     auto node = this->nodes_[i];
     MS_ASSERT(node != nullptr);
+    MS_ASSERT(node->primitive_ != nullptr);
+    delete node->primitive_;
+    node->primitive_ = nullptr;
     delete node;
   }
   this->nodes_.clear();
 }
+
+Model::~Model() { Destroy(); }
 }  // namespace mindspore::lite

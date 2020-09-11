@@ -199,6 +199,9 @@ union PrimitiveType {
     Proposal,
     Custom,
     BlackBox,
+    NegGrad,
+    LogGrad,
+    BatchToSpaceND,
 }
 
 enum QuantType: int {
