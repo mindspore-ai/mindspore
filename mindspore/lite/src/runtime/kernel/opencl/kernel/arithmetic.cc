@@ -18,6 +18,7 @@
 #include <set>
 #include <vector>
 #include <string>
+#include "nnacl/fp32/common_func.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
@@ -48,16 +49,20 @@ std::vector<size_t> ArithmeticOpenCLKernel::InitGlobalSize() const {
 
 void ArithmeticOpenCLKernel::Image2dGetWorkGroupSize() {
   local_size_ = {16, 16};
-  if (out_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
+  if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
+    size_t H = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+    size_t W = out_tensors_[0]->Width();
+    global_size_ = {W, H};
+  } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
     size_t H = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
     size_t W = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
     global_size_ = {W, H};
-  } else if (out_tensors_[0]->GetFormat() == schema::Format::Format_NC4) {
+  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
     size_t H = out_tensors_[0]->Batch();
     size_t W = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
     global_size_ = {W, H};
   } else {
-    MS_LOG(ERROR) << "Unspport data format " << out_tensors_[0]->GetFormat();
+    MS_LOG(ERROR) << "Unsupport data format " << out_tensors_[0]->GetFormat();
   }
 }
 
@@ -68,21 +73,28 @@ void ArithmeticOpenCLKernel::BufferGetWorkGroupSize() {
 
 int ArithmeticOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  if (out_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
+  if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
+    im_dst_x = out_tensors_[0]->Width();
+    im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
     im_dst_x = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
     im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
-  } else if (out_tensors_[0]->GetFormat() == schema::Format::Format_NC4) {
+  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
     im_dst_y = out_tensors_[0]->Batch();
     im_dst_x = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   } else {
-    MS_LOG(ERROR) << "Unspport data format " << out_tensors_[0]->GetFormat();
+    MS_LOG(ERROR) << "Unsupport data format " << out_tensors_[0]->GetFormat();
     return RET_ERROR;
   }
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
+
   size_t img_dtype = CL_FLOAT;
-#endif
+  if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
+    img_dtype = CL_HALF_FLOAT;
+  } else if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
+    img_dtype = CL_FLOAT;
+  } else {
+    MS_LOG(ERROR) << "Unsupport data type " << in_tensors_[0]->data_type();
+  }
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
@@ -93,23 +105,99 @@ int ArithmeticOpenCLKernel::InitBuffer() {
   const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
   if (!arithmetic_parameter->broadcasting_) {
     if (in_tensors_[1]->category() == lite::Tensor::Category::CONST && in_tensors_[1]->MutableData() != nullptr) {
-      auto allocatdor = runtime_->GetAllocator();
+      auto allocator = runtime_->GetAllocator();
       std::vector<size_t> img_size;
       GetImageSize(0, &img_size);
-      weight_ptr_ =
-        allocatdor->CreateImageFromHost(in_tensors_[1]->MutableData(), in_tensors_[1]->ElementsNum(), img_size);
-      return RET_OK;
+      int pack_weight_size = in_tensors_[1]->ElementsC4Num();
+      int plane = in_tensors_[1]->Height() * in_tensors_[1]->Width();
+      int channel = in_tensors_[1]->Channel();
+      int batch = in_tensors_[1]->Batch();
+
+      if (in_tensors_[0]->GetFormat() == in_tensors_[1]->GetFormat()) {
+        if (in_tensors_[0]->data_type() == in_tensors_[1]->data_type()) {
+          weight_ptr_ =
+            allocator->CreateImageFromHost(in_tensors_[1]->MutableData(), in_tensors_[1]->ElementsNum(), img_size);
+        } else {
+          MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
+                        << in_tensors_[0]->data_type();
+          return RET_ERROR;
+        }
+      } else if (in_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
+        if (in_tensors_[1]->GetFormat() == schema::Format_NHWC) {
+          if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
+            float *weight = new (std::nothrow) float[pack_weight_size];
+            if (weight == nullptr) {
+              MS_LOG(ERROR) << "Malloc buffer failed!";
+              return RET_ERROR;
+            }
+            std::function<float(float)> to_dtype = [](float x) -> float { return (float)x; };
+            PackNHWCToNC4HW4<float, float>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
+            weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
+            delete[] weight;
+          } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
+            int16_t *weight = new (std::nothrow) int16_t[pack_weight_size];
+            if (weight == nullptr) {
+              MS_LOG(ERROR) << "Malloc buffer failed!";
+              return RET_ERROR;
+            }
+            std::function<int16_t(float)> to_dtype = Float32ToShort;
+            PackNHWCToNC4HW4<float, int16_t>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
+            weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
+            delete[] weight;
+          } else {
+            MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
+                          << in_tensors_[0]->data_type();
+            return RET_ERROR;
+          }
+        } else {
+          MS_LOG(ERROR) << "Unsupport format transpose from " << in_tensors_[1]->GetFormat() << "to "
+                        << in_tensors_[0]->GetFormat();
+          return RET_ERROR;
+        }
+      } else if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+        if (in_tensors_[1]->GetFormat() == schema::Format_NHWC) {
+          if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
+            float *weight = new (std::nothrow) float[pack_weight_size];
+            if (weight == nullptr) {
+              MS_LOG(ERROR) << "Malloc buffer failed!";
+              return RET_ERROR;
+            }
+            std::function<float(float)> to_dtype = [](float x) -> float { return (float)x; };
+            PackNHWCToNHWC4<float, float>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
+            weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
+            delete[] weight;
+          } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
+            int16_t *weight = new (std::nothrow) int16_t[pack_weight_size];
+            if (weight == nullptr) {
+              MS_LOG(ERROR) << "Malloc buffer failed!";
+              return RET_ERROR;
+            }
+            std::function<int16_t(float)> to_dtype = Float32ToShort;
+            PackNHWCToNHWC4<float, int16_t>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
+            weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
+            delete[] weight;
+          } else {
+            MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
+                          << in_tensors_[0]->data_type();
+            return RET_ERROR;
+          }
+        } else {
+          MS_LOG(ERROR) << "Unsupport format transpose from " << in_tensors_[1]->GetFormat() << "to "
+                        << in_tensors_[0]->GetFormat();
+          return RET_ERROR;
+        }
+      }
     }
   }
   return RET_OK;
 }
+
 int ArithmeticOpenCLKernel::Init() {
   runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
   std::string kernel_name;
 
   const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
-  if (arithmetic_parameter->broadcasting_ && in_tensors_[1]->category() == lite::Tensor::Category::CONST &&
-      in_tensors_[1]->MutableData() != nullptr) {
+  if (arithmetic_parameter->broadcasting_) {
     element_flag_ = false;
     kernel_name = "BoardcastArith";
   } else {
@@ -202,10 +290,13 @@ int ArithmeticOpenCLKernel::Run() {
 
   int H = 0;
   int W = 0;
-  if (out_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
+  if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
+    H = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+    W = out_tensors_[0]->Width();
+  } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
     H = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
     W = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  } else if (out_tensors_[0]->GetFormat() == schema::Format::Format_NC4) {
+  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
     H = out_tensors_[0]->Batch();
     W = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   } else {
