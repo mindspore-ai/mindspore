@@ -42,5 +42,34 @@ int SparseToDense::UnPackToFlatBuilder(const schema::Primitive *primitive, flatb
   return RET_OK;
 }
 #endif
+
+int SparseToDense::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
+  MS_ASSERT(this->primitive_ != nullptr);
+  MS_ASSERT(output_shape != nullptr);
+  auto output = outputs_.front();
+  if (output == nullptr) {
+    MS_LOG(ERROR) << "output null pointer dereferencing.";
+    return RET_ERROR;
+  }
+  auto input2 = inputs_.at(2);
+  outputs_[0]->set_data_type(input2->data_type());
+  outputs_[0]->SetFormat(input2->GetFormat());
+
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+  if (this->primitive_ == nullptr) {
+    return RET_NULL_PTR;
+  }
+
+  auto input1 = inputs_.at(1);
+  int *input1_data = reinterpret_cast<int *>(input1->MutableData());
+  std::vector<int> output_shape;
+  for (int i = 0; i < input1->ElementsNum(); i++) {
+    output_shape.push_back(input1_data[i]);
+  }
+  outputs_[0]->set_shape(output_shape);
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

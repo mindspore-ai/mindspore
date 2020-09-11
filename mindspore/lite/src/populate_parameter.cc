@@ -171,7 +171,7 @@
 #include "nnacl/fp32/embedding_lookup.h"
 #include "nnacl/fp32/elu.h"
 #include "nnacl/leaky_relu_parameter.h"
-#include "nnacl/sparse_to_dense.h"
+#include "mindspore/lite/nnacl/fp32/sparse_to_dense.h"
 #include "nnacl/l2_norm_parameter.h"
 #include "nnacl/detection_post_process_parameter.h"
 #include "nnacl/fp32/exp.h"

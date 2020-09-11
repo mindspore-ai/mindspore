@@ -45,6 +45,7 @@ class SparseToDense : public PrimitiveC {
   std::vector<int> GetSparseValue() const;
   std::vector<int> GetDefaultValue() const;
   bool GetValidateIndices() const;
+  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
 };
 }  // namespace lite
 }  // namespace mindspore

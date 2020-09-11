@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_SPARSETODENSE_H_
-#define MINDSPORE_LITE_NNACL_SPARSETODENSE_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_SPARSETODENSE_H_
+#define MINDSPORE_LITE_NNACL_FP32_SPARSETODENSE_H_
 
-#include "nnacl/op_base.h"
-
-typedef struct SparseToDenseParameter {
-  OpParameter op_parameter_;
-  bool validate_indices_;
-  int thread_num_;
-  int count_;
-} SparseToDenseParameter;
+#include "nnacl/sparse_to_dense_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void SparseToDense(int *input, int *output_shape_, float *snum, float *dnum, int sp_num, float *output,
-                   SparseToDenseParameter *s2d_param_, int task_id);
+void SparseToDense(int **sparse_indices_vect, int *output_shape,
+                   float *sparse_values, float default_value, float *output,
+                   bool isScalar, int index_start, int index_end, int out_width);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_SPARSETODENCE_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_SPARSETODENSE_H_
