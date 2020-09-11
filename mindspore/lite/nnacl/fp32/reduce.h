@@ -32,6 +32,8 @@ int ReduceMin(const int outer_size, const int inner_size, const int axis_size, c
               const int tid, const int thread_num);
 int ReduceProd(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
                const int tid, const int thread_num);
+int IntReduceProd(const int outer_size, const int inner_size, const int axis_size, const int *src_data, int *dst_data,
+                  const int tid, const int thread_num);
 int ReduceSumSquare(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
                     float *dst_data, const int tid, const int thread_num);
 #ifdef __cplusplus

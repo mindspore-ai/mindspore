@@ -17,6 +17,7 @@
 #include <float.h>
 #include "nnacl/fp32/reduce.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/common_func.h"
 
 int ReduceMean(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
                const int tid, const int thread_num) {
@@ -116,6 +117,31 @@ int ReduceProd(const int outer_size, const int inner_size, const int axis_size, 
       float *inner_dst = outer_dst + k;
       float tmp = 1.0f;
       for (i = 0; i < axis_size; i++) {
+        tmp *= inner_src[i * inner_size];
+      }
+      *inner_dst = tmp;
+    }
+  }
+  return NNACL_OK;
+}
+
+int IntReduceProd(const int outer_size, const int inner_size, const int axis_size, const int *src_data, int *dst_data,
+                  const int tid, const int thread_num) {
+  if (src_data == NULL || dst_data == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  int i, j, k;
+  for (j = tid; j < outer_size; j += thread_num) {
+    const int *outer_src = src_data + j * axis_size * inner_size;
+    int *outer_dst = dst_data + j * inner_size;
+    for (k = 0; k < inner_size; k++) {
+      const int *inner_src = outer_src + k;
+      int *inner_dst = outer_dst + k;
+      int tmp = 1;
+      for (i = 0; i < axis_size; i++) {
+        if (isMulOverflow(tmp, inner_src[i * inner_size])) {
+          return NNACL_ERRCODE_MUL_OVERFLOW;
+        }
         tmp *= inner_src[i * inner_size];
       }
       *inner_dst = tmp;

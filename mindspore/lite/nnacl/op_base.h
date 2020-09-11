@@ -53,6 +53,7 @@
 
 typedef enum LiteDataType {
   kDataTypeFloat,
+  kDataTypeInt,
   kDataTypeInt8,
 } LiteDataType;
 
