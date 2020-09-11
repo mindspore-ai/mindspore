@@ -23,6 +23,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <mutex>
+#include <limits>
 #include "debug/tensor_load.h"
 #include "debug/tensor_data.h"
 #include "ir/dtype.h"
@@ -38,39 +39,91 @@ class DebugServices {
 
   ~DebugServices();
 
-  typedef struct condition_no_param {
-    bool enabled = false;
-  } condition_no_param_t;
+  enum CONDITION_TYPE {
+    HAS_NAN,
+    HAS_INF,
+    IS_OVERFLOW,
+    MAX_GT,
+    MAX_LT,
+    MIN_GT,
+    MIN_LT,
+    MAX_MIN_GT,
+    MAX_MIN_LT,
+    MEAN_GT,
+    MEAN_LT,
+    SD_GT,
+    SD_LT
+  };
 
-  typedef struct condition_with_param {
-    bool enabled = false;
+  typedef struct condition {
+    CONDITION_TYPE type;
     float parameter = 0;
-  } condition_with_param_t;
-
-  typedef struct conditions {
-    condition_no_param_t inf;
-    condition_no_param_t neg_inf;
-    condition_no_param_t nan;
-    condition_no_param_t overflow;
-    condition_with_param_t max_below;
-    condition_with_param_t max_above;
-    condition_with_param_t min_below;
-    condition_with_param_t min_above;
-    condition_with_param_t max_minus_min_below;
-    condition_with_param_t max_minus_min_above;
-    condition_with_param_t mean_below;
-    condition_with_param_t mean_above;
-    condition_with_param_t std_dev_below;
-    condition_with_param_t std_dev_above;
-  } conditions_t;
+    std::string comparison;
+  } condition_t;
 
   typedef struct watchpoint {
     unsigned int id;
-    conditions_t conditions;
+    condition_t condition;
     std::vector<std::tuple<std::string, bool>> check_node_list;
+    size_t location = 0;
+
+    bool IsNodeIncluded(const std::string &tensor_name) {
+      std::string node_name = tensor_name.substr(0, tensor_name.find_first_of(':'));
+      for (auto check_node : check_node_list) {
+        std::string w_name = std::get<0>(check_node);
+        bool w_type = std::get<1>(check_node);
+        if ((w_type && (tensor_name.find(w_name) == location || w_name == "*")) || (!w_type && node_name == w_name)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    bool min_max_enabled() {
+      return condition.type == MAX_LT || condition.type == MAX_GT || condition.type == MIN_LT ||
+             condition.type == MIN_GT || condition.type == MAX_MIN_LT || condition.type == MAX_MIN_GT;
+    }
+    // inf or nan related condition set
+    bool inf_nan_enabled() { return condition.type == HAS_INF || condition.type == HAS_NAN; }
+    // mean or sd related condition set
+    bool mean_sd_enabled() {
+      return condition.type == MEAN_LT || condition.type == MEAN_GT || condition.type == SD_LT ||
+             condition.type == SD_GT;
+    }
   } watchpoint_t;
 
-  void AddWatchpoint(unsigned int id, unsigned int watch_condition,
+  struct tensor_stats {
+    float min = std::numeric_limits<float>::max();
+    float max = std::numeric_limits<float>::lowest();
+    bool has_inf = false;
+    bool has_nan = false;
+    unsigned int n = 0;
+    float mean = 0.0;
+    float m2 = 0.0;
+
+    float statLookup(CONDITION_TYPE type) const {
+      if (type == MAX_GT || type == MAX_LT) return max;
+      if (type == MIN_GT || type == MIN_LT) return min;
+      if (type == MAX_MIN_GT || type == MAX_MIN_LT) return (max - min);
+      if (type == MEAN_GT || type == MEAN_LT) return mean;
+      if (type == SD_GT || type == SD_LT) return getStandardDeviation();
+      return std::numeric_limits<float>::quiet_NaN();
+    }
+
+    float getMean() const { return mean; }
+
+    float getVariance() const {
+      if (n > 1) {
+        return m2 / (n - 1);
+      } else {
+        return 0.0;
+      }
+    }
+
+    float getStandardDeviation() const { return sqrt(getVariance()); }
+  };
+
+  void AddWatchpoint(unsigned int id, unsigned int watch_condition, float parameter,
                      const std::vector<std::tuple<std::string, bool>> &check_node_list);
 
   void RemoveWatchpoint(unsigned int id);
@@ -93,14 +146,13 @@ class DebugServices {
   std::mutex lock_;
 
   std::unordered_map<unsigned int, watchpoint_t> watchpoint_table;
+  std::vector<std::string> condition_label = {"HAS_NAN", "HAS_INF", "IS_OVERFLOW", "MAX_GT",     "MAX_LT",
+                                              "MIN_GT",  "MIN_LT",  "MAX_MIN_GT",  "MAX_MIN_LT", "MEAN_GT",
+                                              "MEAN_LT", "SD_GT",   "SD_LT"};
 
   TensorLoader *tensor_loader_;
 
-  void HandleWatchpointHits(const std::vector<unsigned int> &hit_encountered, std::vector<std::string> *name,
-                            std::vector<std::string> *slot, std::vector<int> *condition,
-                            std::vector<unsigned int> *watchpoint_id, std::string current_tensor_name,
-                            std::unordered_map<unsigned int, watchpoint_t> *watchpoints_to_check_table,
-                            std::string tensor_slot);
+  static tensor_stats SummarizeTensor(const float *start, unsigned int n, bool need_min_max, bool need_mean_sd);
 };
 }  // namespace mindspore
 

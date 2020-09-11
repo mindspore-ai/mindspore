@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
 #include "debug/debug_services.h"
 namespace mindspore {
 
@@ -37,25 +38,18 @@ DebugServices &DebugServices::operator=(const DebugServices &other) {
 
 DebugServices::~DebugServices() { delete tensor_loader_; }
 
-void DebugServices::AddWatchpoint(unsigned int id, unsigned int watch_condition,
+void DebugServices::AddWatchpoint(unsigned int id, unsigned int watch_condition, float parameter,
                                   const std::vector<std::tuple<std::string, bool>> &check_node_list) {
   std::lock_guard<std::mutex> lg(lock_);
 
   watchpoint_t watchpoint_item;
-
   watchpoint_item.id = id;
-
-  if (watch_condition == 0) {
-    watchpoint_item.conditions.nan.enabled = true;
-  } else if (watch_condition == 1) {
-    watchpoint_item.conditions.inf.enabled = true;
-    watchpoint_item.conditions.neg_inf.enabled = true;
-  } else if (watch_condition == 2) {
-    watchpoint_item.conditions.overflow.enabled = true;
-  }
-
+  watchpoint_item.condition.type = static_cast<CONDITION_TYPE>(watch_condition);
+  watchpoint_item.condition.parameter = parameter;
+  if (watch_condition > 2)
+    // odd indices are greater than conditions and even indicies are less than
+    watchpoint_item.condition.comparison = (watch_condition & 1) == 0 ? "LT" : "GT";
   watchpoint_item.check_node_list = check_node_list;
-
   watchpoint_table[id] = watchpoint_item;
 }
 
@@ -64,135 +58,109 @@ void DebugServices::RemoveWatchpoint(unsigned int id) {
   watchpoint_table.erase(id);
 }
 
+DebugServices::tensor_stats DebugServices::SummarizeTensor(const float *start, unsigned int n, bool need_min_max,
+                                                           bool need_mean_sd) {
+  tensor_stats stats;
+  for (unsigned int i = 0; i < n; ++i) {
+    float val = start[i];
+    stats.has_nan = stats.has_nan || isnan(val);
+    stats.has_inf = stats.has_inf || isinf(val);
+    if (stats.has_inf && stats.has_nan) {
+      // other statistics don't make sense in this case
+      break;
+    }
+
+    if (need_min_max) {
+      stats.min = std::min(stats.min, val);
+      stats.max = std::max(stats.max, val);
+    }
+
+    if (need_mean_sd) {
+      // for mean and sd calculation see
+      // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
+      float delta = val - stats.mean;
+      stats.mean += delta / (i + 1);
+      stats.m2 += delta * (val - stats.mean);
+    }
+  }
+  stats.n = n;
+  return stats;
+}
+
 void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot,
                                      std::vector<int> *condition, std::vector<unsigned int> *watchpoint_id,
                                      const std::vector<std::string> &op_overflows,
                                      const std::vector<std::shared_ptr<TensorData>> &tensor_list) {
   std::lock_guard<std::mutex> lg(lock_);
-  std::string current_tensor_name;
-  std::unordered_map<unsigned int, watchpoint_t> watchpoints_to_check_table;
-  const size_t location = 0;
-
-  for (std::size_t i = 0; i < tensor_list.size(); i++) {
-    current_tensor_name = tensor_list[i]->GetName();
-    std::string tensor_slot = std::to_string(tensor_list[i]->GetSlot());
-    mindspore::tensor::TensorPtr tensor_ptr = tensor_list[i]->GetTensor();
-    int tensor_data_type = tensor_ptr->data_type_c();
-
-    // check if we need to analyze this node and for which watchpoints we will check
-    // create a list of watchpoints to check
-    watchpoints_to_check_table.clear();
-    for (auto w_table_item : watchpoint_table) {
-      // if the watchpoint is checking for a nan or inf and the current tensor is not of a float type, then
-      // don't check the watchpoint for this tensor
-      if (std::get<1>(w_table_item).conditions.inf.enabled || std::get<1>(w_table_item).conditions.neg_inf.enabled ||
-          std::get<1>(w_table_item).conditions.nan.enabled) {
-        if (tensor_data_type != kNumberTypeFloat16 && tensor_data_type != kNumberTypeFloat &&
-            tensor_data_type != kNumberTypeFloat32 && tensor_data_type != kNumberTypeFloat64) {
-          continue;
-        }
-      }
-
-      auto check_node_list = std::get<1>(w_table_item).check_node_list;
-
-      for (auto check_node : check_node_list) {
-        std::string w_name = std::get<0>(check_node);
-        bool w_type = std::get<1>(check_node);
-
-        // check if the current node tensor name is included the watchpoint
-        std::string current_node_name = current_tensor_name.substr(0, current_tensor_name.find_first_of(":"));
-        if ((w_type == true && (current_tensor_name.find(w_name) == location || w_name == "*")) ||
-            (w_type == false && current_node_name == w_name)) {
-          watchpoints_to_check_table[w_table_item.second.id] = w_table_item.second;
-          break;
-        }
-      }
-    }
-    std::vector<unsigned int> hit_encountered;
-
-    // handle watchpoint conditions that do not require per element checks
-    for (auto it_w_table_check = watchpoints_to_check_table.begin();
-         it_w_table_check != watchpoints_to_check_table.end(); ++it_w_table_check) {
-      if (it_w_table_check->second.conditions.overflow.enabled) {
-        std::string name_no_slot = current_tensor_name.substr(0, current_tensor_name.find_first_of(":"));
-        if (std::find(op_overflows.begin(), op_overflows.end(), name_no_slot) != op_overflows.end()) {
-          hit_encountered.push_back(it_w_table_check->second.id);
-        }
-      }
-    }
-
-    if (hit_encountered.size()) {
-      HandleWatchpointHits(hit_encountered, name, slot, condition, watchpoint_id, current_tensor_name,
-                           &watchpoints_to_check_table, tensor_slot);
-      hit_encountered.clear();
-    }
-
-    // need to add support for float16 and float64, and other types when we support conditions beyond inf and nan
-    if (tensor_data_type != kNumberTypeFloat && tensor_data_type != kNumberTypeFloat32) {
-      continue;
-    }
-
-    // check if no watchpoints are remaining
-    if (watchpoints_to_check_table.empty()) {
-      continue;
-    }
-
-    float *start_addr = reinterpret_cast<float *>(tensor_ptr->data_c());
-    unsigned int num_elements = (tensor_ptr->data().nbytes()) / sizeof(float);
-    std::unordered_map<unsigned int, watchpoint_t>::iterator it_w_table_check;
-
-    for (unsigned int index = 0; index < num_elements; index++) {
-      float x = start_addr[index];
-      it_w_table_check = watchpoints_to_check_table.begin();
-
-      while (it_w_table_check != watchpoints_to_check_table.end()) {
-        if ((it_w_table_check->second.conditions.inf.enabled || it_w_table_check->second.conditions.neg_inf.enabled) &&
-            isinf(x)) {
-          hit_encountered.push_back(it_w_table_check->second.id);
-        } else if (it_w_table_check->second.conditions.nan.enabled && isnan(x)) {
-          hit_encountered.push_back(it_w_table_check->second.id);
-        }
-        ++it_w_table_check;
-      }
-
-      if (hit_encountered.size()) {
-        HandleWatchpointHits(hit_encountered, name, slot, condition, watchpoint_id, current_tensor_name,
-                             &watchpoints_to_check_table, tensor_slot);
-        hit_encountered.clear();
-      }
-
-      if (watchpoints_to_check_table.empty()) {
-        break;
-      }
-    }
+  if (watchpoint_table.empty()) {
+    return;
   }
-}
 
-void DebugServices::HandleWatchpointHits(const std::vector<unsigned int> &hit_encountered,
-                                         std::vector<std::string> *name, std::vector<std::string> *slot,
-                                         std::vector<int> *condition, std::vector<unsigned int> *watchpoint_id,
-                                         std::string current_tensor_name,
-                                         std::unordered_map<unsigned int, watchpoint_t> *watchpoints_to_check_table,
-                                         std::string tensor_slot) {
-  for (auto it_hit_id = hit_encountered.begin(); it_hit_id != hit_encountered.end(); ++it_hit_id) {
-    if (watchpoint_table.find(*it_hit_id) != watchpoint_table.end()) {
-      std::string name_no_slot = current_tensor_name.substr(0, current_tensor_name.find_first_of(":"));
-      name->push_back(name_no_slot);
-      slot->push_back(tensor_slot);
+  for (const auto &tensor : tensor_list) {
+    const auto tensor_name = tensor->GetName();
+    const auto tensor_name_no_slot = tensor_name.substr(0, tensor_name.find_first_of(':'));
+    const auto tensor_slot = std::to_string(tensor->GetSlot());
+    mindspore::tensor::TensorPtr tensor_ptr = tensor->GetTensor();
+    int tensor_dtype = tensor_ptr->data_type_c();
+    std::vector<unsigned int> hit_encountered;
+    std::unordered_map<unsigned int, watchpoint_t> watchpoints_to_check_table;
+    bool min_max_enabled = false;
+    bool mean_sd_enabled = false;
+    bool inf_nan_enabled = false;
+    for (auto w_table_item : watchpoint_table) {
+      auto wp = std::get<1>(w_table_item);
 
-      int condition_item = -1;
-      if (watchpoint_table[*it_hit_id].conditions.nan.enabled) {
-        condition_item = 0;
-      } else if (watchpoint_table[*it_hit_id].conditions.inf.enabled ||
-                 watchpoint_table[*it_hit_id].conditions.neg_inf.enabled) {
-        condition_item = 1;
-      } else if (watchpoint_table[*it_hit_id].conditions.overflow.enabled) {
-        condition_item = 2;
+      // if (!wp.conditions.condition_list[IS_OVERFLOW].enabled) {
+      if (wp.condition.type != IS_OVERFLOW) {
+        // only overflow condition supports all data types
+        if (tensor_dtype != kNumberTypeFloat && tensor_dtype != kNumberTypeFloat32) continue;
       }
-      condition->push_back(condition_item);
-      watchpoint_id->push_back(*it_hit_id);
+
+      if (wp.IsNodeIncluded(tensor_name_no_slot)) {
+        min_max_enabled |= wp.min_max_enabled();
+        mean_sd_enabled |= wp.mean_sd_enabled();
+        inf_nan_enabled |= wp.inf_nan_enabled();
+        watchpoints_to_check_table[w_table_item.second.id] = w_table_item.second;
+      }
     }
-    watchpoints_to_check_table->erase(*it_hit_id);
+    tensor_stats stats;
+
+    if (min_max_enabled || mean_sd_enabled || inf_nan_enabled) {
+      auto *start_addr = reinterpret_cast<float *>(tensor_ptr->data_c());
+      unsigned int num_elements = (tensor_ptr->data().nbytes()) / sizeof(float);
+      stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+    }
+
+    for (auto &it : watchpoints_to_check_table) {
+      auto wp_id = it.second.id;
+      CONDITION_TYPE enabled_condition = it.second.condition.type;
+      bool hit = (enabled_condition == HAS_NAN && stats.has_nan) || (enabled_condition == HAS_INF && stats.has_inf) ||
+                 (enabled_condition == IS_OVERFLOW &&
+                  std::find(op_overflows.begin(), op_overflows.end(), tensor_name_no_slot) != op_overflows.end());
+
+      if (enabled_condition > 2) {
+        if (stats.has_inf || stats.has_nan) {
+          MS_LOG(WARNING) << "NaN or/and INF present in tensor: " << tensor_name << ". Cannot check "
+                          << condition_label[enabled_condition] << " watchpoint.";
+        } else {
+          bool gt = stats.statLookup(enabled_condition) > it.second.condition.parameter;
+          bool lt = stats.statLookup(enabled_condition) < it.second.condition.parameter;
+          hit |= it.second.condition.comparison == "GT" ? gt : lt;
+        }
+      }
+      if (hit) hit_encountered.push_back(wp_id);
+    }
+
+    for (auto it_hit_id = hit_encountered.begin(); it_hit_id != hit_encountered.end(); ++it_hit_id) {
+      if (watchpoint_table.find(*it_hit_id) != watchpoint_table.end()) {
+        name->push_back(tensor_name_no_slot);
+        slot->push_back(tensor_slot);
+        int condition_item = watchpoint_table.find(*it_hit_id)->second.condition.type;
+        condition->push_back(condition_item);
+        watchpoint_id->push_back(*it_hit_id);
+      }
+      watchpoints_to_check_table.erase(*it_hit_id);
+    }
   }
 }
 
