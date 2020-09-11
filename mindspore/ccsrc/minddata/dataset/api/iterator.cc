@@ -119,9 +119,9 @@ Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
 
   // Launch the execution tree.
   RETURN_IF_NOT_OK(tree_->Prepare());
-  RETURN_IF_NOT_OK(tree_->Launch());
   iterator_ = std::make_unique<DatasetIterator>(tree_);
   RETURN_UNEXPECTED_IF_NULL(iterator_);
+  RETURN_IF_NOT_OK(tree_->Launch());
 
   return rc;
 }
