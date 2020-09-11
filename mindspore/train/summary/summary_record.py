@@ -72,6 +72,7 @@ class SummaryRecord:
         1. Make sure to close the SummaryRecord at the end, otherwise the process will not exit.
            Please see the Example section below to learn how to close properly in two ways.
         2. Only one SummaryRecord instance is allowed at a time, otherwise it will cause data writing problems.
+        3. SummaryRecord only supports Linux systems.
 
     Args:
         log_dir (str): The log_dir is a directory location to save the summary.
