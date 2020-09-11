@@ -598,6 +598,7 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
     case schema::PrimitiveType_Unsqueeze:
       return new Unsqueeze(primitive);
     case schema::PrimitiveType_BatchToSpace:
+    case schema::PrimitiveType_BatchToSpaceND:
       return new BatchToSpace(primitive);
     case schema::PrimitiveType_SpaceToBatch:
       return new SpaceToBatch(primitive);
@@ -857,6 +858,7 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
     case schema::PrimitiveType_Unsqueeze:
       return NewPrimitiveC<Unsqueeze>(primitive);
     case schema::PrimitiveType_BatchToSpace:
+    case schema::PrimitiveType_BatchToSpaceND:
       return NewPrimitiveC<BatchToSpace>(primitive);
     case schema::PrimitiveType_SpaceToBatch:
       return NewPrimitiveC<SpaceToBatch>(primitive);

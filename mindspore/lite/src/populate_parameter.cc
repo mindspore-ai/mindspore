@@ -1676,6 +1676,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Pad] = PopulatePadParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Resize] = PopulateResizeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_BatchToSpace] = PopulateBatchToSpaceParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_BatchToSpaceND] = PopulateBatchToSpaceParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SpaceToDepth] = PopulateSpaceToDepthParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SpaceToBatch] = PopulateSpaceToBatchParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SpaceToBatchND] = PopulateSpaceToBatchNDParameter;
