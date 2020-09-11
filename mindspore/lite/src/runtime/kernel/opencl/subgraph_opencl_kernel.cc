@@ -73,18 +73,6 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
       return RET_ERROR;
     }
     new_tensor->CopyTensor(*in_tensors[i]);
-    if ((dst_format == schema::Format::Format_NCHW || dst_format == schema::Format::Format_NC4HW4) &&
-        (src_format == schema::Format::Format_NHWC || src_format == schema::Format::Format_NHWC4)) {
-      auto shape = new_tensor->shape();
-      std::vector<int> dst_shape{shape[0], shape[3], shape[1], shape[2]};
-      new_tensor->set_shape(shape);
-    }
-    if ((dst_format == schema::Format::Format_NHWC || dst_format == schema::Format::Format_NHWC4) &&
-        (src_format == schema::Format::Format_NCHW || src_format == schema::Format::Format_NC4HW4)) {
-      auto shape = new_tensor->shape();
-      std::vector<int> dst_shape{shape[0], shape[2], shape[3], shape[1]};
-      new_tensor->set_shape(shape);
-    }
     if (mem_type == OpenCLMemType::IMG) {
       new_tensor->SetFormat(dst_format);
       in_tensors[i]->SetFormat(src_format);
