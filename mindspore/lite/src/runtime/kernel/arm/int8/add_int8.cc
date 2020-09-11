@@ -92,17 +92,10 @@ int QuantizedAddCPUKernel::Run() {
     input0_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
     input1_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
 
-    ArithmeticParameter tile_para;
-    tile_para.ndim_ = out_tensors_.at(0)->shape().size();
-    for (size_t i = 0; i < tile_para.ndim_; i++) {
-      tile_para.in_shape0_[i] = in_tensors_.at(0)->DimensionSize(i);
-      tile_para.in_shape1_[i] = in_tensors_.at(1)->DimensionSize(i);
-      tile_para.out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
-    }
     TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->MutableData()),
                         static_cast<uint8_t *>(in_tensors_.at(1)->MutableData()),
                         reinterpret_cast<uint8_t *>(input0_data_), reinterpret_cast<uint8_t *>(input1_data_),
-                        &tile_para);
+                        arith_para_);
     ret = ParallelLaunch(THREAD_POOL_DEFAULT, AddInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
