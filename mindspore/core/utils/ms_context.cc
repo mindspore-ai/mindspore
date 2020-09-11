@@ -53,11 +53,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_TASK_SINK, true);
   set_param<bool>(MS_CTX_IR_FUSION_FLAG, true);
   set_param<bool>(MS_CTX_ENABLE_HCCL, false);
-#ifdef ENABLE_DEBUGGER
-  set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, false);
-#else
   set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, true);
-#endif
   set_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY, true);
   set_param<bool>(MS_CTX_PRECOMPILE_ONLY, false);
   set_param<bool>(MS_CTX_ENABLE_AUTO_MIXED_PRECISION, false);

@@ -96,6 +96,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   std::map<std::pair<uint32_t, uint32_t>, std::string> &GetStreamTaskToOpnameMap();
 
+  // check if any feature that uses the debugger backend is enabled
+  bool DebuggerBackendEnabled();
+
  private:
   // private constructor for singleton
   Debugger();
@@ -104,6 +107,12 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // instantiate class members
   // read env variable for grpc client
   void EnableDebugger();
+
+  // check if dump using debugger backend is enabled
+  bool CheckDebuggerDumpEnabled();
+
+  // check if debugger enabled
+  bool CheckDebuggerEnabled();
 
   // check and save graph pointer
   void CheckGraphPtr(const KernelGraphPtr &graph_ptr);

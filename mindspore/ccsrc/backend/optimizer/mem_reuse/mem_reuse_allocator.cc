@@ -80,11 +80,13 @@ bool BestFitMemReuse::IsUsable(const KernelDefPtr &kernel_curr, const MembufPtr 
   MS_EXCEPTION_IF_NULL(kernel_prev);
 #ifdef ENABLE_DEBUGGER
   auto debugger_ = mindspore::Debugger::GetInstance();
-  DebugServices *debug_services = debugger_->debug_services();
-  auto watchpoint_table = debug_services->GetWatchpointTable();
-  std::string current_kernel_name = kernel_curr->scope_full_name();
-  if (debug_services->IsWatchPoint(current_kernel_name, watchpoint_table)) {
-    return false;
+  if (debugger_->DebuggerBackendEnabled()) {
+    DebugServices *debug_services = debugger_->debug_services();
+    auto watchpoint_table = debug_services->GetWatchpointTable();
+    std::string current_kernel_name = kernel_curr->scope_full_name();
+    if (debug_services->IsWatchPoint(current_kernel_name, watchpoint_table)) {
+      return false;
+    }
   }
 #endif
   auto curr_stream_id = kernel_curr->stream_id();

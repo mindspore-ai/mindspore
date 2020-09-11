@@ -80,25 +80,16 @@ void Debugger::EnableDebugger() {
   grpc_client_ = nullptr;
   debug_services_ = nullptr;
 
-  // see if dump is enabled
-  bool dump_enabled = false;
-  if (device_target_ == kGPUDevice) {
-    auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
-    MS_EXCEPTION_IF_NULL(runtime_instance);
-    dump_enabled = runtime_instance->DumpDataEnabled();
-  }
+  // see if dump using debugger backend is enabled
+  bool dump_enabled = CheckDebuggerDumpEnabled();
+  MS_LOG(INFO) << "dump using debugger backend = " << dump_enabled;
 
-  // get env variables to configure debugger
-  const char *env_enable_str = std::getenv("ENABLE_MS_DEBUGGER");
-  if (env_enable_str != nullptr) {
-    MS_LOG(INFO) << "Getenv ENABLE_MS_DEBUGGER: " << env_enable_str;
-    if (std::strcmp(env_enable_str, "1") == 0) {
-      debugger_enabled_ = true;
-    }
-  }
+  // check if debugger enabled
+  debugger_enabled_ = CheckDebuggerEnabled();
+  MS_LOG(INFO) << "debugger_enabled_ = " << debugger_enabled_;
 
   if (!debugger_enabled_ && !dump_enabled) {
-    MS_LOG(WARNING) << "Not enabling debugger. Set environment variable ENABLE_MS_DEBUGGER=1 to enable debugger.";
+    MS_LOG(INFO) << "Not enabling debugger. Set environment variable ENABLE_MS_DEBUGGER=1 to enable debugger.";
     return;
   }
 
@@ -109,7 +100,7 @@ void Debugger::EnableDebugger() {
     MS_LOG(INFO) << "Getenv MS_DEBUGGER_HOST: " << env_host_str;
     host = std::string(env_host_str);
   } else {
-    MS_LOG(WARNING) << "Environment variable MS_DEBUGGER_HOST doesn't exist. Using default debugger host: localhost";
+    MS_LOG(INFO) << "Environment variable MS_DEBUGGER_HOST doesn't exist. Using default debugger host: localhost";
     host = "localhost";
   }
   // configure grpc port
@@ -119,7 +110,7 @@ void Debugger::EnableDebugger() {
     MS_LOG(INFO) << "Getenv MS_DEBUGGER_PORT: " << env_port_str;
     port = std::string(env_port_str);
   } else {
-    MS_LOG(WARNING) << "Environment variable MS_DEBUGGER_PORT doesn't exist. Using default debugger port: 50051";
+    MS_LOG(INFO) << "Environment variable MS_DEBUGGER_PORT doesn't exist. Using default debugger port: 50051";
     port = "50051";
   }
 
@@ -140,8 +131,8 @@ void Debugger::EnableDebugger() {
     MS_LOG(WARNING) << "Partial Memory Reuse is enabled. Note: 1. Please only set watchpoints before running the first "
                        "step. 2. Tensor values are only available for nodes that are watched by any watchpoint.";
   } else {
-    MS_LOG(WARNING) << "Memory Reuse is disabled. Set environment variable MS_DEBUGGER_PARTIAL_MEM=1 to reduce memory "
-                       "usage for large models.";
+    MS_LOG(INFO) << "Memory Reuse is disabled. Set environment variable MS_DEBUGGER_PARTIAL_MEM=1 to reduce memory "
+                    "usage for large models.";
   }
 #ifdef ENABLE_D
   // set operation overflow info
@@ -180,6 +171,29 @@ void Debugger::EnableDebugger() {
   debug_services_ = std::make_unique<DebugServices>();
 }
 
+bool Debugger::CheckDebuggerDumpEnabled() {
+  // see if dump is enabled
+  if (device_target_ == kGPUDevice) {
+    auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+    MS_EXCEPTION_IF_NULL(runtime_instance);
+    return runtime_instance->DumpDataEnabled();
+  }
+  return false;
+}
+
+bool Debugger::CheckDebuggerEnabled() {
+  // get env variables to configure debugger
+  const char *env_enable_str = std::getenv("ENABLE_MS_DEBUGGER");
+  if (env_enable_str != nullptr) {
+    if (std::strcmp(env_enable_str, "1") == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool Debugger::DebuggerBackendEnabled() { return CheckDebuggerDumpEnabled() || CheckDebuggerEnabled(); }
+
 void Debugger::Reset() {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
@@ -201,25 +215,29 @@ void Debugger::Reset() {
 void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
-  // check and save graph_ptr, suspend if graph is new
-  CheckGraphPtr(graph_ptr);
+  if (debugger_->DebuggerBackendEnabled()) {
+    // check and save graph_ptr, suspend if graph is new
+    CheckGraphPtr(graph_ptr);
+  }
 }
 
 void Debugger::PostExecute() {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
-  // analyze tensor data and send the watchpoints been hit
-  if (run_level_ == "node") {
-    MS_LOG(INFO) << "Debugger is in node level mode ";
-    return;
-  }
-  if (debugger_enabled_ && !is_dataset_graph_) {
-    if (device_target_ != kGPUDevice) {
-      num_step_++;
-      MS_LOG(INFO) << "Debugger suspend at end of step; number of steps executed: " << num_step_;
-      SendWatchpointsAndSuspend(CheckWatchpoints());
-    } else {
-      CommandLoop();
+  if (debugger_->DebuggerBackendEnabled()) {
+    // analyze tensor data and send the watchpoints been hit
+    if (run_level_ == "node") {
+      MS_LOG(INFO) << "Debugger is in node level mode ";
+      return;
+    }
+    if (debugger_enabled_ && !is_dataset_graph_) {
+      if (device_target_ != kGPUDevice) {
+        num_step_++;
+        MS_LOG(INFO) << "Debugger suspend at end of step; number of steps executed: " << num_step_;
+        SendWatchpointsAndSuspend(CheckWatchpoints());
+      } else {
+        CommandLoop();
+      }
     }
   }
 }
@@ -302,8 +320,8 @@ void Debugger::CheckDatasetGraph() {
     auto node_name = AnfAlgo::GetCNodeName(node);
     MS_LOG(INFO) << "node: " << node->fullname_with_scope();
     if (node_name == "GetNext" || node_name == "InitDataSetQueue") {
-      MS_LOG(WARNING) << "Not enabling debugger for graph " << graph_ptr_->graph_id() << ": found dataset graph node "
-                      << node_name;
+      MS_LOG(INFO) << "Not enabling debugger for graph " << graph_ptr_->graph_id() << ": found dataset graph node "
+                   << node_name;
       is_dataset_graph_ = true;
       return;
     }
