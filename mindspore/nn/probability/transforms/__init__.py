@@ -13,9 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-Transforms.
-
-The high-level components used to transform model between DNN and BNN.
+The high-level components used to transform model between Deep Neural Network (DNN) and Bayesian Neural Network (BNN).
 """
 from . import transform_bnn
 from .transform_bnn import TransformToBNN

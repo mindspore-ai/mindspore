@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-Infer algorithms in Probabilistic Programming.
+Inference algorithms in Probabilistic Programming.
 """
 
 from .variational import *

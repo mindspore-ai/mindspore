@@ -178,34 +178,34 @@ class ConvReparam(_ConvVariational):
     r"""
     Convolutional variational layers with Reparameterization.
 
-    See more details in paper `Auto-Encoding Variational Bayes <https://arxiv.org/abs/1312.6114>`_.
+    For more details, refer to the paper `Auto-Encoding Variational Bayes <https://arxiv.org/abs/1312.6114>`_.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or
-            tuple with 2 integers. Specifies the height and width of the 2D
-            convolution window. Single int means the value if for both
-            height and width of the kernel. A tuple of 2 ints means the
-            first value is for the height and the other is for the width of
-            the kernel.
+        kernel_size (Union[int, tuple[int]]): The data type is an integer or
+            a tuple of 2 integers. The kernel size specifies the height and
+            width of the 2D convolution window. a single integer stands for the
+            value is for both height and width of the kernel. With the `kernel_size`
+            being a tuple of 2 integers, the first value is for the height and the other
+            is the width of the kernel.
         stride(Union[int, tuple[int]]): The distance of kernel moving,
-            an int number that represents the height and width of movement
-            are both strides, or a tuple of two int numbers that represent
+            an integer number represents that the height and width of movement
+            are both strides, or a tuple of two integers numbers represents that
             height and width of movement respectively. Default: 1.
-        pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "same".
+        pad_mode (str): Specifies the padding mode. The optional values are
+            "same", "valid", and "pad". Default: "same".
 
             - same: Adopts the way of completion. Output height and width
               will be the same as the input.
-              Total number of padding will be calculated for horizontal and
-              vertical direction and evenly distributed to top and bottom,
+              The total number of padding will be calculated for in horizontal and
+              vertical directions and evenly distributed to top and bottom,
               left and right if possible. Otherwise, the last extra padding
               will be done from the bottom and the right side. If this mode
               is set, `padding` must be 0.
 
-            - valid: Adopts the way of discarding. The possibly largest
-              height and width of output will be return without padding.
+            - valid: Adopts the way of discarding. The possible largest
+              height and width of the output will be returned without padding.
               Extra pixels will be discarded. If this mode is set, `padding`
               must be 0.
 
@@ -215,9 +215,9 @@ class ConvReparam(_ConvVariational):
 
         padding (Union[int, tuple[int]]): Implicit paddings on both sides of
             the input. Default: 0.
-        dilation (Union[int, tuple[int]]): The data type is int or tuple
-            with 2 integers. Specifies the dilation rate to use for dilated
-            convolution. If set to be :math:`k > 1`,
+        dilation (Union[int, tuple[int]]): The data type is an integer or a tuple
+            of 2 integers. This parameter specifies the dilation rate of the
+            dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling
             location. Its value should be greater or equal to 1 and bounded
             by the height and width of the input. Default: 1.
@@ -226,28 +226,28 @@ class ConvReparam(_ConvVariational):
             Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector.
             Default: False.
-        weight_prior_fn: prior distribution for weight.
+        weight_prior_fn: The prior distribution for weight.
             It should return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
             normal distribution). The current version only supports normal distribution.
-        weight_posterior_fn: posterior distribution for sampling weight.
+        weight_posterior_fn: The posterior distribution for sampling weight.
             It should be a function handle which returns a mindspore
             distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
             The current version only supports normal distribution.
-        bias_prior_fn: prior distribution for bias vector. It should return
+        bias_prior_fn: The prior distribution for bias vector. It should return
             a mindspore distribution. Default: NormalPrior(which creates an
             instance of standard normal distribution). The current version
             only supports normal distribution.
-        bias_posterior_fn: posterior distribution for sampling bias vector.
+        bias_posterior_fn: The posterior distribution for sampling bias vector.
             It should be a function handle which returns a mindspore
             distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
             The current version only supports normal distribution.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **input** (Tensor) - The shape of the tensor is :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+        Tensor, with the shape being :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
         >>> net = ConvReparam(120, 240, 4, has_bias=False)

@@ -13,9 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-Bijector.
-
-The high-level components(Bijectors) used to construct the probabilistic network.
+Bijectors are the high-level components used to construct the probabilistic network.
 """
 
 from .bijector import Bijector

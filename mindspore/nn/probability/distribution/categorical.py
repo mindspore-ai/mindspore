@@ -23,17 +23,17 @@ from ._utils.utils import logits_to_probs, probs_to_logits, check_type, cast_to_
 
 class Categorical(Distribution):
     """
-    Creates a categorical distribution parameterized by either probs or logits (but not both).
+    Create a categorical distribution parameterized by either probabilities or logits (but not both).
 
     Args:
-        probs (Tensor, list, numpy.ndarray, Parameter): event probabilities.
-        logits (Tensor, list, numpy.ndarray, Parameter, float): event log-odds.
-        seed (int): seed to use in sampling. Global seed is used if it is None. Default: None.
-        dtype (mstype.int32): type of the distribution. Default: mstype.int32.
-        name (str): name of the distribution. Default: Categorical.
+        probs (Tensor, list, numpy.ndarray, Parameter): Event probabilities.
+        logits (Tensor, list, numpy.ndarray, Parameter, float): Event log-odds.
+        seed (int): The global seed is used in sampling. Global seed is used if it is None. Default: None.
+        dtype (mstype.int32): The type of the distribution. Default: mstype.int32.
+        name (str): The name of the distribution. Default: Categorical.
 
     Note:
-        probs must be non-negative, finite and have a non-zero sum, and it will be normalized to sum to 1.
+        `probs` must be non-negative, finite and have a non-zero sum, and it will be normalized to sum to 1.
 
     Examples:
         >>> # To initialize a Categorical distribution of prob is [0.5, 0.5]
@@ -111,14 +111,14 @@ class Categorical(Distribution):
     @property
     def logits(self):
         """
-        Returns the logits.
+        Return the logits.
         """
         return self._logits
 
     @property
     def probs(self):
         """
-        Returns the probability.
+        Return the probability.
         """
         return self._probs
 
@@ -127,7 +127,7 @@ class Categorical(Distribution):
         Sampling.
 
         Args:
-            sample_shape (tuple): shape of the sample. Default: ().
+            sample_shape (tuple): The shape of the sample. Default: ().
 
         Returns:
             Tensor, shape is shape(probs)[:-1] + sample_shape
@@ -149,7 +149,7 @@ class Categorical(Distribution):
         Evaluate log probability.
 
         Args:
-            value (Tensor): value to be evaluated.
+            value (Tensor): The value to be evaluated.
         """
         value = self._check_value(value, 'value')
         value = self.expandim(self.cast(value, mstype.float32), -1)
@@ -176,8 +176,9 @@ class Categorical(Distribution):
     def enumerate_support(self, expand=True):
         r"""
        Enumerate categories.
+
        Args:
-            expand (Bool): whether to expand.
+           expand (Bool): Whether to expand.
        """
         num_events = self._num_events
         values = nn.Range(0., num_events, 1)()

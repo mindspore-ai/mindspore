@@ -13,9 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-Distribution.
-
-The high-level components(Distributions) used to construct the probabilistic network.
+Distributions are the high-level components used to construct the probabilistic network.
 """
 
 from .distribution import Distribution

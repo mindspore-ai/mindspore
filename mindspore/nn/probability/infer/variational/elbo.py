@@ -24,10 +24,10 @@ class ELBO(Cell):
     The Evidence Lower Bound (ELBO).
 
     Variational inference minimizes the Kullback-Leibler (KL) divergence from the variational distribution to
-    the posterior distribution. It maximizes the evidence lower bound (ELBO), a lower bound on the logarithm of
+    the posterior distribution. It maximizes the ELBO, a lower bound on the logarithm of
     the marginal probability of the observations log p(x). The ELBO is equal to the negative KL divergence up to
     an additive constant.
-    see more details in `Variational Inference: A Review for Statisticians <https://arxiv.org/abs/1601.00670>`_.
+    For more details, refer to `Variational Inference: A Review for Statisticians <https://arxiv.org/abs/1601.00670>`_.
 
     Args:
         latent_prior(str): The prior distribution of latent space. Default: Normal.

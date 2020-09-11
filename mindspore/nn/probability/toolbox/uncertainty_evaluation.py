@@ -43,15 +43,15 @@ class UncertaintyEvaluation:
             - regression: A regression model.
             - classification: A classification model.
         num_classes (int): The number of labels of classification.
-                      If the task type is classification, it must be set; if not classification, it need not to be set.
+                      If the task type is classification, it must be set; otherwise, it is not needed.
                       Default: None.
         epochs (int): Total number of iterations on the data. Default: 1.
         epi_uncer_model_path (str): The save or read path of the epistemic uncertainty model. Default: None.
         ale_uncer_model_path (str): The save or read path of the aleatoric uncertainty model. Default: None.
-        save_model (bool): Save the uncertainty model or not, if True, the epi_uncer_model_path
-                        and ale_uncer_model_path should not be None. If False, give the path of
-                        the uncertainty model, it will load the model to evaluate, if not given
-                        the path, it will not save or load the uncertainty model. Default: False.
+        save_model (bool): Whether to save the uncertainty model or not, if True, the epi_uncer_model_path
+                        and ale_uncer_model_path should not be None. If False, the model to evaluate will be loaded from
+                        the the path of the uncertainty model; if the path is not given , it will not save or load the
+                        uncertainty model. Default: False.
 
     Examples:
         >>> network = LeNet()

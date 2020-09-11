@@ -25,21 +25,22 @@ class VAE(Cell):
     Variational Auto-Encoder (VAE).
 
     The VAE defines a generative model, `Z` is sampled from the prior, then used to reconstruct `X` by a decoder.
-    see more details in `Auto-Encoding Variational Bayes <https://arxiv.org/abs/1312.6114>`_.
+    For more details, refer to `Auto-Encoding Variational Bayes <https://arxiv.org/abs/1312.6114>`_.
 
     Note:
-        When define the encoder and decoder, the shape of the encoder's output tensor and decoder's input tensor
+        When the encoder and decoder are defined, the shape of the encoder's output tensor and decoder's input tensor
         should be :math:`(N, hidden\_size)`.
         The latent_size should be less than or equal to the hidden_size.
 
     Args:
-        encoder(Cell): The DNN model defined as encoder.
+        encoder(Cell): The Deep Neural Network (DNN) model defined as encoder.
         decoder(Cell): The DNN model defined as decoder.
         hidden_size(int): The size of encoder's output tensor.
         latent_size(int): The size of the latent space.
 
     Inputs:
-        - **input** (Tensor) - the same shape as the input of encoder, the shape is :math:`(N, C, H, W)`.
+        - **input** (Tensor) - The input tensor is the same shape as the input of encoder, the shape
+        is :math:`(N, C, H, W)`.
 
     Outputs:
         - **output** (Tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor)).
@@ -84,14 +85,14 @@ class VAE(Cell):
 
     def generate_sample(self, generate_nums, shape):
         """
-        Randomly sample from latent space to generate sample.
+        Randomly sample from latent space to generate samples.
 
         Args:
             generate_nums (int): The number of samples to generate.
             shape(tuple): The shape of sample, it should be (generate_nums, C, H, W) or (-1, C, H, W).
 
         Returns:
-            Tensor, the generated sample.
+            Tensor, the generated samples.
         """
         generate_nums = check_int_positive(generate_nums)
         if not isinstance(shape, tuple) or len(shape) != 4 or (shape[0] != -1 and shape[0] != generate_nums):
@@ -103,7 +104,7 @@ class VAE(Cell):
 
     def reconstruct_sample(self, x):
         """
-        Reconstruct sample from original data.
+        Reconstruct samples from original data.
 
         Args:
             x (Tensor): The input tensor to be reconstructed, the shape is (N, C, H, W).

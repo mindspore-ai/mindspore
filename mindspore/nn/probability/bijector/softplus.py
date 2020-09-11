@@ -26,14 +26,15 @@ from .bijector import Bijector
 class Softplus(Bijector):
     r"""
     Softplus Bijector.
-    This Bijector performs the operation, where k is the sharpness factor.
+    This Bijector performs the operation:
 
     .. math::
         Y = \frac{\log(1 + e ^ {kX})}{k}
+    where k is the sharpness factor.
 
     Args:
-        sharpness (float): scale factor. Default: 1.0.
-        name (str): name of the bijector. Default: 'Softplus'.
+        sharpness (float): The scale factor. Default: 1.0.
+        name (str): The name of the Bijector. Default: 'Softplus'.
 
     Examples:
         >>> # To initialize a Softplus bijector of sharpness 2

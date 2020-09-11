@@ -18,17 +18,20 @@ from .power_transform import PowerTransform
 class Exp(PowerTransform):
     r"""
     Exponential Bijector.
-    This Bijector performs the operation: Y = exp(x).
+    This Bijector performs the operation:
+
+    .. math::
+        Y = exp(x).
 
     Args:
-        name (str): name of the bijector. Default: 'Exp'.
+        name (str): The name of the Bijector. Default: 'Exp'.
 
     Examples:
-        >>> # To initialize a Exp bijector
+        >>> # To initialize an Exp bijector
         >>> import mindspore.nn.probability.bijector as msb
         >>> n = msb.Exp()
         >>>
-        >>> # To use Exp distribution in a network
+        >>> # To use Exp bijector in a network
         >>> class net(Cell):
         >>>     def __init__(self):
         >>>         super(net, self).__init__():

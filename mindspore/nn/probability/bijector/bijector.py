@@ -25,11 +25,11 @@ class Bijector(Cell):
     Bijecotr class.
 
     Args:
-        is_constant_jacobian (bool): if the bijector has constant derivative. Default: False.
-        is_injective (bool): if the bijector is an one-to-one mapping. Default: True.
-        name (str): name of the bijector. Default: None.
-        dtype (mindspore.dtype): type of the distribution the bijector can operate on. Default: None.
-        param (dict): parameters used to initialize the bijector. Default: None.
+        is_constant_jacobian (bool): Whether the Bijector has constant derivative. Default: False.
+        is_injective (bool): Whether the Bijector is a one-to-one mapping. Default: True.
+        name (str): The name of the Bijector. Default: None.
+        dtype (mindspore.dtype): The type of the distribution the Bijector can operate on. Default: None.
+        param (dict): The parameters used to initialize the Bijector. Default: None.
     """
     def __init__(self,
                  is_constant_jacobian=False,
@@ -82,7 +82,7 @@ class Bijector(Cell):
 
     def _check_value(self, value, name):
         """
-        Check availability fo value as a Tensor.
+        Check availability of `value` as a Tensor.
         """
         if self.context_mode == 0:
             self.checktensor(value, name)
@@ -119,11 +119,11 @@ class Bijector(Cell):
         This __call__ may go into two directions:
         If args[0] is a distribution instance, the call will generate a new distribution derived from
         the input distribution.
-        Otherwise, input[0] should be the name of a bijector function, e.g. "forward", then this call will
-        go in the construct and invoke the correstpoding bijector function.
+        Otherwise, input[0] should be the name of a Bijector function, e.g. "forward", then this call will
+        go in the construct and invoke the correstpoding Bijector function.
 
         Args:
-            *args: args[0] shall be either a distribution or the name of a bijector function.
+            *args: args[0] shall be either a distribution or the name of a Bijector function.
         """
         if isinstance(args[0], Distribution):
             return TransformedDistribution(self, args[0], self.distribution.dtype)
@@ -131,16 +131,16 @@ class Bijector(Cell):
 
     def construct(self, name, *args, **kwargs):
         """
-        Override construct in Cell.
+        Override `construct` in Cell.
 
         Note:
             Names of supported functions include:
-            'forward', 'inverse', 'forward_log_jacobian', 'inverse_log_jacobian'.
+            'forward', 'inverse', 'forward_log_jacobian', and 'inverse_log_jacobian'.
 
         Args:
-            name (str): name of the function.
-            *args (list): list of positional arguments needed for the function.
-            **kwargs (dictionary): dictionary of keyword arguments needed for the function.
+            name (str): The name of the function.
+            *args (list): A list of positional arguments that the function needs.
+            **kwargs (dictionary): A dictionary of keyword arguments that the function needs.
         """
         if name == 'forward':
             return self.forward(*args, **kwargs)

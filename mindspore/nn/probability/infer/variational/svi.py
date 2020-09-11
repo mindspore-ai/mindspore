@@ -26,9 +26,9 @@ class SVI:
     Stochastic Variational Inference(SVI).
 
     Variational inference casts the inference problem as an optimization. Some distributions over the hidden
-    variables that is indexed by a set of free parameters, and then optimize the parameters to make it closest to
+    variables are indexed by a set of free parameters, which are optimized to make distributions closest to
     the posterior of interest.
-    see more details in `Variational Inference: A Review for Statisticians <https://arxiv.org/abs/1601.00670>`_.
+    For more details, refer to `Variational Inference: A Review for Statisticians <https://arxiv.org/abs/1601.00670>`_.
 
     Args:
         net_with_loss(Cell): Cell with loss function.

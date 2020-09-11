@@ -32,7 +32,7 @@ class TransformToBNN:
     Args:
         trainable_dnn (Cell): A trainable DNN model (backbone) wrapped by TrainOneStepCell.
         dnn_factor ((int, float): The coefficient of backbone's loss, which is computed by loss function. Default: 1.
-        bnn_factor (int, float): The coefficient of kl loss, which is kl divergence of Bayesian layer. Default: 1.
+        bnn_factor (int, float): The coefficient of KL loss, which is KL divergence of Bayesian layer. Default: 1.
 
     Examples:
         >>> class Net(nn.Cell):
@@ -139,15 +139,15 @@ class TransformToBNN:
 
         Args:
             dnn_layer_type (Cell): The type of DNN layer to be transformed to BNN layer. The optional values are
-                nn.Dense, nn.Conv2d.
+                nn.Dense and nn.Conv2d.
             bnn_layer_type (Cell): The type of BNN layer to be transformed to. The optional values are
-                DenseReparam, ConvReparam.
+                DenseReparam and ConvReparam.
             get_args: The arguments gotten from the DNN layer. Default: None.
             add_args (dict): The new arguments added to BNN layer. Note that the arguments in `add_args` should not
                 duplicate arguments in `get_args`. Default: None.
 
         Returns:
-            Cell, a trainable model wrapped by TrainOneStepCell, whose sprcific type of layer is transformed to the
+            Cell, a trainable model wrapped by TrainOneStepCell, whose specific type of layer is transformed to the
             corresponding bayesian layer.
 
         Examples:

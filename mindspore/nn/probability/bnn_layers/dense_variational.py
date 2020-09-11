@@ -143,12 +143,12 @@ class DenseReparam(_DenseVariational):
     r"""
     Dense variational layers with Reparameterization.
 
-    See more details in paper `Auto-Encoding Variational Bayes <https://arxiv.org/abs/1312.6114>`_.
+    For more details, refer to the paper `Auto-Encoding Variational Bayes <https://arxiv.org/abs/1312.6114>`_.
 
-    Applies dense-connected layer for the input. This layer implements the operation as:
+    Applies dense-connected layer to the input. This layer implements the operation as:
 
     .. math::
-        \text{outputs} = \text{activation}(\text{inputs} * \text{kernel} + \text{bias}),
+        \text{outputs} = \text{activation}(\text{inputs} * \text{weight} + \text{bias}),
 
     where :math:`\text{activation}` is the activation function passed as the activation
     argument (if passed in), :math:`\text{activation}` is a weight matrix with the same
@@ -162,31 +162,31 @@ class DenseReparam(_DenseVariational):
         in_channels (int): The number of input channel.
         out_channels (int): The number of output channel .
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
-        activation (str, Cell): Regularizer function applied to the output of the layer. The type of activation can
-            be str (eg. 'relu') or Cell (eg. nn.ReLU()). Note that if the type of activation is Cell, it must have been
-            instantiated. Default: None.
-        weight_prior_fn: prior distribution for weight.
+        activation (str, Cell): A regularization function applied to the output of the layer. The type of `activation`
+            can be a string (eg. 'relu') or a Cell (eg. nn.ReLU()). Note that if the type of activation is Cell, it must
+            be instantiated beforehand. Default: None.
+        weight_prior_fn: The prior distribution for weight.
             It should return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
             normal distribution). The current version only supports normal distribution.
-        weight_posterior_fn: posterior distribution for sampling weight.
+        weight_posterior_fn: The posterior distribution for sampling weight.
             It should be a function handle which returns a mindspore
             distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
             The current version only supports normal distribution.
-        bias_prior_fn: prior distribution for bias vector. It should return
+        bias_prior_fn: The prior distribution for bias vector. It should return
             a mindspore distribution. Default: NormalPrior(which creates an
             instance of standard normal distribution). The current version
             only supports normal distribution.
-        bias_posterior_fn: posterior distribution for sampling bias vector.
+        bias_posterior_fn: The posterior distribution for sampling bias vector.
             It should be a function handle which returns a mindspore
             distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
             The current version only supports normal distribution.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
+        - **input** (Tensor) - The shape of the tensor is :math:`(N, in\_channels)`.
 
     Outputs:
-        Tensor of shape :math:`(N, out\_channels)`.
+        Tensor, the shape of the tensor is :math:`(N, out\_channels)`.
 
     Examples:
         >>> net = DenseReparam(3, 4)
