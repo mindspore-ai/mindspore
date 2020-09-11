@@ -16,6 +16,7 @@
 import cv2
 import numpy as np
 import mindspore.dataset as de
+cv2.setNumThreads(0)
 
 
 class SegDataset:
