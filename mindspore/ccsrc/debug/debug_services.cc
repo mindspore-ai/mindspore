@@ -58,13 +58,14 @@ void DebugServices::RemoveWatchpoint(unsigned int id) {
   watchpoint_table.erase(id);
 }
 
-DebugServices::tensor_stats DebugServices::SummarizeTensor(const float *start, unsigned int n, bool need_min_max,
+template <typename T>
+DebugServices::tensor_stats DebugServices::SummarizeTensor(const T *start, unsigned int n, bool need_min_max,
                                                            bool need_mean_sd) {
   tensor_stats stats;
   for (unsigned int i = 0; i < n; ++i) {
-    float val = start[i];
-    stats.has_nan = stats.has_nan || isnan(val);
-    stats.has_inf = stats.has_inf || isinf(val);
+    auto val = static_cast<double>(start[i]);
+    stats.has_nan = stats.has_nan || std::isnan(val);
+    stats.has_inf = stats.has_inf || std::isinf(val);
     if (stats.has_inf && stats.has_nan) {
       // other statistics don't make sense in this case
       break;
@@ -76,9 +77,7 @@ DebugServices::tensor_stats DebugServices::SummarizeTensor(const float *start, u
     }
 
     if (need_mean_sd) {
-      // for mean and sd calculation see
-      // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
-      float delta = val - stats.mean;
+      double delta = val - stats.mean;
       stats.mean += delta / (i + 1);
       stats.m2 += delta * (val - stats.mean);
     }
@@ -109,13 +108,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
     bool inf_nan_enabled = false;
     for (auto w_table_item : watchpoint_table) {
       auto wp = std::get<1>(w_table_item);
-
-      // if (!wp.conditions.condition_list[IS_OVERFLOW].enabled) {
-      if (wp.condition.type != IS_OVERFLOW) {
-        // only overflow condition supports all data types
-        if (tensor_dtype != kNumberTypeFloat && tensor_dtype != kNumberTypeFloat32) continue;
-      }
-
+      if (wp.condition.type != IS_OVERFLOW && tensor_dtype == kNumberTypeBool) continue;
       if (wp.IsNodeIncluded(tensor_name_no_slot)) {
         min_max_enabled |= wp.min_max_enabled();
         mean_sd_enabled |= wp.mean_sd_enabled();
@@ -124,11 +117,70 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
       }
     }
     tensor_stats stats;
-
+    uint num_elements = tensor_ptr->DataSize();
     if (min_max_enabled || mean_sd_enabled || inf_nan_enabled) {
-      auto *start_addr = reinterpret_cast<float *>(tensor_ptr->data_c());
-      unsigned int num_elements = (tensor_ptr->data().nbytes()) / sizeof(float);
-      stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+      switch (tensor_dtype) {
+        case kNumberTypeUInt8: {
+          auto start_addr = reinterpret_cast<uint8_t *>(tensor_ptr->data_c());
+          stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+          break;
+        }
+        case kNumberTypeInt8: {
+          auto start_addr = reinterpret_cast<int8_t *>(tensor_ptr->data_c());
+          stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+          break;
+        }
+        case kNumberTypeUInt16: {
+          auto start_addr = reinterpret_cast<uint16_t *>(tensor_ptr->data_c());
+          stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+          break;
+        }
+        case kNumberTypeInt16: {
+          auto start_addr = reinterpret_cast<int16_t *>(tensor_ptr->data_c());
+          stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+          break;
+        }
+        case kNumberTypeUInt32: {
+          auto start_addr = reinterpret_cast<uint32_t *>(tensor_ptr->data_c());
+          stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+          break;
+        }
+        case kNumberTypeInt32:
+        case kNumberTypeInt: {
+          auto start_addr = reinterpret_cast<int32_t *>(tensor_ptr->data_c());
+          stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+          break;
+        }
+        case kNumberTypeUInt64: {
+          auto start_addr = reinterpret_cast<uint64_t *>(tensor_ptr->data_c());
+          stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+          break;
+        }
+        case kNumberTypeInt64: {
+          auto start_addr = reinterpret_cast<int64_t *>(tensor_ptr->data_c());
+          stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+          break;
+        }
+        case kNumberTypeFloat16: {
+          auto start_addr = reinterpret_cast<float16 *>(tensor_ptr->data_c());
+          stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+          break;
+        }
+        case kNumberTypeFloat32:
+        case kNumberTypeFloat: {
+          auto start_addr = reinterpret_cast<float *>(tensor_ptr->data_c());
+          stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+          break;
+        }
+        case kNumberTypeFloat64: {
+          auto start_addr = reinterpret_cast<double *>(tensor_ptr->data_c());
+          stats = SummarizeTensor(start_addr, num_elements, min_max_enabled, mean_sd_enabled);
+          break;
+        }
+        default:
+          MS_LOG(INFO) << "Unsupported tensor type";
+          break;
+      }
     }
 
     for (auto &it : watchpoints_to_check_table) {
