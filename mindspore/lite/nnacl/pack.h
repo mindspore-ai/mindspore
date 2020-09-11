@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_NNACL_PACK_H_
 #define MINDSPORE_LITE_NNACL_PACK_H_
 
+#include <stdio.h>
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
@@ -41,8 +42,7 @@ void Conv1x1InputPack(const void *src_ptr, void *dst_ptr, ConvParameter *conv_pa
 
 void Pack1x1WeightFp32(const float *weight_data, float *packed_weight, ConvParameter *conv_param);
 
-void PackInputSum16x4Int8(const int8_t *input_value, int32_t *input_sum, size_t input_channel, size_t output_channel,
-                          size_t plane_size, ConvParameter *conv_param);
+void PackInputSum16x4Int8(const int8_t *input, int32_t *input_sum, int32_t *filter_zp, ConvParameter *conv_param);
 
 void PackInputSum8x4Int8(const int8_t *input_value, int32_t *input_sum, size_t input_channel, size_t output_channel,
                          size_t plane_size, ConvParameter *conv_param);

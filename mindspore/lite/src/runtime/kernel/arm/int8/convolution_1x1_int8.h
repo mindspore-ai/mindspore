@@ -56,7 +56,8 @@ class Convolution1x1Int8CPUKernel : public ConvolutionBaseCPUKernel {
   void CheckSupportOptimize();
 
  private:
-  int32_t *input_sum_ = nullptr; /* per-channel: oc4 format */
+  int32_t *input_sum_ = nullptr;     /* per-channel: oc4 format */
+  int32_t *filter_zp_ptr_ = nullptr; /* oc - per - channel */
   int8_t *packed_weight_ = nullptr;
   int8_t *packed_input_ = nullptr;
   int8_t *input_ptr_ = nullptr;
@@ -70,6 +71,7 @@ class Convolution1x1Int8CPUKernel : public ConvolutionBaseCPUKernel {
   MatMulParameter *matmul_param_ = nullptr;
   MATMUL_OPT_R_FUNC matmul_func_ = nullptr;
   bool support_optimize_ = false;
+  bool filter_peroc_ = false;
 };
 }  // namespace mindspore::kernel
 

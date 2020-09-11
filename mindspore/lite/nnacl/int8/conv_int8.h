@@ -54,13 +54,16 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
                  ConvParameter *conv_param, GEMM_FUNC gemm_func);
 
 // int8 convolution 1x1
-void Conv1x1PreOpt(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum, size_t input_channel,
-                   size_t output_channel, size_t plane_size, ConvParameter *conv_param);
+void Conv1x1PreOptPeroc(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum, size_t input_channel,
+                        size_t output_channel, size_t plane_size, int32_t *filter_zp, size_t inputsum_stride);
+void Conv1x1PreOptPert(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum, size_t input_channel,
+                       size_t plane_size, ConvParameter *conv_param);
 void Conv1x1Int8(const int8_t *packed_input, const int8_t *packed_weight, int8_t *dst, const int32_t *input_sum,
-                 const int32_t *bias, int row, int col, int deep16, ConvParameter *conv_param);
+                 const int32_t *bias, int row, int col, int deep16, int32_t *left_shift, int32_t *right_shift,
+                 int32_t *multiplier, ConvParameter *conv_param);
 void Conv1x1Int8Opt(const int8_t *packed_input, const int8_t *packed_weight, int8_t *dst, const int32_t *input_sum,
-                    const int32_t *bias, int row, int col, int deep4, ConvParameter *conv_param,
-                    MATMUL_OPT_R_FUNC matmul_func);
+                    const int32_t *bias, int row, int col, int deep4, int32_t *left_shift, int32_t *right_shift,
+                    int32_t *multiplier, ConvParameter *conv_param, MATMUL_OPT_R_FUNC matmul_func);
 
 // int8 convolution 3x3
 void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bias_data, int8_t *output_data,
