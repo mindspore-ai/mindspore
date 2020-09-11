@@ -26,8 +26,8 @@ namespace mindspore::kernel {
 
 class ScaleOpenCLKernel : public OpenCLKernel {
  public:
-  explicit ScaleOpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                             const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx)
+  explicit ScaleOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                             const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx)
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~ScaleOpenCLKernel() override;
 
