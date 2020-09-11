@@ -57,8 +57,6 @@ inline void TraverseFuncGraph(const FuncGraphPtr &root, std::function<void(AnfNo
   TraverseFuncGraphFromCNode(root->get_return(), callback);
 }
 
-class AreaGraph;
-class Splitter;
 class Area {
  public:
   explicit Area(const AnfNodePtrList &anf_arr) {
@@ -72,6 +70,8 @@ class Area {
       }
     }
   }
+
+  ~Area() = default;
 
   // Set the external inputs of spy as a Parameter.
   void CreateParameters(const FuncGraphPtr &func_graph, std::unordered_map<ParameterPtr, AnfNodePtr> *param_node_map) {
@@ -148,8 +148,8 @@ class Area {
     }
   }
 
-  friend AreaGraph;
-  friend Splitter;
+  const std::unordered_set<AnfNodePtr> &nodes() const { return nodes_; }
+  const std::vector<AnfNodePtr> &spy_cnodes() const { return spy_cnodes_; }
 
  private:
   // This is a CNode that does not belong to this area.
@@ -170,9 +170,8 @@ class AreaGraph {
   // Build an area graph to maintain the relation between areas.
   // Input node_groups: A group list, each element is a AnfNode list representing the node set in this group.
   static AreaGraphPtr BuildAreaGraph(const std::vector<AnfNodePtrList> &node_groups) {
-    AreaGraph *area_graph_ptr = new (std::nothrow) AreaGraph(node_groups);
-    if (!area_graph_ptr) return nullptr;
-    auto area_graph = AreaGraphPtr(area_graph_ptr);
+    auto area_graph = AreaGraphPtr(new AreaGraph(node_groups));
+    if (area_graph == nullptr) return nullptr;
     if (!area_graph->TopoSort()) {
       MS_LOG(WARNING) << "The groups have a cycle.";
       return nullptr;
@@ -184,12 +183,12 @@ class AreaGraph {
   // The output `main_cnodes` is a topo-sorted cnode list in main graph, holding the new sub_func_graphs.
   // The output `cnode_group_id` represents the indices of main_cnodes before topo-sorting.
   void SplitGraph(const FuncGraphPtr &main_func_graph, std::vector<CNodePtr> *main_cnodes,
-                  std::vector<size_t> *cnode_group_id, std::function<void(Area *)> expand_callback) {
+                  std::vector<size_t> *cnode_group_id, std::function<void(const Area &)> expand_callback) {
     main_cnodes->clear();
     main_cnodes->resize(areas_.size(), nullptr);
 
     for (auto &area : this->areas_) {
-      expand_callback(&area);
+      expand_callback(area);
     }
 
     for (auto index : topo_order_) {
@@ -208,6 +207,8 @@ class AreaGraph {
     return;
   }
 
+  ~AreaGraph() = default;
+
  private:
   explicit AreaGraph(const std::vector<AnfNodePtrList> &node_groups) : edge_prev_(node_groups.size()) {
     for (size_t i = 0; i < node_groups.size(); ++i) {
@@ -217,7 +218,7 @@ class AreaGraph {
       }
     }
     for (auto &area : areas_) {
-      for (auto &spy : area.spy_cnodes_) {
+      for (auto &spy : area.spy_cnodes()) {
         auto cnode = spy->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(cnode);
         size_t v = node_area_map_[spy];
@@ -333,8 +334,8 @@ class Splitter {
 
     // The output new_subgraph_cnodes are topo sorted, use a list to store its order in split_plan.
     std::vector<size_t> cnodes_group_id;
-    std::function<void(Area *)> expand_callback = std::bind(&Splitter::AreaExpand, this, std::placeholders::_1);
-    area_graph->SplitGraph(main_func_graph_, &new_subgraph_cnodes_, &cnodes_group_id, expand_callback);
+    area_graph->SplitGraph(main_func_graph_, &new_subgraph_cnodes_, &cnodes_group_id,
+                           [this](const Area &area) { this->AreaExpand(area); });
 
     RebuildGraph(cnodes_group_id);
 
@@ -347,6 +348,8 @@ class Splitter {
     MS_EXCEPTION_IF_NULL(split_schemer);
     return SplitterPtr(new Splitter(main_cnode, split_schemer));
   }
+
+  ~Splitter() = default;
 
  private:
   Splitter(const CNodePtr &main_cnode, SplitSchemerPtr split_schemer)
@@ -479,9 +482,9 @@ class Splitter {
   }
 
   // Copy all Parameter and ValueNode that the area used.
-  void AreaExpand(Area *area) {
+  void AreaExpand(const Area &area) {
     std::unordered_map<AnfNodePtr, AnfNodePtr> old_valuenode_and_param_map;
-    for (auto sub_node : area->nodes_) {
+    for (auto sub_node : area.nodes()) {
       auto sub_cnode = sub_node->cast<CNodePtr>();
       if (sub_cnode == nullptr) continue;
       for (size_t i = 1; i < sub_cnode->inputs().size(); ++i) {
@@ -565,7 +568,7 @@ class CostModelSplitSchemer : public Splitter::SplitSchemer {
     auto json_desc_str = json_desc.dump();
     MS_LOG(DEBUG) << "CallPyFn: [" << kGraphKernelSplitFunc << "] with input json:\n" << json_desc_str;
     auto ret = parse::python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelSplitFunc, json_desc_str);
-    if (ret.is(py::none())) {
+    if (py::isinstance<py::none>(ret)) {
       MS_LOG(ERROR) << "CallPyFn: [" << kGraphKernelSplitFunc << "] return invalid result. input json:\n"
                     << json_desc_str;
       return false;

@@ -79,22 +79,16 @@ inline std::string AkgKernelJsonGenerator::GetOutputFormat(const AnfNodePtr &anf
 
 bool AkgKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, const std::shared_ptr<OpInfo> &op_info,
                                                  nlohmann::json *const inputs_json) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_NULL(op_info);
-  MS_EXCEPTION_IF_NULL(inputs_json);
-
   // for dynamic input number, dyn_input_sizes has the info of dynamic input num for each input.
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr = op_info->inputs_ptr();
   if (inputs_ptr.empty()) {
-    MS_LOG(DEBUG) << "Kernel [" << anf_node->fullname_with_scope() << "] regist info has no input info";
-    return true;
+    MS_LOG(ERROR) << "Kernel [" << anf_node->fullname_with_scope() << "] regist info has no input info";
+    return false;
   }
 
   // for dynamic input number, dyn_input_sizes has the info of dynamic input num for each input.
   auto dyn_input_sizes = GetDynInputSize(anf_node);
-
   size_t real_input_index = 0;
-  std::vector<nlohmann::json> input_list;
   for (size_t i = 0; i < inputs_ptr.size(); i++) {
     std::shared_ptr<OpIOInfo> input_ptr = inputs_ptr[i];
     if (input_ptr == nullptr) {
@@ -102,10 +96,8 @@ bool AkgKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, con
       return false;
     }
 
-    auto op_input_name = input_ptr->name();
     size_t input_tensor_num = dyn_input_sizes.empty() ? 1 : IntToSize(dyn_input_sizes[i]);
-
-    input_list.clear();
+    std::vector<nlohmann::json> input_list;
     for (size_t input_i = 0; input_i < input_tensor_num; input_i++) {
       auto type_id = this->GetInputDataType(anf_node, real_input_index);
       std::string dtype = TypeId2String(type_id, dump_option_.is_before_select_kernel);
@@ -117,7 +109,7 @@ bool AkgKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, con
       nlohmann::json input_desc_json;
       input_desc_json[kJsonKeyDataType] = dtype;
       input_desc_json[kJsonKeyFormat] = this->GetInputFormat(anf_node, real_input_index);
-      input_desc_json[kJsonKeyName] = op_input_name;
+      input_desc_json[kJsonKeyName] = input_ptr->name();
       input_desc_json[kJsonKeyTensorName] = "input_" + std::to_string(GetInputTensorIdxInc(anf_node, real_input_index));
       auto input_shape = this->GetInputShape(anf_node, real_input_index);
       if (anf_node->func_graph() != nullptr && anf_node->func_graph()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) &&
@@ -204,77 +196,56 @@ void AkgKernelJsonGenerator::GetJson(const AnfNodePtr &anf_node, const std::vect
 
 bool AkgKernelJsonGenerator::CreateAttrDescJson(const AnfNodePtr &anf_node, const std::shared_ptr<OpInfo> &op_info,
                                                 nlohmann::json *const attrs_json) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_NULL(op_info);
-  MS_EXCEPTION_IF_NULL(attrs_json);
   std::vector<std::shared_ptr<OpAttr>> attrs = op_info->attrs_ptr();
   if (attrs.empty()) {
-    MS_LOG(INFO) << "Apply kernel [" << anf_node->fullname_with_scope() << "] op info attrs is empty";
+    MS_LOG(DEBUG) << "Apply kernel [" << anf_node->fullname_with_scope() << "] op info attrs is empty";
     return true;
   }
-  std::vector<std::shared_ptr<OpIOInfo>> inputs = op_info->inputs_ptr();
-
-  std::vector<int> dyn_input_sizes;
+  auto dyn_input_sizes = GetDynInputSize(anf_node);
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
-  MS_EXCEPTION_IF_NULL(primitive);
-  if (primitive->GetAttr(kAttrDynInputSizes) != nullptr) {
-    dyn_input_sizes = GetValue<const std::vector<int>>(primitive->GetAttr(kAttrDynInputSizes));
-  }
-
-  if (inputs.empty()) {
-    MS_LOG(ERROR) << "Apply kernel [" << anf_node->fullname_with_scope() << "] op info inputs is empty";
-    return false;
-  }
 
   // create input name list for "x_shape" in attr with "x" in primitive.
-  std::map<size_t, std::string> op_info_shape_name;
-  for (size_t op_info_input_i = 0; op_info_input_i < inputs.size(); op_info_input_i++) {
-    std::string input_name = inputs[op_info_input_i]->name();
-    std::string x_shape_name = input_name + "_shape";
-    static_cast<void>(op_info_shape_name.insert(make_pair(op_info_input_i, x_shape_name)));
+  std::vector<std::shared_ptr<OpIOInfo>> inputs = op_info->inputs_ptr();
+  std::map<std::string, size_t> op_info_shape_name;
+  for (size_t i = 0; i < inputs.size(); i++) {
+    op_info_shape_name[inputs[i]->name() + "_shape"] = i;
   }
 
   for (const auto &op_attr : attrs) {
     nlohmann::json attr_json;
     ValuePtr attr_value = primitive->GetAttr(op_attr->name());
     if (attr_value == nullptr && op_attr->name() != kArgDataformat) {
-      if (op_attr->param_type() == "required") {
-        // match "x_shape" in att with "x" in primitive.
-        std::string attr_name = op_attr->name();
-        auto find_item = std::find_if(
-          op_info_shape_name.begin(), op_info_shape_name.end(),
-          [attr_name](const std::map<size_t, std::string>::value_type item) { return item.second == attr_name; });
-        if (find_item != op_info_shape_name.end()) {
-          if (!dyn_input_sizes.empty()) {
-            if (find_item->first >= dyn_input_sizes.size() - 1) {
-              MS_LOG(EXCEPTION) << "dyn_input_sizes list index:" << find_item->first
-                                << " is out of range:" << dyn_input_sizes.size() - 1 << ".";
-              return false;
-            }
-            size_t tensor_idx = IntToSize(std::accumulate(&dyn_input_sizes[0], &dyn_input_sizes[find_item->first], 0));
-            for (int input_i = 0; input_i < dyn_input_sizes[find_item->first]; input_i++) {
-              attr_json[kJsonKeyValue] = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, tensor_idx);
-              attr_json[kJsonKeyName] = op_attr->name();
-              attrs_json->push_back(attr_json);
-              tensor_idx++;
-            }
-          } else {
-            attr_json[kJsonKeyValue] = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, find_item->first);
+      if (op_attr->param_type() != "required") continue;
+      // match "x_shape" in attr with "x" in primitive.
+      auto find_item = op_info_shape_name.find(op_attr->name());
+      if (find_item != op_info_shape_name.end()) {
+        if (!dyn_input_sizes.empty()) {
+          if (find_item->second >= dyn_input_sizes.size() - 1) {
+            MS_LOG(EXCEPTION) << "dyn_input_sizes list index:" << find_item->second
+                              << " is out of range:" << dyn_input_sizes.size() - 1 << ".";
+            return false;
+          }
+          size_t tensor_idx = IntToSize(std::accumulate(&dyn_input_sizes[0], &dyn_input_sizes[find_item->second], 0));
+          for (int input_i = 0; input_i < dyn_input_sizes[find_item->second]; input_i++) {
+            attr_json[kJsonKeyValue] = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, tensor_idx);
             attr_json[kJsonKeyName] = op_attr->name();
             attrs_json->push_back(attr_json);
+            tensor_idx++;
           }
         } else {
-          MS_LOG(ERROR) << "op [" << anf_node->fullname_with_scope() << "] should have attr :" << op_attr->name();
-          return false;
+          attr_json[kJsonKeyValue] = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, find_item->second);
+          attr_json[kJsonKeyName] = op_attr->name();
+          attrs_json->push_back(attr_json);
         }
+      } else {
+        MS_LOG(ERROR) << "op [" << anf_node->fullname_with_scope() << "] should have attr :" << op_attr->name();
+        return false;
       }
-      continue;
+    } else {
+      GetJson(anf_node, dyn_input_sizes, op_attr, &attr_json, attr_value);
+      attr_json[kJsonKeyName] = op_attr->name();
+      attrs_json->push_back(attr_json);
     }
-
-    GetJson(anf_node, dyn_input_sizes, op_attr, &attr_json, attr_value);
-
-    attr_json[kJsonKeyName] = op_attr->name();
-    attrs_json->push_back(attr_json);
   }
   return true;
 }
@@ -485,7 +456,47 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   MS_LOG(INFO) << "Fusion nodes: [" << output_list.size() << "], input_list: [" << anf_nodes.size()
                << "], output_list: [" << input_list.size() << "].";
   std::map<AnfNodePtr, nlohmann::json> node_json_map;
+  if (!GenSingleJsons(anf_nodes, &node_json_map)) return false;
 
+  UpdateTensorName(anf_nodes, &node_json_map);
+
+  std::vector<nlohmann::json> node_json_desc;
+  std::transform(anf_nodes.begin(), anf_nodes.end(), std::back_inserter(node_json_desc),
+                 [&node_json_map](const AnfNodePtr &anf_node) { return node_json_map[anf_node]; });
+  (*kernel_json)[kJsonKeyOpDesc] = node_json_desc;
+
+  auto inputs_json = CreateInputsJson(anf_nodes, input_list, node_json_map);
+  (*kernel_json)[kJsonKeyInputDesc] = inputs_json;
+  (*kernel_json)[kJsonKeyOutputDesc] =
+    CreateOutputsJson(anf_nodes, input_list, output_list, inputs_json, node_json_map);
+
+  size_t hash_id = std::hash<std::string>()(kernel_json->dump());
+  kernel_name_ = "Fused_";
+  auto fg = anf_nodes[0]->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto attr_val = fg->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
+  if (attr_val != nullptr) {
+    auto fg_attr = GetValue<std::string>(attr_val);
+    (void)kernel_name_.append(fg_attr).append("_");
+  }
+  (void)kernel_name_.append(std::to_string(hash_id));
+  (*kernel_json)[kJsonKeyId] = GetOpCntInc();
+  (*kernel_json)[kJsonKeyOp] = kernel_name_;
+  (*kernel_json)[kJsonKeyPlatform] = "AKG";
+  (*kernel_json)[kJsonKeyProcess] = GetProcessorStr(anf_nodes[0]);
+  (*kernel_json)[kJsonKeyComposite] = true;
+  (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString();
+
+  if (!GetIOSize(*kernel_json, &input_size_list_, &output_size_list_)) {
+    MS_LOG(ERROR) << "Cal mem size failed.";
+    return false;
+  }
+
+  return true;
+}
+
+bool AkgKernelJsonGenerator::GenSingleJsons(const std::vector<AnfNodePtr> &anf_nodes,
+                                            std::map<AnfNodePtr, nlohmann::json> *node_json_map) {
   for (auto const &anf_node : anf_nodes) {
     MS_EXCEPTION_IF_NULL(anf_node);
     if (!AnfAlgo::IsRealKernel(anf_node)) {
@@ -507,9 +518,13 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
       node_json["fusion"] = primitive->GetAttr("fusion")->ToString();
     }
 
-    node_json_map[anf_node] = node_json;
+    (*node_json_map)[anf_node] = node_json;
   }
+  return true;
+}
 
+void AkgKernelJsonGenerator::UpdateTensorName(const std::vector<AnfNodePtr> &anf_nodes,
+                                              std::map<AnfNodePtr, nlohmann::json> *node_json_map) {
   for (auto const &anf_node : anf_nodes) {
     auto dyn_input_sizes = GetDynInputSize(anf_node);
     bool is_dynamic_input = !dyn_input_sizes.empty();
@@ -519,11 +534,11 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
       size_t input_tensor_num = is_dynamic_input ? IntToSize(dyn_input_sizes[i]) : 1;
       for (size_t j = 0; j < input_tensor_num; ++j) {
         auto tmp_input = GetKernelInput(anf_node, real_input_index);
-        std::string tensor_name = GetTensorName(node_json_map[anf_node], kJsonKeyInputDesc, std::make_pair(i, j));
-        if (node_json_map.find(tmp_input.first) != node_json_map.end()) {
+        std::string tensor_name = GetTensorName((*node_json_map)[anf_node], kJsonKeyInputDesc, std::make_pair(i, j));
+        if (node_json_map->find(tmp_input.first) != node_json_map->end()) {
           std::string new_tensor_name =
-            GetTensorName(node_json_map[tmp_input.first], kJsonKeyOutputDesc, std::make_pair(0, tmp_input.second));
-          SetTensorName(kJsonKeyInputDesc, new_tensor_name, std::make_pair(i, j), &(node_json_map[anf_node]));
+            GetTensorName((*node_json_map)[tmp_input.first], kJsonKeyOutputDesc, std::make_pair(0, tmp_input.second));
+          SetTensorName(kJsonKeyInputDesc, new_tensor_name, std::make_pair(i, j), &((*node_json_map)[anf_node]));
           MS_LOG(DEBUG) << "Update [" << real_input_index << "] input [" << tensor_name << "] of ["
                         << anf_node->fullname_with_scope() << "] to [" << tmp_input.second << "] output ["
                         << new_tensor_name << "] of [" << tmp_input.first->fullname_with_scope() << "].";
@@ -535,12 +550,11 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
       }
     }
   }
+}
 
-  std::vector<nlohmann::json> node_json_desc;
-  std::transform(anf_nodes.begin(), anf_nodes.end(), std::back_inserter(node_json_desc),
-                 [&node_json_map](const AnfNodePtr &anf_node) { return node_json_map[anf_node]; });
-  (*kernel_json)[kJsonKeyOpDesc] = node_json_desc;
-
+nlohmann::json AkgKernelJsonGenerator::CreateInputsJson(const std::vector<AnfNodePtr> &anf_nodes,
+                                                        const std::vector<AnfNodePtr> &input_list,
+                                                        const std::map<AnfNodePtr, nlohmann::json> &node_json_map) {
   nlohmann::json inputs_json;
   auto input_index = GetInputIndex(anf_nodes, input_list);
   for (size_t i = 0; i < input_index.size(); ++i) {
@@ -549,18 +563,22 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
     std::string dtype = TypeId2String(type_id, dump_option_.is_before_select_kernel);
     nlohmann::json input_desc_json;
     input_desc_json[kJsonKeyTensorName] =
-      GetTensorName(node_json_map[tmp_input.first], kJsonKeyInputDesc, tmp_input.second);
+      GetTensorName(node_json_map.at(tmp_input.first), kJsonKeyInputDesc, tmp_input.second);
     input_desc_json[kJsonKeyDataType] = dtype;
     input_desc_json[kJsonKeyFormat] = this->GetInputFormat(tmp_input.first, tmp_input.second.first);
     input_desc_json[kJsonKeyShape] = this->GetInputShape(tmp_input.first, tmp_input.second.first);
     inputs_json.emplace_back(std::vector<nlohmann::json>{input_desc_json});
   }
-  (*kernel_json)[kJsonKeyInputDesc] = inputs_json;
+  return inputs_json;
+}
 
+nlohmann::json AkgKernelJsonGenerator::CreateOutputsJson(const std::vector<AnfNodePtr> &anf_nodes,
+                                                         const std::vector<AnfNodePtr> &input_list,
+                                                         const std::vector<AnfNodePtr> &output_list,
+                                                         const nlohmann::json &inputs_json,
+                                                         const std::map<AnfNodePtr, nlohmann::json> &node_json_map) {
   nlohmann::json outputs_json;
   auto output_index = GetOutputIndex(anf_nodes, input_list, output_list);
-  std::map<size_t, std::vector<std::string>> sub_graphs;
-  std::map<size_t, size_t> dim_infos;
   for (size_t i = 0; i < output_index.size(); ++i) {
     auto tmp_output = output_index[i];
     bool found = false;
@@ -576,7 +594,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
       auto type_id = this->GetOutputDataType(tmp_output.first, tmp_output.second);
       std::string dtype = TypeId2String(type_id, dump_option_.is_before_select_kernel);
       output_desc_json[kJsonKeyTensorName] =
-        GetTensorName(node_json_map[tmp_output.first], kJsonKeyOutputDesc, std::make_pair(0, tmp_output.second));
+        GetTensorName(node_json_map.at(tmp_output.first), kJsonKeyOutputDesc, std::make_pair(0, tmp_output.second));
       output_desc_json[kJsonKeyDataType] = dtype;
       output_desc_json[kJsonKeyFormat] = this->GetOutputFormat(tmp_output.first, tmp_output.second);
       auto output_shape = this->GetOutputShape(tmp_output.first, tmp_output.second);
@@ -587,33 +605,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
     }
     outputs_json.emplace_back(output_desc_json);
   }
-  (*kernel_json)[kJsonKeyOutputDesc] = outputs_json;
-
-  auto processor = GetProcessorStr(anf_nodes[0]);
-
-  size_t hash_id = std::hash<std::string>()(kernel_json->dump());
-  kernel_name_ = "Fused_";
-  auto fg = anf_nodes[0]->func_graph();
-  MS_EXCEPTION_IF_NULL(fg);
-  auto attr_val = fg->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
-  if (attr_val != nullptr) {
-    auto fg_attr = GetValue<std::string>(attr_val);
-    (void)kernel_name_.append(fg_attr).append("_");
-  }
-  (void)kernel_name_.append(std::to_string(hash_id));
-  (*kernel_json)[kJsonKeyId] = GetOpCntInc();
-  (*kernel_json)[kJsonKeyOp] = kernel_name_;
-  (*kernel_json)[kJsonKeyPlatform] = "AKG";
-  (*kernel_json)[kJsonKeyProcess] = processor;
-  (*kernel_json)[kJsonKeyComposite] = true;
-  (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString();
-
-  if (!GetIOSize(*kernel_json, &input_size_list_, &output_size_list_)) {
-    MS_LOG(ERROR) << "Cal mem size failed.";
-    return false;
-  }
-
-  return true;
+  return outputs_json;
 }
 
 bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node) {

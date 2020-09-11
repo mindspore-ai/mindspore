@@ -27,12 +27,20 @@
 
 namespace mindspore {
 namespace kernel {
+using JsonNodePair = std::pair<AkgKernelJsonGenerator, AnfNodePtr>;
+
 class AkgAscendKernelBuilder {
  public:
   AkgAscendKernelBuilder() = default;
   ~AkgAscendKernelBuilder() = default;
+  bool AkgOpParallelBuild(const std::vector<JsonNodePair> &build_args);
 
-  bool AkgOpParallelBuild(const std::vector<std::pair<AkgKernelJsonGenerator, AnfNodePtr>> &build_args);
+ private:
+  std::vector<std::string> GetNotCachedKernelJsons(const std::vector<JsonNodePair> &build_args);
+  bool InsertToCache(const std::vector<JsonNodePair> &build_args);
+  bool HandleRepeatNodes();
+
+  std::vector<JsonNodePair> repeat_nodes_;
 };
 
 bool AkgAscendKernelParallelBuild(const std::vector<AnfNodePtr> &anf_nodes);

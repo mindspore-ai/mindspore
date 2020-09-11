@@ -199,6 +199,5 @@ void SetAkgKernelAttrs(const AnfNodePtr &anf_node) {
     it->second(anf_node);
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore

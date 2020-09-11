@@ -236,12 +236,7 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
 }
 
 void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  MS_EXCEPTION_IF_NULL(func_graph);
-
-  std::vector<AnfNodePtr> node_list;
-  std::vector<AnfNodePtr> input_list;
-  std::vector<AnfNodePtr> output_list;
+  std::vector<AnfNodePtr> node_list, input_list, output_list;
   kernel::GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
 
   std::vector<std::string> graph_input_format;
@@ -295,6 +290,22 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_gr
   AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, kernel_node.get());
   SetTensorDeviceInfo(*graph_selected_info, kernel_node);
 }
+
+void PrintUnsupportedTypeException(const CNodePtr &kernel_node, const std::vector<TypeId> &inputs_type,
+                                   const std::vector<TypeId> &outputs_type) {
+  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  std::string build_type = "in [";
+  std::for_each(std::begin(inputs_type), std::end(inputs_type),
+                [&build_type](auto i) { build_type += mindspore::kernel::TypeId2String(i) + " "; });
+  build_type += "] out [";
+  std::for_each(std::begin(outputs_type), std::end(outputs_type),
+                [&build_type](auto i) { build_type += mindspore::kernel::TypeId2String(i) + " "; });
+  build_type += "]";
+  auto supported_type_lists = SupportedTypeList(kernel_node);
+  MS_EXCEPTION(TypeError) << "Select GPU kernel op[" << kernel_name
+                          << "] fail! Incompatible data type!\nThe supported data types are " << supported_type_lists
+                          << ", but get " << build_type;
+}
 }  // namespace
 
 void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -329,7 +340,7 @@ void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<s
 
 void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   if (AnfAlgo::IsGraphKernel(kernel_node)) {
-    auto func_graph = GetValueNode<FuncGraphPtr>(kernel_node->input(kAnfPrimitiveIndex));
+    auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(kernel_node);
     MS_EXCEPTION_IF_NULL(func_graph);
     SetGraphKernelInfo(kernel_node, func_graph);
     return;
@@ -351,8 +362,7 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   if (IsNeedProcessFormatInfo(kernel_node, inputs_type)) {
     UpdateKernelFormatInfo(kernel_node, inputs_type, &inputs_format, &outputs_format, &origin_data_format);
   }
-  std::shared_ptr<KernelBuildInfo::KernelBuildInfoBuilder> builder =
-    std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
+  auto builder = std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
   builder->SetOriginDataFormat(origin_data_format);
   builder->SetInputsFormat(inputs_format);
   builder->SetInputsDeviceType(inputs_type);
@@ -360,35 +370,23 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   builder->SetOutputsDeviceType(outputs_type);
 
   bool result = false;
-  KernelType res_kernel_type = UNKNOWN_KERNEL_TYPE;
   if (kernel_type == UNKNOWN_KERNEL_TYPE) {
     result =
       kernel::GpuKernelFactory::GetInstance().SearchRegistered(AnfAlgo::GetCNodeName(kernel_node), builder->Build());
 
     if (!result) {
       result = SelectAkgKernel(kernel_node, builder->Build());
-      res_kernel_type = AKG_KERNEL;
+      kernel_type = AKG_KERNEL;
     }
   } else if (kernel_type == AKG_KERNEL) {
     result = SelectAkgKernel(kernel_node, builder->Build());
-    res_kernel_type = AKG_KERNEL;
   }
 
   if (!result) {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    std::string build_type = "in [";
-    std::for_each(std::begin(inputs_type), std::end(inputs_type),
-                  [&build_type](auto i) { build_type += mindspore::kernel::TypeId2String(i) + " "; });
-    build_type += "] out [";
-    std::for_each(std::begin(outputs_type), std::end(outputs_type),
-                  [&build_type](auto i) { build_type += mindspore::kernel::TypeId2String(i) + " "; });
-    build_type += "]";
-    auto supported_type_lists = SupportedTypeList(kernel_node);
-    MS_EXCEPTION(TypeError) << "Select GPU kernel op[" << kernel_name
-                            << "] fail! Incompatible data type!\nThe supported data types are " << supported_type_lists
-                            << ", but get " << build_type;
+    PrintUnsupportedTypeException(kernel_node, inputs_type, outputs_type);
+    return;
   }
-  builder->SetKernelType(res_kernel_type);
+  builder->SetKernelType(kernel_type);
   builder->SetProcessor(kernel::Processor::CUDA);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
   SetTensorDeviceInfo(*(builder->Build()), kernel_node);
