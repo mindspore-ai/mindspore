@@ -20,7 +20,6 @@
 #include "nnacl/int8/common_func.h"
 
 /*conv depthwise int8 begin*/
-// only support perlayer
 #ifndef ENABLE_ARM64
 void ConvDwInt8Row(int32_t *output_ptr, const int8_t *input_ptr, const int16_t *weight_ptr, int num_pixels,
                    int output_channel, int input_step, int8_t input_zp) {
@@ -34,20 +33,46 @@ void ConvDwInt8Row(int32_t *output_ptr, const int8_t *input_ptr, const int16_t *
 }
 #endif
 
-void ConvDwInt8Post(int8_t *dst, int32_t *buffer, int num_pixels, int32_t output_zp, int32_t out_multiplier,
-                    int32_t left_shift, int32_t right_shift, int32_t acc_min, int32_t acc_max) {
-  int align_num = 0;
+void ConvDwInt8Post(int8_t *dst, int32_t *buffer, int output_w, int channel, int32_t output_zp, int32_t *out_multiplier,
+                    int32_t *left_shift, int32_t *right_shift, int32_t acc_min, int32_t acc_max, bool per_channel) {
+  if (per_channel) {
+    // support perchannel
+    for (int w = 0; w < output_w; w++) {
+      int channel4 = 0;
 #ifdef ENABLE_ARM64
-  align_num = num_pixels / 4 * 4;
-  ConvDwInt8PostAlign4(dst, buffer, align_num, output_zp, out_multiplier, left_shift, right_shift, acc_min, acc_max);
+      channel4 = channel / 4 * 4;
+      ConvDwInt8PostAlign4PerChannel(dst, buffer, channel4, output_zp, out_multiplier, left_shift, right_shift, acc_min,
+                                     acc_max);
 #endif
-  for (int i = align_num; i < num_pixels; i++) {
-    buffer[i] = RoundingDivideByPOT(
-      SaturatingRoundingDoublingHighMul(buffer[i] * (1 << (unsigned int)left_shift), out_multiplier), -right_shift);
-    buffer[i] += output_zp;
-    buffer[i] = MSMAX(buffer[i], acc_min);
-    buffer[i] = MSMIN(buffer[i], acc_max);
-    dst[i] = (buffer[i]);
+      for (int c = channel4; c < channel; c++) {
+        buffer[c] = RoundingDivideByPOT(
+          SaturatingRoundingDoublingHighMul(buffer[c] * (1 << (unsigned int)left_shift[c]), out_multiplier[c]),
+          -right_shift[c]);
+        buffer[c] += output_zp;
+        buffer[c] = MSMAX(buffer[c], acc_min);
+        buffer[c] = MSMIN(buffer[c], acc_max);
+        dst[c] = (buffer[c]);
+      }
+      buffer += channel;
+      dst += channel;
+    }
+  } else {
+    int num_pixels = output_w * channel;
+    int align_num = 0;
+#ifdef ENABLE_ARM64
+    align_num = num_pixels / 4 * 4;
+    ConvDwInt8PostAlign4(dst, buffer, align_num, output_zp, out_multiplier[0], left_shift[0], right_shift[0], acc_min,
+                         acc_max);
+#endif
+    for (int i = align_num; i < num_pixels; i++) {
+      buffer[i] = RoundingDivideByPOT(
+        SaturatingRoundingDoublingHighMul(buffer[i] * (1 << (unsigned int)left_shift[0]), out_multiplier[0]),
+        -right_shift[0]);
+      buffer[i] += output_zp;
+      buffer[i] = MSMAX(buffer[i], acc_min);
+      buffer[i] = MSMIN(buffer[i], acc_max);
+      dst[i] = (buffer[i]);
+    }
   }
 }
 
@@ -57,9 +82,10 @@ void ConvDwInt8(int8_t *output_data, int32_t *row_buffer, const int8_t *input_da
   int h_start = h_step * task_id;
   int h_end = MSMIN(h_start + h_step, conv_param->output_h_);
 
-  int out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_[0];
-  int left_shift = conv_param->conv_quant_arg_.left_shift_[0];
-  int right_shift = conv_param->conv_quant_arg_.right_shift_[0];
+  bool filter_per_channel = conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
+  int *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
+  int *left_shift = conv_param->conv_quant_arg_.left_shift_;
+  int *right_shift = conv_param->conv_quant_arg_.right_shift_;
 
   int intput_zp = conv_param->conv_quant_arg_.input_quant_args_[0].zp_;
   int output_zp = conv_param->conv_quant_arg_.output_quant_args_[0].zp_;
@@ -105,8 +131,8 @@ void ConvDwInt8(int8_t *output_data, int32_t *row_buffer, const int8_t *input_da
         }
       }
       // post func, acc int32 -> dst int8
-      ConvDwInt8Post(dst_data, row_buffer, conv_param->output_w_ * conv_param->output_channel_, output_zp,
-                     out_multiplier, left_shift, right_shift, acc_min, acc_max);
+      ConvDwInt8Post(dst_data, row_buffer, conv_param->output_w_, conv_param->output_channel_, output_zp,
+                     out_multiplier, left_shift, right_shift, acc_min, acc_max, filter_per_channel);
     }
   }
 }

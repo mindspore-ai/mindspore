@@ -51,14 +51,25 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   PackNCHWToNHWCInt8(origin_weight, tmp_weight, 1, weight_tensor->Height() * weight_tensor->Width(),
                      weight_tensor->Batch());
 
-  int weight_zp = conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_;
   packed_weight_ = reinterpret_cast<int16_t *>(malloc(pack_weight_size * sizeof(int16_t)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  for (int i = 0; i < weight_tensor->ElementsNum(); i++) {
-    packed_weight_[i] = (int16_t)(tmp_weight[i] - weight_zp);
+
+  bool filter_per_channel = conv_param_->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
+  if (filter_per_channel) {
+    for (int i = 0; i < weight_tensor->Height() * weight_tensor->Width(); i++) {
+      for (int c = 0; c < channel; c++) {
+        int weight_zp = conv_param_->conv_quant_arg_.filter_quant_args_[c].zp_;
+        packed_weight_[i * channel + c] = (int16_t)(tmp_weight[i * channel + c] - weight_zp);
+      }
+    }
+  } else {
+    int weight_zp = conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_;
+    for (int i = 0; i < weight_tensor->ElementsNum(); i++) {
+      packed_weight_[i] = (int16_t)(tmp_weight[i] - weight_zp);
+    }
   }
   free(tmp_weight);
 
@@ -166,14 +177,8 @@ kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *>
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
-  kernel::LiteKernel *kernel;
-  auto filter_quant_size = inputs[kWeightIndex]->GetQuantParams().size();
-  if (filter_quant_size == 1) {  // per tensor
-    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  } else {  // per channel
-    kernel =
-      new (std::nothrow) kernel::ConvolutionDepthwiseSWInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  }
+  auto kernel =
+    new (std::nothrow) kernel::ConvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;
