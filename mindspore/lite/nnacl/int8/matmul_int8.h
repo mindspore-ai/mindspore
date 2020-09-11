@@ -42,7 +42,6 @@ void MatMulInt8_8x8_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
                       bool per_channel);
 void RowMajor2Row8x4MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
 void RowMajor2Row4x8MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
-
 void RowMajor2Row4x16Major(int8_t *src, int row, int col, int8_t *dst, int col_16);
 void RowMajor2Col16x4Major(int8_t *src, int row, int col, int8_t *dst, int row_16);
 void CalcInputSums(int8_t *input, int row, int col, int weight_zp, int *dst, DataOrder order);
@@ -51,6 +50,8 @@ void CalcWeightBiasSums(int8_t *weight, int row, int col, int input_zp, int weig
 void MatmulInt8(const int8_t *a, const int8_t *b, int8_t *dst, const int *a_sums, const int *bias, int act_min,
                 int act_max, int out_zp, int multiplier, int left_shift, int right_shift, int row, int col, int deep16,
                 int stride);
+
+void RowMajor2Row2x16MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
 
 #ifdef ENABLE_ARM64
 void MatmulInt8Neon64(const int8_t *a, const int8_t *b, int8_t *dst, int row4, int col4, int deep16, const int *a_sums,

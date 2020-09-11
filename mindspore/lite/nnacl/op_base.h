@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#define C2NUM 2
 #define C4NUM 4
 #define C8NUM 8
 #define C12NUM 12

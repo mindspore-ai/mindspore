@@ -86,44 +86,10 @@ void Convolution1x1Int8CPUKernel::CheckSupportOptimize() {
   return;
 }
 
-int Convolution1x1Int8CPUKernel::InitWeightBias() {
-  auto filter_tensor = in_tensors_.at(kWeightIndex);
-  auto input_channel = filter_tensor->Channel();
-  auto output_channel = filter_tensor->Batch();
-
-  /* weight */
-  size_t size = support_optimize_ ? UP_ROUND(input_channel, C4NUM) * UP_ROUND(output_channel, C8NUM) * sizeof(int8_t)
-                                  : UP_ROUND(input_channel, C16NUM) * UP_ROUND(output_channel, C4NUM) * sizeof(int8_t);
-  packed_weight_ = reinterpret_cast<int8_t *>(malloc(size));
-  if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "Conv1x1 int8 Malloc weight error!";
-    return RET_ERROR;
-  }
-  memset(packed_weight_, 0, size);
-  if (support_optimize_) {
-    RowMajor2Row8x4MajorInt8(reinterpret_cast<int8_t *>(filter_tensor->MutableData()), packed_weight_, output_channel,
-                             input_channel);
-  } else {
-    RowMajor2Row4x16MajorInt8(reinterpret_cast<int8_t *>(filter_tensor->MutableData()), packed_weight_, output_channel,
-                              input_channel);
-  }
-
+int Convolution1x1Int8CPUKernel::InitBiasByzp(void *src_weight, int input_channel, int output_channel) {
   /* bias = bias - v2 x zp1 + zp1 x zp2  */
-  int col4 = UP_ROUND(output_channel, C4NUM);
-  int col8 = UP_ROUND(output_channel, C8NUM);
-  size = support_optimize_ ? col8 * sizeof(int32_t) : col4 * sizeof(int32_t);
-  bias_data_ = malloc(size);
-  if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "Conv1x1 int8 Malloc bias_ptr_ error!";
-    return RET_ERROR;
-  }
-  memset(bias_data_, 0, size);
-  if (in_tensors_.size() == 3) {
-    memcpy(bias_data_, in_tensors_[kBiasIndex]->MutableData(), output_channel * sizeof(int32_t));
-  }
-
   int32_t *bias_data = reinterpret_cast<int32_t *>(bias_data_);
-  int8_t *weight = reinterpret_cast<int8_t *>(filter_tensor->MutableData());
+  int8_t *weight = reinterpret_cast<int8_t *>(src_weight);
   int32_t input_zp = conv_param_->conv_quant_arg_.input_quant_args_[0].zp_;
   for (int oc = 0; oc < output_channel; oc++) {
     int32_t weight_sum_value = 0;
@@ -147,6 +113,77 @@ int Convolution1x1Int8CPUKernel::InitWeightBias() {
   return RET_OK;
 }
 
+int Convolution1x1Int8CPUKernel::InitWeightBias() {
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  auto input_channel = filter_tensor->Channel();
+  auto output_channel = filter_tensor->Batch();
+
+  /* weight */
+  size_t size = support_optimize_ ? UP_ROUND(input_channel, C4NUM) * UP_ROUND(output_channel, C8NUM) * sizeof(int8_t)
+                                  : UP_ROUND(input_channel, C16NUM) * UP_ROUND(output_channel, C4NUM) * sizeof(int8_t);
+  packed_weight_ = reinterpret_cast<int8_t *>(malloc(size));
+  if (packed_weight_ == nullptr) {
+    MS_LOG(ERROR) << "Conv1x1 int8 Malloc weight error!";
+    return RET_ERROR;
+  }
+  memset(packed_weight_, 0, size);
+  if (support_optimize_) {
+    RowMajor2Row8x4MajorInt8(reinterpret_cast<int8_t *>(filter_tensor->MutableData()), packed_weight_, output_channel,
+                             input_channel);
+  } else {
+    RowMajor2Row4x16MajorInt8(reinterpret_cast<int8_t *>(filter_tensor->MutableData()), packed_weight_, output_channel,
+                              input_channel);
+  }
+
+  int col4 = UP_ROUND(output_channel, C4NUM);
+  int col8 = UP_ROUND(output_channel, C8NUM);
+  size = support_optimize_ ? col8 * sizeof(int32_t) : col4 * sizeof(int32_t);
+  bias_data_ = malloc(size);
+  if (bias_data_ == nullptr) {
+    MS_LOG(ERROR) << "Conv1x1 int8 Malloc bias_ptr_ error!";
+    return RET_ERROR;
+  }
+  memset(bias_data_, 0, size);
+  if (in_tensors_.size() == 3) {
+    memcpy(bias_data_, in_tensors_[kBiasIndex]->MutableData(), output_channel * sizeof(int32_t));
+  }
+
+  InitBiasByzp(filter_tensor->MutableData(), input_channel, output_channel);
+  return RET_OK;
+}
+
+int Convolution1x1Int8CPUKernel::InitWeightBiasArm32() {
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  auto input_channel = filter_tensor->Channel();
+  auto output_channel = filter_tensor->Batch();
+
+  /* weight */
+  size_t size = UP_ROUND(input_channel, C16NUM) * UP_ROUND(output_channel, C2NUM) * sizeof(int8_t);
+  packed_weight_ = reinterpret_cast<int8_t *>(malloc(size));
+  if (packed_weight_ == nullptr) {
+    MS_LOG(ERROR) << "Conv1x1 int8 arm32 Malloc weight error!";
+    return RET_ERROR;
+  }
+  memset(packed_weight_, 0, size);
+  RowMajor2Row2x16MajorInt8(reinterpret_cast<int8_t *>(filter_tensor->MutableData()), packed_weight_, output_channel,
+                            input_channel);
+
+  /* bias */
+  int col2 = UP_ROUND(output_channel, C2NUM);
+  bias_data_ = malloc(col2 * sizeof(int32_t));
+  if (bias_data_ == nullptr) {
+    MS_LOG(ERROR) << "Conv1x1 int8 arm32 Malloc bias_ptr_ error!";
+    return RET_ERROR;
+  }
+  memset(bias_data_, 0, size);
+  if (in_tensors_.size() == 3) {
+    memcpy(bias_data_, in_tensors_[kBiasIndex]->MutableData(), output_channel * sizeof(int32_t));
+  }
+
+  InitBiasByzp(filter_tensor->MutableData(), input_channel, output_channel);
+  return RET_OK;
+}
+
 int Convolution1x1Int8CPUKernel::Init() {
   matmul_param_ = new (std::nothrow) MatMulParameter();
   if (matmul_param_ == nullptr) {
@@ -164,7 +201,11 @@ int Convolution1x1Int8CPUKernel::Init() {
 
   CheckSupportOptimize();
 
+#ifdef ENABLE_ARM32
+  ret = InitWeightBiasArm32();
+#else
   ret = InitWeightBias();
+#endif
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return ret;
@@ -183,6 +224,7 @@ int Convolution1x1Int8CPUKernel::InitParam() {
   matmul_param_->row_ = conv_param_->output_h_ * conv_param_->output_w_;
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->col_ = conv_param_->output_channel_;
+  matmul_param_->col_2_ = UP_ROUND(matmul_param_->col_, C2NUM);
   matmul_param_->col_4_ = UP_ROUND(matmul_param_->col_, C4NUM);
   matmul_param_->col_8_ = UP_ROUND(matmul_param_->col_, C8NUM);
   matmul_param_->row_4_ = UP_ROUND(matmul_param_->row_, C4NUM);
@@ -192,6 +234,10 @@ int Convolution1x1Int8CPUKernel::InitParam() {
 
   int row_pack_count = 0;
   int col_pack_count = 0;
+#ifdef ENABLE_ARM32
+  row_pack_count = C4NUM;
+  col_pack_count = C2NUM;
+#else
   if (support_optimize_) {
     row_pack_count = C8NUM;
     col_pack_count = C8NUM;
@@ -199,6 +245,7 @@ int Convolution1x1Int8CPUKernel::InitParam() {
     row_pack_count = C4NUM;
     col_pack_count = C4NUM;
   }
+#endif
 
   /* init input sum size */
   if (conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL) {
@@ -222,7 +269,7 @@ int Convolution1x1Int8CPUKernel::InitParam() {
     memset(input_ptr_, 0, matmul_param_->row_ * matmul_param_->deep_ * sizeof(int8_t));
   }
   return RET_OK;
-}
+}  // namespace mindspore::kernel
 
 int Convolution1x1Int8CPUKernel::ReSize() {
   FreeResizeBuf();
@@ -260,6 +307,18 @@ int Convolution1x1Int8CPUKernel::RunImpl(int task_id) {
   int32_t *cur_right_shift = conv_param_->conv_quant_arg_.right_shift_;
   int32_t *cur_multiplier = conv_param_->conv_quant_arg_.quant_multiplier_;
 
+#ifdef ENABLE_ARM32
+  int cur_stride = thread_stride_ * C2NUM;
+  int res_stride = matmul_param_->col_ - task_id * thread_stride_ * C2NUM;
+  int cur_oc = MSMIN(cur_stride, res_stride);
+  if (cur_oc <= 0) {
+    return RET_OK;
+  }
+  Conv1x1Int8(packed_input_, packed_weight_ + task_id * thread_stride_ * C2NUM * matmul_param_->deep_16_,
+              output_ptr_ + task_id * thread_stride_ * C2NUM, cur_input_sum,
+              reinterpret_cast<int32_t *>(bias_data_) + task_id * thread_stride_ * C2NUM, matmul_param_->row_, cur_oc,
+              matmul_param_->deep_16_, cur_left_shift, cur_right_shift, cur_multiplier, conv_param_);
+#else
   if (support_optimize_) {
     int cur_stride = thread_stride_ * C8NUM;
     int res_stride = matmul_param_->col_ - task_id * thread_stride_ * C8NUM;
@@ -296,6 +355,7 @@ int Convolution1x1Int8CPUKernel::RunImpl(int task_id) {
                 reinterpret_cast<int32_t *>(bias_data_) + task_id * thread_stride_ * C4NUM, matmul_param_->row_, cur_oc,
                 matmul_param_->deep_16_, cur_left_shift, cur_right_shift, cur_multiplier, conv_param_);
   }
+#endif
   return RET_OK;
 }
 
