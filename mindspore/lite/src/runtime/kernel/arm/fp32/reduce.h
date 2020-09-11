@@ -28,7 +28,7 @@ using mindspore::schema::ReduceMode;
 namespace mindspore::kernel {
 class ReduceCPUKernel : public ReduceBaseCPUKernel {
   typedef int (*Reducer)(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-                         const int *src_shape, float *dst_data, const int tid, const int thread_num);
+                         float *dst_data, const int tid, const int thread_num);
 
  public:
   ReduceCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
@@ -36,13 +36,7 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
                   const mindspore::lite::PrimitiveC *primitive)
       : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive) {}
   ~ReduceCPUKernel() {
-    for (size_t i = 0; i < data_buffers_.size(); i++) {
-      float *buffer = data_buffers_[i];
-      if (buffer != nullptr) {
-        free(buffer);
-        buffer = nullptr;
-      }
-    }
+    FreeTmpBuffer();
     src_data_ = nullptr;
     dst_data_ = nullptr;
   }
@@ -60,6 +54,7 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
 
  private:
   int MallocTmpBuffer();
+  void FreeTmpBuffer();
 };
 }  // namespace mindspore::kernel
 

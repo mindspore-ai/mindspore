@@ -39,10 +39,6 @@ int ReduceInt8CPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  ret = MallocTmpBuffer();
-  if (ret != RET_OK) {
-    return ret;
-  }
   ret = CalculateQuantArgs();
   if (ret != RET_OK) {
     return ret;
@@ -179,23 +175,15 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
 }
 
 int ReduceInt8CPUKernel::MallocTmpBuffer() {
-  auto input_shape = in_tensors_.at(0)->shape();
-  for (auto i = 0; i < num_axes_ - 1; i++) {
-    int axis = axes_[i];
-    size_t size = 1;
-    for (size_t j = 0; j < input_shape.size(); j++) {
-      if (axis != static_cast<int>(j)) {
-        size *= input_shape[j];
-      }
-    }
-    MS_ASSERT(context_->allocator != nullptr);
-    int32_t *buffer = reinterpret_cast<int32_t *>(context_->allocator->Malloc(size * sizeof(int32_t)));
+  data_buffers_.clear();
+  MS_ASSERT(static_cast<int>(buffer_sizes_.size()) == num_axes_ - 1);
+  for (auto buffer_size : buffer_sizes_) {
+    int32_t *buffer = reinterpret_cast<int32_t *>(context_->allocator->Malloc(buffer_size * sizeof(int32_t)));
     if (buffer == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed.";
       return RET_ERROR;
     }
     data_buffers_.emplace_back(buffer);
-    input_shape[axis] = 1;
   }
 
   auto input = in_tensors_.at(0);
@@ -203,17 +191,13 @@ int ReduceInt8CPUKernel::MallocTmpBuffer() {
   if (begin_src_data_ == nullptr) {
     return RET_NULL_PTR;
   }
-  auto input_data = reinterpret_cast<int8_t *>(input->MutableData());
-  for (auto i = 0; i < input->ElementsNum(); i++) {
-    begin_src_data_[i] = static_cast<int32_t>(input_data[i]);
-  }
+
   return RET_OK;
 }
 
 void ReduceInt8CPUKernel::FreeTmpBuffer() {
   for (auto buffer : data_buffers_) {
     if (buffer != nullptr) {
-      MS_ASSERT(context_->allocator != nullptr);
       context_->allocator->Free(buffer);
       buffer = nullptr;
     }
@@ -221,20 +205,12 @@ void ReduceInt8CPUKernel::FreeTmpBuffer() {
   data_buffers_.clear();
 
   if (begin_src_data_ != nullptr) {
-    MS_ASSERT(context_->allocator != nullptr);
     context_->allocator->Free(begin_src_data_);
     begin_src_data_ = nullptr;
   }
 }
 
-int ReduceInt8CPUKernel::ReSize() {
-  FreeTmpBuffer();
-  auto ret = MallocTmpBuffer();
-  if (ret != RET_OK) {
-    FreeTmpBuffer();
-  }
-  return ret;
-}
+int ReduceInt8CPUKernel::ReSize() { return ReduceBaseCPUKernel::ReSize(); }
 
 int ReduceInt8Impl(void *cdata, int task_id) {
   auto reduce = reinterpret_cast<ReduceInt8CPUKernel *>(cdata);
@@ -246,80 +222,65 @@ int ReduceInt8Impl(void *cdata, int task_id) {
   return RET_OK;
 }
 
+void ReduceInt8CPUKernel::GetQuantArgs(size_t i) {
+  MS_ASSERT(i < static_cast<size_t>(num_axis_));
+  if (mode_ == static_cast<int>(schema::ReduceMode_ReduceMean)) {
+    quant_arg_.mean_multiplier_ = mean_multipliers_[i]->multiplier_;
+    quant_arg_.mean_left_shift_ = mean_multipliers_[i]->left_shift_;
+    quant_arg_.mean_right_shift_ = mean_multipliers_[i]->right_shift_;
+  }
+
+  if (mode_ == static_cast<int>(schema::ReduceMode_ReduceProd)) {
+    quant_arg_.prod_multiplier_ = prod_multipliers_[i]->multiplier_;
+    quant_arg_.prod_left_shift_ = prod_multipliers_[i]->left_shift_;
+    quant_arg_.prod_right_shift_ = prod_multipliers_[i]->right_shift_;
+  }
+  if (mode_ == static_cast<int>(schema::ReduceMode_ReduceSumSquare)) {
+    quant_arg_.sum_square_multiplier_ = sum_square_multipliers_[i]->multiplier_;
+    quant_arg_.sum_square_left_shift_ = sum_square_multipliers_[i]->left_shift_;
+    quant_arg_.sum_square_right_shift_ = sum_square_multipliers_[i]->right_shift_;
+  }
+}
+
 int ReduceInt8CPUKernel::Run() {
   auto prepare_ret = Prepare();
   if (prepare_ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
+  auto ret = MallocTmpBuffer();
+  if (ret != RET_OK) {
+    FreeTmpBuffer();
+    return ret;
+  }
 
   is_last_axis_ = false;
-  tmp_shape_ = in_tensors_.at(0)->shape();
+
+  auto input = in_tensors().at(0);
+  auto input_data = reinterpret_cast<int8_t *>(input->MutableData());
+  for (auto i = 0; i < input->ElementsNum(); i++) {
+    begin_src_data_[i] = static_cast<int32_t>(input_data[i]);
+  }
   src_data_ = begin_src_data_;
-
-  for (size_t i = 0; i < data_buffers_.size(); ++i) {
-    if (mode_ == static_cast<int>(schema::ReduceMode_ReduceMean)) {
-      quant_arg_.mean_multiplier_ = mean_multipliers_[i]->multiplier_;
-      quant_arg_.mean_left_shift_ = mean_multipliers_[i]->left_shift_;
-      quant_arg_.mean_right_shift_ = mean_multipliers_[i]->right_shift_;
-    }
-
-    if (mode_ == static_cast<int>(schema::ReduceMode_ReduceProd)) {
-      quant_arg_.prod_multiplier_ = prod_multipliers_[i]->multiplier_;
-      quant_arg_.prod_left_shift_ = prod_multipliers_[i]->left_shift_;
-      quant_arg_.prod_right_shift_ = prod_multipliers_[i]->right_shift_;
-    }
-    if (mode_ == static_cast<int>(schema::ReduceMode_ReduceSumSquare)) {
-      quant_arg_.sum_square_multiplier_ = sum_square_multipliers_[i]->multiplier_;
-      quant_arg_.sum_square_left_shift_ = sum_square_multipliers_[i]->left_shift_;
-      quant_arg_.sum_square_right_shift_ = sum_square_multipliers_[i]->right_shift_;
-    }
+  for (size_t i = 0; i < data_buffers_.size() - 1; ++i) {
+    GetQuantArgs(i);
     dst_data_ = data_buffers_[i];
-    int axis = axes_[i];
-    outer_size_ = 1;
-    for (int j = 0; j < axis; j++) {
-      outer_size_ *= tmp_shape_[j];
-    }
-    inner_size_ = 1;
-    for (int k = axis + 1; k < static_cast<int>(tmp_shape_.size()); k++) {
-      inner_size_ *= tmp_shape_[k];
-    }
-    axis_size_ = tmp_shape_[axis];
+    outer_size_ = outer_sizes_[i];
+    inner_size_ = inner_sizes_[i];
+    axis_size_ = axis_sizes_[i];
     auto error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReduceInt8Impl, this, context_->thread_num_);
     if (error_code != RET_OK) {
       FreeTmpBuffer();
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
       return RET_ERROR;
     }
-    tmp_shape_[axis] = 1;
     src_data_ = dst_data_;
   }
 
-  if (mode_ == static_cast<int>(schema::ReduceMode_ReduceMean)) {
-    quant_arg_.mean_multiplier_ = mean_multipliers_.back()->multiplier_;
-    quant_arg_.mean_left_shift_ = mean_multipliers_.back()->left_shift_;
-    quant_arg_.mean_right_shift_ = mean_multipliers_.back()->right_shift_;
-  }
-  if (mode_ == static_cast<int>(schema::ReduceMode_ReduceProd)) {
-    quant_arg_.prod_multiplier_ = prod_multipliers_.back()->multiplier_;
-    quant_arg_.prod_left_shift_ = prod_multipliers_.back()->left_shift_;
-    quant_arg_.prod_right_shift_ = prod_multipliers_.back()->right_shift_;
-  }
-  if (mode_ == static_cast<int>(schema::ReduceMode_ReduceSumSquare)) {
-    quant_arg_.sum_square_multiplier_ = sum_square_multipliers_.back()->multiplier_;
-    quant_arg_.sum_square_left_shift_ = sum_square_multipliers_.back()->left_shift_;
-    quant_arg_.sum_square_right_shift_ = sum_square_multipliers_.back()->right_shift_;
-  }
-  int last_reduce_axis = axes_[num_axes_ - 1];
-  outer_size_ = 1;
-  for (int i = 0; i < last_reduce_axis; i++) {
-    outer_size_ *= tmp_shape_[i];
-  }
-  inner_size_ = 1;
-  for (int i = last_reduce_axis + 1; i < static_cast<int>(tmp_shape_.size()); i++) {
-    inner_size_ *= tmp_shape_[i];
-  }
-  axis_size_ = tmp_shape_[last_reduce_axis];
+  GetQuantArgs(static_cast<size_t>(num_axes_ - 1));
+  outer_size_ = outer_sizes_.back();
+  inner_size_ = inner_sizes_.back();
+  axis_size_ = axis_sizes_.back();
   last_dst_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   is_last_axis_ = true;
   auto error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReduceInt8Impl, this, context_->thread_num_);
@@ -328,7 +289,6 @@ int ReduceInt8CPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-
   FreeTmpBuffer();
   return RET_OK;
 }

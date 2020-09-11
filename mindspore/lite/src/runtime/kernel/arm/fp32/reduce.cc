@@ -81,17 +81,10 @@ int ReduceCPUKernel::Init() {
   return ReSize();
 }
 
-int ReduceCPUKernel::ReSize() {
-  auto ret = ReduceBaseCPUKernel::ReSize();
-  if (ret != RET_OK) {
-    return ret;
-  }
-  return MallocTmpBuffer();
-}
+int ReduceCPUKernel::ReSize() { return ReduceBaseCPUKernel::ReSize(); }
 
 int ReduceCPUKernel::CallReduceUnit(int task_id) {
-  auto ret = reducer_(outer_size_, inner_size_, axis_size_, src_data_, tmp_shape_.data(), dst_data_, task_id,
-                      context_->thread_num_);
+  auto ret = reducer_(outer_size_, inner_size_, axis_size_, src_data_, dst_data_, task_id, context_->thread_num_);
   return ret;
 }
 
@@ -111,75 +104,55 @@ int ReduceCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  tmp_shape_ = in_tensors_.at(0)->shape();
+  auto ret = MallocTmpBuffer();
+  if (ret != RET_OK) {
+    FreeTmpBuffer();
+    return ret;
+  }
+
   src_data_ = static_cast<float *>(in_tensors_.at(0)->MutableData());
-  for (size_t i = 0; i < data_buffers_.size(); ++i) {
-    dst_data_ = data_buffers_[i];
-    int axis = axes_[i];
-    outer_size_ = 1;
-    for (int j = 0; j < axis; j++) {
-      outer_size_ *= tmp_shape_[j];
+  for (size_t i = 0; i < static_cast<size_t>(num_axes_); ++i) {
+    if (i != static_cast<size_t>(num_axes_ - 1)) {
+      dst_data_ = data_buffers_[i];
+    } else {
+      dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
     }
-    inner_size_ = 1;
-    for (int k = axis + 1; k < static_cast<int>(tmp_shape_.size()); k++) {
-      inner_size_ *= tmp_shape_[k];
-    }
-    axis_size_ = tmp_shape_[axis];
+    outer_size_ = outer_sizes_[i];
+    inner_size_ = inner_sizes_[i];
+    axis_size_ = axis_sizes_[i];
     auto error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReduceImpl, this, context_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
+      FreeTmpBuffer();
       return RET_ERROR;
     }
-    tmp_shape_[axis] = 1;
     src_data_ = dst_data_;
   }
-
-  int last_reduce_axis = axes_[num_axes_ - 1];
-  outer_size_ = 1;
-  for (int i = 0; i < last_reduce_axis; i++) {
-    outer_size_ *= tmp_shape_[i];
-  }
-  inner_size_ = 1;
-  for (int i = last_reduce_axis + 1; i < static_cast<int>(tmp_shape_.size()); i++) {
-    inner_size_ *= tmp_shape_[i];
-  }
-  axis_size_ = tmp_shape_[last_reduce_axis];
-  dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  auto error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReduceImpl, this, context_->thread_num_);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
-    return RET_ERROR;
-  }
-
+  FreeTmpBuffer();
   return RET_OK;
 }
 
 int ReduceCPUKernel::MallocTmpBuffer() {
-  for (auto buffer : data_buffers_) {
-    if (buffer != nullptr) {
-      free(buffer);
-      buffer = nullptr;
-    }
-  }
   data_buffers_.clear();
-
-  auto input_shape = in_tensors_.at(0)->shape();
-  for (auto i = 0; i < num_axes_ - 1; i++) {
-    int axis = axes_[i];
-    size_t size = 1;
-    for (size_t j = 0; j < input_shape.size(); j++) {
-      if (axis != static_cast<int>(j)) {
-        size *= input_shape[j];
-      }
-    }
-    float *buffer = reinterpret_cast<float *>(malloc(size * sizeof(float)));
+  for (auto size : buffer_sizes_) {
+    float *buffer = reinterpret_cast<float *>(context_->allocator->Malloc(size * sizeof(float)));
     if (buffer == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed.";
       return RET_ERROR;
     }
     data_buffers_.emplace_back(buffer);
-    input_shape[axis] = 1;
   }
   return RET_OK;
+}
+
+void ReduceCPUKernel::FreeTmpBuffer() {
+  for (size_t i = 0; i < data_buffers_.size(); i++) {
+    float *buffer = data_buffers_[i];
+    if (buffer != nullptr) {
+      context_->allocator->Free(buffer);
+      buffer = nullptr;
+    }
+  }
+  data_buffers_.clear();
 }
 }  // namespace mindspore::kernel

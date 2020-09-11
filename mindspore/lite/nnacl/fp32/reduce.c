@@ -18,9 +18,9 @@
 #include "nnacl/fp32/reduce.h"
 #include "nnacl/errorcode.h"
 
-int ReduceMean(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-               const int *src_shape, float *dst_data, const int tid, const int thread_num) {
-  if (src_data == NULL || src_shape == NULL || dst_data == NULL) {
+int ReduceMean(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
+               const int tid, const int thread_num) {
+  if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
   int i, j, k;
@@ -39,9 +39,9 @@ int ReduceMean(const int outer_size, const int inner_size, const int axis_size, 
   }
   return NNACL_OK;
 }
-int ReduceSum(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-              const int *src_shape, float *dst_data, const int tid, const int thread_num) {
-  if (src_data == NULL || src_shape == NULL || dst_data == NULL) {
+int ReduceSum(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
+              const int tid, const int thread_num) {
+  if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
   int i, j, k;
@@ -60,9 +60,9 @@ int ReduceSum(const int outer_size, const int inner_size, const int axis_size, c
   }
   return NNACL_OK;
 }
-int ReduceMax(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-              const int *src_shape, float *dst_data, const int tid, const int thread_num) {
-  if (src_data == NULL || src_shape == NULL || dst_data == NULL) {
+int ReduceMax(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
+              const int tid, const int thread_num) {
+  if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
   int i, j, k;
@@ -81,9 +81,9 @@ int ReduceMax(const int outer_size, const int inner_size, const int axis_size, c
   }
   return NNACL_OK;
 }
-int ReduceMin(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-              const int *src_shape, float *dst_data, const int tid, const int thread_num) {
-  if (src_data == NULL || src_shape == NULL || dst_data == NULL) {
+int ReduceMin(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
+              const int tid, const int thread_num) {
+  if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
   int i, j, k;
@@ -102,9 +102,9 @@ int ReduceMin(const int outer_size, const int inner_size, const int axis_size, c
   }
   return NNACL_OK;
 }
-int ReduceProd(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-               const int *src_shape, float *dst_data, const int tid, const int thread_num) {
-  if (src_data == NULL || src_shape == NULL || dst_data == NULL) {
+int ReduceProd(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
+               const int tid, const int thread_num) {
+  if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
   int i, j, k;
@@ -124,8 +124,8 @@ int ReduceProd(const int outer_size, const int inner_size, const int axis_size, 
   return NNACL_OK;
 }
 int ReduceSumSquare(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-                    const int *src_shape, float *dst_data, const int tid, const int thread_num) {
-  if (src_data == NULL || src_shape == NULL || dst_data == NULL) {
+                    float *dst_data, const int tid, const int thread_num) {
+  if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
   int i, j, k;

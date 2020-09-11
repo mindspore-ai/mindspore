@@ -19,8 +19,8 @@
 #include "nnacl/errorcode.h"
 
 int ReduceMeanFp16(const int outer_size, const int inner_size, const int axis_size, const float16_t *src_data,
-               const int *src_shape, float16_t *dst_data, const int tid, const int thread_num) {
-  if (src_data == NULL || src_shape == NULL || dst_data == NULL) {
+                   float16_t *dst_data, const int tid, const int thread_num) {
+  if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
   int i, j, k;

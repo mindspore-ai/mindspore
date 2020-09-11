@@ -68,7 +68,9 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
  private:
   int MallocTmpBuffer();
   void FreeTmpBuffer();
+
   int CalculateQuantArgs();
+  void GetQuantArgs(size_t i);
 
  private:
   ReduceParameter *param_ = nullptr;

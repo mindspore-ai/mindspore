@@ -60,8 +60,8 @@ int ReduceFp16CPUKernel::Init() {
 int ReduceFp16CPUKernel::ReSize() { return ReduceBaseCPUKernel::ReSize(); }
 
 int ReduceFp16CPUKernel::CallReduceUnit(int task_id) {
-  auto ret = reducer_(outer_size_, inner_size_, axis_size_, fp16_src_data_, tmp_shape_.data(), fp16_dst_data_, task_id,
-                      context_->thread_num_);
+  auto ret =
+    reducer_(outer_size_, inner_size_, axis_size_, fp16_src_data_, fp16_dst_data_, task_id, context_->thread_num_);
   return ret;
 }
 
@@ -88,7 +88,6 @@ int ReduceFp16CPUKernel::Run() {
     return ret;
   }
 
-  tmp_shape_ = in_tensors_.at(0)->shape();
   auto in_tensor = in_tensors_.at(0);
   if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
     auto input_data = reinterpret_cast<float *>(in_tensor->MutableData());
@@ -100,23 +99,15 @@ int ReduceFp16CPUKernel::Run() {
   fp16_src_data_ = fp16_input_;
   for (int i = 0; i < data_buffers_.size(); ++i) {
     fp16_dst_data_ = data_buffers_[i];
-    int axis = axes_[i];
-    outer_size_ = 1;
-    for (int j = 0; j < axis; j++) {
-      outer_size_ *= tmp_shape_[j];
-    }
-    inner_size_ = 1;
-    for (int k = axis + 1; k < static_cast<int>(tmp_shape_.size()); k++) {
-      inner_size_ *= tmp_shape_[k];
-    }
-    axis_size_ = tmp_shape_[axis];
+    outer_size_ = outer_sizes_[i];
+    inner_size_ = inner_sizes_[i];
+    axis_size_ = axis_sizes_[i];
     auto error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReduceImpl, this, context_->thread_num_);
     if (error_code != RET_OK) {
       FreeTmpBuffer();
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
       return RET_ERROR;
     }
-    tmp_shape_[axis] = 1;
     fp16_src_data_ = fp16_dst_data_;
   }
 
@@ -151,22 +142,14 @@ void ReduceFp16CPUKernel::FreeTmpBuffer() {
 }
 
 int ReduceFp16CPUKernel::MallocTmpBuffer() {
-  auto input_shape = in_tensors_.at(0)->shape();
-  for (auto i = 0; i < num_axes_; i++) {
-    int axis = axes_[i];
-    size_t size = 1;
-    for (auto j = 0; j < input_shape.size(); j++) {
-      if (static_cast<size_t>(axis) != j) {
-        size *= input_shape[j];
-      }
-    }
+  data_buffers_.clear();
+  for (auto size : buffer_sizes_) {
     float16_t *buffer = reinterpret_cast<float16_t *>(context_->allocator->Malloc(size * sizeof(float16_t)));
     if (buffer == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed";
       return RET_ERROR;
     }
     data_buffers_.emplace_back(buffer);
-    input_shape[axis] = 1;
   }
 
   auto in_tensor = in_tensors_.front();
