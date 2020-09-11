@@ -1536,10 +1536,17 @@ OpParameter *PopulateL2NormParameter(const mindspore::lite::PrimitiveC *primitiv
   for (size_t i = 0; i < axis_vec.size(); i++) {
     l2_norm_parameter->axis_[i] = axis_vec[i];
   }
-  if (param->GetEpsilon() < 1e-12) {
-    l2_norm_parameter->epsilon_ = 1e-12;
+  if (param->GetEpsilon() < 1e-6) {
+    l2_norm_parameter->epsilon_ = 1e-6;
   } else {
     l2_norm_parameter->epsilon_ = param->GetEpsilon();
+  }
+  if (param->GetActivationType() == static_cast<int>(schema::ActivationType_RELU)) {
+    l2_norm_parameter->act_type_ = ActType_Relu;
+  } else if (param->GetActivationType() == static_cast<int>(schema::ActivationType_RELU6)) {
+    l2_norm_parameter->act_type_ = ActType_Relu6;
+  } else {
+    l2_norm_parameter->act_type_ = ActType_No;
   }
   return reinterpret_cast<OpParameter *>(l2_norm_parameter);
 }

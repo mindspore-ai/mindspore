@@ -21,9 +21,13 @@ namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 std::vector<int> L2Norm::GetAxis() const { return this->primitive_->value.AsL2Norm()->axis; }
 float L2Norm::GetEpsilon() const { return this->primitive_->value.AsL2Norm()->epsilon; }
+int L2Norm::GetActivationType() const { return this->primitive_->value.AsL2Norm()->activationType; }
 
 void L2Norm::SetAxis(const std::vector<int> &axis) { this->primitive_->value.AsL2Norm()->axis = axis; }
 void L2Norm::SetEpsilon(float epsilon) { this->primitive_->value.AsL2Norm()->epsilon = epsilon; }
+void L2Norm::SetActivationType(int activationType) {
+  this->primitive_->value.AsL2Norm()->activationType = (schema::ActivationType)activationType;
+}
 
 #else
 int L2Norm::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
@@ -51,6 +55,7 @@ std::vector<int> L2Norm::GetAxis() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 float L2Norm::GetEpsilon() const { return this->primitive_->value_as_L2Norm()->epsilon(); }
+int L2Norm::GetActivationType() const { return this->primitive_->value_as_L2Norm()->activationType(); }
 
 #endif
 }  // namespace lite

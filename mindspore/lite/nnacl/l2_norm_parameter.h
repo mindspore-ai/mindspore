@@ -24,9 +24,10 @@ typedef struct L2NormParameter {
   int *axis_;
   size_t axis_num_;
   float epsilon_;
-  float data_num_;
+  int data_num_;
   int *shape_;
-  int shape_num_;
+  size_t shape_num_;
+  ActType act_type_;
 } L2NormParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_L2NORM_PARAMETER_H_
