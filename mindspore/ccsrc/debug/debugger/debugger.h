@@ -25,7 +25,6 @@
 #include "backend/session/kernel_graph.h"
 #include "debug/debugger/grpc_client.h"
 #include "debug/debug_services.h"
-#include <nlohmann/json.hpp>
 
 using debugger::Chunk;
 using debugger::DataType;
@@ -165,14 +164,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // singleton
   static std::mutex instance_lock_;
   static std::shared_ptr<Debugger> debugger_;
-
-  bool ssl_certificate;
-  std::string certificate_dir;
-  std::string certificate_passphrase;
-  bool SetDebuggerConfFromJsonFile();
-  bool ParseDebuggerConfig(const std::string &dump_config_file);
-  bool IsConfigExist(const nlohmann::json &dumpSettings);
-  bool IsConfigValid(const nlohmann::json &dumpSettings);
 };
 
 using DebuggerPtr = std::shared_ptr<Debugger>;

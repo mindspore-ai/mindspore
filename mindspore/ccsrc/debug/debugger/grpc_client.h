@@ -17,17 +17,9 @@
 #define MINDSPORE_CCSRC_DEBUG_DEBUGGER_GRPC_CLIENT_H_
 
 #include <grpcpp/grpcpp.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <openssl/pem.h>
-#include <openssl/err.h>
-#include <openssl/pkcs12.h>
-
 #include <string>
 #include <list>
 #include <memory>
-
 #include "proto/debug_grpc.grpc.pb.h"
 
 using debugger::EventListener;
@@ -41,15 +33,13 @@ namespace mindspore {
 class GrpcClient {
  public:
   // constructor
-  GrpcClient(const std::string &host, const std::string &port, const bool &ssl_certificate,
-             const std::string &certificate_dir, const std::string &certificate_passphrase);
+  GrpcClient(const std::string &host, const std::string &port);
 
   // deconstructor
   ~GrpcClient() = default;
 
   // init
-  void Init(const std::string &host, const std::string &port, const bool &ssl_certificate,
-            const std::string &certificate_dir, const std::string &certificate_passphrase);
+  void Init(const std::string &host, const std::string &port);
 
   // reset
   void Reset();
