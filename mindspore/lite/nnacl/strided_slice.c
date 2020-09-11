@@ -66,7 +66,7 @@ void ChangeNegToPositive(StridedSliceParameter *param) {
   }
 }
 
-inline bool LoopContinue(int stride, int i, int end) { return stride > 0 ? i < end : i > end; }
+bool LoopContinue(int stride, int i, int end) { return stride > 0 ? i < end : i > end; }
 
 int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *param) {
   if (in_data == NULL || out_data == NULL || param == NULL) {
