@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <nlohmann/json.hpp>
+#include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/perf/connector_throughput.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/path.h"
@@ -75,8 +76,11 @@ json ConnectorThroughput::ParseOpInfo(const DatasetOp &node, const std::vector<d
   json_node["op_type"] = node.Name();
   json_node["num_workers"] = node.num_workers();
   json metrics;
-  metrics["output_queue"] = {{"throughput", thr}};
-
+  // DeviceQueueOp is a special op,it is not inlined but its output queue is invalid.
+  // So we should not output its connector throughput.
+  if (!node.inlined() && node.Name() != "DeviceQueueOp") {
+    metrics["output_queue"] = {{"throughput", thr}};
+  }
   json_node["metrics"] = metrics;
   if (!children_id.empty()) {
     json_node["children"] = children_id;
@@ -86,10 +90,18 @@ json ConnectorThroughput::ParseOpInfo(const DatasetOp &node, const std::vector<d
 }
 
 // Save profiling data to file
+// If the file is already exist (created by other sampling node), simply add the data to metrics field.
 Status ConnectorThroughput::SaveToFile() {
-  std::ofstream os(file_path_);
+  Path path = Path(file_path_);
   json output;
-  output["sampling_interval"] = 10;
+  if (path.Exists()) {
+    MS_LOG(DEBUG) << file_path_ << " exists";
+    std::ifstream file(file_path_);
+    file >> output;
+  } else {
+    output["sampling_interval"] = GlobalContext::config_manager()->monitor_sampling_interval();
+  }
+
   // Traverse the ExecutionTree for JSON node generation
   int col = 0;
   for (auto &node : *tree_) {
@@ -97,15 +109,27 @@ Status ConnectorThroughput::SaveToFile() {
     for (auto i = 0; i < throughput_.size(); i++) {
       throughput.push_back(throughput_[col][i]);
     }
-    json json_node = ParseOpInfo(node, throughput);
-    output["op_info"].push_back(json_node);
+
+    if (!path.Exists()) {
+      json json_node = ParseOpInfo(node, throughput);
+      output["op_info"].push_back(json_node);
+    } else {
+      if (!node.inlined() && node.Name() != "DeviceQueueOp") {
+        auto &ops_data = output["op_info"];
+        ops_data[col]["metrics"]["output_queue"]["throughput"] = throughput;
+      }
+    }
     col++;
   }
+
+  // Discard the content of the file when opening.
+  std::ofstream os(file_path_, std::ios::trunc);
   os << output;
   return Status::OK();
 }
+
 Status ConnectorThroughput::Init(const std::string &dir_path, const std::string &device_id) {
-  file_path_ = (Path(dir_path) / Path("pipeline_profiling_" + Name() + "_" + device_id + ".json")).toString();
+  file_path_ = (Path(dir_path) / Path("pipeline_profiling_" + device_id + ".json")).toString();
   return Status::OK();
 }
 }  // namespace dataset

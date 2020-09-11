@@ -65,11 +65,6 @@ class DeviceQueueOp : public PipelineOp {
       return *this;
     }
 
-    Builder &SetOpConnectorSize(int32_t op_connector_size) {
-      builder_op_connector_size_ = op_connector_size;
-      return *this;
-    }
-
     Builder &SetDeviceType(const std::string &device_type) {
       if (device_type == "Ascend") {
         builder_device_type_ = DeviceType::Ascend;
@@ -96,9 +91,8 @@ class DeviceQueueOp : public PipelineOp {
     //              to call this Build() method.  It will instantiate the DeviceQueueOp
     //              and return it to caller as a shared pointer.
     Status Build(std::shared_ptr<DeviceQueueOp> *ptr) {
-      *ptr =
-        std::make_shared<DeviceQueueOp>(builder_channel_name_, builder_device_type_, builder_device_id_,
-                                        builder_prefetch_size_, builder_op_connector_size_, builder_send_epoch_end_);
+      *ptr = std::make_shared<DeviceQueueOp>(builder_channel_name_, builder_device_type_, builder_device_id_,
+                                             builder_prefetch_size_, builder_send_epoch_end_);
       return Status::OK();
     }
 
@@ -107,18 +101,21 @@ class DeviceQueueOp : public PipelineOp {
     int32_t builder_device_id_;
     DeviceType builder_device_type_;
     std::string builder_channel_name_;
-    int32_t builder_op_connector_size_;
     bool builder_send_epoch_end_;
   };
 
   //  Name: constructor
   //  Description
   DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, int32_t prefetch_size,
-                int32_t op_connector_size, bool send_epoch_end);
+                bool send_epoch_end);
 
   //  Name: destructor
   //  Description
   ~DeviceQueueOp();
+
+  /// \brief Getter function
+  /// \return connector size of current op
+  int32_t ConnectorSize() const { return ChildOpConnectorSize(); }
 
   Status EoeReceived(int32_t worker_id) override;
 

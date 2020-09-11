@@ -30,7 +30,6 @@ namespace dataset {
 // Forward declares
 class TaskGroup;
 class DatasetOp;
-class Monitor;
 
 class ExecutionTree {
  public:
@@ -269,7 +268,6 @@ class ExecutionTree {
   uint32_t prepare_flags_;                               // Flags used during tree prepare
   TreeState tree_state_;                                 // Tracking the current tree state
   int32_t num_epochs_;                                   // Total number of epochs to run for this tree
-  std::unique_ptr<Monitor> perf_monitor_;                // Performance Monitor
   std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
   bool optimize_;                                        // Flag to enable optional optimizations
 };

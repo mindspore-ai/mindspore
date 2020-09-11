@@ -62,24 +62,44 @@ json ConnectorSize::ParseOpInfo(const DatasetOp &node, const std::vector<int32_t
 }
 
 // Save profiling data to file
+// If the file is already exist (created by other sampling node), simply add the data to metrics field.
 Status ConnectorSize::SaveToFile() {
-  std::ofstream os(file_path_, std::ios::trunc);
-  uint32_t idx = 0;
+  Path path = Path(file_path_);
   json output;
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  output["sampling_interval"] = cfg->monitor_sampling_interval();
+  if (path.Exists()) {
+    MS_LOG(DEBUG) << file_path_ << " exists";
+    std::ifstream file(file_path_);
+    file >> output;
+  } else {
+    output["sampling_interval"] = GlobalContext::config_manager()->monitor_sampling_interval();
+  }
+
+  uint32_t idx = 0;
   // Traverse the ExecutionTree for JSON node generation
   for (auto &node : *tree_) {
     std::vector<int32_t> cur_queue_size;
     std::transform(sample_table_.begin(), sample_table_.end(), std::back_inserter(cur_queue_size),
                    [&](const ConnectorSizeSample &sample) { return sample[idx]; });
-    json json_node = ParseOpInfo(node, cur_queue_size);
-    output["op_info"].push_back(json_node);
+    if (!path.Exists()) {
+      json json_node = ParseOpInfo(node, cur_queue_size);
+      output["op_info"].push_back(json_node);
+    } else {
+      if (!node.inlined() && node.Name() != "DeviceQueueOp") {
+        auto &ops_data = output["op_info"];
+        ops_data[idx]["metrics"]["output_queue"]["size"] = cur_queue_size;
+        ops_data[idx]["metrics"]["output_queue"]["length"] = node.ConnectorCapacity();
+      }
+    }
+
     idx++;
   }
+
+  // Discard the content of the file when opening.
+  std::ofstream os(file_path_, std::ios::trunc);
   os << output;
   return Status::OK();
 }
+
 Status ConnectorSize::Init(const std::string &dir_path, const std::string &device_id) {
   file_path_ = (Path(dir_path) / Path("pipeline_profiling_" + device_id + ".json")).toString();
   return Status::OK();
