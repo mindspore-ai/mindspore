@@ -15,14 +15,13 @@
 """Profiling api file."""
 import os
 import time
+from enum import Enum
 
 from mindspore import log as logger, context
 from mindspore.communication.management import release
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException, ProfilerException
 from mindspore.profiler.common.util import get_file_names, fwrite_format
-from mindspore.profiler.common.validator.checkparam import \
-    check_bool, check_subgraph
 from mindspore.profiler.common.validator.validate_path import \
     validate_and_normalize_path
 from mindspore.profiler.parser.aicpu_data_parser import DataPreProcessParser
@@ -40,6 +39,11 @@ from mindspore.nn.cell import Cell
 PROFILING_LOG_BASE_PATH = "/var/log/npu/profiling"
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
+class ProfileOption(Enum):
+    """
+    Profile Option Enum which be used in Profiler.profile.
+    """
+    trainable_parameters = 0
 
 class Profiler:
     """
@@ -50,13 +54,7 @@ class Profiler:
     but only output_path in args works on GPU.
 
     Args:
-        subgraph (str): (Ascend only)Define which subgraph to monitor and analyse, can be 'all', 'Default', 'Gradients'.
-        is_detail (bool): (Ascend only)Whether to show profiling data for op_instance level,
-            only show optype level if False.
-        is_show_op_path (bool): (Ascend only)Whether to save the full path for each op instance.
         output_path (str): Output data path.
-        optypes_to_deal (str): (Ascend only)Op type names, the data of which optype should be collected and analysed,
-            will deal with all op if null; Different op types should be seperated by comma.
         optypes_not_deal (str): (Ascend only)Op type names, the data of which optype will not be collected and analysed;
             Different op types should be seperated by comma.
         job_id (str): (Ascend only)The directory where the parsed profiling files are located;
@@ -78,10 +76,10 @@ class Profiler:
     _opcompute_output_filename_target = "output_op_compute_time_"
     _aicpu_op_output_filename_target = "output_data_preprocess_aicpu_"
 
-    def __init__(self, subgraph='all', is_detail=True, is_show_op_path=False, output_path='./data',
-                 optypes_to_deal='', optypes_not_deal='Variable', job_id=""):
+    def __init__(self, **kwargs):
         # get device_id and device_target
         self._get_devid_and_devtarget()
+        output_path = kwargs.pop("output_path", "./data")
         self._output_path = validate_and_normalize_path(output_path)
         self._output_path = os.path.join(self._output_path, "profiler")
         if not os.path.exists(self._output_path):
@@ -95,27 +93,31 @@ class Profiler:
             self._gpu_profiler = GPUProfiler.get_instance()
             self._gpu_profiler.init(self._output_path)
             self._gpu_profiler.step_profiling_enable(True)
-        elif self._device_target and (self._device_target == "Ascend" or self._device_target != "Davinci"):
-            self._container_path = os.path.join(self._base_profiling_container_path, self._dev_id)
-            data_path = os.path.join(self._container_path, "data")
-            if not os.path.exists(data_path):
-                os.makedirs(data_path, exist_ok=True)
+
+            if kwargs:
+                logger.warning("Params not be supported yet on GPU.")
+        elif self._device_target and self._device_target == "Ascend":
+            optypes_not_deal = kwargs.pop("optypes_not_deal", "Variable")
+            if not isinstance(optypes_not_deal, str):
+                raise TypeError("The parameter optypes_not_deal must be str.")
+            job_id = kwargs.pop("ascend_job_id", "")
+            if kwargs:
+                logger.warning("There are invalid params which don't work.")
 
             os.environ['PROFILING_MODE'] = 'true'
-            os.environ['PROFILING_OPTIONS'] = 'training_trace:task_trace'
             os.environ['MINDDATA_PROFILING_DIR'] = self._output_path
             os.environ['DEVICE_ID'] = self._dev_id
-            os.environ['AICPU_PROFILING_MODE'] = 'true'
-            os.environ['PROFILING_DIR'] = str(self._container_path)
 
             # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
             context.set_context(enable_profiling=True, profiling_options="training_trace:task_trace")
 
-            self._subgraph = check_subgraph(subgraph)
-            self._valid_optype_name = optypes_to_deal.split(",") if optypes_to_deal else []
+            self._container_path = os.path.join(self._base_profiling_container_path, self._dev_id)
+            data_path = os.path.join(self._container_path, "data")
+            data_path = validate_and_normalize_path(data_path)
+            if not os.path.exists(data_path):
+                os.makedirs(data_path, exist_ok=True)
+
             self._filt_optype_names = optypes_not_deal.split(",") if optypes_not_deal else []
-            self._detail = check_bool(is_detail, 'is_detail')
-            self._withfullpath = check_bool(is_show_op_path, 'is_show_op_path')
             self._profiling_job_id = job_id
             # add job id env through user input later
             self._job_id_env = 0
@@ -131,14 +133,14 @@ class Profiler:
             >>> import mindspore.context
             >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
             >>>                     device_id=int(os.environ["DEVICE_ID"]))
-            >>> profiler = Profiler(subgraph='all', is_detail=True, is_show_op_path=False, output_path='./data')
+            >>> profiler = Profiler()
             >>> model = Model()
             >>> model.train()
             >>> profiler.analyse()
         """
         if self._device_target and self._device_target == "GPU":
             self._gpu_profiler.stop()
-        elif self._device_target and (self._device_target == "Ascend" or self._device_target != "Davinci"):
+        elif self._device_target and self._device_target == "Ascend":
             release()
 
             job_id = self._get_profiling_job_id()
@@ -363,15 +365,14 @@ class Profiler:
         fwrite_format(detail_file_path, data_source=" ".join(display_names), is_print=True)
         fwrite_format(detail_file_path, data_source=aicore_type_result, is_print=True)
 
-        if self._detail:
-            op_type_order = [item[0] for item in aicore_type_result]
-            aicore_detail_result = self._query_op_detail_info(op_type_order)
+        op_type_order = [item[0] for item in aicore_type_result]
+        aicore_detail_result = self._query_op_detail_info(op_type_order)
 
-            fwrite_format(detail_file_path, data_source='', is_print=True)
-            fwrite_format(detail_file_path, data_source='Detail:', is_print=True)
-            fwrite_format(detail_file_path, data_source=" ".join(aicore_detail_result.get('col_name_detail')),
-                          is_print=True)
-            fwrite_format(detail_file_path, data_source=aicore_detail_result.get('object'), is_print=True)
+        fwrite_format(detail_file_path, data_source='', is_print=True)
+        fwrite_format(detail_file_path, data_source='Detail:', is_print=True)
+        fwrite_format(detail_file_path, data_source=" ".join(aicore_detail_result.get('col_name_detail')),
+                      is_print=True)
+        fwrite_format(detail_file_path, data_source=aicore_detail_result.get('object'), is_print=True)
 
     def _query_op_type_info(self):
         """
@@ -395,20 +396,12 @@ class Profiler:
         """
 
         op_type_condition = {}
-        if self._valid_optype_name:
-            op_type_condition['in'] = self._valid_optype_name
         if self._filt_optype_names:
             op_type_condition['not_in'] = self._filt_optype_names
 
-        subgraph_condition = {}
-        if self._subgraph != 'all':
-            subgraph_condition['in'] = [self._subgraph]
-
         filter_condition = {
             'op_type': op_type_condition,
-            'subgraph': subgraph_condition,
             'is_display_detail': False,
-            'is_display_full_op_name': self._withfullpath
         }
         integrator = Integrator(self._output_path, self._dev_id)
         return integrator.query_and_sort_by_op_type(filter_condition, op_type_order)
@@ -430,7 +423,7 @@ class Profiler:
             dev_id = "0"
             logger.error("Fail to get DEVICE_ID, use 0 instead.")
 
-        if device_target and device_target not in ["Davinci", "Ascend", "GPU"]:
+        if device_target and device_target not in ["Ascend", "GPU"]:
             msg = "Profiling: unsupported backend: %s" % device_target
             raise RuntimeError(msg)
 
@@ -438,20 +431,28 @@ class Profiler:
         self._device_target = device_target
 
     @staticmethod
-    def trainable_parameters(network):
+    def profile(network=None, profile_option=None):
         """
         Get the number of trainable parameters in the training network.
 
         Args:
-            network(Cell): The training network.
+            network (Cell): The training network.
+            profile_option (ProfileOption): The profile option.
 
         Returns:
-            an integer,the network of trainable parameters.
+            dict, the key is the option name, the value is the result of option.
         """
-        if not isinstance(network, Cell):
-            msg = "Profiling: The network should be an object of nn.Cell"
-            raise ValueError(msg)
+        result = dict()
+        if not profile_option:
+            raise ValueError("Please call a profile function.")
 
-        param_nums = len(network.parameters_dict())
+        if profile_option == ProfileOption.trainable_parameters:
+            if not isinstance(network, Cell):
+                msg = "Profiling: The network should be an object of nn.Cell"
+                raise ValueError(msg)
+            param_nums = len(network.parameters_dict())
+            result = {"trainable_parameters": param_nums}
+        else:
+            raise ValueError("Wrong options.")
 
-        return param_nums
+        return result

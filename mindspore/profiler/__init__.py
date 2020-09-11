@@ -23,5 +23,6 @@ and click the profile link.
 Now, Profiler supports the AICore operator analysis.
 """
 from mindspore.profiler.profiling import Profiler
+from mindspore.profiler.profiling import ProfileOption
 
-__all__ = ["Profiler"]
+__all__ = ["Profiler", "ProfileOption"]
