@@ -36,28 +36,33 @@ if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == 
 
     elif [ $1 == "stage2" ]; then
         echo "run python parallel\train\ops ut"
-        pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train $CURRPATH/ops
-
-    elif [ $1 == "stage3" ]; then
-        echo "run other ut"
-        pytest --ignore=$CURRPATH/dataset --ignore=$CURRPATH/parallel --ignore=$CURRPATH/train  --ignore=$CURRPATH/ops --ignore=$CURRPATH/pynative_mode $IGNORE_EXEC $CURRPATH
-
+        pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train
         RET=$?
         if [ ${RET} -ne 0 ]; then
             exit ${RET}
         fi
+
+        pytest -n 2 --dist=loadfile -v $CURRPATH/ops
+
+    elif [ $1 == "stage3" ]; then
+        echo "run other ut"
+        pytest --ignore=$CURRPATH/dataset --ignore=$CURRPATH/parallel --ignore=$CURRPATH/train  --ignore=$CURRPATH/ops --ignore=$CURRPATH/pynative_mode $IGNORE_EXEC $CURRPATH
+        RET=$?
+        if [ ${RET} -ne 0 ]; then
+            exit ${RET}
+        fi
+
         pytest $CURRPATH/pynative_mode
     fi
 else
     echo "run all python ut"
     pytest $CURRPATH/dataset
-
     RET=$?
     if [ ${RET} -ne 0 ]; then
         exit ${RET}
     fi
-    pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train $CURRPATH/ops
 
+    pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train $CURRPATH/ops
     RET=$?
     if [ ${RET} -ne 0 ]; then
         exit ${RET}
@@ -68,6 +73,7 @@ else
     if [ ${RET} -ne 0 ]; then
         exit ${RET}
     fi
+
     pytest $CURRPATH/pynative_mode
 fi
 
