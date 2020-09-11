@@ -93,9 +93,11 @@ int ReverseSequenceCPUKernel::Run() {
     return ret;
   }
   float *input0 = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  int *input1 = reinterpret_cast<int *>(in_tensors_.at(1)->MutableData());
+  void *input1 = in_tensors_.at(1)->MutableData();
   float *output = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  ReverseSequence(input0, input1, output, reinterpret_cast<ReverseSequenceParameter *>(op_parameter_));
+  ReverseSequenceParameter *param = reinterpret_cast<ReverseSequenceParameter *>(op_parameter_);
+  param->is_seq_length_int32_ = in_tensors_.at(1)->data_type() == kNumberTypeInt32;
+  ReverseSequence(input0, input1, output, param);
   return RET_OK;
 }
 
