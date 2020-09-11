@@ -59,7 +59,8 @@ class LiteSession : public session::LiteSession {
 
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputs() const override;
 
-  int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs) override;
+  int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+             const std::vector<std::vector<int>> &dims) override;
 
  protected:
   int ConvertTensors(const lite::Model *model);
@@ -80,7 +81,11 @@ class LiteSession : public session::LiteSession {
 
   void InitGraphOutputTensorMap(const lite::Model *model);
 
-  int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs);
+  int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+                   const std::vector<std::vector<int>> &dims);
+
+ private:
+  void ResetInputsShape(const std::vector<std::vector<int>> &dims);
 
  protected:
   Context *context_ = nullptr;

@@ -390,34 +390,51 @@ std::unordered_map<std::string, mindspore::tensor::MSTensor *> LiteSession::GetO
   return this->output_tensor_map_;
 }
 
-int LiteSession::ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs) {
+int LiteSession::ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+                              const std::vector<std::vector<int>> &dims) {
   if (inputs.size() != inputs_.size()) {
     MS_LOG(ERROR) << "Inputs size " << inputs.size() << " is not equal to " << inputs_.size();
     return RET_PARAM_INVALID;
   }
 
+  if (dims.size() != inputs.size()) {
+    MS_LOG(ERROR) << "Input dims size " << dims.size() << " is not equal to the inputs size " << inputs.size();
+    return RET_PARAM_INVALID;
+  }
+
   for (size_t i = 0; i < inputs.size(); ++i) {
-    if (inputs[i] == nullptr) {
-      MS_LOG(ERROR) << "Input tensor is nullptr!";
+    if (inputs[i] != inputs_[i]) {
+      MS_LOG(ERROR) << "Input[" << i << "] tensor is not equal to the inputs have been saved!";
       return RET_PARAM_INVALID;
     }
-    inputs_[i]->set_shape(inputs[i]->shape());
+
+    inputs_[i]->set_shape(dims[i]);
   }
   return RET_OK;
 }
 
-int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs) {
-  std::vector<Tensor *> inputs_old(inputs_);
-  auto ret = ResizeInputs(inputs);
+void LiteSession::ResetInputsShape(const std::vector<std::vector<int>> &dims) {
+  for (size_t i = 0; i < inputs_.size(); ++i) {
+    inputs_[i]->set_shape(dims[i]);
+  }
+}
+
+int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+                        const std::vector<std::vector<int>> &dims) {
+  std::vector<std::vector<int>> old_dims;
+  for (size_t i = 0; i < inputs_.size(); ++i) {
+    old_dims.push_back(inputs_[i]->shape());
+  }
+  auto ret = ResizeInputs(inputs, dims);
   if (ret != RET_OK) {
-    inputs_ = inputs_old;
+    ResetInputsShape(old_dims);
     return ret;
   }
 
   Scheduler scheduler(context_);
   ret = scheduler.ReSizeKernels(kernels_);
   if (ret != RET_OK) {
-    inputs_ = inputs_old;
+    ResetInputsShape(old_dims);
     auto resize_ret = scheduler.ReSizeKernels(kernels_);
     if (resize_ret != RET_OK) {
       MS_LOG(ERROR) << "restore kernel size fail!ret: " << resize_ret;

@@ -52,6 +52,7 @@ int Scheduler::Schedule(const lite::Model *model, std::vector<Tensor *> *tensors
 }
 
 int Scheduler::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
+  bool infer_shape_interrupt = false;
   for (size_t i = 0; i < kernels.size(); ++i) {
     if (kernels[i] == nullptr) {
       MS_LOG(ERROR) << "input kernel is nullptr!";
@@ -64,15 +65,25 @@ int Scheduler::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
     }
     std::vector<Tensor *> &inputs = kernels[i]->in_tensors();
     std::vector<Tensor *> &outputs = kernels[i]->out_tensors();
+    primitive->SetInferFlag(!infer_shape_interrupt);
     auto ret = primitive->InferShape(inputs, outputs);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "InferShape failed, name: " << kernels[i]->name() << ", ret = " << ret;
-      return ret;
+    if (ret == RET_INFER_INVALID) {
+      MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
+                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()))
+                   << "flag set to false.";
+      primitive->SetInferFlag(false);
+      infer_shape_interrupt = true;
+    } else if (ret != RET_OK) {
+      MS_LOG(ERROR) << "InferShape failed, type: "
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()));
+      return RET_INFER_ERR;
     }
-    ret = kernels[i]->ReSize();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "kernel " << kernels[i]->name() << " resize fail!ret = " << ret;
-      return ret;
+    if (!infer_shape_interrupt) {
+      ret = kernels[i]->ReSize();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "kernel " << kernels[i]->name() << " resize fail!ret = " << ret;
+        return ret;
+      }
     }
   }
   return RET_OK;
