@@ -119,7 +119,7 @@ required_package = [
     'cffi >= 1.13.2',
     'decorator >= 4.4.0',
     'astunparse >= 1.6.3',
-    'packaging'
+    'packaging >= 20.0'
 ]
 
 package_data = {
