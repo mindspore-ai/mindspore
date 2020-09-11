@@ -39,6 +39,7 @@ typedef struct MatMulParameter {
   int row_8_;
   int row_12_;
   int row_16_;
+  int col_2_;
   int col_4_;
   int col_8_;
   int deep_;

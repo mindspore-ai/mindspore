@@ -52,8 +52,10 @@ class Convolution1x1Int8CPUKernel : public ConvolutionBaseCPUKernel {
   void FreeResizeBuf();
   int InitParam();
   int InitWeightBias();
+  int InitWeightBiasArm32();
   void Pre1x1Trans(int8_t *src_input, int8_t *src_output);
   void CheckSupportOptimize();
+  int InitBiasByzp(void *src_weight, int input_channel, int output_channel);
 
  private:
   int32_t *input_sum_ = nullptr;     /* per-channel: oc4 format */

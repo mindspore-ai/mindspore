@@ -43,6 +43,21 @@ void RowMajor2Row4x16MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int co
   }
 }
 
+void RowMajor2Row2x16MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
+  int col16 = UP_ROUND(col, C16NUM);
+  for (int r = 0; r < row; r++) {
+    int rd4 = r / C2NUM;
+    int rm4 = r % C2NUM;
+    for (int c = 0; c < col; c++) {
+      int cd16 = c / C16NUM;
+      int cm16 = c % C16NUM;
+      int dst_index = rd4 * col16 * C2NUM + cd16 * C2NUM * C16NUM + rm4 * C16NUM + cm16;
+      int src_index = r * col + c;
+      dst_ptr[dst_index] = src_ptr[src_index];
+    }
+  }
+}
+
 void RowMajor2Row8x4MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
   int col4 = UP_ROUND(col, C4NUM);
   for (int r = 0; r < row; r++) {
