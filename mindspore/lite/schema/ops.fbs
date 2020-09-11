@@ -134,7 +134,8 @@ table Minimum {
 
 table Flatten {
 }
-
+table FlattenGrad {
+}
 table Concat {
     axis: int;
     n: int;

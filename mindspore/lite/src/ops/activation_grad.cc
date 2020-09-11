@@ -46,8 +46,6 @@ int ActivationGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodeP
   } else if (prim.name() == "ReLU6") {
     attr->type = schema::ActivationType_RELU6;
   }
-  auto alpha = GetValue<float>(prim.GetAttr("alpha"));
-  attr->alpha = alpha;
   this->primitive_->value.value = attr.release();
   if (this->primitive_->value.value == nullptr) {
     MS_LOG(ERROR) << "new primitiveT value failed";

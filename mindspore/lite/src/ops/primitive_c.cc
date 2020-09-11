@@ -136,7 +136,10 @@
 #include "src/ops/power_grad.h"
 #include "src/ops/softmax_cross_entropy.h"
 #include "src/ops/bn_grad.h"
+#include "src/ops/bn_grad_input.h"
 #include "src/ops/arithmetic_grad.h"
+#include "src/ops/depend.h"
+#include "src/ops/flatten_grad.h"
 #endif
 
 namespace mindspore {
@@ -395,6 +398,12 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<BNGradInput>(prim, inputs, quantType);
   } else if (op_type == "PowerGrad") {
     return NewPrimitiveC<PowerGrad>(prim, inputs, quantType);
+  } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
+    return NewPrimitiveC<SoftmaxCrossEntropy>(prim, inputs, quantType);
+  } else if (op_type == "Depend") {
+    return NewPrimitiveC<Depend>(prim, inputs, quantType);
+  } else if (op_type == "FlattenGrad") {
+    return NewPrimitiveC<FlattenGrad>(prim, inputs, quantType);
 #endif
   } else {
     MS_LOG(ERROR) << "Unsupported primitive type in Create : " << op_type;
@@ -636,6 +645,12 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new PowerGrad(primitive);
     case schema::PrimitiveType_BNGradInput:
       return new BNGradInput(primitive);
+    case schema::PrimitiveType_SoftmaxCrossEntroy:
+      return new SoftmaxCrossEntroy(primitive);
+    case schema::PrimitiveType_Depend:
+      return new Depend(primitive);
+    case schema::PrimitiveType_FlattenGrad:
+      return new FlattenGrad(primitive);
 #endif
 
     default:

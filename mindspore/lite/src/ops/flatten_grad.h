@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,36 +14,32 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_OPS_SOFTMAX_CROSS_ENTROPY_H_
-#define MINDSPORE_LITE_SRC_OPS_SOFTMAX_CROSS_ENTROPY_H_
+#ifndef LITE_MINDSPORE_LITE_C_OPS_FlattenGrad_GRAD_H_
+#define LITE_MINDSPORE_LITE_C_OPS_FlattenGrad_GRAD_H_
 
 #include <vector>
 #include <set>
 #include <cmath>
-#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
-class SoftmaxCrossEntropy : public PrimitiveC {
+class FlattenGrad : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(SoftmaxCrossEntropy, PrimitiveC);
-  SoftmaxCrossEntropy() = default;
-  explicit SoftmaxCrossEntropy(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  void SetAxis(const std::vector<int> &axis);
+  MS_DECLARE_PARENT(FlattenGrad, PrimitiveC);
+  FlattenGrad() = default;
+  explicit FlattenGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  SoftmaxCrossEntropy() = default;
+  FlattenGrad() = default;
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
-
-  std::vector<int> GetAxis() const;
+  int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_OPS_SOFTMAX_CROSS_ENTROPY_H_
+#endif  // LITE_MINDSPORE_LITE_C_OPS_FlattenGrad_H_

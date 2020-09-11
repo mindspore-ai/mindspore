@@ -170,6 +170,7 @@ union PrimitiveType {
     AddFold,
     SquaredDifference,
     Flatten,
+    FlattenGrad,
     TupleGetItem,
     Div,
     Where,
