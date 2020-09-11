@@ -288,13 +288,14 @@ void OpenCLAllocator::Clear() {
       MS_LOG(DEBUG) << "OpenCL free svm buffer : " << it->second->host_ptr_;
     } else {
       cl::Buffer *buffer = static_cast<cl::Buffer *>(it->second->device_ptr_);
-      MS_LOG(DEBUG) << "OpenCL free device buffer : " << buffer;
       if (buffer != nullptr) {
+        MS_LOG(DEBUG) << "OpenCL free device buffer : " << buffer;
         delete buffer;
         it->second->device_ptr_ = nullptr;
       }
       cl::Image *image = static_cast<cl::Image *>(it->second->image_ptr_);
       if (image != nullptr) {
+        MS_LOG(DEBUG) << "OpenCL free image : " << image;
         delete image;
         it->second->image_ptr_ = nullptr;
       }

@@ -136,8 +136,8 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
 
   std::vector<lite::Tensor *> arithmetic_inputs = {tensor_a, tensor_b};
   lite::Context ctx;
-  auto *arith_kernel =
-    new kernel::ArithmeticOpenCLKernel(reinterpret_cast<OpParameter *>(param), arithmetic_inputs, outputs, &ctx);
+  auto *arith_kernel = new (std::nothrow)
+    kernel::ArithmeticOpenCLKernel(reinterpret_cast<OpParameter *>(param), arithmetic_inputs, outputs, &ctx);
   if (arith_kernel == nullptr) {
     MS_LOG(ERROR) << "Create ArithmeticOpenCLKernel failed!";
     delete tensor_a;
@@ -216,7 +216,7 @@ TEST_F(TestArithmeticOpenCL, AddElementwiseTest) {
   TestCase(shape_a, shape_b);
 }
 
-TEST_F(TestArithmeticOpenCL, AddBoardcaseTest) {
+TEST_F(TestArithmeticOpenCL, AddBroadcastTest) {
   const std::vector<int> &shape_a = {1, 128, 128, 4};
   const std::vector<int> &shape_b = {};
   TestCase(shape_a, shape_b);
