@@ -15,6 +15,7 @@
 """Validators for TensorOps.
 """
 from functools import wraps
+import inspect
 import numpy as np
 
 from mindspore._c_expression import typing
@@ -203,7 +204,7 @@ def check_random_transform_ops(method):
 
 
 def check_compose_list(method):
-    """Wrapper method to check the transform list of Compose."""
+    """Wrapper method to check the transform list of Python Compose."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -212,6 +213,22 @@ def check_compose_list(method):
         type_check(transforms, (list,), transforms)
         if not transforms:
             raise ValueError("transforms list is empty.")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_compose_call(method):
+    """Wrapper method to check the transform list of Compose."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        sig = inspect.signature(method)
+        ba = sig.bind_partial(method, *args, **kwargs)
+        img = ba.arguments.get("img")
+        if img is None:
+            raise TypeError(
+                "Compose was called without an image. Fix invocation (avoid it being invoked as Compose([...])()).")
 
         return method(self, *args, **kwargs)
 
