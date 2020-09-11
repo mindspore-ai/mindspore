@@ -116,7 +116,7 @@ class MS_API LiteSession {
   /// \param[in] inputs Define the new inputs shape.
   ///
   /// \return STATUS as an error code of resize inputs, STATUS is defined in errorcode.h.
-  virtual int Resize(const std::vector<tensor::MSTensor *> &inputs) = 0;
+  virtual int Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>>& dims) = 0;
 };
 }  // namespace session
 }  // namespace mindspore
