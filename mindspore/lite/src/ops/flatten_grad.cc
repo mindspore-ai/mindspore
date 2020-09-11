@@ -19,7 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-int FlattenGrad::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int FlattenGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   auto output = outputs_.front();

@@ -110,15 +110,17 @@ int ScaleOpenCLKernel::InitBuffer() {
   if (!element_flag_) {
     return RET_OK;
   }
-  if (in_tensors_[1]->TensorType() == schema::NodeType_ValueNode && in_tensors_[1]->Data() != nullptr) {
+  if (in_tensors_[1]->category() == lite::Tensor::Category::CONST && in_tensors_[1]->MutableData() != nullptr) {
     auto allocator = ocl_runtime_->GetAllocator();
     std::vector<size_t> img_size;
     GetImageSize(0, &img_size);
     if (in_tensors_[1]->shape().size() == 1 && axis_ == 3) {
       img_size[0] = 1;
       img_size[1] = UP_DIV(in_tensors_[1]->shape()[0], C4NUM);
-      scale_ptr_ = allocator->CreateImageFromHost(in_tensors_[1]->Data(), in_tensors_[1]->ElementsNum(), img_size);
-      offset_ptr_ = allocator->CreateImageFromHost(in_tensors_[2]->Data(), in_tensors_[2]->ElementsNum(), img_size);
+      scale_ptr_ =
+        allocator->CreateImageFromHost(in_tensors_[1]->MutableData(), in_tensors_[1]->ElementsNum(), img_size);
+      offset_ptr_ =
+        allocator->CreateImageFromHost(in_tensors_[2]->MutableData(), in_tensors_[2]->ElementsNum(), img_size);
       return RET_OK;
     }
     int pack_weight_size = in_tensors_[1]->ElementsC4Num();
@@ -127,8 +129,10 @@ int ScaleOpenCLKernel::InitBuffer() {
     int batch = in_tensors_[1]->Batch();
     if (in_tensors_[0]->GetFormat() == in_tensors_[1]->GetFormat()) {
       if (in_tensors_[0]->data_type() == in_tensors_[1]->data_type()) {
-        scale_ptr_ = allocator->CreateImageFromHost(in_tensors_[1]->Data(), in_tensors_[1]->ElementsNum(), img_size);
-        offset_ptr_ = allocator->CreateImageFromHost(in_tensors_[2]->Data(), in_tensors_[2]->ElementsNum(), img_size);
+        scale_ptr_ =
+          allocator->CreateImageFromHost(in_tensors_[1]->MutableData(), in_tensors_[1]->ElementsNum(), img_size);
+        offset_ptr_ =
+          allocator->CreateImageFromHost(in_tensors_[2]->MutableData(), in_tensors_[2]->ElementsNum(), img_size);
       } else {
         MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
                       << in_tensors_[0]->data_type();
@@ -149,8 +153,8 @@ int ScaleOpenCLKernel::InitBuffer() {
             return RET_ERROR;
           }
           std::function<float(float)> to_dtype = [](float x) -> float { return (float)x; };
-          PackNHWCToNC4HW4<float, float>(in_tensors_[1]->Data(), scale, batch, plane, channel, to_dtype);
-          PackNHWCToNC4HW4<float, float>(in_tensors_[2]->Data(), offset, batch, plane, channel, to_dtype);
+          PackNHWCToNC4HW4<float, float>(in_tensors_[1]->MutableData(), scale, batch, plane, channel, to_dtype);
+          PackNHWCToNC4HW4<float, float>(in_tensors_[2]->MutableData(), offset, batch, plane, channel, to_dtype);
           scale_ptr_ = allocator->CreateImageFromHost(scale, in_tensors_[1]->ElementsNum(), img_size);
           offset_ptr_ = allocator->CreateImageFromHost(offset, in_tensors_[2]->ElementsNum(), img_size);
           delete[] scale;
@@ -168,8 +172,8 @@ int ScaleOpenCLKernel::InitBuffer() {
             return RET_ERROR;
           }
           std::function<int16_t(float)> to_dtype = Float32ToShort;
-          PackNHWCToNC4HW4<float, int16_t>(in_tensors_[1]->Data(), scale, batch, plane, channel, to_dtype);
-          PackNHWCToNC4HW4<float, int16_t>(in_tensors_[2]->Data(), offset, batch, plane, channel, to_dtype);
+          PackNHWCToNC4HW4<float, int16_t>(in_tensors_[1]->MutableData(), scale, batch, plane, channel, to_dtype);
+          PackNHWCToNC4HW4<float, int16_t>(in_tensors_[2]->MutableData(), offset, batch, plane, channel, to_dtype);
           scale_ptr_ = allocator->CreateImageFromHost(scale, in_tensors_[1]->ElementsNum(), img_size);
           offset_ptr_ = allocator->CreateImageFromHost(offset, in_tensors_[2]->ElementsNum(), img_size);
           delete[] scale;
@@ -199,8 +203,8 @@ int ScaleOpenCLKernel::InitBuffer() {
             return RET_ERROR;
           }
           std::function<float(float)> to_dtype = [](float x) -> float { return (float)x; };
-          PackNHWCToNHWC4<float, float>(in_tensors_[1]->Data(), scale, batch, plane, channel, to_dtype);
-          PackNHWCToNHWC4<float, float>(in_tensors_[2]->Data(), offset, batch, plane, channel, to_dtype);
+          PackNHWCToNHWC4<float, float>(in_tensors_[1]->MutableData(), scale, batch, plane, channel, to_dtype);
+          PackNHWCToNHWC4<float, float>(in_tensors_[2]->MutableData(), offset, batch, plane, channel, to_dtype);
           scale_ptr_ = allocator->CreateImageFromHost(scale, in_tensors_[1]->ElementsNum(), img_size);
           offset_ptr_ = allocator->CreateImageFromHost(offset, in_tensors_[2]->ElementsNum(), img_size);
           delete[] scale;
@@ -218,8 +222,8 @@ int ScaleOpenCLKernel::InitBuffer() {
             return RET_ERROR;
           }
           std::function<int16_t(float)> to_dtype = Float32ToShort;
-          PackNHWCToNHWC4<float, int16_t>(in_tensors_[1]->Data(), scale, batch, plane, channel, to_dtype);
-          PackNHWCToNHWC4<float, int16_t>(in_tensors_[2]->Data(), offset, batch, plane, channel, to_dtype);
+          PackNHWCToNHWC4<float, int16_t>(in_tensors_[1]->MutableData(), scale, batch, plane, channel, to_dtype);
+          PackNHWCToNHWC4<float, int16_t>(in_tensors_[2]->MutableData(), offset, batch, plane, channel, to_dtype);
           scale_ptr_ = allocator->CreateImageFromHost(scale, in_tensors_[1]->ElementsNum(), img_size);
           offset_ptr_ = allocator->CreateImageFromHost(offset, in_tensors_[2]->ElementsNum(), img_size);
           delete[] scale;
@@ -291,7 +295,7 @@ int ScaleOpenCLKernel::Init() {
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
   in_tensors_[0]->SetFormat(format);
-  if (element_flag_ && in_tensors_[1]->TensorType() != schema::NodeType_ValueNode) {
+  if (element_flag_ && in_tensors_[1]->category() != lite::Tensor::Category::CONST) {
     in_tensors_[1]->SetFormat(format);
     in_tensors_[2]->SetFormat(format);
   }
@@ -305,27 +309,27 @@ int ScaleOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
 
   int arg_idx = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
   if (element_flag_) {
-    void *scale = scale_ptr_ == nullptr ? in_tensors_[1]->Data() : scale_ptr_;
-    void *offset = offset_ptr_ == nullptr ? in_tensors_[2]->Data() : offset_ptr_;
+    void *scale = scale_ptr_ == nullptr ? in_tensors_[1]->MutableData() : scale_ptr_;
+    void *offset = offset_ptr_ == nullptr ? in_tensors_[2]->MutableData() : offset_ptr_;
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale);
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, offset);
   } else {
     if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-      float scale = static_cast<float *>(in_tensors_[1]->Data())[0];
-      float offset = static_cast<float *>(in_tensors_[2]->Data())[0];
+      float scale = static_cast<float *>(in_tensors_[1]->MutableData())[0];
+      float offset = static_cast<float *>(in_tensors_[2]->MutableData())[0];
       ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale);
       ocl_runtime_->SetKernelArg(kernel_, arg_idx++, offset);
     } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
       if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
-        float scale = static_cast<float *>(in_tensors_[1]->Data())[0];
-        float offset = static_cast<float *>(in_tensors_[2]->Data())[0];
+        float scale = static_cast<float *>(in_tensors_[1]->MutableData())[0];
+        float offset = static_cast<float *>(in_tensors_[2]->MutableData())[0];
         ocl_runtime_->SetKernelArg(kernel_, arg_idx++, Float32ToShort(scale));
         ocl_runtime_->SetKernelArg(kernel_, arg_idx++, Float32ToShort(offset));
       } else if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
-        int16_t scale = static_cast<int16_t *>(in_tensors_[1]->Data())[0];
-        int16_t offset = static_cast<int16_t *>(in_tensors_[2]->Data())[0];
+        int16_t scale = static_cast<int16_t *>(in_tensors_[1]->MutableData())[0];
+        int16_t offset = static_cast<int16_t *>(in_tensors_[2]->MutableData())[0];
         ocl_runtime_->SetKernelArg(kernel_, arg_idx++, Float32ToShort(scale));
         ocl_runtime_->SetKernelArg(kernel_, arg_idx++, Float32ToShort(offset));
       } else {
@@ -334,7 +338,7 @@ int ScaleOpenCLKernel::Run() {
       }
     }
   }
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
   int H = 0;
   int W = 0;
   if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
@@ -359,10 +363,9 @@ int ScaleOpenCLKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLScaleKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                             const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const lite::Context *ctx,
-                                             const kernel::KernelKey &desc,
+kernel::LiteKernel *OpenCLScaleKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                             const lite::Context *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel =
     new (std::nothrow) ScaleOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, ctx);

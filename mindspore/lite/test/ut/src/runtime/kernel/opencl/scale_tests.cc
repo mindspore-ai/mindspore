@@ -71,7 +71,7 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   auto allocator = ocl_runtime->GetAllocator();
 
   bool is_broadcast = shape_b.empty();
-  auto tensorType = schema::NodeType_ValueNode;
+  auto tensorType = lite::TensorCategory(schema::NodeType_ValueNode);
   auto format = schema::Format_NHWC4;
 
   auto data_type = kNumberTypeFloat32;
@@ -79,10 +79,10 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
     data_type = kNumberTypeFloat16;
     ocl_runtime->SetFp16Enable(true);
   }
-  lite::tensor::Tensor *tensor_in = new (std::nothrow) lite::tensor::Tensor(data_type, shape_a, format, tensorType);
-  lite::tensor::Tensor *tensor_scale = new (std::nothrow) lite::tensor::Tensor(data_type, shape_b, format, tensorType);
-  lite::tensor::Tensor *tensor_offset = new (std::nothrow) lite::tensor::Tensor(data_type, shape_b, format, tensorType);
-  lite::tensor::Tensor *tensor_out = new (std::nothrow) lite::tensor::Tensor(data_type, shape_a, format, tensorType);
+  lite::Tensor *tensor_in = new (std::nothrow) lite::Tensor(data_type, shape_a, format, tensorType);
+  lite::Tensor *tensor_scale = new (std::nothrow) lite::Tensor(data_type, shape_b, format, tensorType);
+  lite::Tensor *tensor_offset = new (std::nothrow) lite::Tensor(data_type, shape_b, format, tensorType);
+  lite::Tensor *tensor_out = new (std::nothrow) lite::Tensor(data_type, shape_a, format, tensorType);
   if (tensor_in == nullptr || tensor_scale == nullptr || tensor_offset == nullptr) {
     MS_LOG(ERROR) << "Create tensor failed!";
     delete tensor_in;
@@ -126,17 +126,17 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
     Scale(data_in, data_scale, data_offset, data_out_cpu, element_num);
   }
 
-  std::vector<lite::tensor::Tensor *> inputs = {tensor_in};
+  std::vector<lite::Tensor *> inputs = {tensor_in};
   if (!is_broadcast) {
     inputs.push_back(tensor_scale);
     inputs.push_back(tensor_offset);
   } else {
     tensor_scale->MallocData();
     tensor_offset->MallocData();
-    memcpy(tensor_scale->Data(), data_scale, sizeof(T));
-    memcpy(tensor_offset->Data(), data_offset, sizeof(T));
+    memcpy(tensor_scale->MutableData(), data_scale, sizeof(T));
+    memcpy(tensor_offset->MutableData(), data_offset, sizeof(T));
   }
-  std::vector<lite::tensor::Tensor *> outputs = {tensor_out};
+  std::vector<lite::Tensor *> outputs = {tensor_out};
 
   ScaleParameter *param = new (std::nothrow) ScaleParameter();
   if (param == nullptr) {
@@ -155,7 +155,7 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   param->axis_ = 0;
   param->op_parameter_.type_ = schema::PrimitiveType_Scale;
 
-  std::vector<lite::tensor::Tensor *> scale_inputs = {tensor_in, tensor_scale, tensor_offset};
+  std::vector<lite::Tensor *> scale_inputs = {tensor_in, tensor_scale, tensor_offset};
   lite::Context ctx;
   auto *scale_kernel =
     new (std::nothrow) kernel::ScaleOpenCLKernel(reinterpret_cast<OpParameter *>(param), scale_inputs, outputs, &ctx);
@@ -196,21 +196,21 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   }
   kernel->Init();
 
-  memcpy(inputs[0]->Data(), data_in, sizeof(T) * element_num);
+  memcpy(inputs[0]->MutableData(), data_in, sizeof(T) * element_num);
   if (!is_broadcast) {
-    memcpy(inputs[1]->Data(), data_scale, sizeof(T) * element_num_b);
-    memcpy(inputs[2]->Data(), data_offset, sizeof(T) * element_num_b);
+    memcpy(inputs[1]->MutableData(), data_scale, sizeof(T) * element_num_b);
+    memcpy(inputs[2]->MutableData(), data_offset, sizeof(T) * element_num_b);
   }
 
   kernel->Run();
 
-  memcpy(data_out_ocl, outputs[0]->Data(), sizeof(T) * element_num);
+  memcpy(data_out_ocl, outputs[0]->MutableData(), sizeof(T) * element_num);
 
   LogData<T>(data_in, 10, "Data input : ");
   LogData<T>(data_scale, tensor_scale->shape().empty() ? 1 : 10, "Data scale : ");
   LogData<T>(data_offset, tensor_offset->shape().empty() ? 1 : 10, "Data offset : ");
   LogData<T>(data_out_cpu, 10, "Expect compute : ");
-  LogData<T>(outputs[0]->Data(), 10, "OpenCL compute : ");
+  LogData<T>(outputs[0]->MutableData(), 10, "OpenCL compute : ");
   bool cmp = DataCompare(data_out_cpu, data_out_ocl, element_num);
   MS_LOG(INFO) << "Compare " << (cmp ? "success!" : "failed!");
   EXPECT_EQ(true, cmp);
