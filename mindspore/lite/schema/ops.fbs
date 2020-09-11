@@ -917,3 +917,10 @@ table Proposal {
 table Custom {
     custom : [ubyte];
 }
+
+
+table BlackBox {
+    id : string;
+    size : int;
+    address : [ubyte];
+}
