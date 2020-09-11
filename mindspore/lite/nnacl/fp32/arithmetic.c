@@ -997,21 +997,15 @@ int BroadcastLogicalOr(float *input0, float *input1, float *tile_input0, float *
 }
 
 int ElementMaximum(float *input0, float *input1, float *output, int element_size) {
+#ifdef ENABLE_NEON
   int block_mod = element_size % C4NUM;
   int block_c4 = element_size - block_mod;
 
   for (int index = 0; index < block_c4; index += C4NUM) {
-#ifdef ENABLE_NEON
     float32x4_t vin0 = vld1q_f32(input0);
     float32x4_t vin1 = vld1q_f32(input1);
     float32x4_t vout = vmaxq_f32(vin0, vin1);
     vst1q_f32(output, vout);
-#else
-    output[0] = input0[0] > input1[0] ? input0[0] : input1[0];
-    output[1] = input0[1] > input1[1] ? input0[1] : input1[1];
-    output[2] = input0[2] > input1[2] ? input0[2] : input1[2];
-    output[3] = input0[3] > input1[3] ? input0[3] : input1[3];
-#endif
     input0 += C4NUM;
     input1 += C4NUM;
     output += C4NUM;
@@ -1019,6 +1013,11 @@ int ElementMaximum(float *input0, float *input1, float *output, int element_size
   for (int index = 0; index < block_mod; ++index) {
     output[index] = input0[index] > input1[index] ? input0[index] : input1[index];
   }
+#else
+  for (int index = 0; index < element_size; ++index) {
+    output[index] = MSMAX(input0[index], input1[index]);
+  }
+#endif
   return NNACL_OK;
 }
 
@@ -1029,21 +1028,15 @@ int BroadcastMaximum(float *input0, float *input1, float *tile_input0, float *ti
 }
 
 int ElementMinimum(float *input0, float *input1, float *output, int element_size) {
+#ifdef ENABLE_NEON
   int block_mod = element_size % C4NUM;
   int block_c4 = element_size - block_mod;
 
   for (int index = 0; index < block_c4; index += C4NUM) {
-#ifdef ENABLE_NEON
     float32x4_t vin0 = vld1q_f32(input0);
     float32x4_t vin1 = vld1q_f32(input1);
     float32x4_t vout = vminq_f32(vin0, vin1);
     vst1q_f32(output, vout);
-#else
-    output[0] = input0[0] > input1[0] ? input1[0] : input0[0];
-    output[1] = input0[1] > input1[1] ? input1[1] : input0[1];
-    output[2] = input0[2] > input1[2] ? input1[2] : input0[2];
-    output[3] = input0[3] > input1[3] ? input1[3] : input0[3];
-#endif
     input0 += C4NUM;
     input1 += C4NUM;
     output += C4NUM;
@@ -1051,6 +1044,11 @@ int ElementMinimum(float *input0, float *input1, float *output, int element_size
   for (int index = 0; index < block_mod; ++index) {
     output[index] = input0[index] > input1[index] ? input1[index] : input0[index];
   }
+#else
+  for (int index = 0; index < element_size; ++index) {
+    output[index] = MSMIN(input0[index], input1[index]);
+  }
+#endif
   return NNACL_OK;
 }
 
@@ -1217,24 +1215,17 @@ int BroadcastLessEqual(float *input0, float *input1, float *tile_input0, float *
 }
 
 int ElementGreater(float *input0, float *input1, float *output, int element_size) {
+#ifdef ENABLE_NEON
   int block_mod = element_size % C4NUM;
   int block_c4 = element_size - block_mod;
-#ifdef ENABLE_NEON
+
   float32x4_t vtrue = {1, 1, 1, 1};
   float32x4_t vfalse = {0, 0, 0, 0};
-#endif
   for (int index = 0; index < block_c4; index += C4NUM) {
-#ifdef ENABLE_NEON
     float32x4_t vin0 = vld1q_f32(input0);
     float32x4_t vin1 = vld1q_f32(input1);
     float32x4_t vout = vbslq_f32(vcgtq_f32(vin0, vin1), vtrue, vfalse);
     vst1q_f32(output, vout);
-#else
-    output[0] = (float)(input0[0] > input1[0]);
-    output[1] = (float)(input0[1] > input1[1]);
-    output[2] = (float)(input0[2] > input1[2]);
-    output[3] = (float)(input0[3] > input1[3]);
-#endif
     input0 += C4NUM;
     input1 += C4NUM;
     output += C4NUM;
@@ -1242,6 +1233,11 @@ int ElementGreater(float *input0, float *input1, float *output, int element_size
   for (int index = 0; index < block_mod; ++index) {
     output[index] = (float)(input0[index] > input1[index]);
   }
+#else
+  for (int index = 0; index < element_size; ++index) {
+    output[index] = (float)(input0[index] > input1[index]);
+  }
+#endif
   return NNACL_OK;
 }
 
