@@ -307,6 +307,7 @@ int LiteSession::Init(Context *context) {
 #if SUPPORT_GPU
   if (context_->device_type_ == DT_GPU) {
     auto opencl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+    opencl_runtime->SetFp16Enable(context_->float16_priority);
     opencl_runtime->Init();
     MS_LOG(INFO) << "Init OpenCL runtime.";
   }
