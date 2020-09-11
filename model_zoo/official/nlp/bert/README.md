@@ -377,6 +377,12 @@ epoch: 0.0, current epoch percent: 0.000, step: 2, outpus are (Tensor(shape=[1],
 ...
 ```
 
+> **Attention** If you are running with a huge dataset, it's better to add an external environ variable to make sure the hccl won't timeout.
+> ```
+> export HCCL_CONNECT_TIMEOUT=600
+> ```
+> This will extend the timeout limits of hccl from the default 120 seconds to 600 seconds.
+
 ### Distributed Training
 #### Running on Ascend
 ```

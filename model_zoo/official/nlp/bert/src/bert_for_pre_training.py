@@ -350,13 +350,12 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         optimizer (Optimizer): Optimizer for updating the weights.
         scale_update_cell (Cell): Cell to do the loss scale. Default: None.
     """
-    def __init__(self, network, optimizer, scale_update_cell=None, enable_global_norm=False):
+    def __init__(self, network, optimizer, scale_update_cell=None):
         super(BertTrainOneStepWithLossScaleCell, self).__init__(auto_prefix=False)
         self.network = network
         self.network.set_grad()
         self.weights = optimizer.parameters
         self.optimizer = optimizer
-        self.enable_global_norm = enable_global_norm
         self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
         self.reducer_flag = False
@@ -423,10 +422,7 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)
         grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads)
-        if self.enable_global_norm:
-            grads = ClipByGlobalNorm()(grads)
-        else:
-            grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         self.get_status(init)
         flag_sum = self.reduce_sum(init, (0,))
         if self.is_distributed:

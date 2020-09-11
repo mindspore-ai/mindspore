@@ -5,9 +5,9 @@ The number of D chips can be automatically allocated based on the device_num set
 
 
 ## how to use
-For example, if we want to run the distributed training of Bert model on D chip, we can in `/bert/` dir:
+For example, if we want to generate the launch command of the distributed training of Bert model on D chip, we can run the following command in `/bert/` dir:
 ```
-python model_zoo/utils/ascend_distributed_launcher/run_distributed.py --run_script_dir ./run_pretrain.py --hyper_parameter_config_dir model_zoo/utils/ascend_distributed_launcher/hyper_parameter_config.ini --data_dir /path/dataset/ --hccl_config_dir model_zoo/utils/hccl_tools/hccl_2p_56_x.x.x.x.json
+python ./scripts/ascend_distributed_launcher/get_distribute_pretrain_cmd.py --run_script_dir ./run_pretrain.py --hyper_parameter_config_dir ./scripts/ascend_distributed_launcher/hyper_parameter_config.ini --data_dir /path/dataset/ --hccl_config_dir model_zoo/utils/hccl_tools/hccl_2p_56_x.x.x.x.json
 ```
 
 output:
@@ -42,7 +42,8 @@ log file dir: ./LOG6/log.txt
 1. Note that `hccl_2p_56_x.x.x.x.json` can use [hccl_tools.py](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools) to generate.
 
 2. For hyper parameter, please note that you should customize the scripts `hyper_parameter_config.ini`. Please note that these two hyper parameters are not allowed to be configured here:
-    device_id
-    device_num
+    - device_id
+    - device_num
+    - data_dir
 
 3. For Other Model, please note that you should customize the option `run_script` and Corresponding `hyper_parameter_config.ini`.

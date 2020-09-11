@@ -5,7 +5,7 @@ mindspore distributed training launch helper utilty that will generate hccl conf
 # use
 
 ```
-python hccl_tools.py --device_num [0,8)
+python hccl_tools.py --device_num "[0,8)"
 ```
 
 output:
