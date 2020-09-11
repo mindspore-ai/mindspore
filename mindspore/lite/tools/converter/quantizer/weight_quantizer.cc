@@ -66,13 +66,14 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
 
     ParamValueLitePtr param_value = std::static_pointer_cast<ParamValueLite>(param_node->default_param());
     auto status =
-      QuantFilter<uint8_t>(param_value, primitive_c, QuantType_WeightQuant, 255, 0, bitNum, true, depthwise);
+      QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant,
+        quant_max, quant_min, bitNum, true, depthwise);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;
     }
     // set dtype
-    param_value->set_tensor_type(kNumberTypeUInt8);
+    param_value->set_tensor_type(kNumberTypeInt8);
     auto abstractBase = param_node->abstract();
     if (abstractBase == nullptr) {
       MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << param_node->name();
@@ -83,7 +84,7 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
       return RET_ERROR;
     }
     auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
-    abstractTensor->element()->set_type(TypeIdToType(kNumberTypeUInt8));
+    abstractTensor->element()->set_type(TypeIdToType(kNumberTypeInt8));
     primitive_c->SetQuantType(schema::QuantType_WeightQuant);
   }
 
@@ -128,12 +129,13 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
 
     std::vector<schema::QuantParamT> quant_params;
     primitive_c->AddInputQuantParam(quant_params);
-    auto status = QuantFilter<uint8_t>(param_value, primitive_c, QuantType_WeightQuant, 255, 0, bitNum, true, false);
+    auto status = QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant,
+      quant_max, quant_min, bitNum, true, false);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;
     }
-    param_value->set_tensor_type(kNumberTypeUInt8);
+    param_value->set_tensor_type(kNumberTypeInt8);
     // set dtype
     auto abstractBase = param_node->abstract();
     if (abstractBase == nullptr) {
@@ -145,7 +147,7 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
       return RET_ERROR;
     }
     auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
-    abstractTensor->element()->set_type(TypeIdToType(kNumberTypeUInt8));
+    abstractTensor->element()->set_type(TypeIdToType(kNumberTypeInt8));
     primitive_c->SetQuantType(schema::QuantType_WeightQuant);
   }
 

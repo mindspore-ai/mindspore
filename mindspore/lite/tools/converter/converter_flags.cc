@@ -31,7 +31,7 @@ Flags::Flags() {
           "Input model weight file path. Needed when fmk is CAFFE. CAFFE: *.caffemodel", "");
   AddFlag(&Flags::inferenceTypeIn, "inferenceType",
           "Real data type saved in output file, reserved param, NOT used for now. FLOAT | INT8", "FLOAT");
-  AddFlag(&Flags::quantTypeIn, "quantType", "Quantization Type. AwareTraining | PostTraining", "");
+  AddFlag(&Flags::quantTypeIn, "quantType", "Quantization Type. AwareTraining | PostTraining | WeightQuant", "");
   AddFlag(&Flags::inputInferenceTypeIn, "inputInferenceType", "Input inference data type. FLOAT | INT8", "FLOAT");
   AddFlag(&Flags::stdDev, "stdDev", "Standard deviation value for aware-quantization", "128");
   AddFlag(&Flags::mean, "mean", "Mean value for aware-quantization", "-0.5");

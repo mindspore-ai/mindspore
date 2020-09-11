@@ -65,7 +65,7 @@ int ApplyMomentumCPUKernel::Init() {
   // Only for test with uninitialized Data
   size_t elem_num = in_tensors_[0]->ElementsNum();
   auto accumulate = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
-  for (int i = 0; i < elem_num; i++) accumulate[i] = 0.0;
+  for (size_t i = 0; i < elem_num; i++) accumulate[i] = 0.0;
 
   workspace = new float[elem_num];
   return 0;

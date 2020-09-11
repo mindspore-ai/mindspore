@@ -127,6 +127,27 @@ function Run_x86() {
             return 1
         fi
     done < ${models_mindspore_config}
+
+    # Run tflite weight quantization converted models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_benchmark_log_file}"
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_benchmark_log_file}"
+        cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}_weightquant.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86: '${model_name}'_weightquant pass'
+            echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86: '${model_name}'_weightquant failed'
+            echo ${run_result} >> ${run_benchmark_result_file}
+            return 1
+        fi
+    done < ${models_tflite_weightquant_config}
 }
 
 # Run on arm64 platform:
@@ -432,6 +453,7 @@ models_tflite_config=${basepath}/models_tflite.cfg
 models_caffe_config=${basepath}/models_caffe.cfg
 models_tflite_awaretraining_config=${basepath}/models_tflite_awaretraining.cfg
 models_tflite_posttraining_config=${basepath}/models_tflite_posttraining.cfg
+models_tflite_weightquant_config=${basepath}/models_tflite_weightquant.cfg
 models_onnx_config=${basepath}/models_onnx.cfg
 models_fp16_config=${basepath}/models_fp16.cfg
 models_mindspore_config=${basepath}/models_mindspore.cfg
@@ -521,6 +543,17 @@ while read line; do
   echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
   cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
 done < ${models_fp16_config}
+
+# Convert weightquant models:
+while read line; do
+    model_name=${line}
+    if [[ $model_name == \#* ]]; then
+      continue
+    fi
+    echo ${model_name} >> "${run_benchmark_log_file}"
+    echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'--quantType=WeightQuant --bitNum=8 --quantSize=500 --convWeightQuantChannelThreshold=16' >> "${run_benchmark_log_file}"
+    ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_weightquant --quantType=WeightQuant --bitNum=8 --quantSize=500 --convWeightQuantChannelThreshold=16 || Convert_status=$?
+done < ${models_tflite_weightquant_config}
 
 # Check all result and return value
 if [[ ${Convert_status} = 0 ]];then

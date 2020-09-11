@@ -53,56 +53,6 @@ kernel::LiteKernel *CpuFullConnectionInt8KernelCreator(const std::vector<lite::T
   }
   return kernel;
 }
-int RestoreFullconnectWeight(lite::Tensor *input_tensor) {
-  MS_ASSERT(input_tensor != nullptr);
-  if (input_tensor->data_type() != kNumberTypeInt8) {
-    MS_LOG(ERROR) << "full connect input type error" << input_tensor->data_type();
-    return RET_ERROR;
-  }
-  if (input_tensor->GetQuantParams().empty()) {
-    MS_LOG(ERROR) << "no quant param";
-    return RET_ERROR;
-  }
-  const auto *quant_data = static_cast<const int8_t *>(input_tensor->MutableData());
-  if (quant_data == nullptr) {
-    MS_LOG(ERROR) << "input_tensor MutableData is nullptr.";
-    return RET_ERROR;
-  }
-  auto *dequant_data = static_cast<float *>(malloc(input_tensor->ElementsNum() * sizeof(float)));
-  if (dequant_data == nullptr) {
-    MS_LOG(ERROR) << "malloc faile";
-    return RET_ERROR;
-  }
-
-  if (input_tensor->GetQuantParams().size() != kPerTensor) {
-    size_t channels = static_cast<size_t>(input_tensor->Batch());
-    if (input_tensor->GetQuantParams().size() != channels) {
-      MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->GetQuantParams().size() << channels;
-      return RET_ERROR;
-    }
-    size_t per_channel_size = input_tensor->ElementsNum() / channels;
-    auto quant_param = input_tensor->GetQuantParams();
-    for (size_t i = 0; i < channels; i++) {
-      auto param = quant_param.at(i);
-      auto scale = param.scale;
-      auto zero_point = param.zeroPoint;
-      for (size_t j = 0; j < per_channel_size; j++) {
-        dequant_data[per_channel_size * i + j] =
-          static_cast<float>((quant_data[per_channel_size * i + j] - zero_point) * scale);
-      }
-    }
-  } else {
-    auto quant_param = input_tensor->GetQuantParams();
-    auto param = quant_param.front();
-    auto scale = param.scale;
-    auto zero_point = param.zeroPoint;
-    for (int64_t j = 0; j < input_tensor->ElementsNum(); j++) {
-      dequant_data[j] = static_cast<float>((quant_data[j] - zero_point) * scale);
-    }
-  }
-  input_tensor->SetData(dequant_data);
-  return RET_OK;
-}
 kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                        const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,
@@ -114,11 +64,20 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::T
   // data of second tensor of fc may be nullptr
   auto *restore_data = weight_tensor->data_c();
   if (!weight_tensor->GetQuantParams().empty()) {
-    RestoreFullconnectWeight(inputs.at(kWeightIndex));
+    auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
+    if (dequant_weight == nullptr) {
+      MS_LOG(ERROR) << "dequant data is nullptr.";
+      return nullptr;
+    }
+    weight_tensor->SetData(dequant_weight);
   }
   auto kernel = new (std::nothrow) FullconnectionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (!kernel) {
     MS_LOG(ERROR) << "kernel is nullptr.";
+    if (!weight_tensor->GetQuantParams().empty()) {
+      weight_tensor->FreeData();
+      weight_tensor->SetData(restore_data);
+    }
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -126,6 +85,10 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::T
     delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    if (!weight_tensor->GetQuantParams().empty()) {
+      weight_tensor->FreeData();
+      weight_tensor->SetData(restore_data);
+    }
     return nullptr;
   }
   if (!weight_tensor->GetQuantParams().empty()) {

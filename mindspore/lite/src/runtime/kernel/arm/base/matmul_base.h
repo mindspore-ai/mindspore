@@ -23,7 +23,6 @@
 #include "nnacl/matmul_parameter.h"
 
 using mindspore::lite::Context;
-static constexpr int kPerTensor = 1;
 
 namespace mindspore::kernel {
 class MatmulBaseCPUKernel : public LiteKernel {

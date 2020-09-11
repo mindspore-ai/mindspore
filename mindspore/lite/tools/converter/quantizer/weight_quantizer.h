@@ -41,7 +41,8 @@ class WeightQuantizer : public Quantizer {
   STATUS DoQuantize(FuncGraphPtr funcGraph) override;
   STATUS DoConvQuantize(const std::list<CNodePtr> &nodes);
   STATUS DoMulQuantize(const std::list<CNodePtr> &nodes);
-
+  int quant_max{INT8_MAX};
+  int quant_min{INT8_MIN};
  private:
   std::unique_ptr<QuantStrategy> mStrategy;
   size_t bitNum;
