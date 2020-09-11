@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "nnacl/fp32/space_to_batch.h"
+#include "nnacl/int8/space_to_batch_int8.h"
 #include "nnacl/arithmetic_common.h"
 
-void DoSpaceToBatchNHWC(const float *input, float *output, int *block_sizes, int *in_shape, int *out_shape) {
+void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, int *block_sizes, int *in_shape,
+                        int *out_shape) {
   int out_dim0 = out_shape[0];
   int out_dim1 = out_shape[1];
   int out_dim2 = out_shape[2];
@@ -27,7 +28,7 @@ void DoSpaceToBatchNHWC(const float *input, float *output, int *block_sizes, int
   ComputeStrides(in_shape, in_strides, 4);
   int out_strides[4];
   ComputeStrides(out_shape, out_strides, 4);
-  size_t copy_size = copy_num * sizeof(float);
+  size_t copy_size = copy_num * sizeof(int8_t);
   size_t out_offset = 0;
   for (int n = 0; n < out_dim0; ++n) {
     int in_n = n % in_shape[0];
@@ -45,21 +46,21 @@ void DoSpaceToBatchNHWC(const float *input, float *output, int *block_sizes, int
   }
 }
 
-void DoSpaceToBatchPaddingNHWC(const float *input, float *output, int *in_shape, int *padding, int *out_shape) {
+void DoSpaceToBatchPaddingNHWCInt8(const int8_t *input, int8_t *output, int *in_shape, int *padding, int *out_shape) {
   int in_h = in_shape[1];
   int in_w = in_shape[2];
   int in_c = in_shape[3];
   int out_w = out_shape[2];
   int out_c = out_shape[3];
   size_t ped_h_num = out_w * out_c;
-  size_t ped_h_size = ped_h_num * sizeof(float);
-  size_t ped_w_size = out_c * sizeof(float);
+  size_t ped_h_size = ped_h_num * sizeof(int8_t);
+  size_t ped_w_size = out_c * sizeof(int8_t);
   size_t out_offset = 0;
   int in_strides[4];
   ComputeStrides(in_shape, in_strides, 4);
   int out_strides[4];
   ComputeStrides(out_shape, out_strides, 4);
-  size_t copy_size = in_c * sizeof(float);
+  size_t copy_size = in_c * sizeof(int8_t);
   for (int i = 0; i < in_shape[0]; ++i) {
     size_t in_offset0 = i * in_strides[0];
     for (int pad_h_top = 0; pad_h_top < padding[0]; ++pad_h_top) {

@@ -27,18 +27,16 @@ class SpaceToBatchCPUKernel : public LiteKernel {
                         const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
 
-  ~SpaceToBatchCPUKernel() { FreeTmpBuffer(); }
+  ~SpaceToBatchCPUKernel() {}
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
- private:
+ protected:
+  size_t EnumElement(int *shape, int n_dims);
   void FreeTmpBuffer();
-  float *pedding_input_ = nullptr;
-  float *pedding_h_data_ = nullptr;
-  float *pedding_w_data_ = nullptr;
-  std::vector<int> padded_in_shape_;
+  void *padded_input_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
