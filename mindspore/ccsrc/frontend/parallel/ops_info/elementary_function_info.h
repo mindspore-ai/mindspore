@@ -258,7 +258,6 @@ class BesselI1eInfo : public ActivationOther {
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~BesselI1eInfo() override = default;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

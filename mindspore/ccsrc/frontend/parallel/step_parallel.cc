@@ -2619,8 +2619,8 @@ ParameterUsersInfo FindRefKeyNodeUsers(const RefKeyPair &ref_key_pair, bool (*Is
 
 ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &)) {
   ParameterUsersInfo parameter_users_info;
-  auto cnode_with_refkeys = CNodeWithRefKeys(node);
 
+  auto cnode_with_refkeys = CNodeWithRefKeys(node);
   if (cnode_with_refkeys.first != nullptr) {
     // the node is a ref key node
     return FindRefKeyNodeUsers(cnode_with_refkeys, IsCareNode);
