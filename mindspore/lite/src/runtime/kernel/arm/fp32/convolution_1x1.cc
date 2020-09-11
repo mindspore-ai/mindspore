@@ -59,6 +59,7 @@ void Convolution1x1CPUKernel::InitConv1x1MatmulParam() {
   matmul_param_->row_ = conv_param_->output_h_ * conv_param_->output_w_;
   matmul_param_->col_ = conv_param_->output_channel_;
   matmul_param_->deep_ = conv_param_->input_channel_;
+  matmul_param_->row_4_ = UP_ROUND(matmul_param_->row_, C4NUM);
   matmul_param_->row_12_ = UP_ROUND(matmul_param_->row_, C12NUM);
   matmul_param_->col_8_ = UP_ROUND(matmul_param_->col_, C8NUM);
   matmul_param_->act_type_ = conv_param_->act_type_;
@@ -120,8 +121,11 @@ void Convolution1x1CPUKernel::Pre1x1Trans(float *src_input, float *src_output) {
   } else {
     input_ptr_ = src_input;
   }
-
+#ifdef ENABLE_ARM32
+  RowMajor2Col4Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+#else
   RowMajor2Col12Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+#endif
   return;
 }
 
@@ -169,8 +173,13 @@ int Convolution1x1CPUKernel::Run() {
   auto src_in = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto src_out = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
 
+#ifdef ENABLE_ARM32
+  pack_input_ =
+    reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_4_ * matmul_param_->deep_ * sizeof(float)));
+#else
   pack_input_ =
     reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_12_ * matmul_param_->deep_ * sizeof(float)));
+#endif
   if (pack_input_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc pack_input_ error!";
     return RET_MEMORY_FAILED;

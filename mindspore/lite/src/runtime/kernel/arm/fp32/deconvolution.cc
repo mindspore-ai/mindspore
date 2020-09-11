@@ -85,6 +85,7 @@ int DeConvolutionCPUKernel::InitParam() {
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->col_ = conv_param_->output_channel_ * kernel_plane_;
   matmul_param_->row_12_ = UP_ROUND(matmul_param_->row_, C12NUM);
+  matmul_param_->row_4_ = UP_ROUND(matmul_param_->row_, C4NUM);
   matmul_param_->col_8_ = UP_ROUND(conv_param_->output_channel_, C8NUM) * kernel_plane_;
 
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(conv_param_->output_channel_, C8NUM));
@@ -112,10 +113,17 @@ int DeConvolutionCPUKernel::DoDeconv(int task_id) {
     return RET_OK;
   }
 
+#ifdef ENABLE_ARM32
+  auto tmp_buffer = tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_4_;
+  MatMulOpt(pack_input_, weight_ptr_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
+            tmp_buffer, nullptr, ActType_No, matmul_param_->deep_, matmul_param_->row_4_, oc * C8NUM * kernel_plane_,
+            matmul_param_->col_, OutType_C8);
+#else
   auto tmp_buffer = tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_12_;
   MatMulOpt(pack_input_, weight_ptr_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
             tmp_buffer, nullptr, ActType_No, matmul_param_->deep_, matmul_param_->row_12_, oc * C8NUM * kernel_plane_,
             matmul_param_->col_, OutType_C8);
+#endif
 
   DeConvPostFp32C12x8(tmp_buffer, pack_output_ + task_id * thread_stride_ * C8NUM * output_plane_,
                       reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id * C8NUM,
@@ -159,15 +167,25 @@ int DeConvolutionCPUKernel::InitRunBuf() {
     return RET_NULL_PTR;
   }
 
+#ifdef ENABLE_ARM32
+  tmp_buffer_ =
+    reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_4_ * matmul_param_->col_8_ * sizeof(float)));
+#else
   tmp_buffer_ =
     reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_12_ * matmul_param_->col_8_ * sizeof(float)));
+#endif
   if (tmp_buffer_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc tmp_buffer_ error!";
     return RET_NULL_PTR;
   }
 
+#ifdef ENABLE_ARM32
+  pack_input_ =
+    reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_4_ * matmul_param_->deep_ * sizeof(float)));
+#else
   pack_input_ =
     reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_12_ * matmul_param_->deep_ * sizeof(float)));
+#endif
   if (pack_input_ == nullptr) {
     MS_LOG(ERROR) << "deconv Malloc pack_input_ error!";
     return RET_ERROR;

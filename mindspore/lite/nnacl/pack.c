@@ -1223,6 +1223,78 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
           : "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14",
             "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29",
             "v30", "v31");
+#elif ENABLE_ARM32
+        size_t srcStride = channel * sizeof(float);
+        size_t dstStride = plane * sizeof(float);
+        asm volatile(
+          "mov r10, %[src_ptr]\n"
+          "mov r12, %[dst_ptr]\n"
+
+          "vld1.32 {q0, q1}, [r10], %[srcStride]\n"
+          "vld1.32 {q2, q3}, [r10], %[srcStride]\n"
+
+          "vtrn.32 d0, d4\n"
+          "vtrn.32 d1, d5\n"
+          "vtrn.32 d2, d6\n"
+          "vtrn.32 d3, d7\n"
+
+          "vld1.32 {q4, q5}, [r10], %[srcStride]\n"
+          "vld1.32 {q6, q7}, [r10], %[srcStride]\n"
+
+          "vtrn.32 d8, d12\n"
+          "vtrn.32 d9, d13\n"
+          "vtrn.32 d10, d14\n"
+          "vtrn.32 d11, d15\n"
+
+          "vld1.32 {q8, q9}, [r10], %[srcStride]\n"
+          "vld1.32 {q10, q11}, [r10], %[srcStride]\n"
+
+          "vswp d1, d8\n"
+          "vswp d3, d10\n"
+          "vswp d5, d12\n"
+          "vswp d7, d14\n"
+
+          "vtrn.32 d16, d20\n"
+          "vtrn.32 d17, d21\n"
+          "vtrn.32 d18, d22\n"
+          "vtrn.32 d19, d23\n"
+
+          "vld1.32 {q12, q13}, [r10], %[srcStride]\n"
+          "vld1.32 {q14, q15}, [r10], %[srcStride]\n"
+
+          "vtrn.32 d24, d28\n"
+          "vtrn.32 d25, d29\n"
+          "vtrn.32 d26, d30\n"
+          "vtrn.32 d27, d31\n"
+
+          "vswp d17, d24\n"
+          "vswp d19, d26\n"
+          "vswp d21, d28\n"
+          "vswp d23, d30\n"
+
+          "add r10, r12, #16\n"
+          "vst1.32 {q0}, [r12], %[dstStride]\n"
+          "vst1.32 {q8}, [r10], %[dstStride]\n"
+          "vst1.32 {q2}, [r12], %[dstStride]\n"
+          "vst1.32 {q10}, [r10], %[dstStride]\n"
+          "vst1.32 {q4}, [r12], %[dstStride]\n"
+          "vst1.32 {q12}, [r10], %[dstStride]\n"
+          "vst1.32 {q6}, [r12], %[dstStride]\n"
+          "vst1.32 {q14}, [r10], %[dstStride]\n"
+          "vst1.32 {q1}, [r12], %[dstStride]\n"
+          "vst1.32 {q9}, [r10], %[dstStride]\n"
+          "vst1.32 {q3}, [r12], %[dstStride]\n"
+          "vst1.32 {q11}, [r10], %[dstStride]\n"
+          "vst1.32 {q5}, [r12], %[dstStride]\n"
+          "vst1.32 {q13}, [r10], %[dstStride]\n"
+          "vst1.32 {q7}, [r12], %[dstStride]\n"
+          "vst1.32 {q15}, [r10], %[dstStride]\n"
+
+          :
+          :
+          [ dst_ptr ] "r"(dst_ptr), [ src_ptr ] "r"(src_ptr), [ srcStride ] "r"(srcStride), [ dstStride ] "r"(dstStride)
+          : "r10", "r12", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10", "q11", "q12", "q13", "q14",
+            "q15");
 #else
         for (int tr = 0; tr < C8NUM; tr++) {
           for (int tc = 0; tc < C8NUM; tc++) {
