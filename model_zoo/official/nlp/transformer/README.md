@@ -54,10 +54,10 @@ After dataset preparation, you can start training and evaluation as follows:
 
 ```bash
 # run training example
-sh scripts/run_standalone_train_ascend.sh 0 52 /path/ende-l128-mindrecord00
+sh scripts/run_standalone_train_ascend.sh 0 52 /path/ende-l128-mindrecord
 
 # run distributed training example
-sh scripts/run_distribute_train_ascend.sh 8 52 /path/newstest2014-l128-mindrecord rank_table.json
+sh scripts/run_distribute_train_ascend.sh 8 52 /path/ende-l128-mindrecord rank_table.json
 
 # run evaluation example
 python eval.py > eval.log 2>&1 &
@@ -104,6 +104,7 @@ usage: train.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_num N] [
                  [--enable_data_sink ENABLE_DATA_SINK] [--save_checkpoint_steps N]
                  [--save_checkpoint_num N] [--save_checkpoint_path SAVE_CHECKPOINT_PATH]
                  [--data_path DATA_PATH]
+                 [--bucket_boundaries BUCKET_LENGTH]
 
 options:
     --distribute               pre_training by serveral devices: "true"(training by more than 1 device) | "false", default is "false"
@@ -119,6 +120,7 @@ options:
     --save_checkpoint_num      number for saving checkpoint files: N, default is 30
     --save_checkpoint_path     path to save checkpoint files: PATH, default is "./checkpoint/"
     --data_path                path to dataset file: PATH, default is ""
+    --bucket_boundaries        sequence lengths for different bucket: LIST, default is [16, 32, 48, 64, 128]
 ```
 
 ### Running Options
@@ -179,13 +181,13 @@ Parameters for learning rate:
 
     ``` bash
     paste train.tok.clean.bpe.32000.en train.tok.clean.bpe.32000.de > train.all
-    python create_data.py --input_file train.all --vocab_file vocab.bpe.32000 --output_file /path/ende-l128-mindrecord --max_seq_length 128
+    python create_data.py --input_file train.all --vocab_file vocab.bpe.32000 --output_file /path/ende-l128-mindrecord --max_seq_length 128 --bucket [16, 32, 48, 64, 128]
     ```
 - Convert the original data to mindrecord for evaluation:
 
     ``` bash
     paste newstest2014.tok.bpe.32000.en newstest2014.tok.bpe.32000.de > test.all
-    python create_data.py --input_file test.all --vocab_file vocab.bpe.32000 --output_file /path/newstest2014-l128-mindrecord --num_splits 1 --max_seq_length 128 --clip_to_max_len True
+    python create_data.py --input_file test.all --vocab_file vocab.bpe.32000 --output_file /path/newstest2014-l128-mindrecord --num_splits 1 --max_seq_length 128 --clip_to_max_len True --bucket [128]
     ```
 
 

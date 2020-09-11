@@ -134,6 +134,7 @@ class BeamSearchDecoder(nn.Cell):
                  eos_id=2,
                  compute_type=mstype.float32):
         super(BeamSearchDecoder, self).__init__(auto_prefix=False)
+        self.seq_length = seq_length
         self.batch_size = batch_size
         self.vocab_size = vocab_size
         self.beam_width = beam_width
@@ -182,7 +183,7 @@ class BeamSearchDecoder(nn.Cell):
         """
         One step for decode
         """
-        log_probs = self.decoder(cur_input_ids, enc_states, enc_attention_mask)
+        log_probs = self.decoder(cur_input_ids, enc_states, enc_attention_mask, self.seq_length)
         log_probs = self.reshape(log_probs, (self.batch_size, self.beam_width, self.vocab_size))
 
         # select topk indices

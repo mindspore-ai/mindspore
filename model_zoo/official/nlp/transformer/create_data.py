@@ -51,20 +51,29 @@ class SampleInstance():
         return self.__str__()
 
 
-def write_instance_to_file(writer, instance, tokenizer, max_seq_length):
+def write_instance_to_file(writer, instance, tokenizer, max_seq_length, bucket):
     """Create files from `SampleInstance`s."""
+    def _find_bucket_length(num):
+        assert num <= bucket[-1]
+
+        for index in range(1, len(bucket)):
+            if bucket[index - 1] < num <= bucket[index]:
+                return bucket[index]
+        return bucket[0]
 
     def _convert_ids_and_mask(input_tokens):
         input_ids = tokenizer.convert_tokens_to_ids(input_tokens)
         input_mask = [1] * len(input_ids)
         assert len(input_ids) <= max_seq_length
 
-        while len(input_ids) < max_seq_length:
+        seq_max_bucket_length = _find_bucket_length(len(input_ids))
+
+        while len(input_ids) < seq_max_bucket_length:
             input_ids.append(0)
             input_mask.append(0)
 
-        assert len(input_ids) == max_seq_length
-        assert len(input_mask) == max_seq_length
+        assert len(input_ids) == seq_max_bucket_length
+        assert len(input_mask) == seq_max_bucket_length
 
         return input_ids, input_mask
 
@@ -93,7 +102,6 @@ def create_training_instance(source_words, target_words, max_seq_length, clip_to
 
     if len(source_words) >= max_seq_length or len(target_words) >= max_seq_length:
         if clip_to_max_len:
-            print("####lalalal")
             source_words = source_words[:min([len(source_words, max_seq_length-1)])]
             target_words = target_words[:min([len(target_words, max_seq_length-1)])]
         else:
@@ -123,6 +131,8 @@ def main():
     parser.add_argument("--clip_to_max_len", type=bool, default=False,
                         help='clip sequences to maximum sequence length.')
     parser.add_argument("--max_seq_length", type=int, default=128, help='Maximum sequence length.')
+    parser.add_argument("--bucket", type=list, default=[16, 32, 48, 64, 128], help='bucket sequence length')
+
     args = parser.parse_args()
 
     tokenizer = tokenization.WhiteSpaceTokenizer(vocab_file=args.vocab_file)
@@ -179,7 +189,7 @@ def main():
                 if instance is None:
                     continue
 
-                features = write_instance_to_file(writer, instance, tokenizer, args.max_seq_length)
+                features = write_instance_to_file(writer, instance, tokenizer, args.max_seq_length, args.bucket)
                 total_written += 1
 
                 if total_written <= 20:

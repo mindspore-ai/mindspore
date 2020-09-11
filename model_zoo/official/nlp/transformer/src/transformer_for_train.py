@@ -95,12 +95,13 @@ class TransformerTrainingLoss(nn.Cell):
         self.flatten = P.Flatten()
         self.neg = P.Neg()
         self.cast = P.Cast()
-        self.flat_shape = (config.batch_size * config.seq_length,)
+        self.batch_size = config.batch_size
 
-    def construct(self, prediction_scores, label_ids, label_weights):
+    def construct(self, prediction_scores, label_ids, label_weights, seq_length):
         """Defines the computation performed."""
-        label_ids = self.reshape(label_ids, self.flat_shape)
-        label_weights = self.cast(self.reshape(label_weights, self.flat_shape), mstype.float32)
+        flat_shape = (self.batch_size * seq_length,)
+        label_ids = self.reshape(label_ids, flat_shape)
+        label_weights = self.cast(self.reshape(label_weights, flat_shape), mstype.float32)
         one_hot_labels = self.onehot(label_ids, self.vocab_size, self.on_value, self.off_value)
 
         per_example_loss = self.neg(self.reduce_sum(prediction_scores * one_hot_labels, self.last_idx))
@@ -128,6 +129,7 @@ class TransformerNetworkWithLoss(nn.Cell):
         self.transformer = TransformerModel(config, is_training, use_one_hot_embeddings)
         self.loss = TransformerTrainingLoss(config)
         self.cast = P.Cast()
+        self.shape = P.Shape()
 
     def construct(self,
                   source_ids,
@@ -136,8 +138,10 @@ class TransformerNetworkWithLoss(nn.Cell):
                   target_mask,
                   label_ids,
                   label_weights):
+        """Transformer network with loss."""
         prediction_scores = self.transformer(source_ids, source_mask, target_ids, target_mask)
-        total_loss = self.loss(prediction_scores, label_ids, label_weights)
+        seq_length = self.shape(source_ids)[1]
+        total_loss = self.loss(prediction_scores, label_ids, label_weights, seq_length)
         return self.cast(total_loss, mstype.float32)
 
 
@@ -156,7 +160,6 @@ class TransformerTrainOneStepCell(nn.Cell):
     def __init__(self, network, optimizer, sens=1.0):
         super(TransformerTrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
-        self.network.set_grad()
         self.weights = ParameterTuple(network.trainable_params())
         self.optimizer = optimizer
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
