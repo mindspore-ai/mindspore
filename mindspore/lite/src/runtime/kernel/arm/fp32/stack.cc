@@ -29,7 +29,7 @@ namespace mindspore::kernel {
 int StackCPUKernel::ReSize() {
   StackParameter *param = reinterpret_cast<StackParameter *>(op_parameter_);
   auto input0_shape = in_tensors_[0]->shape();
-  axis_ = param->axis_ < 0 ? param->axis_ + input0_shape.size() : param->axis_;
+  axis_ = param->axis_ < 0 ? param->axis_ + input0_shape.size() + 1 : param->axis_;
   return RET_OK;
 }
 
