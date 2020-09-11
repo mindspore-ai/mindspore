@@ -17,7 +17,7 @@ Testing RandomApply op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.transforms.py_transforms as py_transforms
 import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 from util import visualize_list, config_get_set_seed, \
@@ -38,16 +38,16 @@ def test_random_apply_op(plot=False):
     transforms_list = [py_vision.CenterCrop(64), py_vision.RandomRotation(30)]
     transforms1 = [
         py_vision.Decode(),
-        py_vision.RandomApply(transforms_list, prob=0.6),
+        py_transforms.RandomApply(transforms_list, prob=0.6),
         py_vision.ToTensor()
     ]
-    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    transform1 = py_transforms.Compose(transforms1)
 
     transforms2 = [
         py_vision.Decode(),
         py_vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
+    transform2 = py_transforms.Compose(transforms2)
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -79,10 +79,10 @@ def test_random_apply_md5():
     transforms = [
         py_vision.Decode(),
         # Note: using default value "prob=0.5"
-        py_vision.RandomApply(transforms_list),
+        py_transforms.RandomApply(transforms_list),
         py_vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = py_transforms.Compose(transforms)
 
     #  Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -111,10 +111,10 @@ def test_random_apply_exception_random_crop_badinput():
                        py_vision.RandomRotation(30)]
     transforms = [
         py_vision.Decode(),
-        py_vision.RandomApply(transforms_list, prob=0.6),
+        py_transforms.RandomApply(transforms_list, prob=0.6),
         py_vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = py_transforms.Compose(transforms)
     #  Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data = data.map(operations=transform, input_columns=["image"])

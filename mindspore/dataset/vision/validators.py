@@ -347,37 +347,6 @@ def check_random_rotation(method):
     return new_method
 
 
-def check_transforms_list(method):
-    """Wrapper method to check the parameters of transform list."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [transforms], _ = parse_user_args(method, *args, **kwargs)
-
-        type_check(transforms, (list,), "transforms")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_random_apply(method):
-    """Wrapper method to check the parameters of random apply."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [transforms, prob], _ = parse_user_args(method, *args, **kwargs)
-        type_check(transforms, (list,), "transforms")
-
-        if prob is not None:
-            type_check(prob, (float, int,), "prob")
-            check_value(prob, [0., 1.], "prob")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
 def check_ten_crop(method):
     """Wrapper method to check the parameters of crop."""
 
@@ -676,7 +645,6 @@ def check_positive_degrees(method):
         return method(self, *args, **kwargs)
 
     return new_method
-
 
 
 def check_random_select_subpolicy_op(method):

@@ -30,7 +30,7 @@ from . import py_transforms_util as util
 from .c_transforms import parse_padding
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
     check_normalize_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
-    check_transforms_list, check_random_apply, check_ten_crop, check_num_channels, check_pad, \
+    check_ten_crop, check_num_channels, check_pad, \
     check_random_perspective, check_random_erasing, check_cutout, check_linear_transform, check_random_affine, \
     check_mix_up, check_positive_degrees, check_uniform_augment_py, check_auto_contrast
 from .utils import Inter, Border
@@ -607,107 +607,6 @@ class RandomRotation:
             img (PIL image), Rotated image.
         """
         return util.random_rotation(img, self.degrees, self.resample, self.expand, self.center, self.fill_value)
-
-
-class RandomOrder:
-    """
-    Perform a series of transforms to the input PIL image in a random order.
-
-    Args:
-        transforms (list): List of the transformations to apply.
-
-    Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
-        >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomOrder(transforms_list),
-        >>>          py_vision.ToTensor()])
-    """
-
-    @check_transforms_list
-    def __init__(self, transforms):
-        self.transforms = transforms
-
-    def __call__(self, img):
-        """
-        Call method.
-
-        Args:
-            img (PIL image): Image to apply transformations in a random order.
-
-        Returns:
-            img (PIL image), Transformed image.
-        """
-        return util.random_order(img, self.transforms)
-
-
-class RandomApply:
-    """
-    Randomly perform a series of transforms with a given probability.
-
-    Args:
-        transforms (list): List of transformations to apply.
-        prob (float, optional): The probability to apply the transformation list (default=0.5).
-
-    Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
-        >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomApply(transforms_list, prob=0.6),
-        >>>          py_vision.ToTensor()])
-    """
-
-    @check_random_apply
-    def __init__(self, transforms, prob=0.5):
-        self.prob = prob
-        self.transforms = transforms
-
-    def __call__(self, img):
-        """
-        Call method.
-
-        Args:
-            img (PIL image): Image to be randomly applied a list transformations.
-
-        Returns:
-            img (PIL image), Transformed image.
-        """
-        return util.random_apply(img, self.transforms, self.prob)
-
-
-class RandomChoice:
-    """
-    Randomly select one transform from a series of transforms and apply that transform on the image.
-
-    Args:
-         transforms (list): List of transformations to be chosen from to apply.
-
-    Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
-        >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomChoice(transforms_list),
-        >>>          py_vision.ToTensor()])
-    """
-
-    @check_transforms_list
-    def __init__(self, transforms):
-        self.transforms = transforms
-
-    def __call__(self, img):
-        """
-        Call method.
-
-        Args:
-            img (PIL image): Image to apply transformation.
-
-        Returns:
-            img (PIL image), Transformed image.
-        """
-        return util.random_choice(img, self.transforms)
 
 
 class FiveCrop:
