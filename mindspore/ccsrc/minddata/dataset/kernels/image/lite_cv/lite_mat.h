@@ -27,17 +27,20 @@ namespace dataset {
 
 template <typename T>
 struct Chn1 {
+  Chn1(T c1) : c1(c1) {}
   T c1;
 };
 
 template <typename T>
 struct Chn2 {
+  Chn2(T c1, T c2) : c1(c1), c2(c2) {}
   T c1;
   T c2;
 };
 
 template <typename T>
 struct Chn3 {
+  Chn3(T c1, T c2, T c3) : c1(c1), c2(c2), c3(c3) {}
   T c1;
   T c2;
   T c3;
@@ -45,6 +48,7 @@ struct Chn3 {
 
 template <typename T>
 struct Chn4 {
+  Chn4(T c1, T c2, T c3, T c4) : c1(c1), c2(c2), c3(c3), c4(c4) {}
   T c1;
   T c2;
   T c3;

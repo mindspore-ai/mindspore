@@ -516,18 +516,10 @@ void ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std:
 std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std::vector<float> &all_scores, float thres,
                           int max_boxes) {
   int boxes_num = all_boxes.size();
-  std::vector<float> y1(boxes_num);
-  std::vector<float> x1(boxes_num);
-  std::vector<float> y2(boxes_num);
-  std::vector<float> x2(boxes_num);
   std::vector<float> areas(boxes_num);
   std::vector<int> order(boxes_num);
   for (int i = 0; i < boxes_num; i++) {
-    y1[i] = all_boxes[i][0];
-    x1[i] = all_boxes[i][1];
-    y2[i] = all_boxes[i][2];
-    x2[i] = all_boxes[i][3];
-    areas[i] = (x2[i] - x1[i] + 1) * (y2[i] - y1[i] + 1);
+    areas[i] = (all_boxes[i][3] - all_boxes[i][1] + 1) * (all_boxes[i][2] - all_boxes[i][0] + 1);
     order[i] = i;
   }
 
@@ -543,10 +535,10 @@ std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std:
     int len = order.size() - 1;
     std::vector<float> ovr(len);
     for (int j = 0; j < len; j++) {
-      float xx1 = std::max(x1[i], x1[order[j + 1]]);
-      float yy1 = std::max(y1[i], y1[order[j + 1]]);
-      float xx2 = std::min(x2[i], x2[order[j + 1]]);
-      float yy2 = std::min(y2[i], y2[order[j + 1]]);
+      float xx1 = std::max(all_boxes[i][1], all_boxes[order[j + 1]][1]);
+      float yy1 = std::max(all_boxes[i][0], all_boxes[order[j + 1]][0]);
+      float xx2 = std::min(all_boxes[i][3], all_boxes[order[j + 1]][3]);
+      float yy2 = std::min(all_boxes[i][2], all_boxes[order[j + 1]][2]);
 
       float w = std::max(0.0f, xx2 - xx1 + 1);
       float h = std::max(0.0f, yy2 - yy1 + 1);
@@ -568,14 +560,15 @@ std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std:
   return keep;
 }
 
-void WarpAffine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue) {
+template <typename Pixel_Type>
+void ImplementAffine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> &dsize, Pixel_Type borderValue) {
   double IM[6];
   for (int i = 0; i < 6; i++) {
     IM[i] = M[i];
   }
 
   double D = IM[0] * IM[4] - IM[1] * IM[3];
-  D = D != 0 ? 1. / D : 0;
+  D = D != 0 ? 1.0f / D : 0;
   double A11 = IM[4] * D, A22 = IM[0] * D;
   IM[0] = A11;
   IM[1] *= -D;
@@ -592,13 +585,22 @@ void WarpAffine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t>
       int src_x = IM[0] * x + IM[1] * y + IM[2];
       int src_y = IM[3] * x + IM[4] * y + IM[5];
       if (src_x >= 0 && src_y >= 0 && src_x < src.width_ && src_y < src.height_) {
-        UINT8_C3 src_pixel = static_cast<UINT8_C3 *>(src.data_ptr_)[src_y * src.width_ + src_x];
-        static_cast<UINT8_C3 *>(out_img.data_ptr_)[y * src.width_ + x] = src_pixel;
+        Pixel_Type src_pixel = static_cast<Pixel_Type *>(src.data_ptr_)[src_y * src.width_ + src_x];
+        static_cast<Pixel_Type *>(out_img.data_ptr_)[y * src.width_ + x] = src_pixel;
       } else {
-        static_cast<UINT8_C3 *>(out_img.data_ptr_)[y * src.width_ + x] = borderValue;
+        static_cast<Pixel_Type *>(out_img.data_ptr_)[y * src.width_ + x] = borderValue;
       }
     }
   }
 }
+
+void Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue) {
+  ImplementAffine(src, out_img, M, dsize, borderValue);
+}
+
+void Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue) {
+  ImplementAffine(src, out_img, M, dsize, borderValue);
+}
+
 }  // namespace dataset
 }  // namespace mindspore
