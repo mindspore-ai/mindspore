@@ -224,5 +224,19 @@ Status BucketBatchByLengthOp::Reset() {
 
   return Status::OK();
 }
+
+// Computing the assignment of the column name map and check compute input columns.
+Status BucketBatchByLengthOp::ComputeColMap() {
+  RETURN_IF_NOT_OK(DatasetOp::ComputeColMap());
+
+  for (const auto &inCol : length_dependent_columns_) {
+    bool found = column_name_id_map_.find(inCol) != column_name_id_map_.end() ? true : false;
+    if (!found) {
+      std::string err_msg = "input column name: " + inCol + " doesn't exist in the dataset columns.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

@@ -135,6 +135,8 @@ class BucketBatchByLengthOp : public PipelineOp {
 
   Status PadAndBatchBucket(int32_t bucket_index, int32_t batch_size);
 
+  Status ComputeColMap() override;
+
   std::vector<std::string> length_dependent_columns_;
   std::vector<int32_t> bucket_boundaries_;
   std::vector<int32_t> bucket_batch_sizes_;
