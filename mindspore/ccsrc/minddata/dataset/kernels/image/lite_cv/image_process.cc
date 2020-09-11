@@ -208,6 +208,9 @@ static void ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
 }
 
 bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h) {
+  if (dst_h <= 0 || dst_w <= 0) {
+    return false;
+  }
   if (src.data_type_ != LDataType::UINT8) {
     return false;
   }
@@ -269,6 +272,9 @@ static bool ConvertRGBAToGRAY(const unsigned char *data, LDataType data_type, in
 }
 
 bool InitFromPixel(const unsigned char *data, LPixelType pixel_type, LDataType data_type, int w, int h, LiteMat &m) {
+  if (w <= 0 || h <= 0) {
+    return false;
+  }
   if (pixel_type == LPixelType::RGBA2BGR) {
     return ConvertRGBAToBGR(data, data_type, w, h, m);
   } else if (pixel_type == LPixelType::RGBA2GRAY) {
@@ -314,7 +320,10 @@ static void CropInternal(const LiteMat &src, LiteMat &dst, int x, int y, int w, 
 }
 
 bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
-  if (y < 0 || y + h > src.height_ || x < 0 || x + w > src.width_) {
+  if (x <= 0 || y <= 0 || w <= 0 || h <= 0) {
+    return false;
+  }
+  if (y + h > src.height_ || x + w > src.width_) {
     return false;
   }
 
@@ -371,9 +380,9 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, float *mean, float
 }
 
 template <typename T>
-static void PaddWithConstant(const LiteMat &src, LiteMat &dst, const int top, const int bottom, const int left,
-                             const int right, const PaddBorderType pad_type, uint8_t fill_b_or_gray, uint8_t fill_g,
-                             uint8_t fill_r) {
+static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, const int bottom, const int left,
+                            const int right, const PaddBorderType pad_type, uint8_t fill_b_or_gray, uint8_t fill_g,
+                            uint8_t fill_r) {
   dst.Init(src.width_ + left + right, src.height_ + top + bottom, src.channel_, src.data_type_);
   const T *src_start_p = src;
   T *dst_start_p = dst;
@@ -444,12 +453,15 @@ static void PaddWithConstant(const LiteMat &src, LiteMat &dst, const int top, co
   }
 }
 
-bool Padd(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
-          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r) {
+bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
+         uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r) {
+  if (top <= 0 || bottom <= 0 || left <= 0 || right <= 0) {
+    return false;
+  }
   if (pad_type == PADD_BORDER_CONSTANT && src.data_type_ == LDataType::FLOAT32) {
-    PaddWithConstant<float>(src, dst, top, bottom, left, right, pad_type, fill_b_or_gray, fill_g, fill_r);
+    PadWithConstant<float>(src, dst, top, bottom, left, right, pad_type, fill_b_or_gray, fill_g, fill_r);
   } else if (pad_type == PADD_BORDER_CONSTANT && src.data_type_ == LDataType::UINT8) {
-    PaddWithConstant<uint8_t>(src, dst, top, bottom, left, right, pad_type, fill_b_or_gray, fill_g, fill_r);
+    PadWithConstant<uint8_t>(src, dst, top, bottom, left, right, pad_type, fill_b_or_gray, fill_g, fill_r);
   } else {
     return false;
   }

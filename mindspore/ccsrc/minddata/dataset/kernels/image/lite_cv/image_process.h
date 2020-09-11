@@ -66,8 +66,8 @@ bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h);
 bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, float *mean, float *norm);
 
 /// \brief padd image, the channel supports is 3 and 1
-bool Padd(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
-          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r);
+bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
+         uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r);
 
 /// \brief Apply affine transformation for 1 channel image
 void Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue);
