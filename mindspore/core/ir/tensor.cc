@@ -525,10 +525,14 @@ std::string Tensor::ToStringInternal(int limit_size) const {
   buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ',';
   if (limit_size <= 0 || DataSize() < limit_size) {
     // Only print data for small tensor.
-    buf << ((data().ndim() > 1) ? '\n' : ' ') << data().ToString(data_type_, shape_, false) << ')';
+    buf << ((data().ndim() > 1) ? '\n' : ' ') << data().ToString(data_type_, shape_, false);
   } else {
-    buf << " [...])";
+    buf << " [...]";
   }
+  if (is_parameter_) {
+    buf << ", name=" << param_info_->name();
+  }
+  buf << ")";
   return buf.str();
 }
 

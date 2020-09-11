@@ -18,10 +18,10 @@ import functools
 from .. import signature as sig
 from ..._checkparam import Validator as validator, Rel
 from ...common import dtype as mstype
-from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+from ..primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 
 
-class Assign(Primitive):
+class Assign(PrimitiveWithCheck):
     """
     Assign `Parameter` with a value.
 
@@ -59,14 +59,10 @@ class Assign(Primitive):
     def __init__(self):
         self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
 
-    def infer_shape(self, variable, value):
-        return variable
-
-    def infer_dtype(self, variable, value):
+    def check_dtype(self, variable, value):
         if variable != mstype.type_refkey:
             validator.check_tensor_type_same({"variable": variable}, mstype.number_type, self.name)
         validator.check_scalar_or_tensor_type_same({"value": value}, mstype.number_type, self.name)
-        return variable
 
 
 class BoundingBoxEncode(PrimitiveWithInfer):

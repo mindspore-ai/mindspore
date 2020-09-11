@@ -297,8 +297,7 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
       // If sig is SignatureEnumRW::kRWRef, not do anything.
     } else if (sig == SignatureEnumRW::kRWWrite &&
                !((type->type_id() == kObjectTypeRef) || (type->type_id() == kObjectTypeRefKey))) {
-      MS_EXCEPTION(TypeError) << "Function " << func_name << "'s input " << i << " should be a Parameter, but "
-                              << type->ToString();
+      RaiseExceptionForCheckParameter(func_name, i, type->ToString());
     }
     MS_LOG(DEBUG) << "Function " << func_name << "'s input " << i << " " << param->DebugString(2) << " abs "
                   << args_spec_list[i]->ToString() << " type " << type->ToString();
@@ -337,6 +336,10 @@ void RaiseExceptionForConvertRefDtype(const std::string &func_name, const std::s
                     << "but the largest type in the same SignatureEumDtype is '" << target_type
                     << "'. The writable arg type is not equal to the largest type, "
                     << "so can not cast automatically.";
+}
+void RaiseExceptionForCheckParameter(const std::string &func_name, int i, const std::string &source_type) {
+  MS_EXCEPTION(TypeError) << "Function " << func_name << "'s input " << i << " should be a Parameter, but "
+                          << source_type << ".";
 }
 }  // namespace prim
 }  // namespace mindspore

@@ -36,6 +36,9 @@ from .op_info_register import op_info_register, AkgGpuRegOp, AkgAscendRegOp, AiC
 from .primitive import constexpr
 from . import composite, operations, functional
 from . import signature
+from .composite import *
+from .operations import *
+from .functional import *
 
 __primitive__ = [
     "prim_attr_register", "Primitive", "PrimitiveWithInfer", "signature"
