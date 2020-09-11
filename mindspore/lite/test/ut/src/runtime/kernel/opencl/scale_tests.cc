@@ -71,7 +71,6 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   auto allocator = ocl_runtime->GetAllocator();
 
   bool is_broadcast = shape_b.empty();
-  auto tensorType = lite::TensorCategory(schema::NodeType_ValueNode);
   auto format = schema::Format_NHWC4;
 
   auto data_type = kNumberTypeFloat32;
@@ -79,10 +78,10 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
     data_type = kNumberTypeFloat16;
     ocl_runtime->SetFp16Enable(true);
   }
-  lite::Tensor *tensor_in = new (std::nothrow) lite::Tensor(data_type, shape_a, format, tensorType);
-  lite::Tensor *tensor_scale = new (std::nothrow) lite::Tensor(data_type, shape_b, format, tensorType);
-  lite::Tensor *tensor_offset = new (std::nothrow) lite::Tensor(data_type, shape_b, format, tensorType);
-  lite::Tensor *tensor_out = new (std::nothrow) lite::Tensor(data_type, shape_a, format, tensorType);
+  lite::Tensor *tensor_in = new (std::nothrow) lite::Tensor(data_type, shape_a, format);
+  lite::Tensor *tensor_scale = new (std::nothrow) lite::Tensor(data_type, shape_b, format);
+  lite::Tensor *tensor_offset = new (std::nothrow) lite::Tensor(data_type, shape_b, format);
+  lite::Tensor *tensor_out = new (std::nothrow) lite::Tensor(data_type, shape_a, format);
   if (tensor_in == nullptr || tensor_scale == nullptr || tensor_offset == nullptr) {
     MS_LOG(ERROR) << "Create tensor failed!";
     delete tensor_in;

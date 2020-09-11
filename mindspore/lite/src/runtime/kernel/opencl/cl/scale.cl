@@ -9,9 +9,9 @@ __kernel void Scale_IMG(__read_only image2d_t input, __read_only image2d_t scale
     return;
   }
 
-  FLT4 in = read_imagef(input, smp_none, (int2)(X, Y));
-  FLT4 s = read_imagef(scale, smp_none, (int2)(X, Y));
-  FLT4 o = read_imagef(offset, smp_none, (int2)(X, Y));
+  FLT4 in = READ_IMAGE(input, smp_none, (int2)(X, Y));
+  FLT4 s = READ_IMAGE(scale, smp_none, (int2)(X, Y));
+  FLT4 o = READ_IMAGE(offset, smp_none, (int2)(X, Y));
   WRITE_IMAGE(output, (int2)(X, Y), in * s + o);
 }
 
@@ -23,7 +23,7 @@ __kernel void BoardcastScale_IMG(__read_only image2d_t input, float scale, float
     return;
   }
 
-  FLT4 in = read_imagef(input, smp_none, (int2)(X, Y));
+  FLT4 in = READ_IMAGE(input, smp_none, (int2)(X, Y));
   WRITE_IMAGE(output, (int2)(X, Y), in * (FLT)scale + (FLT)offset);
 }
 
@@ -35,8 +35,8 @@ __kernel void Scale_C_IMG(__read_only image2d_t input, __read_only image2d_t sca
     return;
   }
 
-  FLT4 in = read_imagef(input, smp_none, (int2)(X, Y));
-  FLT4 s = read_imagef(scale, smp_none, (int2)(X % C, 0));
-  FLT4 o = read_imagef(offset, smp_none, (int2)(X % C, 0));
+  FLT4 in = READ_IMAGE(input, smp_none, (int2)(X, Y));
+  FLT4 s = READ_IMAGE(scale, smp_none, (int2)(X % C, 0));
+  FLT4 o = READ_IMAGE(offset, smp_none, (int2)(X % C, 0));
   WRITE_IMAGE(output, (int2)(X, Y), in * s + o);
 }
