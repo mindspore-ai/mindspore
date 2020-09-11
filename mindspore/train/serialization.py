@@ -147,9 +147,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=F
 
     Args:
         save_obj (nn.Cell or list): The train network for training or parameters list(each element is a dictionary,
-                                    like {"name":xx, "type":xx, "shape":xx, "data":xx}.)
+                                    like {"name":xx, "data":xx}.)
         ckpt_file_name (str): Checkpoint file name.
-        integrated_save (bool): Whether to integrated save in automatic model parallel scene.
+        integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: True
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False
 
     Raises:
