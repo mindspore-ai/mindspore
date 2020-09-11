@@ -83,6 +83,7 @@ struct ActivityData {
   float avg_duration_{0};
   float max_duration_{0};
   float min_duration_{0};
+  std::vector<StartDuration> start_duration;
 
   ActivityData() = default;
 
@@ -109,6 +110,8 @@ using DeviceActivityInfos = std::unordered_map<std::string, ActivityData>;   // 
 using AllActivityInfos = std::unordered_map<uint32_t, DeviceActivityInfos>;  // <device_id, ActivityData>
 using OpTypeInfos = std::unordered_map<std::string, OpType>;                 // <op_full_name, Optype>
 using OpDetailInfos = std::vector<OpDetailInfo>;
+// <op_full_name, StartDuration>
+using OpTimestampInfo = std::unordered_map<std::string, std::vector<StartDuration>>;
 
 class DataSaver {
  public:
@@ -141,10 +144,13 @@ class DataSaver {
 
   void WriteActivity(const std::string &saver_base_dir);
 
+  void WriteOpTimestamp(const std::string &saver_base_dir);
+
   std::string device_id_;
   AllActivityInfos activity_infos_;
   OpTypeInfos op_type_infos_;
   OpDetailInfos op_detail_infos_;
+  OpTimestampInfo op_timestamps_map_;
 };
 }  // namespace gpu
 }  // namespace profiler

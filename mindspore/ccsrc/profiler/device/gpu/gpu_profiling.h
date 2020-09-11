@@ -84,6 +84,11 @@ struct Event {
   };
 };
 
+struct StartDuration {
+  uint64_t start_timestamp = 0l;
+  float duration = 0l;
+};
+
 struct OpInfo {
   std::string op_name;
   float cupti_api_call_time = 0l;
@@ -92,6 +97,7 @@ struct OpInfo {
   int op_kernel_api_count = 0;
   int op_kernel_count = 0;
   int op_count = 0;
+  std::vector<StartDuration> start_duration;
   void *stream;
 };
 
@@ -133,6 +139,7 @@ class GPUProfiler {
   void AddEvent(Event &&event);
   void SetRunTimeData(const std::string &op_name, void *stream);
   void SetRunTimeData(const std::string &op_name, const float time_elapsed);
+  void SetRunTimeData(const std::string &op_name, const uint64_t start, const float duration);
   void FixOpNameByCorrelationId(Event *event);
 
   static std::shared_ptr<GPUProfiler> profiler_inst_;

@@ -50,6 +50,7 @@ ActivityData::ActivityData(std::shared_ptr<Event> data) : basic_info_(data) {
   avg_duration_ = total_duration_;
   max_duration_ = total_duration_;
   min_duration_ = total_duration_;
+  start_duration.emplace_back(StartDuration({basic_info_->start_time_stamp, total_duration_}));
 }
 
 ActivityData &ActivityData::operator+=(const ActivityData &other) {
@@ -68,6 +69,7 @@ void DataSaver::ParseOpInfo(const OpInfoMap &op_info_maps) {
   op_detail_infos_.reserve(op_info_maps.size());
   float total_time_sum = GetTotalOpTime(op_info_maps);
   for (auto item : op_info_maps) {
+    op_timestamps_map_[item.first] = item.second.start_duration;
     float proportion = item.second.op_host_cost_time / total_time_sum;
     auto op_info = std::make_shared<OpInfo>(item.second);
     OpDetailInfo op_detail_info = OpDetailInfo(op_info, proportion);
@@ -147,6 +149,7 @@ void DataSaver::AddKernelEventToDevice(const Event &event, DeviceActivityInfos *
     device_activity_infos->emplace(kernel_name, activity_data);
   } else {
     iter->second += activity_data;
+    iter->second.start_duration.emplace_back(StartDuration({event.start_time_stamp, activity_data.total_duration_}));
   }
 }
 
@@ -164,6 +167,7 @@ void DataSaver::WriteFile(std::string out_path_dir) {
   WriteOpDetail(out_path_dir);
   WriteOpType(out_path_dir);
   WriteActivity(out_path_dir);
+  WriteOpTimestamp(out_path_dir);
 }
 
 void DataSaver::WriteOpType(const std::string &saver_base_dir) {
@@ -201,21 +205,56 @@ void DataSaver::WriteOpDetail(const std::string &saver_base_dir) {
 
 void DataSaver::WriteActivity(const std::string &saver_base_dir) {
   std::string file_path_base = saver_base_dir + "/gpu_activity_data_";
+  std::string timestamp_file_path_base = saver_base_dir + "/activity_execute_timestamp_";
   for (auto device_info : activity_infos_) {
+    // write activity result csv
     std::string file_path = file_path_base + std::to_string(device_info.first) + ".csv";
     std::ofstream ofs(file_path);
     if (!ofs.is_open()) {
       MS_LOG(WARNING) << "Open file '" << file_path << "' failed!";
       return;
     }
+    // write activity timestamp txt
+    std::string timestamp_file_path = timestamp_file_path_base + std::to_string(device_info.first) + ".txt";
+    std::ofstream activity_timestamp_ofs(timestamp_file_path);
+    if (!activity_timestamp_ofs.is_open()) {
+      MS_LOG(WARNING) << "Open file '" << timestamp_file_path << "' failed!";
+      return;
+    }
     // write activity data into file
     ofs << ActivityData().GetHeader() << std::endl;
     for (auto activity_data : device_info.second) {
       ofs << activity_data.second << std::endl;
+      for (auto start_duration : activity_data.second.start_duration) {
+        activity_timestamp_ofs << activity_data.second.basic_info_->kernel_name << ";";
+        activity_timestamp_ofs << activity_data.second.basic_info_->stream_id << ";";
+        activity_timestamp_ofs << start_duration.start_timestamp << ";";
+        activity_timestamp_ofs << start_duration.duration << std::endl;
+      }
     }
     ofs.close();
+    activity_timestamp_ofs.close();
     MS_LOG(INFO) << "Write " << device_info.second.size() << " activity infos into file: " << file_path;
   }
+}
+
+void DataSaver::WriteOpTimestamp(const std::string &saver_base_dir) {
+  std::string file_path = saver_base_dir + "/op_execute_timestamp_" + device_id_ + ".txt";
+  std::ofstream ofs(file_path);
+  // check if the file is writable
+  if (!ofs.is_open()) {
+    MS_LOG(WARNING) << "Open file '" << file_path << "' failed!";
+    return;
+  }
+  // write op timestamp info into file
+  for (const auto &op_timestamp_info : op_timestamps_map_) {
+    ofs << op_timestamp_info.first << ";Ops;";
+    for (auto start_end : op_timestamp_info.second) {
+      ofs << start_end.start_timestamp << "," << start_end.duration << " ";
+    }
+    ofs << std::endl;
+  }
+  ofs.close();
 }
 
 }  // namespace gpu
