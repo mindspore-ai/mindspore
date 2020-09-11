@@ -590,7 +590,7 @@ class BertTrainAccumulateStepsWithLossScaleCell(nn.Cell):
             scaling = scaling_sens * self.degree * self.accumulation_steps
             grads = self.hyper_map(F.partial(grad_scale, scaling), grads)
             if self.enable_global_norm:
-                grads = ClipByGlobalNorm()(grad)
+                grads = ClipByGlobalNorm()(grads)
             else:
                 grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
             accu_overflow = self.overflow_reducer(accu_overflow)

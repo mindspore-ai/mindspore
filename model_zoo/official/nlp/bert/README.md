@@ -1,19 +1,32 @@
 # Contents
+- [Contents](#contents)
 - [BERT Description](#bert-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
 - [Quick Start](#quick-start)
 - [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-    - [Script Parameters](#script-parameters)
-    - [Dataset Preparation](#dataset-preparation)
-    - [Training Process](#training-process)
-    - [Evaluation Process](#evaluation-process)
-- [Model Description](#model-description)
-    - [Performance](#performance)
-        - [Training Performance](#training-performance)
-        - [Evaluation Performance](#evaluation-performance)
+  - [Script and Sample Code](#script-and-sample-code)
+  - [Script Parameters](#script-parameters)
+    - [Pre-Training](#pre-training)
+    - [Fine-Tuning and Evaluation](#fine-tuning-and-evaluation)
+  - [Options and Parameters](#options-and-parameters)
+    - [Options:](#options)
+    - [Parameters:](#parameters)
+  - [Training Process](#training-process)
+    - [Training](#training)
+      - [Running on Ascend](#running-on-ascend)
+    - [Distributed Training](#distributed-training)
+      - [Running on Ascend](#running-on-ascend-1)
+  - [Evaluation Process](#evaluation-process)
+    - [Evaluation](#evaluation)
+      - [evaluation on cola dataset when running on Ascend](#evaluation-on-cola-dataset-when-running-on-ascend)
+      - [evaluation on cluener dataset when running on Ascend](#evaluation-on-cluener-dataset-when-running-on-ascend)
+      - [evaluation on squad v1.1 dataset when running on Ascend](#evaluation-on-squad-v11-dataset-when-running-on-ascend)
+  - [Model Description](#model-description)
+  - [Performance](#performance)
+    - [Pretraining Performance](#pretraining-performance)
+      - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -139,7 +152,7 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
     ├─ascend_distributed_launcher
         ├─__init__.py
         ├─hyper_parameter_config.ini          # hyper paramter for distributed pretraining 
-        ├─run_distribute_pretrain.py          # script for distributed pretraining
+        ├─get_distribute_pretrain_cmd.py          # script for distributed pretraining
         ├─README.md    
     ├─run_classifier.sh                       # shell script for standalone classifier task on ascend or gpu
     ├─run_ner.sh                              # shell script for standalone NER task on ascend or gpu
