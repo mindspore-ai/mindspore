@@ -29,7 +29,7 @@ def fc_with_initialize(input_channels, out_channels):
     return nn.Dense(input_channels, out_channels, weight, bias)
 
 def weight_variable():
-    return TruncatedNormal(0.02)  # 0.02
+    return TruncatedNormal(0.02)
 
 
 class AlexNet(nn.Cell):
@@ -51,6 +51,7 @@ class AlexNet(nn.Cell):
         self.fc3 = fc_with_initialize(4096, num_classes)
 
     def construct(self, x):
+        """define network"""
         x = self.conv1(x)
         x = self.relu(x)
         x = self.max_pool2d(x)
