@@ -6,6 +6,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_
 endif ()
 
 include(${CMAKE_SOURCE_DIR}/cmake/options.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/check_requirements.cmake)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
@@ -28,19 +29,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(PYBIND11_CPP_STANDARD -std=c++17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPTION_CXX_FLAGS}")
-
-find_package(Threads)
-if (DEFINED ENV{MS_PATCH_PATH})
-    find_program(Patch_EXECUTABLE patch PATHS $ENV{MS_PATCH_PATH})
-    set(Patch_FOUND ${Patch_EXECUTABLE})
-else ()
-    find_package(Patch)
-endif ()
-if (NOT Patch_FOUND)
-    message(FATAL_ERROR "Patch not found, please set env variable MS_PATCH_PATH, "
-            "usually locate in GIT_PATH/usr/bin in windows")
-endif ()
-message(PATCH_EXECUTABLE = ${Patch_EXECUTABLE})
 
 if (ENABLE_AKG AND (ENABLE_D OR ENABLE_GPU))
     add_subdirectory("${CMAKE_SOURCE_DIR}/akg")
