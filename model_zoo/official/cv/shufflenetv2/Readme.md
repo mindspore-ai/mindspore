@@ -54,14 +54,14 @@ Dataset used: [imagenet](http://www.image-net.org/)
 +-- ShuffleNetV2      
   +-- Readme.md     # descriptions about ShuffleNetV2
   +-- scripts
-  ¦   +--run_distribute_train_for_gpu.sh   # shell script for distributed training
-  ¦   +--run_eval_for_gpu.sh         # shell script for evaluation
-  ¦   +--run_standalone_train_for_gpu.sh   # shell script for standalone training
+    +--run_distribute_train_for_gpu.sh   # shell script for distributed training
+    +--run_eval_for_gpu.sh         # shell script for evaluation
+    +--run_standalone_train_for_gpu.sh   # shell script for standalone training
   +-- src
-  ¦   +--config.py      # parameter configuration
-  ¦   +--dataset.py     # creating dataset
-  ¦   +--loss.py        # loss function for network
-  ¦   +--lr_generator.py     # learning rate config
+    +--config.py      # parameter configuration
+    +--dataset.py     # creating dataset
+    +--loss.py        # loss function for network
+    +--lr_generator.py     # learning rate config
   +-- train.py      # training script
   +-- eval.py       # evaluation script
   +-- blocks.py     # ShuffleNetV2 blocks
@@ -83,7 +83,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 ```
 # training example
   python:
-      GPU: mpirun --allow-run-as-root -n 8 python train.py --is_distributed=True --platform='GPU' --dataset_path='~/imagenet/train/' > train.log 2>&1 &
+      GPU: mpirun --allow-run-as-root -n 8 --output-filename log_output --merge-stderr-to-stdout python train.py --is_distributed=True --platform='GPU' --dataset_path='~/imagenet/train/' > train.log 2>&1 &
 
   shell:
       GPU: cd scripts & sh run_distribute_train_for_gpu.sh 8 0,1,2,3,4,5,6,7 ~/imagenet/train/

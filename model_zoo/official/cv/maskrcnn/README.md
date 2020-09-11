@@ -329,7 +329,7 @@ sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 ### [Training Result](#content)
 
-Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the followings in loss.log.
+Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the followings in loss_rankid.log.
 
  
 ```

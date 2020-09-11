@@ -40,7 +40,7 @@ class LossCallBack(Callback):
         per_print_times (int): Print loss every times. Default: 1.
     """
 
-    def __init__(self, per_print_times=1):
+    def __init__(self, per_print_times=1, rank_id=0):
         super(LossCallBack, self).__init__()
         if not isinstance(per_print_times, int) or per_print_times < 0:
             raise ValueError("print_step must be int and >= 0.")
@@ -53,6 +53,7 @@ class LossCallBack(Callback):
         self.rcnn_cls_loss_sum = 0
         self.rcnn_reg_loss_sum = 0
         self.rcnn_mask_loss_sum = 0
+        self.rank_id = rank_id
 
         global time_stamp_init, time_stamp_first
         if not time_stamp_init:
@@ -96,7 +97,7 @@ class LossCallBack(Callback):
 
             total_loss = rpn_loss + rcnn_loss
 
-            loss_file = open("./loss.log", "a+")
+            loss_file = open("./loss_{}.log".format(self.rank_id), "a+")
             loss_file.write("%lu epoch: %s step: %s ,rpn_loss: %.5f, rcnn_loss: %.5f, rpn_cls_loss: %.5f, "
                             "rpn_reg_loss: %.5f, rcnn_cls_loss: %.5f, rcnn_reg_loss: %.5f, rcnn_mask_loss: %.5f, "
                             "total_loss: %.5f" %

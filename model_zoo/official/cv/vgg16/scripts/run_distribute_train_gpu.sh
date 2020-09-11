@@ -22,7 +22,8 @@ echo "==========================================================================
 
 DATA_PATH=$1
 
-mpirun -n 8 python train.py  \
+mpirun -n 8 --output-filename log_output --merge-stderr-to-stdout \
+  python train.py  \
     --device_target="GPU" \
     --dataset="imagenet2012" \
     --is_distributed=1 \

@@ -199,24 +199,28 @@ def _build_training_pipeline(config: TransformerConfig,
                                                               scale_update_cell=scale_manager.get_update_cell())
     net_with_grads.set_train(True)
     model = Model(net_with_grads)
-    loss_monitor = LossCallBack(config)
     ckpt_config = CheckpointConfig(save_checkpoint_steps=config.save_ckpt_steps,
                                    keep_checkpoint_max=config.keep_ckpt_max)
 
     rank_size = os.getenv('RANK_SIZE')
-    callbacks = [loss_monitor]
-    if rank_size is not None and int(rank_size) > 1 and MultiAscend.get_rank() % 8 == 0:
-        ckpt_callback = ModelCheckpoint(
-            prefix=config.ckpt_prefix,
-            directory=os.path.join(config.ckpt_path, 'ckpt_{}'.format(os.getenv('DEVICE_ID'))),
-            config=ckpt_config)
-        callbacks.append(ckpt_callback)
+    callbacks = []
+    if rank_size is not None and int(rank_size) > 1:
+        loss_monitor = LossCallBack(config, rank_id=MultiAscend.get_rank())
+        callbacks.append(loss_monitor)
+        if MultiAscend.get_rank() % 8 == 0:
+            ckpt_callback = ModelCheckpoint(
+                prefix=config.ckpt_prefix,
+                directory=os.path.join(config.ckpt_path, 'ckpt_{}'.format(MultiAscend.get_rank())),
+                config=ckpt_config)
+            callbacks.append(ckpt_callback)
 
     if rank_size is None or int(rank_size) == 1:
         ckpt_callback = ModelCheckpoint(
             prefix=config.ckpt_prefix,
             directory=os.path.join(config.ckpt_path, 'ckpt_{}'.format(os.getenv('DEVICE_ID'))),
             config=ckpt_config)
+        loss_monitor = LossCallBack(config, rank_id=os.getenv('DEVICE_ID'))
+        callbacks.append(loss_monitor)
         callbacks.append(ckpt_callback)
 
     print(f" | ALL SET, PREPARE TO TRAIN.")

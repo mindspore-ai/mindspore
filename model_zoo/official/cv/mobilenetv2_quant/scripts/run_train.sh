@@ -167,14 +167,14 @@ run_gpu(){
     env > env.log
     if [ $# == 3 ]
     then
-        mpirun --allow-run-as-root -n ${RANK_SIZE} \
+        mpirun --allow-run-as-root -n ${RANK_SIZE} --output-filename log_output --merge-stderr-to-stdout \
         python train.py --device_target=$1  --dataset_path=$PATH1 &> train.log &
     fi
     
     if [ $# == 4 ]
     then
-        mpirun --allow-run-as-root -n ${RANK_SIZE} \
-        python train.py --device_target=$1  --dataset_path=$PATH1 --pre_trained=$PATH2 &> train.log &
+        mpirun --allow-run-as-root -n ${RANK_SIZE} --output-filename log_output --merge-stderr-to-stdout \
+        python train.py --device_traget=$1  --dataset_path=$PATH1 --pre_trained=$PATH2 &> train.log &
     fi
 
     cd ..

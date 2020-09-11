@@ -14,4 +14,5 @@
 # limitations under the License.
 # ============================================================================
 DATA_DIR=$1
-mpirun --allow-run-as-root -n 8 python ./train.py --is_distributed --platform 'GPU' --dataset_path $DATA_DIR > train.log 2>&1 &
+mpirun --allow-run-as-root -n 8 --output-filename log_output --merge-stderr-to-stdout \
+  python ./train.py --is_distributed --platform 'GPU' --dataset_path $DATA_DIR > train.log 2>&1 &

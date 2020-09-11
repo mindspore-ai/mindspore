@@ -131,7 +131,7 @@ if __name__ == '__main__':
         net = TrainOneStepCell(net_with_loss, net, opt, sens=config.loss_scale)
 
     time_cb = TimeMonitor(data_size=dataset_size)
-    loss_cb = LossCallBack()
+    loss_cb = LossCallBack(rank_id=rank)
     cb = [time_cb, loss_cb]
     if config.save_checkpoint:
         ckptconfig = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * dataset_size,

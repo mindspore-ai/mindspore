@@ -21,7 +21,7 @@ RANK_SIZE=$1
 EPOCH_SIZE=$2
 DATASET=$3
 
-mpirun --allow-run-as-root -n $RANK_SIZE                    \
+mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
     python -s ${self_path}/../train_and_eval_distribute.py  \
         --device_target="GPU"                               \
         --data_path=$DATASET                                \

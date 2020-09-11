@@ -53,11 +53,12 @@ class LossCallBack(Callback):
     Args:
         per_print_times (int): Print loss every times. Default: 1.
     """
-    def __init__(self, per_print_times=1):
+    def __init__(self, per_print_times=1, rank_id=0):
         super(LossCallBack, self).__init__()
         if not isinstance(per_print_times, int) or per_print_times < 0:
             raise ValueError("print_step must be int and >= 0.")
         self._per_print_times = per_print_times
+        self.rank_id = rank_id
         global time_stamp_init, time_stamp_first
         if not time_stamp_init:
             time_stamp_first = get_ms_timestamp()
@@ -71,7 +72,7 @@ class LossCallBack(Callback):
         print("time: {}, epoch: {}, step: {}, outputs are {}".format(time_stamp_current - time_stamp_first,
                                                                      cb_params.cur_epoch_num, cb_params.cur_step_num,
                                                                      str(cb_params.net_outputs)))
-        with open("./loss.log", "a+") as f:
+        with open("./loss_{}.log".fromat(self.rank_id), "a+") as f:
             f.write("time: {}, epoch: {}, step: {}, outputs are {}".format(time_stamp_current - time_stamp_first,
                                                                            cb_params.cur_epoch_num,
                                                                            cb_params.cur_step_num,
@@ -145,7 +146,7 @@ def run_transformer_train():
                                   min_lr=cfg.lr_schedule.min_lr), mstype.float32)
     optimizer = Adam(netwithloss.trainable_params(), lr)
 
-    callbacks = [TimeMonitor(dataset.get_dataset_size()), LossCallBack()]
+    callbacks = [TimeMonitor(dataset.get_dataset_size()), LossCallBack(rank_id=rank_id)]
     if args.enable_save_ckpt == "true":
         if device_num == 1 or (device_num > 1 and rank_id == 0):
             ckpt_config = CheckpointConfig(save_checkpoint_steps=args.save_checkpoint_steps,

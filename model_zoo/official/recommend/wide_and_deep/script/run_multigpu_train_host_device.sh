@@ -23,7 +23,7 @@ DATASET=$3
 VOCAB_SIZE=$4
 EMB_DIM=$5
 
-mpirun --allow-run-as-root -n $RANK_SIZE                       \
+mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
     python -s ${self_path}/../train_and_eval_auto_parallel.py  \
         --device_target="GPU"                                  \
         --data_path=$DATASET                                   \
