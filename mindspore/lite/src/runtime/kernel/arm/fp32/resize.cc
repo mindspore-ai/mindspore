@@ -179,12 +179,8 @@ int ResizeCPUKernel::RunImpl(int task_id) {
       break;
     }
     case static_cast<int>(schema::ResizeMethod_NEAREST_NEIGHBOR): {
-      if (align_corners_) {
-        MS_LOG(ERROR) << "ResizeNearestNeighbor not support align_corners.";
-        return RET_ERROR;
-      }
-      ret = ResizeNearestNeighbor(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(), task_id,
-                                  context_->thread_num_);
+      ret = ResizeNearestNeighbor(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
+                                  align_corners_, task_id, context_->thread_num_);
       break;
     }
     case schema::ResizeMethod_UNKNOW:

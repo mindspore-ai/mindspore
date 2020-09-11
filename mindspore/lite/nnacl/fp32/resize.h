@@ -38,7 +38,7 @@ int ResizeBilinear2(const float *input_data, float *output_data, const int *inpu
                     float *x_left_weights, float *line0, float *line1, int n_h_begin, int n_h_end);
 
 int ResizeNearestNeighbor(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                          int tid, int thread_num);
+                          bool align_corners, int tid, int thread_num);
 #ifdef __cplusplus
 }
 #endif
