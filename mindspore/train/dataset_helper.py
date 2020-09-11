@@ -18,8 +18,7 @@ import os
 
 from mindspore._checkparam import check_bool, check_int
 from .. import context, nn
-from ._utils import _exec_datagraph, _get_types_and_shapes, _to_tensor, \
-    _construct_tensor_list
+from ._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
 from ..nn.wrap import GetNextSingleOp
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_shapes
 from ..ops import operations as P
@@ -297,4 +296,4 @@ class _DatasetIterNormal:
 
     def __next__(self):
         data = self.iter.__next__()
-        return _to_tensor(data)
+        return data

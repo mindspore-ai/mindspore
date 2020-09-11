@@ -55,7 +55,8 @@ def test_resize_with_bbox_op_voc_c(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1), dataVoc2.create_dict_iterator(num_epochs=1)):
+    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                          dataVoc2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 
@@ -91,7 +92,8 @@ def test_resize_with_bbox_op_coco_c(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataCOCO1.create_dict_iterator(num_epochs=1), dataCOCO2.create_dict_iterator(num_epochs=1)):
+    for unAug, Aug in zip(dataCOCO1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                          dataCOCO2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 
@@ -127,7 +129,8 @@ def test_resize_with_bbox_op_edge_c(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1), dataVoc2.create_dict_iterator(num_epochs=1)):
+    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                          dataVoc2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 

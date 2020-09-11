@@ -19,7 +19,6 @@ import os
 import re
 import argparse
 import mindspore.common.dtype as mstype
-from mindspore import Tensor
 from mindspore import context
 from mindspore.train.model import Model
 from mindspore.train.callback import TimeMonitor
@@ -282,7 +281,7 @@ def do_eval_standalone():
     for data in eval_dataset.create_dict_iterator():
         input_data = []
         for i in columns_list:
-            input_data.append(Tensor(data[i]))
+            input_data.append(data[i])
         input_ids, input_mask, token_type_id, label_ids = input_data
         logits = eval_model(input_ids, token_type_id, input_mask)
         callback.update(logits[3], label_ids)

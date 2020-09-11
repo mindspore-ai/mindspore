@@ -44,7 +44,7 @@ def get_rescaled(image_id):
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1):
-        image = item["image"]
+        image = item["image"].asnumpy()
         if num_iter == image_id:
             return rescale_np(image)
         num_iter += 1
@@ -69,7 +69,8 @@ def test_rescale_op(plot=False):
     data2 = data1.map(operations=rescale_op, input_columns=["image"])
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         image_original = item1["image"]
         image_de_rescaled = item2["image"]
         image_np_rescaled = get_rescaled(num_iter)

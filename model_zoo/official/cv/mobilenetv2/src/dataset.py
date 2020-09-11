@@ -109,7 +109,7 @@ def extract_features(net, dataset_path, config):
                              config=config,
                              repeat_num=1)
     step_size = dataset.get_dataset_size()
-    pbar = tqdm(list(dataset.create_dict_iterator()))
+    pbar = tqdm(list(dataset.create_dict_iterator(output_numpy=True)))
     model = Model(net)
     i = 0
     for data in pbar:

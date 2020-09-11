@@ -48,10 +48,10 @@ def test_invert_py(plot=False):
 
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = np.transpose(image, (0, 2, 3, 1))
+            images_original = np.transpose(image.asnumpy(), (0, 2, 3, 1))
         else:
             images_original = np.append(images_original,
-                                        np.transpose(image, (0, 2, 3, 1)),
+                                        np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                         axis=0)
 
     # Color Inverted Images
@@ -68,10 +68,10 @@ def test_invert_py(plot=False):
 
     for idx, (image, _) in enumerate(ds_invert):
         if idx == 0:
-            images_invert = np.transpose(image, (0, 2, 3, 1))
+            images_invert = np.transpose(image.asnumpy(), (0, 2, 3, 1))
         else:
             images_invert = np.append(images_invert,
-                                      np.transpose(image, (0, 2, 3, 1)),
+                                      np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                       axis=0)
 
     num_samples = images_original.shape[0]
@@ -101,10 +101,10 @@ def test_invert_c(plot=False):
 
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = image
+            images_original = image.asnumpy()
         else:
             images_original = np.append(images_original,
-                                        image,
+                                        image.asnumpy(),
                                         axis=0)
 
     # Invert Images
@@ -119,10 +119,10 @@ def test_invert_c(plot=False):
 
     for idx, (image, _) in enumerate(ds_invert):
         if idx == 0:
-            images_invert = image
+            images_invert = image.asnumpy()
         else:
             images_invert = np.append(images_invert,
-                                      image,
+                                      image.asnumpy(),
                                       axis=0)
     if plot:
         visualize_list(images_original, images_invert)
@@ -150,10 +150,10 @@ def test_invert_py_c(plot=False):
 
     for idx, (image, _) in enumerate(ds_c_invert):
         if idx == 0:
-            images_c_invert = image
+            images_c_invert = image.asnumpy()
         else:
             images_c_invert = np.append(images_c_invert,
-                                        image,
+                                        image.asnumpy(),
                                         axis=0)
 
     # invert images in python
@@ -171,10 +171,10 @@ def test_invert_py_c(plot=False):
 
     for idx, (image, _) in enumerate(ds_p_invert):
         if idx == 0:
-            images_p_invert = image
+            images_p_invert = image.asnumpy()
         else:
             images_p_invert = np.append(images_p_invert,
-                                        image,
+                                        image.asnumpy(),
                                         axis=0)
 
     num_samples = images_c_invert.shape[0]

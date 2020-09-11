@@ -48,7 +48,7 @@ def test_take_01():
 
     # Here i refers to index, d refers to data element
     for _, d in enumerate(data1):
-        assert d[0][0] == 0
+        assert d[0].asnumpy()[0] == 0
 
     assert sum([1 for _ in data1]) == 2
 
@@ -65,7 +65,7 @@ def test_take_02():
 
     # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
-        assert i % 2 == d[0][0]
+        assert i % 2 == d[0].asnumpy()[0]
 
     assert sum([1 for _ in data1]) == 4
 
@@ -82,7 +82,7 @@ def test_take_03():
 
     # Here i refers to index, d refers to data elements
     for i, d in enumerate(data1):
-        assert i % 3 == d[0][0]
+        assert i % 3 == d[0].asnumpy()[0]
 
     assert sum([1 for _ in data1]) == 6
 
@@ -99,7 +99,7 @@ def test_take_04():
 
     # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
-        assert i % 3 == d[0][0]
+        assert i % 3 == d[0].asnumpy()[0]
 
     assert sum([1 for _ in data1]) == 6
 
@@ -115,7 +115,7 @@ def test_take_05():
 
     # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
-        assert i == d[0][0]
+        assert i == d[0].asnumpy()[0]
 
     assert sum([1 for _ in data1]) == 2
 
@@ -132,7 +132,7 @@ def test_take_06():
 
     # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
-        assert i % 3 == d[0][0]
+        assert i % 3 == d[0].asnumpy()[0]
 
     assert sum([1 for _ in data1]) == 4
 
@@ -173,7 +173,7 @@ def test_take_09():
 
     # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
-        assert i % 3 == d[0][0]
+        assert i % 3 == d[0].asnumpy()[0]
 
     assert sum([1 for _ in data1]) == 6
 
@@ -190,7 +190,7 @@ def test_take_10():
 
     # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
-        assert i % 3 == d[0][0]
+        assert i % 3 == d[0].asnumpy()[0]
 
     assert sum([1 for _ in data1]) == 6
 
@@ -208,7 +208,7 @@ def test_take_11():
 
     # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
-        assert 2 * (i % 2) == d[0][0]
+        assert 2 * (i % 2) == d[0].asnumpy()[0]
 
     assert sum([1 for _ in data1]) == 4
 
@@ -226,7 +226,7 @@ def test_take_12():
 
     # Here i refers to index, d refers to data element
     for _, d in enumerate(data1):
-        assert d[0][0] == 0
+        assert d[0].asnumpy()[0] == 0
 
     assert sum([1 for _ in data1]) == 2
 
@@ -245,7 +245,7 @@ def test_take_13():
 
     # Here i refers to index, d refers to data element
     for _, d in enumerate(data1):
-        assert d[0][0] == 2
+        assert d[0].asnumpy()[0] == 2
 
     assert sum([1 for _ in data1]) == 2
 
@@ -264,7 +264,7 @@ def test_take_14():
 
     # Here i refers to index, d refers to data element
     for _, d in enumerate(data1):
-        assert d[0][0] == 2
+        assert d[0].asnumpy()[0] == 2
 
     assert sum([1 for _ in data1]) == 2
 
@@ -281,7 +281,7 @@ def test_take_15():
 
     # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
-        assert (i + 2) == d[0][0]
+        assert (i + 2) == d[0].asnumpy()[0]
 
     assert sum([1 for _ in data1]) == 4
 
@@ -298,7 +298,7 @@ def test_take_16():
 
     # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
-        assert (i + 3) == d[0][0]
+        assert (i + 3) == d[0].asnumpy()[0]
 
     assert sum([1 for _ in data1]) == 5
 
@@ -315,7 +315,7 @@ def test_take_17():
 
     # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
-        assert i == d[0][0]
+        assert i == d[0].asnumpy()[0]
 
     assert sum([1 for _ in data1]) == 4
 
@@ -336,7 +336,7 @@ def test_take_18():
 
     # Here i refers to index, d refers to data element
     for _, d in enumerate(data1):
-        assert d[0][0] == 2
+        assert d[0].asnumpy()[0] == 2
 
     assert sum([1 for _ in data1]) == 2
 

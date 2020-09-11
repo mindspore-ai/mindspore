@@ -47,10 +47,10 @@ def test_uniform_augment(plot=False, num_ops=2):
 
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = np.transpose(image, (0, 2, 3, 1))
+            images_original = np.transpose(image.asnumpy(), (0, 2, 3, 1))
         else:
             images_original = np.append(images_original,
-                                        np.transpose(image, (0, 2, 3, 1)),
+                                        np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                         axis=0)
 
             # UniformAugment Images
@@ -76,10 +76,10 @@ def test_uniform_augment(plot=False, num_ops=2):
 
     for idx, (image, _) in enumerate(ds_ua):
         if idx == 0:
-            images_ua = np.transpose(image, (0, 2, 3, 1))
+            images_ua = np.transpose(image.asnumpy(), (0, 2, 3, 1))
         else:
             images_ua = np.append(images_ua,
-                                  np.transpose(image, (0, 2, 3, 1)),
+                                  np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                   axis=0)
 
     num_samples = images_original.shape[0]
@@ -110,10 +110,10 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
 
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = np.transpose(image, (0, 2, 3, 1))
+            images_original = np.transpose(image.asnumpy(), (0, 2, 3, 1))
         else:
             images_original = np.append(images_original,
-                                        np.transpose(image, (0, 2, 3, 1)),
+                                        np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                         axis=0)
 
     # UniformAugment Images
@@ -136,10 +136,10 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
 
     for idx, (image, _) in enumerate(ds_ua):
         if idx == 0:
-            images_ua = np.transpose(image, (0, 2, 3, 1))
+            images_ua = np.transpose(image.asnumpy(), (0, 2, 3, 1))
         else:
             images_ua = np.append(images_ua,
-                                  np.transpose(image, (0, 2, 3, 1)),
+                                  np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                   axis=0)
     if plot:
         visualize_list(images_original, images_ua)
@@ -254,7 +254,7 @@ def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
     ds1 = ds1.batch(batch_size, drop_remainder=True, num_parallel_workers=1)
     num_batches = 0
     try:
-        for _ in ds1.create_dict_iterator(num_epochs=1):
+        for _ in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_batches += 1
     except Exception as e:
         assert "Crop size" in str(e)

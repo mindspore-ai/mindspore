@@ -26,7 +26,7 @@ def test_random_select_subpolicy():
             data = ds.NumpySlicesDataset(arr, column_names="col", shuffle=False)
             data = data.map(operations=visions.RandomSelectSubpolicy(policy), input_columns=["col"])
             res = []
-            for i in data.create_dict_iterator(num_epochs=1):
+            for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
                 res.append(i["col"].tolist())
             return res
         except (TypeError, ValueError) as e:

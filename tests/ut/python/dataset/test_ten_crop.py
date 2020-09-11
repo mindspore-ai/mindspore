@@ -51,7 +51,8 @@ def util_test_ten_crop(crop_size, vertical_flip=False, plot=False):
     transform_2 = mindspore.dataset.transforms.py_transforms.Compose(transforms_2)
     data2 = data2.map(operations=transform_2, input_columns=["image"])
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         num_iter += 1
         image_1 = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image_2 = item2["image"]

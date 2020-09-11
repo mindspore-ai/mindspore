@@ -86,9 +86,9 @@ def test_decode_op():
 
     num_epoch = 5
     # iter1 will always assume there is a next epoch and never shutdown.
-    iter1 = data1.create_dict_iterator()
+    iter1 = data1.create_dict_iterator(output_numpy=True)
     # iter 2 will stop and shutdown pipeline after num_epoch
-    iter2 = data2.create_dict_iterator(num_epoch)
+    iter2 = data2.create_dict_iterator(num_epoch, output_numpy=True)
     for _ in range(num_epoch):
         i = 0
         for item1, item2 in itertools.zip_longest(iter1, iter2):
@@ -135,7 +135,7 @@ def test_generator_dict_0():
 
     i = 0
     # create the iterator inside the loop declaration
-    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
@@ -154,7 +154,7 @@ def test_generator_dict_1():
         i = 0
         # BAD. Do not create iterator every time inside.
         # Create iterator outside the epoch for loop.
-        for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
+        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
             golden = np.array([i])
             np.testing.assert_array_equal(item["data"], golden)
             i = i + 1
@@ -174,7 +174,7 @@ def test_generator_dict_2():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            np.testing.assert_array_equal(item["data"], golden)
+            np.testing.assert_array_equal(item["data"].asnumpy(), golden)
             i = i + 1
         assert i == 64
 
@@ -197,7 +197,7 @@ def test_generator_dict_3():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            np.testing.assert_array_equal(item["data"], golden)
+            np.testing.assert_array_equal(item["data"].asnumpy(), golden)
             i = i + 1
         assert i == 64
     # optional
@@ -221,7 +221,7 @@ def test_generator_dict_4():
         i = 0
         for item in iter1:  # each data is a dictionary
             golden = np.array([i])
-            np.testing.assert_array_equal(item["data"], golden)
+            np.testing.assert_array_equal(item["data"].asnumpy(), golden)
             i = i + 1
         assert i == 64
 
@@ -240,7 +240,7 @@ def test_generator_dict_4_1():
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     # epoch ctrl op will not be injected if num_epochs is 1.
-    iter1 = data1.create_dict_iterator(num_epochs=1)
+    iter1 = data1.create_dict_iterator(num_epochs=1, output_numpy=True)
     for _ in range(1):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -266,7 +266,7 @@ def test_generator_dict_4_2():
     # repeat will not be injected when num repeat is 1.
     data1 = data1.repeat(1)
     # epoch ctrl op will not be injected if num_epochs is 1.
-    iter1 = data1.create_dict_iterator(num_epochs=1)
+    iter1 = data1.create_dict_iterator(num_epochs=1, output_numpy=True)
     for _ in range(1):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -289,7 +289,7 @@ def test_generator_dict_5():
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
-    iter1 = data1.create_dict_iterator(num_epochs=11)
+    iter1 = data1.create_dict_iterator(num_epochs=11, output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -326,7 +326,7 @@ def test_generator_tuple_0():
 
     i = 0
     # create the iterator inside the loop declaration
-    for item in data1.create_tuple_iterator(num_epochs=1):  # each data is a dictionary
+    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(item[0], golden)
         i = i + 1
@@ -345,7 +345,7 @@ def test_generator_tuple_1():
         i = 0
         # BAD. Do not create iterator every time inside.
         # Create iterator outside the epoch for loop.
-        for item in data1.create_tuple_iterator(num_epochs=1):  # each data is a dictionary
+        for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
             golden = np.array([i])
             np.testing.assert_array_equal(item[0], golden)
             i = i + 1
@@ -360,7 +360,7 @@ def test_generator_tuple_2():
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
-    iter1 = data1.create_tuple_iterator()
+    iter1 = data1.create_tuple_iterator(output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -383,7 +383,7 @@ def test_generator_tuple_3():
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
-    iter1 = data1.create_tuple_iterator()
+    iter1 = data1.create_tuple_iterator(output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -407,7 +407,7 @@ def test_generator_tuple_4():
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
-    iter1 = data1.create_tuple_iterator(num_epochs=10)
+    iter1 = data1.create_tuple_iterator(num_epochs=10, output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -430,7 +430,7 @@ def test_generator_tuple_5():
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
-    iter1 = data1.create_tuple_iterator(num_epochs=11)
+    iter1 = data1.create_tuple_iterator(num_epochs=11, output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -464,7 +464,7 @@ def test_generator_tuple_repeat_1():
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat(2)
-    iter1 = data1.create_tuple_iterator(num_epochs=11)
+    iter1 = data1.create_tuple_iterator(num_epochs=11, output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -499,7 +499,7 @@ def test_generator_tuple_repeat_repeat_1():
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat(2)
     data1 = data1.repeat(3)
-    iter1 = data1.create_tuple_iterator(num_epochs=11)
+    iter1 = data1.create_tuple_iterator(num_epochs=11, output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -533,7 +533,7 @@ def test_generator_tuple_repeat_repeat_2():
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat(2)
     data1 = data1.repeat(3)
-    iter1 = data1.create_tuple_iterator()
+    iter1 = data1.create_tuple_iterator(output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -559,7 +559,7 @@ def test_generator_tuple_repeat_repeat_3():
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat(2)
     data1 = data1.repeat(3)
-    iter1 = data1.create_tuple_iterator()
+    iter1 = data1.create_tuple_iterator(output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -589,7 +589,7 @@ def test_generator_tuple_infinite_repeat_repeat_1():
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat()
     data1 = data1.repeat(3)
-    iter1 = data1.create_tuple_iterator(num_epochs=11)
+    iter1 = data1.create_tuple_iterator(num_epochs=11, output_numpy=True)
 
     i = 0
     for item in iter1:  # each data is a dictionary
@@ -612,7 +612,7 @@ def test_generator_tuple_infinite_repeat_repeat_2():
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat(3)
     data1 = data1.repeat()
-    iter1 = data1.create_tuple_iterator(num_epochs=11)
+    iter1 = data1.create_tuple_iterator(num_epochs=11, output_numpy=True)
 
     i = 0
     for item in iter1:  # each data is a dictionary
@@ -635,7 +635,7 @@ def test_generator_tuple_infinite_repeat_repeat_3():
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat()
     data1 = data1.repeat()
-    iter1 = data1.create_tuple_iterator(num_epochs=11)
+    iter1 = data1.create_tuple_iterator(num_epochs=11, output_numpy=True)
 
     i = 0
     for item in iter1:  # each data is a dictionary
@@ -658,7 +658,7 @@ def test_generator_tuple_infinite_repeat_repeat_4():
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat()
     data1 = data1.repeat()
-    iter1 = data1.create_tuple_iterator()
+    iter1 = data1.create_tuple_iterator(output_numpy=True)
 
     i = 0
     for item in iter1:  # each data is a dictionary
@@ -680,7 +680,7 @@ def test_generator_reusedataset():
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat(2)
-    iter1 = data1.create_tuple_iterator()
+    iter1 = data1.create_tuple_iterator(output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -690,7 +690,7 @@ def test_generator_reusedataset():
         assert i == 64 * 2
 
     data1 = data1.repeat(3)
-    iter1 = data1.create_tuple_iterator()
+    iter1 = data1.create_tuple_iterator(output_numpy=True)
     for _ in range(5):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -700,7 +700,7 @@ def test_generator_reusedataset():
         assert i == 64 * 2 * 3
 
     data1 = data1.batch(2)
-    iter1 = data1.create_dict_iterator()
+    iter1 = data1.create_dict_iterator(output_numpy=True)
     for _ in range(5):
         i = 0
         sample = 0

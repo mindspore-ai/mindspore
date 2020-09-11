@@ -394,7 +394,7 @@ class Dataset:
             logger.error("func must be a function.")
             raise TypeError("func must be a function.")
 
-        for row_data in self:
+        for row_data in self.create_tuple_iterator(output_numpy=True):
             if dataset is None:
                 dataset = func(row_data)
             else:
@@ -1133,7 +1133,7 @@ class Dataset:
 
         return SaveOp(self).save(file_names, file_type)
 
-    def create_tuple_iterator(self, columns=None, num_epochs=-1):
+    def create_tuple_iterator(self, columns=None, num_epochs=-1, output_numpy=False):
         """
         Create an Iterator over the dataset. The data retrieved will be a list of ndarray of data.
 
@@ -1143,8 +1143,11 @@ class Dataset:
         Args:
             columns (list[str], optional): List of columns to be used to specify the order of columns
                 (default=None, means all columns).
-            num_epochs (int, optional): max epochs that iterator can be iteratered,
-                if num_epochs = -1, iterator can be iteratered infinit epochs (default=-1)
+            num_epochs (int, optional): maximum epochs that iterator can be iteratered,
+                if num_epochs = -1, iterator can be iteratered infinite epochs (default=-1)
+            output_numpy (bool, optional): Whether or not to output NumPy datatype,
+                if output_numpy=False, iterator will output MSTensor (default=False).
+
 
         Returns:
             Iterator, list of ndarray.
@@ -1161,9 +1164,9 @@ class Dataset:
         """
         if self._noop_mode():
             return DummyIterator(self, 'tuple')
-        return TupleIterator(self, columns, num_epochs)
+        return TupleIterator(self, columns, num_epochs, output_numpy)
 
-    def create_dict_iterator(self, num_epochs=-1):
+    def create_dict_iterator(self, num_epochs=-1, output_numpy=False):
         """
         Create an Iterator over the dataset.
 
@@ -1171,8 +1174,10 @@ class Dataset:
         of the columns in the dictionary may not be the same as the original order.
 
         Args:
-            num_epochs (int, optional): max epochs that iterator can be iteratered,
-                if num_epochs = -1, iterator can be iteratered infinit epochs (default=-1)
+            num_epochs (int, optional): maximum epochs that iterator can be iteratered,
+                if num_epochs = -1, iterator can be iteratered infinite epochs (default=-1)
+            output_numpy (bool, optional): Whether or not to output NumPy datatype,
+                if output_numpy=False, iterator will output MSTensor (default=False).
 
         Returns:
             Iterator, dictionary of column_name-ndarray pair.
@@ -1190,7 +1195,7 @@ class Dataset:
         """
         if self._noop_mode():
             return DummyIterator(self, 'dict')
-        return DictIterator(self, num_epochs)
+        return DictIterator(self, num_epochs, output_numpy)
 
     def __iter__(self):
         """Create an Iterator over the dataset."""
@@ -1617,7 +1622,7 @@ class BucketBatchByLengthDataset(DatasetOp):
         """
         if self.dataset_size is None:
             num_rows = 0
-            for _ in self.create_dict_iterator(num_epochs=1):
+            for _ in self.create_dict_iterator(num_epochs=1, output_numpy=True):
                 num_rows += 1
             self.dataset_size = num_rows
         return self.dataset_size
@@ -2163,7 +2168,7 @@ class FilterDataset(DatasetOp):
         """
         if self.dataset_size is None:
             num_rows = 0
-            for _ in self.create_dict_iterator(num_epochs=1):
+            for _ in self.create_dict_iterator(num_epochs=1, output_numpy=True):
                 num_rows += 1
             self.dataset_size = num_rows
         return self.dataset_size
@@ -2400,7 +2405,7 @@ class ConcatDataset(DatasetOp):
         """
         if self.dataset_size is None:
             num_rows = 0
-            for _ in self.create_dict_iterator(num_epochs=1):
+            for _ in self.create_dict_iterator(num_epochs=1, output_numpy=True):
                 num_rows += 1
             self.dataset_size = num_rows
         return self.dataset_size
@@ -3495,7 +3500,7 @@ class GeneratorDataset(MappableDataset):
                     self.dataset_size = rows_from_sampler
             else:
                 num_rows = 0
-                for _ in self.create_dict_iterator(num_epochs=1):
+                for _ in self.create_dict_iterator(num_epochs=1, output_numpy=True):
                     num_rows += 1
                 self.dataset_size = num_rows
         return self.dataset_size

@@ -44,7 +44,7 @@ def yolo_eval(dataset_path, ckpt_path):
     print("\n========================================\n")
     print("total images num: ", total)
     print("Processing, please wait a moment.")
-    for data in ds.create_dict_iterator():
+    for data in ds.create_dict_iterator(output_numpy=True):
         img_np = data['image']
         image_shape = data['image_shape']
         annotation = data['annotation']

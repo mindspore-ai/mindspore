@@ -30,7 +30,6 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.nn.optim import AdamWeightDecay, Lamb, Momentum
-from mindspore.common.tensor import Tensor
 from mindspore.train.model import Model
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -132,7 +131,7 @@ def do_eval(dataset=None, network=None, use_crf="", num_class=2, assessment_meth
         for data in dataset.create_dict_iterator():
             input_data = []
             for i in columns_list:
-                input_data.append(Tensor(data[i]))
+                input_data.append(data[i])
             input_ids, input_mask, token_type_id, label_ids = input_data
             logits = model.predict(input_ids, input_mask, token_type_id, label_ids)
             callback.update(logits, label_ids)

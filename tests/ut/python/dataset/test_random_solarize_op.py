@@ -62,7 +62,8 @@ def test_random_solarize_op(threshold=(10, 150), plot=False, run_golden=True):
     image_solarized = []
     image = []
 
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         image_solarized.append(item1["image"].copy())
         image.append(item2["image"].copy())
     if plot:
@@ -88,9 +89,9 @@ def test_random_solarize_mnist(plot=False, run_golden=True):
     for _, (data_orig, data_trans) in enumerate(zip(mnist_1, mnist_2)):
         image_orig, label_orig = data_orig
         image_trans, _ = data_trans
-        images.append(image_orig)
-        labels.append(label_orig)
-        images_trans.append(image_trans)
+        images.append(image_orig.asnumpy())
+        labels.append(label_orig.asnumpy())
+        images_trans.append(image_trans.asnumpy())
 
     if plot:
         visualize_one_channel_dataset(images, images_trans, labels)

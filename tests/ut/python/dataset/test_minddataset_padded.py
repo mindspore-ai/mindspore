@@ -122,7 +122,7 @@ def test_cv_minddataset_reader_basic_padded_samples(add_and_remove_cv_file):
     assert data_set.get_dataset_size() == 15
     num_iter = 0
     num_padded_iter = 0
-    for item in data_set.create_dict_iterator(num_epochs=1):
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info("-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
@@ -157,7 +157,7 @@ def test_cv_minddataset_partition_padded_samples(add_and_remove_cv_file):
                                       padded_sample=padded_sample,
                                       num_padded=num_padded)
             assert data_set.get_dataset_size() == dataset_size
-            for item in data_set.create_dict_iterator(num_epochs=1):
+            for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
                 logger.info("-------------- partition : {} ------------------------".format(partition_id))
                 logger.info("-------------- len(item[data]): {} ------------------------".format(len(item["data"])))
                 logger.info("-------------- item[data]: {} -----------------------------".format(item["data"]))
@@ -205,7 +205,7 @@ def test_cv_minddataset_partition_padded_samples_multi_epoch(add_and_remove_cv_f
             assert data_set.get_dataset_size() == dataset_size
             data_set = data_set.repeat(repeat_size)
             local_index = 0
-            for item in data_set.create_dict_iterator(num_epochs=1):
+            for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
                 logger.info("-------------- partition : {} ------------------------".format(partition_id))
                 logger.info("-------------- len(item[data]): {} ------------------------".format(len(item["data"])))
                 logger.info("-------------- item[data]: {} -----------------------------".format(item["data"]))
@@ -267,7 +267,7 @@ def test_cv_minddataset_partition_padded_samples_no_dividsible(add_and_remove_cv
                                       padded_sample=padded_sample,
                                       num_padded=num_padded)
             num_iter = 0
-            for item in data_set.create_dict_iterator(num_epochs=1):
+            for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
                 num_iter += 1
         return num_iter
 
@@ -313,7 +313,7 @@ def test_cv_minddataset_partition_padded_samples_no_equal_column_list(add_and_re
                                       shard_id=partition_id,
                                       padded_sample=padded_sample,
                                       num_padded=num_padded)
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             logger.info("-------------- partition : {} ------------------------".format(partition_id))
             logger.info("-------------- len(item[data]): {} ------------------------".format(len(item["data"])))
             logger.info("-------------- item[data]: {} -----------------------------".format(item["data"]))
@@ -337,7 +337,7 @@ def test_cv_minddataset_partition_padded_samples_no_column_list(add_and_remove_c
                                       shard_id=partition_id,
                                       padded_sample=padded_sample,
                                       num_padded=num_padded)
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             logger.info("-------------- partition : {} ------------------------".format(partition_id))
             logger.info("-------------- len(item[data]): {} ------------------------".format(len(item["data"])))
             logger.info("-------------- item[data]: {} -----------------------------".format(item["data"]))
@@ -360,7 +360,7 @@ def test_cv_minddataset_partition_padded_samples_no_num_padded(add_and_remove_cv
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       padded_sample=padded_sample)
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             logger.info("-------------- partition : {} ------------------------".format(partition_id))
             logger.info("-------------- len(item[data]): {} ------------------------".format(len(item["data"])))
             logger.info("-------------- item[data]: {} -----------------------------".format(item["data"]))
@@ -383,7 +383,7 @@ def test_cv_minddataset_partition_padded_samples_no_padded_samples(add_and_remov
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       num_padded=num_padded)
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             logger.info("-------------- partition : {} ------------------------".format(partition_id))
             logger.info("-------------- len(item[data]): {} ------------------------".format(len(item["data"])))
             logger.info("-------------- item[data]: {} -----------------------------".format(item["data"]))
@@ -413,7 +413,7 @@ def test_nlp_minddataset_reader_basic_padded_samples(add_and_remove_nlp_file):
                                       padded_sample=padded_sample,
                                       num_padded=num_padded)
             assert data_set.get_dataset_size() == dataset_size
-            for item in data_set.create_dict_iterator(num_epochs=1):
+            for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
                 logger.info("-------------- item[id]: {} ------------------------".format(item["id"]))
                 logger.info("-------------- item[rating]: {} --------------------".format(item["rating"]))
                 logger.info("-------------- item[input_ids]: {}, shape: {} -----------------".format(
@@ -461,7 +461,7 @@ def test_nlp_minddataset_reader_basic_padded_samples_multi_epoch(add_and_remove_
             data_set = data_set.repeat(repeat_size)
 
             local_index = 0
-            for item in data_set.create_dict_iterator(num_epochs=1):
+            for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
                 logger.info("-------------- item[id]: {} ------------------------".format(item["id"]))
                 logger.info("-------------- item[rating]: {} --------------------".format(item["rating"]))
                 logger.info("-------------- item[input_ids]: {}, shape: {} -----------------".format(
@@ -523,7 +523,7 @@ def test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_resul
             assert data_set.get_dataset_size() == dataset_size
             data_set = data_set.repeat(repeat_size)
             inner_num_iter = 0
-            for item in data_set.create_dict_iterator(num_epochs=1):
+            for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
                 logger.info("-------------- item[id]: {} ------------------------".format(item["id"]))
                 logger.info("-------------- item[rating]: {} --------------------".format(item["rating"]))
                 logger.info("-------------- item[input_ids]: {}, shape: {} -----------------"

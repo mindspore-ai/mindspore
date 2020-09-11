@@ -19,7 +19,7 @@ import argparse
 import time
 import numpy as np
 from pycocotools.coco import COCO
-from mindspore import context, Tensor
+from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
 
@@ -68,7 +68,7 @@ def FasterRcnn_eval(dataset_path, ckpt_path, ann_file):
 
         start = time.time()
         # run net
-        output = net(Tensor(img_data), Tensor(img_metas), Tensor(gt_bboxes), Tensor(gt_labels), Tensor(gt_num))
+        output = net(img_data, img_metas, gt_bboxes, gt_labels, gt_num)
         end = time.time()
         print("Iter {} cost time {}".format(eval_iter, end - start))
 

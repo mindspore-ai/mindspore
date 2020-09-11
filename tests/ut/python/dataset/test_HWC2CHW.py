@@ -48,7 +48,8 @@ def test_HWC2CHW(plot=False):
 
     image_transposed = []
     image = []
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         transposed_item = item1["image"].copy()
         original_item = item2["image"].copy()
         image_transposed.append(transposed_item.transpose(1, 2, 0))
@@ -105,7 +106,8 @@ def test_HWC2CHW_comp(plot=False):
 
     image_c_transposed = []
     image_py_transposed = []
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
 

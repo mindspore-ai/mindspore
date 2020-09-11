@@ -44,9 +44,9 @@ def test_mixup_batch_success1(plot=False):
     images_original = None
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = image
+            images_original = image.asnumpy()
         else:
-            images_original = np.append(images_original, image, axis=0)
+            images_original = np.append(images_original, image.asnumpy(), axis=0)
 
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
@@ -60,9 +60,9 @@ def test_mixup_batch_success1(plot=False):
     images_mixup = None
     for idx, (image, _) in enumerate(data1):
         if idx == 0:
-            images_mixup = image
+            images_mixup = image.asnumpy()
         else:
-            images_mixup = np.append(images_mixup, image, axis=0)
+            images_mixup = np.append(images_mixup, image.asnumpy(), axis=0)
     if plot:
         visualize_list(images_original, images_mixup)
 
@@ -88,9 +88,9 @@ def test_mixup_batch_success2(plot=False):
     images_original = None
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = image
+            images_original = image.asnumpy()
         else:
-            images_original = np.append(images_original, image, axis=0)
+            images_original = np.append(images_original, image.asnumpy(), axis=0)
 
     # MixUp Images
     data1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR2, shuffle=False)
@@ -108,9 +108,9 @@ def test_mixup_batch_success2(plot=False):
     images_mixup = None
     for idx, (image, _) in enumerate(data1):
         if idx == 0:
-            images_mixup = image
+            images_mixup = image.asnumpy()
         else:
-            images_mixup = np.append(images_mixup, image, axis=0)
+            images_mixup = np.append(images_mixup, image.asnumpy(), axis=0)
     if plot:
         visualize_list(images_original, images_mixup)
 
@@ -135,9 +135,9 @@ def test_mixup_batch_success3(plot=False):
     images_original = None
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = image
+            images_original = image.asnumpy()
         else:
-            images_original = np.append(images_original, image, axis=0)
+            images_original = np.append(images_original, image.asnumpy(), axis=0)
 
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
@@ -151,9 +151,9 @@ def test_mixup_batch_success3(plot=False):
     images_mixup = np.array([])
     for idx, (image, _) in enumerate(data1):
         if idx == 0:
-            images_mixup = image
+            images_mixup = image.asnumpy()
         else:
-            images_mixup = np.append(images_mixup, image, axis=0)
+            images_mixup = np.append(images_mixup, image.asnumpy(), axis=0)
     if plot:
         visualize_list(images_original, images_mixup)
 
@@ -180,9 +180,9 @@ def test_mixup_batch_success4(plot=False):
     images_original = None
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = image
+            images_original = image.asnumpy()
         else:
-            images_original = np.append(images_original, image, axis=0)
+            images_original = np.append(images_original, image.asnumpy(), axis=0)
 
     # MixUp Images
     data1 = ds.CelebADataset(DATA_DIR3, shuffle=False)
@@ -200,9 +200,9 @@ def test_mixup_batch_success4(plot=False):
     images_mixup = np.array([])
     for idx, (image, _) in enumerate(data1):
         if idx == 0:
-            images_mixup = image
+            images_mixup = image.asnumpy()
         else:
-            images_mixup = np.append(images_mixup, image, axis=0)
+            images_mixup = np.append(images_mixup, image.asnumpy(), axis=0)
     if plot:
         visualize_list(images_original, images_mixup)
 
@@ -252,9 +252,9 @@ def test_mixup_batch_fail1():
     images_original = np.array([])
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = image
+            images_original = image.asnumpy()
         else:
-            images_original = np.append(images_original, image, axis=0)
+            images_original = np.append(images_original, image.asnumpy(), axis=0)
 
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
@@ -266,9 +266,9 @@ def test_mixup_batch_fail1():
         data1 = data1.map(operations=mixup_batch_op, input_columns=["image", "label"])
         for idx, (image, _) in enumerate(data1):
             if idx == 0:
-                images_mixup = image
+                images_mixup = image.asnumpy()
             else:
-                images_mixup = np.append(images_mixup, image, axis=0)
+                images_mixup = np.append(images_mixup, image.asnumpy(), axis=0)
         error_message = "You must make sure images are HWC or CHW and batched"
         assert error_message in str(error.value)
 
@@ -287,9 +287,9 @@ def test_mixup_batch_fail2():
     images_original = np.array([])
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = image
+            images_original = image.asnumpy()
         else:
-            images_original = np.append(images_original, image, axis=0)
+            images_original = np.append(images_original, image.asnumpy(), axis=0)
 
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
@@ -315,9 +315,9 @@ def test_mixup_batch_fail3():
     images_original = None
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = image
+            images_original = image.asnumpy()
         else:
-            images_original = np.append(images_original, image, axis=0)
+            images_original = np.append(images_original, image.asnumpy(), axis=0)
 
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
@@ -332,9 +332,9 @@ def test_mixup_batch_fail3():
         images_mixup = np.array([])
         for idx, (image, _) in enumerate(data1):
             if idx == 0:
-                images_mixup = image
+                images_mixup = image.asnumpy()
             else:
-                images_mixup = np.append(images_mixup, image, axis=0)
+                images_mixup = np.append(images_mixup, image.asnumpy(), axis=0)
     error_message = "Both images and labels columns are required"
     assert error_message in str(error.value)
 
@@ -353,9 +353,9 @@ def test_mixup_batch_fail4():
     images_original = np.array([])
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = image
+            images_original = image.asnumpy()
         else:
-            images_original = np.append(images_original, image, axis=0)
+            images_original = np.append(images_original, image.asnumpy(), axis=0)
 
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
@@ -382,9 +382,9 @@ def test_mixup_batch_fail5():
     images_original = np.array([])
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = image
+            images_original = image.asnumpy()
         else:
-            images_original = np.append(images_original, image, axis=0)
+            images_original = np.append(images_original, image.asnumpy(), axis=0)
 
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
@@ -397,9 +397,9 @@ def test_mixup_batch_fail5():
         images_mixup = np.array([])
         for idx, (image, _) in enumerate(data1):
             if idx == 0:
-                images_mixup = image
+                images_mixup = image.asnumpy()
             else:
-                images_mixup = np.append(images_mixup, image, axis=0)
+                images_mixup = np.append(images_mixup, image.asnumpy(), axis=0)
     error_message = "MixUpBatch: Wrong labels shape. The second column (labels) must have a shape of NC or NLC"
     assert error_message in str(error.value)
 
