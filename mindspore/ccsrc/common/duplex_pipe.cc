@@ -43,7 +43,6 @@ int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fd
     DP_INFO << "Remote process, pid: " << getpid() << ", " << fd1_[0] << "/" << fd2_[1];
     remote_stdout_ = dup(STDOUT_FILENO);
     remote_stdin_ = dup(STDIN_FILENO);
-    remote_stderr_ = dup(STDERR_FILENO);
     close(fd1_[1]);
     close(fd2_[0]);
     if (!append_fds) {
@@ -67,7 +66,6 @@ int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fd
     DP_INFO << "Local process, id: " << getpid() << ", " << fd2_[0] << "/" << fd1_[1];
     local_stdout_ = dup(STDOUT_FILENO);
     local_stdin_ = dup(STDIN_FILENO);
-    local_stderr_ = dup(STDERR_FILENO);
     close(fd1_[0]);
     close(fd2_[1]);
 
@@ -95,18 +93,21 @@ void DuplexPipe::Write(const std::string &buf, bool flush) {
 std::string DuplexPipe::Read() {
   // Read the string from pipe
   std::string buf;
-  ssize_t size;
-  // MAYBE BLOCKED
   // Read one line or multiple lines
-  while (SetTimeOut(), (size = read(fd2_[0], c_buf_, kBufferSize)) > 0) {  // Till reading something
+  while (1) {
+    SetTimeOut();
+    ssize_t size = read(fd2_[0], c_buf_, kBufferSize);  // MAYBE BLOCKED, Till reading something
+    if (size <= 0) {
+      break;
+    }
     CancelTimeOut();
-    DP_DEBUG << ">> [" << c_buf_ << "]";
     bool line_end = c_buf_[size - 1] == '\n';
     buf.append(c_buf_, line_end ? size - 1 : size);  // Copy without the last '\n'
     if (line_end) {
       break;
     }
   }
+  DP_DEBUG << ">> [" << buf << "]";
   return buf;
 }
 
@@ -167,15 +168,15 @@ void DuplexPipe::SignalHandler::CancelAlarm() { alarm(0); }
 
 void DuplexPipe::SignalHandler::SigAlarmHandler(int sig) {
   DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
-  if (!dp_.expired()) {
-    dp_.lock()->NotifyTimeOut();
+  if (dp_ != nullptr) {
+    dp_->NotifyTimeOut();
   }
 }
 
 void DuplexPipe::SignalHandler::SigPipeHandler(int sig) {
-  DP_INFO << "Signal: " << sig;
-  if (!dp_.expired()) {
-    dp_.lock()->Close();
+  DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
+  if (dp_ != nullptr) {
+    dp_->NotifyFinalize();
   }
 }
 
@@ -183,19 +184,11 @@ void DuplexPipe::SignalHandler::SigChildHandler(int sig) {
   DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
   int status;
   auto pid = waitpid(child_pid_, &status, WNOHANG | WUNTRACED);
-  if (WIFEXITED(status)) {
-    DP_INFO << "Child exited, status: " << WEXITSTATUS(status) << ", pid: " << pid << ", dp expired: " << dp_.expired();
-    if (pid > 0 && !dp_.expired()) {
-      dp_.lock()->NotifyFinalize();
+  if (WIFEXITED(status)) {  // Normal exit
+    DP_INFO << "Child exited, status: " << WEXITSTATUS(status) << ", pid: " << pid << ", dp: " << dp_;
+    if (pid > 0 && dp_ != nullptr) {  // It's child_pid_
+      dp_->NotifyFinalize();
     }
-  } else if (WIFSTOPPED(status)) {
-    DP_INFO << "Child stopped, sig: " << WSTOPSIG(status) << ", pid: " << pid;
-  } else if (WIFSIGNALED(status)) {
-    DP_INFO << "Child not exited, signaled, sig: " << WTERMSIG(status) << ", pid: " << pid;
-  } else if (WIFCONTINUED(status)) {
-    DP_INFO << "Child continued, pid: " << pid;
-  } else {
-    DP_INFO << "Wrong child status: " << status << ", pid: " << pid;
   }
 }
 }  // namespace mindspore

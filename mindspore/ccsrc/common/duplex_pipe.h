@@ -60,8 +60,16 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
   DuplexPipe &operator>>(std::string &buf);
 
  private:
-  void SetTimeOut() { signal_handler_->SetAlarm(time_out_secs_); }
-  void CancelTimeOut() { signal_handler_->CancelAlarm(); }
+  void SetTimeOut() {
+    if (signal_handler_ != nullptr) {
+      signal_handler_->SetAlarm(time_out_secs_);
+    }
+  }
+  void CancelTimeOut() {
+    if (signal_handler_ != nullptr) {
+      signal_handler_->CancelAlarm();
+    }
+  }
   void NotifyTimeOut() {
     if (time_out_callback_ != nullptr) {
       (*time_out_callback_)();
@@ -96,10 +104,8 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
 
   int local_stdin_;
   int local_stdout_;
-  int local_stderr_;
   int remote_stdin_;
   int remote_stdout_;
-  int remote_stderr_;
 
   class SignalHandler {
    public:
@@ -114,7 +120,7 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
     static void SigPipeHandler(int sig);
     static void SigChildHandler(int sig);
 
-    inline static std::weak_ptr<DuplexPipe> dp_;
+    inline static std::shared_ptr<DuplexPipe> dp_;
     inline static pid_t child_pid_;
   };
 
