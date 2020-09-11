@@ -1,5 +1,5 @@
 # find exec
-find_package(Python3 3.7 COMPONENTS Interpreter Development)
+find_package(Python3 3.7 COMPONENTS Interpreter)
 if (NOT Python3_FOUND)
     message(FATAL_ERROR "No python3 found.")
 endif ()
