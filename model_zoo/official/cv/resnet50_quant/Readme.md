@@ -1,43 +1,4 @@
 # Contents
-# ResNet-50_quant Example
-
-## Description
-
-This is an example of training ResNet-50_quant with ImageNet2012 dataset in MindSpore.
-
-## Requirements
-
-- Install [MindSpore](https://www.mindspore.cn/install/en).
-
-- Download the dataset ImageNet2012 
-
-> Unzip the ImageNet2012 dataset to any path you want and the folder structure should include train and eval dataset as follows:
-> ```
-> .  
-> ├── ilsvrc                  # train dataset
-> └── ilsvrc_eval             # infer dataset: images should be classified into 1000 directories firstly, just like train images
-> ```
-
-
-## Example structure
-
-```shell
-resnet50_quant/
-  ├── eval.py
-  ├── models
-  │   └── resnet_quant.py
-  ├── Readme.md
-  ├── scripts
-  │   ├── run_infer.sh
-  │   └── run_train.sh
-  ├── src
-  │   ├── config.py
-  │   ├── crossentropy.py
-  │   ├── dataset.py
-  │   ├── launch.py
-  │   └── lr_generator.py
-  └── train.py
-```
 
 - [resnet50 Description](#resnet50-description)
 - [Model Architecture](#model-architecture)
@@ -49,17 +10,16 @@ resnet50_quant/
     - [Script and Sample Code](#script-and-sample-code)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
-        - [Evaluation](#evaluation)
 - [Model Description](#model-description)
     - [Performance](#performance)
-        - [Training Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
+        - [Training Performance](#training-performance)
+        - [Evaluation Performance](#evaluation-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
 # [resnet50 Description](#contents)
 
-ResNet-50 is a convolutional neural network that is 50 layers deep, which can classify ImageNet image nto 1000 object categories with 76% accuracy.
+ResNet-50 is a convolutional neural network that is 50 layers deep, which can classify ImageNet image to 1000 object categories with 76% accuracy.
 
 [Paper](https://arxiv.org/abs/1512.03385) Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun."Deep Residual Learning for Image Recognition." He, Kaiming , et al. "Deep Residual Learning for Image Recognition." IEEE Conference on Computer Vision & Pattern Recognition IEEE Computer Society, 2016.
 
@@ -84,7 +44,7 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 # [Features](#contents)
 
-## [Mixed Precision(Ascend)](#contents)
+## [Mixed Precision](#contents)
 
 The [mixed precision](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
@@ -94,7 +54,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 - Hardware:Ascend
   - Prepare hardware environment with Ascend. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
-  - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
+  - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
   - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
   - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
@@ -147,7 +107,7 @@ epoch: 4 step: 5004, loss is 3.2795618
 epoch: 5 step: 5004, loss is 3.1978393
 ```
 
-## [Eval process](#contents)
+## [Evaluation process](#contents)
 
 ### Usage
 

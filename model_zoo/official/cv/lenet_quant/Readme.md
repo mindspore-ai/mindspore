@@ -58,7 +58,7 @@ Dataset used: [MNIST](<http://yann.lecun.com/exdb/mnist/>)
 - Hardware:Ascend
   - Prepare hardware environment with Ascend
 - Framework
-  - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
+  - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
   - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
   - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
