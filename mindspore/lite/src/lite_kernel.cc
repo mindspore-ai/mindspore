@@ -16,7 +16,6 @@
 
 #include "src/lite_kernel.h"
 #include <algorithm>
-#include "src/common/utils.h"
 
 namespace mindspore::kernel {
 void LiteKernel::InitOutTensorRefCount() {

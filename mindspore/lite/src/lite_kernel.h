@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_LITE_KERNEL_H_
 #include <vector>
 #include <string>
+#include "src/common/utils.h"
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
@@ -113,9 +114,17 @@ class LiteKernel {
 
   std::vector<lite::Tensor *> &out_tensors() { return this->out_tensors_; }
 
-  void AddInKernel(LiteKernel *kernel) { this->in_kernels_.emplace_back(kernel); }
+  void AddInKernel(LiteKernel *kernel) {
+    if (!lite::IsContain(this->in_kernels_, kernel)) {
+      this->in_kernels_.emplace_back(kernel);
+    }
+  }
 
-  void AddOutKernel(LiteKernel *kernel) { this->out_kernels_.emplace_back(kernel); }
+  void AddOutKernel(LiteKernel *kernel) {
+    if (!lite::IsContain(this->out_kernels_, kernel)) {
+      this->out_kernels_.emplace_back(kernel);
+    }
+  }
 
   void SetInKernel(const std::vector<LiteKernel *> &kernel) { this->in_kernels_ = kernel; }
 
