@@ -15,6 +15,7 @@
  */
 #include "runtime/device/gpu/gpu_kernel_runtime.h"
 #include <algorithm>
+#include "pybind11/pybind11.h"
 #include "runtime/device/gpu/gpu_device_address.h"
 #include "runtime/device/gpu/cuda_driver.h"
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
@@ -40,6 +41,7 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
+namespace py = pybind11;
 using mindspore::device::memswap::MemSwapInfoSet;
 using mindspore::device::memswap::MemSwapManager;
 using mindspore::device::memswap::SwapKind;
@@ -468,6 +470,7 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink, Debug
 
     ret = RunOneStep(graph, debugger);
   } else {
+    py::gil_scoped_release gil_release;
     ret = LaunchKernel(graph);
   }
   (void)gettimeofday(&end_time, nullptr);
