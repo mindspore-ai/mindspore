@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_INTERNAL_INCLUDE_LITE_UTILS_H_
-#define MINDSPORE_LITE_INTERNAL_INCLUDE_LITE_UTILS_H_
-#include <vector>
-#include <string>
+#ifndef MINDSPORE_LITE_INTERNAL_SRC_KERNEL_FP32_GRAD_ARITHMETIC_SELF_GRAD_H_
+#define MINDSPORE_LITE_INTERNAL_SRC_KERNEL_FP32_GRAD_ARITHMETIC_SELF_GRAD_H_
 
-struct MSTensor;
-struct Node;
-using TensorPtrVector = std::vector<MSTensor *>;
-using Uint32Vector = std::vector<uint32_t>;
-using String = std::string;
-using StringVector = std::vector<std::string>;
-using ShapeVector = std::vector<int>;
-using NodePtrVector = std::vector<struct Node *>;
-using Int32Vector = std::vector<int32_t>;
-using Int32VectorVector = std::vector<Int32Vector>;
-#endif  // MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_
+#include "internal/include/model.h"
+#include "src/runtime/allocator.h"
+
+int DoArithmeticGradSelf(TensorPtrVector in_tensors, TensorPtrVector out_tensors, Node *node,
+                         mindspore::lite::Allocator *allocator);
+
+#endif  // MINDSPORE_LITE_INTERNAL_SRC_KERNEL_FP32_GRAD_ARITHMETIC_SELF_GRAD_H_
