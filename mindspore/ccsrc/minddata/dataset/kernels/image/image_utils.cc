@@ -592,15 +592,18 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   try {
     // NOTE: We are assuming the input image is in RGB and the mean
     // and std are in RGB
-    cv::Mat rgb[3];
+    std::vector<cv::Mat> rgb;
     cv::split(in_image, rgb);
+    if (rgb.size() != 3) {
+      RETURN_STATUS_UNEXPECTED("Input image is not in RGB.");
+    }
     for (uint8_t i = 0; i < 3; i++) {
       float mean_c, std_c;
       RETURN_IF_NOT_OK(mean->GetItemAt<float>(&mean_c, {i}));
       RETURN_IF_NOT_OK(std->GetItemAt<float>(&std_c, {i}));
       rgb[i].convertTo(rgb[i], CV_32F, 1.0 / std_c, (-mean_c / std_c));
     }
-    cv::merge(rgb, 3, output_cv->mat());
+    cv::merge(rgb, output_cv->mat());
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
