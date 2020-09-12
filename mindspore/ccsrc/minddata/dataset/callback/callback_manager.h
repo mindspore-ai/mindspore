@@ -70,6 +70,8 @@ class CallbackManager {
   /// \return Status
   Status StepEnd(const CallbackParam &);
 
+  bool HasCallback() { return !callbacks_.empty(); }
+
  private:
   bool enabled_;                   // flag to enable callback, if false, all functions would return immediately
   std::shared_ptr<DatasetOp> op_;  // back pointer to DatasetOp, each DatasetOp has only 1 CallbackManager
