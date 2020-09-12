@@ -49,15 +49,15 @@ class Profiler:
     """
     Performance profiling API.
 
-    Enable MindSpore users to profile the performance of neural network.
-    Profiler support Ascend and GPU, both of them are used in the same way,
+    This API enables MindSpore users to profile the performance of neural network.
+    Profiler supports Ascend and GPU, both of them are used in the same way,
     but only output_path in args works on GPU.
 
     Args:
         output_path (str): Output data path.
-        optypes_not_deal (str): (Ascend only)Op type names, the data of which optype will not be collected and analysed;
-            Different op types should be seperated by comma.
-        job_id (str): (Ascend only)The directory where the parsed profiling files are located;
+        optypes_not_deal (str): (Ascend only) Op type names, determine the data of which optype should be collected
+            and analysed,will deal with all op if null; Different op types should be separated by comma.
+        ascend_job_id (str): (Ascend only) The directory where the profiling files to be parsed are located;
             This parameter is used to support offline parsing.
 
     Examples:
