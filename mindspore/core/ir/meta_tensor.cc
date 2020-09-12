@@ -91,7 +91,11 @@ void MetaTensor::SetDeviceInfo(const std::string &format, const TypePtr &data_ty
 
 std::string MetaTensor::ToString() const {
   std::ostringstream buf;
-  buf << "MetaTensor shape:[" << shape() << "]";
+  buf << "MetaTensor(shape=[" << shape() << "]";
+  if (is_parameter_) {
+    buf << ", name=" << param_info_->name();
+  }
+  buf << ")";
   return buf.str();
 }
 

@@ -15,9 +15,11 @@
 """ test implicit conversion """
 import numpy as np
 import pytest
+import mindspore as ms
 
-from mindspore import Tensor, nn
+from mindspore import Tensor, nn, Parameter
 from mindspore.ops import composite as C
+from mindspore.ops import functional as F
 
 
 grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
@@ -263,3 +265,24 @@ def test_int8_tensor_and_uint8_tensors_add_grad():
     assert ret[1].dtype == y.dtype
     assert (ret[0].asnumpy() == sens.asnumpy()).all()
     assert (ret[1].asnumpy() == sens.asnumpy()).all()
+
+class AssignCheck(nn.Cell):
+    """ NetWithNDarray definition """
+
+    def __init__(self):
+        super(AssignCheck, self).__init__()
+        self.cov_step = Parameter(0.0, name="cov_step", requires_grad=False)
+
+    def construct(self, x, y):
+        F.assign(self.cov_step, y)
+        F.assign(x, y)
+        return x
+
+
+def test_assign_check_in_sig():
+    net = AssignCheck()
+    x = Tensor(2, ms.int8)
+    y = Tensor(3, ms.uint8)
+    with pytest.raises(TypeError) as e:
+        net(x, y)
+    assert "Parameter" in e.value.args[0]

@@ -306,9 +306,28 @@ class Assign(nn.Cell):
         self.cov_step = self.cov_step + x
         return self.cov_step
 
+
 def test_assign():
     context.set_context(mode=context.GRAPH_MODE)
     net = Assign()
     input_data = ms.Tensor(np.array(1).astype(np.int32))
     net_back = GradNet(net)
     net_back(input_data)
+
+class AssignCheck(nn.Cell):
+    """ NetWithNDarray definition """
+
+    def __init__(self):
+        super(AssignCheck, self).__init__()
+        self.cov_step = ms.Parameter(0.0, name="cov_step", requires_grad=False)
+
+    def construct(self, x):
+        self.cov_step = x
+        return self.cov_step
+
+
+def test_assign_check_none():
+    context.set_context(mode=context.GRAPH_MODE)
+    net = AssignCheck()
+    with pytest.raises(TypeError):
+        net(None)
