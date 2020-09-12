@@ -28,7 +28,6 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def vgg_create_dataset(data_home, image_size, batch_size, rank_id=0, rank_size=1, repeat_num=1, training=True):
     """Data operations."""
-    de.config.set_seed(1)
     data_dir = os.path.join(data_home, "cifar-10-batches-bin")
     if not training:
         data_dir = os.path.join(data_home, "cifar-10-verify-bin")

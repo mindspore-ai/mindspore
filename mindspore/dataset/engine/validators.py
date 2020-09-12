@@ -23,7 +23,6 @@ from functools import wraps
 
 import numpy as np
 from mindspore._c_expression import typing
-from mindspore.dataset.callback import DSCallback
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_value, \
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
     validate_dataset_param_value, check_padding_options, check_gnn_list_or_ndarray, check_num_parallel_workers, \
@@ -31,8 +30,6 @@ from ..core.validator_helpers import parse_user_args, type_check, type_check_lis
 
 from . import datasets
 from . import samplers
-# from . import cache_client
-from .. import callback
 
 
 def check_imagefolderdataset(method):
@@ -566,6 +563,7 @@ def check_map(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
+        from mindspore.dataset.callback import DSCallback
         [_, input_columns, output_columns, column_order, num_parallel_workers, python_multiprocessing, cache,
          callbacks], _ = \
             parse_user_args(method, *args, **kwargs)
@@ -581,9 +579,9 @@ def check_map(method):
 
         if callbacks is not None:
             if isinstance(callbacks, (list, tuple)):
-                type_check_list(callbacks, (callback.DSCallback,), "callbacks")
+                type_check_list(callbacks, (DSCallback,), "callbacks")
             else:
-                type_check(callbacks, (callback.DSCallback,), "callbacks")
+                type_check(callbacks, (DSCallback,), "callbacks")
 
         for param_name, param in zip(nreq_param_columns, [input_columns, output_columns, column_order]):
             if param is not None:
