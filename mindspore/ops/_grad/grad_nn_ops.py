@@ -805,6 +805,22 @@ def get_bprop_lstm(self):
     return bprop
 
 
+@bprop_getters.register(inner.DynamicRNN)
+def get_bprop_dynamic_rnn(self):
+    """Grad definition for `DynamicRNN` operation."""
+    dynamic_rnn_grad = G.DynamicRNNGrad(forget_bias=self.forget_bias)
+
+    def bprop(x, w, b, seq_length, init_h, init_c, out, dout):
+        dy, dh, dc, _, _, _, _, _, = dout
+        dh = dh[-1]
+        dc = dc[-1]
+        y, h, c, i, j, f, o, tanhct = out
+        dw, db, dx, dh_prev, dc_prev = dynamic_rnn_grad(x, w, b, y, init_h[0], init_c[0], h,
+                                                        c, dy, dh, dc, i, j, f, o, tanhct)
+        return dx, dw, db, (0), dh_prev, dc_prev
+    return bprop
+
+
 @bprop_getters.register(P.SigmoidCrossEntropyWithLogits)
 def get_bprop_sigmoid_crossentropy_with_logits(self):
     """Grad definition for `SigmoidCrossEntropyWithLogits` operation."""
