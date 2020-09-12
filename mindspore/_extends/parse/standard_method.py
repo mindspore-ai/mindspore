@@ -275,6 +275,11 @@ def none_bool(x):
     return False
 
 
+def func_bool(x):
+    """Implementation of `func_bool`."""
+    return True
+
+
 def float_floordiv(x, y):
     """Implementation of `float_floordiv`."""
     return floor(x / y)
