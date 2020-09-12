@@ -72,7 +72,7 @@ class LossCallBack(Callback):
         print("time: {}, epoch: {}, step: {}, outputs are {}".format(time_stamp_current - time_stamp_first,
                                                                      cb_params.cur_epoch_num, cb_params.cur_step_num,
                                                                      str(cb_params.net_outputs)))
-        with open("./loss_{}.log".fromat(self.rank_id), "a+") as f:
+        with open("./loss_{}.log".format(self.rank_id), "a+") as f:
             f.write("time: {}, epoch: {}, step: {}, outputs are {}".format(time_stamp_current - time_stamp_first,
                                                                            cb_params.cur_epoch_num,
                                                                            cb_params.cur_step_num,
