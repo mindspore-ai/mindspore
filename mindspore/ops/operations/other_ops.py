@@ -299,7 +299,7 @@ class MakeRefKey(Primitive):
         tag (str): Parameter name to make the RefKey.
 
     Inputs:
-        No input.
+        No inputs.
 
     Outputs:
         RefKeyType, made from the Parameter name.

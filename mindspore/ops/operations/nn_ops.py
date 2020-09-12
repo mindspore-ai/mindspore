@@ -149,7 +149,7 @@ class LogSoftmax(PrimitiveWithInfer):
     Log Softmax activation function.
 
     Applies the Log Softmax function to the input tensor on the specified axis.
-    Suppose a slice in the given aixs :math:`x` then for each element :math:`x_i`
+    Suppose a slice in the given aixs, :math:`x` for each element :math:`x_i`,
     the Log Softmax function is shown as follows:
 
     .. math::
@@ -158,7 +158,7 @@ class LogSoftmax(PrimitiveWithInfer):
     where :math:`N` is the length of the Tensor.
 
     Args:
-        axis (int): The axis to do the Log softmax operation. Default: -1.
+        axis (int): The axis to perform the Log softmax operation. Default: -1.
 
     Inputs:
         - **logits** (Tensor) - The input of Log Softmax, with float16 or float32 data type.
@@ -2253,7 +2253,7 @@ class L2Normalize(PrimitiveWithInfer):
     r"""
     L2 normalization Operator.
 
-    This operator will normalizes the input using the given axis. The function is shown as follows:
+    This operator will normalize the input using the given axis. The function is shown as follows:
 
     .. math::
         \text{output} = \frac{x}{\sqrt{\text{max}(\text{sum} (\text{input_x}^2), \epsilon)}},
@@ -2261,7 +2261,7 @@ class L2Normalize(PrimitiveWithInfer):
     where :math:`\epsilon` is epsilon.
 
     Args:
-        axis (int): The begin axis for the input to apply L2 normalize. Default: 0.
+        axis (int): The starting axis for the input to apply the L2 normalization. Default: 0.
         epsilon (float): A small value added for numerical stability. Default: 1e-4.
 
     Inputs:
@@ -2657,7 +2657,7 @@ class LSTM(PrimitiveWithInfer):
     """
     Performs the long short term memory(LSTM) on the input.
 
-    Detailed information, please refer to `nn.LSTM`.
+    For detailed information, please refer to `nn.LSTM`.
     """
 
     @prim_attr_register
@@ -4803,7 +4803,7 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
 
 class LARSUpdate(PrimitiveWithInfer):
     """
-    Conduct lars (layer-wise adaptive rate scaling) update on the square sum of gradient.
+    Conduct lars (layer-wise adaptive rate scaling) update on the sum of squares of gradient.
 
     Args:
         epsilon (float): Term added to the denominator to improve numerical stability. Default: 1e-05.
@@ -4813,8 +4813,8 @@ class LARSUpdate(PrimitiveWithInfer):
     Inputs:
         - **weight** (Tensor) - The weight to be updated.
         - **gradient** (Tensor) - The gradient of weight, which has the same shape and dtype with weight.
-        - **norm_weight** (Tensor) - A scalar tensor, representing the square sum of weight.
-        - **norm_gradient** (Tensor) - A scalar tensor, representing the square sum of gradient.
+        - **norm_weight** (Tensor) - A scalar tensor, representing the sum of squares of weight.
+        - **norm_gradient** (Tensor) - A scalar tensor, representing the sum of squares of gradient.
         - **weight_decay** (Union[Number, Tensor]) - Weight decay. It should be a scalar tensor or number.
         - **learning_rate** (Union[Number, Tensor]) - Learning rate. It should be a scalar tensor or number.
 
@@ -5576,10 +5576,10 @@ class InTopK(PrimitiveWithInfer):
 
 class LRN(PrimitiveWithInfer):
     r"""
-    Local Response Normalization
+    Local Response Normalization.
 
     Args:
-        depth_radius (int): Half-width of the 1-D normalization window. Shape of 0-D.
+        depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D.
         bias (float): An offset (usually positive to avoid dividing by 0).
         alpha (float): A scale factor, usually positive.
         beta (float): An exponent.
@@ -5589,7 +5589,7 @@ class LRN(PrimitiveWithInfer):
         - **x** (Tensor) - A 4D Tensor with float16 or float32 data type.
 
     Outputs:
-        Tensor, With shape and data type same as the input tensor.
+        Tensor, with the same shape and data type as the input tensor.
 
     Examples:
         >>> x = Tensor(np.random.rand(1, 10, 4, 4)), mindspore.float32)
