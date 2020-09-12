@@ -5541,7 +5541,8 @@ class InTopK(PrimitiveWithInfer):
 
     Inputs:
         - **x1** (Tensor) - A 2D Tensor defines the predictions of a batch of samples with float16 or float32 data type.
-        - **x2** (Tensor) - A 1D Tensor defines the labels of a batch of samples with int32 data type.
+        - **x2** (Tensor) - A 1D Tensor defines the labels of a batch of samples with int32 data type. The size of x2
+          must be equal to x1's first dimension.
 
     Outputs:
         Tensor has 1 dimension of type bool and the same shape with `x2`. For labeling sample `i` in `x2`,
@@ -5568,8 +5569,8 @@ class InTopK(PrimitiveWithInfer):
         return mstype.tensor_type(mstype.bool_)
 
     def infer_shape(self, x1_shape, x2_shape):
-        validator.check("x1", len(x1_shape), "", 2, Rel.EQ, self.name)
-        validator.check("x2", len(x2_shape), "", 1, Rel.EQ, self.name)
+        validator.check("x1 shape", len(x1_shape), "", 2, Rel.EQ, self.name)
+        validator.check("x2 shape", len(x2_shape), "", 1, Rel.EQ, self.name)
         validator.check("size of x2", x2_shape[0], "x1's first dimension", x1_shape[0], Rel.EQ, self.name)
         return x2_shape
 

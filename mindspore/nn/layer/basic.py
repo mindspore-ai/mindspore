@@ -335,7 +335,7 @@ class Norm(Cell):
     Computes the norm of vectors, currently including Euclidean norm, i.e., :math:`L_2`-norm.
 
     Args:
-        axis (tuple): The axis over which to compute vector norms. Default: ().
+        axis (Union[tuple, int]): The axis over which to compute vector norms. Default: ().
         keep_dims (bool): If True, the axis indicated in `axis` are kept with size 1. Otherwise,
                    the dimensions in `axis` are removed from the output shape. Default: False.
 
@@ -348,12 +348,14 @@ class Norm(Cell):
 
     Examples:
         >>> net = nn.Norm(axis=0)
-        >>> input = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
+        >>> input = Tensor(np.random.randint(0, 10, [2, 4]), mindspore.float32)
         >>> net(input)
+        [2.236068 9.848858 4. 5.656854]
     """
 
     def __init__(self, axis=(), keep_dims=False):
         super(Norm, self).__init__()
+        validator.check_value_type("keep_dims", keep_dims, [bool], self.cls_name)
         self.axis = axis
         self.keep_dims = keep_dims
         self.reduce_sum = P.ReduceSum(True)

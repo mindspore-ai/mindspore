@@ -965,7 +965,7 @@ class InplaceAdd(PrimitiveWithInfer):
           the first dimension, which must be the same as indices's size. It has the same data type with `input_x`.
 
     Outputs:
-        Tensor, has the same shape and dtype as input.
+        Tensor, has the same shape and dtype as input_x.
 
     Examples:
         >>> indices = (0, 1)
@@ -1011,7 +1011,7 @@ class InplaceAdd(PrimitiveWithInfer):
 
 class InplaceSub(PrimitiveWithInfer):
     """
-    Subtracts v into specified rows of x. Computes y = x; y[i, :] -= v; return y.
+    Subtracts v into specified rows of x. Computes y = x; y[i, :] -= v.
 
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of x, and determines which rows of x
@@ -1023,7 +1023,7 @@ class InplaceSub(PrimitiveWithInfer):
           the first dimension, which must be the same as indices's size. It has the same data type with `input_x`.
 
     Outputs:
-        Tensor, has the same shape and dtype as input.
+        Tensor, has the same shape and dtype as input_x.
 
     Examples:
         >>> indices = (0, 1)
@@ -1496,7 +1496,7 @@ class Log(PrimitiveWithInfer):
     Returns the natural logarithm of a tensor element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. With float16 or float32 data type. The value must be greater than 0.
 
     Outputs:
         Tensor, has the same shape as the `input_x`.
@@ -1533,7 +1533,7 @@ class Log1p(PrimitiveWithInfer):
     Returns the natural logarithm of one plus the input tensor element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. With float16 or float32 data type.
+        - **input_x** (Tensor) - The input tensor. With float16 or float32 data type. The value must be greater than -1.
 
     Outputs:
         Tensor, has the same shape as the `input_x`.
