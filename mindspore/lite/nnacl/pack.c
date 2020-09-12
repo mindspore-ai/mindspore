@@ -404,14 +404,42 @@ void PackInputSum16x4PerChannel(const int8_t *input_value, int32_t *input_sum, i
   return;
 }
 
+void PackInputSum16x4PerChannelArm32(const int8_t *input_value, int32_t *input_sum, int32_t *filter_zp_ptr,
+                                     size_t plane_size, size_t input_channel, size_t output_channel) {
+  size_t hw4 = UP_ROUND(plane_size, C4NUM);
+  size_t ic16 = UP_ROUND(input_channel, C16NUM);
+
+  for (int ri = 0; ri < plane_size; ri++) {
+    int ri4div = ri / C4NUM, ri4mod = ri % C4NUM;
+    for (int ci = 0; ci < output_channel; ci++) {
+      int32_t tmp_sum_value = 0;
+      int ci2div = ci / C2NUM, ci2mod = ci % C2NUM;
+      int32_t filter_zp = filter_zp_ptr[ci];
+      for (int di = 0; di < input_channel; di++) {
+        size_t di16div = di / C16NUM, di16mod = di % C16NUM;
+        int src_index = ri4div * C4NUM * ic16 + di16div * C16NUM * C4NUM + ri4mod * C16NUM + di16mod;
+        tmp_sum_value += input_value[src_index];
+      }
+      int dst_index = ci2div * C2NUM * hw4 + ri * C2NUM + ci2mod;
+      input_sum[dst_index] = tmp_sum_value * filter_zp;
+    }
+  }
+  return;
+}
+
 void PackInputSum16x4Int8(const int8_t *input, int32_t *input_sum, int32_t *filter_zp, ConvParameter *conv_param) {
   size_t hw4 = UP_ROUND(conv_param->input_h_ * conv_param->input_w_, C4NUM);
   size_t ic16 = UP_ROUND(conv_param->input_channel_, C16NUM);
   if (conv_param->conv_quant_arg_.filter_arg_num_ == 1) {
     PackInputSum16x4PerLayer(input, input_sum, conv_param->conv_quant_arg_.filter_quant_args_[0].zp_, hw4, ic16);
   } else {
+#ifdef ENABLE_ARM32
+    PackInputSum16x4PerChannelArm32(input, input_sum, filter_zp, conv_param->input_h_ * conv_param->input_w_,
+                                    conv_param->input_channel_, conv_param->output_channel_);
+#else
     PackInputSum16x4PerChannel(input, input_sum, filter_zp, conv_param->input_h_ * conv_param->input_w_,
                                conv_param->input_channel_, conv_param->output_channel_);
+#endif
   }
   return;
 }

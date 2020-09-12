@@ -175,7 +175,7 @@ int Convolution1x1Int8CPUKernel::InitWeightBiasArm32() {
     MS_LOG(ERROR) << "Conv1x1 int8 arm32 Malloc bias_ptr_ error!";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, size);
+  memset(bias_data_, 0, col2 * sizeof(int32_t));
   if (in_tensors_.size() == 3) {
     memcpy(bias_data_, in_tensors_[kBiasIndex]->MutableData(), output_channel * sizeof(int32_t));
   }
@@ -249,16 +249,16 @@ int Convolution1x1Int8CPUKernel::InitParam() {
 
   /* init input sum size */
   if (conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL) {
-    input_sum_size = UP_ROUND(matmul_param_->col_, col_pack_count) * UP_ROUND(matmul_param_->row_, row_pack_count);
+    input_sum_size_ = UP_ROUND(matmul_param_->col_, col_pack_count) * UP_ROUND(matmul_param_->row_, row_pack_count);
   } else {
-    input_sum_size = UP_ROUND(matmul_param_->row_, row_pack_count);
+    input_sum_size_ = UP_ROUND(matmul_param_->row_, row_pack_count);
   }
 
-  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, row_pack_count));
-  thread_stride_ = UP_DIV(UP_DIV(matmul_param_->col_, row_pack_count), thread_count_);
+  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, col_pack_count));
+  thread_stride_ = UP_DIV(UP_DIV(matmul_param_->col_, col_pack_count), thread_count_);
 
-  thread_count_hw_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->row_, col_pack_count));
-  thread_stride_hw_ = UP_DIV(UP_DIV(matmul_param_->row_, col_pack_count), thread_count_hw_);
+  thread_count_hw_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->row_, row_pack_count));
+  thread_stride_hw_ = UP_DIV(UP_DIV(matmul_param_->row_, row_pack_count), thread_count_hw_);
 
   if (pre_trans_input_) {
     input_ptr_ = reinterpret_cast<int8_t *>(malloc(matmul_param_->row_ * matmul_param_->deep_ * sizeof(int8_t)));
@@ -269,7 +269,7 @@ int Convolution1x1Int8CPUKernel::InitParam() {
     memset(input_ptr_, 0, matmul_param_->row_ * matmul_param_->deep_ * sizeof(int8_t));
   }
   return RET_OK;
-}  // namespace mindspore::kernel
+}
 
 int Convolution1x1Int8CPUKernel::ReSize() {
   FreeResizeBuf();
@@ -314,10 +314,10 @@ int Convolution1x1Int8CPUKernel::RunImpl(int task_id) {
   if (cur_oc <= 0) {
     return RET_OK;
   }
-  Conv1x1Int8(packed_input_, packed_weight_ + task_id * thread_stride_ * C2NUM * matmul_param_->deep_16_,
-              output_ptr_ + task_id * thread_stride_ * C2NUM, cur_input_sum,
-              reinterpret_cast<int32_t *>(bias_data_) + task_id * thread_stride_ * C2NUM, matmul_param_->row_, cur_oc,
-              matmul_param_->deep_16_, cur_left_shift, cur_right_shift, cur_multiplier, conv_param_);
+  Conv1x1Int8Arm32(packed_input_, packed_weight_ + task_id * thread_stride_ * C2NUM * matmul_param_->deep_16_,
+                   output_ptr_ + task_id * thread_stride_ * C2NUM, cur_input_sum,
+                   reinterpret_cast<int32_t *>(bias_data_) + task_id * thread_stride_ * C2NUM, matmul_param_->row_,
+                   cur_oc, matmul_param_->deep_16_, cur_left_shift, cur_right_shift, cur_multiplier, conv_param_);
 #else
   if (support_optimize_) {
     int cur_stride = thread_stride_ * C8NUM;
@@ -392,7 +392,7 @@ int Convolution1x1Int8Impl(void *cdata, int task_id) {
 }
 
 int Convolution1x1Int8CPUKernel::InitRunBuf() {
-  input_sum_ = reinterpret_cast<int32_t *>(ctx_->allocator->Malloc(input_sum_size * sizeof(int32_t)));
+  input_sum_ = reinterpret_cast<int32_t *>(ctx_->allocator->Malloc(input_sum_size_ * sizeof(int32_t)));
   if (input_sum_ == nullptr) {
     MS_LOG(ERROR) << "malloc input_sum_ failed.";
     return RET_ERROR;
