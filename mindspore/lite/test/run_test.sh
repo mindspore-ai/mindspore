@@ -28,3 +28,6 @@ cp -fr $TEST_DATA_DIR/testPK ./data
 ./lite-test --gtest_filter=TestDeconvInt8.*
 
 ./lite-test --gtest_filter="TestTfliteParser*"
+
+# for GPU OpenCL
+./lite-test --gtest_filter="TestConvolutionOpenCL.simple_test*"

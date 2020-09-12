@@ -21,19 +21,18 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/convolution.h"
 #include "nnacl/pack.h"
-#include "nnacl/fp32/common_func.h"
 
 using mindspore::kernel::ConvolutionOpenCLKernel;
 using mindspore::kernel::LiteKernel;
 using mindspore::kernel::SubGraphOpenCLKernel;
 using mindspore::lite::Tensor;
 using mindspore::schema::Format;
-using mindspore::schema::Format_KHWC;
-using mindspore::schema::Format_NC4HW4;
-using mindspore::schema::Format_NCHW;
-using mindspore::schema::Format_NHWC;
-using mindspore::schema::Format_NHWC4;
 using mindspore::schema::NodeType_ValueNode;
+using mindspore::schema::Format::Format_KHWC;
+using mindspore::schema::Format::Format_NC4HW4;
+using mindspore::schema::Format::Format_NCHW;
+using mindspore::schema::Format::Format_NHWC;
+using mindspore::schema::Format::Format_NHWC4;
 
 namespace mindspore {
 
@@ -41,26 +40,25 @@ class TestConvolutionOpenCL : public mindspore::CommonTest {};
 
 void LoadData(Tensor *tensor, const float *src) {
   if (tensor->data_type() == kNumberTypeFloat16) {
-    auto num = tensor->Size() / 2;
-    auto tensor_data = reinterpret_cast<uint16_t *>(tensor->MutableData());
+    auto num = tensor->Size() / sizeof(float16_t);
+    auto tensor_data = reinterpret_cast<float16_t *>(tensor->data_c());
     for (int i = 0; i < num; ++i) {
-      tensor_data[i] = Float32ToShort(src[i]);
+      tensor_data[i] = static_cast<float16_t>(src[i]);
     }
   } else {
-    memcpy(tensor->MutableData(), src, tensor->Size());
+    memcpy(tensor->data_c(), src, tensor->Size());
   }
 }
 
 void CompareOutput(Tensor *output, const float *expect_data, const float atol) {
-  auto num = (output->data_type() == kNumberTypeFloat16) ? output->Size() / 2 : output->Size() / 4;
+  auto num = output->Size() / (output->data_type() == kNumberTypeFloat16 ? 2 : 4);
   std::vector<float> output_data(num);
   if (output->data_type() == kNumberTypeFloat16) {
-    auto output_data_fp16 = reinterpret_cast<uint16_t *>(output->MutableData());
     for (int i = 0; i < output_data.size(); ++i) {
-      output_data[i] = ShortToFloat32((output_data_fp16[i]));
+      output_data[i] = static_cast<float>(reinterpret_cast<float16_t *>(output->data_c())[i]);
     }
   } else {
-    memcpy(output_data.data(), output->MutableData(), output->Size());
+    memcpy(output_data.data(), output->data_c(), output->Size());
   }
 
   printf("output:");
@@ -69,9 +67,9 @@ void CompareOutput(Tensor *output, const float *expect_data, const float atol) {
   }
   printf("\n");
 
-  float max_err = 0.0f;
+  float max_err = -1.0f;
   std::array<int, 5> idx_5d{};
-  int idx = -1;
+  int max_err_idx = -1, first_err_idx = -1;
   auto SLICES = UP_DIV(output->Channel(), 4);
   int I = 1, J = 1, K = 1, L = 1, M = 1;
   switch (output->GetFormat()) {
@@ -98,10 +96,13 @@ void CompareOutput(Tensor *output, const float *expect_data, const float atol) {
         for (int l = 0; l < L; ++l) {
           for (int m = 0; m < M; ++m) {
             auto err = std::fabs(output_data[cn] - expect_data[cn]);
+            if (first_err_idx == -1 && max_err > atol) {
+              first_err_idx = cn;
+            }
             if (err > max_err) {
               max_err = err;
               idx_5d = {i, j, k, l, m};
-              idx = cn;
+              max_err_idx = cn;
             }
             cn++;
           }
@@ -110,18 +111,19 @@ void CompareOutput(Tensor *output, const float *expect_data, const float atol) {
     }
   }
 
-  float relative_err = max_err / std::fabs(std::max(expect_data[idx], output_data[idx]));
-  if (output->GetFormat() == Format_NHWC || output->GetFormat() == Format_NCHW) {
-    printf("max relative error at [%d,%d,%d,%d]", idx_5d[0], idx_5d[1], idx_5d[2], idx_5d[3]);
-  } else {
-    printf("max relative error at [%d,%d,%d,%d,%d]", idx_5d[0], idx_5d[1], idx_5d[2], idx_5d[3], idx_5d[4]);
-  }
-  printf(" expect=%.3f output=%.3f absolute_err=%.2e relative_err=%.2f%%\n", expect_data[idx], output_data[idx],
-         max_err, relative_err * 100);
-
   if (max_err > atol) {
+    printf("first error at %d expect=%.3f output=%.3f\n", first_err_idx, expect_data[first_err_idx],
+           output_data[first_err_idx]);
     FAIL();
   } else {
+    float relative_err = max_err / std::fabs(std::max(expect_data[max_err_idx], output_data[max_err_idx]));
+    if (output->GetFormat() == Format_NHWC || output->GetFormat() == Format_NCHW) {
+      printf("max relative error at [%d,%d,%d,%d]", idx_5d[0], idx_5d[1], idx_5d[2], idx_5d[3]);
+    } else {
+      printf("max relative error at [%d,%d,%d,%d,%d]", idx_5d[0], idx_5d[1], idx_5d[2], idx_5d[3], idx_5d[4]);
+    }
+    printf(" expect=%.3f output=%.3f absolute_err=%.2e relative_err=%.2f%%\n", expect_data[max_err_idx],
+           output_data[max_err_idx], max_err, relative_err * 100);
     printf("COMPARE SUCCESS!\n\n");
   }
 }

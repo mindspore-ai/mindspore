@@ -310,3 +310,13 @@ __kernel void to_format_NHWC4_to_NHWC4_BUF_float(__read_only image2d_t src_data,
   }
   dst_data[(X * size.y + Y) * size.z + Z] = convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(Y * size.z + Z, X)));
 }
+__kernel void to_format_NHWC4_to_NHWC4_BUF_half(__read_only image2d_t src_data, __global half4 *dst_data, int4 size,
+                                                int4 shape) {
+  int X = get_global_id(0);
+  int Y = get_global_id(1);
+  int Z = get_global_id(2);
+  if (X >= size.x || Y >= size.y || Z >= size.z) {
+    return;
+  }
+  dst_data[(X * size.y + Y) * size.z + Z] = convert_half4(READ_IMAGE(src_data, smp_zero, (int2)(Y * size.z + Z, X)));
+}
