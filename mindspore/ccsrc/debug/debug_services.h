@@ -93,26 +93,26 @@ class DebugServices {
   } watchpoint_t;
 
   struct tensor_stats {
-    float min = std::numeric_limits<float>::max();
-    float max = std::numeric_limits<float>::lowest();
+    double min = std::numeric_limits<double>::max();
+    double max = std::numeric_limits<double>::lowest();
     bool has_inf = false;
     bool has_nan = false;
     unsigned int n = 0;
-    float mean = 0.0;
-    float m2 = 0.0;
+    double mean = 0.0;
+    double m2 = 0.0;
 
-    float statLookup(CONDITION_TYPE type) const {
+    double statLookup(CONDITION_TYPE type) const {
       if (type == MAX_GT || type == MAX_LT) return max;
       if (type == MIN_GT || type == MIN_LT) return min;
       if (type == MAX_MIN_GT || type == MAX_MIN_LT) return (max - min);
       if (type == MEAN_GT || type == MEAN_LT) return mean;
       if (type == SD_GT || type == SD_LT) return getStandardDeviation();
-      return std::numeric_limits<float>::quiet_NaN();
+      return std::numeric_limits<double>::quiet_NaN();
     }
 
-    float getMean() const { return mean; }
+    double getMean() const { return mean; }
 
-    float getVariance() const {
+    double getVariance() const {
       if (n > 1) {
         return m2 / (n - 1);
       } else {
@@ -120,7 +120,7 @@ class DebugServices {
       }
     }
 
-    float getStandardDeviation() const { return sqrt(getVariance()); }
+    double getStandardDeviation() const { return sqrt(getVariance()); }
   };
 
   void AddWatchpoint(unsigned int id, unsigned int watch_condition, float parameter,
@@ -152,7 +152,8 @@ class DebugServices {
 
   TensorLoader *tensor_loader_;
 
-  static tensor_stats SummarizeTensor(const float *start, unsigned int n, bool need_min_max, bool need_mean_sd);
+  template <typename T>
+  static tensor_stats SummarizeTensor(const T *start, unsigned int n, bool need_min_max, bool need_mean_sd);
 };
 }  // namespace mindspore
 
