@@ -101,8 +101,8 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
       std::function<int16_t(int16_t)> to_dtype = [](int16_t x) -> int16_t { return x; };
       PackNCHWToNC4HW4<int16_t, int16_t>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
     } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat32) {
-      std::function<int16_t(float)> to_dtype = Float32ToShort;
-      PackNCHWToNC4HW4<float, int16_t>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
+      std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
+      PackNCHWToNC4HW4<float, float16_t>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
     } else {
       MS_LOG(ERROR) << "Only support float16/float32, actual data type " << in_tensors_.at(kWeightIndex)->data_type();
       return RET_ERROR;
@@ -111,8 +111,11 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
     packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(float));
     packed_weight_ = allocator->MapBuffer(packed_weight_, CL_MAP_WRITE, nullptr, true);
     if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat32) {
-      std::function<float(float)> to_dtype = [](float x) -> float { return (float)x; };
+      std::function<float(float)> to_dtype = [](float x) -> float { return x; };
       PackNCHWToNC4HW4<float, float>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
+    } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16) {
+      std::function<float(float16_t)> to_dtype = [](float16_t x) -> float { return static_cast<float>(x); };
+      PackNCHWToNC4HW4<float16_t, float>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
     } else {
       MS_LOG(ERROR) << "Only support float16/float32, actual data type " << in_tensors_.at(kWeightIndex)->data_type();
       return RET_ERROR;

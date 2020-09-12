@@ -52,7 +52,7 @@ void PReluOpenCLKernel::InitBuffer() {
       auto PReluWeight_fp16 = reinterpret_cast<uint16_t *>(PReluWeight_);
       auto in_tensor_data_fp32 = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
       for (int i = 0; i < elem_num; i++) {
-        PReluWeight_fp16[i] = Float32ToShort(in_tensor_data_fp32[i]);
+        PReluWeight_fp16[i] = static_cast<float16_t>(in_tensor_data_fp32[i]);
       }
     } else {
       memcpy(PReluWeight_, in_tensors_[1]->MutableData(), elem_num * fp_size);
@@ -60,9 +60,9 @@ void PReluOpenCLKernel::InitBuffer() {
   } else {
     if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
       auto PReluWeight_fp32 = reinterpret_cast<float *>(PReluWeight_);
-      auto in_tensor_data_fp16 = reinterpret_cast<uint16_t *>(in_tensors_[1]->MutableData());
+      auto in_tensor_data_fp16 = reinterpret_cast<float16_t *>(in_tensors_[1]->MutableData());
       for (int i = 0; i < elem_num; i++) {
-        PReluWeight_fp32[i] = ShortToFloat32(in_tensor_data_fp16[i]);
+        PReluWeight_fp32[i] = static_cast<float>(in_tensor_data_fp16[i]);
       }
     } else {
       memcpy(PReluWeight_, in_tensors_[1]->MutableData(), elem_num * fp_size);

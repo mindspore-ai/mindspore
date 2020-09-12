@@ -95,6 +95,7 @@ class OpenCLRuntime {
       }
       default:
         MS_LOG(ERROR) << "Unsupport opencl memory type: " << static_cast<int>(mem_type);
+        return CL_IMAGE_FORMAT_NOT_SUPPORTED;
     }
   }
 

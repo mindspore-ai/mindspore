@@ -55,6 +55,9 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
     }
   }
   for (size_t i = 0; i < in_tensors.size(); ++i) {
+    if (in_tensors.at(i)->shape().size() <= 1) {
+      continue;
+    }
     OpenCLKernel *cur_opencl_op = reinterpret_cast<OpenCLKernel *>(in_kernels[i][0]);
     schema::Format out_ori_format = cur_opencl_op->GetOutOriFormat();
     schema::Format in_ori_format = cur_opencl_op->GetInOriFormat();
