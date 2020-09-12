@@ -1,6 +1,5 @@
 {
   "datasetType": "TF",
-  "numRows": 3,
   "columns": {
     "image": {
         "type": "uint8",

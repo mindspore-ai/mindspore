@@ -2438,6 +2438,8 @@ class ConcatDataset(DatasetOp):
         self._sampler = _select_sampler(None, sampler, None, None, None)
         cumulative_samples_nums = 0
         for index, child in enumerate(self.children):
+            if hasattr(child, 'sampler') and child.sampler.get_num_samples() is not None:
+                raise ValueError("The parameter NumSamples of %s is not support to be set!" % (child))
 
             if isinstance(child, BatchDataset):
                 raise TypeError("The parameter %s of concat should't be BatchDataset!" % (child))
