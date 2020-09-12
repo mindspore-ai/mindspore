@@ -69,7 +69,7 @@ class Convolution1x1Int8CPUKernel : public ConvolutionBaseCPUKernel {
   size_t thread_count_hw_ = 1;
   size_t thread_stride_hw_ = 0;
   bool pre_trans_input_ = false;
-  size_t input_sum_size = 0;
+  size_t input_sum_size_ = 0;
   MatMulParameter *matmul_param_ = nullptr;
   MATMUL_OPT_R_FUNC matmul_func_ = nullptr;
   bool support_optimize_ = false;
