@@ -884,8 +884,8 @@ class DepthwiseConv2d(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> net = nn.DepthwiseConv2d(120, 240, 4, has_bias=False, weight_init='normal')
-        >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
+        >>> net = nn.DepthwiseConv2d(240, 240, 4, group=None, has_bias=False, weight_init='normal')
+        >>> input = Tensor(np.ones([1, 240, 1024, 640]), mindspore.float32)
         >>> net(input).shape
         (1, 240, 1024, 640)
     """

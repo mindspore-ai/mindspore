@@ -300,6 +300,7 @@ class IsSubClass(PrimitiveWithInfer):
 
     Examples:
         >>> result = P.IsSubClass()(mindspore.int32,  mindspore.intc)
+        True
     """
 
     @prim_attr_register
@@ -1099,7 +1100,7 @@ class InvertPermutation(PrimitiveWithInfer):
         - **input_x** (Union(tuple[int], list[int]) - The input is constructed by multiple
           integers, i.e., :math:`(y_1, y_2, ..., y_S)` representing the indices.
           The values must include 0. There can be no duplicate values or negative values.
-          Only constant value is allowed.
+          Only constant value is allowed. The maximum value msut be equal to length of input_x.
 
     Outputs:
         tuple[int]. It has the same length as the input.
@@ -1599,7 +1600,7 @@ class Concat(PrimitiveWithInfer):
 
     Note:
         The input data is a tuple of tensors. These tensors have the same rank `R`. Set the given axis as `m`, and
-        :math:`0 \le m < N`. Set the number of input tensors as `N`. For the :math:`i`-th tensor :math:`t_i`, it has
+        :math:`0 \le m < R`. Set the number of input tensors as `N`. For the :math:`i`-th tensor :math:`t_i`, it has
         the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`. :math:`x_{mi}` is the :math:`m`-th dimension of the
         :math:`i`-th tensor. Then, the shape of the output tensor is
 
@@ -3451,7 +3452,8 @@ class InplaceUpdate(PrimitiveWithInfer):
     Updates specified rows with values in `v`.
 
     Args:
-        indices (Union[int, tuple]): Indices into the left-most dimension of `x`.
+        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of x
+            to update with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
 
     Inputs:
         - **x** (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
@@ -3463,22 +3465,14 @@ class InplaceUpdate(PrimitiveWithInfer):
         Tensor, with the same type and shape as the input `x`.
 
     Examples:
-        >>> x = Tensor(np.arange(24).reshape(3, 4, 2), mindspore.float32)
-        >>> v = Tensor(np.arange(-8, 8).reshape(2, 4, 2), mindspore.float32)
-        >>> inplace_update = P.InplaceUpdate((0, 2))
+        >>> indices = (0, 1)
+        >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
+        >>> inplace_update = P.InplaceUpdate(indices)
         >>> result = inplace_update(x, v)
-        [[[-8.  -7.]
-          [-6.  -5.]
-          [-4.  -3.]
-          [-2.  -1.]]
-         [[ 8.   9.]
-          [10.  11.]
-          [12.  13.]
-          [14.  15.]]
-         [[ 0.   1.]
-          [ 2.   3.]
-          [ 4.   5.]
-          [ 6.   7.]]]
+        [[0.5, 1.0],
+         [1.0, 1.5],
+         [5.0, 6.0]]
     """
 
     @prim_attr_register
