@@ -45,7 +45,6 @@ class ActivationOpenClKernel : public OpenCLKernel {
   cl::Kernel kernel_;
   int type_;
   float alpha_;
-  void *alpha_buff_;
   int in_size_;
   int out_size_;
   size_t fp_size;

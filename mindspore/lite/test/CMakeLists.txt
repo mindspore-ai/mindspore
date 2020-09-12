@@ -127,6 +127,7 @@ if (SUPPORT_GPU)
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/to_format.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/biasadd.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/scale.cc
+            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/reduce.cc
             )
 endif()
 ### minddata lite
@@ -315,6 +316,7 @@ if (SUPPORT_GPU)
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/reshape_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/biasadd_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/scale_tests.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/reduce_tests.cc
             )
 endif()
 

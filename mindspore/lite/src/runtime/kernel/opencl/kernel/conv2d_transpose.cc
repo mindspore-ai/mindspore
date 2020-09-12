@@ -94,14 +94,20 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
                 int ori_index = ((ci_offset * kh + kh_i) * kw + kw_i) * co + co_offset;
                 if (enable_fp16_) {
                   if (weight_dtype == kNumberTypeFloat32) {
-                    reinterpret_cast<uint16_t *>(padWeight_)[index++] =
-                      Float32ToShort(reinterpret_cast<float *>(origin_weight)[ori_index]);
+                    reinterpret_cast<float16_t *>(padWeight_)[index++] =
+                      reinterpret_cast<float *>(origin_weight)[ori_index];
                   } else {
-                    reinterpret_cast<uint16_t *>(padWeight_)[index++] =
-                      reinterpret_cast<uint16_t *>(origin_weight)[ori_index];
+                    reinterpret_cast<float16_t *>(padWeight_)[index++] =
+                      reinterpret_cast<float16_t *>(origin_weight)[ori_index];
                   }
                 } else {
-                  reinterpret_cast<float *>(padWeight_)[index++] = reinterpret_cast<float *>(origin_weight)[ori_index];
+                  if (weight_dtype == kNumberTypeFloat32) {
+                    reinterpret_cast<float *>(padWeight_)[index++] =
+                      reinterpret_cast<float *>(origin_weight)[ori_index];
+                  } else {
+                    reinterpret_cast<float *>(padWeight_)[index++] =
+                      reinterpret_cast<float16_t *>(origin_weight)[ori_index];
+                  }
                 }
               } else {
                 index++;
