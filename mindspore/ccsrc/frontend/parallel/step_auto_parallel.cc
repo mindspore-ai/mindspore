@@ -408,6 +408,12 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
       MS_LOG(ERROR) << "Strategy search for Operator " << operator_info->name() << " failed.";
       return nullptr;
     }
+    // If 'approximation' is enabled, the 'strategy_cost' of each operator is approximated
+    auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
+    if (approximation) {
+      operator_info->ApproximateStrategies();
+      MS_LOG(INFO) << "Approximated StrategyCost for: " << operator_info->name();
+    }
   } else {
     // In this case, the configured strategy should be extracted to help setting cost
     StrategyPtr strategyPtr;
@@ -695,6 +701,11 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
     }
     MS_LOG(INFO) << "Successfully created " << edge_count << " edges for: " << node_op_info->name();
   }
+  // If 'approximation' is enabled, the edges need to be checked have effective costs.
+  auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
+  if (approximation) {
+    entire_costgraph->CheckApproximateCostGraphEdges();
+  }
 
   MS_LOG(INFO) << "Constructing edges for cost graph ends.";
 }
@@ -800,6 +811,11 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       }
       std::shared_ptr<Edge> edge_ptr =
         std::make_shared<Edge>(edge_name, tmp_identity_ptr, target_op_info, 0, input_index - 1, false, true);
+      // If 'approximation' is enabled, the edges need to be checked have effective costs.
+      auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
+      if (approximation) {
+        target_op_info->ExactStrategiesAndRelatedEdges();
+      }
 
       if (edge_ptr->InitEdgeCost() != SUCCESS) {
         MS_LOG(EXCEPTION) << "Edge cost initialization failed";

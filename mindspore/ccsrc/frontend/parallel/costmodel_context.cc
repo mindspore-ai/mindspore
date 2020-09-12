@@ -65,6 +65,8 @@ void CostModelContext::ResetAlgoParameters() {
   fully_use_device_ = DEFAULT_FULLY_USE_DEVICES;
   elementwise_stra_follow_ = DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW;
   triangle_star_strategy_overwrite_ = DEFAULT_TRIANGLE_STAR_STRATEGY_OVERWRITE;
+  dp_algo_enable_approxi_ = DEFAULT_DP_ALGO_ENABLE_APPROX;
+  dp_algo_approxi_epsilon_ = DEFAULT_DP_ALGO_APPROX_EPSILON;
 }
 
 void CostModelContext::set_costmodel_context_for_device(const std::string &device_target) {
@@ -72,6 +74,10 @@ void CostModelContext::set_costmodel_context_for_device(const std::string &devic
     costmodel_beta_ = DEFAULT_COST_MODEL_BETA_GPU;
   }
 }
+
+void CostModelContext::set_dp_algo_approxi_epsilon(double epsilon) { dp_algo_approxi_epsilon_ = epsilon; }
+
+void CostModelContext::set_dp_algo_enable_approxi(bool approxi) { dp_algo_enable_approxi_ = approxi; }
 
 void CostModelContext::set_device_memory_capacity(double dm_capacity) { device_memory_capacity_ = dm_capacity; }
 

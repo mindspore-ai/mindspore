@@ -45,6 +45,8 @@ extern size_t TENSOR_SLICE_ALIGNMENT_SIZE;
 extern bool FULLY_USE_DEVICES;
 extern bool ELEMENTWISE_OP_STRA_FOLLOW;
 extern bool MULTI_SUBGRAPHS;
+extern bool DP_ALGO_ENABLE_APPROX;
+extern double DP_ALGO_APPROX_EPSILON;
 extern int32_t RUN_PHASE;
 extern bool TRIANGLE_STAR_STRATEGY_OVERWRITE;
 
@@ -193,6 +195,9 @@ class CostGraph {
   // When TmpIdentity is used by mulitple operators, the corresponding parameter's memory cost should be calculated only
   // once (instead of multiple times), this method is used to correct this.
   Status CorrectOpsMemoryCost();
+  // When APPROXIMATION is enabled in the DP algorithm, some edges may have no valid strategies.
+  // This method is to re-init those edge involved operators.
+  void CheckApproximateCostGraphEdges();
   // Needed by rec_parser
   void add_inputs_tensor_name(const std::vector<std::string> &inputs_tensor_name) {
     inputs_tensor_name_list_.push_back(inputs_tensor_name);

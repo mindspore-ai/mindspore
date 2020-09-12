@@ -246,6 +246,14 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set the parameter elementwise_op_strategy_follow in the DP algorithm.")
     .def("get_elementwise_op_strategy_follow", &CostModelContext::elementwise_stra_follow,
          "Get the parameter elementwise_op_strategy_follow in the DP algorithm.")
+    .def("set_dp_algo_enable_approxi", &CostModelContext::set_dp_algo_enable_approxi,
+         "Set the flag whether enabling approximation in the DP algorithm.")
+    .def("get_dp_algo_enable_approxi", &CostModelContext::dp_algo_enable_approxi,
+         "Get the flag whether enabling approximation in the DP algorithm.")
+    .def("set_dp_algo_approxi_epsilon", &CostModelContext::set_dp_algo_approxi_epsilon,
+         "Set the epsilon which is used in the approximation of DP algorithm.")
+    .def("get_dp_algo_approxi_epsilon", &CostModelContext::dp_algo_approxi_epsilon,
+         "Get the epsilon which is used in the approximation of DP algorithm.")
     .def("reset_cost_model", &CostModelContext::ResetCostModel, "Reset the CostModelContext.")
     .def("reset_algo_parameters", &CostModelContext::ResetAlgoParameters, "Reset the AlgoParameters.");
 

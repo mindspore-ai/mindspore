@@ -140,6 +140,8 @@ class Edge {
   // In the inference phase,
   Status CalculateMemoryCostForInference();
   void mark_output_critical() { is_output_critical_ = 1; }
+  // Whether there exists any available strategy in 'cost_map_'
+  bool CheckStrategyCostPossibility();
 
  private:
   std::string edge_name_;

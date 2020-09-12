@@ -45,6 +45,8 @@ namespace parallel {
 #define TRAINING_PHASE 0
 #define INFERENCE_PHASE 1
 #define DEFAULT_TRIANGLE_STAR_STRATEGY_OVERWRITE true;
+#define DEFAULT_DP_ALGO_ENABLE_APPROX false
+#define DEFAULT_DP_ALGO_APPROX_EPSILON 0.1
 
 class CostModelContext {
  public:
@@ -141,6 +143,12 @@ class CostModelContext {
   void set_run_phase(int32_t);
   int32_t run_phase() const { return run_phase_; }
 
+  void set_dp_algo_approxi_epsilon(double);
+  double dp_algo_approxi_epsilon() const { return dp_algo_approxi_epsilon_; }
+
+  void set_dp_algo_enable_approxi(bool);
+  bool dp_algo_enable_approxi() const { return dp_algo_enable_approxi_; }
+
  private:
   CostModelContext();
   static std::shared_ptr<CostModelContext> cm_context_inst_;
@@ -175,6 +183,12 @@ class CostModelContext {
   // In the recovery phase of DP algorithm, when encountering triangle structure and star structure,
   // whether overwrite the right-node strategy
   bool triangle_star_strategy_overwrite_;
+
+  // Whether to enable APPROXIMATION in the DP algorithm.
+  bool dp_algo_enable_approxi_;
+
+  // When APPROXIMATION is enabled in the DP algorithm, the 'epsilon' value used in the APPROXIMATION.
+  double dp_algo_approxi_epsilon_;
 
   int32_t run_phase_;  // 0: 'training', 1: 'inference'
 

@@ -138,6 +138,13 @@ class OperatorInfo {
   }
   StrategyPtr selected_strategy() const { return selected_strategy_; }
   CostPtr selected_cost() const { return selected_cost_; }
+  // Approximate the list of available strategies
+  void ApproximateStrategies();
+  // Make the list of available strategies exact and re-init the related edges incident to this operator
+  void ExactStrategiesAndRelatedEdges();
+  bool is_strategy_cost_exact() { return is_strategy_cost_exact_; }
+  void SetIsStrategyCostExactTrue() { is_strategy_cost_exact_ = true; }
+  void ClearStrategyCost() { strategy_cost_.clear(); }
   void CheckSelectedStrategy(const StrategyPtr &);
   Status InitSelectedStrategy(const StrategyPtr &s_strategy) { return Init(s_strategy); }
   void set_input_value(const std::vector<ValuePtr> &input_value) { input_value_ = input_value; }
@@ -263,6 +270,8 @@ class OperatorInfo {
   int32_t used_devices_ = -1;
   // the repeated_calc_num_ will be inserted to the last dimension of dev matrix in default
   bool repeated_num_in_dev_matrix_right_ = true;
+  // Whether the list of available strategies is exact or approximate
+  bool is_strategy_cost_exact_ = true;
 
  private:
   OperatorCostPtr operator_cost_;

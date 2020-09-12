@@ -1130,6 +1130,67 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+// Keep at most (1.0 / epsilon) number of available strategies for each operator.
+void OperatorInfo::ApproximateStrategies() {
+  auto enable_approxi = CostModelContext::GetInstance()->dp_algo_enable_approxi();
+  if (!enable_approxi) {
+    return;
+  }
+  MS_LOG(INFO) << "Approximating strategy-cost for: " << name_;
+  auto epsilon = CostModelContext::GetInstance()->dp_algo_approxi_epsilon();
+  auto target_num = static_cast<size_t>(std::ceil(1.0 / epsilon));
+  if (strategy_cost_.size() <= target_num) {
+    MS_LOG(INFO) << name_ << "'s strategy number is: " << strategy_cost_.size()
+                 << ", no greater than target-num: " << target_num;
+    return;
+  }
+  std::vector<std::shared_ptr<StrategyWithCost>> ret;
+  auto &origin_stra_cost = strategy_cost_;
+  auto alpha = CostModelContext::GetInstance()->costmodel_alpha();
+  auto beta = CostModelContext::GetInstance()->costmodel_beta();
+  // sort
+  std::sort(
+    origin_stra_cost.begin(), origin_stra_cost.end(),
+    [&alpha, &beta](const std::shared_ptr<StrategyWithCost> &s1, const std::shared_ptr<StrategyWithCost> &s2) {
+      if (alpha * s1->cost_list[0]->computation_cost_ + beta * s1->cost_list[0]->communication_with_partial_para_ <
+          alpha * s2->cost_list[0]->computation_cost_ + beta * s2->cost_list[0]->communication_with_partial_para_) {
+        return true;
+      }
+      return false;
+    });
+  size_t step_length = origin_stra_cost.size() / target_num;
+  for (size_t i = 0; ret.size() < target_num && static_cast<size_t>(i * step_length) < origin_stra_cost.size(); ++i) {
+    ret.push_back(origin_stra_cost[static_cast<size_t>(i * step_length)]);
+  }
+
+  strategy_cost_ = ret;
+  is_strategy_cost_exact_ = false;
+}
+
+void OperatorInfo::ExactStrategiesAndRelatedEdges() {
+  if (is_strategy_cost_exact()) {
+    return;
+  }
+  ClearStrategyCost();
+  if (GenerateStrategies(0) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Strategy search for Operator " << name() << " failed.";
+    return;
+  }
+  SetIsStrategyCostExactTrue();
+  // re-init the previous edges
+  for (auto &prev_edge : prev_edges()) {
+    if (prev_edge->InitEdgeCost() != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Edge: " << prev_edge->edge_name() << " cost init failed.";
+    }
+  }
+  // re-init the successive edges
+  for (auto &next_edge : succ_edges()) {
+    if (next_edge->InitEdgeCost() != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Edge: " << next_edge->edge_name() << " cost init failed.";
+    }
+  }
+}
+
 int OperatorInfo::ComputeOpAndPrevEdgeParameterInvolved() {
   if (is_output_parameter_involve_ != -1) {
     return is_output_parameter_involve_;
