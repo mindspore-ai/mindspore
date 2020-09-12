@@ -24,8 +24,11 @@ echo "For hyper parameter, please note that you should customize the scripts:
 echo "=============================================================================================================="
 CUR_DIR=`pwd`
 
-python ${CUR_DIR}/scripts/ascend_distributed_launcher/run_distribute_pretrain.py \
+python ${CUR_DIR}/scripts/ascend_distributed_launcher/get_distribute_pretrain_cmd.py \
     --run_script_dir=${CUR_DIR}/run_pretrain.py \
     --hyper_parameter_config_dir=${CUR_DIR}/scripts/ascend_distributed_launcher/hyper_parameter_config.ini \
     --data_dir=$1 \
-    --hccl_config_dir=$2
+    --hccl_config_dir=$2 \
+    --cmd_file=distributed_cmd.sh
+
+bash distributed_cmd.sh
