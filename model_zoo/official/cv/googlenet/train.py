@@ -36,6 +36,7 @@ from mindspore.common import set_seed
 from src.config import cifar_cfg, imagenet_cfg
 from src.dataset import create_dataset_cifar10, create_dataset_imagenet
 from src.googlenet import GoogleNet
+from src.CrossEntropySmooth import CrossEntropySmooth
 
 set_seed(1)
 
@@ -148,7 +149,7 @@ if __name__ == '__main__':
                        learning_rate=Tensor(lr),
                        momentum=cfg.momentum,
                        weight_decay=cfg.weight_decay)
-        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)
+        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
 
     elif args_opt.dataset_name == 'imagenet':
         lr = lr_steps_imagenet(cfg, batch_num)
@@ -188,8 +189,8 @@ if __name__ == '__main__':
                        loss_scale=cfg.loss_scale)
         if not cfg.use_label_smooth:
             cfg.label_smooth_factor = 0.0
-        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean",
-                                                smooth_factor=cfg.label_smooth_factor, num_classes=cfg.num_classes)
+        loss = CrossEntropySmooth(sparse=True, reduction="mean",
+                                  smooth_factor=cfg.label_smooth_factor, num_classes=cfg.num_classes)
 
         if cfg.is_dynamic_loss_scale == 1:
             loss_scale_manager = DynamicLossScaleManager(init_loss_scale=65536, scale_factor=2, scale_window=2000)
