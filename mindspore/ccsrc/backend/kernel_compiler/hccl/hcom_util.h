@@ -24,6 +24,7 @@
 #include "ir/dtype.h"
 #include "hccl/base.h"
 #include "utils/contract.h"
+#include "hccl/hccl_types.h"
 
 namespace mindspore {
 using std::map;
@@ -36,31 +37,31 @@ constexpr auto kBroadcast = "Broadcast";
 constexpr auto kReduceScatter = "ReduceScatter";
 
 /* Correspondence between data_type and hcom data type in Ascend */
-static map<int64_t, hcclDataType_t> CONST_OP_HCOM_DATA_TYPE_MAP = {
-  {TypeId::kNumberTypeFloat32, HCCL_DATA_TYPE_FLOAT},
-  {TypeId::kNumberTypeFloat16, HCCL_DATA_TYPE_HALF},
+static map<int64_t, HcclDataType> CONST_OP_HCOM_DATA_TYPE_MAP = {
+  {TypeId::kNumberTypeFloat32, HCCL_DATA_TYPE_FP32},
+  {TypeId::kNumberTypeFloat16, HCCL_DATA_TYPE_FP16},
   {TypeId::kNumberTypeInt8, HCCL_DATA_TYPE_INT8},
-  {TypeId::kNumberTypeInt32, HCCL_DATA_TYPE_INT},
+  {TypeId::kNumberTypeInt32, HCCL_DATA_TYPE_INT32},
 };
 
 /* Correspondence between data_type and occupied byte size in hcom */
-static map<hcclDataType_t, uint32_t> CONST_OP_HCOM_DATA_TYPE_SIZE_MAP = {
-  {HCCL_DATA_TYPE_FLOAT, sizeof(float)},
-  {HCCL_DATA_TYPE_HALF, sizeof(float) / 2},
+static map<HcclDataType, uint32_t> CONST_OP_HCOM_DATA_TYPE_SIZE_MAP = {
+  {HCCL_DATA_TYPE_FP32, sizeof(float)},
+  {HCCL_DATA_TYPE_FP16, sizeof(float) / 2},
   {HCCL_DATA_TYPE_INT8, sizeof(int8_t)},
-  {HCCL_DATA_TYPE_INT, sizeof(int32_t)},
+  {HCCL_DATA_TYPE_INT32, sizeof(int32_t)},
 };
 
 class HcomUtil {
  public:
   static bool GetKernelInputShape(const AnfNodePtr &anf_node, vector<vector<size_t>> *hccl_kernel_shape_list);
   static bool GetKernelOutputShape(const AnfNodePtr &anf_node, vector<vector<size_t>> *hccl_kernel_shape_list);
-  static bool GetHcomDataType(const AnfNodePtr &anf_node, vector<hcclDataType_t> *data_type_list);
-  static bool GetHcclOpSize(const hcclDataType_t &data_type, const vector<size_t> &shape, size_t *size);
-  static bool GetHcomTypeSize(const hcclDataType_t &data_type, uint32_t *size);
-  static bool GetHcomCount(const AnfNodePtr &anf_node, const vector<hcclDataType_t> &data_type_list,
+  static bool GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> *data_type_list);
+  static bool GetHcclOpSize(const HcclDataType &data_type, const vector<size_t> &shape, size_t *size);
+  static bool GetHcomTypeSize(const HcclDataType &data_type, uint32_t *size);
+  static bool GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataType> &data_type_list,
                            const vector<vector<size_t>> &shape_list, uint64_t *total_count);
-  static bool GetHcomOperationType(const AnfNodePtr &anf_node, hcclRedOp_t *op_type);
+  static bool GetHcomOperationType(const AnfNodePtr &anf_node, HcclReduceOp *op_type);
   static bool GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id);
   static void GetHcomGroup(NotNull<const AnfNodePtr &> anf_node, NotNull<std::string *> group);
 };

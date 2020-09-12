@@ -32,7 +32,7 @@ bool HcomAllGatherKernel::Launch(const std::vector<AddressPtr> &inputs, const st
     return false;
   }
   const char *tag = "Hccl-AllGather";
-  hcclResult_t ret =
+  HcclResult ret =
     hcom_all_gather(tag, inputs[0]->addr, outputs[0]->addr, hccl_count_, hccl_data_type_list_[0], nullptr, stream_ptr);
   if (ret != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcomAllGatherKernelOp : hcom_all_gather fail, return: " << static_cast<int>(ret);
