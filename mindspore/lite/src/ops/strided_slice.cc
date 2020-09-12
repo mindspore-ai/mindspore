@@ -236,8 +236,10 @@ int StridedSlice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
   for (int i = 0; i < static_cast<int>(in_shape_.size()); i++) {
     if (i < ndim_ && new_axis_mask_.at(i)) {
       output_shape.at(i) = 1;
-    } else {
+    } else if (ends_.at(i) > 0) {
       output_shape.at(i) = (ends_.at(i) - begins_.at(i)) / strides_.at(i);
+    } else {
+      output_shape.at(i) = (input_shape.at(i) + ends_.at(i) - begins_.at(i)) % input_shape.at(i) / strides_.at(i);
     }
   }
 

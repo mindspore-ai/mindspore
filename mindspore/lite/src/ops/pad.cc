@@ -58,9 +58,6 @@ int Pad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::Fl
   return RET_OK;
 }
 #endif
-namespace {
-const size_t kInputRank = 4;
-}  // namespace
 int Pad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (this->primitive_ == nullptr) {
@@ -84,9 +81,9 @@ int Pad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs)
   }
   auto input_shape = input->shape();
   std::vector<int> output_shape;
-  MS_ASSERT(input->shape().size() <= kInputRank);
+  MS_ASSERT(input->shape().size() <= 4);
   for (size_t i = 0; i < input_shape.size(); i++) {
-    auto paddings_index = i + kInputRank - input_shape.size();
+    auto paddings_index = i;
     auto shape = input_shape[i] + paddings[2 * paddings_index] + paddings[2 * paddings_index + 1];
     output_shape.push_back(shape);
   }
