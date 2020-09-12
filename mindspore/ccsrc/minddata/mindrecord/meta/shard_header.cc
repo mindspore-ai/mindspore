@@ -81,14 +81,14 @@ MSRStatus ShardHeader::CheckFileStatus(const std::string &path) {
   auto &io_seekg = fin.seekg(0, std::ios::end);
   if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
     fin.close();
-    MS_LOG(ERROR) << "File seekg failed";
+    MS_LOG(ERROR) << "File seekg failed. path: " << path;
     return FAILED;
   }
 
   size_t file_size = fin.tellg();
   if (file_size < kMinFileSize) {
     fin.close();
-    MS_LOG(ERROR) << "File size %d is smaller than the minimum value.";
+    MS_LOG(ERROR) << "Invalid file. path: " << path;
     return FAILED;
   }
   fin.close();
@@ -104,7 +104,7 @@ std::pair<MSRStatus, json> ShardHeader::ValidateHeader(const std::string &path) 
   json json_header;
   std::ifstream fin(common::SafeCStr(path), std::ios::in | std::ios::binary);
   if (!fin.is_open()) {
-    MS_LOG(ERROR) << "File seekg failed";
+    MS_LOG(ERROR) << "File seekg failed. path: " << path;
     return {FAILED, json_header};
   }
 
@@ -118,7 +118,7 @@ std::pair<MSRStatus, json> ShardHeader::ValidateHeader(const std::string &path) 
 
   if (header_size > kMaxHeaderSize) {
     fin.close();
-    MS_LOG(ERROR) << "Header size is illegal.";
+    MS_LOG(ERROR) << "Invalid file. path: " << path;
     return {FAILED, json_header};
   }
 
@@ -126,7 +126,7 @@ std::pair<MSRStatus, json> ShardHeader::ValidateHeader(const std::string &path) 
   std::vector<uint8_t> header_content(header_size);
   auto &io_read_content = fin.read(reinterpret_cast<char *>(&header_content[0]), header_size);
   if (!io_read_content.good() || io_read_content.fail() || io_read_content.bad()) {
-    MS_LOG(ERROR) << "File read failed";
+    MS_LOG(ERROR) << "File read failed. path: " << path;
     fin.close();
     return {FAILED, json_header};
   }
