@@ -27,6 +27,7 @@
 #include "backend/session/session_basic.h"
 #include "frontend/operator/ops.h"
 #include "utils/shape_utils.h"
+#include "utils/profile.h"
 
 namespace mindspore {
 namespace device {
