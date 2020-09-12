@@ -52,7 +52,6 @@ class DeConvolutionFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  private:
   int InitRunBuf();
   void FreeRunBuf();
-  void FreeParam();
   int InitParam();
   int InitWeightBias();
 
