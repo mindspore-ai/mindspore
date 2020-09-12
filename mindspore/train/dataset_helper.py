@@ -61,7 +61,7 @@ def connect_network_with_dataset(network, dataset_helper):
     Examples:
         >>> # call create_dataset function to create a regular dataset, refer to mindspore.dataset
         >>> train_dataset = create_dataset()
-        >>> dataset_helper = mindspore.DatasetHelper(train_dataset)
+        >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)
         >>> net = Net()
         >>> net_with_get_next = connect_network_with_dataset(net, dataset_helper)
     """
