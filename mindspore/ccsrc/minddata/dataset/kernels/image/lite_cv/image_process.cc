@@ -250,6 +250,26 @@ static bool ConvertRGBAToBGR(const unsigned char *data, LDataType data_type, int
   return true;
 }
 
+static bool ConvertRGBAToRGB(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {
+  if (data_type == LDataType::UINT8) {
+    mat.Init(w, h, 3, LDataType::UINT8);
+    unsigned char *ptr = mat;
+    const unsigned char *data_ptr = data;
+    for (int y = 0; y < h; y++) {
+      for (int x = 0; x < w; x++) {
+        ptr[0] = data_ptr[0];
+        ptr[1] = data_ptr[1];
+        ptr[2] = data_ptr[2];
+        ptr += 3;
+        data_ptr += 4;
+      }
+    }
+  } else {
+    return false;
+  }
+  return true;
+}
+
 static bool ConvertRGBAToGRAY(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
     mat.Init(w, h, 1, LDataType::UINT8);
@@ -279,6 +299,8 @@ bool InitFromPixel(const unsigned char *data, LPixelType pixel_type, LDataType d
     return ConvertRGBAToBGR(data, data_type, w, h, m);
   } else if (pixel_type == LPixelType::RGBA2GRAY) {
     return ConvertRGBAToGRAY(data, data_type, w, h, m);
+  } else if (pixel_type == LPixelType::RGBA2RGB) {
+    return ConvertRGBAToRGB(data, data_type, w, h, m);
   } else {
     return false;
   }
