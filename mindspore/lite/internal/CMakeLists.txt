@@ -8,8 +8,10 @@ file(GLOB_RECURSE C_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
 file(GLOB KERNEL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/*.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32_grad/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/int8/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/quantization/*.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/fp32/*.cc
         )
 list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/opt_op_handler.c)
 
