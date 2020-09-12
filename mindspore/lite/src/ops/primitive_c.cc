@@ -375,7 +375,7 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<MatMul>(prim, inputs, quantType);
   } else if (op_type == "Mul") {
     return NewPrimitiveC<Mul>(prim, inputs, quantType);
-  } else if (op_type == "MaxPool") {
+  } else if (op_type == "MaxPool" || op_type == "AvgPool") {
     return NewPrimitiveC<Pooling>(prim, inputs, quantType);
   } else if (op_type == "Quant") {
     return NewPrimitiveC<Quant>(prim, inputs, quantType);
@@ -397,6 +397,9 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<TupleGetItem>(prim, inputs, quantType);
   } else if (op_type == "Softmax") {
     return NewPrimitiveC<SoftMax>(prim, inputs, quantType);
+  } else if (op_type == "StridedSlice") {
+    return NewPrimitiveC<StridedSlice>(prim, inputs, quantType);
+
 
 #ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
