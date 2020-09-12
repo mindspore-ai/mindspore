@@ -158,7 +158,7 @@ TEST_F(MindDataTestVocab, TestVocabFromEmptyVector) {
 
 TEST_F(MindDataTestVocab, TestVocabFromVectorFail1) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromVectorFail1.";
-  // Build vocab from a vector of words with no special tokens
+  // Build vocab from a vector of words
   std::vector<std::string> list = {"apple", "apple", "cat", "cat", "egg"};
   std::vector<std::string> sp_tokens = {};
   std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
@@ -170,12 +170,24 @@ TEST_F(MindDataTestVocab, TestVocabFromVectorFail1) {
 
 TEST_F(MindDataTestVocab, TestVocabFromVectorFail2) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromVectorFail2.";
-  // Build vocab from a vector of words with no special tokens
+  // Build vocab from a vector
   std::vector<std::string> list = {"apple", "dog", "egg"};
   std::vector<std::string> sp_tokens = {"<pad>", "<unk>", "<pad>", "<unk>", "<none>"};
   std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
 
   // Expected failure: duplicate special token <pad> <unk>
+  Status s = Vocab::BuildFromVector(list, sp_tokens, true, &vocab);
+  EXPECT_NE(s, Status::OK());
+}
+
+TEST_F(MindDataTestVocab, TestVocabFromVectorFail3) {
+  MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromVectorFail3.";
+  // Build vocab from a vector
+  std::vector<std::string> list = {"apple", "dog", "egg", "<unk>", "<pad>"};
+  std::vector<std::string> sp_tokens = {"<pad>", "<unk>"};
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+
+  // Expected failure: special tokens are already existed in word_list
   Status s = Vocab::BuildFromVector(list, sp_tokens, true, &vocab);
   EXPECT_NE(s, Status::OK());
 }
@@ -218,12 +230,23 @@ TEST_F(MindDataTestVocab, TestVocabFromFileFail2) {
 }
 
 TEST_F(MindDataTestVocab, TestVocabFromFileFail3) {
-  MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromFileFail2.";
-  // Build vocab from local file which is not exist
+  MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromFileFail3.";
+  // Build vocab from local file
   std::string vocab_dir = datasets_root_path_ + "/testVocab/vocab_list.txt";
   std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
 
   // Expected failure: duplicate special token <unk>
   Status s = Vocab::BuildFromFileCpp(vocab_dir, ",", -1, {"<unk>", "<unk>"}, true, &vocab);
+  EXPECT_NE(s, Status::OK());
+}
+
+TEST_F(MindDataTestVocab, TestVocabFromFileFail4) {
+  MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromFileFail4.";
+  // Build vocab from local file
+  std::string vocab_dir = datasets_root_path_ + "/testVocab/vocab_list.txt";
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+
+  // Expected failure: special_tokens and word_list contain duplicate word
+  Status s = Vocab::BuildFromFileCpp(vocab_dir, ",", -1, {"home"}, true, &vocab);
   EXPECT_NE(s, Status::OK());
 }

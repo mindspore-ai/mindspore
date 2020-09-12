@@ -56,12 +56,14 @@ class Iterator {
   /// \brief Function to get the next row from the data pipeline.
   /// \note Type of return data is a map(with column name).
   /// \param[out] row - the output tensor row.
-  void GetNextRow(TensorMap *row);
+  /// \return Returns true if no error encountered else false.
+  bool GetNextRow(TensorMap *row);
 
   /// \brief Function to get the next row from the data pipeline.
   /// \note Type of return data is a vector(without column name).
   /// \param[out] row - the output tensor row.
-  void GetNextRow(TensorVec *row);
+  /// \return Returns true if no error encountered else false.
+  bool GetNextRow(TensorVec *row);
 
   /// \brief Function to shut down the data pipeline.
   void Stop();

@@ -327,9 +327,7 @@ std::shared_ptr<Vocab> Dataset::BuildVocab(const std::vector<std::string> &colum
 
   // Finish building vocab by triggering GetNextRow
   std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
-  iter->GetNextRow(&row);
-  if (vocab->vocab().empty()) {
-    MS_LOG(ERROR) << "Fail to build vocab.";
+  if (!iter->GetNextRow(&row)) {
     return nullptr;
   }
 
@@ -1782,7 +1780,7 @@ bool BuildVocabDataset::ValidateParams() {
     MS_LOG(ERROR) << "BuildVocab: vocab is null.";
     return false;
   }
-  if (top_k_ < 0) {
+  if (top_k_ <= 0) {
     MS_LOG(ERROR) << "BuildVocab: top_k shoule be positive, but got: " << top_k_;
     return false;
   }

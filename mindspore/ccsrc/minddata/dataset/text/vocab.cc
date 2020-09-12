@@ -92,7 +92,7 @@ Status Vocab::BuildFromVector(const std::vector<WordType> &words, const std::vec
   for (const WordType &word : words) {
     if (std::count(words.begin(), words.end(), word) > 1) {
       if (duplicate_word.find(word) == std::string::npos) {
-        duplicate_word = duplicate_word + ", " + word;
+        duplicate_word = duplicate_word.empty() ? duplicate_word + word : duplicate_word + ", " + word;
       }
     }
   }
@@ -102,16 +102,26 @@ Status Vocab::BuildFromVector(const std::vector<WordType> &words, const std::vec
   }
 
   std::string duplicate_sp;
+  std::string existed_sp;
   for (const WordType &sp : special_tokens) {
     if (std::count(special_tokens.begin(), special_tokens.end(), sp) > 1) {
       if (duplicate_sp.find(sp) == std::string::npos) {
-        duplicate_sp = duplicate_sp + ", " + sp;
+        duplicate_sp = duplicate_sp.empty() ? duplicate_sp + sp : duplicate_sp + ", " + sp;
+      }
+    }
+    if (std::count(words.begin(), words.end(), sp) >= 1) {
+      if (existed_sp.find(sp) == std::string::npos) {
+        existed_sp = existed_sp.empty() ? existed_sp + sp : existed_sp + ", " + sp;
       }
     }
   }
   if (!duplicate_sp.empty()) {
     MS_LOG(ERROR) << "special_tokens contains duplicate word: " << duplicate_sp;
     RETURN_STATUS_UNEXPECTED("special_tokens contains duplicate word: " + duplicate_sp);
+  }
+  if (!existed_sp.empty()) {
+    MS_LOG(ERROR) << "special_tokens and word_list contain duplicate word: " << existed_sp;
+    RETURN_STATUS_UNEXPECTED("special_tokens and word_list contain duplicate word: " + existed_sp);
   }
 
   std::unordered_map<WordType, WordIdType> word2id;
@@ -151,7 +161,7 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
   for (const WordType &sp : special_tokens) {
     if (std::count(special_tokens.begin(), special_tokens.end(), sp) > 1) {
       if (duplicate_sp.find(sp) == std::string::npos) {
-        duplicate_sp = duplicate_sp + ", " + sp;
+        duplicate_sp = duplicate_sp.empty() ? duplicate_sp + sp : duplicate_sp + ", " + sp;
       }
     }
   }
@@ -179,12 +189,12 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
       word = word.substr(0, word.find_first_of(delimiter));
     }
     if (word2id.find(word) != word2id.end()) {
-      MS_LOG(ERROR) << "duplicate word:" + word + ".";
-      RETURN_STATUS_UNEXPECTED("duplicate word:" + word + ".");
+      MS_LOG(ERROR) << "word_list contains duplicate word:" + word + ".";
+      RETURN_STATUS_UNEXPECTED("word_list contains duplicate word:" + word + ".");
     }
     if (specials.find(word) != specials.end()) {
-      MS_LOG(ERROR) << word + " is already in special_tokens.";
-      RETURN_STATUS_UNEXPECTED(word + " is already in special_tokens.");
+      MS_LOG(ERROR) << "special_tokens and word_list contain duplicate word: " << word;
+      RETURN_STATUS_UNEXPECTED("special_tokens and word_list contain duplicate word: " + word);
     }
     word2id[word] = word_id++;
     // break if enough row is read, if vocab_size is smaller than 0
