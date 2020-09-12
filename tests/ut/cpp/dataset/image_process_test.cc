@@ -51,7 +51,7 @@ LiteMat Lite3CImageProcess(LiteMat &lite_mat_bgr) {
     MS_LOG(ERROR) << "ResizeBilinear error";
   }
   LiteMat lite_mat_convert_float;
-  ret = ConvertTo(lite_mat_resize, lite_mat_convert_float, 1.0 );
+  ret = ConvertTo(lite_mat_resize, lite_mat_convert_float, 1.0);
   if (!ret) {
     MS_LOG(ERROR) << "ConvertTo error";
   }
@@ -222,7 +222,7 @@ TEST_F(MindDataImageProcess, TestPadd) {
   ResizeBilinear(lite_mat_bgr, lite_mat_resize, 256, 256);
 
   LiteMat makeborder;
-  Padd(lite_mat_resize, makeborder, top, bottom, left, right, PaddBorderType::PADD_BORDER_CONSTANT, 255, 255, 255);
+  Pad(lite_mat_resize, makeborder, top, bottom, left, right, PaddBorderType::PADD_BORDER_CONSTANT, 255, 255, 255);
 
   cv::Mat dst_image(256 + top + bottom, 256 + left + right, CV_8UC3, makeborder.data_ptr_);
 
@@ -245,7 +245,7 @@ TEST_F(MindDataImageProcess, TestGetDefaultBoxes) {
   int cols = 4;
   std::vector<double> benchmark_boxes(rows * cols);
   std::ifstream in(benchmark, std::ios::in | std::ios::binary);
-  in.read(reinterpret_cast<char*>(benchmark_boxes.data()), benchmark_boxes.size() * sizeof(double));
+  in.read(reinterpret_cast<char *>(benchmark_boxes.data()), benchmark_boxes.size() * sizeof(double));
   in.close();
 
   std::vector<std::vector<float>> default_boxes = GetDefaultBoxes(config);
@@ -284,13 +284,13 @@ TEST_F(MindDataImageProcess, TestAffine) {
   for (size_t i = 0; i < rows; i++) {
     for (size_t j = 0; j < cols; j++) {
       if (i == 2 && j == 2) {
-        static_cast<UINT8_C1*>(src.data_ptr_)[i * cols + j] = 3;
+        static_cast<UINT8_C1 *>(src.data_ptr_)[i * cols + j] = 3;
       } else if (i == 2) {
-        static_cast<UINT8_C1*>(src.data_ptr_)[i * cols + j] = 2;
+        static_cast<UINT8_C1 *>(src.data_ptr_)[i * cols + j] = 2;
       } else if (j == 2) {
-        static_cast<UINT8_C1*>(src.data_ptr_)[i * cols + j] = 1;
+        static_cast<UINT8_C1 *>(src.data_ptr_)[i * cols + j] = 1;
       } else {
-        static_cast<UINT8_C1*>(src.data_ptr_)[i * cols + j] = 0;
+        static_cast<UINT8_C1 *>(src.data_ptr_)[i * cols + j] = 0;
       }
     }
   }
@@ -305,13 +305,13 @@ TEST_F(MindDataImageProcess, TestAffine) {
   for (size_t i = 0; i < rows; i++) {
     for (size_t j = 0; j < cols; j++) {
       if (i == 2 && j == 2) {
-        static_cast<UINT8_C1*>(expect.data_ptr_)[i * cols + j] = 3;
+        static_cast<UINT8_C1 *>(expect.data_ptr_)[i * cols + j] = 3;
       } else if (i == 2) {
-        static_cast<UINT8_C1*>(expect.data_ptr_)[i * cols + j] = 1;
+        static_cast<UINT8_C1 *>(expect.data_ptr_)[i * cols + j] = 1;
       } else if (j == 2) {
-        static_cast<UINT8_C1*>(expect.data_ptr_)[i * cols + j] = 2;
+        static_cast<UINT8_C1 *>(expect.data_ptr_)[i * cols + j] = 2;
       } else {
-        static_cast<UINT8_C1*>(expect.data_ptr_)[i * cols + j] = 0;
+        static_cast<UINT8_C1 *>(expect.data_ptr_)[i * cols + j] = 0;
       }
     }
   }
@@ -329,8 +329,8 @@ TEST_F(MindDataImageProcess, TestAffine) {
 
   for (size_t i = 0; i < rows; i++) {
     for (size_t j = 0; j < cols; j++) {
-      EXPECT_EQ(static_cast<UINT8_C1*>(expect.data_ptr_)[i * cols + j].c1,
-                static_cast<UINT8_C1*>(dst.data_ptr_)[i * cols + j].c1);
+      EXPECT_EQ(static_cast<UINT8_C1 *>(expect.data_ptr_)[i * cols + j].c1,
+                static_cast<UINT8_C1 *>(dst.data_ptr_)[i * cols + j].c1);
     }
   }
 }
