@@ -402,16 +402,18 @@ class Reshape(PrimitiveWithInfer):
                 dim_prod *= shp_i
         arr_prod = np.prod(x_shp)
         if dim_prod <= 0 or arr_prod % dim_prod != 0:
-            raise ValueError(f'For \'{self.name}\' the product of shape should > 0 and'
-                             f' can be divided by prod of input {arr_prod},'
-                             f' but shape {shape}, product of shape {dim_prod}.')
+            raise ValueError(f'For \'{self.name}\' input_x\'s shape is {x_shp}, input_shape\'s value is {shape_v}.'
+                             f'The product of input_x\'s shape should > 0, '
+                             f'and can be divided by product of input_shape, '
+                             f'but product of input_x\'s shape is {arr_prod}, product of input_shape is {dim_prod}.')
 
         if neg_index != -1:
             shape_v[neg_index] = int(arr_prod / dim_prod)
             dim_prod *= shape_v[neg_index]
         if dim_prod != arr_prod:
-            raise ValueError(f'For \'{self.name}\' The shape arg for reshape must match array''s size'
-                             f' input shape {arr_prod}, shape {dim_prod}.')
+            raise ValueError(f'For \'{self.name}\' input_x\'s shape is {x_shp}, input_shape\'s value is {shape_v}.'
+                             f'The product of input_x\'s shape should be equal to product of input_shape, '
+                             f'but product of input_x\'s shape is {arr_prod}, product of input_shape is {dim_prod}.')
 
         value = None
         if x['value'] is not None:
