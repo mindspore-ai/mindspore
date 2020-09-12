@@ -90,7 +90,6 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
     MS_LOG(ERROR) << "Export to meta graph return nullptr";
     return nullptr;
   }
-
   // transform
   transform->SetGraphDef(meta_graph);
   transform->CreateQuantizer(flag);

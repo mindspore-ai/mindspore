@@ -55,7 +55,7 @@ int GatherInt8CPUKernel::DoGather(int task_id) {
 
   auto input_ptr = reinterpret_cast<int8_t *>(input_tensor->MutableData());
   auto output_ptr = reinterpret_cast<int8_t *>(out_tensor->MutableData());
-  auto indices_ptr = reinterpret_cast<int32_t *>(out_tensor->MutableData());
+  auto indices_ptr = reinterpret_cast<int32_t *>(indices_tensor->MutableData());
 
   auto in_shape = input_tensor->shape();
   int in_rank = in_shape.size();
