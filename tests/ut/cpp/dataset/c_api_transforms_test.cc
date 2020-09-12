@@ -1262,3 +1262,53 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeFail) {
   random_solarize = mindspore::dataset::api::vision::RandomSolarize(threshold);
   EXPECT_EQ(random_solarize, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestResizeFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResize with invalid params.";
+  // negative resize value
+  std::shared_ptr<TensorOperation> resize = mindspore::dataset::api::vision::Resize({30, -30});
+  EXPECT_EQ(resize, nullptr);
+  // zero resize value
+  resize = mindspore::dataset::api::vision::Resize({0, 30});
+  EXPECT_EQ(resize, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestCropFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCrop with invalid params.";
+  // wrong width
+  std::shared_ptr<TensorOperation> crop = mindspore::dataset::api::vision::Crop({0, 0}, {32, -32});
+  EXPECT_EQ(crop, nullptr);
+  // wrong height
+  crop = mindspore::dataset::api::vision::Crop({0, 0}, {-32, -32});
+  EXPECT_EQ(crop, nullptr);
+  // zero height
+  crop = mindspore::dataset::api::vision::Crop({0, 0}, {0, 32});
+  EXPECT_EQ(crop, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestCenterCropFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCenterCrop with invalid params.";
+  // center crop height value negative
+  std::shared_ptr<TensorOperation> center_crop = mindspore::dataset::api::vision::CenterCrop({-32, 32});
+  EXPECT_EQ(center_crop, nullptr);
+  // center crop width value negative
+  center_crop = mindspore::dataset::api::vision::CenterCrop({32, -32});
+  EXPECT_EQ(center_crop, nullptr);
+  // 0 value would result in nullptr
+  center_crop = mindspore::dataset::api::vision::CenterCrop({0, 32});
+  EXPECT_EQ(center_crop, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestNormalizeFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalize with invalid params.";
+  // mean value 0.0
+  std::shared_ptr<TensorOperation> normalize = mindspore::dataset::api::vision::Normalize({0.0, 115.0, 100.0},
+                                                                                          {70.0, 68.0, 71.0});
+  EXPECT_EQ(normalize, nullptr);
+  // std value at 0.0
+  normalize = mindspore::dataset::api::vision::Normalize({121.0, 115.0, 100.0}, {0.0, 68.0, 71.0});
+  EXPECT_EQ(normalize, nullptr);
+  // mean value 300.0 greater than 255.0
+  normalize = mindspore::dataset::api::vision::Normalize({300.0, 115.0, 100.0}, {70.0, 68.0, 71.0});
+  EXPECT_EQ(normalize, nullptr);
+}
