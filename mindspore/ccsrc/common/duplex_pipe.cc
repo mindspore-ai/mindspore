@@ -40,7 +40,6 @@ int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fd
     close(fd2_[1]);
     DP_EXCEPTION << "fork failed, errno: " << errno;
   } else if (pid_ == 0) {  // Remote process
-    DP_INFO << "Remote process, pid: " << getpid() << ", " << fd1_[0] << "/" << fd2_[1];
     remote_stdout_ = dup(STDOUT_FILENO);
     remote_stdin_ = dup(STDIN_FILENO);
     close(fd1_[1]);
