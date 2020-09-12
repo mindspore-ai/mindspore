@@ -150,12 +150,15 @@ def check_columns(columns, name):
         Exception: when the value is not correct, otherwise nothing.
     """
     type_check(columns, (list, str), name)
-    if isinstance(columns, list):
+    if isinstance(columns, str):
+        if not columns:
+            raise ValueError("{0} should not be an empty str".format(name))
+    elif isinstance(columns, list):
         if not columns:
             raise ValueError("{0} should not be empty".format(name))
         for i, column_name in enumerate(columns):
             if not column_name:
-                raise ValueError("{0}[{1}] should not be empty".format(name, i))
+                raise ValueError("{0}[{1}] should not be empty.".format(name, i))
 
         col_names = ["{0}[{1}]".format(name, i) for i in range(len(columns))]
         type_check_list(columns, (str,), col_names)

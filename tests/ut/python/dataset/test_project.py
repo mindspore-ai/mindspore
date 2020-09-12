@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import numpy as np
+
 from util import save_and_check_tuple
 
 import mindspore.dataset as ds
@@ -155,3 +157,27 @@ def test_case_map_project_map_project():
 
     filename = "project_alternate_parallel_inline_result.npz"
     save_and_check_tuple(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+
+
+def test_column_order():
+    """test the output dict has maintained an insertion order."""
+
+    def gen_3_cols(num):
+        for i in range(num):
+            yield (np.array([i * 3]), np.array([i * 3 + 1]), np.array([i * 3 + 2]))
+
+    def test_config(num, col_order):
+        dst = ds.GeneratorDataset((lambda: gen_3_cols(num)), ["col1", "col2", "col3"]).batch(batch_size=num)
+        dst = dst.project(col_order)
+        res = dict()
+        for item in dst.create_dict_iterator(num_epochs=1):
+            res = item
+        return res
+
+    assert list(test_config(1, ["col3", "col2", "col1"]).keys()) == ["col3", "col2", "col1"]
+    assert list(test_config(2, ["col1", "col2", "col3"]).keys()) == ["col1", "col2", "col3"]
+    assert list(test_config(3, ["col2", "col3", "col1"]).keys()) == ["col2", "col3", "col1"]
+
+
+if __name__ == '__main__':
+    test_column_order()

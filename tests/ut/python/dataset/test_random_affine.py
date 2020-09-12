@@ -190,14 +190,13 @@ def test_random_affine_py_exception_non_pil_images():
     Test RandomAffine: input img is ndarray and not PIL, expected to raise RuntimeError
     """
     logger.info("test_random_affine_exception_negative_degrees")
-    dataset = ds.MnistDataset(MNIST_DATA_DIR, num_parallel_workers=3)
+    dataset = ds.MnistDataset(MNIST_DATA_DIR, num_samples=3, num_parallel_workers=3)
     try:
         transform = mindspore.dataset.transforms.py_transforms.Compose([py_vision.ToTensor(),
                                                                         py_vision.RandomAffine(degrees=(15, 15))])
-        dataset = dataset.map(operations=transform, input_columns=["image"], num_parallel_workers=3,
-                              python_multiprocessing=True)
+        dataset = dataset.map(operations=transform, input_columns=["image"], num_parallel_workers=3)
         for _ in dataset.create_dict_iterator(num_epochs=1):
-            break
+            pass
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Pillow image" in str(e)
