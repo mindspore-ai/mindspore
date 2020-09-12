@@ -47,6 +47,7 @@
 #include "utils/ms_utils.h"
 #include "common/trans.h"
 #include "utils/ms_context.h"
+#include "debug/data_dump/e2e_dump_util.h"
 #include "debug/tensor_load.h"
 #include "debug/dump_proto.h"
 
@@ -350,14 +351,10 @@ void GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info
 
 #ifdef ENABLE_DEBUGGER
 void GPUSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-#ifdef ENABLE_DUMP_E2E
   if (debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
-    auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
-    MS_EXCEPTION_IF_NULL(runtime_instance);
-    (void)runtime_instance->DumpData(kernel_graph.get(), debugger_.get());
+    E2eDumpUtil::DumpData(kernel_graph.get(), debugger_.get());
   }
-#endif
 }
 
 bool GPUSession::DumpDataEnabledIteration() const {

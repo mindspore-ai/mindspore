@@ -24,9 +24,6 @@
 #include "runtime/device/device_address.h"
 #include "ir/tensor.h"
 #include "utils/convert_utils.h"
-#ifdef ENABLE_DUMP_E2E
-#include "debug/e2e_dump.h"
-#endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
@@ -58,7 +55,6 @@ class KernelRuntime {
   void RunOpClearMemory(const session::KernelGraph *graph);
   bool DumpDataEnabled();
   bool DumpDataEnabledIteration();
-  virtual bool DumpData(session::KernelGraph *graph, Debugger *debugger = nullptr);
   virtual bool LoadData(session::KernelGraph *graph, Debugger *debugger);
   virtual bool Load(session::KernelGraph *graph, bool is_task_sink);
   virtual bool Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger = nullptr) = 0;
@@ -77,9 +73,6 @@ class KernelRuntime {
   virtual bool SyncStream() = 0;
   virtual void ClearGlobalIdleMem() {}
 
-#ifdef ENABLE_DUMP_E2E
-  DumpConfPtr GetDumpConf();
-#endif
   // for GPU and D to impl
   virtual void ReleaseDeviceRes() {}
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
@@ -101,9 +94,6 @@ class KernelRuntime {
   void AssignCommunicationNodeOutputMem(MemType type, const AnfNodePtr &node);
   void AssignCommunicationNodeInputMem(MemType type, const AnfNodePtr &node);
   void AssignCommunicationNodeMem(MemType type, const AnfNodePtr &node);
-#ifdef ENABLE_DUMP_E2E
-  bool SetDumpConf();
-#endif
 
  private:
   void AssignStaticMemoryOutput(session::KernelGraph *graph);
@@ -121,10 +111,6 @@ class KernelRuntime {
 
  protected:
   uint32_t device_id_{0};
-#ifdef ENABLE_DUMP_E2E
-  DumpConfPtr dump_conf_ptr_;
-#endif
-
 #ifdef ENABLE_DEBUGGER
   Debugger *debugger_;
 #endif

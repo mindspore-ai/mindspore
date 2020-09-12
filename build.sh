@@ -23,7 +23,7 @@ usage()
 {
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
-  echo "              [-a on|off] [-Q on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
+  echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I arm64|arm32|x86_64] [-K] \\"
   echo "              [-B on|off] [-w on|off] [-E] [-l on|off] [-n full|lite|off]"
   echo ""
@@ -46,7 +46,6 @@ usage()
   echo "    -j[n] Set the threads when building (Default: -j8)"
   echo "    -e Use gpu, d or cpu"
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
-  echo "    -Q Enable dump memory, default off"
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
   echo "    -n Compile minddata with mindspore lite, available: off, lite, full, default is lite"
@@ -89,7 +88,6 @@ checkopts()
   ENABLE_LOAD_IR="off"
   ENABLE_TIMELINE="off"
   ENABLE_DUMP2PROTO="on"
-  ENABLE_DUMPE2E="off"
   ENABLE_DUMP_IR="on"
   COMPILE_MINDDATA="on"
   COMPILE_MINDDATA_LITE="off"
@@ -108,7 +106,7 @@ checkopts()
   ENABLE_GPU="off"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:swB:En:T:' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:swB:En:T:' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -229,11 +227,6 @@ checkopts()
         ENABLE_DUMP2PROTO="$OPTARG"
         echo "enable dump anf graph to proto file"
         ;;
-      Q)
-        check_on_off $OPTARG Q
-        ENABLE_DUMPE2E="$OPTARG"
-        echo "enable dump end to end"
-        ;;
       D)
         check_on_off $OPTARG D
         ENABLE_DUMP_IR="$OPTARG"
@@ -301,9 +294,6 @@ checkopts()
   done
 }
 checkopts "$@"
-if [[ "X$ENABLE_GPU" = "Xon" ]] && [[ "X$ENABLE_DUMPE2E" = "Xon" ]]; then
-    ENABLE_DEBUGGER="on"
-fi
 echo "---------------- MindSpore: build start ----------------"
 mkdir -pv "${BUILD_PATH}/package/mindspore/lib"
 git submodule update --init graphengine
@@ -349,9 +339,6 @@ build_mindspore()
     fi
     if [[ "X$ENABLE_DUMP2PROTO" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_PROTO=ON"
-    fi
-    if [[ "X$ENABLE_DUMPE2E" = "Xon" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_E2E=ON"
     fi
     CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_IR=${ENABLE_DUMP_IR}"
     CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_PYTHON=${ENABLE_PYTHON}"

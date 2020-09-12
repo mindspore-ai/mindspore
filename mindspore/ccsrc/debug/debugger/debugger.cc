@@ -25,7 +25,7 @@
 #include <utility>
 #include <map>
 #include "debug/debugger/debugger.h"
-#include "debug/data_dump_parser.h"
+#include "debug/data_dump/dump_json_parser.h"
 #include "pipeline/jit/pipeline.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime_manager.h"
@@ -137,7 +137,7 @@ void Debugger::EnableDebugger() {
   }
 #ifdef ENABLE_D
   // set operation overflow info
-  overflow_bin_path_ = DataDumpParser::GetInstance().GetOpOverflowBinPath(graph_ptr_->graph_id(), device_id_);
+  overflow_bin_path_ = DumpJsonParser::GetInstance().GetOpOverflowBinPath(graph_ptr_->graph_id(), device_id_);
   // new overflow dump files will have a timestamp greater than last_overflow_bin_
   last_overflow_bin_ = 0;
   DIR *d;

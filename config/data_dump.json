@@ -1,17 +1,19 @@
 {
-  "DumpSettings": {
+  "common_dump_settings": {
+    "dump_mode": 0,
+    "path": "/test",
     "net_name": "ResNet50",
-    "dump_mode": 1,
-    "op_debug_mode": 3,
     "iteration": 0,
-    "kernels": ["Default/Conv2D-op2", "Default/TensorAdd-op10"]
+    "input_output": 0,
+    "kernels": ["Default/Conv-op12"],
+    "support_device": [0,1,2,3,4,5,6,7]
   },
-
-  "DumpSettingsSpec": {
-    "net_name": "net name eg:ResNet50",
-    "dump_mode": "0: dump all kernels, 1: dump kernels in kernels list",
-    "op_debug_mode": "0: close debug, 1: debug ai-core overflow, 2: debug atomic overflow, 3: debug all overflow",
-    "iteration": "specified iteration ",
-    "kernels": "op's full scope name which need to be dump"
+  "e2e_dump_settings": {
+    "enable": false,
+    "trans_flag": false
+  },
+  "async_dump_settings": {
+    "enable": false,
+    "op_debug_mode": 0
   }
 }

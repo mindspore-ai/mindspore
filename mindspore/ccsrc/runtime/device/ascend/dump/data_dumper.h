@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_DUMP_DATADUMP_H_
 #include <tuple>
 #include <map>
+#include <set>
 #include <memory>
 #include <string>
 #include <vector>
@@ -63,6 +64,7 @@ class DataDumper {
   void SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
   void SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
   void ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) const;
+  void GetNeedDumpKernelList(NotNull<std::map<std::string, CNodePtr> *> kernel_map) const;
 
   std::function<void *()> model_handle_;
   uint32_t debug_task_id_;
