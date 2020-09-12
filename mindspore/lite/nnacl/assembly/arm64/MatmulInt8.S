@@ -6,9 +6,9 @@
     .type MatmulInt8Neon64, %function
 #endif
 
-//void MatmulInt8Neon64(const int8_t *a, const int8_t *b, int8_t *dst, int row4, int col4, int deep16, 
-//                      const int *a_sums, const int *bias, int act_min, int act_max, int out_zp,
-//                      int multiplier, int left_shift, int right_shift, int row, int col, int stride);
+//void MatmulInt8Neon64(const int8_t *a, const int8_t *b, int8_t *dst, int row4, int col4, int deep16, const int *a_sums,
+//                      const int *bias, int act_min, int act_max, int out_zp, int32_t *multiplier, int32_t *left_shift,
+//                      int32_t *right_shift, int row, int col, int stride, int filter_peroc)
 
 // x0: a(left matrix ptr)
 // x1: b(right matrix ptr)
@@ -21,31 +21,34 @@
 // w8: act_min
 // w9: act_max
 // w10: out_zp
-// w11: multiplier
-// w12: left_shift
-// w13: right_shift 
+// x11: multiplier
+// x12: left_shift
+// x13: right_shift
 // w14: row
 // w15: col
 // w24: stride
+// w27: filter_peroc
 
 MatmulInt8Neon64:
-  sub sp, sp, #192
+  sub sp, sp, #208
   st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
   stp x19, x20, [sp], #16
   stp x21, x22, [sp], #16
   stp x23, x24, [sp], #16
   stp x25, x26, [sp], #16
+  stp x27, x28, [sp], #16
 
   ldr w8, [sp]
   ldr w9, [sp, #8]
   ldr w10, [sp, #16]
-  ldr w11, [sp, #24]
-  ldr w12, [sp, #32]
-  ldr w13, [sp, #40]
+  ldr x11, [sp, #24]
+  ldr x12, [sp, #32]
+  ldr x13, [sp, #40]
   ldr w14, [sp, #48]
   ldr w15, [sp, #56]
   ldr w24, [sp, #64]
+  ldr w27, [sp, #72]
 
   mov w17, #4       // sizeof(int8)*4
   mul w21, w5, w17  // the stride of a/b: sizeof(int8)*4*deep16
@@ -58,7 +61,7 @@ L1:
   mov w16, w3     // reset a row4 counter
   mov w23, w14    // reset a row counter
   mov x17, x0     // reload a ptr
-  mov x22, x6     // reload a_sums ptr 
+  mov x22, x6     // reload a_sums ptr
 L2:
   cmp w16, #0
   beq End2
@@ -167,39 +170,60 @@ End3:
   addp v19.4s, v28.4s, v30.4s
 
   // Add (Bias+Depth*Za*Zb-Za*Bsums)
-  ld1 {v15.4s}, [x19], #16  
+  ld1 {v15.4s}, [x19], #16
   add v16.4s, v16.4s, v15.4s
   add v17.4s, v17.4s, v15.4s
   add v18.4s, v18.4s, v15.4s
   add v19.4s, v19.4s, v15.4s
 
-  // Subtract (Asums*Zb)
+  cmp w27, #0
+  beq PerTLoad
+PerCLoad:
+  ld1 {v20.4s}, [x6], #16
+  ld1 {v21.4s}, [x6], #16
+  ld1 {v22.4s}, [x6], #16
+  ld1 {v23.4s}, [x6], #16
+
+  ld1 {v13.4s}, [x12]
+  ld1 {v12.4s}, [x11]
+  ld1 {v11.4s}, [x13]
+  b Apply
+
+PerTLoad:
   ld1 {v14.4s}, [x22], #16
   dup v20.4s, v14.s[0]
   dup v21.4s, v14.s[1]
   dup v22.4s, v14.s[2]
   dup v23.4s, v14.s[3]
+
+  ld1 {v14.s}[0], [x12]
+  dup v13.4s, v14.s[0]
+  ld1 {v14.s}[0], [x11]
+  dup v12.4s, v14.s[0]
+  ld1 {v14.s}[0], [x13]
+  dup v11.4s, v14.s[0]
+  b Apply
+
+Apply:
+  // Subtract (Asums*Zb)
   sub v16.4s, v16.4s, v20.4s
   sub v17.4s, v17.4s, v21.4s
   sub v18.4s, v18.4s, v22.4s
   sub v19.4s, v19.4s, v23.4s
 
   // Apply left shift
-  dup v13.4s, w12
   sqshl v16.4s, v16.4s, v13.4s
   sqshl v17.4s, v17.4s, v13.4s
   sqshl v18.4s, v18.4s, v13.4s
   sqshl v19.4s, v19.4s, v13.4s
 
   // Apply the fixed-point part of the multiplier.
-  dup v12.4s, w11
   sqrdmulh v16.4s, v16.4s, v12.4s
   sqrdmulh v17.4s, v17.4s, v12.4s
   sqrdmulh v18.4s, v18.4s, v12.4s
   sqrdmulh v19.4s, v19.4s, v12.4s
 
   // Apply right shift
-  dup v11.4s, w13
   and v20.16b, v11.16b, v16.16b
   sshr v20.4s, v20.4s, #31
   sqadd v16.4s, v16.4s, v20.4s
@@ -268,7 +292,7 @@ Write:
   beq WriteCol2
   cmp w15, #1
   beq WriteCol1
-  
+
 WriteCol4:
   st1 {v15.s}[0], [x2], x24
   cmp w23, #1
@@ -349,7 +373,7 @@ WriteCol1:
   st1 {v15.b}[12], [x2], x24
   b Endwrite
 
-Endwrite:  
+Endwrite:
   sub w16, w16, #4      // a row4 counter - 4
   sub w23, w23, #4      // a row counter - 4
   b L2
@@ -361,15 +385,23 @@ End2:
   add x7, x7, #16       // bias ptr + stride
   add x25, x25, #4      // output + stride(4 * sizeof(int8))
   mov x2, x25
+
+  cmp w27, #0
+  beq PerTEnd2
+  add x12, x12, #16
+  add x11, x11, #16
+  add x13, x13, #16
+PerTEnd2:
   b L1
 
 End1:
-  sub sp, sp, #192
+  sub sp, sp, #208
   ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
   ldp x19, x20, [sp], #16
   ldp x21, x22, [sp], #16
   ldp x23, x24, [sp], #16
   ldp x25, x26, [sp], #16
+  ldp x27, x28, [sp], #16
   ret
 #endif

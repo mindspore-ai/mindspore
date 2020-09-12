@@ -58,8 +58,11 @@ class Convolution1x1Int8CPUKernel : public ConvolutionBaseCPUKernel {
   int InitBiasByzp(void *src_weight, int input_channel, int output_channel);
 
  private:
-  int32_t *input_sum_ = nullptr;     /* per-channel: oc4 format */
-  int32_t *filter_zp_ptr_ = nullptr; /* oc - per - channel */
+  int32_t *input_sum_ = nullptr;     /* per-oc: oc4 format */
+  int32_t *filter_zp_ptr_ = nullptr; /* per-oc */
+  int32_t *left_shift_ = nullptr;    /* per-oc up round  */
+  int32_t *right_shift_ = nullptr;   /* per-oc up round  */
+  int32_t *multiplier_ = nullptr;    /* per-oc up round  */
   int8_t *packed_weight_ = nullptr;
   int8_t *packed_input_ = nullptr;
   int8_t *input_ptr_ = nullptr;

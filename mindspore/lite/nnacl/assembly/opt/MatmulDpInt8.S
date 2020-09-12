@@ -8,7 +8,7 @@
 
 //void MatmulInt8DpNeon64(const int8_t *a, const int8_t *b, int8_t *dst, int row8, int col8, int deep4, 
 //                      const int *a_sums, const int *bias, int act_min, int act_max, int out_zp,
-//                      int multiplier, int left_shift, int right_shift, int row, int col, int stride);
+//                      int *multiplier, int *left_shift, int *right_shift, int row, int col, int stride, int peroc);
 
 // x0: a(left matrix ptr)
 // x1: b(right matrix ptr)
@@ -21,31 +21,34 @@
 // w8: act_min
 // w9: act_max
 // w10: out_zp
-// w11: multiplier
-// w12: left_shift
-// w13: right_shift 
+// x11: multiplier
+// x12: left_shift
+// x13: right_shift
 // w14: row
 // w15: col
 // w24: stride
+// w27: filter_peroc
 
 MatmulInt8DpNeon64:
-  sub sp, sp, #192
+  sub sp, sp, #208
   st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
   stp x19, x20, [sp], #16
   stp x21, x22, [sp], #16
   stp x23, x24, [sp], #16
   stp x25, x26, [sp], #16
+  stp x27, x28, [sp], #16
 
   ldr w8, [sp]
   ldr w9, [sp, #8]
   ldr w10, [sp, #16]
-  ldr w11, [sp, #24]
-  ldr w12, [sp, #32]
-  ldr w13, [sp, #40]
+  ldr x11, [sp, #24]
+  ldr x12, [sp, #32]
+  ldr x13, [sp, #40]
   ldr w14, [sp, #48]
   ldr w15, [sp, #56]
   ldr w24, [sp, #64]
+  ldr w27, [sp, #72]
 
   mov w17, #8       // sizeof(int8)*8
   mul w21, w5, w17  // the stride of a/b: sizeof(int8)*8*deep4
@@ -226,138 +229,171 @@ End3:
   add v29.4s, v29.4s, v14.4s
   add v31.4s, v31.4s, v14.4s
 
+  cmp w27, #0
+  beq PerTSumLoad
+PerCSumLoad:
+  ld1 {v0.4s, v1.4s, v2.4s, v3.4s}, [x6], #64
+  ld1 {v4.4s, v5.4s, v6.4s, v7.4s}, [x6], #64
+  ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [x6], #64
+  ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [x6], #64
+  b ApplySum
+PerTSumLoad:
+  ld1 {v14.4s}, [x22], #16
+  ld1 {v15.4s}, [x22], #16
+  dup v0.4s, v14.s[0]
+  dup v1.4s, v14.s[0]
+  dup v2.4s, v14.s[1]
+  dup v3.4s, v14.s[1]
+  dup v4.4s, v14.s[2]
+  dup v5.4s, v14.s[2]
+  dup v6.4s, v14.s[3]
+  dup v7.4s, v14.s[3]
+  dup v8.4s, v15.s[0]
+  dup v9.4s, v15.s[0]
+  dup v10.4s, v15.s[1]
+  dup v11.4s, v15.s[1]
+  dup v12.4s, v15.s[2]
+  dup v13.4s, v15.s[2]
+  dup v14.4s, v15.s[3]
+  dup v15.4s, v14.s[0]
+ApplySum:
   // Subtract (Asums*Zb)
-  ld1 {v13.4s}, [x22], #16
-  ld1 {v12.4s}, [x22], #16
-  dup v0.4s, v13.s[0]
-  dup v1.4s, v13.s[1]
-  dup v2.4s, v13.s[2]
-  dup v3.4s, v13.s[3]
-  dup v4.4s, v12.s[0]
-  dup v5.4s, v12.s[1]
-  dup v6.4s, v12.s[2]
-  dup v7.4s, v12.s[3]
   sub v16.4s, v16.4s, v0.4s
-  sub v17.4s, v17.4s, v0.4s
-  sub v18.4s, v18.4s, v1.4s
-  sub v19.4s, v19.4s, v1.4s
-  sub v20.4s, v20.4s, v2.4s
-  sub v21.4s, v21.4s, v2.4s
-  sub v22.4s, v22.4s, v3.4s
-  sub v23.4s, v23.4s, v3.4s
-  sub v24.4s, v24.4s, v4.4s
-  sub v25.4s, v25.4s, v4.4s
-  sub v26.4s, v26.4s, v5.4s
-  sub v27.4s, v27.4s, v5.4s
-  sub v28.4s, v28.4s, v6.4s
-  sub v29.4s, v29.4s, v6.4s
-  sub v30.4s, v30.4s, v7.4s
-  sub v31.4s, v31.4s, v7.4s
+  sub v17.4s, v17.4s, v1.4s
+  sub v18.4s, v18.4s, v2.4s
+  sub v19.4s, v19.4s, v3.4s
+  sub v20.4s, v20.4s, v4.4s
+  sub v21.4s, v21.4s, v5.4s
+  sub v22.4s, v22.4s, v6.4s
+  sub v23.4s, v23.4s, v7.4s
+  sub v24.4s, v24.4s, v8.4s
+  sub v25.4s, v25.4s, v9.4s
+  sub v26.4s, v26.4s, v10.4s
+  sub v27.4s, v27.4s, v11.4s
+  sub v28.4s, v28.4s, v12.4s
+  sub v29.4s, v29.4s, v13.4s
+  sub v30.4s, v30.4s, v14.4s
+  sub v31.4s, v31.4s, v15.4s
 
+  cmp w27, #0
+  beq PerTRoundLoad
+PerCRoundLoad:
+  ld1 {v8.4s, v9.4s}, [x12]
+  ld1 {v10.4s, v11.4s}, [x11]
+  ld1 {v12.4s, v13.4s}, [x13]
+  b ApplyRound
+PerTRoundLoad:
+  ld1 {v14.s}[0], [x12]
+  dup v8.4s, v14.s[0]
+  dup v9.4s, v14.s[0]
+  ld1 {v14.s}[0], [x11]
+  dup v10.4s, v14.s[0]
+  dup v11.4s, v14.s[0]
+  ld1 {v14.s}[0], [x13]
+  dup v12.4s, v14.s[0]
+  dup v13.4s, v14.s[0]
+ApplyRound:
   // Apply left shift
-  dup v11.4s, w12
-  sqshl v16.4s, v16.4s, v11.4s
-  sqshl v17.4s, v17.4s, v11.4s
-  sqshl v18.4s, v18.4s, v11.4s
-  sqshl v19.4s, v19.4s, v11.4s
-  sqshl v20.4s, v20.4s, v11.4s
-  sqshl v21.4s, v21.4s, v11.4s
-  sqshl v22.4s, v22.4s, v11.4s
-  sqshl v23.4s, v23.4s, v11.4s
-  sqshl v24.4s, v24.4s, v11.4s
-  sqshl v25.4s, v25.4s, v11.4s
-  sqshl v26.4s, v26.4s, v11.4s
-  sqshl v27.4s, v27.4s, v11.4s
-  sqshl v28.4s, v28.4s, v11.4s
-  sqshl v29.4s, v29.4s, v11.4s
-  sqshl v30.4s, v30.4s, v11.4s
-  sqshl v31.4s, v31.4s, v11.4s
+  sqshl v16.4s, v16.4s, v8.4s
+  sqshl v17.4s, v17.4s, v9.4s
+  sqshl v18.4s, v18.4s, v8.4s
+  sqshl v19.4s, v19.4s, v9.4s
+  sqshl v20.4s, v20.4s, v8.4s
+  sqshl v21.4s, v21.4s, v9.4s
+  sqshl v22.4s, v22.4s, v8.4s
+  sqshl v23.4s, v23.4s, v9.4s
+  sqshl v24.4s, v24.4s, v8.4s
+  sqshl v25.4s, v25.4s, v9.4s
+  sqshl v26.4s, v26.4s, v8.4s
+  sqshl v27.4s, v27.4s, v9.4s
+  sqshl v28.4s, v28.4s, v8.4s
+  sqshl v29.4s, v29.4s, v9.4s
+  sqshl v30.4s, v30.4s, v8.4s
+  sqshl v31.4s, v31.4s, v9.4s
 
   // Apply the fixed-point part of the multiplier.
-  dup v10.4s, w11
   sqrdmulh v16.4s, v16.4s, v10.4s
-  sqrdmulh v17.4s, v17.4s, v10.4s
+  sqrdmulh v17.4s, v17.4s, v11.4s
   sqrdmulh v18.4s, v18.4s, v10.4s
-  sqrdmulh v19.4s, v19.4s, v10.4s
+  sqrdmulh v19.4s, v19.4s, v11.4s
   sqrdmulh v20.4s, v20.4s, v10.4s
-  sqrdmulh v21.4s, v21.4s, v10.4s
+  sqrdmulh v21.4s, v21.4s, v11.4s
   sqrdmulh v22.4s, v22.4s, v10.4s
-  sqrdmulh v23.4s, v23.4s, v10.4s
+  sqrdmulh v23.4s, v23.4s, v11.4s
   sqrdmulh v24.4s, v24.4s, v10.4s
-  sqrdmulh v25.4s, v25.4s, v10.4s
+  sqrdmulh v25.4s, v25.4s, v11.4s
   sqrdmulh v26.4s, v26.4s, v10.4s
-  sqrdmulh v27.4s, v27.4s, v10.4s
+  sqrdmulh v27.4s, v27.4s, v11.4s
   sqrdmulh v28.4s, v28.4s, v10.4s
-  sqrdmulh v29.4s, v29.4s, v10.4s
+  sqrdmulh v29.4s, v29.4s, v11.4s
   sqrdmulh v30.4s, v30.4s, v10.4s
-  sqrdmulh v31.4s, v31.4s, v10.4s
+  sqrdmulh v31.4s, v31.4s, v11.4s
 
   // Apply right shift
-  dup v9.4s, w13
-  and v0.16b, v9.16b, v16.16b
+  and v0.16b, v12.16b, v16.16b
   sshr v0.4s, v0.4s, #31
   sqadd v16.4s, v16.4s, v0.4s
-  srshl v16.4s, v16.4s, v9.4s
-  and v1.16b, v9.16b, v17.16b
+  srshl v16.4s, v16.4s, v12.4s
+  and v1.16b, v13.16b, v17.16b
   sshr v1.4s, v1.4s, #31
   sqadd v17.4s, v17.4s, v1.4s
-  srshl v17.4s, v17.4s, v9.4s
-  and v2.16b, v9.16b, v18.16b
+  srshl v17.4s, v17.4s, v13.4s
+  and v2.16b, v12.16b, v18.16b
   sshr v2.4s, v2.4s, #31
   sqadd v18.4s, v18.4s, v2.4s
-  srshl v18.4s, v18.4s, v9.4s
-  and v3.16b, v9.16b, v19.16b
+  srshl v18.4s, v18.4s, v12.4s
+  and v3.16b, v13.16b, v19.16b
   sshr v3.4s, v3.4s, #31
   sqadd v19.4s, v19.4s, v3.4s
-  srshl v19.4s, v19.4s, v9.4s
-  and v0.16b, v9.16b, v20.16b
+  srshl v19.4s, v19.4s, v13.4s
+  and v0.16b, v12.16b, v20.16b
   sshr v0.4s, v0.4s, #31
   sqadd v20.4s, v20.4s, v0.4s
-  srshl v20.4s, v20.4s, v9.4s
-  and v1.16b, v9.16b, v21.16b
+  srshl v20.4s, v20.4s, v12.4s
+  and v1.16b, v13.16b, v21.16b
   sshr v1.4s, v1.4s, #31
   sqadd v21.4s, v21.4s, v1.4s
-  srshl v21.4s, v21.4s, v9.4s
-  and v2.16b, v9.16b, v22.16b
+  srshl v21.4s, v21.4s, v13.4s
+  and v2.16b, v12.16b, v22.16b
   sshr v2.4s, v2.4s, #31
   sqadd v22.4s, v22.4s, v2.4s
-  srshl v22.4s, v22.4s, v9.4s
-  and v3.16b, v9.16b, v23.16b
+  srshl v22.4s, v22.4s, v12.4s
+  and v3.16b, v13.16b, v23.16b
   sshr v3.4s, v3.4s, #31
   sqadd v23.4s, v23.4s, v3.4s
-  srshl v23.4s, v23.4s, v9.4s
-  and v0.16b, v9.16b, v24.16b
+  srshl v23.4s, v23.4s, v13.4s
+  and v0.16b, v12.16b, v24.16b
   sshr v0.4s, v0.4s, #31
   sqadd v24.4s, v24.4s, v0.4s
-  srshl v24.4s, v24.4s, v9.4s
-  and v1.16b, v9.16b, v25.16b
+  srshl v24.4s, v24.4s, v12.4s
+  and v1.16b, v13.16b, v25.16b
   sshr v1.4s, v1.4s, #31
   sqadd v25.4s, v25.4s, v1.4s
-  srshl v25.4s, v25.4s, v9.4s
-  and v2.16b, v9.16b, v26.16b
+  srshl v25.4s, v25.4s, v13.4s
+  and v2.16b, v12.16b, v26.16b
   sshr v2.4s, v2.4s, #31
   sqadd v26.4s, v26.4s, v2.4s
-  srshl v26.4s, v26.4s, v9.4s
-  and v3.16b, v9.16b, v27.16b
+  srshl v26.4s, v26.4s, v12.4s
+  and v3.16b, v13.16b, v27.16b
   sshr v3.4s, v3.4s, #31
   sqadd v27.4s, v27.4s, v3.4s
-  srshl v27.4s, v27.4s, v9.4s
-  and v0.16b, v9.16b, v28.16b
+  srshl v27.4s, v27.4s, v13.4s
+  and v0.16b, v12.16b, v28.16b
   sshr v0.4s, v0.4s, #31
   sqadd v28.4s, v28.4s, v0.4s
-  srshl v28.4s, v28.4s, v9.4s
-  and v1.16b, v9.16b, v29.16b
+  srshl v28.4s, v28.4s, v12.4s
+  and v1.16b, v13.16b, v29.16b
   sshr v1.4s, v1.4s, #31
   sqadd v29.4s, v29.4s, v1.4s
-  srshl v29.4s, v29.4s, v9.4s
-  and v2.16b, v9.16b, v30.16b
+  srshl v29.4s, v29.4s, v13.4s
+  and v2.16b, v12.16b, v30.16b
   sshr v2.4s, v2.4s, #31
   sqadd v30.4s, v30.4s, v2.4s
-  srshl v30.4s, v30.4s, v9.4s
-  and v3.16b, v9.16b, v31.16b
+  srshl v30.4s, v30.4s, v12.4s
+  and v3.16b, v13.16b, v31.16b
   sshr v3.4s, v3.4s, #31
   sqadd v31.4s, v31.4s, v3.4s
-  srshl v31.4s, v31.4s, v9.4s
+  srshl v31.4s, v31.4s, v13.4s
 
   // Add the destination zero point
   dup v8.4s, w10
@@ -793,15 +829,23 @@ End2:
   add x7, x7, #32       // bias ptr + stride
   add x25, x25, #8      // output + stride(8 * sizeof(int8))
   mov x2, x25
+
+  cmp w27, #0
+  beq PerTEnd2
+  add x12, x12, #32
+  add x11, x11, #32
+  add x13, x13, #32
+PerTEnd2:
   b L1
 
 End1:
-  sub sp, sp, #192
+  sub sp, sp, #208
   ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
   ldp x19, x20, [sp], #16
   ldp x21, x22, [sp], #16
   ldp x23, x24, [sp], #16
   ldp x25, x26, [sp], #16
+  ldp x27, x28, [sp], #16
   ret
 #endif
