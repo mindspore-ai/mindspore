@@ -256,7 +256,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     auto shape = AnfAlgo::GetOutputDeviceShape(input_kernel, PARAMETER_OUTPUT_INDEX);
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
                          [](size_t inner_item) { return SizeToInt(inner_item); });
-    auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, debugger, false);
+    auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, debugger, true);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
                     << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
@@ -368,6 +368,12 @@ bool GPUKernelRuntime::InitDevice() {
 
 void GPUKernelRuntime::ReleaseDeviceRes() {
   // For dataset mode.
+#ifdef ENABLE_DEBUGGER
+  if (debugger_ && debugger_->debugger_enabled()) {
+    debugger_->SetTrainingDone(true);
+    debugger_->SendMetadata();
+  }
+#endif
   if (GpuBufferMgr::GetInstance().IsInit()) {
     if (!GpuBufferMgr::GetInstance().IsClosed()) {
       if (!GpuBufferMgr::GetInstance().CloseNotify()) {
@@ -684,6 +690,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
   AllocCommunicationOpDynamicRes(graph);
 
 #ifdef ENABLE_DEBUGGER
+  debugger_ = debugger;
   bool dump_enabled = GPUKernelRuntime::DumpDataEnabledIteration();
   if (!mock) {
     UpdateStepNum(debugger, dump_enabled);

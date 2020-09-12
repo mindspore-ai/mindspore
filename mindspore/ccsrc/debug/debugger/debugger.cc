@@ -57,6 +57,7 @@ Debugger::Debugger()
       run_level_(""),
       node_name_(""),
       cur_name_(""),
+      training_done_(false),
       is_dataset_graph_(false),
       partial_memory_(false),
       last_overflow_bin_(0),
@@ -336,17 +337,7 @@ GraphProto Debugger::GetGraphProto() const {
 }
 
 void Debugger::SendGraphAndSuspend(const GraphProto &graph_proto) {
-  // prepare metadata
-  std::string device_name = std::to_string(device_id_) + ":" + std::to_string(graph_ptr_->graph_id());
-  Metadata metadata;
-  metadata.set_device_name(device_name);
-  metadata.set_cur_step(num_step_);
-  metadata.set_backend(device_target_);
-  metadata.set_cur_node(cur_name_);
-  EventReply reply_metadata = grpc_client_->SendMetadata(metadata);
-  if (reply_metadata.status() != reply_metadata.OK) {
-    MS_LOG(ERROR) << "Error: SendMetadata failed";
-  }
+  SendMetadata();
   // send graph to mindinght server
   EventReply reply = grpc_client_->SendGraph(graph_proto);
   if (reply.status() != reply.OK) {
@@ -354,6 +345,22 @@ void Debugger::SendGraphAndSuspend(const GraphProto &graph_proto) {
   }
   // enter command loop, wait and process commands
   CommandLoop();
+}
+
+void Debugger::SendMetadata() {
+  // prepare metadata
+  std::string device_name = std::to_string(device_id_) + ":" + std::to_string(graph_ptr_->graph_id());
+  Metadata metadata;
+  metadata.set_device_name(device_name);
+  metadata.set_cur_step(num_step_);
+  metadata.set_backend(device_target_);
+  metadata.set_cur_node(cur_name_);
+  metadata.set_training_done(training_done_);
+  MS_LOG(INFO) << "Is training done?" << training_done_;
+  EventReply reply_metadata = grpc_client_->SendMetadata(metadata);
+  if (reply_metadata.status() != reply_metadata.OK) {
+    MS_LOG(ERROR) << "Error: SendMetadata failed";
+  }
 }
 
 void Debugger::CommandLoop() {
@@ -365,6 +372,7 @@ void Debugger::CommandLoop() {
   metadata.set_cur_step(num_step_);
   metadata.set_backend(device_target_);
   metadata.set_cur_node(cur_name_);
+  metadata.set_training_done(training_done_);
 
   // loop exit flag
   bool run = false;
@@ -786,5 +794,7 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
 
   return op_names;
 }
+
+void Debugger::SetTrainingDone(bool training_done) { training_done_ = training_done; }
 
 }  // namespace mindspore

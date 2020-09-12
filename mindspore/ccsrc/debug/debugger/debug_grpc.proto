@@ -35,6 +35,8 @@ message Metadata {
   string backend = 3;
   // the full name of current node
   string cur_node = 4;
+  // check if training is done.
+  bool training_done = 5; 
 }
 
 message Chunk {

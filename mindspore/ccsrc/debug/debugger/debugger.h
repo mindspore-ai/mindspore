@@ -99,6 +99,10 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // check if any feature that uses the debugger backend is enabled
   bool DebuggerBackendEnabled();
 
+  void SetTrainingDone(bool training_done);
+
+  void SendMetadata();
+
  private:
   // private constructor for singleton
   Debugger();
@@ -164,6 +168,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::string run_level_;
   std::string node_name_;
   std::string cur_name_;
+  bool training_done_;
   bool is_dataset_graph_;
   bool partial_memory_;
   std::mutex access_lock_;
