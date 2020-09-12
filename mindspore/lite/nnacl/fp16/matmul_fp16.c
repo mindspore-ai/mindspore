@@ -92,6 +92,7 @@ void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const floa
 }
 
 void RowMajor2Col16MajorFp16(float16_t *src_ptr, float16_t *dst_ptr, size_t row, size_t col) {
+  size_t row_up_16 = UP_ROUND(row, C16NUM);
   size_t row16 = row / C16NUM * C16NUM;
   size_t col8 = col / C8NUM * C8NUM;
   float16_t *src_r = src_ptr;
@@ -234,6 +235,12 @@ void RowMajor2Col16MajorFp16(float16_t *src_ptr, float16_t *dst_ptr, size_t row,
       dst_r[i * C16NUM] = src_r[i];
     }
     src_r += col;
+    dst_r += 1;
+  }
+  for (; ri < row_up_16; ri++) {
+    for (size_t i = 0; i < col; i++) {
+      dst_r[i * C16NUM] = 0;
+    }
     dst_r += 1;
   }
   return;
