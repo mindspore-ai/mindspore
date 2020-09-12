@@ -403,8 +403,8 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
     preTensor->refCount = 0;
     preTensor->data.clear();
     if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
-      preTensor->dataType = toAddNodeIn->primitive->value.AsQuantDTypeCast()->dstT;
-      toAddTensor->dataType = toAddNodeIn->primitive->value.AsQuantDTypeCast()->srcT;
+      preTensor->dataType = toAddNodeIn->primitive->value.AsQuantDTypeCast()->srcT;
+      toAddTensor->dataType = toAddNodeIn->primitive->value.AsQuantDTypeCast()->dstT;
     }
     graphT->allTensors.emplace_back(std::move(toAddTensor));
     size_t toAddTensorIdx = graphT->allTensors.size() - 1;
@@ -415,10 +415,10 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
       return graphT->nodes.end();
     }
     toAddNode->inputIndex.clear();
-    toAddNode->inputIndex.push_back(toAddTensorIdx);
+    toAddNode->inputIndex.push_back(preTensorIdx);
     toAddNode->outputIndex.clear();
-    toAddNode->outputIndex.push_back(preTensorIdx);
-    for (auto iter = graphT->inputIndex.begin(); iter != graphT->inputIndex.end(); iter++) {
+    toAddNode->outputIndex.push_back(toAddTensorIdx);
+    for (auto iter = existNode->inputIndex.begin(); iter != existNode->inputIndex.end(); iter++) {
       if (*iter == preTensorIdx) {
         *iter = toAddTensorIdx;
         break;

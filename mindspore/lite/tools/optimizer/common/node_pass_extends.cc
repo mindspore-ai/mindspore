@@ -41,12 +41,12 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
     if (seen_node.count(node) > 0 || !manager->all_nodes().contains(node)) {
       continue;
     }
-    (void)seen_node.insert(node);
+    (void) seen_node.insert(node);
     AnfNodePtr new_node = Run(func_graph, node);
     bool change = (new_node != nullptr);
     if (new_node != nullptr && new_node != node) {
-      (void)manager->Replace(node, new_node);
-      (void)seen_node.erase(node);
+      (void) manager->Replace(node, new_node);
+      (void) seen_node.erase(node);
     } else if (new_node == nullptr) {
       new_node = node;
     }
@@ -61,9 +61,12 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
       auto cnode = new_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       auto inputs = cnode->inputs();
-      (void)to_process.insert(to_process.end(), inputs.begin(), inputs.end());
+      (void) to_process.insert(to_process.end(), inputs.begin(), inputs.end());
     }
     changes = changes || change;
+    if (changes) {
+      MS_LOG(DEBUG) << "pass " << this->name() << "changed node:" << new_node->fullname_with_scope();
+    }
   }
   return changes;
 }

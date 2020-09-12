@@ -32,7 +32,7 @@ class Elu : public PrimitiveC {
   Elu() = default;
   explicit Elu(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAlpha(float alpha);
-
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   Elu() = default;
 

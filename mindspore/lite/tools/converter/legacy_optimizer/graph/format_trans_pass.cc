@@ -58,6 +58,7 @@ STATUS FormatTransPass::DoModelInputFormatTrans(schema::MetaGraphT *graph) {
   }
   auto graphInputIdxes = graph->inputIndex;
   for (size_t i = 0; i < graphInputIdxes.size(); i++) {
+    bool transed = false;
     auto inputIdx = graphInputIdxes.at(i);
     MS_ASSERT(inputIdx < subGraph->allTensors.size());
     auto &tensor = graph->allTensors.at(inputIdx);
@@ -84,7 +85,10 @@ STATUS FormatTransPass::DoModelInputFormatTrans(schema::MetaGraphT *graph) {
           graphInTensor->format = schema::Format::Format_NHWC;
           // assume parser not reformat shape
           auto oldDims = graphInTensor->dims;
-          graphInTensor->dims = {oldDims[NCHW_N], oldDims[NCHW_H], oldDims[NCHW_W], oldDims[NCHW_C]};
+          if (!transed) {
+            graphInTensor->dims = {oldDims[NCHW_N], oldDims[NCHW_H], oldDims[NCHW_W], oldDims[NCHW_C]};
+            transed = true;
+          }
           break;
         }
       }

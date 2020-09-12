@@ -48,6 +48,9 @@ class DeConv2D : public PrimitiveC {
   void SetDilateH(int dilate_h);
   void SetHasBias(bool has_bias);
   void SetActivationType(int activation_type);
+  void PopulaterDeConv2DSingleGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
+
 #else
   DeConv2D() = default;
 

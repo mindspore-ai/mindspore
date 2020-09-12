@@ -369,6 +369,12 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Add>(prim, inputs, quantType);
   } else if (op_type == "Transpose") {
     return NewPrimitiveC<Transpose>(prim, inputs, quantType);
+  } else if (op_type == "Elu") {
+    return NewPrimitiveC<Elu>(prim, inputs, quantType);
+  } else if (op_type == "Log") {
+    return NewPrimitiveC<Log>(prim, inputs, quantType);
+  } else if (op_type == "Conv2DBackpropInput") {
+    return NewPrimitiveC<DeConv2D>(prim, inputs, quantType);
   } else if (op_type == "tuple_getitem") {
     return NewPrimitiveC<TupleGetItem>(prim, inputs, quantType);
   } else if (op_type == "Softmax") {
@@ -380,8 +386,6 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<PoolingGrad>(prim, inputs, quantType);
   } else if (op_type == "Conv2DBackpropFilter") {
     return NewPrimitiveC<Conv2DGradFilter>(prim, inputs, quantType);
-  } else if (op_type == "Conv2DBackpropInput") {
-    return NewPrimitiveC<Conv2DGradInput>(prim, inputs, quantType);
   } else if (op_type == "BiasAddGrad") {
     return NewPrimitiveC<BiasGrad>(prim, inputs, quantType);
   } else if (op_type == "ApplyMomentum") {
