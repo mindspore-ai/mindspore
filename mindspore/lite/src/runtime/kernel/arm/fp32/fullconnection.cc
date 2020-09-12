@@ -49,6 +49,7 @@ int FullconnectionCPUKernel::ReSize() {
 
   fc_param_->row_12_ = UP_ROUND(fc_param_->row_, C12NUM);
   fc_param_->col_8_ = UP_ROUND(fc_param_->col_, C8NUM);
+  fc_param_->row_4_ = UP_ROUND(fc_param_->row_, C4NUM);
 
   thread_count_ = MSMIN(thread_count_, UP_DIV(fc_param_->col_8_, 8));
   thread_stride_ = UP_DIV(UP_DIV(fc_param_->col_8_, 8), thread_count_);
@@ -59,11 +60,19 @@ int FullconnectionCPUKernel::ReSize() {
     memcpy(bias_ptr_, in_tensors_[2]->MutableData(), fc_param_->col_ * sizeof(float));
   }
 
+#ifdef ENABLE_ARM32
+  a_c12_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->row_4_ * fc_param_->deep_ * sizeof(float)));
+  if (a_c12_ptr_ == nullptr) {
+    return RET_MEMORY_FAILED;
+  }
+  memset(a_c12_ptr_, 0, fc_param_->row_4_ * fc_param_->deep_ * sizeof(float));
+#else
   a_c12_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->row_12_ * fc_param_->deep_ * sizeof(float)));
   if (a_c12_ptr_ == nullptr) {
     return RET_MEMORY_FAILED;
   }
   memset(a_c12_ptr_, 0, fc_param_->row_12_ * fc_param_->deep_ * sizeof(float));
+#endif
 
   b_r8_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->col_8_ * fc_param_->deep_ * sizeof(float)));
   if (b_r8_ptr_ == nullptr) {
@@ -87,7 +96,11 @@ int FullconnectionCPUKernel::Init() {
 }
 
 void FullconnectionCPUKernel::InitMatrixA(float *src_ptr, float *dst_ptr) {
+#ifdef ENABLE_ARM32
+  RowMajor2Col4Major(src_ptr, a_c12_ptr_, fc_param_->row_, fc_param_->deep_);
+#else
   RowMajor2Col12Major(src_ptr, a_c12_ptr_, fc_param_->row_, fc_param_->deep_);
+#endif
 }
 
 void FullconnectionCPUKernel::InitMatrixB(float *src_ptr, float *dst_ptr) {

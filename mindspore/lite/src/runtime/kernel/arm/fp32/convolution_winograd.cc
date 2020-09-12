@@ -150,9 +150,14 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   int oc4 = UP_DIV(channel_out, C4NUM);
   int oc8 = UP_DIV(channel_out, C8NUM);
   int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
+#ifdef ENABLE_ARM32
+  int tile_num = 4;
+#else
+  int tile_num = 12;
+#endif
   MS_ASSERT(ctx_->allocator != nullptr);
 
-  size_t tile_buffer_size = thread_count_ * C12NUM * input_unit_ * input_unit_ * ic4 * C4NUM * sizeof(float);
+  size_t tile_buffer_size = thread_count_ * tile_num * input_unit_ * input_unit_ * ic4 * C4NUM * sizeof(float);
   trans_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tile_buffer_size));
   if (trans_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc trans_input_ failed.";
@@ -160,7 +165,7 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   }
 
   gemm_out_ = reinterpret_cast<float *>(
-    ctx_->allocator->Malloc(thread_count_ * C12NUM * input_unit_ * input_unit_ * oc8 * C8NUM * sizeof(float)));
+    ctx_->allocator->Malloc(thread_count_ * tile_num * input_unit_ * input_unit_ * oc8 * C8NUM * sizeof(float)));
   if (gemm_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc gemm_out_ failed.";
     return RET_ERROR;
@@ -184,7 +189,7 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   }
 
   col_buffer_ =
-    reinterpret_cast<float *>(ctx_->allocator->Malloc(thread_count_ * C12NUM * ic4 * C4NUM * sizeof(float)));
+    reinterpret_cast<float *>(ctx_->allocator->Malloc(thread_count_ * tile_num * ic4 * C4NUM * sizeof(float)));
   if (col_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc col_buffer_ failed.";
     return RET_ERROR;

@@ -95,7 +95,12 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
   const int k_plane = 16;
   MS_ASSERT(ctx_->allocator != nullptr);
 
-  size_t tile_buffer_size = thread_count_ * C12NUM * C16NUM * ic4 * C4NUM * sizeof(float);
+#ifdef ENABLE_ARM32
+  int tile_num = 4;
+#else
+  int tile_num = 12;
+#endif
+  size_t tile_buffer_size = thread_count_ * tile_num * C16NUM * ic4 * C4NUM * sizeof(float);
   tile_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tile_buffer_size));
   if (tile_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc tile buffer failed.";
@@ -109,14 +114,14 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  size_t tmp_dst_buffer_size = thread_count_ * C12NUM * k_plane * oC8 * C8NUM * sizeof(float);
+  size_t tmp_dst_buffer_size = thread_count_ * tile_num * k_plane * oC8 * C8NUM * sizeof(float);
   tmp_dst_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tmp_dst_buffer_size));
   if (tmp_dst_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_dst_buffer_ failed.";
     return RET_ERROR;
   }
 
-  size_t col_buffer_size = thread_count_ * C12NUM * C4NUM * ic4 * sizeof(float);
+  size_t col_buffer_size = thread_count_ * tile_num * C4NUM * ic4 * sizeof(float);
   col_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(col_buffer_size));
   if (col_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc col_buffer_ failed.";

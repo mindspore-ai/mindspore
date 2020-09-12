@@ -62,17 +62,27 @@ int MatmulCPUKernel::ReSize() {
   params_->row_ = c_shape[c_shape.size() - 2];
   params_->col_ = c_shape[c_shape.size() - 1];
   params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
+  params_->row_4_ = UP_ROUND(params_->row_, C4NUM);
   params_->row_12_ = UP_ROUND(params_->row_, C12NUM);
   params_->col_8_ = UP_ROUND(params_->col_, 8);
   thread_count_ = MSMIN(thread_count_, UP_DIV(params_->col_8_, 8));
   thread_stride_ = UP_DIV(UP_DIV(params_->col_8_, 8), thread_count_);
 
+#ifdef ENABLE_ARM32
+  a_c12_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * params_->row_4_ * params_->deep_ * sizeof(float)));
+  if (a_c12_ptr_ == nullptr) {
+    FreeTmpBuffer();
+    return RET_MEMORY_FAILED;
+  }
+  memset(a_c12_ptr_, 0, params_->row_4_ * params_->deep_ * sizeof(float));
+#else
   a_c12_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * params_->row_12_ * params_->deep_ * sizeof(float)));
   if (a_c12_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
   memset(a_c12_ptr_, 0, params_->row_12_ * params_->deep_ * sizeof(float));
+#endif
 
   b_r8_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * params_->col_8_ * params_->deep_ * sizeof(float)));
   if (b_r8_ptr_ == nullptr) {
@@ -106,12 +116,21 @@ int MatmulCPUKernel::ReSize() {
 void MatmulCPUKernel::InitMatrixA(float *src_ptr, float *dst_ptr) {
   for (int i = 0; i < params_->batch; i++) {
     float *src = src_ptr + i * params_->deep_ * params_->row_;
+#ifdef ENABLE_ARM32
+    float *dst = dst_ptr + i * params_->deep_ * params_->row_4_;
+    if (params_->a_transpose_) {
+      RowMajor2Row4Major(src, dst, params_->deep_, params_->row_);
+    } else {
+      RowMajor2Col4Major(src, dst, params_->row_, params_->deep_);
+    }
+#else
     float *dst = dst_ptr + i * params_->deep_ * params_->row_12_;
     if (params_->a_transpose_) {
       RowMajor2Row12Major(src, dst, params_->deep_, params_->row_);
     } else {
       RowMajor2Col12Major(src, dst, params_->row_, params_->deep_);
     }
+#endif
   }
   return;
 }

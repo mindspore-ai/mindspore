@@ -270,7 +270,12 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
   int out_w_block = UP_DIV(conv_param->output_w_, out_unit);
   int out_h_block = UP_DIV(conv_param->output_h_, out_unit);
   int output_count = out_w_block * out_h_block;
-  int output_tile_count = UP_DIV(output_count, C12NUM);
+#ifdef ENABLE_ARM32
+  int tile_num = 4;
+#else
+  int tile_num = 12;
+#endif
+  int output_tile_count = UP_DIV(output_count, tile_num);
   int out_channel = conv_param->output_channel_;
   int oc4 = UP_DIV(out_channel, C4NUM);
   int oc8 = UP_DIV(out_channel, C8NUM);
@@ -281,19 +286,19 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
   float *tmp_out_data = buffer_list[2];
   float *tmp_data = buffer_list[3];
   float *col_buffer = buffer_list[4];
-  int trans_input_offset = C12NUM * input_unit_square * ic4 * C4NUM;
-  int gemm_out_offset = C12NUM * input_unit_square * oc8 * C8NUM;
+  int trans_input_offset = tile_num * input_unit_square * ic4 * C4NUM;
+  int gemm_out_offset = tile_num * input_unit_square * oc8 * C8NUM;
   int tmp_data_offset = input_unit_square * C4NUM;
-  int col_buffer_offset = C12NUM * ic4 * C4NUM;
+  int col_buffer_offset = tile_num * ic4 * C4NUM;
   // step 1 : filter transform (pre-processed offline)
   // step 2 : input transform (online)
   for (int b = 0; b < in_batch; b++) {
     int in_batch_offset = b * ic4 * C4NUM * conv_param->input_h_ * conv_param->input_w_;
     int tmp_out_batch_offset = b * out_w_block * out_h_block * out_unit * out_unit * oc4 * C4NUM;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_num) {
-      int out_tile_index = thread_id * C12NUM;
-      int cal_num = output_count - thread_id * C12NUM;
-      cal_num = cal_num > C12NUM ? C12NUM : cal_num;
+      int out_tile_index = thread_id * tile_num;
+      int cal_num = output_count - thread_id * tile_num;
+      cal_num = cal_num > tile_num ? tile_num : cal_num;
       WinogradInputTransform(input_data + in_batch_offset, trans_input + task_id * trans_input_offset,
                              tmp_data + task_id * tmp_data_offset, cal_num, out_tile_index, out_w_block, conv_param,
                              in_func);
@@ -302,7 +307,11 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
       float *dst_ptr = gemm_out + task_id * gemm_out_offset;
       float *tmp_col_ptr = col_buffer + task_id * col_buffer_offset;
       for (int i = 0; i < input_unit_square; ++i) {
+#ifdef ENABLE_ARM32
+        RowMajor2Col4Major(src_ptr + i * C4NUM * ic4 * C4NUM, tmp_col_ptr, C4NUM, ic4 * C4NUM);
+#else
         RowMajor2Col12Major(src_ptr + i * C12NUM * ic4 * C4NUM, tmp_col_ptr, C12NUM, ic4 * C4NUM);
+#endif
         MatMulOpt(tmp_col_ptr, trans_weight + i * ic4 * C4NUM * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0, ic4 * C4NUM,
                   cal_num, oc8 * C8NUM, input_unit_square, 2);
       }
@@ -460,7 +469,12 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
   int out_w_block = UP_DIV(conv_param->output_w_, OUPUT_UNIT);
   int out_h_block = UP_DIV(conv_param->output_h_, OUPUT_UNIT);
   int output_count = out_w_block * out_h_block;
-  int output_tile_count = UP_DIV(output_count, C12NUM);
+#ifdef ENABLE_ARM32
+  int tile_num = 4;
+#else
+  int tile_num = 12;
+#endif
+  int output_tile_count = UP_DIV(output_count, tile_num);
   const int input_unit_square = 4 * 4;
 
   float *tile_buffer = buffer_list[0];
@@ -468,10 +482,10 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
   float *tmp_dst_buffer = buffer_list[2];
   float *nc4hw4_out = buffer_list[3];
   float *col_buffer = buffer_list[4];
-  int tile_buffer_offset = C12NUM * input_unit_square * ic4 * C4NUM;
+  int tile_buffer_offset = tile_num * input_unit_square * ic4 * C4NUM;
   int block_unit_buffer_offset = input_unit_square * C4NUM;
-  int tmp_dst_buffer_offset = C12NUM * input_unit_square * oc8 * C8NUM;
-  int col_buffer_offset = C12NUM * ic4 * C4NUM;
+  int tmp_dst_buffer_offset = tile_num * input_unit_square * oc8 * C8NUM;
+  int col_buffer_offset = tile_num * ic4 * C4NUM;
 
   int input_batch = conv_param->input_batch_;
   for (int batch = 0; batch < input_batch; batch++) {
@@ -479,8 +493,8 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
     int nc4hw4_buffer_offset = batch * oc4 * C4NUM * conv_param->output_h_ * conv_param->output_w_;
 
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
-      int start_index = thread_id * C12NUM;
-      int real_cal_num = (output_count - start_index) < C12NUM ? (output_count - start_index) : C12NUM;
+      int start_index = thread_id * tile_num;
+      int real_cal_num = (output_count - start_index) < tile_num ? (output_count - start_index) : tile_num;
       Conv3x3Fp32InputTransform(input_data + in_batch_offset, tile_buffer + task_id * tile_buffer_offset,
                                 block_unit_buffer + task_id * block_unit_buffer_offset, start_index, real_cal_num,
                                 out_w_block, conv_param);
@@ -489,7 +503,11 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
       float *tmp_col_ptr = col_buffer + task_id * col_buffer_offset;
       float *dst_ptr = tmp_dst_buffer + task_id * tmp_dst_buffer_offset;
       for (int i = 0; i < input_unit_square; ++i) {
+#ifdef ENABLE_ARM32
+        RowMajor2Col4Major(src_ptr + i * C4NUM * ic4 * C4NUM, tmp_col_ptr, C4NUM, ic4 * C4NUM);
+#else
         RowMajor2Col12Major(src_ptr + i * C12NUM * ic4 * C4NUM, tmp_col_ptr, C12NUM, ic4 * C4NUM);
+#endif
         MatMulOpt(tmp_col_ptr, transed_weight + i * ic4 * C4NUM * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0,
                   ic4 * C4NUM, real_cal_num, oc8 * C8NUM, input_unit_square, 2);
       }

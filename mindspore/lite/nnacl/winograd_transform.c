@@ -67,8 +67,13 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
         }
       }
       // input transform
+#ifdef ENABLE_ARM32
+      int tile_num = 4;
+#else
+      int tile_num = 12;
+#endif
       int dst_ic4_offset = dst_plane_offset + ic * C4NUM;
-      size_t dst_step = C12NUM * ic4 * C4NUM;
+      size_t dst_step = tile_num * ic4 * C4NUM;
       float *trans_input_ptr = trans_input + dst_ic4_offset;
       func(tmp_data, trans_input_ptr, C4NUM, dst_step);
       //      GeneralInputTransformUnit(tmp_data, trans_input_ptr, matrix_b, matrix_bt, C4NUM, dst_step, input_unit);
@@ -331,8 +336,13 @@ void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, floa
       }
 
       // input transform
+#ifdef ENABLE_ARM32
+      int tile_num = 4;
+#else
+      int tile_num = 12;
+#endif
       int dst_ic4_offset = dst_plane_offset + ic * C4NUM;
-      size_t dst_step = C12NUM * ic4 * C4NUM;
+      size_t dst_step = tile_num * ic4 * C4NUM;
       float *trans_input_ptr = trans_input + dst_ic4_offset;
       Conv3x3Fp32InputUnit(tmp_data, trans_input_ptr, dst_step);
     }
