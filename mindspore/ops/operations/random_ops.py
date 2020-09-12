@@ -72,7 +72,7 @@ class Laplace(PrimitiveWithInfer):
         \text{f}(x;μ,λ) = \frac{1}{2λ}\exp(-\frac{|x-μ|}{λ}),
 
     Args:
-        seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
+        seed (int): Seed data is used as entropy source for Random number engines to generate pseudo-random numbers.
           Default: 0.
 
     Inputs:
@@ -83,7 +83,7 @@ class Laplace(PrimitiveWithInfer):
           variance of Laplace distribution is equal to twice the square of lambda_param. With float32 data type.
 
     Outputs:
-        Tensor, has the shape 'shape' input and dtype as float32.
+        Tensor, has the specified shape and its dtype is float32.
 
     Examples:
         >>> shape = (4, 16)
