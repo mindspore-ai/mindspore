@@ -32,10 +32,12 @@ using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::ActivationType_SIGMOID;
+using mindspore::schema::ActivationType_TANH;
 using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore {
 class TestActivationOpenCL : public mindspore::CommonTest {};
+class TestActivationOpenCLTanh : public mindspore::CommonTest {};
 
 void LoadActivationData(void *dst, size_t dst_size, const std::string &file_path) {
   if (file_path.empty()) {
@@ -523,6 +525,121 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
     CompareRes<float16_t>(output_tensor, out_file);
   } else {
     printf_tensor<float>("Leaky Relu:FP32--output data---", outputs[0]);
+    CompareRes<float>(output_tensor, out_file);
+  }
+  delete kernel;
+  delete param;
+  delete input_tensor;
+  delete output_tensor;
+  delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
+}
+
+TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
+  std::string in_file = "/data/local/tmp/test_data/in_tanh.bin";
+  std::string out_file = "/data/local/tmp/test_data/out_tanh.bin";
+  MS_LOG(INFO) << "Tanh Begin test!";
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  ocl_runtime->Init();
+  auto data_type = kNumberTypeFloat32;
+  ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
+  bool enable_fp16 = ocl_runtime->GetFp16Enable();
+
+  MS_LOG(INFO) << "Init tensors.";
+  std::vector<int> input_shape = {1, 2, 3, 9};
+  schema::Format format = schema::Format_NHWC;
+  schema::Format op_format = schema::Format_NC4HW4;
+  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
+  if (input_tensor == nullptr) {
+    MS_LOG(ERROR) << "new input tensor error!";
+    return;
+  }
+  auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
+  if (output_tensor == nullptr) {
+    MS_LOG(ERROR) << "new output tensor error!";
+    delete input_tensor;
+    return;
+  }
+  std::vector<lite::Tensor *> inputs{input_tensor};
+  std::vector<lite::Tensor *> outputs{output_tensor};
+  auto allocator = ocl_runtime->GetAllocator();
+  inputs[0]->MallocData(allocator);
+  MS_LOG(INFO) << "Initialize input data";
+  LoadActivationData(inputs[0]->MutableData(), inputs[0]->Size(), in_file);
+  if (enable_fp16) {
+    printf_tensor<float16_t>("Tanh:FP16--input data--", inputs[0]);
+  } else {
+    printf_tensor<float>("Tanh:FP32--input data--", inputs[0]);
+  }
+
+  auto *param = new (std::nothrow) ActivationParameter();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "New ActivationParameter fail.";
+    delete input_tensor;
+    delete output_tensor;
+    return;
+  }
+  param->type_ = ActivationType_TANH;
+  auto *kernel =
+    new (std::nothrow) kernel::ActivationOpenClKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "Kernel:Tanh create fail.";
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    return;
+  }
+  kernel->SetFormatType(op_format);
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete param;
+    delete kernel;
+    delete input_tensor;
+    delete output_tensor;
+    MS_LOG(ERROR) << "Init tanh fail.";
+    return;
+  }
+  MS_LOG(INFO) << "Create kernel SubGraphOpenCLKernel.";
+  std::vector<kernel::LiteKernel *> kernels{kernel};
+  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (sub_graph == nullptr) {
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    MS_LOG(ERROR) << "Kernel SubGraphOpenCLKernel create fail.";
+    return;
+  }
+
+  MS_LOG(INFO) << "Initialize sub_graph.";
+  ret = sub_graph->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init sub_graph error.";
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete sub_graph;
+    return;
+  }
+  MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
+  ret = sub_graph->Run();
+  if (ret != RET_OK) {
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete sub_graph;
+    MS_LOG(ERROR) << "Run SubGraphOpenCLKernel error.";
+    return;
+  }
+
+  if (enable_fp16) {
+    printf_tensor<float16_t>("Tanh:FP16--output data---", outputs[0]);
+    CompareRes<float16_t>(output_tensor, out_file);
+  } else {
+    printf_tensor<float>("Tanh:FP32--output data---", outputs[0]);
     CompareRes<float>(output_tensor, out_file);
   }
   delete kernel;

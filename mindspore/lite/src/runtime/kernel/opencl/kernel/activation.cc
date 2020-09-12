@@ -35,6 +35,7 @@ using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::ActivationType_SIGMOID;
+using mindspore::schema::ActivationType_TANH;
 using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
@@ -67,7 +68,8 @@ int ActivationOpenClKernel::Init() {
     {ActivationType_LEAKY_RELU, std::vector<std::string>{"LEAKY_RELU", "LeakyRelu"}},
     {ActivationType_RELU, std::vector<std::string>{"RELU", "Relu"}},
     {ActivationType_SIGMOID, std::vector<std::string>{"SIGMOID", "Sigmoid"}},
-    {ActivationType_RELU6, std::vector<std::string>{"RELU6", "Relu6"}}};
+    {ActivationType_RELU6, std::vector<std::string>{"RELU6", "Relu6"}},
+    {ActivationType_TANH, std::vector<std::string>{"TANH", "Tanh"}}};
   if (Program_Kernel.count(type_) == 0) {
     MS_LOG(ERROR) << "schema::ActivationType:" << type_ << "not found";
     return RET_ERROR;
@@ -98,6 +100,7 @@ int ActivationOpenClKernel::Run() {
     ocl_runtime->SetKernelArg(kernel_, arg_idx++, alpha_);
   }
   std::vector<size_t> local = {};
+  std::cout << img2d_shape.s[1] << "   " << img2d_shape.s[2] << std::endl;
   std::vector<size_t> global = {static_cast<size_t>(img2d_shape.s[1]), static_cast<size_t>(img2d_shape.s[2])};
   auto ret = ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   if (ret != RET_OK) {
