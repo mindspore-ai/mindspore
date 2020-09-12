@@ -41,7 +41,9 @@ BuildSentencePieceVocabOp::BuildSentencePieceVocabOp(std::shared_ptr<SentencePie
 }
 
 Status BuildSentencePieceVocabOp::operator()() {
-  RETURN_UNEXPECTED_IF_NULL(tree_);
+  if (tree_ == nullptr) {
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
+  }
   RETURN_IF_NOT_OK(sentence_queue_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(
     tree_->AllTasks()->CreateAsyncTask("sentenceTask", std::bind(&BuildSentencePieceVocabOp::SentenceThread, this)));
@@ -69,12 +71,12 @@ Status BuildSentencePieceVocabOp::SentenceThread() {
   TaskManager::FindMe()->Post();
   if (col_names_.empty() == true) {
     auto itr = column_name_id_map_.find("text");
-    CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(),
-                                 "'text' column doesn't exist when column name is empty");
+    CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(), "Invalid data, 'text' column does not exist.");
     col_id_ = itr->second;
   } else {
     auto itr = column_name_id_map_.find(col_names_[0]);
-    CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(), col_names_[0] + "column doesn't exist");
+    CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(),
+                                 "Invalid parameter, column name: " + col_names_[0] + "does not exist.");
     col_id_ = itr->second;
   }
   std::unique_ptr<DatasetSentenceIterator> sentence_iter = std::make_unique<DatasetSentenceIterator>(this);
@@ -85,7 +87,8 @@ Status BuildSentencePieceVocabOp::SentenceThread() {
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, s_status.message());
   } else {
     if (vocab_ == nullptr) {
-      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "sentencepiece vocab ptr must not be nullptr");
+      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+                    "Invalid parameter, sentencepiece vocab not set.");
     }
     vocab_->set_model_proto(model_proto);
   }
@@ -141,8 +144,10 @@ void BuildSentencePieceVocabOp::Next(std::string *sentence) {
   }
 
   if (new_row[col_id_]->type().IsNumeric() || new_row[col_id_]->Rank() > 1) {
-    ret_status_ = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
-                         "for dataset only words on string columns or must bu scalar");
+    ret_status_ =
+      Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+             "Invalid data, build_sentence_piece_vocab only works on string data with rank equal to 1, got type: " +
+               new_row[col_id_]->type().ToString() + "and rank: " + std::to_string(new_row[col_id_]->Rank()));
     read_done_ = true;
     return;
   }

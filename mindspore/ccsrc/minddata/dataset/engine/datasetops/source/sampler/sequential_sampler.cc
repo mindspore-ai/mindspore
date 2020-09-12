@@ -63,16 +63,24 @@ Status SequentialSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer)
 }
 
 Status SequentialSampler::InitSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(start_index_ >= 0, "start_index < 0\n");
-  CHECK_FAIL_RETURN_UNEXPECTED(start_index_ < num_rows_, "start_index >= num_rows\n");
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ >= 0, "num_samples < 0\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(start_index_ >= 0,
+                               "Invalid parameter, start_index must be greater than or equal to 0, but got " +
+                                 std::to_string(start_index_) + ".\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(start_index_ < num_rows_,
+                               "Invalid parameter, start_index must be less than num_rows, but got start_index: " +
+                                 std::to_string(start_index_) + ", num_rows: " + std::to_string(num_rows_) + ".\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ >= 0,
+                               "Invalid parameter, num_samples must be greater than or equal to 0, but got " +
+                                 std::to_string(num_samples_) + ".\n");
   // Adjust the num_samples count based on the range of ids we are sequencing.  If num_samples is 0, we sample
   // the entire set.  If it's non-zero, we will implicitly cap the amount sampled based on available data.
   int64_t available_row_count = num_rows_ - start_index_;
   if (num_samples_ == 0 || num_samples_ > available_row_count) {
     num_samples_ = available_row_count;
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && samples_per_buffer_ > 0, "Fail to init Sequential Sampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    num_samples_ > 0 && samples_per_buffer_ > 0,
+    "Invalid parameter, samples_per_buffer must be greater than 0, but got " + std::to_string(samples_per_buffer_));
   samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
   return Status::OK();
 }

@@ -40,11 +40,13 @@ CacheOp::Builder::Builder() : build_cache_client_(nullptr), build_sampler_(nullp
 // Check if the required parameters are set by the builder.
 Status CacheOp::Builder::SanityCheck() const {
   if (build_cache_client_ == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "CacheOp requires a CacheClient");
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+                  "Invalid parameter, CacheOp requires a CacheClient, but got nullptr.");
   }
   // Make sure the cache client has a valid session
   if (!build_cache_client_->session_id()) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Cache client for CacheOp is missing session id");
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+                  "Invalid parameter, cache client for CacheOp requires a session id which is not equal to 0.");
   }
   return Status::OK();
 }
@@ -76,7 +78,7 @@ Status CacheOp::InitCache() { return Status::OK(); }
 Status CacheOp::operator()() {
   if (!sampler_) {
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
-                  "CacheOp requires a sampler before it can be executed!");
+                  "Invalid parameter, CacheOp requires a sampler before it can be executed, but got nullptr.");
   }
   RETURN_IF_NOT_OK(RegisterResources());
   // Kick off the workers

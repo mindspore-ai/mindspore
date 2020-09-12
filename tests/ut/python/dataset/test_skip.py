@@ -210,7 +210,7 @@ def test_skip_exception_1():
 
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Skip count must be positive integer or 0." in str(e)
+        assert "skip count should be greater than or equal to 0." in str(e)
 
 
 def test_skip_exception_2():

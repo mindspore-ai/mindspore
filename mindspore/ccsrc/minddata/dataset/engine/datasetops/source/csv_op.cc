@@ -37,8 +37,13 @@ CsvOp::Builder::Builder()
 
 Status CsvOp::Builder::ValidateInputs() const {
   std::string err;
-  err += builder_num_workers_ <= 0 ? "Number of parallel workers should be greater than 0\n" : "";
-  err += (builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1) ? "Wrong sharding configs\n" : "";
+  err += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                       std::to_string(builder_num_workers_) + ".\n"
+                                   : "";
+  err += (builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1)
+           ? "Invalid parameter, num_shard must be greater than shard_id and greater than 0, got num_shard: " +
+               std::to_string(builder_num_devices_) + ", shard_id: " + std::to_string(builder_device_id_) + ".\n"
+           : "";
   return err.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err);
 }
 
@@ -501,16 +506,17 @@ Status CsvOp::LoadFile(const std::string &file, const int64_t start_offset, cons
       // int to receive its return value.
       int chr = ifs.get();
       if (csv_parser.ProcessMessage(chr) != 0) {
-        RETURN_STATUS_UNEXPECTED("Failed to parse file " + file + ":" + std::to_string(csv_parser.GetTotalRows() + 1) +
-                                 ". error message: " + csv_parser.GetErrorMessage());
+        RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse file: " + file + ":" +
+                                 std::to_string(csv_parser.GetTotalRows() + 1) +
+                                 ". Error message: " + csv_parser.GetErrorMessage());
       }
     }
   } catch (std::invalid_argument &ia) {
     std::string err_row = std::to_string(csv_parser.GetTotalRows() + 1);
-    RETURN_STATUS_UNEXPECTED(file + ":" + err_row + ", type does not match");
+    RETURN_STATUS_UNEXPECTED("Invalid data, " + file + ":" + err_row + ", type does not match.");
   } catch (std::out_of_range &oor) {
     std::string err_row = std::to_string(csv_parser.GetTotalRows() + 1);
-    RETURN_STATUS_UNEXPECTED(file + ":" + err_row + ", out of range");
+    RETURN_STATUS_UNEXPECTED("Invalid data, " + file + ":" + err_row + ", out of range.");
   }
   return Status::OK();
 }
@@ -771,7 +777,7 @@ Status CsvOp::CalculateNumRowsPerShard() {
   }
   if (all_num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API CsvDataset. Please check file path or CSV format "
+      "Invalid data, no valid data matching the dataset API CsvDataset. Please check file path or CSV format "
       "validation first.");
   }
 
@@ -849,7 +855,7 @@ Status CsvOp::ComputeColMap() {
         if (column_name_id_map_.find(col_names[i]) == column_name_id_map_.end()) {
           column_name_id_map_[col_names[i]] = i;
         } else {
-          RETURN_STATUS_UNEXPECTED("Duplicate column names are not allowed");
+          RETURN_STATUS_UNEXPECTED("Invalid parameter, duplicate column names are not allowed: " + col_names[i]);
         }
       }
     } else {
@@ -857,7 +863,8 @@ Status CsvOp::ComputeColMap() {
         if (column_name_id_map_.find(column_name_list_[i]) == column_name_id_map_.end()) {
           column_name_id_map_[column_name_list_[i]] = i;
         } else {
-          RETURN_STATUS_UNEXPECTED("Duplicate column names are not allowed");
+          RETURN_STATUS_UNEXPECTED("Invalid parameter, duplicate column names are not allowed: " +
+                                   column_name_list_[i]);
         }
       }
     }
@@ -870,7 +877,10 @@ Status CsvOp::ComputeColMap() {
     }
   }
   if (column_default_list_.size() != column_name_id_map_.size()) {
-    RETURN_STATUS_UNEXPECTED("The number of column names does not match the column defaults");
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid parameter, the number of column names does not match the column defaults, column_default_list: " +
+      std::to_string(column_default_list_.size()) +
+      ", column_name_id_map: " + std::to_string(column_name_id_map_.size()));
   }
   return Status::OK();
 }

@@ -33,7 +33,8 @@ SubsetRandomSampler::SubsetRandomSampler(int64_t num_samples, const std::vector<
 
 // Initialized this Sampler.
 Status SubsetRandomSampler::InitSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "num_rows <= 0\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    num_rows_ > 0, "Invalid parameter, num_rows must be greater than 0, but got " + std::to_string(num_rows_) + ".\n");
 
   // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
   // In this case, the id's are provided by the user.  Cap the num_samples on the number of id's given.

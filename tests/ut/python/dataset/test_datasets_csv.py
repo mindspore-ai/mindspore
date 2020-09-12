@@ -205,7 +205,7 @@ def test_csv_dataset_exception():
     with pytest.raises(Exception) as err:
         for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
-    assert "Failed to parse file" in str(err.value)
+    assert "failed to parse file" in str(err.value)
 
 
 def test_csv_dataset_type_error():

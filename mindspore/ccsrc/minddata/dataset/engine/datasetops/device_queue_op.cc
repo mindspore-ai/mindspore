@@ -68,8 +68,8 @@ Status DeviceQueueOp::CheckExceptions(const std::unique_ptr<DataBuffer> &buffer)
     TensorRow row;
     buffer->GetRow(0, &row);
     for (const auto &item : row) {
-      CHECK_FAIL_RETURN_UNEXPECTED(item->type().IsNumeric(), "Cannot send tensor of string type to device.");
-      CHECK_FAIL_RETURN_UNEXPECTED(item->HasData(), "Cannot send tensor with no data.");
+      CHECK_FAIL_RETURN_UNEXPECTED(item->type().IsNumeric(), "Invalid data, cannot send string tensor to device.");
+      CHECK_FAIL_RETURN_UNEXPECTED(item->HasData(), "Invalid data, cannot send tensor with no data to device.");
     }
   }
   return Status::OK();
@@ -206,7 +206,7 @@ Status DeviceQueueOp::SendDataToGPU() {
         if (!is_open) {
           handle = GpuBufferMgr::GetInstance().Open(0, channel_name_, data_size, release_function);
           if (handle == INVALID_HANDLE) {
-            return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "open failed");
+            return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Failed to open channel for sending data.");
           }
           is_open = true;
         }
@@ -249,7 +249,7 @@ Status DeviceQueueOp::RetryPushGPUData(const std::vector<size_t> &data_size, con
         ReleaseData(items[i].data_ptr_);
       }
       if (ret == BlockQueueStatus_T::ERROR_INPUT) {
-        return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "invalid input Data, please check it.");
+        return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Invalid input data, please check it.");
       } else {
         if (!stop_send_) {
           MS_LOG(DEBUG) << "Retry pushing data...";
@@ -269,7 +269,7 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
   for (auto &sub_item : *items) {
     RETURN_IF_NOT_OK(pool_->Allocate(sub_item.data_len_, &sub_item.data_ptr_));
     if (sub_item.data_ptr_ == nullptr) {
-      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "memory malloc failed.");
+      return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__, "Memory malloc failed.");
     }
     (void)memset_s(sub_item.data_ptr_, sub_item.data_len_, 0, sub_item.data_len_);
     const unsigned char *column_data = curr_row[i]->GetBuffer();

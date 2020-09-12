@@ -51,9 +51,15 @@ Status BatchOp::Builder::Build(std::shared_ptr<BatchOp> *ptr) {
 
 Status BatchOp::Builder::SanityCheck() {
   std::string err;
-  err += builder_op_connector_size_ <= 0 ? "connector size <= 0\n" : "";
-  err += builder_batch_size_ <= 0 ? "batch size <= 0\n" : "";
-  err += builder_num_workers_ <= 0 ? "batch num_parallel_workers <= 0\n" : "";
+  err += builder_op_connector_size_ <= 0 ? "Invalid parameter, connector_size must be greater than 0, but got " +
+                                             std::to_string(builder_op_connector_size_) + ".\n"
+                                         : "";
+  err += builder_batch_size_ <= 0 ? "Invalid parameter, batch_size must be greater than 0, but got " +
+                                      std::to_string(builder_batch_size_) + ".\n"
+                                  : "";
+  err += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                       std::to_string(builder_num_workers_) + ".\n"
+                                   : "";
   return err.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, common::SafeCStr(err));
 }
 
@@ -184,7 +190,9 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, const std::u
           }
           // Don't do anything if the tensor has no data
         } else {
-          RETURN_STATUS_UNEXPECTED("[Batch ERROR] Inconsistent TensorShapes of Column " + std::to_string(i));
+          RETURN_STATUS_UNEXPECTED(
+            "Invalid data, expect same shape for each data row, but got inconsistent data shapes in column " +
+            std::to_string(i));
         }
       }
     } else {  // handle string column differently
@@ -239,7 +247,9 @@ Status BatchOp::MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatc
 }
 
 Status BatchOp::LaunchThreadsAndInitOp() {
-  RETURN_UNEXPECTED_IF_NULL(tree_);
+  if (tree_ == nullptr) {
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
+  }
   RETURN_IF_NOT_OK(worker_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&BatchOp::WorkerEntry, this, std::placeholders::_1)));
   return Status::OK();
@@ -258,7 +268,7 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
   input_table.reserve(pyfunc_column_names_.size());
   for (std::string col_name : pyfunc_column_names_) {
     if (column_name_id_map_.find(col_name) == column_name_id_map_.end()) {
-      RETURN_STATUS_UNEXPECTED("column : '" + col_name + "' does not exist\n");
+      RETURN_STATUS_UNEXPECTED("Invalid parameter, column name: '" + col_name + "' does not exist.\n");
     }
     TensorBatch tensor_batch;
     tensor_batch.reserve(table_pair->first->size());
@@ -310,12 +320,14 @@ Status BatchOp::InvokeBatchSizeFunc(int32_t *batch_size, CBatchInfo info) {
       py::object size = batch_size_func_(info);
       *batch_size = size.cast<int32_t>();
       if (*batch_size <= 0) {
-        return Status(StatusCode::kPyFuncException, "Batch size function should return an integer > 0");
+        return Status(StatusCode::kPyFuncException,
+                      "Invalid parameter, batch size function should return an integer greater than 0.");
       }
     } catch (const py::error_already_set &e) {
       return Status(StatusCode::kPyFuncException, e.what());
     } catch (const py::cast_error &e) {
-      return Status(StatusCode::kPyFuncException, "Batch size function should return an integer > 0");
+      return Status(StatusCode::kPyFuncException,
+                    "Invalid parameter, batch size function should return an integer greater than 0.");
     }
   }
   return Status(StatusCode::kOK, "Batch size func call succeed");
@@ -346,7 +358,7 @@ Status BatchOp::InvokeBatchMapFunc(TensorBatchTable *input, TensorBatchTable *ou
       // Parse batch map return value
       py::tuple ret_tuple = py::cast<py::tuple>(ret_py_obj);
       if (ret_tuple.size() != pyfunc_column_names_.size() || !py::isinstance<py::tuple>(ret_tuple)) {
-        return Status(StatusCode::kPyFuncException, "Batch map function should return a tuple");
+        return Status(StatusCode::kPyFuncException, "Invalid parameter, batch map function should return a tuple.");
       }
       for (size_t i = 0; i < ret_tuple.size(); i++) {
         TensorBatch output_batch;
@@ -361,7 +373,8 @@ Status BatchOp::InvokeBatchMapFunc(TensorBatchTable *input, TensorBatchTable *ou
     } catch (const py::error_already_set &e) {
       return Status(StatusCode::kPyFuncException, e.what());
     } catch (const py::cast_error &e) {
-      return Status(StatusCode::kPyFuncException, "Batch map function should return an tuple of list of numpy array");
+      return Status(StatusCode::kPyFuncException,
+                    "Invalid parameter, batch map function should return a tuple of list of numpy array.");
     }
   }
   return Status(StatusCode::kOK);
@@ -371,7 +384,10 @@ Status BatchOp::InvokeBatchMapFunc(TensorBatchTable *input, TensorBatchTable *ou
 Status BatchOp::PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
                            const std::unordered_map<std::string, int32_t> &column_name_id_map) {
   RETURN_UNEXPECTED_IF_NULL(table);  // placeholder for now, might need this in the future
-  CHECK_FAIL_RETURN_UNEXPECTED((*table)->front().size() == column_name_id_map.size(), "col_name_map mismatch");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    (*table)->front().size() == column_name_id_map.size(),
+    "Invaid parameter, size of column_name_id_map must be equal to num of data columns. map size: " +
+      std::to_string(column_name_id_map.size()) + ", column nums: " + std::to_string((*table)->front().size()));
   std::vector<std::shared_ptr<Tensor>> pad_vals(column_name_id_map.size(),
                                                 0);  // value to pad each column's tensor with, default 0
   std::set<int32_t> pad_cols;
@@ -383,14 +399,19 @@ Status BatchOp::PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &
   for (size_t col_id : pad_cols) {
     max_shapes[col_id] = std::vector<dsize_t>((*table)->front()[col_id]->Rank(), -1);
     if (pad_shapes[col_id].empty()) pad_shapes[col_id] = max_shapes[col_id];  // fill pad shape with -1
-    CHECK_FAIL_RETURN_UNEXPECTED(pad_shapes[col_id].size() == max_shapes[col_id].size(), "wrong rank in pad_shape");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      pad_shapes[col_id].size() == max_shapes[col_id].size(),
+      "Invalid data, rank of pad_shape must be equal to rank of specified column. pad_shapes rank:" +
+        std::to_string(pad_shapes[col_id].size()) + ", column rank: " + std::to_string(max_shapes[col_id].size()));
   }
 
   // calculate maximum shape for each column that needs to be padded
   for (const TensorRow &row : **table) {  // iterator each row in a batch
     for (size_t col_id : pad_cols) {      // iterator each tensor in a row
-      CHECK_FAIL_RETURN_UNEXPECTED(row[col_id]->Rank() == max_shapes[col_id].size(),
-                                   "Tensor to be padded together need to have the same rank");
+      CHECK_FAIL_RETURN_UNEXPECTED(
+        row[col_id]->Rank() == max_shapes[col_id].size(),
+        "Invalid data, data to be padded together need to have the same rank, got shape 1: " +
+          std::to_string(row[col_id]->Rank()) + ", shape 2: " + std::to_string(max_shapes[col_id].size()));
       for (size_t dim = 0; dim < row[col_id]->Rank(); dim++) {  // pick the largest number in each dimension
         max_shapes[col_id][dim] = std::max(max_shapes[col_id][dim], row[col_id]->shape()[dim]);
       }
@@ -426,9 +447,13 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
   } else {
     for (const auto &p : pad_info) {
       auto location = column_name_id_map.find(p.first);
-      CHECK_FAIL_RETURN_UNEXPECTED(location != column_name_id_map.end(), "no column exists with name:" + p.first);
+      CHECK_FAIL_RETURN_UNEXPECTED(location != column_name_id_map.end(),
+                                   "Invalid parameter, column name: " + p.first + " does not exist.");
       auto col_id = static_cast<dsize_t>(location->second);
-      CHECK_FAIL_RETURN_UNEXPECTED(col_id < pad_vals->size() && col_id < pad_shapes->size(), "col_id out of bound");
+      CHECK_FAIL_RETURN_UNEXPECTED(
+        col_id < pad_vals->size() && col_id < pad_shapes->size(),
+        "Invalid parameter, column id must be less than the size of pad_val and pad_shape, but got: " +
+          std::to_string(col_id));
       pad_cols->insert(col_id);
       (*pad_vals)[col_id] = p.second.second;              // set pad values
       (*pad_shapes)[col_id] = p.second.first.AsVector();  // empty vector if shape is unknown

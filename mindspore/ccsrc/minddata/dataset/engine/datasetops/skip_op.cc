@@ -36,7 +36,7 @@ SkipOp::Builder::Builder(int32_t count) : build_max_skips_(count) {
 
 Status SkipOp::Builder::SanityCheck() const {
   if (build_max_skips_ < 0) {
-    std::string err_msg("Skip count must be positive integer or 0.");
+    std::string err_msg("Invalid parameter, skip count should be greater than or equal to 0.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   return Status::OK();

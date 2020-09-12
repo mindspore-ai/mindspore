@@ -47,8 +47,13 @@ TextFileOp::Builder::Builder()
 
 Status TextFileOp::Builder::ValidateInputs() const {
   std::string err_msg;
-  err_msg += builder_num_workers_ <= 0 ? "Number of parallel workers should be greater than 0\n" : "";
-  err_msg += builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1 ? "Wrong sharding configs\n" : "";
+  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                           std::to_string(builder_num_workers_) + ".\n"
+                                       : "";
+  err_msg += (builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1)
+               ? "Invalid parameter, num_shard must be greater than shard_id and greater than 0, got num_shard: " +
+                   std::to_string(builder_num_devices_) + ", shard_id: " + std::to_string(builder_device_id_) + ".\n"
+               : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
@@ -153,7 +158,7 @@ Status TextFileOp::LoadFile(const std::string &file, const int64_t start_offset,
                             const int32_t worker_id) {
   std::ifstream handle(file);
   if (!handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Failed to open file " + file);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
   }
 
   int64_t rows_each_buffer = 0;
@@ -442,7 +447,7 @@ Status TextFileOp::operator()() {
 int64_t TextFileOp::CountTotalRows(const std::string &file) {
   std::ifstream handle(file);
   if (!handle.is_open()) {
-    MS_LOG(ERROR) << "Failed to open file: " << file;
+    MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
     return 0;
   }
 
@@ -465,7 +470,7 @@ Status TextFileOp::CalculateNumRowsPerShard() {
   }
   if (all_num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API TextFileDataset.Please check file path or dataset API "
+      "Invalid data, no valid data matching the dataset API TextFileDataset.Please check file path or dataset API "
       "validation first.");
   }
 

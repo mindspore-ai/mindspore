@@ -74,7 +74,10 @@ Status RandomSampler::InitSampler() {
   if (num_samples_ == 0 || num_samples_ > num_rows_) {
     num_samples_ = num_rows_;
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && num_rows_ > 0, "both num_samples & num_rows need to be positive");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    num_samples_ > 0 && num_rows_ > 0,
+    "Invalid parameter, num_samples & num_rows must be greater than 0, but got num_samples: " +
+      std::to_string(num_samples_) + ", num_rows: " + std::to_string(num_rows_));
   samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
   rnd_.seed(seed_);
 

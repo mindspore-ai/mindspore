@@ -41,10 +41,14 @@ Status DistributedSampler::InitSampler() {
   if (num_samples_ == 0 || num_samples_ > num_rows_) {
     num_samples_ = num_rows_;
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0, "num_samples <= 0\n");
-  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "num_rows <= 0\n");
-  CHECK_FAIL_RETURN_UNEXPECTED(device_id_ < num_devices_ && device_id_ >= 0 && num_rows_ > 0 && num_samples_ > 0,
-                               "fail to init DistributedSampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0, "Invalid parameter, num_samples must be greater than 0, but got " +
+                                                   std::to_string(num_samples_) + ".\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    num_rows_ > 0, "Invalid parameter, num_rows must be greater than 0" + std::to_string(num_rows_) + ".\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    device_id_ < num_devices_ && device_id_ >= 0 && num_rows_ > 0 && num_samples_ > 0,
+    "Invalid parameter, num_shard must be greater than shard_id and greater than 0, got num_shard: " +
+      std::to_string(num_devices_) + ", shard_id: " + std::to_string(device_id_) + ".\n");
   rnd_.seed(seed_++);
 
   if (offset_ != -1 || !even_dist_) {

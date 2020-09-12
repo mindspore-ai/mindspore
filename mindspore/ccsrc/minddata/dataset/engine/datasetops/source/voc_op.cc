@@ -91,8 +91,12 @@ Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
 Status VOCOp::Builder::SanityCheck() {
   Path dir(builder_dir_);
   std::string err_msg;
-  err_msg += dir.IsDirectory() == false ? "VOC path is invalid or not set\n" : "";
-  err_msg += builder_num_workers_ <= 0 ? "Num of parallel workers is set to 0 or negative\n" : "";
+  err_msg += dir.IsDirectory() == false
+               ? "Invalid parameter, VOC path is invalid or not set, path: " + builder_dir_ + ".\n"
+               : "";
+  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                           std::to_string(builder_num_workers_) + ".\n"
+                                       : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
@@ -137,7 +141,8 @@ Status VOCOp::operator()() {
       std::shared_ptr<Tensor> sample_ids;
       RETURN_IF_NOT_OK(sampler_buffer->GetTensor(&sample_ids, 0, 0));
       if (sample_ids->type() != DataType(DataType::DE_INT64)) {
-        RETURN_STATUS_UNEXPECTED("Sampler Tensor isn't int64");
+        RETURN_STATUS_UNEXPECTED("Invalid parameter, data type of Sampler Tensor isn't int64, got " +
+                                 sample_ids->type().ToString());
       }
       RETURN_IF_NOT_OK(TraverseSampleIds(sample_ids, &keys));
       RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
@@ -259,7 +264,7 @@ Status VOCOp::ParseImageIds() {
   std::ifstream in_file;
   in_file.open(image_sets_file);
   if (in_file.fail()) {
-    RETURN_STATUS_UNEXPECTED("Fail to open file: " + image_sets_file);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + image_sets_file);
   }
   std::string id;
   while (getline(in_file, id)) {
@@ -301,21 +306,21 @@ Status VOCOp::ParseAnnotationIds() {
 
 Status VOCOp::ParseAnnotationBbox(const std::string &path) {
   if (!Path(path).Exists()) {
-    RETURN_STATUS_UNEXPECTED("File is not found : " + path);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + path);
   }
   Annotation annotation;
   XMLDocument doc;
   XMLError e = doc.LoadFile(common::SafeCStr(path));
   if (e != XMLError::XML_SUCCESS) {
-    RETURN_STATUS_UNEXPECTED("Xml load failed");
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to load xml file: " + path);
   }
   XMLElement *root = doc.RootElement();
   if (root == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Xml load root element error");
+    RETURN_STATUS_UNEXPECTED("Invalid data, failed to load root element for xml file.");
   }
   XMLElement *object = root->FirstChildElement("object");
   if (object == nullptr) {
-    RETURN_STATUS_UNEXPECTED("No object find in " + path);
+    RETURN_STATUS_UNEXPECTED("Invalid data, no object found in " + path);
   }
   while (object != nullptr) {
     std::string label_name;
@@ -338,7 +343,7 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
       XMLElement *ymax_node = bbox_node->FirstChildElement("ymax");
       if (ymax_node != nullptr) ymax = ymax_node->FloatText();
     } else {
-      RETURN_STATUS_UNEXPECTED("bndbox dismatch in " + path);
+      RETURN_STATUS_UNEXPECTED("Invalid data, bndbox dismatch in " + path);
     }
     if (label_name != "" && (class_index_.empty() || class_index_.find(label_name) != class_index_.end()) && xmin > 0 &&
         ymin > 0 && xmax > xmin && ymax > ymin) {
@@ -359,7 +364,7 @@ Status VOCOp::InitSampler() {
 
 Status VOCOp::LaunchThreadsAndInitOp() {
   if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("tree_ not set");
+    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
@@ -378,7 +383,7 @@ Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &co
   if (decode_ == true) {
     Status rc = Decode(*tensor, tensor);
     if (rc.IsError()) {
-      RETURN_STATUS_UNEXPECTED("fail to decode file: " + path);
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to decode file: " + path);
     }
   }
   return Status::OK();
@@ -402,7 +407,9 @@ Status VOCOp::ReadAnnotationToTensor(const std::string &path, TensorRow *row) {
       } else {
         label_data.push_back(static_cast<uint32_t>(label_index_[item.first]));
       }
-      CHECK_FAIL_RETURN_UNEXPECTED(item.second.size() == 6, "annotation only support 6 parameters.");
+      CHECK_FAIL_RETURN_UNEXPECTED(
+        item.second.size() == 6,
+        "Invalid parameter, annotation only support 6 parameters, but got " + std::to_string(item.second.size()));
 
       std::vector<float> tmp_bbox = {(item.second)[0], (item.second)[1], (item.second)[2], (item.second)[3]};
       bbox_data.insert(bbox_data.end(), tmp_bbox.begin(), tmp_bbox.end());

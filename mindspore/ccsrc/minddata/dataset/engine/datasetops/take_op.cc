@@ -34,7 +34,7 @@ TakeOp::Builder::Builder(int32_t count) : build_max_takes_(count) {
 
 Status TakeOp::Builder::SanityCheck() const {
   if (build_max_takes_ <= 0) {
-    std::string err_msg("Take count must be greater than 0.");
+    std::string err_msg("Invalid parameter, take count must be greater than 0.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   return Status::OK();

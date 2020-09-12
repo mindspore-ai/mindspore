@@ -75,9 +75,14 @@ Status CifarOp::Builder::SanityCheck() {
   const std::set<std::string> valid = {"test", "train", "all", ""};
   Path dir(dir_);
   std::string err_msg;
-  err_msg += dir.IsDirectory() == false ? "Cifar path is invalid or not set\n" : "";
-  err_msg += num_workers_ <= 0 ? "Num of parallel workers is negative or 0\n" : "";
-  err_msg += valid.find(usage_) == valid.end() ? "usage needs to be 'train','test' or 'all'\n" : "";
+  err_msg +=
+    dir.IsDirectory() == false ? "Invalid parameter, Cifar path is invalid or not set, path: " + dir_ + ".\n" : "";
+  err_msg += num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                   std::to_string(num_workers_) + ".\n"
+                               : "";
+  err_msg += valid.find(usage_) == valid.end()
+               ? "Invalid parameter, usage must be 'train','test' or 'all', but got " + usage_ + ".\n"
+               : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
@@ -148,7 +153,7 @@ Status CifarOp::operator()() {
 
 Status CifarOp::LaunchThreadsAndInitOp() {
   if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("tree_ not set");
+    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
@@ -188,7 +193,7 @@ Status CifarOp::WorkerEntry(int32_t worker_id) {
     }
     RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
   }
-  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker");
+  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
 }
 
 // Load 1 TensorRow (image,label). 1 function call produces 1 TensorTow in a DataBuffer
@@ -272,7 +277,8 @@ Status CifarOp::ReadCifar10BlockData() {
   for (auto &file : cifar_files_) {
     // check the validity of the file path
     Path file_path(file);
-    CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(), "invalid file:" + file);
+    CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
+                                 "Invalid file, failed to find cifar10 file: " + file);
     std::string file_name = file_path.Basename();
 
     if (usage_ == "train") {
@@ -284,11 +290,11 @@ Status CifarOp::ReadCifar10BlockData() {
     }
 
     std::ifstream in(file, std::ios::binary);
-    CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), file + " can not be opened.");
+    CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), "Invalid file, failed to open cifar10 file: " + file);
 
     for (uint32_t index = 0; index < num_cifar10_records / kCifarBlockImageNum; ++index) {
       (void)in.read(reinterpret_cast<char *>(&(image_data[0])), block_size * sizeof(unsigned char));
-      CHECK_FAIL_RETURN_UNEXPECTED(!in.fail(), "Fail to read cifar file" + file);
+      CHECK_FAIL_RETURN_UNEXPECTED(!in.fail(), "Invalid data, failed to read data from cifar10 file: " + file);
       (void)cifar_raw_data_block_->EmplaceBack(image_data);
     }
     in.close();
@@ -307,7 +313,8 @@ Status CifarOp::ReadCifar100BlockData() {
   for (auto &file : cifar_files_) {
     // check the validity of the file path
     Path file_path(file);
-    CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(), "invalid file:" + file);
+    CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
+                                 "Invalid file, failed to find cifar100 file: " + file);
     std::string file_name = file_path.Basename();
 
     // if usage is train/test, get only these 2 files
@@ -319,15 +326,15 @@ Status CifarOp::ReadCifar100BlockData() {
     } else if (file_name.find("train") != std::string::npos) {
       num_cifar100_records = 50000;
     } else {
-      RETURN_STATUS_UNEXPECTED("Cifar 100 file not found!");
+      RETURN_STATUS_UNEXPECTED("Invalid file, Cifar100 train/test file not found in: " + file_name);
     }
 
     std::ifstream in(file, std::ios::binary);
-    CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), file + " can not be opened.");
+    CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), "Invalid file, failed to open cifar100 file: " + file);
 
     for (uint32_t index = 0; index < num_cifar100_records / kCifarBlockImageNum; index++) {
       (void)in.read(reinterpret_cast<char *>(&(image_data[0])), block_size * sizeof(unsigned char));
-      CHECK_FAIL_RETURN_UNEXPECTED(!in.fail(), "Fail to read cifar file" + file);
+      CHECK_FAIL_RETURN_UNEXPECTED(!in.fail(), "Invalid data, failed to read data from cifar100 file: " + file);
       (void)cifar_raw_data_block_->EmplaceBack(image_data);
     }
     in.close();
@@ -348,9 +355,9 @@ Status CifarOp::GetCifarFiles() {
       }
     }
   } else {
-    RETURN_STATUS_UNEXPECTED("Unable to open directory " + dir_path.toString());
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open directory: " + dir_path.toString());
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(!cifar_files_.empty(), "No .bin files found under " + folder_path_);
+  CHECK_FAIL_RETURN_UNEXPECTED(!cifar_files_.empty(), "Invalid file, no .bin files found under " + folder_path_);
   std::sort(cifar_files_.begin(), cifar_files_.end());
   return Status::OK();
 }
@@ -390,8 +397,8 @@ Status CifarOp::ParseCifarData() {
   num_rows_ = cifar_image_label_pairs_.size();
   if (num_rows_ == 0) {
     std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
-    RETURN_STATUS_UNEXPECTED("There is no valid data matching the dataset API " + api +
-                             ".Please check file path or dataset API validation first.");
+    RETURN_STATUS_UNEXPECTED("Invalid data, no valid data matching the dataset API " + api +
+                             ". Please check file path or dataset API validation first.");
   }
   cifar_raw_data_block_->Reset();
   return Status::OK();
@@ -400,7 +407,9 @@ Status CifarOp::ParseCifarData() {
 // Derived from RandomAccessOp
 Status CifarOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty()) {
-    RETURN_STATUS_UNEXPECTED("ImageLabelPair not set");
+    RETURN_STATUS_UNEXPECTED(
+      "Map for storaging image-index pair is nullptr or has been set in other place,"
+      "it must be empty before using GetClassIds.");
   }
 
   for (uint64_t index = 0; index < cifar_image_label_pairs_.size(); ++index) {
@@ -424,7 +433,8 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
     constexpr int64_t num_cifar10_records = 10000;
     for (auto &file : op->cifar_files_) {
       Path file_path(file);
-      CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(), "invalid file:" + file);
+      CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
+                                   "Invalid file, failed to open cifar file: " + file);
       std::string file_name = file_path.Basename();
 
       if (op->usage_ == "train") {
@@ -447,7 +457,8 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
       Path file_path(file);
       std::string file_name = file_path.Basename();
 
-      CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(), "invalid file:" + file);
+      CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
+                                   "Invalid file, failed to find cifar file: " + file);
 
       if (op->usage_ == "train" && file_path.Basename().find("train") == std::string::npos) continue;
       if (op->usage_ == "test" && file_path.Basename().find("test") == std::string::npos) continue;
@@ -458,7 +469,7 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
         num_cifar100_records += 50000;
       }
       std::ifstream in(file, std::ios::binary);
-      CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), file + " can not be opened.");
+      CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), "Invalid file, failed to open file: " + file);
     }
     *count = num_cifar100_records;
     return Status::OK();

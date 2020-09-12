@@ -112,26 +112,29 @@ Status GeneratorOp::Init() {
 
 Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) {
   if (!py::isinstance<py::tuple>(py_data)) {
-    return Status(StatusCode::kPyFuncException, __LINE__, __FILE__, "Generator should return a tuple of numpy arrays.");
+    return Status(StatusCode::kPyFuncException, __LINE__, __FILE__,
+                  "Invalid parameter, Generator should return a tuple of numpy arrays.");
   }
   py::tuple py_row = py_data.cast<py::tuple>();
   // Check if returned number of columns matches with column names
   if (py_row.size() != column_names_.size()) {
-    return Status(StatusCode::kPyFuncException, __LINE__, __FILE__,
-                  "Generator should return same number of numpy arrays as specified in column names.");
+    return Status(
+      StatusCode::kPyFuncException, __LINE__, __FILE__,
+      "Invalid parameter, Generator should return same number of numpy arrays as specified in column names.");
   }
   // Iterate over two containers simultaneously for memory copy
   for (int i = 0; i < py_row.size(); ++i) {
     py::object ret_py_ele = py_row[i];
     if (!py::isinstance<py::array>(ret_py_ele)) {
       return Status(StatusCode::kPyFuncException, __LINE__, __FILE__,
-                    "Generator should return a tuple of numpy arrays.");
+                    "Invalid parameter, Generator should return a tuple of numpy arrays.");
     }
     std::shared_ptr<Tensor> tensor;
     RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_ele.cast<py::array>(), &tensor));
     if ((!column_types_.empty()) && (column_types_[i] != DataType::DE_UNKNOWN) &&
         (column_types_[i] != tensor->type())) {
-      return Status(StatusCode::kPyFuncException, __LINE__, __FILE__, "Generator type check failed.");
+      return Status(StatusCode::kPyFuncException, __LINE__, __FILE__,
+                    "Invalid parameter, input column type is not same with output tensor type.");
     }
     tensor_row->push_back(tensor);
   }
