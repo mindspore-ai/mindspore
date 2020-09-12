@@ -19,7 +19,7 @@ import os
 def validate_and_normalize_path(
         path,
         check_absolute_path=False,
-        allow_parent_dir=False,
+        allow_parent_dir=True,
 ):
     """
     Validates path and returns its normalized form.
@@ -45,7 +45,7 @@ def validate_and_normalize_path(
     if not allow_parent_dir:
         path_components = path_str.split("/")
         if ".." in path_components:
-            raise RuntimeError("The path is invalid!")
+            raise RuntimeError("The parent path is not allowed!")
 
     # path does not have valid schema, treat it as unix local path.
     if check_absolute_path:
