@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""dynamic learning rate"""
+"""Dynamic Learning Rate"""
 import math
 
 from mindspore._checkparam import Validator as validator
@@ -90,7 +90,7 @@ def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
         decay_epoch (int): A value used to calculate decayed learning rate.
-        is_stair (bool): If true, learning rate decay once every `decay_epoch` times. Default: False.
+        is_stair (bool): If True, learning rate is decayed once every `decay_epoch` times. Default: False.
 
     Returns:
         list[float]. The size of list is `total_step`.
@@ -132,7 +132,7 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
         decay_epoch (int): A value used to calculate decayed learning rate.
-        is_stair (bool): If true, learning rate decay once every `decay_epoch` times. Default: False.
+        is_stair (bool): If True, learning rate is decayed once every `decay_epoch` times. Default: False.
 
     Returns:
         list[float]. The size of list is `total_step`.
@@ -175,7 +175,7 @@ def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, deca
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
         decay_epoch (int): A value used to calculate decayed learning rate.
-        is_stair (bool): If true, learning rate decay once every `decay_epoch` times. Default: False.
+        is_stair (bool): If True, learning rate is decayed once every `decay_epoch` times. Default: False.
 
     Returns:
         list[float]. The size of list is `total_step`.
@@ -261,9 +261,16 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         decayed\_learning\_rate[i] = (learning\_rate - end\_learning\_rate) *
         (1 - tmp\_epoch / tmp\_decay\_epoch)^{power} + end\_learning\_rate
 
-    Where :math:`tmp\_epoch=min(current\_epoch, decay\_epoch),\ current\_epoch=floor(\frac{i}{step\_per\_epoch})`, and
-    :math:`tmp\_decay\_epoch = decay\_epoch`. If `update_decay_epoch` is true, update the value of `tmp_decay_epoch`
-    every epoch. The formula is :math:`tmp\_decay\_epoch = decay\_epoch * ceil(current\_epoch / decay\_epoch)`
+    Where:
+    .. math::
+        `tmp\_epoch = min(current\_epoch, decay\_epoch),
+        current\_epoch=floor(\frac{i}{step\_per\_epoch})`,
+    .. math::
+        `tmp\_decay\_epoch = decay\_epoch`.
+
+    If `update_decay_epoch` is true, update the value of `tmp_decay_epoch` every epoch. The formula is:
+    .. math::
+        `tmp\_decay\_epoch = decay\_epoch * ceil(current\_epoch / decay\_epoch)`
 
     Args:
         learning_rate (float): The initial value of learning rate.

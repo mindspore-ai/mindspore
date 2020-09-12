@@ -61,14 +61,14 @@ class ExponentialDecayLR(LearningRateSchedule):
     .. math::
         decayed\_learning\_rate[i] = learning\_rate * decay\_rate^{p}
 
-    Where :math:`p = \frac{current\_step}{decay\_steps}`, if `is_stair` is True, The formula
+    Where :math:`p = \frac{current\_step}{decay\_steps}`, if `is_stair` is True, the formula
     is :math:`p = floor(\frac{current\_step}{decay\_steps})`.
 
     Args:
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
         decay_steps (int): A value used to calculate decayed learning rate.
-        is_stair (bool): If true, learning rate decay once every `decay_steps` times. Default: False.
+        is_stair (bool): If True, learning rate is decayed once every `decay_steps` time. Default: False.
 
     Inputs:
         Tensor. The current step number.
@@ -80,7 +80,7 @@ class ExponentialDecayLR(LearningRateSchedule):
         >>> learning_rate = 0.1
         >>> decay_rate = 0.9
         >>> decay_steps = 4
-        >>> global_step = Tenosr(2, mstype.int32)
+        >>> global_step = Tensor(2, mstype.int32)
         >>> exponential_decay_lr = ExponentialDecayLR(learning_rate, decay_rate, decay_steps)
         >>> exponential_decay_lr(global_step)
     """
@@ -110,14 +110,14 @@ class NaturalExpDecayLR(LearningRateSchedule):
     .. math::
         decayed\_learning\_rate[i] = learning\_rate * e^{-decay\_rate * p}
 
-    Where :math:`p = \frac{current\_step}{decay\_steps}`, if `is_stair` is True, The formula
+    Where :math:`p = \frac{current\_step}{decay\_steps}`, if `is_stair` is True, the formula
     is :math:`p = floor(\frac{current\_step}{decay\_steps})`.
 
     Args:
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
         decay_steps (int): A value used to calculate decayed learning rate.
-        is_stair (bool): If true, learning rate decay once every `decay_steps` times. Default: False.
+        is_stair (bool): If True, learning rate is decayed once every `decay_steps` time. Default: False.
 
     Inputs:
         Tensor. The current step number.
@@ -129,7 +129,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
         >>> learning_rate = 0.1
         >>> decay_rate = 0.9
         >>> decay_steps = 4
-        >>> global_step = Tenosr(2, mstype.int32)
+        >>> global_step = Tensor(2, mstype.int32)
         >>> natural_exp_decay_lr = NaturalExpDecayLR(learning_rate, decay_rate, decay_steps, True)
         >>> natural_exp_decay_lr(global_step)
     """
@@ -225,7 +225,7 @@ class CosineDecayLR(LearningRateSchedule):
         >>> min_lr = 0.01
         >>> max_lr = 0.1
         >>> decay_steps = 4
-        >>> global_step = Tenosr(2, mstype.int32)
+        >>> global_step = Tensor(2, mstype.int32)
         >>> cosine_decay_lr = CosineDecayLR(min_lr, max_lr, decay_steps)
         >>> cosine_decay_lr(global_steps)
     """
@@ -263,16 +263,20 @@ class PolynomialDecayLR(LearningRateSchedule):
         decayed\_learning\_rate[i] = (learning\_rate - end\_learning\_rate) *
         (1 - tmp\_step / tmp\_decay\_steps)^{power} + end\_learning\_rate
 
-    Where :math:`tmp\_step=min(current\_step, decay\_steps).
-    If `update_decay_steps` is true, update the value of `tmp_decay_step` every `decay_steps`. The formula
-    is :math:`tmp\_decay\_steps = decay\_steps * ceil(current\_step / decay\_steps)`
+    Where :
+    .. math::
+        `tmp\_step=min(current\_step, decay\_steps).
+
+    If `update_decay_steps` is true, update the value of `tmp_decay_step` every `decay_steps`. The formula is
+    .. math::
+        `tmp\_decay\_steps = decay\_steps * ceil(current\_step / decay\_steps)`
 
     Args:
         learning_rate (float): The initial value of learning rate.
         end_learning_rate (float): The end value of learning rate.
         decay_steps (int): A value used to calculate decayed learning rate.
         power (float): A value used to calculate decayed learning rate. This parameter should be greater than 0.
-        update_decay_steps (bool): If true, learning rate decay once every `decay_steps` times. Default: False.
+        update_decay_steps (bool): If True, learning rate is decayed once every `decay_steps` time. Default: False.
 
     Inputs:
         Tensor. The current step number.
@@ -285,7 +289,7 @@ class PolynomialDecayLR(LearningRateSchedule):
         >>> end_learning_rate = 0.01
         >>> decay_steps = 4
         >>> power = 0.5
-        >>> global_step = Tenosr(2, mstype.int32)
+        >>> global_step = Tensor(2, mstype.int32)
         >>> polynomial_decay_lr = PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)
         >>> polynomial_decay_lr(global_step)
     """
