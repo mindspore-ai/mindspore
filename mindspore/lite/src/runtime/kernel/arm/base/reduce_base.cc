@@ -257,6 +257,8 @@ kernel::LiteKernel *CpuReduceInt8KernelCreator(const std::vector<lite::Tensor *>
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reduce, CpuReduceFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt, PrimitiveType_Reduce, CpuReduceFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Reduce, CpuReduceFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Mean, CpuMeanFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Reduce, CpuReduceInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Mean, CpuReduceInt8KernelCreator)

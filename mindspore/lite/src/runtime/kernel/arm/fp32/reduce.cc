@@ -64,6 +64,7 @@ int ReduceCPUKernel::Init() {
     }
     case static_cast<int>(ReduceMode_ReduceProd): {
       reducer_ = ReduceProd;
+      int_reducer_ = IntReduceProd;
       break;
     }
     case static_cast<int>(ReduceMode_ReduceSumSquare): {
@@ -81,10 +82,25 @@ int ReduceCPUKernel::Init() {
   return ReSize();
 }
 
-int ReduceCPUKernel::ReSize() { return ReduceBaseCPUKernel::ReSize(); }
+int ReduceCPUKernel::ReSize() {
+  if (in_tensors().at(0)->data_type() == kNumberTypeFloat32) {
+    data_type_ = kDataTypeFloat;
+  } else {
+    data_type_ = kDataTypeInt;
+  }
+  return ReduceBaseCPUKernel::ReSize();
+}
 
 int ReduceCPUKernel::CallReduceUnit(int task_id) {
-  auto ret = reducer_(outer_size_, inner_size_, axis_size_, src_data_, dst_data_, task_id, context_->thread_num_);
+  int ret;
+  if (data_type_ == kDataTypeFloat) {
+    ret = reducer_(outer_size_, inner_size_, axis_size_, static_cast<const float *>(src_data_),
+                   static_cast<float *>(dst_data_), task_id, context_->thread_num_);
+  } else {
+    ret = int_reducer_(outer_size_, inner_size_, axis_size_, static_cast<const int *>(src_data_),
+                       static_cast<int *>(dst_data_), task_id, context_->thread_num_);
+  }
+
   return ret;
 }
 
@@ -110,12 +126,12 @@ int ReduceCPUKernel::Run() {
     return ret;
   }
 
-  src_data_ = static_cast<float *>(in_tensors_.at(0)->MutableData());
+  src_data_ = in_tensors_.at(0)->MutableData();
   for (size_t i = 0; i < static_cast<size_t>(num_axes_); ++i) {
     if (i != static_cast<size_t>(num_axes_ - 1)) {
       dst_data_ = data_buffers_[i];
     } else {
-      dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+      dst_data_ = out_tensors_.at(0)->MutableData();
     }
     outer_size_ = outer_sizes_[i];
     inner_size_ = inner_sizes_[i];
@@ -135,7 +151,12 @@ int ReduceCPUKernel::Run() {
 int ReduceCPUKernel::MallocTmpBuffer() {
   data_buffers_.clear();
   for (auto size : buffer_sizes_) {
-    float *buffer = reinterpret_cast<float *>(context_->allocator->Malloc(size * sizeof(float)));
+    void *buffer;
+    if (data_type_ == kDataTypeFloat) {
+      buffer = context_->allocator->Malloc(size * sizeof(float));
+    } else {
+      buffer = context_->allocator->Malloc(size * sizeof(int));
+    }
     if (buffer == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed.";
       return RET_ERROR;
@@ -146,8 +167,7 @@ int ReduceCPUKernel::MallocTmpBuffer() {
 }
 
 void ReduceCPUKernel::FreeTmpBuffer() {
-  for (size_t i = 0; i < data_buffers_.size(); i++) {
-    float *buffer = data_buffers_[i];
+  for (auto buffer : data_buffers_) {
     if (buffer != nullptr) {
       context_->allocator->Free(buffer);
       buffer = nullptr;

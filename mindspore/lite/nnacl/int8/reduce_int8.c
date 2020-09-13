@@ -18,16 +18,7 @@
 #include "nnacl/int8/reduce_int8.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/quantization/fixed_point.h"
-
-inline bool isAddOverflow(int32_t x, int32_t y) {
-  int32_t sum = x + y;
-  return (x > 0 && y > 0 && sum < 0) || (x < 0 && y < 0 && sum > 0);
-}
-
-inline bool isMulOverflow(int32_t x, int32_t y) {
-  int32_t p = x * y;
-  return (x != 0) && (p / x != y);
-}
+#include "nnacl/common_func.h"
 
 // Get x such that (x-zp_in) * scale_in = mean
 // Assuming reduce n axes, this works for first n-1 reduce. One call for one reduce.
@@ -268,7 +259,7 @@ int ReduceMinLastAxis(const int outer_size, const int inner_size, const int axis
         RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(
                               (tmp - quant->in_zp_) * (1 << ((unsigned int)quant->in_out_left_shift_ + base_offset)),
                               quant->in_out_multiplier_),
-                              quant->in_out_right_shift_ + base_offset);
+                            quant->in_out_right_shift_ + base_offset);
       if (isAddOverflow(tmp_scaled, quant->out_zp_)) {
         return NNACL_ERRCODE_ADD_OVERFLOW;
       }

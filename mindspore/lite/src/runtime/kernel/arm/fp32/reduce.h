@@ -29,6 +29,8 @@ namespace mindspore::kernel {
 class ReduceCPUKernel : public ReduceBaseCPUKernel {
   typedef int (*Reducer)(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
                          float *dst_data, const int tid, const int thread_num);
+  typedef int (*IntReducer)(const int outer_size, const int inner_size, const int axis_size, const int *src_data,
+                            int *dst_data, const int tid, const int thread_num);
 
  public:
   ReduceCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
@@ -36,9 +38,10 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
                   const mindspore::lite::PrimitiveC *primitive)
       : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive) {}
   ~ReduceCPUKernel() {
-    FreeTmpBuffer();
     src_data_ = nullptr;
     dst_data_ = nullptr;
+    reducer_ = nullptr;
+    int_reducer_ = nullptr;
   }
 
   int Init() override;
@@ -48,9 +51,12 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
 
  private:
   Reducer reducer_ = nullptr;
-  std::vector<float *> data_buffers_;
-  const float *src_data_ = nullptr;
-  float *dst_data_ = nullptr;
+  IntReducer int_reducer_ = nullptr;
+  std::vector<void *> data_buffers_;
+  LiteDataType data_type_;
+
+  const void *src_data_ = nullptr;
+  void *dst_data_ = nullptr;
 
  private:
   int MallocTmpBuffer();
