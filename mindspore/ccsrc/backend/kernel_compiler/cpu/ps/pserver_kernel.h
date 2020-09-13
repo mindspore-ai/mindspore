@@ -35,7 +35,7 @@ class PServerKernel {
   virtual void InitKernel(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) {}
   virtual void InitKernel(const CNodePtr &cnode,
                           const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) {}
-  virtual void ReInit(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) {}
+  virtual void ReInit(const std::vector<std::vector<size_t>> &) {}
   virtual bool Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                        const std::vector<AddressPtr> &outputs) = 0;
 
@@ -45,32 +45,11 @@ class PServerKernel {
 
  protected:
   virtual void ReInit(const std::vector<AddressPtr> &) {}
-
-  void SetTotalRowCnt(size_t total_cnt) {
-    MS_LOG(INFO) << "Total row count of server " << rank_id_ << " is " << total_cnt;
-    total_row_cnt_ = total_cnt;
-  }
-
-  void CalOffset() {
-    size_t rem = total_row_cnt_ % pserver_num_;
-    if (rem == 0) {
-      row_offset_ = total_row_cnt_ / pserver_num_ * rank_id_;
-    } else {
-      row_offset_ = std::round((static_cast<float>(total_row_cnt_)) / pserver_num_) * rank_id_;
-    }
-    MS_LOG(INFO) << "Row offset of server " << rank_id_ << " is " << row_offset_;
-  }
-
-  void Shard(std::vector<size_t> *shape, int axis) {
-    (*shape)[axis] = Util::LocalShard((*shape)[axis], rank_id_, pserver_num_);
-  }
+  void Shard(std::vector<size_t> *shape, int axis);
 
   size_t rank_id_;
   size_t pserver_num_;
   size_t worker_num_;
-
-  size_t total_row_cnt_;
-  size_t row_offset_;
 };
 }  // namespace ps
 }  // namespace kernel

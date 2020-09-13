@@ -28,8 +28,6 @@ void SparseApplyFtrlPSKernel::InitKernel(
   std::vector<size_t> grad_shape = *(shape_vec[3]);
   std::vector<size_t> indices_shape = *(shape_vec[4]);
 
-  SetTotalRowCnt(var_shape[0]);
-  CalOffset();
   Shard(&var_shape, 0);
   Shard(&accum_shape, 0);
   Shard(&linear_shape, 0);
@@ -74,9 +72,8 @@ void SparseApplyFtrlPSKernel::InitKernel(
   workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
 }
 
-void SparseApplyFtrlPSKernel::ReInit(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
-  const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
-  std::vector<size_t> indices_shape = *(shape_vec[0]);
+void SparseApplyFtrlPSKernel::ReInit(const std::vector<std::vector<size_t>> &shapes) {
+  const std::vector<size_t> &indices_shape = shapes[0];
   indices_size_ = indices_shape[0];
   workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_;
   workspace_size_list_[1] = indices_size_ * sizeof(int) * worker_num_;

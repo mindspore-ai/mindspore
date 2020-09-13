@@ -21,6 +21,8 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <numeric>
+#include <functional>
 #include <map>
 #include "ps/ps.h"
 #include "utils/log_adapter.h"
@@ -124,10 +126,7 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
     indice_index = 1;
   }
 
-  size_t total_size = 0;
-  for (auto size : sizes) {
-    total_size += size;
-  }
+  size_t total_size = std::accumulate(sizes.begin(), sizes.end(), 0, std::plus<int>());
   ::ps::SArray<T> total_buffer(total_size, 0);
   size_t offset = 0;
   for (size_t i = 0; i < sizes.size(); i++) {
@@ -135,6 +134,7 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
                         reinterpret_cast<void *>(addrs[i]), sizes[i] * sizeof(T));
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+      return;
     }
     offset += sizes[i] * sizeof(T);
   }
@@ -147,10 +147,7 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
   } else {
     std::vector<int> &var_shape = key_to_optim_shapes_[key][0];
     int first_dim_size = var_shape[0];
-    int outer_dim_size = 1;
-    for (size_t i = 1; i < var_shape.size(); ++i) {
-      outer_dim_size *= var_shape[i];
-    }
+    int outer_dim_size = std::accumulate(var_shape.begin() + 1, var_shape.end(), 1, std::multiplies<int>());
     kv_worker_->PushSparseData(::ps::SArray<::ps::Key>(keys), total_buffer, ::ps::SArray<int>(sizes), grad_index,
                                indice_index, first_dim_size, outer_dim_size);
   }
@@ -166,6 +163,7 @@ void Worker<T>::Pull(const size_t key, void *dev_addr, const size_t size) {
   auto ret = memcpy_s(dev_addr, size, variables.data(), size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    return;
   }
 }
 
@@ -349,6 +347,8 @@ void Worker<T>::AddEmbeddingTable(const ::ps::Key &key, const size_t &row_count)
   }
   kv_worker_->AddEmbeddingTable(key, row_count);
 }
+
+static Worker<float> &worker = Worker<float>::GetInstance();
 }  // namespace ps
 }  // namespace parallel
 }  // namespace mindspore

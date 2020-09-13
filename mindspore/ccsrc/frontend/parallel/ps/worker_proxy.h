@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_WORKER_PROXY_H_
 
 #include <map>
+#include <numeric>
+#include <functional>
 #include <unordered_map>
 #include <unordered_set>
 #include <algorithm>
@@ -247,7 +249,7 @@ void WorkerProxy<T>::PushSparseData(const ::ps::SArray<::ps::Key> &keys, const :
   kvs.keys = keys;
   kvs.vals = vals;
   kvs.lens = lens;
-  int cmd = 0;
+  const int cmd = 0;
   if (embedding_table_ranges_.count(keys[0])) {
     std::map<int, int> attrs{{0, grad_index}, {1, indice_index}, {2, first_dim_size}, {3, outer_dim_size}};
     Send(general_customer_.get(), ts, true, false, cmd, kvs, sparse_slicer_, attrs);
@@ -319,6 +321,7 @@ int WorkerProxy<T>::AddLookupCB(const ::ps::SArray<::ps::Key> &keys, const ::ps:
       auto ret = memcpy_s(result_addr + offset, size, pair->first, size);
       if (ret != 0) {
         MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+        return;
       }
       offset += pair->second;
     }
@@ -493,10 +496,7 @@ void WorkerProxy<T>::SparseSlicer(int timestamp, const ::ps::KVPairs<T> &send, c
       reduced_lens[indice_index] = unique_sparse_grad.indices_size_;
 
       // Build the sparse value to be sent
-      size_t total_size = 0;
-      for (auto size : reduced_lens) {
-        total_size += size;
-      }
+      size_t total_size = std::accumulate(reduced_lens.begin(), reduced_lens.end(), 0, std::plus<int>());
       ::ps::SArray<T> reduced_data(total_size, 0);
       BuildSparseValue(reduced_lens, grad_index, indice_index, data, unique_sparse_grad.value_,
                        unique_sparse_grad.indices_, &reduced_data);
@@ -536,6 +536,7 @@ void WorkerProxy<T>::PrepareSparseGradient(const size_t begin, const size_t end,
     auto ret = memcpy_s(gradient + offset, segment_data_size, pair.second, segment_data_size);
     if (ret != 0) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+      return;
     }
     offset += segment_size;
   }
@@ -566,6 +567,7 @@ void WorkerProxy<T>::BuildSparseValue(const ::ps::SArray<int> &lengths, const si
   auto ret = memcpy_s(reduced_data->data() + grad_offset, data_size, grads, data_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    return;
   }
 
   // Fill the reduced indice
@@ -575,6 +577,7 @@ void WorkerProxy<T>::BuildSparseValue(const ::ps::SArray<int> &lengths, const si
   ret = memcpy_s(indice_data, data_size, indices, data_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    return;
   }
 }
 
