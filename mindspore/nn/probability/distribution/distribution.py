@@ -18,7 +18,8 @@ from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.common import get_seed
-from ._utils.utils import calc_broadcast_shape_from_param, check_scalar_from_param, cast_type_for_device
+from ._utils.utils import calc_broadcast_shape_from_param, check_scalar_from_param, cast_type_for_device,\
+                          raise_none_error
 from ._utils.utils import CheckTuple, CheckTensor
 
 
@@ -114,6 +115,51 @@ class Distribution(Cell):
     @property
     def broadcast_shape(self):
         return self._broadcast_shape
+
+    def _check_param_type(self, *args):
+        """
+        Check the availability and validity of default parameters and dist_spec_args.
+        dist_spec_args passed in must be tensors. If default parameter of the distribution
+        is None, its parameter must be passed in through `args`.
+        """
+        broadcast_shape = None
+        common_dtype = None
+        out = []
+
+        for arg, name, default in zip(args, self.parameter_names, self.default_parameters):
+            # check if the argument is a Tensor
+            if arg is not None:
+                if self.context_mode == 0:
+                    self.checktensor(arg, name)
+                else:
+                    arg = self.checktensor(arg, name)
+            else:
+                arg = default if default is not None else raise_none_error(name)
+
+            # broadcast if the number of args > 1
+            if broadcast_shape is None:
+                broadcast_shape = self.shape(arg)
+                common_dtype = self.dtypeop(arg)
+            else:
+                ones = self.fill(self.dtypeop(arg), broadcast_shape, 1.0)
+                broadcast_shape = self.shape(arg + ones)
+
+                # check if the arguments have the same dtype
+                arg = arg * self.fill(self.dtypeop(arg), broadcast_shape, 1.0)
+                dtype_tensor = self.fill(common_dtype, broadcast_shape, 1.0)
+                self.sametypeshape(arg, dtype_tensor)
+            arg = self.cast(arg, self.parameter_type)
+            out.append(arg)
+
+        if len(out) == 1:
+            return out[0]
+
+        # broadcast all args to broadcast_shape
+        result = ()
+        for arg in out:
+            arg = arg * self.fill(self.dtypeop(arg), broadcast_shape, 1.0)
+            result = result + (arg,)
+        return result
 
     def _check_value(self, value, name):
         """
@@ -211,163 +257,203 @@ class Distribution(Cell):
         if hasattr(self, '_cross_entropy'):
             self._call_cross_entropy = self._cross_entropy
 
-    def log_prob(self, *args, **kwargs):
+    def log_prob(self, value, *args, **kwargs):
         """
         Evaluate the log probability(pdf or pmf) at the given value.
 
-        Note:
-            The argument `args` must include `value`.
-            dist_spec_args are optional.
-        """
-        return self._call_log_prob(*args, **kwargs)
+        Args:
+            value (Tensor): value to be evaluated.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
 
-    def _calc_prob_from_log_prob(self, *args, **kwargs):
+        Note:
+            A distribution can be optionally passed to the function by passing its dist_spec_args through
+            `args` or `kwargs`.
+        """
+        return self._call_log_prob(value, *args, **kwargs)
+
+    def _calc_prob_from_log_prob(self, value, *args, **kwargs):
         r"""
         Evaluate prob from log probability.
 
         .. math::
             probability(x) = \exp(log_likehood(x))
         """
-        return self.exp(self._log_prob(*args, **kwargs))
+        return self.exp(self._log_prob(value, *args, **kwargs))
 
-    def prob(self, *args, **kwargs):
+    def prob(self, value, *args, **kwargs):
         """
         Evaluate the probability (pdf or pmf) at given value.
 
-        Note:
-            The argument `args` must include `value`.
-            dist_spec_args are optional.
-        """
-        return self._call_prob(*args, **kwargs)
+        Args:
+            value (Tensor): value to be evaluated.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
 
-    def _calc_log_prob_from_prob(self, *args, **kwargs):
+        Note:
+            A distribution can be optionally passed to the function by passing its dist_spec_args through
+            `args` or `kwargs`.
+        """
+        return self._call_prob(value, *args, **kwargs)
+
+    def _calc_log_prob_from_prob(self, value, *args, **kwargs):
         r"""
         Evaluate log probability from probability.
 
         .. math::
             log_prob(x) = \log(prob(x))
         """
-        return self.log(self._prob(*args, **kwargs))
+        return self.log(self._prob(value, *args, **kwargs))
 
-    def cdf(self, *args, **kwargs):
+    def cdf(self, value, *args, **kwargs):
         """
         Evaluate the cdf at given value.
 
-        Note:
-            The argument `args` must include `value`.
-            dist_spec_args are optional.
-        """
-        return self._call_cdf(*args, **kwargs)
+        Args:
+            value (Tensor): value to be evaluated.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
 
-    def _calc_cdf_from_log_cdf(self, *args, **kwargs):
+        Note:
+            A distribution can be optionally passed to the function by passing its dist_spec_args through
+            `args` or `kwargs`.
+        """
+        return self._call_cdf(value, *args, **kwargs)
+
+    def _calc_cdf_from_log_cdf(self, value, *args, **kwargs):
         r"""
         Evaluate cdf from log_cdf.
 
         .. math::
             cdf(x) = \exp(log_cdf(x))
         """
-        return self.exp(self._log_cdf(*args, **kwargs))
+        return self.exp(self._log_cdf(value, *args, **kwargs))
 
-    def _calc_cdf_from_survival(self, *args, **kwargs):
+    def _calc_cdf_from_survival(self, value, *args, **kwargs):
         r"""
         Evaluate cdf from survival function.
 
         .. math::
             cdf(x) =  1 - (survival_function(x))
         """
-        return 1.0 - self._survival_function(*args, **kwargs)
+        return 1.0 - self._survival_function(value, *args, **kwargs)
 
-    def _calc_cdf_from_log_survival(self, *args, **kwargs):
+    def _calc_cdf_from_log_survival(self, value, *args, **kwargs):
         r"""
         Evaluate cdf from log survival function.
 
         .. math::
             cdf(x) =  1 - (\exp(log_survival(x)))
         """
-        return 1.0 - self.exp(self._log_survival(*args, **kwargs))
+        return 1.0 - self.exp(self._log_survival(value, *args, **kwargs))
 
-    def log_cdf(self, *args, **kwargs):
+    def log_cdf(self, value, *args, **kwargs):
         """
         Evaluate the log cdf at given value.
 
-        Note:
-            The argument `args` must include `value`.
-            dist_spec_args are optional.
-        """
-        return self._call_log_cdf(*args, **kwargs)
+        Args:
+            value (Tensor): value to be evaluated.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
 
-    def _calc_log_cdf_from_call_cdf(self, *args, **kwargs):
+        Note:
+            A distribution can be optionally passed to the function by passing its dist_spec_args through
+            `args` or `kwargs`.
+        """
+        return self._call_log_cdf(value, *args, **kwargs)
+
+    def _calc_log_cdf_from_call_cdf(self, value, *args, **kwargs):
         r"""
         Evaluate log cdf from cdf.
 
         .. math::
             log_cdf(x) = \log(cdf(x))
         """
-        return self.log(self._call_cdf(*args, **kwargs))
+        return self.log(self._call_cdf(value, *args, **kwargs))
 
-    def survival_function(self, *args, **kwargs):
+    def survival_function(self, value, *args, **kwargs):
         """
         Evaluate the survival function at given value.
 
-        Note:
-            The argument `args` must include `value`.
-            dist_spec_args are optional.
-        """
-        return self._call_survival(*args, **kwargs)
+        Args:
+            value (Tensor): value to be evaluated.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
 
-    def _calc_survival_from_call_cdf(self, *args, **kwargs):
+        Note:
+            A distribution can be optionally passed to the function by passing its dist_spec_args through
+            `args` or `kwargs`.
+        """
+        return self._call_survival(value, *args, **kwargs)
+
+    def _calc_survival_from_call_cdf(self, value, *args, **kwargs):
         r"""
         Evaluate survival function from cdf.
 
         .. math::
             survival_function(x) =  1 - (cdf(x))
         """
-        return 1.0 - self._call_cdf(*args, **kwargs)
+        return 1.0 - self._call_cdf(value, *args, **kwargs)
 
-    def _calc_survival_from_log_survival(self, *args, **kwargs):
+    def _calc_survival_from_log_survival(self, value, *args, **kwargs):
         r"""
         Evaluate survival function from log survival function.
 
         .. math::
             survival(x) = \exp(survival_function(x))
         """
-        return self.exp(self._log_survival(*args, **kwargs))
+        return self.exp(self._log_survival(value, *args, **kwargs))
 
-    def log_survival(self, *args, **kwargs):
+    def log_survival(self, value, *args, **kwargs):
         """
         Evaluate the log survival function at given value.
 
-        Note:
-            The arguments `args` must include `value`.
-            dist_spec_args are optional.
-        """
-        return self._call_log_survival(*args, **kwargs)
+        Args:
+            value (Tensor): value to be evaluated.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
 
-    def _calc_log_survival_from_call_survival(self, *args, **kwargs):
+        Note:
+            A distribution can be optionally passed to the function by passing its dist_spec_args through
+            `args` or `kwargs`.
+        """
+        return self._call_log_survival(value, *args, **kwargs)
+
+    def _calc_log_survival_from_call_survival(self, value, *args, **kwargs):
         r"""
         Evaluate log survival function from survival function.
 
         .. math::
             log_survival(x) = \log(survival_function(x))
         """
-        return self.log(self._call_survival(*args, **kwargs))
+        return self.log(self._call_survival(value, *args, **kwargs))
 
-    def kl_loss(self, *args, **kwargs):
+    def kl_loss(self, dist, *args, **kwargs):
         """
         Evaluate the KL divergence, i.e. KL(a||b).
 
+        Args:
+            dist (str): type of the distribution.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+
         Note:
-            The argument `args` must include the type of the distribution, parameters of distribution b.
-            Parameters for distribution a are optional.
+            dist_spec_args of distribution b must be passed to the function through `args` or `kwargs`.
+            Passing in dist_spec_args of distribution a is optional.
         """
-        return self._kl_loss(*args, **kwargs)
+        return self._kl_loss(dist, *args, **kwargs)
 
     def mean(self, *args, **kwargs):
         """
         Evaluate the mean.
 
+        Args:
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+
         Note:
-            dist_spec_args are optional.
+            A distribution can be optionally passed to the function by passing its *dist_spec_args* through
+            *args* or *kwargs*.
         """
         return self._mean(*args, **kwargs)
 
@@ -375,8 +461,13 @@ class Distribution(Cell):
         """
         Evaluate the mode.
 
+        Args:
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+
         Note:
-            dist_spec_args are optional.
+            A distribution can be optionally passed to the function by passing its *dist_spec_args* through
+            *args* or *kwargs*.
         """
         return self._mode(*args, **kwargs)
 
@@ -384,8 +475,13 @@ class Distribution(Cell):
         """
         Evaluate the standard deviation.
 
+        Args:
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+
         Note:
-            dist_spec_args are optional.
+            A distribution can be optionally passed to the function by passing its *dist_spec_args* through
+            *args* or *kwargs*.
         """
         return self._call_sd(*args, **kwargs)
 
@@ -393,8 +489,13 @@ class Distribution(Cell):
         """
         Evaluate the variance.
 
+        Args:
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+
         Note:
-            dist_spec_args are optional.
+            A distribution can be optionally passed to the function by passing its *dist_spec_args* through
+            *args* or *kwargs*.
         """
         return self._call_var(*args, **kwargs)
 
@@ -420,37 +521,52 @@ class Distribution(Cell):
         """
         Evaluate the entropy.
 
+        Args:
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+
         Note:
-            dist_spec_args are optional.
+            A distribution can be optionally passed to the function by passing its *dist_spec_args* through
+            *args* or *kwargs*.
         """
         return self._entropy(*args, **kwargs)
 
-    def cross_entropy(self, *args, **kwargs):
+    def cross_entropy(self, dist, *args, **kwargs):
         """
         Evaluate the cross_entropy between distribution a and b.
 
-        Note:
-            The argument `args` must include the type of the distribution, parameters of distribution b.
-            Parameters for distribution a are optional.
-        """
-        return self._call_cross_entropy(*args, **kwargs)
+        Args:
+            dist (str): type of the distribution.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
 
-    def _calc_cross_entropy(self, *args, **kwargs):
+        Note:
+            dist_spec_args of distribution b must be passed to the function through `args` or `kwargs`.
+            Passing in dist_spec_args of distribution a is optional.
+        """
+        return self._call_cross_entropy(dist, *args, **kwargs)
+
+    def _calc_cross_entropy(self, dist, *args, **kwargs):
         r"""
         Evaluate cross_entropy from entropy and kl divergence.
 
         .. math::
             H(X, Y) = H(X) + KL(X||Y)
         """
-        return self._entropy(*args, **kwargs) + self._kl_loss(*args, **kwargs)
+        return self._entropy(*args, **kwargs) + self._kl_loss(dist, *args, **kwargs)
 
     def sample(self, *args, **kwargs):
         """
         Sampling function.
 
+        Args:
+            shape (tuple): shape of the sample.
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+
         Note:
-            Shape of the sample is default to ().
-            dist_spec_args are optional.
+            A distribution can be optionally passed to the function by passing its *dist_spec_args* through
+            *args* or *kwargs*.
         """
         return self._sample(*args, **kwargs)
 

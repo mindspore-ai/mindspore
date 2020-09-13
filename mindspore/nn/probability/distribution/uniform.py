@@ -18,7 +18,7 @@ from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_greater, check_type, check_distribution_name,\
-                          raise_none_error, common_dtype
+                          set_param_type
 from ._utils.custom_ops import exp_generic, log_generic
 
 class Uniform(Distribution):
@@ -126,14 +126,17 @@ class Uniform(Distribution):
         valid_dtype = mstype.float_type
         check_type(dtype, valid_dtype, type(self).__name__)
         super(Uniform, self).__init__(seed, dtype, name, param)
-        self.parameter_type = common_dtype(low, 'low', high, 'high', self.dtype)
+        self.parameter_type = set_param_type({'low': low, 'high': high}, self.dtype)
         if low is not None and high is not None:
-            self._low = cast_to_tensor(low, dtype)
-            self._high = cast_to_tensor(high, dtype)
+            self._low = cast_to_tensor(low, self.parameter_type)
+            self._high = cast_to_tensor(high, self.parameter_type)
             check_greater(self.low, self.high, "low value", "high value")
         else:
-            self._low = low
-            self._high = high
+            self._low = low if low is None else cast_to_tensor(low, self.parameter_type)
+            self._high = high if high is None else cast_to_tensor(high, self.parameter_type)
+
+        self.default_parameters = [self.low, self.high]
+        self.parameter_names = ['low', 'high']
 
         # ops needed for the class
         self.exp = exp_generic
@@ -162,32 +165,6 @@ class Uniform(Distribution):
             str_info = f'batch_shape = {self._broadcast_shape}'
         return str_info
 
-    def _check_param(self, low, high):
-        """
-        Check availablity of distribution specific args `low` and `high`.
-        """
-        if low is not None:
-            if self.context_mode == 0:
-                self.checktensor(low, 'low')
-            else:
-                low = self.checktensor(low, 'low')
-        else:
-            low = self.low if self.low is not None else raise_none_error('low')
-        if high is not None:
-            if self.context_mode == 0:
-                self.checktensor(high, 'high')
-            else:
-                high = self.checktensor(high, 'high')
-        else:
-            high = self.high if self.high is not None else raise_none_error('high')
-        batch_shape = self.shape(high - low)
-        high = high * self.fill(self.dtypeop(high), batch_shape, 1.0)
-        low = low * self.fill(self.dtypeop(low), batch_shape, 1.0)
-        self.sametypeshape(high, low)
-        low = self.cast(low, self.parameter_type)
-        high = self.cast(high, self.parameter_type)
-        return low, high
-
     @property
     def low(self):
         """
@@ -209,7 +186,7 @@ class Uniform(Distribution):
         .. math::
             range(U) = high -low
         """
-        low, high = self._check_param(low, high)
+        low, high = self._check_param_type(low, high)
         return high - low
 
     def _mean(self, low=None, high=None):
@@ -217,7 +194,7 @@ class Uniform(Distribution):
         .. math::
             MEAN(U) = \frac{low + high}{2}.
         """
-        low, high = self._check_param(low, high)
+        low, high = self._check_param_type(low, high)
         return (low + high) / 2.
 
     def _var(self, low=None, high=None):
@@ -225,7 +202,7 @@ class Uniform(Distribution):
         .. math::
             VAR(U) = \frac{(high -low) ^ 2}{12}.
         """
-        low, high = self._check_param(low, high)
+        low, high = self._check_param_type(low, high)
         return self.sq(high - low) / 12.0
 
     def _entropy(self, low=None, high=None):
@@ -233,7 +210,7 @@ class Uniform(Distribution):
         .. math::
             H(U) = \log(high - low).
         """
-        low, high = self._check_param(low, high)
+        low, high = self._check_param_type(low, high)
         return self.log(high - low)
 
     def _cross_entropy(self, dist, low_b, high_b, low=None, high=None):
@@ -266,7 +243,7 @@ class Uniform(Distribution):
         """
         value = self._check_value(value, 'value')
         value = self.cast(value, self.dtype)
-        low, high = self._check_param(low, high)
+        low, high = self._check_param_type(low, high)
         neg_ones = self.fill(self.dtype, self.shape(value), -1.0)
         prob = self.exp(neg_ones * self.log(high - low))
         broadcast_shape = self.shape(prob)
@@ -292,7 +269,7 @@ class Uniform(Distribution):
         low_b = self.cast(low_b, self.parameter_type)
         high_b = self._check_value(high_b, 'high_b')
         high_b = self.cast(high_b, self.parameter_type)
-        low_a, high_a = self._check_param(low, high)
+        low_a, high_a = self._check_param_type(low, high)
         kl = self.log(high_b - low_b) - self.log(high_a - low_a)
         comp = self.logicaland(self.lessequal(low_b, low_a), self.lessequal(high_a, high_b))
         return self.select(comp, kl, self.log(self.zeroslike(kl)))
@@ -313,7 +290,7 @@ class Uniform(Distribution):
         """
         value = self._check_value(value, 'value')
         value = self.cast(value, self.dtype)
-        low, high = self._check_param(low, high)
+        low, high = self._check_param_type(low, high)
         prob = (value - low) / (high - low)
         broadcast_shape = self.shape(prob)
         zeros = self.fill(self.dtypeop(prob), broadcast_shape, 0.0)
@@ -336,7 +313,7 @@ class Uniform(Distribution):
             Tensor, shape is shape + batch_shape.
         """
         shape = self.checktuple(shape, 'shape')
-        low, high = self._check_param(low, high)
+        low, high = self._check_param_type(low, high)
         broadcast_shape = self.shape(low + high)
         origin_shape = shape + broadcast_shape
         if origin_shape == ():

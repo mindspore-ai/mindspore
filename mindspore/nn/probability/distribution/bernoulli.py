@@ -17,7 +17,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from .distribution import Distribution
-from ._utils.utils import cast_to_tensor, check_prob, check_type, check_distribution_name, raise_none_error
+from ._utils.utils import cast_to_tensor, check_prob, check_type, check_distribution_name, set_param_type
 from ._utils.custom_ops import exp_generic, log_generic, erf_generic
 
 
@@ -119,12 +119,15 @@ class Bernoulli(Distribution):
         valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
         check_type(dtype, valid_dtype, type(self).__name__)
         super(Bernoulli, self).__init__(seed, dtype, name, param)
-        self.parameter_type = mstype.float32
+        self.parameter_type = set_param_type({'probs1': probs}, mstype.float32)
         if probs is not None:
-            self._probs = cast_to_tensor(probs, mstype.float32)
+            self._probs = cast_to_tensor(probs, self.parameter_type)
             check_prob(self.probs)
         else:
             self._probs = probs
+
+        self.default_parameters = [self.probs]
+        self.parameter_names = ['probs1']
 
         # ops needed for the class
         self.exp = exp_generic
@@ -157,24 +160,12 @@ class Bernoulli(Distribution):
         """
         return self._probs
 
-    def _check_param(self, probs1):
-        """
-        Check availablity of distribution specific args `probs1`.
-        """
-        if probs1 is not None:
-            if self.context_mode == 0:
-                self.checktensor(probs1, 'probs1')
-            else:
-                probs1 = self.checktensor(probs1, 'probs1')
-            return self.cast(probs1, self.parameter_type)
-        return self.probs if self.probs is not None else raise_none_error('probs1')
-
     def _mean(self, probs1=None):
         r"""
         .. math::
             MEAN(B) = probs1
         """
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         return probs1
 
     def _mode(self, probs1=None):
@@ -182,7 +173,7 @@ class Bernoulli(Distribution):
         .. math::
             MODE(B) = 1 if probs1 > 0.5 else = 0
         """
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         prob_type = self.dtypeop(probs1)
         zeros = self.fill(prob_type, self.shape(probs1), 0.0)
         ones = self.fill(prob_type, self.shape(probs1), 1.0)
@@ -194,7 +185,7 @@ class Bernoulli(Distribution):
         .. math::
             VAR(B) = probs1 * probs0
         """
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         probs0 = 1.0 - probs1
         return self.exp(self.log(probs0) + self.log(probs1))
 
@@ -203,11 +194,11 @@ class Bernoulli(Distribution):
         .. math::
             H(B) = -probs0 * \log(probs0) - probs1 * \log(probs1)
         """
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         probs0 = 1.0 - probs1
         return -(probs0 * self.log(probs0)) - (probs1 * self.log(probs1))
 
-    def _cross_entropy(self, dist, probs1_b, probs1_a=None):
+    def _cross_entropy(self, dist, probs1_b, probs1=None):
         """
         Evaluate cross_entropy between Bernoulli distributions.
 
@@ -217,7 +208,7 @@ class Bernoulli(Distribution):
             probs1_a (Tensor): `probs1` of distribution a. Default: self.probs.
         """
         check_distribution_name(dist, 'Bernoulli')
-        return self._entropy(probs1_a) + self._kl_loss(dist, probs1_b, probs1_a)
+        return self._entropy(probs1) + self._kl_loss(dist, probs1_b, probs1)
 
     def _log_prob(self, value, probs1=None):
         r"""
@@ -233,7 +224,7 @@ class Bernoulli(Distribution):
         """
         value = self._check_value(value, 'value')
         value = self.cast(value, mstype.float32)
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         probs0 = 1.0 - probs1
         return self.log(probs1) * value + self.log(probs0) * (1.0 - value)
 
@@ -253,7 +244,7 @@ class Bernoulli(Distribution):
         value = self._check_value(value, 'value')
         value = self.cast(value, mstype.float32)
         value = self.floor(value)
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         prob_type = self.dtypeop(probs1)
         value = value * self.fill(prob_type, self.shape(probs1), 1.0)
         probs0 = 1.0 - probs1 * self.fill(prob_type, self.shape(value), 1.0)
@@ -264,7 +255,7 @@ class Bernoulli(Distribution):
         less_than_zero = self.select(comp_zero, zeros, probs0)
         return self.select(comp_one, less_than_zero, ones)
 
-    def _kl_loss(self, dist, probs1_b, probs1_a=None):
+    def _kl_loss(self, dist, probs1_b, probs1=None):
         r"""
         Evaluate bernoulli-bernoulli kl divergence, i.e. KL(a||b).
 
@@ -280,7 +271,7 @@ class Bernoulli(Distribution):
         check_distribution_name(dist, 'Bernoulli')
         probs1_b = self._check_value(probs1_b, 'probs1_b')
         probs1_b = self.cast(probs1_b, self.parameter_type)
-        probs1_a = self._check_param(probs1_a)
+        probs1_a = self._check_param_type(probs1)
         probs0_a = 1.0 - probs1_a
         probs0_b = 1.0 - probs1_b
         return probs1_a * self.log(probs1_a / probs1_b) + probs0_a * self.log(probs0_a / probs0_b)
@@ -297,7 +288,7 @@ class Bernoulli(Distribution):
             Tensor, shape is shape + batch_shape.
         """
         shape = self.checktuple(shape, 'shape')
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         origin_shape = shape + self.shape(probs1)
         if origin_shape == ():
             sample_shape = (1,)
