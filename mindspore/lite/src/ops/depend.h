@@ -31,9 +31,10 @@ class Depend : public PrimitiveC {
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   Depend() = default;
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_SRC_OPS_Depend_H_
+#endif  // LITE_MINDSPORE_LITE_SRC_OPS_DEPEND_H_

@@ -16,7 +16,6 @@
 #include "src/ops/apply_momentum.h"
 namespace mindspore {
 namespace lite {
-
 #ifdef PRIMITIVE_WRITEABLE
 int ApplyMomentum::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   if (this->primitive_ == nullptr) {
@@ -31,11 +30,17 @@ int ApplyMomentum::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePt
     MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
     return RET_ERROR;
   }
-  auto attr = std::make_unique<schema::ApplyMomentumT>();
-  this->primitive_->value.value = attr.release();
   if (this->primitive_->value.value == nullptr) {
-    MS_LOG(ERROR) << "new primitiveT value failed";
-    return RET_ERROR;
+    auto attr = std::make_unique<schema::ApplyMomentumT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.value = attr.release();
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -49,13 +54,13 @@ int ApplyMomentum::UnPackToFlatBuilder(const schema::Primitive *primitive, flatb
     return RET_ERROR;
   }
   auto val_offset = schema::CreateApplyMomentum(*fbb);
-  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ActivationGrad, val_offset.o);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ApplyMomentum, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
 }
 #endif
 
-int ApplyMomentum::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
+int ApplyMomentum::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   if (5 != inputs.size()) {
     MS_LOG(ERROR) << "ApplyMomentum should have at 5 input tensors";
     return RET_ERROR;

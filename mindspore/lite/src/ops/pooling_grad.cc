@@ -80,9 +80,9 @@ int PoolingGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr>
     } else {
       attr->format = schema::Format_NUM_OF_FORMAT;
     }
-    if (prim.instance_name() == "MaxPool") {
+    if (prim.instance_name() == "MaxPoolGrad") {
       attr->poolingMode = schema::PoolMode_MAX_POOLING;
-    } else if (prim.instance_name() == "MeanPool") {
+    } else if (prim.instance_name() == "MeanPoolGrad") {
       attr->poolingMode = schema::PoolMode_MEAN_POOLING;
     }
 
@@ -189,6 +189,5 @@ int PoolingGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *>
   grad_output->SetFormat(input->GetFormat());
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore

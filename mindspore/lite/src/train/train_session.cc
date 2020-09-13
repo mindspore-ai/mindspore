@@ -35,6 +35,10 @@ void TrainSession::ReplaceOps() {
   mindspore::lite::KernelRegistrar tmp(mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32,
                                        mindspore::schema::PrimitiveType_Conv2D,
                                        mindspore::kernel::CpuConvTrainFp32KernelCreator);
+
+  mindspore::lite::KernelRegistrar tmp0(mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32,
+                                       mindspore::schema::PrimitiveType_DepthwiseConv2D,
+                                       mindspore::kernel::CpuConvTrainFp32KernelCreator);
 }
 
 int TrainSession::CompileGraph(lite::Model *model) {
@@ -124,5 +128,4 @@ std::vector<tensor::MSTensor *> TrainSession::GetOutputsByName(const std::string
   }
   return ret->second;
 }
-
 }  // namespace mindspore::session

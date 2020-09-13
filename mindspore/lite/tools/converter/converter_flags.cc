@@ -41,6 +41,8 @@ Flags::Flags() {
           "16");
   AddFlag(&Flags::configFile, "config_file", "Configuration for post-training.", "");
   AddFlag(&Flags::formatTrans, "formatTrans", "whether transform format. true | false", "true");
+  AddFlag(&Flags::trainModelIn, "trainModel", "whether the model is going to be trained on device."
+                                 " true | false", "false");
 }
 
 int Flags::Init(int argc, const char **argv) {
@@ -128,6 +130,15 @@ int Flags::Init(int argc, const char **argv) {
     return 1;
   }
 
+
+  if (this->trainModelIn == "true") {
+    this->trainModel = true;
+  } else if (this->trainModelIn == "false") {
+    this->trainModel = false;
+  } else {
+    std::cerr << "INPUT ILLEGAL: trainModel must be true|false ";
+    return 1;
+  }
   return 0;
 }
 }  // namespace converter

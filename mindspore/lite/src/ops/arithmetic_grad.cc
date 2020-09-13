@@ -48,6 +48,9 @@ int ArithmeticGrad::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<
 
   if ((Type() == schema::PrimitiveType_AddGrad) || (Type() == schema::PrimitiveType_SubGrad)) {
     ndim_ = outShape.size();
+    x1_shape_.resize(ndim_);
+    x2_shape_.resize(ndim_);
+    dy_shape_.resize(ndim_);
     auto fillDimNum0 = outShape.size() - inShape0.size();
     auto fillDimNum1 = outShape.size() - inShape1.size();
     int j0 = 0;
@@ -61,6 +64,9 @@ int ArithmeticGrad::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<
     // if (inShape0.size() < inShape1.size())
     if (dx1->ElementsNum() < dx2->ElementsNum()) {
       ndim_ = inShape1.size();
+      x1_shape_.resize(ndim_);
+      x2_shape_.resize(ndim_);
+      dy_shape_.resize(ndim_);
       auto fillDimNum = inShape1.size() - inShape0.size();  // This will not work for batch!
       int j = 0;
       for (unsigned int i = 0; i < inShape1.size(); i++) {
@@ -74,8 +80,10 @@ int ArithmeticGrad::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<
       }
     } else if (dx2->ElementsNum() < dx1->ElementsNum()) {  // if (inShape0.size() > inShape1.size())
       ndim_ = inShape0.size();
+      x1_shape_.resize(ndim_);
+      x2_shape_.resize(ndim_);
+      dy_shape_.resize(ndim_);
       broadcasting_ = true;
-      ndim_ = inShape0.size();
       int j = 0;
       auto fillDimNum = inShape0.size() - inShape1.size();
       for (unsigned int i = 0; i < inShape0.size(); i++) {

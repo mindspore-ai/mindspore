@@ -36,6 +36,8 @@ std::vector<schema::PrimitiveType> GetNhwcOpList();
 
 std::vector<schema::PrimitiveType> GetNhwcDualInputOpList();
 
+std::vector<schema::PrimitiveType> GetNhwcAllInputOpList();
+
 std::vector<schema::PrimitiveType> Getfp32FullOpList();
 
 std::vector<schema::PrimitiveType> GetUint8NhwcOpList();

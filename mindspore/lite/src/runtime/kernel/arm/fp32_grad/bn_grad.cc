@@ -56,7 +56,7 @@ OpParameter *PopulateBNGradParameter(const lite::Primitive *primitive) {
 int BNGradCPUKernel::Init() {
   auto *input_x = in_tensors_.at(1);
   int channels = input_x->shape().at(kNHWC_C);
-  workspace_size = 5 * channels;
+  workspace_size = 4 * channels;
   workspace = new (std::nothrow) float[workspace_size];
   if (workspace == nullptr) {
     MS_LOG(ERROR) << "new workspace fail!";
@@ -89,9 +89,8 @@ int BNGradCPUKernel::Run() {
   std::fill(workspace, workspace + workspace_size, 0.f);
   float *mean = workspace;
   float *invar = mean + channels;
-  float *mean_delta = invar + channels;
-  float *variance_delta = mean_delta + channels;
-  float *mean_add_delta = variance_delta + channels;
+  float *dxhat_sum = invar + channels;
+  float *dxhathat_sum = dxhat_sum + channels;
 
   float *x = reinterpret_cast<float *>(input_x->MutableData());
   float *yt = reinterpret_cast<float *>(input_yt->MutableData());
@@ -100,13 +99,7 @@ int BNGradCPUKernel::Run() {
   float *dscale = reinterpret_cast<float *>(output_scale->MutableData());
   float *dbias = reinterpret_cast<float *>(output_bias->MutableData());
 
-  std::copy(yt, yt + batch * channels * spatial, dx);
-  meanVar(x, batch, spatial, channels, eps, mean, invar);
-  scaleBias(scale, batch, channels, spatial, dx);
-  meanDelta(dx, spatial, channels, invar, mean_delta);
-  varianceDelta(x, dx, mean, invar, batch, channels, spatial, variance_delta);
-  meanAdd(x, mean, variance_delta, batch, channels, spatial, mean_add_delta, mean_delta);
-  NormalizeDelta(x, mean, invar, mean_delta, variance_delta, batch, channels, spatial, dx);
+  backwardX(x, yt, scale, batch * spatial, channels, eps, mean, invar, dxhat_sum, dxhathat_sum, dx);
   // dbias
   sumSpatialBatch(yt, batch * spatial, channels, dbias);
   // dscale

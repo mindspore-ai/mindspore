@@ -43,7 +43,7 @@ lite::Tensor *TestBNGradFp32::CreateInTensor(std::string file_name, std::vector<
 
 TEST_F(TestBNGradFp32, BNGradFp32) {
   // prepare stage
-  auto bn_param = new BNGradParameter();
+  auto bn_param = static_cast<BNGradParameter*>(malloc(sizeof(BNGradParameter)));
   bn_param->epsilon_ = 0.00001;
   bn_param->momentum_ = 0.1;
   const int batch = 2;
@@ -88,22 +88,24 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   std::cout << "==========dx==========\n";
   auto dx = reinterpret_cast<float *>(outputs[0]->MutableData());
   for (int i = 0; i < 7; i++) std::cout << dx[i] << " ";
+  std::cout << "\n";
+  auto res = mindspore::lite::CompareRelativeOutput(dx, "./test_data/bngrad/output_dx_2_4_5_3.bin");
   std::cout << "\n=======dscale=======\n";
   auto dscale = reinterpret_cast<float *>(outputs[1]->MutableData());
   for (int i = 0; i < channels; i++) std::cout << dscale[i] << " ";
   std::cout << "\n";
-  int res = mindspore::lite::CompareRelativeOutput(dscale, "./test_data/bngrad/output_dscale_3.bin");
+  res = mindspore::lite::CompareRelativeOutput(dscale, "./test_data/bngrad/output_dscale_3.bin");
   EXPECT_EQ(res, 0);
   std::cout << "==========dbias==========\n";
   auto dbias = reinterpret_cast<float *>(outputs[2]->MutableData());
   for (int i = 0; i < 3; i++) std::cout << dbias[i] << " ";
   std::cout << "\n";
-  res = mindspore::lite::CompareRelativeOutput(dscale, "./test_data/bngrad/output_dscale_3.bin");
+  res = mindspore::lite::CompareRelativeOutput(dbias, "./test_data/bngrad/output_dbias_3.bin");
   EXPECT_EQ(res, 0);
   for (auto v : inputs) {
     delete[] reinterpret_cast<float *>(v->MutableData());
     v->SetData(nullptr);
-    // delete v;
+    delete v;
   }
   delete kernel_obj;
   MS_LOG(INFO) << "BNGradFp32 passed";

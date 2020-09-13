@@ -146,11 +146,29 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
       MS_LOG(ERROR) << "InsertNhwc2NchwNode before " << nodeName << "failed";
       return RET_ERROR;
     }
-
-    iter = InsertFormatTransNode(graph, iter, kAfter, 0, afterNodeType, &status);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "InsertNhwc2NchwNode after " << nodeName << "failed";
-      return RET_ERROR;
+    if (IsContain(GetNhwcAllInputOpList(), GetCNodeTType(**iter))) {
+          int idx_num = node->inputIndex.size();
+          for (int i = 0; i < idx_num; i++) {
+            iter = InsertFormatTransNode(graph, iter, kBefore, i, beforeNodeType, &status);
+            if (status != RET_OK) {
+              MS_LOG(ERROR) << "InsertNchw2NhwcNode before " << nodeName << "failed";
+              return RET_ERROR;
+            }
+          }
+    } else if (IsContain(GetNhwcDualInputOpList(), GetCNodeTType(**iter))) {
+      for (int i = 0; i < 2; i++) {
+        iter = InsertFormatTransNode(graph, iter, kBefore, i, beforeNodeType, &status);
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "InsertNchw2NhwcNode before " << nodeName << "failed";
+          return RET_ERROR;
+        }
+      }
+    } else {
+      iter = InsertFormatTransNode(graph, iter, kAfter, 0, afterNodeType, &status);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "InsertNhwc2NchwNode after " << nodeName << "failed";
+        return RET_ERROR;
+      }
     }
   }
   return RET_OK;

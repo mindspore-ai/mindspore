@@ -43,6 +43,8 @@ int SoftmaxCrossEntropy::UnPackAttr(const Primitive &prim, const std::vector<Anf
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
+
+    attr->axis = {0};
     this->primitive_->value.value = attr;
     if (this->primitive_->value.value == nullptr) {
       MS_LOG(ERROR) << "primitive value is nullptr";
@@ -102,6 +104,5 @@ int SoftmaxCrossEntropy::InferShape(std::vector<Tensor *> inputs, std::vector<Te
   }
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore

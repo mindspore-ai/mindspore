@@ -63,6 +63,30 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
   return RET_OK;
 }
 
+int FusedBatchnormCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail! Ret error code: " << ret;
+    return ret;
+  }
+  auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
+  if (is_train()) {
+    float *in = static_cast<float *>(in_tensors_[0]->MutableData());
+    float *run_mean = static_cast<float *>(out_tensors_[1]->MutableData());
+    float *run_var = static_cast<float *>(out_tensors_[2]->MutableData());
+    float *save_mean = static_cast<float *>(out_tensors_[3]->MutableData());
+    float *save_inv_var = static_cast<float *>(out_tensors_[4]->MutableData());
+    std::fill(run_mean, run_mean+param->channel_, 0.f);
+    std::fill(run_var, run_var+param->channel_, 0.f);
+    FusedBatchNormFp32MeanVar(in, 0.9, run_mean, run_var, param, save_mean, save_inv_var);
+  }
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, BatchNormRun, this, op_parameter_->thread_num_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
+  }
+  return ret;
+}
+
 int FusedBatchnormCPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
   FusedBatchNormFp32(in_tensors_.at(0)->MutableData(), scale_, offset_, mean_, variance_, param, task_id,

@@ -68,6 +68,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string configFile;
   bool formatTrans = true;
   std::string convWeightQuantChannelThreshold;
+  std::string trainModelIn;
+  bool trainModel = false;
 };
 }  // namespace converter
 }  // namespace lite

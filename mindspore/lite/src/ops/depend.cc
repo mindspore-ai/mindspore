@@ -47,6 +47,15 @@ int Depend::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
   }
   return RET_OK;
 }
+#else
+int Depend::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto val_offset = schema::CreateDepend(*fbb);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Depend, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 }  // namespace lite
 }  // namespace mindspore

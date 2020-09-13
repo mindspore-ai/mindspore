@@ -139,7 +139,6 @@
 #include "src/ops/power_grad.h"
 #include "src/ops/softmax_cross_entropy.h"
 #include "src/ops/bn_grad.h"
-#include "src/ops/bn_grad_input.h"
 #include "src/ops/arithmetic_grad.h"
 #include "src/ops/depend.h"
 #include "src/ops/flatten_grad.h"
@@ -392,49 +391,42 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Elu>(prim, inputs, quantType);
   } else if (op_type == "Log") {
     return NewPrimitiveC<Log>(prim, inputs, quantType);
-  } else if (op_type == "Conv2DBackpropInput") {
+  } else if (op_type == "DeConv2D") {
     return NewPrimitiveC<DeConv2D>(prim, inputs, quantType);
   } else if (op_type == "tuple_getitem") {
     return NewPrimitiveC<TupleGetItem>(prim, inputs, quantType);
   } else if (op_type == "Softmax") {
     return NewPrimitiveC<SoftMax>(prim, inputs, quantType);
-#ifdef SUPPORT_TRAIN0
+
+#ifdef SUPPORT_TRAIN
+  } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
+    return NewPrimitiveC<SoftmaxCrossEntropy>(prim, inputs, quantType);
+  } else if (op_type == "BiasAddGrad") {
+    return NewPrimitiveC<BiasGrad>(prim, inputs, quantType);
+  } else if (op_type == "ApplyMomentum") {
+    return NewPrimitiveC<ApplyMomentum>(prim, inputs, quantType);
+  } else if (op_type == "Depend") {
+    return NewPrimitiveC<Depend>(prim, inputs, quantType);
   } else if ((op_type == "ReluGrad" || op_type == "Relu6Grad" || op_type == "SigmoidGrad")) {
     return NewPrimitiveC<ActivationGrad>(prim, inputs, quantType);
   } else if ((op_type == "MaxPoolGrad") || (op_type == "MeanPoolGrad")) {
     return NewPrimitiveC<PoolingGrad>(prim, inputs, quantType);
   } else if (op_type == "Conv2DBackpropFilter") {
     return NewPrimitiveC<Conv2DGradFilter>(prim, inputs, quantType);
-  } else if (op_type == "BiasAddGrad") {
-    return NewPrimitiveC<BiasGrad>(prim, inputs, quantType);
-  } else if (op_type == "ApplyMomentum") {
-    return NewPrimitiveC<ApplyMomentum>(prim, inputs, quantType);
+  } else if (op_type == "Conv2DBackpropInput") {
+    return NewPrimitiveC<Conv2DGradInput>(prim, inputs, quantType);
+  } else if (op_type == "BatchNormGrad") {
+    return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
+  } else if (op_type == "FlattenGrad") {
+    return NewPrimitiveC<FlattenGrad>(prim, inputs, quantType);
+#endif
+#ifdef SUPPORT_TRAIN0
+  } else if (op_type == "PowerGrad") {
+    return NewPrimitiveC<PowerGrad>(prim, inputs, quantType);
   } else if (op_type == "NegGrad") {
     return NewPrimitiveC<NegGrad>(prim, inputs, quantType);
   } else if (op_type == "LogGrad") {
     return NewPrimitiveC<LogGrad>(prim, inputs, quantType);
-  } else if (op_type == "BatchNormGrad") {
-    return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
-  } else if (op_type == "Conv2DGradInput") {
-    return NewPrimitiveC<Conv2DGradInput>(prim, inputs, quantType);
-  } else if (op_type == "Conv2DGradFilter") {
-    return NewPrimitiveC<Conv2DGradFilter>(prim, inputs, quantType);
-  } else if (op_type == "BiasGrad") {
-    return NewPrimitiveC<BiasGrad>(prim, inputs, quantType);
-  } else if (op_type == "ActivationGrad") {
-    return NewPrimitiveC<ActivationGrad>(prim, inputs, quantType);
-  } else if (op_type == "PoolingGrad") {
-    return NewPrimitiveC<PoolingGrad>(prim, inputs, quantType);
-  } else if (op_type == "BNGradInput") {
-    return NewPrimitiveC<BNGradInput>(prim, inputs, quantType);
-  } else if (op_type == "PowerGrad") {
-    return NewPrimitiveC<PowerGrad>(prim, inputs, quantType);
-  } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
-    return NewPrimitiveC<SoftmaxCrossEntropy>(prim, inputs, quantType);
-  } else if (op_type == "Depend") {
-    return NewPrimitiveC<Depend>(prim, inputs, quantType);
-  } else if (op_type == "FlattenGrad") {
-    return NewPrimitiveC<FlattenGrad>(prim, inputs, quantType);
 #endif
   } else {
     MS_LOG(ERROR) << "Unsupported primitive type in Create : " << op_type;
@@ -677,12 +669,10 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new ArithmeticGrad(primitive);
     case schema::PrimitiveType_DivGrad:
       return new ArithmeticGrad(primitive);
-    case schema::PrimitiveType_PowerGrad:
-      return new PowerGrad(primitive);
-    case schema::PrimitiveType_BNGradInput:
-      return new BNGradInput(primitive);
     case schema::PrimitiveType_SoftmaxCrossEntropy:
       return new SoftmaxCrossEntropy(primitive);
+    case schema::PrimitiveType_PowerGrad:
+      return new PowerGrad(primitive);
     case schema::PrimitiveType_Depend:
       return new Depend(primitive);
     case schema::PrimitiveType_FlattenGrad:
@@ -934,7 +924,9 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
     case schema::PrimitiveType_MulGrad:
       return NewPrimitiveC<ArithmeticGrad>(primitive);
     case schema::PrimitiveType_DivGrad:
-      return NewPrimitiveC<ArithmeticGrad>(primitive);
+     return NewPrimitiveC<ArithmeticGrad>(primitive);
+    case schema::PrimitiveType_SoftmaxCrossEntropy:
+      return  NewPrimitiveC<SoftmaxCrossEntropy>(primitive);
     case schema::PrimitiveType_NegGrad:
       return NewPrimitiveC<NegGrad>(primitive);
     case schema::PrimitiveType_LogGrad:

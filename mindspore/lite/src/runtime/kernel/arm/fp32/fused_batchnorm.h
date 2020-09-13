@@ -30,7 +30,7 @@ class FusedBatchnormCPUKernel : public BatchnormCPUKernel {
   ~FusedBatchnormCPUKernel() { FreeScaleAndOffset(); }
 
   int ReSize() override;
-
+  int Run() override;
   int InitConstTensor() override;
   int DoExecute(int task_id) override;
 

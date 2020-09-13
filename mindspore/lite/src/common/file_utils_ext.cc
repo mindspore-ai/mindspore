@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-static int CompareOutputRelativeData(float *output_data, float *correct_data, int data_size) {
+static float CompareOutputRelativeData(float *output_data, float *correct_data, int data_size) {
   float error = 0;
 
   // relative error
@@ -35,6 +35,16 @@ static int CompareOutputRelativeData(float *output_data, float *correct_data, in
     diffSum += diff;
   }
   error = diffSum / sum;
+  return error;
+}
+
+int CompareRelativeOutput(float *output_data, std::string file_path) {
+  size_t output_size;
+  auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
+  size_t output_num = output_size / sizeof(float);
+  // std::cout << "output num : " << output_num << "\n";
+  int error = CompareOutputRelativeData(output_data, ground_truth, output_num);
+  delete [] ground_truth;
   if (error > 1e-4) {
     std::cout << "has accuracy error!\n" << error << "\n";
     return 1;
@@ -42,14 +52,15 @@ static int CompareOutputRelativeData(float *output_data, float *correct_data, in
   return 0;
 }
 
-int CompareRelativeOutput(float *output_data, std::string file_path) {
+float RelativeOutputError(float *output_data, std::string file_path) {
   size_t output_size;
   auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
   size_t output_num = output_size / sizeof(float);
   std::cout << "output num : " << output_num << "\n";
-  int res = CompareOutputRelativeData(output_data, ground_truth, output_num);
-  delete[] ground_truth;
-  return res;
+  float error = CompareOutputRelativeData(output_data, ground_truth, output_num);
+  delete [] ground_truth;
+  return error;
 }
 }  // namespace lite
 }  // namespace mindspore
+

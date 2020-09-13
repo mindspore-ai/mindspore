@@ -67,9 +67,31 @@ int BNGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
 float BNGrad::GetEps() const { return this->primitive_->value_as_BNGrad()->eps(); }
 float BNGrad::GetMomentum() const { return this->primitive_->value_as_BNGrad()->momentum(); }
-
 #endif
+int BNGrad::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
+  if (5 != inputs.size()) {
+    MS_LOG(ERROR) << "BNGrad should have five inputs";
+    return RET_ERROR;
+  }
+  if (3 != outputs.size()) {
+    MS_LOG(ERROR) << "BNGrad should have three outputs";
+    return RET_ERROR;
+  }
+  auto in = inputs[1];
+  auto scale = inputs[2];
+  outputs[0]->set_shape(in->shape());
+  outputs[1]->set_shape(scale->shape());
+  outputs[2]->set_shape(scale->shape());
+  outputs[0]->set_data_type(in->data_type());
+  outputs[1]->set_data_type(scale->data_type());
+  outputs[2]->set_data_type(scale->data_type());
+  outputs[0]->SetFormat(in->GetFormat());
+  outputs[1]->SetFormat(scale->GetFormat());
+  outputs[2]->SetFormat(scale->GetFormat());
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore
