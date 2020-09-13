@@ -42,10 +42,20 @@ def parse_args():
                         help="Data path, it is better to use absolute path")
     parser.add_argument("--hccl_config_dir", type=str, default="",
                         help="Hccl config path, it is better to use absolute path")
+    parser.add_argument("--cmd_file", type=str, default="distributed_cmd.sh",
+                        help="Path of the generated cmd file.")
 
     args = parser.parse_args()
     return args
 
+
+def append_cmd(cmd, s):
+    cmd += s
+    cmd += "\n"
+    return cmd
+
+def append_cmd_env(cmd, key, value):
+    return append_cmd(cmd, "export" + str(key) + "=" + str(value))
 
 def distribute_pretrain():
     """
@@ -92,6 +102,7 @@ def distribute_pretrain():
     print("avg_core_per_rank:", avg_core_per_rank)
 
     count = 0
+    cmd = ""
     for instance in this_server["device"]:
         device_id = instance["device_id"]
         rank_id = instance["rank_id"]
@@ -104,38 +115,44 @@ def distribute_pretrain():
         end = start + core_gap
         cmdopt = str(start) + "-" + str(end)
 
-        os.environ["DEVICE_ID"] = device_id
-        os.environ["RANK_ID"] = rank_id
-        os.environ["DEPLOY_MODE"] = "0"
-        os.environ["GE_USE_STATIC_MEMORY"] = "1"
+        cmd = append_cmd(cmd, "export DEVICE_ID=" + str(device_id))
+        cmd = append_cmd(cmd, "export RANK_ID=" + str(rank_id))
+        cmd = append_cmd(cmd, "export DEPLOY_MODE=0")
+        cmd = append_cmd(cmd, "export GE_USE_STATIC_MEMORY=1")
 
-        os.system("rm -rf LOG" + str(device_id))
-        os.system("mkdir ./LOG" + str(device_id))
-        os.system("cp *.py ./LOG" + str(device_id))
-        os.system("mkdir -p ./LOG" + str(device_id) + "/ms_log")
-        os.system("env > ./LOG" + str(device_id) + "/env.log")
+        cmd = append_cmd(cmd, "rm -rf LOG" + str(device_id))
+        cmd = append_cmd(cmd, "mkdir ./LOG" + str(device_id))
+        cmd = append_cmd(cmd, "cp *.py ./LOG" + str(device_id))
+        cmd = append_cmd(cmd, "mkdir -p ./LOG" + str(device_id) + "/ms_log")
+        cmd = append_cmd(cmd, "env > ./LOG" + str(device_id) + "/env.log")
 
         cur_dir = os.getcwd()
-        os.environ["GLOG_log_dir"] = cur_dir + "/LOG" + str(device_id) + "/ms_log"
-        os.environ["GLOG_logtostderr"] = "0"
+        cmd = append_cmd_env(cmd, "GLOG_LOG_DIR", cur_dir + "/LOG" + str(device_id) + "/ms_log")
+        cmd = append_cmd_env(cmd, "GLOG_logtostderr", "0")
 
         print("core_nums:", cmdopt)
         print("epoch_size:", str(cfg['epoch_size']))
         print("data_dir:", data_dir)
-        print("log_file_dir: ./LOG" + str(device_id) + "/log.txt")
+        print("log_file_dir: " + cur_dir + "/LOG" + str(device_id) + "/pretraining_log.txt")
 
-        cmd = 'taskset -c ' + cmdopt + ' nohup python ' + run_script + " "
+        cmd = append_cmd(cmd, "cd " + cur_dir + "/LOG" + str(device_id))
+
+        run_cmd = 'taskset -c ' + cmdopt + ' nohup python ' + run_script + " "
         opt = " ".join(["--" + key + "=" + str(cfg[key]) for key in cfg.keys()])
         if ('device_id' in opt) or ('device_num' in opt) or ('data_dir' in opt):
             raise ValueError("hyper_parameter_config.ini can not setting 'device_id',"
                              " 'device_num' or 'data_dir'! ")
-        cmd += opt
-        cmd += " --data_dir=" + data_dir
-        cmd += ' --device_id=' + str(device_id) + ' --device_num=' \
-               + str(rank_size) + ' >./LOG' + str(device_id) + '/log.txt 2>&1 &'
+        run_cmd += opt
+        run_cmd += " --data_dir=" + data_dir
+        run_cmd += ' --device_id=' + str(device_id) + ' --device_num=' \
+               + str(rank_size) + ' >./pretraining_log.txt 2>&1 &'
 
-        os.system(cmd)
+        cmd = append_cmd(cmd, run_cmd)
+        cmd = append_cmd(cmd, "cd -")
+        cmd += "\n"
 
+    with open(args.cmd_file, "w") as f:
+        f.write(cmd)
 
 if __name__ == "__main__":
     distribute_pretrain()
