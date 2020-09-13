@@ -182,7 +182,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
                                  "are supported in current version. If you use `O2` option, please"
                                  "use `loss_scale_manager=None` or `FixedLossScaleManager`")
             network = nn.TrainOneStepWithLossScaleCell(network, optimizer,
-                                                       scale_update_cell=update_cell).set_train()
+                                                       scale_sense=update_cell).set_train()
             return network
     network = nn.TrainOneStepCell(network, optimizer, loss_scale).set_train()
     return network
