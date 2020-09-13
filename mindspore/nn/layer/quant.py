@@ -122,31 +122,17 @@ class Conv2dBnAct(Cell):
                  after_fake=True):
         super(Conv2dBnAct, self).__init__()
 
-        if context.get_context('device_target') == "Ascend" and group > 1:
-            self.conv = conv.DepthwiseConv2d(in_channels,
-                                             out_channels,
-                                             kernel_size=kernel_size,
-                                             stride=stride,
-                                             pad_mode=pad_mode,
-                                             padding=padding,
-                                             dilation=dilation,
-                                             group=group,
-                                             has_bias=has_bias,
-                                             weight_init=weight_init,
-                                             bias_init=bias_init)
-        else:
-            self.conv = conv.Conv2d(in_channels,
-                                    out_channels,
-                                    kernel_size=kernel_size,
-                                    stride=stride,
-                                    pad_mode=pad_mode,
-                                    padding=padding,
-                                    dilation=dilation,
-                                    group=group,
-                                    has_bias=has_bias,
-                                    weight_init=weight_init,
-                                    bias_init=bias_init)
-
+        self.conv = conv.Conv2d(in_channels,
+                                out_channels,
+                                kernel_size=kernel_size,
+                                stride=stride,
+                                pad_mode=pad_mode,
+                                padding=padding,
+                                dilation=dilation,
+                                group=group,
+                                has_bias=has_bias,
+                                weight_init=weight_init,
+                                bias_init=bias_init)
         self.has_bn = validator.check_bool("has_bn", has_bn)
         self.has_act = activation is not None
         self.after_fake = after_fake
