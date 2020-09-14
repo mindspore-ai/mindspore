@@ -49,7 +49,7 @@ class Parameter(MetaTensor):
         Each parameter of Cell is represented by Parameter class.
 
     Args:
-        set_data (Union[Tensor, Initializer, Number]): Parameter data, to be set initialized.
+        default_input (Union[Tensor, Initializer, Number]): Parameter data, to be set initialized.
         name (str): Name of the child parameter.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in parallel mode,
