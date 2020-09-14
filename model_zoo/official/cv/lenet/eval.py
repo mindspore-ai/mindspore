@@ -32,7 +32,7 @@ from src.lenet import LeNet5
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='MindSpore Lenet Example')
-    parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU', 'CPU'],
+    parser.add_argument('--device_target', type=str, default="CPU", choices=['Ascend', 'GPU', 'CPU'],
                         help='device where the code will be implemented (default: Ascend)')
     parser.add_argument('--data_path', type=str, default="./Data",
                         help='path where the dataset is saved')
@@ -42,6 +42,7 @@ if __name__ == "__main__":
                         help='dataset_sink_mode is False or True')
 
     args = parser.parse_args()
+    args.ckpt_path = '.ckpt/checkpoint_lenet-10_1875'
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 

@@ -33,9 +33,9 @@ from mindspore.nn.metrics import Accuracy
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='MindSpore Lenet Example')
-    parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU', 'CPU'],
+    parser.add_argument('--device_target', type=str, default="CPU", choices=['Ascend', 'GPU', 'CPU'],
                         help='device where the code will be implemented (default: Ascend)')
-    parser.add_argument('--data_path', type=str, default="./Data",
+    parser.add_argument('--data_path', type=str, default="./data",
                         help='path where the dataset is saved')
     parser.add_argument('--ckpt_path', type=str, default="./ckpt", help='if is test, must provide\
                         path where the trained ckpt file')
