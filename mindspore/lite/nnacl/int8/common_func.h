@@ -32,6 +32,13 @@ void PostFuncInt8C8(const int32_t *in, const int32_t *bias, int8_t *out, size_t 
 void PostFuncInt8C4(const int32_t *in, const int32_t *bias, int8_t *out, size_t oc, size_t plane, size_t stride,
                     int32_t multiplier, int32_t left_shift, int32_t right_shift, int32_t zp, int32_t mini,
                     int32_t maxi);
+#ifdef ENABLE_ARM
+void ConvDwInt8Row(int32_t *output_ptr, const int8_t *input_ptr, const int16_t *weight_ptr, int num_pixels,
+                   int output_channel, int input_step, int8_t input_zp);
+void ConvDwInt8PostAlign4(int8_t *dst, int32_t *buffer, int num_pixels, int32_t output_zp, int32_t out_multiplier,
+                          int32_t left_shift, int32_t right_shift, int32_t acc_min, int32_t acc_max);
+#endif
+
 #ifdef ENABLE_ARM64
 void PostFuncInt8C4Neon64(const int32_t *in, const int32_t *bias, int8_t *out, size_t oc4div, size_t oc4res,
                           size_t plane, size_t stride, int32_t multiplier, int32_t left_shift, int32_t right_shift,
@@ -50,10 +57,6 @@ void ConvDwInt8Center(int8_t *dst, const int8_t *src, const int16_t *weight, con
                       size_t in_sh_step, size_t in_sw_step, size_t in_kh_step, size_t in_kw_step, int8_t *in_zp,
                       int32_t *out_zp, int32_t *out_multiplier, int32_t *left_shift, int32_t *right_shift,
                       int32_t *acc_min, int32_t *acc_max);
-void ConvDwInt8Row(int32_t *output_ptr, const int8_t *input_ptr, const int16_t *weight_ptr, int num_pixels,
-                   int output_channel, int input_step, int8_t input_zp);
-void ConvDwInt8PostAlign4(int8_t *dst, int32_t *buffer, int num_pixels, int32_t output_zp, int32_t out_multiplier,
-                          int32_t left_shift, int32_t right_shift, int32_t acc_min, int32_t acc_max);
 void ConvDwInt8PostAlign4PerChannel(int8_t *dst, int32_t *buffer, int channel4, int32_t output_zp,
                                     int32_t *out_multiplier, int32_t *left_shift, int32_t *right_shift, int32_t acc_min,
                                     int32_t acc_max);

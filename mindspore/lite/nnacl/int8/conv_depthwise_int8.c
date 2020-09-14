@@ -20,7 +20,7 @@
 #include "nnacl/int8/common_func.h"
 
 /*conv depthwise int8 begin*/
-#ifndef ENABLE_ARM64
+#ifndef ENABLE_ARM
 void ConvDwInt8Row(int32_t *output_ptr, const int8_t *input_ptr, const int16_t *weight_ptr, int num_pixels,
                    int output_channel, int input_step, int8_t input_zp) {
   for (int i = 0; i < num_pixels; i++) {
@@ -59,7 +59,7 @@ void ConvDwInt8Post(int8_t *dst, int32_t *buffer, int output_w, int channel, int
   } else {
     int num_pixels = output_w * channel;
     int align_num = 0;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
     align_num = num_pixels / 4 * 4;
     ConvDwInt8PostAlign4(dst, buffer, align_num, output_zp, out_multiplier[0], left_shift[0], right_shift[0], acc_min,
                          acc_max);
