@@ -181,7 +181,7 @@ if (BUILD_MINDDATA STREQUAL "full")
 elseif (BUILD_MINDDATA STREQUAL "lite")
     list(REMOVE_ITEM MINDDATA_CORE_SRC_FILES "${MINDDATA_DIR}/core/client.cc")
     list(REMOVE_ITEM MINDDATA_KERNELS_SRC_FILES "${MINDDATA_DIR}/kernels/py_func_op.cc")
-    add_library(minddata-eager OBJECT 
+    add_library(minddata_eager_mid OBJECT 
         ${MINDDATA_DIR}/api/de_tensor.cc
         ${MINDDATA_DIR}/api/execute.cc
         )

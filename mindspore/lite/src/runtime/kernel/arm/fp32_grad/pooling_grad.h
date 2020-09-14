@@ -38,9 +38,6 @@ class PoolingGradCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-
- private:
-  uint8_t data_shape_{0};
 };
 
 }  // namespace mindspore::kernel
