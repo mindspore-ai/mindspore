@@ -24,7 +24,6 @@
 namespace mindspore {
 namespace system {
 namespace sha256 {
-constexpr int kPathMax = 4096;
 constexpr int kBitNumber = 8;
 constexpr int kDigestSize = 8;
 constexpr int kIterationNumber = 64;
@@ -47,13 +46,13 @@ inline uint32_t sigma2(uint32_t x) { return (x >> 7 | x << 25) ^ (x >> 18 | x <<
 inline uint32_t sigma3(uint32_t x) { return (x >> 17 | x << 15) ^ (x >> 19 | x << 13) ^ (x >> 10); }
 
 std::string LoadFilePath(const std::string &path) {
-  char real_path[kPathMax] = {0};
+  char real_path[PATH_MAX] = {0};
 #if defined(_WIN32) || defined(_WIN64)
-  if (path.size() > kPathMax || _fullpath(real_path, path.c_str(), kPathMax) == nullptr) {
+  if (path.size() > PATH_MAX || _fullpath(real_path, path.c_str(), PATH_MAX) == nullptr) {
     return "";
   }
 #else
-  if (path.size() > kPathMax || realpath(path.c_str(), real_path) == nullptr) {
+  if (path.size() > PATH_MAX || realpath(path.c_str(), real_path) == nullptr) {
     return "";
   }
 #endif
@@ -65,44 +64,50 @@ std::string LoadFilePath(const std::string &path) {
   return message;
 }
 
-void Padding(std::string *message) {
+bool Padding(std::string *message) {
   uint64_t bits_message = message->size() * kBitNumber;
-  int remains = message->size() % kMessageBlockLength;
+  const int remains = message->size() % kMessageBlockLength;
   // The length of the message needs to be stored in 8 bytes, supplemented at the end of the message.
-  int size_append = 8;
-  int size_required = kMessageBlockLength - size_append;
-  int size_pad = size_required - remains + (remains < size_required ? 0 : kMessageBlockLength);
+  const int size_append = 8;
+  const int size_required = kMessageBlockLength - size_append;
+  const int size_pad = size_required - remains + (size_required > remains ? 0 : kMessageBlockLength);
+  if (size_pad < 1 || size_pad > kMessageBlockLength) {
+    return false;
+  }
   message->push_back(0x80);
   for (int i = 1; i < size_pad; ++i) {
     message->push_back(0x00);
   }
   for (int i = size_append - 1; i >= 0; --i) {
-    message->push_back(static_cast<uint8_t>((bits_message >> (i * kBitNumber)) & 0xff));
+    message->push_back(static_cast<uint8_t>((bits_message >> static_cast<uint32_t>(i * kBitNumber)) & 0xff));
   }
+  return true;
 }
 
-void ProcessInner(const std::string &message, uint32_t *digest, const int bias) {
+bool ProcessInner(const std::string &message, const int &bias, uint32_t *digest, const int &digest_size) {
+  if (digest_size != 8) {  // The number of digests is fixed at 8
+    return false;
+  }
   uint32_t w[kIterationNumber] = {0};
   for (int i = 0; i < 16; ++i) {
-    w[i] = (static_cast<uint32_t>(message[bias + i * 4] & 0xff) << 24) |
-           (static_cast<uint32_t>(message[bias + i * 4 + 1] & 0xff) << 16) |
-           (static_cast<uint32_t>(message[bias + i * 4 + 2] & 0xff) << 8) |
-           (static_cast<uint32_t>(message[bias + i * 4 + 3] & 0xff));
+    w[i] = (static_cast<uint32_t>(static_cast<uint8_t>(message[bias + i * 4]) & 0xff) << 24) |
+           (static_cast<uint32_t>(static_cast<uint8_t>(message[bias + i * 4 + 1]) & 0xff) << 16) |
+           (static_cast<uint32_t>(static_cast<uint8_t>(message[bias + i * 4 + 2]) & 0xff) << 8) |
+           (static_cast<uint32_t>(static_cast<uint8_t>(message[bias + i * 4 + 3]) & 0xff));
   }
   for (int i = 16; i < kIterationNumber; ++i) {
     w[i] = sigma3(w[i - 2]) + w[i - 7] + sigma2(w[i - 15]) + w[i - 16];
   }
 
-  uint32_t hash[kDigestSize];
-  for (int i = 0; i < kDigestSize; ++i) {
-    hash[i] = digest[i];
+  uint32_t *hash = new uint32_t[digest_size];
+  auto ret = memcpy_s(hash, digest_size * sizeof(uint32_t), digest, digest_size * sizeof(uint32_t));
+  if (ret != 0) {
+    return false;
   }
   for (int i = 0; i < kIterationNumber; ++i) {
-    uint32_t t1 = w[i] + constant[i] + hash[kDigestSize - 1] + sigma1(hash[kDigestSize - 4]) +
-                  ch(hash[kDigestSize - 4], hash[kDigestSize - 3], hash[kDigestSize - 2]);
-    uint32_t t2 =
-      sigma0(hash[kDigestSize - 8]) + ma(hash[kDigestSize - 8], hash[kDigestSize - 7], hash[kDigestSize - 6]);
-    for (int j = kDigestSize - 1; j >= 0; --j) {
+    uint32_t t1 = w[i] + constant[i] + hash[7] + sigma1(hash[4]) + ch(hash[4], hash[5], hash[6]);
+    uint32_t t2 = sigma0(hash[0]) + ma(hash[0], hash[1], hash[2]);
+    for (int j = digest_size - 1; j >= 0; --j) {
       if (j == 4) {
         hash[j] = hash[j - 1] + t1;
       } else if (j == 0) {
@@ -112,17 +117,19 @@ void ProcessInner(const std::string &message, uint32_t *digest, const int bias) 
       }
     }
   }
-  for (int i = 0; i < kDigestSize; ++i) {
+  for (int i = 0; i < digest_size; ++i) {
     digest[i] += hash[i];
   }
+  delete[](hash);
+  return true;
 }
 
-std::string ConvertToString(uint32_t *input) {
+std::string ConvertToString(uint32_t *input, const int &size) {
   std::ostringstream oss;
   oss << std::hex;
-  for (int i = 0; i < kDigestSize; ++i) {
+  for (int i = 0; i < size; ++i) {
     for (int j = static_cast<int>(sizeof(uint32_t) / sizeof(uint8_t)) - 1; j >= 0; --j) {
-      uint8_t val = static_cast<uint8_t>((input[i] >> (j * kBitNumber)) & 0xff);
+      uint8_t val = static_cast<uint8_t>((input[i] >> static_cast<uint32_t>(j * kBitNumber)) & 0xff);
       oss << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(val);
     }
   }
@@ -133,26 +140,26 @@ std::string Encrypt(const std::string &message) {
   uint32_t digest[kDigestSize] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
                                   0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
   for (int i = 0; i < static_cast<int>(message.size()); i += kMessageBlockLength) {
-    ProcessInner(message, digest, i);
+    if (!ProcessInner(message, i, digest, kDigestSize)) {
+      return "";
+    }
   }
-  return ConvertToString(digest);
+  return ConvertToString(digest, kDigestSize);
 }
 
 std::string GetHashFromString(const std::string &data) {
-  if (data.empty()) {
+  std::string message = data;
+  if (message.empty() || !Padding(&message)) {
     return "";
   }
-  std::string message = data;
-  Padding(&message);
   return Encrypt(message);
 }
 
 std::string GetHashFromFile(const std::string &path) {
   std::string message = LoadFilePath(path);
-  if (message.empty()) {
+  if (message.empty() || !Padding(&message)) {
     return "";
   }
-  Padding(&message);
   return Encrypt(message);
 }
 }  // namespace sha256
