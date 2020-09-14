@@ -110,7 +110,7 @@ if __name__ == "__main__":
     wide_and_deep_config = WideDeepConfig()
     wide_and_deep_config.argparse_init()
     compute_emb_dim(wide_and_deep_config)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Davinci",
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
                         save_graphs=True)
     init()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
