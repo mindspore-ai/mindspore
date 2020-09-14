@@ -33,13 +33,13 @@ static void meanVar(const float *in, int size, int ch, float eps, float *mean, f
   for (int f = 0; f < ch; ++f) {
     mean[f] /= N;
   }
-  for (int f=0; f< ch; f++) {
+  for (int f = 0; f < ch; f++) {
     float tvar = 0;
-    for (int i =0; i< N; i++) {
-      float x = in[i*ch +f];
-      tvar += (x-mean[f]) *(x-mean[f]);
+    for (int i = 0; i < N; i++) {
+      float x = in[i * ch + f];
+      tvar += (x - mean[f]) * (x - mean[f]);
     }
-    invar[f] = 1.0f/(sqrt(tvar/N+eps));
+    invar[f] = 1.0f / (sqrt(tvar / N + eps));
   }
 }
 
