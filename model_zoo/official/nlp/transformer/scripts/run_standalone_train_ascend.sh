@@ -37,9 +37,9 @@ python train.py  \
     --enable_save_ckpt="true" \
     --enable_lossscale="true" \
     --do_shuffle="true" \
-    --enable_data_sink="false" \
     --checkpoint_path="" \
     --save_checkpoint_steps=2500 \
     --save_checkpoint_num=30 \
-    --data_path=$DATA_PATH > log.txt 2>&1 &
+    --data_path=$DATA_PATH \
+    --bucket_boundaries=[16,32,48,64,128] > log.txt 2>&1 &
 cd ..

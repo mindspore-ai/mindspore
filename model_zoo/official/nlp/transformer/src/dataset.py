@@ -19,8 +19,8 @@ import mindspore.dataset as de
 import mindspore.dataset.transforms.c_transforms as deC
 from .config import transformer_net_cfg
 de.config.set_seed(1)
-def create_transformer_dataset(epoch_count=1, rank_size=1, rank_id=0, do_shuffle="true", enable_data_sink="true",
-                               dataset_path=None, bucket_boundaries=None):
+def create_transformer_dataset(epoch_count=1, rank_size=1, rank_id=0, do_shuffle="true", dataset_path=None,
+                               bucket_boundaries=None):
     """create dataset"""
     def batch_per_bucket(bucket_len, dataset_path):
         dataset_path = dataset_path + "_" + str(bucket_len) + "_00"

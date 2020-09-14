@@ -101,10 +101,9 @@ python eval.py > eval.log 2>&1 &
 usage: train.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_num N] [--device_id N]
                  [--enable_save_ckpt ENABLE_SAVE_CKPT]
                  [--enable_lossscale ENABLE_LOSSSCALE] [--do_shuffle DO_SHUFFLE]
-                 [--enable_data_sink ENABLE_DATA_SINK] [--save_checkpoint_steps N]
-                 [--save_checkpoint_num N] [--save_checkpoint_path SAVE_CHECKPOINT_PATH]
-                 [--data_path DATA_PATH]
-                 [--bucket_boundaries BUCKET_LENGTH]
+                 [--save_checkpoint_steps N] [--save_checkpoint_num N]
+                 [--save_checkpoint_path SAVE_CHECKPOINT_PATH]
+                 [--data_path DATA_PATH] [--bucket_boundaries BUCKET_LENGTH]
 
 options:
     --distribute               pre_training by serveral devices: "true"(training by more than 1 device) | "false", default is "false"
@@ -114,7 +113,6 @@ options:
     --enable_save_ckpt         enable save checkpoint: "true" | "false", default is "true"
     --enable_lossscale         enable lossscale: "true" | "false", default is "true"
     --do_shuffle               enable shuffle: "true" | "false", default is "true"
-    --enable_data_sink         enable data sink: "true" | "false", default is "false"
     --checkpoint_path          path to load checkpoint files: PATH, default is ""
     --save_checkpoint_steps    steps for saving checkpoint files: N, default is 2500
     --save_checkpoint_num      number for saving checkpoint files: N, default is 30
@@ -143,7 +141,7 @@ eval_config.py:
 ```
 Parameters for dataset and network (Training/Evaluation):
     batch_size                      batch size of input dataset: N, default is 96
-    seq_length                      length of input sequence: N, default is 128
+    seq_length                      max length of input sequence: N, default is 128
     vocab_size                      size of each embedding vector: N, default is 36560
     hidden_size                     size of Transformer encoder layers: N, default is 1024
     num_hidden_layers               number of hidden layers: N, default is 6
@@ -181,7 +179,7 @@ Parameters for learning rate:
 
     ``` bash
     paste train.tok.clean.bpe.32000.en train.tok.clean.bpe.32000.de > train.all
-    python create_data.py --input_file train.all --vocab_file vocab.bpe.32000 --output_file /path/ende-l128-mindrecord --max_seq_length 128 --bucket [16, 32, 48, 64, 128]
+    python create_data.py --input_file train.all --vocab_file vocab.bpe.32000 --output_file /path/ende-l128-mindrecord --max_seq_length 128 --bucket [16,32,48,64,128]
     ```
 - Convert the original data to mindrecord for evaluation:
 
