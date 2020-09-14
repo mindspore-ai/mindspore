@@ -33,6 +33,9 @@ class PullKernel : public CPUKernel {
   ~PullKernel() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
+    if (inputs.size() != 2) {
+      MS_LOG(EXCEPTION) << "Inputs size is " << inputs.size() << ", but PullKernel needs 2.";
+    }
     bool init_in_server = parallel::ps::worker.GetParamInitInServer(param_name_);
     // If init_in_server, forward kernel should run in server too.
     if (!init_in_server) {

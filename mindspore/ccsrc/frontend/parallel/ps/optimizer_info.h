@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_H_
 
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/kernel.h"
 #include "frontend/parallel/ps/common.h"
 
@@ -49,6 +50,9 @@ class OptimizerInfo {
   virtual size_t indices_index();
 
  protected:
+  template <typename T>
+  void UpdateOptimInputValue(const std::string &optim_type, const std::string &input_name, void *data,
+                             const Lengths &lens);
   std::vector<AddressPtr> inputs_;
   std::vector<AddressPtr> workspaces_;
   std::vector<AddressPtr> outputs_;
