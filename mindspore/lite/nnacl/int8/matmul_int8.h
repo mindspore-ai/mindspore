@@ -65,6 +65,11 @@ void MatmulInt8Neon64(const int8_t *a, const int8_t *b, int8_t *dst, int row4, i
 void MatMulR4Int8Neon64(const int8_t *a, const int8_t *b, int32_t *dst, int row4, int col4, int deep16,
                         const int *input_sum, const int *bias);
 #endif
+#ifdef ENABLE_ARM32
+void MatmulInt8Neon32(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16,
+                      const int *input_sums, const int *weight_bias, int act_min, int act_max, int out_zp,
+                      int *multiplier, int *left_shift, int *right_shift, int stride, int per_channel);
+#endif
 #ifdef __cplusplus
 }
 #endif
