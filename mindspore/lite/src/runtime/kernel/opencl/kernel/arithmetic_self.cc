@@ -16,10 +16,10 @@
 #include <cstring>
 #include <algorithm>
 #include <set>
-#include<string>
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/arithmetic_self.h"
+#include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/arithmeticself.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -145,31 +145,12 @@ int ArithmeticSelfOpenCLKernel::Init() {
 
 int ArithmeticSelfOpenCLKernel::ReSize() { return RET_OK; }
 
-int ArithmeticSelfGetBiggestDividerWithPriority(int number, int max_divider) {
-  if (number % 8 == 0 && max_divider >= 8) {
-    return number / 8;
-  }
-  if (number % 4 == 0 && 4 <= max_divider) {
-    return number / 4;
-  }
-  if (number % 2 == 0 && 2 <= max_divider) {
-    return number / 2;
-  }
-
-  for (int i = max_divider; i != 0; i--) {
-    if (number % i == 0) {
-      return i;
-    }
-  }
-  return RET_OK;
-}
-
 void ArithmeticSelfGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;
   const int max_x = 4, max_y = 8;
-  int x = std::min(ArithmeticSelfGetBiggestDividerWithPriority(global[0], max_divider), max_x);
+  int x = std::min(GetMaxDivisorStrategy1(global[0], max_divider), max_x);
   int yz = max_size / x;
-  int y = std::min(std::min(ArithmeticSelfGetBiggestDividerWithPriority(global[1], max_divider), yz), max_y);
+  int y = std::min(std::min(GetMaxDivisorStrategy1(global[1], max_divider), yz), max_y);
   int z = std::min(yz / y, static_cast<int>(UP_DIV(global[2], 2)));
 
   local->clear();

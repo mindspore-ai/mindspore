@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/opencl/utils.h"
 #include <algorithm>
-#include <string>
 #include <vector>
 #include "src/kernel_registry.h"
 
@@ -34,26 +33,61 @@ kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, con
 }
 }  // namespace mindspore::lite
 
-namespace mindspore {
-namespace kernel {
+namespace mindspore::kernel {
+
+int GetMaxDivisor(int x, int divisor) {
+  int i = divisor;
+  while (i > 0) {
+    if (x % i == 0) {
+      return i;
+    }
+    i--;
+  }
+  return 1;
+}
+
+int GetMaxDivisorStrategy0(int x, int divisor) {
+  if (divisor >= 8 && x % 8 == 0) {
+    return 8;
+  } else if (divisor >= 4 && x % 4 == 0) {
+    return 4;
+  } else if (divisor >= 2 && x % 2 == 0) {
+    return 2;
+  } else {
+    return GetMaxDivisor(x, divisor);
+  }
+}
+
+int GetMaxDivisorStrategy1(int x, int divisor) {
+  if (divisor >= 8 && x % 8 == 0) {
+    return x / 8;
+  } else if (divisor >= 4 && x % 4 == 0) {
+    return x / 4;
+  } else if (divisor >= 2 && x % 2 == 0) {
+    return x / 2;
+  } else {
+    return GetMaxDivisor(x, divisor);
+  }
+}
+
 std::vector<size_t> GetCommonGlobalSize(const std::vector<size_t> &local, const std::vector<size_t> &global) {
-  std::vector<size_t> result(3, 1);
+  std::vector<size_t> result(3);
   for (int i = 0; i < 3; ++i) {
-    result[i] = AlignByN(global[i], local[i]);
+    result[i] = UP_ROUND(global[i], local[i]);
   }
   return result;
 }
 
 std::vector<size_t> GetCommonLocalSize(const std::vector<size_t> &global, int max_size) {
-  size_t wg_z = GetBiggestDividerWithPriority(global[2], 8);
-  if (wg_z == 0) {
+  size_t local_z = GetMaxDivisorStrategy0(global[2], 8);
+  if (local_z == 0) {
     MS_LOG(ERROR) << "Divide by zero";
     return {};
   }
-  size_t wg_xy_size = max_size / wg_z;
-  size_t wg_x = std::min(DivideRoundUp(global[0], 2), wg_xy_size);
-  size_t wg_y = std::min(wg_xy_size / wg_x, global[1]);
-  std::vector<size_t> local = {wg_x, wg_y, wg_z};
+  size_t local_xy = max_size / local_z;
+  size_t local_x = std::min(UP_DIV(global[0], 2), local_xy);
+  size_t local_y = std::min(local_xy / local_x, global[1]);
+  std::vector<size_t> local = {local_x, local_y, local_z};
   return local;
 }
 
@@ -187,5 +221,4 @@ std::string CLErrorCode(cl_int error_code) {
       return "Unknown OpenCL error code";
   }
 }
-}  // namespace kernel
-}  // namespace mindspore
+}  // namespace mindspore::kernel

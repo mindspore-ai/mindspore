@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "src/common/utils.h"
 #include "src/runtime/kernel/opencl/kernel/convolution.h"
+#include "src/runtime/kernel/opencl/utils.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 
@@ -113,7 +114,7 @@ int ConvolutionOpenCLKernel::Init() {
   return RET_OK;
 }
 
-int ConvolutionOpenCLKernel::RearrangeWinogradWeight() {
+int ConvolutionOpenCLKernel::GenerateWinogradWeight() {
   constexpr float Gt[] = {1.0000000000, 1.0000000000, 1.0000000000,  1.0000000000, 1.0000000000,  0.0000000000,
                           0.0000000000, 0.7071067691, -0.7071067691, 1.4142135382, -1.4142135382, 0.0000000000,
                           0.0000000000, 0.4999999702, 0.4999999702,  1.9999998808, 1.9999998808,  1.0000000000};
@@ -155,38 +156,13 @@ int ConvolutionOpenCLKernel::RearrangeWinogradWeight() {
   }
 
   if (use_fp16_) {
-    OHWI2OHWIOGroupI4O4<float, float16_t>(encoded_weight.data(), 6, 6, 2);
+    ConvertConvWeight4DTo7D<float, float16_t>(reinterpret_cast<void *>(encoded_weight.data()), packed_weight_, CO_, 6,
+                                              6, CI_, 2);
   } else {
-    OHWI2OHWIOGroupI4O4<float, float>(encoded_weight.data(), 6, 6, 2);
+    ConvertConvWeight4DTo7D<float, float>(reinterpret_cast<void *>(encoded_weight.data()), packed_weight_, CO_, 6, 6,
+                                          CI_, 2);
   }
 
-  return RET_OK;
-}
-
-template <typename SRC_T, typename DST_T>
-int ConvolutionOpenCLKernel::OHWI2OHWIOGroupI4O4(void *weight_OHWI, size_t KH, size_t KW, size_t OGroup) {
-  auto origin_weight = reinterpret_cast<SRC_T *>(weight_OHWI);
-  auto packed_weight = reinterpret_cast<DST_T *>(packed_weight_);
-
-  // OHWI -> O/OGroup/4 KH KW I/4 OGroup I4 O4
-  for (size_t co = 0, src_idx = 0; co < CO_; ++co) {
-    for (size_t kh = 0; kh < KH; ++kh) {
-      for (size_t kw = 0; kw < KW; ++kw) {
-        for (size_t ci = 0; ci < CI_; ++ci) {
-          size_t co_outer = co / (CO_TILE * OGroup);
-          size_t group_idx = co % (CO_TILE * OGroup) / CO_TILE;
-          size_t co_inner = co % CO_TILE;
-          size_t ci_outer = ci / CI_TILE;
-          size_t ci_inner = ci % CI_TILE;
-          size_t dst_idx =
-            (((((co_outer * KH + kh) * KW + kw) * CI_SLICES_ + ci_outer) * OGroup + group_idx) * CI_TILE + ci_inner) *
-              CO_TILE +
-            co_inner;
-          packed_weight[dst_idx] = static_cast<DST_T>(origin_weight[src_idx++]);
-        }
-      }
-    }
-  }
   return RET_OK;
 }
 
@@ -206,20 +182,20 @@ int ConvolutionOpenCLKernel::InitWeight() {
 
   // rearrange weight
   if (use_winograd_) {
-    RearrangeWinogradWeight();
+    GenerateWinogradWeight();
   } else {
     auto weight_tensor = in_tensors_[1];
     if (weight_tensor->data_type() == kNumberTypeFloat16) {
       if (use_fp16_) {
-        OHWI2OHWIOGroupI4O4<float16_t, float16_t>(weight_tensor->data_c(), KH_, KW_, 1);
+        ConvertConvWeight4DTo7D<float16_t, float16_t>(weight_tensor->data_c(), packed_weight_, CO_, KH_, KW_, CI_);
       } else {
-        OHWI2OHWIOGroupI4O4<float16_t, float>(weight_tensor->data_c(), KH_, KW_, 1);
+        ConvertConvWeight4DTo7D<float16_t, float>(weight_tensor->data_c(), packed_weight_, CO_, KH_, KW_, CI_);
       }
     } else {
       if (use_fp16_) {
-        OHWI2OHWIOGroupI4O4<float, float16_t>(weight_tensor->data_c(), KH_, KW_, 1);
+        ConvertConvWeight4DTo7D<float, float16_t>(weight_tensor->data_c(), packed_weight_, CO_, KH_, KW_, CI_);
       } else {
-        OHWI2OHWIOGroupI4O4<float, float>(weight_tensor->data_c(), KH_, KW_, 1);
+        ConvertConvWeight4DTo7D<float, float>(weight_tensor->data_c(), packed_weight_, CO_, KH_, KW_, CI_);
       }
     }
   }
@@ -635,7 +611,7 @@ std::string ConvolutionOpenCLKernel::CodeGenWinograd4x4To36() {
     "    }\n"
     "\n"
     "    int IH = input_shape.y, IW = input_shape.z;\n"
-    "    int TILE_X = IW / 4;\n"
+    "    int TILE_X = UP_DIV(IW, 4);\n"
     "    int tile_x = tile_xy % TILE_X;\n"
     "    int tile_y = tile_xy / TILE_X;\n"
     "\n"
@@ -764,6 +740,8 @@ std::string ConvolutionOpenCLKernel::CodeGenWinogradConvolution() {
 std::string ConvolutionOpenCLKernel::CodeGenWinograd36To4x4() {
   std::string code =
     "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
+    "#define UP_DIV(x, y) (((x) + (y) - (1)) / (y))\n"
+    "\n"
     "__constant sampler_t\n"
     "smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n"
     "\n"
@@ -804,6 +782,7 @@ std::string ConvolutionOpenCLKernel::CodeGenWinograd36To4x4() {
     "        }\n"
     "    }\n"
     "\n"
+    "    int TILE_X = UP_DIV(OW, 4);\n"
     "    for (int x = 0; x < 4; x++)\n"
     "    {\n"
     "        FLT4 acc = (FLT4)(0.0f, 0.0f, 0.0f, 0.0f);\n"
@@ -822,14 +801,15 @@ std::string ConvolutionOpenCLKernel::CodeGenWinograd36To4x4() {
   }
 
   code +=
-    "        int TILE_X = OW / 4;\n"
-    "        int tile_x = tile_xy % TILE_X * 4;\n"
-    "        int tile_y = tile_xy / TILE_X * 4;\n";
+    "        int tile_x = tile_xy % TILE_X;\n"
+    "        int tile_y = tile_xy / TILE_X;\n"
+    "        int ow = tile_x * 4 + x;\n"
+    "        int oh = tile_y * 4 + row;\n";
 
   if (op_format_ == Format_NHWC4) {
-    code += "        WRITE_IMAGE(output, (int2)((tile_x + x) * SLICES + slice, tile_y + row), acc);\n";
+    code += "        if(ow < OW) { WRITE_IMAGE(output, (int2)(ow * SLICES + slice, oh), acc);}\n";
   } else if (op_format_ == Format_NC4HW4) {
-    code += "        WRITE_IMAGE(output, (int2)(tile_x + x, slice * OH + tile_y + row), acc);\n";
+    code += "        if(oh < OH) { WRITE_IMAGE(output, (int2)(ow, slice * OH + oh), acc);}\n";
   }
 
   code +=
@@ -849,7 +829,7 @@ int ConvolutionOpenCLKernel::SetGlobalLocalConv(std::vector<size_t> *global, std
   size_t global_w = UP_DIV(OW_, work_group_size[1]) * work_group_size[1];
   size_t global_c = UP_DIV(CO_SLICES_, work_group_size[2]) * work_group_size[2];
 
-  size_t local_c = GetBiggestDivider(global_c, max_z_size);
+  size_t local_c = GetMaxDivisor(global_c, max_z_size);
   if (local_c == 0) {
     MS_LOG(ERROR) << "Divide by zero";
     return RET_ERROR;
