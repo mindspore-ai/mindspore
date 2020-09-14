@@ -110,7 +110,8 @@ if __name__ == '__main__':
     time_cb = TimeMonitor(data_size=batches_per_epoch)
     callbacks = [loss_cb, time_cb]
     config_ck = CheckpointConfig(save_checkpoint_steps=batches_per_epoch, keep_checkpoint_max=cfg.keep_checkpoint_max)
-    ckpoint_cb = ModelCheckpoint(prefix=f"shufflenet-rank{cfg.rank}", directory=cfg.ckpt_path, config=config_ck)
+    save_ckpt_path = os.path.join(cfg.ckpt_path, 'ckpt_' + str(cfg.rank) + '/')
+    ckpoint_cb = ModelCheckpoint(prefix=f"shufflenet-rank{cfg.rank}", directory=save_ckpt_path, config=config_ck)
     if args_opt.is_distributed & cfg.is_save_on_master:
         if cfg.rank == 0:
             callbacks.append(ckpoint_cb)

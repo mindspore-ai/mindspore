@@ -137,7 +137,7 @@ def main():
 
         # checkpoint
         ckpt_config = CheckpointConfig(save_checkpoint_steps=dataset_size * args_opt.save_checkpoint_epochs)
-        ckpoint_cb = ModelCheckpoint(prefix="yolov3", directory=None, config=ckpt_config)
+        ckpoint_cb = ModelCheckpoint(prefix="yolov3", directory='./ckpt_' + str(rank) + '/', config=ckpt_config)
 
         if args_opt.pre_trained:
             if args_opt.pre_trained_epoch_size <= 0:

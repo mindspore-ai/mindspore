@@ -291,8 +291,9 @@ def train():
         ckpt_max_num = args.max_epoch * args.steps_per_epoch // args.ckpt_interval
         ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval,
                                        keep_checkpoint_max=ckpt_max_num)
+        save_ckpt_path = os.path.join(args.outputs_dir, 'ckpt_' + str(args.rank) + '/')
         ckpt_cb = ModelCheckpoint(config=ckpt_config,
-                                  directory=args.outputs_dir,
+                                  directory=save_ckpt_path,
                                   prefix='{}'.format(args.rank))
         cb_params = _InternalCallbackParam()
         cb_params.train_network = network

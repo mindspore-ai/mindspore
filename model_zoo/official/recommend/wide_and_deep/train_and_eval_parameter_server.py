@@ -104,7 +104,8 @@ def train_and_eval(config):
     callback = LossCallBack(config=config)
     ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(), keep_checkpoint_max=5)
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train',
-                                 directory=config.ckpt_path, config=ckptconfig)
+                                 directory=config.ckpt_path + '/ckpt_' + str(get_rank()) + '/',
+                                 config=ckptconfig)
     callback_list = [TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback]
     if get_rank() == 0:
         callback_list.append(ckpoint_cb)
