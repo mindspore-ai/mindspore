@@ -466,6 +466,16 @@ def test_batch_exception_13():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "column_order is currently not implemented." in str(e)
 
+def test_batch_exception_14():
+    batch_size = 2
+    input_columns = ["num"]
+    data1 = ds.TFRecordDataset(DATA_DIR)
+    try:
+        _ = data1.batch(batch_size=batch_size, input_columns=input_columns)
+    except ValueError as e:
+        assert "per_batch_map and input_columns need to be passed in together." in str(e)
+
+
 if __name__ == '__main__':
     test_batch_01()
     test_batch_02()
@@ -491,4 +501,5 @@ if __name__ == '__main__':
     test_batch_exception_11()
     test_batch_exception_12()
     test_batch_exception_13()
+    test_batch_exception_14()
     logger.info('\n')
