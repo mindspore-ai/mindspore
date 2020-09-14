@@ -53,7 +53,6 @@ class AscendProfiler {
   std::vector<Event> events_;
   std::atomic_int counter_;
 };
-
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore

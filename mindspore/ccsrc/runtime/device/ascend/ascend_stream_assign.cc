@@ -155,72 +155,15 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
   MS_LOG(INFO) << "Common start from 0, common stream nums:" << resource_manager.get_cur_stream_num();
 
   if (exit_hcom) {
-    std::map<uint32_t, std::vector<CNodePtr>> graph_nodes_map;
-    for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
-      CNodePtr cur_cnode_ptr = cnode_ptr_list[i];
-      // node has been assigned stream before
-      if (AnfAlgo::GetStreamId(cur_cnode_ptr) != kInvalidStreamId) {
-        continue;
-      }
-
-      if (IsHcom(cur_cnode_ptr)) {
-        auto hcom_graph_id = AnfAlgo::GetGraphId(cur_cnode_ptr.get());
-        auto it = graph_nodes_map.find(hcom_graph_id);
-        if (it == graph_nodes_map.end()) {
-          graph_nodes_map[hcom_graph_id] = {cur_cnode_ptr};
-        } else {
-          it->second.emplace_back(cur_cnode_ptr);
-        }
-      }
-    }
-    MS_LOG(INFO) << "hcom diff graph id size:" << graph_nodes_map.size();
-    for (const auto &item : graph_nodes_map) {
-      bool new_graph = true;
-      auto graph_id = item.first;
-      hcom_graph_map_[graph_id] = {};
-      for (const auto &hcom_node_ptr : item.second) {
-        auto assigned_stream_id = AssignHcomStreamId(hcom_node_ptr, new_graph);
-        hcom_graph_map_[graph_id].emplace(assigned_stream_id);
-        new_graph = false;
-      }
-    }
-    MS_LOG(INFO) << "hcom stream nums : " << hcom_stream_map_.size();
+    AssignHcom(graph_ptr);
   }
 
   if (exit_independent) {
-    std::map<uint32_t, std::vector<CNodePtr>> graph_nodes_map;
-    for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
-      CNodePtr cur_cnode_ptr = cnode_ptr_list[i];
-      if (AnfAlgo::GetStreamId(cur_cnode_ptr) != kInvalidStreamId) {
-        continue;
-      }
-      if (AnfAlgo::IsIndependentNode(cur_cnode_ptr)) {
-        auto independent_graph_id = AnfAlgo::GetGraphId(cur_cnode_ptr.get());
-        auto it = graph_nodes_map.find(independent_graph_id);
-        if (it == graph_nodes_map.end()) {
-          graph_nodes_map[independent_graph_id] = {cur_cnode_ptr};
-        } else {
-          it->second.emplace_back(cur_cnode_ptr);
-        }
-      }
-    }
-
-    MS_LOG(INFO) << "independent diff graph id size:" << graph_nodes_map.size();
-    for (const auto &item : graph_nodes_map) {
-      bool new_graph = true;
-      auto graph_id = item.first;
-      independent_graph_map_[graph_id] = {};
-      for (const auto &independent_node_ptr : item.second) {
-        auto assigned_stream_id = AssignIndependentStreamId(independent_node_ptr, new_graph);
-        independent_graph_map_[graph_id].emplace(assigned_stream_id);
-        new_graph = false;
-      }
-    }
-    MS_LOG(INFO) << "stream nums:" << independent_stream_map_.size();
+    AssignIndependent(graph_ptr);
   }
 
   MS_LOG(INFO) << "After stream assign, total stream nums:" << resource_manager.get_cur_stream_num();
-}  // namespace ascend
+}
 
 void AscendStreamAssign::AssignCommonStreamId(const CNodePtr &cur_cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
@@ -249,6 +192,40 @@ void AscendStreamAssign::AssignCommonStreamId(const CNodePtr &cur_cnode_ptr) {
   }
 }
 
+void AscendStreamAssign::AssignHcom(const NotNull<KernelGraphPtr> &graph_ptr) {
+  auto cnode_ptr_list = graph_ptr->execution_order();
+  std::map<uint32_t, std::vector<CNodePtr>> graph_nodes_map;
+  for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
+    CNodePtr cur_cnode_ptr = cnode_ptr_list[i];
+    // node has been assigned stream before
+    if (AnfAlgo::GetStreamId(cur_cnode_ptr) != kInvalidStreamId) {
+      continue;
+    }
+
+    if (IsHcom(cur_cnode_ptr)) {
+      auto hcom_graph_id = AnfAlgo::GetGraphId(cur_cnode_ptr.get());
+      auto it = graph_nodes_map.find(hcom_graph_id);
+      if (it == graph_nodes_map.end()) {
+        graph_nodes_map[hcom_graph_id] = {cur_cnode_ptr};
+      } else {
+        it->second.emplace_back(cur_cnode_ptr);
+      }
+    }
+  }
+  MS_LOG(INFO) << "hcom diff graph id size:" << graph_nodes_map.size();
+  for (const auto &item : graph_nodes_map) {
+    bool new_graph = true;
+    auto graph_id = item.first;
+    hcom_graph_map_[graph_id] = {};
+    for (const auto &hcom_node_ptr : item.second) {
+      auto assigned_stream_id = AssignHcomStreamId(hcom_node_ptr, new_graph);
+      hcom_graph_map_[graph_id].emplace(assigned_stream_id);
+      new_graph = false;
+    }
+  }
+  MS_LOG(INFO) << "hcom stream nums : " << hcom_stream_map_.size();
+}
+
 uint32_t AscendStreamAssign::AssignHcomStreamId(const CNodePtr &cur_cnode_ptr, bool new_graph) {
   MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
   AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
@@ -273,6 +250,39 @@ uint32_t AscendStreamAssign::AssignHcomStreamId(const CNodePtr &cur_cnode_ptr, b
     }
   }
   return cur_hcom_stream_id;
+}
+
+void AscendStreamAssign::AssignIndependent(const NotNull<KernelGraphPtr> &graph_ptr) {
+  auto cnode_ptr_list = graph_ptr->execution_order();
+  std::map<uint32_t, std::vector<CNodePtr>> graph_nodes_map;
+  for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
+    CNodePtr cur_cnode_ptr = cnode_ptr_list[i];
+    if (AnfAlgo::GetStreamId(cur_cnode_ptr) != kInvalidStreamId) {
+      continue;
+    }
+    if (AnfAlgo::IsIndependentNode(cur_cnode_ptr)) {
+      auto independent_graph_id = AnfAlgo::GetGraphId(cur_cnode_ptr.get());
+      auto it = graph_nodes_map.find(independent_graph_id);
+      if (it == graph_nodes_map.end()) {
+        graph_nodes_map[independent_graph_id] = {cur_cnode_ptr};
+      } else {
+        it->second.emplace_back(cur_cnode_ptr);
+      }
+    }
+  }
+
+  MS_LOG(INFO) << "independent diff graph id size:" << graph_nodes_map.size();
+  for (const auto &item : graph_nodes_map) {
+    bool new_graph = true;
+    auto graph_id = item.first;
+    independent_graph_map_[graph_id] = {};
+    for (const auto &independent_node_ptr : item.second) {
+      auto assigned_stream_id = AssignIndependentStreamId(independent_node_ptr, new_graph);
+      independent_graph_map_[graph_id].emplace(assigned_stream_id);
+      new_graph = false;
+    }
+  }
+  MS_LOG(INFO) << "stream nums:" << independent_stream_map_.size();
 }
 
 uint32_t AscendStreamAssign::AssignIndependentStreamId(const CNodePtr &cur_cnode_ptr, bool new_graph) {
@@ -556,8 +566,8 @@ void AscendStreamAssign::InsertStreamActiveForIndependent(const NotNull<KernelGr
     }
   }
 
+  // Root graph independent stream size is not more than one, no need insert active
   if (independent_streams.size() <= 1) {
-    MS_LOG(INFO) << "Root graph independent stream size is not more than one, no need insert active";
     return;
   }
   std::vector<CNodePtr> update_cnode_list;
@@ -568,28 +578,23 @@ void AscendStreamAssign::InsertStreamActiveForIndependent(const NotNull<KernelGr
   std::copy(independent_streams.begin(), independent_streams.end(), std::back_inserter(streams));
   std::sort(streams.begin(), streams.end());
   uint32_t node_num = 0;
-  uint32_t cur_stream_id = kInvalidStreamId;
   for (size_t i = 0; i < exe_orders.size(); i++) {
     auto cur_cnode_ptr = exe_orders[i];
     update_cnode_list.emplace_back(cur_cnode_ptr);
-    bool flag = AnfAlgo::IsIndependentNode(cur_cnode_ptr);
-    if (!flag) {
+    if (!AnfAlgo::IsIndependentNode(cur_cnode_ptr)) {
       continue;
     }
 
-    auto graph_id = AnfAlgo::GetGraphId(cur_cnode_ptr.get());
-    if (graph_id != root_graph_id) {
+    if (AnfAlgo::GetGraphId(cur_cnode_ptr.get()) != root_graph_id) {
       continue;
     }
 
     node_num++;
-    cur_stream_id = AnfAlgo::GetStreamId(cur_cnode_ptr);
+    auto cur_stream_id = AnfAlgo::GetStreamId(cur_cnode_ptr);
     auto it = std::find(streams.begin(), streams.end(), cur_stream_id);
     if (it == streams.end()) {
       MS_LOG(EXCEPTION) << "Can't find independent stream id:" << cur_stream_id;
-    }
-
-    if (it == streams.end() - 1) {
+    } else if (it == streams.end() - 1) {
       std::copy(exe_orders.begin() + i + 1, exe_orders.end(), std::back_inserter(update_cnode_list));
       break;
     } else {
@@ -606,7 +611,6 @@ void AscendStreamAssign::InsertStreamActiveForIndependent(const NotNull<KernelGr
     }
   }
   graph_ptr->set_execution_order(update_cnode_list);
-  MS_LOG(INFO) << "End";
 }
 
 void AscendStreamAssign::GetProcessedStream(const NotNull<KernelGraphPtr> &graph_ptr) {
@@ -637,28 +641,36 @@ void AscendStreamAssign::GetProcessedStream(const NotNull<KernelGraphPtr> &graph
   }
 }
 
-void AscendStreamAssign::UpdateStreamSwitch(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &switch_ptr,
-                                            vector<CNodePtr> *orders) {
+bool AscendStreamAssign::CheckStreamSwitch(const CNodePtr &switch_ptr) {
   if (!AnfAlgo::HasNodeAttr(kStreamNeedActivedFirst, switch_ptr)) {
-    orders->emplace_back(switch_ptr);
-    return;
+    return false;
   }
+
   auto need_active = AnfAlgo::GetNodeAttr<bool>(switch_ptr, kStreamNeedActivedFirst);
   if (!need_active) {
-    orders->emplace_back(switch_ptr);
-    return;
+    return false;
   }
 
   if (!AnfAlgo::HasNodeAttr(kAttrStreamSwitchKind, switch_ptr)) {
-    orders->emplace_back(switch_ptr);
-    return;
+    return false;
   }
+
   auto kind = AnfAlgo::GetNodeAttr<uint32_t>(switch_ptr, kAttrStreamSwitchKind);
   if (kind == kEosStreamSwitch || kind == kGetNextStreamSwitch) {
+    return false;
+  }
+
+  return true;
+}
+
+void AscendStreamAssign::UpdateStreamSwitch(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &switch_ptr,
+                                            vector<CNodePtr> *orders) {
+  if (!CheckStreamSwitch(switch_ptr)) {
     orders->emplace_back(switch_ptr);
     return;
   }
 
+  auto kind = AnfAlgo::GetNodeAttr<uint32_t>(switch_ptr, kAttrStreamSwitchKind);
   if (kind == kIndependentStreamSwitch) {
     bool independent_empty = independent_stream_map_.empty();
     // if indepdent empty: delete independent streamswitch
@@ -679,23 +691,18 @@ void AscendStreamAssign::UpdateStreamSwitch(const NotNull<KernelGraphPtr> &graph
     for (const auto &item : independent_stream_map_) {
       processed_streams_.emplace(item.first);
     }
-    return;
-  }
-
-  if (kind == kFpBpStreamSwitch) {
-    bool hcom_empty = hcom_stream_map_.empty();
-    if (hcom_empty) {
+  } else if (kind == kFpBpStreamSwitch) {
+    if (hcom_stream_map_.empty()) {
       orders->emplace_back(switch_ptr);
       return;
     }
     if (!AnfAlgo::HasNodeAttr(kAttrTrueBranchStream, switch_ptr)) {
+      // FpBp StreamSwitch has no true branch attr
       orders->emplace_back(switch_ptr);
-      MS_LOG(WARNING) << "FpBp StreamSwitch has no true branch attr";
       return;
     }
     auto true_stream_id = AnfAlgo::GetNodeAttr<uint32_t>(switch_ptr, kAttrTrueBranchStream);
-    MS_LOG(INFO) << "Streamswtich stream id:" << AnfAlgo::GetStreamId(switch_ptr)
-                 << "; active stream id:" << true_stream_id;
+    MS_LOG(INFO) << "Swtich stream id:" << AnfAlgo::GetStreamId(switch_ptr) << "; active stream id:" << true_stream_id;
     CNodePtr active_ptr = KernelAdjust::GetInstance().CreateStreamActiveOp(graph_ptr);
     AnfAlgo::SetStreamId(true_stream_id, active_ptr.get());
     vector<uint32_t> active_ids;
@@ -1633,8 +1640,7 @@ StreamActiveKind AscendStreamAssign::GetStreamActiveKind(const NotNull<KernelGra
 
   for (size_t i = index + 1; i < exe_orders.size(); i++) {
     auto cnode = exe_orders[i];
-    auto name = AnfAlgo::GetCNodeName(cnode);
-    if (name == kSendOpName || name == kRecvOpName) {
+    if (AnfAlgo::GetCNodeName(cnode) == kSendOpName || AnfAlgo::GetCNodeName(cnode) == kRecvOpName) {
       continue;
     }
 

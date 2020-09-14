@@ -123,7 +123,9 @@ class AscendStreamAssign {
   void CheckEventAssign(const NotNull<KernelGraphPtr> &graph_ptr);
   void AssignAllNodesStream(const NotNull<KernelGraphPtr> &graph_ptr);
   void AssignCommonStreamId(const CNodePtr &cur_cnode_ptr);
+  void AssignHcom(const NotNull<KernelGraphPtr> &graph_ptr);
   uint32_t AssignHcomStreamId(const CNodePtr &cur_cnode_ptr, bool new_graph);
+  void AssignIndependent(const NotNull<KernelGraphPtr> &graph_ptr);
   uint32_t AssignIndependentStreamId(const CNodePtr &cur_cnode_ptr, bool new_graph);
   void UpdateAtomicAddrCleanStreamId(const NotNull<KernelGraphPtr> &graph_ptr);
   void FindHcomParallelStreams(const NotNull<KernelGraphPtr> &graph_ptr);
@@ -137,6 +139,7 @@ class AscendStreamAssign {
                                 std::map<uint32_t, std::set<uint32_t>> other_graph);
   void UpdateStreamSwitch(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &switch_ptr,
                           vector<CNodePtr> *orders);
+  bool CheckStreamSwitch(const CNodePtr &switch_ptr);
   void InsertEventForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertCtrlForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventForHcomParallel(const NotNull<KernelGraphPtr> &graph_ptr);
