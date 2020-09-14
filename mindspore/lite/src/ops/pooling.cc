@@ -147,7 +147,7 @@ int Pooling::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
   auto val_offset =
     schema::CreatePooling(*fbb, attr->format(), attr->poolingMode(), attr->global(), attr->windowW(), attr->windowH(),
                           attr->strideW(), attr->strideH(), attr->padMode(), attr->padUp(), attr->padDown(),
-                          attr->padLeft(), attr->padRight(), attr->roundMode());
+                          attr->padLeft(), attr->padRight(), attr->roundMode(), attr->activationType());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Pooling, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
