@@ -28,7 +28,7 @@ class ScalarCast(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (scalar) - The input scalar. Only constant value is allowed.
-        - **input_y** (mindspore.dtype) - The type should cast to be. Only constant value is allowed.
+        - **input_y** (mindspore.dtype) - The type to be cast. Only constant value is allowed.
 
     Outputs:
         Scalar. The type is the same as the python type corresponding to `input_y`.

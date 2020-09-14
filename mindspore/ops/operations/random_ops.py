@@ -185,11 +185,11 @@ class Poisson(PrimitiveWithInfer):
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
-        - **mean** (Tensor) - μ parameter the distribution was constructed with.
-          The parameter defines mean number of occurrences of the event. With float32 data type.
+        - **mean** (Tensor) - μ, parameter which the distribution was constructed with.
+          The parameter defines the mean number of occurrences of the event, with float32 data type.
 
     Outputs:
-        Tensor. The shape should be the broadcasted shape of Input "shape" and shape of mean.
+        Tensor. Its shape should be the broadcasted shape of `shape` and the shape of `mean`.
         The dtype is int32.
 
     Examples:
@@ -325,9 +325,10 @@ class UniformReal(PrimitiveWithInfer):
 
 class RandomChoiceWithMask(PrimitiveWithInfer):
     """
-    Generates a random samply as index tensor with a mask tensor from a given tensor.
+    Generates a random sample as index tensor with a mask tensor from a given tensor.
 
-    The input must be a tensor of rank >= 1. If its rank >= 2, the first dimension specify the number of sample.
+    The input must be a tensor of rank not less than 1. If its rank is greater than or equal to 2,
+    the first dimension specifies the number of samples.
     The index tensor and the mask tensor have the fixed shapes. The index tensor denotes the index of the nonzero
     sample, while the mask tensor denotes which elements in the index tensor are valid.
 
@@ -337,7 +338,8 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         seed2 (int): Random seed2. Default: 0.
 
     Inputs:
-        - **input_x** (Tensor[bool]) - The input tensor. The input tensor rank should be >= 1 and <= 5.
+        - **input_x** (Tensor[bool]) - The input tensor.
+            The input tensor rank should be greater than or equal to 1 and less than or equal to 5.
 
     Outputs:
         Two tensors, the first one is the index tensor and the other one is the mask tensor.
@@ -374,8 +376,8 @@ class RandomCategorical(PrimitiveWithInfer):
     Generates random samples from a given categorical distribution tensor.
 
     Args:
-        dtype (mindspore.dtype): The type of output. Its value should be one of [mindspore.int16,
-            mindspore.int32, mindspore.int64]. Default: mindspore.int64.
+        dtype (mindspore.dtype): The type of output. Its value should be one of mindspore.int16,
+            mindspore.int32 and mindspore.int64. Default: mindspore.int64.
 
     Inputs:
         - **logits** (Tensor) - The input tensor. 2-D Tensor with shape [batch_size, num_classes].
@@ -437,16 +439,17 @@ class Multinomial(PrimitiveWithInfer):
         The rows of input do not need to sum to one (in which case we use the values as weights),
         but must be non-negative, finite and have a non-zero sum.
     Args:
-        seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
+        seed (int): Seed data is used as entropy source for Random number engines to generate pseudo-random numbers.
           Must be non-negative. Default: 0.
         replacement(bool): Whether to draw with replacement or not.
 
     Inputs:
-        - **input** (Tensor[float32]) - the input tensor containing the cumsum of probabilities, must be 1 or 2 dims.
+        - **input** (Tensor[float32]) - the input tensor containing the cumsum of probabilities, must be 1 or 2
+            dimensions.
         - **num_samples** (int32) - number of samples to draw.
 
     Outputs:
-        Tensor. have the same rows with input, each row has num_samples sampled indices.
+        Tensor with the same rows as input, each row has num_samples sampled indices.
 
     Examples:
         >>> input = Tensor([0., 9., 4., 0.], mstype.float32)

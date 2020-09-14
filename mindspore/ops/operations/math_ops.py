@@ -132,7 +132,7 @@ class TensorAdd(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> add = P.TensorAdd()
@@ -321,7 +321,7 @@ class ReduceMean(_Reduce):
 
     Args:
         keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                          If False, don't keep these dimensions. Default : False.
+                          If False, don't keep these dimensions. Default: False.
 
     Inputs:
         - **input_x** (Tensor[Number]) - The input tensor.
@@ -329,13 +329,13 @@ class ReduceMean(_Reduce):
           Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same dtype as the 'input_x'.
+        Tensor, has the same dtype as the `input_x`.
 
-        - If axis is (), and keep_dims is false,
+        - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the mean of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is false,
+        - If axis is int, set as 2, and keep_dims is False,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is false,
+        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
@@ -353,7 +353,7 @@ class ReduceSum(_Reduce):
 
     Args:
         keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                          If False, don't keep these dimensions. Default : False.
+                          If False, don't keep these dimensions. Default: False.
 
     Inputs:
          - **input_x** (Tensor[Number]) - The input tensor.
@@ -361,13 +361,13 @@ class ReduceSum(_Reduce):
            Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same dtype as the 'input_x'.
+        Tensor, has the same dtype as the `input_x`.
 
-        - If axis is (), and keep_dims is false,
+        - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the sum of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is false,
+        - If axis is int, set as 2, and keep_dims is False,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is false,
+        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
@@ -402,11 +402,11 @@ class ReduceAll(_Reduce):
     Outputs:
         Tensor, the dtype is bool.
 
-        - If axis is (), and keep_dims is false,
-          the output is a 0-D tensor representing the "logical and" of of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is false,
-          and keep_dims is false, the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is false,
+        - If axis is (), and keep_dims is False,
+          the output is a 0-D tensor representing the "logical and" of all elements in the input tensor.
+        - If axis is int, set as 2, and keep_dims is alse,
+          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
+        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
@@ -421,7 +421,7 @@ class ReduceAll(_Reduce):
 
 class ReduceAny(_Reduce):
     """
-    Reduce a dimension of a tensor by the "logical or" of all elements in the dimension.
+    Reduce a dimension of a tensor by the "logical OR" of all elements in the dimension.
 
     The dtype of the tensor to be reduced is bool.
 
@@ -438,11 +438,11 @@ class ReduceAny(_Reduce):
     Outputs:
         Tensor, the dtype is bool.
 
-        - If axis is (), and keep_dims is false,
-          the output is a 0-D tensor representing the "logical or" of of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is false,
-          and keep_dims is false, the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is false,
+        - If axis is (), and keep_dims is False,
+          the output is a 0-D tensor representing the "logical or" of all elements in the input tensor.
+        - If axis is int, set as 2, and keep_dims is False,
+          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
+        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
@@ -472,13 +472,13 @@ class ReduceMax(_Reduce):
            Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same dtype as the 'input_x'.
+        Tensor, has the same dtype as the `input_x`.
 
-        - If axis is (), and keep_dims is false,
+        - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the maximum of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is false,
+        - If axis is int, set as 2, and keep_dims is False,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is false,
+        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
@@ -511,13 +511,13 @@ class ReduceMin(_Reduce):
           Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same dtype as the 'input_x'.
+        Tensor, has the same dtype as the `input_x`.
 
-        - If axis is (), and keep_dims is false,
+        - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the minimum of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is false,
+        - If axis is int, set as 2, and keep_dims is False,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is false,
+        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
@@ -544,13 +544,13 @@ class ReduceProd(_Reduce):
           Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same dtype as the 'input_x'.
+        Tensor, has the same dtype as the `input_x`.
 
-        - If axis is (), and keep_dims is false,
+        - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is false,
+        - If axis is int, set as 2, and keep_dims is False,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is false,
+        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
@@ -574,7 +574,7 @@ class CumProd(PrimitiveWithInfer):
           Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same shape and dtype as the 'input_x'.
+        Tensor, has the same shape and dtype as the `input_x`.
 
     Examples:
         >>> input_x = Tensor(np.array([a, b, c]).astype(np.float32))
@@ -1086,7 +1086,7 @@ class Sub(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -1125,7 +1125,7 @@ class Mul(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -1165,7 +1165,7 @@ class SquaredDifference(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -1351,7 +1351,7 @@ class Pow(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
@@ -1620,7 +1620,7 @@ class Erfc(PrimitiveWithInfer):
 
 class Minimum(_MathBinaryOp):
     """
-    Computes the element-wise minimum of input tensors.
+    Computes the minimum of input tensors element-wise.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -1637,7 +1637,7 @@ class Minimum(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
@@ -1659,7 +1659,7 @@ class Minimum(_MathBinaryOp):
 
 class Maximum(_MathBinaryOp):
     """
-    Computes the element-wise maximum of input tensors.
+    Computes the maximum of input tensors element-wise.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -1676,7 +1676,7 @@ class Maximum(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
@@ -1715,7 +1715,7 @@ class RealDiv(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -1755,7 +1755,7 @@ class Div(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
         ValueError: When `input_x` and `input_y` do not have the same dtype.
@@ -1796,7 +1796,7 @@ class DivNoNan(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
         ValueError: When `input_x` and `input_y` do not have the same dtype.
@@ -1839,7 +1839,7 @@ class FloorDiv(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -1870,7 +1870,7 @@ class TruncateDiv(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -1900,7 +1900,7 @@ class TruncateMod(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -1928,7 +1928,7 @@ class Mod(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
         ValueError: When `input_x` and `input_y` are not the same dtype.
@@ -1996,7 +1996,7 @@ class FloorMod(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -2055,7 +2055,7 @@ class Xdivy(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.float32)
@@ -2090,7 +2090,7 @@ class Xlogy(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with high precision or high digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
@@ -2776,7 +2776,7 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
     Updates the flag which is the output tensor of `NPUAllocFloatStatus` with latest overflow status.
 
     The flag is a tensor whose shape is `(8,)` and data type is `mindspore.dtype.float32`.
-    If the sum of the flag equals 0, there is no overflow happened. If the sum of the flag is bigger than 0, there
+    If the sum of the flag equals to 0, there is no overflow happened. If the sum of the flag is bigger than 0, there
     is overflow happened.
 
     Inputs:
@@ -2989,8 +2989,8 @@ class NMSWithMask(PrimitiveWithInfer):
     Outputs:
         tuple[Tensor], tuple of three tensors, they are selected_boxes, selected_idx and selected_mask.
 
-        - **selected_boxes** (Tensor) - The shape of tensor is :math:`(N, 5)`. Bounding boxes
-          list after non-max suppression calculation.
+        - **selected_boxes** (Tensor) - The shape of tensor is :math:`(N, 5)`. The list of bounding boxes
+          after non-max suppression calculation.
         - **selected_idx** (Tensor) - The shape of tensor is :math:`(N,)`. The indexes list of
           valid input bounding boxes.
         - **selected_mask** (Tensor) - The shape of tensor is :math:`(N,)`. A mask list of

@@ -298,7 +298,7 @@ class ReLU6(PrimitiveWithInfer):
     It returns :math:`\min(\max(0,x), 6)` element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. With float16 or float32 data type.
+        - **input_x** (Tensor) - The input tensor, with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -1238,7 +1238,7 @@ class MaxPool(_Pool):
 
 class MaxPoolWithArgmax(_Pool):
     r"""
-    Performs max pooling on the input Tensor and return both max values and indices.
+    Perform max pooling on the input Tensor and return both max values and indices.
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool outputs
     regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
@@ -1272,7 +1272,7 @@ class MaxPoolWithArgmax(_Pool):
           Data type should be float16 or float32.
 
     Outputs:
-        Tuple of 2 Tensor, the maxpool result and where max values from.
+        Tuple of 2 Tensors, representing the maxpool result and where the max values are generated.
 
         - **output** (Tensor) -  Maxpooling result, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
         - **mask** (Tensor) -  Max values' index represented by the mask.
@@ -1557,7 +1557,7 @@ class TopK(PrimitiveWithInfer):
         - **k** (int) - Number of top elements to be computed along the last dimension, constant input is needed.
 
     Outputs:
-        Tuple of 2 Tensor, the values and the indices.
+        Tuple of 2 Tensors, the values and the indices.
 
         - **values** (Tensor) - The `k` largest elements along each last dimensional slice.
         - **indices** (Tensor) - The indices of values within the last dimension of input.
@@ -1609,7 +1609,7 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         - **labels** (Tensor) - Ground truth labels, with shape :math:`(N, C)`, has the same data type with `logits`.
 
     Outputs:
-        Tuple of 2 Tensor, the loss shape is `(N,)`, and the dlogits with the same shape as `logits`.
+        Tuple of 2 Tensors, the loss shape is `(N,)`, and the dlogits with the same shape as `logits`.
 
     Examples:
         >>> logits = Tensor([[2, 4, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
@@ -1961,7 +1961,7 @@ class SGD(PrimitiveWithInfer):
         - **accum** (Tensor) - Accum(velocity) to be updated. With float16 or float32 data type.
         - **momentum** (Tensor) - Momentum, a scalar tensor with float16 or float32 data type.
           e.g. Tensor(0.1, mindspore.float32).
-        - **stat** (Tensor) - States to be updated with the same shape as gradient. With float16 or float32 data type.
+        - **stat** (Tensor) - States to be updated with the same shape as gradient, with float16 or float32 data type.
 
     Outputs:
         Tensor, parameters to be updated.
@@ -2397,9 +2397,9 @@ class ResizeBilinear(PrimitiveWithInfer):
     can be represented by different data types, but the data types of output images are always float32.
 
     Args:
-        size (tuple[int]): A tuple of 2 int elements `(new_height, new_width)`, the new size for the images.
-        align_corners (bool): If it's true, rescale input by `(new_height - 1) / (height - 1)`,
-                       which exactly aligns the 4 corners of images and resized images. If it's false,
+        size (tuple[int]): A tuple of 2 int elements `(new_height, new_width)`, the new size of the images.
+        align_corners (bool): If True, rescale input by `(new_height - 1) / (height - 1)`,
+                       which exactly aligns the 4 corners of images and resized images. If False,
                        rescale by `new_height / height`. Default: False.
 
     Inputs:
@@ -2456,7 +2456,7 @@ class OneHot(PrimitiveWithInfer):
           Has the same data type with as `on_value`.
 
     Outputs:
-        Tensor, one_hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
+        Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
 
     Examples:
         >>> indices = Tensor(np.array([0, 1, 2]), mindspore.int32)
@@ -2590,13 +2590,13 @@ class PReLU(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Tensor) - Float tensor, representing the output of the preview layer.
           With data type of float16 or float32.
-        - **weight** (Tensor) -  Float Tensor, w > 0, there is only two shapes are legitimate,
-          1 or the number of channels at input. With data type of float16 or float32.
+        - **weight** (Tensor) -  Float Tensor, w > 0, there are only two shapes are legitimate,
+          1 or the number of channels of the input. With data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type as `input_x`.
 
-    Detailed information, please refer to `nn.PReLU`.
+    For detailed information, please refer to `nn.PReLU`.
 
     Examples:
         >>> import mindspore
@@ -2783,7 +2783,7 @@ class Pad(PrimitiveWithInfer):
         paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
             paddings are int type. For the input in `D` th dimension, paddings[D, 0] indicates how many sizes to be
             extended ahead of the input tensor in the `D` th dimension, and paddings[D, 1] indicates how many sizes to
-            be extended behind of the input tensor in the `D` th dimension.
+            be extended behind the input tensor in the `D` th dimension.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
@@ -2833,21 +2833,21 @@ class MirrorPad(PrimitiveWithInfer):
     Pads the input tensor according to the paddings and mode.
 
     Args:
-        mode (str): Specifies padding mode. The optional values are "REFLECT", "SYMMETRIC".
+        mode (str): Specifies the padding mode. The optional values are "REFLECT" and "SYMMETRIC".
             Default: "REFLECT".
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
         - **paddings** (Tensor) - The paddings tensor. The value of `paddings` is a matrix(list),
           and its shape is (N, 2). N is the rank of input data. All elements of paddings
-          are int type. For the input in `D` th dimension, paddings[D, 0] indicates how many sizes to be
+          are int type. For the input in the `D` th dimension, paddings[D, 0] indicates how many sizes to be
           extended ahead of the input tensor in the `D` th dimension, and paddings[D, 1] indicates how many sizes to
-          be extended behind of the input tensor in the `D` th dimension.
+          be extended behind the input tensor in the `D` th dimension.
 
     Outputs:
         Tensor, the tensor after padding.
 
-        - If `mode` is "REFLECT", it uses a way of symmetrical copying throught the axis of symmetry to fill in.
+        - If `mode` is "REFLECT", it uses a way of symmetrical copying through the axis of symmetry to fill in.
           If the `input_x` is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the
           Outputs is [[6,5,4,5,6,5,4],[3,2,1,2,3,2,1],[6,5,4,5,6,5,4],[9,8,7,8,9,8,7],[6,5,4,5,6,5,4]].
         - If `mode` is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
@@ -3929,7 +3929,7 @@ class ApplyAdagrad(PrimitiveWithInfer):
           With float32 or float16 data type.
 
     Outputs:
-        Tuple of 2 Tensor, the updated parameters.
+        Tuple of 2 Tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
@@ -4012,7 +4012,7 @@ class ApplyAdagradV2(PrimitiveWithInfer):
           With float16 or float32 data type.
 
     Outputs:
-        Tuple of 2 Tensor, the updated parameters.
+        Tuple of 2 Tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `m`.
@@ -4096,7 +4096,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
           The shape of `indices` must be the same as `grad` in first dimension, the type must be int32.
 
     Outputs:
-        Tuple of 2 Tensor, the updated parameters.
+        Tuple of 2 Tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
@@ -4183,7 +4183,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
           The shape of `indices` must be the same as `grad` in first dimension, the type must be int32.
 
     Outputs:
-        Tuple of 2 Tensor, the updated parameters.
+        Tuple of 2 Tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
@@ -4273,7 +4273,7 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
         - **grad** (Tensor) - Gradient with the same shape and dtype as `var`.
 
     Outputs:
-        Tuple of 2 Tensor, the updated parameters.
+        Tuple of 2 Tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
@@ -4377,7 +4377,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
 
     Outputs:
-        Tuple of 2 Tensor, the updated parameters.
+        Tuple of 2 Tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
@@ -4468,7 +4468,7 @@ class ApplyAddSign(PrimitiveWithInfer):
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
 
     Outputs:
-        Tuple of 2 Tensor, the updated parameters.
+        Tuple of 2 Tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **m** (Tensor) - The same shape and data type as `m`.
@@ -4576,7 +4576,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
 
     Outputs:
-        Tuple of 2 Tensor, the updated parameters.
+        Tuple of 2 Tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **m** (Tensor) - The same shape and data type as `m`.
@@ -5162,7 +5162,7 @@ class ConfusionMulGrad(PrimitiveWithInfer):
             Default:(), reduce all dimensions. Only constant value is allowed.
         keep_dims (bool):
             - If true, keep these reduced dimensions and the length as 1.
-            - If false, don't keep these dimensions. Default:False.
+            - If false, don't keep these dimensions. Default: False.
 
     Inputs:
         - **input_0** (Tensor) - The input Tensor.
@@ -5173,11 +5173,11 @@ class ConfusionMulGrad(PrimitiveWithInfer):
         - **output_0** (Tensor) - The same shape as `input0`.
         - **output_1** (Tensor)
 
-            - If axis is (), and keep_dims is false, the output is a 0-D array representing
+            - If axis is (), and keep_dims is False, the output is a 0-D array representing
               the sum of all elements in the input array.
-            - If axis is int, set as 2, and keep_dims is false,
+            - If axis is int, set as 2, and keep_dims is False,
               the shape of output is :math:`(x_1,x_3,...,x_R)`.
-            - If axis is tuple(int), set as (2,3), and keep_dims is false,
+            - If axis is tuple(int), set as (2,3), and keep_dims is False,
               the shape of output is :math:`(x_1,x_4,...x_R)`.
 
     Examples:

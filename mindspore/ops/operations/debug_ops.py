@@ -42,7 +42,7 @@ SUMMARY_RETURN_VALUE = {'dtype': mstype.int32, 'shape': [1], 'value': None}
 
 class ScalarSummary(PrimitiveWithInfer):
     """
-    Output scalar to protocol buffer through scalar summary operator.
+    Output a scalar to a protocol buffer through a scalar summary operator.
 
     Inputs:
         - **name** (str) - The name of the input variable, it should not be an empty string.

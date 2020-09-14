@@ -310,7 +310,7 @@ class ReduceMean(GraphKernel):
 
     Args:
         keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                          If False, don't keep these dimensions. Default : False.
+                          If False, don't keep these dimensions. Default: False.
 
     Inputs:
         - **input_x** (Tensor[Number]) - The input tensor.
@@ -318,13 +318,13 @@ class ReduceMean(GraphKernel):
           Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same dtype as the 'input_x'.
+        Tensor, has the same dtype as the `input_x`.
 
-        - If axis is (), and keep_dims is false,
+        - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the sum of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is false,
+        - If axis is int, set as 2, and keep_dims is False,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is false,
+        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
@@ -394,7 +394,7 @@ class SoftmaxCrossEntropyWithLogits(GraphKernel):
         - **labels** (Tensor) - Ground truth labels, with shape :math:`(N, C)`.
 
     Outputs:
-        Tuple of 2 Tensor, the loss shape is `(N,)`, and the dlogits with the same shape as `logits`.
+        Tuple of 2 Tensors, the loss shape is `(N,)`, and the dlogits with the same shape as `logits`.
 
     Examples:
         >>> logits = Tensor([[2, 4, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
@@ -610,7 +610,7 @@ class LayerNormBetaGammaBackprop(GraphKernel):
         - **input_gamma**(Tensor) - The fourth input of the forward function of LayerNorm.
 
     Outputs:
-        Tuple of 2 Tensor, the backprop outputs.
+        Tuple of 2 Tensors, the backprop outputs.
 
         - **pd_beta**(Tensor) - The first item of return value of this operator, will be used as
                     the second item of the LayerNorm's backprop function.
@@ -1137,12 +1137,12 @@ class LambNextMV(GraphKernel):
         - **inputsx3** (Tensor) - The thirteenth input tensor to be computed.
 
     Outputs:
-        Tuple of 2 Tensor.
+        Tuple of 2 Tensors.
 
         - **add3** (Tensor) - the shape is the same as the one after broadcasting, and the data type is
-                              the one with high precision or high digits among the inputs.
+                              the one with higher precision or higher digits among the inputs.
         - **realdiv4** (Tensor) - the shape is the same as the one after broadcasting, and the data type is
-                                  the one with high precision or high digits among the inputs.
+                                  the one with higher precision or higher digits among the inputs.
 
     Examples:
         >>> lamb_next_mv = LambNextMV()
