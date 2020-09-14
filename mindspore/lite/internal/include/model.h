@@ -182,6 +182,7 @@ enum KernelType {
     NegGrad,
     LogGrad,
     BatchToSpaceND,
+    END,
 };
 
 enum ActivationType {

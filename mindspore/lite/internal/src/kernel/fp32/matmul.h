@@ -20,7 +20,8 @@
 #include "internal/include/model.h"
 #include "src/runtime/allocator.h"
 
-int DoMatMul(TensorPtrVector in_tensors, TensorPtrVector out_tensors, Node *node,
+int DoMatMulInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param);
+int DoMatMul(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
              mindspore::lite::Allocator *allocator);
 
 #endif  // MINDSPORE_LITE_INTERNAL_SRC_KERNEL_FP32_MATMUL_H_

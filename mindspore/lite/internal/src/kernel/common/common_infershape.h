@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_INTERNAL_SRC_KERNEL_FP32_ARITHMETIC_SELF_H_
-#define MINDSPORE_LITE_INTERNAL_SRC_KERNEL_FP32_ARITHMETIC_SELF_H_
+#ifndef MINDSPORE_LITE_INTERNAL_SRC_KERNEL_COMMON_INFERSHAPE_H_
+#define MINDSPORE_LITE_INTERNAL_SRC_KERNEL_COMMON_INFERSHAPE_H_
 
 #include "internal/include/model.h"
-#include "src/runtime/allocator.h"
 
-int DoArithmeticSelfInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors,
-                               OpParameter *param);
-int DoArithmeticSelf(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
-                     mindspore::lite::Allocator *allocator);
+int DoCommonInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors);
 
-#endif  // MINDSPORE_LITE_INTERNAL_SRC_KERNEL_FP32_ARITHMETIC_SELF_H_
+#endif  // MINDSPORE_LITE_INTERNAL_SRC_KERNEL_COMMON_INFERSHAPE_H_

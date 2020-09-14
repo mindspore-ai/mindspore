@@ -20,7 +20,8 @@
 #include "internal/include/model.h"
 #include "src/runtime/allocator.h"
 
-int DoActivation(TensorPtrVector in_tensors, TensorPtrVector out_tensors, Node *node,
+int DoActivationInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param);
+int DoActivation(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
                  mindspore::lite::Allocator *allocator);
 
 #endif  // MINDSPORE_LITE_INTERNAL_SRC_KERNEL_FP32_ACTIVATION_H_

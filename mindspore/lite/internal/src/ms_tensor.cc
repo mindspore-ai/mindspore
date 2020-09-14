@@ -17,15 +17,24 @@
 #include <vector>
 #include <numeric>
 #include <string>
-#include <functional>
 #include "internal/include/ms_tensor.h"
 MSTensor *CreateTensor(TypeId data_type, const ShapeVector &shape) {
-  MSTensor *tensor = new MSTensor();
+  MSTensor *tensor = (MSTensor *)malloc(sizeof(MSTensor));
+  if (tensor == NULL) {
+    return NULL;
+  }
   tensor->shape_ = shape;
   tensor->data_type_ = data_type;
   return tensor;
 }
-int MSTensor::ElementsNum() const { return std::accumulate(shape_.begin(), shape_.end(), 1LL, std::multiplies<int>()); }
+
+int MSTensor::ElementsNum() const {
+  int result = 1;
+  for (size_t i = 0; i < shape_.size(); ++i) {
+    result *= shape_.at(i);
+  }
+  return result;
+}
 
 size_t MSTensor::Size() const {
   size_t size = 0;

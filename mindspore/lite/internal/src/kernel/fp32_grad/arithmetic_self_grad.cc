@@ -15,13 +15,19 @@
  */
 
 #include "internal/src/kernel/fp32_grad/arithmetic_self_grad.h"
+#include "internal/src/kernel/common/common_infershape.h"
 #include "internal/include/errorcode.h"
 #include "internal/include/ms_tensor.h"
 #include "utils/log_adapter.h"
 #include "nnacl/fp32/arithmetic_self.h"
 #include "nnacl/fp32/arithmetic.h"
 
-int DoArithmeticGradSelf(TensorPtrVector in_tensors, TensorPtrVector out_tensors, Node *node,
+int DoArithmeticSelfGradInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors,
+                                   OpParameter *param) {
+  return DoCommonInferShape(in_tensors, out_tensors);
+}
+
+int DoArithmeticSelfGrad(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
                          mindspore::lite::Allocator *allocator) {
   size_t data_size = in_tensors[0]->ElementsNum();
   OpParameter *param = node->primitive_;

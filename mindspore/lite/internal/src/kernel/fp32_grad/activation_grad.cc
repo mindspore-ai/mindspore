@@ -15,13 +15,19 @@
  */
 
 #include "internal/src/kernel/fp32_grad/activation_grad.h"
+#include "internal/src/kernel/common/common_infershape.h"
 #include "internal/include/errorcode.h"
 #include "internal/include/ms_tensor.h"
 #include "nnacl/fp32_grad/activation_grad.h"
 #include "utils/log_adapter.h"
 #include "nnacl/errorcode.h"
 
-int DoActivationGrad(TensorPtrVector in_tensors, TensorPtrVector out_tensors, Node *node,
+int DoActivationGradInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors,
+                               OpParameter *param) {
+  return DoCommonInferShape(in_tensors, out_tensors);
+}
+
+int DoActivationGrad(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
                      mindspore::lite::Allocator *allocator) {
   ActivationGradParameter *param = (ActivationGradParameter *)node->primitive_;
   int ret = RET_OK;
