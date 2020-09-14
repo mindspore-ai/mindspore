@@ -203,6 +203,9 @@ class DEPipeline {
   Status ParseBuildVocabOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
   Status StopSend();
+
+  Status ContinueSend();
+
   Status ParseBuildSentencePieceVocabOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
                                         std::shared_ptr<DatasetOp> *bottom);
 

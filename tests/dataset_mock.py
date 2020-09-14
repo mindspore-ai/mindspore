@@ -64,6 +64,9 @@ class MindData:
     def stop_send(self):
         pass
 
+    def continue_send(self):
+        pass
+
     def __len__(self):
         return self._size
 

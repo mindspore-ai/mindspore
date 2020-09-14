@@ -153,6 +153,10 @@ Status DeviceQueueOp::SendDataToAscend() {
     }
     if (current_buffer->eoe() && send_epoch_end_) {
       TensorRow currRow;
+      while (stop_send_) {
+        MS_LOG(DEBUG) << "stop_send flag is set, waiting for continue signal...";
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
+      }
       auto status =
         tdtInstancePtr->hostPush(currRow, true, channel_name_, isProfilingEnable, tdt_cost, tdt::TDT_END_OF_SEQUENCE);
       if (status == TdtStatus::FAILED) {
@@ -163,6 +167,8 @@ Status DeviceQueueOp::SendDataToAscend() {
           return Status(StatusCode::kTDTPushFailure, "TDT Push Failed");
         }
       }
+      MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
+      stop_send_ = true;
     }
     if (isProfilingEnable) {
       connector_size = ChildOpConnectorSize();

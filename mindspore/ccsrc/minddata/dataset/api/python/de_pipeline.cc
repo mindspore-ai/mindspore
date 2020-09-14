@@ -291,6 +291,16 @@ Status DEPipeline::StopSend() {
   return Status::OK();
 }
 
+Status DEPipeline::ContinueSend() {
+  // tree_.root() must be DeviceQueueOp
+  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(tree_->root().get());
+  if (op == nullptr) {
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "ContinueSend only supported by DeviceQueueOp");
+  }
+  op->ContinueSend();
+  return Status::OK();
+}
+
 int ToInt(const py::handle &handle) { return py::reinterpret_borrow<py::int_>(handle); }
 
 bool ToBool(const py::handle &handle) { return py::reinterpret_borrow<py::bool_>(handle); }
