@@ -367,6 +367,43 @@ function Run_arm64() {
         fi
 	#sleep 1
     done < ${models_tflite_gpu_config}
+
+    # Run mindir converted models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_benchmark_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}' pass'
+            echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}' failed'
+            echo ${run_result} >> ${run_benchmark_result_file}
+            return 1
+        fi
+        # run benchmark test without clib data
+        echo ${model_name} >> "${run_benchmark_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "{run_benchmark_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}' pass'
+            echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}' failed'
+            echo ${run_result} >> ${run_benchmark_result_file}
+            return 1
+        fi
+	#sleep 1
+    done < ${models_mindspore_config}
+
 }
 
 # Print start msg before run testcase
