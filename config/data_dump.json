@@ -4,7 +4,7 @@
     "path": "/test",
     "net_name": "ResNet50",
     "iteration": 0,
-    "input_output": 0,
+    "input_output": 2,
     "kernels": ["Default/Conv-op12"],
     "support_device": [0,1,2,3,4,5,6,7]
   },

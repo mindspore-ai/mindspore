@@ -442,6 +442,7 @@ void AscendSession::InitRuntimeResource() {
   if (!runtime_instance->Init()) {
     MS_LOG(EXCEPTION) << "Kernel runtime init error.";
   }
+  DumpJsonParser::GetInstance().Parse();
   MS_LOG(INFO) << "Finish!";
 }
 

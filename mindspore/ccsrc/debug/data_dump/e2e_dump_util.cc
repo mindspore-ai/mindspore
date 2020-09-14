@@ -206,14 +206,17 @@ bool E2eDumpUtil::DumpData(const session::KernelGraph *graph, Debugger *debugger
     }
   }
   MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+
   std::string net_name = dump_json_parser.net_name();
   std::string iterator = std::to_string(dump_json_parser.cur_dump_iter());
   std::string dump_path = dump_json_parser.path();
-  if (dump_path.back() == '/') {
-    dump_path = dump_path + net_name + '/' + iterator;
-  } else {
-    dump_path = dump_path + '/' + net_name + '/' + iterator;
+  if (dump_path.back() != '/') {
+    dump_path += "/";
   }
+  dump_path += (net_name + "/device_" + std::to_string(device_id) + "/iteration_" + iterator);
   DumpInput(graph, dump_path, debugger);
   DumpOutput(graph, dump_path, debugger);
   DumpParameters(graph, dump_path, debugger);
