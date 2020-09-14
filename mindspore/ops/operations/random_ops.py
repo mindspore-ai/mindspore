@@ -130,9 +130,9 @@ class Gamma(PrimitiveWithInfer):
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
-        - **alpha** (Tensor) - The α distribution parameter.
+        - **alpha** (Tensor) - The α distribution parameter. It should be greater than 0.
           It is also known as the shape parameter with float32 data type.
-        - **beta** (Tensor) - The β distribution parameter.
+        - **beta** (Tensor) - The β distribution parameter. It should be greater than 0.
           It is also known as the scale parameter with float32 data type.
 
     Outputs:
@@ -185,8 +185,8 @@ class Poisson(PrimitiveWithInfer):
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
-        - **mean** (Tensor) - μ, parameter which the distribution was constructed with.
-          The parameter defines the mean number of occurrences of the event, with float32 data type.
+        - **mean** (Tensor) - μ parameter the distribution was constructed with. The parameter defines mean number
+          of occurrences of the event. It should be greater than 0. With float32 data type.
 
     Outputs:
         Tensor. Its shape should be the broadcasted shape of `shape` and the shape of `mean`.
