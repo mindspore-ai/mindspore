@@ -44,7 +44,7 @@ class CallbackManager {
   /// \brief DatasetOp needs to call Init if it wishes to use callback, Init will set enabled_ to true
   /// \param[in] op, this pointer is used for Callback Manager to Pause Worker threads
   /// \return Status
-  Status Init(std::shared_ptr<DatasetOp> op);
+  Status Init(DatasetOp *op);
 
   /// \brief callback function called at the start of the first row
   /// \return Status
@@ -70,11 +70,9 @@ class CallbackManager {
   /// \return Status
   Status StepEnd(const CallbackParam &);
 
-  bool HasCallback() { return !callbacks_.empty(); }
-
  private:
-  bool enabled_;                   // flag to enable callback, if false, all functions would return immediately
-  std::shared_ptr<DatasetOp> op_;  // back pointer to DatasetOp, each DatasetOp has only 1 CallbackManager
+  bool enabled_;   // flag to enable callback, if false, all functions would return immediately
+  DatasetOp *op_;  // back pointer to DatasetOp, raw pointer to avoid circular ownership
   std::vector<std::shared_ptr<DSCallback>> callbacks_;  // list of callbacks the  DatasetOp needs to call
 };
 }  // namespace dataset
