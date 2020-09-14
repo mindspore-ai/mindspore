@@ -82,13 +82,13 @@ class GPUEnvChecker(EnvChecker):
                 f"No such directory: {self.cuda_bin}, please check if cuda is installed correctly.")
 
     def check_version(self):
-        v = self._read_version(self.cuda_version)
         if not Path(self.cuda_version).is_file():
             logger.warning("Using custom cuda path, cuda version checking is skiped, please make sure "
-                           "Ascend 910 AI software package version is supported, you can reference to the installation "
-                           "guidelines https://www.mindspore.cn/install")
+                           "cuda version is supported, you can reference to the installation guidelines "
+                           "https://www.mindspore.cn/install")
             return
 
+        v = self._read_version(self.cuda_version)
         v = version.parse(v)
         v_str = str(v.major) + "." + str(v.minor)
         if v_str not in self.version:
