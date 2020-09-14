@@ -84,6 +84,20 @@ class TestSequentialCell():
         del m[:]
         assert type(m).__name__ == 'SequentialCell'
 
+    def test_sequentialcell_append(self):
+        input_np = np.ones((1, 3)).astype(np.float32)
+        input_me = Tensor(input_np)
+        relu = nn.ReLU()
+        tanh = nn.Tanh()
+        seq = nn.SequentialCell([relu])
+        seq.append(tanh)
+        out_me = seq(input_me)
+
+        seq1 = nn.SequentialCell([relu, tanh])
+        out = seq1(input_me)
+
+        assert out[0][0] == out_me[0][0]
+
 
 class TestCellList():
     """ TestCellList """
