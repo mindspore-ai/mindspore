@@ -16,263 +16,113 @@
 
 import os
 import time
-import argparse
 import random
 import numpy as np
 
-from mindspore import context
 from mindspore import Tensor
-from mindspore import nn
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
+from mindspore.nn import WithLossCell, TrainOneStepCell
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
-from mindspore.nn.loss.loss import _Loss
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
-from mindspore.train.model import Model, ParallelMode
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
+from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init, get_group_size, get_rank
-import mindspore.dataset.engine as de
+from mindspore.train.serialization import _exec_save_checkpoint
 
-from src.dataset import create_dataset
+
+from src.dataset import create_dataset, extract_features
 from src.lr_generator import get_lr
-from src.config import config_gpu, config_ascend
-from src.mobilenetV2 import mobilenet_v2
+from src.config import set_config
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+from src.args import train_parse_args
+from src.utils import context_device_init, switch_precision, config_ckpoint, set_seed
+from src.models import CrossEntropyWithLabelSmooth, define_net
 
-parser = argparse.ArgumentParser(description='Image classification')
-parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
-parser.add_argument('--device_target', type=str, default=None, help='run device_target')
-args_opt = parser.parse_args()
-
-if args_opt.device_target == "Ascend":
-    device_id = int(os.getenv('DEVICE_ID', '0'))
-    rank_id = int(os.getenv('RANK_ID', '0'))
-    rank_size = int(os.getenv('RANK_SIZE', '1'))
-    run_distribute = rank_size > 1
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Ascend",
-                        device_id=device_id, save_graphs=False)
-elif args_opt.device_target == "GPU":
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target="GPU",
-                        save_graphs=False)
-    init("nccl")
-    context.set_auto_parallel_context(device_num=get_group_size(),
-                                      parallel_mode=ParallelMode.DATA_PARALLEL,
-                                      mirror_mean=True)
-else:
-    raise ValueError("Unsupported device target.")
-
-
-class CrossEntropyWithLabelSmooth(_Loss):
-    """
-    CrossEntropyWith LabelSmooth.
-
-    Args:
-        smooth_factor (float): smooth factor, default=0.
-        num_classes (int): num classes
-
-    Returns:
-        None.
-
-    Examples:
-        >>> CrossEntropyWithLabelSmooth(smooth_factor=0., num_classes=1000)
-    """
-
-    def __init__(self, smooth_factor=0., num_classes=1000):
-        super(CrossEntropyWithLabelSmooth, self).__init__()
-        self.onehot = P.OneHot()
-        self.on_value = Tensor(1.0 - smooth_factor, mstype.float32)
-        self.off_value = Tensor(1.0 * smooth_factor /
-                                (num_classes - 1), mstype.float32)
-        self.ce = nn.SoftmaxCrossEntropyWithLogits()
-        self.mean = P.ReduceMean(False)
-        self.cast = P.Cast()
-
-    def construct(self, logit, label):
-        one_hot_label = self.onehot(self.cast(label, mstype.int32), F.shape(logit)[1],
-                                    self.on_value, self.off_value)
-        out_loss = self.ce(logit, one_hot_label)
-        out_loss = self.mean(out_loss, 0)
-        return out_loss
-
-
-class Monitor(Callback):
-    """
-    Monitor loss and time.
-
-    Args:
-        lr_init (numpy array): train lr
-
-    Returns:
-        None
-
-    Examples:
-        >>> Monitor(100,lr_init=Tensor([0.05]*100).asnumpy())
-    """
-
-    def __init__(self, lr_init=None):
-        super(Monitor, self).__init__()
-        self.lr_init = lr_init
-        self.lr_init_len = len(lr_init)
-
-    def epoch_begin(self, run_context):
-        self.losses = []
-        self.epoch_time = time.time()
-
-    def epoch_end(self, run_context):
-        cb_params = run_context.original_args()
-
-        epoch_mseconds = (time.time() - self.epoch_time) * 1000
-        per_step_mseconds = epoch_mseconds / cb_params.batch_num
-        print("epoch time: {:5.3f}, per step time: {:5.3f}, avg loss: {:5.3f}".format(epoch_mseconds,
-                                                                                      per_step_mseconds,
-                                                                                      np.mean(self.losses)))
-
-    def step_begin(self, run_context):
-        self.step_time = time.time()
-
-    def step_end(self, run_context):
-        cb_params = run_context.original_args()
-        step_mseconds = (time.time() - self.step_time) * 1000
-        step_loss = cb_params.net_outputs
-
-        if isinstance(step_loss, (tuple, list)) and isinstance(step_loss[0], Tensor):
-            step_loss = step_loss[0]
-        if isinstance(step_loss, Tensor):
-            step_loss = np.mean(step_loss.asnumpy())
-
-        self.losses.append(step_loss)
-        cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num
-
-        print("epoch: [{:3d}/{:3d}], step:[{:5d}/{:5d}], loss:[{:5.3f}/{:5.3f}], time:[{:5.3f}], lr:[{:5.3f}]".format(
-            cb_params.cur_epoch_num -
-            1, cb_params.epoch_num, cur_step_in_epoch, cb_params.batch_num, step_loss,
-            np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]))
-
+set_seed(1)
 
 if __name__ == '__main__':
-    if args_opt.device_target == "GPU":
-        # train on gpu
-        print("train args: ", args_opt)
-        print("cfg: ", config_gpu)
+    args_opt = train_parse_args()
+    config = set_config(args_opt)
+    start = time.time()
 
-        # define network
-        net = mobilenet_v2(num_classes=config_gpu.num_classes, device_target="GPU")
-        # define loss
-        if config_gpu.label_smooth > 0:
-            loss = CrossEntropyWithLabelSmooth(smooth_factor=config_gpu.label_smooth,
-                                               num_classes=config_gpu.num_classes)
-        else:
-            loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction='mean')
-        # define dataset
-        epoch_size = config_gpu.epoch_size
-        dataset = create_dataset(dataset_path=args_opt.dataset_path,
-                                 do_train=True,
-                                 config=config_gpu,
-                                 device_target=args_opt.device_target,
-                                 repeat_num=1,
-                                 batch_size=config_gpu.batch_size)
+    print(f"train args: {args_opt}\ncfg: {config}")
+
+    #set context and device init
+    context_device_init(config)
+
+    # define network
+    backbone_net, head_net, net = define_net(args_opt, config)
+
+    # CPU only support "incremental_learn"
+    if args_opt.train_method == "incremental_learn":
+        step_size = extract_features(backbone_net, args_opt.dataset_path, config)
+        net = head_net
+
+    elif args_opt.train_method in ("train", "fine_tune"):
+        if args_opt.platform == "CPU":
+            raise ValueError("Currently, CPU only support \"incremental_learn\", not \"fine_tune\" or \"train\".")
+        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, config=config)
         step_size = dataset.get_dataset_size()
-        # resume
-        if args_opt.pre_trained:
-            param_dict = load_checkpoint(args_opt.pre_trained)
-            load_param_into_net(net, param_dict)
 
-        # get learning rate
-        loss_scale = FixedLossScaleManager(
-            config_gpu.loss_scale, drop_overflow_update=False)
-        lr = Tensor(get_lr(global_step=0,
-                           lr_init=0,
-                           lr_end=0,
-                           lr_max=config_gpu.lr,
-                           warmup_epochs=config_gpu.warmup_epochs,
-                           total_epochs=epoch_size,
-                           steps_per_epoch=step_size))
+    # Currently, only Ascend support switch precision.
+    switch_precision(net, mstype.float16, config)
 
-        # define optimization
-        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config_gpu.momentum,
-                       config_gpu.weight_decay, config_gpu.loss_scale)
-        # define model
+    # define loss
+    if config.label_smooth > 0:
+        loss = CrossEntropyWithLabelSmooth(
+            smooth_factor=config.label_smooth, num_classes=config.num_classes)
+    else:
+        loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+
+    epoch_size = config.epoch_size
+
+    # get learning rate
+    lr = Tensor(get_lr(global_step=0,
+                       lr_init=config.lr_init,
+                       lr_end=config.lr_end,
+                       lr_max=config.lr_max,
+                       warmup_epochs=config.warmup_epochs,
+                       total_epochs=epoch_size,
+                       steps_per_epoch=step_size))
+
+    if args_opt.train_method == "incremental_learn":
+        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay)
+
+        network = WithLossCell(net, loss)
+        network = TrainOneStepCell(network, opt)
+        network.set_train()
+
+        features_path = args_opt.dataset_path + '_features'
+        idx_list = list(range(step_size))
+
+        if os.path.isdir(config.save_checkpoint_path):
+            os.rename(config.save_checkpoint_path, "{}_{}".format(config.save_checkpoint_path, time.time()))
+        os.mkdir(config.save_checkpoint_path)
+
+        for epoch in range(epoch_size):
+            random.shuffle(idx_list)
+            epoch_start = time.time()
+            losses = []
+            for j in idx_list:
+                feature = Tensor(np.load(os.path.join(features_path, f"feature_{j}.npy")))
+                label = Tensor(np.load(os.path.join(features_path, f"label_{j}.npy")))
+                losses.append(network(feature, label).asnumpy())
+            epoch_mseconds = (time.time()-epoch_start) * 1000
+            per_step_mseconds = epoch_mseconds / step_size
+            print("\r epoch[{}], iter[{}] cost: {:5.3f}, per step time: {:5.3f}, avg loss: {:5.3f}"\
+            .format(epoch + 1, step_size, epoch_mseconds, per_step_mseconds, np.mean(np.array(losses))), \
+                end="")
+            if (epoch + 1) % config.save_checkpoint_epochs == 0:
+                _exec_save_checkpoint(network, os.path.join(config.save_checkpoint_path, \
+                    f"mobilenetv2_head_{epoch+1}.ckpt"))
+        print("total cost {:5.4f} s".format(time.time() - start))
+
+    elif args_opt.train_method in ("train", "fine_tune"):
+        loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
+        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, \
+            config.weight_decay, config.loss_scale)
         model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale)
 
+        cb = config_ckpoint(config, lr, step_size)
         print("============== Starting Training ==============")
-        cb = [Monitor(lr_init=lr.asnumpy())]
-        ckpt_save_dir = config_gpu.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
-        if config_gpu.save_checkpoint:
-            config_ck = CheckpointConfig(save_checkpoint_steps=config_gpu.save_checkpoint_epochs * step_size,
-                                         keep_checkpoint_max=config_gpu.keep_checkpoint_max)
-            ckpt_cb = ModelCheckpoint(prefix="mobilenetV2", directory=ckpt_save_dir, config=config_ck)
-            cb += [ckpt_cb]
-        # begin train
-        model.train(epoch_size, dataset, callbacks=cb)
+        model.train(epoch_size, dataset, callbacks=cb, dataset_sink_mode=False)
         print("============== End Training ==============")
-    elif args_opt.device_target == "Ascend":
-        # train on ascend
-        print("train args: ", args_opt, "\ncfg: ", config_ascend,
-              "\nparallel args: rank_id {}, device_id {}, rank_size {}".format(rank_id, device_id, rank_size))
-
-        if run_distribute:
-            context.set_auto_parallel_context(device_num=rank_size, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              parameter_broadcast=True, mirror_mean=True)
-            auto_parallel_context().set_all_reduce_fusion_split_indices([140])
-            init()
-
-        epoch_size = config_ascend.epoch_size
-        net = mobilenet_v2(num_classes=config_ascend.num_classes, device_target="Ascend")
-        net.to_float(mstype.float16)
-        for _, cell in net.cells_and_names():
-            if isinstance(cell, nn.Dense):
-                cell.to_float(mstype.float32)
-        if config_ascend.label_smooth > 0:
-            loss = CrossEntropyWithLabelSmooth(
-                smooth_factor=config_ascend.label_smooth, num_classes=config_ascend.num_classes)
-        else:
-            loss = SoftmaxCrossEntropyWithLogits(
-                is_grad=False, sparse=True, reduction='mean')
-        dataset = create_dataset(dataset_path=args_opt.dataset_path,
-                                 do_train=True,
-                                 config=config_ascend,
-                                 device_target=args_opt.device_target,
-                                 repeat_num=1,
-                                 batch_size=config_ascend.batch_size)
-        step_size = dataset.get_dataset_size()
-        if args_opt.pre_trained:
-            param_dict = load_checkpoint(args_opt.pre_trained)
-            load_param_into_net(net, param_dict)
-
-        loss_scale = FixedLossScaleManager(
-            config_ascend.loss_scale, drop_overflow_update=False)
-        lr = Tensor(get_lr(global_step=0,
-                           lr_init=0,
-                           lr_end=0,
-                           lr_max=config_ascend.lr,
-                           warmup_epochs=config_ascend.warmup_epochs,
-                           total_epochs=epoch_size,
-                           steps_per_epoch=step_size))
-        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config_ascend.momentum,
-                       config_ascend.weight_decay, config_ascend.loss_scale)
-
-        model = Model(net, loss_fn=loss, optimizer=opt,
-                      loss_scale_manager=loss_scale)
-
-        cb = None
-        if rank_id == 0:
-            cb = [Monitor(lr_init=lr.asnumpy())]
-            if config_ascend.save_checkpoint:
-                config_ck = CheckpointConfig(save_checkpoint_steps=config_ascend.save_checkpoint_epochs * step_size,
-                                             keep_checkpoint_max=config_ascend.keep_checkpoint_max)
-                ckpt_cb = ModelCheckpoint(
-                    prefix="mobilenetV2", directory=config_ascend.save_checkpoint_path, config=config_ck)
-                cb += [ckpt_cb]
-        model.train(epoch_size, dataset, callbacks=cb)
-    else:
-        raise ValueError("Unsupported device_target.")

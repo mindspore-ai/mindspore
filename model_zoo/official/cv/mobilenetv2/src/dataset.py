@@ -16,41 +16,51 @@
 create train or eval dataset.
 """
 import os
+from tqdm import tqdm
+import numpy as np
+
+from mindspore import Tensor
+from mindspore.train.model import Model
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 
-def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, batch_size=32):
+
+def create_dataset(dataset_path, do_train, config, repeat_num=1):
     """
     create a train or eval dataset
 
     Args:
         dataset_path(string): the path of dataset.
         do_train(bool): whether dataset is used for train or eval.
+        config(struct): the config of train and eval in diffirent platform.
         repeat_num(int): the repeat times of dataset. Default: 1.
-        batch_size(int): the batch size of dataset. Default: 32.
+
 
     Returns:
         dataset
     """
-    if device_target == "Ascend":
+    if config.platform == "Ascend":
         rank_size = int(os.getenv("RANK_SIZE", '1'))
         rank_id = int(os.getenv("RANK_ID", '0'))
         if rank_size == 1:
             ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
         else:
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
-                                         num_shards=rank_size, shard_id=rank_id)
-    elif device_target == "GPU":
+            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,\
+                num_shards=rank_size, shard_id=rank_id)
+    elif config.platform == "GPU":
         if do_train:
-            from mindspore.communication.management import get_rank, get_group_size
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
-                                         num_shards=get_group_size(), shard_id=get_rank())
+            if config.run_distribute:
+                from mindspore.communication.management import get_rank, get_group_size
+                ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,\
+                    num_shards=get_group_size(), shard_id=get_rank())
+            else:
+                ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
         else:
             ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
-    else:
-        raise ValueError("Unsupported device_target.")
+    elif config.platform == "CPU":
+        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
 
     resize_height = config.image_height
     resize_width = config.image_width
@@ -64,7 +74,8 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
     resize_op = C.Resize((256, 256))
     center_crop = C.CenterCrop(resize_width)
     rescale_op = C.RandomColorAdjust(brightness=0.4, contrast=0.4, saturation=0.4)
-    normalize_op = C.Normalize(mean=[0.485*255, 0.456*255, 0.406*255], std=[0.229*255, 0.224*255, 0.225*255])
+    normalize_op = C.Normalize(mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
+                               std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
     change_swap_op = C.HWC2CHW()
 
     if do_train:
@@ -74,16 +85,43 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(input_columns="image", operations=trans, num_parallel_workers=8)
-    ds = ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=8)
+    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply shuffle operations
     ds = ds.shuffle(buffer_size=buffer_size)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    ds = ds.batch(config.batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
     ds = ds.repeat(repeat_num)
 
     return ds
+
+
+def extract_features(net, dataset_path, config):
+    features_folder = dataset_path + '_features'
+    if not os.path.exists(features_folder):
+        os.makedirs(features_folder)
+    dataset = create_dataset(dataset_path=dataset_path,
+                             do_train=False,
+                             config=config,
+                             repeat_num=1)
+    step_size = dataset.get_dataset_size()
+    pbar = tqdm(list(dataset.create_dict_iterator()))
+    model = Model(net)
+    i = 0
+    for data in pbar:
+        features_path = os.path.join(features_folder, f"feature_{i}.npy")
+        label_path = os.path.join(features_folder, f"label_{i}.npy")
+        if not (os.path.exists(features_path) and os.path.exists(label_path)):
+            image = data["image"]
+            label = data["label"]
+            features = model.predict(Tensor(image))
+            np.save(features_path, features.asnumpy())
+            np.save(label_path, label)
+        pbar.set_description("Process dataset batch: %d" % (i + 1))
+        i += 1
+
+    return step_size
