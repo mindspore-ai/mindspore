@@ -20,10 +20,14 @@
 #include <vector>
 
 #include "src/lite_kernel.h"
+#include "nnacl/transpose.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {
+
+enum class TransposeType { NHWC2NCHW, NCHW2NHWC };
+
 class TransposeOpenCLKernel : public OpenCLKernel {
  public:
   explicit TransposeOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -39,6 +43,7 @@ class TransposeOpenCLKernel : public OpenCLKernel {
  private:
   cl::Kernel kernel_;
   bool enable_fp16_{false};
+  TransposeType type{TransposeType::NHWC2NCHW};
 };
 }  // namespace mindspore::kernel
 

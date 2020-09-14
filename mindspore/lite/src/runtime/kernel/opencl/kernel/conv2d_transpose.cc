@@ -132,12 +132,15 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
   bias_ = allocator->Malloc(im_dst_x * im_dst_y * C4NUM * data_size, img_size);
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
   memset(bias_, 0x00, div_co * C4NUM * data_size);
-  auto bias_dtype = in_tensors_[2]->data_type();
   if (in_tensors_.size() >= 3) {
+    auto bias_dtype = in_tensors_[2]->data_type();
     if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
-      auto fdata = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
       for (int i = 0; i < co; i++) {
-        reinterpret_cast<uint16_t *>(bias_)[i] = Float32ToShort(fdata[i]);
+        reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(in_tensors_[2]->MutableData())[i];
+      }
+    } else if (bias_dtype == kNumberTypeFloat16 && !enable_fp16_) {
+      for (int i = 0; i < co; i++) {
+        reinterpret_cast<float *>(bias_)[i] = reinterpret_cast<float16_t *>(in_tensors_[2]->MutableData())[i];
       }
     } else {
       memcpy(bias_, in_tensors_[2]->MutableData(), co * data_size);

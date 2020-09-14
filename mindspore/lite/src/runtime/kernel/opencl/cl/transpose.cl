@@ -43,7 +43,7 @@ __kernel void transpose_IMG(__read_only image2d_t src_data, __write_only image2d
   WRITE_IMAGE(dst_data, (int2)(X, 4 * Y + 3), result[3]);
 }
 
-__kernel void transpose_NHWC4_BUF(__read_only image2d_t src_data, global FLT4 *dst_data, int2 HW, int2 C, int W,
+__kernel void transpose_NHWC4_BUF(__read_only image2d_t src_data, global float4 *dst_data, int2 HW, int2 C, int W,
                                   int H) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
@@ -89,13 +89,13 @@ __kernel void transpose_NHWC4_BUF(__read_only image2d_t src_data, global FLT4 *d
   result[3].z = x2.w;
   result[3].w = x3.w;
 
-  if (4 * Y < C.x) dst_data[4 * Y * HW.y + X] = result[0];
-  if (4 * Y + 1 < C.x) dst_data[(4 * Y + 1) * HW.y + X] = result[1];
-  if (4 * Y + 2 < C.x) dst_data[(4 * Y + 2) * HW.y + X] = result[2];
-  if (4 * Y + 3 < C.x) dst_data[(4 * Y + 3) * HW.y + X] = result[3];
+  if (4 * Y < C.x) dst_data[4 * Y * HW.y + X] = convert_float4(result[0]);
+  if (4 * Y + 1 < C.x) dst_data[(4 * Y + 1) * HW.y + X] = convert_float4(result[1]);
+  if (4 * Y + 2 < C.x) dst_data[(4 * Y + 2) * HW.y + X] = convert_float4(result[2]);
+  if (4 * Y + 3 < C.x) dst_data[(4 * Y + 3) * HW.y + X] = convert_float4(result[3]);
 }
 
-__kernel void transpose_NC4HW4_BUF(__read_only image2d_t src_data, global FLT4 *dst_data, int2 HW, int2 C, int W,
+__kernel void transpose_NC4HW4_BUF(__read_only image2d_t src_data, global float4 *dst_data, int2 HW, int2 C, int W,
                                    int H) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
@@ -131,8 +131,8 @@ __kernel void transpose_NC4HW4_BUF(__read_only image2d_t src_data, global FLT4 *
   result[3].z = x2.w;
   result[3].w = x3.w;
 
-  if (4 * Y < C.x) dst_data[4 * Y * HW.y + X] = result[0];
-  if (4 * Y + 1 < C.x) dst_data[(4 * Y + 1) * HW.y + X] = result[1];
-  if (4 * Y + 2 < C.x) dst_data[(4 * Y + 2) * HW.y + X] = result[2];
-  if (4 * Y + 3 < C.x) dst_data[(4 * Y + 3) * HW.y + X] = result[3];
+  if (4 * Y < C.x) dst_data[4 * Y * HW.y + X] = convert_float4(result[0]);
+  if (4 * Y + 1 < C.x) dst_data[(4 * Y + 1) * HW.y + X] = convert_float4(result[1]);
+  if (4 * Y + 2 < C.x) dst_data[(4 * Y + 2) * HW.y + X] = convert_float4(result[2]);
+  if (4 * Y + 3 < C.x) dst_data[(4 * Y + 3) * HW.y + X] = convert_float4(result[3]);
 }

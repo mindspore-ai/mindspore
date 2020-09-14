@@ -65,13 +65,26 @@ int SoftmaxOpenCLKernel::SetWorkGroupSize1x1() {
 
 int SoftmaxOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  if (onexone_flag_) {
-    im_dst_x = UP_DIV(in_tensors_[0]->shape()[1], C4NUM);
-    im_dst_y = 1;
+  auto out_shape = out_tensors_[0]->shape();
+  int n = 1, h = 1, w = 1, c = 1;
+  if (out_shape.size() == 2) {
+    n = out_shape[0];
+    c = out_shape[1];
+  } else if (out_shape.size() == 4) {
+    n = out_shape[0];
+    h = out_shape[1];
+    w = out_shape[2];
+    c = out_shape[3];
+  }
+  if (op_format_ == schema::Format_NHWC4) {
+    im_dst_x = w * UP_DIV(c, C4NUM);
+    im_dst_y = n * h;
+  } else if (op_format_ == schema::Format_NC4HW4) {
+    im_dst_x = w;
+    im_dst_y = n * UP_DIV(c, C4NUM) * h;
   } else {
-    size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    im_dst_x = out_tensors_[0]->Width() * CO4;
-    im_dst_y = out_tensors_[0]->Height();
+    MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
+    return RET_ERROR;
   }
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
@@ -110,8 +123,7 @@ int SoftmaxOpenCLKernel::Init() {
   if (!is_image_out_) {
     out_mem_type_ = OpenCLMemType::BUF;
   } else {
-    MS_LOG(ERROR) << "image2d output not support yet.";
-    return RET_ERROR;
+    out_mem_type_ = OpenCLMemType::IMG;
   }
   if (out_mem_type_ == OpenCLMemType::BUF) {
     kernel_name += "_BUF";

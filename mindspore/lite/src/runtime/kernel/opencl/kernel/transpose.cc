@@ -36,6 +36,14 @@ int TransposeOpenCLKernel::Init() {
   std::string kernel_name = "transpose";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   enable_fp16_ = ocl_runtime->GetFp16Enable();
+  auto param = reinterpret_cast<TransposeParameter *>(op_parameter_);
+  if (param->num_axes_ == 4 && param->perm_[0] == 0 && param->perm_[1] == 3 && param->perm_[2] == 1 &&
+      param->perm_[3] == 2) {
+    type = TransposeType::NHWC2NCHW;
+  } else {
+    MS_LOG(ERROR) << "unsupported transpose axes.";
+    return RET_ERROR;
+  }
   out_mem_type_ = OpenCLMemType::BUF;
   kernel_name += "_" + std::string(EnumNameFormat(op_format_));
   if (out_mem_type_ == OpenCLMemType::BUF) {
@@ -146,4 +154,5 @@ kernel::LiteKernel *OpenCLTransposeKernelCreator(const std::vector<lite::Tensor 
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Transpose, OpenCLTransposeKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Transpose, OpenCLTransposeKernelCreator)
 }  // namespace mindspore::kernel
