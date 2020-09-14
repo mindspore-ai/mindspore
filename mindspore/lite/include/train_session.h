@@ -27,7 +27,6 @@ struct Model;
 }
 
 namespace session {
-
 class TrainSession : public lite::LiteSession {
  public:
   TrainSession();

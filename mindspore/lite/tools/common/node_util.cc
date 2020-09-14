@@ -30,6 +30,7 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_Conv2DGradInput,
   schema::PrimitiveType_PoolingGrad,
   schema::PrimitiveType_BiasGrad,
+  schema::PrimitiveType_BNGrad,
 #endif
   schema::PrimitiveType_Conv2D,
   schema::PrimitiveType_DeConv2D,
@@ -39,7 +40,20 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_Resize,
   schema::PrimitiveType_BatchNorm,
   schema::PrimitiveType_FusedBatchNorm,
-  schema::PrimitiveType_PReLU};
+  schema::PrimitiveType_PReLU,
+  schema::PrimitiveType_BiasAdd};
+
+static const std::vector<schema::PrimitiveType> nhwcOpDualInputList = {
+#ifdef SUPPORT_TRAIN
+  schema::PrimitiveType_Conv2DGradFilter
+#endif
+};
+
+static const std::vector<schema::PrimitiveType> nhwcOpAllInputList = {
+#ifdef SUPPORT_TRAIN
+  schema::PrimitiveType_PoolingGrad
+#endif
+};
 
 static const std::vector<schema::PrimitiveType> fp32FullOpList = {
   schema::PrimitiveType_Concat, schema::PrimitiveType_Add,
@@ -72,6 +86,10 @@ std::vector<schema::PrimitiveType> GetInsertOpList() { return needInsertOpList; 
 std::vector<schema::PrimitiveType> Getfp32FullOpList() { return fp32FullOpList; }
 
 std::vector<schema::PrimitiveType> GetNhwcOpList() { return nhwcOpList; }
+
+std::vector<schema::PrimitiveType> GetNhwcDualInputOpList() { return nhwcOpDualInputList; }
+
+std::vector<schema::PrimitiveType> GetNhwcAllInputOpList() { return nhwcOpAllInputList; }
 
 std::vector<schema::PrimitiveType> GetUint8NhwcOpList() { return int8NeedNhwcOpList; }
 

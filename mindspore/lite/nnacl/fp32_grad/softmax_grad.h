@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_FP32_SOFTMAX_GRAD_H_
-#define MINDSPORE_LITE_NNACL_FP32_SOFTMAX_GRAD_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
+#define MINDSPORE_LITE_NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/fp32/softmax.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct SoftmaxCrossEntropyParameter {
   OpParameter op_parameter_;
@@ -26,4 +31,11 @@ typedef struct SoftmaxCrossEntropyParameter {
   int n_dim_;
   int input_shape_[5];
 } SoftmaxCrossEntropyParameter;
-#endif  // MINDSPORE_LITE_NNACL_FP32_SOFTMAX_GRAD_H_
+
+void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr, float *sum_data,
+                float *sum_mul, SoftmaxParameter *parameter);
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // MINDSPORE_LITE_NNACL_FP32_GRAD_SOFTMAX_GRAD_H_

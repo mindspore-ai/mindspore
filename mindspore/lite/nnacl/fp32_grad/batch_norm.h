@@ -30,18 +30,11 @@ extern "C" {
 #endif
 
 void sumSpatialBatch(const float *in, int size, int ch, float *out);
-void scaleBias(const float *scales, int batch, int n, int size, float *output);
-void normalize(const float *x, const float *mean, const float *invar, int batch, int filters, int spatial, float *out);
-void backwardScale(const float *x, const float *mean, const float *invar, const float *delta, int batch, int n,
-                   int size, float *scale_updates);
-void meanVar(const float *in, int batch, int size, int ch, float eps, float *mean, float *invar);
-void meanDelta(float *yt, int size, int ch, float *invar, float *mean_delta);
-void varianceDelta(const float *x, const float *delta, const float *mean, const float *invar, int batch, int ch,
-                   int spatial, float *variance_delta);
-void meanAdd(const float *x, const float *mean, const float *variance_delta, int batch, int filters, int spatial,
-             float *mean_add, float *mean_delta);
-void NormalizeDelta(const float *x, const float *mean, const float *invar, const float *mean_delta,
-                    const float *variance_delta, int batch, int filters, int spatial, float *delta);
+void backwardX(const float *in, const float *dout, const float *scale, const int size, int channels, float eps,
+               float *mean, float *invar, float *xhat_sum, float *dxhat_sum, float *out);
+void backwardScale(const float *x, const float *mean, const float *invar, const float *delta, int batch,
+                   int n, int size, float *scale_updates);
+
 #ifdef __cplusplus
 }
 #endif

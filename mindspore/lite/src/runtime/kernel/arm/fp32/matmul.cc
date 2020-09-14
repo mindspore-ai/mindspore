@@ -186,10 +186,10 @@ int MatmulCPUKernel::Run() {
   auto b_src = reinterpret_cast<float *>(in_tensors_[1]->data_c());
   auto c_src = reinterpret_cast<float *>(out_tensors_[0]->data_c());
 
-  if (params_->a_const_ == false) {
+  if (params_->a_const_ == false || is_train()) {
     InitMatrixA(a_src, a_c12_ptr_);
   }
-  if (params_->b_const_ == false) {
+  if (params_->b_const_ == false || is_train()) {
     InitMatrixB(b_src, b_r8_ptr_);
   }
 
@@ -201,4 +201,16 @@ int MatmulCPUKernel::Run() {
   }
   return RET_OK;
 }
+
+void  MatmulCPUKernel::eval() {
+  // Copy weights after training
+  LiteKernel::eval();
+  if (params_->a_const_ == true) {
+    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->MutableData()), a_c12_ptr_);
+  }
+  if (params_->b_const_ == true) {
+    InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->MutableData()), b_r8_ptr_);
+  }
+}
+
 }  // namespace mindspore::kernel

@@ -57,6 +57,7 @@ int Tensor::CopyTensor(const Tensor &srcTensor, bool copyData) {
   this->data_type_ = srcTensor.data_type_;
   this->shape_ = srcTensor.shape_;
   this->category_ = srcTensor.category_;
+  this->format_ = srcTensor.format_;
   if (copyData) {
     auto ret = CopyTensorData(srcTensor);
     if (0 != ret) {

@@ -73,7 +73,7 @@ class NetworkTest : public mindspore::CommonTest {
 //        +-------------+               |
 //               V dw(9)                |
 //               +-----------Update-----+
-
+#if 0
 TEST_F(NetworkTest, tuning_layer) {
   const int BATCH_SIZE = 32;
   const int NUM_CLASSES = 10;
@@ -177,7 +177,7 @@ TEST_F(NetworkTest, tuning_layer) {
     node->name = "Momentum";
     meta_graph->nodes.emplace_back(std::move(node));
   }
-  meta_graph->inputIndex = {6, 0};  // XXX TODO why is it reverse?
+  meta_graph->inputIndex = {0, 6};
   meta_graph->outputIndex = {5, 14};
 
   auto input0 = std::make_unique<schema::TensorT>();
@@ -209,6 +209,7 @@ TEST_F(NetworkTest, tuning_layer) {
   weight->data.resize(weight_size);
   std::copy(buf, buf + weight_size, weight->data.data());
   meta_graph->allTensors.emplace_back(std::move(weight));
+  delete [] buf;
   // tensor 3 - matmul
   auto input3 = std::make_unique<schema::TensorT>();
   input3->nodeType = schema::NodeType::NodeType_Parameter;
@@ -231,6 +232,7 @@ TEST_F(NetworkTest, tuning_layer) {
   bias->data.resize(bias_size);
   std::copy(buf, buf + bias_size, bias->data.data());
   meta_graph->allTensors.emplace_back(std::move(bias));
+  delete [] buf;
 
   // tensor 5 - bias_add
   auto input5 = std::make_unique<schema::TensorT>();
@@ -366,13 +368,13 @@ TEST_F(NetworkTest, tuning_layer) {
   ASSERT_NE(nullptr, model);
   meta_graph.reset();
   content = nullptr;
-  auto context = new lite::Context;
-  context->device_type_ = lite::DT_CPU;
-  context->cpu_bind_mode_ = lite::NO_BIND;
-  context->thread_num_ = 1;
+  lite::Context context;
+  context.device_type_ = lite::DT_CPU;
+  context.cpu_bind_mode_ = lite::NO_BIND;
+  context.thread_num_ = 1;
   auto session = new session::TrainSession();
   ASSERT_NE(nullptr, session);
-  session->Init(context);
+  session->Init(&context);
   auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
   session->train();
@@ -392,7 +394,7 @@ TEST_F(NetworkTest, tuning_layer) {
   //===================================================
   ASSERT_EQ(input_size, inTensor->Size());
   memcpy(data, input_data, input_size);
-
+  delete [] buf;
   auto labelTensor = inputs.at(1);
   ASSERT_NE(nullptr, labelTensor);
   ASSERT_EQ(BATCH_SIZE, labelTensor->ElementsNum());
@@ -408,7 +410,7 @@ TEST_F(NetworkTest, tuning_layer) {
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
   auto *outData = reinterpret_cast<float *>(outTensor->MutableData());
   ASSERT_NE(nullptr, outData);
-  std::cout << "========================dW=====================" << std::endl;
+  std::cout << "==============Initial=Scores===================" << std::endl;
   for (int i = 0; i < 20; i++) {
     std::cout << outData[i] << ", ";
   }
@@ -422,27 +424,19 @@ TEST_F(NetworkTest, tuning_layer) {
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
   outData = reinterpret_cast<float *>(outTensor->MutableData());
   ASSERT_NE(nullptr, outData);
-  std::cout << "========================dW=====================" << std::endl;
+  std::cout << "==============Scores=after-single=train========" << std::endl;
   for (int i = 0; i < 20; i++) {
     std::cout << outData[i] << ", ";
   }
-//===================================================
-#if 0
-  size_t output_size;
-  std::string output_path = "./convfp32_out_1_28_28_32.bin";
-  buf = mindspore::lite::ReadFile(output_path.c_str(), &output_size);
-  ASSERT_NE(nullptr, buf);
-  auto output_data = reinterpret_cast<float *>(buf);
-  ASSERT_NE(nullptr, output_data);
-  //===================================================
-  ASSERT_EQ(output_size, runOutput->Size());
-  for (size_t i = 0; i < runOutput->ElementsNum(); i++) {
-    ASSERT_EQ(output_data[i], outData[i]);
-  }
-#endif
-  MS_LOG(INFO) << "Passed";
-}
+  std::string output_path = "./test_data/train/train_output_32_10.bin";
+  auto error = lite::RelativeOutputError(outData, output_path);
+  EXPECT_LT(error, 2e-3);
+  MS_LOG(INFO) << "TuningLayer passed";
 
+  delete model;
+  delete session;
+}
+#endif
 int32_t fileIterator(mindspore::session::TrainSession *session, const std::string &path,
                      std::function<int32_t(mindspore::session::TrainSession *session, const std::string &)> cb) {
   int32_t res = 0;
@@ -459,7 +453,7 @@ int32_t fileIterator(mindspore::session::TrainSession *session, const std::strin
 }
 void replaceExt(const std::string &src, std::string *dst) { *dst = src.substr(0, src.find_last_of('.')) + ".emb"; }
 
-int32_t runEffNet(mindspore::session::TrainSession *session, const std::string &in, const std::string &out) {
+int32_t runEffNet(mindspore::lite::LiteSession *session, const std::string &in, const std::string &out) {
   // setup input
   auto inputs = session->GetInputs();
   // ASSERT_EQ(inputs.size(), 1);
@@ -473,14 +467,15 @@ int32_t runEffNet(mindspore::session::TrainSession *session, const std::string &
   auto input_data = reinterpret_cast<float *>(in_buf);
   // ASSERT_EQ(input_size, inTensor->Size());
   std::copy(input_data, input_data + inTensor->ElementsNum(), data);
+  delete [] in_buf;
 
   // execute network
   session->RunGraph();
 
   // compare outputs
-  auto outputs = session->GetOutputMap();
+  auto outputs = session->GetOutputs();
   auto output = ((outputs.begin())->second);
-  float *output_data = reinterpret_cast<float *>(output.at(0)->MutableData());
+  float *output_data = reinterpret_cast<float *>(output->MutableData());
 
   return mindspore::lite::CompareRelativeOutput(output_data, out.c_str());
 }
@@ -488,15 +483,19 @@ int32_t runEffNet(mindspore::session::TrainSession *session, const std::string &
 TEST_F(NetworkTest, efficient_net) {
   char *buf = nullptr;
   size_t net_size = 0;
-  std::string net = "./test_data/nets/efficientnet_b0_f.ms";
+  // std::string net = "./test_data/nets/efficientnet_b0_f.ms";
+
+  std::string net = "./test_data/nets/effnetb0_fwd_nofuse.ms";
   ReadFile(net.c_str(), &net_size, &buf);
   auto model = lite::Model::Import(buf, net_size);
+  delete [] buf;
   auto context = new lite::Context;
   context->device_type_ = lite::DT_CPU;
   context->cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 
   auto session = new mindspore::session::TrainSession();
+  // auto session = new mindspore::lite::LiteSession();
   ASSERT_NE(session, nullptr);
   auto ret = session->Init(context);
   ASSERT_EQ(lite::RET_OK, ret);
@@ -506,7 +505,7 @@ TEST_F(NetworkTest, efficient_net) {
 
 #if 0
   std::string path = "/opt/share/MiniBinEmbDataset/";
-  auto res = fileIterator(session, path, [](mindspore::session::TrainSession *session, const std::string &in) {
+  auto res = fileIterator(session, path, [](mindspore::lite::LiteSession *session, const std::string &in) {
     int32_t res = 0;
     if (in.find(".bin") != std::string::npos) {
       std::string out;
@@ -549,6 +548,9 @@ TEST_F(NetworkTest, efficient_net) {
   // float* output_data = reinterpret_cast<float *>(output.at(0)->MutableData());
   // int res = lite::CompareRelativeOutput(output_data, output_path);
   ASSERT_EQ(res, 0);
+  delete model;
+  delete session;
+  delete context;
 }
 
 }  // namespace mindspore

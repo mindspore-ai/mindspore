@@ -41,6 +41,7 @@ int BiasGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &i
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
+    attr->axis = {0};  // GetValue<std::vector<int>>(prim.GetAttr("axis"));
     this->primitive_->value.value = attr;
     if (this->primitive_->value.value == nullptr) {
       MS_LOG(ERROR) << "primitive value is nullptr";
@@ -73,6 +74,7 @@ std::vector<int> BiasGrad::GetAxis() const {
   auto fb_vector = this->primitive_->value_as_BiasGrad()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
+#endif
 
 int BiasGrad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   if (1 != inputs.size()) {
@@ -99,6 +101,5 @@ int BiasGrad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> out
   return RET_OK;
 }
 
-#endif
 }  // namespace lite
 }  // namespace mindspore

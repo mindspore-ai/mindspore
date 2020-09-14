@@ -66,7 +66,6 @@ class DetectionPostProcess : public PrimitiveC {
   bool GetUseRegularNms() const;
   bool GetOutQuantized() const;
 };
-
 }  // namespace lite
 }  // namespace mindspore
 

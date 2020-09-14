@@ -1,0 +1,186 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <math.h>
+#include "src/kernel_registry.h"
+#include "nnacl/softmax_parameter.h"
+#include "nnacl/fp32/softmax.h"
+#include "src/runtime/kernel/arm/fp32_grad/softmax_cross_entropy_with_logits.h"
+#include "include/errorcode.h"
+
+using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_SoftmaxCrossEntropy;
+
+namespace mindspore::kernel {
+
+int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() { return RET_OK; }
+
+void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *labels, const float *logits,
+                                                                float *grads, float *output2) const {
+  float eps = 1e-6;
+  float total_loss = 0.0;
+  if (grads != nullptr) {
+    for (int i = 0; i < param_->batch_size_; ++i) {
+      for (size_t j = 0; j < param_->number_of_classes_; ++j) {
+        float logit =
+          -logf(logits[i * param_->number_of_classes_ + j] <= 0.0 ? eps : logits[i * param_->number_of_classes_ + j]);
+        grads[i * param_->number_of_classes_ + j] =
+          (logits[i * param_->number_of_classes_ + j] - labels[i * param_->number_of_classes_ + j])/param_->batch_size_;
+        total_loss += labels[i * param_->number_of_classes_ + j] * logit;
+      }
+    }
+  } else {
+    for (int i = 0; i < param_->batch_size_; ++i) {
+      for (size_t j = 0; j < param_->number_of_classes_; ++j) {
+        float logit =
+          -logf(logits[i * param_->number_of_classes_ + j] <= 0.0 ? eps : logits[i * param_->number_of_classes_ + j]);
+        total_loss += labels[i * param_->number_of_classes_ + j] * logit;
+      }
+    }
+  }
+  output2[0] = total_loss / param_->batch_size_;
+}
+
+#if 0
+void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *labels, const float *losses,
+                                                                      float *output) const {
+  float total_loss = 0;
+  for (int i = 0; i < param_->batch_size_; ++i) {
+    if (labels[i] < 0) {
+      MS_LOG(EXCEPTION) << "label value must >= 0";
+    }
+    size_t label = labels[i];
+    if (label > param->number_of_classes_) {
+      MS_LOG(EXCEPTION) << "error label input!";
+    } else {
+      total_loss -= logf(losses[i * param->number_of_classes_ + label]);
+    }
+  }
+  output[0] = total_loss / param->batch_size_;
+}
+
+void SoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *labels, const float *losses, float *grads,
+                                                                   float *output) const {
+  size_t row_start = 0;
+  float total_loss = 0;
+  for (int i = 0; i < param->batch_size_; ++i) {
+    if (labels[i] < 0) {
+      MS_LOG(EXCEPTION) << "label value must >= 0";
+    }
+    size_t label = labels[i];
+    if (label > param->number_of_classes_) {
+      MS_LOG(EXCEPTION) << "error label input!";
+    } else {
+      total_loss -= logf(losses[i * param->number_of_classes_ + label]);
+      for (size_t j = 0; j < param->number_of_classes_; ++j) {
+        size_t index = row_start + j;
+        if (j == label) {
+          grads[index] = (losses[index] - 1) / param->batch_size_;
+        } else {
+          grads[index] = losses[index] / param->batch_size_;
+        }
+      }
+    }
+    row_start += param->number_of_classes_;
+  }
+  output[0] = total_loss / param->batch_size_;
+}
+#endif
+
+int SoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
+
+  auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  float *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  float *grads = NULL;
+  if (is_train() && out_tensors_.size() > 1) {
+    grads = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
+  }
+  size_t data_size = in_tensors_.at(0)->ElementsNum();
+  float *losses = new (std::nothrow) float[data_size];
+  if (losses == nullptr) {
+    MS_LOG(ERROR) << "losses is null";
+    return RET_ERROR;
+  }
+
+  MS_ASSERT(out != nullptr);
+  MS_ASSERT(labels != nullptr);
+  MS_ASSERT(ins != nullptr);
+  std::fill(losses_, losses_ + data_size, 0);
+  std::fill(sum_data_, sum_data_ + sm_params_.input_shape_[0], 0);
+  Softmax(ins, losses_, sum_data_, &sm_params_);
+  ForwardPostExecute(labels, losses_, grads, out);
+  return RET_OK;
+}
+
+int SoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
+  auto dims = in_tensors_[0]->shape();
+  param_->n_dim_ = 2;
+  param_->number_of_classes_ = dims[1];
+  param_->batch_size_ = dims[0];
+  for (unsigned int i = 0; i < dims.size(); i++) param_->input_shape_[i] = dims[i];
+  if (2 != this->in_tensors_.size()) {
+    MS_LOG(ERROR) << "softmax entropy loss should have two inputs";
+    return RET_ERROR;
+  }
+  auto *in0 = in_tensors_.front();
+  if (in0 == nullptr) {
+    MS_LOG(ERROR) << "softmax etropy loss in0 have no data";
+    return RET_ERROR;
+  }
+
+  size_t data_size = in_tensors_.at(0)->ElementsNum();
+  losses_ = new (std::nothrow) float[data_size];
+  sum_data_ = new (std::nothrow) float[dims[0]];
+  MS_ASSERT(losses_ != nullptr);
+  MS_ASSERT(sum_data_ != nullptr);
+
+  sm_params_.n_dim_ = 2;
+  sm_params_.element_size_ = data_size;
+  sm_params_.axis_ = 1;
+  for (size_t i = 0; i < dims.size(); i++) sm_params_.input_shape_[i] = dims[i];
+
+  return RET_OK;
+}
+
+kernel::LiteKernel *CpuSoftmaxCrossEntropyFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                            const std::vector<lite::Tensor *> &outputs,
+                                                            OpParameter *opParameter, const lite::Context *ctx,
+                                                            const kernel::KernelKey &desc,
+                                                            const mindspore::lite::PrimitiveC *primitive) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_SoftmaxCrossEntropy);
+  auto *kernel =
+    new (std::nothrow) SoftmaxCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  MS_ASSERT(kernel != nullptr);
+  auto ret = kernel->Init();
+  if (RET_OK != ret) {
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    delete kernel;
+    return nullptr;
+  }
+  return kernel;
+}
+  // REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SoftmaxCrossEntropy, CpuSoftmaxCrossEntropyFp32KernelCreator)
+}  // namespace mindspore::kernel

@@ -42,9 +42,11 @@ bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model) {
     for (uint32_t j = 0; j < count; ++j) {
       node->input_indices_.push_back(size_t(c_node->inputIndex()->GetAs<uint32_t>(j)));
     }
-    count = c_node->outputIndex()->size();
-    for (uint32_t j = 0; j < count; ++j) {
-      node->output_indices_.push_back(size_t(c_node->outputIndex()->GetAs<uint32_t>(j)));
+    if (c_node->outputIndex() != nullptr) {
+      count = c_node->outputIndex()->size();
+      for (uint32_t j = 0; j < count; ++j) {
+        node->output_indices_.push_back(size_t(c_node->outputIndex()->GetAs<uint32_t>(j)));
+      }
     }
     model->nodes_.push_back(node);
   }

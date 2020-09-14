@@ -27,20 +27,40 @@ void sumSpatialBatch(const float *in, int size, int ch, float *out) {
   }
 }
 
-void scaleBias(const float *scales, int batch, int n, int size, float *output) {
-  for (int i = 0; i < batch * size; i++)
-    for (int c = 0; c < n; c++) output[i * n + c] *= scales[c];
+static void meanVar(const float *in, int size, int ch, float eps, float *mean, float *invar) {
+  float N = (float)size;
+  sumSpatialBatch(in, N, ch, mean);
+  for (int f = 0; f < ch; ++f) {
+    mean[f] /= N;
+  }
+  for (int f=0; f< ch; f++) {
+    float tvar = 0;
+    for (int i =0; i< N; i++) {
+      float x = in[i*ch +f];
+      tvar += (x-mean[f]) *(x-mean[f]);
+    }
+    invar[f] = 1.0f/(sqrt(tvar/N+eps));
+  }
 }
 
-void normalize(const float *x, const float *mean, const float *invar, int batch, int filters, int spatial,
-               float *out) {
-  int b, f, i;
-  for (b = 0; b < batch; ++b) {
-    for (i = 0; i < spatial; ++i) {
-      for (f = 0; f < filters; ++f) {
-        int index = b * filters * spatial + i * filters + f;
-        out[index] = (x[index] - mean[f]) * invar[f];
-      }
+void backwardX(const float *in, const float *dout, const float *scale, const int size, int channels, float eps,
+               float *mean, float *invar, float *dxhathat_sum, float *dxhat_sum, float *out) {
+  meanVar(in, size, channels, eps, mean, invar);
+  for (int i = 0; i < size; i++) {
+    for (int f = 0; f < channels; f++) {
+      int ix = i*channels + f;
+      float x_hat = (in[ix] - mean[f]) * invar[f];
+      float dxhat = dout[ix] * scale[f];
+      dxhat_sum[f] += dxhat;
+      dxhathat_sum[f] += dxhat * x_hat;
+    }
+  }
+  for (int i = 0; i < size; i++) {
+    for (int f = 0; f < channels; f++) {
+      int ix = i*channels + f;
+      float x_hat = (in[ix] - mean[f]) * invar[f];
+      float dxhat = dout[ix] * scale[f];
+      out[ix] = 1.f / size * invar[f] * (size * dxhat - dxhat_sum[f] - x_hat * dxhathat_sum[f]);
     }
   }
 }
@@ -60,65 +80,3 @@ void backwardScale(const float *x, const float *mean, const float *invar, const 
   }
 }
 
-void meanVar(const float *in, int batch, int spatial, int ch, float eps, float *mean, float *invar) {
-  float N = batch * spatial;
-  sumSpatialBatch(in, N, ch, mean);
-  for (int f = 0; f < ch; ++f) {
-    mean[f] /= N;
-  }
-  for (int f=0; f< ch; f++) {
-    float tvar = 0;
-    for (int i =0; i< N; i++) {
-      float x = in[i*ch +f];
-      tvar += (x-mean[f]) *(x-mean[f]);
-    }
-    invar[f] = 1.0f/(sqrt(tvar/N+eps));
-  }
-}
-
-void meanDelta(float *yt, int size, int ch,  float *invar, float *mean_delta) {
-  sumSpatialBatch(yt, size, ch, mean_delta);
-  for (int i = 0; i < ch; i++) mean_delta[i] *= -invar[i];
-}
-
-void meanAdd(const float *x, const float *mean, const float *variance_delta, int batch, int filters, int spatial,
-             float *mean_add, float *mean_delta) {
-  int i, k;
-  memset(mean_add, 0, filters * sizeof(float));
-  for (k = 0; k < spatial * batch; ++k) {
-    for (i = 0; i < filters; ++i) {
-      int index = k * filters + i;
-      mean_add[i] += x[index] - mean[i];
-    }
-  }
-  for (i = 0; i < filters; ++i) {
-    mean_add[i] *= variance_delta[i] * (-2.f / (spatial * batch));
-    mean_delta[i] += mean_add[i];
-  }
-}
-
-void varianceDelta(const float *x, const float *delta, const float *mean, const float *invar, int batch, int filters,
-                   int spatial, float *variance_delta) {
-  int i, k;
-  memset(variance_delta, 0, filters * sizeof(float));
-  for (k = 0; k < batch * spatial; k++) {
-    for (i = 0; i < filters; i++) {
-      int index = k * filters + i;
-      variance_delta[i] += delta[index] * (x[index] - mean[i]);
-    }
-  }
-  for (i = 0; i < filters; i++) variance_delta[i] *= -.5 * 1.0f/(invar[i]*invar[i]*invar[i]);
-}
-
-void NormalizeDelta(const float *x, const float *mean, const float *invar, const float *mean_delta,
-                    const float *variance_delta, int batch, int filters, int spatial, float *delta) {
-  int f, k;
-  for (k = 0; k < batch * spatial; k++) {
-    for (f = 0; f < filters; f++) {
-      int index = k * filters + f;
-      delta[index] = delta[index] * invar[f] +
-                     variance_delta[f] * 2. * (x[index] - mean[f]) / (spatial * batch) +
-                     mean_delta[f] / (spatial * batch);
-    }
-  }
-}

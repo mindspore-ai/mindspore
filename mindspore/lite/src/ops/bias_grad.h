@@ -38,8 +38,8 @@ class BiasGrad : public PrimitiveC {
   BiasGrad() = default;
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
-  int InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) override;
 #endif
+  int InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) override;
   std::vector<int> GetAxis() const;
 };
 }  // namespace lite

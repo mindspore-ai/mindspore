@@ -30,8 +30,7 @@ class TestBiasGradFp32 : public mindspore::CommonTest {
 
 TEST_F(TestBiasGradFp32, BiasGradFp32) {
   // prepare stage
-  auto bias_param = new ArithmeticParameter();
-
+  ArithmeticParameter* bias_param = static_cast<ArithmeticParameter*>(malloc(sizeof(ArithmeticParameter)));
   size_t input_size;
   std::string input_path = "./test_data/operators/biasgradfp32_1_dy_10_28_28_7.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));

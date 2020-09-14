@@ -29,7 +29,7 @@ class BNGradCPUKernel : public LiteKernel {
                            const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                            const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~BNGradCPUKernel() override { delete workspace; }
+  ~BNGradCPUKernel() override { delete [] workspace; }
 
   int Init() override;
   int ReSize() override;
@@ -39,8 +39,5 @@ class BNGradCPUKernel : public LiteKernel {
   float *workspace;
   int workspace_size;
 };
-
-// OpParameter *PopulateBNGradParameter(const lite::Primitive *primitive);
-
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_BN_GRAD_H_

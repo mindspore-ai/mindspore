@@ -32,13 +32,16 @@
 
 namespace mindspore {
 namespace lite {
-
 static std::vector<schema::PrimitiveType> packed_op = {
   schema::PrimitiveType_Conv2D, schema::PrimitiveType_DeConv2D, schema::PrimitiveType_DepthwiseConv2D,
   schema::PrimitiveType_DeDepthwiseConv2D, schema::PrimitiveType_MatMul};
 
 // this method will not check whether tensor_idx is a weight tensor index, caller should ensure this.
 static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor_idx) {
+#ifdef SUPPORT_TRAIN
+  return false;
+#endif
+
   MS_ASSERT(model != nullptr);
   auto post_node_idxes = GetLinkedPostNodeIdx(model, tensor_idx);
   return std::none_of(post_node_idxes.begin(), post_node_idxes.end(), [&](const size_t &post_node_idx) {
@@ -267,7 +270,9 @@ int LiteSession::CompileGraph(Model *model) {
   }
 
   executor->Prepare(this->kernels_);
+#ifndef SUPPORT_TRAIN
   model->Free();
+#endif
   return RET_OK;
 }
 

@@ -40,17 +40,24 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   // fusion const_fold
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
-  pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
-  pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>());
-  pm->AddPass(std::make_shared<opt::ConvScaleFusion>());
-  pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu", schema::PrimitiveType_Activation,
-                                                          schema::ActivationType_RELU));
-  pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu6", schema::PrimitiveType_Activation,
-                                                          schema::ActivationType_RELU6));
-  pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(
-    true, "conv_tuple_relu", schema::PrimitiveType_Activation, schema::ActivationType_RELU));
-  pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(
-    true, "conv_tuple_relu6", schema::PrimitiveType_Activation, schema::ActivationType_RELU6));
+
+  // for now - trainning is not supporting fuse operations
+  if (config != nullptr && config->trainModel == false) {
+    pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
+    pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>());
+    pm->AddPass(std::make_shared<opt::ConvScaleFusion>());
+    pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu", schema::PrimitiveType_Activation,
+                                                            schema::ActivationType_RELU));
+    pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu6", schema::PrimitiveType_Activation,
+                                                            schema::ActivationType_RELU6));
+    pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(true, "conv_tuple_relu",
+                                                                schema::PrimitiveType_Activation,
+                                                                schema::ActivationType_RELU));
+    pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(true, "conv_tuple_relu6",
+                                                                schema::PrimitiveType_Activation,
+                                                                schema::ActivationType_RELU6));
+  }
+
   pm->AddPass(std::make_shared<opt::ConstFoldPass>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(old_graph);

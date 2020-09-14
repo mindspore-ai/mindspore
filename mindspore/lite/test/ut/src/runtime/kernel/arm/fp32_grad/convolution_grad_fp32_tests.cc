@@ -77,7 +77,7 @@ void InitConvParamGroup3Dilation2FP32(ConvParameter *conv_param) {
 
 TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
   // prepare stage
-  auto conv_param = new ConvParameter();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   InitConvParamGroup1FP32(conv_param);
 
   size_t dy_size;
@@ -144,7 +144,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
 
 TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
   // prepare stage
-  auto conv_param = new ConvParameter();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   InitConvParamGroup1FP32(conv_param);
 
   size_t dy_size;
@@ -211,7 +211,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
 
 TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
   // prepare stage
-  auto conv_param = new ConvParameter();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   InitConvParamGroup3FP32(conv_param);
 
   size_t dy_size;
@@ -277,7 +277,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
 
 TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
   // prepare stage
-  auto conv_param = new ConvParameter();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   InitConvParamGroup3FP32(conv_param);
 
   size_t dy_size;
@@ -344,7 +344,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
 
 TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
   // prepare stage
-  auto conv_param = new ConvParameter();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
 
   InitConvParamGroup3Dilation2FP32(conv_param);
 
@@ -410,7 +410,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
 
 TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
   // prepare stage
-  auto conv_param = new ConvParameter();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   InitConvParamGroup3Dilation2FP32(conv_param);
 
   size_t dy_size;
@@ -476,7 +476,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
 
 TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
   // prepare stage
-  auto conv_param = new ConvParameter();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   InitConvParamGroup3Dilation2FP32(conv_param);
 
   size_t x_size;

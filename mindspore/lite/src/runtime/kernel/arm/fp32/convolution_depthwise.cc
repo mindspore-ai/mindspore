@@ -50,7 +50,6 @@ int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
   }
   PackWeightKHWToHWKFp32(origin_weight, packed_weight_, weight_tensor->Height() * weight_tensor->Width(), channel);
 
-  auto bias_tensor = in_tensors_[kBiasIndex];
   bias_data_ = reinterpret_cast<float *>(malloc(channel * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -59,6 +58,7 @@ int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
 
   memset(bias_data_, 0, channel * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
+    auto bias_tensor = in_tensors_[kBiasIndex];
     auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(float));
   }

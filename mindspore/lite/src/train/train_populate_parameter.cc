@@ -27,6 +27,8 @@
 #include "nnacl/conv_parameter.h"
 #include "src/ops/power_grad.h"
 #include "nnacl/power_parameter.h"
+#include "src/ops/bias_grad.h"
+#include "nnacl/arithmetic_common.h"
 
 namespace mindspore::kernel {
 
@@ -36,7 +38,7 @@ OpParameter *DefaultPopulateParameter(const mindspore::lite::PrimitiveC *primiti
     return nullptr;
   }
 
-  OpParameter *param = new (std::nothrow) OpParameter();
+  OpParameter *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "new Param for primitive failed.";
     return nullptr;
@@ -51,7 +53,8 @@ OpParameter *PopulateSoftmaxCrossEntropyParameter(const mindspore::lite::Primiti
     MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
     return nullptr;
   }
-  SoftmaxCrossEntropyParameter *sce_param = new (std::nothrow) SoftmaxCrossEntropyParameter();
+  SoftmaxCrossEntropyParameter *sce_param = reinterpret_cast<SoftmaxCrossEntropyParameter *>
+  (malloc(sizeof(SoftmaxCrossEntropyParameter)));
   if (sce_param == nullptr) {
     MS_LOG(ERROR) << "new SoftmaxCrossEntropyParameter failed.";
     return nullptr;
@@ -65,7 +68,7 @@ OpParameter *PopulatePoolingGradParameter(const mindspore::lite::PrimitiveC *pri
     MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
     return nullptr;
   }
-  PoolingParameter *pooling_param = new (std::nothrow) PoolingParameter();
+  PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
   if (pooling_param == nullptr) {
     MS_LOG(ERROR) << "new PoolingParameter failed.";
     return nullptr;
@@ -118,7 +121,7 @@ OpParameter *PopulateActivationGradParameter(const mindspore::lite::PrimitiveC *
     return nullptr;
   }
 
-  ActivationParameter *act_param = new (std::nothrow) ActivationParameter();
+  ActivationParameter *act_param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
   if (act_param == nullptr) {
     MS_LOG(ERROR) << "new ActivationParameter failed.";
     return nullptr;
@@ -137,7 +140,7 @@ OpParameter *PopulateConvolutionGradFilterParameter(const mindspore::lite::Primi
     return nullptr;
   }
 
-  ConvParameter *param = new (std::nothrow) ConvParameter();
+  ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "new Param for conv grad filter failed.";
     return nullptr;
@@ -178,7 +181,7 @@ OpParameter *PopulateConvolutionGradInputParameter(const mindspore::lite::Primit
     return nullptr;
   }
 
-  ConvParameter *param = new (std::nothrow) ConvParameter();
+  ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "new Param for conv grad filter failed.";
     return nullptr;
@@ -219,7 +222,7 @@ OpParameter *PopulatePowerGradParameter(const mindspore::lite::PrimitiveC *primi
     return nullptr;
   }
 
-  PowerParameter *power_param = new (std::nothrow) PowerParameter();
+  PowerParameter *power_param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
   if (power_param == nullptr) {
     MS_LOG(ERROR) << "new PowerParameter failed.";
     return nullptr;
@@ -232,10 +235,25 @@ OpParameter *PopulatePowerGradParameter(const mindspore::lite::PrimitiveC *primi
   return reinterpret_cast<OpParameter *>(power_param);
 }
 
+OpParameter *PopulateBiasGradParameter(const mindspore::lite::PrimitiveC *primitive) {
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
+    return nullptr;
+  }
+
+  ArithmeticParameter *arithmetic_param =  reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
+  if (arithmetic_param == nullptr) {
+    MS_LOG(ERROR) << "new ArithmeticParameter failed.";
+    return nullptr;
+  }
+  arithmetic_param->op_parameter_.type_ = primitive->Type();
+  return reinterpret_cast<OpParameter *>(arithmetic_param);
+}
+
 void PopulateTrainParameters() {
   auto ppr = PopulateParameterRegistry::GetInstance();
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_ApplyMomentum, DefaultPopulateParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_BiasGrad, PopulateArithmetic);
+  ppr->AddPopulateParameterFunc(schema::PrimitiveType_BiasGrad, PopulateBiasGradParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_SoftmaxCrossEntropy, PopulateSoftmaxCrossEntropyParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_ActivationGrad, PopulateActivationGradParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_TupleGetItem, DefaultPopulateParameter);

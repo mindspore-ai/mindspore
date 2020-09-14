@@ -28,6 +28,8 @@ void BatchNormFp32(const void *input, const void *mean, const void *variance, Ba
 void FusedBatchNormFp32(const void *input, const void *scale, const void *offset, const void *mean,
                         const void *variance, BatchNormParameter *param, int task_id, void *output);
 
+void FusedBatchNormFp32MeanVar(const float *input, float momentum, float *run_mean, float *run_var,
+                              BatchNormParameter *param, float *save_mean, float *save_var);
 #ifdef __cplusplus
 }
 #endif

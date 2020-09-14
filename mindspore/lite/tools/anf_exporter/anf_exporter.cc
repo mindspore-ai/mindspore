@@ -56,6 +56,36 @@ void AnfExporter::RemoveIfMakeTuple(const CNodePtr &cnode) {
   }
 }
 
+void AnfExporter::RemoveIfDepend(const CNodePtr &cnode) {
+  bool hasDepend = false;
+  std::vector<AnfNodePtr> inputs;
+  inputs.clear();
+
+  inputs.emplace_back(cnode->input(0));
+  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    AnfNodePtr inputNode = cnode->input(i);
+    if (!inputNode->isa<CNode>()) {
+      inputs.emplace_back(cnode->input(i));
+      continue;
+    }
+    auto dependNode = utils::cast<CNodePtr>(inputNode);
+    if (IsPrimitiveCNode(dependNode, schema::PrimitiveType_Depend)) {
+      hasDepend = true;
+      for (size_t j = 1; j < dependNode->inputs().size(); ++j) {
+        AnfNodePtr dependInputNode = dependNode->input(j);
+        if (dependInputNode->isa<CNode>()) {
+          inputs.emplace_back(dependInputNode);
+        }
+      }
+    } else {
+      inputs.emplace_back(cnode->input(i));
+    }
+  }
+  if (hasDepend) {
+    cnode->set_inputs(inputs);
+  }
+}
+
 int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
                                    const std::shared_ptr<PrimitiveC> primitive,
                                    const std::unique_ptr<schema::CNodeT> &dst_node) {
@@ -175,10 +205,12 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
       return nullptr;
     }
     if (primitive_c->Type() == schema::PrimitiveType_TupleGetItem ||
-        primitive_c->Type() == schema::PrimitiveType_MakeTuple) {
+        primitive_c->Type() == schema::PrimitiveType_MakeTuple ||
+        primitive_c->Type() == schema::PrimitiveType_Depend) {
       continue;
     }
     RemoveIfMakeTuple(cnode);
+    RemoveIfDepend(cnode);
 
     auto primT = primitive_c->GetPrimitiveT();
     auto node = std::make_unique<schema::CNodeT>();
@@ -336,9 +368,49 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
     output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
     meta_graphT->allTensors.emplace_back(std::move(paramTensor));
   } else if (value->isa<mindspore::ValueSequeue>()) {
-    MS_LOG(DEBUG) << "Value type is ValueSequence.";
-    return RET_OK;
-  } else {
+    auto valueAbstract = valueNode->abstract();
+    auto abstractSequnce = utils::cast<abstract::AbstractSequeuePtr>(valueAbstract);
+    if (abstractSequnce->isa<abstract::AbstractTuple>()) {
+      auto abstractTuple = utils::cast<abstract::AbstractTuplePtr>(valueAbstract);
+      auto x_shape_data = abstractTuple->elements();
+      std::vector<int32_t> shape;
+      for (std::size_t i = 0; i < abstractTuple->size(); ++i) {
+        auto value_track = x_shape_data[i]->GetValueTrack();
+        MS_EXCEPTION_IF_NULL(value_track);
+        if (value_track->isa<Int32Imm>()) {
+          shape.push_back((GetValue<int>(value_track)));
+        } else {
+          MS_LOG(ERROR) << "Value type is ValueSequence is not integer, it is "
+                            << value_track->ToString() << ".";
+        }
+      }
+      if (shape.size()) {
+        auto typePtr = abstractTuple->elements()[0]->GetTypeTrack();  // abstractTuple->GetTypeTrack();
+        paramTensor->dataType = typePtr->type_id();
+        paramTensor->dims = {static_cast<int32_t>(shape.size())};
+        paramTensor->nodeType = schema::NodeType_ValueNode;
+        paramTensor->data.resize(shape.size() * sizeof(int));
+        memcpy(paramTensor->data.data(), shape.data(), shape.size() * sizeof(int));
+        node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
+        output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
+        meta_graphT->allTensors.emplace_back(std::move(paramTensor));
+        }
+      } else {
+        MS_LOG(ERROR) << "Value type is ValueSequence not supported - " << valueAbstract->type_name() << ".";
+      }
+  } else if (value->isa<mindspore::BoolImm>()) {
+        auto valueAbstract = valueNode->abstract();
+        auto abstractScalar = utils::cast<abstract::AbstractScalarPtr>(valueAbstract);
+        auto typePtr = abstractScalar->GetTypeTrack();
+        paramTensor->dataType = typePtr->type_id();
+        paramTensor->dims = {1};
+        paramTensor->nodeType = schema::NodeType_ValueNode;
+        auto data = value->cast<mindspore::BoolImmPtr>();
+        paramTensor->data.emplace_back(data->value());
+        node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
+        output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
+        meta_graphT->allTensors.emplace_back(std::move(paramTensor));
+      } else {
     MS_LOG(ERROR) << "Not support value type , need add support.";
     return RET_ERROR;
   }
