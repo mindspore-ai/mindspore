@@ -45,8 +45,13 @@ int ConvolutionCPUKernel::InitWeightBias() {
   int ic4 = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
   int oc_block, oc_block_num;
+#ifdef ENABLE_ARM32
+  oc_block = C4NUM;
+  oc_block_num = UP_DIV(out_channel, C4NUM);
+#else
   oc_block = C8NUM;
   oc_block_num = UP_DIV(out_channel, C8NUM);
+#endif
   int pack_weight_size = oc_block_num * oc_block * ic4 * C4NUM * kernel_plane;
 
   auto origin_weight = reinterpret_cast<float *>(filter_tensor->MutableData());
@@ -113,11 +118,11 @@ void ConvolutionCPUKernel::ConfigInputOutput() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_tensor->SetFormat(schema::Format::Format_NHWC);
 
-  // #ifdef ENABLE_ARM32
-  //   gemm_func_ = IndirectGemmFp32_8x4;
-  // #else
+#ifdef ENABLE_ARM32
+  gemm_func_ = IndirectGemmFp32_8x4;
+#else
   gemm_func_ = IndirectGemmFp32_8x8;
-  // #endif
+#endif
 }
 
 int ConvolutionCPUKernel::Init() {

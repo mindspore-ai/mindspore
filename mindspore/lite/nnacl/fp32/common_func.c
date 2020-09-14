@@ -40,32 +40,6 @@ void PostConvFuncComm(const float *src_ptr_, float *out_ptr, const float *bias_p
   return;
 }
 
-void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
-                        size_t plane_size, size_t stride, bool is_relu, bool is_relu6) {
-#ifndef ENABLE_ARM64
-  PostConvFuncComm(c4_out_ptr, out_ptr, bias_ptr, output_channel, plane_size, stride, is_relu, is_relu6, C4NUM);
-#else
-  if (bias_ptr != NULL) {
-    if (is_relu) {
-      C4BiasAddRelu(out_ptr, c4_out_ptr, bias_ptr, output_channel, plane_size, stride * sizeof(float));
-    } else if (is_relu6) {
-      C4BiasAddRelu6(out_ptr, c4_out_ptr, bias_ptr, output_channel, plane_size, stride * sizeof(float));
-    } else {
-      C4BiasAdd(out_ptr, c4_out_ptr, bias_ptr, output_channel, plane_size, stride * sizeof(float));
-    }
-  } else {
-    if (is_relu) {
-      C4Relu(out_ptr, c4_out_ptr, output_channel, plane_size, stride * sizeof(float));
-    } else if (is_relu6) {
-      C4Relu6(out_ptr, c4_out_ptr, output_channel, plane_size, stride * sizeof(float));
-    } else {
-      // do nothing
-    }
-  }
-#endif
-  return;
-}
-
 void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
                         size_t plane_size, size_t stride, bool is_relu, bool is_relu6) {
 #ifndef ENABLE_ARM64
