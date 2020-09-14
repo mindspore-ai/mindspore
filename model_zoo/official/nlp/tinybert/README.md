@@ -1,19 +1,34 @@
 # Contents
+- [Contents](#contents)
 - [TinyBERT Description](#tinybert-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
 - [Quick Start](#quick-start)
 - [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-    - [Script Parameters](#script-parameters)
-    - [Dataset Preparation](#dataset-preparation)
-    - [Training Process](#training-process)
-    - [Evaluation Process](#evaluation-process)
-- [Model Description](#model-description)
-    - [Performance](#performance)
-        - [Training Performance](#training-performance)
-        - [Evaluation Performance](#evaluation-performance)
+  - [Script and Sample Code](#script-and-sample-code)
+  - [Script Parameters](#script-parameters)
+    - [General Distill](#general-distill)
+    - [Task Distill](#task-distill)
+  - [Options and Parameters](#options-and-parameters)
+    - [Options:](#options)
+    - [Parameters:](#parameters)
+  - [Training Process](#training-process)
+    - [Training](#training)
+      - [running on Ascend](#running-on-ascend)
+      - [running on GPU](#running-on-gpu)
+    - [Distributed Training](#distributed-training)
+      - [running on Ascend](#running-on-ascend-1)
+      - [running on GPU](#running-on-gpu-1)
+  - [Evaluation Process](#evaluation-process)
+    - [Evaluation](#evaluation)
+      - [evaluation on SST-2 dataset](#evaluation-on-sst-2-dataset)
+      - [evaluation on MNLI dataset](#evaluation-on-mnli-dataset)
+      - [evaluation on QNLI dataset](#evaluation-on-qnli-dataset)
+  - [Model Description](#model-description)
+  - [Performance](#performance)
+    - [training Performance](#training-performance)
+      - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -243,6 +258,8 @@ epoch: 1, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, 28.2093), Tens
 epoch: 2, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, 30.1724), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
 ```
+
+> **Attention** This will bind the processor cores according to the `device_num` and total processor numbers. If you don't expect to run pretraining with binding processor cores, remove the operations about `taskset` in `scripts/run_distributed_gd_ascend.sh`
 
 #### running on GPU
 Before running the command below, please check `load_teacher_ckpt_path`, `data_dir` `schma_dir` and `device_target=GPU` has been set. Please set the path to be the absolute full path, e.g:"/username/checkpoint_100_300.ckpt".

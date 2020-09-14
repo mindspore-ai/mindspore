@@ -399,6 +399,9 @@ epoch: 0.0, current epoch percent: 0.002, step: 200, outpus are (Tensor(shape=[1
 ...
 ```
 
+> **Attention** This will bind the processor cores according to the `device_num` and total processor numbers. If you don't expect to run pretraining with binding processor cores, remove the operations about `taskset` in `scripts/ascend_distributed_launcher/get_distribute_pretrain_cmd.py`
+
+
 ## [Evaluation Process](#contents)
 ### Evaluation
 #### evaluation on cola dataset when running on Ascend
