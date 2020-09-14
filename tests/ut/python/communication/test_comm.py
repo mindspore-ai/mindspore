@@ -33,6 +33,7 @@ from mindspore.ops.operations.comm_ops import Broadcast
 
 tag = 0
 
+context.set_context(device_target="Ascend")
 init("hccl")
 
 
