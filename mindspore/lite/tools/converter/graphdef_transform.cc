@@ -120,6 +120,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
         status = mQuantizer->DetermineNodeQuantType();
         if (status != RET_OK) {
           MS_LOG(ERROR) << "DetermineNodeQuant failed";
+          return status;
         }
       }
     }
@@ -142,7 +143,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     auto formatTransPass = new (std::nothrow) FormatTransPass();
     if (formatTransPass == nullptr) {
       MS_LOG(ERROR) << "new formatTransPass failed";
-      return RET_ERROR;
+      return RET_MEMORY_FAILED;
     }
     formatTransPass->SetQuantType(ctx.quantType);
     formatTransPass->SetFmk(ctx.fmk);
@@ -154,7 +155,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
     formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     status = formatTransOptimizer.Run(graphDefT);
-    if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_ERR) {
+    if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_INVALID) {
       MS_LOG(ERROR) << "Run formatTransOptimizer graphPasses Failed";
       return status;
     }
@@ -196,7 +197,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     auto dTypeTransPass = new (std::nothrow) DTypeTransPass();
     if (dTypeTransPass == nullptr) {
       MS_LOG(ERROR) << "new dTypeTransPass failed";
-      return RET_ERROR;
+      return RET_MEMORY_FAILED;
     }
     dTypeTransPass->SetInputDataDType(ctx.inputInferenceType);
     dTypeTransPass->SetOutputDataDType(ctx.inferenceType);

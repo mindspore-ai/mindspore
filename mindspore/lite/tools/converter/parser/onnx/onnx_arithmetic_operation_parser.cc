@@ -548,8 +548,15 @@ STATUS OnnxTanhParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     return RET_NULL_PTR;
   }
 
-  MS_LOG(ERROR) << "mslite don't support tanh now";
-  return RET_ERROR;
+  std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+  attr->type = schema::ActivationType_TANH;
+  op->primitive->value.type = schema::PrimitiveType_Activation;
+  op->primitive->value.value = attr.release();
+  return RET_OK;
 }
 
 OnnxNodeRegistrar g_onnxAddParser("Add", new OnnxAddParser());

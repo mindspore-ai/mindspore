@@ -61,25 +61,31 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   pm->AddPass(std::make_shared<opt::ConstFoldPass>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(old_graph);
-
+  if (new_graph == nullptr) {
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NULL_PTR);
+    return nullptr;
+  }
   // quant
   if (config != nullptr) {
     if (config->quantType == schema::QuantType_PostTraining) {
       this->mQuantizer = std::make_unique<quant::PostTrainingQuantizer>(new_graph, config->configFile, 8);
       if (mQuantizer == nullptr) {
         MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
+        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
         return nullptr;
       }
     } else if (config->quantType == schema::QuantType_WeightQuant) {
       auto bitNum = static_cast<size_t>(std::stoull(config->bitNum));
       if (bitNum != quant::UINT8_QUANTIZATION) {
         MS_LOG(ERROR) << "Current Only Support 8 bit weight quant";
+        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
         return nullptr;
       }
       this->mQuantizer = std::make_unique<quant::WeightQuantizer>(
         new_graph, config->quantSize, config->convWeightQuantChannelThreshold, config->bitNum);
       if (mQuantizer == nullptr) {
         MS_LOG(ERROR) << "New WeightQuantizer failed";
+        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
         return nullptr;
       }
     }
@@ -89,6 +95,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
     auto status = mQuantizer->DoQuantize(new_graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Quant failed " << status;
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       return nullptr;
     }
     if (config->quantType == schema::QuantType_PostTraining) {
@@ -97,6 +104,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
       status = quant_cast.Run(new_graph);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "add QuantCast error";
+        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
         return nullptr;
       }
     }

@@ -117,6 +117,13 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name
                    << ", type: " << schema::EnumNamePrimitiveType(node->primitive->value.type) << "flag set to false.";
+      for (auto input_tensor : input_tensors) {
+        delete input_tensor;
+      }
+      for (auto output_tensor : output_tensors) {
+        delete output_tensor;
+      }
+      return RET_INFER_INVALID;
     } else if (ret != RET_OK) {
       MS_LOG(WARNING) << "InferShape failed, name: " << node->name
                       << ", type: " << schema::EnumNamePrimitiveType(node->primitive->value.type);

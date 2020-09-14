@@ -699,7 +699,6 @@ build_lite()
 
 if [[ "X$COMPILE_LITE" = "Xon" ]]; then
     build_lite
-    exit
 else
     build_mindspore
 fi

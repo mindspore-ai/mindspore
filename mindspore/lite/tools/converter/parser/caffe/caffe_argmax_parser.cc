@@ -38,7 +38,16 @@ STATUS CaffeArgMaxParser::Parse(const caffe::LayerParameter &proto, const caffe:
     return RET_NULL_PTR;
   }
 
+  // set default params
+  attr->outMaxValue = false;
+  attr->topK = 1;
   const caffe::ArgMaxParameter argmaxParam = proto.argmax_param();
+  if (argmaxParam.has_out_max_val()) {
+    attr->outMaxValue = argmaxParam.out_max_val();
+  }
+  if (argmaxParam.has_top_k()) {
+    attr->topK = argmaxParam.top_k();
+  }
   int32_t axisType;
   int32_t axis = 0;
   if (!argmaxParam.has_axis()) {
@@ -46,15 +55,9 @@ STATUS CaffeArgMaxParser::Parse(const caffe::LayerParameter &proto, const caffe:
   } else {
     axisType = 1;
     axis = (int64_t)argmaxParam.axis();
-    if (axis == -1) {
-      MS_LOG(ERROR) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
-      return RET_ERROR;
-    }
   }
   attr->axis = axis;
   attr->axisType = axisType;
-  attr->outMaxValue = argmaxParam.out_max_val();
-  attr->topK = argmaxParam.top_k();
   attr->keepDims = true;
 
   op->name = proto.name();

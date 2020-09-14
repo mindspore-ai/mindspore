@@ -42,11 +42,29 @@ STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::
   attr->format = schema::Format_NCHW;
   std::vector<int64_t> shape;
   shape.clear();
-  for (const auto &onnx_node_attr : onnx_node.attribute()) {
-    const auto &attribute_name = onnx_node_attr.name();
-    if (attribute_name == "shape") {
-      for (int i = 0; i < onnx_node_attr.ints_size(); ++i) {
-        shape.push_back(static_cast<int64_t>(onnx_node_attr.ints(i)));
+  if (onnx_node.input_size() != 2) {
+    for (const auto &onnx_node_attr : onnx_node.attribute()) {
+      const auto &attribute_name = onnx_node_attr.name();
+      if (attribute_name == "shape") {
+        for (int i = 0; i < onnx_node_attr.ints_size(); ++i) {
+          shape.push_back(static_cast<int64_t>(onnx_node_attr.ints(i)));
+        }
+      }
+    }
+  } else {
+    onnx::TensorProto input_shape;
+    const auto &shape_name = onnx_node.input(1);
+    for (const auto &it : onnx_graph.initializer()) {
+      if (it.name() == shape_name) {
+        input_shape = it;
+        break;
+      }
+    }
+    if (input_shape.int64_data_size() == 0) {
+      MS_LOG(WARNING) << "shape maybe from another op other than const initializer";
+    } else {
+      for (int i = 0; i < input_shape.int64_data_size(); ++i) {
+        shape.push_back(input_shape.int64_data(i));
       }
     }
   }

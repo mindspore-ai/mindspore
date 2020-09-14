@@ -33,18 +33,23 @@ const std::set<std::string> CaffeModelParser::skipedLayerType = {"Dropout"};
 
 schema::MetaGraphT *CaffeModelParser::ParseToFb(const std::string &modelFile, const std::string &weightFile,
                                                 const QuantType &quantType) {
-  if (ValidateFileStr(modelFile, ".prototxt") != RET_OK) {
+  int status = ValidateFileStr(modelFile, ".prototxt");
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: modelFile must be *.prototxt";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
 
   if (weightFile.empty()) {
     MS_LOG(ERROR) << "INPUT MISSING: weightFile is necessary";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
     return nullptr;
   }
 
-  if (ValidateFileStr(weightFile, ".caffemodel") != RET_OK) {
+  status = ValidateFileStr(weightFile, ".caffemodel");
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: weightFile must be *.caffemodel";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
 
@@ -52,33 +57,40 @@ schema::MetaGraphT *CaffeModelParser::ParseToFb(const std::string &modelFile, co
   TensorCache tensorCache;
 
   caffe::NetParameter proto;
-  if (ReadProtoFromText((const char *)modelFile.c_str(), &proto) != RET_OK) {
+  status = ReadProtoFromText((const char *)modelFile.c_str(), &proto);
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Read prototxt file failed, model path: " << modelFile;
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
   metaGraph->name = proto.name();
 
   caffe::NetParameter weight;
-  if (ReadProtoFromBinaryFile((const char *)weightFile.c_str(), &weight) != RET_OK) {
+  status = ReadProtoFromBinaryFile((const char *)weightFile.c_str(), &weight);
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Read caffemodel file failed, model path: " << weightFile;
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
 
-  auto status = GetModelInput(proto, &tensorCache);
+  status = GetModelInput(proto, &tensorCache);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "GetModelInput failed " << status;
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
 
   status = ParseLayer(proto, weight, &tensorCache, metaGraph.get());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseLayer failed " << status;
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
 
   status = SetGraphTensorIndex(proto, &tensorCache, metaGraph.get());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Set inputTensor index and outputTensor index for graph failed!";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
   metaGraph->name = GetModelName(modelFile);
@@ -148,7 +160,12 @@ STATUS CaffeModelParser::SetGraphTensorIndex(const caffe::NetParameter &proto, T
   }
 
   for (auto iter : caffeInspector.GetGraphOutput()) {
-    int index = tensorCache->FindTensor(iter);
+    int index = -1;
+    if (splitLayer.find(iter) != splitLayer.end()) {
+      index = tensorCache->FindTensor(splitLayer.find(iter)->second);
+    } else {
+      index = tensorCache->FindTensor(iter);
+    }
     if (index >= 0) {
       subGraphDef->outputIndex.emplace_back(index);
     } else {
@@ -199,26 +216,28 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
       op->name = layer.name();
 
       if (layer.type() == "Split") {
-        splitLayer.emplace(layer.name(), layer.bottom(0));
+        for (int j = 0; j < layer.top_size(); ++j) {
+          splitLayer.emplace(layer.top(j), layer.bottom(0));
+        }
         continue;
       }
       auto status = SetOpInputIdx(layer, op.get(), tensorCache);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Set Op " << layer.name() << " Input Index Failed!";
-        return RET_ERROR;
+        return status;
       }
 
       auto nodeParser = CaffeNodeParserRegistry::GetInstance()->GetNodeParser(layer.type().c_str());
       if (nodeParser == nullptr) {
         MS_LOG(ERROR) << "Don't support type " << layer.type() << ". for caffe op " << layer.name();
-        return RET_ERROR;
+        return RET_NULL_PTR;
       }
 
       std::vector<schema::TensorT *> weightVec;
       status = nodeParser->Parse(layer, layerP, op.get(), &weightVec);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Parse weight for " << layer.name() << " Failed!";
-        return RET_ERROR;
+        return status;
       }
 
       SetWeightTensor(weightVec, op.get(), tensorCache);
@@ -226,7 +245,7 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
       status = SetOpOutputIdx(layer, op.get(), tensorCache);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Set Op " << layer.name() << " Output Index Failed!";
-        return RET_ERROR;
+        return status;
       }
 
       // op->fmkType = FmkType_CAFFE;

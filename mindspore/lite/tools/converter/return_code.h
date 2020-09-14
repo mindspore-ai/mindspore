@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,34 @@
  * limitations under the License.
  */
 
-#ifndef MS_ANF_TRANSFORM_H
-#define MS_ANF_TRANSFORM_H
+#ifndef LITE_RETURN_CODE_H
+#define LITE_RETURN_CODE_H
 
-#include <memory>
-#include "schema/inner/model_generated.h"
-#include "tools/common/storage.h"
-#include "tools/converter/converter_flags.h"
-#include "ir/anf.h"
-#include "tools/converter/quantizer/quantizer.h"
-#include "tools/converter/return_code.h"
+#include "include/errorcode.h"
 
 namespace mindspore {
 namespace lite {
-class AnfTransform {
+class ReturnCode {
  public:
-  AnfTransform();
-  virtual ~AnfTransform();
-  FuncGraphPtr Transform(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
-
+  ~ReturnCode() {}
+  static ReturnCode *GetSingleReturnCode() {
+    static ReturnCode returnCode;
+    return &returnCode;
+  }
+  void UpdateReturnCode(STATUS status) {
+    if (statusCode == RET_OK) {
+      statusCode = status;
+    }
+  }
+  STATUS GetReturnCode() {
+    return statusCode;
+  }
  private:
-  std::unique_ptr<quant::Quantizer> mQuantizer = nullptr;
+  ReturnCode() { statusCode = RET_OK; }
+  int statusCode;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif
+#endif  // LITE_RETURN_CODE_H
+
