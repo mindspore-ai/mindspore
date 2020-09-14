@@ -38,8 +38,10 @@
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/config_manager.h"
+#include "debug/data_dump/dump_json_parser.h"
 #include "debug/tensor_load.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
+#include "debug/data_dump/e2e_dump_util.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 
@@ -329,8 +331,6 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
     LoadTensor(kernel_graph);
   }
 #endif
-  // dump used for debug
-  Dump(kernel_graph);
 #ifdef ENABLE_DEBUGGER
   // debugger post-execution processing
   if (debugger_) {
@@ -565,6 +565,7 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   bool ret_ok = runtime_instance->Run(kernel_graph.get(), is_task_sink);
+  Dump(kernel_graph);
   if (!ret_ok) {
     MS_LOG(EXCEPTION) << "run task error!";
   }
@@ -574,9 +575,7 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
 void AscendSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  (void)runtime_instance->DumpData(kernel_graph.get());
+  E2eDumpUtil::DumpData(kernel_graph.get());
   MS_LOG(INFO) << "Finish!";
 }
 

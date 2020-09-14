@@ -30,9 +30,7 @@
 #include "backend/kernel_compiler/tbe/tbe_kernel_parallel_build.h"
 #include "utils/utils.h"
 #include "common/trans.h"
-#ifdef ENABLE_DUMP_E2E
-#include "debug/e2e_dump.h"
-#endif
+#include "debug/data_dump/dump_json_parser.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
 #endif
@@ -622,7 +620,6 @@ AscendDeviceAddress::~AscendDeviceAddress() {
   }
 }
 
-#ifdef ENABLE_DUMP_E2E
 bool AscendDeviceAddress::DumpMemToFile(bool trans_flag, const std::string &filepath, const std::string &host_fmt,
                                         const ShapeVector &host_shape, TypeId host_type) const {
   bool ret = false;
@@ -649,7 +646,7 @@ bool AscendDeviceAddress::DumpMemToFile(bool trans_flag, const std::string &file
       MS_LOG(ERROR) << "Copy device mem to host failed";
       return ret;
     }
-    ret = mindspore::Dump::DumpToFile(path, out_tensor->data_c(), host_size);
+    ret = DumpJsonParser::DumpToFile(path, out_tensor->data_c(), host_size);
   } else {
     auto host_tmp = std::vector<uint8_t>(size_);
     auto ret_rt_memcpy = rtMemcpy(host_tmp.data(), size_, ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
@@ -659,12 +656,11 @@ bool AscendDeviceAddress::DumpMemToFile(bool trans_flag, const std::string &file
     std::string path =
       filepath + '_' + shape + '_' + TypeIdToType(type_id_)->ToString() + '_' + format_ + file_extension;
     MS_LOG(INFO) << "E2E Dump path is " << path;
-    ret = mindspore::Dump::DumpToFile(path, host_tmp.data(), size_);
+    ret = DumpJsonParser::DumpToFile(path, host_tmp.data(), size_);
   }
 
   return ret;
 }
-#endif
 
 #ifdef ENABLE_DEBUGGER
 bool AscendDeviceAddress::LoadMemToHost(bool trans_flag, const std::string &tensor_name, int execution_order,

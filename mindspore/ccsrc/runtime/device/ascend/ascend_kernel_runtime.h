@@ -25,7 +25,6 @@
 #include "framework/ge_runtime/davinci_model.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/session/session_basic.h"
-#include "debug/data_dump_parser.h"
 #include "runtime/device/ascend/dump/data_dumper.h"
 
 using ge::model_runner::TaskInfo;
@@ -39,7 +38,6 @@ class AscendKernelRuntime : public KernelRuntime {
   AscendKernelRuntime() = default;
   ~AscendKernelRuntime() override;
   bool Init() override;
-  bool DumpData(session::KernelGraph *graph, Debugger *debugger = nullptr) override;
   bool LoadData(session::KernelGraph *graph, Debugger *debugger) override;
   bool GenTask(const session::KernelGraph *graph);
   bool LoadTask(const session::KernelGraph *graph);

@@ -66,6 +66,10 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
   virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }
   void *GetMutablePtr() const override { return ptr_; }
+  virtual bool DumpMemToFile(bool dump_mode, const std::string &filepath, const std::string &host_fmt,
+                             const ShapeVector &host_shape, TypeId host_type) const {
+    return true;
+  }
 
  protected:
   const void *ptr() const { return ptr_; }

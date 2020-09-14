@@ -4,7 +4,6 @@ message("build ut testcases...")
 project(ut)
 
 set(PROJECT_DIR "${PROJECT_SOURCE_DIR}/../../..")
-add_compile_definitions(ENABLE_DUMP_E2E)
 if(ENABLE_DUMP_IR)
     add_compile_definitions(ENABLE_DUMP_IR)
 endif(ENABLE_DUMP_IR)
@@ -84,9 +83,8 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/frontend/parallel/*.cc"
         "../../../mindspore/ccsrc/frontend/operator/*.cc"
         # dont remove the 4 lines above
-        "../../../mindspore/ccsrc/debug/e2e_dump.cc"
+        "../../../mindspore/ccsrc/debug/data_dump/dump_json_parser.cc"
         "../../../mindspore/ccsrc/debug/common.cc"
-        "../../../mindspore/ccsrc/debug/data_dump_parser.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/profiling/profiling_manager.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/profiling/profiling_engine_impl.cc"
         "../../../mindspore/ccsrc/runtime/device/kernel_runtime.cc"

@@ -27,6 +27,7 @@
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
+#include "debug/data_dump/dump_json_parser.h"
 #include "ir/value.h"
 #include "utils/shape_utils.h"
 using mindspore::kernel::Address;
@@ -34,20 +35,9 @@ using mindspore::kernel::AddressPtr;
 
 namespace mindspore {
 namespace device {
-KernelRuntime::~KernelRuntime() {
-#ifdef ENABLE_DUMP_E2E
-  dump_conf_ptr_ = nullptr;
-#endif
-}
+KernelRuntime::~KernelRuntime() {}
 
 bool KernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) { return true; }
-
-bool KernelRuntime::DumpData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
-  if (graph != nullptr) {
-    return true;
-  }
-  return false;
-}
 
 bool KernelRuntime::LoadData(session::KernelGraph *graph, Debugger *debugger) { return false; }
 
@@ -134,36 +124,21 @@ void KernelRuntime::RunOpClearMemory(const session::KernelGraph *graph) {
 }
 
 bool KernelRuntime::DumpDataEnabled() {
-  bool ret = false;
-#ifdef ENABLE_DUMP_E2E
-  DumpConfPtr dump_conf = GetDumpConf();
-  MS_EXCEPTION_IF_NULL(dump_conf);
-  bool dump_flag = dump_conf->dump_enable();
-  if (!dump_flag) {
-    return ret;
-  }
-  ret = true;
-#endif
-  return ret;
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  return dump_json_parser.e2e_dump_enabled();
 }
 
 bool KernelRuntime::DumpDataEnabledIteration() {
-  bool ret = false;
-#ifdef ENABLE_DUMP_E2E
-  if (!DumpDataEnabled()) {
-    return ret;
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (!dump_json_parser.e2e_dump_enabled()) {
+    return false;
   }
-  DumpConfPtr dump_conf = GetDumpConf();
-  MS_EXCEPTION_IF_NULL(dump_conf);
-  uint32_t cur_iter = dump_conf->cur_iter() + 1;
-  if (dump_conf->dump_iter() != 0) {
-    if (cur_iter != dump_conf->dump_iter()) {
-      return ret;
-    }
+
+  auto cur_iter = dump_json_parser.cur_dump_iter() + 1;
+  if (dump_json_parser.iteration() != 0) {
+    return cur_iter == dump_json_parser.iteration();
   }
-  ret = true;
-#endif
-  return ret;
+  return true;
 }
 
 void KernelRuntime::AssignStaticMemory(session::KernelGraph *graph) {
@@ -858,16 +833,5 @@ DeviceAddressPtr KernelRuntime::AssignSingleOpLaunchMemory(size_t size, const st
   MS_EXCEPTION_IF_NULL(base_ptr);
   return device_address;
 }
-
-#ifdef ENABLE_DUMP_E2E
-bool KernelRuntime::SetDumpConf() {
-  dump_conf_ptr_ = std::make_shared<Dump>();
-  MS_EXCEPTION_IF_NULL(dump_conf_ptr_);
-  bool ret = dump_conf_ptr_->SetDumpConfFromJsonFile();
-  return ret;
-}
-
-DumpConfPtr KernelRuntime::GetDumpConf() { return dump_conf_ptr_; }
-#endif
 }  // namespace device
 }  // namespace mindspore

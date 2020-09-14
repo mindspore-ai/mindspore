@@ -21,7 +21,7 @@
 #include <memory>
 #include "framework/ge_runtime/task_info.h"
 #include "backend/kernel_compiler/kernel.h"
-#include "debug/data_dump_parser.h"
+#include "debug/data_dump/dump_json_parser.h"
 
 using TaskInfoPtr = std::shared_ptr<ge::model_runner::TaskInfo>;
 namespace mindspore {
@@ -32,7 +32,9 @@ class AscendKernelMod : public KernelMod {
                                            const std::vector<AddressPtr> &, uint32_t) = 0;
   uint32_t block_dim() { return block_dim_; }
   uint32_t stream_id() { return stream_id_; }
-  virtual bool NeedDump() { return DataDumpParser::GetInstance().NeedDump(kernel_name_); }
+  virtual bool NeedDump() {
+    return DumpJsonParser::GetInstance().NeedDump(kernel_name_) && DumpJsonParser::GetInstance().async_dump_enabled();
+  }
 
  protected:
   uint32_t block_dim_{1};

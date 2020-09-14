@@ -20,7 +20,7 @@
 #include "utils/system/file_system.h"
 #include "utils/system/env.h"
 #define private public
-#include "debug/e2e_dump.h"
+#include "debug/data_dump/dump_json_parser.h"
 #undef private
 
 namespace mindspore {
@@ -38,7 +38,7 @@ TEST_F(TestMemoryDumper, test_DumpToFileAbsPath) {
 
   int ret;
   char filename[] = "/tmp/dumpToFileTestFile";
-  ret = mindspore::Dump::DumpToFile(filename, data, len * sizeof(int));
+  ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int));
   ASSERT_EQ(ret, true);
 
   int fd = open(filename, O_RDONLY);
@@ -70,7 +70,7 @@ TEST_F(TestMemoryDumper, test_DumpToFileRelativePath) {
 
   int ret;
   char filename[] = "../../dumpToFileTestFile";
-  ret = mindspore::Dump::DumpToFile(filename, data, len * sizeof(int));
+  ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int));
   ASSERT_EQ(ret, true);
 
   int fd = open(filename, O_RDONLY);
@@ -102,7 +102,7 @@ TEST_F(TestMemoryDumper, test_DumpToFileNotExistDir) {
   }
 
   char filename[] = "./tmp/dumpToFileTestFile";
-  int ret = mindspore::Dump::DumpToFile(filename, data, len * sizeof(int));
+  int ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int));
   ASSERT_EQ(ret, true);
 
   int fd = open(filename, O_RDONLY);

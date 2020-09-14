@@ -24,10 +24,8 @@
 #include <string>
 #include <utility>
 #include "debug/tensor_data.h"
+#include "debug/data_dump/dump_json_parser.h"
 #include "ir/dtype.h"
-#ifdef ENABLE_DUMP_E2E
-#include "debug/e2e_dump.h"
-#endif
 namespace mindspore {
 class TensorLoader {
  public:
@@ -98,7 +96,6 @@ class TensorLoader {
 
   void set_iter_num(uint32_t iter_num) { this->iter_num = iter_num; }
 
-#ifdef ENABLE_DUMP_E2E
   bool DumpTensorToFile(std::string tensor_name, bool trans_flag, const std::string &filepath,
                         const std::string &host_fmt, const std::vector<int> &host_shape, TypeId host_type,
                         TypeId addr_type_id, std::string addr_format, size_t slot) const {
@@ -132,12 +129,11 @@ class TensorLoader {
       mindspore::tensor::TensorPtr out_tensor = node->GetTensor();
       size_t host_size = out_tensor->data().nbytes();
 
-      ret = mindspore::Dump::DumpToFile(path, out_tensor->data_c(), host_size);
+      ret = DumpJsonParser::DumpToFile(path, out_tensor->data_c(), host_size);
     }
 
     return ret;
   }
-#endif
 
  private:
   std::vector<std::shared_ptr<TensorData>> tensor_list;

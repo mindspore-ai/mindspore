@@ -33,6 +33,7 @@
 #include "ir/dtype.h"
 #include "profiler/device/gpu/gpu_profiling.h"
 #include "utils/shape_utils.h"
+#include "debug/data_dump/dump_json_parser.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #endif
@@ -51,19 +52,12 @@ bool GPUKernelRuntime::Init() {
     GPUMemoryAllocator::GetInstance().CheckMaxDeviceMemory();
     return true;
   }
-  bool ret = false;
-#ifdef ENABLE_DUMP_E2E
-  ret = SetDumpConf();
-  if (!ret) {
-    MS_LOG(INFO) << "No dump conf to set!";
-  }
-#endif
-
-  ret = InitDevice();
+  bool ret = InitDevice();
   if (!ret) {
     MS_LOG(ERROR) << "InitDevice error.";
     return ret;
   }
+  DumpJsonParser::GetInstance().Parse();
   mem_manager_ = std::make_shared<GPUMemoryManager>();
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->MallocDeviceMemory();
@@ -78,146 +72,6 @@ bool GPUKernelRuntime::Init() {
   device_init_ = true;
   return ret;
 }
-
-#ifdef ENABLE_DUMP_E2E
-namespace {
-void DumpOutput(mindspore::session::KernelGraph *graph, const string &dump_path, DumpConfPtr dump_conf,
-                Debugger *debugger) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(dump_conf);
-  bool trans_flag = dump_conf->trans_flag();
-  const auto &apply_kernels = graph->execution_order();
-  for (const auto &node : apply_kernels) {
-    MS_EXCEPTION_IF_NULL(node);
-    auto node_name = AnfAlgo::GetCNodeName(node);
-    std::string kernel_name = node->fullname_with_scope();
-    if (!dump_conf->IsKernelNeedDump(kernel_name)) {
-      continue;
-    }
-    const std::string strsrc = "/";
-    const std::string strdst = "--";
-    std::string::size_type pos = 0;
-    std::string::size_type srclen = strsrc.size();
-    std::string::size_type dstlen = strdst.size();
-    while ((pos = kernel_name.find(strsrc, pos)) != std::string::npos) {
-      kernel_name.replace(pos, srclen, strdst);
-      pos += dstlen;
-    }
-    auto output_size = AnfAlgo::GetOutputTensorNum(node);
-    for (size_t j = 0; j < output_size; ++j) {
-      auto addr = AnfAlgo::GetOutputAddr(node, j);
-      TypeId addr_type_id = addr->type_id();
-      std::string addr_format = addr->format();
-      ShapeVector int_shapes;
-      if (trans_flag) {
-        int_shapes = trans::GetRuntimePaddingShape(node, j);
-      } else {
-        auto shape = AnfAlgo::GetOutputDeviceShape(node, j);
-        (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                             [](size_t inner_item) { return SizeToInt(inner_item); });
-      }
-
-      auto type = AnfAlgo::GetOutputInferDataType(node, j);
-
-      auto format = kOpFormat_DEFAULT;
-      string filepath = dump_path + '/' + kernel_name + '_' + "output_" + std::to_string(j);
-
-      DebugServices *debug_services = debugger->debug_services();
-      TensorLoader *tensor_loader = debug_services->tensor_loader();
-      std::string original_kernel_name = node->fullname_with_scope();
-      size_t slot = j;
-      auto ret = tensor_loader->DumpTensorToFile(original_kernel_name, trans_flag, filepath, format, int_shapes, type,
-                                                 addr_type_id, addr_format, slot);
-
-      if (!ret) {
-        std::string error = "DumpTensorToFile Failed: flag:" + std::to_string(trans_flag) + ", path:" + filepath +
-                            ", host_format:" + format + ".!";
-      }
-    }
-  }
-}
-
-void DumpParameters(mindspore::session::KernelGraph *graph, const string &dump_path, DumpConfPtr dump_conf,
-                    Debugger *debugger) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(dump_conf);
-  bool trans_flag = dump_conf->trans_flag();
-  const auto &parameters = graph->inputs();
-  for (auto &item : parameters) {
-    if (!item->isa<Parameter>()) {
-      continue;
-    }
-    std::string parameter_name = item->fullname_with_scope();
-    if (!dump_conf->IsKernelNeedDump(parameter_name)) {
-      continue;
-    }
-    auto addr = AnfAlgo::GetOutputAddr(item, PARAMETER_OUTPUT_INDEX);
-    TypeId addr_type_id = addr->type_id();
-    std::string addr_format = addr->format();
-    ShapeVector int_shapes;
-    if (trans_flag) {
-      int_shapes = trans::GetRuntimePaddingShape(item, PARAMETER_OUTPUT_INDEX);
-    } else {
-      auto shape = AnfAlgo::GetOutputDeviceShape(item, PARAMETER_OUTPUT_INDEX);
-      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                           [](size_t inner_item) { return SizeToInt(inner_item); });
-    }
-
-    auto type = AnfAlgo::GetOutputInferDataType(item, PARAMETER_OUTPUT_INDEX);
-
-    auto format = kOpFormat_DEFAULT;
-    string filepath = dump_path + '/' + parameter_name + '_' + "output_0";
-
-    DebugServices *debug_services = debugger->debug_services();
-    TensorLoader *tensor_loader = debug_services->tensor_loader();
-    std::string original_kernel_name = parameter_name;
-    size_t slot = 0;
-    auto ret = tensor_loader->DumpTensorToFile(original_kernel_name, trans_flag, filepath, format, int_shapes, type,
-                                               addr_type_id, addr_format, slot);
-
-    if (!ret) {
-      std::string error = "DumpTensorToFile Failed: flag:" + std::to_string(trans_flag) + ", path:" + filepath +
-                          ", host_format:" + format + ".!";
-    }
-  }
-}
-}  // namespace
-
-bool GPUKernelRuntime::DumpData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "Start dump step";
-  DumpConfPtr dump_conf = GetDumpConf();
-  MS_EXCEPTION_IF_NULL(dump_conf);
-  dump_conf->UpdataCurIter();
-  bool dump_flag = dump_conf->dump_enable();
-  if (!dump_flag) {
-    MS_LOG(INFO) << "Dump flag is disable, pass dump step";
-    return true;
-  }
-  uint32_t cur_iter = dump_conf->cur_iter();
-  if (dump_conf->dump_iter() != 0) {
-    if (cur_iter != dump_conf->dump_iter()) {
-      return true;
-    }
-  }
-  MS_LOG(INFO) << "Cur iter is " << cur_iter;
-  std::string net_name = dump_conf->dump_net_name();
-  std::string iterator = std::to_string(cur_iter);
-  std::string dump_path = dump_conf->dump_path();
-  if (dump_path.back() == '/') {
-    dump_path = dump_path + net_name + '/' + iterator;
-  } else {
-    dump_path = dump_path + '/' + net_name + '/' + iterator;
-  }
-
-  // dump output
-  DumpOutput(graph, dump_path, dump_conf, debugger);
-  // dump parameters
-  DumpParameters(graph, dump_path, dump_conf, debugger);
-
-  return true;
-}
-#endif
 
 #ifdef ENABLE_DEBUGGER
 namespace {

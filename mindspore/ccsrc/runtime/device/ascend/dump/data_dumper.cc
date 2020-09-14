@@ -27,7 +27,7 @@
 #include "runtime/device/ascend/dump/ge_dump.h"
 #include "proto/op_mapping_info.pb.h"
 #include "utils/ms_context.h"
-#include "debug/data_dump_parser.h"
+#include "debug/data_dump/dump_json_parser.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
@@ -68,6 +68,27 @@ DataDumper::~DataDumper() {
   ReleaseDevMem(&op_debug_dump_args_);
 }
 
+void DataDumper::GetNeedDumpKernelList(NotNull<std::map<std::string, CNodePtr> *> kernel_map) const {
+  for (const auto &kernel : kernel_graph_->execution_order()) {
+    if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
+        DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope())) {
+      auto input_size = AnfAlgo::GetInputTensorNum(kernel);
+      for (size_t i = 0; i < input_size; ++i) {
+        auto input_with_index = AnfAlgo::GetPrevNodeOutput(kernel, i);
+        auto input = input_with_index.first;
+        if (input->isa<CNode>()) {
+          MS_LOG(INFO) << "[AsyncDump] Match Hccl Node:" << kernel->fullname_with_scope()
+                       << " Input:" << input->fullname_with_scope();
+          kernel_map->try_emplace(input->fullname_with_scope(), input->cast<CNodePtr>());
+        }
+      }
+    } else if (KernelNeedDump(kernel)) {
+      MS_LOG(INFO) << "[AsyncDump] Match Node:" << kernel->fullname_with_scope();
+      kernel_map->try_emplace(kernel->fullname_with_scope(), kernel);
+    }
+  }
+}
+
 void DataDumper::LoadDumpInfo() {
   MS_LOG(INFO) << "[DataDump] LoadDumpInfo start";
   MS_EXCEPTION_IF_NULL(kernel_graph_);
@@ -83,7 +104,7 @@ void DataDumper::LoadDumpInfo() {
     }
     MS_LOG(INFO) << "[DataDump] LoadDumpInfo kernel:" << kernel->fullname_with_scope();
     dump_kernel_names_.emplace_back(kernel->fullname_with_scope());
-    DataDumpParser::GetInstance().MatchKernel(kernel->fullname_with_scope());
+    DumpJsonParser::GetInstance().MatchKernel(kernel->fullname_with_scope());
 
     aicpu::dump::Task task;
     ConstructDumpTask(NOT_NULL(kernel), NOT_NULL(&task));
@@ -115,16 +136,16 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(kernel_graph_);
-  auto dump_path = DataDumpParser::GetInstance().GetDumpPath();
-  if (!dump_path.has_value()) {
+  auto dump_path = DumpJsonParser::GetInstance().path();
+  if (dump_path.empty()) {
     MS_LOG(EXCEPTION) << "Dump path invalid";
   }
   auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  dump_info->set_dump_path("/" + dump_path.value() + "_" + std::to_string(device_id) + "/");
-  MS_LOG(INFO) << "[DataDump] dump_path:" << dump_path.value();
+  dump_info->set_dump_path("/" + dump_path + "_" + std::to_string(device_id) + "/");
+  MS_LOG(INFO) << "[DataDump] dump_path:" << dump_path;
 
-  dump_info->set_model_name(DataDumpParser::GetInstance().net_name() + "_" + std::to_string(kernel_graph_->graph_id()));
-  dump_info->set_dump_step(std::to_string(DataDumpParser::GetInstance().dump_step()));
+  dump_info->set_model_name(DumpJsonParser::GetInstance().net_name() + "_" + std::to_string(kernel_graph_->graph_id()));
+  dump_info->set_dump_step(std::to_string(DumpJsonParser::GetInstance().iteration()));
   dump_info->set_model_id(kernel_graph_->graph_id());
   dump_info->set_flag(kAicpuLoadFlag);
 
@@ -164,7 +185,7 @@ bool DataDumper::KernelNeedDump(const CNodePtr &kernel) const {
   }
   MS_EXCEPTION_IF_NULL(kernel);
   // dump all kernel if mode is set 0 in data_dump.json
-  return DataDumpParser::GetInstance().NeedDump(kernel->fullname_with_scope());
+  return DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope());
 }
 
 void DataDumper::UnloadDumpInfo() {
@@ -258,7 +279,7 @@ void DataDumper::SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo 
 }
 
 void DataDumper::OpDebugRegister() {
-  uint32_t op_debug_mode = DataDumpParser::GetInstance().op_debug_mode();
+  uint32_t op_debug_mode = DumpJsonParser::GetInstance().op_debug_mode();
   auto iter = kOverflowModeStr.find(op_debug_mode);
   if (iter == kOverflowModeStr.end()) {
     MS_LOG(EXCEPTION) << "Invalid op debug mode " << op_debug_mode;
@@ -294,7 +315,7 @@ void DataDumper::OpDebugRegister() {
 }
 
 void DataDumper::OpDebugUnregister() {
-  uint32_t op_debug_mode = DataDumpParser::GetInstance().op_debug_mode();
+  uint32_t op_debug_mode = DumpJsonParser::GetInstance().op_debug_mode();
   if (op_debug_mode == kNoOverflow) {
     MS_LOG(INFO) << "[DataDump] Op debug mode is no overflow, no need to unregister.";
     return;
@@ -337,6 +358,10 @@ void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr) {
 }
 
 void DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
+  if (!DumpJsonParser::GetInstance().OutputNeedDump()) {
+    MS_LOG(INFO) << "Skip dump output";
+    return;
+  }
   MS_LOG(INFO) << "[DataDump] DumpKernelOutput start. Kernel:" << kernel->fullname_with_scope();
   auto input_size = AnfAlgo::GetInputTensorNum(kernel);
   auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
@@ -367,6 +392,10 @@ void DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::T
 }
 
 void DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
+  if (!DumpJsonParser::GetInstance().InputNeedDump()) {
+    MS_LOG(INFO) << "Skip dump input";
+    return;
+  }
   MS_LOG(INFO) << "[DataDump] DumpKernelInput start. Kernel:" << kernel->fullname_with_scope();
   auto input_size = AnfAlgo::GetInputTensorNum(kernel);
   uint64_t offset = 0;
