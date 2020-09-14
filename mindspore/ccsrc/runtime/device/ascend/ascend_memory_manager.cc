@@ -34,10 +34,7 @@ void AscendMemoryManager::MallocDeviceMemory() {
     MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_size_ << "] fail, ret[" << ret << "]";
   }
 
-  AscendMemoryPool::GetInstance().set_device_mem_size(device_mem_size_);
-  AscendMemoryPool::GetInstance().set_device_mem_pool_base(device_mem_base_);
-  AscendMemoryPool::GetInstance().set_device_mem_pool_offset(device_mem_size_);
-  AscendMemoryPool::GetInstance().set_graph_dynamic_mem_offset(dynamic_mem_offset_);
+  AscendMemoryPool::GetInstance().Init(device_mem_base_, device_mem_size_, dynamic_mem_offset_);
 }
 
 uint64_t AscendMemoryManager::GetDeviceMemSizeFromContext() {
