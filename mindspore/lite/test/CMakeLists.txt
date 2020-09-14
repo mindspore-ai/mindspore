@@ -104,30 +104,14 @@ if (ENABLE_FP16)
 endif ()
 ### gpu kernel
 if (SUPPORT_GPU)
+    file(GLOB GPU_KERNEL_OP_SRC
+            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/*.cc
+            )
     set(KERNEL_OP_SRC
             ${KERNEL_OP_SRC}
+            ${GPU_KERNEL_OP_SRC}
             ${LITE_DIR}/src/runtime/kernel/opencl/subgraph_opencl_kernel.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/utils.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/arithmetic.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/convolution.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/depthwise_conv2d.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/pooling2d.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/matmul.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/softmax.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/concat.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/arithmetic_self.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/batchnorm.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/slice.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/activation.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/conv2d_transpose.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/transpose.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/reshape.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/to_format.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/prelu.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/to_format.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/biasadd.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/scale.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/reduce.cc
             )
 endif()
 ### minddata lite
@@ -294,29 +278,12 @@ else()
 endif()
 
 if (SUPPORT_GPU)
+    file(GLOB_RECURSE TEST_CASE_KERNEL_GPU_SRC
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/*.cc
+            )
     set(TEST_SRC
             ${TEST_SRC}
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/matmul_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/depthwise_conv2d_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/concat_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/batchnorm_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/slice_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/arithmetic_self_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/softmax_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/arithmetic_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/avg_pooling_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/max_pooling_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/utils_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/conv2d_transpose_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/transpose_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/convolution_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/activation_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/to_format_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/prelu_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/reshape_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/biasadd_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/scale_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/reduce_tests.cc
+            ${TEST_CASE_KERNEL_GPU_SRC}
             )
 endif()
 
