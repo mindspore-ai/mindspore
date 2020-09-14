@@ -228,9 +228,9 @@ Inference result will be stored in the example path, whose folder name is "eval"
 | Parameters                 | Ascend 910                                                   |   GPU |
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                                |ResNet50-v1.5|
-| Resource                   | Ascend 910，CPU 2.60GHz 56cores，Memory 314G  | GPU，CPU 2.1GHz 24cores，Memory 128G
-| uploaded Date              | 06/01/2020 (month/day/year)  ；                        | 09/01/2020 (month/day/year)  
-| MindSpore Version          | 0.3.0-alpha                                                       |0.7.0-beta   |
+| Resource                   | Ascend 910，CPU 2.60GHz 56cores，Memory 314G  | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
+| uploaded Date              | 06/01/2020 (month/day/year)                       |   
+| MindSpore Version          | 0.3.0-alpha                                                       |  |
 | Dataset                    | ImageNet2012                                                    | ImageNet2012|
 | Training Parameters        | epoch=42, steps per epoch=5004, batch_size = 32             |epoch=36, steps per epoch=5004, batch_size = 32  |
 | Optimizer                  | THOR                                                         |THOR|
@@ -241,7 +241,7 @@ Inference result will be stored in the example path, whose folder name is "eval"
 | Total time                 | 72 mins                          | 229 mins|
 | Parameters (M)             | 25.5                                                         | 25.5 |
 | Checkpoint for Fine tuning | 491M (.ckpt file)                                         |380M (.ckpt file)     |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet_thor |https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet_thor |
+| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet_thor) |[Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet_thor) |
 
 
 
