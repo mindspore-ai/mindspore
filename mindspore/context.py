@@ -562,7 +562,7 @@ def set_context(**kwargs):
     # set device target first
     if 'device_target' in kwargs:
         ctx.set_device_target(kwargs['device_target'])
-        device = kwargs['device_target']
+        device = ctx.get_param(ms_ctx_param.device_target)
         if not device.lower() in __device_target__:
             raise ValueError(f"Error, package type {__package_name__} support device type {__device_target__}, "
                              f"but got device target {device}")
