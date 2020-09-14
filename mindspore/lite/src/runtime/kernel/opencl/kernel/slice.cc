@@ -20,6 +20,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/slice.h"
+#include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/slice.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -49,6 +50,7 @@ int SliceOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   *img_size = vec;
   return RET_OK;
 }
+
 int SliceOpenCLKernel::Init() {
   std::string kernel_name = "slice";
   auto in_format = op_format_;
@@ -77,28 +79,12 @@ int SliceOpenCLKernel::Init() {
 
 int SliceOpenCLKernel::ReSize() { return RET_OK; }
 
-int SliceGetBiggestDividerWithPriority(int number, int max_divider) {
-  if (number % 8 == 0 && 8 <= max_divider) {
-    return number / 8;
-  } else if (number % 4 == 0 && 4 <= max_divider) {
-    return number / 4;
-  } else if (number % 2 == 0 && 2 <= max_divider) {
-    return number / 2;
-  }
-  for (int i = max_divider; i != 0; i--) {
-    if (number % i == 0) {
-      return i;
-    }
-  }
-  return 1;
-}
-
 void SlcieGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;
   const int max_x = 4, max_y = 8;
-  int x = std::min(SliceGetBiggestDividerWithPriority(global[0], max_divider), max_x);
+  int x = std::min(GetMaxDivisorStrategy1(global[0], max_divider), max_x);
   int yz = max_size / x;
-  int y = std::min(std::min(SliceGetBiggestDividerWithPriority(global[1], max_divider), yz), max_y);
+  int y = std::min(std::min(GetMaxDivisorStrategy1(global[1], max_divider), yz), max_y);
   int z = std::min(yz / y, static_cast<int>(UP_DIV(global[2], 2)));
 
   local->clear();
@@ -106,6 +92,7 @@ void SlcieGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *l
   local->push_back(y);
   local->push_back(z);
 }
+
 int SliceOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   auto param = reinterpret_cast<SliceParameter *>(this->op_parameter_);
@@ -154,5 +141,4 @@ kernel::LiteKernel *OpenCLSliceKernelCreator(const std::vector<lite::Tensor *> &
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Slice, OpenCLSliceKernelCreator);
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Slice, OpenCLSliceKernelCreator);
-
 }  // namespace mindspore::kernel

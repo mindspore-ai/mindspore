@@ -68,9 +68,7 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
 
   int InitWeight();
   int InitBias();
-  int RearrangeWinogradWeight();
-  template <typename SRC_T, typename DST_T>
-  int OHWI2OHWIOGroupI4O4(void *weight_OHWI, size_t KH, size_t KW, size_t OGroup);
+  int GenerateWinogradWeight();
 
   std::string CodeGenConvolutionNHWC4();
   std::string CodeGenConvolutionNC4HW4();
@@ -89,29 +87,6 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
     const bool channel_good = CI_SLICES_ >= 12 && CO_SLICES_ >= 12;
     const bool hw_good = TILES_X_ * TILES_Y_ >= 16;
     return attr_valid && channel_good && hw_good;
-  }
-
-  static std::vector<float> MatrixMultiply(const float A[], const float B[], int M, int N, int K) {
-    std::vector<float> C(M * K);
-    for (int i = 0; i < M; ++i) {
-      for (int j = 0; j < K; ++j) {
-        float s = 0.0f;
-        for (int k = 0; k < N; ++k) {
-          s += A[i * N + k] * B[k * K + j];
-        }
-        C[i * K + j] = s;
-      }
-    }
-    return C;
-  }
-
-  static int GetBiggestDivider(int x, int y) {
-    for (int i = y; i != 0; i--) {
-      if (x % i == 0) {
-        return i;
-      }
-    }
-    return 1;
   }
 };
 }  // namespace mindspore::kernel

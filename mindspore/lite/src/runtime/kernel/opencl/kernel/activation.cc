@@ -40,8 +40,6 @@ using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
 
-void ActivationOpenClKernel::InitBuffer() {}
-
 int ActivationOpenClKernel::Init() {
   in_size_ = in_tensors_[0]->shape().size();
   out_size_ = out_tensors_[0]->shape().size();

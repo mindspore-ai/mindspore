@@ -133,6 +133,8 @@ Format get_op_format(Format input_format) {
     case Format_NHWC:
     case Format_NHWC4:
       return Format_NHWC4;
+    case Format_NCHW:
+      return Format_NHWC4;
     default:
       return Format_NC4HW4;
   }
@@ -249,7 +251,7 @@ TEST_F(TestConvolutionOpenCL, winograd_inputNHWC_1x16x256x96_outputNHWC_1x16x256
   TEST_MAIN(attr, Format_NHWC4, Format_NHWC4, kNumberTypeFloat16, 0.6f, "testcases/test_fp32/");
 }
 
-TEST_F(TestConvolutionOpenCL, simple_test0) {
+TEST_F(TestConvolutionOpenCL, simple_test0_NHWC) {
   std::string attr =
     "inputNHWC_1x2x2x2_outputNHWC_1x2x2x2_kernelHW_1x1_strideHW_1x1_padTopBottomLeftRight_0x0x0x0_dilationHW_1x1";
   float input_data[] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
@@ -258,6 +260,34 @@ TEST_F(TestConvolutionOpenCL, simple_test0) {
   float expect_data[] = {1.0f, 1.0f, 5.0f, 5.0f, 9.0f, 9.0f, 13.0f, 13.0f};
   TEST_MAIN(attr, Format_NHWC, Format_NHWC, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data, expect_data);
   TEST_MAIN(attr, Format_NHWC, Format_NHWC, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data, expect_data);
+}
+TEST_F(TestConvolutionOpenCL, simple_test0_NCHW) {
+  std::string attr =
+    "inputNHWC_1x2x2x2_outputNHWC_1x2x2x2_kernelHW_1x1_strideHW_1x1_padTopBottomLeftRight_0x0x0x0_dilationHW_1x1";
+  float input_data[] = {0.0f, 2.0f, 4.0f, 6.0f, 1.0f, 3.0f, 5.0f, 7.0f};
+  float weight_data[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+  float bias_data[] = {0.0f, 0.0f};
+  float expect_data[] = {1.0f, 5.0f, 9.0f, 13.0f, 1.0f, 5.0f, 9.0f, 13.0f};
+  TEST_MAIN(attr, Format_NCHW, Format_NCHW, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data, expect_data);
+  TEST_MAIN(attr, Format_NCHW, Format_NCHW, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data, expect_data);
+}
+
+TEST_F(TestConvolutionOpenCL, simple_test0_NHWC4_and_NC4HW4) {
+  std::string attr =
+    "inputNHWC_1x2x2x2_outputNHWC_1x2x2x2_kernelHW_1x1_strideHW_1x1_padTopBottomLeftRight_0x0x0x0_dilationHW_1x1";
+  float input_data[] = {0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 3.0f, 0.0f, 0.0f, 4.0f, 5.0f, 0.0f, 0.0f, 6.0f, 7.0f, 0.0f, 0.0f};
+  float weight_data[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+  float bias_data[] = {0.0f, 0.0f};
+  float expect_data[] = {1.0f, 1.0f, 0.0f, 0.0f, 5.0f,  5.0f,  0.0f, 0.0f,
+                         9.0f, 9.0f, 0.0f, 0.0f, 13.0f, 13.0f, 0.0f, 0.0f};
+  TEST_MAIN(attr, Format_NHWC4, Format_NHWC4, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data,
+            expect_data);
+  TEST_MAIN(attr, Format_NHWC4, Format_NHWC4, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data,
+            expect_data);
+  TEST_MAIN(attr, Format_NC4HW4, Format_NC4HW4, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data,
+            expect_data);
+  TEST_MAIN(attr, Format_NC4HW4, Format_NC4HW4, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data,
+            expect_data);
 }
 
 TEST_F(TestConvolutionOpenCL, simple_test1) {

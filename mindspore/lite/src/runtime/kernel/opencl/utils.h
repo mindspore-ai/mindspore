@@ -23,7 +23,7 @@
 #include "utils/log_adapter.h"
 #include "nnacl/op_base.h"
 #include "src/lite_kernel.h"
-#include "src/common//utils.h"
+#include "src/common/utils.h"
 
 namespace mindspore::lite {
 kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -32,59 +32,14 @@ kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, con
 
 namespace mindspore::kernel {
 
-/**
- * GetLocalSize
- * @param number
- * @param max_divider
- * @return
- */
-template <typename T, typename N>
-T GetBiggestDividerWithPriority(T number, N max_divider) {
-  if (number % 8 == 0 && 8 <= max_divider) {
-    return (T)8;
-  }
-  if (number % 4 == 0 && 4 <= max_divider) {
-    return (T)4;
-  }
-  if (number % 2 == 0 && 2 <= max_divider) {
-    return (T)2;
-  }
-  for (int i = max_divider; i != 0; i--) {
-    if (number % i == 0) {
-      return (T)i;
-    }
-  }
-  return (T)1;
-}
+int GetMaxDivisor(int x, int divisor);
 
-/**
- * GetLocalSize
- * @param n must be non negative
- * @param divisor must be greater than zero
- * @return
- */
-template <typename T, typename N>
-T DivideRoundUp(T n, N divisor) {
-  const T div = static_cast<T>(divisor);
-  const T q = n / div;
-  return n % div == 0 ? q : q + 1;
-}
+int GetMaxDivisorStrategy0(int x, int divisor);
 
-/**
- * GetLocalSize
- * @param number
- * @param n
- * @return
- */
-template <typename T, typename N>
-T AlignByN(T number, N n) {
-  return DivideRoundUp(number, n) * n;
-}
+int GetMaxDivisorStrategy1(int x, int divisor);
 
-// GetGlobalSize
 std::vector<size_t> GetCommonGlobalSize(const std::vector<size_t> &local, const std::vector<size_t> &global);
 
-// GetLocalSize
 std::vector<size_t> GetCommonLocalSize(const std::vector<size_t> &global, int max_size);
 
 std::string CLErrorCode(cl_int error_code);
@@ -108,6 +63,7 @@ void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane, int channel, c
     }
   }
 }
+
 template <class T1, class T2>
 void PackNHWCToNHWC4(void *src, void *dst, int batch, int plane, int channel, const std::function<T2(T1)> &to_dtype) {
   int c4 = UP_DIV(channel, C4NUM);
@@ -132,6 +88,7 @@ void PackNHWCToNHWC4(void *src, void *dst, int batch, int plane, int channel, co
     }
   }
 }
+
 template <class T1, class T2>
 void PackNHWCToNC4HW4(void *src, void *dst, int batch, int plane, int channel, const std::function<T2(T1)> &to_dtype) {
   int c4 = UP_DIV(channel, C4NUM);
@@ -147,6 +104,47 @@ void PackNHWCToNC4HW4(void *src, void *dst, int batch, int plane, int channel, c
         int src_ic_offset = src_kernel_offset + i;
         int dst_ic_offset = dst_kernel_offset + c4_block_num * plane * C4NUM + c4_block_rem;
         (static_cast<T2 *>(dst) + dst_ic_offset)[0] = to_dtype((static_cast<T1 *>(src) + src_ic_offset)[0]);
+      }
+    }
+  }
+}
+
+template <class T>
+std::vector<T> MatrixMultiply(const T A[], const T B[], int M, int N, int K) {
+  std::vector<T> C(M * K);
+  for (int i = 0; i < M; ++i) {
+    for (int j = 0; j < K; ++j) {
+      float s = 0.0f;
+      for (int k = 0; k < N; ++k) {
+        s += A[i * N + k] * B[k * K + j];
+      }
+      C[i * K + j] = s;
+    }
+  }
+  return C;
+}
+
+template <typename SRC_T, typename DST_T>
+void ConvertConvWeight4DTo7D(void *src, void *dst, size_t CO, size_t KH, size_t KW, size_t CI, size_t OGroup = 1,
+                             size_t CI_TILE = 4, size_t CO_TILE = 4) {
+  auto origin_weight = reinterpret_cast<SRC_T *>(src);
+  auto packed_weight = reinterpret_cast<DST_T *>(dst);
+  auto CI_SLICES = UP_DIV(CI, CI_TILE);
+  for (size_t co = 0, src_idx = 0; co < CO; ++co) {
+    for (size_t kh = 0; kh < KH; ++kh) {
+      for (size_t kw = 0; kw < KW; ++kw) {
+        for (size_t ci = 0; ci < CI; ++ci) {
+          size_t co_outer = co / (CO_TILE * OGroup);
+          size_t group_idx = co % (CO_TILE * OGroup) / CO_TILE;
+          size_t co_inner = co % CO_TILE;
+          size_t ci_outer = ci / CI_TILE;
+          size_t ci_inner = ci % CI_TILE;
+          size_t dst_idx =
+            (((((co_outer * KH + kh) * KW + kw) * CI_SLICES + ci_outer) * OGroup + group_idx) * CI_TILE + ci_inner) *
+              CO_TILE +
+            co_inner;
+          packed_weight[dst_idx] = static_cast<DST_T>(origin_weight[src_idx++]);
+        }
       }
     }
   }
