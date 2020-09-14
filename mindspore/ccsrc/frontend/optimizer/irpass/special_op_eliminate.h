@@ -90,10 +90,6 @@ class VirtualDatasetEliminater : public AnfVisitor {
 
     std::vector<AnfNodePtr> args;
     (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(args));
-    if (args.size() == 1) {
-      return args.front();
-    }
-
     (void)args.insert(args.begin(), NewValueNode(prim::kPrimMakeTuple));
 
     return node->func_graph()->NewCNode(args);

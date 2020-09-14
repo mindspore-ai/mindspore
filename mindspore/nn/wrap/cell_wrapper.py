@@ -304,9 +304,9 @@ class _VirtualDatasetCell(Cell):
         self._backbone = backbone
         self._virtual_dataset = _VirtualDataset()
 
-    def construct(self, data, label):
-        data_, label_ = self._virtual_dataset(data, label)
-        return self._backbone(data_, label_)
+    def construct(self, *inputs):
+        output = self._virtual_dataset(*inputs)
+        return self._backbone(*output)
 
 
 class VirtualDatasetCellTriple(Cell):
