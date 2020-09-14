@@ -301,7 +301,12 @@ bool OptimizeAction(const ResourcePtr &res, const std::vector<PassItem> &passes)
   return true;
 }
 
-bool OptInlineAction(const ResourcePtr &res) { return OptimizeAction(res, kInlinePasses); }
+bool OptInlineAction(const ResourcePtr &res) {
+  if (opt::python_pass::PyPassManager::GetInstance()->GetPassGroup(opt::python_pass::Phase::PREAD)->size() != 0) {
+    return OptimizeAction(res, kInlinePasses);
+  }
+  return true;
+}
 
 bool GeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kGePasses); }
 
