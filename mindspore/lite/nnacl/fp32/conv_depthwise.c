@@ -21,7 +21,7 @@
 #include <arm_neon.h>
 #endif
 
-#ifndef ENABLE_ARM64
+#ifndef ENABLE_ARM
 void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, int num_pixels,
                    int output_channel, int input_step) {
   for (int i = 0; i < num_pixels; i++) {
@@ -202,7 +202,7 @@ void DepthwiseBorder(float *dst, const float *src, const float *weight, const fl
       const float *src_kernel = src_w + start_kh * sliding->in_kh_step_ + start_kw * sliding->in_kw_step_;
       const float *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * C4NUM;
 
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
       ConvDwFp32Border(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
                        sliding->in_kh_step_ * sizeof(float), sliding->in_kw_step_ * sizeof(float),
                        conv_param->kernel_w_ * C4NUM * sizeof(float), relu, relu6);
@@ -286,7 +286,7 @@ void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weig
         int in_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_l_;
         const float *in_t = src_data + in_h_start * sliding->in_h_step_ + in_w_start * sliding->block_channel_;
         float *out_t = dst_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
         ConvDwFp32Center(out_t, in_t, weight, bias, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
                          conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_ * sizeof(float),
                          sliding->block_channel_ * sizeof(float), sliding->in_sh_step_ * sizeof(float),
