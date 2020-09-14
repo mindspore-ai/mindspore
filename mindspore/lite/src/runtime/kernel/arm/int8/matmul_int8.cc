@@ -101,8 +101,8 @@ int MatmulInt8CPUKernel::RunImpl(int task_id) {
   auto &p = quant_params_;
 #ifdef ENABLE_ARM64
   MatmulInt8Neon64(a_r4x16_ptr_, cur_b, cur_c, r4_, cur_oc * C4NUM, d16_, input_sums_, cur_bias, INT8_MIN, INT8_MAX,
-                   p.output.zp_, p.quant_multiplier, p.left_shift, p.right_shift, params_->row_, cur_oc_res,
-                   params_->col_ * sizeof(int8_t));
+                   p.output.zp_, &p.quant_multiplier, &p.left_shift, &p.right_shift, params_->row_, cur_oc_res,
+                   params_->col_ * sizeof(int8_t), false);
 #else
   MatmulInt8(a_r4x16_ptr_, cur_b, cur_c, input_sums_, cur_bias, INT8_MIN, INT8_MAX, p.output.zp_, p.quant_multiplier,
              p.left_shift, p.right_shift, params_->row_, cur_oc_res, d16_, params_->col_);

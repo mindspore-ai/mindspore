@@ -46,6 +46,18 @@ Convolution1x1Int8CPUKernel::~Convolution1x1Int8CPUKernel() {
     free(filter_zp_ptr_);
     filter_zp_ptr_ = nullptr;
   }
+  if (filter_peroc_ && left_shift_ != nullptr) {
+    free(left_shift_);
+    left_shift_ = nullptr;
+  }
+  if (filter_peroc_ && right_shift_ != nullptr) {
+    free(right_shift_);
+    right_shift_ = nullptr;
+  }
+  if (filter_peroc_ && multiplier_ != nullptr) {
+    free(multiplier_);
+    multiplier_ = nullptr;
+  }
   FreeResizeBuf();
   FreeQuantParam();
 }
@@ -59,7 +71,7 @@ void Convolution1x1Int8CPUKernel::FreeResizeBuf() {
 }
 
 void Convolution1x1Int8CPUKernel::CheckSupportOptimize() {
-  support_optimize_ = false;
+  support_optimize_ = true;
   matmul_func_ = MatMulInt8_8x8_r;
 #ifdef ENABLE_ARM64
   void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
@@ -77,10 +89,6 @@ void Convolution1x1Int8CPUKernel::CheckSupportOptimize() {
   } else {
     support_optimize_ = false;
     matmul_func_ = nullptr;
-  }
-
-  if (filter_peroc_) {
-    support_optimize_ = false;
   }
 #endif
   return;
@@ -109,6 +117,26 @@ int Convolution1x1Int8CPUKernel::InitBiasByzp(void *src_weight, int input_channe
     for (int fi = 0; fi < output_channel; fi++) {
       filter_zp_ptr_[fi] = conv_param_->conv_quant_arg_.filter_quant_args_[fi].zp_;
     }
+
+    int up_round_oc_size = support_optimize_ ? UP_ROUND(output_channel, C8NUM) : UP_ROUND(output_channel, C4NUM);
+    left_shift_ = reinterpret_cast<int32_t *>(malloc(up_round_oc_size * sizeof(int32_t)));
+    if (left_shift_ == nullptr) {
+      return RET_ERROR;
+    }
+    memset(left_shift_, 0, up_round_oc_size * sizeof(int32_t));
+    memcpy(left_shift_, conv_param_->conv_quant_arg_.left_shift_, output_channel * sizeof(int32_t));
+    right_shift_ = reinterpret_cast<int32_t *>(malloc(up_round_oc_size * sizeof(int32_t)));
+    if (right_shift_ == nullptr) {
+      return RET_ERROR;
+    }
+    memset(right_shift_, 0, up_round_oc_size * sizeof(int32_t));
+    memcpy(right_shift_, conv_param_->conv_quant_arg_.right_shift_, output_channel * sizeof(int32_t));
+    multiplier_ = reinterpret_cast<int32_t *>(malloc(up_round_oc_size * sizeof(int32_t)));
+    if (multiplier_ == nullptr) {
+      return RET_ERROR;
+    }
+    memset(multiplier_, 0, up_round_oc_size * sizeof(int32_t));
+    memcpy(multiplier_, conv_param_->conv_quant_arg_.quant_multiplier_, output_channel * sizeof(int32_t));
   }
   return RET_OK;
 }
@@ -328,9 +356,9 @@ int Convolution1x1Int8CPUKernel::RunImpl(int task_id) {
     }
     if (filter_peroc_) {
       cur_input_sum = input_sum_ + task_id * matmul_param_->row_8_ * thread_stride_ * C8NUM;
-      cur_left_shift = conv_param_->conv_quant_arg_.left_shift_ + task_id * thread_stride_ * C8NUM;
-      cur_right_shift = conv_param_->conv_quant_arg_.right_shift_ + task_id * thread_stride_ * C8NUM;
-      cur_multiplier = conv_param_->conv_quant_arg_.quant_multiplier_ + task_id * thread_stride_ * C8NUM;
+      cur_left_shift = left_shift_ + task_id * thread_stride_ * C8NUM;
+      cur_right_shift = right_shift_ + task_id * thread_stride_ * C8NUM;
+      cur_multiplier = multiplier_ + task_id * thread_stride_ * C8NUM;
     }
     Conv1x1Int8Opt(packed_input_, packed_weight_ + task_id * thread_stride_ * C8NUM * matmul_param_->deep_4_,
                    output_ptr_ + task_id * thread_stride_ * C8NUM, cur_input_sum,
@@ -346,9 +374,9 @@ int Convolution1x1Int8CPUKernel::RunImpl(int task_id) {
     }
     if (filter_peroc_) {
       cur_input_sum = input_sum_ + task_id * matmul_param_->row_4_ * thread_stride_ * C4NUM;
-      cur_left_shift = conv_param_->conv_quant_arg_.left_shift_ + task_id * thread_stride_ * C4NUM;
-      cur_right_shift = conv_param_->conv_quant_arg_.right_shift_ + task_id * thread_stride_ * C4NUM;
-      cur_multiplier = conv_param_->conv_quant_arg_.quant_multiplier_ + task_id * thread_stride_ * C4NUM;
+      cur_left_shift = left_shift_ + task_id * thread_stride_ * C4NUM;
+      cur_right_shift = right_shift_ + task_id * thread_stride_ * C4NUM;
+      cur_multiplier = multiplier_ + task_id * thread_stride_ * C4NUM;
     }
     Conv1x1Int8(packed_input_, packed_weight_ + task_id * thread_stride_ * C4NUM * matmul_param_->deep_16_,
                 output_ptr_ + task_id * thread_stride_ * C4NUM, cur_input_sum,

@@ -273,13 +273,13 @@ void PackInputSum16x4PerChannel(const int8_t *input_value, int32_t *input_sum, i
     "mov x11, %[input_sum] \n"
     "mov x15, %[filter_zp_ptr] \n"
 
-    "mov x0, #0 \n"  // row 4 count
+    "mov x0, #0 \n"
     "1: \n"
     "cmp x0, %[hw4] \n"
     "beq 11f \n"
     "add x0, x0, #4\n"
     "dup v10.4s, wzr \n"
-    "mov x2, #0 \n"  // input deep count
+    "mov x2, #0 \n"
     "mov x16, x15 \n"
 
     "2: \n"
@@ -313,9 +313,9 @@ void PackInputSum16x4PerChannel(const int8_t *input_value, int32_t *input_sum, i
     "b 2b \n"
 
     "3: \n"
-    "mov x12, x11 \n"  // tmp inputsm  inputsum hw
+    "mov x12, x11 \n"
     "add x11, x11, #64 \n"
-    "mov x4, #0 \n"  // oc count
+    "mov x4, #0 \n"
 
     "dup v1.4s, v10.s[0]  \n"
     "dup v2.4s, v10.s[1]  \n"

@@ -25,7 +25,7 @@ typedef void (*MATMUL_OPT_R4_FUNC)(const int8_t *a, const int8_t *b, int *dst, i
 typedef void (*MATMUL_OPT_R_FUNC)(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_4,
                                   size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
                                   int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini,
-                                  int32_t maxi, bool per_channel);
+                                  int32_t maxi, size_t per_channel);
 
 typedef void (*MAT_TRANS_FUNC)(void *dst, void *a, int row, int col);
 

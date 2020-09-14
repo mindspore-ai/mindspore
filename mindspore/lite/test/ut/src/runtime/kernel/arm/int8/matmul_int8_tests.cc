@@ -120,8 +120,8 @@ TEST_F(TestMatmulInt8, simple) {
   int multiplier, ls, rs;
   QuantizeRoundParameter(1.0f, &multiplier, &ls, &rs);
 #ifdef ENABLE_ARM64
-  MatmulInt8Neon64(a_r4x16, b_c16x4, output, ROW4, COL4, DEPTH16, a_sums, bias, INT8_MIN, INT8_MAX, 0, multiplier, ls,
-                   rs, ROW, COL, COL);
+  MatmulInt8Neon64(a_r4x16, b_c16x4, output, ROW4, COL4, DEPTH16, a_sums, bias, INT8_MIN, INT8_MAX, 0, &multiplier, &ls,
+                   &rs, ROW, COL, COL, false);
 #else
   MatmulInt8(a_r4x16, b_c16x4, output, a_sums, bias, INT8_MIN, INT8_MAX, 0, multiplier, ls, rs, ROW, COL, DEPTH16, COL);
 #endif

@@ -108,8 +108,8 @@ int FullconnectionInt8CPUKernel::RunImpl(int task_id) {
   auto cur_c = output_ptr + task_id * thread_stride_ * C4NUM;
 #ifdef ENABLE_ARM64
   MatmulInt8Neon64(a_r4x16_ptr_, cur_b, cur_c, r4_, cur_oc * C4NUM, d16_, input_sums_, cur_bias, q.out_act_min,
-                   q.out_act_max, q.output.zp_, q.quant_multiplier, q.left_shift, q.right_shift, p->row_, cur_oc_res,
-                   p->col_ * sizeof(int8_t));
+                   q.out_act_max, q.output.zp_, &q.quant_multiplier, &q.left_shift, &q.right_shift, p->row_, cur_oc_res,
+                   p->col_ * sizeof(int8_t), 0);
 #else
   MatmulInt8(a_r4x16_ptr_, cur_b, cur_c, input_sums_, cur_bias, q.out_act_min, q.out_act_max, q.output.zp_,
              q.quant_multiplier, q.left_shift, q.right_shift, p->row_, cur_oc_res, d16_, p->col_);

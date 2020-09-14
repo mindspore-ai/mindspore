@@ -269,7 +269,7 @@ void MatMulInt8_4x2_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
 void MatMulInt8_8x8_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_4,
                       size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
                       int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini, int32_t maxi,
-                      bool per_channel) {
+                      size_t per_channel) {
   /*  row8x4-major * row4x8-major => (int8)row-major  */
   for (int r = 0; r < row; r++) {
     for (int c = 0; c < col; c++) {

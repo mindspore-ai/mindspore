@@ -39,7 +39,7 @@ void RowMajor2Row16x4MajorInt8(void *src_ptr, void *dst_ptr, int row, int col);
 void MatMulInt8_8x8_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_4,
                       size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
                       int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini, int32_t maxi,
-                      bool per_channel);
+                      size_t per_channel);
 void RowMajor2Row8x4MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
 void RowMajor2Row4x8MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
 void RowMajor2Row4x16Major(int8_t *src, int row, int col, int8_t *dst, int col_16);
@@ -59,8 +59,8 @@ void MatMulInt8_4x2_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
 
 #ifdef ENABLE_ARM64
 void MatmulInt8Neon64(const int8_t *a, const int8_t *b, int8_t *dst, int row4, int col4, int deep16, const int *a_sums,
-                      const int *bias, int act_min, int act_max, int out_zp, int multiplier, int left_shift,
-                      int right_shift, int row, int col, int stride);
+                      const int *bias, int act_min, int act_max, int out_zp, int32_t *multiplier, int32_t *left_shift,
+                      int32_t *right_shift, int row, int col, int stride, int filter_peroc);
 
 void MatMulR4Int8Neon64(const int8_t *a, const int8_t *b, int32_t *dst, int row4, int col4, int deep16,
                         const int *input_sum, const int *bias);
