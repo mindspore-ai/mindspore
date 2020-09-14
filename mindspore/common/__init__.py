@@ -20,12 +20,12 @@ from .parameter import Parameter, ParameterTuple
 from .tensor import MetaTensor, Tensor, RowTensor, SparseTensor
 from .seed import set_seed, get_seed
 
-__all__ = [
+
+__all__ = dtype.__all__
+__all__.extend([
     "MetaTensor", "Tensor", "RowTensor", "SparseTensor",  # tensor
     'ms_function',  # api
     'Parameter', 'ParameterTuple',  # parameter
     "dtype",
     "set_seed", "get_seed"  # random seed
-    ]
-
-__all__.extend(dtype.__all__)
+    ])
