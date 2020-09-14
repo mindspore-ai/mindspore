@@ -238,17 +238,49 @@ class TensorDataImpl : public TensorData {
       OutputDataString(ss, 0, 0, 1, false);
       return ss.str();
     }
+
     ssize_t cursor = 0;
+    num_width_ = GetMaxNumLength(shape);
     SummaryStringRecursive(ss, shape, &cursor, 0, use_comma);
     return ss.str();
   }
 
  private:
+  int GetNumLength(const T &num) const {
+    T value = num;
+    int count = 0;
+    if (value <= 0) {  // Return 1 when value is 0, or add the length of '-' when value < 0
+      count++;
+    }
+    while (value != 0) {
+      value /= 10;
+      count++;
+    }
+    return count;
+  }
+
+  int GetMaxNumLength(const ShapeVector &shape) const {
+    if constexpr (std::is_same<T, bool>::value) {
+      constexpr int bool_max_len = sizeof("False") - 1;
+      return bool_max_len;
+    } else if constexpr (std::is_same<T, float16>::value) {
+      return 11;  // The placeholder of float16 is set to 11.
+    } else if (std::is_same<T, float>::value || std::is_same<T, double>::value) {
+      return 15;  // The placeholder of float/double is set to 15.
+    } else {
+      T max_value = 0;
+      T min_value = 0;
+      ssize_t index = 0;
+      GetMaxMinValueRecursive(shape, &index, 0, &max_value, &min_value);
+      return std::max(GetNumLength(max_value), GetNumLength(min_value));
+    }
+  }
+
   void OutputDataString(std::ostringstream &ss, ssize_t cursor, ssize_t start, ssize_t end, bool use_comma) const {
     const bool isScalar = ndim_ == 0 && end - start == 1;
+    constexpr auto isBool = std::is_same<T, bool>::value;
     constexpr auto isFloat =
       std::is_same<T, float16>::value || std::is_same<T, float>::value || std::is_same<T, double>::value;
-    constexpr auto isBool = std::is_same<T, bool>::value;
     constexpr int linefeedThreshold = isFloat ? kThreshold1DFloat : (isBool ? kThreshold1DBool : kThreshold1DInt);
     for (ssize_t i = start; i < end && (cursor + i) < static_cast<ssize_t>(data_size_); i++) {
       const auto value = data_[cursor + i];
@@ -256,52 +288,25 @@ class TensorDataImpl : public TensorData {
         if (isScalar) {
           ss << value;
         } else {
-          if constexpr (std::is_same<T, float16>::value) {
-            ss << std::setw(11) << std::setprecision(4) << std::setiosflags(std::ios::scientific | std::ios::right)
-               << value;
-          } else {
-            ss << std::setw(15) << std::setprecision(8) << std::setiosflags(std::ios::scientific | std::ios::right)
-               << value;
-          }
+          const int precision = std::is_same<T, float16>::value ? 4 : 8;
+          ss << std::setw(num_width_) << std::setprecision(precision)
+             << std::setiosflags(std::ios::scientific | std::ios::right) << value;
         }
-      } else if (std::is_same<T, bool>::value) {
+      } else if (isBool) {
         if (isScalar) {
           ss << (value ? "True" : "False");
         } else {
-          ss << std::setw(5) << std::setiosflags(std::ios::right) << (value ? "True" : "False");
+          ss << std::setw(num_width_) << std::setiosflags(std::ios::right) << (value ? "True" : "False");
         }
       } else {
-        constexpr auto isSigned = std::is_same<T, int64_t>::value;
-        if constexpr (isSigned) {
-          if (!isScalar && static_cast<int64_t>(value) >= 0) {
-            ss << ' ';
-          }
-        }
-
-        // Set width and indent for different int type with signed position.
-        //
-        //   uint8 width:  3,  [0, 255]
-        //   int8 width:   4,  [-128, 127]
-        //   uint16 width: 5,  [0, 65535]
-        //   int16 width:  6,  [-32768, 32767]
-        //   uint32 width: 10, [0, 4294967295]
-        //   int32 width:  11, [-2147483648, 2147483647]
-        //   uint64 width: NOT SET (20, [0, 18446744073709551615])
-        //   int64 width:  NOT SET (20, [-9223372036854775808, 9223372036854775807])
-        if constexpr (std::is_same<T, uint8_t>::value) {
-          ss << std::setw(3) << std::setiosflags(std::ios::right) << static_cast<uint16_t>(value);
-        } else if constexpr (std::is_same<T, int8_t>::value) {
-          ss << std::setw(4) << std::setiosflags(std::ios::right) << static_cast<int16_t>(value);
-        } else if constexpr (std::is_same<T, uint16_t>::value) {
-          ss << std::setw(5) << std::setiosflags(std::ios::right) << value;
-        } else if constexpr (std::is_same<T, int16_t>::value) {
-          ss << std::setw(6) << std::setiosflags(std::ios::right) << value;
-        } else if constexpr (std::is_same<T, uint32_t>::value) {
-          ss << std::setw(10) << std::setiosflags(std::ios::right) << value;
-        } else if constexpr (std::is_same<T, int32_t>::value) {
-          ss << std::setw(11) << std::setiosflags(std::ios::right) << value;
-        } else {
+        if (isScalar) {
           ss << value;
+        } else if constexpr (std::is_same<T, uint8_t>::value) {
+          ss << std::setw(num_width_) << std::setiosflags(std::ios::right) << static_cast<uint16_t>(value);
+        } else if constexpr (std::is_same<T, int8_t>::value) {
+          ss << std::setw(num_width_) << std::setiosflags(std::ios::right) << static_cast<int16_t>(value);
+        } else {
+          ss << std::setw(num_width_) << std::setiosflags(std::ios::right) << value;
         }
       }
       if (!isScalar && i != end - 1) {
@@ -366,9 +371,9 @@ class TensorDataImpl : public TensorData {
       }
       // Handle the second half.
       if (num > kThreshold / 2) {
-        auto continue_pos = num - kThreshold / 2;
-        for (ssize_t i = continue_pos; i < num; i++) {
-          if (use_comma && i != continue_pos) {
+        ssize_t iter_times = std::min(static_cast<ssize_t>(num - kThreshold / 2), static_cast<ssize_t>(kThreshold / 2));
+        for (ssize_t i = 0; i < iter_times; i++) {
+          if (use_comma && i != 0) {
             ss << ',';
           }
           ss << '\n';
@@ -380,6 +385,46 @@ class TensorDataImpl : public TensorData {
     ss << ']';
   }
 
+  void GetMaxMinValueRecursive(const ShapeVector &shape, ssize_t *index, ssize_t depth, T *max_value,
+                               T *min_value) const {
+    if (depth >= static_cast<ssize_t>(ndim_)) {
+      return;
+    }
+    if (depth == static_cast<ssize_t>(ndim_) - 1) {  // Bottom dimension
+      ssize_t num = shape[depth];
+      const bool is_multi_dim = num > kThreshold && ndim_ > 1;
+      for (ssize_t i = 0; i < num; i++) {
+        if (is_multi_dim && i >= kThreshold / 2 && i < num - kThreshold / 2) {
+          continue;
+        }
+        const auto value = data_[i];
+        *max_value = std::max(*max_value, value);
+        *min_value = std::min(*min_value, value);
+      }
+      *index += num;
+    } else {  // Middle dimension
+      ssize_t num = shape[depth];
+      for (ssize_t i = 0; i < std::min(static_cast<ssize_t>(kThreshold / 2), num); i++) {
+        GetMaxMinValueRecursive(shape, index, depth + 1, max_value, min_value);
+      }
+      if (num > kThreshold) {
+        ssize_t ignored = shape[depth + 1];
+        for (ssize_t i = depth + 2; i < static_cast<ssize_t>(ndim_); i++) {
+          ignored *= shape[i];
+        }
+        ignored *= num - kThreshold;
+        *index += ignored;
+      }
+      if (num > kThreshold / 2) {
+        ssize_t iter_times = std::min(static_cast<ssize_t>(num - kThreshold / 2), static_cast<ssize_t>(kThreshold / 2));
+        for (ssize_t i = 0; i < iter_times; i++) {
+          GetMaxMinValueRecursive(shape, index, depth + 1, max_value, min_value);
+        }
+      }
+    }
+  }
+
+  mutable int num_width_{0};
   size_t ndim_{0};
   size_t data_size_{0};
   std::unique_ptr<T[]> data_;
@@ -522,7 +567,7 @@ std::string Tensor::ToStringInternal(int limit_size) const {
   auto dtype = Dtype();
   MS_EXCEPTION_IF_NULL(dtype);
   data_sync();
-  buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ',';
+  buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ", value=";
   if (limit_size <= 0 || DataSize() < limit_size) {
     // Only print data for small tensor.
     buf << ((data().ndim() > 1) ? '\n' : ' ') << data().ToString(data_type_, shape_, false);
@@ -548,8 +593,8 @@ std::string Tensor::ToStringRepr() const {
   auto dtype = Dtype();
   MS_EXCEPTION_IF_NULL(dtype);
   data_sync();
-  buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ','
-      << ((data().ndim() > 1) ? '\n' : ' ') << data().ToString(data_type_, shape_, true) << ')';
+  buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString()
+      << ", value=" << ((data().ndim() > 1) ? '\n' : ' ') << data().ToString(data_type_, shape_, true) << ')';
   return buf.str();
 }
 
