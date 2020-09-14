@@ -43,26 +43,10 @@ STATUS TfliteL2NormParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
-
-  if (tflite_op->inputs.empty()) {
-    MS_LOG(ERROR) << "the input is null";
-    return RET_NULL_PTR;
-  }
-  auto data_index = tflite_op->inputs[0];
-  const auto &data_tensor = tflite_tensors[data_index];
-  if (data_tensor == nullptr) {
-    MS_LOG(ERROR) << "the input tensor is null";
-    return RET_NULL_PTR;
-  }
-
-  auto ndim = data_tensor->shape.size();
-  std::vector<int32_t> axis;
-  axis.reserve(ndim);
-  for (size_t i = 0; i < ndim; i++) {
-    axis.emplace_back(i);
-  }
-  attr->axis = axis;
-  attr->epsilon = 0.0f;
+  const auto &tflite_attr = tflite_op->builtin_options.AsL2NormOptions();
+  attr->axis = {-1};
+  attr->epsilon = 1e-6f;
+  attr->activationType = GetActivationFunctionType(tflite_attr->fused_activation_function);
 
   op->primitive->value.type = schema::PrimitiveType_L2Norm;
   op->primitive->value.value = attr.release();

@@ -79,7 +79,7 @@ int Get_Kenrnel_nums(const CNodePtr &conv_node) {
     return 0;
   }
 }
-void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, const CNodePtr &bias_node) {
+int GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, const CNodePtr &bias_node) {
   AnfNodePtr conv_bias_node = nullptr;
   AnfNodePtr conv_weight_node = nullptr;
   if (conv_node->inputs().size() == kConvNoBiasLen) {
@@ -93,11 +93,12 @@ void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, c
   auto kernel_nums = Get_Kenrnel_nums(conv_node);
   if (kernel_nums <= 0) {
     MS_LOG(EXCEPTION) << "kernel num less than 0";
+    return lite::RET_INVALID_OP_ATTR;
   }
   auto add_bias_data = new (std::nothrow) float[kernel_nums];
   if (add_bias_data == nullptr) {
     MS_LOG(ERROR) << "tensor_data is nullptr";
-    return;
+    return lite::RET_MEMORY_FAILED;
   }
   auto bias_add_weight = bias_node->input(kAddWEIGHTINDEX);
   CheckIfNodeIsParam(bias_add_weight);
@@ -112,6 +113,7 @@ void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, c
   } else {
     if (EOK != memcpy_s(add_bias_data, kernel_nums * sizeof(float), add_weight_data, kernel_nums * sizeof(float))) {
       MS_LOG(EXCEPTION) << "memset_s conv_bias_data failed";
+      return lite::RET_MEMORY_FAILED;
     }
   }
   if (conv_bias_node != nullptr) {
@@ -120,6 +122,7 @@ void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, c
     auto conv_bias_tensor = std::dynamic_pointer_cast<ParamValueLite>(conv_bias_param);
     if (conv_bias_tensor->tensor_shape().empty() || conv_bias_tensor->tensor_shape()[0] != kernel_nums) {
       MS_LOG(EXCEPTION) << "conv_bias_node shape error";
+      return lite::RET_INVALID_OP_ATTR;
     }
     auto conv_bias_data = reinterpret_cast<float *>(conv_bias_tensor->tensor_addr());
     for (int i = 0; i < kernel_nums; i++) {
@@ -133,6 +136,7 @@ void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, c
     conv_new_bias->set_name(conv_node->fullname_with_scope() + "_bias");
     conv_node->add_input(conv_new_bias);
   }
+  return lite::RET_OK;
 }
 }  // namespace
 const BaseRef ConvBiasaddFusion::DefinePattern() const {
@@ -159,7 +163,11 @@ const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, cons
   }
   auto conv_node = conv_node_anf->cast<CNodePtr>();
   CheckIfCNodeIsNull(conv_node);
-  GenConvNewBias(func_graph, conv_node, add_node);
+  int ret = GenConvNewBias(func_graph, conv_node, add_node);
+  if (ret != lite::RET_OK) {
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
+    return nullptr;
+  }
   auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_node->input(0));
   MS_ASSERT(primitive_c != nullptr);
   auto type = primitive_c->Type();
@@ -180,6 +188,7 @@ const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, cons
     primc->SetHasBias(true);
   } else {
     MS_LOG(ERROR) << "Unsupported opType, " << type;
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
     return nullptr;
   }
   return conv_node;

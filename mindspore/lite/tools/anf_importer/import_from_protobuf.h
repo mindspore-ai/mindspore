@@ -45,13 +45,13 @@ class AnfImporterFromProtobuf : public AnfImporter {
   int ConverterConstTensor() override { return RET_ERROR; };
   int ConverterCNode() override { return RET_ERROR; };
   int AddReturnCNode() override { return RET_ERROR; };
-  bool ParseModelConfigureInfo(const onnx::ModelProto &model_proto);
-  bool BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
+  int ParseModelConfigureInfo(const onnx::ModelProto &model_proto);
+  int BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
                       const schema::QuantType &quantType);
-  bool ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto);
-  bool ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
+  int ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto);
+  int ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
                            const schema::QuantType &quantType);
-  bool BuildParameterForFuncGraph(const ParameterPtr &node, const onnx::ValueInfoProto &value_proto);
+  int BuildParameterForFuncGraph(const ParameterPtr &node, const onnx::ValueInfoProto &value_proto);
   CNodePtr BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::NodeProto &node_proto,
                                   const schema::QuantType &quantType);
   bool BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,

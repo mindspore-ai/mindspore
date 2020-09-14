@@ -54,7 +54,7 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
       char *tensor_data = new (std::nothrow) char[size];
       if (tensor_data == nullptr) {
         MS_LOG(ERROR) << "new char[] failed";
-        return RET_ERROR;
+        return RET_MEMORY_FAILED;
       }
       std::memcpy(tensor_data, tensor->data.data(), size);
       param_value->set_tensor_addr(tensor_data);
@@ -128,7 +128,7 @@ int AnfImporterFromMetaGraphT::ConvertAbstract(const std::unique_ptr<schema::CNo
       auto tuple_get_item_prim_ptr = GetTupleGetItemPrim();
       if (tuple_get_item_prim_ptr == nullptr) {
         MS_LOG(ERROR) << "GetTupleGetItemPrim return nullptr";
-        return RET_ERROR;
+        return RET_NULL_PTR;
       }
       auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
       auto get_item_value = NewValueNode(MakeValue<int>(i));
@@ -153,16 +153,16 @@ int AnfImporterFromMetaGraphT::ConverterCNode() {
       auto node = GetNode(j);
       if (nullptr == node) {
         MS_LOG(ERROR) << "Can't find input node.";
-        return RET_ERROR;
+        return RET_NOT_FIND_OP;
       }
       op_inputs.push_back(node);
     }
     auto new_cnode = func_graph_->NewCNode(op_inputs);
     new_cnode->set_fullname_with_scope(cNode->name);
-    auto ret = ConvertAbstract(cNode, new_cnode);
-    if (ret != RET_OK) {
+    auto status = ConvertAbstract(cNode, new_cnode);
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "ConvertAbstract failed.";
-      return RET_ERROR;
+      return status;
     }
   }
   return RET_OK;
@@ -176,7 +176,7 @@ int AnfImporterFromMetaGraphT::AddReturnCNode() {
     auto make_tuple_prim_ptr = GetMakeTuplePrim();
     if (make_tuple_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "GetMakeTuplePrim return nullptr";
-      return RET_ERROR;
+      return RET_NULL_PTR;
     }
     auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
     make_tuple_inputs.emplace_back(make_tuple_prim);
@@ -184,7 +184,7 @@ int AnfImporterFromMetaGraphT::AddReturnCNode() {
       auto cNode = GetNode(tensor_id);
       if (nullptr == cNode) {
         MS_LOG(ERROR) << "Can't find input node.";
-        return RET_ERROR;
+        return RET_NOT_FIND_OP;
       }
       make_tuple_inputs.emplace_back(cNode);
     }
@@ -195,7 +195,7 @@ int AnfImporterFromMetaGraphT::AddReturnCNode() {
     auto return_prim_ptr = GetReturnPrim();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "GetReturnPrim return nullptr";
-      return RET_ERROR;
+      return RET_NULL_PTR;
     }
     auto value_node = NewValueNode(return_prim_ptr);
     op_inputs.emplace_back(value_node);
@@ -207,14 +207,14 @@ int AnfImporterFromMetaGraphT::AddReturnCNode() {
     auto return_prim_ptr = GetReturnPrim();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "GetReturnPrim return nullptr";
-      return RET_ERROR;
+      return RET_NULL_PTR;
     }
     auto value_node = NewValueNode(return_prim_ptr);
     std::vector<AnfNodePtr> op_inputs{value_node};
     auto cnode = GetNode(meta_graph_->outputIndex.front());
     if (nullptr == cnode) {
       MS_LOG(ERROR) << "Can't find input node.";
-      return RET_ERROR;
+      return RET_NOT_FIND_OP;
     }
     op_inputs.emplace_back(cnode);
     auto return_cnode = func_graph_->NewCNode(op_inputs);

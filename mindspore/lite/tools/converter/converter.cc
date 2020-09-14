@@ -66,6 +66,8 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   if (flag->fmk == converter::FmkType_MS) {
     MS_ASSERT(nullptr != modelImporter);
     modelImporter->Import(flag->quantType);
+    int status = modelImporter->Import(flag->quantType);
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     graph = modelImporter->GetResult();
   } else {
     MS_ASSERT(nullptr != modelParser);
@@ -94,8 +96,9 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   transform->SetGraphDef(meta_graph);
   transform->CreateQuantizer(flag);
   auto status = transform->Transform(*flag);
-  if (status != 0) {
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Transform meta graph failed " << status;
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
 
@@ -106,15 +109,16 @@ int RunConverter(int argc, const char **argv) {
   std::unique_ptr<converter::Flags> flags(new (std::nothrow) converter::Flags);
   if (flags == nullptr) {
     MS_LOG(ERROR) << "new flags error ";
-    return RET_ERROR;
+    return RET_MEMORY_FAILED;
   }
   auto status = flags->Init(argc, argv);
   if (status == RET_SUCCESS_EXIT) {
-    return 0;
+    return status;
   }
   if (status != 0) {
     MS_LOG(ERROR) << "converter::Flags Init failed: " << status;
-    return 1;
+    std::cout << "CONVERTER::FLAGS INIT FAILED" << std::endl;
+    return status;
   }
   // Load graph
   std::string modelName = flags->modelFile.substr(flags->modelFile.find_last_of(DELIM_SLASH) + 1);
@@ -147,9 +151,11 @@ int RunConverter(int argc, const char **argv) {
       return 1;
     }
   }
+  status = ReturnCode::GetSingleReturnCode()->GetReturnCode();
   if (fb_graph == nullptr) {
     MS_LOG(ERROR) << "Convert model return nullptr";
-    return 1;
+    std::cout << "CONVERT RESULT: FAILED!" << std::endl;
+    return status;
   }
 
   //   save graph to file
@@ -158,13 +164,14 @@ int RunConverter(int argc, const char **argv) {
   status = storage.Save(*fb_graph, flags->outputFile);
   if (status != 0) {
     MS_LOG(ERROR) << "Save graph failed";
-    return 1;
+    std::cout << "SAVE GRAPH FAILED!" << std::endl;
+    return RET_ERROR;
   }
 
   delete fb_graph;
   MS_LOG(INFO) << "CONVERT RESULT: SUCCESS!";
-
-  return 0;
+  std::cout << "CONVERT RESULT: SUCCESS!" << std::endl;
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

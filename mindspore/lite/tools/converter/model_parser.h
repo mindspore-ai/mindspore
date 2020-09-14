@@ -22,7 +22,7 @@
 #include "schema/inner/model_generated.h"
 #include "tools/anf_importer/import_from_meta_graphT.h"
 #include "ir/anf.h"
-#include "include/errorcode.h"
+#include "tools/converter/return_code.h"
 
 namespace mindspore::lite {
 using namespace schema;
@@ -35,8 +35,12 @@ class ModelParser {
   FuncGraphPtr Parse(const std::string &modelFile, const std::string &weightFile,
                      const QuantType &quantType = QuantType_QUANT_NONE) {
     auto *meta_graph = ParseToFb(modelFile, weightFile, quantType);
+    if (meta_graph == nullptr) {
+      MS_LOG(ERROR) << "parse model to fb failed";
+      return nullptr;
+    }
     auto func_graph = this->Fb2Anf(meta_graph);
-    delete (meta_graph);
+    delete(meta_graph);
     return func_graph;
   }
 
@@ -48,9 +52,10 @@ class ModelParser {
     MS_EXCEPTION_IF_NULL(meta_graph);
     auto func_graph = std::make_shared<FuncGraph>();
     AnfImporterFromMetaGraphT importer(meta_graph, func_graph);
-    auto ret = importer.Import();
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "Import anf_graph from meta_graphT failed, ret: " << ret;
+    auto status = importer.Import();
+    if (RET_OK != status) {
+      MS_LOG(ERROR) << "Import anf_graph from meta_graphT failed, ret: " << status;
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       return nullptr;
     }
     return func_graph;

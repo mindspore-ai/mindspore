@@ -106,7 +106,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     if (i >= dst_node->inputIndex.size()) {
       MS_LOG(ERROR) << "node: " << dst_node->name << " input has " << input_quant_params.size()
                     << " quant_params; but only " << dst_node->inputIndex.size() << " input";
-      break;
+      return RET_PARAM_INVALID;
     }
     auto activate_index = dst_node->inputIndex[i];
     auto tensor_input = meta_graph->allTensors[activate_index].get();
@@ -170,7 +170,7 @@ void AnfExporter::SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &
   }
 }
 
-void AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
+int AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                       schema::CNodeT *return_node) {
   MS_ASSERT(nullptr != meta_graph);
   MS_ASSERT(nullptr != return_node);
@@ -178,31 +178,34 @@ void AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_p
     auto input_node = cnode->input(i);
     if (input_node == nullptr) {
       MS_LOG(ERROR) << "output node is nullptr";
-      return;
+      return RET_NULL_PTR;
     } else if (input_node->isa<CNode>()) {
       auto ret = ConvertInputCNode(input_node, return_node);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "obtain outputs failed";
-        return;
+        return ret;
       }
     } else {
       MS_LOG(ERROR) << "the node " << input_node->fullname_with_scope().c_str() << "is not output node";
-      return;
+      return RET_ERROR;
     }
   }
   for (size_t i = 0; i < return_node->inputIndex.size(); ++i) {
     meta_graphT->outputIndex.push_back(return_node->inputIndex[i]);
   }
+  return RET_OK;
 }
 
 schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool keep_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   auto meta_graphT = std::make_unique<schema::MetaGraphT>();
+  int ret = RET_OK;
   for (const auto &cnode : cnodes) {
     auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "primitive_c is nullptr";
-      return nullptr;
+      ret = RET_MEMORY_FAILED;
+      break;
     }
     if (primitive_c->Type() == schema::PrimitiveType_TupleGetItem ||
         primitive_c->Type() == schema::PrimitiveType_MakeTuple ||
@@ -216,31 +219,40 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
     auto node = std::make_unique<schema::CNodeT>();
     if (node == nullptr) {
       MS_LOG(ERROR) << "object failed to be constructed";
-      return nullptr;
+      ret = RET_MEMORY_FAILED;
+      break;
     }
     if (primT->value.type == schema::PrimitiveType_Return) {
       node->name = "return_node";
-      SetGraphoutputIndex(cnode, meta_graphT, node.get());
+      ret = SetGraphoutputIndex(cnode, meta_graphT, node.get());
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "SetOpOutputN failed";
+        break;
+      }
       continue;
     }
     node->nodeType = schema::NodeType_CNode;
     node->name = cnode->fullname_with_scope();
     node->primitive = std::unique_ptr<schema::PrimitiveT>(primT);
-    auto ret = SetOpInputNode(cnode, meta_graphT, node.get());
+    ret = SetOpInputNode(cnode, meta_graphT, node.get());
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SetOpInputNode failed";
-      return nullptr;
+      break;
     }
     SetOpOutputNode(cnode, meta_graphT, node.get());
     ret = ConvertQuantParam(meta_graphT, primitive_c, node);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ConvertQuantParam failed";
-      return nullptr;
+      break;
     }
     if (!keep_graph) {
       primitive_c->ClearPrimitiveT();
     }
     meta_graphT->nodes.emplace_back(std::move(node));
+  }
+  if (ret != RET_OK) {
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
+    return nullptr;
   }
   // set graph input tensors
   SetGraphInputIndex(meta_graphT);
@@ -297,11 +309,11 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> input_anod
   auto abstractBase = paramNode->abstract();
   if (abstractBase == nullptr) {
     MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << paramNode->name();
-    return RET_ERROR;
+    return RET_PARAM_INVALID;
   }
   if (!utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
     MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << paramNode->name();
-    return RET_ERROR;
+    return RET_INPUT_TENSOR_ERROR;
   }
   auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
   auto typePtr = abstractTensor->element()->GetTypeTrack();
@@ -309,7 +321,7 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> input_anod
   paramTensor->dataType = typePtr->type_id();
   if (!utils::isa<abstract::ShapePtr>(abstractTensor->BuildShape())) {
     MS_LOG(ERROR) << "Shape of Abstract of parameter should be ShapePtr, " << paramNode->name();
-    return RET_ERROR;
+    return RET_PARAM_INVALID;
   }
   paramTensor->dims = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
   auto paramValue = std::dynamic_pointer_cast<ParamValueLite>(paramNode->default_param());
@@ -431,13 +443,13 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
       auto ret = ConvertInputCNode(input_node, fb_node);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "ConvertInputCNode failed";
-        return RET_ERROR;
+        return ret;
       }
     } else if (input_node->isa<Parameter>()) {
       auto ret = ConvertInputParameter(input_node, meta_graphT, fb_node);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "ConvertInputParameter failed";
-        return RET_ERROR;
+        return ret;
       }
       if (!input_node->cast<ParameterPtr>()->has_default()) {
         is_graph_input = true;

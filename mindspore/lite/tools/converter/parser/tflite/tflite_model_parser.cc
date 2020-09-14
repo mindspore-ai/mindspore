@@ -56,11 +56,11 @@ STATUS TfliteModelParser::CopyConstTensorData(const std::vector<std::unique_ptr<
     if (memcpy_s(tensor->data.data(), tensor->data.size(), tflite_model_buffer[buffer_idx]->data.data(),
                  tflite_model_buffer[buffer_idx]->data.size())) {
       MS_LOG(ERROR) << "memcpy tensor data failed";
-      return RET_ERROR;
+      return RET_MEMORY_FAILED;
     }
   } else {
     MS_LOG(ERROR) << "src tensor data is empty";
-    return RET_ERROR;
+    return RET_INPUT_TENSOR_ERROR;
   }
   return RET_OK;
 }
@@ -77,7 +77,8 @@ void TfliteModelParser::SetTensorQuantParam(const std::unique_ptr<tflite::Tensor
   }
 
   // change quant param min to 0 to fit ms-lite ops
-  if (tensor->dataType == TypeId::kNumberTypeInt8) {
+  if (GetTfliteDataType(tflite_tensor->type) == TypeId::kNumberTypeUInt8
+      && tensor->dataType == TypeId::kNumberTypeInt8) {
     quant_param->zeroPoint = quant_param->zeroPoint - 128;
   }
 
@@ -114,12 +115,13 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
     auto node_parser = TfliteNodeParserRegistry::GetInstance()->GetNodeParser(op_type);
     if (node_parser == nullptr) {
       MS_LOG(ERROR) << "cannot find node parser, opType: " << op_type.c_str();
-      return RET_NULL_PTR;
+      return RET_NOT_FIND_OP;
     }
-    if (node_parser->Parse(tflite_op, tflite_subgraph->tensors, tflite_model->buffers, op.get(), &tensorsId,
-                           &tensorsFormat, &tensorsIdMap) != RET_OK) {
+    int status = node_parser->Parse(tflite_op, tflite_subgraph->tensors, tflite_model->buffers, op.get(), &tensorsId,
+                           &tensorsFormat, &tensorsIdMap);
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "node " << op_type.c_str() << " parser failed";
-      return RET_ERROR;
+      return status;
     }
 
     sub_graph->nodes.emplace_back(op.release());
@@ -158,7 +160,11 @@ STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT>
     auto &tensor_buffer = tflite_model_buffer.at(tflite_tensor->buffer);
     auto isConst = (!tensor_buffer->data.empty());
     if (isConst) {
-      CopyConstTensorData(tflite_model_buffer, tflite_tensor.get(), tensor.get());
+      int status = CopyConstTensorData(tflite_model_buffer, tflite_tensor.get(), tensor.get());
+      if (status != RET_OK) {
+          MS_LOG(ERROR) << "obtain const tensor failed";
+          return status;
+      }
     } else if (quantType == QuantType_AwareTraining && tensor->dataType == TypeId::kNumberTypeUInt8) {
       // set in/out tensor to int8 to fit ms-lite op
       tensor->dataType = TypeId::kNumberTypeInt8;
@@ -204,6 +210,9 @@ STATUS TfliteModelParser::GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> 
     auto iter = tensorsIdMap.find(id);
     if (iter != tensorsIdMap.end()) {
       graph_inputs.push_back(iter->second);
+    } else {
+      MS_LOG(ERROR) << "get graph input failed";
+      return RET_INPUT_TENSOR_ERROR;
     }
   }
   sub_graph->inputIndex.assign(graph_inputs.begin(), graph_inputs.end());
@@ -220,6 +229,9 @@ STATUS TfliteModelParser::GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> 
     auto iter = tensorsIdMap.find(id);
     if (iter != tensorsIdMap.end()) {
       graph_outputs.push_back(iter->second);
+    } else {
+      MS_LOG(ERROR) << "get graph output failed";
+      return RET_INPUT_TENSOR_ERROR;
     }
   }
   sub_graph->outputIndex.assign(graph_outputs.begin(), graph_outputs.end());
@@ -306,11 +318,13 @@ schema::MetaGraphT *TfliteModelParser::ParseToFb(const std::string &model_file, 
   auto tflite_model = ReadTfliteModel(model_file.c_str());
   if (tflite_model == nullptr) {
     MS_LOG(ERROR) << "read tflite model failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
     return nullptr;
   }
 
   if (tflite_model->subgraphs.size() != 1) {
     MS_LOG(ERROR) << "read tflite model subgraphs failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
     return nullptr;
   }
   const auto &tflite_subgraph = tflite_model->subgraphs[0];
@@ -318,31 +332,40 @@ schema::MetaGraphT *TfliteModelParser::ParseToFb(const std::string &model_file, 
   auto meta_graph = std::make_unique<schema::MetaGraphT>();
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "new meta graph failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
     return nullptr;
   }
   meta_graph->name = "MS_model converted by TF-Lite";
   quantType = quant_type;
   // convert op
-  if (ConvertOp(tflite_model, tflite_subgraph, quant_type, meta_graph.get()) != RET_OK) {
+  int status = ConvertOp(tflite_model, tflite_subgraph, quant_type, meta_graph.get());
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "parse op failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
 
   // convert tensor
-  if (ConvertTensor(tflite_subgraph, tflite_model->buffers, meta_graph.get()) != RET_OK) {
+  status = ConvertTensor(tflite_subgraph, tflite_model->buffers, meta_graph.get());
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "convert tensor failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
 
   // set graph input/output
-  if (GetGraphInfo(tflite_subgraph, meta_graph.get()) != RET_OK) {
+  status = GetGraphInfo(tflite_subgraph, meta_graph.get());
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "convert tensors failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
 
   // update for depthwiseConv
-  if (ConvertGroupDepthwiseOp(meta_graph.get()) != RET_OK) {
+  status = ConvertGroupDepthwiseOp(meta_graph.get());
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "convert group depthwise conv failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
 

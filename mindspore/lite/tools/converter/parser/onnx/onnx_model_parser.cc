@@ -458,14 +458,18 @@ void OnnxModelParser::FindGraphInputAndConst(const onnx::GraphProto &onnx_graph)
 
 schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, const std::string &weightFile,
                                                const QuantType &quantType) {
-  if (ValidateFileStr(modelFile, ".onnx") != RET_OK) {
+  int status = ValidateFileStr(modelFile, ".onnx");
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Input illegal: modelFile must be *.onnx";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
 
   onnx::ModelProto onnx_model;
-  if (ReadProtoFromBinaryFile((const char *)modelFile.c_str(), &onnx_model) != RET_OK) {
+  status = ReadProtoFromBinaryFile((const char *)modelFile.c_str(), &onnx_model);
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Read onnx model file failed, model path: " << modelFile;
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
   const onnx::GraphProto &onnx_graph = onnx_model.graph();
@@ -475,19 +479,25 @@ schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, con
   // find out input names and const names
   FindGraphInputAndConst(onnx_graph);
   // set const tensor
-  if (SetGraphConstTensor(onnx_graph, &tensor_cache)) {
+  status = SetGraphConstTensor(onnx_graph, &tensor_cache);
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "SetGraphConstTensor failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
   auto dst_graph = std::make_unique<schema::MetaGraphT>();
   // init onnx model graph input tensor
-  if (SetGraphInputTensor(onnx_graph, dst_graph.get(), &tensor_cache)) {
+  status = SetGraphInputTensor(onnx_graph, dst_graph.get(), &tensor_cache);
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "SetGraphInputTensor failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
   // init onnx model graph output tensor
-  if (SetGraphOutputTensor(onnx_graph, dst_graph.get(), &tensor_cache)) {
+  status = SetGraphOutputTensor(onnx_graph, dst_graph.get(), &tensor_cache);
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "SetGraphOutputTensor failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
   // init op node input/output tensor, and dst_op attr
@@ -499,9 +509,10 @@ schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, con
       ParseOnnxGemmNode(onnx_graph, onnx_node, dst_graph.get(), &tensor_cache);
       continue;
     } else if (onnx_node.op_type() == "Int8GivenIntTensorFill" || onnx_node.op_type() == "Int8GivenTensorFill") {
-      auto status = ParseOnnxGivenFillNode(onnx_node, &tensor_cache);
+      status = ParseOnnxGivenFillNode(onnx_node, &tensor_cache);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "ParseOnnxGivenFillNode failed: " << status;
+        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
         return nullptr;
       }
       continue;
@@ -509,9 +520,10 @@ schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, con
 
     std::unique_ptr<schema::CNodeT> dst_op = std::make_unique<schema::CNodeT>();
     std::unique_ptr<schema::TensorT> dst_tensor = std::make_unique<schema::TensorT>();
-    auto status = ParseOnnxNodeToDstOp(onnx_graph, onnx_node, dst_op.get(), dst_tensor.get(), &tensor_cache);
+    status = ParseOnnxNodeToDstOp(onnx_graph, onnx_node, dst_op.get(), dst_tensor.get(), &tensor_cache);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "parse node " << onnx_node.op_type() << " failed";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       return nullptr;
     }
     dst_graph->nodes.emplace_back(std::move(dst_op));

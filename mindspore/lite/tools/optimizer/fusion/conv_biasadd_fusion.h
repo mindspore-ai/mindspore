@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_FUSION_CONV_BIASADD_FUSION_H_
 
 #include "backend/optimizer/common/optimizer.h"
+#include "tools/converter/return_code.h"
 
 namespace mindspore {
 namespace opt {

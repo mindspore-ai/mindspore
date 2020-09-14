@@ -201,23 +201,23 @@ PARSE_ONNXATTR_IN_SCALAR_FORM(int32, bool)
 PARSE_ONNXATTR_IN_SCALAR_FORM(int64, int64)
 PARSE_ONNXATTR_IN_SCALAR_FORM(uint64, uint64)
 
-bool AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &node,
+int AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &node,
                                                          const onnx::ValueInfoProto &value_proto) {
   MS_EXCEPTION_IF_NULL(node);
   if (!value_proto.has_type() || !value_proto.has_name()) {
     MS_LOG(ERROR) << "onnx ValueInfoProto has no type or name! ";
-    return false;
+    return RET_PARAM_INVALID;
   }
   node->set_name(value_proto.name());
   const auto &type_proto = value_proto.type();
   if (!type_proto.has_tensor_type()) {
     MS_LOG(ERROR) << "onnx TypeProto has no tesor_type! ";
-    return false;
+    return RET_PARAM_INVALID;
   }
   const onnx::TypeProto_Tensor &tensor_typeproto = type_proto.tensor_type();
   if (!tensor_typeproto.has_elem_type() || !tensor_typeproto.has_shape()) {
     MS_LOG(ERROR) << "onnx TypeProto_Tensor has no elem_type or shape! ";
-    return false;
+    return RET_INPUT_TENSOR_ERROR;
   }
   const onnx::TensorShapeProto &tensor_shape = tensor_typeproto.shape();
   std::vector<int> shape;
@@ -227,7 +227,7 @@ bool AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &nod
 
   if (kDefaultValueSwitchMap.find(tensor_typeproto.elem_type()) == kDefaultValueSwitchMap.end()) {
     MS_LOG(ERROR) << "onnx TypeProto_Tensor  elem_type is not support yet!";
-    return false;
+    return RET_PARAM_INVALID;
   }
 
   auto type_ptr = TypeIdToType(kDefaultValueSwitchMap[tensor_typeproto.elem_type()]);
@@ -248,7 +248,7 @@ bool AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &nod
       MS_LOG(ERROR) << "memcpy_s error";
       delete tensor_data_buf;
       delete tensor_info;
-      return false;
+      return RET_MEMORY_FAILED;
     }
 
     ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
@@ -261,10 +261,10 @@ bool AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &nod
     delete tensor_info;
   }
   anfnode_build_map_[value_proto.name()] = node;
-  return true;
+  return RET_OK;
 }
 
-bool AnfImporterFromProtobuf::ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph,
+int AnfImporterFromProtobuf::ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph,
                                                        const onnx::GraphProto &importProto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
   MS_LOG(INFO) << "Parameters had default paramerer size is: " << importProto.initializer_size();
@@ -273,20 +273,22 @@ bool AnfImporterFromProtobuf::ImportParametersForGraph(const FuncGraphPtr &outpu
     const onnx::TensorProto &initializer_proto = importProto.initializer(i);
     if (!initializer_proto.has_name()) {
       MS_LOG(ERROR) << "initializer vector of onnx GraphProto has no name at index: " << i;
-      return false;
+      return RET_PARAM_INVALID;
     }
     default_para_map_[initializer_proto.name()] = initializer_proto;
   }
 
+  int status = RET_OK;
   MS_LOG(INFO) << "all parameters size: " << importProto.input_size();
   for (int i = 0; i < importProto.input_size(); ++i) {
     const onnx::ValueInfoProto &input_proto = importProto.input(i);
-    if (!BuildParameterForFuncGraph(outputFuncGraph->add_parameter(), input_proto)) {
+    status = BuildParameterForFuncGraph(outputFuncGraph->add_parameter(), input_proto);
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "Build parameter for funcgraph fail at index: " << i;
-      return false;
+      break;
     }
   }
-  return true;
+  return status;
 }
 
 bool AnfImporterFromProtobuf::ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const std::string &attr_name,
@@ -662,7 +664,7 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
   return true;
 }
 
-bool AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
+int AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
                                                   const onnx::GraphProto &importProto,
                                                   const schema::QuantType &quantType) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
@@ -674,22 +676,25 @@ bool AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFunc
     if (node_type == kConstantValueNode) {
       if (!BuildValueNodeForFuncGraph(node_proto)) {
         MS_LOG(ERROR) << "Build ValueNode for funcgraph fail at index: : " << i;
-        return false;
+        return RET_ERROR;
       }
       continue;
     }
     cnode_ptr = BuildCNodeForFuncGraph(outputFuncGraph, node_proto, quantType);
     if (cnode_ptr == nullptr) {
       MS_LOG(ERROR) << "Build CNode for funcgraph fail at index: : " << i;
-      return false;
+      return RET_NULL_PTR;
     }
   }
 
-  BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr);
-  return true;
+  if (!BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr)) {
+    MS_LOG(ERROR) << "Build ReturnNode for funcgraph failed";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
-bool AnfImporterFromProtobuf::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
+int AnfImporterFromProtobuf::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
                                              const schema::QuantType &quantType) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
   GraphDebugInfoPtr debug_info_ptr = outputFuncGraph->debug_info();
@@ -697,47 +702,51 @@ bool AnfImporterFromProtobuf::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph
   if (importProto.has_name()) {
     debug_info_ptr->set_name(importProto.name());
   } else {
-    MS_LOG(ERROR) << "FuncGraph under converting has not name!";
+    MS_LOG(INFO) << "FuncGraph under converting has not name!";
   }
 
-  if (!ImportParametersForGraph(outputFuncGraph, importProto)) {
-    return false;
+  auto status = ImportParametersForGraph(outputFuncGraph, importProto);
+  if (status != RET_OK) {
+    return status;
   }
   return ImportNodesForGraph(outputFuncGraph, importProto, quantType);
 }
 
-bool AnfImporterFromProtobuf::ParseModelConfigureInfo(const onnx::ModelProto &model_proto) {
+int AnfImporterFromProtobuf::ParseModelConfigureInfo(const onnx::ModelProto &model_proto) {
   if (!model_proto.has_producer_name()) {
     MS_LOG(ERROR) << "Parse model producer name from pb file failed!";
-    return false;
+    return RET_GRAPH_FILE_ERR;
   }
   producer_name_ = model_proto.producer_name();
 
   if (!model_proto.has_model_version()) {
     MS_LOG(ERROR) << "Parse model producer version from pb file failed!";
-    return false;
+    return RET_GRAPH_FILE_ERR;
   }
   model_version_ = model_proto.model_version();
 
   if (!model_proto.has_ir_version()) {
     MS_LOG(ERROR) << "Parse model version from pb file failed!";
-    return false;
+    return RET_GRAPH_FILE_ERR;
   }
   ir_version_ = model_proto.ir_version();
-  return true;
+  return RET_OK;
 }
 
 int AnfImporterFromProtobuf::Import(const schema::QuantType &quantType) {
   FuncGraphPtr dstGraph = std::make_shared<mindspore::FuncGraph>();
   MS_EXCEPTION_IF_NULL(dstGraph);
-  if (!ParseModelConfigureInfo(*onnx_model_)) {
+  int status = ParseModelConfigureInfo(*onnx_model_);
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Parse configuration info for pb file failed!";
+    return status;
   }
   const onnx::GraphProto &graphBuild = onnx_model_->graph();
-  if (!BuildFuncGraph(dstGraph, graphBuild, quantType)) {
+  status = BuildFuncGraph(dstGraph, graphBuild, quantType);
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Build funcgraph failed!";
     func_graph_ = nullptr;
-    return RET_ERROR;
+    return status;
   }
   func_graph_ = dstGraph;
   MS_LOG(INFO) << "Parse pb to build FuncGraph Success!";

@@ -120,6 +120,12 @@ enum PaddingMode : byte {
     MODE_RESERVED = 3
 }
 
+enum LshProjectionType : byte {
+    UNKNOWN = 0,
+    SPARSE = 1,
+    DENSE = 2
+}
+
 table Pad {
     paddings: [int];
     paddingMode: PaddingMode;
@@ -661,7 +667,8 @@ enum ReduceMode : byte {
     ReduceMin = 2,
     ReduceProd = 3,
     ReduceSum = 4,
-    ReduceSumSquare = 5
+    ReduceSumSquare = 5,
+    ReduceASum = 6
 }
 
 table Reduce {
@@ -785,7 +792,7 @@ table FloorMod {
 table L2Norm {
     axis: [int];
     epsilon: float;
-    activationType: ActivationType;
+    activationType: ActivationType = 0;
 }
 
 table LogicalAnd {
@@ -936,4 +943,8 @@ table BlackBox {
     id : string;
     size : int;
     address : [ubyte];
+}
+
+table LshProjection {
+    type : LshProjectionType;
 }
