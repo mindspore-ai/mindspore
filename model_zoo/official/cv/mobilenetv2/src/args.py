@@ -60,6 +60,8 @@ def eval_parse_args():
         for fine tune or incremental learning')
     eval_parser.add_argument('--head_ckpt', type=str, default=None, help='Pretrained checkpoint path \
         for fine tune or incremental learning')
+    eval_parser.add_argument('--run_distribute', type=ast.literal_eval, default=False, help='Run distribute')
+
     eval_args = eval_parser.parse_args()
 
     return eval_args

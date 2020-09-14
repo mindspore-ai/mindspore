@@ -63,7 +63,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 ```python
 ├── MobileNetV2
-  ├── Readme.md     # descriptions about MobileNetV2
+  ├── README.md     # descriptions about MobileNetV2
   ├── scripts
   │   ├──run_train.sh   # shell script for train, fine_tune or incremental  learn with CPU, GPU or Ascend
   │   ├──run_eval.sh    # shell script for evaluation with CPU, GPU or Ascend
