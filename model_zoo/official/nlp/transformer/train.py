@@ -105,6 +105,9 @@ def argparse_init():
     parser.add_argument("--save_checkpoint_path", type=str, default="./checkpoint/", help="Save checkpoint file path, "
                                                                                           "default is ./checkpoint/")
     parser.add_argument("--data_path", type=str, default="", help="Data path, it is better to use absolute path")
+    parser.add_argument("--bucket_boundaries", type=list, default=[16, 32, 48, 64, 128], help="sequence length for "
+                                                                                              "different bucket")
+
     return parser
 
 def run_transformer_train():
@@ -129,7 +132,8 @@ def run_transformer_train():
     dataset = create_transformer_dataset(epoch_count=1, rank_size=device_num,
                                          rank_id=rank_id, do_shuffle=args.do_shuffle,
                                          enable_data_sink=args.enable_data_sink,
-                                         dataset_path=args.data_path)
+                                         dataset_path=args.data_path,
+                                         bucket_boundaries=args.bucket_boundaries)
 
     netwithloss = TransformerNetworkWithLoss(transformer_net_cfg, True)
 
