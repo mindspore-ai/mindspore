@@ -68,7 +68,7 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   int thread_count_;
   ConvParameter *conv_param_;
   ConvQuantArg *conv_quant_arg_;
-  LayoutConvertor convert_func_;
+  LayoutConvertor convert_func_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

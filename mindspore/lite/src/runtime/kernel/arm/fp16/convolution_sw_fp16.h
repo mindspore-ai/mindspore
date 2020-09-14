@@ -54,6 +54,10 @@ class ConvolutionSWFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
 
  private:
   void FreeTmpBuffer() {
+    if (nhwc4_input_ != nullptr) {
+      ctx_->allocator->Free(nhwc4_input_);
+      nhwc4_input_ = nullptr;
+    }
     if (tmp_output_block_ != nullptr) {
       ctx_->allocator->Free(tmp_output_block_);
       tmp_output_block_ = nullptr;

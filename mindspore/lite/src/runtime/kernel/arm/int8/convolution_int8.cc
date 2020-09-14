@@ -132,6 +132,26 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
 int ConvolutionInt8CPUKernel::InitTmpBuffer() {
   MS_ASSERT(ctx_->allocator != nullptr);
 
+  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
+  int output_count = conv_param_->output_h_ * conv_param_->output_w_;
+  int output_tile_count = UP_DIV(output_count, tile_num_);
+  int kernel_plane = conv_param_->kernel_h_ * conv_param_->kernel_w_;
+  int plane_c4 = UP_DIV(kernel_plane, C4NUM);
+  int unit_size = plane_c4 * C4NUM * ic4 * C4NUM;
+  int packed_input_size = output_tile_count * tile_num_ * unit_size;
+  packed_input_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(conv_param_->input_batch_ * packed_input_size));
+  if (packed_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc packed_input_ failed.";
+    return RET_ERROR;
+  }
+
+  size_t nhwc4_input_size = ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_;
+  nhwc4_input_ = ctx_->allocator->Malloc(nhwc4_input_size);
+  if (nhwc4_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc nhwc4 input failed.";
+    return RET_ERROR;
+  }
+
   size_t tmp_dst_size = thread_count_ * tile_num_ * conv_param_->output_channel_ * sizeof(int32_t);
   tmp_dst_ = reinterpret_cast<int32_t *>(ctx_->allocator->Malloc(tmp_dst_size));
   if (tmp_dst_ == nullptr) {
@@ -219,6 +239,14 @@ int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
 int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
   MS_ASSERT(ctx_->allocator != nullptr);
 
+  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
+  size_t nhwc4_input_size = ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_;
+  nhwc4_input_ = ctx_->allocator->Malloc(nhwc4_input_size);
+  if (nhwc4_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc nhwc4 input failed.";
+    return RET_ERROR;
+  }
+
   size_t tmp_dst_size = thread_count_ * tile_num_ * conv_param_->output_channel_ * sizeof(int32_t);
   tmp_dst_ = reinterpret_cast<int32_t *>(ctx_->allocator->Malloc(tmp_dst_size));
   if (tmp_dst_ == nullptr) {
@@ -238,12 +266,6 @@ int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
 void ConvolutionInt8CPUKernel::ConfigInputOutput() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_tensor->SetFormat(schema::Format::Format_NHWC);
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ret = CheckLayout(input_tensor);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Check layout failed.";
-    return;
-  }
 }
 
 int ConvolutionInt8CPUKernel::Init() {
@@ -283,43 +305,11 @@ int ConvolutionInt8CPUKernel::ReSize() {
     return ret;
   }
 
-  if (nhwc4_input_ != nullptr) {
-    free(nhwc4_input_);
-    nhwc4_input_ = nullptr;
-  }
-  if (packed_input_ != nullptr) {
-    free(packed_input_);
-    packed_input_ = nullptr;
-  }
-
   ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return RET_ERROR;
   }
-
-  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
-  size_t nhwc4_input_size = ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_;
-  nhwc4_input_ = malloc(nhwc4_input_size);
-  if (nhwc4_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc nhwc4 input failed.";
-    return RET_ERROR;
-  }
-  memset(nhwc4_input_, 0, nhwc4_input_size);
-
-  int output_count = conv_param_->output_h_ * conv_param_->output_w_;
-  int output_tile_count = UP_DIV(output_count, tile_num_);
-  int kernel_plane = conv_param_->kernel_h_ * conv_param_->kernel_w_;
-  int plane_c4 = UP_DIV(kernel_plane, C4NUM);
-  int unit_size = plane_c4 * C4NUM * ic4 * C4NUM;
-  int packed_input_size = output_tile_count * tile_num_ * unit_size;
-  packed_input_ = reinterpret_cast<int8_t *>(malloc(conv_param_->input_batch_ * packed_input_size));
-  if (packed_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc packed_input_ failed.";
-    return RET_ERROR;
-  }
-  memset(packed_input_, 0, conv_param_->input_batch_ * packed_input_size);
-
   return RET_OK;
 }
 
@@ -353,25 +343,17 @@ int ConvolutionInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  if (support_optimize_) {
-    ret = InitTmpBufferOpt();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Init tmp buffer failed.";
-      return RET_ERROR;
-    }
-  } else {
-    // init tmp input, output
-    ret = InitTmpBuffer();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Init tmp buffer failed.";
-      return RET_ERROR;
-    }
+  // init tmp input, output
+  ret = InitTmpBuffer();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init tmp buffer failed.";
+    return RET_ERROR;
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = input_tensor->MutableData();
-  convert_func_(ori_input_data, nhwc4_input_, conv_param_->input_batch_, conv_param_->input_h_ * conv_param_->input_w_,
-                conv_param_->input_channel_);
+  PackNHWCToNHWC4Int8(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
+                      conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
   int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ConvolutionInt8Impl, this, thread_count_);
   if (error_code != RET_OK) {

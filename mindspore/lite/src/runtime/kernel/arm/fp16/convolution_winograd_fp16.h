@@ -59,6 +59,10 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
 
  private:
   void FreeTmpBuffer() {
+    if (nhwc4_input_ != nullptr) {
+      ctx_->allocator->Free(nhwc4_input_);
+      nhwc4_input_ = nullptr;
+    }
     if (trans_input_ != nullptr) {
       ctx_->allocator->Free(trans_input_);
       trans_input_ = nullptr;

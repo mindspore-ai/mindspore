@@ -105,6 +105,15 @@ int ConvolutionSWFP16CPUKernel::InitTmpBuffer() {
   int out_channel = conv_param_->output_channel_;
   int oc4 = UP_DIV(out_channel, C4NUM);
 
+  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
+  size_t nhwc4_input_size =
+    ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
+  nhwc4_input_ = ctx_->allocator->Malloc(nhwc4_input_size);
+  if (nhwc4_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
+    return RET_ERROR;
+  }
+
   tmp_output_block_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(
     conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * oc4 * C4NUM * sizeof(float16_t)));
   if (tmp_output_block_ == nullptr) {
@@ -145,10 +154,6 @@ int ConvolutionSWFP16CPUKernel::ReSize() {
     return ret;
   }
 
-  if (nhwc4_input_ != nullptr) {
-    free(nhwc4_input_);
-    nhwc4_input_ = nullptr;
-  }
   if (slidingWindow_param_ != nullptr) {
     delete slidingWindow_param_;
     slidingWindow_param_ = nullptr;
@@ -159,16 +164,6 @@ int ConvolutionSWFP16CPUKernel::ReSize() {
     MS_LOG(ERROR) << "ConvolutionBase init fail!ret: " << ret;
     return ret;
   }
-
-  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
-  size_t nhwc4_input_size =
-    ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
-  nhwc4_input_ = malloc(nhwc4_input_size);
-  if (nhwc4_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
-    return RET_ERROR;
-  }
-  memset(nhwc4_input_, 0, nhwc4_input_size);
 
   // init sliding window param
   slidingWindow_param_ = new (std::nothrow) SlidingWindowParam;
