@@ -44,8 +44,6 @@ class ArithmeticOpenCLKernel : public OpenCLKernel {
   cl::Kernel kernel_;
   lite::opencl::OpenCLRuntime *runtime_;
   bool element_flag_{true};
-  float weight_{1.f};
-  float bias_{.0f};
   void *weight_ptr_{nullptr};
 
   std::vector<size_t> local_size_;

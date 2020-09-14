@@ -152,7 +152,7 @@ int ScaleOpenCLKernel::InitBuffer() {
             delete[] scale;
             return RET_ERROR;
           }
-          std::function<float(float)> to_dtype = [](float x) -> float { return (float)x; };
+          std::function<float(float)> to_dtype = [](float x) -> float { return x; };
           PackNHWCToNC4HW4<float, float>(in_tensors_[1]->MutableData(), scale, batch, plane, channel, to_dtype);
           PackNHWCToNC4HW4<float, float>(in_tensors_[2]->MutableData(), offset, batch, plane, channel, to_dtype);
           scale_ptr_ = allocator->CreateImageFromHost(scale, in_tensors_[1]->ElementsNum(), img_size);
@@ -160,20 +160,20 @@ int ScaleOpenCLKernel::InitBuffer() {
           delete[] scale;
           delete[] offset;
         } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
-          int16_t *scale = new (std::nothrow) int16_t[pack_weight_size];
+          float16_t *scale = new (std::nothrow) float16_t[pack_weight_size];
           if (scale == nullptr) {
             MS_LOG(ERROR) << "Malloc buffer failed!";
             return RET_ERROR;
           }
-          int16_t *offset = new (std::nothrow) int16_t[pack_weight_size];
+          float16_t *offset = new (std::nothrow) float16_t[pack_weight_size];
           if (offset == nullptr) {
             MS_LOG(ERROR) << "Malloc buffer failed!";
             delete[] scale;
             return RET_ERROR;
           }
-          std::function<int16_t(float)> to_dtype = Float32ToShort;
-          PackNHWCToNC4HW4<float, int16_t>(in_tensors_[1]->MutableData(), scale, batch, plane, channel, to_dtype);
-          PackNHWCToNC4HW4<float, int16_t>(in_tensors_[2]->MutableData(), offset, batch, plane, channel, to_dtype);
+          std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
+          PackNHWCToNC4HW4<float, float16_t>(in_tensors_[1]->MutableData(), scale, batch, plane, channel, to_dtype);
+          PackNHWCToNC4HW4<float, float16_t>(in_tensors_[2]->MutableData(), offset, batch, plane, channel, to_dtype);
           scale_ptr_ = allocator->CreateImageFromHost(scale, in_tensors_[1]->ElementsNum(), img_size);
           offset_ptr_ = allocator->CreateImageFromHost(offset, in_tensors_[2]->ElementsNum(), img_size);
           delete[] scale;
@@ -202,7 +202,7 @@ int ScaleOpenCLKernel::InitBuffer() {
             delete[] scale;
             return RET_ERROR;
           }
-          std::function<float(float)> to_dtype = [](float x) -> float { return (float)x; };
+          std::function<float(float)> to_dtype = [](float x) -> float { return x; };
           PackNHWCToNHWC4<float, float>(in_tensors_[1]->MutableData(), scale, batch, plane, channel, to_dtype);
           PackNHWCToNHWC4<float, float>(in_tensors_[2]->MutableData(), offset, batch, plane, channel, to_dtype);
           scale_ptr_ = allocator->CreateImageFromHost(scale, in_tensors_[1]->ElementsNum(), img_size);
@@ -210,20 +210,20 @@ int ScaleOpenCLKernel::InitBuffer() {
           delete[] scale;
           delete[] offset;
         } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
-          int16_t *scale = new (std::nothrow) int16_t[pack_weight_size];
+          float16_t *scale = new (std::nothrow) float16_t[pack_weight_size];
           if (scale == nullptr) {
             MS_LOG(ERROR) << "Malloc buffer failed!";
             return RET_ERROR;
           }
-          int16_t *offset = new (std::nothrow) int16_t[pack_weight_size];
+          float16_t *offset = new (std::nothrow) float16_t[pack_weight_size];
           if (offset == nullptr) {
             MS_LOG(ERROR) << "Malloc buffer failed!";
             delete[] scale;
             return RET_ERROR;
           }
-          std::function<int16_t(float)> to_dtype = Float32ToShort;
-          PackNHWCToNHWC4<float, int16_t>(in_tensors_[1]->MutableData(), scale, batch, plane, channel, to_dtype);
-          PackNHWCToNHWC4<float, int16_t>(in_tensors_[2]->MutableData(), offset, batch, plane, channel, to_dtype);
+          std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
+          PackNHWCToNHWC4<float, float16_t>(in_tensors_[1]->MutableData(), scale, batch, plane, channel, to_dtype);
+          PackNHWCToNHWC4<float, float16_t>(in_tensors_[2]->MutableData(), offset, batch, plane, channel, to_dtype);
           scale_ptr_ = allocator->CreateImageFromHost(scale, in_tensors_[1]->ElementsNum(), img_size);
           offset_ptr_ = allocator->CreateImageFromHost(offset, in_tensors_[2]->ElementsNum(), img_size);
           delete[] scale;
@@ -328,8 +328,8 @@ int ScaleOpenCLKernel::Run() {
         ocl_runtime_->SetKernelArg(kernel_, arg_idx++, Float32ToShort(scale));
         ocl_runtime_->SetKernelArg(kernel_, arg_idx++, Float32ToShort(offset));
       } else if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
-        int16_t scale = static_cast<int16_t *>(in_tensors_[1]->MutableData())[0];
-        int16_t offset = static_cast<int16_t *>(in_tensors_[2]->MutableData())[0];
+        float16_t scale = static_cast<float16_t *>(in_tensors_[1]->MutableData())[0];
+        float16_t offset = static_cast<float16_t *>(in_tensors_[2]->MutableData())[0];
         ocl_runtime_->SetKernelArg(kernel_, arg_idx++, Float32ToShort(scale));
         ocl_runtime_->SetKernelArg(kernel_, arg_idx++, Float32ToShort(offset));
       } else {
