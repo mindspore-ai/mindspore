@@ -31,10 +31,10 @@ class PowerTransform(Bijector):
 
     The power transform maps inputs from `[-1/c, inf]` to `[0, inf]`.
 
-    This Bijector is equivalent to the `Exp` bijector when `c=0`
+    This Bijector is equivalent to the `Exp` bijector when `c=0`.
 
     Raises:
-        ValueError: If the power is less than 0 or is not known statically.
+        ValueError: When the power is less than 0 or is not known statically.
 
     Args:
         power (int or float): The scale factor. Default: 0.
@@ -45,19 +45,19 @@ class PowerTransform(Bijector):
           Default: None.
 
     Examples:
-        >>> # To initialize a PowerTransform bijector of power 0.5
+        >>> # To initialize a PowerTransform bijector of power 0.5.
         >>> import mindspore.nn.probability.bijector as msb
         >>> n = msb.PowerTransform(0.5)
         >>>
-        >>> # To use PowerTransform distribution in a network
+        >>> # To use a PowerTransform bijector in a network.
         >>> class net(Cell):
         >>>     def __init__(self):
         >>>         super(net, self).__init__():
         >>>         self.p1 = msb.PowerTransform(0.5)
         >>>
         >>>     def construct(self, value):
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing 'forward' with the name of the function
+        >>>         # Similar calls can be made to other functions
+        >>>         # by replacing 'forward' by the name of the function.
         >>>         ans1 = self.s1.forward(value)
         >>>         ans2 = self.s1.inverse(value)
         >>>         ans3 = self.s1.forward_log_jacobian(value)

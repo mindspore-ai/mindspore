@@ -27,80 +27,80 @@ class Bernoulli(Distribution):
 
     Args:
         probs (float, list, numpy.ndarray, Tensor, Parameter): The probability of that the outcome is 1.
-        seed (int): The global seed is used in sampling. Global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): The type of the distribution. Default: mstype.int32.
-        name (str): The name of the distribution. Default: Bernoulli.
+        seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
+        dtype (mindspore.dtype): The type of the event samples. Default: mstype.int32.
+        name (str): The name of the distribution. Default: 'Bernoulli'.
 
     Note:
         `probs` should be a proper probability (0 < p < 1).
-        dist_spec_args is `probs`.
+        `dist_spec_args` is `probs`.
 
-        Examples:
-        >>> # To initialize a Bernoulli distribution of prob 0.5
+    Examples:
+        >>> # To initialize a Bernoulli distribution of the probability 0.5.
         >>> import mindspore.nn.probability.distribution as msd
         >>> b = msd.Bernoulli(0.5, dtype=mstype.int32)
         >>>
-        >>> # The following creates two independent Bernoulli distributions
+        >>> # The following creates two independent Bernoulli distributions.
         >>> b = msd.Bernoulli([0.5, 0.5], dtype=mstype.int32)
         >>>
-        >>> # A Bernoulli distribution can be initilized without arguments
-        >>> # In this case, probs must be passed in through args during function calls.
+        >>> # A Bernoulli distribution can be initilized without arguments.
+        >>> # In this case, `probs` must be passed in through arguments during function calls.
         >>> b = msd.Bernoulli(dtype=mstype.int32)
         >>>
-        >>> # To use Bernoulli in a network
+        >>> # To use the Bernoulli distribution in a network.
         >>> class net(Cell):
         >>>     def __init__(self):
         >>>         super(net, self).__init__():
         >>>         self.b1 = msd.Bernoulli(0.5, dtype=mstype.int32)
         >>>         self.b2 = msd.Bernoulli(dtype=mstype.int32)
         >>>
-        >>>     # All the following calls in construct are valid
+        >>>     # All the following calls in construct are valid.
         >>>     def construct(self, value, probs_b, probs_a):
         >>>
         >>>         # Private interfaces of probability functions corresponding to public interfaces, including
-        >>>         # 'prob', 'log_prob', 'cdf', 'log_cdf', 'survival_function', 'log_survival', have the form:
+        >>>         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
         >>>         # Args:
-        >>>         #     value (Tensor): value to be evaluated.
-        >>>         #     probs1 (Tensor): probability of success. Default: self.probs.
+        >>>         #     value (Tensor): the value to be evaluated.
+        >>>         #     probs1 (Tensor): the probability of success. Default: self.probs.
         >>>
-        >>>         # Example of prob.
+        >>>         # Examples of `prob`.
         >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing 'prob' with the name of the function
+        >>>         # by replacing `prob` by the name of the function.
         >>>         ans = self.b1.prob(value)
-        >>>         # Evaluate with the respect to distribution b
+        >>>         # Evaluate `prob` with respect to distribution b.
         >>>         ans = self.b1.prob(value, probs_b)
-        >>>         # probs must be passed in during function calls
+        >>>         # `probs` must be passed in during function calls.
         >>>         ans = self.b2.prob(value, probs_a)
         >>>
         >>>
-        >>>         # Functions 'sd', 'var', 'entropy' have the same args.
+        >>>         # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
         >>>         # Args:
-        >>>         #     probs1 (Tensor): probability of success. Default: self.probs.
+        >>>         #     probs1 (Tensor): the probability of success. Default: self.probs.
         >>>
-        >>>         # Example of mean. sd, var have similar usage.
+        >>>         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
         >>>         ans = self.b1.mean() # return 0.5
         >>>         ans = self.b1.mean(probs_b) # return probs_b
-        >>>         # probs must be passed in during function calls
+        >>>         # `probs` must be passed in during function calls.
         >>>         ans = self.b2.mean(probs_a)
         >>>
         >>>
-        >>>         # Interfaces of 'kl_loss' and 'cross_entropy' are similar:
+        >>>         # Interfaces of `kl_loss` and `cross_entropy` are the same as follows:
         >>>         # Args:
-        >>>         #     dist (str): name of the distribution. Only 'Bernoulli' is supported.
-        >>>         #     probs1_b (Tensor): probability of success of distribution b.
-        >>>         #     probs1_a (Tensor): probability of success of distribution a. Default: self.probs.
+        >>>         #     dist (str): the name of the distribution. Only 'Bernoulli' is supported.
+        >>>         #     probs1_b (Tensor): the probability of success of distribution b.
+        >>>         #     probs1_a (Tensor): the probability of success of distribution a. Default: self.probs.
         >>>
-        >>>         # Example of kl_loss (cross_entropy is similar):
+        >>>         # Examples of kl_loss. `cross_entropy` is similar.
         >>>         ans = self.b1.kl_loss('Bernoulli', probs_b)
         >>>         ans = self.b1.kl_loss('Bernoulli', probs_b, probs_a)
-        >>>         # Additional probs_a must be passed in
+        >>>         # An additional `probs_a` must be passed in.
         >>>         ans = self.b2.kl_loss('Bernoulli', probs_b, probs_a)
         >>>
         >>>
-        >>>         # sample
+        >>>         # Examples of `sample`.
         >>>         # Args:
-        >>>         #     shape (tuple): shape of the sample. Default: ()
-        >>>         #     probs1 (Tensor): probability of success. Default: self.probs.
+        >>>         #     shape (tuple): the shape of the sample. Default: ().
+        >>>         #     probs1 (Tensor): the probability of success. Default: self.probs.
         >>>         ans = self.b1.sample()
         >>>         ans = self.b1.sample((2,3))
         >>>         ans = self.b1.sample((2,3), probs_b)
@@ -113,7 +113,7 @@ class Bernoulli(Distribution):
                  dtype=mstype.int32,
                  name="Bernoulli"):
         """
-        Constructor of Bernoulli distribution.
+        Constructor of Bernoulli.
         """
         param = dict(locals())
         valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
@@ -200,7 +200,7 @@ class Bernoulli(Distribution):
 
     def _cross_entropy(self, dist, probs1_b, probs1=None):
         """
-        Evaluate cross_entropy between Bernoulli distributions.
+        Evaluate cross entropy between Bernoulli distributions.
 
         Args:
             dist (str): The type of the distributions. Should be "Bernoulli" in this case.
@@ -212,7 +212,7 @@ class Bernoulli(Distribution):
 
     def _log_prob(self, value, probs1=None):
         r"""
-        pmf of Bernoulli distribution.
+        Log probability mass function of Bernoulli distributions.
 
         Args:
             value (Tensor): A Tensor composed of only zeros and ones.
@@ -230,7 +230,7 @@ class Bernoulli(Distribution):
 
     def _cdf(self, value, probs1=None):
         r"""
-        Cumulative distribution function (cdf) of Bernoulli distribution.
+        Cumulative distribution function (cdf) of Bernoulli distributions.
 
         Args:
             value (Tensor): The value to be evaluated.
