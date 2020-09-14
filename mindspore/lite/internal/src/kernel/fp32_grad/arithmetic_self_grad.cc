@@ -31,9 +31,9 @@ int DoArithmeticSelfGrad(const TensorPtrVector &in_tensors, const TensorPtrVecto
                          mindspore::lite::Allocator *allocator) {
   size_t data_size = in_tensors[0]->ElementsNum();
   OpParameter *param = node->primitive_;
-  float *dy_data = (float *)in_tensors[0]->data_;
-  float *x_data = (float *)in_tensors[1]->data_;
-  float *dx_data = (float *)(float *)out_tensors[0]->data_;
+  float *dy_data = reinterpret_cast<float *>(in_tensors[0]->data_);
+  float *x_data = reinterpret_cast<float *>(in_tensors[1]->data_);
+  float *dx_data = reinterpret_cast<float *>(out_tensors[0]->data_);
   int ret;
   if (param->type_ == KernelType::LogGrad) {
     ret = ElementDiv(dy_data, x_data, dx_data, data_size);

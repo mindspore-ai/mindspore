@@ -30,8 +30,6 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int SoftmaxGradCPUKernel::Init() {
-  // auto input_tensor =in_tensors_.at(0);
-
   param = reinterpret_cast<SoftmaxParameter *>(op_parameter_);
   auto in_shape = in_tensors_.at(0)->shape();
   auto in_dims = in_shape.size();
@@ -43,7 +41,6 @@ int SoftmaxGradCPUKernel::Init() {
   }
   param->element_size_ = ele_size;
 
-  // malloc tmp buffer
   auto axis = param->axis_;
   if ((axis < -1) || (axis > param->n_dim_)) {
     MS_LOG(ERROR) << "SoftmaxGrad axis is invalid!";
@@ -57,9 +54,17 @@ int SoftmaxGradCPUKernel::Init() {
   }
 
   sum_data_ = new (std::nothrow) float[inner_size];
-  MS_ASSERT(sum_data_ != nullptr);
+  if (sum_data_ == nullptr) {
+    MS_LOG(ERROR) << "failed to malloc sum_data_!";
+    return RET_ERROR;
+  }
+
   sum_mul_ = new (std::nothrow) float[inner_size * in_shape[axis]];
-  MS_ASSERT(sum_mul_ != nullptr);
+  if (sum_mul_ == nullptr) {
+    MS_LOG(ERROR) << "failed to malloc sum_mul_!";
+    return RET_ERROR;
+  }
+
   return RET_OK;
 }
 

@@ -37,10 +37,7 @@ int ConvolutionGradFilterCPUKernel::Init() {
   MS_ASSERT(x_tensor != nullptr);
   auto *dy_tensor = in_tensors_.at(0);
   MS_ASSERT(dy_tensor != nullptr);
-#if 0
-  auto *weight_tensor = out_tensors_.at(0);
-  MS_ASSERT(weight_tensor != nullptr);
-#endif
+
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   conv_param->output_batch_ = dy_tensor->shape().at(kNHWC_N);
   conv_param->input_batch_ = x_tensor->shape().at(kNHWC_N);
@@ -49,7 +46,7 @@ int ConvolutionGradFilterCPUKernel::Init() {
   // assume OutCh|kh|kw|InCh
   conv_param->input_channel_ = x_tensor->shape().at(kNHWC_C);
   conv_param->output_channel_ = dy_tensor->shape().at(kNHWC_C);
-  // TBD
+
   conv_param->output_h_ = dy_tensor->shape()[kNHWC_H];
   conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
 
@@ -113,52 +110,9 @@ int ConvolutionGradFilterCPUKernel::Run() {
       gemm(1, 1, k, n, m, 1, mat_a, out_ch, mat_b, m, 1, mat_c, n);
     }
   }
-
-  // std::cout << "run succ" << std::endl;
   return RET_OK;
 }
-#if 0
-OpParameter *PopulateConvolutionGradFilterParameter(const lite::Primitive *primitive) {
-  ConvParameter *param = new (std::nothrow) ConvParameter();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "new Param for conv grad filter failed.";
-    return nullptr;
-  }
-  param->op_parameter_.type_ = primitive->Type();
 
-  auto convg_primitive = primitive->Value()->value_as_Conv2DGradFilter();
-  param->kernel_h_ = convg_primitive->kernelH();
-  param->kernel_w_ = convg_primitive->kernelW();
-  param->stride_h_ = convg_primitive->strideH();
-  param->stride_w_ = convg_primitive->strideW();
-  param->dilation_h_ = convg_primitive->dilateH();
-  param->dilation_w_ = convg_primitive->dilateW();
-  param->pad_h_ = convg_primitive->padUp();
-  param->pad_w_ = convg_primitive->padLeft();
-  param->pad_u_ = convg_primitive->padUp();
-  param->pad_d_ = convg_primitive->padDown();
-  param->pad_l_ = convg_primitive->padLeft();
-  param->pad_r_ = convg_primitive->padRight();
-  param->group_ = convg_primitive->group();
-  auto act_type = convg_primitive->activationType();
-  switch (act_type) {
-    case schema::ActivationType_RELU:
-      param->is_relu_ = true;
-      param->is_relu6_ = false;
-      break;
-    case schema::ActivationType_RELU6:
-      param->is_relu_ = false;
-      param->is_relu6_ = true;
-      break;
-    default:
-      param->is_relu_ = false;
-      param->is_relu6_ = false;
-      break;
-  }
-
-  return reinterpret_cast<OpParameter *>(param);
-}
-#endif
 kernel::LiteKernel *CpuConvGradFilterFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                        const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,

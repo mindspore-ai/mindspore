@@ -55,53 +55,6 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *lab
   }
   output2[0] = total_loss / param_->batch_size_;
 }
-
-#if 0
-void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *labels, const float *losses,
-                                                                      float *output) const {
-  float total_loss = 0;
-  for (int i = 0; i < param_->batch_size_; ++i) {
-    if (labels[i] < 0) {
-      MS_LOG(EXCEPTION) << "label value must >= 0";
-    }
-    size_t label = labels[i];
-    if (label > param->number_of_classes_) {
-      MS_LOG(EXCEPTION) << "error label input!";
-    } else {
-      total_loss -= logf(losses[i * param->number_of_classes_ + label]);
-    }
-  }
-  output[0] = total_loss / param->batch_size_;
-}
-
-void SoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *labels, const float *losses, float *grads,
-                                                                   float *output) const {
-  size_t row_start = 0;
-  float total_loss = 0;
-  for (int i = 0; i < param->batch_size_; ++i) {
-    if (labels[i] < 0) {
-      MS_LOG(EXCEPTION) << "label value must >= 0";
-    }
-    size_t label = labels[i];
-    if (label > param->number_of_classes_) {
-      MS_LOG(EXCEPTION) << "error label input!";
-    } else {
-      total_loss -= logf(losses[i * param->number_of_classes_ + label]);
-      for (size_t j = 0; j < param->number_of_classes_; ++j) {
-        size_t index = row_start + j;
-        if (j == label) {
-          grads[index] = (losses[index] - 1) / param->batch_size_;
-        } else {
-          grads[index] = losses[index] / param->batch_size_;
-        }
-      }
-    }
-    row_start += param->number_of_classes_;
-  }
-  output[0] = total_loss / param->batch_size_;
-}
-#endif
-
 int SoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
@@ -117,11 +70,6 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
     grads = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
   }
   size_t data_size = in_tensors_.at(0)->ElementsNum();
-  float *losses = new (std::nothrow) float[data_size];
-  if (losses == nullptr) {
-    MS_LOG(ERROR) << "losses is null";
-    return RET_ERROR;
-  }
 
   MS_ASSERT(out != nullptr);
   MS_ASSERT(labels != nullptr);
@@ -151,9 +99,16 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
 
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   losses_ = new (std::nothrow) float[data_size];
+  if (losses_ == nullptr) {
+    MS_LOG(ERROR) << "failed to malloc losses!";
+    return RET_ERROR;
+  }
+
   sum_data_ = new (std::nothrow) float[dims[0]];
-  MS_ASSERT(losses_ != nullptr);
-  MS_ASSERT(sum_data_ != nullptr);
+  if (sum_data_ == nullptr) {
+    MS_LOG(ERROR) << "failed to malloc sum_data_!";
+    return RET_ERROR;
+  }
 
   sm_params_.n_dim_ = 2;
   sm_params_.element_size_ = data_size;

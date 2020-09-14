@@ -30,14 +30,14 @@ namespace session {
 class TrainSession : public lite::LiteSession {
  public:
   TrainSession();
-  ~TrainSession() = default;
+  ~TrainSession();
 
   int RunGraph(const session::KernelCallBack &before = nullptr,
                const session::KernelCallBack &after = nullptr) override;
 
   int CompileGraph(lite::Model *model) override;
   virtual void ReplaceOps();
-  virtual void *ExportToBuf(void *buf, size_t *len) const;
+  virtual void* ExportToBuf(lite::Model *model, void* buf, size_t* len) const;
 
   // todo: output tensors by tensor name
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> GetOutputMap() const;

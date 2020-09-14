@@ -27,8 +27,11 @@ class ConvolutionGradInputCPUKernel : public LiteKernel {
   explicit ConvolutionGradInputCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                          const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                                          const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionGradInputCPUKernel() override { delete[] workspace; }
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), workspace(nullptr) {}
+  ~ConvolutionGradInputCPUKernel() override  {
+    if (workspace)
+      delete[] workspace;
+  }
 
   int Init() override;
   int ReSize() override;

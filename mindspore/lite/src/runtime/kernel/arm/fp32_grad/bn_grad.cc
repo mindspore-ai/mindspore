@@ -29,30 +29,8 @@ using mindspore::lite::RET_OK;
 // using mindspore::lite::REG_OP;
 using mindspore::schema::PrimitiveType_BNGrad;
 
-/*
-{dy}
-{x }
-{scale }
-{save_mean }
-{save_inv_variance }
-*/
+
 namespace mindspore::kernel {
-
-#if 0
-OpParameter *PopulateBNGradParameter(const lite::Primitive *primitive) {
-  BNGradParameter *param = new (std::nothrow) BNGradParameter();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "new Param for conv grad filter failed.";
-    return nullptr;
-  }
-  param->op_parameter_.type_ = primitive->Type();
-
-  auto bngrad_primitive = primitive->Value()->value_as_BNGrad();
-  param->epsilon_ = bngrad_primitive->eps();
-  param->momentum_ = bngrad_primitive->momentum();
-  return reinterpret_cast<OpParameter *>(param);
-}
-#endif
 int BNGradCPUKernel::Init() {
   auto *input_x = in_tensors_.at(1);
   int channels = input_x->shape().at(kNHWC_C);
@@ -68,7 +46,6 @@ int BNGradCPUKernel::Init() {
 int BNGradCPUKernel::ReSize() { return RET_OK; }
 
 int BNGradCPUKernel::Run() {
-  // std::cout << "run succ" << std::endl;
   auto prepare_ret = Prepare();
   if (prepare_ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;

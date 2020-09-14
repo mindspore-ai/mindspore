@@ -20,7 +20,6 @@
 #include "nnacl/fp32/pooling.h"
 #include "nnacl/fp32_grad/pooling_grad.h"
 #include "include/errorcode.h"
-// #include "src/train/ops/train_ops.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -51,11 +50,6 @@ int PoolingGradCPUKernel::Init() {
   pool_param->input_w_ = in_shape[kNHWC_W];
   pool_param->input_batch_ = in_shape[kNHWC_N];
   pool_param->input_channel_ = in_shape[kNHWC_C];
-
-  // Emir -- here I assume we get the outputshape in the output tensor
-  // auto *out_tensor = out_tensors_.front();
-  // auto out_shape = in_tensors_.at(1)->shape();
-
   pool_param->output_h_ = out_shape[kNHWC_H];
   pool_param->output_w_ = out_shape[kNHWC_W];
   pool_param->output_batch_ = out_shape[kNHWC_N];

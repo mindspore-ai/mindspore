@@ -73,7 +73,6 @@ class NetworkTest : public mindspore::CommonTest {
 //        +-------------+               |
 //               V dw(9)                |
 //               +-----------Update-----+
-#if 0
 TEST_F(NetworkTest, tuning_layer) {
   const int BATCH_SIZE = 32;
   const int NUM_CLASSES = 10;
@@ -248,12 +247,15 @@ TEST_F(NetworkTest, tuning_layer) {
     label->nodeType = schema::NodeType::NodeType_ValueNode;
     label->format = schema::Format_NHWC;
     label->dataType = TypeId::kNumberTypeInt32;
-    label->dims = {BATCH_SIZE};
+    label->dims = {BATCH_SIZE*NUM_CLASSES};
     label->offset = -1;
-    label->data.resize(BATCH_SIZE * NUM_CLASSES * sizeof(float));
-    int *data = reinterpret_cast<int *>(label->data.data());
-    for (int i = 0; i < BATCH_SIZE; i++)
-      for (int j = 0; j < NUM_CLASSES; j++) *(data + i * NUM_CLASSES + j) = j;
+    // label->data.resize(BATCH_SIZE * NUM_CLASSES * sizeof(float));
+    // int *data = reinterpret_cast<int *>(label->data.data());
+    // for (int i = 0; i < BATCH_SIZE; i++) {
+    //   for (int j = 0; j < NUM_CLASSES; j++) {
+    //     *(data + i * NUM_CLASSES + j) = j;
+    //   }
+    // }
     meta_graph->allTensors.emplace_back(std::move(label));
   }
   // tensor 7 - Softmaxentropy
@@ -378,6 +380,7 @@ TEST_F(NetworkTest, tuning_layer) {
   auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
   session->train();
+  session->train();  // Just double check that calling train twice does not cause a problem
 
   auto inputs = session->GetInputs();
   ASSERT_EQ(inputs.size(), 2);
@@ -397,7 +400,7 @@ TEST_F(NetworkTest, tuning_layer) {
   delete [] buf;
   auto labelTensor = inputs.at(1);
   ASSERT_NE(nullptr, labelTensor);
-  ASSERT_EQ(BATCH_SIZE, labelTensor->ElementsNum());
+  ASSERT_EQ(BATCH_SIZE*NUM_CLASSES, labelTensor->ElementsNum());
   auto labels = reinterpret_cast<int *>(labelTensor->MutableData());
   for (int i = 0; i < BATCH_SIZE; i++) labels[i] = (i * 97) % NUM_CLASSES;
 
@@ -411,32 +414,67 @@ TEST_F(NetworkTest, tuning_layer) {
   auto *outData = reinterpret_cast<float *>(outTensor->MutableData());
   ASSERT_NE(nullptr, outData);
   std::cout << "==============Initial=Scores===================" << std::endl;
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < 10; i++) {
     std::cout << outData[i] << ", ";
   }
   std::cout << std::endl;
+  session->eval();
+  session->eval();  // Just double check that calling eval twice does not cause a problem
   ret = session->RunGraph();
   outputs = session->GetOutputsByName("BiasAdd");
   ASSERT_EQ(outputs.size(), 1);
   outTensor = (outputs.at(0));
   ASSERT_NE(nullptr, outTensor);
-  // ASSERT_EQ(28 * 28 * 32, outTensor->ElementsNum());
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
   outData = reinterpret_cast<float *>(outTensor->MutableData());
   ASSERT_NE(nullptr, outData);
   std::cout << "==============Scores=after-single=train========" << std::endl;
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < 10; i++) {
     std::cout << outData[i] << ", ";
   }
   std::string output_path = "./test_data/train/train_output_32_10.bin";
   auto error = lite::RelativeOutputError(outData, output_path);
   EXPECT_LT(error, 2e-3);
-  MS_LOG(INFO) << "TuningLayer passed";
+
+  ret = session->RunGraph();
+  outputs = session->GetOutputsByName("BiasAdd");
+  ASSERT_EQ(outputs.size(), 1);
+  outTensor = (outputs.at(0));
+  ASSERT_NE(nullptr, outTensor);
+  ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
+  outData = reinterpret_cast<float *>(outTensor->MutableData());
+  ASSERT_NE(nullptr, outData);
+  std::cout << "==============Scores=eval-second-time==========" << std::endl;
+  for (int i = 0; i < 10; i++) {
+    std::cout << outData[i] << ", ";
+  }
+  error = lite::RelativeOutputError(outData, output_path);
+  EXPECT_LT(error, 2e-3);
+
+  session->train();
+  session->eval();   // do some more zig-zags
+  ret = session->RunGraph();
+  outputs = session->GetOutputsByName("BiasAdd");
+  ASSERT_EQ(outputs.size(), 1);
+  outTensor = (outputs.at(0));
+  ASSERT_NE(nullptr, outTensor);
+  ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
+  outData = reinterpret_cast<float *>(outTensor->MutableData());
+  ASSERT_NE(nullptr, outData);
+  std::cout << "==============Scores=Just Checking 3rd time====" << std::endl;
+  for (int i = 0; i < 10; i++) {
+    std::cout << outData[i] << ", ";
+  }
+  error = lite::RelativeOutputError(outData, output_path);
+  EXPECT_LT(error, 2e-3);
+
+
 
   delete model;
   delete session;
+  MS_LOG(INFO) << "TuningLayer passed";
 }
-#endif
+
 int32_t fileIterator(mindspore::session::TrainSession *session, const std::string &path,
                      std::function<int32_t(mindspore::session::TrainSession *session, const std::string &)> cb) {
   int32_t res = 0;

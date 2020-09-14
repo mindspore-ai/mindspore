@@ -47,9 +47,19 @@ int TrainSession::CompileGraph(lite::Model *model) {
   return LiteSession::CompileGraph(model);
 }
 
-void *TrainSession::ExportToBuf(void *buf, size_t *len) const {
-  //  auto train_model_impl = (dynamic_cast<lite::train::TrainModelImpl*>(model_->model_impl()));
-  //  return train_model_impl->ExportToBuf(buf, len);
+TrainSession::~TrainSession() {
+  for (auto it1 = ext_output_map_.begin(); it1 != ext_output_map_.end(); ++it1) {
+    if ((output_node_map_.find(it1->first) == output_node_map_.end()) || train_mode_)  {
+      // Delete if not from output_node_map_
+      auto tensor_ptr = it1->second.back();
+      delete tensor_ptr;
+      it1->second.pop_back();
+    }
+  }
+}
+
+void *TrainSession::ExportToBuf(lite::Model *model, void *buf, size_t *len) const {
+  // return model->ExportBuf(buf, len);
   return nullptr;
 }
 
@@ -61,7 +71,7 @@ int TrainSession::RunGraph(const session::KernelCallBack &before, const session:
   if (train_mode_) return LiteSession::RunGraph(before, after);
 
   // object is expected to run only inference part of graph
-  // prepare a lit of kernels till the loss function -- temporary solution
+  // prepare a list of kernels till the loss function -- temporary solution
   std::vector<kernel::LiteKernel *> infference_kernels;
   for (auto kernel : this->kernels_) {
     if (dynamic_cast<const kernel::LossKernel *>(kernel) != nullptr) break;
@@ -86,8 +96,16 @@ void TrainSession::train() {
     MS_ASSERT(nullptr != kernel);
     kernel->train();
   }
-  train_mode_ = true;
+  for (auto it1 = ext_output_map_.begin(); it1 != ext_output_map_.end(); ++it1) {
+    if ((output_node_map_.find(it1->first) == output_node_map_.end()) || train_mode_)  {
+      // Delete if not from output_node_map_
+      auto tensor_ptr = it1->second.back();
+      delete tensor_ptr;
+      it1->second.pop_back();
+    }
+  }
   ext_output_map_.clear();
+  train_mode_ = true;
   for (auto kernel : this->kernels_) {
     if (dynamic_cast<const kernel::LossKernel *>(kernel) != nullptr) {
       auto *ms_tensor = new lite::Tensor(*kernel->out_tensors().at(0));
@@ -101,14 +119,23 @@ void TrainSession::eval() {
     MS_ASSERT(nullptr != kernel);
     kernel->eval();
   }
-  train_mode_ = false;
   kernel::LiteKernel *last_kernel = nullptr;
-  // We should get in_kernels and then get all last kernels
+  for (auto it1 = ext_output_map_.begin(); it1 != ext_output_map_.end(); ++it1) {
+    if ((output_node_map_.find(it1->first) == output_node_map_.end()) || train_mode_)  {
+      // Delete if not from output_node_map_
+      auto tensor_ptr = it1->second.back();
+      delete tensor_ptr;
+      it1->second.pop_back();
+    }
+  }
   ext_output_map_ = output_node_map_;
+  train_mode_ = false;
   for (auto kernel : this->kernels_) {
     if ((dynamic_cast<const kernel::LossKernel *>(kernel) != nullptr) && (last_kernel != nullptr)) {
-      auto *ms_tensor = new lite::Tensor(*last_kernel->out_tensors().at(0));
-      ext_output_map_[last_kernel->name()].emplace_back(ms_tensor);
+      if (ext_output_map_.find(last_kernel->name()) == ext_output_map_.end()) {
+        auto *ms_tensor = new lite::Tensor(*last_kernel->out_tensors().at(0));
+        ext_output_map_[last_kernel->name()].emplace_back(ms_tensor);
+      }
     }
     last_kernel = kernel;
   }

@@ -30,7 +30,7 @@ class TestSoftmaxCrossEntropyFp32 : public mindspore::CommonTest {
 
 TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   // prepare stage
-  SoftmaxCrossEntropyParameter *sce_param = new SoftmaxCrossEntropyParameter();
+  auto sce_param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(malloc(sizeof(SoftmaxCrossEntropyParameter)));
   size_t input_size;
 
   std::string input_path = "./test_data/operators/sce_fp32_1_y_6_4.bin";
@@ -83,9 +83,16 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   std::string grad_path = "./test_data/operators/sce_fp32_1_dy_6_4.bin";
   lite::CompareOutput(grad, grad_path);
 
-  delete sce_param;
-  l_tensor.SetData(NULL);
-  y_tensor.SetData(NULL);
+  delete [] ll_labels;
+  delete [] labels;
+  delete [] input_data;
+  delete [] loss;
+  delete [] grad;
+  l_tensor.SetData(nullptr);
+  y_tensor.SetData(nullptr);
+  loss_tensor.SetData(nullptr);
+  grad_tensor.SetData(nullptr);
+  delete kernel_obj;
   MS_LOG(INFO) << "SoftmaxCrossEntropyFp32 passed";
 }
 

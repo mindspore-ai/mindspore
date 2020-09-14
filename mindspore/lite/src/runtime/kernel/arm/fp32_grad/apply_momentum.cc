@@ -68,19 +68,12 @@ int ApplyMomentumCPUKernel::Init() {
   for (size_t i = 0; i < elem_num; i++) accumulate[i] = 0.0;
 
   workspace = new float[elem_num];
+  if (workspace == nullptr) {
+    MS_LOG(ERROR) << "apply momentum workspace fail to malloc!";
+    return RET_ERROR;
+  }
   return 0;
 }
-#if 0
-OpParameter *PopulateApplyMomentumParameter(const lite::Primitive *primitive) {
-  OpParameter *param = new (std::nothrow) OpParameter();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "new Param for OptMomentum failed.";
-    return nullptr;
-  }
-  param->type_ = primitive->Type();
-  return param;
-}
-#endif
 
 kernel::LiteKernel *CpuApplyMomentumFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,
