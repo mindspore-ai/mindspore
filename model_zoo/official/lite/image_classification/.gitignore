@@ -1,6 +1,7 @@
 # MindSpore
 build/
 mindspore/lib
+app/src/main/assets/model
 output
 *.ir
 mindspore/ccsrc/schema/inner/*

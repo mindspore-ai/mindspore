@@ -52,7 +52,6 @@ class MSNetWork {
 
   int ReleaseNets(void);
 
- protected:
   mindspore::session::LiteSession *session;
   mindspore::lite::Model *model;
   static const int RET_CATEGORY_SUM = 601;
