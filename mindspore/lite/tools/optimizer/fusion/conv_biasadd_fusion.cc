@@ -24,6 +24,7 @@
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
+#include "src/ops/add.h"
 
 namespace mindspore::opt {
 namespace {
@@ -155,6 +156,15 @@ const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, cons
   auto add_node = node->cast<CNodePtr>();
   CheckIfCNodeIsNull(add_node);
   CheckInputSize(add_node, kAddInputsLength);
+  if (GetCNodeType(add_node) == schema::PrimitiveType_Add) {
+    auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(add_node->input(0));
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Add>>(primitive_c));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::Add>>(primitive_c);
+    MS_ASSERT(primc != nullptr);
+    if (primc->GetActivationType() != schema::ActivationType_NO_ACTIVATION) {
+      return add_node;
+    }
+  }
 
   AnfNodePtr conv_node_anf = add_node->input(1);
   CheckIfAnfNodeIsNull(conv_node_anf);
