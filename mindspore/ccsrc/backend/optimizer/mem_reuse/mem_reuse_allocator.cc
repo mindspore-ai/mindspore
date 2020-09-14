@@ -176,7 +176,6 @@ void BestFitMemReuse::AssignCommonNodeOutputOffset() {
 
 void BestFitMemReuse::AssignCommunicationNodeOutputOffset() {
   size_t total_kernel_output_size = 0;
-  size_t output_num = 0;
   // get all output size
   MS_EXCEPTION_IF_NULL(current_kernel_);
   for (const auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
@@ -203,7 +202,7 @@ void BestFitMemReuse::AssignCommunicationNodeOutputOffset() {
     size_t index = GetTensorIndex(tensor_idx);
     auto tensor_desc = tensor_ptr_list_[index];
     MS_EXCEPTION_IF_NULL(tensor_desc);
-    if (output_index == 0 || output_index == output_num - 1) {
+    if (output_index == 0 || output_index == output_ref_indexes.size() - 1) {
       tensor_desc->size_ += kDefaultMemAlignSize;
     }
 
