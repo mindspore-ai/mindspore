@@ -44,10 +44,11 @@ bool IsBasicOp(const AnfNodePtr &node, bool is_before_kernel_select) {
   }
 #elif ENABLE_GPU
   std::vector<PrimitivePtr> fusable_basic_ops = {
-    prim::kPrimAbs,     prim::kPrimRound, prim::kPrimNeg,        prim::kPrimExp,      prim::kPrimTensorAdd,
-    prim::kPrimRealDiv, prim::kPrimMul,   prim::kPrimMinimum,    prim::kPrimMaximum,  prim::kPrimLog,
-    prim::kPrimPow,     prim::kPrimSub,   prim::kPrimRsqrt,      prim::kPrimSqrt,     prim::kPrimCast,
-    prim::kPrimAddN,    prim::kPrimEqual, prim::kPrimReciprocal, prim::KPrimTransData};
+    prim::kPrimAbs,     prim::kPrimRound, prim::kPrimNeg,        prim::kPrimExp,       prim::kPrimTensorAdd,
+    prim::kPrimRealDiv, prim::kPrimMul,   prim::kPrimMinimum,    prim::kPrimMaximum,   prim::kPrimLog,
+    prim::kPrimPow,     prim::kPrimSub,   prim::kPrimRsqrt,      prim::kPrimSqrt,      prim::kPrimCast,
+    prim::kPrimAddN,    prim::kPrimEqual, prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,
+    prim::kPrimGreater};
 #else
   std::vector<PrimitivePtr> fusable_basic_ops;
 #endif
