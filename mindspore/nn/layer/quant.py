@@ -1393,3 +1393,66 @@ class QuantBlock(Cell):
             str_info = str_info + f', activation={self.activation}'
         str_info = str_info + f', dequant={self.dequant}'
         return str_info
+
+
+class QuantMindirBlock(Cell):
+    """A quant binary block of Conv/Dense, activation layer for export MINDIR model.
+
+       Args:
+        core_op (Cell): The operation cell.
+        weight (Tensor): The weigth of the cell.
+        bias (Tensor): The bias of the cell. Default: None.
+        activation (str): The regularization function applied to the output of the layer, eg. 'relu'. Default: None.
+        param_dict (dict): The information of the cell.
+    """
+
+    def __init__(self,
+                 core_op,
+                 weight,
+                 bias=None,
+                 activation=None,
+                 param_dict=None):
+
+        super(QuantMindirBlock, self).__init__()
+        self.core_op = core_op
+        if activation is not None:
+            self.core_op.add_prim_attr("activation_name", activation.__class__.__name__)
+        self.core_op.add_prim_attr("filter_maxq", Tensor(param_dict["filter_maxq"]))
+        self.core_op.add_prim_attr("filter_minq", Tensor(param_dict["filter_minq"]))
+        self.core_op.add_prim_attr("output_maxq", Tensor(param_dict["output_maxq"]))
+        self.core_op.add_prim_attr("output_minq", Tensor(param_dict["output_minq"]))
+        self.core_op.add_prim_attr("symmetric", Tensor(param_dict["symmetric"]))
+        if hasattr(core_op, 'pad_mode'):
+            self.core_op.add_prim_attr("pad_mode", core_op.pad_mode)
+        self.core_op.add_prim_attr("num_bits", Tensor(8))
+        self.core_op.add_prim_attr("narrow_range", Tensor(False))
+        if param_dict["input_maxq"] is not None:
+            self.core_op.add_prim_attr("input_maxq", Tensor(param_dict["input_maxq"]))
+            self.core_op.add_prim_attr("input_minq", Tensor(param_dict["input_minq"]))
+        else:
+            self.core_op.add_prim_attr("mean", Tensor(param_dict["mean"]))
+            self.core_op.add_prim_attr("std_dev", Tensor(param_dict["std_dev"]))
+        self.weight = weight
+        self.bias = bias
+        self.has_bias = bias is not None
+        self.activation = activation
+        self.has_act = activation is not None
+        if isinstance(activation, ReLU):
+            self.activation = None
+            self.has_act = False
+        self.bias_add = P.BiasAdd()
+
+    def construct(self, x):
+        if self.has_bias:
+            x = self.core_op(x, self.weight, self.bias)
+        else:
+            x = self.core_op(x, self.weight)
+        return x
+
+    def extend_repr(self):
+        str_info = f'core_op={type(self.core_op)}, weight=shape[{self.weight.shape}]'
+        if self.has_bias:
+            str_info = str_info + f', bias=shape[{self.bias.shape}]'
+        if self.has_act:
+            str_info = str_info + f', activation={self.activation}'
+        return str_info
