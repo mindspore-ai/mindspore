@@ -16,6 +16,7 @@ file (GLOB TRAIN_KERNEL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/fp32_grad/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../../nnacl/fp32_grad/*.c
         )
+    set(KERNEL_SRC ${KERNEL_SRC} ${TRAIN_KERNEL_SRC})
 endif()
 
 if (PLATFORM_ARM64)
@@ -35,4 +36,4 @@ if (PLATFORM_ARM32)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
 endif()
 
-add_library(cpu_kernel_mid_ OBJECT ${KERNEL_SRC} ${TRAIN_KERNEL_SRC})
+add_library(cpu_kernel_mid OBJECT ${KERNEL_SRC})

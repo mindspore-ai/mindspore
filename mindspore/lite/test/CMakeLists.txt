@@ -336,8 +336,8 @@ endif()
 
 if (BUILD_MINDDATA STREQUAL "lite")
     target_link_libraries(lite-test
+	   minddata_eager_mid
            minddata-lite
-           minddata-eager
            )
     if (PLATFORM_ARM32 OR PLATFORM_ARM64)
            target_link_libraries(lite-test log)
