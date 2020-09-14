@@ -510,7 +510,6 @@ class TrainStepWrap(nn.Cell):
     def __init__(self, network, config, sens=1000.0):
         super(TrainStepWrap, self).__init__()
         self.network = network
-        self.network.set_grad()
         self.network.set_train()
         self.trainable_params = network.trainable_params()
         weights_w = []
@@ -546,6 +545,8 @@ class TrainStepWrap(nn.Cell):
         self.sens = sens
         self.loss_net_w = IthOutputCell(network, output_index=0)
         self.loss_net_d = IthOutputCell(network, output_index=1)
+        self.loss_net_w.set_grad()
+        self.loss_net_w.set_grad()
 
         self.reducer_flag = False
         self.grad_reducer_w = None
