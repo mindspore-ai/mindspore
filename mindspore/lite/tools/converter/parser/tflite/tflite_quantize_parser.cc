@@ -36,27 +36,37 @@ STATUS TfliteQuantizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfl
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::QuantDTypeCastT> attr = std::make_unique<schema::QuantDTypeCastT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
   const auto &in_tensor = tflite_tensors[tflite_op->inputs[0]];
   if (in_tensor == nullptr) {
     MS_LOG(ERROR) << "input tensor is null";
     return RET_NULL_PTR;
   }
-  attr->srcT = GetTfliteDataType(in_tensor->type);
   const auto &out_tensor = tflite_tensors[tflite_op->outputs[0]];
   if (out_tensor == nullptr) {
     MS_LOG(ERROR) << "output tensor is null";
     return RET_NULL_PTR;
   }
-  attr->dstT = GetTfliteDataType(out_tensor->type);
-
-  op->primitive->value.type = schema::PrimitiveType_QuantDTypeCast;
-  op->primitive->value.value = attr.release();
+  if (GetTfliteDataType(in_tensor->type) != kNumberTypeInt8) {
+    std::unique_ptr<schema::QuantDTypeCastT> attr = std::make_unique<schema::QuantDTypeCastT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return RET_NULL_PTR;
+    }
+    attr->srcT = GetTfliteDataType(in_tensor->type);
+    attr->dstT = GetTfliteDataType(out_tensor->type);
+    op->primitive->value.type = schema::PrimitiveType_QuantDTypeCast;
+    op->primitive->value.value = attr.release();
+  } else {
+    std::unique_ptr<schema::CastT> attr = std::make_unique<schema::CastT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return RET_NULL_PTR;
+    }
+    attr->srcT = GetTfliteDataType(in_tensor->type);
+    attr->dstT = GetTfliteDataType(out_tensor->type);
+    op->primitive->value.type = schema::PrimitiveType_Cast;
+    op->primitive->value.value = attr.release();
+  }
 
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
              tflite_tensors.size(), schema::Format_NHWC);
