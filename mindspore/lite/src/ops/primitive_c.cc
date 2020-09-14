@@ -399,6 +399,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<SoftMax>(prim, inputs, quantType);
   } else if (op_type == "StridedSlice") {
     return NewPrimitiveC<StridedSlice>(prim, inputs, quantType);
+  } else if (op_type == "AvgPool") {
+    return NewPrimitiveC<Pooling>(prim, inputs, quantType);
 
 
 #ifdef SUPPORT_TRAIN

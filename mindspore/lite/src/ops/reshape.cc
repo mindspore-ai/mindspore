@@ -169,7 +169,7 @@ int Reshape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   std::vector<int> out_shape;
   if (inputs_.size() == kDoubleNum) {
     auto shape_tensor = inputs_.at(1);
-    if (shape_tensor->MutableData() == nullptr) {
+    if (shape_tensor->data_c() == nullptr) {
       MS_LOG(INFO) << "Do infer shape in runtime.";
       return RET_INFER_INVALID;
     }
