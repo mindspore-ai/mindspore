@@ -80,7 +80,7 @@ int Pooling::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
     }
     if (prim.instance_name() == "MaxPool") {
       attr->poolingMode = schema::PoolMode_MAX_POOLING;
-    } else if (prim.instance_name() == "MeanPool") {
+    } else if (prim.instance_name() == "MeanPool" || prim.instance_name() == "AvgPool") {
       attr->poolingMode = schema::PoolMode_MEAN_POOLING;
     }
 
