@@ -40,6 +40,11 @@ void ConvDwFp32Center(float *dst, const float *src, const float *weight, const f
 void DeconvDwFp32Center(float *dst, const float *src, const float *weight, size_t height, size_t width, size_t kernel_h,
                         size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step, size_t in_sw_step,
                         size_t in_kh_step, size_t in_kw_step);
+void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, size_t num_pixels,
+                   size_t output_channel, size_t input_step);
+
+void ConvDwFp32Border(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
+                      size_t in_kh_step, size_t in_kw_step, size_t kernel_w, size_t relu, size_t relu6);
 #endif
 
 #ifdef ENABLE_ARM64
@@ -48,12 +53,6 @@ void BiasAddRelu6(const float *bias, float *data, size_t oc4, size_t plan_size);
 void BiasAddRelu(const float *bias, float *data, size_t oc4, size_t plan_size);
 void Relu6(float *data, size_t element4);
 void Relu(float *data, size_t element4);
-
-void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, size_t num_pixels,
-                   size_t output_channel, size_t input_step);
-
-void ConvDwFp32Border(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
-                      size_t in_kh_step, size_t in_kw_step, size_t kernel_w, size_t relu, size_t relu6);
 
 void DeconvDwFp32Border(float *dst, const float *src, const float *weight, size_t height, size_t width,
                         size_t in_kh_step, size_t in_kw_step, size_t kernel_w);
@@ -70,5 +69,4 @@ void ConvSwFp32Center(float *dst, const float *src, const float *weight, const f
 #ifdef __cplusplus
 }
 #endif
-
 #endif /* MINDSPORE_LITE_NNACL_FP32_COMMON_FUNC_H_ */
