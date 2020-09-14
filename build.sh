@@ -25,7 +25,7 @@ usage()
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
   echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I arm64|arm32|x86_64] [-K] \\"
-  echo "              [-B on|off] [-w on|off] [-E] [-l on|off] [-n full|lite|off]"
+  echo "              [-B on|off] [-w on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off]"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -58,6 +58,7 @@ usage()
   echo "    -B Enable debugger, default on"
   echo "    -E Enable IBVERBS for parameter server, default off"
   echo "    -l Compile with python dependency, default on"
+  echo "    -T Enable on-device training, default off"
 }
 
 # check value of input is 'on' or 'off'
