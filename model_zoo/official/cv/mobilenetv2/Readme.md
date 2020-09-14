@@ -181,7 +181,7 @@ result: {'acc': 0.71976314102564111} ckpt=/path/to/checkpoint/mobilenet-200_625.
 
 | Parameters                 | MobilenetV2                                                |                           |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
-| Model Version              |                                                            | large                     |
+| Model Version              | V1                                                         | V1                        |
 | Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
 | uploaded Date              | 05/06/2020                                                 | 05/06/2020                |
 | MindSpore Version          | 0.3.0                                                      | 0.3.0                     |
@@ -189,29 +189,13 @@ result: {'acc': 0.71976314102564111} ckpt=/path/to/checkpoint/mobilenet-200_625.
 | Training Parameters        | src/config.py                                              | src/config.py             |
 | Optimizer                  | Momentum                                                   | Momentum                  |
 | Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
-| outputs                    |                                                            |                           |
-| Loss                       |                                                            | 1.913                     |
-| Accuracy                   |                                                            | ACC1[77.09%] ACC5[92.57%] |
-| Total time                 |                                                            |                           |
-| Params (M)                 |                                                            |                           |
-| Checkpoint for Fine tuning |                                                            |                           |
-| Model for inference        |                                                            |                           |
-
-#### Inference Performance
-
-| Parameters                 |                               |                           |                      |
-| -------------------------- | ----------------------------- | ------------------------- | -------------------- |
-| Model Version              | V1                            |                           |                      |
-| Resource                   | Ascend 910                    | NV SMX2 V100-32G          | Ascend 310           |
-| uploaded Date              | 05/06/2020                    | 05/22/2020                |                      |
-| MindSpore Version          | 0.2.0                         | 0.2.0                     | 0.2.0                |
-| Dataset                    | ImageNet, 1.2W                | ImageNet, 1.2W            | ImageNet, 1.2W       |
-| batch_size                 |                               | 130(8P)                   |                      |
-| outputs                    |                               |                           |                      |
-| Accuracy                   |                               | ACC1[72.07%] ACC5[90.90%] |                      |
-| Speed                      |                               |                           |                      |
-| Total time                 |                               |                           |                      |
-| Model for inference        |                               |                           |                      |
+| outputs                    | probability                                                | probability               |
+| Loss                       | 1.908                                                      | 1.913                     |
+| Accuracy                   | ACC1[71.78%]                                               | ACC1[71.08%] |
+| Total time                 | 753 min                                                    | 845 min                   |
+| Params (M)                 | 3.3 M                                                      | 3.3 M                     |
+| Checkpoint for Fine tuning | 27.3 M                                                     | 27.3 M                    |
+| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv2)|
 
 # [Description of Random Situation](#contents)
 

@@ -72,7 +72,7 @@ class ConvBNReLU(nn.Cell):
         >>> ConvBNReLU(16, 256, kernel_size=1, stride=1, groups=1)
     """
 
-    def __init__(self, platform, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
+    def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
         super(ConvBNReLU, self).__init__()
         padding = (kernel_size - 1) // 2
         in_channels = in_planes
@@ -109,7 +109,7 @@ class InvertedResidual(nn.Cell):
         >>> ResidualBlock(3, 256, 1, 1)
     """
 
-    def __init__(self, platform, inp, oup, stride, expand_ratio):
+    def __init__(self, inp, oup, stride, expand_ratio):
         super(InvertedResidual, self).__init__()
         assert stride in [1, 2]
 
@@ -118,10 +118,10 @@ class InvertedResidual(nn.Cell):
 
         layers = []
         if expand_ratio != 1:
-            layers.append(ConvBNReLU(platform, inp, hidden_dim, kernel_size=1))
+            layers.append(ConvBNReLU(inp, hidden_dim, kernel_size=1))
         layers.extend([
             # dw
-            ConvBNReLU(platform, hidden_dim, hidden_dim,
+            ConvBNReLU(hidden_dim, hidden_dim,
                        stride=stride, groups=hidden_dim),
             # pw-linear
             nn.Conv2d(hidden_dim, oup, kernel_size=1,
@@ -157,7 +157,7 @@ class MobileNetV2Backbone(nn.Cell):
         >>> MobileNetV2(num_classes=1000)
     """
 
-    def __init__(self, platform, width_mult=1., inverted_residual_setting=None, round_nearest=8,
+    def __init__(self, width_mult=1., inverted_residual_setting=None, round_nearest=8,
                  input_channel=32, last_channel=1280):
         super(MobileNetV2Backbone, self).__init__()
         block = InvertedResidual
@@ -178,16 +178,16 @@ class MobileNetV2Backbone(nn.Cell):
         # building first layer
         input_channel = _make_divisible(input_channel * width_mult, round_nearest)
         self.out_channels = _make_divisible(last_channel * max(1.0, width_mult), round_nearest)
-        features = [ConvBNReLU(platform, 3, input_channel, stride=2)]
+        features = [ConvBNReLU(3, input_channel, stride=2)]
         # building inverted residual blocks
         for t, c, n, s in self.cfgs:
             output_channel = _make_divisible(c * width_mult, round_nearest)
             for i in range(n):
                 stride = s if i == 0 else 1
-                features.append(block(platform, input_channel, output_channel, stride, expand_ratio=t))
+                features.append(block(input_channel, output_channel, stride, expand_ratio=t))
                 input_channel = output_channel
         # building last several layers
-        features.append(ConvBNReLU(platform, input_channel, self.out_channels, kernel_size=1))
+        features.append(ConvBNReLU(input_channel, self.out_channels, kernel_size=1))
         # make it nn.CellList
         self.features = nn.SequentialCell(features)
         self._initialize_weights()
@@ -293,10 +293,10 @@ class MobileNetV2(nn.Cell):
         >>> MobileNetV2(backbone, head)
     """
 
-    def __init__(self, platform, num_classes=1000, width_mult=1., has_dropout=False, inverted_residual_setting=None, \
+    def __init__(self, num_classes=1000, width_mult=1., has_dropout=False, inverted_residual_setting=None, \
         round_nearest=8, input_channel=32, last_channel=1280):
         super(MobileNetV2, self).__init__()
-        self.backbone = MobileNetV2Backbone(platform=platform, width_mult=width_mult, \
+        self.backbone = MobileNetV2Backbone(width_mult=width_mult, \
             inverted_residual_setting=inverted_residual_setting, \
             round_nearest=round_nearest, input_channel=input_channel, last_channel=last_channel).get_features
         self.head = MobileNetV2Head(input_channel=self.backbone.out_channel, num_classes=num_classes, \
