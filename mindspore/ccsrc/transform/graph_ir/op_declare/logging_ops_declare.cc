@@ -17,13 +17,13 @@
 #include "transform/graph_ir/op_declare/logging_ops_declare.h"
 
 namespace mindspore::transform {
-#ifdef ENABLE_GE
 // Print
 INPUT_MAP(Print) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(Print) = {{1, DYN_INPUT_DESC(x)}};
 ATTR_MAP(Print) = EMPTY_ATTR_MAP;
 REG_ADPT_DESC(Print, kNamePrint, ADPT_DESC(Print))
 
+#ifdef ENABLE_GE
 INPUT_MAP(Assert) = {{1, INPUT_DESC(input_condition)}};
 DYN_INPUT_MAP(Assert) = {{2, DYN_INPUT_DESC(input_data)}};
 ATTR_MAP(Assert) = {{"summarize", ATTR_DESC(summarize, AnyTraits<int>())}};
