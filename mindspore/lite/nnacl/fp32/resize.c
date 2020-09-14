@@ -277,21 +277,36 @@ int ResizeBilinear2(const float *input_data, float *output_data, const int *inpu
   return NNACL_OK;
 }
 
+int CalcNearestNeighbor(const int out_position, const int in_size, const float scale, const bool align_corners) {
+  int actual_v;
+  if (align_corners) {
+    actual_v = (int)(round((float)out_position * scale));
+  } else {
+    actual_v = (int)(floor((float)out_position * scale));
+  }
+  int input_position = actual_v < in_size ? actual_v : in_size - 1;
+  return input_position;
+}
+
 int ResizeNearestNeighbor(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                          int tid, int thread_num) {
+                          bool align_corners, int tid, int thread_num) {
   int batch, y, x, c;
   c = input_shape[3];
 
   float height_scale = (float)(input_shape[1]) / (float)(output_shape[1]);
   float width_scale = (float)(input_shape[2]) / (float)(output_shape[2]);
+  if (align_corners && output_shape[1] > 1) {
+    height_scale = (float)(input_shape[1] - 1) / (output_shape[1] - 1);
+  }
+  if (align_corners && output_shape[2] > 1) {
+    width_scale = (float)(input_shape[2] - 1) / (output_shape[2] - 1);
+  }
 
   for (batch = 0; batch < output_shape[0]; batch++) {
     for (y = tid; y < output_shape[1]; y += thread_num) {
-      int actual_y = (int)(floor((float)(y)*height_scale));
-      int input_y = actual_y < input_shape[1] ? actual_y : input_shape[1] - 1;
+      int input_y = CalcNearestNeighbor(y, input_shape[1], height_scale, align_corners);
       for (x = 0; x < output_shape[2]; x++) {
-        int actual_x = (int)(floor((float)(x)*width_scale));
-        int input_x = actual_x < input_shape[2] ? actual_x : input_shape[2] - 1;
+        int input_x = CalcNearestNeighbor(x, input_shape[2], width_scale, align_corners);
         int in_offset = offset(input_shape, batch, input_y, input_x, 0);
         int out_offset = offset(output_shape, batch, y, x, 0);
         memcpy(output_data + out_offset, input_data + in_offset, c * sizeof(float));
