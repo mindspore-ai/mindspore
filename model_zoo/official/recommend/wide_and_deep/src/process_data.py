@@ -33,17 +33,17 @@ class RecommendationDatasetStatsDict():
         self.field_size = 39 # value_1-13; cat_1-26;
         self.val_cols = ["val_{}".format(i+1) for i in range(13)]
         self.cat_cols = ["cat_{}".format(i+1) for i in range(26)]
-        #
+
         self.val_min_dict = {col: 0 for col in self.val_cols}
         self.val_max_dict = {col: 0 for col in self.val_cols}
         self.cat_count_dict = {col: collections.defaultdict(int) for col in self.cat_cols}
-        #
+
         self.oov_prefix = "OOV_"
 
         self.cat2id_dict = {}
         self.cat2id_dict.update({col: i for i, col in enumerate(self.val_cols)})
         self.cat2id_dict.update({self.oov_prefix + col: i + len(self.val_cols) for i, col in enumerate(self.cat_cols)})
-    #
+
     def stats_vals(self, val_list):
         """vals status"""
         assert len(val_list) == len(self.val_cols)
@@ -54,19 +54,19 @@ class RecommendationDatasetStatsDict():
                     self.val_max_dict[key] = float(val)
                 if float(val) < self.val_min_dict[key]:
                     self.val_min_dict[key] = float(val)
-            #
+
         for i, val in enumerate(val_list):
             map_max_min(i, val)
-    #
+
     def stats_cats(self, cat_list):
         assert len(cat_list) == len(self.cat_cols)
         def map_cat_count(i, cat):
             key = self.cat_cols[i]
             self.cat_count_dict[key][cat] += 1
-        #
+
         for i, cat in enumerate(cat_list):
             map_cat_count(i, cat)
-    #
+
     def save_dict(self, output_path, prefix=""):
         with open(os.path.join(output_path, "{}val_max_dict.pkl".format(prefix)), "wb") as file_wrt:
             pickle.dump(self.val_max_dict, file_wrt)
@@ -74,7 +74,7 @@ class RecommendationDatasetStatsDict():
             pickle.dump(self.val_min_dict, file_wrt)
         with open(os.path.join(output_path, "{}cat_count_dict.pkl".format(prefix)), "wb") as file_wrt:
             pickle.dump(self.cat_count_dict, file_wrt)
-    #
+
     def load_dict(self, dict_path, prefix=""):
         with open(os.path.join(dict_path, "{}val_max_dict.pkl".format(prefix)), "rb") as file_wrt:
             self.val_max_dict = pickle.load(file_wrt)
@@ -84,27 +84,20 @@ class RecommendationDatasetStatsDict():
             self.cat_count_dict = pickle.load(file_wrt)
         print("val_max_dict.items()[:50]: {}".format(list(self.val_max_dict.items())))
         print("val_min_dict.items()[:50]: {}".format(list(self.val_min_dict.items())))
-        #
-    #
+
     def get_cat2id(self, threshold=100):
         """get cat to id"""
-        # before_all_count = 0
-        # after_all_count = 0
         for key, cat_count_d in self.cat_count_dict.items():
             new_cat_count_d = dict(filter(lambda x: x[1] > threshold, cat_count_d.items()))
             for cat_str, _ in new_cat_count_d.items():
                 self.cat2id_dict[key + "_" + cat_str] = len(self.cat2id_dict)
-        # print("before_all_count: {}".format(before_all_count)) # before_all_count: 33762577
-        # print("after_all_count: {}".format(after_all_count)) # after_all_count: 184926
         print("cat2id_dict.size: {}".format(len(self.cat2id_dict)))
         print("cat2id_dict.items()[:50]: {}".format(self.cat2id_dict.items()[:50]))
-    #
+
     def map_cat2id(self, values, cats):
         """map cat to id"""
         def minmax_sclae_value(i, val):
-            # min_v = float(self.val_min_dict["val_{}".format(i+1)])
             max_v = float(self.val_max_dict["val_{}".format(i + 1)])
-            # return (float(val) - min_v) * 1.0 / (max_v - min_v)
             return float(val) * 1.0 / max_v
 
         id_list = []
@@ -117,7 +110,7 @@ class RecommendationDatasetStatsDict():
                 key = "val_{}".format(i + 1)
                 id_list.append(self.cat2id_dict[key])
                 weight_list.append(minmax_sclae_value(i, float(val)))
-        #
+
         for i, cat_str in enumerate(cats):
             key = "cat_{}".format(i + 1) + "_" + cat_str
             if key in self.cat2id_dict:
@@ -126,14 +119,12 @@ class RecommendationDatasetStatsDict():
                 id_list.append(self.cat2id_dict[self.oov_prefix + "cat_{}".format(i + 1)])
             weight_list.append(1.0)
         return id_list, weight_list
-    #
-
 
 
 def mkdir_path(file_path):
     if not os.path.exists(file_path):
         os.makedirs(file_path)
-  #
+
 
 def statsdata(data_file_path, output_path, recommendation_dataset_stats):
     """data status"""
@@ -150,9 +141,7 @@ def statsdata(data_file_path, output_path, recommendation_dataset_stats):
                 continue
             if count % 1000000 == 0:
                 print("Have handle {}w lines.".format(count//10000))
-            # if count % 5000000 == 0:
-            #    print("Have handle {}w lines.".format(count//10000))
-            # label = items[0]
+
             values = items[1:14]
             cats = items[14:]
             assert len(values) == 13, "value.size: {}".format(len(values))
@@ -160,25 +149,21 @@ def statsdata(data_file_path, output_path, recommendation_dataset_stats):
             recommendation_dataset_stats.stats_vals(values)
             recommendation_dataset_stats.stats_cats(cats)
     recommendation_dataset_stats.save_dict(output_path)
-    #
 
 
 def add_write(file_path, wr_str):
     with open(file_path, "a", encoding="utf-8") as file_out:
         file_out.write(wr_str + "\n")
-#
 
 
 def random_split_trans2h5(in_file_path, output_path, recommendation_dataset_stats,
                           part_rows=2000000, test_size=0.1, seed=2020):
     """random split trans2h5"""
     test_size = int(TRAIN_LINE_COUNT * test_size)
-    # train_size = TRAIN_LINE_COUNT - test_size
     all_indices = [i for i in range(TRAIN_LINE_COUNT)]
     np.random.seed(seed)
     np.random.shuffle(all_indices)
     print("all_indices.size: {}".format(len(all_indices)))
-    # lines_count_dict = collections.defaultdict(int)
     test_indices_set = set(all_indices[:test_size])
     print("test_indices_set.size: {}".format(len(test_indices_set)))
     print("------" * 10 + "\n" * 2)
@@ -231,7 +216,7 @@ def random_split_trans2h5(in_file_path, output_path, recommendation_dataset_stat
                 test_feature_list = []
                 test_label_list = []
                 test_part_number += 1
-        #
+
         if train_label_list:
             pd.DataFrame(np.asarray(train_feature_list)).to_hdf(train_feature_file_name.format(train_part_number),
                                                                 key="fixed")
@@ -242,7 +227,6 @@ def random_split_trans2h5(in_file_path, output_path, recommendation_dataset_stat
                                                                key="fixed")
             pd.DataFrame(np.asarray(test_label_list)).to_hdf(test_label_file_name.format(test_part_number),
                                                              key="fixed")
-#
 
 
 
