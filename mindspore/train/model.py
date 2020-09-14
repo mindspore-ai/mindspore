@@ -147,7 +147,7 @@ class Model:
     def _build_train_network(self):
         """Build train network"""
         network = self._network
-        if self._loss_scale_manager_set and not self._optimizer:
+        if self._loss_scale_manager is not None and self._optimizer is None:
             raise ValueError("Optimizer can not be None when set loss_scale_manager.")
         if self._optimizer:
             if self._loss_scale_manager_set:
