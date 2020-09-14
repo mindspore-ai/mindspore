@@ -12,6 +12,8 @@
   - [Script Parameters](#script-parameters)
   - [Training Process](#training-process)
     - [Training](#training)
+  - [Evaluation Process](#evaluation-process)
+    - [Evaluation](#evaluation)
 - [Model Description](#model-description)
   - [Performance](#performance)
 - [Description of random situation](#description-of-random-situation)
@@ -88,6 +90,9 @@ After installing MindSpore via the official website and Dataset is correctly gen
   ```
   # run training example with Amazon-Beauty dataset
   sh run_train_ascend.sh
+  
+  # run evaluation example with Amazon-Beauty dataset
+  sh run_eval_ascend.sh 
   ```  
   
 # [Script Description](#contents)
@@ -99,6 +104,7 @@ After installing MindSpore via the official website and Dataset is correctly gen
 └─bgcf      
   ├─README.md
   ├─scripts 
+  | ├─run_eval_ascend.sh          # Launch evaluation
   | ├─run_process_data_ascend.sh  # Generate dataset in mindrecord format
   | └─run_train_ascend.sh         # Launch training   
   |
@@ -110,6 +116,7 @@ After installing MindSpore via the official website and Dataset is correctly gen
   | ├─metrics.py           # Recommendation metrics
   | └─utils.py             # Utils for training bgcf
   |
+  ├─eval.py                # Evaluation net
   └─train.py               # Train net
 ```
 
@@ -118,7 +125,7 @@ After installing MindSpore via the official website and Dataset is correctly gen
 Parameters for both training and evaluation can be set in config.py.
 
 - config for BGCF dataset
-
+  
   ```python
   "learning_rate": 0.001,            # Learning rate
   "num_epochs": 600,                 # Epoch sizes for training
@@ -130,6 +137,7 @@ Parameters for both training and evaluation can be set in config.py.
   "neighbor_dropout": [0.0, 0.2, 0.3]# Dropout ratio for different aggregation layer
   "num_graphs":5                     # Num of sample graph
   ```
+  config.py for more configuration.
   
 ## [Training Process](#contents)
 
@@ -154,27 +162,54 @@ Parameters for both training and evaluation can be set in config.py.
   Epoch 598 iter 12 loss 3640.7612
   Epoch 599 iter 12 loss 3654.9087
   Epoch 600 iter 12 loss 3632.4585
-  epoch:600,      recall_@10:0.10393,     recall_@20:0.15669,     ndcg_@10:0.07564,    ndcg_@20:0.09343,   
-  sedp_@10:0.01936,     sedp_@20:0.01544,    nov_@10:7.58599,    nov_@20:7.79782
   ...
   ```
+ 
+## [Evaluation Process](#contents)
+
+### Evaluation 
+
+- Evaluation on Ascend
+ ```python 
+  sh run_eval_ascend.sh 
+  ```
+
+  Evaluation result will be stored in the scripts path, whose folder name begins with "eval". You can find the result like the 
+  followings in log.
   
+  ```python
+  epoch:020,      recall_@10:0.07345,     recall_@20:0.11193,     ndcg_@10:0.05293,    ndcg_@20:0.06613,   
+  sedp_@10:0.01393,     sedp_@20:0.01126,    nov_@10:6.95106,    nov_@20:7.22280
+  epoch:040,      recall_@10:0.07410,     recall_@20:0.11537,     ndcg_@10:0.05387,    ndcg_@20:0.06801,   
+  sedp_@10:0.01445,     sedp_@20:0.01168,    nov_@10:7.34799,    nov_@20:7.58883
+  epoch:060,      recall_@10:0.07654,     recall_@20:0.11987,     ndcg_@10:0.05530,    ndcg_@20:0.07015,   
+  sedp_@10:0.01474,     sedp_@20:0.01206,    nov_@10:7.46553,    nov_@20:7.69436
+
+  ...
+  epoch:560,      recall_@10:0.09825,     recall_@20:0.14877,     ndcg_@10:0.07176,    ndcg_@20:0.08883,   
+  sedp_@10:0.01882,     sedp_@20:0.01501,    nov_@10:7.58045,    nov_@20:7.79586
+  epoch:580,      recall_@10:0.09917,     recall_@20:0.14970,     ndcg_@10:0.07337,    ndcg_@20:0.09037,   
+  sedp_@10:0.01896,     sedp_@20:0.01504,    nov_@10:7.57995,    nov_@20:7.79439
+  epoch:600,      recall_@10:0.09926,     recall_@20:0.15080,     ndcg_@10:0.07283,    ndcg_@20:0.09016,   
+  sedp_@10:0.01890,     sedp_@20:0.01517,    nov_@10:7.58277,    nov_@20:7.80038
+  ...
+  ```
 # [Model Description](#contents)
 ## [Performance](#contents)
 
 | Parameter                            | BGCF                                      |
 | ------------------------------------ | ----------------------------------------- |
 | Resource                             | Ascend 910                                |
-| uploaded Date                        | 09/04/2020(month/day/year)                |
-| MindSpore Version                    | 1.0                                       |
+| uploaded Date                        |                                           |
+| MindSpore Version                    |                                           |
 | Dataset                              | Amazon-Beauty                             |
 | Training Parameter                   | epoch=600                                 |
 | Optimizer                            | Adam                                      |
 | Loss Function                        | BPR loss                                  |
 | Recall@20                            | 0.1534                                    |
 | NDCG@20                              | 0.0912                                    |
-| Total time                           | 30min                                     |
-| Scripts                              | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/bgcf  |
+| Training Cost                        | 25min                                     |
+| Scripts                              |                                           |
 
 # [Description of random situation](#contents)
 
