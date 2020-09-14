@@ -452,13 +452,13 @@ for eval_data in ds_eval.create_dict_iterator():
 
 ### Examples
 Examples in [mindspore/tests/st/probability](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability) are as follows:
-- [Bayesian LeNet](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/test_bnn_layer.py). How to construct and train a LeNet by bnn layers.
-- [Transform whole DNN model to BNN](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/test_transform_bnn_model.py): How to transform whole DNN model to BNN.
-- [Transform DNN layer to BNN](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/test_transform_bnn_layer.py): How to transform one certainty type of layer in DNN model to corresponding Bayesian layer.
-- [Variational Auto-Encoder](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/test_gpu_svi_vae.py): Variational Auto-Encoder (VAE) model trained with MNIST to generate sample images.
-- [Conditional Variational Auto-Encoder](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/test_gpu_svi_cvae.py): Conditional Variational Auto-Encoder (CVAE) model trained with MNIST to generate sample images.
-- [VAE-GAN](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/test_gpu_vae_gan.py): VAE-GAN model trained with MNIST to generate sample images.
-- [Uncertainty Estimation](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/test_uncertainty.py): Evaluate uncertainty of model and data..
+- [Bayesian LeNet](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/bnn_layers/test_bnn_layer.py). How to construct and train a LeNet by bnn layers.
+- [Transform whole DNN model to BNN](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/transforms/test_transform_bnn_model.py): How to transform whole DNN model to BNN.
+- [Transform DNN layer to BNN](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/transforms/test_transform_bnn_layer.py): How to transform one certainty type of layer in DNN model to corresponding Bayesian layer.
+- [Variational Auto-Encoder](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/dpn/test_gpu_svi_vae.py): Variational Auto-Encoder (VAE) model trained with MNIST to generate sample images.
+- [Conditional Variational Auto-Encoder](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/dpn/test_gpu_svi_cvae.py): Conditional Variational Auto-Encoder (CVAE) model trained with MNIST to generate sample images.
+- [VAE-GAN](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/dpn/test_gpu_vae_gan.py): VAE-GAN model trained with MNIST to generate sample images.
+- [Uncertainty Estimation](https://gitee.com/mindspore/mindspore/tree/master/tests/st/probability/toobox/test_uncertainty.py): Evaluate uncertainty of model and data..
 
 ### Community
 As part of MindSpore, we are committed to creating an open and friendly environment.
