@@ -100,7 +100,6 @@ int ActivationOpenClKernel::Run() {
     ocl_runtime->SetKernelArg(kernel_, arg_idx++, alpha_);
   }
   std::vector<size_t> local = {};
-  std::cout << img2d_shape.s[1] << "   " << img2d_shape.s[2] << std::endl;
   std::vector<size_t> global = {static_cast<size_t>(img2d_shape.s[1]), static_cast<size_t>(img2d_shape.s[2])};
   auto ret = ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   if (ret != RET_OK) {

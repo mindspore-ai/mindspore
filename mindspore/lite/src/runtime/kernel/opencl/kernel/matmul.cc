@@ -152,14 +152,12 @@ void MatMulOpenCLKernel::PadWeight() {
   memset(bias_, 0x00, co4 * C4NUM * dtype_size);
   if (in_tensors_.size() >= 3) {
     if (in_tensors_[2]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
-      auto fdata = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
       for (int i = 0; i < co; i++) {
-        reinterpret_cast<uint16_t *>(bias_)[i] = Float32ToShort(fdata[i]);
+        reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(in_tensors_[2]->MutableData())[i];
       }
     } else if (in_tensors_[2]->data_type() == kNumberTypeFloat16 && !enable_fp16_) {
-      auto fdata = reinterpret_cast<uint16_t *>(in_tensors_[2]->MutableData());
       for (int i = 0; i < co; i++) {
-        reinterpret_cast<float *>(bias_)[i] = ShortToFloat32(fdata[i]);
+        reinterpret_cast<float *>(bias_)[i] = reinterpret_cast<float16_t *>(in_tensors_[2]->MutableData())[i];
       }
     } else {
       memcpy(bias_, in_tensors_[2]->MutableData(), co * dtype_size);

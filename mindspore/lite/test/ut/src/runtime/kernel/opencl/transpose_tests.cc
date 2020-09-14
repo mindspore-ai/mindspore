@@ -37,6 +37,17 @@ void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *out
     ocl_runtime->SetFp16Enable(true);
     dtype_size = sizeof(float16_t);
   }
+  auto param_ptr = std::make_unique<TransposeParameter>();
+  auto param = param_ptr.get();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param_ptr create error.";
+    return;
+  }
+  param->num_axes_ = 4;
+  param->perm_[0] = 0;
+  param->perm_[1] = 3;
+  param->perm_[2] = 1;
+  param->perm_[3] = 2;
   auto allocator = ocl_runtime->GetAllocator();
   int h = shape[0];
   int w = shape[1];
@@ -59,7 +70,8 @@ void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *out
   }
   std::vector<lite::Tensor *> inputs{tensor_x};
   std::vector<lite::Tensor *> outputs{tensor_out};
-  auto arith_kernel_ptr = std::make_unique<kernel::TransposeOpenCLKernel>(nullptr, inputs, outputs);
+  auto arith_kernel_ptr =
+    std::make_unique<kernel::TransposeOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   auto arith_kernel = arith_kernel_ptr.get();
   if (arith_kernel == nullptr) {
     MS_LOG(ERROR) << "arith_kernel create error.";
@@ -94,26 +106,14 @@ void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *out
 }
 
 TEST_F(TestTransposeOpenCL, TransposeFp32) {
-  int h = 1;
-  int w = 64;
-  int c = 7360;
+  int h = 2;
+  int w = 2;
+  int c = 3;
   std::vector<int> shape = {h, w, c};
-  size_t input_size;
-  std::string input_path = "./test_data/transpose/transpose_fp32_input.bin";
-  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
-  if (input_data == nullptr) {
-    MS_LOG(ERROR) << "input_data load error.";
-    return;
-  }
+  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
+  std::vector<float> output_data = {0.0f, 3.0f, 6.0f, 9.0f, 1.0f, 4.0f, 7.0f, 10.0f, 2.0f, 5.0f, 8.0f, 11.0f};
 
-  size_t output_size;
-  std::string output_path = "./test_data/transpose/transpose_fp32_output.bin";
-  auto correct_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(output_path.c_str(), &output_size));
-  if (correct_data == nullptr) {
-    MS_LOG(ERROR) << "correct_data create error.";
-    return;
-  }
-  RunTestTranspose(shape, input_data, correct_data, false);
+  RunTestTranspose(shape, input_data.data(), output_data.data(), false);
 }
 
 TEST_F(TestTransposeOpenCL, TransposeFp16) {
