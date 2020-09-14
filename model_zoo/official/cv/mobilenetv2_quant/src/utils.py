@@ -74,8 +74,7 @@ class Monitor(Callback):
         cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num
 
         print("epoch: [{:3d}/{:3d}], step:[{:5d}/{:5d}], loss:[{:5.3f}/{:5.3f}], time:[{:5.3f}], lr:[{:5.5f}]".format(
-            cb_params.cur_epoch_num -
-            1, cb_params.epoch_num, cur_step_in_epoch, cb_params.batch_num, step_loss,
+            cb_params.cur_epoch_num, cb_params.epoch_num, cur_step_in_epoch+1, cb_params.batch_num, step_loss,
             np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]))
 
 
