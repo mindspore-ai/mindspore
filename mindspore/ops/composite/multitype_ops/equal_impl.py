@@ -26,6 +26,21 @@ using ".register" decorator
 """
 
 
+@equal.register("Bool", "Bool")
+def _equal_bool(x, y):
+    """
+    Determine if two bool objects are equal.
+
+    Args:
+       x (bool): first input bool object.
+       y (bool): second input bool object.
+
+    Returns:
+       bool, if x == y return true, x != y return false.
+   """
+    return F.bool_eq(x, y)
+
+
 @equal.register("Number", "Number")
 def _equal_scalar(x, y):
     """

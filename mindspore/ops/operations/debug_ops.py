@@ -117,7 +117,7 @@ class ImageSummary(PrimitiveWithInfer):
 
 class TensorSummary(PrimitiveWithInfer):
     """
-    Output tensor to protocol buffer through tensor summary operator.
+    Output a tensor to a protocol buffer through a tensor summary operator.
 
     Inputs:
         - **name** (str) - The name of the input variable.

@@ -98,7 +98,7 @@ class Softmax(PrimitiveWithInfer):
     Softmax operation.
 
     Applies the Softmax operation to the input tensor on the specified axis.
-    Suppose a slice in the given aixs :math:`x` then for each element :math:`x_i`
+    Suppose a slice in the given aixs :math:`x`, then for each element :math:`x_i`,
     the Softmax function is shown as follows:
 
     .. math::
@@ -107,7 +107,7 @@ class Softmax(PrimitiveWithInfer):
     where :math:`N` is the length of the tensor.
 
     Args:
-        axis (Union[int, tuple]): The axis to do the Softmax operation. Default: -1.
+        axis (Union[int, tuple]): The axis to perform the Softmax operation. Default: -1.
 
     Inputs:
         - **logits** (Tensor) - The input of Softmax, with float16 or float32 data type.
@@ -1549,17 +1549,17 @@ class TopK(PrimitiveWithInfer):
     Finds values and indices of the `k` largest entries along the last dimension.
 
     Args:
-        sorted (bool): If true, the resulting elements will
+        sorted (bool): If True, the obtained elements will
             be sorted by the values in descending order. Default: False.
 
     Inputs:
         - **input_x** (Tensor) - Input to be computed, data type should be float16, float32 or int32.
-        - **k** (int) - Number of top elements to be computed along the last dimension, constant input is needed.
+        - **k** (int) - The number of top elements to be computed along the last dimension, constant input is needed.
 
     Outputs:
-        Tuple of 2 Tensors, the values and the indices.
+        Tuple of 2 tensors, the values and the indices.
 
-        - **values** (Tensor) - The `k` largest elements along each last dimensional slice.
+        - **values** (Tensor) - The `k` largest elements in each slice of the last dimensional.
         - **indices** (Tensor) - The indices of values within the last dimension of input.
 
     Examples:
@@ -1593,7 +1593,7 @@ class TopK(PrimitiveWithInfer):
 
 class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
     r"""
-    Gets the softmax cross-entropy value between logits and labels which shoule be one-hot encoding.
+    Gets the softmax cross-entropy value between logits and labels with one-hot encoding.
 
     Note:
         Sets input logits as `X`, input label as `Y`, output as `loss`. Then,
@@ -1609,7 +1609,7 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         - **labels** (Tensor) - Ground truth labels, with shape :math:`(N, C)`, has the same data type with `logits`.
 
     Outputs:
-        Tuple of 2 Tensors, the loss shape is `(N,)`, and the dlogits with the same shape as `logits`.
+        Tuple of 2 tensors, the `loss` shape is `(N,)`, and the `dlogits` with the same shape as `logits`.
 
     Examples:
         >>> logits = Tensor([[2, 4, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
@@ -1653,7 +1653,7 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
             loss = \sum_{ij} loss_{ij}
 
     Args:
-        is_grad (bool): If it's true, this operation returns the computed gradient. Default: False.
+        is_grad (bool): If true, this operation returns the computed gradient. Default: False.
 
     Inputs:
         - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type should be float16 or float32.
@@ -4084,19 +4084,19 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
     Args:
         lr (float): Learning rate.
         update_slots (bool): If `True`, `accum` will be updated. Default: True.
-        use_locking (bool): If true, the var and accumulation tensors will be protected from being updated.
+        use_locking (bool): If true, the `var` and `accumulation` tensors will be protected from being updated.
             Default: False.
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
-        - **accum** (Parameter) - Accumulation to be updated. The shape and dtype should be the same as `var`.
-        - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape except first dimension.
-          Has the same data type as `var`.
+        - **accum** (Parameter) - Accumulation to be updated. The shape and data type should be the same as `var`.
+        - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape except the first dimension.
+          Gradients has the same data type as `var`.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
           The shape of `indices` must be the same as `grad` in first dimension, the type must be int32.
 
     Outputs:
-        Tuple of 2 Tensors, the updated parameters.
+        Tuple of 2 tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
@@ -4170,20 +4170,20 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
     Args:
         lr (float): Learning rate.
         epsilon (float): A small value added for numerical stability.
-        use_locking (bool): If `True`, the var and accumulation tensors will be protected from being updated.
+        use_locking (bool): If `True`, the `var` and `accum` tensors will be protected from being updated.
             Default: False.
         update_slots (bool): If `True`, the computation logic will be different to `False`. Default: True.
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
-        - **accum** (Parameter) - Accumulation to be updated. The shape and dtype should be the same as `var`.
-        - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape except first dimension.
-          Has the same data type as `var`.
+        - **accum** (Parameter) - Accumulation to be updated. The shape and data type should be the same as `var`.
+        - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape except the first dimension.
+          Gradients has the same data type as `var`.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
           The shape of `indices` must be the same as `grad` in first dimension, the type must be int32.
 
     Outputs:
-        Tuple of 2 Tensors, the updated parameters.
+        Tuple of 2 tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
@@ -4361,23 +4361,23 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
-        use_locking (bool): If true, the var and accumulation tensors will be protected from being updated.
+        use_locking (bool): If true, the `var` and `accum` tensors will be protected from being updated.
             Default: False.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float16 or float32.
         - **accum** (Parameter) - Variable tensor to be updated, has the same dtype as `var`.
-        - **lr** (Union[Number, Tensor]) - The learning rate value. Tshould be a float number or
+        - **lr** (Union[Number, Tensor]) - The learning rate value. should be a float number or
           a scalar tensor with float16 or float32 data type.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength. should be a float number or
           a scalar tensor with float16 or float32 data type.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength. should be a float number or
           a scalar tensor with float16 or float32 data type..
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
-        - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
+        - **indices** (Tensor) - A vector of indices in the first dimension of `var` and `accum`.
 
     Outputs:
-        Tuple of 2 Tensors, the updated parameters.
+        Tuple of 2 tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
@@ -4982,16 +4982,16 @@ class SparseApplyFtrl(PrimitiveWithCheck):
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
-        - **accum** (Parameter) - The accumulation to be updated, must be same type and shape as `var`.
-        - **linear** (Parameter) - the linear coefficient to be updated, must be same type and shape as `var`.
+        - **accum** (Parameter) - The accumulation to be updated, must be same data type and shape as `var`.
+        - **linear** (Parameter) - the linear coefficient to be updated, must be the same data type and shape as `var`.
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
-        - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
-          The shape of `indices` must be the same as `grad` in first dimension. The type must be int32.
+        - **indices** (Tensor) - A vector of indices in the first dimension of `var` and `accum`.
+          The shape of `indices` must be the same as `grad` in the first dimension. The type must be int32.
 
     Outputs:
-        - **var** (Tensor) - Tensor, has the same shape and type as `var`.
-        - **accum** (Tensor) - Tensor, has the same shape and type as `accum`.
-        - **linear** (Tensor) - Tensor, has the same shape and type as `linear`.
+        - **var** (Tensor) - Tensor, has the same shape and data type as `var`.
+        - **accum** (Tensor) - Tensor, has the same shape and data type as `accum`.
+        - **linear** (Tensor) - Tensor, has the same shape and data type as `linear`.
 
     Examples:
         >>> import mindspore
@@ -5074,18 +5074,18 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
-        - **accum** (Parameter) - The accumulation to be updated, must be same type and shape as `var`.
-        - **linear** (Parameter) - the linear coefficient to be updated, must be same type and shape as `var`.
+        - **accum** (Parameter) - The accumulation to be updated, must be same data type and shape as `var`.
+        - **linear** (Parameter) - the linear coefficient to be updated, must be same data type and shape as `var`.
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
-        - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
-          The shape of `indices` must be the same as `grad` in first dimension. The type must be int32.
+        - **indices** (Tensor) - A vector of indices in the first dimension of `var` and `accum`.
+          The shape of `indices` must be the same as `grad` in the first dimension. The type must be int32.
 
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
 
-        - **var** (Tensor) - Tensor, has the same shape and type as `var`.
-        - **accum** (Tensor) - Tensor, has the same shape and type as `accum`.
-        - **linear** (Tensor) - Tensor, has the same shape and type as `linear`.
+        - **var** (Tensor) - Tensor, has the same shape and data type as `var`.
+        - **accum** (Tensor) - Tensor, has the same shape and data type as `accum`.
+        - **linear** (Tensor) - Tensor, has the same shape and data type as `linear`.
 
     Examples:
         >>> import mindspore

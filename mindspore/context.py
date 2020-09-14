@@ -14,7 +14,7 @@
 # ============================================================================
 """
 The context of mindspore, used to configure the current execution environment,
-including execution mode, execution backend and other feature switches.
+includes the execution mode, execution backend and other feature switches.
 """
 import os
 import time
@@ -338,40 +338,40 @@ def set_auto_parallel_context(**kwargs):
 
     Note:
         Attribute name is required for setting attributes.
-        If a program has tasks with different parallel modes, then before setting new parallel mode for
+        If a program has tasks with different parallel modes, then before setting new parallel mode for the
         next task, interface mindspore.context.reset_auto_parallel_context() needs to be called to reset
         the configuration.
-        Setting or changing parallel modes must be called before any Initializer created, or RuntimeError
-        may be raised when compile network.
+        Setting or changing parallel modes must be called before any creating Initializer, otherwise,
+        RuntimeError may be raised when compiling the network.
 
     Args:
         device_num (int): Available device number, the value must be in [1, 4096]. Default: 1.
         global_rank (int): Global rank id, the value must be in [0, 4095]. Default: 0.
         gradients_mean (bool): Whether to perform mean operator after all-reduce of mirror.
-                     "stand_alone" do not support gradients_mean. Default: False.
-        gradient_fp32_sync (bool): Gradients allreduce by fp32 even though gradients is fp16 if this flag is True..
+                     "stand_alone" does not support `gradients_mean`. Default: False.
+        gradient_fp32_sync (bool): Gradients allreduce by fp32, even though gradients is fp16 if this flag is True..
                      "stand_alone", "data_parallel" and "hybrid_parallel" do not support
                      gradient_fp32_sync. Default: True.
         parallel_mode (str): There are five kinds of parallel modes, "stand_alone", "data_parallel",
                      "hybrid_parallel", "semi_auto_parallel" and "auto_parallel". Default: "stand_alone".
 
-                     - stand_alone: Only one processor working.
+                     - stand_alone: Only one processor is working.
 
-                     - data_parallel: Distributing the data across different processors.
+                     - data_parallel: Distributes the data across different processors.
 
-                     - hybrid_parallel: Achieving data parallelism and model parallelism manually.
+                     - hybrid_parallel: Achieves data parallelism and model parallelism manually.
 
-                     - semi_auto_parallel: Achieving data parallelism and model parallelism by
+                     - semi_auto_parallel: Achieves data parallelism and model parallelism by
                        setting parallel strategies.
 
-                     - auto_parallel: Achieving parallelism automatically.
+                     - auto_parallel: Achieves parallelism automatically.
         auto_parallel_search_mode (str): There are two kinds of search modes, "recursive_programming"
                      and "dynamic_programming". Default: "dynamic_programming".
 
                      - recursive_programming: Recursive programming search mode.
 
                      - dynamic_programming: Dynamic programming search mode.
-        parameter_broadcast (bool): Indicating whether to broadcast parameters before training.
+        parameter_broadcast (bool): Whether to broadcast parameters before training.
                        "stand_alone", "semi_auto_parallel" and "auto_parallel" do not support parameter
                        broadcast. Default: False.
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
@@ -468,7 +468,7 @@ def set_context(**kwargs):
 
     When the `save_graphs` attribute is set to True, attribute of `save_graphs_path` is used to set the
     intermediate compilation graph storage path. By default, the graphs are saved in the current directory.
-    As for other configurations and arguments, please refer to the corresponding module
+    For other configurations and arguments, please refer to the corresponding module
     description, the configuration is optional and can be enabled when needed.
 
     Note:
@@ -498,9 +498,9 @@ def set_context(**kwargs):
 
     Args:
         mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: PYNATIVE_MODE(1).
-        device_target (str): The target device to run, support "Ascend", "GPU", "CPU". Default: "Ascend".
-        device_id (int): Id of target device, the value must be in [0, device_num_per_host-1],
-                    while device_num_per_host should no more than 4096. Default: 0.
+        device_target (str): The target device to run, support "Ascend", "GPU", and "CPU". Default: "Ascend".
+        device_id (int): ID of the target device, the value must be in [0, device_num_per_host-1],
+                    while device_num_per_host should be no more than 4096. Default: 0.
         save_graphs (bool): Whether to save graphs. Default: False.
         save_graphs_path (str): Path to save graphs. Default: "."
         enable_auto_mixed_precision (bool): Whether to enable auto mixed precision. Default: False.
@@ -509,33 +509,34 @@ def set_context(**kwargs):
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
         enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
         enable_dump (bool): Whether to enable dump. Default: False.
-        save_dump_path (str): When the program is executed on Ascend, operators can dump data here.
+        save_dump_path (str): When the program is executed on Ascend, operators can dump data in this path.
             The root dump path is configured in /home/HwHiAiUser/ide_daemon/ide_daemon.cfg.
             So the real dump path is "{configured root dump path}/{`save_dump_path`}". Default: ".".
-        variable_memory_max_size (str): Sets variable memory max size. Default: "0GB".
+        variable_memory_max_size (str): Set the maximum size of the variable memory max size. Default: "0GB".
         enable_profiling (bool): Whether to open profiling. Default: False.
-        profiling_options (str): Sets profiling collection options, operators can profiling data here.
-            Profiling collection options, the values are as follows, supporting the collection of multiple data.
+        profiling_options (str): Set profiling collection options, operators can profiling data here.
+            The values of profiling collection options are as follows, supporting the collection of multiple data.
 
             - training_trace: collect iterative trajectory data, that is, the training task and software information of
               the AI software stack, to achieve performance analysis of the training task, focusing on data
               enhancement, forward and backward calculation, gradient aggregation update and other related data.
 
             - task_trace: collect task trajectory data, that is, the hardware information of the HWTS/AICore of
-              the Ascend 910 processor, and analyze the information of start and end of the task.
+              the Ascend 910 processor, and analyze the information of beginning and ending of the task.
 
             - op_trace: collect single operator performance data.
-            The profiling can choose training_trace, task_trace, training_trace and task_trace combination and
-            separated by colons; single operator can choose op_trace, op_trace cannot be combined with
-            training_trace and task_trace. Default: "training_trace".
+            The profiling can choose the combination of `training_trace`, `task_trace`,
+            `training_trace` and `task_trace` combination, and eparated by colons;
+            a single operator can choose `op_trace`, `op_trace` cannot be combined with
+            `training_trace` and `task_trace`. Default: "training_trace".
         check_bprop (bool): Whether to check bprop. Default: False.
-        max_device_memory (str): Sets the maximum memory available for device, currently only supported on GPU.
-            The format is "xxGB". Default: "1024GB".
-        print_file_path (str): The path of print data to save. If this parameter is set, print data is saved to
-            a file by default, and turn off printing to the screen. If the file already exists, add a timestamp
+        max_device_memory (str): Sets the maximum memory available for devices.
+            Currently, it is only supported on GPU. The format is "xxGB". Default: "1024GB".
+        print_file_path (str): The path of saving print data. If this parameter is set, print data is saved to
+            a file by default, and turns off printing to the screen. If the file already exists, add a timestamp
             suffix to the file. Default: ''.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
-        max_call_depth(int): Specify the function call depth limit. Default: 1000.
+        max_call_depth(int): Specify the maximum depth of function call. Default: 1000.
 
     Raises:
         ValueError: If input key is not an attribute in context.
@@ -614,13 +615,13 @@ class ParallelMode:
     There are five kinds of parallel modes, "STAND_ALONE", "DATA_PARALLEL",
     "HYBRID_PARALLEL", "SEMI_AUTO_PARALLEL" and "AUTO_PARALLEL". Default: "STAND_ALONE".
 
-        - STAND_ALONE: Only one processor working.
-        - DATA_PARALLEL: Distributing the data across different processors.
-        - HYBRID_PARALLEL: Achieving data parallelism and model parallelism manually.
-        - SEMI_AUTO_PARALLEL: Achieving data parallelism and model parallelism by setting parallel strategies.
-        - AUTO_PARALLEL: Achieving parallelism automatically.
+        - STAND_ALONE: Only one processor is working.
+        - DATA_PARALLEL: Distributes the data across different processors.
+        - HYBRID_PARALLEL: Achieves data parallelism and model parallelism manually.
+        - SEMI_AUTO_PARALLEL: Achieves data parallelism and model parallelism by setting parallel strategies.
+        - AUTO_PARALLEL: Achieves parallelism automatically.
 
-    MODE_LIST: The list for all supported parallel modes.
+    MODE_LIST: The list of all supported parallel modes.
     """
 
     STAND_ALONE = "stand_alone"
