@@ -27,8 +27,6 @@
 extern "C" {
 #endif
 
-void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
-                        size_t plane_size, size_t stride, bool is_relu, bool is_relu6);
 void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
                         size_t plane_size, size_t stride, bool is_relu, bool is_relu6);
 float ShortToFloat32(uint16_t src_value);
@@ -50,11 +48,6 @@ void BiasAddRelu6(const float *bias, float *data, size_t oc4, size_t plan_size);
 void BiasAddRelu(const float *bias, float *data, size_t oc4, size_t plan_size);
 void Relu6(float *data, size_t element4);
 void Relu(float *data, size_t element4);
-void C4BiasAdd(float *dst, const float *input, const float *bias, size_t oc, size_t plane_size, size_t stride);
-void C4BiasAddRelu(float *dst, const float *input, const float *bias, size_t oc, size_t plane_size, size_t stride);
-void C4BiasAddRelu6(float *dst, const float *input, const float *bias, size_t oc, size_t plane_size, size_t stride);
-void C4Relu(float *dst, const float *input, size_t oc, size_t plane_size, size_t stride);
-void C4Relu6(float *dst, const float *input, size_t oc, size_t plane_size, size_t stride);
 
 void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, size_t num_pixels,
                    size_t output_channel, size_t input_step);
