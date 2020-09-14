@@ -25,47 +25,20 @@
 #include "internal/src/kernel/fp32_grad/arithmetic_self_grad.h"
 #include "internal/src/kernel/fp32_grad/activation_grad.h"
 
-static Context *g_Ctx;
-static Model *g_Model;
-static LiteSession g_Session;
-static mindspore::lite::DefaultAllocator allocator;
+static Context *g_ctx;
+static Model *g_model;
+static LiteSession g_session;
+static mindspore::lite::DefaultAllocator g_allocator;
+static bool g_infershape_interrupt = false;
+static bool g_first_load = true;
+typedef int (*InferShape)(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param);
+typedef int (*RunKernel)(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
+                         mindspore::lite::Allocator *allocator);
+static InferShape g_infershape_funcs[KernelType::END];
+static RunKernel g_runkernel_funcs[KernelType::END];
 
-LiteSession *LiteSession::CreateSession(Context *context) {
-  g_Ctx = context;
-  return &g_Session;
-}
-
-int LiteSession::CompileGraph(Model *model) {
-  g_Model = model;
-  for (auto in : g_Model->input_indices_) {
-    g_Model->all_tensors_[in]->data_ = allocator.Malloc(g_Model->all_tensors_[in]->Size());
-  }
-  return 0;
-}
-
-TensorPtrVector LiteSession::GetInputs() const {
-  TensorPtrVector in(g_Model->input_indices_.size());
-  //    for(auto index : g_Model->input_indices_){
-  //        in.emplace_back(g_Model->all_tensors_[index]);
-  //    }
-  return in;
-}
-
-TensorPtrVector LiteSession::GetInputsByName(const String &node_name) const { return TensorPtrVector(); }
-
-TensorPtrVector LiteSession::GetOutputsByNodeName(const String &node_name) const { return TensorPtrVector(); }
-
-TensorPtrVector LiteSession::GetOutputs() const {
-  TensorPtrVector out(g_Model->output_indices_.size());
-  //    for(auto index : g_Model->output_indices_){
-  //        out.emplace_back(g_Model->all_tensors_[index]);
-  //    }
-  return out;
-}
-
-int LiteSession::RunGraph() {
-  // invoke nnacl kernel
-  NodePtrVector nodes = g_Model->nodes_;
+static int ModelInferShape() {
+  NodePtrVector nodes = g_model->nodes_;
   size_t nodes_size = nodes.size();
   for (size_t i = 0; i < nodes_size; ++i) {
     auto node = nodes[i];
@@ -75,41 +48,139 @@ int LiteSession::RunGraph() {
     }
     TensorPtrVector in_tensors;
     for (size_t j = 0; j < node->input_indices_.size(); ++j) {
-      in_tensors.push_back(g_Model->all_tensors_[node->input_indices_[j]]);
+      in_tensors.push_back(g_model->all_tensors_[node->input_indices_[j]]);
     }
     TensorPtrVector out_tensors;
     for (size_t j = 0; j < node->output_indices_.size(); ++j) {
-      out_tensors.push_back(g_Model->all_tensors_[node->output_indices_[j]]);
+      out_tensors.push_back(g_model->all_tensors_[node->output_indices_[j]]);
     }
     int type = node->primitive_->type_;
-    int ret = RET_ERROR;
-    switch (type) {
-      case KernelType::MatMul:
-        ret = DoMatMul(in_tensors, out_tensors, node, &allocator);
-        break;
-      case KernelType::Activation:
-        ret = DoActivation(in_tensors, out_tensors, node, &allocator);
-        break;
-      case KernelType::Log:
-      case KernelType::Neg:
-        ret = DoArithmeticSelf(in_tensors, out_tensors, node, &allocator);
-        break;
-      case KernelType::LogGrad:
-      case KernelType::NegGrad:
-        ret = DoArithmeticGradSelf(in_tensors, out_tensors, node, &allocator);
-        break;
-      case KernelType::ActivationGrad:
-        ret = DoActivationGrad(in_tensors, out_tensors, node, &allocator);
-        break;
-      default:
+    InferShape infershape = g_infershape_funcs[type];
+    if (infershape == NULL) {
+      MS_LOG(ERROR) << "Unsupport kernel type: " << type;
+      return RET_PARAM_INVALID;
+    }
+    int ret = (*infershape)(in_tensors, out_tensors, node->primitive_);
+    if (ret == RET_INFER_INVALID) {
+      g_infershape_interrupt = true;
+      MS_LOG(INFO) << node->name_ << "inferShape shouldn't be done before runtime, inferShape interrupt!";
+    }
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Infer shape fail!ret: " << ret;
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+
+static void InitFuncs() {
+  if (g_first_load) {
+    g_infershape_funcs[KernelType::MatMul] = DoMatMulInferShape;
+    g_infershape_funcs[KernelType::Activation] = DoActivationInferShape;
+    g_infershape_funcs[KernelType::Log] = DoArithmeticSelfInferShape;
+    g_infershape_funcs[KernelType::Neg] = DoArithmeticSelfInferShape;
+    g_infershape_funcs[KernelType::ActivationGrad] = DoActivationGradInferShape;
+
+    g_runkernel_funcs[KernelType::MatMul] = DoMatMul;
+    g_runkernel_funcs[KernelType::Activation] = DoActivation;
+    g_runkernel_funcs[KernelType::Log] = DoArithmeticSelf;
+    g_runkernel_funcs[KernelType::LogGrad] = DoArithmeticSelfGrad;
+    g_runkernel_funcs[KernelType::Neg] = DoArithmeticSelf;
+    g_runkernel_funcs[KernelType::NegGrad] = DoArithmeticSelfGrad;
+    g_runkernel_funcs[KernelType::ActivationGrad] = DoActivationGrad;
+    g_first_load = false;
+  }
+}
+
+LiteSession *LiteSession::CreateSession(Context *context) {
+  g_ctx = context;
+  return &g_session;
+}
+
+int LiteSession::CompileGraph(Model *model) {
+  InitFuncs();
+  g_model = model;
+  for (auto in : g_model->input_indices_) {
+    g_model->all_tensors_[in]->data_ = g_allocator.Malloc(g_model->all_tensors_[in]->Size());
+  }
+  g_infershape_interrupt = false;
+  int ret = ModelInferShape();
+  if (ret != RET_OK && ret != RET_INFER_INVALID) {
+    return ret;
+  }
+  return RET_OK;
+}
+
+TensorPtrVector LiteSession::GetInputs() const {
+  TensorPtrVector in(g_model->input_indices_.size());
+  for (size_t i = 0; i < g_model->input_indices_.size(); ++i) {
+    in.at(i) = g_model->all_tensors_[i];
+  }
+  return in;
+}
+
+TensorPtrVector LiteSession::GetInputsByName(const String &node_name) const { return TensorPtrVector(); }
+
+TensorPtrVector LiteSession::GetOutputsByNodeName(const String &node_name) const { return TensorPtrVector(); }
+
+TensorPtrVector LiteSession::GetOutputs() const {
+  TensorPtrVector out(g_model->output_indices_.size());
+  for (size_t i = 0; i < g_model->output_indices_.size(); ++i) {
+    out.at(i) = g_model->all_tensors_[i];
+  }
+  return out;
+}
+
+int LiteSession::RunGraph() {
+  NodePtrVector nodes = g_model->nodes_;
+  size_t nodes_size = nodes.size();
+  for (size_t i = 0; i < nodes_size; ++i) {
+    auto node = nodes[i];
+    if (node->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "node's primitive is NULL!";
+      return RET_ERROR;
+    }
+    TensorPtrVector in_tensors;
+    for (size_t j = 0; j < node->input_indices_.size(); ++j) {
+      in_tensors.push_back(g_model->all_tensors_[node->input_indices_[j]]);
+    }
+    TensorPtrVector out_tensors;
+    for (size_t j = 0; j < node->output_indices_.size(); ++j) {
+      out_tensors.push_back(g_model->all_tensors_[node->output_indices_[j]]);
+    }
+    int type = node->primitive_->type_;
+    if (g_infershape_interrupt) {
+      InferShape infershape = g_infershape_funcs[type];
+      if (infershape == NULL) {
         MS_LOG(ERROR) << "Unsupport kernel type: " << type;
         return RET_PARAM_INVALID;
+      }
+      int ret = (*infershape)(in_tensors, out_tensors, node->primitive_);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "InferShape fail!ret: " << ret;
+        return ret;
+      }
     }
+    for (size_t j = 0; j < out_tensors.size(); ++j) {
+      out_tensors[j]->data_ = g_allocator.Malloc(out_tensors[j]->Size());
+      if (out_tensors[j]->data_ == NULL) {
+        MS_LOG(ERROR) << "Malloc data for out tensor fail!";
+        return RET_NULL_PTR;
+      }
+    }
+    RunKernel run_kernel = g_runkernel_funcs[type];
+    if (run_kernel == NULL) {
+      MS_LOG(ERROR) << "Unsupport kernel type: " << type;
+      return RET_PARAM_INVALID;
+    }
+
+    int ret = (*run_kernel)(in_tensors, out_tensors, node, &g_allocator);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "run kernel fail!ret: " << ret;
       return ret;
     }
   }
+  g_infershape_interrupt = false;
   return RET_OK;
 }
 
@@ -117,4 +188,4 @@ StringVector LiteSession::GetOutputTensorNames() const { return StringVector(); 
 
 MSTensor *LiteSession::GetOutputByTensorName(const String &tensor_name) const { return NULL; }
 
-int LiteSession::Resize(const TensorPtrVector &inputs, Int32VectorVector dims) { return 0; }
+int LiteSession::Resize(const TensorPtrVector &inputs, const Int32VectorVector &dims) { return 0; }

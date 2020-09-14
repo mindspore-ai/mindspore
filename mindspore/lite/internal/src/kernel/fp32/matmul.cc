@@ -71,7 +71,50 @@ void FreeMatMulKernelData(MatMulCPUKernelData *kernel_data, mindspore::lite::All
   free(kernel_data);
 }
 
-int DoMatMul(TensorPtrVector in_tensors, TensorPtrVector out_tensors, Node *node,
+static void SwapDims(Int32Vector *dims, int index1, int index2) {
+  int tmp = dims->at(index1);
+  dims->at(index1) = dims->at(index2);
+  dims->at(index2) = tmp;
+}
+
+int DoMatMulInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param) {
+  MS_ASSERT(this->primitive_ != nullptr);
+  TensorPtr input0 = in_tensors.at(0);
+  MS_ASSERT(input0 != nullptr);
+  TensorPtr input1 = in_tensors.at(1);
+  MS_ASSERT(input1 != nullptr);
+  TensorPtr output = out_tensors.at(0);
+  MS_ASSERT(output != nullptr);
+
+  output->data_type_ = input0->data_type_;
+  output->format_ = input0->format_;
+
+  Int32Vector a_shape = input0->shape_;
+  Int32Vector b_shape = input1->shape_;
+  if (a_shape.size() < 2 || b_shape.size() < 2) {
+    MS_LOG(ERROR) << "inputs shape is invalid";
+    return RET_INPUT_TENSOR_ERROR;
+  }
+  for (size_t i = 0; i < a_shape.size() - 2; ++i) {
+    if (a_shape[i] != b_shape[i]) {
+      MS_LOG(ERROR) << "Op MatMul's dimensions must be equal";
+      return RET_INPUT_TENSOR_ERROR;
+    }
+  }
+
+  MatMulParameter *matmul_param = (MatMulParameter *)param;
+  if (matmul_param->a_transpose_) {
+    SwapDims(&a_shape, a_shape.size() - 1, a_shape.size() - 2);
+  }
+  if (matmul_param->b_transpose_) {
+    SwapDims(&b_shape, b_shape.size() - 1, b_shape.size() - 2);
+  }
+  output->shape_ = a_shape;
+  output->shape_.at(a_shape.size() - 1) = b_shape.at(b_shape.size() - 1);
+  return RET_OK;
+}
+
+int DoMatMul(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
              mindspore::lite::Allocator *allocator) {
   if (in_tensors[0]->data_ == NULL || in_tensors[1]->data_ ==NULL) {
     MS_LOG(ERROR) << "input data is NULL!";

@@ -21,12 +21,13 @@
 
 struct MSTensor;
 struct Node;
+using TensorPtr = MSTensor *;
 using TensorPtrVector = std::vector<MSTensor *>;
 using Uint32Vector = std::vector<uint32_t>;
 using String = std::string;
 using StringVector = std::vector<std::string>;
 using ShapeVector = std::vector<int>;
 using NodePtrVector = std::vector<struct Node *>;
-using Int32Vector = std::vector<int32_t>;
+using Int32Vector = std::vector<int>;
 using Int32VectorVector = std::vector<Int32Vector>;
 #endif  // MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_

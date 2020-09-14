@@ -20,7 +20,9 @@
 #include "internal/include/model.h"
 #include "src/runtime/allocator.h"
 
-int DoActivationGrad(TensorPtrVector in_tensors, TensorPtrVector out_tensors, Node *node,
+int DoActivationGradInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors,
+                               OpParameter *param);
+int DoActivationGrad(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
                      mindspore::lite::Allocator *allocator);
 
 #endif  // MINDSPORE_LITE_INTERNAL_SRC_KERNEL_FP32_GRAD_ACTIVATION_GRAD_H_
