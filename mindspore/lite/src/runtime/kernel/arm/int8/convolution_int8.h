@@ -36,10 +36,6 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
       free(packed_weight_);
       packed_weight_ = nullptr;
     }
-    if (packed_input_ != nullptr) {
-      free(packed_input_);
-      packed_input_ = nullptr;
-    }
     if (input_sum_ != nullptr) {
       free(input_sum_);
       input_sum_ = nullptr;
@@ -59,6 +55,14 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
 
  private:
   void FreeTmpBuffer() {
+    if (nhwc4_input_ != nullptr) {
+      ctx_->allocator->Free(nhwc4_input_);
+      nhwc4_input_ = nullptr;
+    }
+    if (packed_input_ != nullptr) {
+      ctx_->allocator->Free(packed_input_);
+      packed_input_ = nullptr;
+    }
     if (tmp_dst_ != nullptr) {
       ctx_->allocator->Free(tmp_dst_);
       tmp_dst_ = nullptr;

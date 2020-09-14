@@ -379,50 +379,50 @@ void Conv3x3Fp32FilterTransform(float *weight_data, float *trans_weight, int iC4
       float32x4_t dst01 = g01;
       float32x4_t dst02 = g02;
 
-      float32x4_t dst10 = vaddq_f32(vmulq_n_f32(g00, 0.5), vmulq_n_f32(g10, 0.5));
-      dst10 = vaddq_f32(dst10, vmulq_n_f32(g20, 0.5));
-      float32x4_t dst11 = vaddq_f32(vmulq_n_f32(g01, 0.5), vmulq_n_f32(g11, 0.5));
-      dst11 = vaddq_f32(dst11, vmulq_n_f32(g21, 0.5));
-      float32x4_t dst12 = vaddq_f32(vmulq_n_f32(g02, 0.5), vmulq_n_f32(g12, 0.5));
-      dst12 = vaddq_f32(dst12, vmulq_n_f32(g22, 0.5));
+      float32x4_t dst10 = vaddq_f32(vaddq_f32(g00, g10), g20);
+      dst10 = vmulq_n_f32(dst10, 0.5);
+      float32x4_t dst11 = vaddq_f32(vaddq_f32(g01, g11), g21);
+      dst11 = vmulq_n_f32(dst11, 0.5);
+      float32x4_t dst12 = vaddq_f32(vaddq_f32(g02, g12), g22);
+      dst12 = vmulq_n_f32(dst12, 0.5);
 
-      float32x4_t dst20 = vsubq_f32(vmulq_n_f32(g00, 0.5), vmulq_n_f32(g10, 0.5));
-      dst20 = vaddq_f32(dst20, vmulq_n_f32(g20, 0.5));
-      float32x4_t dst21 = vsubq_f32(vmulq_n_f32(g01, 0.5), vmulq_n_f32(g11, 0.5));
-      dst21 = vaddq_f32(dst21, vmulq_n_f32(g21, 0.5));
-      float32x4_t dst22 = vsubq_f32(vmulq_n_f32(g02, 0.5), vmulq_n_f32(g12, 0.5));
-      dst22 = vaddq_f32(dst22, vmulq_n_f32(g22, 0.5));
+      float32x4_t dst20 = vaddq_f32(vsubq_f32(g00, g10), g20);
+      dst20 = vmulq_n_f32(dst20, 0.5);
+      float32x4_t dst21 = vaddq_f32(vsubq_f32(g01, g11), g21);
+      dst21 = vmulq_n_f32(dst21, 0.5);
+      float32x4_t dst22 = vaddq_f32(vsubq_f32(g02, g12), g22);
+      dst22 = vmulq_n_f32(dst22, 0.5);
 
       float32x4_t dst30 = g20;
       float32x4_t dst31 = g21;
       float32x4_t dst32 = g22;
 
       float32x4_t m00 = dst00;
-      float32x4_t m01 = vaddq_f32(vmulq_n_f32(dst00, 0.5), vmulq_n_f32(dst01, 0.5));
-      m01 = vaddq_f32(m01, vmulq_n_f32(dst02, 0.5));
-      float32x4_t m02 = vsubq_f32(vmulq_n_f32(dst00, 0.5), vmulq_n_f32(dst01, 0.5));
-      m02 = vaddq_f32(m02, vmulq_n_f32(dst02, 0.5));
+      float32x4_t m01 = vaddq_f32(vaddq_f32(dst00, dst01), dst02);
+      m01 = vmulq_n_f32(m01, 0.5);
+      float32x4_t m02 = vaddq_f32(vsubq_f32(dst00, dst01), dst02);
+      m02 = vmulq_n_f32(m02, 0.5);
       float32x4_t m03 = dst02;
 
       float32x4_t m10 = dst10;
-      float32x4_t m11 = vaddq_f32(vmulq_n_f32(dst10, 0.5), vmulq_n_f32(dst11, 0.5));
-      m11 = vaddq_f32(m11, vmulq_n_f32(dst12, 0.5));
-      float32x4_t m12 = vsubq_f32(vmulq_n_f32(dst10, 0.5), vmulq_n_f32(dst11, 0.5));
-      m12 = vaddq_f32(m12, vmulq_n_f32(dst12, 0.5));
+      float32x4_t m11 = vaddq_f32(vaddq_f32(dst10, dst11), dst12);
+      m11 = vmulq_n_f32(m11, 0.5);
+      float32x4_t m12 = vaddq_f32(vsubq_f32(dst10, dst11), dst12);
+      m12 = vmulq_n_f32(m12, 0.5);
       float32x4_t m13 = dst12;
 
       float32x4_t m20 = dst20;
-      float32x4_t m21 = vaddq_f32(vmulq_n_f32(dst20, 0.5), vmulq_n_f32(dst21, 0.5));
-      m21 = vaddq_f32(m21, vmulq_n_f32(dst22, 0.5));
-      float32x4_t m22 = vsubq_f32(vmulq_n_f32(dst20, 0.5), vmulq_n_f32(dst21, 0.5));
-      m22 = vaddq_f32(m22, vmulq_n_f32(dst22, 0.5));
+      float32x4_t m21 = vaddq_f32(vaddq_f32(dst20, dst21), dst22);
+      m21 = vmulq_n_f32(m21, 0.5);
+      float32x4_t m22 = vaddq_f32(vsubq_f32(dst20, dst21), dst22);
+      m22 = vmulq_n_f32(m22, 0.5);
       float32x4_t m23 = dst22;
 
       float32x4_t m30 = dst30;
-      float32x4_t m31 = vaddq_f32(vmulq_n_f32(dst30, 0.5), vmulq_n_f32(dst31, 0.5));
-      m31 = vaddq_f32(m31, vmulq_n_f32(dst32, 0.5));
-      float32x4_t m32 = vsubq_f32(vmulq_n_f32(dst30, 0.5), vmulq_n_f32(dst31, 0.5));
-      m32 = vaddq_f32(m32, vmulq_n_f32(dst32, 0.5));
+      float32x4_t m31 = vaddq_f32(vaddq_f32(dst30, dst31), dst32);
+      m31 = vmulq_n_f32(m31, 0.5);
+      float32x4_t m32 = vaddq_f32(vsubq_f32(dst30, dst31), dst32);
+      m32 = vmulq_n_f32(m32, 0.5);
       float32x4_t m33 = dst32;
 
       dst_ic4_ptr[0] = m00[0];

@@ -44,6 +44,10 @@ void ProcessFilterUint8(int8_t *origin_weight, int16_t *dst_weight, ConvParamete
 }
 
 void Convolution3x3Int8CPUKernel::FreeTmpBuffer() {
+  if (input_data_ != nullptr) {
+    ctx_->allocator->Free(input_data_);
+    input_data_ = nullptr;
+  }
   if (tile_buffer_ != nullptr) {
     ctx_->allocator->Free(tile_buffer_);
     tile_buffer_ = nullptr;
@@ -66,10 +70,6 @@ Convolution3x3Int8CPUKernel::~Convolution3x3Int8CPUKernel() {
   if (transformed_filter_addr_ != nullptr) {
     free(transformed_filter_addr_);
     transformed_filter_addr_ = nullptr;
-  }
-  if (input_data_ != nullptr) {
-    free(input_data_);
-    input_data_ = nullptr;
   }
   FreeQuantParam();
 }
@@ -117,6 +117,14 @@ int Convolution3x3Int8CPUKernel::InitTmpBuffer() {
   int output_h = conv_param_->output_h_;
   int ic8 = UP_DIV(conv_param_->input_channel_, C8NUM);
   MS_ASSERT(ctx_->allocator != nullptr);
+
+  size_t c8_input_size =
+    conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * ic8 * C8NUM * sizeof(int16_t);
+  input_data_ = reinterpret_cast<int16_t *>(ctx_->allocator->Malloc(c8_input_size));
+  if (input_data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc input_data_ failed.";
+    return RET_ERROR;
+  }
 
   size_t tile_buffer_size = thread_count_ * TILE_NUM * C16NUM * ic8 * C8NUM * sizeof(int16_t);
   tile_buffer_ = reinterpret_cast<int16_t *>(ctx_->allocator->Malloc(tile_buffer_size));
@@ -179,27 +187,11 @@ int Convolution3x3Int8CPUKernel::ReSize() {
     return ret;
   }
 
-  if (input_data_ != nullptr) {
-    free(input_data_);
-    input_data_ = nullptr;
-  }
-
   ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return RET_ERROR;
   }
-
-  int ic8 = UP_DIV(conv_param_->input_channel_, C8NUM);
-  size_t c8_input_size =
-    conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * ic8 * C8NUM * sizeof(int16_t);
-  input_data_ = reinterpret_cast<int16_t *>(malloc(c8_input_size));
-  if (input_data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc input_data_ failed.";
-    return RET_ERROR;
-  }
-  memset(input_data_, 0, c8_input_size);
-
   return RET_OK;
 }
 

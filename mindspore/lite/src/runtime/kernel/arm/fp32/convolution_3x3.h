@@ -45,6 +45,10 @@ class Convolution3x3CPUKernel : public ConvolutionBaseCPUKernel {
 
  private:
   void FreeTmpBuffer() {
+    if (nhwc4_input_ != nullptr) {
+      ctx_->allocator->Free(nhwc4_input_);
+      nhwc4_input_ = nullptr;
+    }
     if (tile_buffer_ != nullptr) {
       ctx_->allocator->Free(tile_buffer_);
       tile_buffer_ = nullptr;
