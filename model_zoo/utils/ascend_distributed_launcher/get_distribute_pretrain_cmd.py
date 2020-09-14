@@ -55,13 +55,14 @@ def append_cmd(cmd, s):
     return cmd
 
 def append_cmd_env(cmd, key, value):
-    return append_cmd(cmd, "export" + str(key) + "=" + str(value))
+    return append_cmd(cmd, "export " + str(key) + "=" + str(value))
 
 def distribute_pretrain():
     """
     distribute pretrain scripts. The number of D chips can be automatically allocated
     based on the device_num set in hccl config file, You don not need to specify that.
     """
+    cmd = ""
     print("start", __file__)
     args = parse_args()
 
@@ -72,7 +73,7 @@ def distribute_pretrain():
     cfg = dict(cf.items("config"))
 
     print("hccl_config_dir:", args.hccl_config_dir)
-    os.environ['RANK_TABLE_FILE'] = args.hccl_config_dir
+    cmd = append_cmd_env(cmd, 'RANK_TABLE_FILE', args.hccl_config_dir)
 
     cores = multiprocessing.cpu_count()
     print("the number of logical core:", cores)
@@ -94,7 +95,7 @@ def distribute_pretrain():
             if server["device"][0]["device_ip"] in device_ips.values():
                 this_server = server
 
-    os.environ['RANK_SIZE'] = str(rank_size)
+    cmd = append_cmd_env(cmd, "RANK_SIZE", str(rank_size))
     print("total rank size:", rank_size)
     print("this server rank size:", len(this_server["device"]))
     avg_core_per_rank = int(int(cores) / len(this_server["device"]))
@@ -102,7 +103,6 @@ def distribute_pretrain():
     print("avg_core_per_rank:", avg_core_per_rank)
 
     count = 0
-    cmd = ""
     for instance in this_server["device"]:
         device_id = instance["device_id"]
         rank_id = instance["rank_id"]
@@ -115,10 +115,10 @@ def distribute_pretrain():
         end = start + core_gap
         cmdopt = str(start) + "-" + str(end)
 
-        cmd = append_cmd(cmd, "export DEVICE_ID=" + str(device_id))
-        cmd = append_cmd(cmd, "export RANK_ID=" + str(rank_id))
-        cmd = append_cmd(cmd, "export DEPLOY_MODE=0")
-        cmd = append_cmd(cmd, "export GE_USE_STATIC_MEMORY=1")
+        cmd = append_cmd_env(cmd, "DEVICE_ID", str(device_id))
+        cmd = append_cmd_env(cmd, "RANK_ID", str(rank_id))
+        cmd = append_cmd_env(cmd, "DEPLOY_MODE", '0')
+        cmd = append_cmd_env(cmd, "GE_USE_STATIC_MEMORY", '1')
 
         cmd = append_cmd(cmd, "rm -rf LOG" + str(device_id))
         cmd = append_cmd(cmd, "mkdir ./LOG" + str(device_id))
@@ -127,7 +127,7 @@ def distribute_pretrain():
         cmd = append_cmd(cmd, "env > ./LOG" + str(device_id) + "/env.log")
 
         cur_dir = os.getcwd()
-        cmd = append_cmd_env(cmd, "GLOG_LOG_DIR", cur_dir + "/LOG" + str(device_id) + "/ms_log")
+        cmd = append_cmd_env(cmd, "GLOG_log_dir", cur_dir + "/LOG" + str(device_id) + "/ms_log")
         cmd = append_cmd_env(cmd, "GLOG_logtostderr", "0")
 
         print("core_nums:", cmdopt)
