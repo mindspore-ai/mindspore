@@ -91,7 +91,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
       MS_LOG(ERROR) << "tensor_data is nullptr";
       return nullptr;
     }
-    auto ret = memcpy_s(tensor_data, size * sizeof(float), tensor->MutableData(), size * sizeof(float));
+    auto ret = memcpy_s(tensor_data, tensor->Size(), tensor->MutableData(), tensor->Size());
     if (ret != EOK) {
       delete[] tensor_data;
       MS_LOG(ERROR) << "memcpy error: " << ret;
@@ -234,6 +234,9 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       return nullptr;
     }
     lite::Context context;
+    if (context.allocator == nullptr) {
+      context.allocator = lite::Allocator::Create();
+    }
     auto lite_kernel = GetLiteKernel(input_tensors, output_tensors, parameter, &context, lite_primitive.get());
     if (lite_kernel == nullptr) {
       MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";

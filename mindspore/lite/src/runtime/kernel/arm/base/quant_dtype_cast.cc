@@ -79,7 +79,12 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
     return RET_OK;
   }
   int thread_offset = task_id * thread_n_stride_;
-  auto quant_arg = in_tensors_.front()->GetQuantParams().front();
+  if (in_tensors_.front()->GetQuantParams().empty() && out_tensors_.front()->GetQuantParams().empty()) {
+    MS_LOG(ERROR) << "QuantDTypeCast need quantization parameters which is not found.";
+    return RET_ERROR;
+  }
+  auto quant_arg = !in_tensors_.front()->GetQuantParams().empty() ? in_tensors_.front()->GetQuantParams().front() :
+                   out_tensors_.front()->GetQuantParams().front();
   int ret;
   if (inverse_) {
     ret = DoDequantizeInt8(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
