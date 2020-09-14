@@ -51,6 +51,7 @@ class AlexNet(nn.Cell):
         self.fc3 = fc_with_initialize(4096, num_classes)
 
     def construct(self, x):
+        """define network"""
         x = self.conv1(x)
         x = self.relu(x)
         x = self.max_pool2d(x)
