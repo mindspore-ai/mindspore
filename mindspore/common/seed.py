@@ -14,6 +14,7 @@
 # ============================================================================
 """Provide random seed api."""
 import numpy as np
+import mindspore.dataset as de
 
 # set global RNG seed
 _GLOBAL_SEED = None
@@ -43,6 +44,7 @@ def set_seed(seed):
     if seed < 0:
         raise ValueError("The seed must be greater or equal to 0.")
     np.random.seed(seed)
+    de.config.set_seed(seed)
     global _GLOBAL_SEED
     _GLOBAL_SEED = seed
 

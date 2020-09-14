@@ -26,7 +26,6 @@ from src.config import cifar_cfg, imagenet_cfg
 
 def create_dataset_cifar10(data_home, repeat_num=1, training=True):
     """Data operations."""
-    ds.config.set_seed(1)
     data_dir = os.path.join(data_home, "cifar-10-batches-bin")
     if not training:
         data_dir = os.path.join(data_home, "cifar-10-verify-bin")
