@@ -28,6 +28,7 @@
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
+using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
 
@@ -130,18 +131,18 @@ int ArithmeticOpenCLKernel::InitBuffer() {
               MS_LOG(ERROR) << "Malloc buffer failed!";
               return RET_ERROR;
             }
-            std::function<float(float)> to_dtype = [](float x) -> float { return (float)x; };
+            std::function<float(float)> to_dtype = [](float x) -> float { return x; };
             PackNHWCToNC4HW4<float, float>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
             weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
             delete[] weight;
           } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
-            int16_t *weight = new (std::nothrow) int16_t[pack_weight_size];
+            float16_t *weight = new (std::nothrow) float16_t[pack_weight_size];
             if (weight == nullptr) {
               MS_LOG(ERROR) << "Malloc buffer failed!";
               return RET_ERROR;
             }
-            std::function<int16_t(float)> to_dtype = Float32ToShort;
-            PackNHWCToNC4HW4<float, int16_t>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
+            std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
+            PackNHWCToNC4HW4<float, float16_t>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
             weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
             delete[] weight;
           } else {
@@ -162,18 +163,18 @@ int ArithmeticOpenCLKernel::InitBuffer() {
               MS_LOG(ERROR) << "Malloc buffer failed!";
               return RET_ERROR;
             }
-            std::function<float(float)> to_dtype = [](float x) -> float { return (float)x; };
+            std::function<float(float)> to_dtype = [](float x) -> float { return x; };
             PackNHWCToNHWC4<float, float>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
             weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
             delete[] weight;
           } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
-            int16_t *weight = new (std::nothrow) int16_t[pack_weight_size];
+            float16_t *weight = new (std::nothrow) float16_t[pack_weight_size];
             if (weight == nullptr) {
               MS_LOG(ERROR) << "Malloc buffer failed!";
               return RET_ERROR;
             }
-            std::function<int16_t(float)> to_dtype = Float32ToShort;
-            PackNHWCToNHWC4<float, int16_t>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
+            std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
+            PackNHWCToNHWC4<float, float16_t>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
             weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
             delete[] weight;
           } else {
@@ -197,28 +198,69 @@ int ArithmeticOpenCLKernel::Init() {
   std::string kernel_name;
 
   const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
+
   if (arithmetic_parameter->broadcasting_) {
     element_flag_ = false;
-    kernel_name = "BoardcastArith";
+    kernel_name = "Broadcast";
   } else {
-    element_flag_ = true;
-    switch (op_parameter_->type_) {
-      case PrimitiveType_Mul:
-        kernel_name = "ElementMul";
-        break;
-      case PrimitiveType_Add:
-        kernel_name = "ElementAdd";
-        break;
-      case PrimitiveType_Sub:
-        kernel_name = "ElementSub";
-        break;
-      case PrimitiveType_Div:
-        kernel_name = "ElementDiv";
-        break;
-      default:
-        MS_LOG(ERROR) << "Error Operator type " << op_parameter_->type_;
-        break;
-    }
+    kernel_name = "Element";
+  }
+
+  switch (op_parameter_->type_) {
+    case PrimitiveType_Mul:
+      kernel_name += "Mul";
+      break;
+    case PrimitiveType_Add:
+      kernel_name += "Add";
+      break;
+    case PrimitiveType_Sub:
+      kernel_name += "Sub";
+      break;
+    case PrimitiveType_Div:
+      kernel_name += "Div";
+      break;
+    case PrimitiveType_LogicalAnd:
+      kernel_name += "And";
+      break;
+    case PrimitiveType_LogicalOr:
+      kernel_name += "Or";
+      break;
+    case PrimitiveType_Maximum:
+      kernel_name += "Max";
+      break;
+    case PrimitiveType_Minimum:
+      kernel_name += "Min";
+      break;
+    case PrimitiveType_FloorDiv:
+      kernel_name += "FloorDiv";
+      break;
+    case PrimitiveType_FloorMod:
+      kernel_name += "FloorMod";
+      break;
+    case PrimitiveType_SquaredDifference:
+      kernel_name += "SquaredDifference";
+      break;
+    case PrimitiveType_Equal:
+      kernel_name += "Equal";
+      break;
+    case PrimitiveType_NotEqual:
+      kernel_name += "NotEqual";
+      break;
+    case PrimitiveType_Less:
+      kernel_name += "Less";
+      break;
+    case PrimitiveType_LessEqual:
+      kernel_name += "LessEqual";
+      break;
+    case PrimitiveType_Greater:
+      kernel_name += "Greater";
+      break;
+    case PrimitiveType_GreaterEqual:
+      kernel_name += "GreaterEqual";
+      break;
+    default:
+      MS_LOG(ERROR) << "Error Operator type " << op_parameter_->type_;
+      return RET_ERROR;
   }
 
   lite::STATUS error_code = RET_OK;
@@ -265,26 +307,8 @@ int ArithmeticOpenCLKernel::Run() {
     void *weight = weight_ptr_ == nullptr ? in_tensors_[1]->MutableData() : weight_ptr_;
     runtime_->SetKernelArg(kernel_, arg_idx++, weight);
   } else {
-    float value = static_cast<float *>(in_tensors_[1]->MutableData())[0];
-    switch (op_parameter_->type_) {
-      case PrimitiveType_Mul:
-        weight_ = value;
-        break;
-      case PrimitiveType_Add:
-        bias_ = value;
-        break;
-      case PrimitiveType_Sub:
-        bias_ = -1 * value;
-        break;
-      case PrimitiveType_Div:
-        weight_ = 1 / value;
-        break;
-      default:
-        MS_LOG(ERROR) << "Error Operator type " << op_parameter_->type_;
-        break;
-    }
-    runtime_->SetKernelArg(kernel_, arg_idx++, weight_);
-    runtime_->SetKernelArg(kernel_, arg_idx++, bias_);
+    float weight = static_cast<float *>(in_tensors_[1]->MutableData())[0];
+    runtime_->SetKernelArg(kernel_, arg_idx++, weight);
   }
   runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
 
@@ -345,4 +369,36 @@ REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Mul, OpenCLArithmeticKernelCr
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Add, OpenCLArithmeticKernelCreator)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Sub, OpenCLArithmeticKernelCreator)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Div, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LogicalAnd, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LogicalOr, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Maximum, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Minimum, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_FloorDiv, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_FloorMod, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SquaredDifference, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Equal, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_NotEqual, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Less, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LessEqual, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Greater, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_GreaterEqual, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Eltwise, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Mul, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Add, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Sub, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Div, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LogicalAnd, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LogicalOr, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Maximum, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Minimum, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_FloorDiv, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_FloorMod, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SquaredDifference, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Equal, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_NotEqual, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Less, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LessEqual, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Greater, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_GreaterEqual, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Eltwise, OpenCLArithmeticKernelCreator)
 }  // namespace mindspore::kernel
