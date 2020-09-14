@@ -148,7 +148,10 @@ bool AscendInferenceSession::CompareInput(const tensor::TensorPtr &input, const 
   vector<size_t> trans_input;
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(trans_input),
                        [](const int dim) { return static_cast<size_t>(dim); });
-  if (trans_input != parameter_shape) {
+  auto is_scalar_shape = [](const vector<size_t> &shape) {
+    return shape.empty() || (shape.size() == 1 && shape[0] == 1);
+  };
+  if ((!is_scalar_shape(trans_input) || !is_scalar_shape(parameter_shape)) && (trans_input != parameter_shape)) {
     MS_LOG(ERROR) << "Input shape is inconsistent. The actual shape is " << PrintInputShape(trans_input)
                   << ", but the parameter shape is " << PrintInputShape(parameter_shape)
                   << ". parameter : " << parameter->DebugString();
