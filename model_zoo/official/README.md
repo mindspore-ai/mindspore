@@ -15,9 +15,9 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
  
 # Table of Contents
 
-- [Models](#models)
-    - [Computer Vision](#computer-vision)
-        - [Image Classification](#image-classification)
+- [Models](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official)
+    - [Computer Vision](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
+        - [Image Classification](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
             - [GoogleNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/googlenet/README.md)
             - [ResNet50[benchmark]](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet/README.md)
             - [ResNet50_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet/resnet_quant/README.md)
@@ -27,26 +27,30 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
             - [AlexNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/alexnet/README.md)
             - [LeNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet/README.md)
             - [LeNet_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet_quant/README.md)
-        - [Object Detection and Segmentation](#object-detection-and-segmentation)
+            - [InceptionV3](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3/README.md)                       
+        - [Object Detection and Segmentation](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
             - [DeepLabV3](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeplabv3/README.md)
             - [FasterRCNN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/faster_rcnn/README.md)
-            - [YoloV3-DarkNet53](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53/README.md)
+            - [YoloV3-DarkNet53](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53/README.md)         
             - [YoloV3-ResNet18](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_resnet18/README.md)
             - [MobileNetV2](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv2/README.md)
             - [MobileNetV2_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv2_quant/README.md)
             - [MobileNetV3](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv3/README.md)
+            - [MaskRCNN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/maskrcnn/README.md)            
             - [SSD](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd/README.md)
             - [Warp-CTC](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/warpctc/README.md)
 
-    - [Natural Language Processing](#natural-language-processing)
+    - [Natural Language Processing](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp)
         - [BERT[benchmark]](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert/README.md)
         - [TinyBERT](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/tinybert/README.md)
+        - [LSTM](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/lstm/README.md)        
         - [MASS](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/mass/README.md)
         - [Transformer](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/transformer/README.md)
-    - [Recommendation](#recommendation)
+    - [Recommender Systems](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend)
         - [DeepFM](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend/deepfm/README.md)
         - [Wide&Deep[benchmark]](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend/wide_and_deep/README.md)
-    - [Graph Neural Networks](#gnn)
+    - [Graph Neural Networks](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn)
+        - [BGCF](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/bgcf/README.md)    
         - [GAT](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gat/README.md)
         - [GCN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gcn//README.md)
 
@@ -55,7 +59,8 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
 # Announcements
 | Date         | News                                                         |
 | ------------ | ------------------------------------------------------------ |
-| June 30, 2020 | Support [MindSpore v0.6.0-beta](https://www.mindspore.cn/news/newschildren?id=221) |
+| September 01, 2020 | Support [MindSpore v0.7.0-beta](https://www.mindspore.cn/news/newschildren/en?id=246) |
+| July 31, 2020 | Support [MindSpore v0.6.0-beta](https://www.mindspore.cn/news/newschildren/en?id=237) |
 
 
 
