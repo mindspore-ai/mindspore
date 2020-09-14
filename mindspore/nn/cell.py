@@ -786,8 +786,8 @@ class Cell(Cell_):
             for par_name, par in params:
                 if par.inited_param is not None:
                     par = par.inited_param
-                if par is not None and par not in params_set:
-                    params_set.add(par)
+                if par is not None and id(par) not in params_set:
+                    params_set.add(id(par))
                     par_new_name = par_name
                     if cell_name:
                         par_new_name = cell_name + '.' + par_new_name
