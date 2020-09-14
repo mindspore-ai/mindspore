@@ -648,9 +648,6 @@ bool JsonDescToAnf(const std::string &json_desc, const std::map<std::string, Anf
 std::unordered_set<PrimitivePtr> GetExpandOps() {
   std::unordered_set<PrimitivePtr> expand_ops = {
     prim::kPrimSquare,
-    prim::kPrimGelu,
-    prim::kPrimSoftmax,
-    prim::kPrimLayerNorm,
   };
   return expand_ops;
 }
