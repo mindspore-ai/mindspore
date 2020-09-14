@@ -102,7 +102,8 @@ void Executor::CheckException() {
 }
 
 void Executor::WorkerJoin() {
-  if (worker_->joinable()) {
+  // Avoid worker thread join itself which will cause deadlock
+  if (worker_->joinable() && worker_->get_id() != std::this_thread::get_id()) {
     {
       std::unique_lock<std::mutex> lock(task_mutex_);
       auto task = std::make_shared<ExitTask>();

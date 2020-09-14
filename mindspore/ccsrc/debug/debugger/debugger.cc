@@ -428,6 +428,8 @@ void Debugger::CommandLoop() {
       case DebuggerCommand::kExitCMD:
         MS_LOG(INFO) << "ExitCMD";
         Exit();
+        // Used for debugger termination
+        run = true;
         break;
       case DebuggerCommand::kRunCMD:
         MS_LOG(INFO) << "RunCMD";
@@ -578,8 +580,18 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
 
 void Debugger::Exit() {
   // clear resource before exit
-  pipeline::ClearResAtexit();
-  std::exit(EXIT_FAILURE);
+  // For node level, debugger has to exit itself because main thread can only exit in step bundary;
+  // For step level, debugger will notify main thread to exit;
+  if (run_level_ == "node") {
+    pipeline::ClearResAtexit();
+    exit(1);
+  } else if (run_level_ == "step") {
+    // Notify main thread to terminate
+    pipeline::ExecutorPy::DebugTerminate(true);
+  } else {
+    pipeline::ClearResAtexit();
+    exit(1);
+  }
 }
 
 std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode) {
