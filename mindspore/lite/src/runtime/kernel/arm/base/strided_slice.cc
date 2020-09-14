@@ -29,7 +29,12 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_StridedSlice;
 
 namespace mindspore::kernel {
-
+namespace {
+constexpr size_t kMultiInputsSize = 4;
+constexpr size_t kBeginsIndex = 1;
+constexpr size_t kEndsIndex = 2;
+constexpr size_t kStridesInex = 3;
+}  // namespace
 int StridedSliceCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -52,6 +57,39 @@ int StridedSliceCPUKernel::ReSize() {
   return RET_OK;
 }
 
+int StridedSliceCPUKernel::HandleMultiInputs() {
+  if (in_tensors_.size() != kMultiInputsSize) {
+    MS_LOG(ERROR) << "Inputs size should be " << kMultiInputsSize << ", got " << in_tensors_.size();
+    return RET_ERROR;
+  }
+  auto param = reinterpret_cast<StridedSliceParameter *>(op_parameter_);
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "StridedSliceParamater cast nullptr";
+    return RET_ERROR;
+  }
+  auto begins = in_tensors_.at(kBeginsIndex);
+  MS_ASSERT(begins != nullptr);
+  int axis_num = begins->ElementsNum();
+  if (axis_num > DIMENSION_6D) {
+    MS_LOG(ERROR) << "StridedSlice supports max dimension " << DIMENSION_6D << ", input begins dim is " << axis_num;
+    return RET_ERROR;
+  }
+  memcpy(param->begins_, begins->MutableData(), axis_num * sizeof(int));
+
+  auto ends = in_tensors_.at(kEndsIndex);
+  MS_ASSERT(ends != nullptr);
+  MS_ASSERT(axis_num == ends->ElementsNum());
+  memcpy(param->ends_, ends->MutableData(), axis_num * sizeof(int));
+
+  auto strides = in_tensors_.at(kStridesInex);
+  MS_ASSERT(strides != nullptr);
+  MS_ASSERT(axis_num == strides->ElementsNum());
+  memcpy(param->strides_, strides->MutableData(), axis_num * sizeof(int));
+
+  param->num_axes_ = axis_num;
+  return RET_OK;
+}
+
 int StridedSliceCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
@@ -63,7 +101,12 @@ int StridedSliceCPUKernel::Run() {
   auto output = out_tensors_.at(0);
   MS_ASSERT(input);
   MS_ASSERT(output);
-
+  if (in_tensors().size() == kMultiInputsSize) {
+    ret = HandleMultiInputs();
+    if (ret != RET_OK) {
+      return ret;
+    }
+  }
   ret = DoStridedSlice(input->MutableData(), output->MutableData(),
                        reinterpret_cast<StridedSliceParameter *>(op_parameter_));
   if (ret != RET_OK) {

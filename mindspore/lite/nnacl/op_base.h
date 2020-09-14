@@ -39,7 +39,7 @@
 #define MSVALID(left, x, right) (MSMIN((MSMAX(left, x)), right))
 
 #define DIMENSION_4D 4
-
+#define DIMENSION_6D 6
 #define kInputIndex 0
 #define kWeightIndex 1
 #define kBiasIndex 2

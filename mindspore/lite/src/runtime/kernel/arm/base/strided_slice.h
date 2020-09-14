@@ -33,6 +33,9 @@ class StridedSliceCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+
+ private:
+  int HandleMultiInputs();
 };
 }  // namespace mindspore::kernel
 
