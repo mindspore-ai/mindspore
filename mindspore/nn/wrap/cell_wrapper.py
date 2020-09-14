@@ -185,23 +185,21 @@ class TrainOneStepCell(Cell):
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
         self.reducer_flag = False
-        self.grad_reducer = None
-        parallel_mode = _get_parallel_mode()
-        if parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL):
+        self.grad_reducer = F.identity
+        self.parallel_mode = _get_parallel_mode()
+        if self.parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL):
             self.reducer_flag = True
         if self.reducer_flag:
             mean = _get_gradients_mean()
             degree = _get_device_num()
-            self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
+            self.grad_reducer = DistributedGradReducer(self.weights, mean, degree)
 
     def construct(self, *inputs):
         weights = self.weights
         loss = self.network(*inputs)
         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
         grads = self.grad(self.network, weights)(*inputs, sens)
-        if self.reducer_flag:
-            # apply grad reducer on grads
-            grads = self.grad_reducer(grads)
+        grads = self.grad_reducer(grads)
         return F.depend(loss, self.optimizer(grads))
 
 

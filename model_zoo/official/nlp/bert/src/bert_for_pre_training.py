@@ -271,23 +271,7 @@ class BertTrainOneStepCell(nn.Cell):
         sens (Number): The adjust parameter. Default: 1.0.
     """
     def __init__(self, network, optimizer, sens=1.0):
-        super(BertTrainOneStepCell, self).__init__(auto_prefix=False)
-        self.network = network
-        self.network.set_grad()
-        self.weights = optimizer.parameters
-        self.optimizer = optimizer
-        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
-        self.sens = sens
-        self.reducer_flag = False
-        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
-            self.reducer_flag = True
-        self.grad_reducer = None
-        if self.reducer_flag:
-            mean = context.get_auto_parallel_context("gradients_mean")
-            degree = get_group_size()
-            self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
-
+        super(BertTrainOneStepCell, self).__init__(network, optimizer, sens)
         self.cast = P.Cast()
         self.hyper_map = C.HyperMap()
 
@@ -322,9 +306,7 @@ class BertTrainOneStepCell(nn.Cell):
                                                  self.cast(F.tuple_to_array((self.sens,)),
                                                            mstype.float32))
         grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
-        if self.reducer_flag:
-            # apply grad reducer on grads
-            grads = self.grad_reducer(grads)
+        grads = self.grad_reducer(grads)
         succ = self.optimizer(grads)
         return F.depend(loss, succ)
 
