@@ -187,7 +187,9 @@ class ConvertToQuantNetwork:
                                                      num_bits=self.weight_bits,
                                                      fake=True,
                                                      symmetric=self.weight_symmetric,
-                                                     narrow_range=self.weight_range)
+                                                     narrow_range=self.weight_range,
+                                                     has_bias=conv_inner.has_bias,
+                                                     bias_init=conv_inner.bias_init)
                 # change original network BatchNormal OP parameters to quant network
                 conv_inner.gamma = subcell.batchnorm.gamma
                 conv_inner.beta = subcell.batchnorm.beta
@@ -212,7 +214,9 @@ class ConvertToQuantNetwork:
                                                             per_channel=self.weight_channel,
                                                             num_bits=self.weight_bits,
                                                             symmetric=self.weight_symmetric,
-                                                            narrow_range=self.weight_range)
+                                                            narrow_range=self.weight_range,
+                                                            has_bias=conv_inner.has_bias,
+                                                            bias_init=conv_inner.bias_init)
                 # change original network BatchNormal OP parameters to quant network
                 conv_inner.batchnorm.gamma = subcell.batchnorm.gamma
                 conv_inner.batchnorm.beta = subcell.batchnorm.beta
