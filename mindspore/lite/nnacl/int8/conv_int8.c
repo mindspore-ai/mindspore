@@ -1029,6 +1029,14 @@ void Conv1x1Int8Arm32(const int8_t *packed_input, const int8_t *packed_weight, i
                       const int32_t *bias, int row, int col, int deep16, int32_t *left_shift, int32_t *right_shift,
                       int32_t *multiplier, ConvParameter *conv_param) {
   int is_per_channel = conv_param->conv_quant_arg_.filter_arg_num_ != 1 ? true : false;
+
+  if (is_per_channel == 1) {
+    return MatMulInt8_4x2_r(
+      packed_input, packed_weight, dst, row, col, deep16, conv_param->output_channel_, input_sum, bias, left_shift,
+      right_shift, multiplier, conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
+      conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0], true);
+  }
+
 #ifdef ENABLE_ARM32
   MatmulInt8Neon32(packed_input, packed_weight, dst, row, col, deep16, input_sum, bias,
                    conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0],
