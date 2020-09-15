@@ -2329,21 +2329,6 @@ test_case_other_ops = [
         'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
                         Tensor(np.array([1.2]).astype(np.float32))],
         'skip': ['backward']}),
-    ('ConfusionMulGrad_1', {
-        'block': P.ConfusionMulGrad(axis=[0], keep_dims=False),
-        'desc_inputs': [[3, 2], [3, 2], [3, 2]],
-        'desc_bprop': [[3, 2], [2]],
-        'skip': ['backward']}),
-    ('ConfusionMulGrad_2', {
-        'block': P.ConfusionMulGrad(axis=[0], keep_dims=True),
-        'desc_inputs': [[3, 2], [3, 2], [3, 2]],
-        'desc_bprop': [[3, 2], [1, 2]],
-        'skip': ['backward']}),
-    ('ConfusionMulGrad_3', {
-        'block': P.ConfusionMulGrad(axis=(), keep_dims=True),
-        'desc_inputs': [[2, 3, 4], [2, 3, 4], [2, 3, 4]],
-        'desc_bprop': [[2, 3, 4], [1, 1, 1]],
-        'skip': ['backward']}),
     ('HistogramSummary', {
         'block': HistogramSummaryNet(),
         'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
