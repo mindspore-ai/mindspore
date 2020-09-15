@@ -20,7 +20,7 @@ from abc import abstractmethod, ABCMeta
 from packaging import version
 from . import log as logger
 from .version import __version__
-from .package_name import __package_name__
+from .default_config import __package_name__
 
 
 class EnvChecker(metaclass=ABCMeta):
