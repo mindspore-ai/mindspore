@@ -35,7 +35,7 @@ def argparse_init():
     parser.add_argument("--dropout_flag", type=int, default=1) # The dropout rate
 
     parser.add_argument("--output_path", type=str, default="./output/")  # The location of the output file.
-    parser.add_argument("--ckpt_path", type=str, default="./checkpoints/")  # The location of the checkpoints file.
+    parser.add_argument("--ckpt_path", type=str, default="./")  # The location of the checkpoints file.
     parser.add_argument("--eval_file_name", type=str, default="eval.log")  # Eval output file.
     parser.add_argument("--loss_file_name", type=str, default="loss.log")  # Loss output file.
     return parser
@@ -67,7 +67,7 @@ class WideDeepConfig():
         self.output_path = "./output/"
         self.eval_file_name = "eval.log"
         self.loss_file_name = "loss.log"
-        self.ckpt_path = "./checkpoints/"
+        self.ckpt_path = "./"
 
     def argparse_init(self):
         """

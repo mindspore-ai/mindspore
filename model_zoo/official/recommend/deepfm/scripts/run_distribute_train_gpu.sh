@@ -31,7 +31,7 @@ env > env.log
 mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
   python -u train.py \
     --dataset_path=$DATA_URL \
-    --ckpt_path="checkpoint" \
+    --ckpt_path="./" \
     --eval_file_name='auc.log' \
     --loss_file_name='loss.log' \
     --device_target='GPU' \
