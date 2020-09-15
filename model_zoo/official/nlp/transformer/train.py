@@ -16,6 +16,7 @@
 
 import time
 import argparse
+import ast
 
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
@@ -94,8 +95,6 @@ def argparse_init():
                         help="Use lossscale or not, default is true.")
     parser.add_argument("--do_shuffle", type=str, default="true", choices=['true', 'false'],
                         help="Enable shuffle for dataset, default is true.")
-    parser.add_argument("--enable_data_sink", type=str, default="false", choices=['true', 'false'],
-                        help="Enable data sink, default is false.")
     parser.add_argument("--checkpoint_path", type=str, default="", help="Checkpoint file path")
     parser.add_argument("--enable_save_ckpt", type=str, default="true", choices=['true', 'false'],
                         help="Enable save checkpoint, default is true.")
@@ -105,8 +104,8 @@ def argparse_init():
     parser.add_argument("--save_checkpoint_path", type=str, default="./checkpoint/", help="Save checkpoint file path, "
                                                                                           "default is ./checkpoint/")
     parser.add_argument("--data_path", type=str, default="", help="Data path, it is better to use absolute path")
-    parser.add_argument("--bucket_boundaries", type=list, default=[16, 32, 48, 64, 128], help="sequence length for "
-                                                                                              "different bucket")
+    parser.add_argument("--bucket_boundaries", type=ast.literal_eval, default=[16, 32, 48, 64, 128],
+                        help="sequence length for different bucket")
 
     return parser
 
@@ -131,7 +130,6 @@ def run_transformer_train():
         rank_id = 0
     dataset = create_transformer_dataset(epoch_count=1, rank_size=device_num,
                                          rank_id=rank_id, do_shuffle=args.do_shuffle,
-                                         enable_data_sink=args.enable_data_sink,
                                          dataset_path=args.data_path,
                                          bucket_boundaries=args.bucket_boundaries)
 
@@ -171,13 +169,7 @@ def run_transformer_train():
     netwithgrads.set_train(True)
     model = Model(netwithgrads)
 
-    enable_sink = (args.enable_data_sink == "true")
-    if enable_sink:
-        sink_size = args.save_checkpoint_steps
-        model.train(args.epoch_size*dataset.get_dataset_size()//sink_size, dataset, callbacks=callbacks,
-                    dataset_sink_mode=enable_sink, sink_size=sink_size)
-    else:
-        model.train(args.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=enable_sink)
+    model.train(args.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=False)
 
 if __name__ == '__main__':
     run_transformer_train()
