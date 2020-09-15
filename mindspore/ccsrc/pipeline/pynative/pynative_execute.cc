@@ -1468,7 +1468,7 @@ void PynativeExecutor::Clear(const std::string &flag) {
     MapClear<std::unordered_map<std::string, FuncGraphPtr>>(&cell_graph_map_, flag);
     MapClear<std::unordered_map<std::string, ResourcePtr>>(&cell_resource_map_, flag);
     MapClear<std::unordered_map<std::string, FuncGraphPtr>>(&df_builder_map_, flag);
-    Clean();
+
     // Maybe exit in the pynative runing op, so need reset pynative flag.
     auto ms_context = MsContext::GetInstance();
     if (ms_context != nullptr) {
@@ -1477,6 +1477,7 @@ void PynativeExecutor::Clear(const std::string &flag) {
     ConfigManager::GetInstance().ResetIterNum();
     if (top_graph_cells_.find(flag) != top_graph_cells_.end()) {
       op_forward_map_.clear();
+      Clean();
     }
     return;
   }
