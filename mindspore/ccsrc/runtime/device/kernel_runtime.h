@@ -96,7 +96,7 @@ class KernelRuntime {
   void AssignCommunicationNodeMem(MemType type, const AnfNodePtr &node);
 
  private:
-  void AssignStaticMemoryOutput(session::KernelGraph *graph);
+  void AssignStaticMemoryOutput(const session::KernelGraph *graph);
   void GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod, const AnfNodePtr &kernel,
                      AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces, AddressPtrList *kernel_outputs);
   bool LaunchKernelMod(const session::KernelGraph &graph);
