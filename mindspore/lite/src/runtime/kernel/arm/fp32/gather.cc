@@ -106,7 +106,7 @@ int GatherCPUKernel::Run() {
     return ret;
   }
 
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, GatherRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, GatherRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Gather function error error_code[" << ret << "]";
   }
@@ -141,7 +141,7 @@ int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, lit
 
 kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc,
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Gather);
   if (opParameter == nullptr) {

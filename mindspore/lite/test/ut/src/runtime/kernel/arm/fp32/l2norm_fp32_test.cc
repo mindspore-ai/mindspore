@@ -36,7 +36,7 @@ class TestL2NormFp32 : public mindspore::CommonTest {
   std::vector<lite::Tensor *> outputs_{&out_tensor_};
   L2NormParameter param_;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Resize};
-  lite::Context ctx_ = lite::Context();
+  lite::InnerContext ctx_ = lite::InnerContext();
   kernel::KernelCreator creator_ = nullptr;
   kernel::LiteKernel *kernel_ = nullptr;
 };
@@ -65,8 +65,9 @@ void TestL2NormFp32::Init(const std::vector<int> &input_shape, const std::vector
   param_.act_type_ = activation_type;
 
   desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_L2Norm};
-  ctx_ = lite::Context();
+  ctx_ = lite::InnerContext();
   ctx_.thread_num_ = thread_num;
+  ASSERT_EQ(lite::RET_OK, ctx_.Init());
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator_, nullptr);
   kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc, nullptr);

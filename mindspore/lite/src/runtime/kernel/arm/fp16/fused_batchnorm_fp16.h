@@ -24,7 +24,7 @@ namespace mindspore::kernel {
 class FusedBatchnormFp16CPUKernel : public FusedBatchnormCPUKernel {
  public:
   FusedBatchnormFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                              const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                               const mindspore::lite::PrimitiveC *primitive)
       : FusedBatchnormCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   virtual ~FusedBatchnormFp16CPUKernel() {}

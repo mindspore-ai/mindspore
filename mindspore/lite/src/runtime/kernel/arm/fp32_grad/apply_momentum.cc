@@ -77,7 +77,7 @@ int ApplyMomentumCPUKernel::Init() {
 
 kernel::LiteKernel *CpuApplyMomentumFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,
-                                                      OpParameter *opParameter, const lite::Context *ctx,
+                                                      OpParameter *opParameter, const lite::InnerContext *ctx,
                                                       const kernel::KernelKey &desc,
                                                       const lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_ApplyMomentum);

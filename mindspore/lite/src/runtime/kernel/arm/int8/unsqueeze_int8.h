@@ -22,13 +22,13 @@
 #include "nnacl/int8/unsqueeze_int8.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class Unsqueezeint8CPUKernel : public LiteKernel {
  public:
   Unsqueezeint8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                         const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                         const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
     Unsq_para_ = reinterpret_cast<UnSqueezeParameter *>(op_parameter_);

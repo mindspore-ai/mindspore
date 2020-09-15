@@ -21,13 +21,13 @@
 #include "src/lite_kernel.h"
 #include "nnacl/split_parameter.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class SplitBaseCPUKernel : public LiteKernel {
  public:
   SplitBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                     const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     param = reinterpret_cast<SplitParameter *>(op_parameter_);
@@ -39,7 +39,7 @@ class SplitBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 
  protected:
-  const Context *ctx_;
+  const InnerContext *ctx_;
   int thread_count_;
   int thread_n_stride_;
   int thread_n_num_;

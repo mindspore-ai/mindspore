@@ -74,7 +74,7 @@ int ExpandDimsCPUKernel::Run() {
   }
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, ExpandDimsRun, this, thread_sz_count_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, ExpandDimsRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ExpandDimsRun error error_code[" << ret << "]";
     return ret;
@@ -84,7 +84,7 @@ int ExpandDimsCPUKernel::Run() {
 
 kernel::LiteKernel *CpuExpandsDimsFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                     const std::vector<lite::Tensor *> &outputs,
-                                                    OpParameter *opParameter, const lite::Context *ctx,
+                                                    OpParameter *opParameter, const lite::InnerContext *ctx,
                                                     const kernel::KernelKey &desc,
                                                     const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);

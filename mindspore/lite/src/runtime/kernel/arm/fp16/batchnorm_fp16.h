@@ -24,7 +24,7 @@ namespace mindspore::kernel {
 class BatchnormFp16CPUKernel : public BatchnormCPUKernel {
  public:
   BatchnormFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                         const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                         const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
       : BatchnormCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   virtual ~BatchnormFp16CPUKernel() {}

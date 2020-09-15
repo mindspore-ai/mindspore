@@ -23,13 +23,13 @@
 #include "nnacl/fp32/matmul.h"
 #include "src/runtime/kernel/arm/base/fullconnection_base.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class FullconnectionCPUKernel : public FullconnectionBaseCPUKernel {
  public:
   FullconnectionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                          const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                          const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                           const mindspore::lite::PrimitiveC *primitive)
       : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~FullconnectionCPUKernel() override;

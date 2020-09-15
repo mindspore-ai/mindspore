@@ -103,7 +103,7 @@ int PowerInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return ret;
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, PowerInt8Run, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, PowerInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PowerInt8Run error, error_code[" << ret << "]";
   }

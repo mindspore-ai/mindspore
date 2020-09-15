@@ -23,13 +23,13 @@
 
 #define REVERSE_STRIDE_MAX_SIZE 4
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class ReverseCPUKernel : public LiteKernel {
  public:
   ReverseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                   const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                    const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
   ~ReverseCPUKernel() {

@@ -187,7 +187,7 @@ int ArithmeticSelfOpenCLKernel::Run() {
 
 kernel::LiteKernel *OpenCLArithmeticSelfKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,
-                                                      OpParameter *opParameter, const lite::Context *ctx,
+                                                      OpParameter *opParameter, const lite::InnerContext *ctx,
                                                       const kernel::KernelKey &desc,
                                                       const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) ArithmeticSelfOpenCLKernel(opParameter, inputs, outputs);

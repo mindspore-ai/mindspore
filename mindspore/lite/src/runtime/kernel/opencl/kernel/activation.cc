@@ -137,7 +137,7 @@ int ActivationOpenClKernel::GetImageSize(size_t idx, std::vector<size_t> *img_si
 
 kernel::LiteKernel *OpenClActivationFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,
-                                                      OpParameter *opParameter, const lite::Context *ctx,
+                                                      OpParameter *opParameter, const lite::InnerContext *ctx,
                                                       const kernel::KernelKey &desc,
                                                       const mindspore::lite::PrimitiveC *primitive) {
   if (inputs.empty()) {

@@ -214,7 +214,7 @@ int ConvolutionSWFP16CPUKernel::Run() {
   int in_channel = conv_param_->input_channel_;
   convert_func_(reinterpret_cast<void *>(execute_input_), nhwc4_input_, in_batch, in_h * in_w, in_channel);
 
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ConvolutionSWFp16Impl, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionSWFp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv fp16 error error_code[" << error_code << "]";
     FreeTmpBuffer();

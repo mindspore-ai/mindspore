@@ -77,7 +77,7 @@ int FillCPUKernel::Run() {
   auto fill_data = reinterpret_cast<float *>(fillData->MutableData());
   src_data_ = fill_data[0];
   out_ptr_ = reinterpret_cast<float *>(output->MutableData());
-  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, FillRun, this, thread_sz_count_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, FillRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FillRun error error_code[" << ret << "]";
     return ret;
@@ -87,7 +87,7 @@ int FillCPUKernel::Run() {
 
 kernel::LiteKernel *CpuFillFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const lite::Context *ctx, const kernel::KernelKey &desc,
+                                             const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   if (opParameter == nullptr) {

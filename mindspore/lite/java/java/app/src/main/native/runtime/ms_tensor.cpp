@@ -170,6 +170,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setData(J
   auto *data_arr = env->GetByteArrayElements(data, &is_copy);
   auto *local_data = ms_tensor_ptr->MutableData();
   memcpy(local_data, data_arr, data_len);
+  env->ReleaseByteArrayElements(data, data_arr, JNI_ABORT);
   return static_cast<jboolean>(true);
 }
 
@@ -200,6 +201,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setByteBu
   auto *data_arr = env->GetByteArrayElements(data, &is_copy);
   auto *local_data = ms_tensor_ptr->MutableData();
   memcpy(local_data, data_arr, data_len);
+  env->ReleaseByteArrayElements(data, data_arr, JNI_ABORT);
   return static_cast<jboolean>(true);
 }
 

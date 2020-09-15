@@ -36,7 +36,7 @@ class OpenCLExecutor : Executor {
           const session::KernelCallBack &after = nullptr);
 
  protected:
-  Context *context = nullptr;
+  InnerContext *context = nullptr;
   OpenCLAllocator *allocator_;
 };
 }  // namespace mindspore::lite::opencl

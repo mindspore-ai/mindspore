@@ -138,7 +138,7 @@ int BiasAddOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
 
 kernel::LiteKernel *OpenCLBiasAddKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc,
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                const lite::PrimitiveC *primitive) {
   if (inputs.size() == 0) {
     MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << inputs.size();

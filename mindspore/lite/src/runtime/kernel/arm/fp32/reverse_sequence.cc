@@ -103,7 +103,7 @@ int ReverseSequenceCPUKernel::Run() {
 
 kernel::LiteKernel *CpuReverseSequenceFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                         const std::vector<lite::Tensor *> &outputs,
-                                                        OpParameter *parameter, const lite::Context *ctx,
+                                                        OpParameter *parameter, const lite::InnerContext *ctx,
                                                         const KernelKey &desc,
                                                         const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter != nullptr);

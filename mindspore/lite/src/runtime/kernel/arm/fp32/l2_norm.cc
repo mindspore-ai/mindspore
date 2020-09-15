@@ -151,7 +151,7 @@ int L2NormCPUKernel::Run() {
   output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
   if (l2_norm_param_->axis_num_ == 0 || l2_norm_param_->axis_num_ == input_shape.size()) {
     // all axis
-    ret = ParallelLaunch(THREAD_POOL_DEFAULT, SquareSumRun, this, context_->thread_num_);
+    ret = ParallelLaunch(this->context_->thread_pool_, SquareSumRun, this, context_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "L2Norm error: error_code[" << ret << "]";
       return RET_ERROR;
@@ -161,13 +161,13 @@ int L2NormCPUKernel::Run() {
       sum += tmp_sum_[i];
     }
     sqrt_sum_ = sqrt(sum > l2_norm_param_->epsilon_ ? sum : l2_norm_param_->epsilon_);
-    ret = ParallelLaunch(THREAD_POOL_DEFAULT, L2NormRun, this, context_->thread_num_);
+    ret = ParallelLaunch(this->context_->thread_pool_, L2NormRun, this, context_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "L2Norm error: error_code[" << ret << "]";
       return RET_ERROR;
     }
   } else if (l2_norm_param_->axis_num_ == 1 && l2_norm_param_->axis_[0] == static_cast<int>(input_shape.size()) - 1) {
-    ret = ParallelLaunch(THREAD_POOL_DEFAULT, L2NormTrailingAxisRun, this, context_->thread_num_);
+    ret = ParallelLaunch(this->context_->thread_pool_, L2NormTrailingAxisRun, this, context_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "L2Norm error: error_code[" << ret << "]";
       return RET_ERROR;
@@ -181,7 +181,7 @@ int L2NormCPUKernel::Run() {
 
 kernel::LiteKernel *CpuL2NormFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *param,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc,
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "input param is nullptr!";

@@ -24,7 +24,7 @@
 #endif
 #include "src/ops/primitive_c.h"
 #include "nnacl/op_base.h"
-#include "include/context.h"
+#include "src/inner_context.h"
 #include "src/tensor.h"
 #include "include/errorcode.h"
 
@@ -56,7 +56,7 @@ class LiteKernel {
   LiteKernel() = default;
   // parameter should be deleted or freed by caller, and should be deleted or freed after LiteKernel is deleted
   LiteKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &in_tensors,
-             const std::vector<lite::Tensor *> &out_tensors, const lite::Context *ctx,
+             const std::vector<lite::Tensor *> &out_tensors, const lite::InnerContext *ctx,
              const mindspore::lite::PrimitiveC *primitive)
       : op_parameter_(parameter),
         in_tensors_(in_tensors),
@@ -156,7 +156,7 @@ class LiteKernel {
   std::vector<lite::Tensor *> in_tensors_;
   std::vector<lite::Tensor *> out_tensors_;
   const mindspore::lite::PrimitiveC *primitive_ = nullptr;
-  const lite::Context *context_ = nullptr;
+  const lite::InnerContext *context_ = nullptr;
   std::vector<LiteKernel *> in_kernels_;
   std::vector<LiteKernel *> out_kernels_;
   bool train_mode_ = false;
@@ -168,7 +168,7 @@ class SubGraphKernel : public LiteKernel {
   explicit SubGraphKernel(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                           const std::vector<kernel::LiteKernel *> &in_kernels,
                           const std::vector<kernel::LiteKernel *> &out_kernels,
-                          const std::vector<kernel::LiteKernel *> &nodes, const lite::Context *ctx,
+                          const std::vector<kernel::LiteKernel *> &nodes, const lite::InnerContext *ctx,
                           const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(nullptr, inputs, outputs, ctx, primitive), nodes_(nodes) {
     in_kernels_ = in_kernels;
@@ -186,7 +186,7 @@ class SubGraphKernel : public LiteKernel {
 
 typedef LiteKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                     const lite::Context *ctx, const KernelKey &desc,
+                                     const lite::InnerContext *ctx, const KernelKey &desc,
                                      const mindspore::lite::PrimitiveC *primitive);
 
 class LiteKernelUtil {

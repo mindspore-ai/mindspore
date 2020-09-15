@@ -22,13 +22,13 @@
 #include "include/context.h"
 #include "nnacl/fp32/fill.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class FillCPUKernel : public LiteKernel {
  public:
   FillCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                 const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
   ~FillCPUKernel() override = default;

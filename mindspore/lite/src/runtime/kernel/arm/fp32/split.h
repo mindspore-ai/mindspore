@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 class SplitCPUKernel : public SplitBaseCPUKernel {
  public:
   SplitCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                  const mindspore::lite::PrimitiveC *primitive)
       : SplitBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~SplitCPUKernel() override = default;

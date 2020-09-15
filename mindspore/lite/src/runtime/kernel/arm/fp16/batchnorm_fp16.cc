@@ -62,7 +62,7 @@ int BatchnormFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, BatchNormRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, BatchNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }
@@ -92,7 +92,7 @@ void BatchnormFp16CPUKernel::FreeInputAndOutput() {
 
 kernel::LiteKernel *CpuBatchnormFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) BatchnormFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {

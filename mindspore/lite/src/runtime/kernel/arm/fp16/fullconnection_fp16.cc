@@ -154,7 +154,7 @@ int FullconnectionFP16CPUKernel::Run() {
   } else {
     InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->MutableData()), a_pack_ptr_);
   }
-  ParallelLaunch(THREAD_POOL_DEFAULT, FcFP16Run, this, thread_count_);
+  ParallelLaunch(this->context_->thread_pool_, FcFP16Run, this, thread_count_);
   if (out_tensor->data_type() == kNumberTypeFloat32) {
     auto size = out_tensor->ElementsNum();
     auto out_tensor_data = reinterpret_cast<float *>(out_tensor->MutableData());
@@ -165,7 +165,7 @@ int FullconnectionFP16CPUKernel::Run() {
 
 kernel::LiteKernel *CpuFullConnectionFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                        const std::vector<lite::Tensor *> &outputs,
-                                                       OpParameter *opParameter, const lite::Context *ctx,
+                                                       OpParameter *opParameter, const lite::InnerContext *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) FullconnectionFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);

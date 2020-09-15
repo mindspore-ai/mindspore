@@ -52,8 +52,9 @@ TEST_F(TestConstantOfShapeFp32, Simple) {
   std::vector<int> a_shape = {4, 1, 1, 1};
   // std::vector<int> c_shape = {2, 2, 2, 1};
   int total_size = ConstantOfShapeTestInit(&inputs_, &outputs_, a, a_shape);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 4;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::ConstantOfShapeCPUKernel *op =
     new kernel::ConstantOfShapeCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx, nullptr);
   op->Init();

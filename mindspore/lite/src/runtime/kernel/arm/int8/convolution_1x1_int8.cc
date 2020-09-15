@@ -320,7 +320,7 @@ void Convolution1x1Int8CPUKernel::Pre1x1Trans(int8_t *src_input, int8_t *src_out
   }
 
   if (support_optimize_) {
-    ParallelLaunch(THREAD_POOL_DEFAULT, Convolution1x1Int8Pre, this, thread_count_hw_);
+    ParallelLaunch(this->context_->thread_pool_, Convolution1x1Int8Pre, this, thread_count_hw_);
   } else {
     RowMajor2Row16x4MajorInt8(input_ptr_, packed_input_, matmul_param_->row_, matmul_param_->deep_);
     PackInputSum16x4Int8(packed_input_, input_sum_, filter_zp_ptr_, conv_param_);
@@ -473,7 +473,7 @@ int Convolution1x1Int8CPUKernel::Run() {
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     Pre1x1Trans(src_in + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_,
                 src_out + batch_index * matmul_param_->row_ * matmul_param_->col_);
-    ParallelLaunch(THREAD_POOL_DEFAULT, Convolution1x1Int8Impl, this, thread_count_);
+    ParallelLaunch(this->context_->thread_pool_, Convolution1x1Int8Impl, this, thread_count_);
   }
 
   FreeRunBuf();

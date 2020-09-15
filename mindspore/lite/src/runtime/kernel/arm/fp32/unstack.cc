@@ -80,7 +80,7 @@ int UnstackCPUKernel::Run() {
 
 kernel::LiteKernel *CpuUnstackFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                const lite::Context *ctx, const KernelKey &desc,
+                                                const lite::InnerContext *ctx, const KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter != nullptr);
   MS_ASSERT(desc.type == PrimitiveType_Unstack);

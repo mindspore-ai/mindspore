@@ -62,7 +62,7 @@ int BroadcastToCPUKernel::Run() {
 
 kernel::LiteKernel *CpuBroadcastToFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                     const std::vector<lite::Tensor *> &outputs,
-                                                    OpParameter *op_parameter, const lite::Context *ctx,
+                                                    OpParameter *op_parameter, const lite::InnerContext *ctx,
                                                     const kernel::KernelKey &desc,
                                                     const mindspore::lite::PrimitiveC *primitive) {
   if (op_parameter == nullptr) {

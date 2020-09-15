@@ -26,13 +26,11 @@ namespace mindspore::kernel {
 class BNGradCPUKernel : public LiteKernel {
  public:
   explicit BNGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                           const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                            const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), workspace(nullptr),
-       workspace_size(0) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), workspace(nullptr), workspace_size(0) {}
   ~BNGradCPUKernel() override {
-    if (workspace)
-      delete [] workspace;
+    if (workspace) delete[] workspace;
   }
 
   int Init() override;

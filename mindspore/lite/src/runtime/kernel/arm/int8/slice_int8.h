@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 class SliceInt8CPUKernel : public SliceBaseCPUKernel {
  public:
   SliceInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
       : SliceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~SliceInt8CPUKernel() {}

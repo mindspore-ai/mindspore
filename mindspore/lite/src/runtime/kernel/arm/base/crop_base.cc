@@ -32,7 +32,7 @@ int CropBaseCPUKernel::Init() { return RET_OK; }
 
 kernel::LiteKernel *CpuCropInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const Context *ctx, const kernel::KernelKey &desc,
+                                             const InnerContext *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
@@ -56,7 +56,7 @@ kernel::LiteKernel *CpuCropInt8KernelCreator(const std::vector<lite::Tensor *> &
 
 kernel::LiteKernel *CpuCropInt32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const Context *ctx, const kernel::KernelKey &desc,
+                                              const InnerContext *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
@@ -80,7 +80,7 @@ kernel::LiteKernel *CpuCropInt32KernelCreator(const std::vector<lite::Tensor *> 
 
 kernel::LiteKernel *CpuCropFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const Context *ctx, const kernel::KernelKey &desc,
+                                             const InnerContext *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";

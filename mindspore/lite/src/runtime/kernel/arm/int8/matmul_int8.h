@@ -22,13 +22,13 @@
 #include "nnacl/quantization/quantize.h"
 #include "src/runtime/kernel/arm/base/matmul_base.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class MatmulInt8CPUKernel : public MatmulBaseCPUKernel {
  public:
   MatmulInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                      const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
       : MatmulBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~MatmulInt8CPUKernel() override;

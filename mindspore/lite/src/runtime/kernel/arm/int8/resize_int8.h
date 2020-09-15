@@ -28,7 +28,7 @@ namespace mindspore::kernel {
 class ResizeInt8CPUKernel : public ResizeBaseCPUKernel {
  public:
   ResizeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
       : ResizeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 

@@ -24,7 +24,6 @@
 #include "schema/inner/model_generated.h"
 namespace mindspore {
 namespace lite {
-
 int AnfImporter::Import(const schema::QuantType &quantType) {
   auto ret = ConverterConstTensor();
   if (RET_OK != ret) {

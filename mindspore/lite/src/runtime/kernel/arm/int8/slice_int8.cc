@@ -89,7 +89,7 @@ int SliceInt8CPUKernel::Run() {
   if (param_->size_[1] < param_->op_parameter_.thread_num_) {
     ret = SliceInt8NoParallel(input_data, output_data, param_);
   } else {
-    ret = ParallelLaunch(THREAD_POOL_DEFAULT, SliceInt8Run, this, op_parameter_->thread_num_);
+    ret = ParallelLaunch(this->context_->thread_pool_, SliceInt8Run, this, op_parameter_->thread_num_);
   }
 
   if (ret != RET_OK) {

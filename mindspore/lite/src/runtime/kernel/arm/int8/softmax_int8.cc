@@ -120,7 +120,7 @@ int SoftmaxInt8CPUKernel::Run() {
     context_->allocator->Free(sum_data_);
     return RET_ERROR;
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SoftmaxRun, this, thread_count_);
+  ret = ParallelLaunch(this->context_->thread_pool_, SoftmaxRun, this, thread_count_);
   context_->allocator->Free(exp_data_);
   context_->allocator->Free(sum_data_);
   if (ret != RET_OK) {

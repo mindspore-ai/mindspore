@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 class MulInt8CPUKernel : public LiteKernel {
  public:
   explicit MulInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                            const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                             const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx_->thread_num_) {}
   ~MulInt8CPUKernel() override{};
@@ -36,7 +36,7 @@ class MulInt8CPUKernel : public LiteKernel {
   int DoExecute(int task_id);
 
  private:
-  const lite::Context *ctx_;
+  const lite::InnerContext *ctx_;
   MulParameter para_;
   int thread_count_;
   int64_t elements_num_;

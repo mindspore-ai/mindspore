@@ -30,8 +30,8 @@ namespace mindspore::kernel {
 
 int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() { return RET_OK; }
 
-void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *labels, const float *logits,
-                                                                float *grads, float *output2) const {
+void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *labels, const float *logits, float *grads,
+                                                                float *output2) const {
   float eps = 1e-6;
   float total_loss = 0.0;
   if (grads != nullptr) {
@@ -40,7 +40,8 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *lab
         float logit =
           -logf(logits[i * param_->number_of_classes_ + j] <= 0.0 ? eps : logits[i * param_->number_of_classes_ + j]);
         grads[i * param_->number_of_classes_ + j] =
-          (logits[i * param_->number_of_classes_ + j] - labels[i * param_->number_of_classes_ + j])/param_->batch_size_;
+          (logits[i * param_->number_of_classes_ + j] - labels[i * param_->number_of_classes_ + j]) /
+          param_->batch_size_;
         total_loss += labels[i * param_->number_of_classes_ + j] * logit;
       }
     }
@@ -120,7 +121,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
 
 kernel::LiteKernel *CpuSoftmaxCrossEntropyFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                             const std::vector<lite::Tensor *> &outputs,
-                                                            OpParameter *opParameter, const lite::Context *ctx,
+                                                            OpParameter *opParameter, const lite::InnerContext *ctx,
                                                             const kernel::KernelKey &desc,
                                                             const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
@@ -137,5 +138,5 @@ kernel::LiteKernel *CpuSoftmaxCrossEntropyFp32KernelCreator(const std::vector<li
   }
   return kernel;
 }
-  // REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SoftmaxCrossEntropy, CpuSoftmaxCrossEntropyFp32KernelCreator)
+// REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SoftmaxCrossEntropy, CpuSoftmaxCrossEntropyFp32KernelCreator)
 }  // namespace mindspore::kernel

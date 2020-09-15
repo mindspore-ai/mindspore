@@ -80,8 +80,9 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test1) {
 
   SparseToDenseParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 3;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   op_param.validate_indices_ = false;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, tid, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -166,8 +167,9 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test2) {
 
   SparseToDenseParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   op_param.validate_indices_ = false;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, tid, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -252,8 +254,9 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test3) {
 
   SparseToDenseParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   op_param.validate_indices_ = true;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, tid, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -333,8 +336,9 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test4) {
 
   SparseToDenseParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   op_param.validate_indices_ = true;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, tid, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -414,8 +418,9 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test5) {
 
   SparseToDenseParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   op_param.validate_indices_ = true;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, tid, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);

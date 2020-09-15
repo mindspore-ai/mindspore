@@ -22,13 +22,13 @@
 #include "include/context.h"
 #include "src/runtime/kernel/arm/base/concat_base.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class ConcatFp16CPUKernel : public ConcatBaseCPUKernel {
  public:
   ConcatFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
       : ConcatBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 

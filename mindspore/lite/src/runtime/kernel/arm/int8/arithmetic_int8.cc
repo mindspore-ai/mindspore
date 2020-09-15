@@ -149,7 +149,7 @@ int ArithmeticInt8CPUKernel::Run() {
     }
     TileDimensionsInt8(input_data0, input_data1, tile_data0_, tile_data1_, param);
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
   if (param->broadcasting_) {
     context_->allocator->Free(tile_data0_);
     context_->allocator->Free(tile_data1_);
@@ -162,7 +162,7 @@ int ArithmeticInt8CPUKernel::Run() {
 
 kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                   const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "Input parameter is null!";

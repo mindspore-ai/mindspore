@@ -168,7 +168,7 @@ int PriorBoxCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail! Ret error code[" << prepare_ret << "]";
     return prepare_ret;
   }
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, RunPriorBox, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, RunPriorBox, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "PriorBox run error, error_code[" << error_code << "]";
     return RET_ERROR;
@@ -178,7 +178,7 @@ int PriorBoxCPUKernel::Run() {
 
 kernel::LiteKernel *CpuPriorBoxKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                             const Context *ctx, const kernel::KernelKey &desc,
+                                             const InnerContext *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";

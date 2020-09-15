@@ -26,7 +26,7 @@ namespace mindspore::kernel {
 class PoolingCPUKernel : public PoolingBaseCPUKernel {
  public:
   PoolingCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                   const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                   const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                    const mindspore::lite::PrimitiveC *primitive)
       : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~PoolingCPUKernel() override = default;

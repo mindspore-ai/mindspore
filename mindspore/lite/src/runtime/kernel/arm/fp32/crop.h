@@ -24,7 +24,7 @@ namespace mindspore::kernel {
 class CropCPUKernel : public CropBaseCPUKernel {
  public:
   CropCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                 const mindspore::lite::PrimitiveC *primitive)
       : CropBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~CropCPUKernel() = default;

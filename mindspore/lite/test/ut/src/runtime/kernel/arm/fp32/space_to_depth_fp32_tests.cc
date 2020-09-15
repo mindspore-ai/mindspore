@@ -74,8 +74,9 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest2) {
   op_param.op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
   op_param.block_size_ = 2;
 
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 3;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SpaceToDepth};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

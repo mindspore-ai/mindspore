@@ -63,7 +63,7 @@ int DepthToSpaceBaseCPUKernel::ReSize() {
 
 kernel::LiteKernel *CpuDepthToSpaceInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                      const std::vector<lite::Tensor *> &outputs,
-                                                     OpParameter *op_parameter, const lite::Context *ctx,
+                                                     OpParameter *op_parameter, const lite::InnerContext *ctx,
                                                      const kernel::KernelKey &desc,
                                                      const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthToSpace);
@@ -89,7 +89,7 @@ kernel::LiteKernel *CpuDepthToSpaceInt8KernelCreator(const std::vector<lite::Ten
 
 kernel::LiteKernel *CpuDepthToSpaceFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                      const std::vector<lite::Tensor *> &outputs,
-                                                     OpParameter *op_parameter, const lite::Context *ctx,
+                                                     OpParameter *op_parameter, const lite::InnerContext *ctx,
                                                      const kernel::KernelKey &desc,
                                                      const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthToSpace);

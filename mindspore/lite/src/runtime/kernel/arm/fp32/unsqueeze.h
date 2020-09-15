@@ -21,13 +21,13 @@
 #include "include/context.h"
 #include "nnacl/fp32/unsqueeze.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class UnsqueezeCPUKernel : public LiteKernel {
  public:
   UnsqueezeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~UnsqueezeCPUKernel() = default;

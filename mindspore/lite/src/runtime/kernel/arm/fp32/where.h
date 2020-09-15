@@ -23,13 +23,13 @@
 #include "nnacl/where.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class WhereCPUKernel : public LiteKernel {
  public:
   WhereCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                  const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     where_param_ = reinterpret_cast<WhereParameter *>(op_parameter_);
@@ -42,7 +42,7 @@ class WhereCPUKernel : public LiteKernel {
   int DoExcute(int task_id);
 
  protected:
-  const Context *ctx_;
+  const InnerContext *ctx_;
   int thread_count_;
   WhereParameter *where_param_;
 

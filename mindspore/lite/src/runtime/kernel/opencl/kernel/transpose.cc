@@ -137,7 +137,7 @@ int TransposeOpenCLKernel::Run() {
 
 kernel::LiteKernel *OpenCLTransposeKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                 const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                 const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                  const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel =
     new (std::nothrow) TransposeOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);

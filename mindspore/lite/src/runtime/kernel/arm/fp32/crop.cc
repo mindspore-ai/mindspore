@@ -68,7 +68,7 @@ int CropCPUKernel::Run() {
     return RET_OK;
   }
 
-  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, CropLaunch, this, param->op_parameter_.thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, CropLaunch, this, param->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Crop launch fail!ret: " << ret;
     return RET_ERROR;

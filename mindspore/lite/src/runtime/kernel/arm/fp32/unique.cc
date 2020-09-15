@@ -48,7 +48,7 @@ int UniqueCPUKernel::Run() {
 
 kernel::LiteKernel *CpuUniqueFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                               const lite::Context *ctx, const KernelKey &desc,
+                                               const lite::InnerContext *ctx, const KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter);
   MS_ASSERT(desc.type == PrimitiveType_Unique);

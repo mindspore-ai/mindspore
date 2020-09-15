@@ -23,7 +23,7 @@ using mindspore::lite::KernelRegistrar;
 
 namespace mindspore::lite {
 kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                                    OpParameter *parameter, const Context *ctx, const kernel::KernelKey &key) {
+                                    OpParameter *parameter, const InnerContext *ctx, const kernel::KernelKey &key) {
   auto creator = KernelRegistry::GetInstance()->GetCreator(key);
   if (creator != nullptr) {
     auto kernel = creator(in_tensors, out_tensors, parameter, nullptr, key, nullptr);

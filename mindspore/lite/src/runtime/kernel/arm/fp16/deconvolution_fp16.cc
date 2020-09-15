@@ -188,7 +188,7 @@ int DeConvolutionFp16CPUKernel::Run() {
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     RowMajor2Col16MajorFp16(execute_input_, pack_input_, input_plane_, conv_param_->input_channel_);
 
-    error_code = ParallelLaunch(THREAD_POOL_DEFAULT, DeConvFp16Run, this, thread_count_);
+    error_code = ParallelLaunch(this->context_->thread_pool_, DeConvFp16Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv fp32 run error! error_code[" << error_code << "]";
       return RET_ERROR;
@@ -204,7 +204,7 @@ int DeConvolutionFp16CPUKernel::Run() {
 
 kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc,
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2D);

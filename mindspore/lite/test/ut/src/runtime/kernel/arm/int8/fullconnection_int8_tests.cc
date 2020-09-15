@@ -133,8 +133,9 @@ TEST_F(TestFcInt8, fctest1) {
   std::vector<lite::Tensor *> inputs;
   std::vector<lite::Tensor *> outputs;
   FcInt8TestInit(&inputs, &outputs, &in_params, &weight_params, &bias_params, &out_params);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
 
   kernel::FullconnectionInt8CPUKernel *fc =
     new kernel::FullconnectionInt8CPUKernel(reinterpret_cast<OpParameter *>(fc_param), inputs, outputs, ctx, nullptr);

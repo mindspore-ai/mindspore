@@ -21,21 +21,18 @@
 #include "src/lite_kernel.h"
 #include "nnacl/softmax_parameter.h"
 
-
 namespace mindspore::kernel {
 class SoftmaxGradCPUKernel : public LiteKernel {
  public:
   explicit SoftmaxGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                 const lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), sum_data_(nullptr), sum_mul_(nullptr)  {
-        param = reinterpret_cast<SoftmaxParameter *>(parameter);
-      }
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), sum_data_(nullptr), sum_mul_(nullptr) {
+    param = reinterpret_cast<SoftmaxParameter *>(parameter);
+  }
   ~SoftmaxGradCPUKernel() override {
-    if (sum_data_)
-      delete[] sum_data_;
-    if (sum_mul_)
-      delete[] sum_mul_;
+    if (sum_data_) delete[] sum_data_;
+    if (sum_mul_) delete[] sum_mul_;
   }
   int Init() override;
   int ReSize() override;
@@ -50,4 +47,3 @@ class SoftmaxGradCPUKernel : public LiteKernel {
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_SOFTMAX_GRAD_H_
-

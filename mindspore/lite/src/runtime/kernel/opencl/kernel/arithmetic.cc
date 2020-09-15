@@ -343,12 +343,12 @@ int ArithmeticOpenCLKernel::Run() {
 
 kernel::LiteKernel *OpenCLBiasAddKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc,
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                const lite::PrimitiveC *primitive);
 
 kernel::LiteKernel *OpenCLArithmeticKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(opParameter);
   if (arithmetic_parameter->broadcasting_) {

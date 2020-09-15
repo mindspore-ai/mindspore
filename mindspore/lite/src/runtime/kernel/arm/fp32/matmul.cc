@@ -197,12 +197,12 @@ int MatmulCPUKernel::Run() {
     a_ptr_ = a_c12_ptr_ + i * params_->row_12_ * params_->deep_;
     b_ptr_ = b_r8_ptr_ + i * params_->deep_ * params_->col_8_;
     c_ptr_ = c_src + i * params_->row_ * params_->col_;
-    ParallelLaunch(THREAD_POOL_DEFAULT, MatmulFloatRun, this, thread_count_);
+    ParallelLaunch(this->context_->thread_pool_, MatmulFloatRun, this, thread_count_);
   }
   return RET_OK;
 }
 
-void  MatmulCPUKernel::eval() {
+void MatmulCPUKernel::eval() {
   // Copy weights after training
   LiteKernel::eval();
   if (params_->a_const_ == true) {

@@ -76,7 +76,7 @@ int ReshapeFp16CPUKernel::Run() {
 
 kernel::LiteKernel *CpuReshapeFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                const Context *ctx, const kernel::KernelKey &desc,
+                                                const InnerContext *ctx, const kernel::KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";

@@ -507,9 +507,10 @@ TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
   printf("Calculating runtime cost...\n");
   uint64_t time_avg = 0;
 
-  lite::Context context;
+  lite::InnerContext context;
   context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
 
   auto *kernel = new mindspore::kernel::ConvolutionTrainCPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs,
                                                                   outputs, &context, 0);

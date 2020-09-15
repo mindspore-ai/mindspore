@@ -69,8 +69,9 @@ TEST_F(TestPreluInt8, prelu_1) {
   op_param.slope_ = reinterpret_cast<float *>(malloc(sizeof(float)));
   op_param.slope_[0] = 0.25;
 
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   op_param.axis_ = 0.25;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_LeakyReLU};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);

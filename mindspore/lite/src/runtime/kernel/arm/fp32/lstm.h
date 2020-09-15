@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 class LstmCPUKernel : public LiteKernel {
  public:
   LstmCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                 const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     lstm_parm_ = reinterpret_cast<LstmParameter *>(op_parameter_);

@@ -58,8 +58,9 @@ TEST_F(TestROIPoolingFp32, Simple) {
   std::vector<int> b_shape = {2, 5};
   std::vector<int> c_shape = {1, 2, 2, 2};
   int total_size = ROIPoolingTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 3;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::ROIPoolingCPUKernel *op =
     new kernel::ROIPoolingCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx, nullptr);
   op->Init();

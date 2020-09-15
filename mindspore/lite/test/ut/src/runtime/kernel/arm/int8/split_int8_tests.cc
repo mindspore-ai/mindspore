@@ -79,8 +79,9 @@ TEST_F(TestSplitInt8, Split_quant0_thread2) {
   op_param.split_dim_ = 1;
   op_param.split_sizes_[0] = 1;
   op_param.split_sizes_[1] = 2;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Split};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -167,8 +168,9 @@ TEST_F(TestSplitInt8, Split_quant0_thread2_num) {
   op_param.op_parameter_.type_ = schema::PrimitiveType_Split;
   op_param.num_split_ = 3;
   op_param.split_dim_ = 1;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Split};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -263,8 +265,9 @@ TEST_F(TestSplitInt8, Split_quant1_thread2_num) {
   op_param.op_parameter_.type_ = schema::PrimitiveType_Split;
   op_param.num_split_ = 3;
   op_param.split_dim_ = 1;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Split};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

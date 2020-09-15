@@ -142,7 +142,7 @@ int FullconnectionCPUKernel::Run() {
   if (!fc_param_->a_const_) InitMatrixA(a_ptr, a_c12_ptr_);
   if (!fc_param_->b_const_) InitMatrixB(b_ptr, b_r8_ptr_);
 
-  ParallelLaunch(THREAD_POOL_DEFAULT, FcFp32MatmulRun, this, thread_count_);
+  ParallelLaunch(this->context_->thread_pool_, FcFp32MatmulRun, this, thread_count_);
 
   return RET_OK;
 }

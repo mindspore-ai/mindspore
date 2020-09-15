@@ -155,7 +155,8 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   param->op_parameter_.type_ = schema::PrimitiveType_Scale;
 
   std::vector<lite::Tensor *> scale_inputs = {tensor_in, tensor_scale, tensor_offset};
-  lite::Context ctx;
+  lite::InnerContext ctx;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   auto *scale_kernel =
     new (std::nothrow) kernel::ScaleOpenCLKernel(reinterpret_cast<OpParameter *>(param), scale_inputs, outputs, &ctx);
   if (scale_kernel == nullptr) {

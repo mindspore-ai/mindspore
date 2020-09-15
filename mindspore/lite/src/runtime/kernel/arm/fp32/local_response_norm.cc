@@ -79,7 +79,7 @@ int LocalResponseNormCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, LocalResponseNormRun, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, LocalResponseNormRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "LocalResponseNorm function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -89,7 +89,7 @@ int LocalResponseNormCPUKernel::Run() {
 
 kernel::LiteKernel *CpuLocalResponseNormFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                           const std::vector<lite::Tensor *> &outputs,
-                                                          OpParameter *opParameter, const lite::Context *ctx,
+                                                          OpParameter *opParameter, const lite::InnerContext *ctx,
                                                           const kernel::KernelKey &desc,
                                                           const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);

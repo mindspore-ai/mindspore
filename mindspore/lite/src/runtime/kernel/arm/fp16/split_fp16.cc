@@ -97,7 +97,7 @@ int SplitFp16CPUKernel::Run() {
       output_ptr_[i] = reinterpret_cast<float16_t *>(out_tensors_.at(i)->MutableData());
     }
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SplitRun, this, thread_n_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, SplitRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "split error error_code[" << ret << "]";
     return RET_ERROR;
@@ -117,7 +117,7 @@ int SplitFp16CPUKernel::Run() {
 
 kernel::LiteKernel *CpuSplitFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const Context *ctx, const kernel::KernelKey &desc,
+                                              const InnerContext *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";

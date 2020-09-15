@@ -83,7 +83,7 @@ int ActivationCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return ret;
   }
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ActivationRun, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ActivationRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Activation function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -93,7 +93,7 @@ int ActivationCPUKernel::Run() {
 
 kernel::LiteKernel *CpuActivationFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                   const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Activation);

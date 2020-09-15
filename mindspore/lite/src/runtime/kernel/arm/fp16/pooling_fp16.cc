@@ -88,7 +88,7 @@ int PoolingFp16CPUKernel::Run() {
   MS_ASSERT(out_data_type_ == kNumberTypeFloat32 || out_data_type_ == kNumberTypeFloat16);
   fp16_output_ = MallocOutputFp16(out_tensor, context_);
 
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, PoolingFp16Impl, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, PoolingFp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "pooling error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -108,7 +108,7 @@ int PoolingFp16CPUKernel::Run() {
 
 kernel::LiteKernel *CpuPoolingFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                const Context *ctx, const kernel::KernelKey &desc,
+                                                const InnerContext *ctx, const kernel::KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";

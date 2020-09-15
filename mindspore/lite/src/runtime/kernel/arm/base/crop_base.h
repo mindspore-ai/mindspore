@@ -21,13 +21,13 @@
 #include "src/lite_kernel.h"
 #include "nnacl/crop_parameter.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class CropBaseCPUKernel : public LiteKernel {
  public:
   CropBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                    const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                     const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
   ~CropBaseCPUKernel() = default;

@@ -125,7 +125,7 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
     return ret;
   }
 
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConvDwFp16Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, ConvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwFp16Run error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -138,7 +138,7 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
 
 kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const Context *ctx, const kernel::KernelKey &desc,
+                                               const InnerContext *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);

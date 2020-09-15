@@ -77,8 +77,9 @@ TEST_F(TestConcatInt8, Concat1_axis0) {
   ConcatParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Concat;
   op_param.axis_ = 0;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Concat};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -148,8 +149,9 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2) {
   ConcatParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Concat;
   op_param.axis_ = 1;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Concat};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -220,8 +222,9 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2_quant1) {
   ConcatParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Concat;
   op_param.axis_ = 1;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Concat};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

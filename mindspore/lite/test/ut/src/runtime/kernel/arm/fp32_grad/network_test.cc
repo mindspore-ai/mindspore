@@ -208,7 +208,7 @@ TEST_F(NetworkTest, tuning_layer) {
   weight->data.resize(weight_size);
   std::copy(buf, buf + weight_size, weight->data.data());
   meta_graph->allTensors.emplace_back(std::move(weight));
-  delete [] buf;
+  delete[] buf;
   // tensor 3 - matmul
   auto input3 = std::make_unique<schema::TensorT>();
   input3->nodeType = schema::NodeType::NodeType_Parameter;
@@ -231,7 +231,7 @@ TEST_F(NetworkTest, tuning_layer) {
   bias->data.resize(bias_size);
   std::copy(buf, buf + bias_size, bias->data.data());
   meta_graph->allTensors.emplace_back(std::move(bias));
-  delete [] buf;
+  delete[] buf;
 
   // tensor 5 - bias_add
   auto input5 = std::make_unique<schema::TensorT>();
@@ -247,7 +247,7 @@ TEST_F(NetworkTest, tuning_layer) {
     label->nodeType = schema::NodeType::NodeType_ValueNode;
     label->format = schema::Format_NHWC;
     label->dataType = TypeId::kNumberTypeInt32;
-    label->dims = {BATCH_SIZE*NUM_CLASSES};
+    label->dims = {BATCH_SIZE * NUM_CLASSES};
     label->offset = -1;
     // label->data.resize(BATCH_SIZE * NUM_CLASSES * sizeof(float));
     // int *data = reinterpret_cast<int *>(label->data.data());
@@ -370,10 +370,11 @@ TEST_F(NetworkTest, tuning_layer) {
   ASSERT_NE(nullptr, model);
   meta_graph.reset();
   content = nullptr;
-  lite::Context context;
+  lite::InnerContext context;
   context.device_type_ = lite::DT_CPU;
   context.cpu_bind_mode_ = lite::NO_BIND;
   context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
   auto session = new session::TrainSession();
   ASSERT_NE(nullptr, session);
   session->Init(&context);
@@ -397,10 +398,10 @@ TEST_F(NetworkTest, tuning_layer) {
   //===================================================
   ASSERT_EQ(input_size, inTensor->Size());
   memcpy(data, input_data, input_size);
-  delete [] buf;
+  delete[] buf;
   auto labelTensor = inputs.at(1);
   ASSERT_NE(nullptr, labelTensor);
-  ASSERT_EQ(BATCH_SIZE*NUM_CLASSES, labelTensor->ElementsNum());
+  ASSERT_EQ(BATCH_SIZE * NUM_CLASSES, labelTensor->ElementsNum());
   auto labels = reinterpret_cast<int *>(labelTensor->MutableData());
   for (int i = 0; i < BATCH_SIZE; i++) labels[i] = (i * 97) % NUM_CLASSES;
 
@@ -452,7 +453,7 @@ TEST_F(NetworkTest, tuning_layer) {
   EXPECT_LT(error, 2e-3);
 
   session->train();
-  session->eval();   // do some more zig-zags
+  session->eval();  // do some more zig-zags
   ret = session->RunGraph();
   outputs = session->GetOutputsByName("BiasAdd");
   ASSERT_EQ(outputs.size(), 1);
@@ -467,8 +468,6 @@ TEST_F(NetworkTest, tuning_layer) {
   }
   error = lite::RelativeOutputError(outData, output_path);
   EXPECT_LT(error, 2e-3);
-
-
 
   delete model;
   delete session;
@@ -505,7 +504,7 @@ int32_t runEffNet(mindspore::lite::LiteSession *session, const std::string &in, 
   auto input_data = reinterpret_cast<float *>(in_buf);
   // ASSERT_EQ(input_size, inTensor->Size());
   std::copy(input_data, input_data + inTensor->ElementsNum(), data);
-  delete [] in_buf;
+  delete[] in_buf;
 
   // execute network
   session->RunGraph();
@@ -526,11 +525,12 @@ TEST_F(NetworkTest, efficient_net) {
   std::string net = "./test_data/nets/effnetb0_fwd_nofuse.ms";
   ReadFile(net.c_str(), &net_size, &buf);
   auto model = lite::Model::Import(buf, net_size);
-  delete [] buf;
-  auto context = new lite::Context;
+  delete[] buf;
+  auto context = new lite::InnerContext;
   context->device_type_ = lite::DT_CPU;
   context->cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context->Init());
 
   auto session = new mindspore::session::TrainSession();
   // auto session = new mindspore::lite::LiteSession();

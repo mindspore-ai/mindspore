@@ -216,7 +216,7 @@ int Convolution1x1FP16CPUKernel::Run() {
       execute_input_ + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_,
       execute_output_ + batch_index * matmul_param_->row_ * matmul_param_->col_);
 
-    int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, Convolution1x1Fp16Impl, this, thread_count_);
+    int error_code = ParallelLaunch(this->context_->thread_pool_, Convolution1x1Fp16Impl, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "conv1x1 fp16 error error_code[" << error_code << "]";
       return RET_ERROR;

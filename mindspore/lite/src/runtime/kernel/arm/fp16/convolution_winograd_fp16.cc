@@ -393,7 +393,7 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
   int in_channel = conv_param_->input_channel_;
   PackNHWCToNHWC8Fp16(execute_input_, nhwc4_input_, in_batch, in_h * in_w, in_channel);
 
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ConvolutionWinogradFp16Impl, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionWinogradFp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv winograd error error_code[" << error_code << "]";
     FreeTmpBuffer();

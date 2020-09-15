@@ -17,10 +17,10 @@
 #include "src/lite_session.h"
 #include <vector>
 #include <utility>
+#include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/scheduler.h"
-#include "src/runtime/runtime_api.h"
 #include "src/runtime/allocator.h"
 #include "src/executor.h"
 #include "src/common/utils.h"
@@ -50,6 +50,8 @@ static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor
     return IsContain(packed_op, static_cast<schema::PrimitiveType>(node->primitive_->Type()));
   });
 }
+
+LiteSession::LiteSession() { this->is_running_.store(false); }
 
 int LiteSession::ConvertTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
@@ -247,15 +249,22 @@ void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
 }
 
 int LiteSession::CompileGraph(Model *model) {
+  bool expected = false;
+  if (!is_running_.compare_exchange_strong(expected, true)) {
+    MS_LOG(ERROR) << "Not support multi-threading";
+    return RET_ERROR;
+  }
   // model.MetaGraph ==> kernels
   if (model == nullptr) {
     MS_LOG(ERROR) << "The input model is nullptr.";
+    is_running_.store(false);
     return RET_PARAM_INVALID;
   }
 
   auto ret = ConvertTensors(model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvertTensors failed: " << ret;
+    is_running_.store(false);
     return ret;
   }
 
@@ -266,47 +275,71 @@ int LiteSession::CompileGraph(Model *model) {
   ret = scheduler.Schedule(model, &tensors_, &kernels_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule kernels failed: " << ret;
+    is_running_.store(false);
     return ret;
   }
 
-  executor->Prepare(this->kernels_);
+  ret = executor->Prepare(this->kernels_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare kernels failed: " << ret;
+    is_running_.store(false);
+    return ret;
+  }
 #ifndef SUPPORT_TRAIN
   model->Free();
 #endif
+  is_running_.store(false);
   return RET_OK;
 }
 
 std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const { return this->input_vec_; }
 
 int LiteSession::RunGraph(const session::KernelCallBack &before, const session::KernelCallBack &after) {
+  bool expected = false;
+  if (!is_running_.compare_exchange_strong(expected, true)) {
+    MS_LOG(ERROR) << "Not support multi-threading";
+    return RET_ERROR;
+  }
+  STATUS ret = RET_ERROR;
   MS_ASSERT(this->context_);
   if (before == nullptr && after == nullptr) {
-    return executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());
+    ret = executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());
   } else {
-    return executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get(), before, after);
+    ret = executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get(), before, after);
   }
+  is_running_.store(false);
+  return ret;
 }
 
 int LiteSession::Init(Context *context) {
+  bool expected = false;
+  if (!is_running_.compare_exchange_strong(expected, true)) {
+    MS_LOG(ERROR) << "Not support multi-threading";
+    return RET_ERROR;
+  }
+
   MS_ASSERT(nullptr != context);
-  this->context_ = new (std::nothrow) Context();
+  this->context_ = new (std::nothrow) InnerContext();
   if (this->context_ == nullptr) {
-    MS_LOG(ERROR) << "new context failed";
+    MS_LOG(ERROR) << "New Context failed";
+    is_running_.store(false);
     return RET_MEMORY_FAILED;
   }
-  // context->thread_num_, context->allocator, context->device_ctx
-  this->context_->thread_num_ = context->thread_num_;
   this->context_->allocator = context->allocator;
+  this->context_->thread_num_ = context->thread_num_;
+  this->context_->cpu_bind_mode_ = context->cpu_bind_mode_;
   this->context_->device_type_ = context->device_type_;
   this->context_->float16_priority = context->float16_priority;
-  this->context_->cpu_bind_mode_ = context->cpu_bind_mode_;
-  if (context_->allocator == nullptr) {
-    context_->allocator = Allocator::Create();
+  auto ret = this->context_->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init Context failed";
+    is_running_.store(false);
+    return ret;
   }
-  ConfigThreadPool(THREAD_POOL_DEFAULT, context->thread_num_, context->cpu_bind_mode_);
-  auto ret = KernelRegistry::GetInstance()->Init();
+  ret = KernelRegistry::GetInstance()->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "KernelRegistry Init Failed.";
+    is_running_.store(false);
     return ret;
   }
 #if SUPPORT_GPU
@@ -319,19 +352,27 @@ int LiteSession::Init(Context *context) {
 #endif
   executor = new Executor();
   if (nullptr == executor) {
-    MS_LOG(ERROR) << "new Executor failed";
+    MS_LOG(ERROR) << "New Executor failed";
+    is_running_.store(false);
     return RET_ERROR;
   }
+  is_running_.store(false);
   return RET_OK;
 }
 
 void LiteSession::BindThread(bool if_bind) {
   if (this->context_->cpu_bind_mode_ != NO_BIND) {
-    BindThreads(THREAD_POOL_DEFAULT, if_bind, this->context_->cpu_bind_mode_);
+    MS_ASSERT(this->context_->thread_pool_ != NULL);
+    BindThreads(this->context_->thread_pool_, if_bind, this->context_->cpu_bind_mode_);
   }
 }
 
 LiteSession::~LiteSession() {
+  bool expected = false;
+  if (!is_running_.compare_exchange_strong(expected, true)) {
+    MS_LOG(ERROR) << "Not support multi-threading";
+    return;
+  }
   for (size_t i = 0; i < tensors_.size(); i++) {
     auto *tensor = tensors_.at(i);
     MS_ASSERT(tensor != nullptr);
@@ -358,6 +399,7 @@ LiteSession::~LiteSession() {
   delete this->context_;
   delete this->executor;
   this->executor = nullptr;
+  is_running_.store(false);
 }
 
 std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputsByName(const std::string &name) const {
@@ -426,6 +468,11 @@ void LiteSession::ResetInputsShape(const std::vector<std::vector<int>> &dims) {
 
 int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
                         const std::vector<std::vector<int>> &dims) {
+  bool expected = false;
+  if (!is_running_.compare_exchange_strong(expected, true)) {
+    MS_LOG(ERROR) << "Not support multi-threading";
+    return RET_ERROR;
+  }
   std::vector<std::vector<int>> old_dims;
   for (size_t i = 0; i < inputs_.size(); ++i) {
     old_dims.push_back(inputs_[i]->shape());
@@ -433,6 +480,7 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
   auto ret = ResizeInputs(inputs, dims);
   if (ret != RET_OK) {
     ResetInputsShape(old_dims);
+    is_running_.store(false);
     return ret;
   }
 
@@ -444,8 +492,10 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
     if (resize_ret != RET_OK) {
       MS_LOG(ERROR) << "restore kernel size fail!ret: " << resize_ret;
     }
+    is_running_.store(false);
     return ret;
   }
+  is_running_.store(false);
   return RET_OK;
 }
 }  // namespace lite

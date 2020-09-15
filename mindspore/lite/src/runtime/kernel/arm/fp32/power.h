@@ -27,7 +27,7 @@ namespace mindspore::kernel {
 class PowerCPUKernel : public PowerBaseCPUKernel {
  public:
   PowerCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                  const mindspore::lite::PrimitiveC *primitive)
       : PowerBaseCPUKernel(param, inputs, outputs, ctx, primitive),
         thread_count_(ctx->thread_num_),

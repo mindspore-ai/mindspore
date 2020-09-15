@@ -41,7 +41,7 @@ class TestResizeBilinearInt8 : public mindspore::CommonTest {
 
   kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Resize};
   kernel::KernelCreator creator_ = nullptr;
-  lite::Context ctx_ = lite::Context();
+  lite::InnerContext ctx_ = lite::InnerContext();
   kernel::LiteKernel *kernel_ = nullptr;
   float err_percent_ = 0.2f;
 };
@@ -76,6 +76,7 @@ void TestResizeBilinearInt8::Prepare(const std::vector<int> &in_shape, const std
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc_);
 
   ctx_.thread_num_ = thread_num;
+  ASSERT_EQ(lite::RET_OK, ctx_.Init());
   kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_, nullptr);
 }
 

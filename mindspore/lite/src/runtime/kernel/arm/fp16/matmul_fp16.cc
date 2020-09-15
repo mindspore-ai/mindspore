@@ -216,7 +216,7 @@ int MatmulFP16CPUKernel::Run() {
     current_a_ = a_pack_ptr_ + i * params_->row_16_ * params_->deep_;
     current_b_ = b_pack_ptr_ + i * params_->deep_ * params_->col_8_;
     current_c_ = c_ptr + i * params_->row_ * params_->col_;
-    ParallelLaunch(THREAD_POOL_DEFAULT, MatmulFP16Run, this, thread_count_);
+    ParallelLaunch(this->context_->thread_pool_, MatmulFP16Run, this, thread_count_);
   }
   if (out_tensor->data_type() == kNumberTypeFloat32) {
     auto size = out_tensor->ElementsNum();
@@ -228,7 +228,7 @@ int MatmulFP16CPUKernel::Run() {
 
 kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc,
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) MatmulFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {

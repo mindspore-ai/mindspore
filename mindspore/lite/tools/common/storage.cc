@@ -34,7 +34,7 @@ int Storage::Save(const schema::MetaGraphT &graph, const std::string &outputPath
 
   std::ofstream output(outputPath + ".ms", std::ofstream::binary);
   if (!output.is_open()) {
-    MS_LOG(ERROR) << "Output file path is error";
+    MS_LOG(ERROR) << "Can not open output file: " << outputPath << ".ms";
     return RET_ERROR;
   }
 

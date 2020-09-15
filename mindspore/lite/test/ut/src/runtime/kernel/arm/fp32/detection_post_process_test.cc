@@ -121,8 +121,9 @@ TEST_F(TestDetectionPostProcessFp32, Fast) {
   std::vector<lite::Tensor *> outputs_;
   auto param = new DetectionPostProcessParameter();
   DetectionPostProcessTestInit(&inputs_, &outputs_, param);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::DetectionPostProcessCPUKernel *op =
     new kernel::DetectionPostProcessCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx, nullptr);
   op->Init();

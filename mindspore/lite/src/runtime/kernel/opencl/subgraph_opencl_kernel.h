@@ -34,8 +34,7 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
   explicit SubGraphOpenCLKernel(const std::vector<lite::Tensor *> inputs, const std::vector<lite::Tensor *> outputs,
                                 const std::vector<kernel::LiteKernel *> inKernels,
                                 const std::vector<kernel::LiteKernel *> outKernels,
-                                const std::vector<kernel::LiteKernel *> nodes,
-                                const lite::Context *ctx = nullptr,
+                                const std::vector<kernel::LiteKernel *> nodes, const lite::InnerContext *ctx = nullptr,
                                 const mindspore::lite::PrimitiveC *primitive = nullptr)
       : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx, primitive) {}
   ~SubGraphOpenCLKernel() override;

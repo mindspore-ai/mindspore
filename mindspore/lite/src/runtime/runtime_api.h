@@ -32,9 +32,9 @@
 #ifdef __cplusplus
 extern "C" {
 #include "src/runtime/thread_pool.h"
-
+struct ThreadPool;
 #endif
-
+INTERNAL_API_DLL ThreadPool *CreateLiteThreadPool(int thread_num, int mode);
 INTERNAL_API_DLL void LiteAPISetLastError(const char *msg);
 INTERNAL_API_DLL void *LiteBackendAllocWorkspace(int deviceType, int deviceId, uint64_t size, int dtypeCode,
                                                  int dtypeBits);

@@ -26,7 +26,7 @@ namespace mindspore::kernel {
 class ReduceBaseCPUKernel : public LiteKernel {
  public:
   ReduceBaseCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(param, inputs, outputs, ctx, primitive) {}
   virtual ~ReduceBaseCPUKernel() = default;

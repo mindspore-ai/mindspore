@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_COMMON_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_COMMON_FP16_H_
 
-#include <vector>
-#include "src/lite_kernel.h"
+#ifndef MINDSPORE_LITE_SRC_INNER_CONTEXT_H
+#define MINDSPORE_LITE_SRC_INNER_CONTEXT_H
 
-namespace mindspore::kernel {
-float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::InnerContext *ctx);
+#include "include/context.h"
+#include "src/runtime/runtime_api.h"
+#include "src/runtime/allocator.h"
 
-float16_t *MallocOutputFp16(lite::Tensor *output, const lite::InnerContext *ctx);
+namespace mindspore::lite {
+struct InnerContext : public Context {
+ public:
+  struct ThreadPool *thread_pool_ = nullptr;
 
-bool IsExistFp16Tensor(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs);
-}  // namespace mindspore::kernel
+ public:
+  int Init();
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_COMMON_FP16_H_
+  virtual ~InnerContext();
+};
+}  // namespace mindspore::lite
+
+#endif  // MINDSPORE_LITE_SRC_INNER_CONTEXT_H

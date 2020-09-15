@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 class BiasAddInt8CPUKernel : public LiteKernel {
  public:
   BiasAddInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx) {}
   ~BiasAddInt8CPUKernel() = default;
@@ -35,7 +35,7 @@ class BiasAddInt8CPUKernel : public LiteKernel {
   int Run() override;
 
  private:
-  const lite::Context *ctx_;
+  const lite::InnerContext *ctx_;
 };
 }  // namespace mindspore::kernel
 

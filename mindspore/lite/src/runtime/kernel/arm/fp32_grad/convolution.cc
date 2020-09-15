@@ -41,7 +41,7 @@ int ConvolutionTrainCPUKernel::Init() {
   conv_param_->kernel_h_ = input_weight->shape().at(kNHWC_H);
   conv_param_->kernel_w_ = input_weight->shape().at(kNHWC_W);
 
-  conv_param_->group_ = (conv_param_->group_ == 0)? conv_param_->input_channel_:conv_param_->group_;
+  conv_param_->group_ = (conv_param_->group_ == 0) ? conv_param_->input_channel_ : conv_param_->group_;
 
   int ws_size = conv_param_->output_h_ * conv_param_->output_w_ * conv_param_->kernel_h_ * conv_param_->kernel_w_ *
                 conv_param_->input_channel_ / conv_param_->group_;
@@ -104,7 +104,7 @@ int ConvolutionTrainCPUKernel::Run() {
 
 kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                   const lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D || desc.type == schema::PrimitiveType_DepthwiseConv2D);

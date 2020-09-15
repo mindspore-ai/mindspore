@@ -43,7 +43,6 @@
 #define RET_TP_ERROR (1)
 #define RET_TP_SYSTEM_ERROR (-1)
 
-#define MAX_TASK_NUM (2)
 #define MAX_THREAD_NUM (8)
 #define MAX_THREAD_POOL_NUM (4)
 #define DEFAULT_SPIN_COUNT (30000)
@@ -54,7 +53,7 @@ typedef struct {
 } Task;
 
 typedef struct Thread {
-  int thread_pool_id;
+  void *thread_pool;
   int thread_id;
   struct Thread *next;
   pthread_t pthread;
@@ -81,22 +80,9 @@ typedef struct ThreadPool {
   atomic_bool is_alive;
 } ThreadPool;
 
-static ThreadPool thread_pool_list[MAX_THREAD_POOL_NUM];
-static atomic_int thread_pool_refcount[MAX_THREAD_POOL_NUM] = {ATOMIC_VAR_INIT(0)};
-static atomic_bool thread_pool_is_created[MAX_THREAD_POOL_NUM] = {ATOMIC_VAR_INIT(false)};
-
-ThreadPool *GetInstance(int thread_pool_id) {
-  if (thread_pool_id < 0 || thread_pool_id >= MAX_THREAD_POOL_NUM) {
-    LOG_ERROR("invaid context id: %d", thread_pool_id);
-    return NULL;
-  }
-  return &thread_pool_list[thread_pool_id];
-}
-
-Thread *GetThread(int thread_pool_id, int thread_id) {
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
+Thread *GetThread(struct ThreadPool *thread_pool, int thread_id) {
   if (thread_pool == NULL) {
-    LOG_ERROR("get thread pool instane failed, thread_pool_id: %d, thread_id: %d", thread_pool_id, thread_id);
+    LOG_ERROR("get thread pool instane failed, thread_id: %d", thread_id);
     return NULL;
   }
   ThreadList *thread_list = thread_pool->thread_list;
@@ -105,8 +91,7 @@ Thread *GetThread(int thread_pool_id, int thread_id) {
     return NULL;
   }
   if (thread_id >= thread_list->size) {
-    LOG_ERROR("invalid thread id: %d, thread_pool_id: %d, thread size: %d", thread_id, thread_pool_id,
-             thread_list->size);
+    LOG_ERROR("invalid thread id: %d, thread size: %d", thread_id, thread_list->size);
     return NULL;
   }
   if (thread_id == 0) {
@@ -134,10 +119,14 @@ void FreeThread(ThreadList *thread_list, Thread *thread) {
   // only support sequential release
   thread_list->head = thread->next;
   sem_post(&thread->sem);
-  while (thread != NULL && !thread->is_running) {
-    sem_destroy(&thread->sem);
-    free(thread);
-    thread = NULL;
+  pthread_join(thread->pthread, NULL);
+  while (true) {
+    if (thread != NULL && !thread->is_running) {
+      sem_destroy(&thread->sem);
+      free(thread);
+      thread = NULL;
+      break;
+    }
   }
 }
 
@@ -306,8 +295,7 @@ int SetAffinity(pthread_t thread_id, cpu_set_t *cpuSet) {
   return RET_TP_OK;
 }
 
-int BindMasterThread(int thread_pool_id, bool is_bind) {
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
+int BindMasterThread(struct ThreadPool *thread_pool, bool is_bind) {
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return RET_TP_ERROR;
@@ -337,8 +325,7 @@ int BindMasterThread(int thread_pool_id, bool is_bind) {
   return RET_TP_OK;
 }
 
-int BindSalverThreads(int thread_pool_id, bool is_bind) {
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
+int BindSalverThreads(struct ThreadPool *thread_pool, bool is_bind) {
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return RET_TP_ERROR;
@@ -360,9 +347,9 @@ int BindSalverThreads(int thread_pool_id, bool is_bind) {
       LOG_INFO("mode: %d, attach id: %u", thread_pool->mode, attach_id);
       CPU_ZERO(&mask);
       CPU_SET(attach_id, &mask);
-      Thread *thread = GetThread(thread_pool_id, i);
+      Thread *thread = GetThread(thread_pool, i);
       if (thread == NULL) {
-        LOG_ERROR("get thread failed, thread_pool_id: %d, thread_id: %d", thread_pool_id, i);
+        LOG_ERROR("get thread failed, thread_id: %d", i);
         return false;
       }
       int ret = SetAffinity(thread->pthread, &mask);
@@ -377,9 +364,9 @@ int BindSalverThreads(int thread_pool_id, bool is_bind) {
       CPU_SET(cpu_cores[i], &mask);
     }
     for (int i = 0; i < thread_pool->thread_num - 1; ++i) {
-      Thread *thread = GetThread(thread_pool_id, i);
+      Thread *thread = GetThread(thread_pool, i);
       if (thread == NULL) {
-        LOG_ERROR("get thread failed, thread_pool_id: %d, thread_id: %d", thread_pool_id, i);
+        LOG_ERROR("get thread failed, thread_id: %d", i);
         return false;
       }
       int ret = SetAffinity(thread->pthread, &mask);
@@ -394,22 +381,21 @@ int BindSalverThreads(int thread_pool_id, bool is_bind) {
 }
 #endif
 
-int BindThreads(int thread_pool_id, bool is_bind, int mode) {
+int BindThreads(struct ThreadPool *thread_pool, bool is_bind, int mode) {
 #ifdef BIND_CORE
   if (mode == NO_BIND_MODE) {
     return RET_TP_OK;
   }
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return RET_TP_ERROR;
   }
   thread_pool->mode = mode;
-  int ret = BindMasterThread(thread_pool_id, is_bind);
+  int ret = BindMasterThread(thread_pool, is_bind);
   if (ret != RET_TP_OK) {
     LOG_ERROR("bind master thread failed.");
   }
-  ret = BindSalverThreads(thread_pool_id, is_bind);
+  ret = BindSalverThreads(thread_pool, is_bind);
   if (ret != RET_TP_OK) {
     LOG_ERROR("bind salver thread failed.");
   }
@@ -419,10 +405,10 @@ int BindThreads(int thread_pool_id, bool is_bind, int mode) {
 #endif
 }
 
-bool PushTaskToQueue(int thread_pool_id, int thread_id, Task *task) {
-  Thread *thread = GetThread(thread_pool_id, thread_id);
+bool PushTaskToQueue(struct ThreadPool *thread_pool, int thread_id, Task *task) {
+  Thread *thread = GetThread(thread_pool, thread_id);
   if (thread == NULL) {
-    LOG_ERROR("get thread failed, thread_pool_id: %d, thread_id: %d", thread_pool_id, thread_id);
+    LOG_ERROR("get thread failed, thread_id: %d", thread_id);
     return false;
   }
   const int tail_index = atomic_load_explicit(&thread->tail, memory_order_relaxed);
@@ -454,8 +440,7 @@ bool PopTaskFromQueue(Thread *thread, Task **task) {
   return true;
 }
 
-void WaitAllThread(int thread_pool_id) {
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
+void WaitAllThread(struct ThreadPool *thread_pool) {
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return;
@@ -464,9 +449,9 @@ void WaitAllThread(int thread_pool_id) {
   while (!k_success_flag) {
     k_success_flag = true;
     for (int i = 0; i < thread_pool->thread_num - 1; ++i) {
-      Thread *thread = GetThread(thread_pool_id, i);
+      Thread *thread = GetThread(thread_pool, i);
       if (thread == NULL) {
-        LOG_ERROR("get thread failed, thread_pool_id: %d, thread_id: %d", thread_pool_id, i);
+        LOG_ERROR("get thread failed, thread_id: %d", i);
         return;
       }
       if (thread->task_size != 0) {
@@ -477,8 +462,7 @@ void WaitAllThread(int thread_pool_id) {
   }
 }
 
-int DistributeTask(int thread_pool_id, Task *task, int task_num) {
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
+int DistributeTask(struct ThreadPool *thread_pool, Task *task, int task_num) {
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return RET_TP_ERROR;
@@ -492,7 +476,7 @@ int DistributeTask(int thread_pool_id, Task *task, int task_num) {
   for (int i = 0; i < size - 1; ++i) {
     do {
       k_success_flag = true;
-      if (!PushTaskToQueue(thread_pool_id, i, task)) {
+      if (!PushTaskToQueue(thread_pool, i, task)) {
         k_success_flag = false;
       }
     } while (!k_success_flag);
@@ -504,12 +488,11 @@ int DistributeTask(int thread_pool_id, Task *task, int task_num) {
   }
   task->func(task->content, size - 1);
   // wait
-  WaitAllThread(thread_pool_id);
+  WaitAllThread(thread_pool);
   return RET_TP_OK;
 }
 
-int AddTask(int thread_pool_id, int func(void *, int), void *content, int task_num) {
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
+int AddTask(struct ThreadPool *thread_pool, int func(void *, int), void *content, int task_num) {
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return RET_TP_ERROR;
@@ -524,23 +507,24 @@ int AddTask(int thread_pool_id, int func(void *, int), void *content, int task_n
   Task task;
   task.func = func;
   task.content = content;
-  return DistributeTask(thread_pool_id, &task, task_num);
+  return DistributeTask(thread_pool, &task, task_num);
 }
 
-int ParallelLaunch(int thread_pool_id, int (*func)(void *, int), void *content, int task_num) {
-  return AddTask(thread_pool_id, func, content, task_num);
+int ParallelLaunch(struct ThreadPool *thread_pool, int (*func)(void *, int), void *content, int task_num) {
+  return AddTask(thread_pool, func, content, task_num);
 }
 
 void ThreadRun(Thread *thread) {
-  ThreadPool *thread_pool = GetInstance(thread->thread_pool_id);
+  thread->is_running = true;
+  ThreadPool *thread_pool = (ThreadPool *)(thread->thread_pool);
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
+    thread->is_running = false;
     return;
   }
   Task *task = NULL;
   int thread_id = thread->thread_id;
   int spin_count = 0;
-  thread->is_running = true;
   while (thread_pool->is_alive) {
     while (thread->activate) {
       if (PopTaskFromQueue(thread, &task)) {
@@ -565,8 +549,7 @@ void ThreadRun(Thread *thread) {
   thread->is_running = false;
 }
 
-void PushThreadToList(int thread_pool_id, Thread *thread) {
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
+void PushThreadToList(struct ThreadPool *thread_pool, Thread *thread) {
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return;
@@ -574,7 +557,7 @@ void PushThreadToList(int thread_pool_id, Thread *thread) {
   ThreadList *thread_list = thread_pool->thread_list;
   if (thread_list == NULL) {
     LOG_ERROR("thread list is null");
-    DestroyThreadPool(thread_pool_id);
+    DestroyThreadPool(thread_pool);
     return;
   }
   pthread_mutex_lock(&thread_list->lock);
@@ -589,36 +572,35 @@ void PushThreadToList(int thread_pool_id, Thread *thread) {
   pthread_mutex_unlock(&thread_list->lock);
 }
 
-int CreateNewThread(int thread_pool_id, int thread_id) {
-  LOG_INFO("thread_pool_id: %d, create thread: %d", thread_pool_id, thread_id);
+int CreateNewThread(struct ThreadPool *thread_pool, int thread_id) {
+  LOG_INFO("create thread: %d", thread_id);
   Thread *thread = (Thread *)malloc(sizeof(Thread));
   if (thread == NULL) {
     LOG_ERROR("create thread failed");
-    DestroyThreadPool(thread_pool_id);
+    DestroyThreadPool(thread_pool);
     return RET_TP_ERROR;
   }
-  thread->thread_pool_id = thread_pool_id;
+  thread->thread_pool = thread_pool;
   thread->thread_id = thread_id;
   thread->head = ATOMIC_VAR_INIT(0);
   thread->tail = ATOMIC_VAR_INIT(0);
   thread->task_size = ATOMIC_VAR_INIT(0);
   thread->activate = ATOMIC_VAR_INIT(true);
-  thread->is_running = ATOMIC_VAR_INIT(false);
+  thread->is_running = ATOMIC_VAR_INIT(true);
   thread->next = NULL;
   sem_init(&thread->sem, 0, 0);
-  PushThreadToList(thread_pool_id, thread);
+  PushThreadToList(thread_pool, thread);
   pthread_create(&thread->pthread, NULL, (void *)ThreadRun, thread);
   pthread_detach(thread->pthread);
   return RET_TP_OK;
 }
 
-int ReConfigThreadPool(int thread_pool_id, int thread_num, int mode) {
-  LOG_INFO("reconfig thread pool, thread_pool_id: %d, thread_num: %d, mode: %d", thread_pool_id, thread_num, mode);
+int ReConfigThreadPool(struct ThreadPool *thread_pool, int thread_num, int mode) {
+  LOG_INFO("reconfig thread pool, thread_num: %d, mode: %d", thread_num, mode);
   if (thread_num <= 0 || thread_num > MAX_THREAD_NUM) {
     LOG_ERROR("invalid thread num: %d", thread_num);
     return RET_TP_ERROR;
   }
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return RET_TP_ERROR;
@@ -634,7 +616,7 @@ int ReConfigThreadPool(int thread_pool_id, int thread_num, int mode) {
     thread_pool->thread_list = (ThreadList *)malloc(sizeof(ThreadList));
     if (thread_pool->thread_list == NULL) {
       LOG_ERROR("create thread list failed");
-      DestroyThreadPool(thread_pool_id);
+      DestroyThreadPool(thread_pool);
       return RET_TP_ERROR;
     }
     thread_pool->thread_list->head = NULL;
@@ -644,20 +626,20 @@ int ReConfigThreadPool(int thread_pool_id, int thread_num, int mode) {
   }
   int add_thread_num = thread_pool->thread_num - curr_thread_num;
   for (int i = curr_thread_num - 1, j = 0; j < add_thread_num; ++i, ++j) {
-    int ret = CreateNewThread(thread_pool_id, i);
+    int ret = CreateNewThread(thread_pool, i);
     if (ret != RET_TP_OK) {
       LOG_ERROR("create new thread failed");
       return RET_TP_ERROR;
     }
   }
-  return BindThreads(thread_pool_id, true, mode);
+  return BindThreads(thread_pool, true, mode);
 }
 
-int CreateThreadPool(int thread_pool_id, int thread_num, int mode) {
-  LOG_INFO("create thread pool, thread_pool_id: %d, thread_num: %d, mode: %d", thread_pool_id, thread_num, mode);
+ThreadPool *CreateThreadPool(int thread_num, int mode) {
+  LOG_INFO("create thread pool, thread_num: %d, mode: %d", thread_num, mode);
   if (thread_num <= 0 || thread_num > MAX_THREAD_NUM) {
     LOG_ERROR("invalid thread num: %d", thread_num);
-    return RET_TP_ERROR;
+    return NULL;
   }
 #ifdef BIND_CORE
   if (run_once) {
@@ -665,11 +647,7 @@ int CreateThreadPool(int thread_pool_id, int thread_num, int mode) {
     run_once = false;
   }
 #endif
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
-  if (thread_pool == NULL) {
-    LOG_ERROR("get thread pool instane failed");
-    return RET_TP_ERROR;
-  }
+  ThreadPool *thread_pool = (struct ThreadPool *)(malloc(sizeof(ThreadPool)));
   thread_pool->thread_num = thread_num > MAX_THREAD_NUM ? MAX_THREAD_NUM : thread_num;
   thread_pool->is_alive = ATOMIC_VAR_INIT(true);
   thread_pool->mode = mode;
@@ -678,8 +656,8 @@ int CreateThreadPool(int thread_pool_id, int thread_num, int mode) {
     thread_pool->thread_list = (ThreadList *)malloc(sizeof(ThreadList));
     if (thread_pool->thread_list == NULL) {
       LOG_ERROR("create thread list failed");
-      DestroyThreadPool(thread_pool_id);
-      return RET_TP_ERROR;
+      DestroyThreadPool(thread_pool);
+      return NULL;
     }
     thread_pool->thread_list->head = NULL;
     thread_pool->thread_list->tail = NULL;
@@ -687,55 +665,36 @@ int CreateThreadPool(int thread_pool_id, int thread_num, int mode) {
     pthread_mutex_init(&thread_pool->thread_list->lock, NULL);
   }
   for (int i = 0; i < thread_pool->thread_num - 1; ++i) {
-    int ret = CreateNewThread(thread_pool_id, i);
+    int ret = CreateNewThread(thread_pool, i);
     if (ret != RET_TP_OK) {
       LOG_ERROR("create thread %d failed", i);
-      DestroyThreadPool(thread_pool_id);
-      return RET_TP_ERROR;
+      DestroyThreadPool(thread_pool);
+      return NULL;
     }
   }
-  return RET_TP_OK;
+  return thread_pool;
 }
 
-int ConfigThreadPool(int thread_pool_id, int thread_num, int mode) {
-  LOG_INFO("config: thread_pool_id: %d, thread_num: %d, mode: %d, is_created: %d, refcount: %d", thread_pool_id,
-           thread_num, mode, thread_pool_is_created[thread_pool_id], thread_pool_refcount[thread_pool_id]);
-  if (thread_pool_id >= MAX_THREAD_POOL_NUM) {
-    LOG_ERROR("invalid context id: %d", thread_pool_id);
-    return RET_TP_ERROR;
-  }
+int ConfigThreadPool(struct ThreadPool *thread_pool, int thread_num, int mode) {
   if (thread_num <= 0 || thread_num > MAX_THREAD_NUM) {
     LOG_ERROR("invalid thread num: %d", thread_num);
     return RET_TP_ERROR;
   }
-  thread_pool_refcount[thread_pool_id] += 1;
-  int ret;
-  if (thread_pool_is_created[thread_pool_id]) {
-    ret = ReConfigThreadPool(thread_pool_id, thread_num, mode);
-    if (ret != RET_TP_OK) {
-      LOG_ERROR("reconfig thread pool failed, thread_pool_id: %d, thread_num: %d, mode: %d", thread_pool_id, thread_num,
-               mode);
-    }
-  } else {
-    thread_pool_is_created[thread_pool_id] = true;
-    ret = CreateThreadPool(thread_pool_id, thread_num, mode);
-    if (ret != RET_TP_OK) {
-      LOG_ERROR("create thread pool failed, thread_pool_id: %d, thread_num: %d, mode: %d", thread_pool_id, thread_num,
-               mode);
-    }
+  int ret = ReConfigThreadPool(thread_pool, thread_num, mode);
+  if (ret != RET_TP_OK) {
+    LOG_ERROR("reconfig thread pool failed, thread_num: %d, mode: %d", thread_num, mode);
   }
   return ret;
 }
 
-void ActivateThreadPool(int thread_pool_id) {
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
+void ActivateThreadPool(struct ThreadPool *thread_pool) {
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return;
   }
   ThreadList *thread_list = thread_pool->thread_list;
   if (thread_list == NULL) {
-    LOG_ERROR("thread pool: %d list is null", thread_pool_id);
+    LOG_ERROR("thread pool's list is null");
     return;
   }
   Thread *thread = thread_list->head;
@@ -746,15 +705,14 @@ void ActivateThreadPool(int thread_pool_id) {
   }
 }
 
-void DeactivateThreadPool(int thread_pool_id) {
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
+void DeactivateThreadPool(struct ThreadPool *thread_pool) {
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return;
   }
   ThreadList *thread_list = thread_pool->thread_list;
   if (thread_list == NULL) {
-    LOG_ERROR("thread pool: %d list is null", thread_pool_id);
+    LOG_ERROR("thread pool's list is null");
     return;
   }
   Thread *thread = thread_list->head;
@@ -764,39 +722,30 @@ void DeactivateThreadPool(int thread_pool_id) {
   }
 }
 
-void DestroyThreadPool(int thread_pool_id) {
-  thread_pool_refcount[thread_pool_id]--;
-  if (thread_pool_refcount[thread_pool_id] > 0) {
-    LOG_ERROR("no need to free, thread_pool_id: %d, refcount: %d",
-              thread_pool_id, thread_pool_refcount[thread_pool_id]);
-    return;
-  }
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
+void DestroyThreadPool(struct ThreadPool *thread_pool) {
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return;
   }
   if (thread_pool->thread_list == NULL) {
-    LOG_ERROR("thread pool: %d list is null", thread_pool_id);
+    LOG_ERROR("thread pool's list is null");
     return;
   }
-  DeactivateThreadPool(thread_pool_id);
-  thread_pool_is_created[thread_pool_id] = false;
+  DeactivateThreadPool(thread_pool);
   thread_pool->is_alive = false;
+  LOG_ERROR("DestroyThreadPool thread num : %d", thread_pool->thread_num);
   for (int i = 0; i < thread_pool->thread_num - 1; ++i) {
-    Thread *thread = GetThread(thread_pool_id, i);
+    Thread *thread = GetThread(thread_pool, i);
     if (thread != NULL) {
       FreeThread(thread_pool->thread_list, thread);
     }
   }
   free(thread_pool->thread_list);
   thread_pool->thread_list = NULL;
-  LOG_INFO("destroy thread pool success, thread_pool_id: %d, refcount: %d", thread_pool_id,
-           thread_pool_refcount[thread_pool_id]);
+  LOG_INFO("destroy thread pool success");
 }
 
-int GetCurrentThreadNum(int thread_pool_id) {
-  ThreadPool *thread_pool = GetInstance(thread_pool_id);
+int GetCurrentThreadNum(struct ThreadPool *thread_pool) {
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return 0;
