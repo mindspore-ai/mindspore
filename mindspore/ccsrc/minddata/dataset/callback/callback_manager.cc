@@ -26,7 +26,7 @@ void CallbackManager::AddCallbacks(std::vector<std::shared_ptr<DSCallback>> call
   callbacks_.insert(callbacks_.end(), callbacks.begin(), callbacks.end());
 }
 
-Status CallbackManager::Init(std::shared_ptr<DatasetOp> op) {
+Status CallbackManager::Init(DatasetOp *op) {
   RETURN_UNEXPECTED_IF_NULL(op);
   op_ = op;
   // turn the flag on if callback is set
@@ -42,6 +42,7 @@ Status CallbackManager::Init(std::shared_ptr<DatasetOp> op) {
 
 Status CallbackManager::Begin(const CallbackParam &cb_param) {
   RETURN_OK_IF_TRUE(!enabled_);
+  RETURN_UNEXPECTED_IF_NULL(op_);
   std::vector<size_t> callback_inds;
   // go through all callback functions to see if each function is needed
   for (size_t ind = 0; ind < callbacks_.size(); ind++) {
@@ -61,6 +62,7 @@ Status CallbackManager::Begin(const CallbackParam &cb_param) {
 
 Status CallbackManager::EpochBegin(const CallbackParam &cb_param) {
   RETURN_OK_IF_TRUE(!enabled_);
+  RETURN_UNEXPECTED_IF_NULL(op_);
   std::vector<size_t> callback_inds;
   // go through all callback functions to see if each function is needed
   for (size_t ind = 0; ind < callbacks_.size(); ind++) {
@@ -80,6 +82,7 @@ Status CallbackManager::EpochBegin(const CallbackParam &cb_param) {
 
 Status CallbackManager::StepBegin(const CallbackParam &cb_param) {
   RETURN_OK_IF_TRUE(!enabled_);
+  RETURN_UNEXPECTED_IF_NULL(op_);
   std::vector<size_t> callback_inds;
   // go through all callback functions to see if each function is needed
   for (size_t ind = 0; ind < callbacks_.size(); ind++) {
@@ -100,6 +103,7 @@ Status CallbackManager::StepBegin(const CallbackParam &cb_param) {
 
 Status CallbackManager::End(const CallbackParam &cb_param) {
   RETURN_OK_IF_TRUE(!enabled_);
+  RETURN_UNEXPECTED_IF_NULL(op_);
   std::vector<size_t> callback_inds;
   // go through all callback functions to see if each function is needed
   for (size_t ind = 0; ind < callbacks_.size(); ind++) {
@@ -119,6 +123,7 @@ Status CallbackManager::End(const CallbackParam &cb_param) {
 
 Status CallbackManager::EpochEnd(const CallbackParam &cb_param) {
   RETURN_OK_IF_TRUE(!enabled_);
+  RETURN_UNEXPECTED_IF_NULL(op_);
   std::vector<size_t> callback_inds;
   // go through all callback functions to see if each function is needed
   for (size_t ind = 0; ind < callbacks_.size(); ind++) {
@@ -138,6 +143,7 @@ Status CallbackManager::EpochEnd(const CallbackParam &cb_param) {
 
 Status CallbackManager::StepEnd(const CallbackParam &cb_param) {
   RETURN_OK_IF_TRUE(!enabled_);
+  RETURN_UNEXPECTED_IF_NULL(op_);
   std::vector<size_t> callback_inds;
   // go through all callback functions to see if each function is needed
   for (size_t ind = 0; ind < callbacks_.size(); ind++) {
