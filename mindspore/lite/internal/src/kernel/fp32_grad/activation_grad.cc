@@ -19,7 +19,7 @@
 #include "internal/include/errorcode.h"
 #include "internal/include/ms_tensor.h"
 #include "nnacl/fp32_grad/activation_grad.h"
-#include "utils/log_adapter.h"
+#include "internal/src/lite_log.h"
 #include "nnacl/errorcode.h"
 
 int DoActivationGradInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors,
@@ -45,11 +45,11 @@ int DoActivationGrad(const TensorPtrVector &in_tensors, const TensorPtrVector &o
     float alpha = param->alpha_;
     ret = LReluGrad(dy_data, x_data, length, dx_data, alpha);
   } else {
-    MS_LOG(ERROR) << "Unsupport activation type " << param->type_;
+    LITE_ERROR_LOG("Unsupport activation type %d", param->type_);
     return RET_PARAM_INVALID;
   }
   if (ret != NNACL_OK) {
-    MS_LOG(ERROR) << "do activation(" << param->type_ << ") fail!ret: " << ret;
+    LITE_ERROR_LOG("do activation(%d) fail!ret: %d", param->type_, ret);
     return RET_ERROR;
   }
   return RET_OK;

@@ -18,7 +18,7 @@
 #include "nnacl/fp32/matmul.h"
 #include "internal/include/errorcode.h"
 #include "internal/include/ms_tensor.h"
-#include "utils/log_adapter.h"
+#include "internal/src/lite_log.h"
 
 typedef struct MatMulCPUKernelData {
   float *a_c12_ptr_;
@@ -92,12 +92,12 @@ int DoMatMulInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector 
   Int32Vector a_shape = input0->shape_;
   Int32Vector b_shape = input1->shape_;
   if (a_shape.size() < 2 || b_shape.size() < 2) {
-    MS_LOG(ERROR) << "inputs shape is invalid";
+    LITE_ERROR_LOG("inputs shape is invalid");
     return RET_INPUT_TENSOR_ERROR;
   }
   for (size_t i = 0; i < a_shape.size() - 2; ++i) {
     if (a_shape[i] != b_shape[i]) {
-      MS_LOG(ERROR) << "Op MatMul's dimensions must be equal";
+      LITE_ERROR_LOG("Op MatMul's dimensions must be equal");
       return RET_INPUT_TENSOR_ERROR;
     }
   }
@@ -117,11 +117,11 @@ int DoMatMulInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector 
 int DoMatMul(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
              mindspore::lite::Allocator *allocator) {
   if (in_tensors[0]->data_ == NULL || in_tensors[1]->data_ ==NULL) {
-    MS_LOG(ERROR) << "input data is NULL!";
+    LITE_LOG_ERROR("input data is NULL!");
     return RET_PARAM_INVALID;
   }
   if (allocator == NULL) {
-    MS_LOG(ERROR) << "input allocator is NULL!";
+    LITE_LOG_ERROR("input allocator is NULL!");
     return RET_PARAM_INVALID;
   }
   int batch = 1;
@@ -130,7 +130,8 @@ int DoMatMul(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tenso
   if (in_tensors.size() == 3) {
     std::vector<int> bias_shape = in_tensors[2]->shape_;
     if (bias_shape[bias_shape.size() - 1] != c_shape[c_shape.size() - 1]) {
-      MS_LOG(ERROR) << "The bias' dimension is not equal with column";
+      LITE_ERROR_LOG("The bias' dimension %d is not equal with column %d", bias_shape[bias_shape.size() - 1],
+                     c_shape[c_shape.size() - 1]);
       return RET_INPUT_TENSOR_ERROR;
     }
   }

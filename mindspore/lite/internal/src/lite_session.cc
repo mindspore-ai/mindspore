@@ -18,7 +18,7 @@
 #include "internal/include/ms_tensor.h"
 #include "src/runtime/allocator.h"
 #include "internal/include/errorcode.h"
-#include "utils/log_adapter.h"
+#include "internal/src/lite_log.h"
 #include "internal/src/kernel/fp32/activation.h"
 #include "internal/src/kernel/fp32/arithmetic_self.h"
 #include "internal/src/kernel/fp32/matmul.h"
@@ -42,8 +42,8 @@ static int ModelInferShape() {
   size_t nodes_size = nodes.size();
   for (size_t i = 0; i < nodes_size; ++i) {
     auto node = nodes[i];
-    if (node->primitive_ == nullptr) {
-      MS_LOG(ERROR) << "node's primitive is NULL!";
+    if (node->primitive_ == NULL) {
+      LITE_ERROR_LOG("node's primitive is NULL!");
       return RET_ERROR;
     }
     TensorPtrVector in_tensors;
@@ -57,16 +57,16 @@ static int ModelInferShape() {
     int type = node->primitive_->type_;
     InferShape infershape = g_infershape_funcs[type];
     if (infershape == NULL) {
-      MS_LOG(ERROR) << "Unsupport kernel type: " << type;
+      LITE_ERROR_LOG("Unsupport kernel type: %d", type);
       return RET_PARAM_INVALID;
     }
     int ret = (*infershape)(in_tensors, out_tensors, node->primitive_);
     if (ret == RET_INFER_INVALID) {
       g_infershape_interrupt = true;
-      MS_LOG(INFO) << node->name_ << "inferShape shouldn't be done before runtime, inferShape interrupt!";
+      LITE_INFO_LOG("%s inferShape shouldn't be done before runtime, inferShape interrupt!", node->name_.c_str());
     }
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Infer shape fail!ret: " << ret;
+      LITE_ERROR_LOG("Infer shape fail!ret: %d", ret);
       return ret;
     }
   }
@@ -79,15 +79,19 @@ static void InitFuncs() {
     g_infershape_funcs[KernelType::Activation] = DoActivationInferShape;
     g_infershape_funcs[KernelType::Log] = DoArithmeticSelfInferShape;
     g_infershape_funcs[KernelType::Neg] = DoArithmeticSelfInferShape;
-    g_infershape_funcs[KernelType::ActivationGrad] = DoActivationGradInferShape;
 
     g_runkernel_funcs[KernelType::MatMul] = DoMatMul;
     g_runkernel_funcs[KernelType::Activation] = DoActivation;
     g_runkernel_funcs[KernelType::Log] = DoArithmeticSelf;
-    g_runkernel_funcs[KernelType::LogGrad] = DoArithmeticSelfGrad;
     g_runkernel_funcs[KernelType::Neg] = DoArithmeticSelf;
+
+#ifdef SUPPORT_TRAIN
+    g_infershape_funcs[KernelType::ActivationGrad] = DoActivationGradInferShape;
+
     g_runkernel_funcs[KernelType::NegGrad] = DoArithmeticSelfGrad;
     g_runkernel_funcs[KernelType::ActivationGrad] = DoActivationGrad;
+    g_runkernel_funcs[KernelType::LogGrad] = DoArithmeticSelfGrad;
+#endif
     g_first_load = false;
   }
 }
@@ -114,7 +118,7 @@ int LiteSession::CompileGraph(Model *model) {
 TensorPtrVector LiteSession::GetInputs() const {
   TensorPtrVector in(g_model->input_indices_.size());
   for (size_t i = 0; i < g_model->input_indices_.size(); ++i) {
-    in.at(i) = g_model->all_tensors_[i];
+    in.at(i) = g_model->all_tensors_[g_model->input_indices_[i]];
   }
   return in;
 }
@@ -126,7 +130,7 @@ TensorPtrVector LiteSession::GetOutputsByNodeName(const String &node_name) const
 TensorPtrVector LiteSession::GetOutputs() const {
   TensorPtrVector out(g_model->output_indices_.size());
   for (size_t i = 0; i < g_model->output_indices_.size(); ++i) {
-    out.at(i) = g_model->all_tensors_[i];
+    out.at(i) = g_model->all_tensors_[g_model->output_indices_[i]];
   }
   return out;
 }
@@ -137,7 +141,7 @@ int LiteSession::RunGraph() {
   for (size_t i = 0; i < nodes_size; ++i) {
     auto node = nodes[i];
     if (node->primitive_ == nullptr) {
-      MS_LOG(ERROR) << "node's primitive is NULL!";
+      LITE_ERROR_LOG("node's primitive is NULL!");
       return RET_ERROR;
     }
     TensorPtrVector in_tensors;
@@ -152,31 +156,31 @@ int LiteSession::RunGraph() {
     if (g_infershape_interrupt) {
       InferShape infershape = g_infershape_funcs[type];
       if (infershape == NULL) {
-        MS_LOG(ERROR) << "Unsupport kernel type: " << type;
+        LITE_ERROR_LOG("Unsupport kernel type: %d", type);
         return RET_PARAM_INVALID;
       }
       int ret = (*infershape)(in_tensors, out_tensors, node->primitive_);
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << "InferShape fail!ret: " << ret;
+        LITE_ERROR_LOG("InferShape fail!ret: %d", ret);
         return ret;
       }
     }
     for (size_t j = 0; j < out_tensors.size(); ++j) {
       out_tensors[j]->data_ = g_allocator.Malloc(out_tensors[j]->Size());
       if (out_tensors[j]->data_ == NULL) {
-        MS_LOG(ERROR) << "Malloc data for out tensor fail!";
+        LITE_ERROR_LOG("Malloc data for out tensor fail!");
         return RET_NULL_PTR;
       }
     }
     RunKernel run_kernel = g_runkernel_funcs[type];
     if (run_kernel == NULL) {
-      MS_LOG(ERROR) << "Unsupport kernel type: " << type;
+      LITE_ERROR_LOG("Unsupport kernel type: %d", type);
       return RET_PARAM_INVALID;
     }
 
     int ret = (*run_kernel)(in_tensors, out_tensors, node, &g_allocator);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "run kernel fail!ret: " << ret;
+      LITE_ERROR_LOG("run kernel fail!ret: ", ret);
       return ret;
     }
   }

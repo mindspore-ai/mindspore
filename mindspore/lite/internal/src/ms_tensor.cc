@@ -15,11 +15,10 @@
  */
 #include <iostream>
 #include <vector>
-#include <numeric>
 #include <string>
 #include "internal/include/ms_tensor.h"
 MSTensor *CreateTensor(TypeId data_type, const ShapeVector &shape) {
-  MSTensor *tensor = (MSTensor *)malloc(sizeof(MSTensor));
+  MSTensor *tensor = new (std::nothrow) MSTensor();
   if (tensor == NULL) {
     return NULL;
   }

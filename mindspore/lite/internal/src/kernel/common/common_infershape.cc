@@ -17,7 +17,7 @@
 #include "internal/src/kernel/common/common_infershape.h"
 #include "internal/include/errorcode.h"
 #include "internal/include/ms_tensor.h"
-#include "utils/log_adapter.h"
+#include "internal/src/lite_log.h"
 
 int DoCommonInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors) {
   TensorPtr input = in_tensors.at(0);
