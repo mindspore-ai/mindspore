@@ -20,7 +20,8 @@
 #include "minddata/dataset/core/data_type.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "utils/hashing.h"
-#include "mindspore/lite/src/ir/tensor.h"
+#include "mindspore/lite/internal/include/ms_tensor.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace tensor {
@@ -59,7 +60,7 @@ DETensor::DETensor(std::shared_ptr<dataset::Tensor> tensor_ptr) { this->tensor_i
 
 MSTensor *DETensor::ConvertToLiteTensor() {
   // static MSTensor::CreateTensor is only for the LiteTensor
-  MSTensor *tensor = MSTensor::CreateTensor(this->data_type(), this->shape());
+  MSTensor *tensor = CreateTensor(this->data_type(), this->shape());
   MS_ASSERT(tensor->Size() == this->Size());
   memcpy_s(tensor->MutableData(), tensor->Size(), this->MutableData(), this->Size());
   return tensor;
@@ -141,7 +142,7 @@ size_t DETensor::Size() const {
   return this->tensor_impl_->SizeInBytes();
 }
 
-void *DETensor::MutableData() const {
+void *DETensor::MutableData() {
   MS_ASSERT(this->tensor_impl_ != nullptr);
   return this->tensor_impl_->GetMutableBuffer();
 }
