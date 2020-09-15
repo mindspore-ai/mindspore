@@ -51,7 +51,7 @@ if __name__ == '__main__':
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     model = Model(net, loss_fn=loss, metrics={'acc'})
 
-    res = model.eval(dataset, dataset_sink_mode=False)
+    res = model.eval(dataset)
     print(f"result:{res}\npretrain_ckpt={args_opt.pretrain_ckpt}")
     if args_opt.head_ckpt:
         print(f"head_ckpt={args_opt.head_ckpt}")

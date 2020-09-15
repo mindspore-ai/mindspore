@@ -76,14 +76,12 @@ def config_ckpoint(config, lr, step_size):
         if config.save_checkpoint:
             config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
                                          keep_checkpoint_max=config.keep_checkpoint_max)
-            ckpt_save_dir = config.save_checkpoint_path
 
-            if config.platform == "GPU":
-                if config.run_distribute:
-                    ckpt_save_dir += "ckpt_" + str(get_rank()) + "/"
-                else:
-                    ckpt_save_dir += "ckpt_" + "/"
+            rank = 0
+            if config.run_distribute:
+                rank = get_rank()
 
+            ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(rank) + "/"
             ckpt_cb = ModelCheckpoint(prefix="mobilenetV2", directory=ckpt_save_dir, config=config_ck)
             cb += [ckpt_cb]
     return cb

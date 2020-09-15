@@ -60,8 +60,7 @@ if __name__ == '__main__':
     elif args_opt.train_method in ("train", "fine_tune"):
         if args_opt.platform == "CPU":
             raise ValueError("Currently, CPU only support \"incremental_learn\", not \"fine_tune\" or \"train\".")
-        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, config=config)
-        step_size = dataset.get_dataset_size()
+        dataset, step_size = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, config=config)
 
     # Currently, only Ascend support switch precision.
     switch_precision(net, mstype.float16, config)
@@ -108,9 +107,8 @@ if __name__ == '__main__':
                 losses.append(network(feature, label).asnumpy())
             epoch_mseconds = (time.time()-epoch_start) * 1000
             per_step_mseconds = epoch_mseconds / step_size
-            print("\r epoch[{}], iter[{}] cost: {:5.3f}, per step time: {:5.3f}, avg loss: {:5.3f}"\
-            .format(epoch + 1, step_size, epoch_mseconds, per_step_mseconds, np.mean(np.array(losses))), \
-                end="")
+            print("epoch[{}], iter[{}] cost: {:5.3f}, per step time: {:5.3f}, avg loss: {:5.3f}"\
+            .format(epoch + 1, step_size, epoch_mseconds, per_step_mseconds, np.mean(np.array(losses))))
             if (epoch + 1) % config.save_checkpoint_epochs == 0:
                 save_checkpoint(network, os.path.join(config.save_checkpoint_path, \
                     f"mobilenetv2_head_{epoch+1}.ckpt"))
