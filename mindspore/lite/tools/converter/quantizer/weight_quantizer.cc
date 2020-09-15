@@ -69,13 +69,9 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
 
     std::vector<schema::QuantParamT> quant_params;
     primitive_c->AddInputQuantParam(quant_params);
-
-    auto op_type = (schema::PrimitiveType)primitive_c->Type();
-    bool depthwise = op_type == schema::PrimitiveType_DepthwiseConv2D ? true : false;
-
     auto status =
       QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant,
-        quant_max, quant_min, bitNum, true, depthwise);
+        quant_max, quant_min, bitNum, true, false);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;

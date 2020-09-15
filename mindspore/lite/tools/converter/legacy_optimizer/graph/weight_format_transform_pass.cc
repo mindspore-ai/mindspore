@@ -53,16 +53,19 @@ STATUS WeightFormatTransformPass::QuantDataFormatTrans(MetaGraphT *graph) {
     MS_ASSERT(node != nullptr);
     MS_ASSERT(node->primitive != nullptr);
     auto opType = node->primitive->value.type;
-    if (opType != PrimitiveType_Conv2D && opType != PrimitiveType_DepthwiseConv2D) {
+    if (opType != PrimitiveType_Conv2D && opType != PrimitiveType_DepthwiseConv2D &&
+      opType != PrimitiveType_DeConv2D && opType != PrimitiveType_DeDepthwiseConv2D) {
       continue;
     }
     MS_ASSERT(node->inputIndex.size() >= 2);
     auto weightIndex = node->inputIndex.at(1);
     MS_ASSERT(subGraph->allTensors.size() > weightIndex);
     auto &weightTensor = graph->allTensors[weightIndex];
-    MS_ASSERT(weightTensor->dataType == DataType_DT_UINT8 || weightTensor->dataType == DataType_DT_FLOAT);
+    MS_ASSERT(weightTensor->dataType == DataType_DT_UINT8 || weightTensor->dataType == DataType_DT_FLOAT ||
+      weightTensor->dataType == DataType_DT_INT8);
     STATUS status;
-    if (opType == PrimitiveType_Conv2D || opType == PrimitiveType_DepthwiseConv2D) {  // weight should be HWCK
+    if (opType == PrimitiveType_Conv2D || opType == PrimitiveType_DepthwiseConv2D ||
+      opType == PrimitiveType_DeConv2D || opType == PrimitiveType_DeDepthwiseConv2D) {  // weight should be HWCK
       Format curDstFormat;
       if (this->dstFormat == Format_NUM_OF_FORMAT) {
         curDstFormat = Format_KHWC;

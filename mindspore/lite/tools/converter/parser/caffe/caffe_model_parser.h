@@ -50,7 +50,7 @@ class CaffeModelParser : public ModelParser {
                              schema::MetaGraphT *subGraphDef);
 
   STATUS ParseLayer(const caffe::NetParameter &proto, const caffe::NetParameter &weight, TensorCache *tensorCache,
-                    schema::MetaGraphT *subGraphDef);
+                    schema::MetaGraphT *subGraphDef, const QuantType &quantType);
 
   STATUS GetModelInput(const caffe::NetParameter &proto, TensorCache *tensorCache);
 

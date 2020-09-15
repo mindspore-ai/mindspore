@@ -247,9 +247,10 @@ STATUS OnnxModelParser::ParseOnnxGivenFillNode(const onnx::NodeProto &onnx_node,
 
 STATUS OnnxModelParser::ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                              schema::CNodeT *dst_op, schema::TensorT *dst_tensor,
-                                             TensorCache *tensor_cache) {
+                                             TensorCache *tensor_cache, const QuantType &quantType) {
   // change op_type() to name(), that is unique
   dst_op->name = onnx_node.op_type() + "_" + onnx_node.output(0);
+  dst_op->quantType = quantType;
   // dst_op->fmkType = FmkType_ONNX;
   MS_LOG(DEBUG) << "onnx op name " << onnx_node.op_type() << ", dst op name: " << dst_op->name << ", input size "
                 << onnx_node.input_size();
@@ -520,7 +521,7 @@ schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, con
 
     std::unique_ptr<schema::CNodeT> dst_op = std::make_unique<schema::CNodeT>();
     std::unique_ptr<schema::TensorT> dst_tensor = std::make_unique<schema::TensorT>();
-    status = ParseOnnxNodeToDstOp(onnx_graph, onnx_node, dst_op.get(), dst_tensor.get(), &tensor_cache);
+    status = ParseOnnxNodeToDstOp(onnx_graph, onnx_node, dst_op.get(), dst_tensor.get(), &tensor_cache, quantType);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "parse node " << onnx_node.op_type() << " failed";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);

@@ -80,7 +80,7 @@ schema::MetaGraphT *CaffeModelParser::ParseToFb(const std::string &modelFile, co
     return nullptr;
   }
 
-  status = ParseLayer(proto, weight, &tensorCache, metaGraph.get());
+  status = ParseLayer(proto, weight, &tensorCache, metaGraph.get(), quantType);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseLayer failed " << status;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -177,7 +177,8 @@ STATUS CaffeModelParser::SetGraphTensorIndex(const caffe::NetParameter &proto, T
 }
 
 STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caffe::NetParameter &weight,
-                                    TensorCache *tensorCache, schema::MetaGraphT *subGraphDef) {
+                                    TensorCache *tensorCache, schema::MetaGraphT *subGraphDef,
+                                    const QuantType &quantType) {
   for (int i = 0; i < proto.layer_size(); i++) {
     auto layer = proto.layer(i);
 
@@ -214,7 +215,7 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
 
       std::unique_ptr<schema::CNodeT> op = std::make_unique<schema::CNodeT>();
       op->name = layer.name();
-
+      op->quantType = quantType;
       if (layer.type() == "Split") {
         for (int j = 0; j < layer.top_size(); ++j) {
           splitLayer.emplace(layer.top(j), layer.bottom(0));
