@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-#include "tools/time_profile/time_profile.h"
+#include "tools/time_profiler/time_profiler.h"
 
-int main(int argc, const char **argv) { return mindspore::lite::RunTimeProfile(argc, argv); }
+int main(int argc, const char **argv) { return mindspore::lite::RunTimeProfiler(argc, argv); }

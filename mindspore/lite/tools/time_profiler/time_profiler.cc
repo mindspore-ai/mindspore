@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/time_profile/time_profile.h"
+#include "tools/time_profiler/time_profiler.h"
 #define __STDC_FORMAT_MACROS
 #include <cinttypes>
 #undef __STDC_FORMAT_MACROS
@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace lite {
-int TimeProfile::GenerateRandomData(size_t size, void *data) {
+int TimeProfiler::GenerateRandomData(size_t size, void *data) {
   MS_ASSERT(data != nullptr);
   char *castedData = static_cast<char *>(data);
   for (size_t i = 0; i < size; i++) {
@@ -36,7 +36,7 @@ int TimeProfile::GenerateRandomData(size_t size, void *data) {
   return RET_OK;
 }
 
-int TimeProfile::GenerateInputData() {
+int TimeProfiler::GenerateInputData() {
   for (auto tensor : ms_inputs_) {
     MS_ASSERT(tensor != nullptr);
     auto input_data = tensor->MutableData();
@@ -57,7 +57,7 @@ int TimeProfile::GenerateInputData() {
   return RET_OK;
 }
 
-int TimeProfile::ReadInputFile() {
+int TimeProfiler::ReadInputFile() {
   if (ms_inputs_.empty()) {
     return RET_OK;
   }
@@ -83,7 +83,7 @@ int TimeProfile::ReadInputFile() {
   return RET_OK;
 }
 
-int TimeProfile::LoadInput() {
+int TimeProfiler::LoadInput() {
   ms_inputs_ = session_->GetInputs();
   if (_flags->in_data_path_.empty()) {
     auto status = GenerateInputData();
@@ -103,7 +103,7 @@ int TimeProfile::LoadInput() {
   return RET_OK;
 }
 
-int TimeProfile::InitSession() {
+int TimeProfiler::InitSession() {
   size_t size = 0;
   char *graph_buf = ReadFile(_flags->model_path_.c_str(), &size);
   if (graph_buf == nullptr) {
@@ -127,7 +127,7 @@ int TimeProfile::InitSession() {
   return RET_OK;
 }
 
-int TimeProfile::InitCallbackParameter() {
+int TimeProfiler::InitCallbackParameter() {
   // before callback
   before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
                           const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
@@ -175,7 +175,7 @@ int TimeProfile::InitCallbackParameter() {
   return RET_OK;
 }
 
-int TimeProfile::Init() {
+int TimeProfiler::Init() {
   if (this->_flags == nullptr) {
     return 1;
   }
@@ -238,7 +238,7 @@ int TimeProfile::Init() {
   return RET_OK;
 }
 
-int TimeProfile::PrintResult(const std::vector<std::string> &title,
+int TimeProfiler::PrintResult(const std::vector<std::string> &title,
                              const std::map<std::string, std::pair<int, float>> &result) {
   std::vector<size_t> columnLenMax(5);
   std::vector<std::vector<std::string>> rows;
@@ -302,7 +302,7 @@ int TimeProfile::PrintResult(const std::vector<std::string> &title,
   return RET_OK;
 }
 
-int TimeProfile::RunTimeProfile() {
+int TimeProfiler::RunTimeProfiler() {
   uint64_t time_avg = 0;
 
   // Load graph
@@ -383,8 +383,8 @@ int TimeProfile::RunTimeProfile() {
   return ret;
 }
 
-int RunTimeProfile(int argc, const char **argv) {
-  TimeProfileFlags flags;
+int RunTimeProfiler(int argc, const char **argv) {
+  TimeProfilerFlags flags;
   Option<std::string> err = flags.ParseFlags(argc, argv);
 
   if (err.IsSome()) {
@@ -398,15 +398,15 @@ int RunTimeProfile(int argc, const char **argv) {
     return 0;
   }
 
-  TimeProfile time_profile(&flags);
-  auto ret = time_profile.Init();
+  TimeProfiler time_profiler(&flags);
+  auto ret = time_profiler.Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init TimeProfile failed.";
     std::cerr << "Init TimeProfile failed." << std::endl;
     return RET_ERROR;
   }
 
-  ret = time_profile.RunTimeProfile();
+  ret = time_profiler.RunTimeProfiler();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run TimeProfile failed.";
     std::cerr << "Run TimeProfile failed." << std::endl;

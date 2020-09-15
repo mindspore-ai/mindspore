@@ -31,19 +31,19 @@
 
 namespace mindspore {
 namespace lite {
-class MS_API TimeProfileFlags : public virtual FlagParser {
+class MS_API TimeProfilerFlags : public virtual FlagParser {
  public:
-  TimeProfileFlags() {
-    AddFlag(&TimeProfileFlags::model_path_, "modelPath", "Input model path", "");
-    AddFlag(&TimeProfileFlags::in_data_path_, "inDataPath", "Input data path, if not set, use random input", "");
-    AddFlag(&TimeProfileFlags::cpu_bind_mode_, "cpuBindMode",
+  TimeProfilerFlags() {
+    AddFlag(&TimeProfilerFlags::model_path_, "modelPath", "Input model path", "");
+    AddFlag(&TimeProfilerFlags::in_data_path_, "inDataPath", "Input data path, if not set, use random input", "");
+    AddFlag(&TimeProfilerFlags::cpu_bind_mode_, "cpuBindMode",
             "Input -1 for MID_CPU, 1 for HIGHER_CPU, 0 for NO_BIND, defalut value: 1", 1);
-    AddFlag(&TimeProfileFlags::loop_count_, "loopCount", "Run loop count", 10);
-    AddFlag(&TimeProfileFlags::num_threads_, "numThreads", "Run threads number", 2);
-    AddFlag(&TimeProfileFlags::fp16_priority, "fp16Priority", "Run fp16 ops prior", false);
+    AddFlag(&TimeProfilerFlags::loop_count_, "loopCount", "Run loop count", 10);
+    AddFlag(&TimeProfilerFlags::num_threads_, "numThreads", "Run threads number", 2);
+    AddFlag(&TimeProfilerFlags::fp16_priority, "fp16Priority", "Run fp16 ops prior", false);
   }
 
-  ~TimeProfileFlags() override = default;
+  ~TimeProfilerFlags() override = default;
 
  public:
   std::string model_path_;
@@ -54,13 +54,13 @@ class MS_API TimeProfileFlags : public virtual FlagParser {
   bool fp16_priority;
 };
 
-class MS_API TimeProfile {
+class MS_API TimeProfiler {
  public:
-  explicit TimeProfile(TimeProfileFlags *flags) : _flags(flags) {}
-  ~TimeProfile() = default;
+  explicit TimeProfiler(TimeProfilerFlags *flags) : _flags(flags) {}
+  ~TimeProfiler() = default;
 
   int Init();
-  int RunTimeProfile();
+  int RunTimeProfiler();
 
  private:
   int GenerateRandomData(size_t size, void *data);
@@ -72,7 +72,7 @@ class MS_API TimeProfile {
   int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
 
  private:
-  TimeProfileFlags *_flags;
+  TimeProfilerFlags *_flags;
   std::vector<mindspore::tensor::MSTensor *> ms_inputs_;
   session::LiteSession *session_;
 
@@ -87,7 +87,7 @@ class MS_API TimeProfile {
   session::KernelCallBack after_call_back_;
 };
 
-int MS_API RunTimeProfile(int argc, const char **argv);
+int MS_API RunTimeProfiler(int argc, const char **argv);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINNIE_TIMEPROFILE_TIMEPROFILE_H_
