@@ -710,9 +710,14 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
     if (!succ) {
       MS_LOG(EXCEPTION) << "The " << i << "th arg convert failed.";
     }
-    if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == 0 && !converted->isa<tensor::Tensor>()) {
-      MS_EXCEPTION(TypeError) << "For 'graph mode', the " << i << "th arg: " << converted->ToString()
-                              << " is not tensor.";
+    if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == 0) {
+      if (!converted->isa<tensor::Tensor>()) {
+        MS_EXCEPTION(TypeError) << "For 'graph mode', the " << i << "th arg: " << converted->ToString()
+                                << " is not tensor.";
+      }
+      if (converted->cast<TensorPtr>()->is_parameter()) {
+        MS_EXCEPTION(TypeError) << "The inputs could not be Parameter.";
+      }
     }
     arg_list->push_back(converted);
   }

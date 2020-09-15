@@ -47,6 +47,7 @@ class Parameter(MetaTensor):
 
     Note:
         Each parameter of Cell is represented by Parameter class.
+        A Parameter has to belong to a Cell.
 
     Args:
         default_input (Union[Tensor, Initializer, Number]): Parameter data, to be set initialized.
