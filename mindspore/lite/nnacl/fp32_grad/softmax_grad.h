@@ -33,7 +33,7 @@ typedef struct SoftmaxCrossEntropyParameter {
 } SoftmaxCrossEntropyParameter;
 
 void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr, float *sum_data,
-                float *sum_mul, SoftmaxParameter *parameter);
+                 float *sum_mul, SoftmaxParameter *parameter);
 #ifdef __cplusplus
 }
 #endif

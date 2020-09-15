@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace lite {
-
 struct QuantArg {
   double scale;
   int32_t zeroPoint;

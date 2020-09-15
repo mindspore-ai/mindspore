@@ -17,7 +17,7 @@
 #include "nnacl/arithmetic_common.h"
 
 void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, int *block_sizes, int *in_shape,
-                        int *out_shape) {
+                            int *out_shape) {
   int out_dim0 = out_shape[0];
   int out_dim1 = out_shape[1];
   int out_dim2 = out_shape[2];

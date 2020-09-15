@@ -33,7 +33,7 @@ class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
                                                         const std::vector<lite::Tensor *> &outputs,
                                                         const lite::Context *ctx,
                                                         const mindspore::lite::PrimitiveC *primitive)
-      : LossKernel(parameter, inputs, outputs, ctx, primitive) , losses_(nullptr), sum_data_(nullptr)  {
+      : LossKernel(parameter, inputs, outputs, ctx, primitive), losses_(nullptr), sum_data_(nullptr)  {
     param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(parameter);
   }
   ~SparseSoftmaxCrossEntropyWithLogitsCPUKernel() override {

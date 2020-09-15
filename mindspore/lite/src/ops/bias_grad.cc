@@ -100,6 +100,5 @@ int BiasGrad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> out
 
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore
