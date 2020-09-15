@@ -77,8 +77,7 @@ void TfliteModelParser::SetTensorQuantParam(const std::unique_ptr<tflite::Tensor
   }
 
   // change quant param min to 0 to fit ms-lite ops
-  if (GetTfliteDataType(tflite_tensor->type) == TypeId::kNumberTypeUInt8
-      && tensor->dataType == TypeId::kNumberTypeInt8) {
+  if (GetTfliteDataType(tflite_tensor->type) == TypeId::kNumberTypeUInt8 && tensor->data.empty()) {
     quant_param->zeroPoint = quant_param->zeroPoint - 128;
   }
 

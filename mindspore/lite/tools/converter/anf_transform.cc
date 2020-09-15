@@ -24,6 +24,7 @@
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include "tools/optimizer/fusion/constant_folding_fusion.h"
+#include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
@@ -43,6 +44,10 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
 
   // for now - trainning is not supporting fuse operations
   if (config != nullptr && config->trainModel == false) {
+    // remove quantdtype when awaretraining
+    if (config->quantType == QuantType_AwareTraining) {
+      pm->AddPass(std::make_shared<opt::QuantDtypeCastFusion>());
+    }
     pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
     pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>());
     pm->AddPass(std::make_shared<opt::ConvScaleFusion>());

@@ -151,7 +151,7 @@ STATUS DTypeTransPass::DoNodeInoutDTypeTrans(schema::MetaGraphT *graph) {
       MS_ASSERT(graph->allTensors.size() > (*iter)->inputIndex.at(i));
       auto &preTensor = graph->allTensors.at((*iter)->inputIndex.at(i));
       auto &graphInIdxes = graph->inputIndex;
-      if (preTensor->nodeType == NodeType_ValueNode && !IsContain(graphInIdxes, (*iter)->inputIndex.at(i))) {
+      if (!preTensor->data.empty() && !IsContain(graphInIdxes, (*iter)->inputIndex.at(i))) {
         continue;
       }
       iter = InsertDTypeTransNode(graph, iter, kBefore, i, kInt8ToFP32, &status);

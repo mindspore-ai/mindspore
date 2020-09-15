@@ -357,6 +357,14 @@ bool IsPoolingNode(const BaseRef &n) {
   return false;
 }
 
+bool IsQuantNode(const BaseRef &n) {
+  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
+    auto type = opt::GetCNodeType(n);
+    return type == schema::PrimitiveType_QuantDTypeCast;
+  }
+  return false;
+}
+
 bool CheckIsAllInputsParam(const AnfNodePtr &node) {
   if (utils::isa<CNode>(node)) {
     auto cnode = node->cast<CNodePtr>();
