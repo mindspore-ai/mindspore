@@ -33,6 +33,7 @@ class Cast : public PrimitiveC {
   explicit Cast(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetSrcT(int src_t);
   void SetDstT(int dst_t);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 #else
   Cast() = default;
 
