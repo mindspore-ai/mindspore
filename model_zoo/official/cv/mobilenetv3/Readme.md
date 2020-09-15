@@ -145,29 +145,13 @@ result: {'acc': 0.71976314102564111} ckpt=/path/to/checkpoint/mobilenet-200_625.
 | Training Parameters        | src/config.py             |
 | Optimizer                  | Momentum                  |
 | Loss Function              | SoftmaxCrossEntropy       |
-| outputs                    |                           |
+| outputs                    | probability               |
 | Loss                       | 1.913                     |
 | Accuracy                   | ACC1[77.57%] ACC5[92.51%] |
-| Total time                 |                           |
-| Params (M)                 |                           |
-| Checkpoint for Fine tuning |                           |
-| Model for inference        |                           |
-
-#### Inference Performance
-
-| Parameters                 |                      |
-| -------------------------- | -------------------- |
-| Model Version              |                           |
-| Resource                   | NV SMX2 V100-32G          |
-| uploaded Date              | 05/22/2020                |
-| MindSpore Version          | 0.2.0                     |
-| Dataset                    | ImageNet, 1.2W            |
-| batch_size                 | 130(8P)                   |
-| outputs                    |                           |
-| Accuracy                   | ACC1[75.43%] ACC5[92.51%] |
-| Speed                      |                           |
-| Total time                 |                           |
-| Model for inference        |                           |
+| Total time                 | 1433 min                  |
+| Params (M)                 | 5.48 M                    |
+| Checkpoint for Fine tuning | 44 M                      |
+|  Scripts                   | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv3)|
 
 # [Description of Random Situation](#contents)
 

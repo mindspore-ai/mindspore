@@ -21,18 +21,14 @@ from mindspore.common import dtype as mstype
 
 from src.dataset import create_dataset
 from src.config import set_config
-from src.mobilenetV2 import MobileNetV2Backbone, MobileNetV2Head, mobilenet_v2
 from src.args import eval_parse_args
-from src.models import load_ckpt
+from src.models import define_net, load_ckpt
 from src.utils import switch_precision, set_context
 
 if __name__ == '__main__':
     args_opt = eval_parse_args()
     config = set_config(args_opt)
-
-    backbone_net = MobileNetV2Backbone(platform=args_opt.platform)
-    head_net = MobileNetV2Head(input_channel=backbone_net.out_channels, num_classes=config.num_classes)
-    net = mobilenet_v2(backbone_net, head_net)
+    backbone_net, head_net, net = define_net(args_opt, config)
 
     #load the trained checkpoint file to the net for evaluation
     if args_opt.head_ckpt:
@@ -51,7 +47,7 @@ if __name__ == '__main__':
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     model = Model(net, loss_fn=loss, metrics={'acc'})
 
-    res = model.eval(dataset, dataset_sink_mode=False)
+    res = model.eval(dataset)
     print(f"result:{res}\npretrain_ckpt={args_opt.pretrain_ckpt}")
     if args_opt.head_ckpt:
         print(f"head_ckpt={args_opt.head_ckpt}")
