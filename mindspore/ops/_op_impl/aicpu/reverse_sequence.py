@@ -26,6 +26,7 @@ reverse_sequence_op_info = AiCPURegOp("ReverseSequence") \
     .dtype_format(DataType.I8_Default, DataType.I32_Default, DataType.I8_Default) \
     .dtype_format(DataType.I16_Default, DataType.I32_Default, DataType.I16_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I64_Default, DataType.I32_Default) \
     .dtype_format(DataType.I64_Default, DataType.I32_Default, DataType.I64_Default) \
     .dtype_format(DataType.U8_Default, DataType.I32_Default, DataType.U8_Default) \
     .dtype_format(DataType.U16_Default, DataType.I32_Default, DataType.U16_Default) \

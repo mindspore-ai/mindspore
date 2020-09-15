@@ -40,7 +40,7 @@ def test_net_int8():
     batch_dim = 1
     net = Net(seq_dim, batch_dim)
     output = net(Tensor(x), Tensor(seq_lengths))
-    expected = np.array([1, 5, 9], [4, 2, 6], [7, 8, 3]).astype(np.int8)
+    expected = np.array([[1, 5, 9], [4, 2, 6], [7, 8, 3]]).astype(np.int8)
     assert np.array_equal(output.asnumpy(), expected)
 
 
@@ -51,5 +51,5 @@ def test_net_int32():
     batch_dim = 0
     net = Net(seq_dim, batch_dim)
     output = net(Tensor(x), Tensor(seq_lengths))
-    expected = np.array([1, 2, 3], [5, 4, 6], [9, 8, 7]).astype(np.int32)
+    expected = np.array([[1, 2, 3], [5, 4, 6], [9, 8, 7]]).astype(np.int32)
     assert np.array_equal(output.asnumpy(), expected)
