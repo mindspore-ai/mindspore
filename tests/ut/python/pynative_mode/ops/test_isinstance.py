@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-Quantization.
+""" test_multitype """
+import mindspore as ms
+from mindspore.ops import operations as P
 
-User can use quantization aware to train a model. MindSpore supports quantization aware training,
-which models quantization errors in both the forward and backward passes using fake-quantization
-operations. Note that the entire computation is carried out in floating point. At the end of quantization
-aware training, MindSpore provides conversion functions to convert the trained model into lower precision.
-"""
 
-from .quant import convert_quant_network, export
-
-__all__ = ["convert_quant_network", "export"]
+def test_isinstance():
+    assert P.IsInstance()([1, 2, 3], ms.list_) is True
+    assert P.IsInstance()((1, 2, 3), ms.tuple_) is True
+    assert P.IsInstance()(1.0, ms.float_) is True
+    assert P.IsInstance()(1, ms.int_) is True

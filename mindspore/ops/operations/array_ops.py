@@ -349,7 +349,12 @@ class IsInstance(PrimitiveWithInfer):
         validator.check_const_input("inst", inst['value'], self.name)
         validator.check_value_type("type_", type_v, [mstype.Type], self.name)
 
-        value = mstype.issubclass_(sub_type_t, type_v)
+        if type_v == mstype.list_:
+            value = isinstance(sub_type_t, list)
+        elif type_v == mstype.tuple_:
+            value = isinstance(sub_type_t, tuple)
+        else:
+            value = mstype.issubclass_(sub_type_t, type_v)
 
         out = {'shape': (),
                'dtype': mstype.type_type,

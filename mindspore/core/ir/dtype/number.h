@@ -92,7 +92,12 @@ class Int : public Number {
   ~Int() override = default;
   MS_DECLARE_PARENT(Int, Number)
   TypeId generic_type_id() const override { return kNumberTypeInt; }
-  TypePtr DeepCopy() const override { return std::make_shared<Int>(nbits()); }
+  TypePtr DeepCopy() const override {
+    if (nbits() == 0) {
+      return std::make_shared<Int>();
+    }
+    return std::make_shared<Int>(nbits());
+  }
   std::string ToString() const override { return GetTypeName("Int"); }
   std::string ToReprString() const override { return nbits() == 0 ? "int_" : GetTypeName("int"); }
   std::string DumpText() const override {
@@ -110,7 +115,12 @@ class UInt : public Number {
   ~UInt() override {}
   MS_DECLARE_PARENT(UInt, Number)
 
-  TypePtr DeepCopy() const override { return std::make_shared<UInt>(nbits()); }
+  TypePtr DeepCopy() const override {
+    if (nbits() == 0) {
+      return std::make_shared<UInt>();
+    }
+    return std::make_shared<UInt>(nbits());
+  }
   std::string ToString() const override { return GetTypeName("UInt"); }
   std::string ToReprString() const override { return GetTypeName("uint"); }
   std::string DumpText() const override {
@@ -127,7 +137,12 @@ class Float : public Number {
   MS_DECLARE_PARENT(Float, Number)
 
   TypeId generic_type_id() const override { return kNumberTypeFloat; }
-  TypePtr DeepCopy() const override { return std::make_shared<Float>(nbits()); }
+  TypePtr DeepCopy() const override {
+    if (nbits() == 0) {
+      return std::make_shared<Float>();
+    }
+    return std::make_shared<Float>(nbits());
+  }
   std::string ToString() const override { return GetTypeName("Float"); }
   std::string ToReprString() const override { return nbits() == 0 ? "float_" : GetTypeName("float"); }
   std::string DumpText() const override {
