@@ -526,8 +526,8 @@ basepath=$(pwd)
 echo ${basepath}
 #set -e
 
-# Example:sh run_benchmark_nets.sh -a /home/temp_test -c /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408"
-while getopts "a:c:m:d:" opt; do
+# Example:sh run_benchmark_nets.sh -a /home/temp_test -c /home/temp_test -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408"
+while getopts "a:c:r:m:d:" opt; do
     case ${opt} in
         a)
 	    arm_path=${OPTARG}
@@ -536,6 +536,10 @@ while getopts "a:c:m:d:" opt; do
         c)
 	    x86_path=${OPTARG}
             echo "x86_path is ${OPTARG}"
+            ;;
+        r)
+	    release_path=${OPTARG}
+            echo "release_path is ${OPTARG}"
             ;;
         m)
 	    models_path=${OPTARG}
@@ -550,6 +554,8 @@ while getopts "a:c:m:d:" opt; do
         exit 1;;
     esac
 done
+
+echo ${release_path}
 
 mkdir train
 mv ${arm_path}/*runtime-*train* ./train
