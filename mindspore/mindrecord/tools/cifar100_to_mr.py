@@ -24,7 +24,8 @@ from mindspore import log as logger
 from .cifar100 import Cifar100
 from ..common.exceptions import PathNotExistsError
 from ..filewriter import FileWriter
-from ..shardutils import check_filename, SUCCESS
+from ..shardutils import check_filename, ExceptionThread, SUCCESS
+
 try:
     cv2 = import_module("cv2")
 except ModuleNotFoundError:
@@ -65,7 +66,7 @@ class Cifar100ToMR:
         self.destination = destination
         self.writer = None
 
-    def transform(self, fields=None):
+    def run(self, fields=None):
         """
         Executes transformation from cifar100 to MindRecord.
 
@@ -103,6 +104,15 @@ class Cifar100ToMR:
         if _generate_mindrecord(self.destination + "_test", test_data_list, fields, "img_test") != SUCCESS:
             return FAILED
         return SUCCESS
+
+    def transform(self, fields=None):
+        t = ExceptionThread(target=self.run, kwargs={'fields': fields})
+        t.daemon = True
+        t.start()
+        t.join()
+        if t.exitcode != 0:
+            raise t.exception
+        return t.res
 
 def _construct_raw_data(images, fine_labels, coarse_labels):
     """

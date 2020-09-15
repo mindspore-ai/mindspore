@@ -16,6 +16,10 @@
 This module is to write data into mindrecord.
 """
 import os
+import sys
+import threading
+import traceback
+
 import numpy as np
 import mindspore._c_mindrecord as ms
 from .common.exceptions import ParamValueError, MRMUnsupportedSchemaError
@@ -41,6 +45,23 @@ VALUE_TYPE_MAP = {"int": ["int32", "int64"], "float": ["float32", "float64"], "s
 VALID_ATTRIBUTES = ["int32", "int64", "float32", "float64", "string", "bytes"]
 VALID_ARRAY_ATTRIBUTES = ["int32", "int64", "float32", "float64"]
 
+class ExceptionThread(threading.Thread):
+    """ class to pass exception"""
+    def __init__(self, *args, **kwargs):
+        threading.Thread.__init__(self, *args, **kwargs)
+        self.res = SUCCESS
+        self.exitcode = 0
+        self.exception = None
+        self.exc_traceback = ''
+
+    def run(self):
+        try:
+            if self._target:
+                self.res = self._target(*self._args, **self._kwargs)
+        except Exception as e: # pylint: disable=W0703
+            self.exitcode = 1
+            self.exception = e
+            self.exc_traceback = ''.join(traceback.format_exception(*sys.exc_info()))
 
 def check_filename(path):
     """
