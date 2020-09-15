@@ -313,7 +313,7 @@ def train():
         args.logger.info('iter[{}], shape{}'.format(i, input_shape[0]))
         shape_record.set(input_shape)
 
-        images = Tensor(images)
+        images = Tensor.from_numpy(images)
         annos = data["annotation"]
         if args.group_size == 1:
             batch_y_true_0, batch_y_true_1, batch_y_true_2, batch_gt_box0, batch_gt_box1, batch_gt_box2 = \
@@ -322,12 +322,12 @@ def train():
             batch_y_true_0, batch_y_true_1, batch_y_true_2, batch_gt_box0, batch_gt_box1, batch_gt_box2 = \
                 batch_preprocess_true_box_single(annos, config, input_shape)
 
-        batch_y_true_0 = Tensor(batch_y_true_0)
-        batch_y_true_1 = Tensor(batch_y_true_1)
-        batch_y_true_2 = Tensor(batch_y_true_2)
-        batch_gt_box0 = Tensor(batch_gt_box0)
-        batch_gt_box1 = Tensor(batch_gt_box1)
-        batch_gt_box2 = Tensor(batch_gt_box2)
+        batch_y_true_0 = Tensor.from_numpy(batch_y_true_0)
+        batch_y_true_1 = Tensor.from_numpy(batch_y_true_1)
+        batch_y_true_2 = Tensor.from_numpy(batch_y_true_2)
+        batch_gt_box0 = Tensor.from_numpy(batch_gt_box0)
+        batch_gt_box1 = Tensor.from_numpy(batch_gt_box1)
+        batch_gt_box2 = Tensor.from_numpy(batch_gt_box2)
 
         input_shape = Tensor(tuple(input_shape[::-1]), ms.float32)
         loss = network(images, batch_y_true_0, batch_y_true_1, batch_y_true_2, batch_gt_box0, batch_gt_box1,
