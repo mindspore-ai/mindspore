@@ -91,11 +91,12 @@ run_ascend(){
     #device_num=${#device_id_list}
     cat $2 | awk -F "[device_id]" '/device_id/{print$0}' >temp.log
     array=$(cat temp.log | awk -F "[:]" '/device_id/{print$2}')
-    rm temp.log
+    
     IFS=" " read -ra device_list <<<$array
     first_device=${device_list[0]:1:1}
-    device_num=${#device_list[*]}
-
+    #device_num=${#device_list[*]}
+    device_num=$(cat temp.log | wc -l)
+    rm temp.log
     ulimit -u unlimited
     export DEVICE_NUM=${device_num}
     export RANK_SIZE=${device_num}
