@@ -26,6 +26,7 @@ list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/opt_op_handler.
 set(CCSRC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/ms_tensor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/common/string.cc
         ${TOP_DIR}/src/common/log_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../core/gvar/logging_level.cc
         ${TOP_DIR}/src/runtime/allocator.cc
