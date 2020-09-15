@@ -78,5 +78,6 @@ STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 }
 
 OnnxNodeRegistrar g_onnxLrnxParser("Lrn", new OnnxLrnParser());
+OnnxNodeRegistrar g_onnxLRNxParser("LRN", new OnnxLrnParser());
 }  // namespace lite
 }  // namespace mindspore

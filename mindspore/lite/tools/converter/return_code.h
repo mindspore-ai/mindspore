@@ -33,7 +33,7 @@ class ReturnCode {
       statusCode = status;
     }
   }
-  STATUS GetReturnCode() {
+  STATUS GetReturnCode() const {
     return statusCode;
   }
  private:

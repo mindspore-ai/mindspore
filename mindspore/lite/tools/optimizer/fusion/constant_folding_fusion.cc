@@ -85,8 +85,8 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   param_value->set_tensor_type(type_id);
   param_value->set_format(tensor->GetFormat());
   if (tensor->MutableData() != nullptr) {
-    auto size = tensor->ElementsNum();
-    auto tensor_data = new (std::nothrow) float[size];
+    auto size = tensor->Size();
+    auto tensor_data = new (std::nothrow) uint8_t[size];
     if (tensor_data == nullptr) {
       MS_LOG(ERROR) << "tensor_data is nullptr";
       return nullptr;
@@ -98,7 +98,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
       return nullptr;
     }
     param_value->set_tensor_addr(tensor_data);
-    param_value->set_tensor_size(size * sizeof(float) / sizeof(uint8_t));
+    param_value->set_tensor_size(size);
   }
   parameter->set_default_param(param_value);
   return parameter;

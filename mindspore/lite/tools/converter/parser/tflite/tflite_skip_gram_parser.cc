@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#include "tools/converter/parser/tflite/tflite_expand_dims_parser.h"
+#include "tools/converter/parser/tflite/tflite_skip_gram_parser.h"
 #include <vector>
 #include <memory>
 #include <map>
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                     const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                                     const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                     schema::CNodeT *op, std::vector<int32_t> *tensors_id,
-                                     std::vector<schema::Format> *tensors_format, std::map<int, int> *tensors_id_map) {
-  MS_LOG(DEBUG) << "parse TfliteExpandDimsParser";
+STATUS TfliteSkipGramParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                   const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
+                                   const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                   schema::CNodeT *op, std::vector<int32_t> *tensors_id,
+                                   std::vector<schema::Format> *tensors_format, std::map<int, int> *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteSkipGramParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -37,24 +37,31 @@ STATUS TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::ExpandDimsT> attr = std::make_unique<schema::ExpandDimsT>();
+  std::unique_ptr<schema::SkipGramT> attr = std::make_unique<schema::SkipGramT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
-  std::vector<int> dims;
-  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, dims)) {
-    MS_LOG(ERROR) << "get expand_dims -> dim failed";
-    return RET_ERROR;
+
+  const auto &tflite_attr = tflite_op->builtin_options.AsSkipGramOptions();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
+    return RET_NULL_PTR;
   }
-  attr->dim = dims[0];
-  op->primitive->value.type = schema::PrimitiveType_ExpandDims;
+  attr->includeAllGrams = tflite_attr->include_all_ngrams;
+  attr->maxSkipSize = tflite_attr->max_skip_size;
+  attr->ngramSize = tflite_attr->ngram_size;
+
+  op->primitive->value.type = schema::PrimitiveType_SkipGram;
   op->primitive->value.value = attr.release();
+
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
              tflite_tensors.size(), schema::Format::Format_NHWC);
   AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
               tflite_tensors.size(), schema::Format::Format_NHWC);
+  return RET_OK;
 }
-TfliteNodeRegister g_tfliteExpandDimsParser("ExpandDims", new TfliteExpandDimsParser());
+
+TfliteNodeRegister g_TfliteSkiGramParser("SKipGram", new TfliteSkipGramParser());
 }  // namespace lite
 }  // namespace mindspore

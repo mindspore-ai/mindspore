@@ -57,7 +57,7 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_POW, "Pow"},
   {tflite::BuiltinOperator_ARG_MIN, "Argmin"},
   {tflite::BuiltinOperator_CEIL, "Ceil"},
-  // {tflite::BuiltinOperator_EXPAND_DIMS, "ExpandDims"},
+  {tflite::BuiltinOperator_EXPAND_DIMS, "ExpandDims"},
   {tflite::BuiltinOperator_FILL, "Fill"},
   {tflite::BuiltinOperator_DIV, "Div"},
   {tflite::BuiltinOperator_FLOOR, "flOOR"},
@@ -117,6 +117,7 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_UNIQUE, "Unique"},
   {tflite::BuiltinOperator_UNPACK, "Unstack"},
   {tflite::BuiltinOperator_CUSTOM, "Custom"},
+  {tflite::BuiltinOperator_MIRROR_PAD, "MirrorPad"},
 };
 
 std::map<tflite::ActivationFunctionType, schema::ActivationType> tfMsActivationFunctionMap{

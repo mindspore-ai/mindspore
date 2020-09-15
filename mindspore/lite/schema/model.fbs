@@ -203,6 +203,8 @@ union PrimitiveType {
     LogGrad,
     BatchToSpaceND,
     LshProjection,
+    HashtableLookup,
+    SkipGram,
 }
 
 enum QuantType: int {

@@ -55,7 +55,7 @@ int Flags::Init(int argc, const char **argv) {
   if (err.IsSome()) {
     std::cerr << err.Get();
     std::cerr << this->Usage() << std::endl;
-    return 1;
+    return RET_INPUT_PARAM_INVALID;
   }
 
   if (this->help) {
@@ -64,21 +64,21 @@ int Flags::Init(int argc, const char **argv) {
   }
   if (this->modelFile.empty()) {
     std::cerr << "INPUT MISSING: model file path is necessary";
-    return 1;
+    return RET_INPUT_PARAM_LACK;
   }
   if (this->outputFile.empty()) {
     std::cerr << "INPUT MISSING: output file path is necessary";
-    return 1;
+    return RET_INPUT_PARAM_LACK;
   }
 
   if (this->outputFile.rfind('/') == this->outputFile.length() - 1) {
     std::cerr << "INPUT ILLEGAL: outputFile must be a valid file path";
-    return 1;
+    return RET_INPUT_PARAM_INVALID;
   }
 
   if (this->fmkIn.empty()) {
     std::cerr << "INPUT MISSING: fmk is necessary";
-    return 1;
+    return RET_INPUT_PARAM_LACK;
   }
   if (this->inputInferenceTypeIn == "FLOAT") {
     this->inputInferenceType = TypeId::kNumberTypeFloat;
@@ -87,7 +87,7 @@ int Flags::Init(int argc, const char **argv) {
   } else {
     std::cerr << "INPUT INVALID: inputInferenceType is invalid: %s, supported inputInferenceType: FLOAT | INT8",
       this->inputInferenceTypeIn.c_str();
-    return 1;
+    return RET_INPUT_PARAM_INVALID;
   }
 
   if (this->inferenceTypeIn == "FLOAT") {
@@ -97,7 +97,7 @@ int Flags::Init(int argc, const char **argv) {
   } else {
     std::cerr << "INPUT INVALID: inferenceType is invalid: %s, supported inferenceType: FLOAT | INT8",
       this->inferenceTypeIn.c_str();
-    return 1;
+    return RET_INPUT_PARAM_INVALID;
   }
 
   if (this->fmkIn == "CAFFE") {
@@ -110,12 +110,12 @@ int Flags::Init(int argc, const char **argv) {
     this->fmk = FmkType_ONNX;
   } else {
     std::cerr << "INPUT ILLEGAL: fmk must be TFLITE|CAFFE|MS|ONNX";
-    return 1;
+    return RET_INPUT_PARAM_INVALID;
   }
 
   if (this->fmk != FmkType_CAFFE && !weightFile.empty()) {
     std::cerr << "INPUT ILLEGAL: weightFile is not a valid flag";
-    return 1;
+    return RET_INPUT_PARAM_INVALID;
   }
   if (this->quantTypeIn == "AwareTraining") {
     this->quantType = QuantType_AwareTraining;
@@ -127,7 +127,7 @@ int Flags::Init(int argc, const char **argv) {
     this->quantType = QuantType_QUANT_NONE;
   } else {
     std::cerr << "INPUT ILLEGAL: quantType must be AwareTraining|WeightQuant|PostTraining";
-    return 1;
+    return RET_INPUT_PARAM_INVALID;
   }
 
 
@@ -137,9 +137,9 @@ int Flags::Init(int argc, const char **argv) {
     this->trainModel = false;
   } else {
     std::cerr << "INPUT ILLEGAL: trainModel must be true|false ";
-    return 1;
+    return RET_INPUT_PARAM_INVALID;
   }
-  return 0;
+  return RET_OK;
 }
 }  // namespace converter
 }  // namespace lite

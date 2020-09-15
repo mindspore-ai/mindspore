@@ -42,18 +42,43 @@ STATUS TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_o
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
-
-  const auto &tflite_attr = tflite_op->builtin_options.AsPadOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-    return RET_NULL_PTR;
-  }
-
-  attr->paddingMode = schema::PaddingMode_CONSTANT;
-  attr->constantValue = 0.0f;
-  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->paddings)) {
-    MS_LOG(ERROR) << "get pad -> paddings failed";
-    return RET_ERROR;
+  std::vector<std::string> node_name_str;
+  Split(op->name, &node_name_str, "-");
+  const char *node_name = node_name_str.data()->c_str();
+  if (std::strcmp(node_name, "Pad") == 0) {
+    const auto &tflite_attr = tflite_op->builtin_options.AsPadOptions();
+    if (tflite_attr == nullptr) {
+      MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+      return RET_NULL_PTR;
+    }
+    attr->paddingMode = schema::PaddingMode_CONSTANT;
+    attr->constantValue = 0.0f;
+    if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->paddings)) {
+      MS_LOG(ERROR) << "get pad -> paddings failed";
+      return RET_ERROR;
+    }
+  } else if (std::strcmp(node_name, "MirrorPad") == 0) {
+    const auto &tflite_attr = tflite_op->builtin_options.AsMirrorPadOptions();
+    if (tflite_attr == nullptr) {
+      MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
+      return RET_NULL_PTR;
+    }
+    switch (tflite_attr->mode) {
+      case tflite::MirrorPadMode_REFLECT:
+        attr->paddingMode = schema::PaddingMode_REFLECT;
+        break;
+      case tflite::MirrorPadMode_SYMMETRIC:
+        attr->paddingMode = schema::PaddingMode_SYMMETRIC;
+        break;
+      default:
+        MS_LOG(ERROR) << "paddingmode:" << tflite_attr->mode << " don't support";
+        return RET_INVALID_OP_ATTR;
+      }
+    AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[1], tensors_id->size(),
+               tflite_tensors.size(), schema::Format::Format_NHWC);
+  } else {
+    MS_LOG(ERROR) << "this pad:" << node_name << " hasn't been supported";
+    return RET_NOT_SUPPORT;
   }
 
   op->primitive->value.type = schema::PrimitiveType_Pad;
@@ -67,5 +92,6 @@ STATUS TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_o
 }
 
 TfliteNodeRegister g_tflitePadParser("Pad", new TflitePadParser());
+TfliteNodeRegister g_tfliteMirorPadParser("MirrorPad", new TflitePadParser());
 }  // namespace lite
 }  // namespace mindspore
