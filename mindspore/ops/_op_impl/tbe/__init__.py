@@ -274,6 +274,8 @@ from .basic_lstm_cell import _basic_lstm_cell_tbe
 from .basic_lstm_cell_c_state_grad import _basic_lstm_cell_c_state_grad_tbe
 from .basic_lstm_cell_weight_grad import _basic_lstm_cell_weight_grad_tbe
 from .basic_lstm_cell_input_grad import _basic_lstm_cell_input_grad_tbe
+from .dynamic_rnn import _dynamic_rnn_tbe
+from .lstm_input_grad import _lstm_input_grad_tbe
 from .confusion_matrix import _confusion_matrix_tbe
 from .broadcast_to import _broadcast_to_tbe
 from .strided_read import _strided_read_tbe
