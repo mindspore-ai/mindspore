@@ -289,7 +289,7 @@ class Cast(PrimitiveWithInfer):
 
 class IsSubClass(PrimitiveWithInfer):
     """
-    Check whether one type is sub class of another type.
+    Check whether one type is subtraction class of another type.
 
     Inputs:
         - **sub_type** (mindspore.dtype) - The type to be checked. Only constant value is allowed.
@@ -478,7 +478,7 @@ class DynamicShape(Primitive):
 
 class Squeeze(PrimitiveWithInfer):
     """
-    Returns a tensor with the same type but dimensions of 1 being removed based on axis.
+    Returns a tensor with the same type but dimensions of 1 are removed based on `axis`.
 
     Note:
         The dimension index starts at 0 and must be in the range `[-input.dim(), input.dim())`.
@@ -536,7 +536,7 @@ class Squeeze(PrimitiveWithInfer):
 
 class Transpose(PrimitiveWithInfer):
     """
-    Permutes the dimensions of input tensor according to input perm.
+    Permutes the dimensions of input tensor according to input permutation.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -545,7 +545,7 @@ class Transpose(PrimitiveWithInfer):
           allowed.
 
     Outputs:
-        Tensor, the type of output tensor is same as `input_x` and the shape of output tensor is decided by the
+        Tensor, the type of output tensor is the same as `input_x` and the shape of output tensor is decided by the
         shape of `input_x` and the value of `input_perm`.
 
     Examples:
@@ -654,7 +654,7 @@ class SparseGatherV2(GatherV2):
         - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
           The original Tensor.
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
-          Specifies the indices of elements of the original Tensor. Must be in the range
+          Specifies the indices of elements of the original Tensor, must be in the range
           `[0, input_param.shape[axis])`.
         - **axis** (int) - Specifies the dimension index to gather indices.
 
@@ -718,15 +718,15 @@ class Split(PrimitiveWithInfer):
         output_num (int): The number of output tensors. Default: 1.
 
     Raises:
-        ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)),
-            or if the output_num is less than or equal to 0, or if the
-            dimension which to split cannot be evenly divided by output_num.
+        ValueError: If `axis` is out of the range [-len(`input_x.shape`), len(`input_x.shape`)),
+            or if the `output_num` is less than or equal to 0, or if the
+            dimension which to split cannot be evenly divided by `output_num`.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
-        tuple[Tensor], the shape of each output tensor is same, which is
+        tuple[Tensor], the shape of each output tensor is the same, which is
         :math:`(y_1, y_2, ..., y_S)`.
 
     Examples:
@@ -806,14 +806,14 @@ class TruncatedNormal(PrimitiveWithInfer):
     The generated values follow a normal distribution.
 
     Args:
-        seed (int): A int number used to create random seed. Default: 0.
+        seed (int): A integer number used to create random seed. Default: 0.
         dtype (:class:`mindspore.dtype`): Data type. Default: mindspore.float32.
 
     Inputs:
-        - **shape** (tuple[int]) - Shape of output tensor, is a tuple of positive int.
+        - **shape** (tuple[int]) - The shape of the output tensor, is a tuple of positive integer.
 
     Outputs:
-        Tensor, type of output tensor is same as attribute `dtype`.
+        Tensor, the dat type of output tensor is the same as attribute `dtype`.
 
     Examples:
         >>> shape = (1, 2, 3)
@@ -953,13 +953,13 @@ class ZerosLike(PrimitiveWithInfer):
     """
     Creates a new tensor. All elements value are 0.
 
-    Returns a tensor of zeros with the same shape and type as the input tensor.
+    Returns a tensor of zeros with the same shape and data type as the input tensor.
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
 
     Outputs:
-        Tensor, has the same shape and type as `input_x` but filled with zeros.
+        Tensor, has the same shape and data type as `input_x` but filled with zeros.
 
     Examples:
         >>> zeroslike = P.ZerosLike()
@@ -982,15 +982,16 @@ class ZerosLike(PrimitiveWithInfer):
 
 class TupleToArray(PrimitiveWithInfer):
     """
-    Converts a tuple to tensor.
+    Convert a tuple to a tensor.
 
-    If the first number type of tuple is int, the output tensor type is int. Else, the output tensor type is float.
+    If the type of the first number in the tuple is integer, the data type of the output tensor is int.
+    Otherwise, the data type of the output tensor is float.
 
     Inputs:
         - **input_x** (tuple) - A tuple of numbers. These numbers have the same type. Only constant value is allowed.
 
     Outputs:
-        Tensor, if the input tuple contain `N` numbers, then the shape of the output tensor is (N,).
+        Tensor, if the input tuple contains `N` numbers, then the shape of the output tensor is (N,).
 
     Examples:
         >>> type = P.TupleToArray()((1,2,3))
@@ -1355,7 +1356,7 @@ class Tile(PrimitiveWithInfer):
     Replicates a tensor with given multiples times.
 
     Creates a new tensor by replicating input multiples times. The dimension of
-    output tensor is the larger of the dimension length of input and the length of multiples.
+    output tensor is the larger of the input tensor dimension and the length of `multiples`.
 
     Inputs:
         - **input_x** (Tensor) - 1-D or higher Tensor. Set the shape of input tensor as
@@ -1363,16 +1364,17 @@ class Tile(PrimitiveWithInfer):
 
         - **multiples** (tuple[int]) - The input tuple is constructed by multiple
           integers, i.e., :math:`(y_1, y_2, ..., y_S)`. The length of `multiples`
-          can't be smaller than the length of shape in `input_x`. Only constant value is allowed.
+          cannot be smaller than the length of the shape of `input_x`.
+          Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same type as the `input_x`.
+        Tensor, has the same data type as the `input_x`.
 
-        - If the length of `multiples` is the same as the length of shape in `input_x`,
+        - If the length of `multiples` is the same as the length of shape of `input_x`,
           then the shape of their corresponding positions can be multiplied, and
           the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_R)`.
-        - If the length of `multiples` is larger than the length of shape in `input_x`,
-          fill in multiple 1 in front of the shape in `input_x` until their lengths are consistent.
+        - If the length of `multiples` is larger than the length of shape of `input_x`,
+          fill in multiple 1 in the length of the shape of `input_x` until their lengths are consistent.
           Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
           then the shape of their corresponding positions can be multiplied, and
           the shape of Outputs is :math:`(1*y_1, ..., x_S*y_R)`.
@@ -1501,7 +1503,7 @@ class UnsortedSegmentMin(PrimitiveWithInfer):
         - **num_segments** (int) - The value spcifies the number of distinct `segment_ids`.
 
     Outputs:
-        Tensor, Set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+        Tensor. Set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
@@ -1552,7 +1554,7 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
           should be greater than 0.
 
     Outputs:
-        Tensor, Set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
@@ -1783,10 +1785,10 @@ class Unpack(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
-          A rank R > 0 Tensor to be unpacked.
+          A tensor to be unpacked and the rank of the tensor must be greater than 0.
 
     Outputs:
-        A tuple of Tensors, the shape of each objects is same.
+        A tuple of tensors, the shape of each objects is the same.
 
     Raises:
         ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
@@ -1834,7 +1836,7 @@ class Unpack(PrimitiveWithInfer):
 
 class Slice(PrimitiveWithInfer):
     """
-    Slice a tensor in specified shape.
+    Slice a tensor in the specified shape.
 
     Args:
         x (Tensor): The target tensor.
@@ -1955,16 +1957,16 @@ class Select(PrimitiveWithInfer):
 
     Given a tensor as input, this operation inserts a dimension of 1 at the dimension,
     if both :math:`x` and :math:`y` are none, the operation returns the coordinates of the true
-    element in the condition, the coordinates are returned as a two-dimensional
+    element in the `condition`, the coordinates are returned as a two-dimensional
     tensor, where the first dimension (row) represents the number of true elements
     and the second dimension (columns) represents the coordinates of the true
     elements. Keep in mind that the shape of the output tensor can vary depending
-    on how much of the true value is in the input. Indexes are output in row-first
+    on how many true values are in the input. Indexes are output in row-first
     order.
 
     If neither is None, :math:`x` and :math:`y` must have the same shape. If :math:`x` and :math:`y` are
     scalars, the conditional tensor must be a scalar. If :math:`x` and :math:`y` are
-    higher-demensional vectors, the condition must be a vector whose size matches the
+    higher-demensional vectors, the `condition` must be a vector whose size matches the
     first dimension of :math:`x`, or must have the same shape as :math:`y`.
 
     The conditional tensor acts as an optional compensation (mask), which
@@ -1979,14 +1981,14 @@ class Select(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor[bool]) - The shape is :math:`(x_1, x_2, ..., x_N)`.
-          The condition tensor, decides whose element is chosen.
+          The condition tensor, decides which element is chosen.
         - **input_y** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
           The first input tensor.
         - **input_z** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
           The second input tensor.
 
     Outputs:
-        Tensor, has the same shape as input_y. The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+        Tensor, has the same shape as `input_y`. The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
 
     Examples:
         >>> select = P.Select()
@@ -2080,12 +2082,12 @@ def _compute_slicing_length(begin, end, stride, x_shape, i):
 class StridedSlice(PrimitiveWithInfer):
     r"""
 
-    Extracts a strided slice of a tensor.
+    Extract a strided slice of a tensor.
 
     Given an input tensor, this operation inserts a dimension of length 1 at the dimension.
-    This operation extracts a fragment of size (end-begin)/stride from the given
-    'input_tensor'. Starting from the position specified by the begin, the fragment
-    continues adding stride to the index until all dimensions are not less than end.
+    This operation extracts a fragment of size (end-begin)/stride from the given 'input_tensor'.
+    Starting from the begining position, the fragment continues adding stride to the index until
+    all dimensions are not less than the ending position.
 
     Note:
         The stride may be negative value, which causes reverse slicing.
@@ -2102,22 +2104,22 @@ class StridedSlice(PrimitiveWithInfer):
         - **input_x** (Tensor) - The input Tensor.
         - **begin** (tuple[int]) - A tuple which represents the location where to start. Only
           constant value is allowed.
-        - **end** (tuple[int]) - A tuple or which represents the maximum location where to stop.
+        - **end** (tuple[int]) - A tuple or which represents the maximum location where to end.
           Only constant value is allowed.
-        - **strides** (tuple[int]) - A tuple which represents the stride continuously added
-          before reach the maximum location. Only constant value is allowed.
+        - **strides** (tuple[int]) - A tuple which represents the stride is continuously added
+          before reaching the maximum location. Only constant value is allowed.
 
     Outputs:
         Tensor.
-        Explain with the following example.
-            - In the 0th dim, begin is 1, end is 2, and strides is 1,
+        The output is explained by following example.
+            - In the 0th dimension, begin is 1, end is 2, and strides is 1,
               because :math:`1+1=2\geq2`, the interval is :math:`[1,2)`.
-              Thus, return the element with :math:`index = 1` in 0th dim, i.e., [[3, 3, 3], [4, 4, 4]].
-            - In the 1st dim, similarly, the interval is :math:`[0,1)`.
-              Based on the return value of the 0th dim, return the element with :math:`index = 0`,
+              Thus, return the element with :math:`index = 1` in 0th dimension, i.e., [[3, 3, 3], [4, 4, 4]].
+            - In the 1st dimension, similarly, the interval is :math:`[0,1)`.
+              Based on the return value of the 0th dimension, return the element with :math:`index = 0`,
               i.e., [3, 3, 3].
-            - In the 2nd dim, similarly, the interval is :math:`[0,3)`.
-              Based on the return value of the 1st dim, return the element with :math:`index = 0,1,2`,
+            - In the 2nd dimension, similarly, the interval is :math:`[0,3)`.
+              Based on the return value of the 1st dimension, return the element with :math:`index = 0,1,2`,
               i.e., [3, 3, 3].
             - Finally, the output is [3, 3, 3].
 
@@ -2358,7 +2360,7 @@ class DiagPart(PrimitiveWithInfer):
 class Eye(PrimitiveWithInfer):
     """
 
-    Creates a tensor with ones on the diagonal and zeros the rest.
+    Create a tensor with ones on the diagonal and zeros the rest.
 
     Inputs:
         - **n** (int) - The number of rows of returned tensor
@@ -2391,12 +2393,12 @@ class Eye(PrimitiveWithInfer):
 
 class ScatterNd(PrimitiveWithInfer):
     """
-    Scatters a tensor into a new tensor depending on the specified indices.
+    Scatter a tensor into a new tensor depending on the specified indices.
 
-    Creates an empty tensor, and set values by scattering the update tensor depending on indices.
+    Create an empty tensor, and set values by scattering the update tensor depending on indices.
 
     Inputs:
-        - **indices** (Tensor) - The index of scattering in the new tensor. With int32 data type.
+        - **indices** (Tensor) - The index of scattering in the new tensor with int32 data type.
         - **update** (Tensor) - The source Tensor to be scattered.
         - **shape** (tuple[int]) - Define the shape of the output tensor, has the same type as indices.
 
@@ -2480,7 +2482,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
 
 class GatherNd(PrimitiveWithInfer):
     """
-    Gathers slices from a tensor by indices.
+    Gather slices from a tensor by indices.
 
     Using given indices to gather slices from a tensor with a specified shape.
 
@@ -2516,9 +2518,7 @@ class GatherNd(PrimitiveWithInfer):
 
 class TensorScatterUpdate(PrimitiveWithInfer):
     """
-    Update tensor value by using input indices and value.
-
-    Using given values to update tensor value, along with the input indices.
+    Update tensor value using given values, along with the input indices.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor.
@@ -2619,7 +2619,7 @@ class ScatterNdUpdate(_ScatterNdOp):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
         - **indices** (Tensor) - The index of input tensor, with int32 data type.
-        - **update** (Tensor) - The tensor to add to the input tensor, has the same type as input.
+        - **update** (Tensor) - The tensor to be updated to the input tensor, has the same type as input.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -2757,9 +2757,9 @@ class ScatterAdd(_ScatterOp):
 
 class ScatterSub(_ScatterOp):
     """
-    Update the value of the input tensor through the sub operation.
+    Update the value of the input tensor through the subtraction operation.
 
-    Using given values to update tensor value through the sub operation, along with the input indices.
+    Using given values to update tensor value through the subtraction operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
@@ -2772,9 +2772,10 @@ class ScatterSub(_ScatterOp):
 
     Inputs:
         - **input_x** (Parameter) - The target parameter.
-        - **indices** (Tensor) - The index to do sub operation whose data type should be mindspore.int32.
-        - **updates** (Tensor) - The tensor doing the sub operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+        - **indices** (Tensor) - The index to perform the subtraction operation
+          whose data type should be mindspore.int32.
+        - **updates** (Tensor) - The tensor that performs the subtraction operation with `input_x`,
+          the data type is the same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
         Parameter, the updated `input_x`.
@@ -2895,7 +2896,7 @@ class ScatterNdSub(_ScatterNdOp):
     """
     Applies sparse subtraction to individual values or slices in a Tensor.
 
-    Using given values to update tensor value through the sub operation, along with the input indices.
+    Using given values to update tensor value through the subtraction operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
@@ -2909,8 +2910,8 @@ class ScatterNdSub(_ScatterNdOp):
     Inputs:
         - **input_x** (Parameter) - The target parameter.
         - **indices** (Tensor) - The index to do add operation whose data type should be mindspore.int32.
-        - **updates** (Tensor) - The tensor doing the sub operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+        - **updates** (Tensor) - The tensor that performs the subtraction operation with `input_x`,
+          the data type is the same as `input_x`, the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
 
     Outputs:
         Parameter, the updated `input_x`.
@@ -2939,9 +2940,9 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
 
     Inputs:
         - **input_x** (Parameter) - The target parameter. The data type should be float16, float32 or int32.
-        - **indices** (Tensor) - The index to do add operation whose data type should be mindspore.int32.
-        - **updates** (Tensor) - The tensor doing the add operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+        - **indices** (Tensor) - The index to perform the addition operation whose data type should be mindspore.int32.
+        - **updates** (Tensor) - The tensor that performs the addition operation with `input_x`,
+          the data type is the same as `input_x`, the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
 
     Outputs:
         Parameter, the updated `input_x`.
@@ -2987,7 +2988,7 @@ class SpaceToDepth(PrimitiveWithInfer):
         - **x** (Tensor) - The target tensor.
 
     Outputs:
-        Tensor, the same type as `x`. It must be a 4-D tensor.
+        Tensor, the same data type as `x`. It must be a 4-D tensor.
 
     Examples:
         >>> x = Tensor(np.random.rand(1,3,2,2), mindspore.float32)
@@ -3083,24 +3084,26 @@ class SpaceToBatch(PrimitiveWithInfer):
     r"""
     Divide spatial dimensions into blocks and combine the block size with the original batch.
 
-    This operation will divide spatial dimensions (H, W) into blocks with block_size, the output tensor's H and W
+    This operation will divide spatial dimensions (H, W) into blocks with `block_size`, the output tensor's H and W
     dimension is the corresponding number of blocks after division. The output tensor's batch dimension is the
-    product of the original batch and the square of block_size. Prior to division into blocks, the spatial dimensions
+    product of the original batch and the square of block_size. Before division, the spatial dimensions
     of the input are zero padded according to paddings if necessary.
 
     Args:
-        block_size (int): The block size of division, has the value not less than 2.
-        paddings (list): The padding value for H and W dimension, containing 2 sub list, each containing 2 int value.
-            All values must be >= 0. paddings[i] specifies the paddings for spatial dimension i, which corresponds to
-            input dimension i+2. It is required that input_shape[i+2]+paddings[i][0]+paddings[i][1] is divisible
-            by block_size.
+        block_size (int): The block size of dividing blocks with value greater than 2.
+        paddings (list): The padding values for H and W dimension, containing 2 subtraction lists.
+            Each subtraction list contains 2 integer value. All values must be greater than 0.
+            paddings[i] specifies the paddings for the spatial dimension i, which corresponds to the
+            input dimension i+2. It is required that input_shape[i+2]+paddings[i][0]+paddings[i][1]
+            is divisible by block_size.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor.
 
     Outputs:
-        Tensor, the output tensor with the same type as input. Assume input shape is :math:`(n, c, h, w)` with
-        :math:`block\_size` and :math:`paddings`. The shape of the output tensor will be :math:`(n', c', h', w')`, where
+        Tensor, the output tensor with the same data type as input. Assume input shape is :math:`(n, c, h, w)` with
+        :math:`block\_size` and :math:`paddings`. The shape of the output tensor will be :math:`(n', c', h', w')`,
+        where
 
             :math:`n' = n*(block\_size*block\_size)`
 
@@ -3159,7 +3162,7 @@ class BatchToSpace(PrimitiveWithInfer):
 
     Args:
         block_size (int): The block size of division, has the value not less than 2.
-        crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 sub lists.
+        crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 subtraction lists.
             Each list contains 2 integers.
             All values must be not less than 0. crops[i] specifies the crop values for the spatial dimension i, which
             corresponds to the input dimension i+2. It is required that
@@ -3230,21 +3233,22 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
     This operation will divide spatial dimensions (H, W) into blocks with block_shape, the output tensor's H and W
     dimension is the corresponding number of blocks after division. The output tensor's batch dimension is the
-    product of the original batch and the product of block_shape. Prior to division into blocks, the spatial dimensions
-    of the input are zero padded according to paddings if necessary.
+    product of the original batch and the product of `block_shape`. Before division,
+    the spatial dimensions of the input are zero padded according to paddings if necessary.
 
     Args:
-        block_shape (Union[list(int), tuple(int)]): The block shape of dividing block with all value >= 1.
-            The length of block_shape is M correspoding to the number of spatial dimensions.
-        paddings (list): The padding value for H and W dimension, containing M sub list, each containing 2 int value.
-            All values must be >= 0. paddings[i] specifies the paddings for spatial dimension i, which corresponds to
-            input dimension i+2. It is required that input_shape[i+2]+paddings[i][0]+paddings[i][1] is divisible
-            by block_shape[i].
+        block_shape (Union[list(int), tuple(int)]): The block shape of dividing block with all value greater than 1.
+            The length of `block_shape` is M correspoding to the number of spatial dimensions.
+        paddings (list): The padding values for H and W dimension, containing M subtraction list.
+            Each contains 2 integer value. All values must be greater than 0.
+            `paddings[i]` specifies the paddings for the spatial dimension i,
+            which corresponds to the input dimension i+2.
+            It is required that input_shape[i+2]+paddings[i][0]+paddings[i][1] is divisible by block_shape[i].
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor.
     Outputs:
-        Tensor, the output tensor with the same type as input. Assume input shape is :math:`(n, c, h, w)` with
+        Tensor, the output tensor with the same data type as input. Assume input shape is :math:`(n, c, h, w)` with
         :math:`block\_shape` and :math:`padddings`. The shape of the output tensor will be :math:`(n', c', h', w')`,
         where
 
@@ -3321,7 +3325,7 @@ class BatchToSpaceND(PrimitiveWithInfer):
     Args:
         block_shape (Union[list(int), tuple(int)]): The block shape of dividing block with all value >= 1.
             The length of block_shape is M correspoding to the number of spatial dimensions.
-        crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 sub list,
+        crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 subtraction list,
             each containing 2 int value.
             All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
             input dimension i+2. It is required that input_shape[i+2]*block_shape[i] > crops[i][0]+crops[i][1].

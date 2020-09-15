@@ -34,7 +34,7 @@ class StandardNormal(PrimitiveWithInfer):
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
 
     Outputs:
-        Tensor. The shape that the input 'shape' denotes. The dtype is float32.
+        Tensor. The shape is the same as the input `shape`. The dtype is float32.
 
     Examples:
         >>> shape = (4, 16)
@@ -239,13 +239,13 @@ class UniformInt(PrimitiveWithInfer):
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
-        - **minval** (Tensor) - The a distribution parameter.
-          It defines the minimum possibly generated value. With int32 data type. Only one number is supported.
-        - **maxval** (Tensor) - The b distribution parameter.
-          It defines the maximum possibly generated value. With int32 data type. Only one number is supported.
+        - **minval** (Tensor) - The distribution parameter, a.
+          It defines the minimum possibly generated value, with int32 data type. Only one number is supported.
+        - **maxval** (Tensor) - The distribution parameter, b.
+          It defines the maximum possibly generated value, with int32 data type. Only one number is supported.
 
     Outputs:
-        Tensor. The shape that the input 'shape' denotes. The dtype is int32.
+        Tensor. The shape is the same as the input 'shape', and the data type is int32.
 
     Examples:
         >>> shape = (4, 16)
@@ -284,7 +284,7 @@ class UniformInt(PrimitiveWithInfer):
 
 class UniformReal(PrimitiveWithInfer):
     r"""
-    Produces random floating-point values i, uniformly distributed on the interval [0, 1).
+    Produces random floating-point values i, uniformly distributed to the interval [0, 1).
 
     Args:
         seed (int): Random seed. Must be non-negative. Default: 0.

@@ -29,10 +29,10 @@ class SparseToDense(PrimitiveWithInfer):
     Inputs:
         - **indices** (Tensor) - The indices of sparse representation.
         - **values** (Tensor) - Values corresponding to each row of indices.
-        - **dense_shape** (tuple) - A int tuple which specifies the shape of dense tensor.
+        - **dense_shape** (tuple) - An int tuple which specifies the shape of dense tensor.
 
     Returns:
-        Tensor, the shape of tensor is dense_shape.
+        Tensor, the shape of tensor is `dense_shape`.
 
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]])

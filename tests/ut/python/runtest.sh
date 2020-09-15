@@ -62,7 +62,13 @@ else
         exit ${RET}
     fi
 
-    pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train $CURRPATH/ops
+    pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train
+    RET=$?
+    if [ ${RET} -ne 0 ]; then
+        exit ${RET}
+    fi
+
+    pytest -n 2 --dist=loadfile -v $CURRPATH/ops
     RET=$?
     if [ ${RET} -ne 0 ]; then
         exit ${RET}

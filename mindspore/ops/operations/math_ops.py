@@ -125,10 +125,10 @@ class TensorAdd(_MathBinaryOp):
     the scalar could only be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
+          or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number,
+          or a bool when the first input is a tensor, or a tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -1079,10 +1079,10 @@ class Sub(_MathBinaryOp):
     the scalar could only be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
+          or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number,
+        or a bool when the first input is a tensor, or a tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -1157,10 +1157,10 @@ class SquaredDifference(_MathBinaryOp):
     the scalar could only be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is float16, float32, int32 or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
+          or a tensor whose data type is float16, float32, int32 or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number,
+          or a bool when the first input is a tensor or a tensor whose data type is
           float16, float32, int32 or bool.
 
     Outputs:
@@ -1863,10 +1863,10 @@ class TruncateDiv(_MathBinaryOp):
     the scalar could only be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
+          or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number,
+          or a bool when the first input is a tensor, or a tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -1893,10 +1893,10 @@ class TruncateMod(_MathBinaryOp):
     the scalar could only be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
+          or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number,
+          or a bool when the first input is a tensor, or a tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -2048,10 +2048,10 @@ class Xdivy(_MathBinaryOp):
     the scalar could only be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is float16, float32 or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is float16, float32 or bool.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
+          or a tensor whose data type is float16, float32 or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number,
+          or a bool when the first input is a tensor, or a tensor whose data type is float16, float32 or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -3069,7 +3069,7 @@ class Sign(PrimitiveWithInfer):
     Note:
         .. math::
             sign(x) = \begin{cases} -1, &if\ x < 0 \cr
-            0, &if\ x == 0 \cr
+            0, &if\ x = 0 \cr
             1, &if\ x > 0\end{cases}
 
     Inputs:
@@ -3251,7 +3251,7 @@ class SquareSumAll(PrimitiveWithInfer):
 
     Inputs:
         - **input_x1** (Tensor) - The input tensor. The data type must be float16 or float32.
-        - **input_x2** (Tensor) - The input tensor same type and shape as the `input_x1`.
+        - **input_x2** (Tensor) - The input tensor has the same type and shape as the `input_x1`.
 
     Note:
         SquareSumAll only supports float16 and float32 data type.
