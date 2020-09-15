@@ -35,7 +35,7 @@ Status CallbackManager::Init() {
 }
 
 Status CallbackManager::CallbackProcess() {
-  std::pair<rtEvent_t, std::pair<rtCallback_t, void *>> entry;
+  std::pair<rtEvent_t, std::pair<rtCallback_t, const void *>> entry;
   while (true) {
     if (!callback_queue_.Pop(&entry)) {
       MS_LOG(INFO) << "CallbackManager stopped";
@@ -84,7 +84,7 @@ Status CallbackManager::Destroy() {
   return ret;
 }
 
-Status CallbackManager::RegisterCallback(rtCallback_t callback, void *user_data) {
+Status CallbackManager::RegisterCallback(rtCallback_t callback, const void *user_data) {
   MS_LOG(INFO) << "To register callback";
   rtEvent_t event = nullptr;
   auto ret = rtEventCreate(&event);
@@ -98,8 +98,8 @@ Status CallbackManager::RegisterCallback(rtCallback_t callback, void *user_data)
     MS_LOG(ERROR) << "Record event failed";
     return kFail;
   }
-  auto cb = std::pair<rtCallback_t, void *>(callback, user_data);
-  auto entry = std::pair<rtEvent_t, std::pair<rtCallback_t, void *>>(event, std::move(cb));
+  auto cb = std::pair<rtCallback_t, const void *>(callback, user_data);
+  auto entry = std::pair<rtEvent_t, std::pair<rtCallback_t, const void *>>(event, std::move(cb));
   if (!callback_queue_.Push(entry)) {
     return kFail;
   }
@@ -108,9 +108,9 @@ Status CallbackManager::RegisterCallback(rtCallback_t callback, void *user_data)
   return kSuccess;
 }
 
-void CallbackManager::RtCallbackFunc(void *data) {
+void CallbackManager::RtCallbackFunc(const void *data) {
   MS_LOG(INFO) << "To invoke callback function";
-  auto callback_func = reinterpret_cast<std::function<void()> *>(data);
+  auto callback_func = reinterpret_cast<const std::function<void()> *>(data);
   (*callback_func)();
   delete callback_func;
 }

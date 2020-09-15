@@ -24,11 +24,10 @@
 #include <utility>
 #include "profiler/device/ascend/blocking_queue.h"
 #include "runtime/base.h"
-
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-using rtCallback_t = std::function<void(void *)>;
+using rtCallback_t = std::function<void(const void *)>;
 enum Status { kSuccess = 0, kFail, kInvalidParam };
 class CallbackManager {
  public:
@@ -45,14 +44,14 @@ class CallbackManager {
 
   Status Destroy();
 
-  Status RegisterCallback(rtCallback_t callback, void *user_data);
+  Status RegisterCallback(rtCallback_t callback, const void *user_data);
   Status RegisterCallback(const std::function<void()> &callback);
 
  private:
   Status CallbackProcess();
-  static void RtCallbackFunc(void *data);
+  static void RtCallbackFunc(const void *data);
 
-  BlockingQueue<std::pair<rtEvent_t, std::pair<rtCallback_t, void *>>> callback_queue_;
+  BlockingQueue<std::pair<rtEvent_t, std::pair<rtCallback_t, const void *>>> callback_queue_;
   rtStream_t stream_;
   std::future<Status> ret_future_;
 };

@@ -172,7 +172,7 @@ class AscendStreamAssign {
   // function for memory resue
   void GetStreamRelations();
   void DFS(uint32_t start, std::vector<uint32_t> *group);
-  bool IsVecExist(std::vector<uint32_t> *group);
+  bool IsVecExist(const std::vector<uint32_t> &group);
   void FindStreamRelations(const NotNull<KernelGraphPtr> &graph_ptr);
   void GetStreamSwitchStreamRelation(const CNodePtr &node_ptr);
   void GetStreamActiveStreamRelation(const NotNull<KernelGraphPtr> &graph_ptr, size_t index);

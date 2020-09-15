@@ -38,6 +38,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
     Reset();
     SetLoopSink();
     ReorderIndependentOrders(graph_ptr);
+
     AssignAllNodesStream(graph_ptr);
     UpdateAtomicAddrCleanStreamId(graph_ptr);
     InsertStreamActive(graph_ptr);
@@ -1438,19 +1439,19 @@ void AscendStreamAssign::Reset() {
 }
 
 // section 10
-bool AscendStreamAssign::IsVecExist(std::vector<uint32_t> *group) {
-  auto group_size = group->size();
+bool AscendStreamAssign::IsVecExist(const std::vector<uint32_t> &group) {
+  auto group_size = group.size();
   if (group_size == 0) {
     return false;
   }
   for (const auto &item : stream_groups_) {
-    if (item.size() < group->size()) {
+    if (item.size() < group.size()) {
       continue;
     }
 
     bool flag = true;
     for (size_t i = 0; i < group_size; i++) {
-      if (item[i] != group->at(i)) {
+      if (item[i] != group.at(i)) {
         flag = false;
         break;
       }
@@ -1469,7 +1470,7 @@ bool AscendStreamAssign::IsVecExist(std::vector<uint32_t> *group) {
 void AscendStreamAssign::DFS(uint32_t start, std::vector<uint32_t> *group) {
   auto it = stream_relations_.find(start);
   if (it == stream_relations_.end()) {
-    if (!IsVecExist(group)) {
+    if (!IsVecExist(*group)) {
       stream_groups_.emplace_back(*group);
     } else {
       MS_LOG(WARNING) << "DFS find same stream group, Not expected";
@@ -1781,7 +1782,6 @@ void AscendStreamAssign::FindEventRelations(const NotNull<KernelGraphPtr> &graph
     MS_LOG(INFO) << "Event_id:" << AnfAlgo::GetNodeAttr<uint32_t>(item.first, kAttrEventId);
   }
 }
-
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
