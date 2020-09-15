@@ -37,11 +37,13 @@ ShardDistributedSample::ShardDistributedSample(int num_shards, int shard_id, boo
 
 int64_t ShardDistributedSample::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
   if (no_of_padded_samples_ <= 0) {
+    int64_t res = 0;
     if (dataset_size % denominator_ == 0) {
-      return dataset_size / denominator_ * numerator_;
+      res = dataset_size / denominator_ * numerator_;
     } else {
-      return dataset_size / denominator_ * numerator_ + 1;
+      res = dataset_size / denominator_ * numerator_ + 1;
     }
+    return no_of_samples_ == 0 ? res : std::min(static_cast<int64_t>(no_of_samples_), res);
   } else {
     auto padded_size = dataset_size + no_of_padded_samples_;
     if (padded_size % denominator_ == 0) {
