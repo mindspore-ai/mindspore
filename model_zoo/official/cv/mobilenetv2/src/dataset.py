@@ -16,7 +16,6 @@
 create train or eval dataset.
 """
 import os
-from tqdm import tqdm
 import numpy as np
 
 from mindspore import Tensor
@@ -97,7 +96,11 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1):
     # apply dataset repeat operation
     ds = ds.repeat(repeat_num)
 
-    return ds
+    step_size = ds.get_dataset_size()
+    if step_size == 0:
+        raise ValueError("The step_size of dataset is zero. Check if the images of train dataset is more than batch_\
+            size in config.py")
+    return ds, step_size
 
 
 def extract_features(net, dataset_path, config):
@@ -109,19 +112,16 @@ def extract_features(net, dataset_path, config):
                              config=config,
                              repeat_num=1)
     step_size = dataset.get_dataset_size()
-    pbar = tqdm(list(dataset.create_dict_iterator(output_numpy=True)))
     model = Model(net)
-    i = 0
-    for data in pbar:
+
+    for i, data in enumerate(dataset.create_dict_iterator(output_numpy=True)):
         features_path = os.path.join(features_folder, f"feature_{i}.npy")
         label_path = os.path.join(features_folder, f"label_{i}.npy")
-        if not (os.path.exists(features_path) and os.path.exists(label_path)):
+        if not os.path.exists(features_path or not os.path.exists(label_path)):
             image = data["image"]
             label = data["label"]
             features = model.predict(Tensor(image))
             np.save(features_path, features.asnumpy())
             np.save(label_path, label)
-        pbar.set_description("Process dataset batch: %d" % (i + 1))
-        i += 1
-
+        print(f"Complete the batch {i}/{step_size}")
     return step_size

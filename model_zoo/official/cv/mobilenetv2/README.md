@@ -4,17 +4,16 @@
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
-  - [Mixed Precision](#mixed-precision)
+  - [Mixed Precision](#mixed-precision(ascend))
 - [Environment Requirements](#environment-requirements)
 - [Script Description](#script-description)
   - [Script and Sample Code](#script-and-sample-code)
     - [Training Process](#training-process)
-    - [Evaluation Process](#evaluation-process)
-      - [Evaluation](#evaluation)
+    - [Evaluation Process](#eval-process)
 - [Model Description](#model-description)
   - [Performance](#performance)  
-    - [Training Performance](#evaluation-performance)
-    - [Inference Performance](#evaluation-performance)
+    - [Training Performance](#training-performance)
+    - [Evaluation Performance](#evaluation-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -38,7 +37,7 @@ Dataset used: [imagenet](http://www.image-net.org/)
   - Train: 120G, 1.2W images
   - Test: 5G, 50000 images
 - Data format: RGB images.
-	- Note: Data will be processed in src/dataset.py
+  - Note: Data will be processed in src/dataset.py
 
 # [Features](#contents)
 
@@ -92,84 +91,84 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 ### Launch
 
-```
+```shell
 # training example
   python:
-      Ascend: python train.py --dataset_path ~/imagenet/train/ --platform Ascend --train_method train
-      GPU: python train.py --dataset_path ~/imagenet/train/ --platform GPU --train_method train
-      CPU: python train.py --dataset_path ~/imagenet/train/ --platform CPU --train_method train
+      Ascend: python train.py --platform Ascend --dataset_path [TRAIN_DATASET_PATH] --train_method train
+      GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH] --train_method train
+      CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --train_method train
 
   shell:
-      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json ~/imagenet/train/  train
-      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/ train
-      CPU: sh run_train.sh CPU ~/imagenet/train/ train
+      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  train
+      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] train
+      CPU: sh run_train.sh CPU [TRAIN_DATASET_PATH] train
 
 # fine tune example
   python:
-      Ascend: python train.py --dataset_path ~/imagenet/train/ --platform Ascend --train_method fine_tune ./pretrain_checkpoint/mobilenetv2_199.ckpt
-      GPU: python train.py --dataset_path ~/imagenet/train/ --platform GPU --train_method fine_tune ./pretrain_checkpoint/mobilenetv2_199.ckpt
-      CPU: python train.py --dataset_path ~/imagenet/train/ --platform CPU --train_method fine_tune ./pretrain_checkpoint/mobilenetv2_199.ckpt
+      Ascend: python train.py --platform Ascend --dataset_path [TRAIN_DATASET_PATH] --train_method fine_tune ./pretrain_checkpoint/mobilenetv2.ckpt
+      GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH] --train_method fine_tune ./pretrain_checkpoint/mobilenetv2.ckpt
+      CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --train_method fine_tune ./pretrain_checkpoint/mobilenetv2.ckpt
 
   shell:
-      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json ~/imagenet/train/  fine_tune ./pretrain_checkpoint/mobilenetv2_199.ckpt
-      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/ fine_tune ./pretrain_checkpoint/mobilenetv2_199.ckpt
-      CPU: sh run_train.sh CPU ~/imagenet/train/ fine_tune ./pretrain_checkpoint/mobilenetv2_199.ckpt
+      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  fine_tune ./pretrain_checkpoint/mobilenetv2.ckpt
+      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] fine_tune ./pretrain_checkpoint/mobilenetv2.ckpt
+      CPU: sh run_train.sh CPU [TRAIN_DATASET_PATH] fine_tune ./pretrain_checkpoint/mobilenetv2.ckpt
 
 # incremental learn example
   python:
-      Ascend: python train.py --dataset_path ~/imagenet/train/ --platform Ascend --train_method incremental_learn ./pretrain_checkpoint/mobilenetv2_199.ckpt
-      GPU: python train.py --dataset_path ~/imagenet/train/ --platform GPU --train_method incremental_learn ./pretrain_checkpoint/mobilenetv2_199.ckpt
-      CPU: python train.py --dataset_path ~/imagenet/train/ --platform CPU --train_method incremental_learn ./pretrain_checkpoint/mobilenetv2_199.ckpt
+      Ascend: python --platform Ascend train.py --dataset_path [TRAIN_DATASET_PATH] --train_method incremental_learn ./pretrain_checkpoint/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
+      GPU: python --platform GPU train.py --dataset_path [TRAIN_DATASET_PATH] --train_method incremental_learn ./pretrain_checkpoint/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
+      CPU: python --platform CPU train.py --dataset_path [TRAIN_DATASET_PATH] --train_method incremental_learn ./pretrain_checkpoint/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
 
   shell:
-      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json ~/imagenet/train/  incremental_learn ./pretrain_checkpoint/mobilenetv2_199.ckpt
-      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/ incremental_learn ./pretrain_checkpoint/mobilenetv2_199.ckpt
-      CPU: sh run_train.sh CPU ~/imagenet/train/ incremental_learn ./pretrain_checkpoint/mobilenetv2_199.ckpt
+      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  incremental_learn ./pretrain_checkpoint/mobilenetv2.ckpt  ./checkpoint/mobilenetv2_head_15.ckpt
+      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] incremental_learn ./pretrain_checkpoint/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
+      CPU: sh run_train.sh CPU [TRAIN_DATASET_PATH] incremental_learn ./pretrain_checkpoint/mobilenetv2_199.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
 ```
 
 ### Result
 
-Training result will be stored in the example path. Checkpoints will be stored at `. /checkpoint` by default, and training log  will be redirected to `./train/train.log` like followings.
+Training result will be stored in the example path. Checkpoints will be stored at `. /checkpoint` by default, and training log  will be redirected to `./train.log` like followings with the platform CPU and GPU, will be wrote to `./train/rank*/log*.log` with the platform Ascend .
 
-```
+```shell
 epoch: [  0/200], step:[  624/  625], loss:[5.258/5.258], time:[140412.236], lr:[0.100]
 epoch time: 140522.500, per step time: 224.836, avg loss: 5.258
 epoch: [  1/200], step:[  624/  625], loss:[3.917/3.917], time:[138221.250], lr:[0.200]
 epoch time: 138331.250, per step time: 221.330, avg loss: 3.917
 ```
 
-## [Eval process](#contents)
+## [Evaluation process](#contents)
 
 ### Usage
 
-You can start training using python or shell scripts. The usage of shell scripts as follows:
+You can start training using python or shell scripts.If the train method is train or fine tune, should not input the `[CHECKPOINT_PATH]` The usage of shell scripts as follows:
 
-- Ascend: sh run_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH] [HEAD_CKPT_PATH]
-- GPU: sh run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH] [HEAD_CKPT_PATH]
-- CPU: sh run_infer.sh CPU [DATASET_PATH] [BACKBONE_CKPT_PATH] [HEAD_CKPT_PATH]
+- Ascend: sh run_eval.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH] [HEAD_CKPT_PATH]
+- GPU: sh run_eval.sh GPU [DATASET_PATH] [CHECKPOINT_PATH] [HEAD_CKPT_PATH]
+- CPU: sh run_eval.sh CPU [DATASET_PATH] [BACKBONE_CKPT_PATH] [HEAD_CKPT_PATH]
 
 ### Launch
 
-```
-# infer example
+```shell
+# eval example
   python:
-      Ascend: python eval.py --dataset_path ~/imagenet/val/ --pretrain_ckpt ~/train/mobilenet-200_625.ckpt --platform Ascend --head_ckpt ./checkpoint/mobilenetv2_199.ckpt
-      GPU: python eval.py --dataset_path ~/imagenet/val/ --pretrain_ckpt ~/train/mobilenet-200_625.ckpt --platform GPU --head_ckpt ./checkpoint/mobilenetv2_199.ckpt
-      CPU: python eval.py --dataset_path ~/imagenet/val/ --pretrain_ckpt ~/train/mobilenet-200_625.ckpt --platform CPU --head_ckpt ./checkpoint/mobilenetv2_199.ckpt
+      Ascend: python eval.py --platform Ascend --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt ./pretrain_ckpt/mobilenetv2.ckpt --head_ckpt ./checkpoint/mobilenetv2_head_15.ckpt
+      GPU: python eval.py --platform GPU --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt ./pretrain_ckpt/mobilenetv2.ckpt --head_ckpt ./checkpoint/mobilenetv2_head_15.ckpt
+      CPU: python eval.py --platform CPU --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt ./pretrain_ckpt/mobilenetv2.ckpt --head_ckpt ./checkpoint/mobilenetv2_head_15.ckpt
 
   shell:
-      Ascend: sh run_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-200_625.ckpt ./checkpoint/mobilenetv2_199.ckpt
-      GPU: sh run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-200_625.ckpt ./checkpoint/mobilenetv2_199.ckpt
-      CPU: sh run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-200_625.ckpt ./checkpoint/mobilenetv2_199.ckpt
+      Ascend: sh run_eval.sh Ascend [VAL_DATASET_PATH] ./pretrain_ckpt/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
+      GPU: sh run_eval.sh GPU [VAL_DATASET_PATH] ./pretrain_ckpt/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
+      CPU: sh run_eval.sh CPU [VAL_DATASET_PATH] ./pretrain_ckpt/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
 ```
 
 > checkpoint can be produced in training process.
 
 ### Result
 
-Inference result will be stored in the example path, you can find result like the followings in `val.log`.
+Inference result will be stored in the example path, you can find result like the followings in `eval.log`.
 
-```
+```shell
 result: {'acc': 0.71976314102564111} ckpt=/path/to/checkpoint/mobilenet-200_625.ckpt
 ```
 
@@ -199,7 +198,8 @@ result: {'acc': 0.71976314102564111} ckpt=/path/to/checkpoint/mobilenet-200_625.
 
 # [Description of Random Situation](#contents)
 
-In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in train.py.
+<!-- In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in train.py. -->
+In train.py, we set the seed which is used by numpy.random, mindspore.common.Initializer, mindspore.ops.composite.random_ops and mindspore.nn.probability.distribution.
 
 # [ModelZoo Homepage](#contents)
 
