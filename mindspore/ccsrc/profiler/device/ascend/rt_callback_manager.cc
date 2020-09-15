@@ -21,7 +21,6 @@
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-
 CallbackManager::CallbackManager(rtStream_t stream) : stream_(stream) {}
 
 Status CallbackManager::Init() {

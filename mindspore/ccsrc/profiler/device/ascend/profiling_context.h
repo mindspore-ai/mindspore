@@ -26,7 +26,6 @@
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-
 inline pid_t GetTid() {
   thread_local static pid_t tid = syscall(__NR_gettid);
   return tid;
