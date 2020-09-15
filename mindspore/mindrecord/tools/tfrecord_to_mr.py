@@ -21,7 +21,7 @@ import numpy as np
 
 from mindspore import log as logger
 from ..filewriter import FileWriter
-from ..shardutils import check_filename
+from ..shardutils import check_filename, ExceptionThread
 
 try:
     tf = import_module("tensorflow")    # just used to convert tfrecord to mindrecord
@@ -235,7 +235,7 @@ class TFRecordToMR:
         except tf.errors.InvalidArgumentError:
             raise ValueError("TFRecord feature_dict parameter error.")
 
-    def transform(self):
+    def run(self):
         """
         Executes transform from TFRecord to MindRecord.
 
@@ -267,3 +267,12 @@ class TFRecordToMR:
                     logger.info("Transformed {} records...".format(transform_count))
                 break
         return writer.commit()
+
+    def transform(self):
+        t = ExceptionThread(target=self.run)
+        t.daemon = True
+        t.start()
+        t.join()
+        if t.exitcode != 0:
+            raise t.exception
+        return t.res

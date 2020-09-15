@@ -21,7 +21,7 @@ import time
 from mindspore import log as logger
 from ..common.exceptions import PathNotExistsError
 from ..filewriter import FileWriter
-from ..shardutils import check_filename
+from ..shardutils import check_filename, ExceptionThread
 
 __all__ = ['ImageNetToMR']
 
@@ -118,7 +118,7 @@ class ImageNetToMR:
                 data["image"] = image_bytes
                 yield data
 
-    def transform(self):
+    def run(self):
         """
         Executes transformation from imagenet to MindRecord.
 
@@ -170,3 +170,12 @@ class ImageNetToMR:
         logger.info("--------------------------------------------")
 
         return ret
+
+    def transform(self):
+        t = ExceptionThread(target=self.run)
+        t.daemon = True
+        t.start()
+        t.join()
+        if t.exitcode != 0:
+            raise t.exception
+        return t.res

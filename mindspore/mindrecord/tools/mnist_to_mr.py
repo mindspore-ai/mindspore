@@ -23,7 +23,7 @@ import numpy as np
 
 from mindspore import log as logger
 from ..filewriter import FileWriter
-from ..shardutils import check_filename, SUCCESS, FAILED
+from ..shardutils import check_filename, ExceptionThread, SUCCESS, FAILED
 
 try:
     cv2 = import_module("cv2")
@@ -217,7 +217,7 @@ class MnistToMR:
 
         return ret
 
-    def transform(self):
+    def run(self):
         """
         Executes transformation from Mnist to MindRecord.
 
@@ -233,3 +233,12 @@ class MnistToMR:
             return FAILED
 
         return SUCCESS
+
+    def transform(self):
+        t = ExceptionThread(target=self.run)
+        t.daemon = True
+        t.start()
+        t.join()
+        if t.exitcode != 0:
+            raise t.exception
+        return t.res

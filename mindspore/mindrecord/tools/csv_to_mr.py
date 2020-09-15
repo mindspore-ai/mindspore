@@ -20,7 +20,7 @@ import os
 
 from mindspore import log as logger
 from ..filewriter import FileWriter
-from ..shardutils import check_filename
+from ..shardutils import check_filename, ExceptionThread
 
 try:
     pd = import_module("pandas")
@@ -116,7 +116,7 @@ class CsvToMR:
                     row[col] = r[col]
             yield row
 
-    def transform(self):
+    def run(self):
         """
         Executes transformation from csv to MindRecord.
 
@@ -166,3 +166,12 @@ class CsvToMR:
         ret = self.writer.commit()
 
         return ret
+
+    def transform(self):
+        t = ExceptionThread(target=self.run)
+        t.daemon = True
+        t.start()
+        t.join()
+        if t.exitcode != 0:
+            raise t.exception
+        return t.res
