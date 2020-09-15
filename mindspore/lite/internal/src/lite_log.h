@@ -32,6 +32,9 @@
 #define LITE_LOG_ERROR(...) \
   printf("[ERROR] [%s %s] [%s] [%d] %s\n", __DATE__, __TIME__, __FILE__, __LINE__, __VA_ARGS__)
 #define MS_ASSERT(f) assert(f)
+#define MS_C_EXCEPTION(...)                                                                          \
+  printf("[EXCEPTION] [%s %s] [%s] [%d] %s\n", __DATE__, __TIME__, __FILE__, __LINE__, __VA_ARGS__); \
+  exit(1)
 #else
 #define LITE_DEBUG_LOG(...)
 #define LITE_INFO_LOG(...)
@@ -39,6 +42,7 @@
 #define LITE_ERROR_LOG(...)
 #define LITE_LOG_ERROR(...)
 #define MS_ASSERT(f) ((void)0)
+#define MS_C_EXCEPTION(...) exit(1)
 #endif
 
 #endif  // MINDSPORE_LITE_INTERNAL_SRC_LITE_LOG_H_

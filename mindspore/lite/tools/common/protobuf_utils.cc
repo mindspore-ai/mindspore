@@ -73,13 +73,13 @@ STATUS ReadProtoFromBinaryFile(const char *file, google::protobuf::Message *mess
 
   std::string realPath = RealPath(file);
   if (realPath.empty()) {
-    MS_LOG(ERROR) << "Weight file path " << file << " is not valid";
+    MS_LOG(ERROR) << "Binary proto file path " << file << " is not valid";
     return RET_ERROR;
   }
 
   std::ifstream fs(realPath, std::ifstream::in | std::ifstream::binary);
   if (!fs.is_open()) {
-    MS_LOG(ERROR) << "Open weight file " << file << " failed.";
+    MS_LOG(ERROR) << "Open binary proto file " << file << " failed.";
     return RET_ERROR;
   }
 
