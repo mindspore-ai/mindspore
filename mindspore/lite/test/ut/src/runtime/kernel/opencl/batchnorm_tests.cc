@@ -130,15 +130,15 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   }
   sub_graph->Init();
   MS_LOG(INFO) << " init tensors ";
-  memcpy(inputs[0]->MutableData(), input_data, input_size);
-  memcpy(inputs[1]->MutableData(), scale_data, scale_size);
-  memcpy(inputs[2]->MutableData(), offset_data, offset_size);
-  memcpy(inputs[3]->MutableData(), mean_data, mean_size);
-  memcpy(inputs[4]->MutableData(), var_data, var_size);
+  memcpy(inputs[0]->data_c(), input_data, input_size);
+  memcpy(inputs[1]->data_c(), scale_data, scale_size);
+  memcpy(inputs[2]->data_c(), offset_data, offset_size);
+  memcpy(inputs[3]->data_c(), mean_data, mean_size);
+  memcpy(inputs[4]->data_c(), var_data, var_size);
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
 
-  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
+  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.01);
   for (auto tensor : inputs) {
     delete tensor;
@@ -247,15 +247,15 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   }
   sub_graph->Init();
   MS_LOG(INFO) << " init tensors ";
-  memcpy(inputs[0]->MutableData(), input_data, input_size);
-  memcpy(inputs[1]->MutableData(), scale_data, scale_size);
-  memcpy(inputs[2]->MutableData(), offset_data, offset_size);
-  memcpy(inputs[3]->MutableData(), mean_data, mean_size);
-  memcpy(inputs[4]->MutableData(), var_data, var_size);
+  memcpy(inputs[0]->data_c(), input_data, input_size);
+  memcpy(inputs[1]->data_c(), scale_data, scale_size);
+  memcpy(inputs[2]->data_c(), offset_data, offset_size);
+  memcpy(inputs[3]->data_c(), mean_data, mean_size);
+  memcpy(inputs[4]->data_c(), var_data, var_size);
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
 
-  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->MutableData());
+  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
   for (auto tensor : inputs) {
     delete tensor;

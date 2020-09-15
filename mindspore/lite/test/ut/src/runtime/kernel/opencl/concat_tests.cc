@@ -138,24 +138,24 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_2input_dim4_axis3) {
   sub_graph->Init();
   MS_LOG(INFO) << " initialize input data ";
   if (inputs.size() == 2) {
-    memcpy(inputs[0]->MutableData(), input_data1, input1_size);
-    memcpy(inputs[1]->MutableData(), input_data2, input2_size);
+    memcpy(inputs[0]->data_c(), input_data1, input1_size);
+    memcpy(inputs[1]->data_c(), input_data2, input2_size);
   } else if (inputs.size() == 3) {
-    memcpy(inputs[0]->MutableData(), input_data1, input1_size);
-    memcpy(inputs[1]->MutableData(), input_data2, input2_size);
-    memcpy(inputs[2]->MutableData(), input_data3, input3_size);
+    memcpy(inputs[0]->data_c(), input_data1, input1_size);
+    memcpy(inputs[1]->data_c(), input_data2, input2_size);
+    memcpy(inputs[2]->data_c(), input_data3, input3_size);
   } else if (inputs.size() == 4) {
-    memcpy(inputs[0]->MutableData(), input_data1, input1_size);
-    memcpy(inputs[1]->MutableData(), input_data2, input2_size);
-    memcpy(inputs[2]->MutableData(), input_data3, input3_size);
-    memcpy(inputs[3]->MutableData(), input_data4, input4_size);
+    memcpy(inputs[0]->data_c(), input_data1, input1_size);
+    memcpy(inputs[1]->data_c(), input_data2, input2_size);
+    memcpy(inputs[2]->data_c(), input_data3, input3_size);
+    memcpy(inputs[3]->data_c(), input_data4, input4_size);
   } else {
     MS_LOG(ERROR) << " input size must be 2 or 3 or 4";
   }
 
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
-  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
+  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
     delete tensor;
@@ -263,19 +263,19 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_2input_dim4_axis3) {
   sub_graph->Init();
   MS_LOG(INFO) << " initialize input data ";
   if (inputs.size() == 2) {
-    memcpy(inputs[0]->MutableData(), input_data1, input1_size);
-    memcpy(inputs[1]->MutableData(), input_data2, input2_size);
+    memcpy(inputs[0]->data_c(), input_data1, input1_size);
+    memcpy(inputs[1]->data_c(), input_data2, input2_size);
   } else if (inputs.size() == 3) {
-    memcpy(inputs[0]->MutableData(), input_data1, input1_size);
-    memcpy(inputs[1]->MutableData(), input_data2, input2_size);
-    memcpy(inputs[2]->MutableData(), input_data3, input3_size);
+    memcpy(inputs[0]->data_c(), input_data1, input1_size);
+    memcpy(inputs[1]->data_c(), input_data2, input2_size);
+    memcpy(inputs[2]->data_c(), input_data3, input3_size);
   } else {
     MS_LOG(ERROR) << " input size must be 2 or 3 ";
   }
 
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
-  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->MutableData());
+  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001);
   for (auto tensor : inputs) {
     delete tensor;
