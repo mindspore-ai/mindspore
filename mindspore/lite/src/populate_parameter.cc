@@ -629,6 +629,7 @@ OpParameter *PopulateActivationParameter(const mindspore::lite::PrimitiveC *prim
     return nullptr;
   }
   memset(act_param, 0, sizeof(ActivationParameter));
+  act_param->op_parameter_.type_ = primitive->Type();
   auto activation =
     reinterpret_cast<mindspore::lite::Activation *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   act_param->type_ = static_cast<int>(activation->GetType());
