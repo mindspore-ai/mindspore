@@ -307,7 +307,15 @@ int ArithmeticOpenCLKernel::Run() {
     void *weight = weight_ptr_ == nullptr ? in_tensors_[1]->MutableData() : weight_ptr_;
     runtime_->SetKernelArg(kernel_, arg_idx++, weight);
   } else {
-    float weight = static_cast<float *>(in_tensors_[1]->MutableData())[0];
+    float weight = 0.f;
+    if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
+      weight = static_cast<float *>(in_tensors_[1]->MutableData())[0];
+    } else if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
+      weight = static_cast<float>(static_cast<float16_t *>(in_tensors_[1]->MutableData())[0]);
+    } else {
+      MS_LOG(ERROR) << "Unsupport data type " << in_tensors_[1]->data_type();
+      return RET_ERROR;
+    }
     runtime_->SetKernelArg(kernel_, arg_idx++, weight);
   }
   runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
