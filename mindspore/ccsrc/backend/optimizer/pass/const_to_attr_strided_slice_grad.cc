@@ -16,6 +16,7 @@
 #include "backend/optimizer/pass/const_to_attr_strided_slice_grad.h"
 #include <memory>
 #include <vector>
+#include <string>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/ms_context.h"
