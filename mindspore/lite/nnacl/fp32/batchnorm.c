@@ -68,7 +68,7 @@ void FusedBatchNormFp32MeanVar(const float *input, float momentum, float *run_me
     run_mean[f] = run_mean[f] / N;
     run_var[f] = run_var[f] / N - run_mean[f] * run_mean[f];
     save_mean[f] = momentum * save_mean[f] + (1 - momentum) * run_mean[f];
-    float inv_var = 1.f/sqrt(run_var[f]+param->epsilon_);
+    float inv_var = 1.f / sqrt(run_var[f] + param->epsilon_);
     save_inv_var[f] = momentum * save_inv_var[f] + (1 - momentum) * inv_var;
   }
 }

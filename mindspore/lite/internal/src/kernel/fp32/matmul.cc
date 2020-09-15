@@ -116,7 +116,7 @@ int DoMatMulInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector 
 
 int DoMatMul(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
              mindspore::lite::Allocator *allocator) {
-  if (in_tensors[0]->data_ == NULL || in_tensors[1]->data_ ==NULL) {
+  if (in_tensors[0]->data_ == NULL || in_tensors[1]->data_ == NULL) {
     LITE_LOG_ERROR("input data is NULL!");
     return RET_PARAM_INVALID;
   }
