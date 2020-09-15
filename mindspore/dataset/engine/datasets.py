@@ -84,7 +84,7 @@ def zip(datasets):
             >>> ds1 = ds.ImageFolderDataset(dataset_dir1, num_parallel_workers=8)
             >>> ds2 = ds.ImageFolderDataset(dataset_dir2, num_parallel_workers=8)
             >>>
-            >>> # creates a dataset which is the combination of ds1 and ds2
+            >>> # Create a dataset which is the combination of ds1 and ds2
             >>> data = ds.zip((ds1, ds2))
     """
     if len(datasets) <= 1:
@@ -218,18 +218,19 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # data is an instance of Dataset object.
             >>>
-            >>> # creates a dataset where every 100 rows is combined into a batch
+            >>> # Create a dataset where every 100 rows is combined into a batch
             >>> # and drops the last incomplete batch if there is one.
             >>> column_names = ["col1", "col2"]
             >>> buket_boundaries = [5, 10]
             >>> bucket_batch_sizes = [5, 1, 1]
             >>> element_length_function = (lambda col1, col2: max(len(col1), len(col2)))
             >>>
-            >>> # will pad col1 to shape [2, bucket_boundaries[i]] where i is the
+            >>> # Will pad col1 to shape [2, bucket_boundaries[i]] where i is the
             >>> # index of the bucket that is currently being batched.
-            >>> # will pad col2 to a shape where each dimension is the longest in all
+            >>> # Will pad col2 to a shape where each dimension is the longest in all
             >>> # the elements currently being batched.
             >>> pad_info = {"col1", ([2, None], -1)}
             >>> pad_to_bucket_boundary = True
@@ -291,8 +292,10 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # data is an instance of Dataset object.
-            >>> # creates a dataset where every 100 rows is combined into a batch
+            >>>
+            >>> # Create a dataset where every 100 rows is combined into a batch
             >>> # and drops the last incomplete batch if there is one.
             >>> data = data.batch(100, True)
         """
@@ -314,6 +317,7 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # data is an instance of Dataset object.
             >>> data = data.sync_wait("callback1")
             >>> data = data.batch(batch_size)
@@ -349,11 +353,12 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
-            >>> # data is an instance of Dataset object
-            >>> # optionally set the seed for the first epoch
+            >>>
+            >>> # data is an instance of Dataset object.
+            >>> # Optionally set the seed for the first epoch
             >>> ds.config.set_seed(58)
             >>>
-            >>> # creates a shuffled dataset using a shuffle buffer of size 4
+            >>> # Create a shuffled dataset using a shuffle buffer of size 4
             >>> data = data.shuffle(4)
         """
         return ShuffleDataset(self, buffer_size)
@@ -375,12 +380,13 @@ class Dataset:
         Examples:
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
-            >>> # declare a function which returns a Dataset object
+            >>>
+            >>> # Declare a function which returns a Dataset object
             >>> def flat_map_func(x):
             >>>     data_dir = text.to_str(x[0])
             >>>     d = ds.ImageFolderDataset(data_dir)
             >>>     return d
-            >>> # data is a Dataset object
+            >>> # data is an instance of a Dataset object.
             >>> data = ds.TextFileDataset(DATA_FILE)
             >>> data = data.flat_map(flat_map_func)
 
@@ -460,16 +466,17 @@ class Dataset:
             >>> import mindspore.dataset.vision.c_transforms as c_transforms
             >>>
             >>> # data is an instance of Dataset which has 2 columns, "image" and "label".
-            >>> # ds_pyfunc is an instance of Dataset which has 3 columns, "col0", "col1", and "col2". Each column is
-            >>> # a 2d array of integers.
+            >>> # ds_pyfunc is an instance of Dataset which has 3 columns, "col0", "col1", and "col2".
+            >>> # Each column is a 2D array of integers.
             >>>
-            >>> # This config is a global setting, meaning that all future operations which
-            >>> # uses this config value will use 2 worker threads, unless if specified
-            >>> # otherwise in their constructor. set_num_parallel_workers can be called
-            >>> # again later if a different number of worker threads are needed.
+            >>> # Set the global configuration value for num_parallel_workers to be 2.
+            >>> # Operations which use this configuration value will use 2 worker threads,
+            >>> # unless otherwise specified in the operator's constructor.
+            >>> # set_num_parallel_workers can be called again later if a different
+            >>> # global configuration value for the number of worker threads is desired.
             >>> ds.config.set_num_parallel_workers(2)
             >>>
-            >>> # Two operations, which takes 1 column for input and outputs 1 column.
+            >>> # Define two operations, where each operation accepts 1 input column and outputs 1 column.
             >>> decode_op = c_transforms.Decode(rgb_format=True)
             >>> random_jitter_op = c_transforms.RandomColorAdjust((0.8, 0.8), (1, 1), (1, 1), (0, 0))
             >>>
@@ -478,12 +485,12 @@ class Dataset:
             >>> operations = [decode_op]
             >>> input_columns = ["image"]
             >>>
-            >>> # Applies decode_op on column "image". This column will be replaced by the outputed
+            >>> # Apply decode_op on column "image". This column will be replaced by the outputted
             >>> # column of decode_op. Since column_order is not provided, both columns "image"
             >>> # and "label" will be propagated to the child node in their original order.
             >>> ds_decoded = data.map(operations, input_columns)
             >>>
-            >>> # Rename column "image" to "decoded_image"
+            >>> # Rename column "image" to "decoded_image".
             >>> output_columns = ["decoded_image"]
             >>> ds_decoded = data.map(operations, input_columns, output_columns)
             >>>
@@ -501,7 +508,7 @@ class Dataset:
             >>> output_columns = ["decoded_image"]
             >>> ds_decoded = data.map(operations, input_columns, output_columns, column_order)
             >>>
-            >>> # Simple example using pyfunc. Renaming columns and specifying column order
+            >>> # A simple example using pyfunc: Renaming columns and specifying column order
             >>> # work in the same way as the previous examples.
             >>> input_columns = ["col0"]
             >>> operations = [(lambda x: x + 1)]
@@ -515,7 +522,7 @@ class Dataset:
             >>>
             >>> input_columns = ["image"]
             >>>
-            >>> # Creates a dataset where the images are decoded, then randomly color jittered.
+            >>> # Create a dataset where the images are decoded, then randomly color jittered.
             >>> # decode_op takes column "image" as input and outputs one column. The column
             >>> # outputted by decode_op is passed as input to random_jitter_op.
             >>> # random_jitter_op will output one column. Column "image" will be replaced by
@@ -524,13 +531,13 @@ class Dataset:
             >>> # columns will remain the same.
             >>> ds_mapped = data.map(operations, input_columns)
             >>>
-            >>> # Creates a dataset that is identical to ds_mapped, except the column "image"
+            >>> # Create a dataset that is identical to ds_mapped, except the column "image"
             >>> # that is outputted by random_jitter_op is renamed to "image_transformed".
             >>> # Specifying column order works in the same way as examples in 1).
             >>> output_columns = ["image_transformed"]
             >>> ds_mapped_and_renamed = data.map(operation, input_columns, output_columns)
             >>>
-            >>> # Multiple operations using pyfunc. Renaming columns and specifying column order
+            >>> # Multiple operations using pyfunc: Renaming columns and specifying column order
             >>> # work in the same way as examples in 1).
             >>> input_columns = ["col0"]
             >>> operations = [(lambda x: x + x), (lambda x: x - 1)]
@@ -543,15 +550,15 @@ class Dataset:
             >>> # operations[1] is a lambda that takes 3 columns as input and outputs 1 column.
             >>> # operations[1] is a lambda that takes 1 column as input and outputs 4 columns.
             >>> #
-            >>> # Note: the number of output columns of operation[i] must equal the number of
+            >>> # Note: The number of output columns of operation[i] must equal the number of
             >>> # input columns of operation[i+1]. Otherwise, this map call will also result
             >>> # in an error.
             >>> operations = [(lambda x y: (x, x + y, x + y + 1)),
             >>>               (lambda x y z: x * y * z),
             >>>               (lambda x: (x % 2, x % 3, x % 5, x % 7))]
             >>>
-            >>> # Note: because the number of input columns is not the same as the number of
-            >>> # output columns, the output_columns and column_order parameter must be
+            >>> # Note: Since the number of input columns is not the same as the number of
+            >>> # output columns, the output_columns and column_order parameters must be
             >>> # specified. Otherwise, this map call will also result in an error.
             >>> input_columns = ["col2", "col0"]
             >>> output_columns = ["mod2", "mod3", "mod5", "mod7"]
@@ -614,15 +621,17 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # data is an instance of Dataset object.
-            >>> # creates a dataset where the dataset is repeated for 50 epochs
+            >>>
+            >>> # Create a dataset where the dataset is repeated for 50 epochs
             >>> repeated = data.repeat(50)
             >>>
-            >>> # creates a dataset where each epoch is shuffled individually
+            >>> # Create a dataset where each epoch is shuffled individually
             >>> shuffled_and_repeated = data.shuffle(10)
             >>> shuffled_and_repeated = shuffled_and_repeated.repeat(50)
             >>>
-            >>> # creates a dataset where the dataset is first repeated for
+            >>> # Create a dataset where the dataset is first repeated for
             >>> # 50 epochs before shuffling. The shuffle operator will treat
             >>> # the entire 50 epochs as one big dataset.
             >>> repeat_and_shuffle = data.repeat(50)
@@ -645,8 +654,9 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # data is an instance of Dataset object.
-            >>> # creates a dataset which skips first 3 elements from data
+            >>> # Create a dataset which skips first 3 elements from data
             >>> data = data.skip(3)
         """
         return SkipDataset(self, count)
@@ -670,8 +680,9 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # data is an instance of Dataset object.
-            >>> # creates a dataset where the dataset including 50 elements.
+            >>> # Create a dataset where the dataset includes 50 elements.
             >>> data = data.take(50)
         """
         if count == -1:
@@ -781,11 +792,11 @@ class Dataset:
         Examples:
             >>> import mindspore.dataset as ds
             >>>
-            >>> dataset_dir = "/path/to/text_file.txt"
+            >>> dataset_files = "/path/to/text_file/*"
             >>>
-            >>> # TextFileDataset is not a mappable dataset, so this non optimized split will be called.
-            >>> # many datasets have shuffle on by default, set shuffle to False if split will be called!
-            >>> data = ds.TextFileDataset(dataset_dir, shuffle=False)
+            >>> # TextFileDataset is not a mappable dataset, so this non-optimized split will be called.
+            >>> # Since many datasets have shuffle on by default, set shuffle to False if split will be called!
+            >>> data = ds.TextFileDataset(dataset_files, shuffle=False)
             >>> train, test = data.split([0.9, 0.1])
         """
         if self.is_shuffled():
@@ -829,8 +840,9 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # ds1 and ds2 are instances of Dataset object
-            >>> # creates a dataset which is the combination of ds1 and ds2
+            >>> # Create a dataset which is the combination of ds1 and ds2
             >>> data = ds1.zip(ds2)
         """
         if isinstance(datasets, tuple):
@@ -858,10 +870,12 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # ds1 and ds2 are instances of Dataset object
-            >>> # creates a dataset by concatenating ds1 and ds2 with "+" operator
+            >>>
+            >>> # Create a dataset by concatenating ds1 and ds2 with "+" operator
             >>> data1 = ds1 + ds2
-            >>> # creates a dataset by concatenating ds1 and ds2 with concat operation
+            >>> # Create a dataset by concatenating ds1 and ds2 with concat operation
             >>> data1 = ds1.concat(ds2)
         """
         if isinstance(datasets, Dataset):
@@ -886,11 +900,12 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # data is an instance of Dataset object.
             >>> input_columns = ["input_col1", "input_col2", "input_col3"]
             >>> output_columns = ["output_col1", "output_col2", "output_col3"]
             >>>
-            >>> # creates a dataset where input_col1 is renamed to output_col1, and
+            >>> # Create a dataset where input_col1 is renamed to output_col1, and
             >>> # input_col2 is renamed to output_col2, and input_col3 is renamed
             >>> # to output_col3.
             >>> data = data.rename(input_columns=input_columns, output_columns=output_columns)
@@ -914,10 +929,11 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # data is an instance of Dataset object
             >>> columns_to_project = ["column3", "column1", "column2"]
             >>>
-            >>> # creates a dataset that consist of column3, column1, column2
+            >>> # Create a dataset that consists of column3, column1, column2
             >>> # in that order, regardless of the original order of columns.
             >>> data = data.project(columns=columns_to_project)
         """
@@ -945,12 +961,15 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # data is an instance of Dataset object
-            >>> # declare an apply_func function which returns a Dataset object
+            >>>
+            >>> # Declare an apply_func function which returns a Dataset object
             >>> def apply_func(ds):
             >>>     ds = ds.batch(2)
             >>>     return ds
-            >>> # use apply to call apply_func
+            >>>
+            >>> # Use apply to call apply_func
             >>> data = data.apply(apply_func)
 
         Raises:
@@ -1150,8 +1169,10 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # data is an instance of Dataset object
-            >>> # create an iterator
+            >>>
+            >>> # Create an iterator
             >>> # The columns in the data obtained by the iterator will not be changed.
             >>> iterator = data.create_tuple_iterator()
             >>> for item in iterator:
@@ -1171,8 +1192,6 @@ class Dataset:
         Args:
             num_epochs (int, optional): Maximum number of epochs that iterator can be iterated
                 (default=-1, iterator can be iterated infinite number of epochs).
-            num_epochs (int, optional): maximum epochs that iterator can be iteratered,
-                if num_epochs = -1, iterator can be iteratered infinite epochs (default=-1)
             output_numpy (bool, optional): Whether or not to output NumPy datatype,
                 if output_numpy=False, iterator will output MSTensor (default=False).
 
@@ -1181,14 +1200,15 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> # data is an instance of Dataset object
+            >>>
             >>> # create an iterator
             >>> # The columns in the data obtained by the iterator might be changed.
             >>> iterator = data.create_dict_iterator()
             >>> for item in iterator:
             >>>     # print the data in column1
             >>>     print(item["column1"])
-
         """
         if self._noop_mode():
             return DummyIterator(self, 'dict')
@@ -1426,10 +1446,10 @@ class MappableDataset(SourceDataset):
             >>> import mindspore.dataset as ds
             >>>
             >>> dataset_dir = "/path/to/imagefolder_directory"
-            >>> # a SequentialSampler is created by default
+            >>> # Note: A SequentialSampler is created by default
             >>> data = ds.ImageFolderDataset(dataset_dir)
             >>>
-            >>> # use a DistributedSampler instead of the SequentialSampler
+            >>> # Use a DistributedSampler instead of the SequentialSampler
             >>> new_sampler = ds.DistributedSampler(10, 2)
             >>> data.use_sampler(new_sampler)
         """
@@ -1514,15 +1534,15 @@ class MappableDataset(SourceDataset):
             >>>
             >>> dataset_dir = "/path/to/imagefolder_directory"
             >>>
-            >>> # many datasets have shuffle on by default, set shuffle to False if split will be called!
+            >>> # Since many datasets have shuffle on by default, set shuffle to False if split will be called!
             >>> data = ds.ImageFolderDataset(dataset_dir, shuffle=False)
             >>>
-            >>> # sets the seed, and tells split to use this seed when randomizing. This
-            >>> # is needed because we are sharding later
+            >>> # Set the seed, and tell split to use this seed when randomizing.
+            >>> # This is needed because sharding will be done later
             >>> ds.config.set_seed(58)
             >>> train, test = data.split([0.9, 0.1])
             >>>
-            >>> # if we want to shard the train dataset, we can use a DistributedSampler
+            >>> # To shard the train dataset, use a DistributedSampler
             >>> train_sampler = ds.DistributedSampler(10, 2)
             >>> train.use_sampler(train_sampler)
         """
@@ -1990,7 +2010,7 @@ class _PythonCallable:
 
 class MapDataset(DatasetOp):
     """
-    The result of applying Map operator to the input Dataset.
+    The result of applying the Map operator to the input Dataset.
 
     Args:
         input_dataset (Dataset): Input Dataset to be mapped.
@@ -2756,14 +2776,19 @@ class ImageFolderDataset(MappableDataset):
 
     Examples:
         >>> import mindspore.dataset as ds
-        >>> # path to imagefolder directory. This directory needs to contain sub-directories which contain the images
+        >>>
+        >>> # Set path to the imagefolder directory.
+        >>> # This directory needs to contain sub-directories which contain the images
         >>> dataset_dir = "/path/to/imagefolder_directory"
-        >>> # 1) read all samples (image files) in dataset_dir with 8 threads
+        >>>
+        >>> # 1) Read all samples (image files) in dataset_dir with 8 threads
         >>> imagefolder_dataset = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8)
-        >>> # 2) read all samples (image files) from folder cat and folder dog with label 0 and 1
-        >>> imagefolder_dataset = ds.ImageFolderDataset(dataset_dir,class_indexing={"cat":0,"dog":1})
-        >>> # 3) read all samples (image files) in dataset_dir with extensions .JPEG and .png (case sensitive)
-        >>> imagefolder_dataset = ds.ImageFolderDataset(dataset_dir, extensions=[".JPEG",".png"])
+        >>>
+        >>> # 2) Read all samples (image files) from folder cat and folder dog with label 0 and 1
+        >>> imagefolder_dataset = ds.ImageFolderDataset(dataset_dir, class_indexing={"cat":0, "dog":1})
+        >>>
+        >>> # 3) Read all samples (image files) in dataset_dir with extensions .JPEG and .png (case sensitive)
+        >>> imagefolder_dataset = ds.ImageFolderDataset(dataset_dir, extensions=[".JPEG", ".png"])
     """
 
     @check_imagefolderdataset
@@ -2912,10 +2937,11 @@ class MnistDataset(MappableDataset):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>>
         >>> dataset_dir = "/path/to/mnist_folder"
-        >>> # 1) read 3 samples from mnist_dataset
+        >>> # Read 3 samples from MNIST dataset
         >>> mnist_dataset = ds.MnistDataset(dataset_dir=dataset_dir, num_samples=3)
-        >>> # in mnist_dataset dataset, each dictionary has keys "image" and "label"
+        >>> # Note: In mnist_dataset dataset, each dictionary has keys "image" and "label"
     """
 
     @check_mnist_cifar_dataset
@@ -3418,35 +3444,39 @@ class GeneratorDataset(MappableDataset):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>>
         >>> # 1) Multidimensional generator function as callable input
-        >>> def generator_md():
+        >>> def GeneratorMD():
         >>>     for i in range(64):
         >>>         yield (np.array([[i, i + 1], [i + 2, i + 3]]),)
-        >>> # create multi_dimension_generator_dataset with GeneratorMD and column name "multi_dimensional_data"
-        >>> multi_dimension_generator_dataset = ds.GeneratorDataset(generator_md, ["multi_dimensional_data"])
+        >>> # Create multi_dimension_generator_dataset with GeneratorMD and column name "multi_dimensional_data"
+        >>> multi_dimension_generator_dataset = ds.GeneratorDataset(GeneratorMD, ["multi_dimensional_data"])
+        >>>
         >>> # 2) Multi-column generator function as callable input
-        >>> def generator_mc(maxid = 64):
+        >>> def GeneratorMC(maxid = 64):
         >>>     for i in range(maxid):
         >>>         yield (np.array([i]), np.array([[i, i + 1], [i + 2, i + 3]]))
-        >>> # create multi_column_generator_dataset with GeneratorMC and column names "col1" and "col2"
-        >>> multi_column_generator_dataset = ds.GeneratorDataset(generator_mc, ["col1", "col2"])
+        >>> # Create multi_column_generator_dataset with GeneratorMC and column names "col1" and "col2"
+        >>> multi_column_generator_dataset = ds.GeneratorDataset(GeneratorMC, ["col1", "col2"])
+        >>>
         >>> # 3) Iterable dataset as iterable input
         >>> class MyIterable():
         >>>     def __iter__(self):
         >>>         return # User implementation
-        >>> # create iterable_generator_dataset with MyIterable object
+        >>> # Create iterable_generator_dataset with MyIterable object
         >>> iterable_generator_dataset = ds.GeneratorDataset(MyIterable(), ["col1"])
-        >>> # 4) Random accessible dataset as Random accessible input
+        >>>
+        >>> # 4) Random accessible dataset as random accessible input
         >>> class MyRA():
         >>>     def __getitem__(self, index):
         >>>         return # User implementation
-        >>> # create ra_generator_dataset with MyRA object
+        >>> # Create ra_generator_dataset with MyRA object
         >>> ra_generator_dataset = ds.GeneratorDataset(MyRA(), ["col1"])
         >>> # List/Dict/Tuple is also random accessible
         >>> list_generator = ds.GeneratorDataset([(np.array(0),), (np.array(1)), (np.array(2))], ["col1"])
+        >>>
         >>> # 5) Built-in Sampler
         >>> my_generator = ds.GeneratorDataset(my_ds, ["img", "label"], sampler=samplers.RandomSampler())
-        >>>
     """
 
     @check_generatordataset
@@ -3602,15 +3632,19 @@ class TFRecordDataset(SourceDataset):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.common.dtype as mstype
+        >>>
         >>> dataset_files = ["/path/to/1", "/path/to/2"] # contains 1 or multiple tf data files
-        >>> # 1) get all rows from dataset_files with no explicit schema:
+        >>>
+        >>> # 1) Get all rows from dataset_files with no explicit schema
         >>> # The meta-data in the first row will be used as a schema.
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files)
-        >>> # 2) get all rows from dataset_files with user-defined schema:
+        >>>
+        >>> # 2) Get all rows from dataset_files with user-defined schema
         >>> schema = ds.Schema()
         >>> schema.add_column('col_1d', de_type=mindspore.int64, shape=[2])
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files, schema=schema)
-        >>> # 3) get all rows from dataset_files with schema file "./schema.json":
+        >>>
+        >>> # 3) Get all rows from dataset_files with schema file "./schema.json"
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files, schema="./schema.json")
     """
 
@@ -3773,10 +3807,14 @@ class ManifestDataset(MappableDataset):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>>
         >>> dataset_file = "/path/to/manifest_file.manifest"
-        >>> # 1) read all samples specified in manifest_file dataset with 8 threads for training:
+        >>>
+        >>> # 1) Read all samples specified in manifest_file dataset with 8 threads for training
         >>> manifest_dataset = ds.ManifestDataset(dataset_file, usage="train", num_parallel_workers=8)
-        >>> # 2) reads samples (specified in manifest_file.manifest) for shard 0 in a 2-way distributed training setup:
+        >>>
+        >>> # 2) Read samples (specified in manifest_file.manifest) for shard 0
+        >>> # in a 2-way distributed training setup
         >>> manifest_dataset = ds.ManifestDataset(dataset_file, num_shards=2, shard_id=0)
 
     """
@@ -3951,14 +3989,19 @@ class Cifar10Dataset(MappableDataset):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>>
         >>> dataset_dir = "/path/to/cifar10_dataset_directory"
-        >>> # 1) get all samples from CIFAR10 dataset in sequence:
-        >>> dataset = ds.Cifar10Dataset(dataset_dir=dataset_dir,shuffle=False)
-        >>> # 2) randomly select 350 samples from CIFAR10 dataset:
-        >>> dataset = ds.Cifar10Dataset(dataset_dir=dataset_dir,num_samples=350, shuffle=True)
-        >>> # 3) get samples from CIFAR10 dataset for shard 0 in a 2 way distributed training:
-        >>> dataset = ds.Cifar10Dataset(dataset_dir=dataset_dir,num_shards=2,shard_id=0)
-        >>> # in CIFAR10 dataset, each dictionary has keys "image" and "label"
+        >>>
+        >>> # 1) Get all samples from CIFAR10 dataset in sequence
+        >>> dataset = ds.Cifar10Dataset(dataset_dir=dataset_dir, shuffle=False)
+        >>>
+        >>> # 2) Randomly select 350 samples from CIFAR10 dataset
+        >>> dataset = ds.Cifar10Dataset(dataset_dir=dataset_dir, num_samples=350, shuffle=True)
+        >>>
+        >>> # 3) Get samples from CIFAR10 dataset for shard 0 in a 2-way distributed training
+        >>> dataset = ds.Cifar10Dataset(dataset_dir=dataset_dir, num_shards=2, shard_id=0)
+        >>>
+        >>> # In CIFAR10 dataset, each dictionary has keys "image" and "label"
     """
 
     @check_mnist_cifar_dataset
@@ -4093,12 +4136,16 @@ class Cifar100Dataset(MappableDataset):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>>
         >>> dataset_dir = "/path/to/cifar100_dataset_directory"
-        >>> # 1) get all samples from CIFAR100 dataset in sequence:
-        >>> cifar100_dataset = ds.Cifar100Dataset(dataset_dir=dataset_dir,shuffle=False)
-        >>> # 2) randomly select 350 samples from CIFAR100 dataset:
-        >>> cifar100_dataset = ds.Cifar100Dataset(dataset_dir=dataset_dir,num_samples=350, shuffle=True)
-        >>> # in CIFAR100 dataset, each dictionary has 3 keys: "image", "fine_label" and "coarse_label"
+        >>>
+        >>> # 1) Get all samples from CIFAR100 dataset in sequence
+        >>> cifar100_dataset = ds.Cifar100Dataset(dataset_dir=dataset_dir, shuffle=False)
+        >>>
+        >>> # 2) Randomly select 350 samples from CIFAR100 dataset
+        >>> cifar100_dataset = ds.Cifar100Dataset(dataset_dir=dataset_dir, num_samples=350, shuffle=True)
+        >>>
+        >>> # In CIFAR100 dataset, each dictionary has 3 keys: "image", "fine_label" and "coarse_label"
     """
 
     @check_mnist_cifar_dataset
@@ -4265,7 +4312,8 @@ class Schema:
     Example:
         >>> import mindspore.dataset as ds
         >>> import mindspore.common.dtype as mstype
-        >>> # create schema, specify column name, mindspore.dtype and shape of the column
+        >>>
+        >>> # Create schema; specify column name, mindspore.dtype and shape of the column
         >>> schema = ds.Schema()
         >>> schema.add_column('col1', de_type=mindspore.int64, shape=[2])
     """
@@ -4522,17 +4570,23 @@ class VOCDataset(MappableDataset):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>>
         >>> dataset_dir = "/path/to/voc_dataset_directory"
-        >>> # 1) read VOC data for segmenatation train
+        >>>
+        >>> # 1) Read VOC data for segmentatation training
         >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Segmentation", usage="train")
-        >>> # 2) read VOC data for detection train
+        >>>
+        >>> # 2) Read VOC data for detection training
         >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", usage="train")
-        >>> # 3) read all VOC dataset samples in dataset_dir with 8 threads in random order:
+        >>>
+        >>> # 3) Read all VOC dataset samples in dataset_dir with 8 threads in random order
         >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", usage="train", num_parallel_workers=8)
-        >>> # 4) read then decode all VOC dataset samples in dataset_dir in sequence:
+        >>>
+        >>> # 4) Read then decode all VOC dataset samples in dataset_dir in sequence
         >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", usage="train", decode=True, shuffle=False)
-        >>> # in VOC dataset, if task='Segmentation', each dictionary has keys "image" and "target"
-        >>> # in VOC dataset, if task='Detection', each dictionary has keys "image" and "annotation"
+        >>>
+        >>> # In VOC dataset, if task='Segmentation', each dictionary has keys "image" and "target"
+        >>> # In VOC dataset, if task='Detection', each dictionary has keys "image" and "annotation"
     """
 
     @check_vocdataset
@@ -4722,17 +4776,23 @@ class CocoDataset(MappableDataset):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>>
         >>> dataset_dir = "/path/to/coco_dataset_directory/image_folder"
         >>> annotation_file = "/path/to/coco_dataset_directory/annotation_folder/annotation.json"
-        >>> # 1) read COCO data for Detection task
+        >>>
+        >>> # 1) Read COCO data for Detection task
         >>> coco_dataset = ds.CocoDataset(dataset_dir, annotation_file=annotation_file, task='Detection')
-        >>> # 2) read COCO data for Stuff task
+        >>>
+        >>> # 2) Read COCO data for Stuff task
         >>> coco_dataset = ds.CocoDataset(dataset_dir, annotation_file=annotation_file, task='Stuff')
-        >>> # 3) read COCO data for Panoptic task
+        >>>
+        >>> # 3) Read COCO data for Panoptic task
         >>> coco_dataset = ds.CocoDataset(dataset_dir, annotation_file=annotation_file, task='Panoptic')
-        >>> # 4) read COCO data for Keypoint task
+        >>>
+        >>> # 4) Read COCO data for Keypoint task
         >>> coco_dataset = ds.CocoDataset(dataset_dir, annotation_file=annotation_file, task='Keypoint')
-        >>> # in COCO dataset, each dictionary has keys "image" and "annotation"
+        >>>
+        >>> # In COCO dataset, each dictionary has keys "image" and "annotation"
     """
 
     @check_cocodataset
@@ -4857,6 +4917,12 @@ class CelebADataset(MappableDataset):
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
+
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>>
+        >>> dataset_dir = "/path/to/celeba_directory"
+        >>> dataset = ds.CelebADataset(dataset_dir=dataset_dir, usage='train')
     """
 
     @check_celebadataset
@@ -4976,6 +5042,7 @@ class CLUEDataset(SourceDataset):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>>
         >>> dataset_files = ["/path/to/1", "/path/to/2"] # contains 1 or multiple text files
         >>> dataset = ds.CLUEDataset(dataset_files=dataset_files, task='AFQMC', usage='train')
     """
@@ -5162,7 +5229,7 @@ class CLUEDataset(SourceDataset):
 
 class CSVDataset(SourceDataset):
     """
-    A source dataset that reads and parses CSV datasets.
+    A source dataset that reads and parses comma-separated values (CSV) datasets.
 
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search
@@ -5192,6 +5259,7 @@ class CSVDataset(SourceDataset):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>>
         >>> dataset_files = ["/path/to/1", "/path/to/2"] # contains 1 or multiple text files
         >>> dataset = ds.CSVDataset(dataset_files=dataset_files, column_names=['col1', 'col2', 'col3', 'col4'])
     """
@@ -5288,6 +5356,7 @@ class TextFileDataset(SourceDataset):
             argument can only be specified when num_shards is also specified.
     Examples:
         >>> import mindspore.dataset as ds
+        >>>
         >>> dataset_files = ["/path/to/1", "/path/to/2"] # contains 1 or multiple text files
         >>> dataset = ds.TextFileDataset(dataset_files=dataset_files)
     """
@@ -5455,10 +5524,10 @@ class NumpySlicesDataset(GeneratorDataset):
 
     Args:
         data (Union[list, tuple, dict]) Input of given data. Supported data types include: list, tuple, dict and other
-            NumPy formats. Input data will be sliced in first dimension and generate many rows. Large data is not
-            recommended to be loaded in this way as data is loading into memory.
+            NumPy formats. Input data will be sliced along the first dimension and generate additional rows.
+            Large data is not recommended to be loaded in this way as data is loading into memory.
         column_names (list[str], optional): List of column names of the dataset (default=None). If column_names is not
-            provided, when data is dict, column_names will be its key, otherwise it will be like column_1, column_2 ...
+            provided, when data is dict, column_names will be its keys, otherwise it will be like column_1, column_2 ...
         num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
@@ -5472,16 +5541,20 @@ class NumpySlicesDataset(GeneratorDataset):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>>
         >>> # 1) Input data can be a list
         >>> data = [1, 2, 3]
         >>> dataset1 = ds.NumpySlicesDataset(data, column_names=["column_1"])
-        >>> # 2) Input data can be a dict, and column_names will be its key
+        >>>
+        >>> # 2) Input data can be a dictionary, and column_names will be its keys
         >>> data = {"a": [1, 2], "b": [3, 4]}
         >>> dataset2 = ds.NumpySlicesDataset(data)
+        >>>
         >>> # 3) Input data can be a tuple of lists (or NumPy arrays), each tuple element refers to data in each column
         >>> data = ([1, 2], [3, 4], [5, 6])
         >>> dataset3 = ds.NumpySlicesDataset(data, column_names=["column_1", "column_2", "column_3"])
-        >>> # 4) Load data from csv file
+        >>>
+        >>> # 4) Load data from CSV file
         >>> import pandas as pd
         >>> df = pd.read_csv("file.csv")
         >>> dataset4 = ds.NumpySlicesDataset(dict(df), shuffle=False)

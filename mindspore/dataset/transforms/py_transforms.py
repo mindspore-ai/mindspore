@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
 """
-This module py_transforms is implemented basing on Python. It provides common
+The module transforms.py_transform is implemented based on Python. It provides common
 operations including OneHotOp.
 """
 from .validators import check_one_hot_op, check_compose_list, check_random_apply, check_transforms_list, \
@@ -80,11 +79,11 @@ class Compose:
         >>> # create a dataset that reads all files in dataset_dir with 8 threads
         >>> dataset = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8)
         >>> # create a list of transformations to be applied to the image data
-        >>> transform = py_transform.Compose([py_vision.Decode(),
-        >>>                                  py_vision.RandomHorizontalFlip(0.5),
-        >>>                                  py_vision.ToTensor(),
-        >>>                                  py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
-        >>>                                  py_vision.RandomErasing()])
+        >>> transform = py_transforms.Compose([py_vision.Decode(),
+        >>>                                   py_vision.RandomHorizontalFlip(0.5),
+        >>>                                   py_vision.ToTensor(),
+        >>>                                   py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
+        >>>                                   py_vision.RandomErasing()])
         >>> # apply the transform to the dataset through dataset.map()
         >>> dataset = dataset.map(operations=transform, input_columns="image")
     """

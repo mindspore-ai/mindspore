@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-This module c_transforms provides common operations, including OneHotOp and TypeCast.
+The module transforms.c_transforms provides common operations, including OneHotOp and TypeCast.
 """
 from enum import IntEnum
 import numpy as np

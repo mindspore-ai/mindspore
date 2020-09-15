@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
 """
 The module vision.py_transforms is implemented based on Python PIL.
 This module provides many kinds of image augmentations. It also provides
@@ -50,9 +49,9 @@ class ToTensor:
     Convert the input NumPy image array or PIL image of shape (H, W, C) to a NumPy ndarray of shape (C, H, W).
 
     Note:
-        The ranges of values in height and width dimension are converted from [0, 255] to [0.0, 1.0].
+        The values in the input arrays are rescaled from [0, 255] to [0.0, 1.0].
         The type is cast to output_type (default NumPy float32).
-        The range of channel dimension remains the same.
+        The number of channels remains the same.
 
     Args:
         output_type (NumPy datatype, optional): The datatype of the NumPy output (default=np.float32).
