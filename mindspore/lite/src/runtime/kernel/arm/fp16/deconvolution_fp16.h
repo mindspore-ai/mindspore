@@ -57,8 +57,6 @@ class DeConvolutionFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
 
  private:
   MatMulParameter *matmul_param_;
-  int row16_;
-  int col8_;
   int input_plane_;
   int kernel_plane_;
   int output_plane_;
