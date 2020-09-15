@@ -206,7 +206,7 @@ class Model:
         self._predict_network = self._network
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             self._predict_network = _VirtualDatasetCell(self._network)
-            _set_multi_subgraphs()
+            # Unlike the cases in build_train_network() and build_eval_network(), 'multi_subgraphs' is not set
             self._predict_network.set_auto_parallel()
 
     def _clear_metrics(self):
