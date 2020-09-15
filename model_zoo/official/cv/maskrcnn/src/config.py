@@ -139,7 +139,7 @@ config = ed({
     "save_checkpoint": True,
     "save_checkpoint_epochs": 1,
     "keep_checkpoint_max": 12,
-    "save_checkpoint_path": "./checkpoint",
+    "save_checkpoint_path": "./",
 
     "mindrecord_dir": "/home/mask_rcnn/MindRecord_COCO2017_Train",
     "coco_root": "/home/mask_rcnn/coco2017/",

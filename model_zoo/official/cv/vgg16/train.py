@@ -226,8 +226,9 @@ if __name__ == '__main__':
     if args.rank_save_ckpt_flag:
         ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval * args.steps_per_epoch,
                                        keep_checkpoint_max=args.ckpt_save_max)
+        save_ckpt_path = os.path.join(args.outputs_dir, 'ckpt_' + str(args.rank) + '/')
         ckpt_cb = ModelCheckpoint(config=ckpt_config,
-                                  directory=args.outputs_dir,
+                                  directory=save_ckpt_path,
                                   prefix='{}'.format(args.rank))
         callbacks.append(ckpt_cb)
 

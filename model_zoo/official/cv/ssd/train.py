@@ -118,7 +118,8 @@ def main():
 
         # checkpoint
         ckpt_config = CheckpointConfig(save_checkpoint_steps=dataset_size * args_opt.save_checkpoint_epochs)
-        ckpoint_cb = ModelCheckpoint(prefix="ssd", directory=None, config=ckpt_config)
+        save_ckpt_path = './ckpt_' + str(rank) + '/'
+        ckpoint_cb = ModelCheckpoint(prefix="ssd", directory=save_ckpt_path, config=ckpt_config)
 
         if args_opt.pre_trained:
             if args_opt.pre_trained_epoch_size <= 0:

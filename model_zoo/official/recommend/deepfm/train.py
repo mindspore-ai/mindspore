@@ -104,6 +104,7 @@ if __name__ == '__main__':
     if train_config.save_checkpoint:
         if rank_size:
             train_config.ckpt_file_name_prefix = train_config.ckpt_file_name_prefix + str(get_rank())
+            args_opt.ckpt_path = os.path.join(args_opt.ckpt_path, 'ckpt_' + str(get_rank()) + '/')
         if args_opt.device_target == "GPU":
             config_ck = CheckpointConfig(save_checkpoint_steps=steps_size,
                                          keep_checkpoint_max=train_config.keep_checkpoint_max)

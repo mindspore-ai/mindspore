@@ -27,5 +27,5 @@ config = EasyDict({
     "save_checkpoint": True,
     "save_checkpoint_steps": 97,
     "keep_checkpoint_max": 30,
-    "save_checkpoint_path": "./checkpoint",
+    "save_checkpoint_path": "./",
 })

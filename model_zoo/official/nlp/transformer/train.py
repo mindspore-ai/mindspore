@@ -14,6 +14,7 @@
 # ============================================================================
 """Transformer training script."""
 
+import os
 import time
 import argparse
 import ast
@@ -27,6 +28,7 @@ from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
 from mindspore.train.callback import Callback, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.communication.management as D
+from mindspore.communication.management import get_rank
 from mindspore.context import ParallelMode
 from mindspore import context
 from mindspore.common import set_seed
@@ -125,6 +127,7 @@ def run_transformer_train():
                                           parameter_broadcast=True, device_num=device_num)
         D.init()
         rank_id = args.device_id % device_num
+        save_ckpt_path = os.path.join(args.save_checkpoint_path, 'ckpt_' + str(get_rank()) + '/')
     else:
         device_num = 1
         rank_id = 0
@@ -153,7 +156,7 @@ def run_transformer_train():
         if device_num == 1 or (device_num > 1 and rank_id == 0):
             ckpt_config = CheckpointConfig(save_checkpoint_steps=args.save_checkpoint_steps,
                                            keep_checkpoint_max=args.save_checkpoint_num)
-            ckpoint_cb = ModelCheckpoint(prefix='transformer', directory=args.save_checkpoint_path, config=ckpt_config)
+            ckpoint_cb = ModelCheckpoint(prefix='transformer', directory=save_ckpt_path, config=ckpt_config)
             callbacks.append(ckpoint_cb)
 
     if args.enable_lossscale == "true":

@@ -98,7 +98,8 @@ def train_and_eval(config):
     ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size()*config.epochs,
                                   keep_checkpoint_max=10)
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train',
-                                 directory=config.ckpt_path, config=ckptconfig)
+                                 directory=config.ckpt_path + '/ckpt_' + str(get_rank()) + '/',
+                                 config=ckptconfig)
     callback_list = [TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback]
     if int(get_rank()) == 0:
         callback_list.append(ckpoint_cb)

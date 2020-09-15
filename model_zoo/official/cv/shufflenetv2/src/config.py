@@ -25,7 +25,7 @@ config_gpu = edict({
     'work_nums': 8,
     'epoch_size': 250,
     'keep_checkpoint_max': 100,
-    'ckpt_path': './checkpoint/',
+    'ckpt_path': './',
     'is_save_on_master': 0,
 
     ### Dataset Config

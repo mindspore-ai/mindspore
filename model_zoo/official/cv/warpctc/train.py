@@ -98,6 +98,7 @@ if __name__ == '__main__':
     if cf.save_checkpoint:
         config_ck = CheckpointConfig(save_checkpoint_steps=cf.save_checkpoint_steps,
                                      keep_checkpoint_max=cf.keep_checkpoint_max)
-        ckpt_cb = ModelCheckpoint(prefix="warpctc", directory=cf.save_checkpoint_path + str(rank), config=config_ck)
+        save_ckpt_path = os.path.join(cf.save_checkpoint_path, 'ckpt_' + str(rank) + '/')
+        ckpt_cb = ModelCheckpoint(prefix="warpctc", directory=save_ckpt_path, config=config_ck)
         callbacks.append(ckpt_cb)
     model.train(cf.epoch_size, dataset, callbacks=callbacks)

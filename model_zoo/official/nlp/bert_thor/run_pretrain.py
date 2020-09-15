@@ -28,6 +28,7 @@ from src.model_thor import Model
 from src.utils import LossCallBack, BertLearningRate
 import mindspore.common.dtype as mstype
 import mindspore.communication.management as D
+from mindspore.communication.management import get_rank
 from mindspore import context
 from mindspore import log as logger
 from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecay
@@ -84,7 +85,7 @@ def run_pretrain():
             D.init()
             device_num = D.get_group_size()
             rank = D.get_rank()
-            ckpt_save_dir = args_opt.save_checkpoint_path + 'ckpt_' + str(rank) + '/'
+        ckpt_save_dir = args_opt.save_checkpoint_path + 'ckpt_' + str(get_rank()) + '/'
 
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,

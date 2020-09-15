@@ -136,7 +136,8 @@ if __name__ == '__main__':
     if config.save_checkpoint:
         ckptconfig = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * dataset_size,
                                       keep_checkpoint_max=config.keep_checkpoint_max)
-        ckpoint_cb = ModelCheckpoint(prefix='faster_rcnn', directory=config.save_checkpoint_path, config=ckptconfig)
+        save_checkpoint_path = os.path.join(config.save_checkpoint_path, "ckpt_" + str(rank) + "/")
+        ckpoint_cb = ModelCheckpoint(prefix='faster_rcnn', directory=save_checkpoint_path, config=ckptconfig)
         cb += [ckpoint_cb]
 
     model = Model(net)
