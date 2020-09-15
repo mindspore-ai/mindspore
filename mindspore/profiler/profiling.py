@@ -107,6 +107,7 @@ class Profiler:
             os.environ['PROFILING_MODE'] = 'true'
             os.environ['MINDDATA_PROFILING_DIR'] = self._output_path
             os.environ['DEVICE_ID'] = self._dev_id
+            os.environ['AICPU_PROFILING_MODE'] = 'true'
 
             # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
             context.set_context(enable_profiling=True, profiling_options="training_trace:task_trace")
