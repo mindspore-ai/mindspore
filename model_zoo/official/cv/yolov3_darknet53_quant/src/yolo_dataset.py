@@ -15,6 +15,7 @@
 """YOLOV3 dataset."""
 import os
 
+import cv2
 from PIL import Image
 from pycocotools.coco import COCO
 import mindspore.dataset as de
@@ -142,6 +143,8 @@ class COCOYoloDataset:
 def create_yolo_dataset(image_dir, anno_path, batch_size, max_epoch, device_num, rank,
                         config=None, is_training=True, shuffle=True):
     """Create dataset for YOLOV3."""
+    cv2.setNumThreads(0)
+
     if is_training:
         filter_crowd = True
         remove_empty_anno = True
