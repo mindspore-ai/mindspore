@@ -64,7 +64,7 @@ __kernel void ElementAnd_IMG(__read_only image2d_t input_a, __read_only image2d_
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(as_int4(a) & as_int4(b)));
+  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(AS_UINT4(a) & AS_UINT4(b)));
 }
 
 __kernel void ElementOr_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b, __write_only image2d_t output,
@@ -77,7 +77,7 @@ __kernel void ElementOr_IMG(__read_only image2d_t input_a, __read_only image2d_t
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(as_int4(a) | as_int4(b)));
+  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(AS_UINT4(a) | AS_UINT4(b)));
 }
 
 __kernel void ElementMax_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
@@ -279,7 +279,7 @@ __kernel void BroadcastAnd_IMG(__read_only image2d_t input_a, float b, __write_o
   }
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(as_int4(a) & (int4)(b)));
+  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(AS_UINT4(a) & (UINT4)((FLT)b)));
 }
 
 __kernel void BroadcastOr_IMG(__read_only image2d_t input_a, float b, __write_only image2d_t output,
@@ -291,7 +291,7 @@ __kernel void BroadcastOr_IMG(__read_only image2d_t input_a, float b, __write_on
   }
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(as_int4(a) | (int4)b));
+  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(AS_UINT4(a) | (UINT4)((FLT)b)));
 }
 
 __kernel void BroadcastMax_IMG(__read_only image2d_t input_a, float b, __write_only image2d_t output,
