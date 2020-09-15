@@ -354,7 +354,7 @@ class BPlusTree {
 
     Iterator &operator=(const Iterator &lhs);
 
-    Iterator(Iterator &&);
+    explicit Iterator(Iterator &&);
 
     Iterator &operator=(Iterator &&lhs);
 
@@ -403,7 +403,7 @@ class BPlusTree {
 
     ConstIterator &operator=(const ConstIterator &lhs);
 
-    ConstIterator(ConstIterator &&);
+    explicit ConstIterator(ConstIterator &&);
 
     ConstIterator &operator=(ConstIterator &&lhs);
 
