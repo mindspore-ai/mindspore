@@ -206,11 +206,8 @@ bool AscendKernelRuntime::Init() {
     SetContext();
     return true;
   }
-  bool ret = false;
-
-  DumpJsonParser::GetInstance().Parse();
   // Start up profiling before rtSetDevice
-  ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
+  bool ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
   if (!ret) {
     MS_EXCEPTION(DeviceProcessError) << "StartupProfiling failed.";
   }

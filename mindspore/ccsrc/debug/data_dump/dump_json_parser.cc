@@ -74,6 +74,10 @@ bool DumpJsonParser::IsDumpEnabled() {
 
 void DumpJsonParser::Parse() {
   std::lock_guard<std::mutex> guard(lock_);
+  if (already_parsed_) {
+    return;
+  }
+  already_parsed_ = true;
   if (!IsDumpEnabled()) {
     return;
   }
@@ -305,6 +309,8 @@ void DumpJsonParser::JudgeDumpEnabled() {
     MS_LOG(WARNING) << "Dump not enabled. device_id:" << device_id << " not support";
   }
   context->set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, !e2e_dump_enabled_);
+  MS_LOG(INFO) << "Dump status, e2e_dump_enabled:" << e2e_dump_enabled_
+               << " async_dump_enabled:" << async_dump_enabled_;
 }
 
 bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
@@ -325,6 +331,9 @@ void DumpJsonParser::MatchKernel(const std::string &kernel_name) {
 }
 
 void DumpJsonParser::PrintUnusedKernel() {
+  if (!e2e_dump_enabled_ && !async_dump_enabled_) {
+    return;
+  }
   for (const auto &iter : kernels_) {
     if (iter.second == 0) {
       MS_LOG(WARNING) << "[DataDump] Unused Kernel in json:" << iter.first;
@@ -362,16 +371,6 @@ bool DumpJsonParser::OutputNeedDump() const {
   return input_output_ == kDumpInputAndOutput || input_output_ == kDumpOutputOnly;
 }
 
-bool NeedAsyncDump(const CNodePtr &kernel) {
-  if (AnfAlgo::GetKernelType(kernel) != TBE_KERNEL && AnfAlgo::GetKernelType(kernel) != AICPU_KERNEL &&
-      AnfAlgo::GetKernelType(kernel) != AKG_KERNEL) {
-    return false;
-  }
-  MS_EXCEPTION_IF_NULL(kernel);
-  // dump all kernel if mode is set 0 in data_dump.json
-  return DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope());
-}
-
 void DumpJsonParser::UpdateNeedDumpKernels(NotNull<const session::KernelGraph *> kernel_graph) {
   if (e2e_dump_enabled_) {
     MS_LOG(INFO) << "E2e dump no need to update dump kernel list";
@@ -391,9 +390,6 @@ void DumpJsonParser::UpdateNeedDumpKernels(NotNull<const session::KernelGraph *>
           update_kernels.try_emplace(input->fullname_with_scope(), 0);
         }
       }
-    } else if (NeedAsyncDump(kernel)) {
-      MS_LOG(INFO) << "[AsyncDump] Match Node:" << kernel->fullname_with_scope();
-      update_kernels.try_emplace(kernel->fullname_with_scope(), 0);
     }
   }
   kernels_.insert(update_kernels.begin(), update_kernels.end());

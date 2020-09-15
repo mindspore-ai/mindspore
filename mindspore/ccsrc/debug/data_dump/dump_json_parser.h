@@ -72,6 +72,7 @@ class DumpJsonParser {
   uint32_t op_debug_mode_{0};
   bool trans_flag_{false};
   uint32_t cur_dump_iter_{0};
+  bool already_parsed_{false};
 
   void ParseCommonDumpSetting(const nlohmann::json &content);
   void ParseAsyncDumpSetting(const nlohmann::json &content);
