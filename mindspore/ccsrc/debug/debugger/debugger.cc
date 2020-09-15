@@ -381,7 +381,7 @@ void Debugger::CommandLoop() {
     // get type of the command in reply
     DebuggerCommand cmd = GetCommand(reply);
     if (cmd == DebuggerCommand::kUnknownCMD) {
-      MS_LOG(ERROR) << "Error: debugger recieved unknown command";
+      MS_LOG(DEBUG) << "Debug: debugger recieved unknown command";
       continue;
     }
 
