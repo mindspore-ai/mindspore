@@ -194,7 +194,7 @@ class TrainOneStepWithLossScaleCell(Cell):
         >>> net_with_loss = Net()
         >>> optimizer = nn.Momentum(net_with_loss.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> manager = nn.DynamicLossScaleUpdateCell(loss_scale_value=2**12, scale_factor=2, scale_window=1000)
-        >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=manager)
+        >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=manager)
         >>> train_network.set_train()
         >>>
         >>> inputs = Tensor(np.ones([16, 16]).astype(np.float32))

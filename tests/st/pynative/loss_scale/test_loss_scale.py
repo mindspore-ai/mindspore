@@ -168,6 +168,31 @@ def test_loss_scale_fp16_lr_overflow():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_loss_scale_fp16_lr_overflow_set_sense_scale():
+    inputs = Tensor(np.ones([16, 16]).astype(np.float32))
+    label = Tensor(np.zeros([16, 16]).astype(np.float32))
+    lr = Tensor(np.ones([1], np.float32) * 0.1)
+    net = NetFP16(16, 16)
+    net.set_train()
+
+    loss = MSELoss()
+    optimizer = Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9)
+
+    net_with_loss = WithLossCell(net, loss)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer,
+                                                  scale_sense=Tensor(np.full((1), np.finfo(np.float32).max),
+                                                                     dtype=mstype.float32))
+    output_1 = train_network(inputs, label)
+
+    train_network.set_sense_scale(Tensor(np.full((1), np.finfo(np.float32).max), dtype=mstype.float32))
+    output_2 = train_network(inputs, label)
+    assert output_1[0].asnumpy() == output_2[0].asnumpy()
+    assert output_1[1].asnumpy() == output_2[1].asnumpy() == True
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_loss_scale_fp16_model_train_overflow():
     dataset_types = (np.float32, np.float32)
     dataset_shapes = ((16, 16), (16, 16))
