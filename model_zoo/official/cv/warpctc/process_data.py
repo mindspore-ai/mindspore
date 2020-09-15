@@ -14,6 +14,7 @@
 # ============================================================================
 """Generate train and test dataset"""
 import os
+import shutil
 import math as m
 import random
 from multiprocessing import Process
@@ -46,11 +47,14 @@ def generate_captcha(name, img_num, img_width, img_height, max_digits, process_n
         process_num(int): number of process to generate captcha images, default is 16
     """
     cur_script_path = os.path.dirname(os.path.realpath(__file__))
-    path = os.path.join(cur_script_path, "data", name)
+    path_data = os.path.join(cur_script_path, "data")
+    if not os.path.exists(path_data):
+        os.mkdir(path_data)
+    path = os.path.join(path_data, name)
     print("Generating dataset [{}] under {}...".format(name, path))
     if os.path.exists(path):
-        os.system("rm -rf {}".format(path))
-    os.system("mkdir -p {}".format(path))
+        shutil.rmtree(path)
+    os.mkdir(path)
     img_num_per_thread = m.ceil(img_num / process_num)
 
     processes = []
