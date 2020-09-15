@@ -230,7 +230,6 @@ def _get_tf_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000,
     ds = ds.map(operations=_padding_func(batch_size, manual_shape, target_column),
                 input_columns=['feat_ids', 'feat_vals', 'label'],
                 column_order=['feat_ids', 'feat_vals', 'label'], num_parallel_workers=8)
-    # if train_mode:
     ds = ds.repeat(epochs)
     return ds
 
