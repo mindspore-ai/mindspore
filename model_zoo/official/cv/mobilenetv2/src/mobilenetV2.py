@@ -330,8 +330,12 @@ class MobileNetV2(nn.Cell):
     MobileNetV2 architecture.
 
     Args:
-        backbone(nn.Cell):
-        head(nn.Cell):
+        class_num (int): number of classes.
+        width_mult (int): Channels multiplier for round to 8/16 and others. Default is 1.
+        has_dropout (bool): Is dropout used. Default is false
+        inverted_residual_setting (list): Inverted residual settings. Default is None
+        round_nearest (list): Channel round to . Default is 8
+
     Returns:
         Tensor, output tensor.
 
@@ -355,14 +359,11 @@ class MobileNetV2(nn.Cell):
 
 class MobileNetV2Combine(nn.Cell):
     """
-    MobileNetV2 architecture.
+    MobileNetV2Combine architecture.
 
     Args:
-        class_num (Cell): number of classes.
-        width_mult (int): Channels multiplier for round to 8/16 and others. Default is 1.
-        has_dropout (bool): Is dropout used. Default is false
-        inverted_residual_setting (list): Inverted residual settings. Default is None
-        round_nearest (list): Channel round to . Default is 8
+        backbone(Cell): The features extract layers.
+        head(Cell): The fully connected layer.
     Returns:
         Tensor, output tensor.
 
@@ -371,7 +372,7 @@ class MobileNetV2Combine(nn.Cell):
     """
 
     def __init__(self, backbone, head):
-        super(MobileNetV2Combine, self).__init__()
+        super(MobileNetV2Combine, self).__init__(auto_prefix=False)
         self.backbone = backbone
         self.head = head
 
