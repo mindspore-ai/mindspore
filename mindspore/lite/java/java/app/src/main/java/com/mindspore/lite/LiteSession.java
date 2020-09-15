@@ -76,23 +76,6 @@ public class LiteSession {
         return tensors;
     }
 
-    public Map<String, List<MSTensor>> getOutputMapByNode() {
-        Map<String, List<Long>> ret = this.getOutputMapByNode(this.sessionPtr);
-        Map<String, List<MSTensor>> tensorMap = new HashMap<>();
-        Set<Map.Entry<String, List<Long>>> entrySet = ret.entrySet();
-        for (Map.Entry<String, List<Long>> entry : entrySet) {
-            String name = entry.getKey();
-            List<Long> msTensorAddrs = entry.getValue();
-            ArrayList<MSTensor> msTensors = new ArrayList<>();
-            for (Long msTensorAddr : msTensorAddrs) {
-                MSTensor msTensor = new MSTensor(msTensorAddr);
-                msTensors.add(msTensor);
-            }
-            tensorMap.put(name, msTensors);
-        }
-        return tensorMap;
-    }
-
     public List<MSTensor> getOutputsByNodeName(String nodeName) {
         List<Long> ret = this.getOutputsByNodeName(this.sessionPtr, nodeName);
         ArrayList<MSTensor> tensors = new ArrayList<>();
@@ -140,8 +123,6 @@ public class LiteSession {
     private native List<Long> getInputs(long sessionPtr);
 
     private native List<Long> getInputsByName(long sessionPtr, String nodeName);
-
-    private native Map<String, List<Long>> getOutputMapByNode(long sessionPtr);
 
     private native List<Long> getOutputsByNodeName(long sessionPtr, String nodeName);
 

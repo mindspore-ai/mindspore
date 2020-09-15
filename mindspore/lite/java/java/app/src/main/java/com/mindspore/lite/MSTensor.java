@@ -31,25 +31,12 @@ public class MSTensor {
         this.tensorPtr = tensorPtr;
     }
 
-    public boolean init(int dataType, int[] shape) {
-        this.tensorPtr = createMSTensor(dataType, shape, shape.length);
-        return this.tensorPtr != 0;
-    }
-
     public int[] getShape() {
         return this.getShape(this.tensorPtr);
     }
 
-    public void setShape(int[] shape) {
-        this.setShape(this.tensorPtr, shape, shape.length);
-    }
-
     public int getDataType() {
         return this.getDataType(this.tensorPtr);
-    }
-
-    public void setDataType(int dataType) {
-        this.setDataType(this.tensorPtr, dataType);
     }
 
     public byte[] getByteData() {
@@ -107,15 +94,9 @@ public class MSTensor {
         return ret;
     }
 
-    private native long createMSTensor(int dataType, int[] shape, int shapeLen);
-
     private native int[] getShape(long tensorPtr);
 
-    private native boolean setShape(long tensorPtr, int[] shape, int shapeLen);
-
     private native int getDataType(long tensorPtr);
-
-    private native boolean setDataType(long tensorPtr, int dataType);
 
     private native byte[] getByteData(long tensorPtr);
 
