@@ -43,6 +43,8 @@ void PackNCHWToNC4HW4Fp16(const void *src, void *dst, int batch, int plane, int 
 
 void PackNCHWToNHWCFp16(const void *src, void *dst, int batch, int plane, int channel);
 
+void PackNHWCToNCHWFp16(const void *src, void *dst, int batch, int plane, int channel);
+
 void PackNHWCToNHWC4Fp16(const void *src, void *dst, int batch, int plane, int channel);
 
 void PackNHWCToNHWC8Fp16(const void *src, void *dst, int batch, int plane, int channel);
