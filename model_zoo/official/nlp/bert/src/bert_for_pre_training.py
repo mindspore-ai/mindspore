@@ -258,7 +258,7 @@ class BertNetworkWithLoss(nn.Cell):
         return self.cast(total_loss, mstype.float32)
 
 
-class BertTrainOneStepCell(nn.Cell):
+class BertTrainOneStepCell(nn.TrainOneStepCell):
     """
     Encapsulation class of bert network training.
 
