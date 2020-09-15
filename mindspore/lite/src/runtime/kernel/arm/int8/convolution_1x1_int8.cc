@@ -71,7 +71,7 @@ void Convolution1x1Int8CPUKernel::FreeResizeBuf() {
 }
 
 void Convolution1x1Int8CPUKernel::CheckSupportOptimize() {
-  support_optimize_ = true;
+  support_optimize_ = false;
   matmul_func_ = MatMulInt8_8x8_r;
 #ifdef ENABLE_ARM64
   void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
@@ -94,7 +94,7 @@ void Convolution1x1Int8CPUKernel::CheckSupportOptimize() {
   return;
 }
 
-int Convolution1x1Int8CPUKernel::InitBiasByzp(void *src_weight, int input_channel, int output_channel) {
+int Convolution1x1Int8CPUKernel::InitBiasByzp(void *src_weight, int input_channel, int output_channel, int round_oc) {
   /* bias = bias - v2 x zp1 + zp1 x zp2  */
   int32_t *bias_data = reinterpret_cast<int32_t *>(bias_data_);
   int8_t *weight = reinterpret_cast<int8_t *>(src_weight);
@@ -118,24 +118,23 @@ int Convolution1x1Int8CPUKernel::InitBiasByzp(void *src_weight, int input_channe
       filter_zp_ptr_[fi] = conv_param_->conv_quant_arg_.filter_quant_args_[fi].zp_;
     }
 
-    int up_round_oc_size = support_optimize_ ? UP_ROUND(output_channel, C8NUM) : UP_ROUND(output_channel, C4NUM);
-    left_shift_ = reinterpret_cast<int32_t *>(malloc(up_round_oc_size * sizeof(int32_t)));
+    left_shift_ = reinterpret_cast<int32_t *>(malloc(round_oc * sizeof(int32_t)));
     if (left_shift_ == nullptr) {
       return RET_ERROR;
     }
-    memset(left_shift_, 0, up_round_oc_size * sizeof(int32_t));
+    memset(left_shift_, 0, round_oc * sizeof(int32_t));
     memcpy(left_shift_, conv_param_->conv_quant_arg_.left_shift_, output_channel * sizeof(int32_t));
-    right_shift_ = reinterpret_cast<int32_t *>(malloc(up_round_oc_size * sizeof(int32_t)));
+    right_shift_ = reinterpret_cast<int32_t *>(malloc(round_oc * sizeof(int32_t)));
     if (right_shift_ == nullptr) {
       return RET_ERROR;
     }
-    memset(right_shift_, 0, up_round_oc_size * sizeof(int32_t));
+    memset(right_shift_, 0, round_oc * sizeof(int32_t));
     memcpy(right_shift_, conv_param_->conv_quant_arg_.right_shift_, output_channel * sizeof(int32_t));
-    multiplier_ = reinterpret_cast<int32_t *>(malloc(up_round_oc_size * sizeof(int32_t)));
+    multiplier_ = reinterpret_cast<int32_t *>(malloc(round_oc * sizeof(int32_t)));
     if (multiplier_ == nullptr) {
       return RET_ERROR;
     }
-    memset(multiplier_, 0, up_round_oc_size * sizeof(int32_t));
+    memset(multiplier_, 0, round_oc * sizeof(int32_t));
     memcpy(multiplier_, conv_param_->conv_quant_arg_.quant_multiplier_, output_channel * sizeof(int32_t));
   }
   return RET_OK;
@@ -165,18 +164,18 @@ int Convolution1x1Int8CPUKernel::InitWeightBias() {
 
   int col4 = UP_ROUND(output_channel, C4NUM);
   int col8 = UP_ROUND(output_channel, C8NUM);
-  size = support_optimize_ ? col8 * sizeof(int32_t) : col4 * sizeof(int32_t);
-  bias_data_ = malloc(size);
+  size = support_optimize_ ? col8 : col4;
+  bias_data_ = malloc(size * sizeof(int32_t));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 int8 Malloc bias_ptr_ error!";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, size);
+  memset(bias_data_, 0, size * sizeof(int32_t));
   if (in_tensors_.size() == 3) {
     memcpy(bias_data_, in_tensors_[kBiasIndex]->MutableData(), output_channel * sizeof(int32_t));
   }
 
-  InitBiasByzp(filter_tensor->MutableData(), input_channel, output_channel);
+  InitBiasByzp(filter_tensor->MutableData(), input_channel, output_channel, size);
   return RET_OK;
 }
 
@@ -208,7 +207,7 @@ int Convolution1x1Int8CPUKernel::InitWeightBiasArm32() {
     memcpy(bias_data_, in_tensors_[kBiasIndex]->MutableData(), output_channel * sizeof(int32_t));
   }
 
-  InitBiasByzp(filter_tensor->MutableData(), input_channel, output_channel);
+  InitBiasByzp(filter_tensor->MutableData(), input_channel, output_channel, UP_ROUND(output_channel, C2NUM));
   return RET_OK;
 }
 
@@ -341,6 +340,12 @@ int Convolution1x1Int8CPUKernel::RunImpl(int task_id) {
   int cur_oc = MSMIN(cur_stride, res_stride);
   if (cur_oc <= 0) {
     return RET_OK;
+  }
+  if (filter_peroc_) {
+    cur_input_sum = input_sum_ + task_id * matmul_param_->row_4_ * thread_stride_ * C2NUM;
+    cur_left_shift = left_shift_ + task_id * thread_stride_ * C2NUM;
+    cur_right_shift = right_shift_ + task_id * thread_stride_ * C2NUM;
+    cur_multiplier = multiplier_ + task_id * thread_stride_ * C2NUM;
   }
   Conv1x1Int8Arm32(packed_input_, packed_weight_ + task_id * thread_stride_ * C2NUM * matmul_param_->deep_16_,
                    output_ptr_ + task_id * thread_stride_ * C2NUM, cur_input_sum,

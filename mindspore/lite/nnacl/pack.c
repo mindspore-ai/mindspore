@@ -189,63 +189,8 @@ void Pack1x1WeightFp32(const float *weight_data, float *packed_weight, ConvParam
 
 void PackInputSum16x4PerLayer(const int8_t *src, int32_t *dst, int32_t filter_zp, size_t row4, size_t col16) {
   /* normal matmul : 4x16 * 16x4 -> 4x4  */
-#ifdef ENABLE_ARM64
-  asm volatile(
-    "mov x10, %[src] \n"
-    "mov x11, %[dst] \n"
-    "dup v15.4s, %w[filter_zp]  \n"
-
-    "mov x0, #0 \n"
-    "1: \n"
-    "cmp x0, %[row4] \n"
-    "beq 4f \n"
-    "add x0, x0, #4\n"
-    "dup v10.4s, wzr \n"
-    "mov x2, #0 \n"
-
-    "2: \n"
-    "cmp x2, %[col16] \n"
-    "beq 3f \n"
-    "add x2, x2, #16\n"
-
-    "ld1 {v0.16b}, [x10], #16\n"
-    "ld1 {v1.16b}, [x10], #16\n"
-    "ld1 {v2.16b}, [x10], #16\n"
-    "ld1 {v3.16b}, [x10], #16\n"
-
-    "saddlp v4.8h, v0.16b \n"
-    "saddlp v5.8h, v1.16b \n"
-    "saddlp v6.8h, v2.16b \n"
-    "saddlp v7.8h, v3.16b \n"
-
-    "saddlp v0.4S, v4.8h \n"
-    "saddlp v1.4S, v5.8h \n"
-    "saddlp v2.4S, v6.8h \n"
-    "saddlp v3.4S, v7.8h \n"
-
-    "addv s4, v0.4S \n"
-    "addv s5, v1.4S \n"
-    "addv s6, v2.4S \n"
-    "addv s7, v3.4S \n"
-
-    "mov v0.s[0], v4.s[0] \n"
-    "mov v0.s[1], v5.s[0] \n"
-    "mov v0.s[2], v6.s[0] \n"
-    "mov v0.s[3], v7.s[0] \n"
-
-    "add v10.4s, v10.4s, v0.4s \n"
-    "b 2b\n"
-
-    "3: \n"
-    "mul v10.4s, v10.4s, v15.4s \n"
-    "st1 {v10.4s}, [x11], #16 \n"
-    "beq 1b \n"
-
-    "4: \n"
-
-    :
-    : [ dst ] "r"(dst), [ src ] "r"(src), [ row4 ] "r"(row4), [ col16 ] "r"(col16), [ filter_zp ] "r"(filter_zp)
-    : "x0", "x1", "x2", "x3", "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v10", "v15");
+#ifdef ENABLE_ARM
+  PreSum4x16Int8Pert(src, dst, row4, col16, filter_zp);
 #else
   for (int r = 0; r < row4; r++) {
     int32_t tmp_value = 0;
@@ -268,121 +213,7 @@ void PackInputSum16x4PerChannel(const int8_t *input_value, int32_t *input_sum, i
   size_t oc_div4 = output_channel / C4NUM * C4NUM;
   size_t oc_res4 = output_channel - oc_div4;
   size_t inputsun_stride = hw4 * C4NUM * 4 - C4NUM * C4NUM * 4;
-  asm volatile(
-    "mov x10, %[input_value] \n"
-    "mov x11, %[input_sum] \n"
-    "mov x15, %[filter_zp_ptr] \n"
-
-    "mov x0, #0 \n"
-    "1: \n"
-    "cmp x0, %[hw4] \n"
-    "beq 11f \n"
-    "add x0, x0, #4\n"
-    "dup v10.4s, wzr \n"
-    "mov x2, #0 \n"
-    "mov x16, x15 \n"
-
-    "2: \n"
-    "cmp x2, %[ic16] \n"
-    "beq 3f \n"
-    "add x2, x2, #16 \n"
-
-    "ld1 {v0.16b}, [x10], #16\n"
-    "ld1 {v1.16b}, [x10], #16\n"
-    "ld1 {v2.16b}, [x10], #16\n"
-    "ld1 {v3.16b}, [x10], #16\n"
-
-    "saddlp v4.8h, v0.16b \n"
-    "saddlp v5.8h, v1.16b \n"
-    "saddlp v6.8h, v2.16b \n"
-    "saddlp v7.8h, v3.16b \n"
-    "saddlp v0.4S, v4.8h \n"
-    "saddlp v1.4S, v5.8h \n"
-    "saddlp v2.4S, v6.8h \n"
-    "saddlp v3.4S, v7.8h \n"
-    "addv s4, v0.4S \n"
-    "addv s5, v1.4S \n"
-    "addv s6, v2.4S \n"
-    "addv s7, v3.4S \n"
-    "mov v0.s[0], v4.s[0] \n"
-    "mov v0.s[1], v5.s[0] \n"
-    "mov v0.s[2], v6.s[0] \n"
-    "mov v0.s[3], v7.s[0] \n"
-
-    "add v10.4s, v10.4s, v0.4s \n"
-    "b 2b \n"
-
-    "3: \n"
-    "mov x12, x11 \n"
-    "add x11, x11, #64 \n"
-    "mov x4, #0 \n"
-
-    "dup v1.4s, v10.s[0]  \n"
-    "dup v2.4s, v10.s[1]  \n"
-    "dup v3.4s, v10.s[2]  \n"
-    "dup v4.4s, v10.s[3]  \n"
-
-    "4: \n"
-    "cmp x4, %[oc_div4] \n"
-    "beq 6f \n"
-    "add x4, x4, #4\n"
-    "ld1 {v15.4s}, [x16], #16\n"
-
-    "mul v16.4s, v15.4s, v1.4s \n"
-    "mul v17.4s, v15.4s, v2.4s \n"
-    "mul v18.4s, v15.4s, v3.4s \n"
-    "mul v19.4s, v15.4s, v4.4s \n"
-    "st1 {v16.4s}, [x12], #16 \n"
-    "st1 {v17.4s}, [x12], #16 \n"
-    "st1 {v18.4s}, [x12], #16 \n"
-    "st1 {v19.4s}, [x12], #16 \n"
-    "add x12, x12, %[inputsun_stride] \n"
-    "b 4b \n"
-
-    "6: \n"
-    "cmp %[oc_res4], #0\n"
-    "beq 1b \n"
-    "dup v15.4s, wzr \n"
-    "cmp %[oc_res4], #1\n"
-    "beq 7f \n"
-    "cmp %[oc_res4], #2\n"
-    "beq 8f \n"
-    "cmp %[oc_res4], #3\n"
-    "beq 9f \n"
-
-    "7: \n"
-    "ld1 {v15.s}[0], [x16] \n"
-    "b 10f \n"
-
-    "8: \n"
-    "ld1 {v15.h}[0], [x16] \n"
-    "b 10f \n"
-
-    "9: \n"
-    "ld1 {v15.h}[0], [x16] \n"
-    "add x16, x16, #8 \n"
-    "ld1 {v15.s}[2], [x16] \n"
-    "b 10f \n"
-
-    "10: \n"
-    "mul v16.4s, v15.4s, v1.4s \n"
-    "mul v17.4s, v15.4s, v2.4s \n"
-    "mul v18.4s, v15.4s, v3.4s \n"
-    "mul v19.4s, v15.4s, v4.4s \n"
-    "st1 {v16.4s}, [x12], #16 \n"
-    "st1 {v17.4s}, [x12], #16 \n"
-    "st1 {v18.4s}, [x12], #16 \n"
-    "st1 {v19.4s}, [x12], #16 \n"
-    "b 1b \n"
-
-    "11: \n"
-
-    :
-    : [ input_value ] "r"(input_value), [ input_sum ] "r"(input_sum), [ filter_zp_ptr ] "r"(filter_zp_ptr),
-      [ hw4 ] "r"(hw4), [ ic16 ] "r"(ic16), [ oc_div4 ] "r"(oc_div4), [ oc_res4 ] "r"(oc_res4),
-      [ inputsun_stride ] "r"(inputsun_stride)
-    : "x0", "x2", "x4", "x10", "x11", "x12", "x15", "x16", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v10", "v15",
-      "v16", "v17", "v18", "v19");
+  PreSum4x16Int8Peroc(input_value, input_sum, filter_zp_ptr, hw4, ic16, oc_div4, oc_res4, inputsun_stride);
 #else
 
   for (int ri = 0; ri < plane_size; ri++) {
@@ -409,6 +240,12 @@ void PackInputSum16x4PerChannelArm32(const int8_t *input_value, int32_t *input_s
   size_t hw4 = UP_ROUND(plane_size, C4NUM);
   size_t ic16 = UP_ROUND(input_channel, C16NUM);
 
+#ifdef ENABLE_ARM32
+  size_t oc_div2 = output_channel / C2NUM * C2NUM;
+  size_t oc_res2 = output_channel - oc_div2;
+  size_t inputsun_stride = hw4 * C2NUM * 4 - C4NUM * C2NUM * 4;
+  PreSum4x16Int8Peroc(input_value, input_sum, filter_zp_ptr, hw4, ic16, oc_div2, oc_res2, inputsun_stride);
+#else
   for (int ri = 0; ri < plane_size; ri++) {
     int ri4div = ri / C4NUM, ri4mod = ri % C4NUM;
     for (int ci = 0; ci < output_channel; ci++) {
@@ -424,6 +261,7 @@ void PackInputSum16x4PerChannelArm32(const int8_t *input_value, int32_t *input_s
       input_sum[dst_index] = tmp_sum_value * filter_zp;
     }
   }
+#endif
   return;
 }
 

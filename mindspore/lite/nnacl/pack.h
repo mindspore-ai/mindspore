@@ -121,6 +121,13 @@ void PackDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight
 
 void PackDeconvDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight_, int plane, int channel,
                                    ConvQuantArg *quant_qrg);
+
+#ifdef ENABLE_ARM
+void PreSum4x16Int8Pert(const int8_t *src, int32_t *sum, size_t row4, size_t col16, int32_t filter_zp);
+void PreSum4x16Int8Peroc(const int8_t *src, int32_t *sum, int32_t *zp, size_t hw4, size_t ic16, int32_t oc_div,
+                         size_t oc_res, size_t stride);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
