@@ -641,6 +641,7 @@ class PConstant : public PBase<PConstant<T> > {
     }
     int ret = 0;
     char *source_data = reinterpret_cast<char *>(GetPointerToTensorData(x));
+    MS_EXCEPTION_IF_NULL(source_data);
     if (x_tensor_ptr->DataSize() == 1) {
       for (int i = 0; i < new_tensor_ptr->ElementsNum(); i++) {
         ret = memcpy_s(data + i * GetTypeByte(tensor_type_ptr), GetTypeByte(tensor_type_ptr), source_data,

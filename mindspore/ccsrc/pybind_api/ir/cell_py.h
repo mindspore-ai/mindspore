@@ -32,13 +32,11 @@ namespace py = pybind11;
 // mindspore namespace is the top level namespace of Mindsporeession project.
 // Other namespace should be a sub namespace of mindspore namespace in the ME project.
 namespace mindspore {
-
 // Cell python wrapper and adapter class.
 class CellPy {
  public:
   static void AddAttr(CellPtr cell, const std::string &name, const py::object &obj);
 };
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_CELL_PY_H_

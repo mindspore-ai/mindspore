@@ -145,7 +145,7 @@ AnfNodePtr MatchResult::get_node(const PatternPtr &pattern) {
 }
 
 void MatchResult::merge(const MatchResultPtr &other_result) {
-  auto other_result_map = other_result->_result();
+  auto other_result_map = other_result->result();
   // add/update entries in other_result
   for (auto &iter : other_result_map) {
     match_result_[iter.first] = iter.second;

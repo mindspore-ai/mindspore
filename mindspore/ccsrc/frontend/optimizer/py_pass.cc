@@ -243,7 +243,6 @@ void Reset(PatternPtr pattern) {
   }
   return;
 }
-
 }  // namespace internal
 
 AnfNodePtr PythonPass::Run(const FuncGraphPtr &func_graph, const FuncGraphPtr &top_graph, const AnfNodePtr &node,

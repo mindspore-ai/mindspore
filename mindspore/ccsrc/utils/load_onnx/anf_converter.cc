@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace lite {
-
 const char WHITESPACE[] = "\t\n\v\f\r ";
 const int FLAG_PREFIX_LEN = 2;
 

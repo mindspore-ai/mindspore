@@ -115,7 +115,7 @@ class Primitive : public Named {
   void set_const_input_indexes(const std::vector<size_t> &const_input_indexes) {
     const_input_indexes_ = const_input_indexes;
   }
-  std::vector<size_t> &get_const_input_indexes() { return const_input_indexes_; }
+  const std::vector<size_t> &get_const_input_indexes() { return const_input_indexes_; }
   std::string id() const { return id_; }
 
  protected:

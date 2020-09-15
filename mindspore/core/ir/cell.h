@@ -64,6 +64,5 @@ class Cell : public Named {
 };
 
 using CellPtr = std::shared_ptr<Cell>;
-
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_IR_CELL_H_
