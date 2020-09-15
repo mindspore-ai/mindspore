@@ -84,7 +84,6 @@ class ConvBNReLU(nn.Cell):
 
     def construct(self, x):
         output = self.features(x)
-        # print(output.shape)
         return output
 
 
@@ -267,8 +266,6 @@ class GhostModule(nn.Cell):
     def construct(self, x):
         x1 = self.primary_conv(x)
         x2 = self.cheap_operation(x1)
-        # print(x1.shape)
-        # print(x2.shape)
         return self.concat((x1, x2))
 
 
@@ -342,7 +339,6 @@ class GhostBottleneck(nn.Cell):
             out = self.add(shortcut, out)
         if self.last_relu:
             out = self.relu(out)
-        # print(out.shape)
         return out
 
     def _get_pad(self, kernel_size):
@@ -410,7 +406,6 @@ class InvertedResidual(nn.Cell):
             x = self.add(identity, x)
         if self.last_relu:
             x = self.relu(x)
-        # print(x.shape)
         return x
 
 
@@ -675,7 +670,6 @@ class SSDWithGhostNet(nn.Cell):
     def __init__(self, model_cfgs, multiplier=1., round_nearest=8):
         super(SSDWithGhostNet, self).__init__()
         self.cfgs = model_cfgs['cfg']
-        # self.inplanes = 16   ## for "1x"
         self.inplanes = 20  # for "1.3x"
         first_conv_in_channel = 3
         first_conv_out_channel = _make_divisible(multiplier * self.inplanes)
@@ -686,7 +680,6 @@ class SSDWithGhostNet(nn.Cell):
 
         layer_index = 0
         for layer_cfg in self.cfgs:
-            # print(layer_cfg)
             if layer_index == 11:
                 hidden_dim = int(round(self.inplanes * 6))
                 self.expand_layer_conv_11 = ConvBNReLU(
@@ -711,7 +704,6 @@ class SSDWithGhostNet(nn.Cell):
     def _make_layer(self, kernel_size, exp_ch, out_channel, use_se, act_func, stride=1):
         mid_planes = exp_ch
         out_planes = out_channel
-        # num_in, num_mid, num_out, kernel_size, stride=1, act_type='relu', use_se=False):
         layer = GhostBottleneck(self.inplanes, mid_planes, out_planes,
                                 kernel_size, stride=stride, act_type=act_func, use_se=use_se)
         self.inplanes = out_planes

@@ -14,7 +14,6 @@
 # ============================================================================
 """
 #################train lstm example on aclImdb########################
-python eval.py --ckpt_path=./lstm-20-390.ckpt
 """
 import argparse
 import os

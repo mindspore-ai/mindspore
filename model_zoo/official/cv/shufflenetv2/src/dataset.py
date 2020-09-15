@@ -66,7 +66,6 @@ def create_dataset(dataset_path, do_train, rank, group_size, repeat_num=1):
     trans += [
         toBGR(),
         C.Rescale(1.0 / 255.0, 0.0),
-        # C.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         C.HWC2CHW(),
         C2.TypeCast(mstype.float32)
     ]

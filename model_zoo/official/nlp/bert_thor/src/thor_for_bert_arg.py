@@ -203,7 +203,7 @@ class THOR(Optimizer):
             g = F.depend(g, fake_G)
             new_grads = new_grads + (g, pooler_bias)
 
-            # for cls1 fc layer: mlm
+            # cls1 fully connect layer for masked language model(mlm)
             mlm_fc_idx = encoder_layers_num * self.num_hidden_layers + 8
             matrix_idx = self.num_hidden_layers * 6 + 4
             g = gradients[mlm_fc_idx]
@@ -333,7 +333,7 @@ class THOR(Optimizer):
             g = self.cast(g, mstype.float32)
             new_grads = new_grads + (g, pooler_bias)
 
-            # for cls1 fc layer: mlm
+            # cls1 fully connect layer for masked language model(mlm)
             mlm_fc_idx = encoder_layers_num * self.num_hidden_layers + 8
             matrix_idx = self.num_hidden_layers * 6 + 4
             g = gradients[mlm_fc_idx]

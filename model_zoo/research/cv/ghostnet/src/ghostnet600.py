@@ -335,7 +335,6 @@ class GhostNet(nn.Cell):
 
         self.blocks = []
         for layer_cfg in self.cfgs:
-            #print (layer_cfg)
             self.blocks.append(self._make_layer(kernel_size=layer_cfg[0],
                                                 exp_ch=_make_divisible(
                                                     self.inplanes * layer_cfg[3]),

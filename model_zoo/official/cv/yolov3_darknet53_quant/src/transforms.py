@@ -153,7 +153,7 @@ def _preprocess_true_boxes(true_boxes, anchors, in_shape, num_classes,
     # input_shape is [h, w]
     true_boxes[..., 0:2] = boxes_xy / input_shape[::-1]
     true_boxes[..., 2:4] = boxes_wh / input_shape[::-1]
-    # true_boxes = [xywh]
+    # true_boxes [x, y, w, h]
 
     grid_shapes = [input_shape // 32, input_shape // 16, input_shape // 8]
     # grid_shape [h, w]

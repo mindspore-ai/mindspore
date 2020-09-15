@@ -129,7 +129,6 @@ def LoadNewestCkpt(load_finetune_checkpoint_dir, steps_per_epoch, epoch_num, pre
         name_ext = os.path.splitext(filename)
         if name_ext[-1] != ".ckpt":
             continue
-        # steps_per_epoch = ds.get_dataset_size()
         if filename.find(prefix) == 0 and not filename[pre_len].isalpha():
             index = filename[pre_len:].find("-")
             if index == 0 and max_num == 0:

@@ -258,7 +258,7 @@ class BeamSearchDecoder(nn.Cell):
 
         # add length penalty scores
         penalty_len = self.length_penalty(state_length)
-        # return penalty_len
+        # get penalty length
         log_probs = self.real_div(state_log_probs, penalty_len)
 
         # sort according to scores

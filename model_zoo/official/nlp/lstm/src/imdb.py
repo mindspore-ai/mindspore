@@ -103,7 +103,7 @@ class ImdbParser():
         vocab = set(chain(*tokenized_features))
         self.__vacab[seg] = vocab
 
-        # word_to_idx: {'hello': 1, 'world':111, ... '<unk>': 0}
+        # word_to_idx looks like {'hello': 1, 'world':111, ... '<unk>': 0}
         word_to_idx = {word: i + 1 for i, word in enumerate(vocab)}
         word_to_idx['<unk>'] = 0
         self.__word2idx[seg] = word_to_idx
@@ -147,7 +147,7 @@ class ImdbParser():
 
     def get_datas(self, seg):
         """
-        return features, labels, and weight
+        get features, labels, and weight by gensim.
         """
         features = np.array(self.__features[seg]).astype(np.int32)
         labels = np.array(self.__labels[seg]).astype(np.int32)

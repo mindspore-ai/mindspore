@@ -283,7 +283,7 @@ class ResNet(nn.Cell):
                               frequency=frequency, batch_size=batch_size)
         self.bn1 = _bn(64)
         self.relu = P.ReLU()
-        # self.maxpool = P.MaxPoolWithArgmax(padding="same", ksize=3, strides=2)
+
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="same")
 
         self.layer1 = self._make_layer(block,

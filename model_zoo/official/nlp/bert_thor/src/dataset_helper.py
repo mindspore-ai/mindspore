@@ -155,7 +155,7 @@ class _DatasetIter:
 
 
 class _DatasetIterMSLoopSink(_DatasetIter):
-    """Iter for context (device_target=Ascend)"""
+    """Iter for context, the device_target is Ascend."""
 
     def __init__(self, dataset, sink_size, epoch_num, iter_first_order):
         super().__init__(dataset, sink_size, epoch_num)

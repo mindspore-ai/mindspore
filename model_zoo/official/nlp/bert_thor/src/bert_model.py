@@ -566,7 +566,7 @@ class BertAttention(nn.Cell):
 
         # use_relative_position, supplementary logic
         if self.use_relative_positions:
-            # 'relations_keys' = [F|T, F|T, H]
+            # relations_keys is [F|T, F|T, H]
             relations_keys = self._generate_relative_positions_embeddings()
             relations_keys = self.cast_compute_type(relations_keys)
             # query_layer_t is [F, B, N, H]
@@ -609,7 +609,7 @@ class BertAttention(nn.Cell):
 
         # use_relative_position, supplementary logic
         if self.use_relative_positions:
-            # 'relations_values' = [F|T, F|T, H]
+            # relations_values is [F|T, F|T, H]
             relations_values = self._generate_relative_positions_embeddings()
             relations_values = self.cast_compute_type(relations_values)
             # attention_probs_t is [F, B, N, T]

@@ -145,7 +145,7 @@ class MobileNetV2Backbone(nn.Cell):
     MobileNetV2 architecture.
 
     Args:
-        class_num (Cell): number of classes.
+        class_num (int): number of classes.
         width_mult (int): Channels multiplier for round to 8/16 and others. Default is 1.
         has_dropout (bool): Is dropout used. Default is false
         inverted_residual_setting (list): Inverted residual settings. Default is None
@@ -233,7 +233,7 @@ class MobileNetV2Head(nn.Cell):
     MobileNetV2 architecture.
 
     Args:
-        class_num (Cell): number of classes.
+        class_num (int): Number of classes. Default is 1000.
         has_dropout (bool): Is dropout used. Default is false
     Returns:
         Tensor, output tensor.
@@ -284,11 +284,13 @@ class MobileNetV2(nn.Cell):
     MobileNetV2 architecture.
 
     Args:
-        class_num (Cell): number of classes.
+        class_num (int): number of classes.
         width_mult (int): Channels multiplier for round to 8/16 and others. Default is 1.
         has_dropout (bool): Is dropout used. Default is false
         inverted_residual_setting (list): Inverted residual settings. Default is None
         round_nearest (list): Channel round to . Default is 8
+        backbone(nn.Cell): Backbone of MobileNetV2.
+        head(nn.Cell): Classification head of MobileNetV2.
     Returns:
         Tensor, output tensor.
 

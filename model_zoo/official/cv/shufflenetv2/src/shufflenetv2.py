@@ -79,7 +79,6 @@ class ShuffleV2Block(nn.Cell):
 
     def channel_shuffle(self, x):
         batchsize, num_channels, height, width = P.Shape()(x)
-        ##assert (num_channels % 4 == 0)
         x = P.Reshape()(x, (batchsize * num_channels // 2, 2, height * width,))
         x = P.Transpose()(x, (1, 0, 2,))
         x = P.Reshape()(x, (2, -1, num_channels // 2, height, width,))

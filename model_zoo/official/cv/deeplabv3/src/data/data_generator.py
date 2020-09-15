@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
-import cv2
 import numpy as np
+import cv2
 import mindspore.dataset as de
 cv2.setNumThreads(0)
 

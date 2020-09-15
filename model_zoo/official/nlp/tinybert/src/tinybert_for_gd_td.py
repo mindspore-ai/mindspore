@@ -383,7 +383,6 @@ class BertNetworkWithLoss_td(nn.Cell):
         if is_predistill:
             new_param_dict = {}
             for key, value in param_dict.items():
-                # new_key = re.sub('tinybert_', 'bert_', key)
                 new_key = re.sub('tinybert_', 'bert_', 'bert.' + key)
                 new_param_dict[new_key] = value
             load_param_into_net(self.bert, new_param_dict)
@@ -391,7 +390,6 @@ class BertNetworkWithLoss_td(nn.Cell):
             new_param_dict = {}
             for key, value in param_dict.items():
                 new_key = re.sub('tinybert_', 'bert_', key)
-                # new_key = re.sub('tinybert_', 'bert_', 'bert.'+ key)
                 new_param_dict[new_key] = value
             load_param_into_net(self.bert, new_param_dict)
         self.cast = P.Cast()

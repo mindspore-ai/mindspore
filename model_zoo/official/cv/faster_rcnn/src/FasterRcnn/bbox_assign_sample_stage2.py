@@ -114,7 +114,7 @@ class BboxAssignSampleForRcnn(nn.Cell):
         bboxes = self.select(self.cast(self.tile(self.reshape(self.cast(valid_mask, mstype.int32), \
                              (self.num_bboxes, 1)), (1, 4)), mstype.bool_), \
                              bboxes, self.check_anchor_two)
-        # 1 dim = gt, 2 dim = bbox
+
         overlaps = self.iou(bboxes, gt_bboxes_i)
 
         max_overlaps_w_gt_index, max_overlaps_w_gt = self.max_gt(overlaps)
