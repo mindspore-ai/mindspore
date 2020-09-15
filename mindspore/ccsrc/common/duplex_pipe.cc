@@ -152,7 +152,7 @@ void DuplexPipe::Close() {
 DuplexPipe::SignalHandler::SignalHandler(std::shared_ptr<DuplexPipe> dp, pid_t pid) {
   dp_ = dp;
   child_pid_ = pid;
-  signal(SIGCHLD, SigChildHandler);
+  signal(SIGCHLD, SIG_IGN);
   signal(SIGPIPE, SigPipeHandler);
 }
 
@@ -176,18 +176,6 @@ void DuplexPipe::SignalHandler::SigPipeHandler(int sig) {
   DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
   if (dp_ != nullptr) {
     dp_->NotifyFinalize();
-  }
-}
-
-void DuplexPipe::SignalHandler::SigChildHandler(int sig) {
-  DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
-  int status;
-  auto pid = waitpid(child_pid_, &status, WNOHANG | WUNTRACED);
-  if (WIFEXITED(status)) {  // Normal exit
-    DP_INFO << "Child exited, status: " << WEXITSTATUS(status) << ", pid: " << pid << ", dp: " << dp_;
-    if (pid > 0 && dp_ != nullptr) {  // It's child_pid_
-      dp_->NotifyFinalize();
-    }
   }
 }
 }  // namespace mindspore
