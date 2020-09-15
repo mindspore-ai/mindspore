@@ -94,6 +94,14 @@ class AkgKernelJsonGenerator {
                           nlohmann::json *const attrs_json);
   bool GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *const input_size,
                  std::vector<size_t> *const output_size);
+  bool GenSingleJsons(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map);
+  void UpdateTensorName(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map);
+  nlohmann::json CreateInputsJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
+                                  const std::map<AnfNodePtr, nlohmann::json> &node_json_map);
+  nlohmann::json CreateOutputsJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
+                                   const std::vector<AnfNodePtr> &output_list, const nlohmann::json &inputs_json,
+                                   const std::map<AnfNodePtr, nlohmann::json> &node_json_map);
+
   int GetOpCntInc();
   size_t GetInputTensorIdxInc(const AnfNodePtr &anf_node, size_t input_idx);
   size_t GetOutputTensorIdxInc();

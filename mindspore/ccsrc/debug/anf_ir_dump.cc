@@ -463,13 +463,15 @@ std::string AddGlobalId(const std::string &filename) {
   static size_t g_id = 0;
   std::ostringstream s;
   auto i = filename.rfind('/');
-  if (i == string::npos) {
+  if (i >= filename.size()) {
     s << std::setfill('0') << std::setw(4) << g_id << "_";
     s << filename;
   } else {
     s << filename.substr(0, i + 1);
     s << std::setfill('0') << std::setw(4) << g_id << "_";
-    s << filename.substr(i + 1);
+    if (i + 1 < filename.size()) {
+      s << filename.substr(i + 1);
+    }
   }
   ++g_id;
   return s.str();

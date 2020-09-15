@@ -37,11 +37,10 @@ class AkgKernelJsonDecoder {
                         AnfNodePtrList *res_graphs);
 
  private:
-  ScalarPtr DecodeScalar(const nlohmann::json &scalar_json);
-  ValueNodePtr DecodeValueNode(const nlohmann::json &value_json, const FuncGraphPtr &func_graph);
   ParameterPtr DecodeParameter(const nlohmann::json &parameter_json, const FuncGraphPtr &func_graph);
   CNodePtr DecodeCNode(const nlohmann::json &cnode_json, const FuncGraphPtr &func_graph, const std::string &processor);
-  std::map<std::string, AnfNodePtr> nodes_map_{};
+  AnfNodePtr DecodeOutput(const std::vector<nlohmann::json> &output_descs, const FuncGraphPtr &func_graph);
+  std::map<std::string, AnfNodePtr> nodes_map_;
 };
 }  // namespace kernel
 }  // namespace mindspore

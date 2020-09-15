@@ -211,9 +211,9 @@ AnfNodePtr DeleteAttrInInput(const FuncGraphPtr &func_graph, const CNodePtr &cno
   return new_cnode;
 }
 
-AnfNodePtrList EliminateMakeTuple(const FuncGraphPtr *fg, FuncGraphManagerPtr *mng) {
+AnfNodePtrList EliminateMakeTuple(const FuncGraphPtr &fg, const FuncGraphManagerPtr &mng) {
   AnfNodePtrList outs;
-  auto out_node = (*fg)->output();
+  auto out_node = fg->output();
   if (IsPrimitiveCNode(out_node, prim::kPrimMakeTuple)) {
     std::vector<AnfNodePtr> output_args;
     auto out_cnode = out_node->cast<CNodePtr>();
@@ -228,8 +228,8 @@ AnfNodePtrList EliminateMakeTuple(const FuncGraphPtr *fg, FuncGraphManagerPtr *m
       }
     }
     if (output_args.size() != out_cnode->inputs().size()) {
-      auto new_out = (*fg)->NewCNode(output_args);
-      (*mng)->Replace(out_node, new_out);
+      auto new_out = fg->NewCNode(output_args);
+      mng->Replace(out_node, new_out);
     }
 
     for (size_t i = 1; i < output_args.size(); ++i) {
@@ -240,6 +240,27 @@ AnfNodePtrList EliminateMakeTuple(const FuncGraphPtr *fg, FuncGraphManagerPtr *m
 
   outs.push_back(out_node);
   return outs;
+}
+
+bool GenJson(const AnfNodePtrList &op_nodes, const AnfNodePtrList &inputs, const AnfNodePtrList &outputs,
+             const DumpOption &dump_option, nlohmann::json *op_desc,
+             std::map<std::string, AnfNodePtr> *address_node_map) {
+  kernel::AkgKernelJsonGenerator akg_kernel_json_generator(dump_option);
+  if (!akg_kernel_json_generator.CollectFusedJson(op_nodes, inputs, outputs)) {
+    MS_LOG(ERROR) << "Collect json desc failed.";
+    return false;
+  }
+
+  *op_desc = akg_kernel_json_generator.kernel_json();
+  if (address_node_map != nullptr) {
+    *address_node_map = akg_kernel_json_generator.address_node_map();
+  }
+  std::string fused_name;
+  std::for_each(op_nodes.begin(), op_nodes.end(), [&fused_name](const AnfNodePtr &node) {
+    (void)fused_name.append(AnfAlgo::GetCNodeName(node)).append("_");
+  });
+  MS_LOG(INFO) << "Collect fusion json: " << fused_name;
+  return true;
 }
 }  // namespace
 
@@ -457,7 +478,7 @@ void FuseNodesToSubGraph(const std::vector<AnfNodePtr> &fuse_nodes,
     mng->Replace(n, out);
   }
 
-  EliminateMakeTuple(&fg, &mng);
+  EliminateMakeTuple(fg, mng);
   // set graphKernel attr
   std::string fuse_op_name = "";
   for (auto &fuse_node : fuse_nodes) {
@@ -476,50 +497,26 @@ void FuseNodesToSubGraph(const std::vector<AnfNodePtr> &fuse_nodes,
   fg->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(fuse_op_name));
 }
 
-bool AnfToJsonDesc(const AnfNodePtrList &nodes, DumpOption dump_option, nlohmann::json *op_desc,
+bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc,
                    std::map<std::string, AnfNodePtr> *address_node_map) {
   MS_EXCEPTION_IF_NULL(op_desc);
   if (nodes.empty()) {
     MS_LOG(ERROR) << "Input nodes is empty.";
     return false;
   }
-  bool has_graph_kernel =
-    std::any_of(nodes.begin(), nodes.end(), [](const AnfNodePtr &node) { return AnfAlgo::IsGraphKernel(node); });
+  bool has_graph_kernel = std::any_of(nodes.begin(), nodes.end(), AnfAlgo::IsGraphKernel);
   bool is_single_graph_kernel = has_graph_kernel && nodes.size() == 1;
 
-  auto gen_json = [&dump_option, &op_desc, &address_node_map](const AnfNodePtrList &op_nodes,
-                                                              const AnfNodePtrList &inputs,
-                                                              const AnfNodePtrList &outputs) -> bool {
-    kernel::AkgKernelJsonGenerator akg_kernel_json_generator(dump_option);
-    if (!akg_kernel_json_generator.CollectFusedJson(op_nodes, inputs, outputs)) {
-      MS_LOG(ERROR) << "Collect json desc failed.";
-      return false;
-    }
-
-    *op_desc = akg_kernel_json_generator.kernel_json();
-    if (address_node_map != nullptr) {
-      *address_node_map = akg_kernel_json_generator.address_node_map();
-    }
-    std::string fused_name;
-    std::for_each(op_nodes.begin(), op_nodes.end(), [&fused_name](const AnfNodePtr &node) {
-      (void)fused_name.append(AnfAlgo::GetCNodeName(node)).append("_");
-    });
-    MS_LOG(INFO) << "Collect fusion json: " << fused_name;
-    return true;
-  };
-
   FuncGraphPtr fg;
-  AnfNodePtrList op_nodes;
-  AnfNodePtrList inputs;
-  AnfNodePtrList outputs;
+  AnfNodePtrList op_nodes, inputs, outputs;
   if (is_single_graph_kernel) {
     fg = AnfAlgo::GetCNodeFuncGraphPtr(nodes[0]);
     kernel::GetValidKernelNodes(fg, &op_nodes, &inputs, &outputs);
-    return gen_json(op_nodes, inputs, outputs);
+    return GenJson(op_nodes, inputs, outputs, dump_option, op_desc, address_node_map);
   } else if (!has_graph_kernel) {
     std::tie(fg, inputs, outputs) = compile::TransformSegmentToAnfGraph(nodes);
     op_nodes = nodes;
-    return gen_json(op_nodes, inputs, outputs);
+    return GenJson(op_nodes, inputs, outputs, dump_option, op_desc, address_node_map);
   }
 
   std::tie(fg, inputs, outputs) = compile::TransformSegmentToAnfGraph(nodes);
@@ -540,10 +537,10 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, DumpOption dump_option, nlohmann
   inputs.clear();
   outputs.clear();
   kernel::GetValidKernelNodes(fg, &op_nodes, &inputs, &outputs);
-  return gen_json(op_nodes, inputs, outputs);
+  return GenJson(op_nodes, inputs, outputs, dump_option, op_desc, address_node_map);
 }
 
-bool AnfToJsonDesc(const std::vector<AnfNodePtrList> &graphs, DumpOption dump_option, nlohmann::json *op_desc) {
+bool AnfToJsonDesc(const std::vector<AnfNodePtrList> &graphs, const DumpOption &dump_option, nlohmann::json *op_desc) {
   MS_EXCEPTION_IF_NULL(op_desc);
   std::vector<nlohmann::json> graphs_desc;
   for (auto const &graph_nodes : graphs) {

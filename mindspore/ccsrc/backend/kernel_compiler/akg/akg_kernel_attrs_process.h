@@ -20,9 +20,7 @@
 
 namespace mindspore {
 namespace kernel {
-
 void SetAkgKernelAttrs(const AnfNodePtr &anf_node);
-
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_ATTRS_PROCESS_H

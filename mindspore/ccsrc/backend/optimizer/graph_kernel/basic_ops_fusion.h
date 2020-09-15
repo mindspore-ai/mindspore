@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
@@ -32,7 +31,6 @@ class BasicOpsFusion : public Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 using FuseBasicPtr = std::shared_ptr<BasicOpsFusion>;
-
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_BASIC_OPS_FUSION_H_
