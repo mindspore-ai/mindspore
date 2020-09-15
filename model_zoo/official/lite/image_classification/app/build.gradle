@@ -49,7 +49,7 @@ android {
         }
     }
     packagingOptions{
-        pickFirst 'lib/arm64-v8a/libopencv_java4.so'
+        pickFirst 'lib/arm64-v8a/libminddata-lite.so'
         pickFirst 'lib/arm64-v8a/libmindspore-lite.so'
         pickFirst 'lib/arm64-v8a/libmlkit-label-MS.so'
     }

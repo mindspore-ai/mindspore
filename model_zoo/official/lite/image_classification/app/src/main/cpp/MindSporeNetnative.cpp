@@ -13,103 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <jni.h>
 #include <android/bitmap.h>
 #include <android/asset_manager_jni.h>
 #include <android/log.h>
-#include <MindSpore/errorcode.h>
-#include <MindSpore/ms_tensor.h>
-#include <jni.h>
 #include <cstring>
 #include <vector>
 #include <string>
 #include <unordered_map>
 #include <set>
+#include "include/errorcode.h"
+#include "include/ms_tensor.h"
 #include "MindSporeNetnative.h"
-#include "opencv2/core.hpp"
-#include "opencv2/imgproc.hpp"
 #include "MSNetWork.h"
+#include "lite_cv/lite_mat.h"
+#include "lite_cv/image_process.h"
 
+using mindspore::dataset::LiteMat;
+using mindspore::dataset::LPixelType;
+using mindspore::dataset::LDataType;
 #define MS_PRINT(format, ...) __android_log_print(ANDROID_LOG_INFO, "MSJNI", format, ##__VA_ARGS__)
-
-void BitmapToMat2(JNIEnv *env, const jobject &bitmap, cv::Mat *mat,
-                  jboolean needUnPremultiplyAlpha) {
-  AndroidBitmapInfo info;
-  void *pixels = nullptr;
-  cv::Mat &dst = *mat;
-  CV_Assert(AndroidBitmap_getInfo(env, bitmap, &info) >= 0);
-  CV_Assert(info.format == ANDROID_BITMAP_FORMAT_RGBA_8888 ||
-      info.format == ANDROID_BITMAP_FORMAT_RGB_565);
-  CV_Assert(AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0);
-  CV_Assert(pixels);
-  dst.create(info.height, info.width, CV_8UC4);
-  if (info.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
-    cv::Mat tmp(info.height, info.width, CV_8UC4, pixels);
-    if (needUnPremultiplyAlpha) {
-      cvtColor(tmp, dst, cv::COLOR_RGBA2BGR);
-    } else {
-      tmp.copyTo(dst);
-    }
-  } else {
-    cv::Mat tmp(info.height, info.width, CV_8UC4, pixels);
-    cvtColor(tmp, dst, cv::COLOR_BGR5652RGBA);
-  }
-  AndroidBitmap_unlockPixels(env, bitmap);
-  return;
-}
-
-void BitmapToMat(JNIEnv *env, const jobject &bitmap, cv::Mat *mat) {
-  BitmapToMat2(env, bitmap, mat, true);
-}
-
-/**
- * Processing image with resize and normalize.
- */
-cv::Mat PreProcessImageData(cv::Mat input) {
-  cv::Mat imgFloatTmp, imgResized256, imgResized224;
-  int resizeWidth = 256;
-  int resizeHeight = 256;
-  float normalizMin = 1.0;
-  float normalizMax = 255.0;
-
-  cv::resize(input, imgFloatTmp, cv::Size(resizeWidth, resizeHeight));
-
-  imgFloatTmp.convertTo(imgResized256, CV_32FC3, normalizMin / normalizMax);
-
-  const int offsetX = 16;
-  const int offsetY = 16;
-  const int cropWidth = 224;
-  const int cropHeight = 224;
-
-  // Standardization processing.
-  float meanR = 0.485;
-  float meanG = 0.456;
-  float meanB = 0.406;
-  float varR = 0.229;
-  float varG = 0.224;
-  float varB = 0.225;
-
-  cv::Rect roi;
-  roi.x = offsetX;
-  roi.y = offsetY;
-  roi.width = cropWidth;
-  roi.height = cropHeight;
-
-  // The final image size of the incoming model is 224*224.
-  imgResized256(roi).copyTo(imgResized224);
-
-  cv::Scalar mean = cv::Scalar(meanR, meanG, meanB);
-  cv::Scalar var = cv::Scalar(varR, varG, varB);
-  cv::Mat imgResized1;
-  cv::Mat imgResized2;
-  cv::Mat imgMean(imgResized224.size(), CV_32FC3,
-                  mean);  // imgMean Each pixel channel is (0.485, 0.456, 0.406)
-  cv::Mat imgVar(imgResized224.size(), CV_32FC3,
-                 var);  // imgVar Each pixel channel is (0.229, 0.224, 0.225)
-  imgResized1 = imgResized224 - imgMean;
-  imgResized2 = imgResized1 / imgVar;
-  return imgResized2;
-}
 
 char *CreateLocalModelBuffer(JNIEnv *env, jobject modelBuffer) {
   jbyte *modelAddr = static_cast<jbyte *>(env->GetDirectBufferAddress(modelBuffer));
@@ -126,21 +49,20 @@ char *CreateLocalModelBuffer(JNIEnv *env, jobject modelBuffer) {
  */
 std::string
 ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const labels_name_map[],
-                    std::unordered_map<std::string,
-                                       std::vector<mindspore::tensor::MSTensor *>> msOutputs) {
+                    std::unordered_map<std::string, mindspore::tensor::MSTensor *> msOutputs) {
   // Get the branch of the model output.
   // Use iterators to get map elements.
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>>::iterator iter;
+  std::unordered_map<std::string, mindspore::tensor::MSTensor *>::iterator iter;
   iter = msOutputs.begin();
 
   // The mobilenetv2.ms model output just one branch.
   auto outputTensor = iter->second;
 
-  int tensorNum = outputTensor[0]->ElementsNum();
+  int tensorNum = outputTensor->ElementsNum();
   MS_PRINT("Number of tensor elements:%d", tensorNum);
 
   // Get a pointer to the first score.
-  float *temp_scores = static_cast<float * >(outputTensor[0]->MutableData());
+  float *temp_scores = static_cast<float * >(outputTensor->MutableData());
 
   float scores[RET_CATEGORY_SUM];
   for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
@@ -163,6 +85,72 @@ ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const labels_name_ma
   return categoryScore;
 }
 
+bool BitmapToLiteMat(JNIEnv *env, const jobject &srcBitmap, LiteMat *lite_mat) {
+  bool ret = false;
+  AndroidBitmapInfo info;
+  void *pixels = nullptr;
+  LiteMat &lite_mat_bgr = *lite_mat;
+  AndroidBitmap_getInfo(env, srcBitmap, &info);
+  if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
+    MS_PRINT("Image Err, Request RGBA");
+    return false;
+  }
+  AndroidBitmap_lockPixels(env, srcBitmap, &pixels);
+  if (info.stride == info.width*4) {
+    ret = InitFromPixel(reinterpret_cast<const unsigned char *>(pixels),
+               LPixelType::RGBA2RGB, LDataType::UINT8,
+                        info.width, info.height, lite_mat_bgr);
+    if (!ret) {
+      MS_PRINT("Init From RGBA error");
+    }
+  } else {
+    unsigned char *pixels_ptr = new unsigned char[info.width*info.height*4];
+    unsigned char *ptr = pixels_ptr;
+    unsigned char *data = reinterpret_cast<unsigned char *>(pixels);
+    for (int i = 0; i < info.height; i++) {
+      memcpy(ptr, data, info.width*4);
+      ptr += info.width*4;
+      data += info.stride;
+    }
+    ret = InitFromPixel(reinterpret_cast<const unsigned char *>(pixels_ptr),
+               LPixelType::RGBA2RGB, LDataType::UINT8,
+                        info.width, info.height, lite_mat_bgr);
+    if (!ret) {
+      MS_PRINT("Init From RGBA error");
+    }
+    delete[] (pixels_ptr);
+  }
+  AndroidBitmap_unlockPixels(env, srcBitmap);
+  return ret;
+}
+
+bool PreProcessImageData(const LiteMat &lite_mat_bgr, LiteMat *lite_norm_mat_ptr) {
+  bool ret = false;
+  LiteMat lite_mat_resize;
+  LiteMat &lite_norm_mat_cut = *lite_norm_mat_ptr;
+  ret = ResizeBilinear(lite_mat_bgr, lite_mat_resize, 256, 256);
+  if (!ret) {
+    MS_PRINT("ResizeBilinear error");
+    return false;
+  }
+  LiteMat lite_mat_convert_float;
+  ret = ConvertTo(lite_mat_resize, lite_mat_convert_float, 1.0 / 255.0);
+  if (!ret) {
+    MS_PRINT("ConvertTo error");
+    return false;
+  }
+  LiteMat lite_mat_cut;
+  ret = Crop(lite_mat_convert_float, lite_mat_cut, 16, 16, 224, 224);
+  if (!ret) {
+    MS_PRINT("Crop error");
+    return false;
+  }
+  float means[3] = {0.485, 0.456, 0.406};
+  float vars[3] = {1.0 / 0.229, 1.0 / 0.224, 1.0 / 0.225};
+  SubStractMeanNormalize(lite_mat_cut, lite_norm_mat_cut, means, vars);
+  return true;
+}
+
 
 /**
  * The Java layer reads the model into MappedByteBuffer or ByteBuffer to load the model.
@@ -170,9 +158,9 @@ ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const labels_name_ma
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_loadModel(JNIEnv *env,
-                                                                             jobject thiz,
-                                                                             jobject model_buffer,
-                                                                             jint num_thread) {
+                         jobject thiz,
+                         jobject model_buffer,
+                         jint num_thread) {
   if (nullptr == model_buffer) {
     MS_PRINT("error, buffer is nullptr!");
     return (jlong) nullptr;
@@ -220,16 +208,23 @@ Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_loadModel(JNI
  */
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_runNet(JNIEnv *env, jclass type,
-                                                                          jlong netEnv,
-                                                                          jobject srcBitmap) {
-  cv::Mat matImageSrc;
-  BitmapToMat(env, srcBitmap, &matImageSrc);
-  cv::Mat matImgPreprocessed = PreProcessImageData(matImageSrc);
+                      jlong netEnv,
+                      jobject srcBitmap) {
+  LiteMat lite_mat_bgr, lite_norm_mat_cut;
+
+  if (!BitmapToLiteMat(env, srcBitmap, &lite_mat_bgr)) {
+    MS_PRINT("BitmapToLiteMat error");
+    return NULL;
+  }
+  if (!PreProcessImageData(lite_mat_bgr, &lite_norm_mat_cut)) {
+    MS_PRINT("PreProcessImageData error");
+    return NULL;
+  }
 
   ImgDims inputDims;
-  inputDims.channel = matImgPreprocessed.channels();
-  inputDims.width = matImgPreprocessed.cols;
-  inputDims.height = matImgPreprocessed.rows;
+  inputDims.channel = lite_norm_mat_cut.channel_;
+  inputDims.width = lite_norm_mat_cut.width_;
+  inputDims.height = lite_norm_mat_cut.height_;
 
   // Get the mindsore inference environment which created in loadModel().
   void **labelEnv = reinterpret_cast<void **>(netEnv);
@@ -253,17 +248,10 @@ Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_runNet(JNIEnv
   }
   auto inTensor = msInputs.front();
 
-  // dataHWC is the tensor format.
-  float *dataHWC = new float[inputDims.channel * inputDims.width * inputDims.height];
-  float *ptrTmp = reinterpret_cast<float *>(matImgPreprocessed.data);
-  for (int i = 0; i < inputDims.channel * inputDims.width * inputDims.height; ++i) {
-    dataHWC[i] = ptrTmp[i];
-  }
-
+  float *dataHWC = reinterpret_cast<float *>(lite_norm_mat_cut.data_ptr_);
   // Copy dataHWC to the model input tensor.
   memcpy(inTensor->MutableData(), dataHWC,
          inputDims.channel * inputDims.width * inputDims.height * sizeof(float));
-  delete[] (dataHWC);
 
   // After the model and image tensor data is loaded, run inference.
   auto status = mSession->RunGraph();
@@ -277,7 +265,12 @@ Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_runNet(JNIEnv
    * Get the mindspore inference results.
    * Return the map of output node name and MindSpore Lite MSTensor.
    */
-  auto msOutputs = mSession->GetOutputMapByNode();
+  auto names = mSession->GetOutputTensorNames();
+  std::unordered_map<std::string, mindspore::tensor::MSTensor *> msOutputs;
+  for (const auto &name : names) {
+    auto temp_dat = mSession->GetOutputByTensorName(name);
+    msOutputs.insert(std::pair<std::string, mindspore::tensor::MSTensor *> {name, temp_dat});
+  }
 
   std::string resultStr = ProcessRunnetResult(MSNetWork::RET_CATEGORY_SUM,
                                               MSNetWork::labels_name_map, msOutputs);
@@ -288,8 +281,8 @@ Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_runNet(JNIEnv
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_unloadModel(JNIEnv *env,
-                                                                               jclass type,
-                                                                               jlong netEnv) {
+                           jclass type,
+                           jlong netEnv) {
   MS_PRINT("MindSpore release net.");
   void **labelEnv = reinterpret_cast<void **>(netEnv);
   if (labelEnv == nullptr) {
