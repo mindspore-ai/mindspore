@@ -98,8 +98,10 @@ int ConcatOpenCLKernel::Init() {
     kernel_name += "2input";
   } else if (in_tensors_.size() == 3) {
     kernel_name += "3input";
+  } else if (in_tensors_.size() == 4) {
+    kernel_name += "4input";
   } else {
-    MS_LOG(ERROR) << " input must be 2 or 3";
+    MS_LOG(ERROR) << " input must be 2 3 or 4";
     return RET_ERROR;
   }
   if (in_format == schema::Format_NC4HW4) {
@@ -194,11 +196,25 @@ int ConcatOpenCLKernel::Run() {
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape3_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, param->axis_);
-  } else if (in_tensors_.size() < 2) {
-    MS_LOG(ERROR) << " input sizes must >= 2 ";
-    return RET_ERROR;
+  } else if (in_tensors_.size() == 4) {
+    auto input3_shape = in_tensors_[2]->shape();
+    auto input4_shape = in_tensors_[3]->shape();
+    cl_int4 input_shape3_ = {input3_shape[0], input3_shape[1], input3_shape[2], UP_DIV(input3_shape[3], C4NUM)};
+    cl_int4 input_shape4_ = {input4_shape[0], input4_shape[1], input4_shape[2], UP_DIV(input4_shape[3], C4NUM)};
+
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->MutableData());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->MutableData());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->MutableData());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[3]->MutableData());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->MutableData());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape1_);
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape2_);
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape3_);
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape4_);
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, param->axis_);
   } else {
-    MS_LOG(ERROR) << " only support inputs <= 3 ";
+    MS_LOG(ERROR) << " input sizes must 2 or 3 or 4";
     return RET_ERROR;
   }
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);

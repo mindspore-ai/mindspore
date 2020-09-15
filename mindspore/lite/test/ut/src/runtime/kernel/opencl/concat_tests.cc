@@ -47,22 +47,25 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_2input_dim4_axis3) {
   auto allocator = ocl_runtime->GetAllocator();
 
   // get the input from .bin
-  size_t input1_size, input2_size, input3_size, output_size;
+  size_t input1_size, input2_size, input3_size, input4_size, output_size;
   std::string input1Ppath = "./test_data/concatfp16_input1.bin";
   std::string input2Ppath = "./test_data/concatfp16_input2.bin";
   std::string input3Ppath = "./test_data/concatfp16_input3.bin";
+  std::string input4Ppath = "./test_data/concatfp16_input4.bin";
   std::string correctOutputPath = "./test_data/concatfp16_output.bin";
   auto input_data1 = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
   auto input_data2 = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input2Ppath.c_str(), &input2_size));
   auto input_data3 = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input3Ppath.c_str(), &input3_size));
+  auto input_data4 = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input4Ppath.c_str(), &input4_size));
   auto correctOutput =
     reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
 
   MS_LOG(INFO) << " init tensors ";
-  constexpr int INPUT_NUM = 2;
-  std::array<std::vector<int>, INPUT_NUM> input_shapes = {std::vector<int>{1, 19, 19, 96},
-                                                          std::vector<int>{1, 19, 19, 96}};
-  std::vector<int> output_shape = {1, 19, 19, 192};
+  constexpr int INPUT_NUM = 4;
+  std::array<std::vector<int>, INPUT_NUM> input_shapes = {
+    std::vector<int>{1, 19, 19, 96}, std::vector<int>{1, 19, 19, 96}, std::vector<int>{1, 19, 19, 96},
+    std::vector<int>{1, 19, 19, 96}};
+  std::vector<int> output_shape = {1, 76, 19, 96};
   auto data_type = kNumberTypeFloat16;
   auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
   std::vector<lite::Tensor *> inputs;
@@ -97,7 +100,7 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_2input_dim4_axis3) {
     }
     return;
   }
-  param->axis_ = 3;
+  param->axis_ = 1;
   auto *concat_kernel =
     new (std::nothrow) kernel::ConcatOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   if (concat_kernel == nullptr) {
@@ -141,8 +144,13 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_2input_dim4_axis3) {
     memcpy(inputs[0]->MutableData(), input_data1, input1_size);
     memcpy(inputs[1]->MutableData(), input_data2, input2_size);
     memcpy(inputs[2]->MutableData(), input_data3, input3_size);
+  } else if (inputs.size() == 4) {
+    memcpy(inputs[0]->MutableData(), input_data1, input1_size);
+    memcpy(inputs[1]->MutableData(), input_data2, input2_size);
+    memcpy(inputs[2]->MutableData(), input_data3, input3_size);
+    memcpy(inputs[3]->MutableData(), input_data4, input4_size);
   } else {
-    MS_LOG(ERROR) << " input size must be 2 or 3";
+    MS_LOG(ERROR) << " input size must be 2 or 3 or 4";
   }
 
   std::cout << "==================output data================" << std::endl;
