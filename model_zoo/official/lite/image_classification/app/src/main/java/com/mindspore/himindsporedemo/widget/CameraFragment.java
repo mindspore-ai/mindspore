@@ -427,7 +427,6 @@ public class CameraFragment extends Fragment {
 
             mPreviewRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             mPreviewRequestBuilder.addTarget(surface);
-            // mPreviewRequestBuilder.addTarget(mImageReader.getSurface());
             // Here, we create a CameraCaptureSession for ic_launcher preview.
             mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
                     new CameraCaptureSession.StateCallback() {

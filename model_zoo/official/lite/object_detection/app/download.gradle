@@ -6,10 +6,10 @@
 def targetMindSporeInclude = "src/main/cpp/"
 def mindsporeLite_Version = "mindspore-lite-0.7.0-minddata-arm64-cpu"
 
-def targetModelFile = "src/main/assets/model/mobilenetv2.ms"
+def targetModelFile = "src/main/assets/model/ssd.ms"
 def mindSporeLibrary_arm64 = "src/main/cpp/${mindsporeLite_Version}.tar.gz"
 
-def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_openimage_lite/mobilenetv2.ms"
+def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/ssd_mobilenetv2_lite/ssd.ms"
 def mindsporeLiteDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%201.0/${mindsporeLite_Version}.tar.gz"
 
 def cleantargetMindSporeInclude = "src/main/cpp"
@@ -58,7 +58,7 @@ if (file("src/main/cpp/${mindsporeLite_Version}/lib/libmindspore-lite.so").exist
     cleanUnusedmindsporeFiles.enabled = false
 }
 
-if (file("src/main/assets/model/mobilenetv2.ms").exists()){
+if (file("src/main/assets/model/ssd.ms").exists()){
     downloadModelFile.enabled = false
 }
 
