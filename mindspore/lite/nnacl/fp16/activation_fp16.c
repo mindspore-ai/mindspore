@@ -18,24 +18,17 @@
 #include "nnacl/errorcode.h"
 
 int ReluFp16(const float16_t *src, float16_t *dst, int ele_num) {
-  int eight_block = UP_DIV(ele_num, C8NUM);
-  int i;
-  for (i = 0; i < eight_block - 1; i++) {
-    int index = i * C8NUM;
+  int offset = 0;
 #ifdef ENABLE_NEON
-    float16x8_t relu_src = vld1q_f16(src + index);
-    float16x8_t zero_src = vdupq_n_f16(0);
-    relu_src = vmaxq_f16(relu_src, zero_src);
-    vst1q_f16(dst + index, relu_src);
-#else
-    int j;
-    for (j = 0; j < C8NUM; j++) {
-      dst[index + j] = src[index + j] < 0 ? 0 : src[index + j];
-    }
-#endif
+  float16x8_t zero = vdupq_n_f16(0);
+  for (; offset <= ele_num - C8NUM; offset += C8NUM) {
+    float16x8_t src_value = vld1q_f16(src + offset);
+    float16x8_t rst_value = vmaxq_f16(src_value, zero);
+    vst1q_f16(dst + offset, rst_value);
   }
-  for (int j = (eight_block - 1) * C8NUM; j < ele_num; ++j) {
-    dst[j] = src[j] < 0 ? 0 : src[j];
+#endif
+  for (; offset < ele_num; offset++) {
+    dst[offset] = src[offset] < 0 ? 0 : src[offset];
   }
   return NNACL_OK;
 }
