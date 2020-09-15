@@ -791,11 +791,6 @@ int ElementDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
   int block_c8 = element_size - block_mod;
 
   for (int index = 0; index < block_c8; index += C8NUM) {
-    for (int i = 0; i < C8NUM; ++i) {
-      if (input1[i] == 0) {
-        return NNACL_ERRCODE_DIVISOR_ZERO;
-      }
-    }
 #ifdef ENABLE_NEON
     float16x8_t vin0 = vld1q_f16(input0);
     float16x8_t vin1 = vld1q_f16(input1);
@@ -811,9 +806,6 @@ int ElementDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
     output += C8NUM;
   }
   for (int index = 0; index < block_mod; ++index) {
-    if (input1[index] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
     output[index] = input0[index] / input1[index];
   }
   return NNACL_OK;
@@ -830,11 +822,6 @@ int ElementOptDivFp16(float16_t *input0, float16_t *input1, float16_t *output, i
 #endif
   if (param->in_elements_num0_ == 1) {
     for (int index = 0; index < block_c8; index += C8NUM) {
-      for (int i = 0; i < C8NUM; ++i) {
-        if (input1[i] == 0) {
-          return NNACL_ERRCODE_DIVISOR_ZERO;
-        }
-      }
 #ifdef ENABLE_NEON
       float16x8_t vin0 = vin0_opt;
       float16x8_t vin1 = vld1q_f16(input1);
@@ -849,9 +836,6 @@ int ElementOptDivFp16(float16_t *input0, float16_t *input1, float16_t *output, i
       output += C8NUM;
     }
     for (int index = 0; index < block_mod; ++index) {
-      if (input1[index] == 0) {
-        return NNACL_ERRCODE_DIVISOR_ZERO;
-      }
       output[index] = in0_opt / input1[index];
     }
   } else {
@@ -886,11 +870,6 @@ int ElementDivReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
   float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
 #endif
   for (int index = 0; index < block_c8; index += C8NUM) {
-    for (int i = 0; i < C8NUM; ++i) {
-      if (input1[i] == 0) {
-        return NNACL_ERRCODE_DIVISOR_ZERO;
-      }
-    }
 #ifdef ENABLE_NEON
     float16x8_t vin0 = vld1q_f16(input0);
     float16x8_t vin1 = vld1q_f16(input1);
@@ -928,11 +907,6 @@ int ElementOptDivReluFp16(float16_t *input0, float16_t *input1, float16_t *outpu
 #endif
   if (param->in_elements_num0_ == 1) {
     for (int index = 0; index < block_c8; index += C8NUM) {
-      for (int i = 0; i < C8NUM; ++i) {
-        if (input1[i] == 0) {
-          return NNACL_ERRCODE_DIVISOR_ZERO;
-        }
-      }
 #ifdef ENABLE_NEON
       float16x8_t vin0 = vin0_opt;
       float16x8_t vin1 = vld1q_f16(input1);
@@ -985,11 +959,6 @@ int ElementDivRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output,
   float16x8_t bounds = {6, 6, 6, 6, 6, 6, 6, 6};
 #endif
   for (int index = 0; index < block_c8; index += C8NUM) {
-    for (int i = 0; i < C8NUM; ++i) {
-      if (input1[i] == 0) {
-        return NNACL_ERRCODE_DIVISOR_ZERO;
-      }
-    }
 #ifdef ENABLE_NEON
     float16x8_t vin0 = vld1q_f16(input0);
     float16x8_t vin1 = vld1q_f16(input1);
@@ -1027,11 +996,6 @@ int ElementOptDivRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *outp
 #endif
   if (param->in_elements_num0_ == 1) {
     for (int index = 0; index < block_c8; index += C8NUM) {
-      for (int i = 0; i < C8NUM; ++i) {
-        if (input1[i] == 0) {
-          return NNACL_ERRCODE_DIVISOR_ZERO;
-        }
-      }
 #ifdef ENABLE_NEON
       float16x8_t vin0 = vin0_opt;
       float16x8_t vin1 = vld1q_f16(input1);
@@ -1088,17 +1052,11 @@ int ElementFloorModFp16(float16_t *input0, float16_t *input1, float16_t *output,
 int ElementOptFloorModFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param) {
   if (param->in_elements_num1_ == 1) {
-    if (input1[0] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
     for (int i = 0; i < element_size; ++i) {
       output[i] = input0[i] - floorf(input0[i] / input1[0]) * input1[0];
     }
   } else {
     for (int i = 0; i < element_size; ++i) {
-      if (input1[i] == 0) {
-        return NNACL_ERRCODE_DIVISOR_ZERO;
-      }
       output[i] = input0[i] - floorf(input0[i] / input1[i]) * input1[i];
     }
   }
@@ -1107,9 +1065,6 @@ int ElementOptFloorModFp16(float16_t *input0, float16_t *input1, float16_t *outp
 
 int ElementFloorDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; ++i) {
-    if (input1[i] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
     output[i] = floorf(input0[i] / input1[i]);
   }
   return NNACL_OK;
@@ -1117,17 +1072,11 @@ int ElementFloorDivFp16(float16_t *input0, float16_t *input1, float16_t *output,
 int ElementOptFloorDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param) {
   if (param->in_elements_num1_ == 1) {
-    if (input1[0] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
     for (int i = 0; i < element_size; ++i) {
       output[i] = floorf(input0[i] / input1[0]);
     }
   } else {
     for (int i = 0; i < element_size; ++i) {
-      if (input1[i] == 0) {
-        return NNACL_ERRCODE_DIVISOR_ZERO;
-      }
       output[i] = floorf(input0[i] / input1[i]);
     }
   }
