@@ -31,3 +31,9 @@ cp -fr $TEST_DATA_DIR/testPK ./data
 
 # for GPU OpenCL
 ./lite-test --gtest_filter="TestConvolutionOpenCL.simple_test*"
+
+./lite-test --gtest_filter="TestArithmeticSelfOpenCLCI.ArithmeticSelfRound*"
+./lite-test --gtest_filter="TestConcatOpenCLCI.ConcatFp32_2inputforCI*"
+./lite-test --gtest_filter="TestSliceOpenCLfp32.Slicefp32CI*"
+./lite-test --gtest_filter="TestBatchnormOpenCLCI.Batchnormfp32CI*"
+

@@ -451,7 +451,6 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp16) {
   float16_t gnd_data[] = {3.3848767, 1.4446403, 1.8428744, 1.3194335, 2.5873442, 2.1384869, 2.04022,  1.1872686,
                           2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
-  lite::opencl::OpenCLRuntime::GetInstance()->SetFp16Enable(true);
   DepthWiseTestMain<float16_t, float16_t>(conv_param, input_data, weight_data, gnd_data, schema::Format_NHWC4,
                                           kNumberTypeFloat16, true, 1e-2);
 }
