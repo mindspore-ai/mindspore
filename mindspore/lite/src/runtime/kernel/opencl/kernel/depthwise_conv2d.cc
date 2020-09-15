@@ -134,7 +134,14 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
     size_t up_co_size = C4NUM * CO4 * dtype_size;
     memset(bias_data_, 0, up_co_size);
     auto ori_bias = in_tensors_.at(kBiasIndex)->MutableData();
-    memcpy(bias_data_, ori_bias, out_tensors_[0]->Channel() * dtype_size);
+    if (is_fp16 && in_tensors_.at(kBiasIndex)->data_type() == kNumberTypeFloat32) {
+      float16_t *bias_ptr = static_cast<float16_t*>(bias_data_);
+      for (size_t i = 0; i < in_tensors_.at(kBiasIndex)->ElementsNum(); ++i) {
+        bias_ptr[i] = static_cast<float16_t>(static_cast<float*>(ori_bias)[i]);
+      }
+    } else {
+      memcpy(bias_data_, ori_bias, out_tensors_[0]->Channel() * dtype_size);
+    }
     allocator->UnmapBuffer(bias_data_);
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);

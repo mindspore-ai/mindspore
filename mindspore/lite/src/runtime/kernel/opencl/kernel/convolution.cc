@@ -69,7 +69,7 @@ int ConvolutionOpenCLKernel::Init() {
   TILES_X_ = UP_DIV(OW_, 4);
   TILES_Y_ = UP_DIV(OH_, 4);
   TILES_XY_ = TILES_X_ * TILES_Y_;
-  use_winograd_ = UseWinograd4x4To6x6();
+  use_winograd_ = UseWinograd4x4To6x6() && use_fp16_;
 
   // build kernel
   if (use_winograd_) {
