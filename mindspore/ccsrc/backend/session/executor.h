@@ -146,7 +146,7 @@ class ExitTask : public Task {
 class Executor {
  public:
   Executor(const std::string &device_name, uint32_t device_id);
-  ~Executor() = default;
+  ~Executor();
   void WorkerLoop();
   void WorkerJoin();
   GraphId CompileGraphAsync(const SessionPtr &session, const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
@@ -168,7 +168,6 @@ class Executor {
   std::vector<std::shared_ptr<RunGraphTask>> GetNewReadyTasks();
   bool IsAllInputsReady(const std::vector<tensor::TensorPtr> &inputs);
   void CheckException();
-  void StopWorker();
   void OnWorkerExit();
 
   uint32_t device_id_;

@@ -91,6 +91,8 @@ Executor::Executor(const std::string &device_name, uint32_t device_id) {
   worker_ = std::make_shared<std::thread>(&Executor::WorkerLoop, this);
 }
 
+Executor::~Executor() { WorkerJoin(); }
+
 void Executor::CheckException() {
   if (exception_ptr_ != nullptr) {
     auto exception_ptr = exception_ptr_;
@@ -100,8 +102,15 @@ void Executor::CheckException() {
 }
 
 void Executor::WorkerJoin() {
-  StopWorker();
-  worker_->join();
+  if (worker_->joinable()) {
+    {
+      std::unique_lock<std::mutex> lock(task_mutex_);
+      auto task = std::make_shared<ExitTask>();
+      ready_tasks_.push(task);
+      task_cond_var_.notify_all();
+    }
+    worker_->join();
+  }
 }
 
 void Executor::WorkerLoop() {
@@ -280,13 +289,6 @@ bool Executor::DestroyCommGroup(const std::string &group_name) {
   task_cond_var_.notify_all();
   sync_cond_var_.wait(lock);
   return task->result_;
-}
-
-void Executor::StopWorker() {
-  std::unique_lock<std::mutex> lock(task_mutex_);
-  auto task = std::make_shared<ExitTask>();
-  ready_tasks_.push(task);
-  task_cond_var_.notify_all();
 }
 
 void Executor::OnWorkerExit() {
