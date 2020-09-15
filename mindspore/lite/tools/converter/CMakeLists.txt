@@ -1,5 +1,4 @@
 add_definitions(-DPRIMITIVE_WRITEABLE)
-string(REPLACE    " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 file (GLOB_RECURSE CORE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/*.cc
