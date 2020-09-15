@@ -181,8 +181,8 @@ class SameTypeShape(PrimitiveWithInfer):
     Checks whether data type and shape of two tensors are the same.
 
     Raises:
-        TypeError: If data type not the same.
-        ValueError: If shape of two tensors not the same.
+        TypeError: If the data types of two tensors are not the same.
+        ValueError: If the shapes of two tensors are not the same.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -362,7 +362,7 @@ class Reshape(PrimitiveWithInfer):
     Reshapes input tensor with the same values based on a given shape tuple.
 
     Raises:
-        ValueError: Given a shape tuple, if it has more than one -1; or if the product
+        ValueError: Given a shape tuple, if it has several -1; or if the product
             of its elements is less than or equal to 0 or cannot be divided by the product
             of the input tensor shape; or if it does not match the input's array size.
 
@@ -671,10 +671,10 @@ class SparseGatherV2(GatherV2):
 
 class Padding(PrimitiveWithInfer):
     """
-    Extend the last dimension of input tensor from 1 to pad_dim_size, fill with 0.
+    Extend the last dimension of input tensor from 1 to pad_dim_size, by filling with 0.
 
     Args:
-        pad_dim_size (int): The extend value of last dimension of x, must be positive.
+        pad_dim_size (int): The value of the last dimension of x to be extended, which must be positive.
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The rank of x should be at least 2.
@@ -921,7 +921,7 @@ class Fill(PrimitiveWithInfer):
 
 class OnesLike(PrimitiveWithInfer):
     """
-    Creates a new tensor. All elements' value are 1.
+    Creates a new tensor. The values of all elements are 1.
 
     Returns a tensor of ones with the same shape and type as the input.
 
@@ -1025,7 +1025,7 @@ class TupleToArray(PrimitiveWithInfer):
 
 class ScalarToArray(PrimitiveWithInfer):
     """
-    Converts scalar to `Tensor`.
+    Converts a scalar to a `Tensor`.
 
     Inputs:
         - **input_x** (Union[int, float]) - The input is a scalar. Only constant value is allowed.
@@ -1054,7 +1054,7 @@ class ScalarToArray(PrimitiveWithInfer):
 
 class ScalarToTensor(PrimitiveWithInfer):
     """
-    Converts scalar to `Tensor`, and convert data type to specified type.
+    Converts a scalar to a `Tensor`, and convert data type to specified type.
 
     Inputs:
         - **input_x** (Union[int, float]) - The input is a scalar. Only constant value is allowed.
@@ -1653,11 +1653,11 @@ class ParallelConcat(PrimitiveWithInfer):
         The input tensors are all required to have size 1 in the first dimension.
 
     Inputs:
-        - **values** (tuple, list) - Tuple or list of input tensors. The data type and shape of these
-          tensors must be same.
+        - **values** (tuple, list) - A tuple or a list of input tensors. The data type and shape of these
+          tensors must be the same.
 
     Outputs:
-        Tensor, data type same as `values`.
+        Tensor, data type is the same as `values`.
 
     Examples:
         >>> data1 = Tensor(np.array([[0, 1]]).astype(np.int32))
@@ -1726,7 +1726,7 @@ class Pack(PrimitiveWithInfer):
     If :math:`0 \le axis`, the shape of the output tensor is :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)`.
 
     Args:
-        axis (int): Dimension along which to pack. Default: 0.
+        axis (int): Dimension to pack. Default: 0.
                     Negative values wrap around. The range is [-(R+1), R+1).
 
     Inputs:
@@ -1736,8 +1736,8 @@ class Pack(PrimitiveWithInfer):
         Tensor. A packed Tensor with the same type as `input_x`.
 
     Raises:
-        TypeError: If the data types of elements in input_x are not the same.
-        ValueError: If length of input_x is not greater than 1;
+        TypeError: If the data types of elements in `input_x` are not the same.
+        ValueError: If the length of `input_x` is not greater than 1;
                     or if axis is out of the range [-(R+1), R+1);
                     or if the shapes of elements in input_x are not the same.
 
@@ -2267,7 +2267,7 @@ class Diag(PrimitiveWithInfer):
         - **input_x** (Tensor) - The input tensor. The input shape should be less than 5d.
 
     Outputs:
-        Tensor, has the same dtype as the 'input_x'.
+        Tensor, has the same dtype as the `input_x`.
 
     Examples:
         >>> input_x = Tensor([1, 2, 3, 4])
@@ -2437,7 +2437,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
     r"""
     Resize the input tensor by using nearest neighbor algorithm.
 
-    Resize input tensor to given size by using nearest neighbor algorithm. The nearest
+    Resize the input tensor to a given size by using the nearest neighbor algorithm. The nearest
     neighbor algorithm selects the value of the nearest point and does not consider the
     values of neighboring points at all, yielding a piecewise-constant interpolant.
 
@@ -2665,8 +2665,8 @@ class ScatterMax(_ScatterOp):
     Inputs:
         - **input_x** (Parameter) - The target parameter.
         - **indices** (Tensor) - The index to do max operation whose data type should be mindspore.int32.
-        - **updates** (Tensor) - The tensor doing the maximum operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+        - **updates** (Tensor) - The tensor that performs the maximum operation with `input_x`,
+          the data type is the same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
         Parameter, the updated `input_x`.
@@ -2739,8 +2739,8 @@ class ScatterAdd(_ScatterOp):
     Inputs:
         - **input_x** (Parameter) - The target parameter.
         - **indices** (Tensor) - The index to do add operation whose data type should be mindspore.int32.
-        - **updates** (Tensor) - The tensor doing the add operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+        - **updates** (Tensor) - The tensor that performs the add operation with `input_x`,
+          the data type is the same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
         Parameter, the updated `input_x`.
@@ -2841,8 +2841,8 @@ class ScatterDiv(_ScatterOp):
     Inputs:
         - **input_x** (Parameter) - The target parameter.
         - **indices** (Tensor) - The index to do div operation whose data type should be mindspore.int32.
-        - **updates** (Tensor) - The tensor doing the div operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+        - **updates** (Tensor) - The tensor that performs the div operation with `input_x`,
+          the data type is the same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
         Parameter, the updated `input_x`.
@@ -3510,12 +3510,12 @@ class ReverseSequence(PrimitiveWithInfer):
     Reverses variable length slices.
 
     Args:
-        seq_dim (int): The dimension along which reversal is performed. Required.
-        batch_dim (int): The input is sliced along this dimmension. Default: 0.
+        seq_dim (int): The dimension where reversal is performed. Required.
+        batch_dim (int): The input is sliced in this dimension. Default: 0.
 
     Inputs:
-        - **x** (Tensor) - The input to reverse, support all number types including bool.
-        - **seq_lengths** (Tensor) - Must be 1-D vector with types: int32, int64.
+        - **x** (Tensor) - The input to reverse, supporting all number types including bool.
+        - **seq_lengths** (Tensor) - Must be a 1-D vector with int32 or int64 types.
 
     Outputs:
         Reversed tensor with the same shape and data type as input.

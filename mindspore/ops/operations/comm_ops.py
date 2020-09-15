@@ -26,7 +26,7 @@ class ReduceOp:
     """
     Operation options for reduce tensors.
 
-    There are four kinds of operation options, "SUM","MAX","MIN","PROD".
+    There are four kinds of operation options, "SUM", "MAX", "MIN", and "PROD".
 
         - SUM: Take the sum.
         - MAX: Take the maximum.
@@ -232,12 +232,12 @@ class ReduceScatter(PrimitiveWithInfer):
 
     Args:
         op (str): Specifies an operation used for element-wise reductions,
-                  like sum, max, avg. Default: ReduceOp.SUM.
+                  like SUM, MAX, AVG. Default: ReduceOp.SUM.
         group (str): The communication group to work on. Default: "hccl_world_group".
 
     Raises:
         TypeError: If any of operation and group is not a string.
-        ValueError: If the first dimension of input can not be divided by rank size.
+        ValueError: If the first dimension of the input cannot be divided by the rank size.
 
     Examples:
         >>> from mindspore import Tensor

@@ -490,7 +490,7 @@ class PopulationCount(PrimitiveWithInfer):
         - **input** (Tensor) -  The data type should be int16 or uint16.
 
     Outputs:
-        Tensor, with shape same as the input.
+        Tensor, with the sam  shape as the input.
 
     Examples:
         >>> population_count = P.PopulationCount()

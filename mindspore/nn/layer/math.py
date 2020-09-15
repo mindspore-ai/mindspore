@@ -46,13 +46,13 @@ class ReduceLogSumExp(Cell):
           Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same dtype as the 'input_x'.
+        Tensor, has the same dtype as the `input_x`.
 
-        - If axis is (), and keep_dims is false,
+        - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the sum of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is false,
+        - If axis is int, set as 2, and keep_dims is False,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is false,
+        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
@@ -214,7 +214,7 @@ class LGamma(Cell):
         - **input_x** (Tensor[Number]) - The input tensor. Only float16, float32 are supported.
 
     Outputs:
-        Tensor, has the same shape and dtype as the 'input_x'.
+        Tensor, has the same shape and dtype as the `input_x`.
 
     Examples:
         >>> input_x = Tensor(np.array(2, 3, 4).astype(np.float32))
