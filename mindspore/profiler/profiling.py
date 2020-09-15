@@ -322,15 +322,16 @@ class Profiler:
             if not item_dict:
                 logger.error("Profiling: job path %s, fail to get job start info.", path)
                 continue
-            if self._start_time > int(item_dict["start_time"]):
-                logger.info("Profiling: job path %s, start_time %s, training start_time %d.",
-                            path, item_dict["start_time"], self._start_time)
-                break
 
             if self._dev_id != item_dict["device_id"]:
                 logger.info("Profiling: job path %s, dev id %s, training device id %s.",
                             path, item_dict["device_id"], self._dev_id)
                 continue
+
+            if self._start_time > int(item_dict["start_time"]):
+                logger.info("Profiling: job path %s, start_time %s, training start_time %d.",
+                            path, item_dict["start_time"], self._start_time)
+                break
 
             job_id = item.strip()
             break
