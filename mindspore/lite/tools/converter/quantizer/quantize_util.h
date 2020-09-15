@@ -109,7 +109,7 @@ T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quan
   const int minLimit = quant_min;
 
   return [maxLimit, minLimit, zeroPoint, scale, narrowRange, originData] {
-    int quant_data = std::round(originData / scale + zeroPoint);
+    auto quant_data = std::round(originData / scale + zeroPoint);
     if (quant_data > maxLimit) {
       quant_data = maxLimit;
     } else if (quant_data < minLimit) {
@@ -120,7 +120,7 @@ T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quan
 }
 template <typename T>
 STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primitive_c, QuantType quantType,
-                   int quant_max, int quant_min, size_t bitNum, bool per_channel, bool depth_wise) {
+                   int quant_max, int quant_min, size_t bitNum, bool per_channel) {
   auto dims = weight->tensor_shape();
   if (per_channel) {
     if (dims.size() != 4) {
@@ -145,104 +145,53 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
   std::vector<T> quant_datas(elem_count);
 
   if (per_channel) {
-    // notice:
-    // at now for tflite model, Conv2D's weight format is KHWC, so is DepthwiseConv2D
-    // if TransWeightFormat is done before PostTraingingQuantization, the DepthwiseCon2D's weight is CHWK
-    if (depth_wise) {
-      // channel at last
-      auto channels = dims[3];
-      if (channels == 0) {
-        MS_LOG(ERROR) << "channels is zero";
-        return RET_ERROR;
-      }
-      size_t one_filter_size = elem_count / channels;
-
-      for (int i = 0; i < channels; i++) {
-        float min = FLT_MAX;
-        float max = -FLT_MAX;
-        // find min and max
-        for (size_t j = 0; j < one_filter_size; j++) {
-          auto index = i + j * channels;
-          if (index >= elem_count) {
-            MS_LOG(ERROR) << "over flow!";
-            return RET_ERROR;
-          }
-          min = std::min(min, raw_datas[index]);
-          max = std::max(max, raw_datas[index]);
-        }
-        schema::QuantParamT quant_param;
-        STATUS status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bitNum);
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
-          return status;
-        }
-        quant_params.emplace_back(quant_param);
-        // do quantization
-        for (uint32_t j = 0; j < one_filter_size; j++) {
-          auto index = i + j * channels;
-          if (index >= elem_count) {
-            MS_LOG(ERROR) << "over flow!";
-            return RET_ERROR;
-          }
-          float raw_data = raw_datas[index];
-          auto quant_data = QuantizeData<T>(raw_data, quant_param, quant_max, quant_min);
-          quant_datas[index] = quant_data;
-        }
-      }
-      auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(T));
-      if (ret != EOK) {
-        MS_LOG(ERROR) << "memcpy error: " << ret;
-        return RET_ERROR;
-      }
-      weight->set_tensor_size(elem_count * sizeof(T));
-    } else {
-      // channel at first
-      auto channels = dims[0];
-      if (channels == 0) {
-        MS_LOG(ERROR) << "channels is zero";
-        return RET_ERROR;
-      }
-      size_t one_filter_size = elem_count / channels;
-
-      for (int i = 0; i < channels; i++) {
-        float min = FLT_MAX;
-        float max = -FLT_MAX;
-        // find min and max
-        for (size_t j = 0; j < one_filter_size; j++) {
-          auto index = j + i * one_filter_size;
-          if (index >= elem_count) {
-            MS_LOG(ERROR) << "over flow!";
-            return RET_ERROR;
-          }
-          min = std::min(min, raw_datas[index]);
-          max = std::max(max, raw_datas[index]);
-        }
-        schema::QuantParamT quant_param;
-        STATUS status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bitNum);
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
-          return status;
-        }
-        quant_params.emplace_back(quant_param);
-        // do quantization
-        for (uint32_t j = 0; j < one_filter_size; j++) {
-          auto index = j + i * one_filter_size;
-          if (index >= elem_count) {
-            MS_LOG(ERROR) << "over flow!";
-            return RET_ERROR;
-          }
-          float raw_data = raw_datas[index];
-          auto quant_data = QuantizeData<T>(raw_data, quant_param, quant_max, quant_min);
-          quant_datas[index] = quant_data;
-        }
-      }
-      auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(int8_t));
-      if (ret != EOK) {
-        MS_LOG(ERROR) << "memcpy error: " << ret;
-        return RET_ERROR;
-      }
-      weight->set_tensor_size(elem_count * sizeof(T));
+    // notice: assume Con2D\DepthwiseConv2D's weight format are same: KHWC
+    // channel at first
+    auto channels = dims[0];
+    if (channels == 0) {
+      MS_LOG(ERROR) << "channels is zero";
+      return RET_ERROR;
     }
+    size_t one_filter_size = elem_count / channels;
+
+    for (int i = 0; i < channels; i++) {
+      float min = FLT_MAX;
+      float max = -FLT_MAX;
+      // find min and max
+      for (size_t j = 0; j < one_filter_size; j++) {
+        auto index = j + i * one_filter_size;
+        if (index >= elem_count) {
+          MS_LOG(ERROR) << "over flow!";
+          return RET_ERROR;
+        }
+        min = std::min(min, raw_datas[index]);
+        max = std::max(max, raw_datas[index]);
+      }
+      schema::QuantParamT quant_param;
+      STATUS status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bitNum);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
+        return status;
+      }
+      quant_params.emplace_back(quant_param);
+      // do quantization
+      for (uint32_t j = 0; j < one_filter_size; j++) {
+        auto index = j + i * one_filter_size;
+        if (index >= elem_count) {
+          MS_LOG(ERROR) << "over flow!";
+          return RET_ERROR;
+        }
+        float raw_data = raw_datas[index];
+        auto quant_data = QuantizeData<T>(raw_data, quant_param, quant_max, quant_min);
+        quant_datas[index] = quant_data;
+      }
+    }
+    auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(int8_t));
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy error: " << ret;
+      return RET_ERROR;
+    }
+    weight->set_tensor_size(elem_count * sizeof(T));
   } else {
     // per layer
     float min = FLT_MAX;

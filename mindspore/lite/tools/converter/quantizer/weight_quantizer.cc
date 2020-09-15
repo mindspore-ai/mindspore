@@ -97,8 +97,7 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
     std::vector<schema::QuantParamT> quant_params;
     primitive_c->AddInputQuantParam(quant_params);
     auto status =
-      QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant,
-        quant_max, quant_min, bitNum, true, false);
+      QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;
@@ -160,8 +159,8 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
 
     std::vector<schema::QuantParamT> quant_params;
     primitive_c->AddInputQuantParam(quant_params);
-    auto status = QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant,
-      quant_max, quant_min, bitNum, true, false);
+    auto status =
+      QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;

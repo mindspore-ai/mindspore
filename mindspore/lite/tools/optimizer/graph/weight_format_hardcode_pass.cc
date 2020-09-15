@@ -40,6 +40,7 @@ lite::STATUS WeightFormatHardCodePass::HardCodeCAFFE(const AnfNodePtr &conv_node
   MS_ASSERT(conv_cnode != nullptr);
   MS_ASSERT(param_value != nullptr);
   switch (quant_type) {
+    case schema::QuantType_PostTraining:
     case QuantType_WeightQuant:
     case QuantType_QUANT_NONE:param_value->set_format(schema::Format::Format_KCHW);
       break;
@@ -73,6 +74,7 @@ lite::STATUS WeightFormatHardCodePass::HardCodeONNX(const AnfNodePtr &conv_node,
       }
     }
       break;
+    case QuantType_PostTraining:
     case QuantType_WeightQuant:
     case QuantType_QUANT_NONE: {
       // conv (K x C/group x kH x kW) group = 1
@@ -114,6 +116,7 @@ lite::STATUS WeightFormatHardCodePass::HardCodeMS(const AnfNodePtr &conv_node,
       }
     }
       break;
+    case QuantType_PostTraining:
     case QuantType_WeightQuant:
     case QuantType_QUANT_NONE: {
       // sum up from current ms quant models
