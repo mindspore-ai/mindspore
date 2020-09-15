@@ -176,6 +176,9 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
       MS_LOG(ERROR) << "Convert Convolution to Depthwise failed";
       return RET_ERROR;
     }
+  } else if (attr->group != 1) {
+    MS_LOG(ERROR) << "group conv hasn't supported";
+    return RET_NOT_SUPPORT;
   } else {
     op->primitive->value.type = schema::PrimitiveType_Conv2D;
     op->primitive->value.value = attr.release();

@@ -32,6 +32,7 @@ constexpr int RET_PARAM_INVALID = -3; /**< Invalid parameter.*/
 constexpr int RET_NO_CHANGE = -4;     /**< No change. */
 constexpr int RET_SUCCESS_EXIT = -5;  /**< No error but exit. */
 constexpr int RET_MEMORY_FAILED = -6; /**< Fail to create memory. */
+constexpr int RET_NOT_SUPPORT = -7;   /**< Fail to support. */
 
 /* Executor error code, range: [-101,-200] */
 constexpr int RET_OUT_OF_TENSOR_RANGE = -101; /**< Failed to check range. */
@@ -53,6 +54,10 @@ constexpr int RET_FORMAT_ERR = -401; /**< Failed to checking tensor format. */
 /* InferShape error code, range: [-501,-600] */
 constexpr int RET_INFER_ERR = -501;     /**< Failed to infer shape. */
 constexpr int RET_INFER_INVALID = -502; /**< Invalid infer shape before runtime. */
+
+/* User input param error code, range: [-601, 700]*/
+constexpr int RET_INPUT_PARAM_INVALID = -601;     /**< Invalid input param by user. */
+constexpr int RET_INPUT_PARAM_LACK = -602;     /**< LACK input param by user. */
 }  // namespace lite
 }  // namespace mindspore
 

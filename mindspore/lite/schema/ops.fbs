@@ -948,3 +948,12 @@ table BlackBox {
 table LshProjection {
     type : LshProjectionType;
 }
+
+table HashtableLookup {
+}
+
+table SkipGram {
+    includeAllGrams : bool;
+    maxSkipSize : int;
+    ngramSize : int;
+}

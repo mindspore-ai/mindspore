@@ -109,15 +109,15 @@ int RunConverter(int argc, const char **argv) {
   std::unique_ptr<converter::Flags> flags(new (std::nothrow) converter::Flags);
   if (flags == nullptr) {
     MS_LOG(ERROR) << "new flags error ";
+    std::cout << "NEW FLAGS ERROR:" << RET_MEMORY_FAILED << std::endl;
     return RET_MEMORY_FAILED;
   }
   auto status = flags->Init(argc, argv);
-  if (status == RET_SUCCESS_EXIT) {
-    return status;
-  }
-  if (status != 0) {
-    MS_LOG(ERROR) << "converter::Flags Init failed: " << status;
-    std::cout << "CONVERTER::FLAGS INIT FAILED" << std::endl;
+  if (status != RET_OK) {
+    if (status != RET_SUCCESS_EXIT) {
+      MS_LOG(ERROR) << "converter::Flags Init failed: " << status;
+      std::cout << "CONVERTER::FLAGS INIT FAILED:" << status << std::endl;
+    }
     return status;
   }
   // Load graph
@@ -148,13 +148,14 @@ int RunConverter(int argc, const char **argv) {
     } break;
     default: {
       MS_LOG(ERROR) << "Unsupported fmkType: " << flags->fmk;
-      return 1;
+      std::cout << "UNSUPPORTED FMKTYPE " << flags->fmk << ":" << RET_INPUT_PARAM_INVALID << std::endl;
+      return RET_INPUT_PARAM_INVALID;
     }
   }
   status = ReturnCode::GetSingleReturnCode()->GetReturnCode();
   if (fb_graph == nullptr) {
     MS_LOG(ERROR) << "Convert model return nullptr";
-    std::cout << "CONVERT RESULT: FAILED!" << std::endl;
+    std::cout << "CONVERT RESULT FAILED:" << status << std::endl;
     return status;
   }
 
@@ -164,14 +165,14 @@ int RunConverter(int argc, const char **argv) {
   status = storage.Save(*fb_graph, flags->outputFile);
   if (status != 0) {
     MS_LOG(ERROR) << "Save graph failed";
-    std::cout << "SAVE GRAPH FAILED!" << std::endl;
-    return RET_ERROR;
+    std::cout << "SAVE GRAPH FAILED:" << status << std::endl;
+    return status;
   }
 
   delete fb_graph;
   MS_LOG(INFO) << "CONVERT RESULT: SUCCESS!";
-  std::cout << "CONVERT RESULT: SUCCESS!" << std::endl;
-  return RET_OK;
+  std::cout << "CONVERT RESULT SUCCESS:" << status << std::endl;
+  return status;
 }
 }  // namespace lite
 }  // namespace mindspore
