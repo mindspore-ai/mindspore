@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <cstring>
+#include <string>
 #include <algorithm>
 #include <set>
 #include "src/kernel_registry.h"
