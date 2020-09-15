@@ -32,22 +32,23 @@ class InferTest : public mindspore::CommonTest {
 
 TEST_F(InferTest, TestSession) {
   Model model;
-  Node *node = reinterpret_cast<Node *>(malloc(sizeof(Node)));
+  Node node;
+  model.nodes_.push_back(&node);
 
-  node->name_ = "Neg";
-  node->node_type_ = NodeType::NodeType_CNode;
-  PrimitiveC *prim = reinterpret_cast<PrimitiveC *>(malloc(sizeof(PrimitiveC)));
-  prim->type_ = KernelType::Neg;
-  node->input_indices_.push_back(0);
-  node->output_indices_.push_back(1);
-
-  MSTensor *in = CreateTensor(kNumberTypeFloat32, {1, 1, 1, 10});
+  node.node_type_ = NodeType::NodeType_CNode;
+  PrimitiveC prim;
+  prim.type_ = KernelType::Neg;
+  node.primitive_ = &prim;
+  node.input_indices_.push_back(0);
+  node.output_indices_.push_back(1);
+  ShapeVector shape = {1, 1, 1, 10};
+  MSTensor *in = CreateTensor(kNumberTypeFloat32, shape);
   model.all_tensors_.push_back(in);
   model.input_indices_.push_back(0);
 
-  MSTensor *out = CreateTensor(kNumberTypeFloat32, {1, 1, 1, 10});
+  MSTensor *out = CreateTensor(kNumberTypeFloat32, shape);
   model.all_tensors_.emplace_back(out);
-  node->output_indices_.push_back(1);
+  model.output_indices_.push_back(1);
 
   LiteSession session;
   session.CompileGraph(&model);

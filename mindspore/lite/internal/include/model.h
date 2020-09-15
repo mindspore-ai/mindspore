@@ -27,8 +27,8 @@ enum NodeType {
   NodeType_MAX = NodeType_CNode
 };
 
-enum KernelType {
-    Concat,
+enum KernelType : int {
+    Concat = 0,
     SoftMax,
     Activation,
     Conv2D,

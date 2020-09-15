@@ -18,7 +18,7 @@
 #include "internal/src/kernel/common/common_infershape.h"
 #include "internal/include/errorcode.h"
 #include "internal/include/ms_tensor.h"
-#include "utils/log_adapter.h"
+#include "internal/src/lite_log.h"
 #include "nnacl/fp32/arithmetic_self.h"
 #include "nnacl/fp32/arithmetic.h"
 
@@ -40,11 +40,11 @@ int DoArithmeticSelfGrad(const TensorPtrVector &in_tensors, const TensorPtrVecto
   } else if (param->type_ == KernelType::NegGrad) {
     ret = ElementNegative(dy_data, dx_data, data_size);
   } else {
-    MS_LOG(ERROR) << "Unsupport kernel type: " << param->type_;
+    LITE_ERROR_LOG("Unsupport kernel type: %d", param->type_);
     return RET_PARAM_INVALID;
   }
   if (ret != NNACL_OK) {
-    MS_LOG(ERROR) << "do arithmetic " << param->type_ << " fail!ret: " << ret;
+    LITE_ERROR_LOG("do arithmetic %d fail!ret: %d", param->type_, ret);
     return RET_ERROR;
   }
   return RET_OK;

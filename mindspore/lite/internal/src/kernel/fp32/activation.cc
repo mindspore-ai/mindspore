@@ -19,7 +19,7 @@
 #include "internal/include/errorcode.h"
 #include "internal/include/ms_tensor.h"
 #include "nnacl/fp32/activation.h"
-#include "utils/log_adapter.h"
+#include "internal/src/lite_log.h"
 #include "nnacl/errorcode.h"
 
 int DoActivationInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param) {
@@ -43,11 +43,11 @@ int DoActivation(const TensorPtrVector &in_tensors, const TensorPtrVector &out_t
     float alpha = param->alpha_;
     ret = LRelu(input_addr, length, output_addr, alpha);
   } else {
-    MS_LOG(ERROR) << "Unsupport activation type " << param->type_;
+    LITE_ERROR_LOG("Unsupport activation type: %d", param->type_);
     return RET_PARAM_INVALID;
   }
   if (ret != NNACL_OK) {
-    MS_LOG(ERROR) << "do activation(" << param->type_ << ") fail!ret: " << ret;
+    LITE_ERROR_LOG("do activation(%d) fail!ret: %d", param->type_, ret);
     return RET_ERROR;
   }
   return RET_OK;
