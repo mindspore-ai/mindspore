@@ -89,7 +89,7 @@ def connect_network_with_dataset(network, dataset_helper):
         raise RuntimeError("Dataset should be connected with network only in sink mode.")
 
     if not hasattr(dataset, '__ME_INITED__') and context.get_context("device_target") == "Ascend" and \
-            context.get_context("mode") == context.GRAPH_MODE and not context.get_context("enable_ge"):
+            not context.get_context("enable_ge"):
         dataset.__ME_INITED__ = True
         dataset_types, dataset_shapes = dataset_helper.types_shapes()
         queue_name = dataset.__TRANSFER_DATASET__.queue_name
