@@ -21,6 +21,25 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+void AscendMemoryPool::Init(uint8_t *device_mem_base, uint64_t device_mem_size, uint64_t dynamic_mem_offset) {
+  static bool initialized = false;
+  if (initialized) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(device_mem_base);
+  set_device_mem_pool_base(device_mem_base);
+
+  if (dynamic_mem_offset > device_mem_size) {
+    MS_LOG(EXCEPTION) << "Dynamic memory offset: " << dynamic_mem_offset
+                      << " exceed the device memory size: " << device_mem_size;
+  }
+  set_device_mem_size(device_mem_size);
+  set_device_mem_pool_offset(device_mem_size);
+  set_graph_dynamic_mem_offset(dynamic_mem_offset);
+  initialized = true;
+}
+
 size_t AscendMemoryPool::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
   if (size == 0) {
     MS_LOG(EXCEPTION) << "Failed to alloc memory pool resource, the size is zero!";
