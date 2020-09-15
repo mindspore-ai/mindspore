@@ -125,8 +125,6 @@ int DeConvInt8CPUKernel::InitParam() {
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->col_ = conv_param_->output_channel_ * conv_param_->kernel_h_ * conv_param_->kernel_w_;
 
-  /* optimize normal -> same data layout */
-  input_trans_func_ = RowMajor2Row16x4MajorInt8;
   int oc4 = UP_DIV(conv_param_->output_channel_, C4NUM);
   thread_count_ = MSMIN(op_parameter_->thread_num_, oc4);
   thread_stride_ = UP_DIV(oc4, thread_count_);
@@ -275,8 +273,8 @@ int DeConvInt8CPUKernel::Run() {
   }
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
-    input_trans_func_(src_in + batch_index * matmul_param_->row_ * conv_param_->input_channel_, input_ptr_,
-                      matmul_param_->row_, matmul_param_->deep_);
+    RowMajor2Row16x4MajorInt8(src_in + batch_index * matmul_param_->row_ * conv_param_->input_channel_, input_ptr_,
+                              matmul_param_->row_, matmul_param_->deep_);
     output_ptr_ = src_out + batch_index * matmul_param_->col_;
 
     DeConvPackInputSum(input_ptr_, input_sum_, conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_,

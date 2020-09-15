@@ -158,7 +158,7 @@ int Convolution1x1Int8CPUKernel::InitWeightBias() {
     RowMajor2Row8x4MajorInt8(reinterpret_cast<int8_t *>(filter_tensor->MutableData()), packed_weight_, output_channel,
                              input_channel);
   } else {
-    RowMajor2Row4x16MajorInt8(reinterpret_cast<int8_t *>(filter_tensor->MutableData()), packed_weight_, output_channel,
+    RowMajor2Row16x4MajorInt8(reinterpret_cast<int8_t *>(filter_tensor->MutableData()), packed_weight_, output_channel,
                               input_channel);
   }
 
@@ -207,7 +207,7 @@ int Convolution1x1Int8CPUKernel::InitWeightBiasArm32() {
     memcpy(bias_data_, in_tensors_[kBiasIndex]->MutableData(), output_channel * sizeof(int32_t));
   }
 
-  InitBiasByzp(filter_tensor->MutableData(), input_channel, output_channel, UP_ROUND(output_channel, C2NUM));
+  InitBiasByzp(filter_tensor->MutableData(), input_channel, output_channel, col2);
   return RET_OK;
 }
 

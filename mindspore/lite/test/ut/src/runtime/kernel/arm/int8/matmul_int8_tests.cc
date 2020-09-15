@@ -113,7 +113,7 @@ TEST_F(TestMatmulInt8, simple) {
   memset(a_r4x16, 0, ROW4 * DEPTH16);
   int8_t *b_c16x4 = new int8_t[COL4 * DEPTH16];
   memset(b_c16x4, 0, COL4 * DEPTH16);
-  RowMajor2Row4x16Major(a, ROW, DEPTH, a_r4x16, DEPTH16);
+  RowMajor2Row16x4MajorInt8(a, a_r4x16, ROW, DEPTH);
   RowMajor2Col16x4Major(b, DEPTH, COL, b_c16x4, DEPTH16);
   int a_sums[ROW4] = {0};
   int bias[COL4] = {0};
@@ -123,7 +123,8 @@ TEST_F(TestMatmulInt8, simple) {
   MatmulInt8Neon64(a_r4x16, b_c16x4, output, ROW4, COL4, DEPTH16, a_sums, bias, INT8_MIN, INT8_MAX, 0, &multiplier, &ls,
                    &rs, ROW, COL, COL, false);
 #else
-  MatmulInt8(a_r4x16, b_c16x4, output, a_sums, bias, INT8_MIN, INT8_MAX, 0, multiplier, ls, rs, ROW, COL, DEPTH16, COL);
+  MatMulInt8_16x4_r(a_r4x16, b_c16x4, output, ROW, COL, DEPTH16, COL, a_sums, bias, &ls, &rs, &multiplier, 0, INT8_MIN,
+                    INT8_MAX, false);
 #endif
   CompareOutputData(output, correct, ROW * COL, 0.1);
   delete[] a_r4x16;

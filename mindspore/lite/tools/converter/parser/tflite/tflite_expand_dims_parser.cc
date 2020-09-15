@@ -54,6 +54,7 @@ STATUS TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
              tflite_tensors.size(), schema::Format::Format_NHWC);
   AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
               tflite_tensors.size(), schema::Format::Format_NHWC);
+  return RET_OK;
 }
 TfliteNodeRegister g_tfliteExpandDimsParser("ExpandDims", new TfliteExpandDimsParser());
 }  // namespace lite

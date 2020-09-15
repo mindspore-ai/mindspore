@@ -57,7 +57,7 @@ int FullconnectionInt8CPUKernel::ReSize() {
   if (!weight_bias_sums_) return RET_MEMORY_FAILED;
   memset(weight_bias_sums_, 0, c4_ * sizeof(int));
   auto weight_data = reinterpret_cast<int8_t *>(in_tensors_[1]->MutableData());
-  RowMajor2Row4x16Major(weight_data, fc_param_->col_, fc_param_->deep_, b_c16x4_ptr_, d16_);
+  RowMajor2Row16x4MajorInt8(weight_data, b_c16x4_ptr_, fc_param_->col_, fc_param_->deep_);
   if (in_tensors_.size() == 3) {
     auto bias_len = fc_param_->col_8_ * sizeof(int);
     bias_ptr_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(bias_len));
@@ -111,8 +111,8 @@ int FullconnectionInt8CPUKernel::RunImpl(int task_id) {
                    q.out_act_max, q.output.zp_, &q.quant_multiplier, &q.left_shift, &q.right_shift, p->row_, cur_oc_res,
                    p->col_ * sizeof(int8_t), 0);
 #else
-  MatmulInt8(a_r4x16_ptr_, cur_b, cur_c, input_sums_, cur_bias, q.out_act_min, q.out_act_max, q.output.zp_,
-             q.quant_multiplier, q.left_shift, q.right_shift, p->row_, cur_oc_res, d16_, p->col_);
+  MatMulInt8_16x4_r(a_r4x16_ptr_, cur_b, cur_c, p->row_, cur_oc_res, d16_, p->col_, input_sums_, cur_bias,
+                    &q.left_shift, &q.right_shift, &q.quant_multiplier, q.output.zp_, INT8_MIN, INT8_MAX, false);
 #endif
 
   return RET_OK;
@@ -135,7 +135,7 @@ int FullconnectionInt8CPUKernel::Run() {
     return RET_ERROR;
   }
   auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
-  RowMajor2Row4x16Major(input_ptr, fc_param_->row_, fc_param_->deep_, a_r4x16_ptr_, d16_);
+  RowMajor2Row16x4MajorInt8(input_ptr, a_r4x16_ptr_, fc_param_->row_, fc_param_->deep_);
   CalcInputSums(input_ptr, fc_param_->row_, fc_param_->deep_, quant_params_.weight.zp_, input_sums_, RowMajor);
   ParallelLaunch(THREAD_POOL_DEFAULT, FcInt8Run, this, thread_count_);
   return RET_OK;
