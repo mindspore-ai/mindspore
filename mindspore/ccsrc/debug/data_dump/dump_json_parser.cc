@@ -343,12 +343,8 @@ void DumpJsonParser::PrintUnusedKernel() {
 
 std::string DumpJsonParser::GetOpOverflowBinPath(uint32_t graph_id, uint32_t device_id) const {
   std::string bin_path = "/var/log/npu/ide_daemon/dump";
-
-  const char *dump_data_path = std::getenv("DATA_DUMP_PATH");
-  if (dump_data_path != nullptr) {
-    bin_path.append(dump_data_path);
-    bin_path.append("_");
-  }
+  bin_path.append(path_);
+  bin_path.append("_");
   bin_path.append(std::to_string(device_id));
   bin_path.append("/");
   bin_path.append(net_name_);
@@ -372,8 +368,9 @@ bool DumpJsonParser::OutputNeedDump() const {
 }
 
 void DumpJsonParser::UpdateNeedDumpKernels(NotNull<const session::KernelGraph *> kernel_graph) {
-  if (e2e_dump_enabled_) {
+  if (!async_dump_enabled_) {
     MS_LOG(INFO) << "E2e dump no need to update dump kernel list";
+    return;
   }
   std::map<std::string, uint32_t> update_kernels;
   for (const auto &kernel : kernel_graph->execution_order()) {
