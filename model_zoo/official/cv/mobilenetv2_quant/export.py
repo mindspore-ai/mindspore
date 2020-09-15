@@ -24,7 +24,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.quant import quant
 
 from src.mobilenetV2 import mobilenetV2
-from src.config import config_ascend
+from src.config import config_ascend_quant
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
@@ -34,7 +34,7 @@ args_opt = parser.parse_args()
 if __name__ == '__main__':
     cfg = None
     if args_opt.device_target == "Ascend":
-        cfg = config_ascend
+        cfg = config_ascend_quant
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
     else:
         raise ValueError("Unsupported device target: {}.".format(args_opt.device_target))
@@ -50,5 +50,5 @@ if __name__ == '__main__':
     # export network
     print("============== Starting export ==============")
     inputs = Tensor(np.ones([1, 3, cfg.image_height, cfg.image_width]), mindspore.float32)
-    quant.export(network, inputs, file_name="mobilenet_quant", file_format='AIR')
+    quant.export(network, inputs, file_name="mobilenet_quant", file_format='MINDIR')
     print("============== End export ==============")

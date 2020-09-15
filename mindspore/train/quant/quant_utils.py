@@ -122,7 +122,7 @@ def weight2int(data, scale, zero_point):
     return np.round((data / scale) + zero_point)
 
 
-def scale_zp_from_fack_quant_cell(cell, data_type):
+def scale_zp_from_fake_quant_cell(cell, data_type):
     r"""
     Get calculate quantization params for scale and zero point From `FakeQuantWithMinMax`.
 
@@ -146,7 +146,7 @@ def scale_zp_from_fack_quant_cell(cell, data_type):
     return scale, zp
 
 
-def scale_zp_max_min_from_fack_quant_cell(cell, data_type):
+def scale_zp_max_min_from_fake_quant_cell(cell, data_type):
     """Get calculate quantization params for scale, zero point, max and min from `FakeQuantWithMinMax`."""
     minq = cell.minq.data.asnumpy()
     maxq = cell.maxq.data.asnumpy()

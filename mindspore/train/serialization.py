@@ -170,10 +170,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=F
         param_list = []
         for (key, value) in param_dict.items():
             each_param = {"name": key}
-            if isinstance(value.data, Tensor):
-                param_data = value.data
-            else:
-                param_data = Tensor(value.data)
+            param_data = Tensor(value.data)
 
             # in automatic model parallel scenario, some parameters were spliteds to all the devices,
             # which should be combined before saving
