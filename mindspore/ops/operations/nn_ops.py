@@ -1892,7 +1892,7 @@ class RNNTLoss(PrimitiveWithInfer):
         - **acts** (Tensor) - Tensor of shape :math:`(B, T, U, V)`. Data type should be float16 or float32.
         - **labels** (Tensor[int32]) - Tensor of shape :math:`(B, U-1)`.
         - **input_lengths** (Tensor[int32]) - Tensor of shape :math:`(B,)`.
-        - **label_lebgths** (Tensor[int32]) - Tensor of shape :math:`(B,)`.
+        - **label_lengths** (Tensor[int32]) - Tensor of shape :math:`(B,)`.
 
     Outputs:
         - **costs** (Tensor[int32]) - Tensor of shape :math:`(B,)`.
