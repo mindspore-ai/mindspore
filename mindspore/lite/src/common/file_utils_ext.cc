@@ -42,11 +42,9 @@ int CompareRelativeOutput(float *output_data, std::string file_path) {
   size_t output_size;
   auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
   size_t output_num = output_size / sizeof(float);
-  // std::cout << "output num : " << output_num << "\n";
   int error = CompareOutputRelativeData(output_data, ground_truth, output_num);
   delete [] ground_truth;
   if (error > 1e-4) {
-    std::cout << "has accuracy error!\n" << error << "\n";
     return 1;
   }
   return 0;
@@ -56,7 +54,6 @@ float RelativeOutputError(float *output_data, std::string file_path) {
   size_t output_size;
   auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
   size_t output_num = output_size / sizeof(float);
-  std::cout << "output num : " << output_num << "\n";
   float error = CompareOutputRelativeData(output_data, ground_truth, output_num);
   delete [] ground_truth;
   return error;

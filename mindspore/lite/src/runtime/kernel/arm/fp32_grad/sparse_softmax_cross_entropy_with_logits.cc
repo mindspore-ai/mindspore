@@ -89,12 +89,6 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
     grads = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
   }
   size_t data_size = in_tensors_.at(0)->ElementsNum();
-  float *losses = new (std::nothrow) float[data_size];
-  if (losses == nullptr) {
-    MS_LOG(ERROR) << "losses is null";
-    return RET_ERROR;
-  }
-
   MS_ASSERT(out != nullptr);
   MS_ASSERT(labels != nullptr);
   MS_ASSERT(ins != nullptr);
@@ -128,12 +122,18 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
     MS_LOG(ERROR) << "softmax etropy loss in0 have no data";
     return RET_ERROR;
   }
-
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   losses_ = new (std::nothrow) float[data_size];
+  if (losses_ == nullptr) {
+    MS_LOG(ERROR) << "failed to malloc losses!";
+    return RET_ERROR;
+  }
+
   sum_data_ = new (std::nothrow) float[dims[0]];
-  MS_ASSERT(losses_ != nullptr);
-  MS_ASSERT(sum_data_ != nullptr);
+  if (sum_data_ == nullptr) {
+    MS_LOG(ERROR) << "failed to malloc sum_data_!";
+    return RET_ERROR;
+  }
 
   sm_params_.n_dim_ = 2;
   sm_params_.element_size_ = data_size;

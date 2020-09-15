@@ -47,7 +47,6 @@ int ConvolutionGradInputCPUKernel::Init() {
   conv_param->input_channel_ = dx_tensor->shape()[(kNHWC_C)];
   conv_param->output_channel_ = weight_tensor->shape()[(kNHWC_N)];
 
-  // TBD
   conv_param->output_h_ = dy_tensor->shape()[kNHWC_H];
   conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
 
@@ -59,7 +58,7 @@ int ConvolutionGradInputCPUKernel::Init() {
     MS_LOG(ERROR) << "new workspace fail!";
     return RET_ERROR;
   }
-  return 0;
+  return RET_OK;
 }
 
 int ConvolutionGradInputCPUKernel::ReSize() { return 0; }
@@ -108,53 +107,8 @@ int ConvolutionGradInputCPUKernel::Run() {
       col2im_hwc(mat_c, dx_addr + (i * groups) * (in_ch / groups) * in_h * in_w + j * (in_ch / groups), conv_param);
     }
   }
-
-  // std::cout << "run succ" << std::endl;
-  return 0;
+  return RET_OK;
 }
-
-#if 0
-OpParameter *PopulateConvolutionGradInputParameter(const lite::Primitive *primitive) {
-  ConvParameter *param = new (std::nothrow) ConvParameter();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "new Param for conv grad input failed.";
-    return nullptr;
-  }
-  param->op_parameter_.type_ = primitive->Type();
-
-  auto convg_primitive = primitive->Value()->value_as_Conv2DGradInput();
-  param->kernel_h_ = convg_primitive->kernelH();
-  param->kernel_w_ = convg_primitive->kernelW();
-  param->stride_h_ = convg_primitive->strideH();
-  param->stride_w_ = convg_primitive->strideW();
-  param->dilation_h_ = convg_primitive->dilateH();
-  param->dilation_w_ = convg_primitive->dilateW();
-  param->pad_h_ = convg_primitive->padUp();
-  param->pad_w_ = convg_primitive->padLeft();
-  param->pad_u_ = convg_primitive->padUp();
-  param->pad_d_ = convg_primitive->padDown();
-  param->pad_l_ = convg_primitive->padLeft();
-  param->pad_r_ = convg_primitive->padRight();
-  param->group_ = convg_primitive->group();
-  auto act_type = convg_primitive->activationType();
-  switch (act_type) {
-    case schema::ActivationType_RELU:
-      param->is_relu_ = true;
-      param->is_relu6_ = false;
-      break;
-    case schema::ActivationType_RELU6:
-      param->is_relu_ = false;
-      param->is_relu6_ = true;
-      break;
-    default:
-      param->is_relu_ = false;
-      param->is_relu6_ = false;
-      break;
-  }
-
-  return reinterpret_cast<OpParameter *>(param);
-}
-#endif
 
 kernel::LiteKernel *CpuConvGradInputFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,

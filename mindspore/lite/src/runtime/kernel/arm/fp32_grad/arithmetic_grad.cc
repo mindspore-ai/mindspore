@@ -58,7 +58,6 @@ int ArithmeticGradCPUKernel::Init() {
     tile_data1 = new (std::nothrow) float[in_tensors_.at(0)->ElementsNum()];
     if (tile_data1 == nullptr) {
       MS_LOG(ERROR) << "new data1 fail!";
-      delete tile_data0;
       return RET_ERROR;
     }
 
@@ -66,8 +65,6 @@ int ArithmeticGradCPUKernel::Init() {
       tile_data2 = new (std::nothrow) float[in_tensors_.at(0)->ElementsNum()];
       if (tile_data2 == nullptr) {
         MS_LOG(ERROR) << "new data2 fail!";
-        delete tile_data0;
-        delete tile_data1;
         return RET_ERROR;
       }
     }

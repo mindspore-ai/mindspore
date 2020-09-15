@@ -28,11 +28,15 @@ class SoftmaxGradCPUKernel : public LiteKernel {
   explicit SoftmaxGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                                 const lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), sum_data_(nullptr), sum_mul_(nullptr)  {
         param = reinterpret_cast<SoftmaxParameter *>(parameter);
       }
-  ~SoftmaxGradCPUKernel() override = default;
-
+  ~SoftmaxGradCPUKernel() override {
+    if (sum_data_)
+      delete[] sum_data_;
+    if (sum_mul_)
+      delete[] sum_mul_;
+  }
   int Init() override;
   int ReSize() override;
   int Run() override;

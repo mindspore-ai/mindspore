@@ -47,6 +47,10 @@ int ConvolutionTrainCPUKernel::Init() {
                 conv_param_->input_channel_ / conv_param_->group_;
 
   workspace = new (std::nothrow) float[ws_size];
+  if (workspace == nullptr) {
+    MS_LOG(ERROR) << "new workspace fail!";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -95,8 +99,6 @@ int ConvolutionTrainCPUKernel::Run() {
       gemm(0, 1, m, n, k, 1, mat_a, k, mat_b, k, 1, mat_c, out_ch);
     }
   }
-
-  // std::cout << "run succ" << std::endl;
   return RET_OK;
 }
 

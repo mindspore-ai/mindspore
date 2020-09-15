@@ -110,4 +110,18 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   delete kernel_obj;
   MS_LOG(INFO) << "BNGradFp32 passed";
 }
+
+#if 0
+TEST_F(TestBNGradFp32, BNTtrainFp32) {
+  auto bn_param = static_cast<BNGradParameter*>(malloc(sizeof(BNGradParameter)));
+  bn_param->epsilon_ = 0.00001;
+  bn_param->momentum_ = 0.1;
+  const int batch = 2;
+  const int channels = 3;
+  const int height = 4;
+  const int width = 5;
+  auto x_tensor = CreateInTensor("./test_data/bngrad/input_x_2_4_5_3.bin", {batch, height, width, channels});
+  std::vector<lite::Tensor *> inputs = {x_tensor, x_tensor, scale_tensor, mean_tensor, var_tensor};
+}
+#endif
 }  // namespace mindspore

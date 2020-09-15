@@ -51,8 +51,6 @@ int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_
         MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->name();
       }
     }
-    // JBDEBUG
-    // std::cout << "executing kernel " << kernel->name() << "\n";
     auto ret = kernel->Run();
     if (0 != ret) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();

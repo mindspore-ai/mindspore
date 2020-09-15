@@ -28,7 +28,7 @@ void sumSpatialBatch(const float *in, int size, int ch, float *out) {
 }
 
 static void meanVar(const float *in, int size, int ch, float eps, float *mean, float *invar) {
-  float N = (float)size;
+  float N = (float)(size);
   sumSpatialBatch(in, N, ch, mean);
   for (int f = 0; f < ch; ++f) {
     mean[f] /= N;
