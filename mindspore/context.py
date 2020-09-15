@@ -498,13 +498,13 @@ def set_context(**kwargs):
     ===========================  ===========================  =================
 
     Args:
-        mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1).
+        mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: PYNATIVE_MODE(1).
         device_target (str): The target device to run, support "Ascend", "GPU", "CPU". Default: "Ascend".
         device_id (int): Id of target device, the value must be in [0, device_num_per_host-1],
                     while device_num_per_host should no more than 4096. Default: 0.
         save_graphs (bool): Whether to save graphs. Default: False.
         save_graphs_path (str): Path to save graphs. Default: "."
-        enable_auto_mixed_precision (bool): Whether to enable auto mixed precision. Default: True.
+        enable_auto_mixed_precision (bool): Whether to enable auto mixed precision. Default: False.
         enable_graph_kernel (bool): Whether to enable composition of basic primitives. These primitives would be
             compiled into a fused kernel automatically. Default: False.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
@@ -513,7 +513,7 @@ def set_context(**kwargs):
         save_dump_path (str): When the program is executed on Ascend, operators can dump data here.
             The root dump path is configured in /home/HwHiAiUser/ide_daemon/ide_daemon.cfg.
             So the real dump path is "{configured root dump path}/{`save_dump_path`}". Default: ".".
-        variable_memory_max_size (str): Sets variable memory max size. Default: "5GB".
+        variable_memory_max_size (str): Sets variable memory max size. Default: "0GB".
         enable_profiling (bool): Whether to open profiling. Default: False.
         profiling_options (str): Sets profiling collection options, operators can profiling data here.
             Profiling collection options, the values are as follows, supporting the collection of multiple data.
@@ -534,7 +534,7 @@ def set_context(**kwargs):
             The format is "xxGB". Default: "1024GB".
         print_file_path (str): The path of print data to save. If this parameter is set, print data is saved to
             a file by default, and turn off printing to the screen. If the file already exists, add a timestamp
-            suffix to the file.
+            suffix to the file. Default: ''.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
         max_call_depth(int): Specify the function call depth limit. Default: 1000.
 
