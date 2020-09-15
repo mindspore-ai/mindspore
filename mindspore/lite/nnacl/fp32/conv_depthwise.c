@@ -440,7 +440,7 @@ void DeconvDwC4Fp32(float *output_data, const float *input_data, const float *we
         float *out_t = dst_data + oh_h_start * sliding->in_h_step_ + oh_w_start * sliding->block_channel_;
         const float *in_t = src_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;
 
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
         DeconvDwFp32Center(out_t, in_t, weight, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
                            conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_ * sizeof(float),
                            sliding->block_channel_ * sizeof(float), sliding->in_sh_step_ * sizeof(float),
