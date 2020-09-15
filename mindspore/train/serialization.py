@@ -146,8 +146,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=F
     Saves checkpoint info to a specified file.
 
     Args:
-        save_obj (nn.Cell or list): The cell object or parameters list(each element is a dictionary,
-                                    like {"name": param_name, "data": param_data}.)
+        save_obj (nn.Cell or list): The cell object or data list(each element is a dictionary, like
+                                    [{"name": param_name, "data": param_data},...], the type of param_name would
+                                    be string, and the type of param_data would be parameter, tensor or numpy).
         ckpt_file_name (str): Checkpoint file name. If the file name already exists, it will be overwritten.
         integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: True
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False
