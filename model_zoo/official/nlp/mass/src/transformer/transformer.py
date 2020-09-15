@@ -104,7 +104,7 @@ class Transformer(nn.Cell):
         self.dtype = config.dtype
         self.cast_compute_type = SaturateCast(dst_type=config.compute_type)
         self.slice = P.StridedSlice()
-        self.dropout = nn.Dropout(keep_prob=1 - config.hidden_dropout_prob)
+        self.dropout = nn.Dropout(keep_prob=1.0 - config.hidden_dropout_prob)
 
         self._create_attention_mask_from_input_mask = CreateAttentionMaskFromInputMask(config)
 

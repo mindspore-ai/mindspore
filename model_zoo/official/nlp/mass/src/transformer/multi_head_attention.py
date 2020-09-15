@@ -133,7 +133,7 @@ class MultiHeadAttention(nn.Cell):
         self.matmul = P.BatchMatMul()
 
         self.softmax = nn.Softmax()
-        self.dropout = nn.Dropout(1 - attention_dropout_prob)
+        self.dropout = nn.Dropout(1.0 - attention_dropout_prob)
 
         if self.has_attention_mask:
             self.expand_dims = P.ExpandDims()

@@ -66,7 +66,7 @@ class FeedForwardNet(nn.Cell):
         )
         self.get_shape = P.Shape()
         self.reshape = P.Reshape()
-        self.dropout = nn.Dropout(keep_prob=1 - hidden_dropout_prob)
+        self.dropout = nn.Dropout(keep_prob=1.0 - hidden_dropout_prob)
 
     def construct(self, input_tensor):
         """
