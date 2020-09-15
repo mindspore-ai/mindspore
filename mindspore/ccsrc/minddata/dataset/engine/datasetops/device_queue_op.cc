@@ -120,6 +120,10 @@ Status DeviceQueueOp::SendDataToAscend() {
       TensorRow currRow;
       for (int row_id = 0; row_id < current_buffer->NumRows(); row_id++) {
         RETURN_IF_NOT_OK(current_buffer->GetRow(row_id, &currRow));
+        while (stop_send_) {
+          MS_LOG(DEBUG) << "stop_send flag is set, waiting for continue signal...";
+          std::this_thread::sleep_for(std::chrono::microseconds(100));
+        }
         auto status = tdtInstancePtr->hostPush(currRow, true, channel_name_, isProfilingEnable, tdt_cost);
         if (status == TdtStatus::FAILED) {
           if (stop_send_) {
@@ -153,10 +157,6 @@ Status DeviceQueueOp::SendDataToAscend() {
     }
     if (current_buffer->eoe() && send_epoch_end_) {
       TensorRow currRow;
-      while (stop_send_) {
-        MS_LOG(DEBUG) << "stop_send flag is set, waiting for continue signal...";
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
-      }
       auto status =
         tdtInstancePtr->hostPush(currRow, true, channel_name_, isProfilingEnable, tdt_cost, tdt::TDT_END_OF_SEQUENCE);
       if (status == TdtStatus::FAILED) {
