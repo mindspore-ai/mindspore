@@ -81,6 +81,7 @@ PYBIND_REGISTER(
       .def("GetNumClasses", &DEPipeline::GetNumClasses)
       .def("GetRepeatCount", &DEPipeline::GetRepeatCount)
       .def("StopSend", [](DEPipeline &de) { THROW_IF_ERROR(de.StopSend()); })
+      .def("ContinueSend", [](DEPipeline &de) { THROW_IF_ERROR(de.ContinueSend()); })
       .def("SaveDataset", [](DEPipeline &de, const std::vector<std::string> &file_names, const std::string &file_type) {
         THROW_IF_ERROR(de.SaveDataset(file_names, file_type));
         return true;

@@ -98,6 +98,6 @@ def test_deeplabv3_1p():
     print("expect loss: ", callback.loss)
     print("expect time: ", callback.time)
     expect_loss = 0.92
-    expect_time = 40
+    expect_time = 43
     assert callback.loss.asnumpy() <= expect_loss
     assert callback.time <= expect_time

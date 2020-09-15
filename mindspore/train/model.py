@@ -442,6 +442,7 @@ class Model:
                 cb_params.net_outputs = outputs
                 list_callback.step_end(run_context)
 
+            dataset_helper.continue_send()
             list_callback.epoch_end(run_context)
             should_stop = should_stop or run_context.get_stop_requested()
             if should_stop:

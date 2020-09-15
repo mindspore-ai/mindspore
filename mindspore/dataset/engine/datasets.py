@@ -2585,6 +2585,9 @@ class TransferDataset(DatasetOp):
     def stop_send(self):
         self.iterator.depipeline.StopSend()
 
+    def continue_send(self):
+        self.iterator.depipeline.ContinueSend()
+
 
 class RangeDataset(MappableDataset):
     """

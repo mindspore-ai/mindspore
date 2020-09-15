@@ -163,6 +163,10 @@ class DatasetHelper:
         """Free up resources about data sink."""
         self.iter.stop_send()
 
+    def continue_send(self):
+        """continue send data to device at the beginning of epoch."""
+        self.iter.continue_send()
+
 
 class _DatasetIter:
     """Base iter for dataset helper"""
@@ -182,6 +186,7 @@ class _DatasetIter:
             _send_data_no_flag(dataset, epoch_num)
 
         self.stop_send = dataset.__TRANSFER_DATASET__.stop_send
+        self.continue_send = dataset.__TRANSFER_DATASET__.continue_send
         self.dataset_types, self.dataset_shapes = _get_types_and_shapes(dataset)
 
     def __iter__(self):

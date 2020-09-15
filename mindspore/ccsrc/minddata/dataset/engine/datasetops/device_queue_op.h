@@ -123,6 +123,11 @@ class DeviceQueueOp : public PipelineOp {
 
   void StopSend() { stop_send_ = true; }
 
+  void ContinueSend() {
+    MS_LOG(INFO) << "continue send at the beginning of the epoch";
+    stop_send_ = false;
+  }
+
   // Name: Print()
   // Description: A function that prints info about the node
   void Print(std::ostream &out,              // In: The output stream to print to
