@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace inference {
-
 DvppProcess::DvppProcess() {}
 
 DvppProcess::~DvppProcess() {}
@@ -1134,6 +1133,5 @@ Status DvppProcess::InitWithJsonConfig(const std::string &json_config) {
   }
   return SUCCESS;
 }
-
 }  // namespace inference
 }  // namespace mindspore

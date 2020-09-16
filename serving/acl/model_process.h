@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace inference {
-
 struct AclTensorInfo {
   void *device_data;
   size_t buffer_size;
@@ -78,7 +77,6 @@ class ModelProcess {
   void DestroyInputsBuffer();
   void DestroyOutputsBuffer();
 };
-
 }  // namespace inference
 }  // namespace mindspore
 

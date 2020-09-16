@@ -40,7 +40,6 @@ using ms_serving::PredictRequest;
 
 namespace mindspore {
 namespace serving {
-
 namespace {
 static const uint32_t uint32max = 0x7FFFFFFF;
 std::promise<void> exit_requested;
@@ -66,7 +65,6 @@ grpc::Status CreatGRPCStatus(const Status &status) {
       return grpc::Status::CANCELLED;
   }
 }
-
 }  // namespace
 
 // Service Implement
@@ -114,7 +112,6 @@ static std::pair<struct evhttp *, struct event_base *> NewHttpServer() {
   auto listener =
     evconnlistener_new_bind(eb, nullptr, nullptr, LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_EXEC | LEV_OPT_CLOSE_ON_FREE, -1,
                             reinterpret_cast<struct sockaddr *>(&sin), sizeof(sin));
-
   if (listener == nullptr) {
     MSI_LOG_ERROR << "Serving Error: RESTful server start failed, create http listener faild, port " << http_port;
     std::cout << "Serving Error: RESTful server start failed, create http listener faild, port " << http_port

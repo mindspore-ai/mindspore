@@ -35,7 +35,6 @@ using ms_serving::PredictRequest;
 
 namespace mindspore {
 namespace serving {
-
 Status Session::CreatDeviceSession(const std::string &device, uint32_t device_id) {
   session_ = inference::InferSession::CreateSession(device, device_id);
   if (session_ == nullptr) {
@@ -151,6 +150,5 @@ Status Session::GetModelInputsInfo(std::vector<inference::InferTensor> &tensor_l
   }
   return ret;
 }
-
 }  // namespace serving
 }  // namespace mindspore

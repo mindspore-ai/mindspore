@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace serving {
-
 volatile bool stop_poll = false;
 
 std::string GetVersionFromPath(const std::string &path) {

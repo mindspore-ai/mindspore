@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace serving {
-
 class MS_API ServingTensor : public inference::InferTensorBase {
  public:
   // the other's lifetime must longer than this object
@@ -101,7 +100,6 @@ class ServingImagesRequest : public inference::ImagesRequestBase {
   const ms_serving::PredictRequest &request_;
   std::vector<ServingImages> cache_;
 };
-
 }  // namespace serving
 }  // namespace mindspore
 #endif  // MINDSPORE_SERVING_TENSOR_H_

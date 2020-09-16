@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace serving {
-
 bool DirOrFileExist(const std::string &file_path) {
   int ret = access(file_path.c_str(), 0);
   return (ret == -1) ? false : true;

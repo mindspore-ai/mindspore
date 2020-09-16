@@ -1,3 +1,5 @@
+set(libevent_CFLAGS "-fstack-protector-all -D_FORTIFY_SOURCE=2 -O2")
+set(libevent_LDFLAGS "-Wl,-z,now")
 mindspore_add_pkg(libevent
         VER 2.1.12
         LIBS event event_pthreads

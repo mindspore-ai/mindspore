@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace inference {
-
 Status ModelProcess::PreInitModelResource() {
   model_desc_ = aclmdlCreateDesc();
   aclError acl_ret = aclmdlGetDesc(model_desc_, model_id_);
@@ -428,6 +427,5 @@ size_t ModelProcess::GetBatchSize() const {
   }
   return static_cast<size_t>(input_infos_[0].dims[0]);
 }
-
 }  // namespace inference
 }  // namespace mindspore
