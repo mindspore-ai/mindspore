@@ -244,6 +244,19 @@ def get_bprop_embedding_lookup(self):
     return bprop_sparse
 
 
+@bprop_getters.register(P.Padding)
+def get_bprop_padding(self):
+    """Grad definition for `Padding` operation."""
+
+    def bprop(x, out, dout):
+        shp = shape_op(x)
+        begin = tuple([0 for _ in shp])
+        dx = P.Slice()(dout, begin, shp)
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.Transpose)
 def get_bprop_transpose(self):
     """Generate bprop for Transpose"""
