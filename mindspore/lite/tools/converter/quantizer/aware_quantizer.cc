@@ -71,7 +71,7 @@ STATUS InputArray::SetInputArrayQP(schema::MetaGraphT *graph, size_t inputTensor
   return RET_OK;
 }
 
-AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph, const string &inputInferType, const string &stdValues,
+AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph, const TypeId &inferType, const string &stdValues,
                                const string &meanValues)
     : FbQuantizer(graph) {
   MS_ASSERT(graph != nullptr);
@@ -80,7 +80,7 @@ AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph, const string &inputInf
   sz = 0;
   const float mean = std::stof(meanValues, &sz);
   std::unique_ptr<InputArray> inArr = nullptr;
-  if (inputInferType == "FLOAT") {
+  if (inferType == kNumberTypeFloat) {
     inArr.reset(new (std::nothrow) InputArray(mean, stdValue));
   } else {
     inArr.reset(new (std::nothrow) InputArray(mean, stdValue, TypeId::kNumberTypeInt8));
