@@ -302,3 +302,6 @@ class _DatasetIterNormal:
     def __next__(self):
         data = self.iter.__next__()
         return data
+
+
+__all__ = ["DatasetHelper", "connect_network_with_dataset"]

@@ -30,7 +30,7 @@ class Fbeta(Metric):
                 {(1+\beta^2) \cdot true\_positive +\beta^2 \cdot false\_negative + false\_positive}
 
     Args:
-        beta (float): The weight of precision.
+        beta (Union[float, int]): The weight of precision.
 
     Examples:
         >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
@@ -122,14 +122,14 @@ class F1(Fbeta):
     Refer to class `Fbeta` for more details.
 
     .. math::
-        F_\beta=\frac{2\cdot true\_positive}{2\cdot true\_positive + false\_negative + false\_positive}
+        F_1=\frac{2\cdot true\_positive}{2\cdot true\_positive + false\_negative + false\_positive}
 
     Examples:
         >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
         >>> y = Tensor(np.array([1, 0, 1]))
         >>> metric = nn.F1()
         >>> metric.update(x, y)
-        >>> fbeta = metric.eval()
+        >>> f1 = metric.eval()
     """
     def __init__(self):
         super(F1, self).__init__(1.0)
