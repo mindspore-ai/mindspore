@@ -13,13 +13,13 @@
 # limitations under the License.
 # ============================================================================
 
+import pytest
+import numpy as np
 import mindspore as ms
 from mindspore.nn import ReLU
 from mindspore.nn import Cell
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
-import numpy as np
-import pytest
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training

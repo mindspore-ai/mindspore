@@ -208,7 +208,6 @@ void AscendControlParser::LinkGraph(NotNull<KernelGraphPtr> kg) {
   memo.clear();
   // assign label resource
   device::ascend::AscendLabelAssign::GetInstance().AssignLabel(kg);
-  // AttachChildGraphToReturnNode(kg, NOT_NULL(&memo));
 }
 
 void AscendControlParser::EraseParameter(NotNull<KernelGraphPtr> root_graph,

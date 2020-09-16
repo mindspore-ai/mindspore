@@ -29,7 +29,6 @@ void AscendMemoryManager::MallocDeviceMemory() {
   auto context_mem = GetDeviceMemSizeFromContext();
   device_mem_size_ = context_mem == 0 ? kAscendDeviceMemSize : context_mem;
   auto ret = rtMalloc(reinterpret_cast<void **>(&device_mem_base_), device_mem_size_, RT_MEMORY_HBM);
-
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_size_ << "] fail, ret[" << ret << "]";
   }

@@ -65,6 +65,9 @@ class DataDumper {
   void SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
   void ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) const;
   void GetNeedDumpKernelList(NotNull<std::map<std::string, CNodePtr> *> kernel_map) const;
+  static void DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task);
+  static void DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task);
+  static void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr);
 
   std::function<void *()> model_handle_;
   uint32_t debug_task_id_;

@@ -57,9 +57,6 @@ constexpr const char *kOpTypeOpDebug = "Opdebug";
 namespace mindspore {
 namespace device {
 namespace ascend {
-static void DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task);
-static void DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task);
-static void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr);
 
 DataDumper::~DataDumper() {
   ReleaseDevMem(&dev_load_mem_);
@@ -328,7 +325,7 @@ void DataDumper::OpDebugUnregister() {
   }
 }
 
-void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr) {
+void DataDumper::RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr) {
   std::string proto_str;
   size_t proto_size = dump_info.ByteSizeLong();
   bool ret = dump_info.SerializeToString(&proto_str);
@@ -357,7 +354,7 @@ void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr) {
   }
 }
 
-void DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
+void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
   if (!DumpJsonParser::GetInstance().OutputNeedDump()) {
     MS_LOG(INFO) << "Skip dump output";
     return;
@@ -391,7 +388,7 @@ void DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::T
   }
 }
 
-void DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
+void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
   if (!DumpJsonParser::GetInstance().InputNeedDump()) {
     MS_LOG(INFO) << "Skip dump input";
     return;

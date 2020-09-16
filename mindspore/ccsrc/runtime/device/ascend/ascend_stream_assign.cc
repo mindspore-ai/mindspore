@@ -541,7 +541,6 @@ void AscendStreamAssign::InsertStreamActiveForCommon(const NotNull<KernelGraphPt
 
     if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kStreamSwitchOpName) {
       MS_LOG(INFO) << "Insert StreamActive op after FP StreamSwitch for stream parallel";
-      // UpdateStreamSwitch(graph_ptr, cur_cnode_ptr, &update_cnode_list);
       update_cnode_list.emplace_back(cur_cnode_ptr);
     } else {
       update_cnode_list.emplace_back(cur_cnode_ptr);
@@ -1781,7 +1780,6 @@ void AscendStreamAssign::FindEventRelations(const NotNull<KernelGraphPtr> &graph
     MS_LOG(INFO) << "Event_id:" << AnfAlgo::GetNodeAttr<uint32_t>(item.first, kAttrEventId);
   }
 }
-
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
