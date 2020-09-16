@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""in_impl"""
+"""Implementation for internal polymorphism `in` operations."""
 
 from . import _constexpr_utils as const_utils
 from ... import functional as F
@@ -21,7 +21,7 @@ from ...composite import base
 
 in_ = base.MultitypeFuncGraph("in", True)
 """
-in_ is a metafuncgraph object which will determine if a in b
+"in_" is a multi type func graph  object which will determine if a in b
 using ".register" decorator
 """
 

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""uadd_impl"""
+"""Implementation for internal polymorphism `uadd` operations."""
 from mindspore.ops.composite import base
 
 # uadd is a metagraph object which will return operation result regarding input

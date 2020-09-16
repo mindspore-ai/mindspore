@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""Implementation for setitem."""
+"""Implementation for internal polymorphism `setitem` operations."""
 
 from . import _compile_utils as compile_utils
 from ... import functional as F

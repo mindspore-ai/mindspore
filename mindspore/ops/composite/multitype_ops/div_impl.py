@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""div_impl"""
+"""Implementation for internal polymorphism `div` operations."""
 
 from ...composite import base
 from ... import functional as F

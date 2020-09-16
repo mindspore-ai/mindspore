@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""not_equal_impl"""
+"""Implementation for internal polymorphism `not equal` operations."""
 
 from ...composite import base
 from ... import functional as F

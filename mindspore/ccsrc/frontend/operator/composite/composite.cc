@@ -641,7 +641,7 @@ void GradOperation::doGetGrad(const FuncGraphPtr &func_graph, AnfNodePtr out, An
 
 // Generate the graph.
 FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  if (args_spec_list.size() < 1) {
+  if (args_spec_list.empty()) {
     MS_LOG(EXCEPTION) << "GenerateGraph requires at least 1 parameters, while the input size is "
                       << args_spec_list.size() << ".";
   }

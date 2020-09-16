@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""Implementation for getitem."""
+"""Implementation for internal polymorphism `getitem` operations."""
 from . import _compile_utils as compile_utils
 from .. import base
 from ... import functional as F

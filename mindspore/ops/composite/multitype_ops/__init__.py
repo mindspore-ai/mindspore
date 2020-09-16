@@ -38,6 +38,7 @@ from .logical_or_impl import logical_or
 from .logic_not_impl import logical_not
 from .uadd_impl import uadd
 from .in_impl import in_
+from .not_in_impl import not_in_
 __all__ = [
     'add',
     'sub',
@@ -61,5 +62,6 @@ __all__ = [
     'logical_and',
     'logical_or',
     'logical_not',
-    'in_'
+    'in_',
+    'not_in_'
 ]

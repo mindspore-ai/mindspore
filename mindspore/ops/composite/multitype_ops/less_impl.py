@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""equal_impl"""
+"""Implementation for internal polymorphism `less` operations."""
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 

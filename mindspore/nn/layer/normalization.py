@@ -27,12 +27,12 @@ from mindspore._checkparam import check_int_positive
 from mindspore.ops import _selected_ops
 from ..cell import Cell
 
-
-
 __all__ = ['BatchNorm1d', 'BatchNorm2d', 'LayerNorm', 'GroupNorm', 'GlobalBatchNorm']
+
 
 class _BatchNorm(Cell):
     """Batch Normalization base class."""
+
     @cell_attr_register
     def __init__(self,
                  num_features,
@@ -131,7 +131,6 @@ class _BatchNorm(Cell):
         world_rank_list = zip(*(iter(world_rank),) * group_size)
         group_list = [list(i) for i in world_rank_list]
         return group_list
-
 
     def _global_sync(self, x, axes, re_shape):
         """calculate global batch normalization output"""

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""equal_impl"""
+"""Implementation for internal polymorphism `equal` operations."""
 from . import _constexpr_utils as const_utils
 from ...composite import base
 from ... import functional as F
