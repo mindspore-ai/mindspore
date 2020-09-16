@@ -54,7 +54,6 @@ def build_op(build_type, json_str):
     kernel_info = json.loads(json_str)
     check_kernel_info(kernel_info)
 
-    # import module
     op_name = kernel_info['op_info']['name']
 
     try:
