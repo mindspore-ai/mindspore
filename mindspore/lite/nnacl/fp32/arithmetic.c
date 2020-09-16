@@ -473,9 +473,6 @@ int ElementOptAddRelu6(float *input0, float *input1, float *output, int element_
 int ElementOptDiv(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
   if (param->in_elements_num0_ == 1) {
     for (int index = 0; index < element_size; ++index) {
-      if (input1[index] == 0) {
-        return NNACL_ERRCODE_DIVISOR_ZERO;
-      }
       output[index] = input0[0] / input1[index];
     }
   } else {
@@ -492,16 +489,10 @@ int ElementOptDiv(float *input0, float *input1, float *output, int element_size,
 int ElementOptDivRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
   if (param->in_elements_num0_ == 1) {
     for (int index = 0; index < element_size; ++index) {
-      if (input1[index] == 0) {
-        return NNACL_ERRCODE_DIVISOR_ZERO;
-      }
       output[index] = input0[0] / input1[index];
       output[index] = output[index] > 0 ? output[index] : 0;
     }
   } else {
-    if (input1[0] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
     for (int index = 0; index < element_size; ++index) {
       output[index] = input0[index] / input1[0];
       output[index] = output[index] > 0 ? output[index] : 0;
@@ -513,15 +504,9 @@ int ElementOptDivRelu(float *input0, float *input1, float *output, int element_s
 int ElementOptDivRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
   if (param->in_elements_num0_ == 1) {
     for (int index = 0; index < element_size; ++index) {
-      if (input1[index] == 0) {
-        return NNACL_ERRCODE_DIVISOR_ZERO;
-      }
       output[index] = MSMIN(MSMAX(input0[0] / input1[index], 0), 6);
     }
   } else {
-    if (input1[0] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
     for (int index = 0; index < element_size; ++index) {
       output[index] = MSMIN(MSMAX(input0[index] / input1[0], 0), 6);
     }
@@ -840,9 +825,6 @@ int BroadcastSub(float *input0, float *input1, float *tile_input0, float *tile_i
 
 int ElementDiv(float *input0, float *input1, float *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
-    if (input1[i] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
     output[i] = input0[i] / input1[i];
   }
   return NNACL_OK;
@@ -850,9 +832,6 @@ int ElementDiv(float *input0, float *input1, float *output, int element_size) {
 
 int ElementDivRelu(float *input0, float *input1, float *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
-    if (input1[i] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
     float res = input0[i] / input1[i];
     output[i] = res > 0 ? res : 0;
   }
@@ -861,9 +840,6 @@ int ElementDivRelu(float *input0, float *input1, float *output, int element_size
 
 int ElementDivRelu6(float *input0, float *input1, float *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
-    if (input1[i] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
     output[i] = MSMIN(MSMAX(input0[i] / input1[i], 0), 6);
   }
   return NNACL_OK;
@@ -877,9 +853,6 @@ int BroadcastDiv(float *input0, float *input1, float *tile_input0, float *tile_i
 
 int ElementFloorMod(float *input0, float *input1, float *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
-    if (input1[i] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
     output[i] = input0[i] - floorf(input0[i] / input1[i]) * input1[i];
   }
   return NNACL_OK;
@@ -893,9 +866,6 @@ int BroadcastFloorMod(float *input0, float *input1, float *tile_input0, float *t
 
 int ElementFloorDiv(float *input0, float *input1, float *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
-    if (input1[i] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
     output[i] = floorf(input0[i] / input1[i]);
   }
   return NNACL_OK;
