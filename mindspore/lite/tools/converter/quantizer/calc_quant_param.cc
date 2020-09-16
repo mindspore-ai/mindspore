@@ -116,11 +116,11 @@ int CommonCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
     return status;
   }
   if (inputParamDone != node.inputIndex.size()) {
-    MS_LOG(ERROR) << "Can not determine inputTensor quantParam, node " << node.name;
+    MS_LOG(WARNING) << "Can not determine inputTensor quantParam, node " << node.name;
     return RET_ERROR;
   }
   if (outputParamDone != node.outputIndex.size()) {
-    MS_LOG(ERROR) << "Can not determine outputTensor quantParam, node " << node.name;
+    MS_LOG(WARNING) << "Can not determine outputTensor quantParam, node " << node.name;
     return RET_ERROR;
   }
   return RET_OK;
@@ -138,7 +138,7 @@ int LinearCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
     MS_ASSERT(outTensor != nullptr);
     auto outputQuantParam = GetTensorQuantParam(outTensor);
     MS_ASSERT(outputQuantParam != nullptr);
-    if (!outputQuantParam->inited) {
+    if (outputQuantParam == nullptr || !outputQuantParam->inited) {
       MS_LOG(WARNING) << "Can not determine inputTensor quantParam from outputTensor for node " << node.name;
       return RET_ERROR;
     }
@@ -204,8 +204,7 @@ class CalcConcat : public QuantParamCalcer {
         auto &inTensor = graph->allTensors.at(i);
         MS_ASSERT(inTensor != nullptr);
         auto inQuantParam = GetTensorQuantParam(inTensor);
-        MS_ASSERT(inQuantParam != nullptr);
-        if (!inQuantParam->inited) {
+        if (inQuantParam == nullptr || !inQuantParam->inited) {
           return RET_ERROR;
         }
         if (numBits == -1) {

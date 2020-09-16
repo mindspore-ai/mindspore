@@ -48,7 +48,7 @@ struct InputArray {
 
 class AwareQuantizer : public FbQuantizer {
  public:
-  AwareQuantizer(schema::MetaGraphT *graph, const std::string &inputInferType, const std::string &stdValues,
+  AwareQuantizer(schema::MetaGraphT *graph, const TypeId &inferType, const std::string &stdValues,
                  const std::string &meanValues);
 
   ~AwareQuantizer() { delete (mInputArray); }

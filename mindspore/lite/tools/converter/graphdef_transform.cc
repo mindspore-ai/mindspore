@@ -51,7 +51,7 @@ void GraphDefTransform::CreateQuantizer(const converter::Flags *flags) {
     case QuantType::QuantType_AwareTraining: {
       MS_LOG(INFO) << "create AwareTrainingQuantizer!";
       fbQuantizer =
-        std::make_unique<quant::AwareQuantizer>(graphDefT, flags->inputInferenceTypeIn, flags->stdDev, flags->mean);
+        std::make_unique<quant::AwareQuantizer>(graphDefT, flags->inferenceType, flags->stdDev, flags->mean);
       break;
     }
     default:
@@ -194,11 +194,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   if (ctx.quantType == QuantType_AwareTraining) {
     Optimizer quantNodeOptimizer;
     auto dTypeTransPass = new (std::nothrow) DTypeTransPass();
-    if (dTypeTransPass == nullptr) {
-      MS_LOG(ERROR) << "new dTypeTransPass failed";
-      return RET_MEMORY_FAILED;
-    }
-    dTypeTransPass->SetInputDataDType(ctx.inputInferenceType);
+    dTypeTransPass->SetInputDataDType(ctx.inferenceType);
     dTypeTransPass->SetOutputDataDType(ctx.inferenceType);
     quantNodeOptimizer.AddPass(dTypeTransPass);
     quantNodeOptimizer.AddPass(new (std::nothrow) QuantCastFusionPass());
