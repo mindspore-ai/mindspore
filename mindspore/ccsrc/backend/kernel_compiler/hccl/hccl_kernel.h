@@ -26,6 +26,7 @@
 #include "backend/kernel_compiler/ascend_kernel_mod.h"
 #include "backend/kernel_compiler/hccl/hcom_util.h"
 #include "hccl/hcom.h"
+#include "hccl/hccl_types.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -44,10 +45,10 @@ class HcclKernel : public AscendKernelMod {
  protected:
   std::vector<std::vector<size_t>> hccl_kernel_input_shape_list_;
   std::vector<std::vector<size_t>> hccl_kernel_output_shape_list_;
-  std::vector<hcclDataType_t> hccl_data_type_list_;
+  std::vector<HcclDataType> hccl_data_type_list_;
   std::vector<std::string> hccl_format_list_;
   uint64_t hccl_count_;
-  hcclRedOp_t op_type_;
+  HcclReduceOp op_type_;
   uint32_t root_id_;
   mutable std::vector<size_t> input_size_list_;
   mutable std::vector<size_t> output_size_list_;

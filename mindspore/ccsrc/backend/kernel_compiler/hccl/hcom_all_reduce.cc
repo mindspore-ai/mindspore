@@ -32,8 +32,8 @@ bool HcomAllReduceKernel::Launch(const std::vector<AddressPtr> &inputs, const st
     return false;
   }
   const char *tag = "Hccl-AllReduce";
-  hcclResult_t ret = hcom_all_reduce(tag, inputs[0]->addr, outputs[0]->addr, hccl_count_, hccl_data_type_list_[0],
-                                     op_type_, nullptr, stream_ptr);
+  HcclResult ret = hcom_all_reduce(tag, inputs[0]->addr, outputs[0]->addr, hccl_count_, hccl_data_type_list_[0],
+                                   op_type_, nullptr, stream_ptr);
   if (ret != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcomAllReduceKernelOp : hcom_all_reduce fail, return: " << static_cast<int>(ret);
     return false;

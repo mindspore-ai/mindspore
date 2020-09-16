@@ -34,7 +34,7 @@ bool HcomAllBroadCastKernel::Launch(const std::vector<AddressPtr> &inputs,
   }
   const char *tag = "Hccl-BroadCast";
   MS_EXCEPTION_IF_NULL(inputs[0]);
-  hcclResult_t ret =
+  HcclResult ret =
     hcom_broadcast(tag, inputs[0]->addr, hccl_count_, hccl_data_type_list_[0], root_id_, nullptr, stream_ptr);
   if (ret != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcomBroadcastOp : hcom_broadcast fail, return: " << static_cast<int>(ret);

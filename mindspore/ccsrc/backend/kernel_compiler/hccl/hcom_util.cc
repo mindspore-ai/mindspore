@@ -43,7 +43,7 @@ bool HcomUtil::GetKernelOutputShape(const AnfNodePtr &anf_node, vector<vector<si
   return true;
 }
 
-bool HcomUtil::GetHcomDataType(const AnfNodePtr &anf_node, vector<hcclDataType_t> *data_type_list) {
+bool HcomUtil::GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> *data_type_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(data_type_list);
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(anf_node); ++i) {
@@ -56,14 +56,14 @@ bool HcomUtil::GetHcomDataType(const AnfNodePtr &anf_node, vector<hcclDataType_t
   }
   auto type_base = *(std::begin(*data_type_list));
   if (std::any_of(data_type_list->begin(), data_type_list->end(),
-                  [&type_base](hcclDataType_t type) { return type != type_base; })) {
+                  [&type_base](HcclDataType type) { return type != type_base; })) {
     MS_LOG(ERROR) << "hccl have different data type";
     return false;
   }
   return true;
 }
 
-bool HcomUtil::GetHcclOpSize(const hcclDataType_t &data_type, const vector<size_t> &shape, size_t *size) {
+bool HcomUtil::GetHcclOpSize(const HcclDataType &data_type, const vector<size_t> &shape, size_t *size) {
   MS_EXCEPTION_IF_NULL(size);
   size_t tmp_size = 1;
   uint32_t type_size = 4;
@@ -81,7 +81,7 @@ bool HcomUtil::GetHcclOpSize(const hcclDataType_t &data_type, const vector<size_
   return true;
 }
 
-bool HcomUtil::GetHcomTypeSize(const hcclDataType_t &data_type, uint32_t *size) {
+bool HcomUtil::GetHcomTypeSize(const HcclDataType &data_type, uint32_t *size) {
   MS_EXCEPTION_IF_NULL(size);
   auto iter = CONST_OP_HCOM_DATA_TYPE_SIZE_MAP.find(data_type);
   if (iter == CONST_OP_HCOM_DATA_TYPE_SIZE_MAP.end()) {
@@ -92,7 +92,7 @@ bool HcomUtil::GetHcomTypeSize(const hcclDataType_t &data_type, uint32_t *size) 
   return true;
 }
 
-bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<hcclDataType_t> &data_type_list,
+bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataType> &data_type_list,
                             const vector<vector<size_t>> &shape_list, uint64_t *total_count) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(total_count);
@@ -143,7 +143,7 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<hcclDataTyp
   return true;
 }
 
-bool HcomUtil::GetHcomOperationType(const AnfNodePtr &anf_node, hcclRedOp_t *op_type) {
+bool HcomUtil::GetHcomOperationType(const AnfNodePtr &anf_node, HcclReduceOp *op_type) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(op_type);
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
@@ -155,13 +155,13 @@ bool HcomUtil::GetHcomOperationType(const AnfNodePtr &anf_node, hcclRedOp_t *op_
   auto hcom_op_type_get = GetValue<const char *>(primitive->GetAttr("op"));
   string hcom_op_type(hcom_op_type_get);
   if (hcom_op_type == "min") {
-    *op_type = HCCL_REP_OP_MIN;
+    *op_type = HCCL_REDUCE_MIN;
   } else if (hcom_op_type == "max") {
-    *op_type = HCCL_REP_OP_MAX;
+    *op_type = HCCL_REDUCE_MAX;
   } else if (hcom_op_type == "prod") {
-    *op_type = HCCL_REP_OP_PROD;
+    *op_type = HCCL_REDUCE_PROD;
   } else if (hcom_op_type == "sum") {
-    *op_type = HCCL_REP_OP_SUM;
+    *op_type = HCCL_REDUCE_SUM;
   } else {
     MS_LOG(ERROR) << "HcomUtil::Get HCOM_ATTR_REDUCE_TYPE fail, [" << hcom_op_type << "] not support!";
     return false;

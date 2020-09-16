@@ -44,14 +44,14 @@ HcclKernelFactory &HcclKernelFactory::Get() {
   return _this;
 }
 
-HcclKernel::HcclKernel() : hccl_count_(0), op_type_(HCCL_REP_OP_SUM), root_id_(0), anf_node_(nullptr) {}
+HcclKernel::HcclKernel() : hccl_count_(0), op_type_(HCCL_REDUCE_SUM), root_id_(0), anf_node_(nullptr) {}
 
 HcclKernel::~HcclKernel() {
   hccl_kernel_input_shape_list_.clear();
   hccl_kernel_output_shape_list_.clear();
   hccl_data_type_list_.clear();
   hccl_count_ = 0;
-  op_type_ = HCCL_REP_OP_SUM;
+  op_type_ = HCCL_REDUCE_SUM;
   root_id_ = 0;
   input_size_list_.clear();
   output_size_list_.clear();
@@ -141,7 +141,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
   void *workspace_address = nullptr;
   const int64_t workspace_num = 0;
   std::vector<uint8_t> private_def;
-  hcclDataType_t data_type = hccl_data_type_list_[0];
+  HcclDataType data_type = hccl_data_type_list_[0];
 
   MS_LOG(INFO) << "HCCL Task : stream_id=" << stream_id << ", ws_num=" << workspace_num << ", count=" << hccl_count_
                << ", root_id=" << root_id_ << ", op_type=" << static_cast<int>(op_type_)

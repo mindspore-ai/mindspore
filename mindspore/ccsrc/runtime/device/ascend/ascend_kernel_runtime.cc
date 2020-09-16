@@ -639,7 +639,7 @@ bool AscendKernelRuntime::HcclInit() {
     return false;
   }
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
-  hcclResult_t res = hcom_init(full_path, rank_id_str.c_str());
+  HcclResult res = hcom_init(full_path, rank_id_str.c_str());
   free(full_path);
   if (res != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "Hcom init failed, res is " << static_cast<int>(res);
@@ -655,7 +655,7 @@ bool AscendKernelRuntime::DestroyHccl() {
     MS_LOG(INFO) << "Hccl is not enable, no need to close.";
     return true;
   }
-  hcclResult_t res = hcom_destroy();
+  HcclResult res = hcom_destroy();
   if (res != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "Hccl destroy failed";
     return false;
