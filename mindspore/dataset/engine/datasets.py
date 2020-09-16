@@ -1975,7 +1975,11 @@ class _PythonCallable:
             try:
                 # This call will send the tensors along with Python callable index to the process pool.
                 # Block, yield GIL. Current thread will reacquire GIL once result is returned.
-                return self.pool.apply(_pyfunc_worker_exec, [self.idx, *args])
+                result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, *args])
+                return result.get(60)
+            except multiprocessing.TimeoutError:
+                # Ensure c++ pyfunc threads exit normally if python sub-process is killed unnormally.
+                return None
             except KeyboardInterrupt:
                 self.pool.terminate()
                 self.pool.join()

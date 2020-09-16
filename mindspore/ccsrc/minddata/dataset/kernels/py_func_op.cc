@@ -50,6 +50,11 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
       } else {
         ret_py_obj = this->py_func_ptr_();
       }
+      // Object is none if pyfunc timeout
+      if (ret_py_obj.is_none()) {
+        MS_LOG(INFO) << "Pyfunc execute time out";
+        goto TimeoutError;
+      }
       if (output_type_ != DataType::DE_UNKNOWN) {
         RETURN_IF_NOT_OK(CastOutput(ret_py_obj, output));
 
@@ -86,6 +91,10 @@ ComputeReturn:
 
 ShapeMisMatch:
   ret = Status(StatusCode::kShapeMisMatch, "PyFunc should return a numpy array or a numpy array tuple");
+  goto ComputeReturn;
+
+TimeoutError:
+  ret = Status(StatusCode::kTimeOut, "PyFunc timeout");
   goto ComputeReturn;
 }
 
