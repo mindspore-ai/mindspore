@@ -613,16 +613,16 @@ void ImplementAffine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<si
   IM[2] = b1;
   IM[5] = b2;
 
-  out_img.Init(dsize[0], dsize[1]);
+  out_img.Init(dsize[0], dsize[1], sizeof(Pixel_Type));
   for (int y = 0; y < out_img.height_; y++) {
     for (int x = 0; x < out_img.width_; x++) {
       int src_x = IM[0] * x + IM[1] * y + IM[2];
       int src_y = IM[3] * x + IM[4] * y + IM[5];
       if (src_x >= 0 && src_y >= 0 && src_x < src.width_ && src_y < src.height_) {
         Pixel_Type src_pixel = static_cast<Pixel_Type *>(src.data_ptr_)[src_y * src.width_ + src_x];
-        static_cast<Pixel_Type *>(out_img.data_ptr_)[y * src.width_ + x] = src_pixel;
+        static_cast<Pixel_Type *>(out_img.data_ptr_)[y * out_img.width_ + x] = src_pixel;
       } else {
-        static_cast<Pixel_Type *>(out_img.data_ptr_)[y * src.width_ + x] = borderValue;
+        static_cast<Pixel_Type *>(out_img.data_ptr_)[y * out_img.width_ + x] = borderValue;
       }
     }
   }
