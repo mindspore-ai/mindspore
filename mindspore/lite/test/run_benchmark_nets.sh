@@ -277,24 +277,24 @@ function Run_x86() {
 
 # Run on arm64 platform:
 function Run_arm64() {
-    # Unzip arm
-    cd ${arm_path} || exit 1
+    # Unzip arm64
+    cd ${arm64_path} || exit 1
     tar -zxf mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}.tar.gz || exit 1
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_test_path} || exit 1
-    if [ -f ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/lib/libminddata-lite.so ]; then
-        cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/third_party/libjpeg-turbo/lib/libjpeg.so ${benchmark_test_path}/libjpeg.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${benchmark_test_path}/libturbojpeg.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/third_party/opencv/lib/libopencv_core.so ${benchmark_test_path}/libopencv_core.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/third_party/opencv/lib/libopencv_imgcodecs.so ${benchmark_test_path}/libopencv_imgcodecs.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/third_party/opencv/lib/libopencv_imgproc.so ${benchmark_test_path}/libopencv_imgproc.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/lib/libminddata-lite.so ]; then
+        cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/third_party/libjpeg-turbo/lib/libjpeg.so ${benchmark_test_path}/libjpeg.so || exit 1
+        cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${benchmark_test_path}/libturbojpeg.so || exit 1
+        cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/third_party/opencv/lib/libopencv_core.so ${benchmark_test_path}/libopencv_core.so || exit 1
+        cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/third_party/opencv/lib/libopencv_imgcodecs.so ${benchmark_test_path}/libopencv_imgcodecs.so || exit 1
+        cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/third_party/opencv/lib/libopencv_imgproc.so ${benchmark_test_path}/libopencv_imgproc.so || exit 1
+        cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
 
-    cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
-    cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/lib/liboptimize.so ${benchmark_test_path}/liboptimize.so || exit 1
-    cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/lib/liboptimize.so ${benchmark_test_path}/liboptimize.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
     # adb push all needed files to the phone
     adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
@@ -570,8 +570,8 @@ while getopts "a:c:r:m:d:" opt; do
             echo "arm_path is ${OPTARG}"
             ;;
         c)
-	    x86_path=${OPTARG}
-            echo "x86_path is ${OPTARG}"
+	    converter_path=${OPTARG}
+            echo "converter_path is ${OPTARG}"
             ;;
         r)
 	    release_path=${OPTARG}
@@ -591,16 +591,19 @@ while getopts "a:c:r:m:d:" opt; do
     esac
 done
 
-echo ${release_path}
+echo ${arm_path}
+echo ${converter_path}
 
 mkdir train
-mv ${arm_path}/*runtime-*train* ./train
-file_name=$(ls ${arm_path}/*runtime-arm64*.tar.gz)
+arm64_path=${release_path}/andriod_aarch64
+mv ${arm64_path}/*runtime-*train* ./train
+file_name=$(ls ${arm64_path}/*runtime-arm64*.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 IFS="." read -r -a suffix <<< "${file_name_array[-1]}"
 process_unit_arm64=${suffix[0]}
 
+x86_path=${release_path}/ubuntu_x86
 file_name=$(ls ${x86_path}/*runtime-x86*.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 IFS="." read -r -a suffix <<< "${file_name_array[-1]}"
@@ -629,7 +632,7 @@ echo ' ' > ${run_converter_result_file}
 
 # Run converter
 echo "start Run converter ..."
-Run_Converter &
+Run_Converter
 Run_converter_PID=$!
 sleep 1
 
@@ -648,11 +651,11 @@ function Print_Converter_Result() {
 # Check converter result and return value
 if [[ ${Run_converter_status} = 0 ]];then
     echo "Run converter success"
-    Print_Converter_Result &
+    Print_Converter_Result
 else
     echo "Run converter failed"
     cat ${run_converter_log_file}
-    Print_Converter_Result &
+    Print_Converter_Result
     exit 1
 fi
 
@@ -701,11 +704,11 @@ function Print_Benchmark_Result() {
 # Check benchmark result and return value
 if [[ ${Run_x86_status} = 0 ]] && [[ ${Run_arm64_status} = 0 ]];then
     echo "Run_x86 and Run_arm64 is ended"
-    Print_Benchmark_Result &
+    Print_Benchmark_Result
     exit 0
 else
     echo "Run failed"
     cat ${run_benchmark_log_file}
-    Print_Benchmark_Result &
+    Print_Benchmark_Result
     exit 1
 fi
