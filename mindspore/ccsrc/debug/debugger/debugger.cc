@@ -268,9 +268,8 @@ void Debugger::PostExecuteNode() {
       if (!hits.empty()) {
         SendWatchpointsAndSuspend(hits);
       }
-    }
-    // if kernel is not watchpoint and is next_to or continue_to node, suspend.
-    if (run_level_ == "node" && (node_name_ == "" || node_name_ == cur_name_)) {
+    } else if (run_level_ == "node" && (node_name_ == "" || node_name_ == cur_name_)) {
+      // if kernel is not watchpoint and is next_to or continue_to node, suspend
       CommandLoop();
     }
     return;
