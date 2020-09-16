@@ -21,7 +21,7 @@
 #include "include/version.h"
 
 namespace mindspore::lite {
-namespace {
+
 bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model) {
   for (size_t i = 0; i < meta_graph->nodes()->size(); ++i) {
     Model::Node *node = new (std::nothrow) Model::Node();
@@ -66,7 +66,6 @@ bool ConvertTensors(const schema::MetaGraph *meta_graph, Model *model) {
   }
   return true;
 }
-}  // namespace
 
 Model *Model::Import(const char *model_buf, size_t size) {
   if (model_buf == nullptr) {

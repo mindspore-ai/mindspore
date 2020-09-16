@@ -25,4 +25,4 @@ void ElementMulAndDivNegSquare(const float *a, const float *b, const float *deno
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP32_ARITHMETIC_GRAD_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_

@@ -23,7 +23,7 @@
 #include <functional>
 
 #include "mindspore/lite/schema/inner/model_generated.h"
-#include "mindspore/lite/include/model.h"
+#include "mindspore/lite/include/train_model.h"
 #include "common/common_test.h"
 #include "include/train_session.h"
 // #include "include/lite_session.h"
@@ -249,13 +249,6 @@ TEST_F(NetworkTest, tuning_layer) {
     label->dataType = TypeId::kNumberTypeInt32;
     label->dims = {BATCH_SIZE * NUM_CLASSES};
     label->offset = -1;
-    // label->data.resize(BATCH_SIZE * NUM_CLASSES * sizeof(float));
-    // int *data = reinterpret_cast<int *>(label->data.data());
-    // for (int i = 0; i < BATCH_SIZE; i++) {
-    //   for (int j = 0; j < NUM_CLASSES; j++) {
-    //     *(data + i * NUM_CLASSES + j) = j;
-    //   }
-    // }
     meta_graph->allTensors.emplace_back(std::move(label));
   }
   // tensor 7 - Softmaxentropy
@@ -353,20 +346,9 @@ TEST_F(NetworkTest, tuning_layer) {
   builder.Finish(offset);
   size_t size = builder.GetSize();
   const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
-  std::cout << "build fb size= " << size << "\n";
+  std::cout << "build fb size= " << size << std::endl;
 
-#if 0  // EXPORT_FILE
-  std::string path = std::string("hcdemo_train.fb");
-  std::ofstream ofs(path);
-  ASSERT_EQ(true, ofs.good());
-  ASSERT_EQ(true, ofs.is_open());
-
-  ofs.seekp(0, std::ios::beg);
-  ofs.write(content, size);
-  ofs.close();
-#endif
-
-  auto model = lite::Model::Import(content, size);
+  auto model = lite::TrainModel::Import(content, size);
   ASSERT_NE(nullptr, model);
   meta_graph.reset();
   content = nullptr;
@@ -380,8 +362,8 @@ TEST_F(NetworkTest, tuning_layer) {
   session->Init(&context);
   auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
-  session->train();
-  session->train();  // Just double check that calling train twice does not cause a problem
+  session->Train();
+  session->Train();  // Just double check that calling Train twice does not cause a problem
 
   auto inputs = session->GetInputs();
   ASSERT_EQ(inputs.size(), 2);
@@ -407,22 +389,20 @@ TEST_F(NetworkTest, tuning_layer) {
 
   ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
-  auto outputs = session->GetOutputsByName("BiasAdd");
+  auto outputs = session->GetOutputsByNodeName("SoftmaxCrossEntropy");
   ASSERT_EQ(outputs.size(), 1);
   auto outTensor = (outputs.at(0));
   ASSERT_NE(nullptr, outTensor);
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
   auto *outData = reinterpret_cast<float *>(outTensor->MutableData());
   ASSERT_NE(nullptr, outData);
-  std::cout << "==============Initial=Scores===================" << std::endl;
-  for (int i = 0; i < 10; i++) {
-    std::cout << outData[i] << ", ";
-  }
-  std::cout << std::endl;
-  session->eval();
-  session->eval();  // Just double check that calling eval twice does not cause a problem
+  std::cout << "==============Initial=Loss=====================" << std::endl;
+  std::cout << outData[0] << ", " << std::endl;
+
+  session->Eval();
+  session->Eval();  // Just double check that calling eval twice does not cause a problem
   ret = session->RunGraph();
-  outputs = session->GetOutputsByName("BiasAdd");
+  outputs = session->GetOutputsByNodeName("BiasAdd");
   ASSERT_EQ(outputs.size(), 1);
   outTensor = (outputs.at(0));
   ASSERT_NE(nullptr, outTensor);
@@ -433,14 +413,14 @@ TEST_F(NetworkTest, tuning_layer) {
   for (int i = 0; i < 10; i++) {
     std::cout << outData[i] << ", ";
   }
+  std::cout << std::endl;
   std::string output_path = "./test_data/train/train_output_32_10.bin";
   auto error = lite::RelativeOutputError(outData, output_path);
   EXPECT_LT(error, 2e-3);
 
   ret = session->RunGraph();
-  outputs = session->GetOutputsByName("BiasAdd");
-  ASSERT_EQ(outputs.size(), 1);
-  outTensor = (outputs.at(0));
+  auto all_output_tensors = session->GetOutputs();
+  outTensor = (all_output_tensors["5"]);
   ASSERT_NE(nullptr, outTensor);
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
   outData = reinterpret_cast<float *>(outTensor->MutableData());
@@ -449,15 +429,14 @@ TEST_F(NetworkTest, tuning_layer) {
   for (int i = 0; i < 10; i++) {
     std::cout << outData[i] << ", ";
   }
+  std::cout << std::endl;
   error = lite::RelativeOutputError(outData, output_path);
   EXPECT_LT(error, 2e-3);
 
-  session->train();
-  session->eval();  // do some more zig-zags
+  session->Train();
+  session->Eval();  // do some more zig-zags
   ret = session->RunGraph();
-  outputs = session->GetOutputsByName("BiasAdd");
-  ASSERT_EQ(outputs.size(), 1);
-  outTensor = (outputs.at(0));
+  outTensor = session->GetOutputByTensorName("5");
   ASSERT_NE(nullptr, outTensor);
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
   outData = reinterpret_cast<float *>(outTensor->MutableData());
@@ -466,10 +445,10 @@ TEST_F(NetworkTest, tuning_layer) {
   for (int i = 0; i < 10; i++) {
     std::cout << outData[i] << ", ";
   }
+  std::cout << std::endl;
   error = lite::RelativeOutputError(outData, output_path);
   EXPECT_LT(error, 2e-3);
 
-  delete model;
   delete session;
   MS_LOG(INFO) << "TuningLayer passed";
 }
@@ -490,19 +469,16 @@ int32_t fileIterator(mindspore::session::TrainSession *session, const std::strin
 }
 void replaceExt(const std::string &src, std::string *dst) { *dst = src.substr(0, src.find_last_of('.')) + ".emb"; }
 
-int32_t runEffNet(mindspore::lite::LiteSession *session, const std::string &in, const std::string &out) {
+int32_t runNet(mindspore::lite::LiteSession *session, const std::string &in, const std::string &out,
+               const char *tensor_name) {
   // setup input
   auto inputs = session->GetInputs();
-  // ASSERT_EQ(inputs.size(), 1);
   auto inTensor = inputs.at(0);
-  // ASSERT_NE(nullptr, inTensor);
   float *data = reinterpret_cast<float *>(inTensor->MutableData());
 
   size_t input_size;
   float *in_buf = reinterpret_cast<float *>(lite::ReadFile(in.c_str(), &input_size));
-  // ASSERT_NE(nullptr, data);
   auto input_data = reinterpret_cast<float *>(in_buf);
-  // ASSERT_EQ(input_size, inTensor->Size());
   std::copy(input_data, input_data + inTensor->ElementsNum(), data);
   delete[] in_buf;
 
@@ -510,11 +486,10 @@ int32_t runEffNet(mindspore::lite::LiteSession *session, const std::string &in, 
   session->RunGraph();
 
   // compare outputs
-  auto outputs = session->GetOutputs();
-  auto output = ((outputs.begin())->second);
+  auto output = session->GetOutputByTensorName(tensor_name);
   float *output_data = reinterpret_cast<float *>(output->MutableData());
 
-  return mindspore::lite::CompareRelativeOutput(output_data, out.c_str());
+  return mindspore::lite::CompareRelativeOutput(output_data, out);
 }
 
 TEST_F(NetworkTest, efficient_net) {
@@ -524,7 +499,7 @@ TEST_F(NetworkTest, efficient_net) {
 
   std::string net = "./test_data/nets/effnetb0_fwd_nofuse.ms";
   ReadFile(net.c_str(), &net_size, &buf);
-  auto model = lite::Model::Import(buf, net_size);
+  auto model = lite::TrainModel::Import(buf, net_size);
   delete[] buf;
   auto context = new lite::InnerContext;
   context->device_type_ = lite::DT_CPU;
@@ -533,60 +508,47 @@ TEST_F(NetworkTest, efficient_net) {
   ASSERT_EQ(lite::RET_OK, context->Init());
 
   auto session = new mindspore::session::TrainSession();
-  // auto session = new mindspore::lite::LiteSession();
   ASSERT_NE(session, nullptr);
   auto ret = session->Init(context);
   ASSERT_EQ(lite::RET_OK, ret);
   ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
-  session->eval();
+  session->Eval();
 
-#if 0
-  std::string path = "/opt/share/MiniBinEmbDataset/";
-  auto res = fileIterator(session, path, [](mindspore::lite::LiteSession *session, const std::string &in) {
-    int32_t res = 0;
-    if (in.find(".bin") != std::string::npos) {
-      std::string out;
-      replaceExt(in, &out);
-      res = runEffNet(session, in, out);
-      std::cout << "input file: " << in << (res ?  " Fail" : " Pass") << std::endl;
-    }
-    return res;
-  });
-#else
   std::string in = "./test_data/nets/effNet_input_x_1_3_224_224.bin";
   std::string out = "./test_data/nets/effNet_output_y_1_1000.bin";
-  auto res = runEffNet(session, in, out);
-#endif
-  // auto inputs = session->GetInputs();
-  // ASSERT_EQ(inputs.size(), NUM_OF_INPUTS);
-  // auto inTensor = inputs.at(0);
-  // ASSERT_NE(nullptr, inTensor);
-  // float *data = reinterpret_cast<float *>(inTensor->MutableData());
+  auto res = runNet(session, in, out, "631");
 
-  // // fill input
-  // std::string input_path = "./test_data/nets/effNet_input_x_1_3_224_224.bin";
-  // // std::string input_path = "/opt/share/MiniBinEmbDataset/2_pet/n02099601_3111.bin";
-  // size_t input_size;
-  // char *in_buf = nullptr;
-  // ReadFile(input_path.c_str(), &input_size, &in_buf);
-  // ASSERT_NE(nullptr, data);
-  // auto input_data = reinterpret_cast<float *>(in_buf);
-  // ASSERT_EQ(input_size, inTensor->Size());
-  // std::copy(input_data, input_data+inTensor->ElementsNum(), data);
-
-  // // execute network
-  // ret = session->RunGraph();
-
-  // // compare outputs
-  // std::string output_path = "./test_data/nets/effNet_output_y_1_1000.bin";
-  // // std::string output_path = "/opt/share/MiniBinEmbDataset/2_pet/n02099601_3111.emb";
-  // auto outputs = session->GetOutputs();
-  // auto output = ((outputs.begin())->second);
-  // float* output_data = reinterpret_cast<float *>(output.at(0)->MutableData());
-  // int res = lite::CompareRelativeOutput(output_data, output_path);
   ASSERT_EQ(res, 0);
-  delete model;
+  delete session;
+  delete context;
+}
+
+TEST_F(NetworkTest, lenetnet) {
+  char *buf = nullptr;
+  size_t net_size = 0;
+  std::string net = "./test_data/nets/lenet_train.ms";
+  ReadFile(net.c_str(), &net_size, &buf);
+  auto model = lite::TrainModel::Import(buf, net_size);
+  delete[] buf;
+  auto context = new lite::Context;
+  context->device_type_ = lite::DT_CPU;
+  context->cpu_bind_mode_ = lite::NO_BIND;
+  context->thread_num_ = 1;
+
+  auto session = new mindspore::session::TrainSession();
+  ASSERT_NE(session, nullptr);
+  auto ret = session->Init(context);
+  ASSERT_EQ(lite::RET_OK, ret);
+  ret = session->CompileGraph(model);
+  ASSERT_EQ(lite::RET_OK, ret);
+  session->Eval();
+
+  std::string in = "./test_data/nets/x_lenet.bin";
+  std::string out = "./test_data/nets/y_lenet.bin";
+  auto res = runNet(session, in, out, "24");
+
+  ASSERT_EQ(res, 0);
   delete session;
   delete context;
 }

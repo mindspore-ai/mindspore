@@ -196,7 +196,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
 
   std::vector<int> dim_dx({3, 28, 28, 3});
   lite::Tensor dx_tensor(TypeId::kNumberTypeFloat32, dim_dx);
-  dx_tensor.MallocData();
+  ASSERT_EQ(dx_tensor.MallocData(), 0);
   auto output_data = reinterpret_cast<float *>(dx_tensor.MutableData());
   std::vector<lite::Tensor *> outputs = {&dx_tensor};
 
@@ -253,7 +253,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
   lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.SetData(yt_data);
   lite::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
-  out_tensor.MallocData();
+  ASSERT_EQ(out_tensor.MallocData(), 0);
   float *out_data = static_cast<float *>(out_tensor.MutableData());
   std::vector<lite::Tensor *> inputs = {&yt_tensor, &x_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
@@ -312,7 +312,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
   yt_tensor.SetData(yt_data);
 
   lite::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
-  out_tensor.MallocData();
+  ASSERT_EQ(out_tensor.MallocData(), 0);
   auto out_data = static_cast<float *>(out_tensor.MutableData());
 
   std::vector<lite::Tensor *> inputs = {&yt_tensor, &x_tensor};
@@ -399,124 +399,6 @@ TEST_F(TestPoolingGradFp32, MaxPoolingGradFp32) {
   MS_LOG(INFO) << "TestMaxPoolingGradFp32 passed";
 }
 
-#if 0
-TEST_F(TestPoolingGradFp32, MaxPoolingKernelGradFp32) {
-  // prepare stage
-  auto maxpool = new PoolingParameter();
-  InitPoolingParamFP32(maxpool);
-  maxpool->pool_mode_ = PoolMode_MaxPool;
-  maxpool->input_h_ = 30;
-  maxpool->input_w_ = 30;
-  maxpool->input_channel_ = 3;
-
-  maxpool->output_batch_ = 1;
-  maxpool->output_h_ = 10;
-  maxpool->output_w_ = 10;
-  maxpool->output_channel_ = 3;
-  maxpool->stride_h_ = 3;
-  maxpool->stride_w_ = 3;
-
-  maxpool->pad_u_ = 0;
-  maxpool->pad_d_ = 0;
-  maxpool->pad_l_ = 0;
-  maxpool->pad_r_ = 0;
-
-  size_t input_size;
-  size_t y_data_size = maxpool->output_batch_ * maxpool->output_channel_ * maxpool->output_h_ * maxpool->output_w_;
-
-  auto x_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_2_x_1_30_30_3.bin", &input_size));
-  std::vector<int> dim_x({1, 30, 30, 3});
-  lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
-  x_tensor.SetData(x_data);
-  std::vector<lite::Tensor *> maxpool_inputs = {&x_tensor};
-
-  auto y_data = new float[y_data_size];
-  std::vector<int> dim_y({1, 10, 10, 3});
-  lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
-  y_tensor.SetData(y_data);
-
-  auto ind_data = new int[y_data_size];
-  lite::Tensor ind_tensor(TypeId::kNumberTypeInt32, dim_y);
-  ind_tensor.SetData(ind_data);
-
-  std::vector<lite::Tensor *> maxpool_outputs = {&y_tensor, &ind_tensor};
-
-  kernel::KernelKey maxpool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Pooling};
-  auto maxpool_creator = lite::KernelRegistry::GetInstance()->GetCreator(maxpool_desc);
-  auto maxpoolobj = maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool),
-                                    NULL, maxpool_desc);
-  maxpoolobj->Run();
-
-  printf("==================indices data=================\n");
-  for (int i = 0; i < 10; i++) {
-    std::cout << ind_data[i] << " ,";
-  }
-  std::cout << std::endl;
-
-  auto pooling_param = new PoolingParameter();
-  InitPoolingParamFP32(pooling_param);
-  pooling_param->pool_mode_ = PoolMode_MaxPool;
-  pooling_param->input_h_ = 10;
-  pooling_param->input_w_ = 10;
-  pooling_param->input_channel_ = 3;
-
-  pooling_param->output_batch_ = 1;
-  pooling_param->output_h_ = 30;
-  pooling_param->output_w_ = 30;
-  pooling_param->output_channel_ = 3;
-
-  // runtime part
-  printf("Calculating runtime cost...\n");
-  // uint64_t time_avg = 0;
-  size_t output_data_size =
-    pooling_param->output_batch_ * pooling_param->output_channel_ * pooling_param->output_h_ * pooling_param->output_w_;
-
-  auto dy_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_2_dy_1_10_10_3.bin", &input_size));
-  std::vector<int> dim_dy({1, 3, 10, 10});
-  lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
-  dy_tensor.SetData(dy_data);
-
-#if 0
-  std::string i_path = "./test_data/pooling/maxpoolgradfp32_2_i_1_3_10_10.bin";
-  auto ill_data = reinterpret_cast<int64_t*>(mindspore::lite::ReadFile(i_path.c_str(), &input_size));
-  auto i_data = new int[output_data_size];
-  for (int i=0; i < output_data_size; i++)
-    i_data[i] = static_cast<int>(ill_data[i]);
-  std::vector<int> dim_ind({1, 3, 10, 10});
-  lite::Tensor ind_tensor(TypeId::kNumberTypeInt32, dim_ind);
-  ind_tensor.SetData(i_data);
-#endif
-
-  std::vector<lite::Tensor *> inputs = {&dy_tensor, &ind_tensor};
-
-  auto output_data = new float[output_data_size];
-  std::vector<int> dim_dx({1, 3, 30, 30});
-  lite::Tensor dx_tensor(TypeId::kNumberTypeFloat32, dim_dx);
-  dx_tensor.SetData(output_data);
-  std::vector<lite::Tensor *> outputs = {&dx_tensor};
-
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(pooling_param), NULL, desc);
-  kernel_obj->Run();
-
-  printf("==================output data=================\n");
-  for (int i = 0; i < 20; i++) {
-    std::cout << output_data[i] << " ,";
-  }
-  std::cout << std::endl;
-  std::string output_path = "./test_data/pooling/maxpoolgradfp32_2_dx_1_30_30_3.bin";
-  lite::CompareOutput(output_data, output_path);
-
-  // delete input_data;
-  // delete[] output_data;
-  delete pooling_param;
-  MS_LOG(INFO) << "TestMaxPoolingKernelGradFp32 passed";
-}
-#endif  // if 0 before MaxPoolingKernelGradFp32
-
 TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
   // prepare stage
   // input size will be equal to the original size of x, output size will be the output size as in forward
@@ -547,7 +429,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
   yt_tensor.SetData(yt_data);
 
   lite::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
-  out_tensor.MallocData();
+  ASSERT_EQ(out_tensor.MallocData(), 0);
   auto out_data = static_cast<float *>(out_tensor.MutableData());
   std::vector<lite::Tensor *> maxpool_inputs = {&x_tensor, &y_tensor, &yt_tensor};
   std::vector<lite::Tensor *> maxpool_outputs = {&out_tensor};
@@ -616,7 +498,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
   yt_tensor.SetData(yt_data);
 
   lite::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
-  out_tensor.MallocData();
+  ASSERT_EQ(out_tensor.MallocData(), 0);
   auto out_data = static_cast<float *>(out_tensor.MutableData());
 
   std::vector<lite::Tensor *> maxpool_inputs = {&x_tensor, &y_tensor, &yt_tensor};
@@ -686,7 +568,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
   yt_tensor.SetData(yt_data);
 
   lite::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
-  out_tensor.MallocData();
+  ASSERT_EQ(out_tensor.MallocData(), 0);
   auto out_data = static_cast<float *>(out_tensor.MutableData());
 
   std::vector<lite::Tensor *> maxpool_inputs = {&x_tensor, &y_tensor, &yt_tensor};

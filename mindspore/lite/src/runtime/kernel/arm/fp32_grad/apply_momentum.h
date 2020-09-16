@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_APPLY_MOMENTUM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_APPLY_MOMENTUM_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_APPLY_MOMENTUM_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_APPLY_MOMENTUM_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
@@ -27,20 +27,12 @@ class ApplyMomentumCPUKernel : public LiteKernel {
   explicit ApplyMomentumCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                   const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), workspace(nullptr) {}
-  ~ApplyMomentumCPUKernel() override {
-    if (workspace)
-      delete[] workspace;
-  }
-
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~ApplyMomentumCPUKernel() override {}
   int Init() override;
   int ReSize() override;
   int Run() override;
-
- private:
-  float *workspace;
 };
-
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_APPLY_MOMENTUM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_APPLY_MOMENTUM_H_

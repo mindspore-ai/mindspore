@@ -515,10 +515,6 @@ TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
   auto *kernel = new mindspore::kernel::ConvolutionTrainCPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs,
                                                                   outputs, &context, 0);
   kernel->Init();
-  // kernel::KernelKey desc = {kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Conv2D};
-  // auto creator = lite::KernelRegistry::GetInstance()->GetKernelCreator(desc);
-  // auto kernel = creator(inputs, outputs, (OpParameter *)conv_param, &context, desc);
-
   kernel->train();
   EXPECT_EQ(kernel->is_train(), 1);
 

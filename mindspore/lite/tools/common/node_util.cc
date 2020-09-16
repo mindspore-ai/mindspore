@@ -31,6 +31,9 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_PoolingGrad,
   schema::PrimitiveType_BiasGrad,
   schema::PrimitiveType_BNGrad,
+  schema::PrimitiveType_ActivationGrad,
+  schema::PrimitiveType_ApplyMomentum,
+
 #endif
   schema::PrimitiveType_Conv2D,
   schema::PrimitiveType_DeConv2D,
@@ -51,7 +54,8 @@ static const std::vector<schema::PrimitiveType> nhwcOpDualInputList = {
 
 static const std::vector<schema::PrimitiveType> nhwcOpAllInputList = {
 #ifdef SUPPORT_TRAIN
-  schema::PrimitiveType_PoolingGrad
+  schema::PrimitiveType_PoolingGrad,
+  schema::PrimitiveType_ActivationGrad
 #endif
 };
 

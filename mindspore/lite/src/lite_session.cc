@@ -278,16 +278,13 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-
   ret = executor->Prepare(this->kernels_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare kernels failed: " << ret;
     is_running_.store(false);
     return ret;
   }
-#ifndef SUPPORT_TRAIN
   model->Free();
-#endif
   is_running_.store(false);
   return RET_OK;
 }

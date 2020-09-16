@@ -41,9 +41,12 @@ static float CompareOutputRelativeData(float *output_data, float *correct_data, 
 int CompareRelativeOutput(float *output_data, std::string file_path) {
   size_t output_size;
   auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
+  if (ground_truth == nullptr) {
+    return 1;
+  }
   size_t output_num = output_size / sizeof(float);
   int error = CompareOutputRelativeData(output_data, ground_truth, output_num);
-  delete [] ground_truth;
+  delete[] ground_truth;
   if (error > 1e-4) {
     return 1;
   }
@@ -55,9 +58,8 @@ float RelativeOutputError(float *output_data, std::string file_path) {
   auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
   size_t output_num = output_size / sizeof(float);
   float error = CompareOutputRelativeData(output_data, ground_truth, output_num);
-  delete [] ground_truth;
+  delete[] ground_truth;
   return error;
 }
 }  // namespace lite
 }  // namespace mindspore
-

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_ACTIVATION_GRAD_H_
-#define MINDSPORE_LITE_NNACL_ACTIVATION_GRAD_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_GRAD_ACTIVATION_GRAD_H_
+#define MINDSPORE_LITE_NNACL_FP32_GRAD_ACTIVATION_GRAD_H_
 
 #include <math.h>
 #include "nnacl/op_base.h"
@@ -42,4 +42,4 @@ int HSigmoidGrad(float *src0, float *src1, int length, float *dst);
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_ACTIVATION_GRAD_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_GRAD_ACTIVATION_GRAD_H_

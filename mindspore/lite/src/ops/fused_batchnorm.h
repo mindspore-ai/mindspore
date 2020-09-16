@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_FUSED_BATCH_NORM_H_
-#define LITE_MINDSPORE_LITE_C_OPS_FUSED_BATCH_NORM_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_FUSED_BATCHNORM_H_
+#define MINDSPORE_LITE_SRC_OPS_FUSED_BATCHNORM_H_
 
 #include <vector>
 #include <set>
@@ -34,6 +34,7 @@ class FusedBatchNorm : public PrimitiveC {
   void SetEpsilon(float epsilon);
   void SetMomentum(float momentum);
   void SetSpatial(int spatial);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   FusedBatchNorm() = default;
 
@@ -46,4 +47,4 @@ class FusedBatchNorm : public PrimitiveC {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_FUSED_BATCH_NORM_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_FUSED_BATCHNORM_H_

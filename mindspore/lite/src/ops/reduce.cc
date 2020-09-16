@@ -49,7 +49,19 @@ int Reduce::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
-    attr->mode = schema::ReduceMode_ReduceMean;
+    if (prim.name() == "ReduceMean") {
+      attr->mode = schema::ReduceMode_ReduceMean;
+    } else if (prim.name() == "ReduceSum") {
+      attr->mode = schema::ReduceMode_ReduceSum;
+    } else if (prim.name() == "ReduceMax") {
+      attr->mode = schema::ReduceMode_ReduceMax;
+    } else if (prim.name() == "ReduceMin") {
+      attr->mode = schema::ReduceMode_ReduceMin;
+    } else if (prim.name() == "ReduceProd") {
+      attr->mode = schema::ReduceMode_ReduceProd;
+    } else if (prim.name() == "ReduceSumSquare") {
+      attr->mode = schema::ReduceMode_ReduceSumSquare;
+    }
 
     attr->keepDims = GetValue<bool>(prim.GetAttr("keep_dims"));
     if (inputs.size() == kAnfPopulaterTwo) {
