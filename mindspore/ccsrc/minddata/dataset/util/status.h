@@ -81,6 +81,7 @@ enum class StatusCode : char {
   kBoundingBoxOutOfBounds = 11,
   kBoundingBoxInvalidShape = 12,
   kSyntaxError = 13,
+  kTimeOut = 14,
   // Make this error code the last one. Add new error code above it.
   kUnexpectedError = 127
 };
