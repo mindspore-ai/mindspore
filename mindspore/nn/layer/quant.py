@@ -85,9 +85,14 @@ class Conv2dBnAct(Cell):
             Initializer and string are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: 'zeros'.
         has_bn (bool): Specifies to used batchnorm or not. Default: False.
+        momentum (float): Momentum for moving average.Momentum value should be [0, 1].Default:0.9
+        eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
+                     1e-5.
         activation (Cell): Specifies activation type. The optional values are as following:
             'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
             'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
+        alpha (float): Slope of the activation function at x < 0. Default: 0.2.
+        after_fake(bool): Determin whether there should be a fake quantization operation after Cond2dBnAct.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -171,6 +176,7 @@ class DenseBnAct(Cell):
         activation (string): Specifies activation type. The optional values are as following:
             'Softmax', 'LogSoftmax', 'ReLU', 'ReLU6', 'Tanh', 'GELU', 'Sigmoid',
             'PReLU', 'LeakyReLU', 'h-Swish', and 'h-Sigmoid'. Default: None.
+        after_fake(bool): Determin whether there should be a fake quantization operation after DenseBnAct.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
