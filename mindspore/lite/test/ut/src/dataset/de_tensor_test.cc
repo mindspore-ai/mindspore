@@ -25,7 +25,7 @@
 
 using MSTensor = mindspore::tensor::MSTensor;
 using DETensor = mindspore::tensor::DETensor;
-using LiteTensor = mindspore::lite::tensor::LiteTensor;
+using LiteTensor = mindspore::lite::Tensor;
 using Tensor = mindspore::dataset::Tensor;
 using DataType = mindspore::dataset::DataType;
 using TensorShape = mindspore::dataset::TensorShape;
@@ -56,11 +56,6 @@ TEST_F(MindDataTestTensorDE, MSTensorShape) {
   auto ms_tensor = std::shared_ptr<MSTensor>(new DETensor(t));
   ASSERT_EQ(ms_tensor->DimensionSize(0) == 2, true);
   ASSERT_EQ(ms_tensor->DimensionSize(1) == 3, true);
-  ms_tensor->set_shape(std::vector<int>{3, 2});
-  ASSERT_EQ(ms_tensor->DimensionSize(0) == 3, true);
-  ASSERT_EQ(ms_tensor->DimensionSize(1) == 2, true);
-  ms_tensor->set_shape(std::vector<int>{6});
-  ASSERT_EQ(ms_tensor->DimensionSize(0) == 6, true);
 }
 
 TEST_F(MindDataTestTensorDE, MSTensorSize) {
@@ -74,9 +69,6 @@ TEST_F(MindDataTestTensorDE, MSTensorDataType) {
   std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_FLOAT32));
   auto ms_tensor = std::shared_ptr<MSTensor>(new DETensor(t));
   ASSERT_EQ(ms_tensor->data_type() == mindspore::TypeId::kNumberTypeFloat32, true);
-  ms_tensor->set_data_type(mindspore::TypeId::kNumberTypeInt32);
-  ASSERT_EQ(ms_tensor->data_type() == mindspore::TypeId::kNumberTypeInt32, true);
-  ASSERT_EQ(std::dynamic_pointer_cast<DETensor>(ms_tensor)->tensor()->type() == DataType::DE_INT32, true);
 }
 
 TEST_F(MindDataTestTensorDE, MSTensorMutableData) {
@@ -89,19 +81,8 @@ TEST_F(MindDataTestTensorDE, MSTensorMutableData) {
   ASSERT_EQ(x == tensor_vec, true);
 }
 
-TEST_F(MindDataTestTensorDE, MSTensorHash) {
-  std::vector<float> x = {2.5, 2.5, 2.5, 2.5};
-  std::shared_ptr<Tensor> t;
-  Tensor::CreateFromVector(x, TensorShape({2, 2}), &t);
-  auto ms_tensor = std::shared_ptr<MSTensor>(new DETensor(t));
-  ASSERT_EQ(ms_tensor->hash() == 11093771382437, true);
-}
-
 TEST_F(MindDataTestTensorDE, MSTensorCreateFromMemory) {
   std::vector<float> x = {2.5, 2.5, 2.5, 2.5};
   auto mem_tensor = DETensor::CreateFromMemory(mindspore::TypeId::kNumberTypeFloat32, {2, 2}, &x[0]);
-  std::shared_ptr<Tensor> t;
-  Tensor::CreateFromVector(x, TensorShape({2, 2}), &t);
-  auto ms_tensor = std::shared_ptr<MSTensor>(new DETensor(t));
-  ASSERT_EQ(ms_tensor->hash() == mem_tensor->hash(), true);
+  ASSERT_EQ(mem_tensor->data_type() == mindspore::TypeId::kNumberTypeFloat32, true);
 }

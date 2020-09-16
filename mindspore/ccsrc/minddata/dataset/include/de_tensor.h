@@ -24,7 +24,7 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace tensor {
-class DETensor : public MSTensor {
+class DETensor : public mindspore::tensor::MSTensor {
  public:
   /// \brief Create a MSTensor pointer.
   /// \param[in] data_type DataTypeId of tensor to be created
@@ -58,21 +58,21 @@ class DETensor : public MSTensor {
 
   TypeId data_type() const override;
 
-  TypeId set_data_type(const TypeId data_type) override;
+  TypeId set_data_type(const TypeId data_type);
 
   std::vector<int> shape() const override;
 
-  size_t set_shape(const std::vector<int> &shape) override;
+  size_t set_shape(const std::vector<int> &shape);
 
   int DimensionSize(size_t index) const override;
 
   int ElementsNum() const override;
 
-  std::size_t hash() const override;
+  std::size_t hash() const;
 
   size_t Size() const override;
 
-  void *MutableData() const override;
+  void *MutableData() override;
 
  protected:
   std::shared_ptr<dataset::Tensor> tensor_impl_;
