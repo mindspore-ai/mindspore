@@ -462,6 +462,42 @@ class DepthwiseConv2dNativeBackpropInput(PrimitiveWithInfer):
         return out
 
 
+class DropoutGrad(PrimitiveWithInfer):
+    """
+    The gradient of Dropout. During training, randomly zeroes some of the elements
+    of the input tensor with probability.
+
+    Args:
+        keep_prob (float): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
+          means dropping out 10% of input units.
+
+    Inputs:
+        - **shape** (tuple[int]) - The shape of target mask.
+
+    Outputs:
+        Tensor, the value of generated mask for input shape.
+
+    Examples:
+        >>> dropout_grad = P.DropoutGrad(keep_prob=0.5)
+        >>> in = Tensor((20, 16, 50, 50))
+        >>> out = dropout_grad(in)
+    """
+
+    @prim_attr_register
+    def __init__(self, keep_prob=0.5):
+        self.keep_prob = validator.check_number_range("keep_prob", keep_prob, 0, 1, Rel.INC_RIGHT, self.name)
+
+    def infer_shape(self, dy_shape, mask_shape):
+        return dy_shape
+
+    def infer_dtype(self, dy_dtype, mask_dtype):
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_subclass("dy", dy_dtype, mstype.tensor, self.name)
+        validator.check_subclass("mask", mask_dtype, mstype.tensor, self.name)
+        validator.check_tensor_type_same({"dy_dtype": dy_dtype}, valid_types, self.name)
+        return dy_dtype
+
+
 class FlattenGrad(PrimitiveWithInfer):
     """Performs gradients of Flatten."""
 

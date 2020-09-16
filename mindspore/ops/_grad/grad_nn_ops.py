@@ -930,7 +930,7 @@ def get_bprop_kl_div_loss(self):
 @bprop_getters.register(P.Dropout)
 def get_bprop_dropout(self):
     """Grad definition for `Dropout` operation."""
-    grad = P.DropoutGrad(self.keep_prob)
+    grad = G.DropoutGrad(self.keep_prob)
 
     def bprop(x, out, dout):
         _, mask = out
