@@ -419,10 +419,13 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
         MS_LOG(ERROR) << "Value type is ValueSequence not supported - " << valueAbstract->type_name() << ".";
       }
 #endif
+  } else if (value->isa<Number>()) {
+    MS_LOG(INFO) << "Value is a number.";
+    return RET_OK;
   } else {
-      MS_LOG(ERROR) << "Not support value type , need add support.";
-      return RET_ERROR;
-    }
+    MS_LOG(ERROR) << "Not support value type , need add support.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

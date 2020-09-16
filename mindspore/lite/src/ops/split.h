@@ -35,6 +35,7 @@ class Split : public PrimitiveC {
   void SetNumberSplit(int number_split);
   void SetSizeSplits(const std::vector<int> &size_splits);
   void SetSplitDim(int split_dim);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 #else
   Split() = default;
 
