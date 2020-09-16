@@ -65,10 +65,6 @@ int ApplyMomentum::InferShape(std::vector<lite::Tensor *> inputs, std::vector<li
     MS_LOG(ERROR) << "ApplyMomentum should have at 5 input tensors";
     return RET_ERROR;
   }
-  // if (outputs.empty()) {
-  //  MS_LOG(ERROR) << "ApplyMomentumCPUKernel error input output size!";
-  //  return RET_ERROR;
-  // }
 
   if (inputs[0]->ElementsNum() != inputs[1]->ElementsNum() || inputs[0]->ElementsNum() != inputs[3]->ElementsNum() ||
       inputs[2]->ElementsNum() != 1 || inputs[4]->ElementsNum() != 1) {

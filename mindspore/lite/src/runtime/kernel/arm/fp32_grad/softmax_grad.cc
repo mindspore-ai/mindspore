@@ -22,11 +22,9 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 
-// using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-// using mindspore::schema::PrimitiveType_SoftMaxGrad;
 
 namespace mindspore::kernel {
 int SoftmaxGradCPUKernel::Init() {
@@ -71,7 +69,6 @@ int SoftmaxGradCPUKernel::Init() {
 int SoftmaxGradCPUKernel::ReSize() { return RET_OK; }
 
 int SoftmaxGradCPUKernel::Run() {
-  // auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   auto yt_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
@@ -85,7 +82,6 @@ kernel::LiteKernel *CpuSoftmaxGradFp32KernelCreator(const std::vector<lite::Tens
                                                     const kernel::KernelKey &desc,
                                                     const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
-  // MS_ASSERT(desc.type == schema::PrimitiveType_SoftMaxGrad);
   auto *kernel = new (std::nothrow) SoftmaxGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SoftmaxGradCPUKernel fail!";
@@ -101,5 +97,4 @@ kernel::LiteKernel *CpuSoftmaxGradFp32KernelCreator(const std::vector<lite::Tens
   return kernel;
 }
 
-// REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SoftMaxGrad, CpuSoftmaxGradFp32KernelCreator)
 }  // namespace mindspore::kernel
