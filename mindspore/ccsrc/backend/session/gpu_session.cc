@@ -196,7 +196,9 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
         }
       }
       if (need_sync) {
-        tensor->set_device_address(device_address);
+        if (AnfAlgo::IsParameterWeight(input_node->cast<ParameterPtr>())) {
+          tensor->set_device_address(device_address);
+        }
         MS_EXCEPTION_IF_NULL(device_address);
         if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
                                               LongToSize(tensor->data().nbytes()), tensor->data_type(),
