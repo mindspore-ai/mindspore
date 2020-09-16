@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""logical_not_impl"""
+"""Implementation for internal polymorphism `logical not` operations."""
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 

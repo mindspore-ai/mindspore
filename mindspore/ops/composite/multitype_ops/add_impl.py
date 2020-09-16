@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""add_impl"""
+"""Implementation for internal polymorphism `add` operations."""
 
 from ...composite import base
 from ... import functional as F

@@ -138,7 +138,7 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   auto unpack_graph = prim_->cast<prim::UnpackGraphPrimitivePtr>();
   auto out_node = out_conf->node()->cast<CNodePtr>();
   const auto &out_node_inputs = out_node->inputs();
-  if (out_node->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+  if (out_node->inputs().empty() || (out_node_inputs.size() - 1) != args_conf_list.size()) {
     MS_LOG(EXCEPTION) << "UnpackGraphPrimitive"
                       << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
                       << ", inputs size " << out_node_inputs.size();
@@ -149,7 +149,7 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
                        [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue()->abstract(); });
   // get the forward graph
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  AbstractFunctionPtr fn = args_spec_list[0]->cast<AbstractFunctionPtr>();
+  auto fn = args_spec_list[0]->cast<AbstractFunctionPtr>();
   if (fn == nullptr) {
     MS_LOG(EXCEPTION) << "UnpackGraphPrimitive arg0 must be AbstractFunction, but " << args_spec_list[0]->ToString();
   }
@@ -161,6 +161,9 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
     GetUnpackGraphSpecArgsList(args_spec_list, unpack_graph->need_unpack_args());
 
   AbstractBasePtrList graph_specialize_args_without_sens;
+  if (unpack_graph->with_sens_in_args() && graph_specialize_args.empty()) {
+    MS_EXCEPTION(ValueError) << "Grad with sens, but the sens is not provided.";
+  }
   (void)std::transform(graph_specialize_args.begin(),
                        graph_specialize_args.end() - (unpack_graph->with_sens_in_args() ? 1 : 0),
                        std::back_inserter(graph_specialize_args_without_sens), [](AbstractBasePtr abs) { return abs; });
@@ -177,8 +180,8 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   return engine->ForwardConfig(out_conf, fn_conf);
 }
 
-AnfNodePtr MixedPrecisionCastHelper(AnfNodePtr source_node, AbstractBasePtr node_type, AnfNodePtr target_type,
-                                    FuncGraphPtr func_graph) {
+AnfNodePtr MixedPrecisionCastHelper(const AnfNodePtr &source_node, const AbstractBasePtr &node_type,
+                                    const AnfNodePtr &target_type, const FuncGraphPtr &func_graph) {
   AnfNodePtr target_node = source_node;
   if (node_type->isa<AbstractTensor>()) {
     auto x = node_type->cast<AbstractTensorPtr>();
