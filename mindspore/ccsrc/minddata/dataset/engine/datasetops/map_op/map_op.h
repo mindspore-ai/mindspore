@@ -228,12 +228,6 @@ class MapOp : public ParallelOp {
   // Indices of the columns to process.
   std::vector<size_t> to_process_indices_;
 
-  // Wait post used to perform the pausing logic in MapOp
-  WaitPost wait_for_workers_post_;
-
-  // Count number of workers that have signaled master
-  std::atomic_int num_workers_paused_;
-
   // Private function for worker/thread to loop continuously. It comprises the main
   // logic of MapOp: getting the data from previous Op, validating user specified column names,
   // applying a list of TensorOps to each of the data, process the results and then

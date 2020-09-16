@@ -62,15 +62,7 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     PipelineOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nCurrent repeat count: " << repeat_count_ << "\nMax repeat count: " << num_repeats_
-        << "\nLeaf Nodes in execution path:";
-    if (!eoe_ops_.empty()) {
-      for (size_t i = 0; i < eoe_ops_.size(); i++) {
-        out << "\n  Operator: " << eoe_ops_[i]->id();
-      }
-    } else {
-      out << " None.";
-    }
+    out << "\nCurrent repeat count: " << repeat_count_ << "\nMax repeat count: " << num_repeats_;
     out << "\n\n";
   }
 }
@@ -108,7 +100,6 @@ Status RepeatOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
 // Base-class override for handling cases when an eoe is received.
 Status RepeatOp::EoeReceived(int32_t worker_id) {
   UpdateRepeatAndEpochCounter();
-
   repeat_count_++;
   MS_LOG(DEBUG) << "Repeat operator (" << operator_id_
                 << ") end of epoch message received. Repeat count is now: " << repeat_count_ << ".";
@@ -116,15 +107,9 @@ Status RepeatOp::EoeReceived(int32_t worker_id) {
   if (repeat_count_ == num_repeats_) {
     repeat_count_ = 0;
     state_ = OpState::kDeOpIdle;
-    return Status::OK();
+  } else {
+    state_ = OpState::kDeOpRunning;
   }
-
-  // Invoke a reset against the eoe nodes only.
-  for (auto &eoe_op : eoe_ops_) {
-    MS_LOG(DEBUG) << "Repeat operator sending reset to operator: " << eoe_op->id();
-    RETURN_IF_NOT_OK(eoe_op->Reset());
-  }
-
   return Status::OK();
 }
 
@@ -151,19 +136,6 @@ int32_t RepeatOp::num_consumers() const {
   } else {
     return parent_[0]->num_consumers();
   }
-}
-
-// Drive reset actions if needed
-Status RepeatOp::Reset() {
-  // If there's nested repeats, an ascendant repeat may have ourself listed as an eoe op.
-  // In that case, we now have to bounce the reset down to our own eoe ops.
-  MS_LOG(DEBUG) << "Repeat operator " << operator_id_ << " got reset.";
-  for (auto &eoe_op : eoe_ops_) {
-    MS_LOG(DEBUG) << "Nested repeat operator bouncing a reset to operator: " << eoe_op->id();
-    RETURN_IF_NOT_OK(eoe_op->Reset());
-  }
-  state_ = OpState::kDeOpRunning;
-  return Status::OK();
 }
 
 int32_t RepeatOp::num_producers() const {

@@ -141,6 +141,34 @@ def test_bucket_batch_multi_bucket_no_padding():
     assert output == expected_output
 
 
+def test_bucket_batch_multi_bucket_no_padding_repeat():
+    dataset = ds.GeneratorDataset((lambda: generate_sequential_same_shape(10)), ["col1"])
+
+    column_names = ["col1"]
+    bucket_boundaries = [1, 2, 3]
+    bucket_batch_sizes = [3, 3, 2, 2]
+    element_length_function = (lambda x: x[0] % 4)
+
+    dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
+                                             bucket_batch_sizes, element_length_function)
+    dataset = dataset.repeat(2)
+
+    expected_output = [[[2], [6]],
+                       [[3], [7]],
+                       [[0], [4], [8]],
+                       [[1], [5], [9]],
+                       [[2], [6]],
+                       [[3], [7]],
+                       [[0], [4], [8]],
+                       [[1], [5], [9]]]
+
+    output = []
+    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        output.append(data["col1"].tolist())
+
+    assert output == expected_output
+
+
 def test_bucket_batch_multi_bucket_with_padding():
     dataset = ds.GeneratorDataset((lambda: generate_sequential(10)), ["col1"])
 
@@ -471,6 +499,7 @@ def test_bucket_batch_invalid_column():
 if __name__ == '__main__':
     test_bucket_batch_invalid_input()
     test_bucket_batch_multi_bucket_no_padding()
+    test_bucket_batch_multi_bucket_no_padding_repeat()
     test_bucket_batch_multi_bucket_with_padding()
     test_bucket_batch_single_bucket_no_padding()
     test_bucket_batch_single_bucket_with_padding()

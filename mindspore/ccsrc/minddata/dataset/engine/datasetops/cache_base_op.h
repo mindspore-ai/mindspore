@@ -26,7 +26,6 @@
 #include "minddata/dataset/engine/cache/cache_service.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
-#include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/util/queue.h"
@@ -88,7 +87,6 @@ class CacheBase : public ParallelOp {
   int64_t row_cnt_;
   std::atomic<int64_t> num_cache_miss_;
   std::shared_ptr<CacheClient> cache_client_;
-  WaitPost epoch_sync_;
   int32_t rows_per_buffer_;
   Connector<std::vector<row_id_type>> keys_miss_;
   QueueMap<row_id_type, TensorRow> prefetch_;
@@ -110,7 +108,6 @@ class CacheBase : public ParallelOp {
  private:
   constexpr static int32_t connector_capacity_ = 1024;
   int32_t prefetch_size_;
-  QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
   QueueList<std::unique_ptr<IOBlock>> prefetch_queues_;
   std::unique_ptr<Queue<std::shared_ptr<Tensor>>> sampler_queue_;
 

@@ -32,7 +32,7 @@ def test_case_0():
     ds1 = ds1.map(operations=(lambda x: x + x), input_columns=col, output_columns="out")
 
     print("************** Output Tensor *****************")
-    for data in ds1.create_dict_iterator():  # each data is a dictionary
+    for data in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         print(data["out"])
     print("************** Output Tensor *****************")
@@ -52,7 +52,7 @@ def test_case_1():
     ds1 = ds1.map(operations=(lambda x: (x, x + x)), input_columns=col, output_columns=["out0", "out1"])
 
     print("************** Output Tensor *****************")
-    for data in ds1.create_dict_iterator():  # each data is a dictionary
+    for data in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         print("out0")
         print(data["out0"])
@@ -75,7 +75,7 @@ def test_case_2():
     ds1 = ds1.map(operations=(lambda x, y: x + y), input_columns=col, output_columns="out")
 
     print("************** Output Tensor *****************")
-    for data in ds1.create_dict_iterator():  # each data is a dictionary
+    for data in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         print(data["out"])
 
@@ -97,7 +97,7 @@ def test_case_3():
                   output_columns=["out0", "out1", "out2"])
 
     print("************** Output Tensor *****************")
-    for data in ds1.create_dict_iterator():  # each data is a dictionary
+    for data in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         print("out0")
         print(data["out0"])
@@ -123,7 +123,7 @@ def test_case_4():
                   output_columns=["out0", "out1", "out2"], num_parallel_workers=4)
 
     print("************** Output Tensor *****************")
-    for data in ds1.create_dict_iterator():  # each data is a dictionary
+    for data in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         print("out0")
         print(data["out0"])

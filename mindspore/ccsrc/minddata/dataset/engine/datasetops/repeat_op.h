@@ -101,10 +101,6 @@ class RepeatOp : public PipelineOp {
   // @param worker_id - The worker id
   Status EofReceived(int32_t worker_id) override;
 
-  /// \brief reset Op
-  /// \@return Status - The error code return
-  Status Reset() override;
-
   // Base-class override. Return the number of workers in the first parent.
   // @param workerId - The worker id
   int32_t num_consumers() const override;
@@ -133,10 +129,6 @@ class RepeatOp : public PipelineOp {
   /// \return The number of repeats that the user requested
   int32_t num_repeats() { return num_repeats_; }
 
-  // \brief Adds an operator to the repeat ops list of tracked leaf/eoe nodes
-  // \param[in] eoe_op The input leaf/eoe operator to add to the list
-  void AddToEoeList(std::shared_ptr<DatasetOp> eoe_op) { eoe_ops_.push_back(std::move(eoe_op)); }
-
  protected:
   // The number of repeats that the user requested.
   // Note that num_repeats_ is different with op_total_repeats_ or op_num_repeats_per_epoch_ in base DatasetOp class.
@@ -147,7 +139,6 @@ class RepeatOp : public PipelineOp {
   // Note that repeat_count_ is different with op_current_repeats_ in the base DatasetOp class
   // because it counts the repeats in the current epoch, whereas op_current_repeats_ counts the global total repeats.
   int32_t repeat_count_;
-  std::vector<std::shared_ptr<DatasetOp>> eoe_ops_;  // List of operators that can generate EOE underneath this repeat.
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -317,6 +317,8 @@ Status TFReaderOp::operator()() {
     } else {
       jagged_buffer_connector_->DoReset();
       buffer_id = 0;
+      // Self-reset to start a new iteration
+      RETURN_IF_NOT_OK(Reset());
     }
     UpdateRepeatAndEpochCounter();
   }
@@ -709,6 +711,7 @@ Status TFReaderOp::LoadFeature(const std::unique_ptr<TensorQTable> *tensor_table
 // Overrides base class reset method. Cleans up any state info from it's previous execution and
 // reinitializes itself so that it can be executed again, as if it was just created.
 Status TFReaderOp::Reset() {
+  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   // start workers first, otherwise IOBlokcs will fall through if workers see it before this is set to true
   load_jagged_connector_ = true;
 
