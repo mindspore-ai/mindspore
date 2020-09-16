@@ -44,13 +44,20 @@ then
     dataset_type=$3
 fi
 
-
 export DEVICE_NUM=8
 export RANK_SIZE=8
 export RANK_TABLE_FILE=$1
 
+cpus=`cat /proc/cpuinfo| grep "processor"| wc -l`
+avg=`expr $cpus \/ $RANK_SIZE`
+gap=`expr $avg \- 1`
+
 for((i=0;i<RANK_SIZE;i++))
 do
+    start=`expr $i \* $avg`
+    end=`expr $start \+ $gap`
+    cmdopt=$start"-"$end
+
     export DEVICE_ID=$i
     export RANK_ID=$i
     rm -rf ./train_parallel$i
@@ -60,6 +67,6 @@ do
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID, $dataset_type"
     env > env.log
-    python train.py --data_path=$2 --device_target="Ascend" --device_id=$i --is_distributed=1 --dataset=$dataset_type &> log &
+    taskset -c $cmdopt python train.py --data_path=$2 --device_target="Ascend" --device_id=$i --is_distributed=1 --dataset=$dataset_type &> log &
     cd ..
 done

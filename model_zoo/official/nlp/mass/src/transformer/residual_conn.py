@@ -31,7 +31,7 @@ class ResidualConnection(nn.Cell):
     def __init__(self, dropout_prob=0.1):
         super(ResidualConnection, self).__init__()
         self.add = P.TensorAdd()
-        self.dropout = nn.Dropout(1 - dropout_prob)
+        self.dropout = nn.Dropout(1.0 - dropout_prob)
 
     def construct(self, hidden_tensor, residual):
         """

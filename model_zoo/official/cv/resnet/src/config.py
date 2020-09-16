@@ -40,7 +40,7 @@ config1 = ed({
 # config for resnet50, imagenet2012
 config2 = ed({
     "class_num": 1001,
-    "batch_size": 32,
+    "batch_size": 256,
     "loss_scale": 1024,
     "momentum": 0.9,
     "weight_decay": 1e-4,
@@ -55,7 +55,7 @@ config2 = ed({
     "use_label_smooth": True,
     "label_smooth_factor": 0.1,
     "lr_init": 0,
-    "lr_max": 0.1,
+    "lr_max": 0.8,
     "lr_end": 0.0
 })
 
