@@ -33,6 +33,7 @@ class InferTest : public mindspore::CommonTest {
 TEST_F(InferTest, TestSession) {
   Model model;
   Node node;
+  node.name_ = String("node");
   model.nodes_.push_back(&node);
 
   node.node_type_ = NodeType::NodeType_CNode;
@@ -64,7 +65,7 @@ TEST_F(InferTest, TestSession) {
   TensorPtrVector outvec = session.GetOutputs();
   ASSERT_EQ(outvec.size(), 1);
   for (int i = 0; i < kOutSize; ++i) {
-    std::cout << *(reinterpret_cast<float *>(outvec.at(0)->data_)+ i) << " ";
+    std::cout << *(reinterpret_cast<float *>(outvec.at(0)->data_) + i) << " ";
   }
   std::cout << "\n";
   CompareOutputData(reinterpret_cast<float *>(outvec.at(0)->data_), expect_out, kOutSize, 0.000001);

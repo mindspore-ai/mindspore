@@ -10,6 +10,8 @@ file(GLOB KERNEL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/arithmetic_self.c
         ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/arithmetic.c
         ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/matmul.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/reduce.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/arithmetic.c
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/fp32/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/common/*.cc
         )
