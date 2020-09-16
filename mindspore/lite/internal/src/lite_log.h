@@ -16,6 +16,8 @@
 
 #ifndef MINDSPORE_LITE_INTERNAL_SRC_LITE_LOG_H_
 #define MINDSPORE_LITE_INTERNAL_SRC_LITE_LOG_H_
+
+#include <stdlib.h>
 #ifdef DEBUG
 #include <assert.h>
 #endif

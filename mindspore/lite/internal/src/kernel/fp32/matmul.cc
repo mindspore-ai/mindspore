@@ -125,10 +125,10 @@ int DoMatMul(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tenso
     return RET_PARAM_INVALID;
   }
   int batch = 1;
-  std::vector<int> a_shape = in_tensors[0]->shape_;
-  std::vector<int> c_shape = out_tensors[0]->shape_;
+  ShapeVector a_shape = in_tensors[0]->shape_;
+  ShapeVector c_shape = out_tensors[0]->shape_;
   if (in_tensors.size() == 3) {
-    std::vector<int> bias_shape = in_tensors[2]->shape_;
+    ShapeVector bias_shape = in_tensors[2]->shape_;
     if (bias_shape[bias_shape.size() - 1] != c_shape[c_shape.size() - 1]) {
       LITE_ERROR_LOG("The bias' dimension %d is not equal with column %d", bias_shape[bias_shape.size() - 1],
                      c_shape[c_shape.size() - 1]);
