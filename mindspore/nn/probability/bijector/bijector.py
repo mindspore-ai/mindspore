@@ -20,6 +20,7 @@ from ..distribution._utils.utils import CheckTensor
 from ..distribution import Distribution
 from ..distribution import TransformedDistribution
 
+
 class Bijector(Cell):
     """
     Bijecotr class.
@@ -28,22 +29,23 @@ class Bijector(Cell):
         is_constant_jacobian (bool): Whether the Bijector has constant derivative. Default: False.
         is_injective (bool): Whether the Bijector is a one-to-one mapping. Default: True.
         name (str): The name of the Bijector. Default: None.
-        dtype (mindspore.dtype): The type of the distribution the Bijector can operate on. Default: None.
+        dtype (mindspore.dtype): The type of the distributions that the Bijector can operate on. Default: None.
         param (dict): The parameters used to initialize the Bijector. Default: None.
     """
+
     def __init__(self,
                  is_constant_jacobian=False,
                  is_injective=True,
                  name=None,
                  dtype=None,
                  param=None):
-
         """
-        Constructor of bijector class.
+        Constructor of Bijector class.
         """
         super(Bijector, self).__init__()
         validator.check_value_type('name', name, [str], type(self).__name__)
-        validator.check_value_type('is_constant_jacobian', is_constant_jacobian, [bool], name)
+        validator.check_value_type(
+            'is_constant_jacobian', is_constant_jacobian, [bool], name)
         validator.check_value_type('is_injective', is_injective, [bool], name)
         self._name = name
         self._dtype = dtype

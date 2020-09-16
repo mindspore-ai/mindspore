@@ -15,6 +15,7 @@
 """Power Bijector"""
 from .power_transform import PowerTransform
 
+
 class Exp(PowerTransform):
     r"""
     Exponential Bijector.
@@ -27,24 +28,25 @@ class Exp(PowerTransform):
         name (str): The name of the Bijector. Default: 'Exp'.
 
     Examples:
-        >>> # To initialize an Exp bijector
+        >>> # To initialize an Exp bijector.
         >>> import mindspore.nn.probability.bijector as msb
         >>> n = msb.Exp()
         >>>
-        >>> # To use Exp bijector in a network
+        >>> # To use an Exp bijector in a network.
         >>> class net(Cell):
         >>>     def __init__(self):
         >>>         super(net, self).__init__():
         >>>         self.e1 = msb.Exp()
         >>>
         >>>     def construct(self, value):
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing 'forward' with the name of the function
+        >>>         # Similar calls can be made to other functions
+        >>>         # by replacing `forward` by the name of the function.
         >>>         ans1 = self.s1.forward(value)
         >>>         ans2 = self.s1.inverse(value)
         >>>         ans3 = self.s1.forward_log_jacobian(value)
         >>>         ans4 = self.s1.inverse_log_jacobian(value)
     """
+
     def __init__(self,
                  name='Exp'):
         param = dict(locals())

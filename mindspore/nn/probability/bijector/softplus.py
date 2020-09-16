@@ -37,18 +37,18 @@ class Softplus(Bijector):
         name (str): The name of the Bijector. Default: 'Softplus'.
 
     Examples:
-        >>> # To initialize a Softplus bijector of sharpness 2
+        >>> # To initialize a Softplus bijector of sharpness 2.
         >>> softplus = nn.probability.bijector.Softfplus(2)
         >>>
-        >>> # To use ScalarAffine bijector in a network
+        >>> # To use ScalarAffine bijector in a network.
         >>> class net(Cell):
         >>>     def __init__(self):
         >>>         super(net, self).__init__():
         >>>         self.sp1 = nn.probability.bijector.Softflus(2)
         >>>
         >>>     def construct(self, value):
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing 'forward' with the name of the function
+        >>>         # Similar calls can be made to other functions
+        >>>         # by replacing 'forward' by the name of the function.
         >>>         ans1 = self.sp1.forward(value)
         >>>         ans2 = self.sp1.inverse(value)
         >>>         ans3 = self.sp1.forward_log_jacobian(value)
@@ -58,8 +58,12 @@ class Softplus(Bijector):
     def __init__(self,
                  sharpness=1.0,
                  name='Softplus'):
+        """
+        Constructor of Softplus Bijector.
+        """
         param = dict(locals())
-        validator.check_value_type('sharpness', sharpness, [int, float], type(self).__name__)
+        validator.check_value_type('sharpness', sharpness,
+                                   [int, float], type(self).__name__)
         super(Softplus, self).__init__(name=name, param=param)
         self._sharpness = cast_to_tensor(sharpness)
 

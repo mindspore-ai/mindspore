@@ -21,87 +21,88 @@ from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_greater_zero, check_type, check_distribution_name, set_param_type
 from ._utils.custom_ops import exp_generic, log_generic
 
+
 class Exponential(Distribution):
     """
     Example class: Exponential Distribution.
 
     Args:
         rate (float, list, numpy.ndarray, Tensor, Parameter): The inverse scale.
-        seed (int): The seed used in sampling. Global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): The type of the distribution. Default: mstype.float32.
-        name (str): The name of the distribution. Default: Exponential.
+        seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
+        dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
+        name (str): The name of the distribution. Default: 'Exponential'.
 
     Note:
         `rate` should be strictly greater than 0.
-        dist_spec_args is `rate`.
-        `dtype` should be float type because Exponential distributions are continuous.
+        `dist_spec_args` is `rate`.
+        `dtype` should be a float type because Exponential distributions are continuous.
 
-        Examples:
-        >>> # To initialize an Exponential distribution of rate 0.5
+    Examples:
+        >>> # To initialize an Exponential distribution of the rate 0.5.
         >>> import mindspore.nn.probability.distribution as msd
         >>> e = msd.Exponential(0.5, dtype=mstype.float32)
         >>>
-        >>> # The following creates two independent Exponential distributions
+        >>> # The following creates two independent Exponential distributions.
         >>> e = msd.Exponential([0.5, 0.5], dtype=mstype.float32)
         >>>
-        >>> # An Exponential distribution can be initilized without arguments
-        >>> # In this case, rate must be passed in through args during function calls
+        >>> # An Exponential distribution can be initilized without arguments.
+        >>> # In this case, `rate` must be passed in through `args` during function calls.
         >>> e = msd.Exponential(dtype=mstype.float32)
         >>>
-        >>> # To use Exponential in a network
+        >>> # To use an Exponential distribution in a network.
         >>> class net(Cell):
         >>>     def __init__(self):
         >>>         super(net, self).__init__():
         >>>         self.e1 = msd.Exponential(0.5, dtype=mstype.float32)
         >>>         self.e2 = msd.Exponential(dtype=mstype.float32)
         >>>
-        >>>     # All the following calls in construct are valid
+        >>>     # All the following calls in construct are valid.
         >>>     def construct(self, value, rate_b, rate_a):
         >>>
         >>>         # Private interfaces of probability functions corresponding to public interfaces, including
-        >>>         # 'prob', 'log_prob', 'cdf', 'log_cdf', 'survival_function', 'log_survival', have the form:
+        >>>         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
         >>>         # Args:
-        >>>         #     value (Tensor): value to be evaluated.
-        >>>         #     rate (Tensor): rate of the distribution. Default: self.rate.
+        >>>         #     value (Tensor): the value to be evaluated.
+        >>>         #     rate (Tensor): the rate of the distribution. Default: self.rate.
         >>>
-        >>>         # Example of prob.
+        >>>         # Examples of `prob`.
         >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing 'prob' with the name of the function
+        >>>         # by replacing `prob` by the name of the function.
         >>>         ans = self.e1.prob(value)
-        >>>         # Evaluate with the respect to distribution b
+        >>>         # Evaluate with respect to distribution b.
         >>>         ans = self.e1.prob(value, rate_b)
-        >>>         # Rate must be passed in during function calls
+        >>>         # `rate` must be passed in during function calls.
         >>>         ans = self.e2.prob(value, rate_a)
         >>>
         >>>
-        >>>         # Functions 'sd', 'var', 'entropy' have the same args.
+        >>>         # Functions `mean`, `sd`, 'var', and 'entropy' have the same arguments as follows.
         >>>         # Args:
-        >>>         #     rate (Tensor): rate of the distribution. Default: self.rate.
+        >>>         #     rate (Tensor): the rate of the distribution. Default: self.rate.
         >>>
-        >>>         # Example of mean. sd, var have similar usage.
+        >>>         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
         >>>         ans = self.e1.mean() # return 2
         >>>         ans = self.e1.mean(rate_b) # return 1 / rate_b
-        >>>         # Rate must be passed in during function calls
+        >>>         # `rate` must be passed in during function calls.
         >>>         ans = self.e2.mean(rate_a)
         >>>
         >>>
-        >>>         # Interfaces of 'kl_loss' and 'cross_entropy' are similar:
+        >>>         # Interfaces of `kl_loss` and `cross_entropy` are the same.
         >>>         # Args:
-        >>>         #     dist (str): name of the distribution. Only 'Exponential' is supported.
-        >>>         #     rate_b (Tensor): rate of distribution b.
-        >>>         #     rate_a (Tensor): rate of distribution a. Default: self.rate.
+        >>>         #     dist (str): The name of the distribution. Only 'Exponential' is supported.
+        >>>         #     rate_b (Tensor): the rate of distribution b.
+        >>>         #     rate_a (Tensor): the rate of distribution a. Default: self.rate.
         >>>
-        >>>         # Example of kl_loss (cross_entropy is similar):
+        >>>         # Examples of `kl_loss`. `cross_entropy` is similar.
         >>>         ans = self.e1.kl_loss('Exponential', rate_b)
         >>>         ans = self.e1.kl_loss('Exponential', rate_b, rate_a)
-        >>>         # Additional rate must be passed in
+        >>>         # An additional `rate` must be passed in.
         >>>         ans = self.e2.kl_loss('Exponential', rate_b, rate_a)
         >>>
         >>>
-        >>>         # sample
+        >>>         # Examples of `sample`.
         >>>         # Args:
-        >>>         #     shape (tuple): shape of the sample. Default: ()
-        >>>         #     probs1 (Tensor): rate of distribution. Default: self.rate.
+        >>>         #     shape (tuple): the shape of the sample. Default: ()
+        >>>         #     probs1 (Tensor): the rate of the distribution. Default: self.rate.
         >>>         ans = self.e1.sample()
         >>>         ans = self.e1.sample((2,3))
         >>>         ans = self.e1.sample((2,3), rate_b)
@@ -114,7 +115,7 @@ class Exponential(Distribution):
                  dtype=mstype.float32,
                  name="Exponential"):
         """
-        Constructor of Exponential distribution.
+        Constructor of Exponential.
         """
         param = dict(locals())
         valid_dtype = mstype.float_type
@@ -132,7 +133,6 @@ class Exponential(Distribution):
 
         self.minval = np.finfo(np.float).tiny
 
-
         # ops needed for the class
         self.exp = exp_generic
         self.log = log_generic
@@ -147,7 +147,6 @@ class Exponential(Distribution):
         self.sqrt = P.Sqrt()
         self.sq = P.Square()
         self.uniform = C.uniform
-
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -197,7 +196,7 @@ class Exponential(Distribution):
 
     def _cross_entropy(self, dist, rate_b, rate=None):
         """
-        Evaluate cross_entropy between Exponential distributions.
+        Evaluate cross entropy between Exponential distributions.
 
         Args:
             dist (str): The type of the distributions. Should be "Exponential" in this case.
@@ -207,10 +206,9 @@ class Exponential(Distribution):
         check_distribution_name(dist, 'Exponential')
         return self._entropy(rate) + self._kl_loss(dist, rate_b, rate)
 
-
     def _log_prob(self, value, rate=None):
         r"""
-        log_pdf of Exponential distribution.
+        Log probability density function of Exponential distributions.
 
         Args:
             Args:
@@ -234,7 +232,7 @@ class Exponential(Distribution):
 
     def _cdf(self, value, rate=None):
         r"""
-        Cumulative distribution function (cdf) of Exponential distribution.
+        Cumulative distribution function (cdf) of Exponential distributions.
 
         Args:
             value (Tensor): The value to be evaluated.
@@ -256,7 +254,7 @@ class Exponential(Distribution):
 
     def _log_survival(self, value, rate=None):
         r"""
-        log survival_function of Exponential distribution.
+        Log survival_function of Exponential distributions.
 
         Args:
             value (Tensor): The value to be evaluated.

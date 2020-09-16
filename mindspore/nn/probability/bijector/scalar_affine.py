@@ -35,18 +35,18 @@ class ScalarAffine(Bijector):
         name (str): The name of the bijector. Default: 'ScalarAffine'.
 
     Examples:
-        >>> # To initialize a ScalarAffine bijector of scale 1 and shift 2
+        >>> # To initialize a ScalarAffine bijector of scale 1 and shift 2.
         >>> scalaraffine = nn.probability.bijector.ScalarAffine(1, 2)
         >>>
-        >>> # To use ScalarAffine bijector in a network
+        >>> # To use a ScalarAffine bijector in a network.
         >>> class net(Cell):
         >>>     def __init__(self):
         >>>         super(net, self).__init__():
         >>>         self.s1 = nn.probability.bijector.ScalarAffine(1, 2)
         >>>
         >>>     def construct(self, value):
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing 'forward' with the name of the function
+        >>>         # Similar calls can be made to other functions
+        >>>         # by replacing 'forward' by the name of the function.
         >>>         ans1 = self.s1.forward(value)
         >>>         ans2 = self.s1.inverse(value)
         >>>         ans3 = self.s1.forward_log_jacobian(value)
@@ -58,11 +58,13 @@ class ScalarAffine(Bijector):
                  shift=0.0,
                  name='ScalarAffine'):
         """
-        Constructor of scalar affine Bijector.
+        Constructor of ScalarAffine Bijector.
         """
         param = dict(locals())
-        validator.check_value_type('scale', scale, [int, float], type(self).__name__)
-        validator.check_value_type('shift', shift, [int, float], type(self).__name__)
+        validator.check_value_type(
+            'scale', scale, [int, float], type(self).__name__)
+        validator.check_value_type(
+            'shift', shift, [int, float], type(self).__name__)
         self._scale = cast_to_tensor(scale)
         self._shift = cast_to_tensor(shift)
         super(ScalarAffine, self).__init__(

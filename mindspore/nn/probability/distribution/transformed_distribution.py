@@ -20,6 +20,7 @@ from .distribution import Distribution
 from ._utils.utils import check_type, raise_not_impl_error
 from ._utils.custom_ops import exp_generic, log_generic
 
+
 class TransformedDistribution(Distribution):
     """
     Transformed Distribution.
@@ -29,7 +30,7 @@ class TransformedDistribution(Distribution):
     Args:
         bijector (Bijector): The transformation to perform.
         distribution (Distribution): The original distribution.
-        name (str): The name of the transformed distribution. Default: transformed_distribution.
+        name (str): The name of the transformed distribution. Default: 'transformed_distribution'.
 
     Note:
         The arguments used to initialize the original distribution cannot be None.
@@ -37,15 +38,15 @@ class TransformedDistribution(Distribution):
         TransformedDistribution since `mean` and `sd` are not specified.
 
     Examples:
-        >>> # To initialize a transformed distribution, e.g. lognormal distribution,
-        >>> # using Normal distribution as the base distribution, and Exp bijector as the bijector function.
+        >>> # To initialize a transformed distribution, e.g. a lognormal distribution,
+        >>> # using a Normal distribution as the base distribution, and an Exp bijector as the bijector function.
         >>> import mindspore.nn.probability.distribution as msd
         >>> import mindspore.nn.probability.bijector as msb
         >>> ln = msd.TransformedDistribution(msb.Exp(),
         >>>                                  msd.Normal(0.0, 1.0, dtype=mstype.float32),
         >>>                                  dtype=mstype.float32)
         >>>
-        >>> # To use a transformed distribution in a network
+        >>> # To use a transformed distribution in a network.
         >>> class net(Cell):
         >>>     def __init__(self):
         >>>         super(net, self).__init__():
@@ -54,10 +55,11 @@ class TransformedDistribution(Distribution):
         >>>                                               dtype=mstype.float32)
         >>>
         >>>     def construct(self, value):
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing 'sample' with the name of the function
+        >>>         # Similar calls can be made to other functions
+        >>>         # by replacing 'sample' by the name of the function.
         >>>         ans = self.ln.sample(shape=(2, 3))
     """
+
     def __init__(self,
                  bijector,
                  distribution,
@@ -68,8 +70,10 @@ class TransformedDistribution(Distribution):
         Constructor of transformed_distribution class.
         """
         param = dict(locals())
-        validator.check_value_type('bijector', bijector, [nn.probability.bijector.Bijector], type(self).__name__)
-        validator.check_value_type('distribution', distribution, [Distribution], type(self).__name__)
+        validator.check_value_type('bijector', bijector,
+                                   [nn.probability.bijector.Bijector], type(self).__name__)
+        validator.check_value_type('distribution', distribution,
+                                   [Distribution], type(self).__name__)
         valid_dtype = mstype.number_type
         check_type(dtype, valid_dtype, type(self).__name__)
         super(TransformedDistribution, self).__init__(seed, dtype, name, param)

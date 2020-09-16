@@ -19,7 +19,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.common import get_seed
 from ._utils.utils import calc_broadcast_shape_from_param, check_scalar_from_param, cast_type_for_device,\
-                          raise_none_error
+    raise_none_error
 from ._utils.utils import CheckTuple, CheckTensor
 
 
@@ -28,24 +28,24 @@ class Distribution(Cell):
     Base class for all mathematical distributions.
 
     Args:
-        seed (int): The global seed is used in sampling. Global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): The type of the event samples. Default: subclass dtype.
-        name (str): Python string name prefixed to operations created by this class. Default: subclass name.
+        seed (int): The seed is used in sampling. The global seed is used if it is None.
+        dtype (mindspore.dtype): The type of the event samples.
+        name (str): The name of the distribution.
         param (dict): The parameters used to initialize the distribution.
 
     Note:
         Derived class should override operations such as `_mean`, `_prob`,
-        and `_log_prob`. Required arguments, such as value for `_prob`,
-        should be passed in through `args` or `kwargs`. dist_spec_args which specify
+        and `_log_prob`. Required arguments, such as `value` for `_prob`,
+        should be passed in through `args` or `kwargs`. `dist_spec_args` which specifies
         a new distribution are optional.
 
-        dist_spec_args are unique for each type of distribution. For example, `mean` and `sd`
-        are the dist_spec_args for a Normal distribution, while `rate` is the dist_spec_args
-        for exponential distribution.
+        `dist_spec_args` is unique for each type of distribution. For example, `mean` and `sd`
+        are the `dist_spec_args` for a Normal distribution, while `rate` is the `dist_spec_args`
+        for an Exponential distribution.
 
-        For all functions, passing in dist_spec_args, is optional.
-        Passing in the additional dist_spec_args will evaluate the result to be evaluated with
-        new distribution specified by the dist_spec_args. But it will not change the original distribution.
+        For all functions, passing in `dist_spec_args`, is optional.
+        Function calls with the additional `dist_spec_args` passed in will evaluate the result with
+        a new distribution specified by the `dist_spec_args`. However, it will not change the original distribution.
     """
 
     def __init__(self,
@@ -118,9 +118,9 @@ class Distribution(Cell):
 
     def _check_param_type(self, *args):
         """
-        Check the availability and validity of default parameters and dist_spec_args.
-        dist_spec_args passed in must be tensors. If default parameter of the distribution
-        is None, its parameter must be passed in through `args`.
+        Check the availability and validity of default parameters and `dist_spec_args`.
+        `dist_spec_args` passed in must be tensors. If default parameters of the distribution
+        are None, the parameters must be passed in through `args`.
         """
         broadcast_shape = None
         common_dtype = None
@@ -134,7 +134,8 @@ class Distribution(Cell):
                 else:
                     arg = self.checktensor(arg, name)
             else:
-                arg = default if default is not None else raise_none_error(name)
+                arg = default if default is not None else raise_none_error(
+                    name)
 
             # broadcast if the number of args > 1
             if broadcast_shape is None:
