@@ -80,6 +80,7 @@ class StridedSlice : public PrimitiveC {
   std::vector<bool> ellipsis_mask_;
   std::vector<bool> new_axis_mask_;
   std::vector<bool> shrink_axis_mask_;
+  void TransIndexToPositive();
 };
 }  // namespace lite
 }  // namespace mindspore
