@@ -17,12 +17,14 @@
 #include "lite_cv/image_process.h"
 
 #include <string.h>
-#include <math.h>
+#include <cmath>
 #include <vector>
 #include <algorithm>
 
 namespace mindspore {
 namespace dataset {
+
+#define Equ(a, b) ((std::fabs((a) - (b)) < 1e-6))
 
 static inline void InitBilinearWeight(int *data_ptr, int16_t *weight_ptr, double scale, int dst_length, int src_length,
                                       int a) {
@@ -359,8 +361,43 @@ bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
   return true;
 }
 
-bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, float *mean, float *norm) {
+static bool CheckZero(const std::vector<float> &vs) {
+  for (int i = 0; i < vs.size(); i++) {
+    if (Equ(vs[i], 0.0f)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool CheckMeanAndStd(int channel, const std::vector<float> &mean, const std::vector<float> &std) {
+  if (mean.size() == 0 && std.size() == 0) {
+    return false;
+  }
+  if (mean.size() > 0) {
+    if (CheckZero(mean)) {
+      return false;
+    }
+    if (mean.size() != channel) {
+      return false;
+    }
+  }
+  if (std.size() > 0) {
+    if (CheckZero(std)) {
+      return false;
+    }
+    if (std.size() != channel) {
+      return false;
+    }
+  }
+  return true;
+}
+bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<float> &mean,
+                            const std::vector<float> &std) {
   if (src.data_type_ != LDataType::FLOAT32) {
+    return false;
+  }
+  if (!CheckMeanAndStd(src.channel_, mean, std)) {
     return false;
   }
 
@@ -368,7 +405,7 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, float *mean, float
 
   const float *src_start_p = src;
   float *dst_start_p = dst;
-  if (mean && !norm) {
+  if ((!mean.empty()) && std.empty()) {
     for (int h = 0; h < src.height_; h++) {
       for (int w = 0; w < src.width_; w++) {
         for (int c = 0; c < src.channel_; c++) {
@@ -377,21 +414,21 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, float *mean, float
         }
       }
     }
-  } else if (!mean && norm) {
+  } else if (mean.empty() && (!std.empty())) {
     for (int h = 0; h < src.height_; h++) {
       for (int w = 0; w < src.width_; w++) {
         for (int c = 0; c < src.channel_; c++) {
           int index = (h * src.width_ + w) * src.channel_ + c;
-          dst_start_p[index] = src_start_p[index] * norm[c];
+          dst_start_p[index] = src_start_p[index] / std[c];
         }
       }
     }
-  } else if (mean && norm) {
+  } else if ((!mean.empty()) && (!std.empty())) {
     for (int h = 0; h < src.height_; h++) {
       for (int w = 0; w < src.width_; w++) {
         for (int c = 0; c < src.channel_; c++) {
           int index = (h * src.width_ + w) * src.channel_ + c;
-          dst_start_p[index] = (src_start_p[index] - mean[c]) * norm[c];
+          dst_start_p[index] = (src_start_p[index] - mean[c]) / std[c];
         }
       }
     }
