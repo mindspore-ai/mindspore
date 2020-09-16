@@ -36,7 +36,7 @@ def set_config(args):
         "save_checkpoint": True,
         "save_checkpoint_epochs": 1,
         "keep_checkpoint_max": 20,
-        "save_checkpoint_path": "./checkpoint",
+        "save_checkpoint_path": "./",
         "platform": args.platform,
         "run_distribute": False
     })
@@ -57,7 +57,7 @@ def set_config(args):
         "save_checkpoint": True,
         "save_checkpoint_epochs": 1,
         "keep_checkpoint_max": 200,
-        "save_checkpoint_path": "./checkpoint",
+        "save_checkpoint_path": "./",
         "platform": args.platform,
         "ccl": "nccl",
         "run_distribute": args.run_distribute
@@ -79,7 +79,7 @@ def set_config(args):
         "save_checkpoint": True,
         "save_checkpoint_epochs": 1,
         "keep_checkpoint_max": 200,
-        "save_checkpoint_path": "./checkpoint",
+        "save_checkpoint_path": "./",
         "platform": args.platform,
         "ccl": "hccl",
         "device_id": int(os.getenv('DEVICE_ID', '0')),

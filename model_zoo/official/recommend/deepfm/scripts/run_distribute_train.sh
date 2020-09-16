@@ -36,7 +36,7 @@ do
     env > env.log
     python -u train.py \
     --dataset_path=$DATA_URL \
-    --ckpt_path="checkpoint" \
+    --ckpt_path="./" \
     --eval_file_name='auc.log' \
     --loss_file_name='loss.log' \
     --do_eval=True > output.log 2>&1 &

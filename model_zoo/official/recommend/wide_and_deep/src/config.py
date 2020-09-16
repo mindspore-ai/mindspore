@@ -38,7 +38,7 @@ def argparse_init():
     parser.add_argument("--keep_prob", type=float, default=1.0, help="The keep rate in dropout layer.")
     parser.add_argument("--dropout_flag", type=int, default=0, help="Enable dropout")
     parser.add_argument("--output_path", type=str, default="./output/")
-    parser.add_argument("--ckpt_path", type=str, default="./checkpoints/", help="The location of the checkpoint file.")
+    parser.add_argument("--ckpt_path", type=str, default="./", help="The location of the checkpoint file.")
     parser.add_argument("--stra_ckpt", type=str, default="./checkpoints/strategy.ckpt",
                         help="The strategy checkpoint file.")
     parser.add_argument("--eval_file_name", type=str, default="eval.log", help="Eval output file.")
@@ -77,7 +77,7 @@ class WideDeepConfig():
         self.output_path = "./output"
         self.eval_file_name = "eval.log"
         self.loss_file_name = "loss.log"
-        self.ckpt_path = "./checkpoints/"
+        self.ckpt_path = "./"
         self.stra_ckpt = './checkpoints/strategy.ckpt'
         self.host_device_mix = 0
         self.dataset_type = "tfrecord"
