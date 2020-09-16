@@ -39,9 +39,9 @@ void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr,
   dim /= outter_size;
   memcpy(output_ptr, yt_ptr, ele_size * sizeof(float));
 
-  int M = input_shape[axis];
-  int N = inner_size;
-  int K = 1;
+  const int M = input_shape[axis];
+  const int N = inner_size;
+  const int K = 1;
   for (int i = 0; i < outter_size; i++) {
     int outter_offset = i * dim;
     memset(sum_data, 0.0f, inner_size * sizeof(float));
