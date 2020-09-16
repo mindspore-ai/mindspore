@@ -132,7 +132,8 @@ void IndirectGemmInt8Opt(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const
     size_t asymmetric = conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC;
     size_t per_channel = conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
     gemm_func(dst, src, weight, bias, kernel_plane, ic4, output_channel, output_channel * sizeof(int8_t), input_sum,
-              act_min, act_max, out_zp, out_multiplier, shift_before, shift_after, asymmetric, per_channel);
+              act_min, act_max, out_zp, out_multiplier, shift_before, shift_after, asymmetric, per_channel,
+              oc4 * C4NUM * sizeof(int32_t));
 #endif
   } else {
     int tile_num = conv_param->tile_num_;
