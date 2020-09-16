@@ -78,14 +78,19 @@ class MinddataParser:
         """
         col_names = ["node_name", "start_time", "end_time", "queue_size"]
         minddata_aicpu_source_path = get_file_join_name(
-            input_path=source_path, file_name='DATA_PREPROCESS.dev.AICPUMI')
+            input_path=source_path, file_name='DATA_PREPROCESS.AICPUMI')
         if not minddata_aicpu_source_path:
             minddata_aicpu_source_path = get_file_join_name(
-                input_path=os.path.join(source_path, "data"), file_name='DATA_PREPROCESS.dev.AICPUMI')
+                input_path=source_path, file_name='DATA_PREPROCESS.dev.AICPUMI')
             if not minddata_aicpu_source_path:
-                return
+                minddata_aicpu_source_path = get_file_join_name(
+                    input_path=os.path.join(source_path, "data"), file_name='DATA_PREPROCESS.AICPUMI')
+                if not minddata_aicpu_source_path:
+                    minddata_aicpu_source_path = get_file_join_name(
+                        input_path=os.path.join(source_path, "data"), file_name='DATA_PREPROCESS.dev.AICPUMI')
+                    if not minddata_aicpu_source_path:
+                        return
         minddata_aicpu_output_path = os.path.join(output_path, "minddata_aicpu_" + device_id + ".txt")
-
         minddata_aicpu_data = MinddataParser.parse_minddata_aicpu_data(minddata_aicpu_source_path)
         if minddata_aicpu_data:
             fwrite_format(minddata_aicpu_output_path, " ".join(col_names), is_start=True)

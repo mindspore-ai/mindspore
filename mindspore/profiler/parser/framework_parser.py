@@ -174,8 +174,8 @@ class FrameworkParser:
         output_path (str): The directory of the parsed file. Default: `./`.
     """
     _raw_data_dir = '/var/log/npu/profiling'
-    _regex_framework = r'Framework\.host\.(?P<data_type>.+)\.(?P<device_id>\d).+'
-    _regex_framework_in_data = r'Framework\.host\.(?P<data_type>.+)\.' \
+    _regex_framework = r'Framework\.(?P<data_type>.+)\.(?P<device_id>\d).+'
+    _regex_framework_in_data = r'Framework\.(?P<data_type>.+)\.' \
                                r'(?P<device_id>\d)\.(?P<profiling_id>[a-zA-Z0-9]+).+'
     _col_names = [
         'task_id', 'stream_id', 'block_dim', 'full_op_name', 'op_name',
@@ -338,6 +338,7 @@ class FrameworkParser:
                 raise ProfilerDeviceIdMismatchException()
 
             data_type = attrs.get('data_type')
+            data_type = data_type.replace("host.", "")
             if data_type.startswith('vm.'):
                 if self._backend_type and self._backend_type != 'vm':
                     raise ProfilerRawFileException('Backend type is inconsistent.')
@@ -395,6 +396,7 @@ class FrameworkParser:
                 raise ProfilerDeviceIdMismatchException()
 
             data_type = attrs.get('data_type')
+            data_type = data_type.replace("host.", "")
             if data_type.startswith('vm.'):
                 if self._backend_type and self._backend_type != 'vm':
                     raise ProfilerRawFileException('Backend type is inconsistent.')

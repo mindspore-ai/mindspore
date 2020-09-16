@@ -30,8 +30,8 @@ class DataPreProcessParser:
          output_filename(str): The output data path and name.
 
     """
-
-    _source_file_target = 'DATA_PREPROCESS.dev.AICPU.'
+    _source_file_target_old = 'DATA_PREPROCESS.dev.AICPU.'
+    _source_file_target = 'DATA_PREPROCESS.AICPU.'
     _dst_file_title = 'title:DATA_PREPROCESS AICPU'
     _dst_file_column_title = ['serial_number', 'node_type_name', 'total_time(ms)',
                               'dispatch_time(ms)', 'run_start', 'run_end']
@@ -53,8 +53,12 @@ class DataPreProcessParser:
         """Get log file name, which was created by ada service."""
         file_name = get_file_join_name(self._input_path, self._source_file_target)
         if not file_name:
-            data_path = os.path.join(self._input_path, "data")
-            file_name = get_file_join_name(data_path, self._source_file_target)
+            file_name = get_file_join_name(self._input_path, self._source_file_target_old)
+            if not file_name:
+                data_path = os.path.join(self._input_path, "data")
+                file_name = get_file_join_name(data_path, self._source_file_target)
+                if not file_name:
+                    file_name = get_file_join_name(data_path, self._source_file_target_old)
         return file_name
 
     def _get_kernel_result(self, number, node_list, thread_list):

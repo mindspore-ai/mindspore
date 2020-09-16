@@ -625,7 +625,7 @@ DebuggerCommand GetCommand(const EventReply &reply) {
       cmd = DebuggerCommand::kViewCMD;
       break;
     default:
-      MS_LOG(ERROR) << "Error: UnknownCMD";
+      MS_LOG(DEBUG) << "Debug: UnknownCMD";
       break;
   }
   return cmd;

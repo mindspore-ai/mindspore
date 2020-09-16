@@ -28,7 +28,8 @@ class HWTSLogParser:
          output_filename (str): The output data path and name. Such as: './output_format_data_hwts_0.txt'.
     """
 
-    _source_file_target = 'hwts.log.data.45.dev.profiler_default_tag'
+    _source_file_target_old = 'hwts.log.data.45.dev.profiler_default_tag'
+    _source_file_target = 'hwts.data'
     _dst_file_title = 'title:45 HWTS data'
     _dst_file_column_title = 'Type           cnt  Core_ID  Block_ID  Task_ID  Cycle_counter   Stream_ID'
 
@@ -42,11 +43,15 @@ class HWTSLogParser:
 
         file_name = get_file_join_name(self._input_path, self._source_file_target)
         if not file_name:
-            data_path = os.path.join(self._input_path, "data")
-            file_name = get_file_join_name(data_path, self._source_file_target)
+            file_name = get_file_join_name(self._input_path, self._source_file_target_old)
             if not file_name:
-                msg = "Fail to find hwts log file, under profiling directory"
-                raise RuntimeError(msg)
+                data_path = os.path.join(self._input_path, "data")
+                file_name = get_file_join_name(data_path, self._source_file_target)
+                if not file_name:
+                    file_name = get_file_join_name(data_path, self._source_file_target_old)
+                    if not file_name:
+                        msg = "Fail to find hwts log file, under profiling directory"
+                        raise RuntimeError(msg)
 
         return file_name
 
