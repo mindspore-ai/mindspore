@@ -38,14 +38,24 @@ class PadCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   virtual int RunImpl(int task_id);
+  int RunMirrorPadImpl(int task_id);
+
+ private:
+  int HandleMirrorPad();
+  int CheckPaddings(int *paddings, int length, int *input_shape, int mode);
+  int CopyPaddingFromInput();
+  void CalculateStrides();
+  int ExtendShape(int *shape, int length, const int *ori_shape, int rank);
+  int ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length);
 
  protected:
-  const PadParameter *pad_param_;
-  int in_[4] = {1, 1, 1, 1};
-  int out_[4] = {1, 1, 1, 1};
+  PadParameter *pad_param_;
+  int in_[4];
+  int out_[4];
 };
 
 int PadImpl(void *cdata, int task_id);
+int MirrorPadImpl(void *cdata, int task_id);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_PAD_H_
