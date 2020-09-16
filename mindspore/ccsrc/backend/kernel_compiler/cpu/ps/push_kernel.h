@@ -34,6 +34,9 @@ class PushKernel : public CPUKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) {
+    if (outputs.size() != 1) {
+      MS_LOG(EXCEPTION) << "Outputs size is " << outputs.size() << ", but PushKernel needs 1.";
+    }
     std::vector<size_t> keys;
     std::vector<uintptr_t> addrs;
     std::vector<int> sizes;
@@ -43,9 +46,10 @@ class PushKernel : public CPUKernel {
       sizes.push_back(SizeToInt(input->size) / sizeof(T));
     }
     parallel::ps::Worker<T>::GetInstance().Push(keys, addrs, sizes);
-    auto ret = memcpy_s(outputs[0]->addr, sizeof(size_t), &key_, sizeof(size_t));
+    auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, &key_, sizeof(size_t));
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
+      return false;
     }
     return true;
   }

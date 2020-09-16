@@ -318,7 +318,9 @@ int WorkerProxy<T>::AddLookupCB(const ::ps::SArray<::ps::Key> &keys, const ::ps:
     for (size_t i = 0; i < lookup_ids.size(); i++) {
       auto &pair = id_addr_map[static_cast<Key>(lookup_ids[i])];
       int size = pair->second * sizeof(T);
-      auto ret = memcpy_s(result_addr + offset, size, pair->first, size);
+      size_t dst_size = size;
+      size_t src_size = size;
+      auto ret = memcpy_s(result_addr + offset, dst_size, pair->first, src_size);
       if (ret != 0) {
         MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
         return;
@@ -547,12 +549,17 @@ void WorkerProxy<T>::BuildSparseValue(const ::ps::SArray<int> &lengths, const si
                                       const size_t indice_index, const T *original_data, const T *grads, int *indices,
                                       ::ps::SArray<T> *reduced_data) {
   int offset = 0;
+  size_t dst_size = 0;
+  size_t src_size = 0;
   for (size_t i = 0; i < lengths.size(); i++) {
     if (i != grad_index && i != indice_index) {
       int data_size = lengths[i] * sizeof(T);
-      auto ret = memcpy_s(reduced_data->data() + offset, data_size, original_data + offset, data_size);
+      dst_size = data_size;
+      src_size = data_size;
+      auto ret = memcpy_s(reduced_data->data() + offset, dst_size, original_data + offset, src_size);
       if (ret != 0) {
         MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+        return;
       }
     }
     offset += lengths[i];
@@ -564,7 +571,9 @@ void WorkerProxy<T>::BuildSparseValue(const ::ps::SArray<int> &lengths, const si
     grad_offset += lengths[i];
   }
   int data_size = lengths[grad_index] * sizeof(T);
-  auto ret = memcpy_s(reduced_data->data() + grad_offset, data_size, grads, data_size);
+  dst_size = data_size;
+  src_size = data_size;
+  auto ret = memcpy_s(reduced_data->data() + grad_offset, dst_size, grads, src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
@@ -574,7 +583,9 @@ void WorkerProxy<T>::BuildSparseValue(const ::ps::SArray<int> &lengths, const si
   int indice_offset = grad_offset + lengths[grad_index];
   data_size = lengths[indice_index] * sizeof(T);
   T *indice_data = reduced_data->data() + indice_offset;
-  ret = memcpy_s(indice_data, data_size, indices, data_size);
+  dst_size = data_size;
+  src_size = data_size;
+  ret = memcpy_s(indice_data, dst_size, indices, src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;

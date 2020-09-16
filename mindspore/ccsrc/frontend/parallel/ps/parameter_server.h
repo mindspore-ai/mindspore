@@ -347,9 +347,11 @@ bool ParameterServer<T>::Init(const FuncGraphPtr &func_graph) {
 
 template <typename T>
 void ParameterServer<T>::InitOptimInfoBuilders() {
-  std::shared_ptr<OptimizerInfoBuilder> momentum_info_builder = std::make_shared<MomentumOptimInfoBuilder>();
-  std::shared_ptr<OptimizerInfoBuilder> sparse_adam_info_builder = std::make_shared<SparseAdamOptimInfoBuilder>();
-  std::shared_ptr<OptimizerInfoBuilder> sparse_ftrl_info_builder = std::make_shared<SparseFtrlOptimInfoBuilder>();
+  std::shared_ptr<OptimizerInfoBuilder> momentum_info_builder = std::make_shared<MomentumOptimInfoBuilder>(worker_num_);
+  std::shared_ptr<OptimizerInfoBuilder> sparse_adam_info_builder =
+    std::make_shared<SparseAdamOptimInfoBuilder>(worker_num_);
+  std::shared_ptr<OptimizerInfoBuilder> sparse_ftrl_info_builder =
+    std::make_shared<SparseFtrlOptimInfoBuilder>(worker_num_);
   optim_info_builders_[kApplyMomentum] = momentum_info_builder;
   optim_info_builders_[kSparseAdam] = sparse_adam_info_builder;
   optim_info_builders_[kSparseFtrl] = sparse_ftrl_info_builder;
@@ -383,8 +385,7 @@ void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &va
     inputs_shape->push_back(shape);
     original_inputs_shape->push_back(original_shape);
 
-    int len = lengths[i];
-    for (int j = 0; j < len; j++) {
+    for (int j = 0; j < lengths[i]; j++) {
       shape->push_back(values[val_idx]);
       original_shape->push_back(values[val_idx++]);
     }

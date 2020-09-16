@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/cpu/ps/pserver_kernel.h"
 #include "frontend/parallel/ps/optimizer_info.h"
@@ -30,7 +31,7 @@ using mindspore::kernel::KernelMod;
 using mindspore::kernel::ps::PServerKernel;
 class OptimizerInfoBuilder {
  public:
-  OptimizerInfoBuilder() = default;
+  explicit OptimizerInfoBuilder(size_t worker_num) : worker_num_(worker_num) {}
   virtual ~OptimizerInfoBuilder() = default;
 
   OptimizerInfo *Build(const std::shared_ptr<PServerKernel> &pserver_kernel, const WeightPtr &weight, const Keys &keys,
@@ -43,10 +44,17 @@ class OptimizerInfoBuilder {
 
   virtual void BuildWorkspaces(OptimizerInfo *info, const std::vector<size_t> &ws_sizes, size_t worker_num);
   virtual void BuildOutputs(OptimizerInfo *info, size_t worker_num) {}
+
+ protected:
+  template <typename T>
+  AddressPtr GenInputAddrPtr(const std::string &optim_type, const std::string &input_name, void *ps_data,
+                             const Lengths &lens, const InputsShapePtr &inputs_shape = nullptr);
+  size_t worker_num_;
 };
 
 class MomentumOptimInfoBuilder : public OptimizerInfoBuilder {
  public:
+  explicit MomentumOptimInfoBuilder(size_t worker_num) : OptimizerInfoBuilder(worker_num) {}
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
                              const InputsShapePtr &inputs_shape, size_t worker_num,
                              const std::shared_ptr<PServerKernel> &pserver_kernel) override;
@@ -54,6 +62,7 @@ class MomentumOptimInfoBuilder : public OptimizerInfoBuilder {
 
 class SparseAdamOptimInfoBuilder : public OptimizerInfoBuilder {
  public:
+  explicit SparseAdamOptimInfoBuilder(size_t worker_num) : OptimizerInfoBuilder(worker_num) {}
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
                              const InputsShapePtr &inputs_shape, size_t worker_num,
                              const std::shared_ptr<PServerKernel> &pserver_kernel) override;
@@ -61,6 +70,7 @@ class SparseAdamOptimInfoBuilder : public OptimizerInfoBuilder {
 
 class SparseFtrlOptimInfoBuilder : public OptimizerInfoBuilder {
  public:
+  explicit SparseFtrlOptimInfoBuilder(size_t worker_num) : OptimizerInfoBuilder(worker_num) {}
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
                              const InputsShapePtr &inputs_shape, size_t worker_num,
                              const std::shared_ptr<PServerKernel> &pserver_kernel) override;

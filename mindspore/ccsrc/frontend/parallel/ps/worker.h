@@ -129,9 +129,13 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
   size_t total_size = std::accumulate(sizes.begin(), sizes.end(), 0, std::plus<int>());
   ::ps::SArray<T> total_buffer(total_size, 0);
   size_t offset = 0;
+  size_t dst_size = 0;
+  size_t src_size = 0;
   for (size_t i = 0; i < sizes.size(); i++) {
-    auto ret = memcpy_s(total_buffer.data() + offset / sizeof(T), sizes[i] * sizeof(T),
-                        reinterpret_cast<void *>(addrs[i]), sizes[i] * sizeof(T));
+    dst_size = sizes[i] * sizeof(T);
+    src_size = sizes[i] * sizeof(T);
+    auto ret =
+      memcpy_s(total_buffer.data() + offset / sizeof(T), dst_size, reinterpret_cast<void *>(addrs[i]), src_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
       return;
@@ -160,7 +164,9 @@ void Worker<T>::Pull(const size_t key, void *dev_addr, const size_t size) {
     continue;
   }
   kv_worker_->PullData({key}, &variables);
-  auto ret = memcpy_s(dev_addr, size, variables.data(), size);
+  size_t dst_size = size;
+  size_t src_size = size;
+  auto ret = memcpy_s(dev_addr, dst_size, variables.data(), src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;

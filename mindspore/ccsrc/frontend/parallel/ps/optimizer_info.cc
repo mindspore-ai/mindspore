@@ -17,6 +17,8 @@
 #include "frontend/parallel/ps/optimizer_info.h"
 #include <map>
 #include <memory>
+#include <string>
+#include <functional>
 #include "frontend/parallel/ps/util.h"
 
 namespace mindspore {
@@ -37,6 +39,36 @@ const size_t OptimizerInfo::indice_size() const { return 0; }
 size_t OptimizerInfo::grad_index() { return 0; }
 
 size_t OptimizerInfo::indices_index() { return 0; }
+
+template <typename T>
+void OptimizerInfo::UpdateOptimInputValue(const std::string &optim_type, const std::string &input_name, void *data,
+                                          const Lengths &lens) {
+  if (kOptimToOriginIdx.count(optim_type) == 0 || kOptimToPSSendIdx.count(optim_type) == 0) {
+    MS_LOG(EXCEPTION) << "Optimizer type " << optim_type << " in not supported.";
+  }
+  const OptimOriginIdx &origin_input_map = kOptimToOriginIdx.at(optim_type);
+  const OptimPSSendIdx &ps_send_index_map = kOptimToPSSendIdx.at(optim_type);
+  if (ps_send_index_map.count(input_name) == 0 || origin_input_map.count(input_name) == 0) {
+    MS_LOG(EXCEPTION) << "Optimizer " << optim_type << " has no input for " << input_name;
+  }
+
+  size_t origin_index = origin_input_map.at(input_name);
+  size_t ps_send_index = ps_send_index_map.at(input_name);
+  if (ps_send_index > lens.size() || origin_index > inputs_.size()) {
+    MS_LOG(EXCEPTION) << "Index is out of bound for optimizer " << optim_type << ", origin_index:" << origin_index
+                      << ", ps_send_index:" << ps_send_index;
+  }
+  EXC_IF_VEC_IDX_OOB(lens, ps_send_index);
+  size_t size = lens[ps_send_index] * sizeof(T);
+  size_t offset = std::accumulate(lens.begin(), lens.begin() + ps_send_index, 0, std::plus<int>());
+  AddressPtr optim_input = inputs_[origin_index];
+  int ret = memcpy_s(optim_input->addr, optim_input->size, reinterpret_cast<T *>(data) + offset, size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    return;
+  }
+  return;
+}
 
 void DenseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   float *accum_grad_data = reinterpret_cast<float *>(gradient()->addr);
@@ -77,8 +109,9 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   }
   float *incr_grad_data = values.data() + grad_offset;
   size_t incr_grad_size = lengths[grad_index] * sizeof(float);
-
-  auto ret = memcpy_s(accum_grad_data + grads_offset_, incr_grad_size, incr_grad_data, incr_grad_size);
+  size_t dst_size = incr_grad_size;
+  size_t src_size = incr_grad_size;
+  auto ret = memcpy_s(accum_grad_data + grads_offset_, dst_size, incr_grad_data, src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
@@ -97,6 +130,8 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   int *incr_indice_data = reinterpret_cast<int *>(values.data()) + indice_offset;
   size_t incr_indice_size = lengths[indices_index];
   size_t incr_indice_data_size = incr_indice_size * sizeof(int);
+  dst_size = incr_indice_data_size;
+  src_size = incr_indice_data_size;
   auto ret2 =
     memcpy_s(accum_indices_data + indices_offset_, incr_indice_data_size, incr_indice_data, incr_indice_data_size);
   if (ret2 != 0) {
@@ -109,6 +144,8 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
 
 void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes, size_t n, size_t server_num,
                                   size_t rank_id) {
+  MS_EXCEPTION_IF_NULL(gradient());
+  MS_EXCEPTION_IF_NULL(indices());
   size_t indices_size = static_cast<size_t>(indices()->size / sizeof(int));
   int segment_size = gradient()->size / indices()->size;
 
@@ -116,7 +153,6 @@ void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes
   std::vector<int> new_indices(indices_size);
   mindspore::kernel::SparseGradient<int> unique_sparse_grad({new_grad.data(), new_indices.data(), indices_size});
 
-  // const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   if (shapes.size() < 2 || shapes[1].empty()) {
     MS_LOG(EXCEPTION) << "No input shape found";
   }
@@ -153,13 +189,13 @@ void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes
                              &unique_sparse_grad);
 
   int reduced_grad_size = unique_sparse_grad.indices_size_ * segment_size * sizeof(float);
-  auto ret = memcpy_s(gradient()->addr, reduced_grad_size, unique_sparse_grad.value_, reduced_grad_size);
+  auto ret = memcpy_s(gradient()->addr, gradient()->size, unique_sparse_grad.value_, reduced_grad_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
   }
   int reduced_indice_size = unique_sparse_grad.indices_size_ * sizeof(int);
-  ret = memcpy_s(indices()->addr, reduced_indice_size, unique_sparse_grad.indices_, reduced_indice_size);
+  ret = memcpy_s(indices()->addr, indices()->size, unique_sparse_grad.indices_, reduced_indice_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
@@ -193,22 +229,27 @@ MomentumOptimInfo::MomentumOptimInfo(const AddressPtr &weight, const AddressPtr 
 }
 
 void MomentumOptimInfo::Update(const Values &values, const Lengths &lens) {
-  const size_t lr_offset = 0;
-  float *lr = values.data() + lr_offset;
-  auto ret = memcpy_s(inputs_[2]->addr, sizeof(float), lr, sizeof(float));
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-    return;
-  }
+  UpdateOptimInputValue<float>(kApplyMomentum, "lr", values.data(), lens);
 }
 
 const size_t SparseOptimInfo::indice_size() const { return indices_offset_; }
 
-const AddressPtr &MomentumOptimInfo::gradient() { return inputs_[3]; }
+const AddressPtr &MomentumOptimInfo::gradient() {
+  size_t origin_grad_index = kMomentumOriginIdx.at("grad");
+  EXC_IF_VEC_IDX_OOB(inputs_, origin_grad_index);
+  return inputs_[origin_grad_index];
+}
 
-const AddressPtr &MomentumOptimInfo::indices() { return inputs_[3]; }
+const AddressPtr &MomentumOptimInfo::indices() {
+  size_t origin_grad_index = kMomentumOriginIdx.at("grad");
+  EXC_IF_VEC_IDX_OOB(inputs_, origin_grad_index);
+  return inputs_[origin_grad_index];
+}
 
-size_t MomentumOptimInfo::grad_index() { return 1; }
+size_t MomentumOptimInfo::grad_index() {
+  size_t ps_grad_index = kMomentumPSSendIdx.at("grad");
+  return ps_grad_index;
+}
 
 SparseAdamOptimInfo::SparseAdamOptimInfo(const AddressPtr &weight, const AddressPtr &m, const AddressPtr &v,
                                          const AddressPtr &beta1_power, const AddressPtr &beta2_power,
@@ -231,73 +272,37 @@ SparseAdamOptimInfo::SparseAdamOptimInfo(const AddressPtr &weight, const Address
 }
 
 void SparseAdamOptimInfo::Update(const Values &values, const Lengths &lens) {
-  float *data_ptr = values.data();
-  int offset = 0;
-
-  AddressPtr &beta1_power = inputs_[3];
-  int size = lens[0];
-  int bytes = sizeof(float);
-  auto ret = memcpy_s(beta1_power->addr, size * bytes, data_ptr + offset, size * bytes);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-    return;
-  }
-
-  offset += size;
-  AddressPtr &beta2_power = inputs_[4];
-  size = lens[1];
-  ret = memcpy_s(beta2_power->addr, size * bytes, data_ptr + offset, size * bytes);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-    return;
-  }
-
-  offset += size;
-  AddressPtr &lr = inputs_[5];
-  size = lens[2];
-  ret = memcpy_s(lr->addr, size * bytes, data_ptr + offset, size * bytes);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-    return;
-  }
-
-  offset += size;
-  AddressPtr &beta1 = inputs_[6];
-  size = lens[3];
-  ret = memcpy_s(beta1->addr, size * bytes, data_ptr + offset, size * bytes);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-    return;
-  }
-
-  offset += size;
-  AddressPtr &beta2 = inputs_[7];
-  size = lens[4];
-  ret = memcpy_s(beta2->addr, size * bytes, data_ptr + offset, size * bytes);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-    return;
-  }
-
-  offset += size;
-  AddressPtr &epsilon = inputs_[8];
-  size = lens[5];
-  ret = memcpy_s(epsilon->addr, size * bytes, data_ptr + offset, size * bytes);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-    return;
-  }
+  UpdateOptimInputValue<float>(kSparseAdam, "beta1_power", values.data(), lens);
+  UpdateOptimInputValue<float>(kSparseAdam, "beta2_power", values.data(), lens);
+  UpdateOptimInputValue<float>(kSparseAdam, "lr", values.data(), lens);
+  UpdateOptimInputValue<float>(kSparseAdam, "beta1", values.data(), lens);
+  UpdateOptimInputValue<float>(kSparseAdam, "beta2", values.data(), lens);
+  UpdateOptimInputValue<float>(kSparseAdam, "eps", values.data(), lens);
 }
 
-const AddressPtr &SparseAdamOptimInfo::gradient() { return inputs_[9]; }
+const AddressPtr &SparseAdamOptimInfo::gradient() {
+  size_t origin_grad_index = kSparseAdamOriginIdx.at("grad");
+  EXC_IF_VEC_IDX_OOB(inputs_, origin_grad_index);
+  return inputs_[origin_grad_index];
+}
 
-const AddressPtr &SparseAdamOptimInfo::indices() { return inputs_[10]; }
+const AddressPtr &SparseAdamOptimInfo::indices() {
+  size_t origin_indices_index = kSparseAdamOriginIdx.at("indices");
+  EXC_IF_VEC_IDX_OOB(inputs_, origin_indices_index);
+  return inputs_[origin_indices_index];
+}
 
 bool SparseAdamOptimInfo::IsSparse() const { return true; }
 
-size_t SparseAdamOptimInfo::grad_index() { return 6; }
+size_t SparseAdamOptimInfo::grad_index() {
+  size_t ps_grad_index = kSparseAdamPSSendIdx.at("grad");
+  return ps_grad_index;
+}
 
-size_t SparseAdamOptimInfo::indices_index() { return 7; }
+size_t SparseAdamOptimInfo::indices_index() {
+  size_t ps_indices_index = kSparseAdamPSSendIdx.at("indices");
+  return ps_indices_index;
+}
 
 SparseFtrlOptimInfo::SparseFtrlOptimInfo(const AddressPtr &weight, const AddressPtr &accum, const AddressPtr &linear,
                                          const AddressPtr &grad, const AddressPtr &indices) {
@@ -310,15 +315,29 @@ SparseFtrlOptimInfo::SparseFtrlOptimInfo(const AddressPtr &weight, const Address
   indices_offset_ = indices->size / sizeof(int);
 }
 
-const AddressPtr &SparseFtrlOptimInfo::gradient() { return inputs_[3]; }
+const AddressPtr &SparseFtrlOptimInfo::gradient() {
+  size_t origin_grad_index = kSparseFtrlOriginIdx.at("grad");
+  EXC_IF_VEC_IDX_OOB(inputs_, origin_grad_index);
+  return inputs_[origin_grad_index];
+}
 
-const AddressPtr &SparseFtrlOptimInfo::indices() { return inputs_[4]; }
+const AddressPtr &SparseFtrlOptimInfo::indices() {
+  size_t origin_indices_index = kSparseFtrlOriginIdx.at("indices");
+  EXC_IF_VEC_IDX_OOB(inputs_, origin_indices_index);
+  return inputs_[origin_indices_index];
+}
 
 bool SparseFtrlOptimInfo::IsSparse() const { return true; }
 
-size_t SparseFtrlOptimInfo::grad_index() { return 0; }
+size_t SparseFtrlOptimInfo::grad_index() {
+  size_t ps_grad_index = kSparseFtrlPSSendIdx.at("grad");
+  return ps_grad_index;
+}
 
-size_t SparseFtrlOptimInfo::indices_index() { return 1; }
+size_t SparseFtrlOptimInfo::indices_index() {
+  size_t ps_indices_index = kSparseFtrlPSSendIdx.at("indices");
+  return ps_indices_index;
+}
 }  // namespace ps
 }  // namespace parallel
 }  // namespace mindspore

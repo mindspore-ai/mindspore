@@ -50,6 +50,12 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
 bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> & /*workspace*/,
                                         const std::vector<kernel::AddressPtr> &outputs) {
+  if (inputs.size() != 2) {
+    MS_LOG(EXCEPTION) << "Inputs size is " << inputs.size() << ", but EmbeddingLookUpProxyKernel needs 2.";
+  }
+  if (outputs.size() != 1) {
+    MS_LOG(EXCEPTION) << "Outputs size is " << outputs.size() << ", but EmbeddingLookUpProxyKernel needs 1.";
+  }
   auto indices_addr = reinterpret_cast<int *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   size_t input_size = inputs[1]->size;
@@ -59,17 +65,18 @@ bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &i
   ::ps::SArray<int> lookup_ids(size, 0);
   ::ps::SArray<int> lengths{size};
   ::ps::SArray<float> lookup_result(output_size / sizeof(float), 0);
-
-  auto ret = memcpy_s(lookup_ids.data(), input_size, indices_addr, input_size);
+  auto ret = memcpy_s(lookup_ids.data(), lookup_ids.size() * sizeof(int), indices_addr, input_size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
+    return false;
   }
   parallel::ps::worker.DoPSEmbeddingLookup({key_}, lookup_ids, lengths, &lookup_result,
                                            parallel::ps::kEmbeddingLookupCmd);
 
-  auto ret2 = memcpy_s(output_addr, output_size, lookup_result.data(), output_size);
+  auto ret2 = memcpy_s(output_addr, outputs[0]->size, lookup_result.data(), output_size);
   if (ret2 != EOK) {
     MS_LOG(EXCEPTION) << "Lookup result memcpy failed.";
+    return false;
   }
   return true;
 }
