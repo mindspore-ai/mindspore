@@ -28,15 +28,21 @@ void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const in
   int32_t out_zp = conv_param->conv_quant_arg_.output_quant_args_[0].zp_;
   int32_t act_min = conv_param->conv_quant_arg_.out_act_min_[0];
   int32_t act_max = conv_param->conv_quant_arg_.out_act_max_[0];
+  int oc4 = UP_DIV(output_channel, C4NUM);
 
 #ifdef ENABLE_ARM64
   size_t asymmetric = conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC;
   size_t per_channel = conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
   IndirectGemmInt8_4x4(dst, src, weight, bias, UP_DIV(kernel_plane, C4NUM), ic4, output_channel,
                        output_channel * sizeof(int8_t), input_sum, act_min, act_max, out_zp, out_multiplier,
-                       shift_before, shift_after, asymmetric, per_channel);
+                       shift_before, shift_after, asymmetric, per_channel, oc4 * C4NUM * sizeof(int32_t));
+#elif ENABLE_ARM32
+  size_t asymmetric = conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC;
+  size_t per_channel = conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
+  IndirectGemmInt8_2x4(dst, src, weight, bias, UP_DIV(kernel_plane, C4NUM), ic4, output_channel,
+                       output_channel * sizeof(int8_t), input_sum, act_min, act_max, out_zp, out_multiplier,
+                       shift_before, shift_after, asymmetric, per_channel, oc4 * C4NUM * sizeof(int32_t));
 #else
-  int oc4 = UP_DIV(output_channel, C4NUM);
   int tile_num = conv_param->tile_num_;
   int plane_c4 = UP_DIV(kernel_plane, C4NUM);
   for (int oc = 0; oc < output_channel; oc++) {
@@ -201,7 +207,7 @@ void IndirectGemmInt8Opt(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const
 
 void Conv3x3Int8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, int oc, int ic8, size_t real_cal_num) {
   int oc4 = UP_DIV(oc, C4NUM);
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
   IndirectGemmInt16to32_8x4(dst, src, weight, 16, ic8, oc4, oc4 * 4 * 16 * sizeof(int32_t));
 #else
   const int input_unit_square = 16;

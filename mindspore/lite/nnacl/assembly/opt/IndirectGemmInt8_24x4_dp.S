@@ -9,7 +9,7 @@
 
 // void IndirectGemmInt8_24x4_dp(int8_t *output, int8_t *input, int8_t *weight, int32_t *bias, size_t ksize, size_t ic4,
 // size_t oc, size_t offset, int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp, int32_t *out_multiplier,
-// int32_t *shift_before, int32_t *shift_after);
+// int32_t *shift_before, int32_t *shift_after, size_t asymmetric, size_t per_channel, size_t per_channel_offset);
 // x0: output, x1: input, x2: weight, x3: bias, x4: kSize, x5: ic4, x6: oc, x7: offset
 // we use sdot intrinsic on cores that supports dotprod(Armv8.2-A w/dp or later)
 // mrs intrinsic could read system register ID_AA64ISAR0_EL1(or s3_0_c0_c6_0 on Armv8.2-A)
@@ -148,10 +148,7 @@ IndirectGemmInt8_24x4_dp:
     ldr x19, [sp, #48]
     ldr x20, [sp, #56]
     ldr x21, [sp, #64]
-
-    add x24, x6, #3
-    mov x23, #4
-    sdiv x23, x24, x23
+    ldr x23, [sp, #72]
 
     mul x5, x4, x5
     mov x4, #1
