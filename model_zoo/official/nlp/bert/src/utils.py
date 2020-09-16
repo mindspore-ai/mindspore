@@ -145,11 +145,17 @@ class LossCallBack(Callback):
         super(LossCallBack, self).__init__()
         self._dataset_size = dataset_size
     def step_end(self, run_context):
+        """
+        Print loss after each step
+        """
         cb_params = run_context.original_args()
         if self._dataset_size > 0:
             percent, epoch_num = math.modf(cb_params.cur_step_num / self._dataset_size)
+            if percent == 0:
+                percent = 1
+                epoch_num -= 1
             print("epoch: {}, current epoch percent: {}, step: {}, outputs are {}"
-                  .format(epoch_num, "%.3f" % percent, cb_params.cur_step_num, str(cb_params.net_outputs)))
+                  .format(int(epoch_num), "%.3f" % percent, cb_params.cur_step_num, str(cb_params.net_outputs)))
         else:
             print("epoch: {}, step: {}, outputs are {}".format(cb_params.cur_epoch_num, cb_params.cur_step_num,
                                                                str(cb_params.net_outputs)))

@@ -381,6 +381,11 @@ epoch: 0.0, current epoch percent: 0.000, step: 2, outpus are (Tensor(shape=[1],
 > ```
 > This will extend the timeout limits of hccl from the default 120 seconds to 600 seconds.
 
+> **Attention** If you are running with a big bert model, some error of protobuf may occurs while saving checkpoints, try with the following environ set.
+> ```
+> export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
+> ```
+
 ### Distributed Training
 #### Running on Ascend
 ```
