@@ -41,11 +41,10 @@ DATA_DIR = ["/home/workspace/mindspore_dataset/bert/example/examples.tfrecord"]
 SCHEMA_DIR = "/home/workspace/mindspore_dataset/bert/example/datasetSchema.json"
 
 
-def get_config(version='base', batch_size=1):
+def get_config(version='base'):
     """get config"""
     if version == 'base':
         bert_config = BertConfig(
-            batch_size=batch_size,
             seq_length=128,
             vocab_size=21136,
             hidden_size=768,
@@ -59,13 +58,10 @@ def get_config(version='base', batch_size=1):
             type_vocab_size=2,
             initializer_range=0.02,
             use_relative_positions=True,
-            input_mask_from_dataset=True,
-            token_type_ids_from_dataset=True,
             dtype=mstype.float32,
             compute_type=mstype.float32)
     elif version == 'large':
         bert_config = BertConfig(
-            batch_size=batch_size,
             seq_length=128,
             vocab_size=21136,
             hidden_size=1024,
@@ -79,12 +75,10 @@ def get_config(version='base', batch_size=1):
             type_vocab_size=2,
             initializer_range=0.02,
             use_relative_positions=False,
-            input_mask_from_dataset=True,
-            token_type_ids_from_dataset=True,
             dtype=mstype.float32,
             compute_type=mstype.float16)
     else:
-        bert_config = BertConfig(batch_size=batch_size)
+        bert_config = BertConfig()
     return bert_config
 
 
@@ -185,8 +179,7 @@ def test_bert_percision():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
     ds, new_repeat_count, _ = me_de_train_dataset()
     version = os.getenv('VERSION', 'large')
-    batch_size = 16
-    config = get_config(version=version, batch_size=batch_size)
+    config = get_config(version=version)
     netwithloss = BertNetworkWithLoss(config, True)
     lr = BertLearningRate(decay_steps=ds.get_dataset_size()*new_repeat_count,
                           learning_rate=5e-5, end_learning_rate=1e-9,

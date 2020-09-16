@@ -107,7 +107,7 @@ class BertNERModel(nn.Cell):
         self.reshape = P.Reshape()
         self.shape = (-1, config.hidden_size)
         self.use_crf = use_crf
-        self.origin_shape = (config.batch_size, config.seq_length, self.num_labels)
+        self.origin_shape = (-1, config.seq_length, self.num_labels)
 
     def construct(self, input_ids, input_mask, token_type_id):
         """Return the final logits as the results of log_softmax."""

@@ -123,7 +123,7 @@ def do_eval(dataset=None, vocab_file="", eval_json="", load_checkpoint_path="", 
         start = logits[1].asnumpy()
         end = logits[2].asnumpy()
 
-        for i in range(bert_net_cfg.batch_size):
+        for i in range(optimizer_cfg.batch_size):
             unique_id = int(ids[i])
             start_logits = [float(x) for x in start[i].flat]
             end_logits = [float(x) for x in end[i].flat]
@@ -193,7 +193,7 @@ def run_squad():
     netwithloss = BertSquad(bert_net_cfg, True, 2, dropout_prob=0.1)
 
     if args_opt.do_train.lower() == "true":
-        ds = create_squad_dataset(batch_size=bert_net_cfg.batch_size, repeat_count=1,
+        ds = create_squad_dataset(batch_size=optimizer_cfg.batch_size, repeat_count=1,
                                   data_file_path=args_opt.train_data_file_path,
                                   schema_file_path=args_opt.schema_file_path,
                                   do_shuffle=(args_opt.train_data_shuffle.lower() == "true"))
@@ -207,7 +207,7 @@ def run_squad():
                                                            ds.get_dataset_size(), epoch_num, "squad")
 
     if args_opt.do_eval.lower() == "true":
-        ds = create_squad_dataset(batch_size=bert_net_cfg.batch_size, repeat_count=1,
+        ds = create_squad_dataset(batch_size=optimizer_cfg.batch_size, repeat_count=1,
                                   data_file_path=args_opt.eval_data_file_path,
                                   schema_file_path=args_opt.schema_file_path, is_training=False,
                                   do_shuffle=(args_opt.eval_data_shuffle.lower() == "true"))

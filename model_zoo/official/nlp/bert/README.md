@@ -312,6 +312,7 @@ Parameters for training and evaluation can be set in file `config.py` and `finet
 ```
 config for lossscale and etc.
     bert_network                    version of BERT model: base | nezha, default is base
+    batch_size                      batch size of input dataset: N, default is 16
     loss_scale_value                initial value of loss scale: N, default is 2^32
     scale_factor                    factor used to update loss scale: N, default is 2
     scale_window                    steps for once updatation of loss scale: N, default is 1000   
@@ -321,7 +322,6 @@ config for lossscale and etc.
 ### Parameters:
 ```
 Parameters for dataset and network (Pre-Training/Fine-Tuning/Evaluation):
-    batch_size                      batch size of input dataset: N, default is 16
     seq_length                      length of input sequence: N, default is 128
     vocab_size                      size of each embedding vector: N, must be consistant with the dataset you use. Default is 21136
     hidden_size                     size of bert encoder layers: N, default is 768
@@ -335,8 +335,6 @@ Parameters for dataset and network (Pre-Training/Fine-Tuning/Evaluation):
     type_vocab_size                 size of token type vocab: N, default is 16
     initializer_range               initialization value of TruncatedNormal: Q, default is 0.02
     use_relative_positions          use relative positions or not: True | False, default is False
-    input_mask_from_dataset         use the input mask loaded form dataset or not: True | False, default is True
-    token_type_ids_from_dataset     use the token type ids loaded from dataset or not: True | False, default is True
     dtype                           data type of input: mstype.float16 | mstype.float32, default is mstype.float32
     compute_type                    compute type in BertTransformer: mstype.float16 | mstype.float32, default is mstype.float16
 

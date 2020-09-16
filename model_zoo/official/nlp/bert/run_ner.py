@@ -104,9 +104,9 @@ def do_eval(dataset=None, network=None, use_crf="", num_class=2, assessment_meth
     if load_checkpoint_path == "":
         raise ValueError("Finetune model missed, evaluation task must load finetune model!")
     if assessment_method == "clue_benchmark":
-        bert_net_cfg.batch_size = 1
-    net_for_pretraining = network(bert_net_cfg, False, num_class, use_crf=(use_crf.lower() == "true"),
-                                  tag_to_index=tag_to_index)
+        optimizer_cfg.batch_size = 1
+    net_for_pretraining = network(bert_net_cfg, optimizer_cfg.batch_size, False, num_class,
+                                  use_crf=(use_crf.lower() == "true"), tag_to_index=tag_to_index)
     net_for_pretraining.set_train(False)
     param_dict = load_checkpoint(load_checkpoint_path)
     load_param_into_net(net_for_pretraining, param_dict)
@@ -211,11 +211,11 @@ def run_ner():
         number_labels = len(tag_to_index)
     else:
         number_labels = args_opt.num_class
-    netwithloss = BertNER(bert_net_cfg, True, num_labels=number_labels,
+    netwithloss = BertNER(bert_net_cfg, optimizer_cfg.batch_size, True, num_labels=number_labels,
                           use_crf=(args_opt.use_crf.lower() == "true"),
                           tag_to_index=tag_to_index, dropout_prob=0.1)
     if args_opt.do_train.lower() == "true":
-        ds = create_ner_dataset(batch_size=bert_net_cfg.batch_size, repeat_count=1,
+        ds = create_ner_dataset(batch_size=optimizer_cfg.batch_size, repeat_count=1,
                                 assessment_method=assessment_method, data_file_path=args_opt.train_data_file_path,
                                 schema_file_path=args_opt.schema_file_path,
                                 do_shuffle=(args_opt.train_data_shuffle.lower() == "true"))

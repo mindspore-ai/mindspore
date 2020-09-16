@@ -22,6 +22,7 @@ import mindspore.common.dtype as mstype
 from .bert_model import BertConfig
 
 optimizer_cfg = edict({
+    'batch_size': 16,
     'optimizer': 'Lamb',
     'AdamWeightDecay': edict({
         'learning_rate': 2e-5,
@@ -45,7 +46,6 @@ optimizer_cfg = edict({
 })
 
 bert_net_cfg = BertConfig(
-    batch_size=16,
     seq_length=128,
     vocab_size=21128,
     hidden_size=768,
@@ -59,8 +59,6 @@ bert_net_cfg = BertConfig(
     type_vocab_size=2,
     initializer_range=0.02,
     use_relative_positions=False,
-    input_mask_from_dataset=True,
-    token_type_ids_from_dataset=True,
     dtype=mstype.float32,
     compute_type=mstype.float16,
 )
