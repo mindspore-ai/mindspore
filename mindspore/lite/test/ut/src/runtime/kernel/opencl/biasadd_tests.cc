@@ -43,7 +43,7 @@ void LoadDataBiasAdd(void *dst, size_t dst_size, const std::string &file_path) {
 template <typename T>
 void CompareOutBiasAdd(lite::Tensor *output_tensor, const std::string &standard_answer_file) {
   size_t output_size = output_tensor->ElementsNum();
-  auto output_data = reinterpret_cast<T *>(output_tensor->MutableData());
+  auto output_data = reinterpret_cast<T *>(output_tensor->data_c());
   auto expect_data = reinterpret_cast<T *>(mindspore::lite::ReadFile(standard_answer_file.c_str(), &output_size));
   constexpr float atol = 0.0002;
   for (int i = 0; i < output_tensor->ElementsNum(); ++i) {
@@ -62,7 +62,7 @@ void CompareOutBiasAdd(lite::Tensor *output_tensor, const std::string &standard_
 template <typename T>
 void printf_tensor_BiasAdd(const std::string log, mindspore::lite::Tensor *in_data, int size) {
   MS_LOG(INFO) << log;
-  auto input_data = reinterpret_cast<T *>(in_data->MutableData());
+  auto input_data = reinterpret_cast<T *>(in_data->data_c());
   for (int i = 0; i < size; ++i) {
     printf("%f ", input_data[i]);
   }
@@ -114,8 +114,8 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
   auto allocator = ocl_runtime->GetAllocator();
   inputs[0]->MallocData(allocator);
   inputs[1]->MallocData(allocator);
-  LoadDataBiasAdd(input_tensor->MutableData(), input_tensor->Size(), in_file);
-  LoadDataBiasAdd(weight_tensor->MutableData(), weight_tensor->Size(), weight_file);
+  LoadDataBiasAdd(input_tensor->data_c(), input_tensor->Size(), in_file);
+  LoadDataBiasAdd(weight_tensor->data_c(), weight_tensor->Size(), weight_file);
   if (ocl_runtime->GetFp16Enable()) {
     printf_tensor_BiasAdd<float16_t>("BiasAdd:FP16--input data", inputs[0], input_tensor->ElementsNum());
     printf_tensor_BiasAdd<float16_t>("BiasAdd:FP16--weight data", inputs[1], weight_tensor->ElementsNum());

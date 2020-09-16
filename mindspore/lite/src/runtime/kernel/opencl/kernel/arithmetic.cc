@@ -105,7 +105,7 @@ int ArithmeticOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_si
 int ArithmeticOpenCLKernel::InitBuffer() {
   const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
   if (!arithmetic_parameter->broadcasting_) {
-    if (in_tensors_[1]->category() == lite::Tensor::Category::CONST && in_tensors_[1]->MutableData() != nullptr) {
+    if (in_tensors_[1]->category() == lite::Tensor::Category::CONST && in_tensors_[1]->data_c() != nullptr) {
       auto allocator = runtime_->GetAllocator();
       std::vector<size_t> img_size;
       GetImageSize(0, &img_size);
@@ -117,7 +117,7 @@ int ArithmeticOpenCLKernel::InitBuffer() {
       if (in_tensors_[0]->GetFormat() == in_tensors_[1]->GetFormat()) {
         if (in_tensors_[0]->data_type() == in_tensors_[1]->data_type()) {
           weight_ptr_ =
-            allocator->CreateImageFromHost(in_tensors_[1]->MutableData(), in_tensors_[1]->ElementsNum(), img_size);
+            allocator->CreateImageFromHost(in_tensors_[1]->data_c(), in_tensors_[1]->ElementsNum(), img_size);
         } else {
           MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
                         << in_tensors_[0]->data_type();
@@ -132,7 +132,7 @@ int ArithmeticOpenCLKernel::InitBuffer() {
               return RET_ERROR;
             }
             std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-            PackNHWCToNC4HW4<float, float>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
+            PackNHWCToNC4HW4<float, float>(in_tensors_[1]->data_c(), weight, batch, plane, channel, to_dtype);
             weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
             delete[] weight;
           } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
@@ -142,7 +142,7 @@ int ArithmeticOpenCLKernel::InitBuffer() {
               return RET_ERROR;
             }
             std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
-            PackNHWCToNC4HW4<float, float16_t>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
+            PackNHWCToNC4HW4<float, float16_t>(in_tensors_[1]->data_c(), weight, batch, plane, channel, to_dtype);
             weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
             delete[] weight;
           } else {
@@ -164,7 +164,7 @@ int ArithmeticOpenCLKernel::InitBuffer() {
               return RET_ERROR;
             }
             std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-            PackNHWCToNHWC4<float, float>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
+            PackNHWCToNHWC4<float, float>(in_tensors_[1]->data_c(), weight, batch, plane, channel, to_dtype);
             weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
             delete[] weight;
           } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
@@ -174,7 +174,7 @@ int ArithmeticOpenCLKernel::InitBuffer() {
               return RET_ERROR;
             }
             std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
-            PackNHWCToNHWC4<float, float16_t>(in_tensors_[1]->MutableData(), weight, batch, plane, channel, to_dtype);
+            PackNHWCToNHWC4<float, float16_t>(in_tensors_[1]->data_c(), weight, batch, plane, channel, to_dtype);
             weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
             delete[] weight;
           } else {
@@ -302,23 +302,23 @@ int ArithmeticOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
 
   int arg_idx = 0;
-  runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
+  runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   if (element_flag_) {
-    void *weight = weight_ptr_ == nullptr ? in_tensors_[1]->MutableData() : weight_ptr_;
+    void *weight = weight_ptr_ == nullptr ? in_tensors_[1]->data_c() : weight_ptr_;
     runtime_->SetKernelArg(kernel_, arg_idx++, weight);
   } else {
     float weight = 0.f;
     if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
-      weight = static_cast<float *>(in_tensors_[1]->MutableData())[0];
+      weight = static_cast<float *>(in_tensors_[1]->data_c())[0];
     } else if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
-      weight = static_cast<float>(static_cast<float16_t *>(in_tensors_[1]->MutableData())[0]);
+      weight = static_cast<float>(static_cast<float16_t *>(in_tensors_[1]->data_c())[0]);
     } else {
       MS_LOG(ERROR) << "Unsupport data type " << in_tensors_[1]->data_type();
       return RET_ERROR;
     }
     runtime_->SetKernelArg(kernel_, arg_idx++, weight);
   }
-  runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
+  runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
 
   int H = 0;
   int W = 0;

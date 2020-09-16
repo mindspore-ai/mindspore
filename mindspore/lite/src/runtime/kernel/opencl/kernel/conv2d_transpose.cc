@@ -79,7 +79,7 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
   padWeight_ = allocator->Malloc(div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
   memset(padWeight_, 0x00, div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
-  auto origin_weight = in_tensors_.at(kWeightIndex)->MutableData();
+  auto origin_weight = in_tensors_.at(kWeightIndex)->data_c();
   auto weight_dtype = in_tensors_.at(kWeightIndex)->data_type();
   int index = 0;
   for (int co_i = 0; co_i < div_co; co_i++) {
@@ -136,14 +136,14 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
     auto bias_dtype = in_tensors_[2]->data_type();
     if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < co; i++) {
-        reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(in_tensors_[2]->MutableData())[i];
+        reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(in_tensors_[2]->data_c())[i];
       }
     } else if (bias_dtype == kNumberTypeFloat16 && !enable_fp16_) {
       for (int i = 0; i < co; i++) {
-        reinterpret_cast<float *>(bias_)[i] = reinterpret_cast<float16_t *>(in_tensors_[2]->MutableData())[i];
+        reinterpret_cast<float *>(bias_)[i] = reinterpret_cast<float16_t *>(in_tensors_[2]->data_c())[i];
       }
     } else {
-      memcpy(bias_, in_tensors_[2]->MutableData(), co * data_size);
+      memcpy(bias_, in_tensors_[2]->data_c(), co * data_size);
     }
   }
   allocator->UnmapBuffer(bias_);
@@ -200,10 +200,10 @@ int Conv2dTransposeOpenCLKernel::Run() {
   cl_int4 src_size = {h, w, UP_DIV(ci, C4NUM), 1};
   cl_int4 dst_size = {oh, ow, UP_DIV(co, C4NUM), 1};
   int arg_cnt = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c());
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, padWeight_, lite::opencl::MemType::BUF);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, bias_);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c());
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, kernel_size);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, stride);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, padding);

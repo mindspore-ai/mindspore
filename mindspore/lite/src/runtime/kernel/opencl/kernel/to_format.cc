@@ -76,6 +76,14 @@ int ToFormatOpenCLKernel::InitNHWCShape() {
     nhwc_shape_ = {n, h, w, c};
     return RET_OK;
   }
+  if (shapex.size() == 3) {
+    n = 1;
+    h = 1;
+    w = 1;
+    c = 1;
+    nhwc_shape_ = {n, h, w, c};
+    return RET_OK;
+  }
   if (out_tensors_[0]->GetFormat() == schema::Format::Format_NC4HW4 ||
       out_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4 ||
       out_tensors_[0]->GetFormat() == schema::Format::Format_NHWC) {
@@ -159,8 +167,8 @@ int ToFormatOpenCLKernel::Run() {
   cl_int4 gsize{(cl_int)global[0], (cl_int)global[1], (cl_int)global[2], 1};
   auto src_mem_type = (out_mem_type_ == OpenCLMemType::IMG) ? lite::opencl::MemType::BUF : lite::opencl::MemType::IMG;
   auto dst_mem_type = (out_mem_type_ == OpenCLMemType::IMG) ? lite::opencl::MemType::IMG : lite::opencl::MemType::BUF;
-  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->MutableData(), src_mem_type);
-  ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->MutableData(), dst_mem_type);
+  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c(), src_mem_type);
+  ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c(), dst_mem_type);
   ocl_runtime->SetKernelArg(kernel_, 2, gsize);
   ocl_runtime->SetKernelArg(kernel_, 3, shape);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);

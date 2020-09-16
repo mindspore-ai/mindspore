@@ -135,8 +135,8 @@ int ReduceOpenCLKernel::Run() {
   std::vector<size_t> global = {static_cast<size_t>(c4)};
   cl_int4 size = {h, w, c4, 1};
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, size);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;

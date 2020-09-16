@@ -158,11 +158,11 @@ int SoftmaxOpenCLKernel::Run() {
     auto mask_ = GetMaskForLastChannel(channel_size);
     cl_float4 mask = {mask_[0], mask_[1], mask_[2], mask_[3]};
 
-    runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
+    runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
     if (is_image_out_) {
-      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
+      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
     } else {
-      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData(), lite::opencl::MemType::BUF);
+      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
     }
     runtime_->SetKernelArg(kernel_, arg_idx++, mask);
     runtime_->SetKernelArg(kernel_, arg_idx++, slices);
@@ -172,11 +172,11 @@ int SoftmaxOpenCLKernel::Run() {
     int slices = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
     cl_int4 input_shape = {in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2], in_tensors_[0]->shape()[3], slices};
 
-    runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
+    runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
     if (is_image_out_) {
-      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
+      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
     } else {
-      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData(), lite::opencl::MemType::BUF);
+      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
     }
     runtime_->SetKernelArg(kernel_, arg_idx, input_shape);
     SetWorkGroupSize();

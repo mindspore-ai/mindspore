@@ -114,11 +114,11 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
   }
   sub_graph->Init();
   MS_LOG(INFO) << " initialize input data ";
-  memcpy(inputs[0]->MutableData(), input_data1, input1_size);
+  memcpy(inputs[0]->data_c(), input_data1, input1_size);
 
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
-  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
+  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData1(input_data1, output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
     delete tensor;

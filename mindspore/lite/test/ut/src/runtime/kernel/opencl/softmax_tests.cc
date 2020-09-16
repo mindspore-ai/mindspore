@@ -89,14 +89,14 @@ void RunTestCaseSoftmax(const std::vector<int> &shape, void *input_data, void *o
     return;
   }
   pGraph->Init();
-  memcpy(inputs[0]->MutableData(), input_data, inputs[0]->ElementsNum() * dtype_size);
+  memcpy(inputs[0]->data_c(), input_data, inputs[0]->ElementsNum() * dtype_size);
   pGraph->Run();
 
   if (enable_fp16) {
-    CompareOutput(outputs[0]->MutableData(), output_data, outputs[0]->ElementsNum(), static_cast<float16_t>(1e-3),
+    CompareOutput(outputs[0]->data_c(), output_data, outputs[0]->ElementsNum(), static_cast<float16_t>(1e-3),
                   2e-2);
   } else {
-    CompareOutput(outputs[0]->MutableData(), output_data, outputs[0]->ElementsNum(), static_cast<float>(1e-5));
+    CompareOutput(outputs[0]->data_c(), output_data, outputs[0]->ElementsNum(), static_cast<float>(1e-5));
   }
   inputs[0]->SetData(nullptr);
   outputs[0]->SetData(nullptr);

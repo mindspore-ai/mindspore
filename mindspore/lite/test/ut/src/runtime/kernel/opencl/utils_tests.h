@@ -57,7 +57,7 @@ template <typename T>
 void CompareOutput(lite::Tensor *output_tensor, const std::string &file_path, T atol, float rtol = 1e-5) {
   size_t output_size;
   auto expect_data = mindspore::lite::ReadFile(file_path.c_str(), &output_size);
-  CompareOutput(output_tensor->MutableData(), expect_data, output_tensor->ElementsNum(), atol, rtol);
+  CompareOutput(output_tensor->data_c(), expect_data, output_tensor->ElementsNum(), atol, rtol);
 }
 
 }  // namespace mindspore

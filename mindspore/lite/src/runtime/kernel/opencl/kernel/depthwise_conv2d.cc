@@ -89,7 +89,7 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
   bool is_fp16 = ocl_runtime->GetFp16Enable();
 
   // weight: o, h, w, i; o == group, i == 1
-  void *origin_weight = in_tensors_.at(kWeightIndex)->MutableData();
+  void *origin_weight = in_tensors_.at(kWeightIndex)->data_c();
   int CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   int pack_weight_size = C4NUM * CO4 * parameter->kernel_h_ * parameter->kernel_w_;
 
@@ -133,7 +133,7 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
     bias_data_ = allocator->MapBuffer(bias_data_, CL_MAP_WRITE, nullptr, true);
     size_t up_co_size = C4NUM * CO4 * dtype_size;
     memset(bias_data_, 0, up_co_size);
-    auto ori_bias = in_tensors_.at(kBiasIndex)->MutableData();
+    auto ori_bias = in_tensors_.at(kBiasIndex)->data_c();
     if (is_fp16 && in_tensors_.at(kBiasIndex)->data_type() == kNumberTypeFloat32) {
       float16_t *bias_ptr = static_cast<float16_t*>(bias_data_);
       for (size_t i = 0; i < in_tensors_.at(kBiasIndex)->ElementsNum(); ++i) {
@@ -207,10 +207,10 @@ int DepthwiseConv2dOpenCLKernel::Run() {
                       (cl_int)out_tensors_[0]->Batch()};
 
   int arg_cnt = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c());
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, packed_weight_, lite::opencl::MemType::BUF);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, bias_data_, lite::opencl::MemType::BUF);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c());
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, kernel_size);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, stride);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, padding);

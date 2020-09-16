@@ -112,11 +112,11 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
 
   // freamework to do!!!
   inputs[0]->MallocData(allocator);
-  memcpy(inputs[0]->MutableData(), packed_input, sizeof(T2) * pack_input_size);
+  memcpy(inputs[0]->data_c(), packed_input, sizeof(T2) * pack_input_size);
 
   pGraph->Run();
   if (is_compare) {
-    T2 *packed_output = reinterpret_cast<T2 *>(outputs[0]->MutableData());
+    T2 *packed_output = reinterpret_cast<T2 *>(outputs[0]->data_c());
     auto packed_correct_data = std::make_unique<T2>(packed_output_size);
     if (packed_correct_data.get() == nullptr) {
       delete[] packed_input;

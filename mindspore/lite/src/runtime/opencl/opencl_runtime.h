@@ -127,6 +127,7 @@ class OpenCLRuntime {
   int UnmapBuffer(const cl::Memory &buffer, void *host_ptr, cl::CommandQueue *command_queue = nullptr) const;
   int UnmapBuffer(void *host_ptr, cl::CommandQueue *command_queue = nullptr) const;
   bool SyncCommandQueue(cl::CommandQueue *command_queue = nullptr);
+  bool IsInitOK() {return init_done_;}
 
   /**
    * Get kernel max worker group size.

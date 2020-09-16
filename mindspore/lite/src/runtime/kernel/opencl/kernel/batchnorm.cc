@@ -112,12 +112,12 @@ int BatchNormOpenCLKernel::Run() {
   std::vector<size_t> global = {OH, OW, OC};
   BatchNormGetWorkGroup(global, &local, max_global[0]);
   int arg_cn = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->MutableData());   // input tensor
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->MutableData());   // scale
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->MutableData());   // offest
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[3]->MutableData());   // mean
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[4]->MutableData());   // variance
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->MutableData());  // out tensor
+  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());   // input tensor
+  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());   // scale
+  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->data_c());   // offest
+  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[3]->data_c());   // mean
+  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[4]->data_c());   // variance
+  ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());  // out tensor
   ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape_);
   ocl_runtime->SetKernelArg(kernel_, arg_cn++, param->epsilon_);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);

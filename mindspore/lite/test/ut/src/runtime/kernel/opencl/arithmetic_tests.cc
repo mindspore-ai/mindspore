@@ -122,7 +122,7 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
     inputs.push_back(tensor_b);
   } else {
     tensor_b->MallocData();
-    memcpy(tensor_b->MutableData(), data_b, sizeof(T));
+    memcpy(tensor_b->data_c(), data_b, sizeof(T));
   }
   std::vector<lite::Tensor *> outputs = {tensor_c};
 
@@ -178,19 +178,19 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   }
   kernel->Init();
 
-  memcpy(inputs[0]->MutableData(), data_a, sizeof(T) * element_num);
+  memcpy(inputs[0]->data_c(), data_a, sizeof(T) * element_num);
   if (!is_bias_add) {
-    memcpy(inputs[1]->MutableData(), data_b, sizeof(T) * element_num_b);
+    memcpy(inputs[1]->data_c(), data_b, sizeof(T) * element_num_b);
   }
 
   kernel->Run();
 
-  memcpy(data_c_ocl, outputs[0]->MutableData(), sizeof(T) * element_num);
+  memcpy(data_c_ocl, outputs[0]->data_c(), sizeof(T) * element_num);
 
   LogData<T>(data_a, 10, "Data A : ");
   LogData<T>(data_b, tensor_b->shape().empty() ? 1 : 10, "Data B : ");
   LogData<T>(data_c_cpu, 10, "Expect compute : ");
-  LogData<T>(outputs[0]->MutableData(), 10, "OpenCL compute : ");
+  LogData<T>(outputs[0]->data_c(), 10, "OpenCL compute : ");
   bool cmp = DataCompare(data_c_cpu, data_c_ocl, element_num);
   MS_LOG(INFO) << "Compare " << (cmp ? "success!" : "failed!");
   EXPECT_EQ(true, cmp);

@@ -44,7 +44,7 @@ void LoadDataPRelu(void *dst, size_t dst_size, const std::string &file_path) {
 
 template <typename T>
 void CompareOutPRelu(lite::Tensor *output_tensor, const std::string &standard_answer_file) {
-  auto *output_data = reinterpret_cast<T *>(output_tensor->MutableData());
+  auto *output_data = reinterpret_cast<T *>(output_tensor->data_c());
   size_t output_size = output_tensor->Size();
   auto expect_data = reinterpret_cast<T *>(mindspore::lite::ReadFile(standard_answer_file.c_str(), &output_size));
   constexpr float atol = 0.0002;
@@ -64,7 +64,7 @@ void CompareOutPRelu(lite::Tensor *output_tensor, const std::string &standard_an
 template <typename T>
 void printf_tensor_Prelu(const std::string &log, mindspore::lite::Tensor *in_data, int size) {
   MS_LOG(INFO) << log;
-  auto input_data = reinterpret_cast<T *>(in_data->MutableData());
+  auto input_data = reinterpret_cast<T *>(in_data->data_c());
   for (int i = 0; i < size; ++i) {
     printf("%f ", input_data[i]);
   }
@@ -113,8 +113,8 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   inputs[1]->MallocData(allocator);
 
   MS_LOG(INFO) << "initialize input data";
-  LoadDataPRelu(input_tensor->MutableData(), input_tensor->Size(), in_file);
-  LoadDataPRelu(weight_tensor->MutableData(), weight_tensor->Size(), weight_file);
+  LoadDataPRelu(input_tensor->data_c(), input_tensor->Size(), in_file);
+  LoadDataPRelu(weight_tensor->data_c(), weight_tensor->Size(), weight_file);
   if (ocl_runtime->GetFp16Enable()) {
     printf_tensor_Prelu<float16_t>("PRELU:FP16--input data", input_tensor, inputs[0]->ElementsNum());
     printf_tensor_Prelu<float16_t>("PRELU:FP16--weight data", weight_tensor, weight_tensor->ElementsNum());

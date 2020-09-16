@@ -93,8 +93,8 @@ void MatMulOpenCLKernel::PadWeight() {
   auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
   auto padWeightFp16 = reinterpret_cast<float16_t *>(padWeight_);
   memset(padWeight_, 0x00, a * b * ci4 * co4 * C4NUM * C4NUM * dtype_size);
-  auto originWeightFp32 = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->MutableData());
-  auto originWeightFp16 = reinterpret_cast<float16_t *>(in_tensors_.at(kWeightIndex)->MutableData());
+  auto originWeightFp32 = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->data_c());
+  auto originWeightFp16 = reinterpret_cast<float16_t *>(in_tensors_.at(kWeightIndex)->data_c());
   bool isModelFp16 = in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16;
 
   // pad weight
@@ -153,14 +153,14 @@ void MatMulOpenCLKernel::PadWeight() {
   if (in_tensors_.size() >= 3) {
     if (in_tensors_[2]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < co; i++) {
-        reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(in_tensors_[2]->MutableData())[i];
+        reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(in_tensors_[2]->data_c())[i];
       }
     } else if (in_tensors_[2]->data_type() == kNumberTypeFloat16 && !enable_fp16_) {
       for (int i = 0; i < co; i++) {
-        reinterpret_cast<float *>(bias_)[i] = reinterpret_cast<float16_t *>(in_tensors_[2]->MutableData())[i];
+        reinterpret_cast<float *>(bias_)[i] = reinterpret_cast<float16_t *>(in_tensors_[2]->data_c())[i];
       }
     } else {
-      memcpy(bias_, in_tensors_[2]->MutableData(), co * dtype_size);
+      memcpy(bias_, in_tensors_[2]->data_c(), co * dtype_size);
     }
   }
   allocator->UnmapBuffer(bias_);
@@ -210,10 +210,10 @@ int MatMulOpenCLKernel::Run() {
   int arg_count = 0;
   cl_int4 in_shape = {inShape[0], inShape[1], inShape[2], inShape[3]};
   cl_int4 out_shape = {outShape[0], outShape[1], outShape[2], outShape[3]};
-  ocl_runtime->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
   ocl_runtime->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
   ocl_runtime->SetKernelArg(kernel_, arg_count++, bias_);
-  ocl_runtime->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
   ocl_runtime->SetKernelArg(kernel_, arg_count++, in_shape);
   ocl_runtime->SetKernelArg(kernel_, arg_count++, out_shape);
   ocl_runtime->SetKernelArg(kernel_, arg_count++, hasBias_ ? 1 : 0);

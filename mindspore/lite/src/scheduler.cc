@@ -24,6 +24,7 @@
 #include "src/common/utils.h"
 #if SUPPORT_GPU
 #include "src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
+#include "src/runtime/opencl/opencl_runtime.h"
 #endif
 
 namespace mindspore::lite {
@@ -242,7 +243,8 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<Tensor *> &in_tens
   MS_ASSERT(primitive != nullptr);
   TypeId data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(primitive->Type())};
-  if (context_->device_type_ == DT_GPU) {
+#if SUPPORT_GPU
+  if (context_->device_type_ == DT_GPU && lite::opencl::OpenCLRuntime::GetInstance()->IsInitOK()) {
     desc.arch = kernel::KERNEL_ARCH::kGPU;
     auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
     if (kernel != nullptr) {
@@ -254,7 +256,7 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<Tensor *> &in_tens
                     << node->name_;
     }
   }
-
+#endif
   desc.arch = kernel::KERNEL_ARCH::kCPU;
   kernel::LiteKernel *kernel = nullptr;
   if ((context_->float16_priority && data_type == kNumberTypeFloat32) || data_type == kNumberTypeFloat16) {
