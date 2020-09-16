@@ -57,9 +57,8 @@ class QuantStrategy {
  private:
   size_t mWeightSize;
   size_t mConvWeightQuantChannelThreshold;
-
-  static const std::array<std::string, 4> mConvTypes;
-  static const std::array<std::string, 4> mMulTypes;
+  static const std::vector<schema::PrimitiveType> conv_types;
+  static const std::vector<schema::PrimitiveType> mul_types;
 };
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,

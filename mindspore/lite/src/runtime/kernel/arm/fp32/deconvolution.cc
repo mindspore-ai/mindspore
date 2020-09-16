@@ -231,9 +231,23 @@ kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *>
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2D);
+  auto *weight_tensor = inputs.at(kWeightIndex);
+  auto *restore_data = weight_tensor->MutableData();
+  if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
+    if (dequant_weight == nullptr) {
+      MS_LOG(ERROR) << "dequant data is nullptr.";
+      return nullptr;
+    }
+    weight_tensor->SetData(dequant_weight);
+  }
   auto kernel = new (std::nothrow) kernel::DeConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
+    if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+      weight_tensor->FreeData();
+      weight_tensor->SetData(restore_data);
+    }
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -241,8 +255,18 @@ kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *>
     delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+      weight_tensor->FreeData();
+      weight_tensor->SetData(restore_data);
+    }
     return nullptr;
   }
+
+  if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    weight_tensor->FreeData();
+    weight_tensor->SetData(restore_data);
+  }
+
   return kernel;
 }
 
