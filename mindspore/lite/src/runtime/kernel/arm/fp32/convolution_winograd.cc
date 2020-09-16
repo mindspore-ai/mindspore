@@ -348,6 +348,7 @@ int ConvolutionWinogradCPUKernel::Run() {
   ret = PostProcess();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Post process failed.";
+    FreeTmpBuffer();
     return ret;
   }
   FreeTmpBuffer();

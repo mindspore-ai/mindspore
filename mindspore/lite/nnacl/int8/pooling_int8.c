@@ -443,7 +443,7 @@ void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
   int out_plane = output_w * output_h;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
   int thread_num = out_tile_count < pooling_param->thread_num_ ? out_tile_count : pooling_param->thread_num_;
-  int c16 = UP_DIV(channel, 16);
+  int c16 = channel / 16;
 
   for (int batch = 0; batch < output_batch; batch++) {
     int in_batch_offset = batch * in_h * in_w * channel;
@@ -458,7 +458,7 @@ void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
         int in_w_index = out_w_index * stride_w - pad_w;
         int in_h_index = out_h_index * stride_h - pad_h;
         int out_plane_offset = out_batch_offset + index * channel;
-        for (int j = 0; j < c16 - 1; j++) {
+        for (int j = 0; j < c16; j++) {
           int in_channel_offset = in_batch_offset + j * 16;
           int out_channel_offset = out_plane_offset + j * 16;
 #ifdef ENABLE_NEON
@@ -495,8 +495,48 @@ void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
 #endif
         }  // in_channel loop
 
+        // 8 channel
+        int tmp_c = c16 * 16;
+        int c8 = (channel - c16 * 16) / 8;
+        for (int k = 0; k < c8; k++) {
+          int in_channel_offset = in_batch_offset + tmp_c + k * 8;
+          int out_channel_offset = out_plane_offset + tmp_c + k * 8;
+#ifdef ENABLE_NEON
+          int8x8_t tmp_max = vdup_n_s8(INT8_MIN);
+#else
+          int8_t tmp_max[8];
+          for (int m = 0; m < C8NUM; ++m) {
+            tmp_max[m] = INT8_MIN;
+          }
+#endif
+          for (int h = 0; h < win_h; h++) {
+            for (int w = 0; w < win_w; w++) {
+              if ((in_h_index + h) < 0 || (in_h_index + h) >= in_h || (in_w_index + w) < 0 ||
+                  (in_w_index + w) >= in_w) {
+                continue;
+              } else {
+                int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
+#ifdef ENABLE_NEON
+                tmp_max = vmax_s8(tmp_max, vld1_s8(input_ptr + in_offset));
+#else
+                for (int l = 0; l < C8NUM; ++l) {
+                  tmp_max[l] = MaxInt8(tmp_max[l], *(input_ptr + in_offset + l));
+                }
+#endif
+              }
+            }  // win_w loop
+          }    // win_h loop
+#ifdef ENABLE_NEON
+          vst1_s8(output_ptr + out_channel_offset, tmp_max);
+#else
+          for (int l = 0; l < C8NUM; ++l) {
+            *(output_ptr + out_channel_offset + l) = tmp_max[l];
+          }
+#endif
+        }  // 8 channel loop
+
         // res channel
-        int channel_s = (c16 - 1) * 16;
+        int channel_s = c16 * 16 + c8 * 8;
         for (int k = channel_s; k < channel; k++) {
           int in_channel_offset = in_batch_offset + k;
           int out_channel_offset = out_plane_offset + k;
