@@ -43,4 +43,24 @@ float16_t *MallocOutputFp16(lite::Tensor *output, const lite::Context *ctx) {
   }
   return fp16_data;
 }
+
+bool IsExistFp16Tensor(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs) {
+  bool result = false;
+  for (auto &input : inputs) {
+    if (input->data_type() == kNumberTypeFloat16) {
+      result = true;
+      break;
+    }
+  }
+  if (result) {
+    return true;
+  }
+  for (auto &output : outputs) {
+    if (output->data_type() == kNumberTypeFloat16) {
+      result = true;
+      break;
+    }
+  }
+  return result;
+}
 }  // namespace mindspore::kernel

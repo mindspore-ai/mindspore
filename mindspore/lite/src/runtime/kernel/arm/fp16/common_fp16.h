@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_COMMON_FP16_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_COMMON_FP16_H_
 
+#include <vector>
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
@@ -23,6 +24,7 @@ float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::Context *ctx)
 
 float16_t *MallocOutputFp16(lite::Tensor *output, const lite::Context *ctx);
 
+bool IsExistFp16Tensor(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_COMMON_FP16_H_
