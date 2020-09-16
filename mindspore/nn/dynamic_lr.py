@@ -262,15 +262,20 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         (1 - tmp\_epoch / tmp\_decay\_epoch)^{power} + end\_learning\_rate
 
     Where:
+
     .. math::
-        `tmp\_epoch = min(current\_epoch, decay\_epoch),
-        current\_epoch=floor(\frac{i}{step\_per\_epoch})`,
+        tmp\_epoch = min(current\_epoch, decay\_epoch)
+
     .. math::
-        `tmp\_decay\_epoch = decay\_epoch`.
+        current\_epoch=floor(\frac{i}{step\_per\_epoch})
+
+    .. math::
+        tmp\_decay\_epoch = decay\_epoch
 
     If `update_decay_epoch` is true, update the value of `tmp_decay_epoch` every epoch. The formula is:
+
     .. math::
-        `tmp\_decay\_epoch = decay\_epoch * ceil(current\_epoch / decay\_epoch)`
+        tmp\_decay\_epoch = decay\_epoch * ceil(current\_epoch / decay\_epoch)
 
     Args:
         learning_rate (float): The initial value of learning rate.
