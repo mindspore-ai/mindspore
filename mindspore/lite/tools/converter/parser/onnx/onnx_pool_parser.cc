@@ -83,9 +83,9 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
       if (onnx_node_attr.ints_size() == 4) {
         attr->padMode = schema::PadMode_CAFFE;
         attr->padUp = static_cast<int32_t>(onnx_node_attr.ints(0));
-        attr->padDown = static_cast<int32_t>(onnx_node_attr.ints(1));
-        attr->padLeft = static_cast<int32_t>(onnx_node_attr.ints(0));
-        attr->padRight = static_cast<int32_t>(onnx_node_attr.ints(1));
+        attr->padDown = static_cast<int32_t>(onnx_node_attr.ints(2));
+        attr->padLeft = static_cast<int32_t>(onnx_node_attr.ints(1));
+        attr->padRight = static_cast<int32_t>(onnx_node_attr.ints(3));
       }
     }
     if (attribute_name == "ceil_mode") {

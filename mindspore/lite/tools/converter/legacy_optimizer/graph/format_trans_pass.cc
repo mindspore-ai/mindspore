@@ -67,9 +67,8 @@ STATUS FormatTransPass::DoModelInputFormatTrans(schema::MetaGraphT *graph) {
     }
 
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
-      auto &node = *iter;
-      for (size_t inputIndexIdx = 0; inputIndexIdx < node->inputIndex.size(); inputIndexIdx++) {
-        if (node->inputIndex.at(inputIndexIdx) == inputIdx) {
+      for (size_t inputIndexIdx = 0; inputIndexIdx < (*iter)->inputIndex.size(); inputIndexIdx++) {
+        if ((*iter)->inputIndex.at(inputIndexIdx) == inputIdx) {
           STATUS status = RET_OK;
           iter = InsertFormatTransNode(graph, iter, kBefore, inputIndexIdx, kNHWC2NCHW, &status);
           if (status != RET_OK) {
@@ -89,7 +88,6 @@ STATUS FormatTransPass::DoModelInputFormatTrans(schema::MetaGraphT *graph) {
             graphInTensor->dims = {oldDims[NCHW_N], oldDims[NCHW_H], oldDims[NCHW_W], oldDims[NCHW_C]};
             transed = true;
           }
-          break;
         }
       }
     }

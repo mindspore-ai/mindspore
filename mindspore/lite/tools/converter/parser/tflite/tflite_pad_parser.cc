@@ -74,8 +74,6 @@ STATUS TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_o
         MS_LOG(ERROR) << "paddingmode:" << tflite_attr->mode << " don't support";
         return RET_INVALID_OP_ATTR;
       }
-    AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[1], tensors_id->size(),
-               tflite_tensors.size(), schema::Format::Format_NHWC);
   } else {
     MS_LOG(ERROR) << "this pad:" << node_name << " hasn't been supported";
     return RET_NOT_SUPPORT;
@@ -86,6 +84,10 @@ STATUS TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_o
 
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
              tflite_tensors.size(), schema::Format::Format_NHWC);
+  if (std::strcmp(node_name, "MirrorPad") == 0) {
+    AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[1], tensors_id->size(),
+               tflite_tensors.size(), schema::Format::Format_NHWC);
+  }
   AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
               tflite_tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
