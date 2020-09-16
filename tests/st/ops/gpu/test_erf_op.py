@@ -37,10 +37,21 @@ class NetErf(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_exp():
+def test_erf_fp32():
     erf = NetErf()
-    x = np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32)
+    x = np.random.rand(3, 8).astype(np.float32)
     output = erf(Tensor(x, dtype=dtype.float32))
     expect = special.erf(x)
     tol = 1e-6
+    assert (np.abs(output.asnumpy() - expect) < tol).all()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_erf_fp16():
+    erf = NetErf()
+    x = np.random.rand(3, 8).astype(np.float16)
+    output = erf(Tensor(x, dtype=dtype.float16))
+    expect = special.erf(x)
+    tol = 1e-3
     assert (np.abs(output.asnumpy() - expect) < tol).all()

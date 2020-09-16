@@ -18,7 +18,7 @@
 template <typename T>
 __global__ void ErfcKernel(T *input, T *output, size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-    output[i] = (T)erfc(input[i]);
+    output[i] = static_cast<T>(erfc(static_cast<float>(input[i])));
   }
   return;
 }
@@ -30,3 +30,4 @@ void Erfc(T *input, T *output, size_t count, cudaStream_t cuda_stream) {
 }
 
 template void Erfc<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
+template void Erfc<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
