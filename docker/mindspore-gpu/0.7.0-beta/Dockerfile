@@ -35,9 +35,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     autoconf \
     libtool \
     automake \
-    flex \
-    libnccl2=2.4.8-1+cuda10.1 \
-    libnccl-dev=2.4.8-1+cuda10.1
+    flex
 
 # Set bash
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
