@@ -192,12 +192,14 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithFullSchema) {
     uint64_t i = 0;
     int32_t label = 0;
     double priority = 0;
+    int64_t id = 0;
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       tensor_map["_priority"]->GetItemAt<double>(&priority, {});
-      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "label shape"
+      tensor_map["id"]->GetItemAt<int64_t>(&id, {});
+      MS_LOG(ERROR) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "label shape"
                     << tensor_map["label"]  << "priority: " << priority << " embedding : " <<
-		    tensor_map["_embedding"]->shape() << "\n";
+		    tensor_map["_embedding"]->shape() << " id: " << id << "\n";
       i++;
       di.GetNextAsMap(&tensor_map);
     }

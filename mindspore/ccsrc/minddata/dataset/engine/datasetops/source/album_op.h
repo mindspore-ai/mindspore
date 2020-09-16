@@ -220,6 +220,13 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   /// \return Status The error code return
   Status LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row);
 
+  /// \brief Load vector of floatss to tensor, append tensor to tensor row
+  /// \param[in] json_obj Json object containing array data
+  /// \param[in] col_num Column num in schema
+  /// \param[inout] row Tensor row to push to
+  /// \return Status The error code return
+  Status LoadFloatArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row);
+
   /// \brief Load string array into a tensor, append tensor to tensor row
   /// \param[in] json_obj Json object containing string tensor
   /// \param[in] col_num Column num in schema
@@ -240,6 +247,13 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   /// \param[inout] row Tensor row to push to
   /// \return Status The error code return
   Status LoadFloatTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row);
+
+  /// \brief Load int value to tensor row
+  /// \param[in] json_obj Json object containing int
+  /// \param[in] col_num Column num in schema
+  /// \param[inout] row Tensor row to push to
+  /// \return Status The error code return
+  Status LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row);
 
   /// \brief Load emtpy tensor to tensor row
   /// \param[in] col_num Column num in schema

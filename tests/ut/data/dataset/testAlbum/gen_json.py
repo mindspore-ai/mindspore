@@ -15,7 +15,7 @@ if __name__ == '__main__':
         default_dict.update(dataset='')
         default_dict.update(image=os.path.abspath(os.path.join(DIRECTORY, filename)))
         default_dict.update(label=['3', '2'])
-        default_dict.update(_priority=0.8)
+        default_dict.update(_priority=[0.8, 0.3])
         default_dict.update(_embedding=os.path.abspath(os.path.join(PARENT_DIR, 'sample.bin')))
         default_dict.update(_processed_image=os.path.abspath(os.path.join(DIRECTORY, filename)))
         i = i + 1
