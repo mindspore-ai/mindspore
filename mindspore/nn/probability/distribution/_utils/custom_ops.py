@@ -24,8 +24,11 @@ def exp_generic(input_x):
     """
     exp = P.Exp()
     cast = P.Cast()
+    dtype = P.DType()
+    checktype = P.IsSubClass()
 
-    input_x = cast(input_x, mstype.float32)
+    if not checktype(dtype(input_x), mstype.float_):
+        input_x = cast(input_x, mstype.float32)
     return exp(input_x)
 
 
@@ -51,8 +54,10 @@ def log_generic(input_x):
     dtype = P.DType()
     shape = P.Shape()
     select = P.Select()
+    checktype = P.IsSubClass()
 
-    input_x = cast(input_x, mstype.float32)
+    if not checktype(dtype(input_x), mstype.float_):
+        input_x = cast(input_x, mstype.float32)
     nan = fill(dtype(input_x), shape(input_x), np.nan)
     inf = fill(dtype(input_x), shape(input_x), np.inf)
     neg_x = less(input_x, 0.0)

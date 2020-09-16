@@ -222,7 +222,7 @@ class Bernoulli(Distribution):
             pmf(k) = probs0 if k = 0;
         """
         value = self._check_value(value, 'value')
-        value = self.cast(value, mstype.float32)
+        value = self.cast(value, self.parameter_type)
         probs1 = self._check_param_type(probs1)
         probs0 = 1.0 - probs1
         return self.log(probs1) * value + self.log(probs0) * (1.0 - value)
@@ -241,7 +241,7 @@ class Bernoulli(Distribution):
             cdf(k) = 1 if k >=1;
         """
         value = self._check_value(value, 'value')
-        value = self.cast(value, mstype.float32)
+        value = self.cast(value, self.parameter_type)
         value = self.floor(value)
         probs1 = self._check_param_type(probs1)
         prob_type = self.dtypeop(probs1)
