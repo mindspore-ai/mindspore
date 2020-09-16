@@ -1064,6 +1064,14 @@ void PynativeExecutor::NewGraphInner(const py::object &cell, const py::args &arg
 
   auto g = std::make_shared<FuncGraph>();
   if (graph_context_.empty()) {
+    for (auto arg : args) {
+      if (py::isinstance<tensor::Tensor>(arg)) {
+        auto tensor = arg.cast<tensor::TensorPtr>();
+        if (tensor && tensor->is_parameter()) {
+          MS_EXCEPTION(TypeError) << "The inputs could not be Parameter.";
+        }
+      }
+    }
     // a df builder is built for every top function graph
     df_builder_ = std::make_shared<FuncGraph>();
     df_builder_map_[cell_id] = df_builder_;
@@ -1279,6 +1287,10 @@ void PynativeExecutor::EndGraphByOutId(const std::string &out_id, const py::obje
   if (need_replace_param) {
     auto params = newfg->parameters();
     auto manager = Manage({newfg}, false);
+    if (args.size() > params.size()) {
+      MS_EXCEPTION(ValueError) << "The number of arguments " << args.size()
+                               << " is more than the number of parameters required, which is " << params.size();
+    }
     for (size_t i = 0; i < args.size(); i++) {
       ValuePtr value = PyAttrValue(args[i]);
       auto v_node = NewValueNode(value);
