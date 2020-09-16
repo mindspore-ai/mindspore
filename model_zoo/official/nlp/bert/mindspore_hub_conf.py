@@ -19,7 +19,6 @@ from src.bert_model import BertModel
 from src.bert_model import BertConfig
 import mindspore.common.dtype as mstype
 bert_net_cfg_base = BertConfig(
-    batch_size=32,
     seq_length=128,
     vocab_size=21128,
     hidden_size=768,
@@ -33,13 +32,10 @@ bert_net_cfg_base = BertConfig(
     type_vocab_size=2,
     initializer_range=0.02,
     use_relative_positions=False,
-    input_mask_from_dataset=True,
-    token_type_ids_from_dataset=True,
     dtype=mstype.float32,
     compute_type=mstype.float16
 )
 bert_net_cfg_nezha = BertConfig(
-    batch_size=32,
     seq_length=128,
     vocab_size=21128,
     hidden_size=1024,
@@ -53,8 +49,6 @@ bert_net_cfg_nezha = BertConfig(
     type_vocab_size=2,
     initializer_range=0.02,
     use_relative_positions=True,
-    input_mask_from_dataset=True,
-    token_type_ids_from_dataset=True,
     dtype=mstype.float32,
     compute_type=mstype.float16
 )
@@ -63,15 +57,11 @@ def create_network(name, *args, **kwargs):
     Create bert network for base and nezha.
     '''
     if name == 'bert_base':
-        if "batch_size" in kwargs:
-            bert_net_cfg_base.batch_size = kwargs["batch_size"]
         if "seq_length" in kwargs:
             bert_net_cfg_base.seq_length = kwargs["seq_length"]
         is_training = kwargs.get("is_training", default=False)
         return BertModel(bert_net_cfg_base, is_training, *args)
     if name == 'bert_nezha':
-        if "batch_size" in kwargs:
-            bert_net_cfg_nezha.batch_size = kwargs["batch_size"]
         if "seq_length" in kwargs:
             bert_net_cfg_nezha.seq_length = kwargs["seq_length"]
         is_training = kwargs.get("is_training", default=False)

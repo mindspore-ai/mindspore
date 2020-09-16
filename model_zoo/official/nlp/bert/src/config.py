@@ -19,6 +19,7 @@ from easydict import EasyDict as edict
 import mindspore.common.dtype as mstype
 from .bert_model import BertConfig
 cfg = edict({
+    'batch_size': 32,
     'bert_network': 'base',
     'loss_scale_value': 65536,
     'scale_factor': 2,
@@ -57,7 +58,6 @@ large: BERT-NEZHA(a Chinese pretrained language model developed by Huawei, which
 '''
 if cfg.bert_network == 'base':
     bert_net_cfg = BertConfig(
-        batch_size=64,
         seq_length=128,
         vocab_size=21128,
         hidden_size=768,
@@ -71,14 +71,11 @@ if cfg.bert_network == 'base':
         type_vocab_size=2,
         initializer_range=0.02,
         use_relative_positions=False,
-        input_mask_from_dataset=True,
-        token_type_ids_from_dataset=True,
         dtype=mstype.float32,
         compute_type=mstype.float16
     )
 if cfg.bert_network == 'nezha':
     bert_net_cfg = BertConfig(
-        batch_size=96,
         seq_length=128,
         vocab_size=21128,
         hidden_size=1024,
@@ -92,14 +89,11 @@ if cfg.bert_network == 'nezha':
         type_vocab_size=2,
         initializer_range=0.02,
         use_relative_positions=True,
-        input_mask_from_dataset=True,
-        token_type_ids_from_dataset=True,
         dtype=mstype.float32,
         compute_type=mstype.float16
     )
 if cfg.bert_network == 'large':
     bert_net_cfg = BertConfig(
-        batch_size=24,
         seq_length=512,
         vocab_size=30522,
         hidden_size=1024,
@@ -113,8 +107,6 @@ if cfg.bert_network == 'large':
         type_vocab_size=2,
         initializer_range=0.02,
         use_relative_positions=False,
-        input_mask_from_dataset=True,
-        token_type_ids_from_dataset=True,
         dtype=mstype.float32,
         compute_type=mstype.float16
     )

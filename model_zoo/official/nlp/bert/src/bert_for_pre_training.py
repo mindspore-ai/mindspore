@@ -92,9 +92,8 @@ class GetMaskedLMOutput(nn.Cell):
         self.matmul = P.MatMul(transpose_b=True)
         self.log_softmax = nn.LogSoftmax(axis=-1)
         self.shape_flat_offsets = (-1, 1)
-        self.rng = Tensor(np.array(range(0, config.batch_size)).astype(np.int32))
         self.last_idx = (-1,)
-        self.shape_flat_sequence_tensor = (config.batch_size * config.seq_length, self.width)
+        self.shape_flat_sequence_tensor = (-1, self.width)
         self.seq_length_tensor = Tensor(np.array((config.seq_length,)).astype(np.int32))
         self.cast = P.Cast()
         self.compute_type = config.compute_type
@@ -105,8 +104,8 @@ class GetMaskedLMOutput(nn.Cell):
                   output_weights,
                   positions):
         """Get output log_probs"""
-        flat_offsets = self.reshape(
-            self.rng * self.seq_length_tensor, self.shape_flat_offsets)
+        rng = F.tuple_to_array(F.make_range(P.Shape()(input_tensor)[0]))
+        flat_offsets = self.reshape(rng * self.seq_length_tensor, self.shape_flat_offsets)
         flat_position = self.reshape(positions + flat_offsets, self.last_idx)
         flat_sequence_tensor = self.reshape(input_tensor, self.shape_flat_sequence_tensor)
         input_tensor = self.gather(flat_sequence_tensor, flat_position, 0)

@@ -20,7 +20,7 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset.engine.datasets as de
 import mindspore.dataset.transforms.c_transforms as C
 from mindspore import log as logger
-from .config import bert_net_cfg
+from .config import cfg
 
 
 def create_bert_dataset(device_num=1, rank=0, do_shuffle="true", data_dir=None, schema_dir=None):
@@ -46,7 +46,7 @@ def create_bert_dataset(device_num=1, rank=0, do_shuffle="true", data_dir=None, 
     ds = ds.map(operations=type_cast_op, input_columns="input_mask")
     ds = ds.map(operations=type_cast_op, input_columns="input_ids")
     # apply batch operations
-    ds = ds.batch(bert_net_cfg.batch_size, drop_remainder=True)
+    ds = ds.batch(cfg.batch_size, drop_remainder=True)
     logger.info("data size: {}".format(ds.get_dataset_size()))
     logger.info("repeat count: {}".format(ds.get_repeat_count()))
     return ds

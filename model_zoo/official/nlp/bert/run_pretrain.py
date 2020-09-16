@@ -107,7 +107,7 @@ def run_pretrain():
 
     if args_opt.accumulation_steps > 1:
         logger.info("accumulation steps: {}".format(args_opt.accumulation_steps))
-        logger.info("global batch size: {}".format(bert_net_cfg.batch_size * args_opt.accumulation_steps))
+        logger.info("global batch size: {}".format(cfg.batch_size * args_opt.accumulation_steps))
         if args_opt.enable_data_sink == "true":
             args_opt.data_sink_steps *= args_opt.accumulation_steps
             logger.info("data sink steps: {}".format(args_opt.data_sink_steps))
