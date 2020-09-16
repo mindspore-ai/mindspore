@@ -31,7 +31,6 @@ def _op_select_format(kernel_info):
         op supported format
     """
     try:
-        # import module
         op_name = kernel_info['op_info']['name']
         impl_path = build_in_impl_path
         custom_flag = False
@@ -78,7 +77,6 @@ def _check_supported(kernel_info):
         bool: check result, true or false
     """
     try:
-        # import module
         op_name = kernel_info['op_info']['name']
         impl_path = build_in_impl_path
         custom_flag = False
