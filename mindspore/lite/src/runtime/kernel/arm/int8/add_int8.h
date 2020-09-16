@@ -26,7 +26,7 @@ namespace mindspore::kernel {
 class QuantizedAddCPUKernel : public LiteKernel {
  public:
   explicit QuantizedAddCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                 const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                  const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx_->thread_num_) {
     arith_para_ = reinterpret_cast<ArithmeticParameter *>(parameter);
@@ -39,7 +39,7 @@ class QuantizedAddCPUKernel : public LiteKernel {
   int DoExecute(int tId);
 
  private:
-  const lite::Context *ctx_;
+  const lite::InnerContext *ctx_;
   AddQuantParameter para_;
   ArithmeticParameter *arith_para_;
   int thread_count_;

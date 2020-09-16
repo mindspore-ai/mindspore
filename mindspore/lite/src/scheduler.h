@@ -19,14 +19,14 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "include/context.h"
+#include "src/inner_context.h"
 #include "include/model.h"
 #include "src/ops/primitive_c.h"
 
 namespace mindspore::lite {
 class Scheduler {
  public:
-  explicit Scheduler(const Context *ctx) { context_ = const_cast<Context *>(ctx); }
+  explicit Scheduler(const InnerContext *ctx) { context_ = const_cast<InnerContext *>(ctx); }
   int Schedule(const lite::Model *model, std::vector<Tensor *> *tensors, std::vector<kernel::LiteKernel *> *kernels);
 
   int ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels);
@@ -48,7 +48,7 @@ class Scheduler {
   void SetKernelTensorDataType(kernel::LiteKernel *kernel);
 
  protected:
-  Context *context_ = nullptr;
+  InnerContext *context_ = nullptr;
 };
 }  // namespace mindspore::lite
 

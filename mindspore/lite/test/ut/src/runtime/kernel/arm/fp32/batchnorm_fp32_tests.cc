@@ -55,8 +55,9 @@ TEST_F(TestBatchnormFp32, BNTest) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_BatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
@@ -111,8 +112,9 @@ TEST_F(TestBatchnormFp32, FusedBNTest) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_FusedBatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
@@ -161,8 +163,9 @@ TEST_F(TestBatchnormFp32, easyTest) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_BatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);

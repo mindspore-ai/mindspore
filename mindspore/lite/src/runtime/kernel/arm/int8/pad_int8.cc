@@ -132,7 +132,7 @@ int PadInt8CPUKernel::Run() {
   out_data_ = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
 
   memset(out_data_, pad_param_->pad_quant_arg_.constant_value_[0], out_tensors_[0]->ElementsNum() * sizeof(int8_t));
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, PadInt8Impl, this, context_->thread_num_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, PadInt8Impl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
     return RET_ERROR;

@@ -217,8 +217,9 @@ TEST_F(TestConv1x1Fp32, Conv1x1Test1) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
   auto conv_param = new ConvParameter();
-  lite::Context *ctx = new lite::Context();
+  lite::InnerContext *ctx = new lite::InnerContext();
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   float *correct;
   int total_size = Conv1x1TestInit1(&inputs_, &outputs_, conv_param, &correct);
   kernel::Convolution1x1CPUKernel *conv1x1 =
@@ -284,8 +285,9 @@ TEST_F(TestConv1x1Fp32, Conv1x1Test2) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
   auto conv_param = new ConvParameter();
-  lite::Context *ctx = new lite::Context();
+  lite::InnerContext *ctx = new lite::InnerContext();
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   float *correct;
   int total_size = Conv1x1TestInit2(&inputs_, &outputs_, conv_param, &correct);
   kernel::Convolution1x1CPUKernel *conv1x1 =

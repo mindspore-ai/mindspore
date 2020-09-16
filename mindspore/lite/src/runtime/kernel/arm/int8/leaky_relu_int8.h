@@ -27,7 +27,7 @@ namespace mindspore::kernel {
 class LeakyReluInt8CPUKernel : public LeakyReluBaseCPUKernel {
  public:
   LeakyReluInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                         const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
       : LeakyReluBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~LeakyReluInt8CPUKernel() override;

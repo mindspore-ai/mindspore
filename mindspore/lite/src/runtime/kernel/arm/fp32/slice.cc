@@ -106,7 +106,7 @@ int SliceCPUKernel::Run() {
     DoSliceNoParallel(input_data, output_data, param);
     return RET_OK;
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SliceLaunch, this, param->op_parameter_.thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, SliceLaunch, this, param->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "slice launch fail!ret: " << ret;
     return RET_ERROR;

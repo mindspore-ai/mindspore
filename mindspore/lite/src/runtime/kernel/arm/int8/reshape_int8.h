@@ -23,13 +23,13 @@
 #include "src/runtime/kernel/arm/base/reshape_base.h"
 #include "src/runtime/runtime_api.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class ReshapeInt8CPUKernel : public ReshapeBaseCPUKernel {
  public:
   ReshapeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
       : ReshapeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ReshapeInt8CPUKernel() = default;

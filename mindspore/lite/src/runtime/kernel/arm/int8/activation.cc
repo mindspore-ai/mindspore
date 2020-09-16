@@ -32,7 +32,7 @@ using mindspore::schema::PrimitiveType_Activation;
 namespace mindspore::kernel {
 kernel::LiteKernel *CpuActivationInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                   const lite::Context *ctx, const KernelKey &desc,
+                                                   const lite::InnerContext *ctx, const KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr";

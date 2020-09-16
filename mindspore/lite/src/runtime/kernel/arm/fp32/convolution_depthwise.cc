@@ -116,7 +116,7 @@ int ConvolutionDepthwiseCPUKernel::Run() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<float *>(output_tensor->MutableData());
 
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConvDwRun, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, ConvDwRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwRun error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -126,7 +126,7 @@ int ConvolutionDepthwiseCPUKernel::Run() {
 
 kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const Context *ctx, const kernel::KernelKey &desc,
+                                               const InnerContext *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);

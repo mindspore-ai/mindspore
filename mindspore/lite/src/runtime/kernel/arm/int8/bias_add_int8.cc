@@ -70,7 +70,7 @@ int BiasAddInt8CPUKernel::Run() {
 
 kernel::LiteKernel *CpuBiasAddInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                const lite::Context *ctx, const KernelKey &desc,
+                                                const lite::InnerContext *ctx, const KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr || ctx == nullptr) {
     MS_LOG(ERROR) << "parameter or context is nullptr";

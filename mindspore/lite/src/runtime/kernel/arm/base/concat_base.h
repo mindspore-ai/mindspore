@@ -22,13 +22,13 @@
 #include "nnacl/concat_parameter.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class ConcatBaseCPUKernel : public LiteKernel {
  public:
   ConcatBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                      const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     concat_param_ = reinterpret_cast<ConcatParameter *>(op_parameter_);
@@ -44,7 +44,7 @@ class ConcatBaseCPUKernel : public LiteKernel {
 
  protected:
   int axis_;
-  const Context *ctx_;
+  const InnerContext *ctx_;
   int thread_count_;
   ConcatParameter *concat_param_ = nullptr;
 };

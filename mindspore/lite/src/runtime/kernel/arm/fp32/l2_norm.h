@@ -24,13 +24,13 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class L2NormCPUKernel : public LiteKernel {
  public:
   L2NormCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                  const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                  const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                   const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     l2_norm_param_ = reinterpret_cast<L2NormParameter *>(op_parameter_);

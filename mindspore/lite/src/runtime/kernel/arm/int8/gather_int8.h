@@ -26,11 +26,10 @@ namespace mindspore::kernel {
 class GatherInt8CPUKernel : public LiteKernel {
  public:
   GatherInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
-  ~GatherInt8CPUKernel() {
-  }
+  ~GatherInt8CPUKernel() {}
 
   int Init() override;
   int ReSize() override;

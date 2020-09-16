@@ -23,13 +23,13 @@
 #include "include/context.h"
 #include "src/runtime/kernel/arm/fp32/reshape.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class ReshapeFp16CPUKernel : public ReshapeCPUKernel {
  public:
   ReshapeFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
       : ReshapeCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ReshapeFp16CPUKernel() = default;

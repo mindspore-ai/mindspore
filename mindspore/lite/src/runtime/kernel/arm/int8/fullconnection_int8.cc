@@ -137,7 +137,7 @@ int FullconnectionInt8CPUKernel::Run() {
   auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
   RowMajor2Row16x4MajorInt8(input_ptr, a_r4x16_ptr_, fc_param_->row_, fc_param_->deep_);
   CalcInputSums(input_ptr, fc_param_->row_, fc_param_->deep_, quant_params_.weight.zp_, input_sums_, RowMajor);
-  ParallelLaunch(THREAD_POOL_DEFAULT, FcInt8Run, this, thread_count_);
+  ParallelLaunch(this->context_->thread_pool_, FcInt8Run, this, thread_count_);
   return RET_OK;
 }
 

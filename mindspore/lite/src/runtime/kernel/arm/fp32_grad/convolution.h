@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 class ConvolutionTrainCPUKernel : public LiteKernel {
  public:
   explicit ConvolutionTrainCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                     const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                      const lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), workspace(nullptr) {}
   ~ConvolutionTrainCPUKernel() override {
@@ -43,7 +43,7 @@ class ConvolutionTrainCPUKernel : public LiteKernel {
 
 kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                   const lite::PrimitiveC *primitive);
 }  // namespace mindspore::kernel
 

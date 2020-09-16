@@ -475,8 +475,9 @@ TEST_F(TestDeConvolutionFp32, DeConvTest1) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
   ConvParameter *deconv_param = new ConvParameter();
-  lite::Context *ctx = new lite::Context();
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   float *correct;
   int total_size = DeConvTestInit1(&inputs_, &outputs_, deconv_param, &correct);
   kernel::DeConvolutionCPUKernel *deconv =
@@ -543,8 +544,9 @@ TEST_F(TestDeConvolutionFp32, DeConvTest2) {
   auto deconv_param = new ConvParameter();
   float *correct;
   int total_size = DeConvTestInit2(&inputs_, &outputs_, deconv_param, &correct);
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::DeConvolutionCPUKernel *deconv =
     new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx, nullptr);
 
@@ -621,8 +623,9 @@ TEST_F(TestDeConvolutionFp32, DeConvTest3) {
   auto deconv_param = new ConvParameter();
   float *correct;
   int total_size = DeConvTestInit3(&inputs_, &outputs_, deconv_param, &correct);
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::DeConvolutionCPUKernel *deconv =
     new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx, nullptr);
 
@@ -688,8 +691,9 @@ TEST_F(TestDeConvolutionFp32, DeConvTest4) {
   auto deconv_param = new ConvParameter();
   float *correct;
   int total_size = DeConvTestInit4(&inputs_, &outputs_, deconv_param, &correct);
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::DeConvolutionCPUKernel *deconv =
     new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx, nullptr);
 

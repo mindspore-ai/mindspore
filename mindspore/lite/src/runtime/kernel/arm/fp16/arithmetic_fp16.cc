@@ -202,7 +202,7 @@ int ArithmeticFP16CPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ArithmeticsRunFp16, this, context_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticsRunFp16, this, context_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticsRunFp16 run error error_code[" << ret << "]";
   }
@@ -231,7 +231,7 @@ void ArithmeticFP16CPUKernel::FreeTmpBuffer() {
 
 kernel::LiteKernel *CpuArithmeticFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                   const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "input parameter is null!";

@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 class StridedSliceCPUKernel : public LiteKernel {
  public:
   StridedSliceCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                        const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                         const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~StridedSliceCPUKernel() override = default;

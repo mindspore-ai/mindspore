@@ -23,13 +23,13 @@
 #include "src/runtime/kernel/arm/base/fullconnection_base.h"
 #include "nnacl/int8/common_func.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class FullconnectionInt8CPUKernel : public FullconnectionBaseCPUKernel {
  public:
   FullconnectionInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                              const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                               const mindspore::lite::PrimitiveC *primitive)
       : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~FullconnectionInt8CPUKernel() override { FreeTmpBuffer(); }

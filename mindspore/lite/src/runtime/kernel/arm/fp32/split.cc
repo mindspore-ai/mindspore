@@ -83,7 +83,7 @@ int SplitCPUKernel::Run() {
   for (int i = 0; i < param->num_split_; i++) {
     output_ptr_[i] = reinterpret_cast<float *>(out_tensors_.at(i)->MutableData());
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SplitRun, this, thread_n_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, SplitRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

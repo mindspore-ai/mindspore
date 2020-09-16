@@ -22,14 +22,14 @@
 #include "nnacl/fp32/pooling.h"
 #include "include/errorcode.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 class PoolingBaseCPUKernel : public LiteKernel {
  public:
   PoolingBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     pooling_param_ = reinterpret_cast<PoolingParameter *>(op_parameter_);
@@ -43,7 +43,7 @@ class PoolingBaseCPUKernel : public LiteKernel {
   void FreeQuantParam();
 
  protected:
-  const Context *ctx_;
+  const InnerContext *ctx_;
   int thread_count_;
   PoolingParameter *pooling_param_;
   QuantArg **pooling_quant_arg_ = nullptr;

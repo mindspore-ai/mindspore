@@ -49,7 +49,8 @@ TEST_F(TestReverseSequenceFp32, BatchLessSeq) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
 
-  auto ctx = std::make_shared<lite::Context>();
+  auto ctx = std::make_shared<lite::InnerContext>();
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc, nullptr);
   EXPECT_NE(kernel, nullptr);
 
@@ -92,7 +93,8 @@ TEST_F(TestReverseSequenceFp32, BatchGreaterSeq) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
 
-  auto ctx = std::make_shared<lite::Context>();
+  auto ctx = std::make_shared<lite::InnerContext>();
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc, nullptr);
   EXPECT_NE(kernel, nullptr);
 
@@ -135,7 +137,8 @@ TEST_F(TestReverseSequenceFp32, BatchSeqNotAdjacent) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
 
-  auto ctx = std::make_shared<lite::Context>();
+  auto ctx = std::make_shared<lite::InnerContext>();
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc, nullptr);
   EXPECT_NE(kernel, nullptr);
 

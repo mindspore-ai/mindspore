@@ -22,13 +22,13 @@
 #include "nnacl/fp32/leaky_relu.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class LeakyReluCPUKernel : public LiteKernel {
  public:
   LeakyReluCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     prelu_param_ = (reinterpret_cast<LeakyReluParameter *>(op_parameter_));

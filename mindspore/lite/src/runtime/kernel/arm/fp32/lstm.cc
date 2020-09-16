@@ -158,7 +158,7 @@ int LstmCPUKernel::Run() {
 
 kernel::LiteKernel *CpuLstmKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                          const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                         const lite::Context *ctx, const kernel::KernelKey &desc,
+                                         const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                          const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "Input parameter is nullptr!";

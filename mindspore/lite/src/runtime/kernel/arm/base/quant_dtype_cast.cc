@@ -83,8 +83,8 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
     MS_LOG(ERROR) << "QuantDTypeCast need quantization parameters which is not found.";
     return RET_ERROR;
   }
-  auto quant_arg = !in_tensors_.front()->GetQuantParams().empty() ? in_tensors_.front()->GetQuantParams().front() :
-                   out_tensors_.front()->GetQuantParams().front();
+  auto quant_arg = !in_tensors_.front()->GetQuantParams().empty() ? in_tensors_.front()->GetQuantParams().front()
+                                                                  : out_tensors_.front()->GetQuantParams().front();
   int ret;
   if (inverse_) {
     ret = DoDequantizeInt8(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
@@ -124,7 +124,7 @@ int QuantDTypeCastCPUKernel::Run() {
     int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
   }
 
-  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, QuantDTypeCastRun, this, thread_n_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, QuantDTypeCastRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;
@@ -135,7 +135,7 @@ int QuantDTypeCastCPUKernel::Run() {
 
 kernel::LiteKernel *CpuQuantDTypeCastFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                        const std::vector<lite::Tensor *> &outputs,
-                                                       OpParameter *opParameter, const lite::Context *ctx,
+                                                       OpParameter *opParameter, const lite::InnerContext *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {

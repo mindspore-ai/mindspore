@@ -27,7 +27,7 @@ namespace mindspore::kernel {
 class ArithmeticOpenCLKernel : public OpenCLKernel {
  public:
   explicit ArithmeticOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                  const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx)
+                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~ArithmeticOpenCLKernel() override;
 

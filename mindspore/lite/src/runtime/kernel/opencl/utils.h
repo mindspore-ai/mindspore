@@ -27,7 +27,7 @@
 
 namespace mindspore::lite {
 kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                                    OpParameter *parameter, const Context *ctx, const kernel::KernelKey &key);
+                                    OpParameter *parameter, const InnerContext *ctx, const kernel::KernelKey &key);
 }
 
 namespace mindspore::kernel {

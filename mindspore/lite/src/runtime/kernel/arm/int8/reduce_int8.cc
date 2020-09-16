@@ -268,7 +268,7 @@ int ReduceInt8CPUKernel::Run() {
     outer_size_ = outer_sizes_[i];
     inner_size_ = inner_sizes_[i];
     axis_size_ = axis_sizes_[i];
-    auto error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReduceInt8Impl, this, context_->thread_num_);
+    auto error_code = ParallelLaunch(this->context_->thread_pool_, ReduceInt8Impl, this, context_->thread_num_);
     if (error_code != RET_OK) {
       FreeTmpBuffer();
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
@@ -283,7 +283,7 @@ int ReduceInt8CPUKernel::Run() {
   axis_size_ = axis_sizes_.back();
   last_dst_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   is_last_axis_ = true;
-  auto error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReduceInt8Impl, this, context_->thread_num_);
+  auto error_code = ParallelLaunch(this->context_->thread_pool_, ReduceInt8Impl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
     FreeTmpBuffer();

@@ -18,6 +18,7 @@
 #include "utils/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
+#include "include/version.h"
 
 namespace mindspore::lite {
 namespace {
@@ -100,6 +101,11 @@ Model *Model::Import(const char *model_buf, size_t size) {
   if (meta_graph->version() != nullptr) {
     model->version_ = meta_graph->version()->c_str();
   }
+
+  if (model->version_ != Version()) {
+    MS_LOG(WARNING) << "model version is " << model->version_ << ", inference version is " << Version() << " not equal";
+  }
+
   auto in_count = meta_graph->inputIndex()->size();
   for (uint32_t i = 0; i < in_count; ++i) {
     model->input_indices_.push_back(size_t(meta_graph->inputIndex()->GetAs<uint32_t>(i)));

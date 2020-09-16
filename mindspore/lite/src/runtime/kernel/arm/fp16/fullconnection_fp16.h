@@ -29,7 +29,7 @@ namespace mindspore::kernel {
 class FullconnectionFP16CPUKernel : public FullconnectionBaseCPUKernel {
  public:
   explicit FullconnectionFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                       const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                        const mindspore::lite::PrimitiveC *primitive)
       : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~FullconnectionFP16CPUKernel() override;

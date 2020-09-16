@@ -21,13 +21,13 @@
 #include "src/lite_kernel.h"
 #include "nnacl/reshape_parameter.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class ReshapeBaseCPUKernel : public LiteKernel {
  public:
   ReshapeBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx) {
     reshape_param_ = reinterpret_cast<ReshapeParameter *>(op_parameter_);
@@ -39,7 +39,7 @@ class ReshapeBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 
  protected:
-  const Context *ctx_;
+  const InnerContext *ctx_;
   ReshapeParameter *reshape_param_;
 };
 }  // namespace mindspore::kernel

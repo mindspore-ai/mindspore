@@ -27,9 +27,15 @@ namespace mindspore {
 namespace opt {
 class ConstFoldPass : public PatternProcessPass {
  public:
-  explicit ConstFoldPass(bool multigraph = true) : PatternProcessPass("constfold_pass", multigraph) {}
-  ~ConstFoldPass() override = default;
+  explicit ConstFoldPass(bool multigraph = true) : PatternProcessPass("constfold_pass", multigraph) {
+    this->context = new lite::InnerContext;
+    this->context->Init();
+  }
+  ~ConstFoldPass() override { delete (this->context); }
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  lite::InnerContext *context = nullptr;
 };
 }  // namespace opt
 }  // namespace mindspore

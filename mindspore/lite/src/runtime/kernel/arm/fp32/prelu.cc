@@ -135,7 +135,7 @@ int PReluCPUKernel::Run() {
   auto negative_slope_tensor = in_tensors_.at(1);
   prelu_param_->slope_ = reinterpret_cast<float *>(negative_slope_tensor->MutableData());
 
-  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, PReluRun, this, prelu_param_->op_parameter_.thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, PReluRun, this, prelu_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PRelu Run error: error_code[" << ret << "]";
     context_->allocator->Free(input_data_);
@@ -149,7 +149,7 @@ int PReluCPUKernel::Run() {
 
 kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *param,
-                                              const lite::Context *ctx, const kernel::KernelKey &desc,
+                                              const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "input param is nullptr!";

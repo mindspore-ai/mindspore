@@ -164,7 +164,7 @@ int RunConverter(int argc, const char **argv) {
   fb_graph->version = Version();
   status = storage.Save(*fb_graph, flags->outputFile);
   if (status != 0) {
-    MS_LOG(ERROR) << "Save graph failed";
+    MS_LOG(ERROR) << "Save graph to file failed";
     std::cout << "SAVE GRAPH FAILED:" << status << std::endl;
     return status;
   }

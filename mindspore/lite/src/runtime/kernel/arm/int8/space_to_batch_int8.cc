@@ -56,9 +56,8 @@ int SpaceToBatchInt8CPUKernel::Run() {
 }
 
 kernel::LiteKernel *CpuSpaceToBatchInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                     const std::vector<lite::Tensor *> &outputs,
-                                                     OpParameter *param, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc,
+                                                     const std::vector<lite::Tensor *> &outputs, OpParameter *param,
+                                                     const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                      const mindspore::lite::PrimitiveC *primitive) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "Input param is nullptr!";

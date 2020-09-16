@@ -140,8 +140,9 @@ TEST_F(LstmFp32, LstmForwardFp32Accuracy) {
   InitLstmParam(lstm_param);
 
   // init ctx
-  auto ctx = new lite::Context();
+  auto ctx = new lite::InnerContext();
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
 
   // init tensor
   std::vector<lite::Tensor *> inputs;
@@ -288,8 +289,9 @@ TEST_F(LstmFp32, LstmBackwardFp32Accuracy) {
   lstm_param->bidirectional_ = true;
 
   // init ctx
-  auto ctx = new lite::Context();
+  auto ctx = new lite::InnerContext();
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
 
   // init tensor
   std::vector<lite::Tensor *> inputs;

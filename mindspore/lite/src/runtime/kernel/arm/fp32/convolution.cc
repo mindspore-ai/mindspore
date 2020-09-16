@@ -192,7 +192,7 @@ int ConvolutionCPUKernel::Run() {
   PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
                       conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ConvolutionImpl, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionImpl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv error error_code[" << error_code << "]";
     FreeTmpBuffer();
@@ -217,7 +217,7 @@ bool CheckIfUseSlideWindow(ConvParameter *conv_param) {
 
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                             const Context *ctx, const kernel::KernelKey &desc,
+                                             const InnerContext *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);

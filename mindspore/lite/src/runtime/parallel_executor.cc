@@ -20,10 +20,10 @@
 
 #define MAX_THREAD_NUM 8
 namespace mindspore::lite {
-ParallelExecutor::~ParallelExecutor() {}
+ParallelExecutor::~ParallelExecutor() { DestroyThreadPool(thread_pool_); }
 int ParallelExecutor::Prepare(std::vector<mindspore::kernel::LiteKernel *> &kernels) {
-  int status = ConfigThreadPool(THREAD_POOL_DEFAULT, MAX_THREAD_NUM, NO_BIND);
-  if (status != 0) {
+  thread_pool_ = CreateLiteThreadPool(MAX_THREAD_NUM, NO_BIND);
+  if (thread_pool_ == nullptr) {
     MS_LOG(ERROR) << "Memory error: fail to new ThreadPool";
     return RET_ERROR;
   }
@@ -79,7 +79,7 @@ int ParallelExecutor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor 
   std::vector<kernel::LiteKernel *> newReadyKernels;
   while (readyKernels.size() > 0) {
     results.resize(readyKernels.size(), RET_OK);
-    ParallelLaunch(THREAD_POOL_DEFAULT, RunKernel, this, readyKernels.size());
+    ParallelLaunch(thread_pool_, RunKernel, this, readyKernels.size());
 
     if (std::find_if(results.begin(), results.end(), [](const int &ret) { return (ret != 0); }) != results.end()) {
       return RET_ERROR;

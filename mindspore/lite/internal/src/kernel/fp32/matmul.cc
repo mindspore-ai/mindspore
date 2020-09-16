@@ -148,6 +148,10 @@ int DoMatMul(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tenso
   params->col_8_ = UP_ROUND(params->col_, 8);
 
   MatMulCPUKernelData *kernel_data = (MatMulCPUKernelData *)malloc(sizeof(MatMulCPUKernelData));
+  if (kernel_data == NULL) {
+    LITE_ERROR_LOG("Malloc MatMulCPUKernelData failed");
+    return RET_MEMORY_FAILED;
+  }
   kernel_data->a_c12_ptr_
     = reinterpret_cast<float *>(allocator->Malloc(params->batch * params->row_12_ * params->deep_ * sizeof(float)));
   if (kernel_data->a_c12_ptr_ == NULL) {

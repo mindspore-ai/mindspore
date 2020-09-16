@@ -62,8 +62,9 @@ TEST_F(TestEmbeddingLookupFp32, ElTest) {
   auto embedding_lookup_param_ = new EmbeddingLookupParameter();
   ElTestInit(&inputs_, &outputs_, embedding_lookup_param_);
 
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::EmbeddingLookupCPUKernel *el = new kernel::EmbeddingLookupCPUKernel(
     reinterpret_cast<OpParameter *>(embedding_lookup_param_), inputs_, outputs_, ctx, nullptr);
 

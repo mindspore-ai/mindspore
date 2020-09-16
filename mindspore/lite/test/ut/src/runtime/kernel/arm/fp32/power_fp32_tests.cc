@@ -70,8 +70,9 @@ TEST_F(TestPowerFp32, Simple) {
   std::vector<int> b_shape = {2, 2};
   std::vector<int> c_shape = {2, 2};
   int total_size = PowerTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::PowerCPUKernel *op =
     new kernel::PowerCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx, nullptr);
   op->Init();
@@ -95,8 +96,9 @@ TEST_F(TestPowerFp32, Broadcast) {
   std::vector<int> a_shape = {2, 2};
   std::vector<int> c_shape = {2, 2};
   int total_size = PowerTestInit2(&inputs_, &outputs_, a, a_shape, c_shape);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::PowerCPUKernel *op =
     new kernel::PowerCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx, nullptr);
   op->Init();

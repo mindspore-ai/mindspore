@@ -24,7 +24,7 @@ namespace mindspore::kernel {
 class PadFp16CPUKernel : public PadCPUKernel {
  public:
   PadFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                   const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                    const mindspore::lite::PrimitiveC *primitive)
       : PadCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 

@@ -29,7 +29,7 @@
 #include "include/context.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 using mindspore::schema::PadMode;
 using mindspore::schema::QuantType;
 
@@ -37,7 +37,7 @@ namespace mindspore::kernel {
 class ConvolutionBaseCPUKernel : public LiteKernel {
  public:
   ConvolutionBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                           const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                           const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                            const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     op_parameter_->thread_num_ = ctx->thread_num_;
@@ -64,7 +64,7 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   int tile_num_;
   void *bias_data_ = nullptr;
   void *nhwc4_input_ = nullptr;
-  const Context *ctx_;
+  const InnerContext *ctx_;
   int thread_count_;
   ConvParameter *conv_param_;
   ConvQuantArg *conv_quant_arg_;

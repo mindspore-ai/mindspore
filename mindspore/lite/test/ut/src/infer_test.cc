@@ -105,10 +105,11 @@ TEST_F(InferTest, TestConvNode) {
   ASSERT_NE(nullptr, model);
   meta_graph.reset();
   content = nullptr;
-  auto context = new lite::Context;
+  auto context = new lite::InnerContext;
   context->cpu_bind_mode_ = lite::NO_BIND;
   context->device_type_ = lite::DT_CPU;
   context->thread_num_ = 4;
+  ASSERT_EQ(lite::RET_OK, context->Init());
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
   auto ret = session->CompileGraph(model);
@@ -203,10 +204,11 @@ TEST_F(InferTest, TestAddNode) {
   ASSERT_NE(nullptr, model);
   meta_graph.reset();
   content = nullptr;
-  auto context = new lite::Context;
+  auto context = new lite::InnerContext;
   context->cpu_bind_mode_ = lite::NO_BIND;
   context->device_type_ = lite::DT_CPU;
   context->thread_num_ = 4;
+  ASSERT_EQ(lite::RET_OK, context->Init());
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
   auto ret = session->CompileGraph(model);
@@ -246,7 +248,7 @@ TEST_F(InferTest, TestAddNode) {
 
 class SessionWithParallelExecutor : public lite::LiteSession {
  public:
-  int Init(lite::Context *context) {
+  int Init(lite::InnerContext *context) {
     lite::LiteSession::Init(context);
     delete this->executor;
     this->executor = new mindspore::lite::ParallelExecutor();
@@ -304,10 +306,11 @@ TEST_F(InferTest, TestParallelExecutor) {
   ASSERT_NE(nullptr, model);
   meta_graph.reset();
   content = nullptr;
-  auto context = new lite::Context;
+  auto context = new lite::InnerContext;
   context->cpu_bind_mode_ = lite::NO_BIND;
   context->device_type_ = lite::DT_CPU;
   context->thread_num_ = 4;
+  ASSERT_EQ(lite::RET_OK, context->Init());
   auto session = new SessionWithParallelExecutor();
   session->Init(context);
   ASSERT_NE(nullptr, session);
@@ -344,10 +347,11 @@ TEST_F(InferTest, TestModel) {
   auto model = lite::Model::Import(buf[0], model_size);
   ASSERT_NE(nullptr, model);
   delete[] buf[0];
-  auto context = new lite::Context;
+  auto context = new lite::InnerContext;
   context->cpu_bind_mode_ = lite::NO_BIND;
   context->device_type_ = lite::DT_CPU;
   context->thread_num_ = 4;
+  ASSERT_EQ(lite::RET_OK, context->Init());
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
   auto ret = session->CompileGraph(model);

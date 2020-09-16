@@ -157,7 +157,7 @@ int SqueezeInt8CPUKernel::Run() {
     free(*(inputs_array + i));
   }
 
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SqueezeInt8Run, this, thread_count_);
+  ret = ParallelLaunch(this->context_->thread_pool_, SqueezeInt8Run, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunSqueezeParam failed. errorcode: ";
   }

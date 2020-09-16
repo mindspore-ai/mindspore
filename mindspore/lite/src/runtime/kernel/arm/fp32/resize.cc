@@ -198,7 +198,7 @@ int ResizeCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ResizeImpl, this, context_->thread_num_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ResizeImpl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
     FreeTmpBuffer();

@@ -79,7 +79,7 @@ int WhereCPUKernel::Run() {
     MS_LOG(ERROR) << "Error, inputs' length are zero !!!";
     return RET_ERROR;
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, WhereRun, this, where_param_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, WhereRun, this, where_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "WhereDwRun error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -89,7 +89,7 @@ int WhereCPUKernel::Run() {
 
 kernel::LiteKernel *CpuWhereFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const lite::Context *ctx, const kernel::KernelKey &desc,
+                                              const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "input opParameter is nullptr!";

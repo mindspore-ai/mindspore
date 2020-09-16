@@ -103,8 +103,9 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Accuracy) {
   InitConvDwParam(conv_param);
 
   // init ctx
-  auto ctx = new Context();
+  auto ctx = new InnerContext();
   ctx->thread_num_ = 4;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
 
   // init tensor
   std::vector<lite::Tensor *> inputs;
@@ -154,8 +155,9 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Performance) {
   InitConvDwParam(conv_param);
 
   // init ctx
-  auto ctx = new Context();
+  auto ctx = new InnerContext();
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
 
   // init tensor
   std::vector<lite::Tensor *> inputs;

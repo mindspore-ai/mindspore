@@ -65,8 +65,9 @@ TEST_F(TestReshapeInt8, reshape_quant0) {
 
   ReshapeParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Reshape;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Reshape};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -124,8 +125,9 @@ TEST_F(TestReshapeInt8, reshape_quant1_thread2) {
 
   ReshapeParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Reshape;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Reshape};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

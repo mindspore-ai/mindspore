@@ -24,7 +24,7 @@
 #include "schema/model_generated.h"
 #include "include/context.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 using mindspore::schema::PrimitiveType_Abs;
 using mindspore::schema::PrimitiveType_Ceil;
 using mindspore::schema::PrimitiveType_Cos;
@@ -43,7 +43,7 @@ class ArithmeticSelfInt8CPUKernel : public LiteKernel {
 
  public:
   explicit ArithmeticSelfInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                       const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                                        const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
     switch (parameter->type_) {

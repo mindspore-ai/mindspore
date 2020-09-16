@@ -76,11 +76,11 @@ int FusedBatchnormCPUKernel::Run() {
     float *run_var = static_cast<float *>(out_tensors_[2]->MutableData());
     float *save_mean = static_cast<float *>(out_tensors_[3]->MutableData());
     float *save_inv_var = static_cast<float *>(out_tensors_[4]->MutableData());
-    std::fill(run_mean, run_mean+param->channel_, 0.f);
-    std::fill(run_var, run_var+param->channel_, 0.f);
+    std::fill(run_mean, run_mean + param->channel_, 0.f);
+    std::fill(run_var, run_var + param->channel_, 0.f);
     FusedBatchNormFp32MeanVar(in, 0.9, run_mean, run_var, param, save_mean, save_inv_var);
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, BatchNormRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, BatchNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }
@@ -96,7 +96,7 @@ int FusedBatchnormCPUKernel::DoExecute(int task_id) {
 
 kernel::LiteKernel *CpuFusedBatchnormKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs,
-                                                   OpParameter *op_parameter, const lite::Context *ctx,
+                                                   OpParameter *op_parameter, const lite::InnerContext *ctx,
                                                    const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   FusedBatchnormCPUKernel *kernel =

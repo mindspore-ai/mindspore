@@ -57,7 +57,7 @@ int NegGradCPUKernel::Run() {
   int dy_size = in_tensors_.at(0)->ElementsNum();
   op_parameter_->thread_num_ = MSMIN(op_parameter_->thread_num_, static_cast<int>(dy_size));
   thread_stride_ = UP_DIV(dy_size, op_parameter_->thread_num_);
-  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, NegGradRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, NegGradRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "parallel launch fail!ret: " << ret;
     return ret;
@@ -67,9 +67,8 @@ int NegGradCPUKernel::Run() {
 }
 
 kernel::LiteKernel *CpuNegGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                const std::vector<lite::Tensor *> &outputs,
-                                                OpParameter *param, const lite::Context *ctx,
-                                                const kernel::KernelKey &desc,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *param,
+                                                const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                 const mindspore::lite::PrimitiveC *primitive) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr!";
@@ -83,8 +82,8 @@ kernel::LiteKernel *CpuNegGradFp32KernelCreator(const std::vector<lite::Tensor *
 
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << param->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(param->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << param->name_
+                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(param->type_));
     delete kernel;
     return nullptr;
   }

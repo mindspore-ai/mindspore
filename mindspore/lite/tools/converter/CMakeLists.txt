@@ -19,6 +19,7 @@ if (WIN32)
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/tensor.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/model.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/lite_session.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/inner_context.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/kernel_registry.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_util.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/runtime_api.cc
@@ -81,6 +82,7 @@ set(LITE_SRC
         ${SRC_DIR}/runtime/runtime_api.cc
         ${SRC_DIR}/runtime/thread_pool.c
         ${SRC_DIR}/runtime/workspace_pool.cc
+        ${SRC_DIR}/inner_context.cc
         ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/kernel_registry.cc
         ${SRC_DIR}/lite_kernel.cc

@@ -86,13 +86,13 @@ int MulInt8CPUKernel::Run() {
     }
     TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->MutableData()),
                        static_cast<int8_t *>(in_tensors_.at(1)->MutableData()), input0_data_, input1_data_, &tile_para);
-    ret = ParallelLaunch(THREAD_POOL_DEFAULT, MulInt8Run, this, thread_count_);
+    ret = ParallelLaunch(this->context_->thread_pool_, MulInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
     return ret;
   }
 
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, MulInt8Run, this, thread_count_);
+  ret = ParallelLaunch(this->context_->thread_pool_, MulInt8Run, this, thread_count_);
   return ret;
 }
 
@@ -117,7 +117,7 @@ int MulInt8CPUKernel::DoExecute(int task_id) {
 
 kernel::LiteKernel *CpuMulInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                            const lite::Context *ctx, const KernelKey &desc,
+                                            const lite::InnerContext *ctx, const KernelKey &desc,
                                             const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Mul);

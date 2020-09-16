@@ -76,7 +76,7 @@ int BiasCPUKernel::Init() {
 
 kernel::LiteKernel *CpuBiasFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                             const lite::Context *ctx, const kernel::KernelKey &desc,
+                                             const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BiasAdd);

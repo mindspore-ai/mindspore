@@ -114,6 +114,7 @@ int GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, co
   } else {
     if (EOK != memcpy_s(add_bias_data, kernel_nums * sizeof(float), add_weight_data, kernel_nums * sizeof(float))) {
       MS_LOG(EXCEPTION) << "memset_s conv_bias_data failed";
+      delete[] add_bias_data;
       return lite::RET_MEMORY_FAILED;
     }
   }

@@ -178,7 +178,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   if (!need_align_) {
     packed_output_ = execute_output_;
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, DeconvDwFp16Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, DeconvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvDwFp16Run error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -197,7 +197,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
 
 kernel::LiteKernel *CpuDeconvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                 const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                 const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                  const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DeDepthwiseConv2D);

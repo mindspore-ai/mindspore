@@ -23,13 +23,13 @@
 #include "src/runtime/runtime_api.h"
 #include "src/runtime/kernel/arm/base/squeeze_base.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class SqueezeInt8CPUKernel : public SqueezeBaseCPUKernel {
  public:
   SqueezeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
       : SqueezeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~SqueezeInt8CPUKernel() override { delete quant_Squeeze_parm_; }

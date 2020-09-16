@@ -21,6 +21,7 @@
 #include "mindspore/lite/nnacl/fp32/arithmetic.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
+#include "include/errorcode.h"
 
 namespace mindspore {
 
@@ -507,8 +508,9 @@ TEST_F(TestArithmeticTestFp32, MulFp32) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 3;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&mul_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
@@ -580,8 +582,9 @@ TEST_F(TestArithmeticTestFp32, MulReluFp32) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 3;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&mul_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
@@ -653,8 +656,9 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 3;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&mul_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
@@ -725,8 +729,9 @@ TEST_F(TestArithmeticTestFp32, AddReluFp32) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 3;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&add_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
@@ -797,8 +802,9 @@ TEST_F(TestArithmeticTestFp32, AddRelu6Fp32) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 3;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&add_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
@@ -868,8 +874,9 @@ TEST_F(TestArithmeticTestFp32, DivReluFp32) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 3;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&div_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
@@ -941,8 +948,9 @@ TEST_F(TestArithmeticTestFp32, DivRelu6Fp32) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 3;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&div_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
@@ -1011,8 +1019,9 @@ TEST_F(TestArithmeticTestFp32, EqualFp32) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 3;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&equal_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);

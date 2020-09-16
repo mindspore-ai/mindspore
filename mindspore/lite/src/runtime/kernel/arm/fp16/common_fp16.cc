@@ -18,7 +18,7 @@
 #include "nnacl/fp16/cast_fp16.h"
 
 namespace mindspore::kernel {
-float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::Context *ctx) {
+float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::InnerContext *ctx) {
   float16_t *fp16_data = nullptr;
   auto data_type = input->data_type();
   if (data_type == kNumberTypeFloat32) {
@@ -32,7 +32,7 @@ float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::Context *ctx)
   return fp16_data;
 }
 
-float16_t *MallocOutputFp16(lite::Tensor *output, const lite::Context *ctx) {
+float16_t *MallocOutputFp16(lite::Tensor *output, const lite::InnerContext *ctx) {
   float16_t *fp16_data = nullptr;
   auto data_type = output->data_type();
   if (data_type == kNumberTypeFloat32) {

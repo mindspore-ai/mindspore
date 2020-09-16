@@ -124,7 +124,7 @@ int ResizeInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ResizeInt8Impl, this, context_->thread_num_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ResizeInt8Impl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
     return RET_ERROR;

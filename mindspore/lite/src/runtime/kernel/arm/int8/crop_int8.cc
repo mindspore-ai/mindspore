@@ -67,7 +67,7 @@ int CropInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, CropInt8Run, this, thread_count_);
+  ret = ParallelLaunch(this->context_->thread_pool_, CropInt8Run, this, thread_count_);
   return ret;
 }
 

@@ -33,7 +33,7 @@ namespace mindspore::kernel {
 class DeConvInt8CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   DeConvInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                      const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~DeConvInt8CPUKernel() override;

@@ -46,7 +46,7 @@ int RankCPUKernel::Run() {
 
 kernel::LiteKernel *CpuRankFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const lite::Context *ctx, const kernel::KernelKey &desc,
+                                             const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Rank);

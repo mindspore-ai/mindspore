@@ -102,7 +102,8 @@ int EmbeddingLookupCPUKernel::Run() {
   output_addr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   ids_addr_ = reinterpret_cast<int *>(in_tensors_.back()->MutableData());
 
-  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, EmbeddingLookupRun, this, embedding_lookup_parameter_->thread_num);
+  auto ret =
+    ParallelLaunch(this->context_->thread_pool_, EmbeddingLookupRun, this, embedding_lookup_parameter_->thread_num);
   context_->allocator->Free(input_addr_);
   context_->allocator->Free(embedding_lookup_parameter_->is_regulated_);
   if (ret != RET_OK) {
@@ -113,7 +114,7 @@ int EmbeddingLookupCPUKernel::Run() {
 
 kernel::LiteKernel *CpuEmbeddingLookupFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                         const std::vector<lite::Tensor *> &outputs,
-                                                        OpParameter *parameter, const lite::Context *ctx,
+                                                        OpParameter *parameter, const lite::InnerContext *ctx,
                                                         const KernelKey &desc,
                                                         const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr || ctx == nullptr) {

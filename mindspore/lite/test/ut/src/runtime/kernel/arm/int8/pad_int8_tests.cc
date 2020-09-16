@@ -65,7 +65,8 @@ TEST_F(TestPadInt8, PadInt8Test1) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
   auto pad_param = new PadParameter();
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   int8_t *correct;
   int total_size = PadInt8TestInit1(&inputs_, &outputs_, pad_param, &correct);
   kernel::PadInt8CPUKernel *pad =
@@ -117,7 +118,8 @@ TEST_F(TestPadInt8, PadInt8Test2) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
   auto pad_param = new PadParameter();
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   int8_t *correct;
   int total_size = PadInt8TestInit2(&inputs_, &outputs_, pad_param, &correct);
   kernel::PadInt8CPUKernel *pad =
@@ -185,8 +187,9 @@ TEST_F(TestPadInt8, PadInt8TestInit4) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
   auto pad_param = new PadParameter();
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   int8_t *correct;
   int total_size = PadInt8TestInit2(&inputs_, &outputs_, pad_param, &correct);
   kernel::PadInt8CPUKernel *pad =

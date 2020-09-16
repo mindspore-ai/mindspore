@@ -79,7 +79,7 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
 
 kernel::LiteKernel *CpuFusedBatchnormFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                        const std::vector<lite::Tensor *> &outputs,
-                                                       OpParameter *op_parameter, const lite::Context *ctx,
+                                                       OpParameter *op_parameter, const lite::InnerContext *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {
   FusedBatchnormFp16CPUKernel *kernel =

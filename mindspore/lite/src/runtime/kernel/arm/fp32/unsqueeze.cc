@@ -73,7 +73,7 @@ int UnsqueezeCPUKernel::Run() {
   }
   in_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, UnsqueezeRun, this, thread_sz_count_);
+  ret = ParallelLaunch(this->context_->thread_pool_, UnsqueezeRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error error_code[" << ret << "]";
     return ret;
@@ -83,7 +83,7 @@ int UnsqueezeCPUKernel::Run() {
 
 kernel::LiteKernel *CpuUnsqueezeFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Unsqueeze);

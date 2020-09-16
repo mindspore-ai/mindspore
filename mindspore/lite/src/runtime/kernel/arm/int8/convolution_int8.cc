@@ -355,7 +355,7 @@ int ConvolutionInt8CPUKernel::Run() {
   PackNHWCToNHWC4Int8(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
                       conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ConvolutionInt8Impl, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionInt8Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv int8 error error_code[" << error_code << "]";
     FreeTmpBuffer();
@@ -367,7 +367,7 @@ int ConvolutionInt8CPUKernel::Run() {
 
 kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const Context *ctx, const kernel::KernelKey &desc,
+                                             const InnerContext *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);

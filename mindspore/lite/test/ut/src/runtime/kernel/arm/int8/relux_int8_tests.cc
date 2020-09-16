@@ -54,7 +54,8 @@ TEST_F(TestReluXInt8, Relu) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
 
-  auto ctx = std::make_shared<lite::Context>();
+  auto ctx = std::make_shared<lite::InnerContext>();
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc, nullptr);
   ASSERT_NE(kernel, nullptr);
 
@@ -97,7 +98,8 @@ TEST_F(TestReluXInt8, Relu6) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
 
-  auto ctx = std::make_shared<lite::Context>();
+  auto ctx = std::make_shared<lite::InnerContext>();
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc, nullptr);
   ASSERT_NE(kernel, nullptr);
 

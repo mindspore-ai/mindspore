@@ -42,6 +42,7 @@ class ParallelExecutor : public Executor {
   std::unordered_map<kernel::LiteKernel *, size_t> refCount;
   std::vector<kernel::LiteKernel *> readyKernels;
   std::vector<int> results;
+  struct ThreadPool *thread_pool_ = NULL;
 };
 
 }  // namespace mindspore::lite

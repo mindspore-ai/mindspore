@@ -29,7 +29,7 @@ namespace mindspore::kernel {
 class Nhwc2NchwCPUKernel : public LiteKernel {
  public:
   Nhwc2NchwCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~Nhwc2NchwCPUKernel() override = default;

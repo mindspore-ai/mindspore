@@ -171,7 +171,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
     packed_output_ = execute_output_;
   }
 
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConvDwSWFp16Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, ConvDwSWFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwSWFp16Run error: error_code[" << ret << "]";
     return RET_ERROR;

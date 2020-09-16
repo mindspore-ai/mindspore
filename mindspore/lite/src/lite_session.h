@@ -21,11 +21,12 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <atomic>
 #include "src/lite_kernel.h"
 #include "include/ms_tensor.h"
 #include "include/lite_session.h"
 #include "include/model.h"
-#include "include/context.h"
+#include "src/inner_context.h"
 #include "schema/model_generated.h"
 #include "src/executor.h"
 #include "src/tensor.h"
@@ -34,7 +35,7 @@ namespace mindspore {
 namespace lite {
 class LiteSession : public session::LiteSession {
  public:
-  LiteSession() = default;
+  LiteSession();
 
   ~LiteSession() override;
 
@@ -81,14 +82,13 @@ class LiteSession : public session::LiteSession {
 
   void InitGraphOutputTensorMap(const lite::Model *model);
 
-  int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs,
-                   const std::vector<std::vector<int>> &dims);
+  int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims);
 
  private:
   void ResetInputsShape(const std::vector<std::vector<int>> &dims);
 
  protected:
-  Context *context_ = nullptr;
+  InnerContext *context_ = nullptr;
   std::vector<kernel::LiteKernel *> kernels_;
   std::vector<Tensor *> tensors_;
   std::vector<size_t> copyed_tensor_idxes_;
@@ -107,6 +107,7 @@ class LiteSession : public session::LiteSession {
   // graph output tensor name -- output tensor
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> output_tensor_map_;
   Executor *executor = nullptr;
+  std::atomic<bool> is_running_ = false;
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -23,13 +23,13 @@
 #include "nnacl/int8/batchnorm_int8.h"
 #include "nnacl/batchnorm_parameter.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class BatchnormInt8CPUKernel : public LiteKernel {
  public:
   BatchnormInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                         const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                         const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     batchnorm_param_ = reinterpret_cast<BatchNormParameter *>(parameter);

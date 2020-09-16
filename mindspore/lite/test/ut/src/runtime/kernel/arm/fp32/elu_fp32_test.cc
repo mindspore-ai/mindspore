@@ -49,8 +49,9 @@ TEST_F(TestEluFp32, EluTest) {
   auto elu_param_ = new EluParameter();
   EluTestInit(&inputs_, &outputs_, elu_param_);
 
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::EluCPUKernel *elu =
     new kernel::EluCPUKernel(reinterpret_cast<OpParameter *>(elu_param_), inputs_, outputs_, ctx, nullptr);
 

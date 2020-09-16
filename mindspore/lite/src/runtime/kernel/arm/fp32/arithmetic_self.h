@@ -24,19 +24,19 @@
 #include "schema/model_generated.h"
 #include "include/context.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 using mindspore::schema::PrimitiveType_Abs;
 using mindspore::schema::PrimitiveType_Ceil;
 using mindspore::schema::PrimitiveType_Cos;
 using mindspore::schema::PrimitiveType_Floor;
 using mindspore::schema::PrimitiveType_Log;
 using mindspore::schema::PrimitiveType_LogicalNot;
+using mindspore::schema::PrimitiveType_Neg;
 using mindspore::schema::PrimitiveType_Round;
 using mindspore::schema::PrimitiveType_Rsqrt;
 using mindspore::schema::PrimitiveType_Sin;
 using mindspore::schema::PrimitiveType_Sqrt;
 using mindspore::schema::PrimitiveType_Square;
-using mindspore::schema::PrimitiveType_Neg;
 
 namespace mindspore::kernel {
 class ArithmeticSelfCPUKernel : public LiteKernel {
@@ -44,7 +44,7 @@ class ArithmeticSelfCPUKernel : public LiteKernel {
 
  public:
   explicit ArithmeticSelfCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                   const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                    const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
     switch (parameter->type_) {

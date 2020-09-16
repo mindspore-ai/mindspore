@@ -266,8 +266,9 @@ TEST_F(CropTestFp32, CropTest11) {
   out_t->MallocData();
   outputs.push_back(out_t);
 
-  auto ctx = new (std::nothrow) lite::Context;
+  auto ctx = new (std::nothrow) lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   CropParameter crop_param;
   crop_param.axis_ = 2;
   crop_param.offset_[0] = 0;

@@ -240,8 +240,9 @@ TEST_F(TestMatMulFp32, simple) {
   std::vector<int> b_shape = {8, 3};
   std::vector<int> c_shape = {2, 3};
   int total_size = MMTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
   mm->Init();
   mm->Run();
@@ -272,8 +273,9 @@ TEST_F(TestMatMulFp32, simple_bias) {
   std::vector<int> bias_shape = {1, 3};
   std::vector<int> c_shape = {2, 3};
   int total_size = MMTestInit2(&inputs_, &outputs_, a, b, bias, a_shape, b_shape, bias_shape, c_shape);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
   mm->Init();
   mm->Run();
@@ -323,8 +325,9 @@ TEST_F(TestMatMulFp32, simple2) {
   std::vector<int> b_shape = {12, 36};
   std::vector<int> c_shape = {25, 36};
   int total_size = MMTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
   mm->Init();
   mm->Run();
@@ -392,8 +395,9 @@ TEST_F(TestMatMulFp32, simple_transb) {
   std::vector<int> b_shape = {1, 3, 8};
   std::vector<int> c_shape = {1, 2, 3};
   int total_size = MMTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
   mm->Init();
   mm->Run();
@@ -441,8 +445,9 @@ TEST_F(TestMatMulFp32, batch) {
   std::vector<int> b_shape = {3, 3, 8};
   std::vector<int> c_shape = {3, 2, 3};
   int total_size = MMTestInit(&inputs_, &outputs_, a, b, a_shape, b_shape, c_shape);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto mm = new kernel::MatmulCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
   mm->Init();
   mm->Run();

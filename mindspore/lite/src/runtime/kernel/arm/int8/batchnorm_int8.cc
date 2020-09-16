@@ -193,7 +193,8 @@ int BatchnormInt8CPUKernel::Run() {
   in_addr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
   out_addr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
-  int ret = ParallelLaunch(THREAD_POOL_DEFAULT, BatchNormInt8Run, this, batchnorm_param_->op_parameter_.thread_num_);
+  int ret =
+    ParallelLaunch(this->context_->thread_pool_, BatchNormInt8Run, this, batchnorm_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
     return ret;
@@ -203,7 +204,7 @@ int BatchnormInt8CPUKernel::Run() {
 
 kernel::LiteKernel *CpuBatchnormInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BatchNorm);

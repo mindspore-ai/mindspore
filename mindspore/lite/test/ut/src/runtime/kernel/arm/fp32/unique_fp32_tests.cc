@@ -45,7 +45,8 @@ TEST_F(TestUniqueFp32, Unique) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
 
-  auto ctx = std::make_shared<lite::Context>();
+  auto ctx = std::make_shared<lite::InnerContext>();
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, &parameter, ctx.get(), desc, nullptr);
   EXPECT_NE(kernel, nullptr);
 

@@ -91,7 +91,7 @@ int ROIPoolingCPUKernel::Run() {
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   roi_ptr_ = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ROIPoolingRun, this, param_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, ROIPoolingRun, this, param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ROIPooling error: error_code[" << ret << "]";
     return ret;
@@ -101,7 +101,7 @@ int ROIPoolingCPUKernel::Run() {
 
 kernel::LiteKernel *CpuROIPoolingFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                   const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";

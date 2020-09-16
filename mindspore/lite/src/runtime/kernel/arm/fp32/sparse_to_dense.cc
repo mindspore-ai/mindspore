@@ -68,9 +68,8 @@ int SparseToDenseCPUKernel::DoExcute(int task_id) {
   int index_start = task_id * count_unit_;
   int index_end = index_start + real_dst_count;
   int out_width = output_num / index_num;
-  SparseToDense(sparse_indices_vect, output_shape, sparse_values,
-                default_value, output_data, isScalar,
-                index_start, index_end, out_width);
+  SparseToDense(sparse_indices_vect, output_shape, sparse_values, default_value, output_data, isScalar, index_start,
+                index_end, out_width);
   return RET_OK;
 }
 
@@ -78,8 +77,7 @@ int SparseToDenseRun(void *cdata, int task_id) {
   auto s2ddata = reinterpret_cast<SparseToDenseCPUKernel *>(cdata);
   auto ret = s2ddata->DoExcute(task_id);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "SparseToDenseRun error task_id[" << task_id
-                  << "] error_code[" << ret << "]";
+    MS_LOG(ERROR) << "SparseToDenseRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
   }
   return RET_OK;
@@ -143,8 +141,8 @@ int SparseToDenseCPUKernel::IndicesValidCheck() {
   int d3 = output_shape[3];
   int index_before = -1;
   for (int i = 0; i < index_num; i++) {
-    int index = d1 * sparse_indices_vect[i][0] + d2 * sparse_indices_vect[i][1] +
-                d3 * sparse_indices_vect[i][2] + sparse_indices_vect[i][3];
+    int index = d1 * sparse_indices_vect[i][0] + d2 * sparse_indices_vect[i][1] + d3 * sparse_indices_vect[i][2] +
+                sparse_indices_vect[i][3];
     if (index <= index_before) {
       return RET_ERROR;
     }
@@ -173,8 +171,7 @@ int SparseToDenseCPUKernel::Run() {
   }
   output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   count_unit_ = thread_count_ > 1 ? UP_DIV(index_num, thread_count_) : index_num;
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SparseToDenseRun, this,
-                       s2d_param->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, SparseToDenseRun, this, s2d_param->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SparseToDenseRun error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -194,7 +191,7 @@ int SparseToDenseCPUKernel::Run() {
 
 kernel::LiteKernel *CpuSparseToDenseFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,
-                                                      OpParameter *opParameter, const lite::Context *ctx,
+                                                      OpParameter *opParameter, const lite::InnerContext *ctx,
                                                       const kernel::KernelKey &desc,
                                                       const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
@@ -202,25 +199,20 @@ kernel::LiteKernel *CpuSparseToDenseFp32KernelCreator(const std::vector<lite::Te
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_SparseToDense);
-  auto *kernel = new (std::nothrow)
-      SparseToDenseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) SparseToDenseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SparseToDenseCPUKernel fail!";
     return nullptr;
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_
-                  << ", type: "
-                  << schema::EnumNamePrimitiveType(
-                         static_cast<schema::PrimitiveType>(
-                             opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;
     return nullptr;
   }
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SparseToDense,
-           CpuSparseToDenseFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SparseToDense, CpuSparseToDenseFp32KernelCreator)
 }  // namespace mindspore::kernel

@@ -209,7 +209,7 @@ int ArithmeticCPUKernel::Run() {
     ComputeStrides(arithmeticParameter_->out_shape_, arithmeticParameter_->out_strides_, arithmeticParameter_->ndim_);
   }
 
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ArithmeticsRun, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ArithmeticsRun, this, thread_count_);
 
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Arithmetic function error error_code[" << error_code << "]";
@@ -220,7 +220,7 @@ int ArithmeticCPUKernel::Run() {
 
 kernel::LiteKernel *CpuArithmeticFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                   const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter != nullptr);
   auto kernel = new (std::nothrow) ArithmeticCPUKernel(parameter, inputs, outputs, ctx, primitive);

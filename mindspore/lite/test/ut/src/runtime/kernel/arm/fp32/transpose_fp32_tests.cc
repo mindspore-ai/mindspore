@@ -198,8 +198,9 @@ TEST_F(TestTransposeFp32, TransposeFp32_test5) {
   std::vector<lite::Tensor *> outputs_tensor;
   outputs_tensor.emplace_back(&output_tensor);
 
-  lite::Context ctx;
+  lite::InnerContext ctx;
   ctx.thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Transpose};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

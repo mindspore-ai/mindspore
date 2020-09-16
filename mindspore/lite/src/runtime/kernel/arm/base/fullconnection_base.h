@@ -22,13 +22,13 @@
 #include "include/context.h"
 #include "nnacl/matmul_parameter.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class FullconnectionBaseCPUKernel : public LiteKernel {
  public:
   FullconnectionBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                              const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                               const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     fc_param_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
@@ -42,7 +42,7 @@ class FullconnectionBaseCPUKernel : public LiteKernel {
  protected:
   MatMulParameter *fc_param_;
   int thread_stride_;
-  const Context *ctx_;
+  const InnerContext *ctx_;
   int thread_count_;
 };
 }  // namespace mindspore::kernel

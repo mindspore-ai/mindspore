@@ -89,7 +89,7 @@ int PoolingInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, PoolingInt8Impl, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, PoolingInt8Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "poolingInt8 error error_code[" << error_code << "]";
     return RET_ERROR;

@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 class SqueezeCPUKernel : public LiteKernel {
  public:
   explicit SqueezeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                            const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                             const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~SqueezeCPUKernel() override = default;

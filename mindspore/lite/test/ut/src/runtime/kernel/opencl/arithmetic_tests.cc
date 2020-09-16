@@ -143,7 +143,8 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   param->op_parameter_.type_ = PrimitiveType_Add;
 
   std::vector<lite::Tensor *> arithmetic_inputs = {tensor_a, tensor_b};
-  lite::Context ctx;
+  lite::InnerContext ctx;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
   auto *arith_kernel = new (std::nothrow)
     kernel::ArithmeticOpenCLKernel(reinterpret_cast<OpParameter *>(param), arithmetic_inputs, outputs, &ctx);
   if (arith_kernel == nullptr) {

@@ -94,7 +94,7 @@ int LeakyReluInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, LeakyReluInt8Run, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, LeakyReluInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunPreluParam failed. errorcode: ";
   }

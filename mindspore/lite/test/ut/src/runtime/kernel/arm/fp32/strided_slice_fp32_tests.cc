@@ -149,8 +149,9 @@ TEST_F(TestStridedSliceFp32, StridedSlice3) {
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
-  lite::Context *ctx = new lite::Context();
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   strided_slice_param->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -198,8 +199,9 @@ TEST_F(TestStridedSliceFp32, StridedSlice4) {
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
-  lite::Context *ctx = new lite::Context();
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   strided_slice_param->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -254,8 +256,9 @@ TEST_F(TestStridedSliceFp32, StridedSlice5) {
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
-  lite::Context *ctx = new lite::Context();
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   strided_slice_param->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -310,8 +313,9 @@ TEST_F(TestStridedSliceFp32, StridedSlice6) {
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
-  lite::Context *ctx = new lite::Context();
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   strided_slice_param->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -358,8 +362,9 @@ TEST_F(TestStridedSliceFp32, StridedSlice7) {
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
-  lite::Context *ctx = new lite::Context();
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   strided_slice_param->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -414,8 +419,9 @@ TEST_F(TestStridedSliceFp32, StridedSlice8) {
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
-  lite::Context *ctx = new lite::Context();
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   strided_slice_param->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -564,7 +570,8 @@ TEST_F(TestStridedSliceFp32, StridedSlice9) {
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
-  lite::Context *ctx = new lite::Context();
+  lite::InnerContext *ctx = new lite::InnerContext;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   strided_slice_param->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);

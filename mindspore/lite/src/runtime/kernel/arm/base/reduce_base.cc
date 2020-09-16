@@ -171,7 +171,7 @@ int ReduceBaseCPUKernel::ReSize() {
 
 kernel::LiteKernel *CpuReduceFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc,
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Reduce);
@@ -200,7 +200,7 @@ kernel::LiteKernel *CpuReduceFp32KernelCreator(const std::vector<lite::Tensor *>
 
 kernel::LiteKernel *CpuMeanFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const lite::Context *ctx, const kernel::KernelKey &desc,
+                                             const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Mean);
@@ -229,7 +229,7 @@ kernel::LiteKernel *CpuMeanFp32KernelCreator(const std::vector<lite::Tensor *> &
 
 kernel::LiteKernel *CpuReduceInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc,
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Reduce);

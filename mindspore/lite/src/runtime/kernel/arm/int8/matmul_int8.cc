@@ -155,7 +155,7 @@ int MatmulInt8CPUKernel::Run() {
                          NULL, weight_bias_sums_, RowMajor);
     }
     c_ptr_ = c_ptr + i * c_stride;
-    ret = ParallelLaunch(THREAD_POOL_DEFAULT, MatmulInt8Run, this, thread_count_);
+    ret = ParallelLaunch(this->context_->thread_pool_, MatmulInt8Run, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulInt8Run error: [" << ret << "]";
       return ret;

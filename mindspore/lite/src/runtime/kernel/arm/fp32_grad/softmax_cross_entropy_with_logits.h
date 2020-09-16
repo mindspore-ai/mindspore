@@ -28,23 +28,19 @@ namespace mindspore::kernel {
 
 class SoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
  public:
-  explicit SoftmaxCrossEntropyWithLogitsCPUKernel(OpParameter *parameter,
-                                                        const std::vector<lite::Tensor *> &inputs,
-                                                        const std::vector<lite::Tensor *> &outputs,
-                                                        const lite::Context *ctx,
-                                                        const mindspore::lite::PrimitiveC *primitive)
-      : LossKernel(parameter, inputs, outputs, ctx, primitive), losses_(nullptr), sum_data_(nullptr)  {
+  explicit SoftmaxCrossEntropyWithLogitsCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs,
+                                                  const lite::InnerContext *ctx,
+                                                  const mindspore::lite::PrimitiveC *primitive)
+      : LossKernel(parameter, inputs, outputs, ctx, primitive), losses_(nullptr), sum_data_(nullptr) {
     param_ = reinterpret_cast<SoftmaxCrossEntropyParameter *>(parameter);
   }
   ~SoftmaxCrossEntropyWithLogitsCPUKernel() override {
-    if (losses_)
-      delete[] losses_;
-    if (sum_data_)
-      delete[] sum_data_;
+    if (losses_) delete[] losses_;
+    if (sum_data_) delete[] sum_data_;
   }
 
-  void ForwardPostExecute(const float *labels, const float *logits,
-                          float *output1, float *output2) const;
+  void ForwardPostExecute(const float *labels, const float *logits, float *output1, float *output2) const;
   // void ForwardPostExecute(const int *labels, const float *losses, float *output) const;
   // void GradPostExecute(const int *labels, const float *losses, float* grads, float *output) const;
 

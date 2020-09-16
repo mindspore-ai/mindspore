@@ -23,13 +23,13 @@
 #include "src/runtime/kernel/arm/base/crop_base.h"
 #include "src/runtime/runtime_api.h"
 
-using mindspore::lite::Context;
+using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
 class CropInt8CPUKernel : public CropBaseCPUKernel {
  public:
   CropInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs, const Context *ctx,
+                    const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                     const mindspore::lite::PrimitiveC *primitive)
       : CropBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
     crop_para_ = reinterpret_cast<CropParameter *>(op_parameter_);

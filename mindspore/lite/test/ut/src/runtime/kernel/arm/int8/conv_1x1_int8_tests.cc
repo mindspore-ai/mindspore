@@ -120,8 +120,9 @@ TEST_F(TestConv1x1Int8, Conv1x1TestPerChannel) {
   std::vector<lite::Tensor *> outputs_;
   auto conv_param = new ConvParameter();
   int8_t *correct;
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   int total_size = Conv1x1Int8TestInit1_perchannel(&inputs_, &outputs_, conv_param, &correct);
   kernel::Convolution1x1Int8CPUKernel *conv1x1 = new kernel::Convolution1x1Int8CPUKernel(
     reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx, nullptr);
@@ -187,8 +188,9 @@ TEST_F(TestConv1x1Int8, Conv1x1Int8Test1) {
   std::vector<lite::Tensor *> outputs_;
   auto conv_param = new ConvParameter();
   int8_t *correct;
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   int total_size = Conv1x1Int8TestInit1(&inputs_, &outputs_, conv_param, &correct);
   kernel::Convolution1x1Int8CPUKernel *conv1x1 = new kernel::Convolution1x1Int8CPUKernel(
     reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx, nullptr);
@@ -262,8 +264,9 @@ TEST_F(TestConv1x1Int8, Conv1x1Int8Test2) {
   std::vector<lite::Tensor *> outputs_;
   auto conv_param = new ConvParameter();
   int8_t *correct;
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   int total_size = Conv1x1Int8TestInit2(&inputs_, &outputs_, conv_param, &correct);
   kernel::Convolution1x1Int8CPUKernel *conv1x1 = new kernel::Convolution1x1Int8CPUKernel(
     reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx, nullptr);

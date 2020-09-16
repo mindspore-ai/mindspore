@@ -55,7 +55,7 @@ int PadFp16CPUKernel::Run() {
   }
 
   memset(output_, 0, output_tensor->ElementsNum() * sizeof(float16_t));
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, PadImpl, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, PadImpl, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }
@@ -78,9 +78,8 @@ void PadFp16CPUKernel::FreeInputAndOutput() {
 }
 
 kernel::LiteKernel *CpuPadFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                            const std::vector<lite::Tensor *> &outputs,
-                                            OpParameter *opParameter, const lite::Context *ctx,
-                                            const kernel::KernelKey &desc,
+                                            const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                            const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                             const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) PadFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {

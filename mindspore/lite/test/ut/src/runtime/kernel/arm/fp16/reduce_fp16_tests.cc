@@ -37,7 +37,7 @@ class TestReduceFp16 : public mindspore::CommonTest {
   std::vector<lite::Tensor *> outputs_{&out_tensor_};
   ReduceParameter param_ = {{}};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat16, schema::PrimitiveType_Reduce};
-  lite::Context ctx_ = lite::Context();
+  lite::InnerContext ctx_ = lite::InnerContext();
   kernel::KernelCreator creator_ = nullptr;
   kernel::LiteKernel *kernel_ = nullptr;
 };
@@ -69,8 +69,9 @@ void TestReduceFp16::Prepare(const std::vector<int> &input_shape, const std::vec
   param_.mode_ = mode;
 
   desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat16, schema::PrimitiveType_Reduce};
-  ctx_ = lite::Context();
+  ctx_ = lite::InnerContext();
   ctx_.thread_num_ = thread_num;
+  ASSERT_EQ(lite::RET_OK, context->Init());
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator_, nullptr);
   kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc, nullptr);

@@ -33,7 +33,7 @@ build_mslite_arm64() {
 }
 
 build_mslite_arm32() {
-    # build mindspore-lite arm64
+    # build mindspore-lite arm32
     cd ${TOP_PATH}
     bash build.sh -I arm32
     COMPILE_RET=$?

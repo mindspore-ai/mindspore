@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 class ExpCPUKernel : public LiteKernel {
  public:
   explicit ExpCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                        const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                         const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {}
   ~ExpCPUKernel() override{};
@@ -36,7 +36,7 @@ class ExpCPUKernel : public LiteKernel {
   int DoExcute(int task_id);
 
  protected:
-  const lite::Context *ctx_;
+  const lite::InnerContext *ctx_;
   int thread_count_;
   ExpParameter *exp_parameter_;
 

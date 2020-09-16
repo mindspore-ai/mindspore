@@ -65,7 +65,7 @@ int LeakyReluCPUKernel::Run() {
   input_data = reinterpret_cast<float *>(input->MutableData());
   output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
-  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, LeakyReluRun, this, context_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, LeakyReluRun, this, context_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PReluDwRun error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -75,7 +75,7 @@ int LeakyReluCPUKernel::Run() {
 
 kernel::LiteKernel *CpuLeakyReluFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *param,
-                                                  const lite::Context *ctx, const kernel::KernelKey &desc,
+                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "input param is nullptr!";

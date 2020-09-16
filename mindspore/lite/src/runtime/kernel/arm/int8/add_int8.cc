@@ -96,13 +96,13 @@ int QuantizedAddCPUKernel::Run() {
                         static_cast<uint8_t *>(in_tensors_.at(1)->MutableData()),
                         reinterpret_cast<uint8_t *>(input0_data_), reinterpret_cast<uint8_t *>(input1_data_),
                         arith_para_);
-    ret = ParallelLaunch(THREAD_POOL_DEFAULT, AddInt8Run, this, thread_count_);
+    ret = ParallelLaunch(this->context_->thread_pool_, AddInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
     return ret;
   }
 
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, AddInt8Run, this, thread_count_);
+  ret = ParallelLaunch(this->context_->thread_pool_, AddInt8Run, this, thread_count_);
   return ret;
 }
 
@@ -124,7 +124,7 @@ int QuantizedAddCPUKernel::DoExecute(int tId) {
 
 kernel::LiteKernel *CpuAddInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                            const lite::Context *ctx, const KernelKey &desc,
+                                            const lite::InnerContext *ctx, const KernelKey &desc,
                                             const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr || ctx == nullptr) {
     MS_LOG(ERROR) << "parameter or ctx is nullptr";

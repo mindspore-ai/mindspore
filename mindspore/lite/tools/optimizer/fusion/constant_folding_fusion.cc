@@ -21,7 +21,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "src/kernel_registry.h"
-#include "include/context.h"
+#include "src/inner_context.h"
 #include "src/populate_parameter.h"
 #include "src/ops/primitive_c.h"
 #include "src/tensor.h"
@@ -91,7 +91,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
       MS_LOG(ERROR) << "tensor_data is nullptr";
       return nullptr;
     }
-    auto ret = memcpy_s(tensor_data, tensor->Size(), tensor->MutableData(), tensor->Size());
+    auto ret = memcpy_s(tensor_data, size, tensor->MutableData(), tensor->Size());
     if (ret != EOK) {
       delete[] tensor_data;
       MS_LOG(ERROR) << "memcpy error: " << ret;
@@ -104,7 +104,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   return parameter;
 }
 kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs, OpParameter *parameter,
-                                  lite::Context *context, mindspore::lite::PrimitiveC *primitive) {
+                                  lite::InnerContext *context, mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(nullptr != lite_primitive);
   auto data_type = inputs.front()->data_type();
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, (schema::PrimitiveType)primitive->Type()};
@@ -233,11 +233,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
                     << schema::EnumNamePrimitiveType((schema::PrimitiveType)(lite_primitive->Type()));
       return nullptr;
     }
-    lite::Context context;
-    if (context.allocator == nullptr) {
-      context.allocator = lite::Allocator::Create();
-    }
-    auto lite_kernel = GetLiteKernel(input_tensors, output_tensors, parameter, &context, lite_primitive.get());
+    auto lite_kernel = GetLiteKernel(input_tensors, output_tensors, parameter, context, lite_primitive.get());
     if (lite_kernel == nullptr) {
       MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";
       FreeTensors(&input_tensors, &output_tensors);

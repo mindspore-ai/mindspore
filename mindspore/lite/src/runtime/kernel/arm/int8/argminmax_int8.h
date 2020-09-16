@@ -24,7 +24,7 @@ namespace mindspore::kernel {
 class ArgMinMaxInt8CPUKernel : public ArgMinMaxBaseCPUKernel {
  public:
   ArgMinMaxInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                         const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
+                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
       : ArgMinMaxBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 

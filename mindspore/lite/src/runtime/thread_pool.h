@@ -19,6 +19,8 @@
 
 #include <stdbool.h>
 
+#define MAX_TASK_NUM (2)
+
 /// \brief BindMode defined for holding bind cpu strategy argument.
 typedef enum {
   MID_MODE = -1,   /**< bind middle cpu first */
@@ -34,12 +36,16 @@ typedef enum {
   THREAD_POOL_FOURTH = 3   /**< the fourth thread pool id */
 } ThreadPoolId;
 
+struct ThreadPool;
+
+struct ThreadPool *CreateThreadPool(int thread_num, int mode);
+
 /**
  * create thread pool and init
  * @param thread_num
  * @param mode
  */
-int ConfigThreadPool(int thread_pool_id, int thread_num, int mode);
+int ConfigThreadPool(struct ThreadPool *thread_pool, int thread_num, int mode);
 
 /**
  *
@@ -48,36 +54,36 @@ int ConfigThreadPool(int thread_pool_id, int thread_num, int mode);
  * @param content
  * @param task_num
  */
-int ParallelLaunch(int thread_pool_id, int (*job)(void *, int), void *content, int task_num);
+int ParallelLaunch(struct ThreadPool *thread_pool, int (*job)(void *, int), void *content, int task_num);
 
 /**
  * bind each thread to specified cpu core
  * @param is_bind
  * @param mode
  */
-int BindThreads(int thread_pool_id, bool is_bind, int mode);
+int BindThreads(struct ThreadPool *thread_pool, bool is_bind, int mode);
 
 /**
  * activate the thread pool
  * @param thread_pool_id
  */
-void ActivateThreadPool(int thread_pool_id);
+void ActivateThreadPool(struct ThreadPool *thread_pool);
 
 /**
  * deactivate the thread pool
  * @param thread_pool_id
  */
-void DeactivateThreadPool(int thread_pool_id);
+void DeactivateThreadPool(struct ThreadPool *thread_pool);
 
 /**
  *
  * @return current thread num
  */
-int GetCurrentThreadNum(int thread_pool_id);
+int GetCurrentThreadNum(struct ThreadPool *thread_pool);
 
 /**
  * destroy thread pool, and release resource
  */
-void DestroyThreadPool(int thread_pool_id);
+void DestroyThreadPool(struct ThreadPool *thread_pool);
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_THREAD_POOL_H_

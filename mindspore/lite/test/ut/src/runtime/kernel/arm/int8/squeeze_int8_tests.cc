@@ -66,8 +66,9 @@ TEST_F(TestSqueezeInt8, Squeeze_1d_axis0_offset0_quant0_thread2) {
 
   SqueezeParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Squeeze;
-  lite::Context *ctx = new lite::Context;
+  lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   op_param.axis_ = 0;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;

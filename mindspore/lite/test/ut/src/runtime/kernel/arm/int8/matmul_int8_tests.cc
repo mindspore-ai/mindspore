@@ -174,8 +174,9 @@ TEST_F(TestMatmulInt8, mmtest1) {
   std::vector<lite::Tensor *> inputs;
   std::vector<lite::Tensor *> outputs;
   MMInt8TestInit(&inputs, &outputs, &in_params, &weight_params, &out_params);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::MatmulInt8CPUKernel *mm =
     new kernel::MatmulInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs, outputs, ctx, nullptr);
 
@@ -290,8 +291,9 @@ TEST_F(TestMatmulInt8, mmtest2) {
   std::vector<lite::Tensor *> inputs;
   std::vector<lite::Tensor *> outputs;
   MMInt8TestInit(&inputs, &outputs, &in_params, &weight_params, &out_params);
-  auto ctx = new lite::Context;
+  auto ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::MatmulInt8CPUKernel *mm =
     new kernel::MatmulInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs, outputs, ctx, nullptr);
 
