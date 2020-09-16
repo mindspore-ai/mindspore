@@ -23,6 +23,7 @@ struct ReduceParameter {
   OpParameter op_parameter_;
   bool keep_dims_;
   bool reduce_to_end_;
+  float coeff;
   int axes_[REDUCE_MAX_AXES_NUM];
   int num_axes_;
   int mode_;

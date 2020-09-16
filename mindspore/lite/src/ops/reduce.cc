@@ -24,11 +24,13 @@ std::vector<int> Reduce::GetAxes() const { return this->primitive_->value.AsRedu
 int Reduce::GetKeepDims() const { return this->primitive_->value.AsReduce()->keepDims; }
 int Reduce::GetMode() const { return this->primitive_->value.AsReduce()->mode; }
 bool Reduce::GetReduceToEnd() const { return this->primitive_->value.AsReduce()->reduceToEnd; }
+float Reduce::GetCoeff() const { return this->primitive_->value.AsReduce()->coeff; }
 
 void Reduce::SetAxes(const std::vector<int> &axes) { this->primitive_->value.AsReduce()->axes = axes; }
 void Reduce::SetKeepDims(int keep_dims) { this->primitive_->value.AsReduce()->keepDims = keep_dims; }
 void Reduce::SetMode(int mode) { this->primitive_->value.AsReduce()->mode = (schema::ReduceMode)mode; }
 void Reduce::SetReduceToEnd(bool reduce_to_end) { this->primitive_->value.AsReduce()->reduceToEnd = reduce_to_end; }
+void Reduce::SetCoeff(float coeff) { this->primitive_->value.AsReduce()->coeff = coeff; }
 
 int Reduce::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   if (this->primitive_ == nullptr) {
@@ -101,6 +103,7 @@ std::vector<int> Reduce::GetAxes() const {
 int Reduce::GetKeepDims() const { return this->primitive_->value_as_Reduce()->keepDims(); }
 int Reduce::GetMode() const { return this->primitive_->value_as_Reduce()->mode(); }
 bool Reduce::GetReduceToEnd() const { return this->primitive_->value_as_Reduce()->reduceToEnd(); }
+float Reduce::GetCoeff() const { return this->primitive_->value_as_Reduce()->coeff(); }
 int Reduce::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);

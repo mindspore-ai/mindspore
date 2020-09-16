@@ -676,6 +676,7 @@ table Reduce {
     keepDims: int;
     mode: ReduceMode;
     reduceToEnd: bool = false;
+    coeff: float = 1.0;
 }
 
 table Transpose {

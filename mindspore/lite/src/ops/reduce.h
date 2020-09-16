@@ -38,6 +38,7 @@ class Reduce : public PrimitiveC {
   void SetKeepDims(int keep_dims);
   void SetMode(int mode);
   void SetReduceToEnd(bool reduce_to_end);
+  void SetCoeff(float coeff);
 #else
   Reduce() = default;
 
@@ -48,6 +49,7 @@ class Reduce : public PrimitiveC {
   int GetKeepDims() const;
   int GetMode() const;
   bool GetReduceToEnd() const;
+  float GetCoeff() const;
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -30,6 +30,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Mean;
 using mindspore::schema::PrimitiveType_Reduce;
 using mindspore::schema::ReduceMode;
+using mindspore::schema::ReduceMode_ReduceASum;
 using mindspore::schema::ReduceMode_ReduceMax;
 using mindspore::schema::ReduceMode_ReduceMean;
 using mindspore::schema::ReduceMode_ReduceMin;
@@ -68,7 +69,11 @@ int ReduceCPUKernel::Init() {
       break;
     }
     case static_cast<int>(ReduceMode_ReduceSumSquare): {
-      reducer_ = ReduceSumSquare;
+      reducer_ = ReduceSum;
+      break;
+    }
+    case static_cast<int>(ReduceMode_ReduceASum): {
+      reducer_ = ReduceSum;
       break;
     }
     default:
@@ -125,6 +130,7 @@ int ReduceCPUKernel::Run() {
   }
 
   src_data_ = in_tensors_.at(0)->MutableData();
+  PreProcess();
   for (size_t i = 0; i < static_cast<size_t>(num_axes_); ++i) {
     if (i != static_cast<size_t>(num_axes_ - 1)) {
       dst_data_ = data_buffers_[i];
@@ -142,7 +148,53 @@ int ReduceCPUKernel::Run() {
     }
     src_data_ = dst_data_;
   }
+  if (reduce_param_->reduce_to_end_ && reduce_param_->coeff - 1.0f > 1e-5) {
+    ret = CalculateCoeffOutput();
+    if (ret != RET_OK) {
+      return ret;
+    }
+  }
+
   FreeTmpBuffer();
+  return RET_OK;
+}
+
+void ReduceCPUKernel::PreProcess() {
+  if (data_type_ == kDataTypeInt) {
+    return;
+  }
+  int num = in_tensors_.at(0)->ElementsNum();
+  float *data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  if (data == nullptr) {
+    return;
+  }
+  if (reduce_param_->mode_ == static_cast<int>(ReduceMode_ReduceASum)) {
+    for (int i = 0; i < num; ++i) {
+      if (data[i] < 0.0f) {
+        data[i] = 0.0f - data[i];
+      }
+    }
+  }
+  if (reduce_param_->mode_ == static_cast<int>(ReduceMode_ReduceSumSquare)) {
+    for (int i = 0; i < num; ++i) {
+      data[i] = data[i] * data[i];
+    }
+  }
+}
+
+int ReduceCPUKernel::CalculateCoeffOutput() {
+  auto out_tensor = out_tensors_.at(0);
+  int num = out_tensor->ElementsNum();
+  if (data_type_ != kDataTypeFloat) {
+    return RET_ERROR;
+  }
+  float *out_data = reinterpret_cast<float *>(out_tensor->MutableData());
+  if (out_data == nullptr) {
+    return RET_NULL_PTR;
+  }
+  for (int i = 0; i < num; ++i) {
+    out_data[i] *= reduce_param_->coeff;
+  }
   return RET_OK;
 }
 
