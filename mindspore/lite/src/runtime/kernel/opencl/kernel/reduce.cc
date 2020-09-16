@@ -19,7 +19,6 @@
 #include <map>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/reduce.h"
 #include "src/runtime/kernel/opencl/cl/reduce.cl.inc"
 
@@ -59,8 +58,7 @@ int ReduceOpenCLKernel::Init() {
   }
   std::string kernel_name = reduce_type2str.at(reduce_param->mode_);
   kernel_name += "_" + std::string(EnumNameFormat(op_format_));
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  enable_fp16_ = ocl_runtime->GetFp16Enable();
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
 
   if (in_tensors_[0]->shape().back() != out_tensors_[0]->shape().back()) {
     MS_LOG(ERROR) << "Reduce input channel " << in_tensors_[0]->shape().back() << " should equal output channel"
@@ -68,12 +66,12 @@ int ReduceOpenCLKernel::Init() {
     return RET_ERROR;
   }
 #ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
+  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
   std::set<std::string> build_options;
   std::string source = reduce_source;
-  ocl_runtime->LoadSource(kernel_name, source);
-  ocl_runtime->BuildKernel(kernel_, kernel_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(kernel_name, source);
+  ocl_runtime_->BuildKernel(kernel_, kernel_name, kernel_name, build_options);
 #endif
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
@@ -130,15 +128,14 @@ int ReduceOpenCLKernel::Run() {
   int w = shapex[2];
   int c = shapex[3];
   int c4 = UP_DIV(c, C4NUM);
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::vector<size_t> local = {};
   std::vector<size_t> global = {static_cast<size_t>(c4)};
   cl_int4 size = {h, w, c4, 1};
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, size);
-  ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size);
+  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }
 

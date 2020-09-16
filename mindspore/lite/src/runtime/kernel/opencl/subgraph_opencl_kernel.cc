@@ -99,7 +99,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
 
     out_tensors->emplace_back(new_tensor);
     KernelKey desc{kGPU, kNumberTypeFloat32, schema::PrimitiveType_ToFormat};
-    if (mem_type == OpenCLMemType::IMG && lite::opencl::OpenCLRuntime::GetInstance()->GetFp16Enable()) {
+    if (mem_type == OpenCLMemType::IMG && ocl_runtime_->GetFp16Enable()) {
       desc.data_type = kNumberTypeFloat16;
       new_tensor->set_data_type(kNumberTypeFloat16);
     }
@@ -160,7 +160,8 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
 }
 
 int SubGraphOpenCLKernel::Init() {
-  allocator_ = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  ocl_runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
+  allocator_ = ocl_runtime_->GetAllocator();
   MS_LOG(DEBUG) << "input num=" << in_tensors_.size() << ", output num=" << out_tensors_.size();
   for (const auto tensor : in_tensors_) {
     tensor->set_allocator(allocator_);
@@ -195,8 +196,7 @@ int SubGraphOpenCLKernel::Init() {
 }
 
 int SubGraphOpenCLKernel::UpdateTensorDataType() {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  bool is_fp16 = ocl_runtime->GetFp16Enable();
+  bool is_fp16 = ocl_runtime_->GetFp16Enable();
   if (is_fp16 && (in_tensors_[0]->data_type() == kNumberTypeFloat32)) {
     std::set<lite::Tensor *> out_set;
     out_set.insert(in_tensors_.begin(), in_tensors_.end());
@@ -292,15 +292,24 @@ int SubGraphOpenCLKernel::UnInit() {
       delete tensor;
     }
   }
+  in_convert_tensors_.clear();
   for (const auto &tensor : out_convert_tensors_) {
     if (tensor != nullptr) {
       delete tensor;
     }
   }
-  for (const auto &op : in_convert_ops_) {
+  out_convert_tensors_.clear();
+  for (const auto &op : nodes_) {
     if (op != nullptr) {
       delete op;
     }
+  }
+  nodes_.clear();
+  in_convert_ops_.clear();
+  out_convert_ops_.clear();
+  if (ocl_runtime_ != nullptr) {
+    lite::opencl::OpenCLRuntime::DeleteInstance();
+    ocl_runtime_ = nullptr;
   }
   return RET_OK;
 }
@@ -310,14 +319,13 @@ int SubGraphOpenCLKernel::InferShape() { return RET_OK; }
 int SubGraphOpenCLKernel::ReSize() { return RET_OK; }
 
 int SubGraphOpenCLKernel::Run() {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   for (auto &tensor : in_tensors_) {
     allocator_->UnmapBuffer(tensor->data_c());
   }
 
   lite::opencl::OpenCLExecutor executor;
   executor.Run(in_tensors_, out_tensors_, nodes_, allocator_);
-  ocl_runtime->SyncCommandQueue();
+  ocl_runtime_->SyncCommandQueue();
 
   return RET_OK;
 }

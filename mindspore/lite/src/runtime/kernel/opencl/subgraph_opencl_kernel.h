@@ -64,6 +64,7 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
   std::vector<OpenCLToFormatParameter *> out_parameters_;
   std::vector<LiteKernel *> in_convert_ops_;
   std::vector<LiteKernel *> out_convert_ops_;
+  lite::opencl::OpenCLRuntime *ocl_runtime_{nullptr};
 };
 }  // namespace mindspore::kernel
 

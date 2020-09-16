@@ -19,7 +19,6 @@
 #include <map>
 #include "nnacl/fp32/common_func.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/matmul.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/matmul.cl.inc"
@@ -35,7 +34,6 @@ namespace mindspore::kernel {
 int MatMulOpenCLKernel::Init() {
   std::string kernel_name = "MatMul";
   kernel_name += "_" + std::string(EnumNameFormat(op_format_));
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
   transposeA = param->a_transpose_;
   if (transposeA) {
@@ -43,7 +41,7 @@ int MatMulOpenCLKernel::Init() {
     return RET_ERROR;
   }
   transposeB = param->b_transpose_;
-  enable_fp16_ = ocl_runtime->GetFp16Enable();
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if (in_tensors_[0]->shape().size() != out_tensors_[0]->shape().size() ||
       (in_tensors_[0]->shape().size() != 2 && in_tensors_[0]->shape().size() != 4)) {
     MS_LOG(ERROR) << "matmul only support input shape size=2 or 4.";
@@ -57,13 +55,13 @@ int MatMulOpenCLKernel::Init() {
   std::map<int, std::string> dims2str = {{2, "_2d"}, {4, "_4d"}};
   kernel_name += dims2str[dims];
 #ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
+  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
   std::set<std::string> build_options;
   std::string source = matmul_source;
   std::string program_name = "MatMul";
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
 
   PadWeight();
@@ -79,7 +77,7 @@ int MatMulOpenCLKernel::ReSize() { return RET_OK; }
 
 void MatMulOpenCLKernel::PadWeight() {
   // ABMCI @ ABCICO = ABMCO
-  auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  auto allocator = ocl_runtime_->GetAllocator();
   int ci = inShape[3];
   int ci4 = UP_DIV(ci, C4NUM);
   int co = outShape[3];
@@ -201,7 +199,6 @@ int MatMulOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
 
 int MatMulOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   // local size should less than MAX_GROUP_SIZE
   std::vector<size_t> local = {32, 4, 1};
   std::vector<size_t> global = {UP_DIV(static_cast<size_t>(outShape[3]), C4NUM),
@@ -210,14 +207,14 @@ int MatMulOpenCLKernel::Run() {
   int arg_count = 0;
   cl_int4 in_shape = {inShape[0], inShape[1], inShape[2], inShape[3]};
   cl_int4 out_shape = {outShape[0], outShape[1], outShape[2], outShape[3]};
-  ocl_runtime->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
-  ocl_runtime->SetKernelArg(kernel_, arg_count++, bias_);
-  ocl_runtime->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_count++, in_shape);
-  ocl_runtime->SetKernelArg(kernel_, arg_count++, out_shape);
-  ocl_runtime->SetKernelArg(kernel_, arg_count++, hasBias_ ? 1 : 0);
-  ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, bias_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_shape);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, hasBias_ ? 1 : 0);
+  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }
 

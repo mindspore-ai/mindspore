@@ -21,7 +21,6 @@
 #include <map>
 #include <utility>
 #include "src/kernel_registry.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "nnacl/fp32/common_func.h"
 #include "nnacl/op_base.h"
@@ -42,7 +41,6 @@ using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 namespace mindspore::kernel {
 
 int DepthwiseConv2dOpenCLKernel::Init() {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::string kernel_name = "DepthwiseConv2d";
   auto in_format = op_format_;
   in_ori_format_ = in_tensors_[0]->GetFormat();
@@ -69,13 +67,13 @@ int DepthwiseConv2dOpenCLKernel::Init() {
     kernel_name += "_1x1";
   }
 #ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
+  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
   std::string program_name = "DepthwiseConv2d";
   std::set<std::string> build_options;
   std::string source = depthwise_conv2d_source;
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   this->InitBuffer();
   MS_LOG(DEBUG) << kernel_name << " Init Done! mem type=" << static_cast<int>(out_mem_type_);
@@ -84,9 +82,8 @@ int DepthwiseConv2dOpenCLKernel::Init() {
 
 int DepthwiseConv2dOpenCLKernel::InitBuffer() {
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  auto allocator = ocl_runtime->GetAllocator();
-  bool is_fp16 = ocl_runtime->GetFp16Enable();
+  auto allocator = ocl_runtime_->GetAllocator();
+  bool is_fp16 = ocl_runtime_->GetFp16Enable();
 
   // weight: o, h, w, i; o == group, i == 1
   void *origin_weight = in_tensors_.at(kWeightIndex)->data_c();
@@ -162,7 +159,7 @@ int DepthwiseConv2dOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *i
     im_dst_x = out_tensors_[0]->Width();
   }
   size_t img_dtype = CL_FLOAT;
-  if (lite::opencl::OpenCLRuntime::GetInstance()->GetFp16Enable()) {
+  if (ocl_runtime_->GetFp16Enable()) {
     img_dtype = CL_HALF_FLOAT;
   }
   img_size->clear();
@@ -189,7 +186,6 @@ int DepthwiseConv2dOpenCLKernel::GetLocalSize(size_t idx, const std::vector<size
 int DepthwiseConv2dOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t CI4 = UP_DIV(in_tensors_[0]->Channel(), C4NUM);
   std::vector<size_t> global = {(size_t)out_tensors_[0]->Width(), (size_t)out_tensors_[0]->Height(), CO4};
@@ -207,19 +203,19 @@ int DepthwiseConv2dOpenCLKernel::Run() {
                       (cl_int)out_tensors_[0]->Batch()};
 
   int arg_cnt = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, packed_weight_, lite::opencl::MemType::BUF);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, bias_data_, lite::opencl::MemType::BUF);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, kernel_size);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, stride);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, padding);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, dilation);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, src_size);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, dst_size);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].first);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].second);
-  ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, packed_weight_, lite::opencl::MemType::BUF);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, bias_data_, lite::opencl::MemType::BUF);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, kernel_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, stride);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padding);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dilation);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].first);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].second);
+  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }
 

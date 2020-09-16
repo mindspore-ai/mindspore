@@ -23,8 +23,6 @@
 
 namespace mindspore::lite::opencl {
 
-OpenCLAllocator::OpenCLAllocator() {}
-
 OpenCLAllocator::OpenCLAllocator(OpenCLRuntime *ocl_runtime) : ocl_runtime_(ocl_runtime) {}
 
 OpenCLAllocator::~OpenCLAllocator() { Clear(); }
@@ -49,9 +47,6 @@ void OpenCLAllocator::UnLock() {
 void *OpenCLAllocator::Malloc(size_t size) { return Malloc(size, std::vector<size_t>{}); }
 
 void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) {
-  if (ocl_runtime_ == nullptr) {
-    ocl_runtime_ = opencl::OpenCLRuntime::GetInstance();
-  }
   auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
 
   size_t img_pitch = 0;
@@ -143,9 +138,6 @@ void *OpenCLAllocator::CreateImageFromHost(void *data, size_t size, const std::v
   if (size > MAX_MALLOC_SIZE) {
     MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
     return nullptr;
-  }
-  if (ocl_runtime_ == nullptr) {
-    ocl_runtime_ = opencl::OpenCLRuntime::GetInstance();
   }
   Lock();
   auto iter = free_list_.lower_bound(size);
@@ -258,9 +250,6 @@ void *OpenCLAllocator::GetBuffer(void *buffer) {
 
 void OpenCLAllocator::Clear() {
   Lock();
-  if (ocl_runtime_ == nullptr) {
-    ocl_runtime_ = opencl::OpenCLRuntime::GetInstance();
-  }
   auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
   for (auto it = allocated_list_.begin(); it != allocated_list_.end(); it++) {
     if (svm_capabilities) {
@@ -306,9 +295,6 @@ void OpenCLAllocator::Clear() {
 }
 
 void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue, bool sync) {
-  if (ocl_runtime_ == nullptr) {
-    ocl_runtime_ = opencl::OpenCLRuntime::GetInstance();
-  }
   auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
   if (svm_capabilities) {
     if (!(svm_capabilities & CL_DEVICE_SVM_FINE_GRAIN_BUFFER)) {
@@ -362,9 +348,6 @@ void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue,
 }
 
 int OpenCLAllocator::UnmapBuffer(void *host_ptr, void *command_queue) {
-  if (ocl_runtime_ == nullptr) {
-    ocl_runtime_ = opencl::OpenCLRuntime::GetInstance();
-  }
   auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
   if (svm_capabilities) {
     if (!(svm_capabilities & CL_DEVICE_SVM_FINE_GRAIN_BUFFER)) {

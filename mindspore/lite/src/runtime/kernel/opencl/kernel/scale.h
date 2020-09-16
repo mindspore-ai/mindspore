@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "nnacl/scale.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {
@@ -42,7 +41,6 @@ class ScaleOpenCLKernel : public OpenCLKernel {
   int InitBuffer();
 
   cl::Kernel kernel_;
-  lite::opencl::OpenCLRuntime *ocl_runtime_;
   bool element_flag_{true};
   void *scale_ptr_{nullptr};
   void *offset_ptr_{nullptr};

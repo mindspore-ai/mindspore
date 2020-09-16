@@ -127,7 +127,6 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
     delete tensor;
   }
   delete param;
-  delete arithmeticself_kernel;
   delete sub_graph;
 }
 }  // namespace mindspore

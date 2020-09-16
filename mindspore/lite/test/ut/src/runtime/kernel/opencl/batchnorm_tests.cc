@@ -147,7 +147,6 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
     delete tensor;
   }
   delete param;
-  delete batchnorm_kernel;
   delete sub_graph;
 }
 TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {

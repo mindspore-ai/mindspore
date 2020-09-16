@@ -167,7 +167,6 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
     delete output_tensor;
     delete weight_tensor;
     delete param;
-    delete prelu_kernel;
     delete sub_graph;
     return;
   }
@@ -179,7 +178,6 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
     delete output_tensor;
     delete weight_tensor;
     delete param;
-    delete prelu_kernel;
     delete sub_graph;
     return;
   }
@@ -195,7 +193,6 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   delete output_tensor;
   delete weight_tensor;
   delete param;
-  delete prelu_kernel;
   delete sub_graph;
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }

@@ -20,6 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/errorcode.h"
+#include "src/runtime/opencl/opencl_runtime.h"
 
 namespace mindspore::kernel {
 
@@ -36,7 +37,16 @@ class OpenCLKernel : public LiteKernel {
  public:
   explicit OpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {}
+      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {
+    ocl_runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
+  }
+
+  ~OpenCLKernel() {
+    if (ocl_runtime_ != nullptr) {
+      lite::opencl::OpenCLRuntime::DeleteInstance();
+      ocl_runtime_ = nullptr;
+    }
+  }
 
   virtual int Init() { return RET_ERROR; }
   virtual int Prepare() { return RET_ERROR; }
@@ -59,6 +69,7 @@ class OpenCLKernel : public LiteKernel {
   schema::Format in_ori_format_{schema::Format::Format_NHWC};
   schema::Format out_ori_format_{schema::Format::Format_NHWC4};
   schema::Format op_format_{schema::Format::Format_NHWC4};
+  lite::opencl::OpenCLRuntime *ocl_runtime_{nullptr};
 };
 }  // namespace mindspore::kernel
 

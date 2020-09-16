@@ -34,7 +34,7 @@ namespace mindspore::kernel {
 
 ArithmeticOpenCLKernel::~ArithmeticOpenCLKernel() {
   if (weight_ptr_ != nullptr) {
-    auto allocator = runtime_->GetAllocator();
+    auto allocator = ocl_runtime_->GetAllocator();
     allocator->Free(weight_ptr_);
     weight_ptr_ = nullptr;
   }
@@ -106,7 +106,7 @@ int ArithmeticOpenCLKernel::InitBuffer() {
   const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
   if (!arithmetic_parameter->broadcasting_) {
     if (in_tensors_[1]->category() == lite::Tensor::Category::CONST && in_tensors_[1]->data_c() != nullptr) {
-      auto allocator = runtime_->GetAllocator();
+      auto allocator = ocl_runtime_->GetAllocator();
       std::vector<size_t> img_size;
       GetImageSize(0, &img_size);
       int pack_weight_size = in_tensors_[1]->ElementsC4Num();
@@ -194,7 +194,6 @@ int ArithmeticOpenCLKernel::InitBuffer() {
 }
 
 int ArithmeticOpenCLKernel::Init() {
-  runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
   std::string kernel_name;
 
   const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
@@ -265,7 +264,7 @@ int ArithmeticOpenCLKernel::Init() {
 
   lite::STATUS error_code = RET_OK;
 #ifdef PROGRAM_WITH_IL
-  kernel_ = runtime_->GetKernelFromBinary(kernel_name);
+  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
   if (out_mem_type_ == OpenCLMemType::IMG) {
     kernel_name += "_IMG";
@@ -275,8 +274,8 @@ int ArithmeticOpenCLKernel::Init() {
   std::string program_name = "Arithmetic";
   std::set<std::string> build_options;
   std::string source = arithmetic_source;
-  runtime_->LoadSource(program_name, source);
-  error_code = runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   if (error_code != RET_OK) {
     return error_code;
@@ -302,10 +301,10 @@ int ArithmeticOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
 
   int arg_idx = 0;
-  runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   if (element_flag_) {
     void *weight = weight_ptr_ == nullptr ? in_tensors_[1]->data_c() : weight_ptr_;
-    runtime_->SetKernelArg(kernel_, arg_idx++, weight);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight);
   } else {
     float weight = 0.f;
     if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
@@ -316,9 +315,9 @@ int ArithmeticOpenCLKernel::Run() {
       MS_LOG(ERROR) << "Unsupport data type " << in_tensors_[1]->data_type();
       return RET_ERROR;
     }
-    runtime_->SetKernelArg(kernel_, arg_idx++, weight);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight);
   }
-  runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
 
   int H = 0;
   int W = 0;
@@ -336,8 +335,8 @@ int ArithmeticOpenCLKernel::Run() {
     return RET_ERROR;
   }
   cl_int2 output_shape{W, H};
-  runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
-  runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
+  ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
   return RET_OK;
 }
 

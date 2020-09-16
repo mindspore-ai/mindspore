@@ -45,7 +45,6 @@ enum class MemType : char { SVM, BUF, IMG };
 
 class OpenCLAllocator : public Allocator {
  public:
-  OpenCLAllocator();
   explicit OpenCLAllocator(OpenCLRuntime *ocl_runtime);
   ~OpenCLAllocator() override;
   void SetContext(const AllocatorContext &ctx) override;

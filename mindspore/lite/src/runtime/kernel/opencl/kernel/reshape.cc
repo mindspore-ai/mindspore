@@ -18,7 +18,6 @@
 #include <string>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/reshape.h"
 #include "src/runtime/kernel/opencl/cl/reshape.cl.inc"
 
@@ -34,8 +33,7 @@ namespace mindspore::kernel {
 int ReshapeOpenCLKernel::Init() {
   std::string kernel_name = "reshape";
   kernel_name += "_" + std::string(EnumNameFormat(op_format_));
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  enable_fp16_ = ocl_runtime->GetFp16Enable();
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if (out_tensors_[0]->shape().size() != 2 && out_tensors_[0]->shape().size() != 4) {
     MS_LOG(ERROR) << "Reshape output size should in 2,4";
     return RET_ERROR;
@@ -46,13 +44,13 @@ int ReshapeOpenCLKernel::Init() {
     return RET_ERROR;
   }
 #ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
+  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
   std::set<std::string> build_options;
   std::string source = reshape_source;
   std::string program_name = "reshape";
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
@@ -112,17 +110,16 @@ int ReshapeOpenCLKernel::Run() {
     oh = out_tensors_[0]->shape()[1];
     ow = out_tensors_[0]->shape()[2];
   }
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::vector<size_t> local = {};
   std::vector<size_t> global = {(size_t)oh, (size_t)ow, (size_t)c4};
   cl_int4 size = {h, w, c4, 1};
   cl_int4 size_out = {oh, ow, c4, 1};
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, size);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, size_out);
-  ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size_out);
+  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }
 

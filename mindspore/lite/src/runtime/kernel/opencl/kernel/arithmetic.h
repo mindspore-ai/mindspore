@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/fp32/arithmetic.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {
@@ -42,7 +41,6 @@ class ArithmeticOpenCLKernel : public OpenCLKernel {
   int InitBuffer();
 
   cl::Kernel kernel_;
-  lite::opencl::OpenCLRuntime *runtime_;
   bool element_flag_{true};
   void *weight_ptr_{nullptr};
 

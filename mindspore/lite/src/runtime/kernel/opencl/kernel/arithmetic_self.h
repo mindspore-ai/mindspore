@@ -21,7 +21,6 @@
 #include <string>
 #include "ir/anf.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "nnacl/arithmetic_self_parameter.h"
 
 namespace mindspore::kernel {

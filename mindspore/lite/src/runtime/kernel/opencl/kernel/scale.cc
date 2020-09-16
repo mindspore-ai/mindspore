@@ -245,7 +245,6 @@ int ScaleOpenCLKernel::InitBuffer() {
 }
 
 int ScaleOpenCLKernel::Init() {
-  ocl_runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
   std::string kernel_name;
 
   const ScaleParameter *scale_param = reinterpret_cast<const ScaleParameter *>(op_parameter_);

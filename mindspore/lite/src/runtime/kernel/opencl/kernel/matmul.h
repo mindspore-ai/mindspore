@@ -21,7 +21,6 @@
 
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/matmul_parameter.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 
 namespace mindspore::kernel {
 

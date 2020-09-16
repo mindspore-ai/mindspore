@@ -164,7 +164,6 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_2input_dim4_axis3) {
     delete tensor;
   }
   delete param;
-  delete concat_kernel;
   delete sub_graph;
 }
 
@@ -284,7 +283,6 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_2input_dim4_axis3) {
     delete tensor;
   }
   delete param;
-  delete concat_kernel;
   delete sub_graph;
 }
 }  // namespace mindspore

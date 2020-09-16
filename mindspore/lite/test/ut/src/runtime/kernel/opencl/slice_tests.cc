@@ -143,7 +143,6 @@ TEST_F(TestSliceOpenCLfp32, Slicefp32input_dim4) {
   for (auto tensor : outputs) {
     delete tensor;
   }
-  delete slice_kernel;
   delete sub_graph;
 }
 TEST_F(TestSliceOpenCLfp16, Slicefp16input_dim4) {
@@ -251,7 +250,6 @@ TEST_F(TestSliceOpenCLfp16, Slicefp16input_dim4) {
   for (auto tensor : outputs) {
     delete tensor;
   }
-  delete slice_kernel;
   delete sub_graph;
 }
 }  // namespace mindspore

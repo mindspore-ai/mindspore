@@ -21,7 +21,6 @@
 #include <utility>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/cl/to_format.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -33,7 +32,6 @@ using mindspore::schema::PrimitiveType_ToFormat;
 namespace mindspore::kernel {
 
 int ToFormatOpenCLKernel::Init() {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto parameter = reinterpret_cast<OpenCLToFormatParameter *>(op_parameter_);
   out_mem_type_ = parameter->out_mem_type;
   std::string program_name = "to_format";
@@ -53,12 +51,12 @@ int ToFormatOpenCLKernel::Init() {
 
   this->set_name(kernel_name);
 #ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
+  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
   std::set<std::string> build_options;
   std::string source = to_format_source;
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   InitNHWCShape();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
@@ -147,7 +145,7 @@ int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size
     return RET_ERROR;
   }
   img_size->clear();
-  auto enable_fp16_ = lite::opencl::OpenCLRuntime::GetInstance()->GetFp16Enable();
+  auto enable_fp16_ = ocl_runtime_->GetFp16Enable();
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
     img_dtype = CL_HALF_FLOAT;
@@ -158,7 +156,6 @@ int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size
 }
 int ToFormatOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::vector<size_t> local = {};
   std::vector<size_t> global;
   GetGlobalSize(0, &global);
@@ -167,11 +164,11 @@ int ToFormatOpenCLKernel::Run() {
   cl_int4 gsize{(cl_int)global[0], (cl_int)global[1], (cl_int)global[2], 1};
   auto src_mem_type = (out_mem_type_ == OpenCLMemType::IMG) ? lite::opencl::MemType::BUF : lite::opencl::MemType::IMG;
   auto dst_mem_type = (out_mem_type_ == OpenCLMemType::IMG) ? lite::opencl::MemType::IMG : lite::opencl::MemType::BUF;
-  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c(), src_mem_type);
-  ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c(), dst_mem_type);
-  ocl_runtime->SetKernelArg(kernel_, 2, gsize);
-  ocl_runtime->SetKernelArg(kernel_, 3, shape);
-  ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c(), src_mem_type);
+  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c(), dst_mem_type);
+  ocl_runtime_->SetKernelArg(kernel_, 2, gsize);
+  ocl_runtime_->SetKernelArg(kernel_, 3, shape);
+  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }
 

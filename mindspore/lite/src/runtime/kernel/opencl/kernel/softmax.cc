@@ -19,7 +19,6 @@
 #include <set>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/softmax.cl.inc"
@@ -51,7 +50,7 @@ int SoftmaxOpenCLKernel::InitGlobalSize() {
 int SoftmaxOpenCLKernel::SetWorkGroupSize() {
   // set work group size
   InitGlobalSize();
-  int max_work_group_size = runtime_->GetKernelMaxWorkGroupSize(kernel_(), (*runtime_->Device())());
+  int max_work_group_size = ocl_runtime_->GetKernelMaxWorkGroupSize(kernel_(), (*ocl_runtime_->Device())());
   local_size_ = GetCommonLocalSize(global_size_, max_work_group_size);
   global_size_ = GetCommonGlobalSize(local_size_, global_size_);
   return lite::RET_OK;
@@ -101,8 +100,7 @@ int SoftmaxOpenCLKernel::Init() {
   std::string program_name = "SoftMax";
 
   std::string source = softmax_source;
-  runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
-  enable_fp16_ = runtime_->GetFp16Enable();
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
   // framework not set this param yet! just use default.
   if (in_tensors_[0]->shape().size() == 4) {
     // support 4d tensor
@@ -133,8 +131,8 @@ int SoftmaxOpenCLKernel::Init() {
     program_name += "_IMG";
   }
   std::set<std::string> build_options;
-  runtime_->LoadSource(program_name, source);
-  runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
@@ -158,32 +156,32 @@ int SoftmaxOpenCLKernel::Run() {
     auto mask_ = GetMaskForLastChannel(channel_size);
     cl_float4 mask = {mask_[0], mask_[1], mask_[2], mask_[3]};
 
-    runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
     if (is_image_out_) {
-      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
     } else {
-      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
     }
-    runtime_->SetKernelArg(kernel_, arg_idx++, mask);
-    runtime_->SetKernelArg(kernel_, arg_idx++, slices);
-    runtime_->SetKernelArg(kernel_, arg_idx, slices_x32);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, mask);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, slices);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx, slices_x32);
     SetWorkGroupSize1x1();
   } else {
     int slices = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
     cl_int4 input_shape = {in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2], in_tensors_[0]->shape()[3], slices};
 
-    runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
     if (is_image_out_) {
-      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
     } else {
-      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
     }
-    runtime_->SetKernelArg(kernel_, arg_idx, input_shape);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx, input_shape);
     SetWorkGroupSize();
   }
 
   // run opengl kernel
-  runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
   return lite::RET_OK;
 }
 

@@ -21,7 +21,6 @@
 
 #include "src/lite_kernel.h"
 #include "nnacl/transpose.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {

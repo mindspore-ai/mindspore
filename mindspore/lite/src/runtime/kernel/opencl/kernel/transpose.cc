@@ -18,7 +18,6 @@
 #include <string>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/transpose.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/transpose.cl.inc"
@@ -34,8 +33,7 @@ namespace mindspore::kernel {
 
 int TransposeOpenCLKernel::Init() {
   std::string kernel_name = "transpose";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  enable_fp16_ = ocl_runtime->GetFp16Enable();
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
   auto param = reinterpret_cast<TransposeParameter *>(op_parameter_);
   if (param->num_axes_ == 4 && param->perm_[0] == 0 && param->perm_[1] == 3 && param->perm_[2] == 1 &&
       param->perm_[3] == 2) {
@@ -52,13 +50,13 @@ int TransposeOpenCLKernel::Init() {
     kernel_name += "_IMG";
   }
 #ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
+  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
   std::set<std::string> build_options;
   std::string source = transpose_source;
   std::string program_name = "transpose";
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   if ((in_tensors_[0]->shape()[1] * in_tensors_[0]->shape()[2]) % 4 != 0) {
     MS_LOG(ERROR) << "input H * W % 4 != 0 not support!";
@@ -114,24 +112,23 @@ int TransposeOpenCLKernel::Run() {
   int c = shapex[3];
   int c4 = UP_DIV(c, 4);
   int hw4 = UP_DIV(h * w, 4);
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::vector<size_t> local = {16, 16};
   std::vector<size_t> global = {UP_ROUND(hw4, local[0]), UP_ROUND(c4, local[1])};
 
   cl_int2 HW = {h * w, hw4};
   cl_int2 C = {c, c4};
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   if (out_mem_type_ == OpenCLMemType::BUF) {
-    ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
   } else {
-    ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   }
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, HW);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, C);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, w);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, h);
-  ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, HW);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, C);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, w);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, h);
+  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }
 
