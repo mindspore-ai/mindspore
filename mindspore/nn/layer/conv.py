@@ -20,7 +20,7 @@ from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
 from mindspore.common.parameter import Parameter
-from mindspore.common.initializer import initializer
+from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import ParamValidator as validator, Rel
 from mindspore._checkparam import Validator
@@ -251,6 +251,10 @@ class Conv2d(_Conv):
                                                   stride=self.stride,
                                                   dilation=self.dilation)
             weight_shape = [1, self.in_channels, *self.kernel_size]
+            if isinstance(self.weight_init, Tensor):
+                self.weight_init = Tensor(self.weight_init.asnumpy().swapaxes(0, 1), self.weight_init.dtype)
+            if isinstance(self.weight_init, Initializer):
+                self.weight_init.shape = weight_shape
             self.weight = Parameter(initializer(self.weight_init, weight_shape), name='weight')
 
     def construct(self, x):
