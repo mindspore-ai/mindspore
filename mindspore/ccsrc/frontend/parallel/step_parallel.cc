@@ -1269,15 +1269,17 @@ std::pair<AnfNodePtr, int> FindSubGraph(const FuncGraphPtr &graph, const AnfNode
   } else {
     AnfNodeIndexSet param_sub_set = manager->node_users()[parameter];
     for (auto &param_pair : param_sub_set) {
-      CNodePtr graph_cnode = param_pair.first->cast<CNodePtr>();
-      if ((graph_cnode == nullptr) || !graph_cnode->input(0)->isa<CNode>()) {
+      CNodePtr param_cnode = param_pair.first->cast<CNodePtr>();
+      AnfNodePtr graph_value_node;
+      if (param_cnode->input(0)->isa<CNode>()) {
+        graph_value_node = param_cnode->input(0)->cast<CNodePtr>()->input(1);
+      } else {
+        graph_value_node = param_cnode->input(0);
+      }
+      if (!IsValueNode<FuncGraph>(graph_value_node)) {
         continue;
       }
-      CNodePtr graph_cnode_inp0 = graph_cnode->input(0)->cast<CNodePtr>();
-      if (!IsValueNode<FuncGraph>(graph_cnode_inp0->input(1))) {
-        continue;
-      }
-      FuncGraphPtr graph_sub = GetValueNode<FuncGraphPtr>(graph_cnode_inp0->input(1));
+      FuncGraphPtr graph_sub = GetValueNode<FuncGraphPtr>(graph_value_node);
       auto parameters = graph_sub->parameters();
       if (IntToSize(param_pair.second - 1) >= parameters.size()) {
         MS_LOG(EXCEPTION) << "The index is out of range, index is " << param_pair.second - 1 << ", vector size is "
@@ -1864,7 +1866,8 @@ CNodePtr FindLossCNode(const FuncGraphPtr &func_graph) {
 
   // return -> make_tuple
   if (current_prim->name() == MAKE_TUPLE) {
-    MS_LOG(EXCEPTION) << "The loss have make_tuple, it is not supported";
+    MS_LOG(WARNING) << "The loss have make_tuple, it is not supported";
+    return nullptr;
   }
 
   // return -> loss
@@ -2069,6 +2072,12 @@ std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const AnfNodeSet &root_all_no
       auto graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
       MS_LOG(DEBUG) << "Find the forward graph success";
       graph_set.insert(graph);
+      auto manager = graph->manager();
+      MS_EXCEPTION_IF_NULL(manager);
+      auto graph_used = manager->func_graphs_used_total(graph);
+      for (auto &sub_graph : graph_used) {
+        graph_set.insert(sub_graph);
+      }
     }
   }
   return graph_set;
@@ -2423,7 +2432,7 @@ void HandleRootReshape(const std::vector<AnfNodePtr> &all_nodes) {
 void MarkForwardCNode(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
   auto all_nodes = root->nodes();
-  std::set<FuncGraphPtr> graph_set = FindForwardGraphByRootNodes(all_nodes);
+  auto graph_set = FindForwardGraphByRootNodes(all_nodes);
 
   if (graph_set.empty()) {
     MS_LOG(INFO) << "Can not find the forward graph, so mark the ops in root graph";

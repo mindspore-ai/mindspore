@@ -145,9 +145,9 @@ int32_t GetTupleGetItemIndex(const CNodePtr &cnode);
 
 Status ParallelInit();
 
-std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node);
-
 std::set<FuncGraphPtr> ForwardGraph(const FuncGraphPtr &root);
+
+std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node);
 
 bool AnfNodeIsPrimitive(const AnfNodePtr &anf_node, const std::string &prim_name);
 
