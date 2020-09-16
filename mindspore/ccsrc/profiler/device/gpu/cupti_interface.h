@@ -36,7 +36,6 @@ CUptiResult CuptiActivityGetNextRecord(uint8_t *buffer, size_t validBufferSizeBy
 CUptiResult CuptiActivityGetNumDroppedRecords(CUcontext context, uint32_t streamId, size_t *dropped);
 CUptiResult CuptiGetTimestamp(uint64_t *timestamp);
 CUptiResult CuptiGetResultString(CUptiResult result, const char **str);
-
 }  // namespace gpu
 }  // namespace profiler
 }  // namespace mindspore

@@ -60,8 +60,7 @@ namespace gpu {
 std::shared_ptr<GPUProfiler> GPUProfiler::profiler_inst_ = nullptr;
 
 int32_t GetThreadID() {
-  uint32_t thread_id = 0;
-  thread_id = static_cast<uint32_t>(pthread_self());
+  uint32_t thread_id = static_cast<uint32_t>(pthread_self());
   return thread_id;
 }
 
@@ -95,6 +94,59 @@ std::string GetKernelFunc(const char *name) {
   }
 }
 
+void CUPTIApiExit(const std::shared_ptr<GPUProfiler> &gpu_profiler_inst, CUpti_CallbackId cb_id,
+                  const CUpti_CallbackData *cb_data) {
+  uint64_t start_timestamp = *cb_data->correlationData;
+  uint64_t end_timestamp = GetCUPTITimeStamp();
+  switch (cb_id) {
+    case CUPTI_DRIVER_TRACE_CBID_cuLaunchKernel:
+    case CUPTI_DRIVER_TRACE_CBID_cuLaunchCooperativeKernel:
+    case CUPTI_DRIVER_TRACE_CBID_cuLaunchCooperativeKernelMultiDevice:
+      gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "cuLaunchKernel", start_timestamp, end_timestamp);
+      break;
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpy:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoD_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoH_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoD_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAtoH_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAtoD_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoA_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAtoA_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpy2D_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpy2DUnaligned_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpy3D_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoA_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAsync:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoDAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoHAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoDAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAtoHAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpy2DAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpy3DAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoAAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyPeer:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyPeerAsync:
+      gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "cuMemcpy", start_timestamp, end_timestamp);
+      break;
+    case CUPTI_DRIVER_TRACE_CBID_cuMemAlloc:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemAlloc_v2:
+      gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "cuMemAlloc", start_timestamp, end_timestamp);
+      break;
+    case CUPTI_DRIVER_TRACE_CBID_cuEventCreate:
+    case CUPTI_DRIVER_TRACE_CBID_cuEventDestroy_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuEventRecord:
+    case CUPTI_DRIVER_TRACE_CBID_cuEventSynchronize:
+    case CUPTI_DRIVER_TRACE_CBID_cuEventElapsedTime:
+    // In some cases, the callback of cuctxsetcurrent is only exist
+    // without entry, so this callback is ignored
+    case CUPTI_DRIVER_TRACE_CBID_cuCtxSetCurrent:
+      break;
+    default:
+      gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "others_api", start_timestamp, end_timestamp);
+      break;
+  }
+}
+
 void CUPTICallBackFunc(void *user_data, CUpti_CallbackDomain domain, CUpti_CallbackId cb_id,
                        const CUpti_CallbackData *cb_data) {
   if (domain != CUPTI_CB_DOMAIN_DRIVER_API) {
@@ -113,63 +165,10 @@ void CUPTICallBackFunc(void *user_data, CUpti_CallbackDomain domain, CUpti_Callb
     return;
   }
 
-  uint64_t start_timestamp;
-  uint64_t end_timestamp;
-
   if (cb_data->callbackSite == CUPTI_API_ENTER) {
     *cb_data->correlationData = GetCUPTITimeStamp();
-
   } else if (cb_data->callbackSite == CUPTI_API_EXIT) {
-    start_timestamp = *cb_data->correlationData;
-    end_timestamp = GetCUPTITimeStamp();
-
-    switch (cb_id) {
-      case CUPTI_DRIVER_TRACE_CBID_cuLaunchKernel:
-      case CUPTI_DRIVER_TRACE_CBID_cuLaunchCooperativeKernel:
-      case CUPTI_DRIVER_TRACE_CBID_cuLaunchCooperativeKernelMultiDevice:
-        gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "cuLaunchKernel", start_timestamp, end_timestamp);
-        break;
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpy:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoD_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoH_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoD_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAtoH_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAtoD_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoA_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAtoA_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpy2D_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpy2DUnaligned_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpy3D_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoA_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAsync:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoDAsync_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoHAsync_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoDAsync_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAtoHAsync_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpy2DAsync_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpy3DAsync_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoAAsync_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyPeer:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemcpyPeerAsync:
-        gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "cuMemcpy", start_timestamp, end_timestamp);
-        break;
-      case CUPTI_DRIVER_TRACE_CBID_cuMemAlloc:
-      case CUPTI_DRIVER_TRACE_CBID_cuMemAlloc_v2:
-        gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "cuMemAlloc", start_timestamp, end_timestamp);
-        break;
-      case CUPTI_DRIVER_TRACE_CBID_cuEventCreate:
-      case CUPTI_DRIVER_TRACE_CBID_cuEventDestroy_v2:
-      case CUPTI_DRIVER_TRACE_CBID_cuEventRecord:
-      case CUPTI_DRIVER_TRACE_CBID_cuEventSynchronize:
-      case CUPTI_DRIVER_TRACE_CBID_cuEventElapsedTime:
-      // In some cases, the callback of cuctxsetcurrent is only exist
-      // without entry, so this callback is ignored
-      case CUPTI_DRIVER_TRACE_CBID_cuCtxSetCurrent:
-        break;
-      default:
-        gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "others_api", start_timestamp, end_timestamp);
-        break;
-    }
+    CUPTIApiExit(gpu_profiler_inst, cb_id, cb_data);
   }
 }
 
@@ -240,21 +239,7 @@ void GPUProfiler::EventLog(const Event &event) {
                 << ",stream_id:" << event.stream_id << ",cb_id:" << event.cb_id;
 }
 
-void GPUProfiler::OpsParser() {
-  MS_LOG(INFO) << "Count the number of events size:" << events_.size()
-               << " callback api:" << cupti_callback_events_count_ << " activity:" << cupti_activity_events_count_;
-
-  if (cupti_activity_events_drop_count_ > 0 || cupti_callback_events_drop_count_ > 0) {
-    MS_LOG(WARNING)
-      << "The total number of events exceeded the profiler's processing capacity, Some events were discarded."
-      << " callback api events:" << cupti_activity_events_drop_count_
-      << " activity api events:" << cupti_callback_events_drop_count_;
-  }
-
-  if (events_.size() == 0) {
-    return;
-  }
-
+void GPUProfiler::ProcessEvents() {
   for (Event &event : events_) {
     if (event.op_name.empty()) {
       FixOpNameByCorrelationId(&event);
@@ -286,7 +271,24 @@ void GPUProfiler::OpsParser() {
       }
     }
   }
+}
 
+void GPUProfiler::OpsParser() {
+  MS_LOG(INFO) << "Count the number of events size:" << events_.size()
+               << " callback api:" << cupti_callback_events_count_ << " activity:" << cupti_activity_events_count_;
+
+  if (cupti_activity_events_drop_count_ > 0 || cupti_callback_events_drop_count_ > 0) {
+    MS_LOG(WARNING)
+      << "The total number of events exceeded the profiler's processing capacity, some events were discarded."
+      << " activity api events:" << cupti_activity_events_drop_count_
+      << " callback api events:" << cupti_callback_events_drop_count_;
+  }
+
+  if (events_.size() == 0) {
+    return;
+  }
+
+  ProcessEvents();
   MS_LOG(DEBUG) << "GPU_profiler, op_name, op_count , kernel_count, kernel_api_count,|"
                    ",cupti_activity_total_time, cupti_api_call_total_time, op_host_cost_total_time,|"
                    ",cupti_activity_average_time,cupti_api_call_average_time, op_host_cost_average_time"
@@ -490,8 +492,7 @@ void CUPTIAPI ActivityProcessBuffer(CUcontext ctx, uint32_t streamId, uint8_t *b
   GPUProfiler::GetInstance()->ProcessBuffer(ctx, streamId, buffer, size, validSize);
 }
 
-void HandleActivityMemcpyRecord(Event *profilingData, CUpti_Activity *record) {
-  CUpti_ActivityMemcpy *memcpy = reinterpret_cast<CUpti_ActivityMemcpy *>(record);
+void ProcessActivityMemcpyRecord(Event *profilingData, CUpti_Activity *record, CUpti_ActivityMemcpy *memcpy) {
   switch (memcpy->copyKind) {
     case CUPTI_ACTIVITY_MEMCPY_KIND_HTOD:
       profilingData->activity_type = ActivityType::kMemcpyH2D;
@@ -534,6 +535,12 @@ void HandleActivityMemcpyRecord(Event *profilingData, CUpti_Activity *record) {
       profilingData->kernel_name = "MemcpyUnknown";
       break;
   }
+}
+
+void HandleActivityMemcpyRecord(Event *profilingData, CUpti_Activity *record) {
+  CUpti_ActivityMemcpy *memcpy = reinterpret_cast<CUpti_ActivityMemcpy *>(record);
+  ProcessActivityMemcpyRecord(profilingData, record, memcpy);
+
   profilingData->kernel_type = "cuMemcpy";
   profilingData->api_type = CUPTIApiType::kActivity;
   profilingData->start_time_stamp = memcpy->start;
@@ -687,7 +694,6 @@ REGISTER_PYBIND_DEFINE(GPUProfiler_, ([](const py::module *m) {
                            .def("sync_enable", &GPUProfiler::SyncEnable, py::arg("enable_flag"),
                                 "enable or disable synchronization profiling");
                        }));
-
 }  // namespace gpu
 }  // namespace profiler
 }  // namespace mindspore

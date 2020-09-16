@@ -25,7 +25,6 @@
 namespace mindspore {
 namespace profiler {
 namespace gpu {
-
 struct OpDetailInfo {
   std::string op_type_;
   std::string op_name_;
