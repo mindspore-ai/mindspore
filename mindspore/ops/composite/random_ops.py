@@ -49,7 +49,8 @@ def normal(shape, mean, stddev, seed=0):
         shape (tuple): The shape of random tensor to be generated.
         mean (Tensor): The mean μ distribution parameter, which specifies the location of the peak.
           With float32 data type.
-        stddev (Tensor): The deviation σ distribution parameter. With float32 data type.
+        stddev (Tensor): The deviation σ distribution parameter. It should be greater than 0.
+          With float32 data type.
         seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
           Must be non-negative. Default: 0.
 
@@ -136,8 +137,8 @@ def gamma(shape, alpha, beta, seed=0):
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
-        alpha (Tensor): The alpha α distribution parameter. With float32 data type.
-        beta (Tensor): The beta β distribution parameter. With float32 data type.
+        alpha (Tensor): The alpha α distribution parameter. It should be greater than 0. With float32 data type.
+        beta (Tensor): The beta β distribution parameter. It should be greater than 0. With float32 data type.
         seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
           Must be non-negative. Default: 0.
 
@@ -164,7 +165,7 @@ def poisson(shape, mean, seed=0):
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
-        mean (Tensor): The mean μ distribution parameter. With float32 data type.
+        mean (Tensor): The mean μ distribution parameter. It should be greater than 0. With float32 data type.
         seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
           Must be non-negative. Default: 0.
 
