@@ -180,7 +180,12 @@ class Parameter(MetaTensor):
 
     @property
     def inited_param(self):
-        """Get the new parameter after call the init_data."""
+        """
+        Get the new parameter after call the init_data.
+
+        Default is a None, If `self` is a Parameter with out data, after call the
+        `init_data` the initialized Parameter with data will be recorded here.
+        """
         return self._inited_param
 
 
@@ -232,7 +237,14 @@ class Parameter(MetaTensor):
 
     @property
     def is_init(self):
-        """Get the initialization status of the parameter."""
+        """
+        Get the initialization status of the parameter.
+
+        In GE backend, the Parameter need a "init graph" to sync the data from host to device.
+        This flag indicates whether the data as been sync to the device.
+
+        This flag only work in GE, and it will be set to False in other backend.
+        """
         return self._is_init
 
     @is_init.setter
@@ -250,7 +262,8 @@ class Parameter(MetaTensor):
         Clone the parameter.
 
         Args:
-            prefix (str): Namespace of parameter.
+            prefix (str): Namespace of parameter. The cloned Parameter name is
+                combined of prefix and current name: `f"{perfix}.{self.name}"`.
             init (Union[Tensor, str, Initializer, numbers.Number]): Initialize the shape of the parameter.
                 Default: 'same'.
 

@@ -34,6 +34,8 @@ __dtype__ = [
     "float64", "double",
     "bool_", "float_",
     "list_", "tuple_",
+    "int_", "uint",
+    "number", "tensor",
     "string", "type_none",
     "tensor_type",
     "Type"
