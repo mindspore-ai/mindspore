@@ -8,8 +8,8 @@
 #endif
 
 // void IndirectGemmInt8_4x4(int8_t *output, int8_t *input, int8_t *weight, int32_t *bias, size_t ksize, size_t ic4,
-// size_t oc, size_t offset, int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp,
-// int32_t *out_multiplier, int32_t *shift_before, int32_t *shift_after, size_t asymmetric, size_t per_channel);
+// size_t oc, size_t offset, int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp, int32_t *out_multiplier,
+// int32_t *shift_before, int32_t *shift_after, size_t asymmetric, size_t per_channel, size_t per_channel_offset);
 // x0: output, x1: input, x2: weight, x3: bias, x4: kSize, x5: ic4, x6: oc, x7: offset
 IndirectGemmInt8_4x4:
 
@@ -52,10 +52,7 @@ IndirectGemmInt8_4x4:
     ldr x19, [sp, #48]
     ldr x20, [sp, #56]
     ldr x21, [sp, #64]
-
-    add x24, x6, #3
-    mov x23, #4
-    sdiv x23, x24, x23
+    ldr x23, [sp, #72]
 
     mul x5, x4, x5
     mov x4, #1
@@ -218,10 +215,10 @@ IndirectGemmInt8_4x4:
                 // load sum
                 mov x22, x15
                 cbz x21, SymSum
-                ld1r {v8.4s}, [x22], x23
-                ld1r {v9.4s}, [x22], x23
-                ld1r {v10.4s}, [x22], x23
-                ld1r {v11.4s}, [x22]
+                ld1 {v8.4s}, [x22], x23
+                ld1 {v9.4s}, [x22], x23
+                ld1 {v10.4s}, [x22], x23
+                ld1 {v11.4s}, [x22]
                 b AddSum
             SymSum:
                 ld1r {v8.4s}, [x22], #4

@@ -9,8 +9,8 @@
 #endif
 
 // void IndirectGemmInt8_2x4(int8_t *output, int8_t *input, int8_t *weight, int32_t *bias, size_t ksize, size_t ic4,
-// size_t oc, size_t offset, int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp, size_t out_multiplier,
-// size_t shift_before, size_t shift_after);
+// size_t oc, size_t offset, int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp, int32_t *out_multiplier,
+// int32_t *shift_before, int32_t *shift_after, size_t asymmetric, size_t per_channel, size_t per_channel_offset);
 // r0: output, r1: input, r2: weight, r3: bias, r4: kSize, r5: ic4, r6: oc, r7: offset
 // r8: input_sum, r10: act_min, r11: act_max, r10: out_zp, r11: out_multiplier, r10: shift_before, r11: shift_after
 IndirectGemmInt8_2x4:
@@ -24,7 +24,7 @@ IndirectGemmInt8_2x4:
         veor q15, q15, q15
     .endm
 
-       // at return, clang generates "push {lr}, pop {pc}"" while gcc will generate "bx lr"
+    // at return, clang generates "push {lr}, pop {pc}"" while gcc will generate "bx lr"
     // according to https://stackoverflow.com/questions/53625807
     // even if we jump to link register instead of saving it, we still have to save it in subroutine calls anyway
     // clang's rule seems more simple, though there are no subroutine calls here
@@ -127,10 +127,6 @@ IndirectGemmInt8_2x4:
                 vpadal.s16 q14, q6
                 vpadal.s16 q15, q7
 
-                // load sum
-                ldr r10, [sp, #16]
-                vld1.32 q0[], [r10]!
-                vld1.32 q1[], [r10]!
                 // pairwise add
                 vpadd.i32 d16, d16, d17
                 vpadd.i32 d18, d18, d19
@@ -145,8 +141,27 @@ IndirectGemmInt8_2x4:
                 vpadd.i32 d17, d20, d22
                 vpadd.i32 d24, d24, d26
                 vpadd.i32 d25, d28, d30
+
+                // load sum
+                ldr lr, [sp, #44]
+                cmp lr, #0
+                beq NoSum
+                ldr r10, [sp, #16]
+                ldr lr, [sp, #48]
+                cmp lr, #0
+                beq SymSum
+                ldr lr, [sp, #52]
+                vld1.32 q0, [r10]
+                add r10, r10, lr
+                vld1.32 q1, [r10]
+                b AddSum
+            SymSum:
+                vld1.32 q0[], [r10]!
+                vld1.32 q1[], [r10]!
+            AddSum:
                 vsub.i32 q8, q8, q0
                 vsub.i32 q12, q12, q1
+            NoSum:
                 cmp r3, #0
                 beq NoBias
                 vld1.32 q2, [r3]
@@ -154,18 +169,30 @@ IndirectGemmInt8_2x4:
                 vadd.i32 q12, q12, q2
 
             NoBias:
-                ldr r10, [sp, #36]
-                vdup.32 q3, r10
+                ldr lr, [sp, #48]
+                cmp lr, #0
+                bne PerChannel
+                ldr lr, [sp, #36]
+                vld1.32 q3[], [lr]
+                ldr lr, [sp, #32]
+                vld1.32 q4[], [lr]
+                ldr lr, [sp, #40]
+                vld1.32 q5[], [lr]
+                b QuantizeStart
+            PerChannel:
+                ldr lr, [sp, #36]
+                vld1.32 q3, [lr]
+                ldr lr, [sp, #32]
+                vld1.32 q4, [lr]
+                ldr lr, [sp, #40]
+                vld1.32 q5, [lr]
+            QuantizeStart:
                 vshl.s32 q8, q8, q3
                 vshl.s32 q12, q12, q3
 
-                ldr r10, [sp, #32]
-                vdup.32 q4, r10
                 vqrdmulh.s32 q8, q8, q4
                 vqrdmulh.s32 q12, q12, q4
 
-                ldr r10, [sp, #40]
-                vdup.32 q5, r10
                 vand q3, q5, q8
                 vshr.s32 q3, q3, #31
                 vqadd.s32 q8, q8, q3
@@ -192,7 +219,7 @@ IndirectGemmInt8_2x4:
 
                 vqmovn.s32 d30, q8
                 vqmovn.s32 d31, q12
-                vqmovn.s16 d0, q14
+                vqmovn.s16 d0, q15
 
             // prefetching is not prefered while writing results in spite of cache missings
             // you could try prfm pstl2strm
@@ -234,6 +261,26 @@ IndirectGemmInt8_2x4:
 
         cmp r6, #4
         ble LoopOcEnd
+        ldr lr, [sp, #48]
+        cmp lr, #0
+        beq NoChannelForward
+        ldr lr, [sp, #44]
+        cmp lr, #0
+        beq NoSumForward
+        ldr lr, [sp, #16]
+        add lr, lr, #16
+        str lr, [sp, #16]
+    NoSumForward:
+        ldr lr, [sp, #36]
+        add lr, lr, #16
+        str lr, [sp, #36]
+        ldr lr, [sp, #32]
+        add lr, lr, #16
+        str lr, [sp, #32]
+        ldr lr, [sp, #40]
+        add lr, lr, #16
+        str lr, [sp, #40]
+    NoChannelForward:
         sub r6, r6, #4
         cmp r3, #0
         beq NoStepFowrard

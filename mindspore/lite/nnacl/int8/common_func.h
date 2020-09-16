@@ -37,18 +37,25 @@ void ConvDwInt8Row(int32_t *output_ptr, const int8_t *input_ptr, const int16_t *
                    int output_channel, int input_step, int8_t input_zp);
 void ConvDwInt8PostAlign4(int8_t *dst, int32_t *buffer, int num_pixels, int32_t output_zp, int32_t out_multiplier,
                           int32_t left_shift, int32_t right_shift, int32_t acc_min, int32_t acc_max);
+void IndirectGemmInt16to32_8x4(int32_t *dst, const int16_t *src, const int16_t *weight, size_t ksize, size_t ic8,
+                               size_t oc4, size_t offset);
+#endif
+
+#ifdef ENABLE_ARM32
+void IndirectGemmInt8_2x4(int8_t *output, const int8_t *input, const int8_t *weight, const int32_t *bias, size_t ksize,
+                          size_t ic4, size_t oc, size_t offset, const int32_t *input_sum, size_t act_min,
+                          size_t act_max, size_t out_zp, int32_t *out_multiplier, int32_t *shift_before,
+                          int32_t *shift_after, size_t asymmetric, size_t per_channel, size_t per_channel_offset);
 #endif
 
 #ifdef ENABLE_ARM64
 void PostFuncInt8C4Neon64(const int32_t *in, const int32_t *bias, int8_t *out, size_t oc4div, size_t oc4res,
                           size_t plane, size_t stride, int32_t multiplier, int32_t left_shift, int32_t right_shift,
                           int32_t zp, int32_t mini, int32_t maxi);
-void IndirectGemmInt16to32_8x4(int32_t *dst, const int16_t *src, const int16_t *weight, size_t ksize, size_t ic8,
-                               size_t oc4, size_t offset);
 void IndirectGemmInt8_4x4(int8_t *output, const int8_t *input, const int8_t *weight, const int32_t *bias, size_t ksize,
                           size_t ic4, size_t oc, size_t offset, const int32_t *input_sum, size_t act_min,
                           size_t act_max, size_t out_zp, int32_t *out_multiplier, int32_t *shift_before,
-                          int32_t *shift_after, size_t asymmetric, size_t per_channel);
+                          int32_t *shift_after, size_t asymmetric, size_t per_channel, size_t per_channel_offset);
 void DeconvDwInt8Center(int32_t *dst, const int16_t *src, const int16_t *weight, size_t height, size_t width,
                         size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,
                         size_t in_sw_step, size_t in_kh_step, size_t in_kw_step);
