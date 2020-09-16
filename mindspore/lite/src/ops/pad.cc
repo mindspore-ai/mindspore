@@ -64,8 +64,6 @@ int Pad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs)
     return RET_NULL_PTR;
   }
 
-  auto paddings = GetPaddings();
-
   auto input = inputs.front();
   if (input == nullptr) {
     return RET_NULL_PTR;
@@ -79,6 +77,27 @@ int Pad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs)
   if (!GetInferFlag()) {
     return RET_OK;
   }
+
+  std::vector<int> paddings;
+  if (GetPaddingMode() == static_cast<int>(schema::PaddingMode_CONSTANT)) {
+    paddings = GetPaddings();
+  } else {
+    // mirror pad
+    MS_ASSERT(inputs.size() == 2);
+    auto paddings_tensor = inputs.at(1);
+    int rank = static_cast<int>(inputs.front()->shape().size());
+    MS_ASSERT(paddings_tensor->ElementsNum() == 2 * rank);
+    int *paddings_data = reinterpret_cast<int *>(paddings_tensor->MutableData());
+    if (paddings_data == nullptr) {
+      return RET_INFER_ERR;
+    }
+    paddings.clear();
+    for (auto i = 0; i < rank; ++i) {
+      paddings.emplace_back(paddings_data[i * 2]);
+      paddings.emplace_back(paddings_data[i * 2 + 1]);
+    }
+  }
+
   auto input_shape = input->shape();
   std::vector<int> output_shape;
   MS_ASSERT(input->shape().size() <= 4);
