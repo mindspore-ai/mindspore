@@ -87,7 +87,6 @@ def fake_quant_perchannel_grad_compute(dout, x, min_val, max_val, quant_min, qua
     quant_min = te.lang.cce.broadcast(quant_min, minmax_shape, x.dtype)
     quant_max = te.lang.cce.broadcast(quant_max, minmax_shape, x.dtype)
 
-    # CalNudge(NudgeMinMax)
     scale = te.lang.cce.vdiv(te.lang.cce.vsub(
         max_val, min_val), te.lang.cce.vsub(quant_max, quant_min))
     zp_from_min = te.lang.cce.vsub(quant_min, te.lang.cce.vdiv(min_val, scale))

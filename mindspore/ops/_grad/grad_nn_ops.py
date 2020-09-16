@@ -678,16 +678,13 @@ def get_bprop_top_kv2(self):
 
     def bprop(input_x, k, out, dout):
 
-        # (n1, n2, ...., n_p), in_lastdim = n_p
         in_shape = shape_op(input_x)
         in_lastdim = in_shape[-1]
 
-        # (n_1, ... n_(p-1), k), ind_lastdim = k
         indices = out[1]
         ind_shape = shape_op(indices)
         ind_lastdim = ind_shape[-1]
 
-        # (n_1*n_2..*n_(p-1), k),  outerdim = n_1*n_2..*n_(p-1)
         ind_2d = reshape_op(indices, (-1, ind_lastdim))
         outerdim = shape_op(ind_2d)[0]
 

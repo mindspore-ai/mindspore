@@ -92,7 +92,6 @@ def fake_quant_per_layer_grad_compute(dout, x, min_val, max_val, quant_min, quan
         max_val = te.lang.cce.vmax(te.lang.cce.vmuls(min_val, -1.), max_val)
         min_val = te.lang.cce.vmuls(max_val, -1.)
 
-    # CalNudge(NudgeMinMax)
     scale = te.lang.cce.vdiv(te.lang.cce.vsub(
         max_val, min_val), te.lang.cce.vsub(quant_max, quant_min))
     zp_from_min = te.lang.cce.vsub(quant_min, te.lang.cce.vdiv(min_val, scale))

@@ -745,7 +745,6 @@ class BNTrainingUpdate(PrimitiveWithInfer):
     def __init__(self, isRef=True, epsilon=1e-5, factor=0.1):
         self.init_prim_io_names(inputs=['x', 'sum', 'square_sum', 'scale', 'b', 'mean', 'variance'],
                                 outputs=['y', 'running_mean', 'running_variance', 'save_mean', 'save_inv_variance'])
-        #self.isRef = validator.check_integer('isRef', isRef, [0, 1], Rel.IN)
         self.epsilon = validator.check_number_range('epsilon', epsilon, 0, 1, Rel.INC_RIGHT, 'BNTrainingUpdate')
         self.factor = validator.check_number_range('factor', factor, 0, 1, Rel.INC_BOTH, 'BNTrainingUpdate')
 
