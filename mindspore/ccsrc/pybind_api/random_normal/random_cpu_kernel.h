@@ -38,7 +38,7 @@ class NormalDistribution<T, float> {
     const uint32_t exp = static_cast<uint32_t>(127);
     const uint32_t val = (exp << 23) | temp_value;
     errno_t mem_ret;
-    mem_ret = memcpy_s(output, sizeof(val), &val, sizeof(val));
+    mem_ret = memcpy_s(output, sizeof(float), &val, sizeof(uint32_t));
     if (mem_ret != EOK) {
       MS_LOG(ERROR) << "UInt32ToFloat32 memcpy is failed";
       return false;
@@ -71,10 +71,13 @@ bool FillRandoms(PhiloxGenerator generator, float *output, int64_t vet_size, int
   generator.JumpStep((vet_size * thread_Id + gResultNum - 1) / gResultNum);
   for (int32_t i = 0; i < vet_size; i += gResultNum) {
     auto outputResult = distribution(&generator);
+    size_t max_length = 0;
     if (vet_size - i >= gResultNum) {
-      mem_ret = memcpy_s(&output[i], gResultNum * sizeof(float), &outputResult[0], gResultNum * sizeof(float));
+      max_length = gResultNum * sizeof(float);
+      mem_ret = memcpy_s(&output[i], max_length, &outputResult[0], max_length);
     } else {
-      mem_ret = memcpy_s(&output[i], (vet_size - i) * sizeof(float), &outputResult[0], (vet_size - i) * sizeof(float));
+      max_length = (vet_size - i) * sizeof(float);
+      mem_ret = memcpy_s(&output[i], max_length, &outputResult[0], max_length);
     }
     if (mem_ret != EOK) {
       MS_LOG(ERROR) << "FillRandoms memcpy is failed";

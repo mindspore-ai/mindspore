@@ -33,6 +33,8 @@ class PhiloxGenerator {
     counter_[3] = static_cast<uint32_t>(seed_ >> 32);
   }
 
+  ~PhiloxGenerator() = default;
+
   void Jump();
 
   void JumpStep(uint64_t step);
