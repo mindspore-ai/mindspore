@@ -50,7 +50,7 @@ void LoadActivationData(void *dst, size_t dst_size, const std::string &file_path
 
 template <typename T>
 void CompareRes(lite::Tensor *output_tensor, const std::string &standard_answer_file) {
-  auto *output_data = reinterpret_cast<T *>(output_tensor->MutableData());
+  auto *output_data = reinterpret_cast<T *>(output_tensor->data_c());
   size_t output_size = output_tensor->Size();
   auto expect_data = reinterpret_cast<T *>(mindspore::lite::ReadFile(standard_answer_file.c_str(), &output_size));
   constexpr float atol = 0.001;
@@ -70,7 +70,7 @@ void CompareRes(lite::Tensor *output_tensor, const std::string &standard_answer_
 template <typename T>
 void printf_tensor(const std::string &str, mindspore::lite::Tensor *in_data) {
   MS_LOG(INFO) << str;
-  auto input_data = reinterpret_cast<T *>(in_data->MutableData());
+  auto input_data = reinterpret_cast<T *>(in_data->data_c());
   for (int i = 0; i < in_data->ElementsNum(); ++i) {
     printf("%f ", input_data[i]);
   }
@@ -107,7 +107,7 @@ TEST_F(TestActivationOpenCL, ReluFp_dim4) {
   std::vector<lite::Tensor *> inputs{input_tensor};
   std::vector<lite::Tensor *> outputs{output_tensor};
   inputs[0]->MallocData(allocator);
-  LoadActivationData(inputs[0]->MutableData(), inputs[0]->Size(), in_file);
+  LoadActivationData(inputs[0]->data_c(), inputs[0]->Size(), in_file);
   if (enable_fp16) {
     printf_tensor<float16_t>("ReluFp16:--input data---", inputs[0]);
   } else {
@@ -221,7 +221,7 @@ TEST_F(TestActivationOpenCL, Relu6Fp_dim4) {
   auto allocator = ocl_runtime->GetAllocator();
   inputs[0]->MallocData(allocator);
   MS_LOG(INFO) << "Initialize input data";
-  LoadActivationData(inputs[0]->MutableData(), inputs[0]->Size(), in_file);
+  LoadActivationData(inputs[0]->data_c(), inputs[0]->Size(), in_file);
   if (enable_fp16) {
     printf_tensor<float16_t>("Relu6:FP16--input data--", inputs[0]);
   } else {
@@ -336,7 +336,7 @@ TEST_F(TestActivationOpenCL, SigmoidFp_dim4) {
   auto allocator = ocl_runtime->GetAllocator();
   inputs[0]->MallocData(allocator);
   MS_LOG(INFO) << "Initialize input data";
-  LoadActivationData(inputs[0]->MutableData(), inputs[0]->Size(), in_file);
+  LoadActivationData(inputs[0]->data_c(), inputs[0]->Size(), in_file);
   if (enable_fp16) {
     printf_tensor<float16_t>("Sigmoid:FP16--input data--", inputs[0]);
   } else {
@@ -451,7 +451,7 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
   auto allocator = ocl_runtime->GetAllocator();
   inputs[0]->MallocData(allocator);
   MS_LOG(INFO) << "Initialize input data";
-  LoadActivationData(inputs[0]->MutableData(), inputs[0]->Size(), in_file);
+  LoadActivationData(inputs[0]->data_c(), inputs[0]->Size(), in_file);
   if (enable_fp16) {
     printf_tensor<float16_t>("Leaky Relu:FP16--input data--", inputs[0]);
   } else {
@@ -566,7 +566,7 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
   auto allocator = ocl_runtime->GetAllocator();
   inputs[0]->MallocData(allocator);
   MS_LOG(INFO) << "Initialize input data";
-  LoadActivationData(inputs[0]->MutableData(), inputs[0]->Size(), in_file);
+  LoadActivationData(inputs[0]->data_c(), inputs[0]->Size(), in_file);
   if (enable_fp16) {
     printf_tensor<float16_t>("Tanh:FP16--input data--", inputs[0]);
   } else {

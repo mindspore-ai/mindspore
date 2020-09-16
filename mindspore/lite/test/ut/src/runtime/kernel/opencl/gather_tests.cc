@@ -71,7 +71,7 @@ void test_main_gather(void *input_data, void *correct_data, const std::vector<in
   sub_graph->Init();
 
   MS_LOG(INFO) << " init tensors ";
-  memcpy(inputs[0]->MutableData(), input_data, input_size);
+  memcpy(inputs[0]->data_c(), input_data, input_size);
 
   sub_graph->Run();
 

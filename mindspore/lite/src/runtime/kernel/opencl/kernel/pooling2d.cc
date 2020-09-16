@@ -135,8 +135,8 @@ int PoolingOpenCLKernel::Run() {
   cl_int2 padding = {parameter_->pad_u_, parameter_->pad_l_};
 
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, output_shape);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, stride);

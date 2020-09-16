@@ -47,7 +47,7 @@ void BiasAddOpenCLKernel::InitBuffer() {
   BiasAdd_ = allocator->Malloc(div_ci * C4NUM * fp_size, img_size);
   BiasAdd_ = allocator->MapBuffer(BiasAdd_, CL_MAP_WRITE, nullptr, true);
   memset(BiasAdd_, 0x00, div_ci * C4NUM * fp_size);
-  memcpy(BiasAdd_, in_tensors_[1]->MutableData(), C * fp_size);
+  memcpy(BiasAdd_, in_tensors_[1]->data_c(), C * fp_size);
   allocator->UnmapBuffer(BiasAdd_);
 }
 
@@ -93,8 +93,8 @@ int BiasAddOpenCLKernel::Run() {
   int arg_idx = 0;
   std::map<schema::Format, int> data_type{
     {schema::Format::Format_NC4, 1}, {schema::Format::Format_NHWC4, 2}, {schema::Format::Format_NC4HW4, 3}};
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape_);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, BiasAdd_);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, data_type[op_format_]);

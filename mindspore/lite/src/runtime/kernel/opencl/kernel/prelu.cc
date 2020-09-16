@@ -50,22 +50,22 @@ void PReluOpenCLKernel::InitBuffer() {
   if (enable_fp16_) {
     if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
       auto PReluWeight_fp16 = reinterpret_cast<uint16_t *>(PReluWeight_);
-      auto in_tensor_data_fp32 = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+      auto in_tensor_data_fp32 = reinterpret_cast<float *>(in_tensors_[1]->data_c());
       for (int i = 0; i < elem_num; i++) {
         PReluWeight_fp16[i] = static_cast<float16_t>(in_tensor_data_fp32[i]);
       }
     } else {
-      memcpy(PReluWeight_, in_tensors_[1]->MutableData(), elem_num * fp_size);
+      memcpy(PReluWeight_, in_tensors_[1]->data_c(), elem_num * fp_size);
     }
   } else {
     if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
       auto PReluWeight_fp32 = reinterpret_cast<float *>(PReluWeight_);
-      auto in_tensor_data_fp16 = reinterpret_cast<float16_t *>(in_tensors_[1]->MutableData());
+      auto in_tensor_data_fp16 = reinterpret_cast<float16_t *>(in_tensors_[1]->data_c());
       for (int i = 0; i < elem_num; i++) {
         PReluWeight_fp32[i] = static_cast<float>(in_tensor_data_fp16[i]);
       }
     } else {
-      memcpy(PReluWeight_, in_tensors_[1]->MutableData(), elem_num * fp_size);
+      memcpy(PReluWeight_, in_tensors_[1]->data_c(), elem_num * fp_size);
     }
   }
   allocator->UnmapBuffer(PReluWeight_);
@@ -110,8 +110,8 @@ int PReluOpenCLKernel::Run() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::map<schema::Format, int> data_type{{schema::Format::Format_NHWC4, 1}, {schema::Format::Format_NC4HW4, 2}};
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape_);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, PReluWeight_);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, data_type[op_format_]);

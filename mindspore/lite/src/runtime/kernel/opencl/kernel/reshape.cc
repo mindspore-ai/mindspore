@@ -36,7 +36,10 @@ int ReshapeOpenCLKernel::Init() {
   kernel_name += "_" + std::string(EnumNameFormat(op_format_));
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   enable_fp16_ = ocl_runtime->GetFp16Enable();
-
+  if (out_tensors_[0]->shape().size() != 2 && out_tensors_[0]->shape().size() != 4) {
+    MS_LOG(ERROR) << "Reshape output size should in 2,4";
+    return RET_ERROR;
+  }
   if (in_tensors_[0]->shape().back() != out_tensors_[0]->shape().back()) {
     MS_LOG(ERROR) << "Reshape input channel " << in_tensors_[0]->shape().back() << " should equal output channel"
                   << out_tensors_[0]->shape().back();
@@ -115,8 +118,8 @@ int ReshapeOpenCLKernel::Run() {
   cl_int4 size = {h, w, c4, 1};
   cl_int4 size_out = {oh, ow, c4, 1};
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, size);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, size_out);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);

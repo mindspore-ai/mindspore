@@ -121,11 +121,11 @@ int TransposeOpenCLKernel::Run() {
   cl_int2 HW = {h * w, hw4};
   cl_int2 C = {c, c4};
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->MutableData());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   if (out_mem_type_ == OpenCLMemType::BUF) {
-    ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData(), lite::opencl::MemType::BUF);
+    ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
   } else {
-    ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->MutableData());
+    ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   }
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, HW);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, C);

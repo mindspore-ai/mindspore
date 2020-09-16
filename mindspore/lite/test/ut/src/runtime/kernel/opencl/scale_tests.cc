@@ -132,8 +132,8 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   } else {
     tensor_scale->MallocData();
     tensor_offset->MallocData();
-    memcpy(tensor_scale->MutableData(), data_scale, sizeof(T));
-    memcpy(tensor_offset->MutableData(), data_offset, sizeof(T));
+    memcpy(tensor_scale->data_c(), data_scale, sizeof(T));
+    memcpy(tensor_offset->data_c(), data_offset, sizeof(T));
   }
   std::vector<lite::Tensor *> outputs = {tensor_out};
 
@@ -196,21 +196,21 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   }
   kernel->Init();
 
-  memcpy(inputs[0]->MutableData(), data_in, sizeof(T) * element_num);
+  memcpy(inputs[0]->data_c(), data_in, sizeof(T) * element_num);
   if (!is_broadcast) {
-    memcpy(inputs[1]->MutableData(), data_scale, sizeof(T) * element_num_b);
-    memcpy(inputs[2]->MutableData(), data_offset, sizeof(T) * element_num_b);
+    memcpy(inputs[1]->data_c(), data_scale, sizeof(T) * element_num_b);
+    memcpy(inputs[2]->data_c(), data_offset, sizeof(T) * element_num_b);
   }
 
   kernel->Run();
 
-  memcpy(data_out_ocl, outputs[0]->MutableData(), sizeof(T) * element_num);
+  memcpy(data_out_ocl, outputs[0]->data_c(), sizeof(T) * element_num);
 
   LogData<T>(data_in, 10, "Data input : ");
   LogData<T>(data_scale, tensor_scale->shape().empty() ? 1 : 10, "Data scale : ");
   LogData<T>(data_offset, tensor_offset->shape().empty() ? 1 : 10, "Data offset : ");
   LogData<T>(data_out_cpu, 10, "Expect compute : ");
-  LogData<T>(outputs[0]->MutableData(), 10, "OpenCL compute : ");
+  LogData<T>(outputs[0]->data_c(), 10, "OpenCL compute : ");
   bool cmp = DataCompare(data_out_cpu, data_out_ocl, element_num);
   MS_LOG(INFO) << "Compare " << (cmp ? "success!" : "failed!");
   EXPECT_EQ(true, cmp);

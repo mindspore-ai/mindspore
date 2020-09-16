@@ -312,7 +312,7 @@ int SubGraphOpenCLKernel::ReSize() { return RET_OK; }
 int SubGraphOpenCLKernel::Run() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   for (auto &tensor : in_tensors_) {
-    allocator_->UnmapBuffer(tensor->MutableData());
+    allocator_->UnmapBuffer(tensor->data_c());
   }
 
   lite::opencl::OpenCLExecutor executor;

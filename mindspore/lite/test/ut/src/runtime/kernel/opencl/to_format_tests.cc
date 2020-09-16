@@ -76,7 +76,7 @@ TEST_F(TestToFormatOpenCL, ToFormatNHWC2NCHW) {
     return;
   }
   pGraph->Init();
-  memcpy(inputs[0]->MutableData(), input_data, input_size);
+  memcpy(inputs[0]->data_c(), input_data, input_size);
   pGraph->Run();
 
   size_t output_size;
@@ -87,7 +87,7 @@ TEST_F(TestToFormatOpenCL, ToFormatNHWC2NCHW) {
     return;
   }
   printf("==================output data=================\n");
-  float *output_data = reinterpret_cast<float *>(tensor_out->MutableData());
+  float *output_data = reinterpret_cast<float *>(tensor_out->data_c());
   std::cout << std::endl;
   int size_n = h * w * c;
   size_n = size_n > 100 ? 100 : size_n;
