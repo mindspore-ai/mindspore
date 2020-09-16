@@ -58,7 +58,6 @@ int BNGradCPUKernel::Run() {
   auto *output_dx = out_tensors_.at(0);
   auto *output_scale = out_tensors_.at(1);
   auto *output_bias = out_tensors_.at(2);
-  // Tensor *bias = input[5];
   int batch = input_x->Batch();
   int channels = input_x->Channel();
   int spatial = input_x->Height() * input_x->Width();

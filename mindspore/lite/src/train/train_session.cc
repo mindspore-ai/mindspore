@@ -59,7 +59,6 @@ TrainSession::~TrainSession() {
 }
 
 void *TrainSession::ExportToBuf(lite::Model *model, void *buf, size_t *len) const {
-  // return model->ExportBuf(buf, len);
   return nullptr;
 }
 
@@ -79,9 +78,6 @@ int TrainSession::RunGraph(const session::KernelCallBack &before, const session:
   }
 
   MS_EXCEPTION_IF_NULL(this->context_);
-  // TODO(Emir)
-  // SetMaxWokerNum(context_->thread_num_);
-  // context_->running_ = true;
   lite::Executor executor;
   if (before == nullptr && after == nullptr) {
     return executor.Run(this->inputs_, this->outputs_, infference_kernels, this->context_->allocator.get());

@@ -33,17 +33,15 @@ int DependCPUKernel::Init() { return RET_OK; }
 int DependCPUKernel::ReSize() { return 0; }
 
 int DependCPUKernel::Run() {
-#if 0
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-  auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-
-  memcpy(out, in, in_tensors_.at(0)->Size());
-#endif
+//  auto ret = Prepare();
+//  if (ret != RET_OK) {
+//    MS_LOG(ERROR) << "Prepare failed.";
+//    return RET_ERROR;
+//  }
+//  auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+//  auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+//
+//  memcpy(out, in, in_tensors_.at(0)->Size());
   return RET_OK;
 }
 

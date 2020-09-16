@@ -18,7 +18,6 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
-// #include "include/lite_session.h"
 #include "src/lite_session.h"
 
 namespace mindspore {
