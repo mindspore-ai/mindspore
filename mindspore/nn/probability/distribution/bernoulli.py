@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob, check_type, check_distribution_name, set_param_type
-from ._utils.custom_ops import exp_generic, log_generic, erf_generic
+from ._utils.custom_ops import exp_generic, log_generic
 
 
 class Bernoulli(Distribution):
@@ -132,7 +132,6 @@ class Bernoulli(Distribution):
         # ops needed for the class
         self.exp = exp_generic
         self.log = log_generic
-        self.erf = erf_generic
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
         self.const = P.ScalarToArray()
