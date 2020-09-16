@@ -186,7 +186,6 @@ int Benchmark::CompareOutput() {
     } else {
       tensor = tensors.front();
     }
-    MS_ASSERT(tensor->GetDataType() == DataType_DT_FLOAT);
     MS_ASSERT(tensor->GetData() != nullptr);
     float bias = 0;
     switch (msCalibDataType) {
@@ -196,6 +195,10 @@ int Benchmark::CompareOutput() {
       }
       case TypeId::kNumberTypeInt8: {
         bias = CompareData<int8_t>(nodeOrTensorName, tensor->shape(), static_cast<int8_t *>(tensor->MutableData()));
+        break;
+      }
+      case TypeId::kNumberTypeUInt8: {
+        bias = CompareData<uint8_t>(nodeOrTensorName, tensor->shape(), static_cast<uint8_t *>(tensor->MutableData()));
         break;
       }
       case TypeId::kNumberTypeInt32: {

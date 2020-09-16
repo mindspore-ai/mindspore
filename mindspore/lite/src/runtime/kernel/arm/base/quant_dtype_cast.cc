@@ -53,6 +53,18 @@ int QuantDTypeCastCPUKernel::Init() {
       return RET_ERROR;
     }
     inverse_ = true;
+  } else if (param->srcT == kNumberTypeUInt8 && param->dstT == kNumberTypeInt8) {
+    if (in_tensor->data_type() != kNumberTypeUInt8 || out_tensor->data_type() != kNumberTypeInt8) {
+      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+      return RET_ERROR;
+    }
+    inverse_ = false;
+  } else if (param->srcT == kNumberTypeInt8 && param->dstT == kNumberTypeUInt8) {
+    if (in_tensor->data_type() != kNumberTypeInt8 || out_tensor->data_type() != kNumberTypeUInt8) {
+      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+      return RET_ERROR;
+    }
+    inverse_ = true;
   } else {
     MS_LOG(ERROR) << "param data type not supported:"
                   << " src: " << param->srcT << " dst: " << param->dstT;
@@ -83,16 +95,25 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
     MS_LOG(ERROR) << "QuantDTypeCast need quantization parameters which is not found.";
     return RET_ERROR;
   }
-  auto quant_arg = !in_tensors_.front()->GetQuantParams().empty() ? in_tensors_.front()->GetQuantParams().front() :
-                   out_tensors_.front()->GetQuantParams().front();
+  auto quant_arg = !in_tensors_.front()->GetQuantParams().empty() ? in_tensors_.front()->GetQuantParams().front()
+                                                                  : out_tensors_.front()->GetQuantParams().front();
   int ret;
-  if (inverse_) {
-    ret = DoDequantizeInt8(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
-                           quant_arg.zeroPoint, num_unit_thread);
+  if (uint8_ptr_ == nullptr) {
+    if (inverse_) {
+      ret = DoDequantizeInt8ToFp32(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
+                                   quant_arg.zeroPoint, num_unit_thread);
+    } else {
+      ret = DoQuantizeToInt8FromFp32(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
+                                     quant_arg.zeroPoint, num_unit_thread);
+    }
   } else {
-    ret = DoQuantizeToInt8(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
-                           quant_arg.zeroPoint, num_unit_thread);
+    if (inverse_) {
+      ret = DoDequantizeInt8ToUInt8(int8_ptr_ + thread_offset, uint8_ptr_ + thread_offset, num_unit_thread);
+    } else {
+      ret = DoQuantizeToInt8FromUint8(uint8_ptr_ + thread_offset, int8_ptr_ + thread_offset, num_unit_thread);
+    }
   }
+
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "QuantDTypeCast error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
@@ -116,12 +137,23 @@ int QuantDTypeCastCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  if (inverse_) {
-    int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
-    float32_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
-  } else {
-    float32_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
-    int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
+
+  if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
+      out_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32) {
+    int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
+    float32_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->data_c());
+  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32 &&
+             out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
+    float32_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->data_c());
+    int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
+  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
+             out_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8) {
+    int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
+    uint8_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c());
+  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8 &&
+             out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
+    uint8_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_[0]->data_c());
+    int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
   }
 
   auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, QuantDTypeCastRun, this, thread_n_num_);
@@ -156,6 +188,7 @@ kernel::LiteKernel *CpuQuantDTypeCastFp32KernelCreator(const std::vector<lite::T
   }
   return kernel;
 }
+REG_KERNEL(kCPU, kNumberTypeUInt8, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp32KernelCreator)
 }  // namespace mindspore::kernel

@@ -66,7 +66,8 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::warmUpLoopCount, "warmUpLoopCount", "Run warm up loop", 3);
     // MarkAccuracy
     AddFlag(&BenchmarkFlags::calibDataPath, "calibDataPath", "Calibration data file path", "");
-    AddFlag(&BenchmarkFlags::calibDataType, "calibDataType", "Calibration data type. FLOAT | INT32 | INT8", "FLOAT");
+    AddFlag(&BenchmarkFlags::calibDataType, "calibDataType", "Calibration data type. FLOAT | INT32 | INT8 | UINT8",
+            "FLOAT");
     AddFlag(&BenchmarkFlags::accuracyThreshold, "accuracyThreshold", "Threshold of accuracy", 0.5);
   }
 
@@ -222,8 +223,10 @@ class MS_API Benchmark {
   std::vector<mindspore::tensor::MSTensor *> msInputs;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> msOutputs;
   std::unordered_map<std::string, CheckTensor *> calibData;
-  std::unordered_map<std::string, TypeId> dataTypeMap{
-    {"FLOAT", TypeId::kNumberTypeFloat}, {"INT8", TypeId::kNumberTypeInt8}, {"INT32", TypeId::kNumberTypeInt32}};
+  std::unordered_map<std::string, TypeId> dataTypeMap{{"FLOAT", TypeId::kNumberTypeFloat},
+                                                      {"INT8", TypeId::kNumberTypeInt8},
+                                                      {"INT32", TypeId::kNumberTypeInt32},
+                                                      {"UINT8", TypeId::kNumberTypeUInt8}};
   TypeId msCalibDataType = TypeId::kNumberTypeFloat;
 };
 

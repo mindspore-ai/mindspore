@@ -72,8 +72,8 @@ function Run_Converter() {
           continue
         fi
         echo ${model_name} >> "${run_converter_log_file}"
-        echo './converter_lite  --fmk=MS --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_converter_log_file}"
-        ./converter_lite  --fmk=MS --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}
+        echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=MINDIR --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}
         if [ $? = 0 ]; then
             converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
         else
