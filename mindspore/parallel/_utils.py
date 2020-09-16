@@ -32,6 +32,18 @@ def _get_full_batch():
     """Get whether to use full_batch."""
     return auto_parallel_context().get_full_batch()
 
+def _check_full_batch():
+    """
+    full_batch could only be used under semi_auto_parallel or auto_parallel, check it.
+
+    Raises:
+        RuntimeError: Using full_batch under neither semi_auto_parallel nor auto_parallel.
+    """
+    parallel_mode = _get_parallel_mode()
+    full_batch = _get_full_batch()
+    if ((parallel_mode not in ("semi_auto_parallel", "auto_parallel")) and full_batch):
+        raise RuntimeError("full_batch could only be used under semi_auto_parallel or auto_parallel.")
+
 
 def _need_to_full():
     """Check whether to convert input to full shape or tensor."""
