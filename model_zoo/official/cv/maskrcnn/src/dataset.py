@@ -406,9 +406,14 @@ def create_coco_label(is_training):
     image_anno_dict = {}
     masks = {}
     masks_shape = {}
-    for img_id in image_ids:
+    images_num = len(image_ids)
+    for ind, img_id in enumerate(image_ids):
         image_info = coco.loadImgs(img_id)
         file_name = image_info[0]["file_name"]
+        image_path = os.path.join(coco_root, data_type, file_name)
+        if not os.path.isfile(image_path):
+            print("{}/{}: {} is in annotations but not exist".format(ind + 1, images_num, image_path))
+            continue
         anno_ids = coco.getAnnIds(imgIds=img_id, iscrowd=None)
         anno = coco.loadAnns(anno_ids)
         image_path = os.path.join(coco_root, data_type, file_name)
@@ -416,7 +421,8 @@ def create_coco_label(is_training):
         instance_masks = []
         image_height = coco.imgs[img_id]["height"]
         image_width = coco.imgs[img_id]["width"]
-        print("image file name: ", file_name)
+        if (ind + 1) % 10 == 0:
+            print("{}/{}: parsing annotation for image={}".format(ind + 1, images_num, file_name))
         if not is_training:
             image_files.append(image_path)
             image_anno_dict[image_path] = np.array([0, 0, 0, 0, 0, 1])
@@ -478,13 +484,16 @@ def data_to_mindrecord_byte_image(dataset="coco", is_training=True, prefix="mask
     }
     writer.add_schema(maskrcnn_json, "maskrcnn_json")
 
-    for image_name in image_files:
+    image_files_num = len(image_files)
+    for ind, image_name in enumerate(image_files):
         with open(image_name, 'rb') as f:
             img = f.read()
         annos = np.array(image_anno_dict[image_name], dtype=np.int32)
         mask = masks[image_name]
         mask_shape = masks_shape[image_name]
         row = {"image": img, "annotation": annos, "mask": mask, "mask_shape": mask_shape}
+        if (ind + 1) % 10 == 0:
+            print("writing {}/{} into mindrecord".format(ind + 1, image_files_num))
         writer.write_raw_data([row])
     writer.commit()
 

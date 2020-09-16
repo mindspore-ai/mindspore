@@ -108,7 +108,7 @@ class BboxAssignSampleForRcnn(nn.Cell):
         self.round = P.Round()
         self.image_h_w = Tensor([cfg.img_height, cfg.img_width, cfg.img_height, cfg.img_width], dtype=mstype.float16)
         self.range = nn.Range(start=0, limit=cfg.num_expected_pos_stage2)
-        self.crop_and_resize = P.CropAndResize()
+        self.crop_and_resize = P.CropAndResize(method="bilinear_v2")
         self.mask_shape = (cfg.mask_shape[0], cfg.mask_shape[1])
         self.squeeze_mask_last = P.Squeeze(axis=-1)
     def construct(self, gt_bboxes_i, gt_labels_i, valid_mask, bboxes, gt_valids, gt_masks_i):
