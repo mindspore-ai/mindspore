@@ -27,7 +27,6 @@ using std::vector;
 
 namespace mindspore {
 namespace serving {
-
 using inference::DataType;
 using inference::InferTensorBase;
 
@@ -191,6 +190,5 @@ const inference::InferImagesBase *ServingImagesRequest::operator[](size_t index)
   }
   return &(cache_[index]);
 }
-
 }  // namespace serving
 }  // namespace mindspore

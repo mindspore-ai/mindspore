@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace inference {
-
 class AclSession : public InferSession {
  public:
   AclSession();

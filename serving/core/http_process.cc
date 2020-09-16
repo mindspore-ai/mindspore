@@ -32,7 +32,6 @@ using nlohmann::json;
 
 namespace mindspore {
 namespace serving {
-
 const int BUF_MAX = 0x7FFFFFFF;
 static constexpr char HTTP_DATA[] = "data";
 static constexpr char HTTP_TENSOR[] = "tensor";
@@ -550,6 +549,5 @@ void http_handler_msg(struct evhttp_request *const req, void *const arg) {
   evbuffer_free(retbuff);
   MSI_TIME_STAMP_END(TotalRestfulPredict)
 }
-
 }  // namespace serving
 }  // namespace mindspore

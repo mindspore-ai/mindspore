@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace serving {
-
 using inference::FAILED;
 using inference::INVALID_INPUTS;
 using inference::Status;
@@ -57,7 +56,6 @@ class Session {
 
   Status PredictInner(const PredictRequest &request, PredictReply &reply);
 };
-
 }  // namespace serving
 }  // namespace mindspore
 #endif  // MINDSPORE_SERVER_H

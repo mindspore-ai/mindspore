@@ -19,7 +19,6 @@
 #include "util/status.h"
 namespace mindspore {
 namespace serving {
-
 class Server {
  public:
   Server() = default;
