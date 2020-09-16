@@ -63,58 +63,50 @@ class StandardNormal(PrimitiveWithInfer):
         return out
 
 
-class Laplace(PrimitiveWithInfer):
+class StandardLaplace(PrimitiveWithInfer):
     r"""
-    Generates random numbers according to the Laplace random number distribution.
+    Generates random numbers according to the Laplace random number distribution (mean=0, lambda=1).
     It is defined as:
 
     .. math::
-        \text{f}(x;μ,λ) = \frac{1}{2λ}\exp(-\frac{|x-μ|}{λ}),
+        \text{f}(x;0,1) = \frac{1}{2}\exp(-|x|),
 
     Args:
-        seed (int): Seed data is used as entropy source for Random number engines to generate pseudo-random numbers.
-          Default: 0.
+        seed (int): Random seed. Default: 0.
+        seed2 (int): Random seed2. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
-        - **mean** (Tensor) - The mean μ distribution parameter, which specifies the location of the peak.
-          With float32 data type.
-        - **lambda_param** (Tensor) - The parameter used for controling the variance of this random distribution. The
-          variance of Laplace distribution is equal to twice the square of lambda_param. With float32 data type.
 
     Outputs:
-        Tensor, has the specified shape and its dtype is float32.
+        Tensor. The shape that the input 'shape' denotes. The dtype is float32.
 
     Examples:
         >>> shape = (4, 16)
-        >>> mean = Tensor(1.0, mstype.float32)
-        >>> lambda_param = Tensor(1.0, mstype.float32)
-        >>> laplace = P.Laplace(seed=2)
-        >>> output = laplace(shape, mean, lambda_param)
+        >>> stdlaplace = P.StandardLaplace(seed=2)
+        >>> output = stdlaplace(shape)
     """
 
     @prim_attr_register
-    def __init__(self, seed=0):
-        """Init Laplace"""
-        self.init_prim_io_names(inputs=['shape', 'mean', 'lambda_param'], outputs=['output'])
+    def __init__(self, seed=0, seed2=0):
+        """Init StandardLaplace"""
+        self.init_prim_io_names(inputs=['shape'], outputs=['output'])
         validator.check_value_type('seed', seed, [int], self.name)
+        validator.check_value_type('seed2', seed2, [int], self.name)
 
-    def __infer__(self, shape, mean, lambda_param):
+    def __infer__(self, shape):
         shape_v = shape["value"]
         if shape_v is None:
             raise ValueError(f"For {self.name}, shape must be const.")
         validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             validator.check_integer("shape[%d]" % i, shape_i, 0, Rel.GT, self.name)
-        validator.check_tensor_type_same({"mean": mean["dtype"]}, [mstype.float32], self.name)
-        validator.check_tensor_type_same({"lambda_param": lambda_param["dtype"]}, [mstype.float32], self.name)
-        broadcast_shape = get_broadcast_shape(mean['shape'], lambda_param['shape'], self.name)
-        broadcast_shape = get_broadcast_shape(broadcast_shape, shape_v, self.name)
         out = {
-            'shape': broadcast_shape,
+            'shape': shape_v,
             'dtype': mstype.float32,
             'value': None}
         return out
+
 
 
 class Gamma(PrimitiveWithInfer):

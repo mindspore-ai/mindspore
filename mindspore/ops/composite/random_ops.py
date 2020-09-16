@@ -76,6 +76,44 @@ def normal(shape, mean, stddev, seed=0):
     value = random_normal * stddev + mean
     return value
 
+def laplace(shape, mean, lambda_param, seed=0):
+    r"""
+    Generates random numbers according to the Laplace random number distribution.
+    It is defined as:
+
+    .. math::
+        \text{f}(x;μ,λ) = \frac{1}{2λ}\exp(-\frac{|x-μ|}{λ}),
+
+    Args:
+        shape (tuple): The shape of random tensor to be generated.
+        mean (Tensor): The mean μ distribution parameter, which specifies the location of the peak.
+          With float32 data type.
+        lambda_param (Tensor): The parameter used for controling the variance of this random distribution. The
+          variance of Laplace distribution is equal to twice the square of lambda_param. With float32 data type.
+        seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: 0.
+
+    Returns:
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of mean and lambda_param.
+        The dtype is float32.
+
+    Examples:
+        >>> shape = (4, 16)
+        >>> mean = Tensor(1.0, mstype.float32)
+        >>> lambda_param = Tensor(1.0, mstype.float32)
+        >>> output = C.laplace(shape, mean, lambda_param, seed=5)
+    """
+    mean_dtype = F.dtype(mean)
+    lambda_param_dtype = F.dtype(lambda_param)
+    const_utils.check_tensors_dtype_same(mean_dtype, mstype.float32, "laplace")
+    const_utils.check_tensors_dtype_same(lambda_param_dtype, mstype.float32, "laplace")
+    seed1 = get_seed()
+    seed2 = seed
+    stdlaplace = P.StandardLaplace(seed1, seed2)
+    rnd = stdlaplace(shape)
+    value = rnd * lambda_param + mean
+    return value
+
 def uniform(shape, minval, maxval, seed=0, dtype=mstype.float32):
     """
     Generates random numbers according to the Uniform random number distribution.
