@@ -55,11 +55,11 @@ int ConcatOpenCLKernel::RunAxis0() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto allocator_ = ocl_runtime->GetAllocator();
   std::vector<size_t> img_size;
-  auto dst_data = out_tensors_[0]->MutableData();
+  auto dst_data = out_tensors_[0]->data_c();
   auto dst_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
   for (int i = 0; i < in_tensors_.size(); i++) {
-    auto src_data = in_tensors_[i]->MutableData();
+    auto src_data = in_tensors_[i]->data_c();
     allocator_->GetImageSize(src_data, &img_size);
     auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
     auto region = cl::array<cl::size_type, 3U>{img_size[0], img_size[1], 1};
@@ -176,9 +176,9 @@ int ConcatOpenCLKernel::Run() {
 
   int arg_cn = 0;
   if (in_tensors_.size() == 2) {
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->MutableData());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->MutableData());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->MutableData());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape1_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape2_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
@@ -187,10 +187,10 @@ int ConcatOpenCLKernel::Run() {
     auto input3_shape = in_tensors_[2]->shape();
     cl_int4 input_shape3_ = {input3_shape[0], input3_shape[1], input3_shape[2], UP_DIV(input3_shape[3], C4NUM)};
 
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->MutableData());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->MutableData());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->MutableData());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->MutableData());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->data_c());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape1_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape2_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape3_);
@@ -202,11 +202,11 @@ int ConcatOpenCLKernel::Run() {
     cl_int4 input_shape3_ = {input3_shape[0], input3_shape[1], input3_shape[2], UP_DIV(input3_shape[3], C4NUM)};
     cl_int4 input_shape4_ = {input4_shape[0], input4_shape[1], input4_shape[2], UP_DIV(input4_shape[3], C4NUM)};
 
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->MutableData());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->MutableData());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->MutableData());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[3]->MutableData());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->MutableData());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->data_c());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[3]->data_c());
+    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape1_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape2_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape3_);

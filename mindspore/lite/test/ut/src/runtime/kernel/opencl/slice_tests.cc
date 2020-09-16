@@ -130,12 +130,12 @@ TEST_F(TestSliceOpenCLfp32, Slicefp32input_dim4) {
   sub_graph->Init();
 
   MS_LOG(INFO) << " init tensors ";
-  memcpy(inputs[0]->MutableData(), input_data, input_size);
+  memcpy(inputs[0]->data_c(), input_data, input_size);
 
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
 
-  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->MutableData());
+  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
   for (auto tensor : inputs) {
     delete tensor;
@@ -238,12 +238,12 @@ TEST_F(TestSliceOpenCLfp16, Slicefp16input_dim4) {
   sub_graph->Init();
 
   MS_LOG(INFO) << " init tensors ";
-  memcpy(inputs[0]->MutableData(), input_data, input_size);
+  memcpy(inputs[0]->data_c(), input_data, input_size);
 
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
 
-  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
+  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
   for (auto tensor : inputs) {
     delete tensor;
