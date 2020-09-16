@@ -43,6 +43,12 @@ int KernelRegistry::Init() {
   } else {
     MS_LOG(INFO) << "load optimize lib failed.";
   }
+  void *float16_op_handler = Float16Module::GetInstance()->float16_op_handler_;
+  if (float16_op_handler != nullptr) {
+    MS_LOG(INFO) << "load float16 lib success.";
+  } else {
+    MS_LOG(INFO) << "load float16 lib failed.";
+  }
 #endif
   return RET_OK;
 }

@@ -1,45 +1,42 @@
 project(nnacl)
 
 set(NNACL_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 include_directories(NNACL_DIR)
 
-########################### optimized files ###########################
-file(GLOB OPTIMIZED_ASSEMBLY
-        ${NNACL_DIR}/assembly/opt/*.s
-        ${NNACL_DIR}/assembly/opt/*.S
-        )
+if (PLATFORM_ARM32 OR PLATFORM_ARM64)
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math")
+    endif()
+endif ()
 
-file(GLOB FP16_SRC
-        ${NNACL_DIR}/fp16/*.c
-        ${TOP_DIR}/src/runtime/kernel/arm/fp16/*.cc
-        )
+########################### files ###########################
+file(GLOB KERNEL_SRC
+    ${NNACL_DIR}/*.c
+    ${NNACL_DIR}/fp32/*.c
+    ${NNACL_DIR}/int8/*.c
+    ${NNACL_DIR}/quantization/*.c
+)
 
-########################### share library build ########################
-set(OPTIMIZED_OPS ${NNACL_DIR}/opt_op_handler.c)
-
-set_property(SOURCE ${OPTIMIZED_ASSEMBLY} PROPERTY LANGUAGE C)
-list(APPEND OPTIMIZED_OPS ${OPTIMIZED_ASSEMBLY} ${FP16_SRC})
+if (SUPPORT_TRAIN)
+    file (GLOB TRAIN_SRC ${NNACL_DIR}/fp32_grad/*.c)
+endif()
 
 if (PLATFORM_ARM64)
-    string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8.2-a+dotprod+fp16")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.2-a+dotprod+fp16")
-    add_library(optimize SHARED ${OPTIMIZED_OPS})
-    target_link_libraries(
-            optimize
-            mindspore-lite
-    )
-    set_target_properties(optimize PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/assembly/arm64/*.S)
+    set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
+endif()
 
-    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-        add_custom_command(TARGET optimize POST_BUILD
-            COMMAND ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
-            ${TOP_DIR}/build/nnacl/liboptimize.so)
-    endif ()
+if (PLATFORM_ARM32)
+    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/assembly/arm32/*.S)
+    set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
+endif()
 
-    add_custom_command(TARGET optimize POST_BUILD
-            COMMAND rm -rf ${TOP_DIR}/output/lib/liboptimize.so
-            COMMAND mkdir -pv ${TOP_DIR}/output/lib
-            COMMAND cp ${TOP_DIR}/build/nnacl/liboptimize.so ${TOP_DIR}/output/lib)
-endif ()
+########################### build nnacl static library ########################
+string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+add_library(nnacl STATIC ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})
+
+########################### arm64 build optimize library ########################
+if (PLATFORM_ARM64)
+    add_subdirectory(${NNACL_DIR}/optimize)
+endif()

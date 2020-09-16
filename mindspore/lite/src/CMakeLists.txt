@@ -1,7 +1,12 @@
+
+set(LITE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
+include_directories(${LITE_DIR}/nnacl/)
+include_directories(${LITE_DIR}/nnacl/optimize)
+
 if (PLATFORM_ARM32 OR PLATFORM_ARM64)
-  # for performance
+#for performance
   if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    #-fno-rtti -fno-exceptions
+#- fno - rtti - fno - exceptions
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math")
   endif()
@@ -65,21 +70,11 @@ set_target_properties(mindspore-lite_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
 if (SUPPORT_GPU)
   add_subdirectory(runtime/kernel/opencl)
-  target_link_libraries(mindspore-lite
-      cpu_kernel_mid
-      opencl_kernel_mid
-      )
-  target_link_libraries(mindspore-lite_static
-      cpu_kernel_mid
-      opencl_kernel_mid
-      )
+  target_link_libraries(mindspore-lite cpu_kernel_mid opencl_kernel_mid nnacl)
+  target_link_libraries(mindspore-lite_static cpu_kernel_mid opencl_kernel_mid nnacl)
 else ()
-  target_link_libraries(mindspore-lite
-      cpu_kernel_mid
-      )
-  target_link_libraries(mindspore-lite_static
-      cpu_kernel_mid
-      )
+  target_link_libraries(mindspore-lite cpu_kernel_mid nnacl)
+  target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl)
 endif ()
 if (PLATFORM_ARM32 OR PLATFORM_ARM64)
   target_link_libraries(mindspore-lite log)
@@ -104,5 +99,26 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     add_custom_command(TARGET mindspore-lite POST_BUILD
         COMMAND strip ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite.so)
   endif ()
+endif ()
+
+########################## build optimize and float16 library #################################3
+if (PLATFORM_ARM64)
+  add_library(mindspore-lite-optimize SHARED)
+  target_link_libraries(mindspore-lite-optimize cpu_opt_kernel_mid)
+  target_link_libraries(mindspore-lite-optimize nnacl_optimize)
+
+  add_library(mindspore-lite-fp16 SHARED)
+  target_link_libraries(mindspore-lite-fp16 cpu_fp16_kernel_mid)
+  target_link_libraries(mindspore-lite-fp16 nnacl_fp16)
+endif ()
+
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND (PLATFORM_ARM64))
+  add_custom_command(TARGET mindspore-lite-optimize POST_BUILD COMMAND
+    ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
+    ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite-optimize.so)
+
+  add_custom_command(TARGET mindspore-lite-fp16 POST_BUILD COMMAND
+    ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
+    ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite-fp16.so)
 endif ()
 

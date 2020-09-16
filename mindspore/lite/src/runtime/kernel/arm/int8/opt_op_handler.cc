@@ -34,10 +34,6 @@ extern void MatmulInt8DpNeon64(const int8_t *a, const int8_t *b, int8_t *dst, in
                                int *multiplier, int *left_shift, int *right_shift, int row, int col, int stride,
                                size_t peroc);
 
-#ifdef __cplusplus
-}
-#endif
-
 #ifdef ENABLE_ARM64
 void IndirectGemmInt8_optimize_handler(int8_t *dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
                                        size_t ksize, size_t ic4, size_t output_channel, size_t offset,
@@ -59,5 +55,9 @@ void MatMulRInt8_optimize_handler(const int8_t *a, const int8_t *b, int8_t *dst,
                                   int32_t maxi, size_t per_channel) {
   return MatmulInt8DpNeon64(a, b, dst, UP_ROUND(row, 8), UP_ROUND(col, 8), deep_4, input_sum, bias, mini, maxi,
                             output_zp, multiplier, left_shift, right_shift, row, col, stride, per_channel);
+}
+#endif
+
+#ifdef __cplusplus
 }
 #endif
