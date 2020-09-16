@@ -5,4 +5,4 @@ echo '{
     "normalization": "include"
   }
 }' > filter.json
-./icu4c/source/runConfigureICU Linux --enable-rpath --disable-tests --disable-samples --disable-icuio --disable-extras ICU_DATA_FILTER_FILE=filter.json "$@"
+CFLAGS="-fstack-protector -Wl,-z,now -D_FORTIFY_SOURCE=2 -O2" ./icu4c/source/runConfigureICU Linux --enable-rpath --disable-tests --disable-samples --disable-icuio --disable-extras ICU_DATA_FILTER_FILE=filter.json "$@"

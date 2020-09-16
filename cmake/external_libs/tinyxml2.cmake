@@ -1,5 +1,10 @@
-set(tinyxml2_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 -Wno-unused-result")
-set(tinyxml2_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+set(tinyxml2_CXXFLAGS "-fstack-protector -D_FORTIFY_SOURCE=2 -O2 -Wno-unused-result")
+set(tinyxml2_CFLAGS "-fstack-protector -D_FORTIFY_SOURCE=2 -O2")
+
+if (NOT WIN32)
+    set(tinyxml2_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
+endif()
+
 mindspore_add_pkg(tinyxml2
         VER 8.0.0
         LIBS tinyxml2
