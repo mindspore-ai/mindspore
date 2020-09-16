@@ -100,10 +100,10 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   if (PLATFORM_ARM64 OR PLATFORM_ARM32)
     add_custom_command(TARGET mindspore-lite POST_BUILD
         COMMAND ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
-        ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite.so)
+        ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)
   elseif (NOT WIN32)
     add_custom_command(TARGET mindspore-lite POST_BUILD
-        COMMAND strip ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite.so)
+        COMMAND strip ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)
   endif ()
 endif ()
 
