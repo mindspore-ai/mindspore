@@ -1,8 +1,7 @@
-message(STATUS "ENABLE_GE set to FALSE, compiling GraphEngine")
+message(STATUS "compiling GraphEngine")
 set(GE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/graphengine)
 
 message(STATUS "ge dir: ${GE_SOURCE_DIR}")
-# download json headers, rather than whole repository
 include(${GE_SOURCE_DIR}/cmake/ge_utils.cmake)
 include(${GE_SOURCE_DIR}/cmake/external_libs/json.cmake)
 include(${GE_SOURCE_DIR}/cmake/external_libs/eigen.cmake)
@@ -11,7 +10,7 @@ include(${GE_SOURCE_DIR}/cmake/external_libs/protobuf.cmake)
 include(${GE_SOURCE_DIR}/cmake/external_libs/onnx.cmake)
 include(${GE_SOURCE_DIR}/cmake/external_libs/securec.cmake)
 
-# for CPU/GPU mode, find slog from local prebuild
+# for UT, find slog and error_manager from local prebuild
 if (NOT ENABLE_D)
     set(GE_PREBUILD_PATH ${GE_SOURCE_DIR}/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR})
     find_library(slog libslog.so ${GE_PREBUILD_PATH})
