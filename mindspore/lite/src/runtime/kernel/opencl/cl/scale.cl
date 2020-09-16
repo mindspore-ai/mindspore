@@ -31,7 +31,7 @@ __kernel void Scale_C_IMG(__read_only image2d_t input, __read_only image2d_t sca
                           __write_only image2d_t output, const int2 output_shape, const int C) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
-  if (X >= output_shape.x || Y >= output_shape.y) {
+  if (X >= output_shape.x || Y >= output_shape.y || C == 0) {
     return;
   }
 
