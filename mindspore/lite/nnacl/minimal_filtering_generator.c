@@ -16,7 +16,8 @@
 #include "nnacl/minimal_filtering_generator.h"
 #include <string.h>
 #include <math.h>
-#include <stdlib.h>
+#include "nnacl/winograd_utils.h"
+#include "nnacl/errorcode.h"
 
 void Polynomial(float *interval, float *m, int degree) {
   for (int i = 0; i < degree; ++i) {
@@ -53,9 +54,13 @@ void ResidueMatrix(float *interval, float *b, int row, int col) {
   b[len - 1] = 1;
 }
 
-void LT(float *poly_array, float *matrix_lt, int n) {
-  float *coefficient_array = (float *)malloc(n * sizeof(float));
-  float *poly = (float *)malloc(n * sizeof(float));
+int LT(float *poly_array, float *matrix_lt, int n) {
+  if (n > MAX_LEN) {
+    return NNACL_ERR;
+  }
+  float coefficient_array[MAX_LEN];  // n
+  float poly[MAX_LEN];               // n
+
   Polynomial(poly_array, poly, n);
   for (int i = 0; i < n; ++i) {
     // get coefficient
@@ -79,8 +84,7 @@ void LT(float *poly_array, float *matrix_lt, int n) {
       matrix_lt[setp + l] = coefficient_array[l] / poly[i];
     }
   }  // matrix L row loop
-  free(coefficient_array);
-  free(poly);
+  return NNACL_OK;
 }
 
 void T(float *poly_array, float *matrix_t, int n) {
@@ -99,20 +103,22 @@ void T(float *poly_array, float *matrix_t, int n) {
   }
 }
 
-void B(float *poly_array, float *matrix_b, int in_unit) {
+int B(float *poly_array, float *matrix_b, int in_unit) {
   memset(matrix_b, 0, in_unit * in_unit * sizeof(float));
   int n = in_unit - 1;
-  float *matrix_l = (float *)malloc(n * n * sizeof(float));
-  float *matrix_lt = (float *)malloc(n * n * sizeof(float));
-  float *matrix_t = (float *)malloc(n * in_unit * sizeof(float));
+  if ((n * n) > MAX_LEN || (n * in_unit) > MAX_LEN) {
+    return NNACL_ERR;
+  }
+  float matrix_l[MAX_LEN];   // n * n
+  float matrix_lt[MAX_LEN];  // n * n
+  float matrix_t[MAX_LEN];   // n * in_unit
+
   T(poly_array, matrix_t, n);
   LT(poly_array, matrix_lt, n);
   MatrixTranspose(matrix_lt, matrix_l, n, n);
   MatrixMultiply(matrix_l, matrix_t, matrix_b, n, n, in_unit);
   matrix_b[in_unit * in_unit - 1] = 1;
-  free(matrix_l);
-  free(matrix_lt);
-  free(matrix_t);
+  return NNACL_OK;
 }
 
 void GenerateIntervalArray(float *array, float interval, int degree) {
@@ -146,16 +152,19 @@ void MatrixMultiply(const float *matrix_a, const float *matrix_b, float *matrix_
   }
 }
 
-void CookToomFilter(float *matrix_a, float *matrix_at, float *matrix_b, float *matrix_bt, float *matrix_g,
-                    float *matrix_gt, float coefficient, int out_unit, int filter_size) {
+int CookToomFilter(float *matrix_a, float *matrix_at, float *matrix_b, float *matrix_bt, float *matrix_g,
+                   float *matrix_gt, float coefficient, int out_unit, int filter_size) {
   int in_unit = out_unit + filter_size - 1;
   int degree = in_unit - 1;
-  float *polynomial_m = malloc(degree * sizeof(float));
-  float *diagonal_matrix = malloc(in_unit * in_unit * sizeof(float));
-  float *inverse_diagonal_matrix = malloc(in_unit * in_unit * sizeof(float));
+  if (degree > MAX_LEN || (in_unit * in_unit) > MAX_LEN || degree > MAX_LEN || (in_unit * filter_size) > MAX_LEN) {
+    return NNACL_ERR;
+  }
+  float polynomial_m[MAX_LEN];             // degree
+  float diagonal_matrix[MAX_LEN];          // input_unit * input_unit
+  float inverse_diagonal_matrix[MAX_LEN];  // input_unit * input_unit
 
   // get diagonal matrix
-  float *interval = malloc(degree * sizeof(float));
+  float interval[MAX_LEN];  // degree
   GenerateIntervalArray(interval, coefficient, degree);
   Polynomial(interval, polynomial_m, degree);
   DiagonalPlusMatrix(polynomial_m, diagonal_matrix, degree);
@@ -185,17 +194,12 @@ void CookToomFilter(float *matrix_a, float *matrix_at, float *matrix_b, float *m
   MatrixTranspose(matrix_bt, matrix_b, in_unit, in_unit);
 
   // get matrix G && GT
-  float *tmp_g = malloc(in_unit * filter_size * sizeof(float));
+  float tmp_g[MAX_LEN];  // in_unit * filter_size
   ResidueMatrix(interval, matrix_g, in_unit, filter_size);
   MatrixTranspose(matrix_g, tmp_g, in_unit, filter_size);
   MatrixMultiply(tmp_g, inverse_diagonal_matrix, matrix_gt, filter_size, in_unit, in_unit);
   MatrixTranspose(matrix_gt, matrix_g, filter_size, in_unit);
-
-  free(interval);
-  free(polynomial_m);
-  free(diagonal_matrix);
-  free(inverse_diagonal_matrix);
-  free(tmp_g);
+  return NNACL_OK;
 }
 
 #ifdef ENABLE_ARM

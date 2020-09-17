@@ -39,6 +39,7 @@ class LeakyReluInt8CPUKernel : public LeakyReluBaseCPUKernel {
 
  private:
   LeakyReluQuantArg quant_prelu_parm_;
+  QuantArg *input_quant_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

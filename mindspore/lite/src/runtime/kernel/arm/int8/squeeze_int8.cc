@@ -34,6 +34,10 @@ int SqueezeInt8CPUKernel::Init() {
     return init_ret;
   }
   quant_Squeeze_parm_ = new (std::nothrow) SqueezeQuantArg;
+  if (quant_Squeeze_parm_ == nullptr) {
+    MS_LOG(ERROR) << "new quant_Squeeze_parm_ failed.";
+    return RET_ERROR;
+  }
   auto input_num = in_tensors_.size();
   quant_Squeeze_parm_->input_num_ = input_num;
   quant_Squeeze_parm_->input_sizes_ = reinterpret_cast<int *>(malloc(sizeof(int) * input_num));
@@ -115,6 +119,10 @@ int SqueezeInt8CPUKernel::ReSize() {
   quant_Squeeze_parm_->output_size_ = output_size;
 
   quant_Squeeze_parm_->output_shape_ = new int[output_size];
+  if (quant_Squeeze_parm_->output_shape_ == nullptr) {
+    MS_LOG(ERROR) << "new quant_Squeeze_parm_->output_shape_ failed.";
+    return RET_ERROR;
+  }
   ::memcpy(quant_Squeeze_parm_->output_shape_, output_shape.data(), sizeof(int) * output_size);
   return RET_OK;
 }
@@ -127,9 +135,18 @@ int SqueezeInt8CPUKernel::Run() {
   }
   auto input_dim = quant_Squeeze_parm_->input_num_;
   int8_t **inputs_array = reinterpret_cast<int8_t **>(malloc(sizeof(int8_t *) * input_dim));
+  if (inputs_array == nullptr) {
+    MS_LOG(ERROR) << "malloc inputs_array failed.";
+    return RET_ERROR;
+  }
   for (size_t i = 0; i < input_dim; i++) {
     auto input_size = quant_Squeeze_parm_->input_sizes_[i];
     inputs_array[i] = reinterpret_cast<int8_t *>(malloc(sizeof(int8_t) * input_size));
+    if (inputs_array[i] == nullptr) {
+      MS_LOG(ERROR) << "malloc inputs_array[" << i << "]"
+                    << " failed.";
+      return RET_ERROR;
+    }
     auto input_type = in_tensors_[i]->data_type();
     if (input_type == kNumberTypeUInt8) {
       uint8_t *input_tmp = reinterpret_cast<uint8_t *>(in_tensors_[i]->MutableData());

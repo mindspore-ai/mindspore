@@ -60,7 +60,15 @@ int TransposeCPUKernel::ReSize() {
     free(this->out_shape_);
   }
   in_shape_ = reinterpret_cast<int *>(malloc(in_shape.size() * sizeof(int)));
+  if (in_shape_ == nullptr) {
+    MS_LOG(ERROR) << "malloc in_shape_ failed.";
+    return RET_ERROR;
+  }
   out_shape_ = reinterpret_cast<int *>(malloc(out_shape.size() * sizeof(int)));
+  if (out_shape_ == nullptr) {
+    MS_LOG(ERROR) << "malloc out_shape_ failed.";
+    return RET_ERROR;
+  }
   memcpy(in_shape_, in_shape.data(), in_shape.size() * sizeof(int));
   memcpy(out_shape_, out_shape.data(), in_shape.size() * sizeof(int));
   return RET_OK;

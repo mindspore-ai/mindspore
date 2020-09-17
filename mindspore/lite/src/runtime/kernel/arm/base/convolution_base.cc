@@ -22,6 +22,7 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 using mindspore::schema::ActivationType;
 using mindspore::schema::PadMode;
@@ -193,17 +194,17 @@ int ConvolutionBaseCPUKernel::MallocQuantParam() {
   conv_quant_arg_->input_quant_args_ = reinterpret_cast<QuantArg *>(malloc(input_arg_num * sizeof(QuantArg)));
   if (conv_quant_arg_->input_quant_args_ == nullptr) {
     MS_LOG(ERROR) << "malloc input_quant_args_ failed.";
-    return RET_ERROR;
+    return RET_MEMORY_FAILED;
   }
   conv_quant_arg_->filter_quant_args_ = reinterpret_cast<QuantArg *>(malloc(filter_arg_num * sizeof(QuantArg)));
   if (conv_quant_arg_->filter_quant_args_ == nullptr) {
     MS_LOG(ERROR) << "malloc filter_quant_args_ failed.";
-    return RET_ERROR;
+    return RET_MEMORY_FAILED;
   }
   conv_quant_arg_->output_quant_args_ = reinterpret_cast<QuantArg *>(malloc(output_arg_num * sizeof(QuantArg)));
   if (conv_quant_arg_->output_quant_args_ == nullptr) {
     MS_LOG(ERROR) << "malloc output_quant_args_ failed.";
-    return RET_ERROR;
+    return RET_MEMORY_FAILED;
   }
   return RET_OK;
 }
@@ -261,11 +262,35 @@ int ConvolutionBaseCPUKernel::SetQuantMultiplier() {
     weight_arg_num = conv_quant_arg_->filter_arg_num_;
   }
   conv_quant_arg_->real_multiplier_ = reinterpret_cast<double *>(malloc(weight_arg_num * sizeof(double)));
+  if (conv_quant_arg_->real_multiplier_ == nullptr) {
+    MS_LOG(ERROR) << "malloc conv_quant_arg_->real_multiplier_ failed.";
+    return RET_MEMORY_FAILED;
+  }
   conv_quant_arg_->left_shift_ = reinterpret_cast<int32_t *>(malloc(weight_arg_num * sizeof(int32_t)));
+  if (conv_quant_arg_->left_shift_ == nullptr) {
+    MS_LOG(ERROR) << "malloc conv_quant_arg_->left_shift_ failed.";
+    return RET_MEMORY_FAILED;
+  }
   conv_quant_arg_->right_shift_ = reinterpret_cast<int32_t *>(malloc(weight_arg_num * sizeof(int32_t)));
+  if (conv_quant_arg_->right_shift_ == nullptr) {
+    MS_LOG(ERROR) << "malloc conv_quant_arg_->right_shift_ failed.";
+    return RET_MEMORY_FAILED;
+  }
   conv_quant_arg_->quant_multiplier_ = reinterpret_cast<int32_t *>(malloc(weight_arg_num * sizeof(int32_t)));
+  if (conv_quant_arg_->quant_multiplier_ == nullptr) {
+    MS_LOG(ERROR) << "malloc conv_quant_arg_->quant_multiplier_ failed.";
+    return RET_MEMORY_FAILED;
+  }
   conv_quant_arg_->out_act_min_ = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
+  if (conv_quant_arg_->out_act_min_ == nullptr) {
+    MS_LOG(ERROR) << "malloc conv_quant_arg_->out_act_min_ failed.";
+    return RET_MEMORY_FAILED;
+  }
   conv_quant_arg_->out_act_max_ = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
+  if (conv_quant_arg_->out_act_max_ == nullptr) {
+    MS_LOG(ERROR) << "malloc conv_quant_arg_->out_act_max_ failed.";
+    return RET_MEMORY_FAILED;
+  }
 
   for (int i = 0; i < weight_arg_num; ++i) {
     const double in_scale =

@@ -85,6 +85,10 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   }
   memset(packed_weight_, 0, pack_weight_size);
   auto *weight_sum = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t) * output_channel));
+  if (weight_sum == nullptr) {
+    MS_LOG(ERROR) << "malloc weight_sum failed.";
+    return RET_ERROR;
+  }
   for (int i = 0; i < output_channel; i++) weight_sum[i] = 0;
   PackWeightInt8(origin_weight, conv_param_, packed_weight_, weight_sum);
 
@@ -192,6 +196,10 @@ int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
   }
   memset(packed_weight_, 0, pack_weight_size);
   auto *weight_sum = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t) * output_channel));
+  if (weight_sum == nullptr) {
+    MS_LOG(ERROR) << "malloc weight_sum failed.";
+    return RET_ERROR;
+  }
   for (int i = 0; i < output_channel; i++) weight_sum[i] = 0;
   PackWeightInt8Opt(origin_weight, conv_param_, packed_weight_, weight_sum);
 

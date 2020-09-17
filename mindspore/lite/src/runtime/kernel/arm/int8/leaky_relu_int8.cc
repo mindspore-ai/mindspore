@@ -25,6 +25,7 @@
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
@@ -74,6 +75,10 @@ LeakyReluInt8CPUKernel::~LeakyReluInt8CPUKernel() {
     free(quant_prelu_parm_.slope_);
     quant_prelu_parm_.slope_ = nullptr;
   }
+  if (input_quant_ != nullptr) {
+    free(input_quant_);
+    input_quant_ = nullptr;
+  }
 }
 
 int LeakyReluInt8CPUKernel::ReSize() {
@@ -81,10 +86,18 @@ int LeakyReluInt8CPUKernel::ReSize() {
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto input_dim = input_tensor->shape().size();
   MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
+  if (input_quant_ != nullptr) {
+    free(input_quant_);
+    input_quant_ = nullptr;
+  }
   quant_prelu_parm_.input_dim_ = input_dim;
   quant_prelu_parm_.element_num = in_tensors_[0]->Size();
   quant_prelu_parm_.in_shape_ = input_tensor->shape().data();
   quant_prelu_parm_.out_shape_ = out_tensor->shape().data();
+  input_quant_ = static_cast<QuantArg *>(malloc(sizeof(QuantArg) * input_dim));
+  if (input_quant_ == nullptr) {
+    return RET_MEMORY_FAILED;
+  }
   return RET_OK;
 }
 
@@ -106,7 +119,7 @@ int LeakyReluInt8CPUKernel::DoExecute(int task_id) {
   auto out_tensor = out_tensors_.at(kOutputIndex);
   int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->MutableData());
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->MutableData());
-  auto ret = DoLeakReluInt8(input_data, output_data, &quant_prelu_parm_, task_id);
+  auto ret = DoLeakReluInt8(input_data, output_data, &quant_prelu_parm_, input_quant_, task_id);
   if (ret != NNACL_OK) {
     MS_LOG(ERROR) << "DoLeakReluInt8 failed";
     return RET_ERROR;

@@ -41,6 +41,10 @@ void ProcessFilterFp16(float16_t *origin_weight, float16_t *dst_weight, ConvPara
 
   size_t tmp_size = oC8 * C8NUM * iC8 * C8NUM * kernel_plane * sizeof(float16_t);
   auto tmp_addr = reinterpret_cast<float16_t *>(malloc(tmp_size));
+  if (tmp_addr == nullptr) {
+    MS_LOG(ERROR) << "malloc tmp_addr failed.";
+    return;
+  }
   memset(tmp_addr, 0, tmp_size);
 
   PackWeightToC4Fp16(origin_weight, tmp_addr, conv_param);

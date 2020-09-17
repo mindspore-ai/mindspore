@@ -24,6 +24,7 @@
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2D;
 
@@ -40,8 +41,20 @@ int ConvolutionWinogradCPUKernel::WinogradFilterTransform(const float *weight_da
   // trans_filter = G*g*GT (g represents weight_data)
   // separate into two steps ===> tmp = G*g ===> out = tmp * GT
   auto tmp_weight_data = reinterpret_cast<float *>(malloc(kernel_unit_ * kernel_unit_ * sizeof(float)));
+  if (tmp_weight_data == nullptr) {
+    MS_LOG(ERROR) << "malloc tmp_weight_data failed.";
+    return RET_MEMORY_FAILED;
+  }
   auto tmp_data = reinterpret_cast<float *>(malloc(input_unit_ * kernel_unit_ * sizeof(float)));
+  if (tmp_data == nullptr) {
+    MS_LOG(ERROR) << "malloc tmp_data failed.";
+    return RET_MEMORY_FAILED;
+  }
   auto trans_out_data = reinterpret_cast<float *>(malloc(input_unit_ * input_unit_ * sizeof(float)));
+  if (trans_out_data == nullptr) {
+    MS_LOG(ERROR) << "malloc trans_out_data failed.";
+    return RET_MEMORY_FAILED;
+  }
   std::vector<int> shape{input_unit_ * input_unit_, oc_block_num, ic4, C4NUM, oc_block};
   std::vector<int> strides;
   for (int i = 0; i < 4; i++) {
@@ -110,9 +123,8 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
   trans_weight_ = reinterpret_cast<float *>(malloc(trans_matrix_data_size));
   if (trans_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc matrix_buffer failed.";
-    return RET_ERROR;
+    return RET_MEMORY_FAILED;
   }
-
   memset(trans_weight_, 0, trans_matrix_data_size);
 
   float matrix_g[64];
@@ -121,10 +133,14 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
   float matrix_at[64];
   float matrix_b[64];
   float matrix_bt[64];
-  CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, 1.0f, output_unit_, kernel_unit_);
-
+  auto ret =
+    CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, 1.0f, output_unit_, kernel_unit_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "get matrix g from CookToomFilter failed.";
+    return ret;
+  }
   auto weight_data = reinterpret_cast<float *>(filter_tensor->MutableData());
-  auto ret = WinogradFilterTransform(weight_data, matrix_g, matrix_gt, oc_block);
+  ret = WinogradFilterTransform(weight_data, matrix_g, matrix_gt, oc_block);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "winograd filter transfrom failed.";
     return ret;
@@ -133,6 +149,10 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
   // init bias
   size_t new_bias_size = oc4 * C4NUM * sizeof(float);
   bias_data_ = reinterpret_cast<float *>(malloc(new_bias_size));
+  if (bias_data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc bias_data_ failed.";
+    return RET_MEMORY_FAILED;
+  }
   memset(bias_data_, 0, new_bias_size);
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias_addr = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
@@ -162,14 +182,14 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   nhwc4_input_ = ctx_->allocator->Malloc(nhwc4_input_size);
   if (nhwc4_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
-    return RET_ERROR;
+    return RET_MEMORY_FAILED;
   }
 
   size_t tile_buffer_size = thread_count_ * tile_num * input_unit_ * input_unit_ * ic4 * C4NUM * sizeof(float);
   trans_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tile_buffer_size));
   if (trans_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc trans_input_ failed.";
-    return RET_ERROR;
+    return RET_MEMORY_FAILED;
   }
 
   gemm_out_ = reinterpret_cast<float *>(
@@ -186,14 +206,14 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
                                                       output_unit_ * output_unit_ * oc4 * C4NUM * sizeof(float)));
   if (tmp_out_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_out_data_ failed.";
-    return RET_ERROR;
+    return RET_MEMORY_FAILED;
   }
 
   tmp_data_ = reinterpret_cast<float *>(
     ctx_->allocator->Malloc(thread_count_ * C4NUM * input_unit_ * input_unit_ * sizeof(float)));
   if (tmp_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_data_ failed.";
-    return RET_ERROR;
+    return RET_MEMORY_FAILED;
   }
 
   col_buffer_ =

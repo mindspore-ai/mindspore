@@ -117,6 +117,10 @@ int MatmulFP16CPUKernel::ReSize() {
   if (out_tensors_[0]->data_type() == kNumberTypeFloat32) {
     output_ptr_ = reinterpret_cast<float16_t *>(
       ctx_->allocator->Malloc(params_->batch * params_->row_ * params_->col_ * sizeof(float16_t)));
+    if (output_ptr_ == nullptr) {
+        MS_LOG(ERROR) << "malloc output_ptr_ failed.";
+        return RET_MEMORY_FAILED;
+    }
   }
   return RET_OK;
 }

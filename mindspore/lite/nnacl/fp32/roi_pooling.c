@@ -20,7 +20,7 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 
-int ROIPooling(float *in_ptr, float *out_ptr, float *roi, int tid, ROIPoolingParameter *param) {
+int ROIPooling(float *in_ptr, float *out_ptr, float *roi, float *max_c, int tid, ROIPoolingParameter *param) {
   int num_rois = param->output_n_;
   int units = UP_DIV(num_rois, param->thread_num_);
   int roi_st = tid * units;
@@ -37,11 +37,9 @@ int ROIPooling(float *in_ptr, float *out_ptr, float *roi, int tid, ROIPoolingPar
   int pooled_width = param->pooledW_;
   const int roi_stride = 5;
   int roi_ind_st = roi_st * roi_stride;
-  float *max_c = malloc(channels_ * sizeof(float));
   for (int i = roi_st; i < roi_end; ++i) {
     int roi_batch_ind = (int)roi[roi_ind_st];  // batch_index
     if (roi_batch_ind >= batch_size) {
-      free(max_c);
       return NNACL_ERRCODE_INDEX_OUT_OF_RANGE;
     }
     int roi_start_h = (int)roundf(roi[roi_ind_st + 1] * scale);  // top-left x1
@@ -93,6 +91,5 @@ int ROIPooling(float *in_ptr, float *out_ptr, float *roi, int tid, ROIPoolingPar
     }
     roi_ind_st += roi_stride;
   }
-  free(max_c);
   return NNACL_OK;
 }

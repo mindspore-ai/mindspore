@@ -91,6 +91,10 @@ int QuantizedAddCPUKernel::Run() {
   if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
     input0_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
     input1_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
+    if (!input0_data_ || !input1_data_) {
+      MS_LOG(ERROR) << "malloc input0_data_ || input1_data_ failed.";
+      return RET_ERROR;
+    }
 
     TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->MutableData()),
                         static_cast<uint8_t *>(in_tensors_.at(1)->MutableData()),
