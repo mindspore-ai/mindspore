@@ -678,7 +678,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             timeline_dict['args'] = args_dict
         else:
             # Update total time of operator execution.
-            self._timeline_summary['total_time'] += dur
+            self._timeline_summary['total_time'] += dur / factor
             self._timeline_summary['op_exe_times'] += 1
 
         self._timeline_meta.append(timeline_dict)
