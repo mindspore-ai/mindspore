@@ -42,7 +42,7 @@ TEST_F(InferTest, TestConvNode) {
   node->primitive = std::make_unique<schema::PrimitiveT>();
   node->primitive->value.type = schema::PrimitiveType_Conv2D;
   auto primitive = new schema::Conv2DT;
-  primitive->padMode = schema::PadMode_SAME;
+  primitive->padMode = schema::PadMode_SAME_UPPER;
   primitive->channelIn = 3;
   primitive->channelOut = 32;
   primitive->format = schema::Format_NHWC;
@@ -231,18 +231,6 @@ TEST_F(InferTest, TestAddNode) {
   ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
   auto *outData = reinterpret_cast<float *>(outTensor->MutableData());
   ASSERT_NE(nullptr, outData);
-  // //===================================================
-  // size_t output_size;
-  // std::string output_path = "./convfp32_out_1_28_28_32.bin";
-  // ReadFile(output_path.c_str(), &output_size, buf);
-  // ASSERT_NE(nullptr, buf[0]);
-  // auto output_data = reinterpret_cast<float *>(buf[0]);
-  // ASSERT_NE(nullptr, output_data);
-  // //===================================================
-  // ASSERT_EQ(output_size, outTensor->Size());
-  // for (size_t i = 0; i < outTensor->ElementsNum(); i++) {
-  //   ASSERT_EQ(output_data[i], outData[i]);
-  // }
   MS_LOG(INFO) << "Passed";
 }
 
@@ -366,141 +354,4 @@ TEST_F(InferTest, TestModel) {
   auto outputs = session->GetOutputs();
   MS_LOG(INFO) << "Passed";
 }
-
-// TEST_F(TrainTest, TestMultiNode) {
-//  auto msGraph = std::make_shared<schema::GraphDefT>();
-//  msGraph->name = "graph";
-//  auto msSubgraph = std::make_unique<schema::SubGraphDefT>();
-//  msSubgraph->name = "subGraph";
-//
-//  auto conv = std::make_unique<schema::OpDefT>();
-//  conv->inputIndex = {0, 1};
-//  conv->outputIndex = {2};
-//  conv->attr.type = schema::OpT_Conv2D;
-//  auto conv_attr = new schema::Conv2DT;
-//  conv_attr->padMode = schema::PadMode_SAME;
-//  conv_attr->format = schema::Format_NHWC;
-//  conv_attr->strideH = 1;
-//  conv_attr->strideW = 1;
-//  conv_attr->kernelH = 3;
-//  conv_attr->kernelW = 3;
-//  conv_attr->dilateH = 1;
-//  conv_attr->dilateW = 1;
-//
-//  conv->attr.value = conv_attr;
-//  conv->name = "Conv2D";
-//  conv->fmkType = schema::FmkType_CAFFE;
-//  msSubgraph->nodes.emplace_back(std::move(conv));
-//
-//  auto matMul1 = std::make_unique<schema::OpDefT>();
-//  matMul1->inputIndex = {2, 3};
-//  matMul1->outputIndex = {4};
-//  matMul1->attr.type = schema::OpT_MatMul;
-//  auto matMul_attr1 = new schema::MatMulT;
-//  matMul_attr1->transposeA = false;
-//  matMul_attr1->transposeB = true;
-//  matMul1->attr.value = matMul_attr1;
-//  matMul1->name = "matmul1";
-//  matMul1->fmkType = schema::FmkType_CAFFE;
-//  msSubgraph->nodes.emplace_back(std::move(matMul1));
-//
-//  auto matMul2 = std::make_unique<schema::OpDefT>();
-//  matMul2->inputIndex = {4, 5};
-//  matMul2->outputIndex = {6};
-//  matMul2->attr.type = schema::OpT_MatMul;
-//  auto matMul_attr2 = new schema::MatMulT;
-//  matMul_attr2->transposeA = false;
-//  matMul_attr2->transposeB = true;
-//  matMul2->attr.value = matMul_attr2;
-//  matMul2->name = "matmul2";
-//  matMul2->fmkType = schema::FmkType_CAFFE;
-//  msSubgraph->nodes.emplace_back(std::move(matMul2));
-//
-//  msSubgraph->inputIndex = {0};
-//  msSubgraph->outputIndex = {6};
-//
-//  auto input0 = std::make_unique<schema::TensorDefT>();
-//  input0->refCount = schema::MSCONST_WEIGHT_REFCOUNT;
-//  input0->format = schema::Format_NHWC;
-//  input0->dataType = TypeId::kNumberTypeFloat32;
-//  input0->dims = {1, 5, 5, 3};
-//  input0->offset = -1;
-//  msSubgraph->allTensors.emplace_back(std::move(input0));
-//
-//  auto conv_weight = std::make_unique<schema::TensorDefT>();
-//  conv_weight->refCount = schema::MSCONST_WEIGHT_REFCOUNT;
-//  conv_weight->format = schema::Format_KHWC;
-//  conv_weight->dataType = TypeId::kNumberTypeFloat32;
-//  conv_weight->dims = {8, 3, 3, 3};
-//  conv_weight->data.resize(8*3*3*3*sizeof(float));
-//  msSubgraph->allTensors.emplace_back(std::move(conv_weight));
-//
-//  auto conv_output = std::make_unique<schema::TensorDefT>();
-//  conv_output->refCount = 0;
-//  conv_output->format = schema::Format_NHWC;
-//  conv_output->dataType = TypeId::kNumberTypeFloat32;
-//  conv_output->dims = {1, 5, 5, 8};
-//  msSubgraph->allTensors.emplace_back(std::move(conv_output));
-//
-//  auto add_weight = std::make_unique<schema::TensorDefT>();
-//  add_weight->refCount = schema::MSCONST_WEIGHT_REFCOUNT;
-//  add_weight->format = schema::Format_NHWC;
-//  add_weight->dataType = TypeId::kNumberTypeFloat32;
-//  add_weight->dims = {1, 5, 5, 8};
-//  add_weight->data.resize(5*5*8*sizeof(float));
-//  msSubgraph->allTensors.emplace_back(std::move(add_weight));
-//
-//  auto add_output = std::make_unique<schema::TensorDefT>();
-//  add_output->refCount = 0;
-//  add_output->format = schema::Format_NHWC;
-//  add_output->dataType = TypeId::kNumberTypeFloat32;
-//  add_output->dims = {1, 5, 5, 8};
-//  msSubgraph->allTensors.emplace_back(std::move(add_output));
-//
-//  auto mul_weight = std::make_unique<schema::TensorDefT>();
-//  mul_weight->refCount = schema::MSCONST_WEIGHT_REFCOUNT;
-//  mul_weight->format = schema::Format_NHWC;
-//  mul_weight->dataType = TypeId::kNumberTypeFloat32;
-//  mul_weight->dims = {1, 5, 5, 8};
-//  mul_weight->data.resize(5*5*8*sizeof(float));
-//  msSubgraph->allTensors.emplace_back(std::move(mul_weight));
-//
-//  auto mul_output = std::make_unique<schema::TensorDefT>();
-//  mul_output->refCount = 0;
-//  mul_output->format = schema::Format_NHWC;
-//  mul_output->dataType = TypeId::kNumberTypeFloat32;
-//  mul_output->dims = {1, 5, 5, 8};
-//  msSubgraph->allTensors.emplace_back(std::move(mul_output));
-//  msGraph->subgraphs.emplace_back(std::move(msSubgraph));
-//
-//  flatbuffers::FlatBufferBuilder builder(1024);
-//  auto offset = schema::GraphDef::Pack(builder, msGraph.get());
-//  builder.Finish(offset);
-//  size_t size = builder.GetSize();
-//  const char *content = (char *)builder.GetBufferPointer();
-//  const std::string strstub = "";
-//
-//  auto func_graph = inference::LoadModel(content, size, strstub);
-//  ASSERT_NE(nullptr, func_graph);
-//  auto session = inference::MSSession::CreateSession(kCPUDevice, 0);
-//  ASSERT_NE(nullptr, session);
-//  auto graphId = session->CompileGraph(func_graph);
-//
-//  auto inTensor =
-//    std::shared_ptr<inference::MSTensor>(inference::MSTensor::CreateTensor(TypeId::kNumberTypeFloat32, {1, 5, 5, 3}));
-//  ASSERT_NE(nullptr, inTensor);
-//  ASSERT_EQ(sizeof(float) * (5 * 5 * 3), inTensor->Size());
-//  (void)inTensor->MutableData();
-//
-//  std::vector<std::shared_ptr<inference::MSTensor>> inputs;
-//  inputs.emplace_back(inTensor);
-//  auto outputs = session->RunGraph(graphId, inputs);
-//  ASSERT_EQ(1, outputs.size());
-//  ASSERT_EQ(1, outputs.front().size());
-//  auto runOutput = outputs.front().front();
-//  ASSERT_NE(nullptr, runOutput);
-//  ASSERT_EQ(5 * 5 * 8, runOutput->ElementsNum());
-//  ASSERT_EQ(TypeId::kNumberTypeFloat32, runOutput->data_type());
-//  MS_LOG(INFO) << "Passed";
-//}
 }  // namespace mindspore

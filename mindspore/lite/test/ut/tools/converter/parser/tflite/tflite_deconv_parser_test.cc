@@ -47,7 +47,7 @@ TEST_F(TestTfliteParserDeConv, AttrValue) {
   ASSERT_EQ(val->strideW, 1);
   ASSERT_EQ(val->dilateH, 1);
   ASSERT_EQ(val->dilateW, 1);
-  ASSERT_EQ(val->padMode, schema::PadMode_SAME);
+  ASSERT_EQ(val->padMode, schema::PadMode_SAME_UPPER);
   ASSERT_EQ(val->padUp, 1);
   ASSERT_EQ(val->padDown, 1);
   ASSERT_EQ(val->padLeft, 1);

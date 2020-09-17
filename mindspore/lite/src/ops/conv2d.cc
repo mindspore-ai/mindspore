@@ -156,7 +156,7 @@ void Conv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT
   if (pad_mode == "valid") {
     attr->padMode = schema::PadMode_VALID;
   } else if (pad_mode == "same") {
-    attr->padMode = schema::PadMode_SAME;
+    attr->padMode = schema::PadMode_SAME_UPPER;
   } else {
     attr->padMode = schema::PadMode_NOTSET;
   }
@@ -221,7 +221,7 @@ void Conv2D::PopulaterConv2DSingleGroup(const Primitive &prim, schema::Primitive
   if (pad_mode == "valid") {
     attr->padMode = schema::PadMode_VALID;
   } else if (pad_mode == "same") {
-    attr->padMode = schema::PadMode_SAME;
+    attr->padMode = schema::PadMode_SAME_UPPER;
   } else {
     attr->padMode = schema::PadMode_NOTSET;
   }
@@ -233,8 +233,6 @@ void Conv2D::PopulaterConv2DSingleGroup(const Primitive &prim, schema::Primitive
     attr->activationType = schema::ActivationType_NO_ACTIVATION;
   }
 
-  //  attr->padMode = schema::PadMode_SAME;
-  //  attr->activationType = schema::ActivationType_RELU;
   primitive->value.type = schema::PrimitiveType_Conv2D;
   primitive->value.value = attr.release();
 }
@@ -319,7 +317,7 @@ void Conv2D::ConvInferShape(int input_h, int input_w, int *output_h, int *output
   pad_d_ = GetPadDown();
   pad_r_ = GetPadRight();
 
-  if (GetPadMode() == schema::PadMode_SAME) {
+  if (GetPadMode() == schema::PadMode_SAME_UPPER) {
     *output_w = std::ceil(static_cast<float>(input_w) / static_cast<float>(stride_w));
     *output_h = std::ceil(static_cast<float>(input_h) / static_cast<float>(stride_h));
     auto pad_h_all = ((*output_h - 1) * stride_h + (kernel_h - 1) * dilate_h + 1 - input_h);

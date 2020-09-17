@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <string>
 
 namespace mindspore {
 namespace lite {

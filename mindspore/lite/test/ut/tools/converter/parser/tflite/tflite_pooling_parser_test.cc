@@ -73,7 +73,7 @@ TEST_F(TestTfliteParserAvgPooling, AttrValue) {
   ASSERT_EQ(val->windowH, 2);
   ASSERT_EQ(val->strideW, 1);
   ASSERT_EQ(val->strideH, 1);
-  ASSERT_EQ(val->padMode, schema::PadMode_SAME);
+  ASSERT_EQ(val->padMode, schema::PadMode_SAME_UPPER);
   ASSERT_EQ(val->padUp, 0);
   ASSERT_EQ(val->padDown, 1);
   ASSERT_EQ(val->padLeft, 0);
