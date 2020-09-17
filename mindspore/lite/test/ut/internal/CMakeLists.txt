@@ -40,6 +40,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/internal/src/lite_session.cc
         ${LITE_DIR}/src/runtime/allocator.cc
         ${LITE_DIR}/internal/src/ms_tensor.cc
+        ${LITE_DIR}/internal/src/common/string.cc
         ${TOP_DIR}/mindspore/core/utils/log_adapter.cc
         ${TOP_DIR}/mindspore/core/gvar/logging_level.cc
         )

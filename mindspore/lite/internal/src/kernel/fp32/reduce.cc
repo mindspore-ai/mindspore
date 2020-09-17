@@ -23,7 +23,6 @@
 #include "internal/include/errorcode.h"
 #include "nnacl/reduce_parameter.h"
 #include "nnacl/fp32/reduce.h"
-#include "schema/ops_generated.h"
 
 typedef int (*Reducer)(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
                        float *dst_data, const int tid, const int thread_num);
@@ -202,9 +201,9 @@ int DoReduce(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tenso
 
   ReduceParameter *params = reinterpret_cast<ReduceParameter *>(node->primitive_);
   Reducer reducer = NULL;
-  if (params->mode_ == mindspore::schema::ReduceMode::ReduceMode_ReduceSum) {
+  if (params->mode_ == ReduceMode::ReduceMode_ReduceSum) {
     reducer = ReduceSum;
-  } else if (params->mode_ == mindspore::schema::ReduceMode::ReduceMode_ReduceMean) {
+  } else if (params->mode_ == ReduceMode::ReduceMode_ReduceMean) {
     reducer = ReduceMean;
   }
 

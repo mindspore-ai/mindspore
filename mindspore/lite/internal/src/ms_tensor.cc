@@ -17,8 +17,9 @@
 #include <vector>
 #include <string>
 #include "internal/include/ms_tensor.h"
+
 MSTensor *CreateTensor(TypeId data_type, const ShapeVector &shape) {
-  MSTensor *tensor = new (std::nothrow) MSTensor();
+  MSTensor *tensor = new MSTensor();
   if (tensor == NULL) {
     return NULL;
   }
@@ -26,6 +27,8 @@ MSTensor *CreateTensor(TypeId data_type, const ShapeVector &shape) {
   tensor->data_type_ = data_type;
   return tensor;
 }
+
+void DestroyTensor(MSTensor *ptr) { delete ptr; }
 
 int MSTensor::ElementsNum() const {
   int result = 1;
@@ -200,3 +203,17 @@ int MSTensor::ElementsC4Num() const {
   }
   return result;
 }
+
+void *MSTensor::operator new(std::size_t sz) {
+  void *storage = malloc(sz);
+  return storage;
+}
+
+void *MSTensor::operator new[](std::size_t sz) {
+  void *storage = malloc(sz);
+  return storage;
+}
+
+void MSTensor::operator delete(void *ptr, std::size_t sz) { free(ptr); }
+
+void MSTensor::operator delete[](void *ptr, std::size_t sz) { free(ptr); }

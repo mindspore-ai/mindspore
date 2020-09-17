@@ -136,7 +136,16 @@ typedef struct MSTensor {
   ///
   /// \return Byte size of data in MSTensor.
   size_t Size() const;
+
+  static void *operator new(std::size_t sz);
+
+  static void *operator new[](std::size_t sz);
+
+  static void operator delete(void *ptr, std::size_t sz);
+
+  static void operator delete[](void *ptr, std::size_t sz);
 } MSTensor;
 
 MSTensor *CreateTensor(TypeId data_type, const ShapeVector &shape);
+void DestroyTensor(MSTensor *ptr);
 #endif  // MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_
