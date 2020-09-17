@@ -38,7 +38,8 @@ def set_config(args):
         "keep_checkpoint_max": 20,
         "save_checkpoint_path": "./",
         "platform": args.platform,
-        "run_distribute": False
+        "run_distribute": False,
+        "activation": "Softmax"
     })
     config_gpu = ed({
         "num_classes": 1000,
@@ -60,7 +61,8 @@ def set_config(args):
         "save_checkpoint_path": "./",
         "platform": args.platform,
         "ccl": "nccl",
-        "run_distribute": args.run_distribute
+        "run_distribute": args.run_distribute,
+        "activation": "Softmax"
     })
     config_ascend = ed({
         "num_classes": 1000,
@@ -85,7 +87,8 @@ def set_config(args):
         "device_id": int(os.getenv('DEVICE_ID', '0')),
         "rank_id": int(os.getenv('RANK_ID', '0')),
         "rank_size": int(os.getenv('RANK_SIZE', '1')),
-        "run_distribute": int(os.getenv('RANK_SIZE', '1')) > 1.
+        "run_distribute": int(os.getenv('RANK_SIZE', '1')) > 1.,
+        "activation": "Softmax"
     })
     config = ed({"CPU": config_cpu,
                  "GPU": config_gpu,

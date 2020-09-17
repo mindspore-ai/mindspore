@@ -158,7 +158,7 @@ Parameters for both training and evaluation can be set in config.py.
 "epoch_size": 90,                 # only valid for taining, which is always 1 for inference 
 "pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
 "save_checkpoint": True,          # whether save checkpoint or not
-"save_checkpoint_steps": 195,     # the step interval between two checkpoints. By default, the last checkpoint will be saved after the last step
+"save_checkpoint_epochs": 5,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last step
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
 "save_checkpoint_path": "./",     # path to save checkpoint
 "warmup_epochs": 5,               # number of warmup epoch
@@ -179,15 +179,16 @@ Parameters for both training and evaluation can be set in config.py.
 "epoch_size": 90,                 # only valid for taining, which is always 1 for inference 
 "pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
 "save_checkpoint": True,          # whether save checkpoint or not
-"save_checkpoint_epochs": 1,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
+"save_checkpoint_epochs": 5,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 0,               # number of warmup epoch
-"lr_decay_mode": "cosine",        # decay mode for generating learning rate
+"lr_decay_mode": "Linear",        # decay mode for generating learning rate
 "label_smooth": True,             # label smooth
 "label_smooth_factor": 0.1,       # label smooth factor
 "lr_init": 0,                     # initial learning rate
 "lr_max": 0.1,                    # maximum learning rate
+"lr_end": 0.0,                    # minimum learning rate
 ```
 
 - Config for ResNet101, ImageNet2012 dataset
@@ -201,7 +202,7 @@ Parameters for both training and evaluation can be set in config.py.
 "epoch_size": 120,                # epoch size for training
 "pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
 "save_checkpoint": True,          # whether save checkpoint or not
-"save_checkpoint_epochs": 1,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
+"save_checkpoint_epochs": 5,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 0,               # number of warmup epoch

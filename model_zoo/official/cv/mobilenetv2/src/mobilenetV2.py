@@ -242,16 +242,25 @@ class MobileNetV2Head(nn.Cell):
         >>> MobileNetV2(num_classes=1000)
     """
 
-    def __init__(self, input_channel=1280, num_classes=1000, has_dropout=False):
+    def __init__(self, input_channel=1280, num_classes=1000, has_dropout=False, activation="None"):
         super(MobileNetV2Head, self).__init__()
         # mobilenet head
         head = ([GlobalAvgPooling(), nn.Dense(input_channel, num_classes, has_bias=True)] if not has_dropout else
                 [GlobalAvgPooling(), nn.Dropout(0.2), nn.Dense(input_channel, num_classes, has_bias=True)])
         self.head = nn.SequentialCell(head)
+        self.need_activation = True
+        if activation == "Sigmoid":
+            self.activation = P.Sigmoid()
+        elif activation == "Softmax":
+            self.activation = P.Softmax()
+        else:
+            self.need_activation = False
         self._initialize_weights()
 
     def construct(self, x):
         x = self.head(x)
+        if self.need_activation:
+            x = self.activation(x)
         return x
 
     def _initialize_weights(self):
