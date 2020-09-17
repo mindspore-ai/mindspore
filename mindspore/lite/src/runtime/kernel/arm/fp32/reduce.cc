@@ -82,14 +82,7 @@ int ReduceCPUKernel::Init() {
   return ReSize();
 }
 
-int ReduceCPUKernel::ReSize() {
-  if (in_tensors().at(0)->data_type() == kNumberTypeFloat32) {
-    data_type_ = kDataTypeFloat;
-  } else {
-    data_type_ = kDataTypeInt;
-  }
-  return ReduceBaseCPUKernel::ReSize();
-}
+int ReduceCPUKernel::ReSize() { return ReduceBaseCPUKernel::ReSize(); }
 
 int ReduceCPUKernel::CallReduceUnit(int task_id) {
   int ret;
@@ -119,6 +112,11 @@ int ReduceCPUKernel::Run() {
   if (prepare_ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
+  }
+  if (in_tensors().at(0)->data_type() == kNumberTypeFloat32) {
+    data_type_ = kDataTypeFloat;
+  } else {
+    data_type_ = kDataTypeInt;
   }
   auto ret = MallocTmpBuffer();
   if (ret != RET_OK) {
