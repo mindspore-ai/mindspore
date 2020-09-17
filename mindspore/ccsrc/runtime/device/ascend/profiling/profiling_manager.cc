@@ -26,6 +26,11 @@
 #include "utils/ms_utils.h"
 #include "utils/convert_utils.h"
 #include "runtime/base.h"
+#include "toolchain/prof_acl_api.h"
+
+namespace {
+constexpr uint32_t kProfilingDeviceNum = 1;
+}
 
 namespace mindspore {
 namespace device {
@@ -102,6 +107,12 @@ static std::vector<std::string> Split(const std::string &str, const char delim) 
   return elems;
 }
 
+uint64_t GetProfilingModule() {
+  return PROF_MODEL_EXECUTE_MASK | PROF_RUNTIME_API_MASK | PROF_RUNTIME_TRACE_MASK | PROF_SCHEDULE_TIMELINE_MASK |
+         PROF_SCHEDULE_TRACE_MASK | PROF_TASK_TIME_MASK | PROF_SUBTASK_TIME_MASK | PROF_AICPU_TRACE_MASK |
+         PROF_AICORE_METRICS_MASK | PROF_AIVECTORCORE_METRICS_MASK | PROF_MODEL_LOAD_MASK;
+}
+
 bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   auto is_profiling = IsProfiling();
   if (!is_profiling) {
@@ -151,13 +162,22 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   return true;
 }
 
+uint32_t GetCurrentDeviceId() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  return context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+}
+
 bool ProfilingManager::ProfStartUp(const nlohmann::json &startCfg) {
   // convert json to string
   std::stringstream ss;
   ss << startCfg;
   std::string cfg = ss.str();
   MS_LOG(INFO) << "profiling config " << cfg;
-  auto ret = rtProfilerStart();
+
+  auto module = GetProfilingModule();
+  auto device_id = GetCurrentDeviceId();
+  auto ret = rtProfilerStart(module, kProfilingDeviceNum, &device_id);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(INFO) << "Call rtProfilerStart failed, ret:" << ret;
     return false;
@@ -185,7 +205,10 @@ bool ProfilingManager::StopProfiling() {
     MS_LOG(INFO) << "report data end, ret = " << ret;
   }
 
-  auto rt_ret = rtProfilerStop();
+  auto module = GetProfilingModule();
+  uint32_t device_ids[kProfilingDeviceNum] = {GetCurrentDeviceId()};
+
+  auto rt_ret = rtProfilerStop(module, kProfilingDeviceNum, device_ids);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtProfilerStop failed";
     return false;

@@ -134,6 +134,6 @@ rtError_t rtGetFunctionByName(const char *stubName, void **stubFunc) { return RT
 
 rtError_t rtSetTaskGenCallback(rtTaskGenCallback callback) { return RT_ERROR_NONE; }
 
-rtError_t rtProfilerStart(void) { return RT_ERROR_NONE; }
+RTS_API rtError_t rtProfilerStart(uint64_t profConfig, int32_t numsDev, uint32_t* deviceList) { return RT_ERROR_NONE; }
 
-rtError_t rtProfilerStop(void) { return RT_ERROR_NONE; }
+RTS_API rtError_t rtProfilerStop(uint64_t profConfig, int32_t numsDev, uint32_t* deviceList) { return RT_ERROR_NONE; }
