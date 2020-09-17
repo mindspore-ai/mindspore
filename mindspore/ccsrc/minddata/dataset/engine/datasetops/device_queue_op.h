@@ -128,6 +128,10 @@ class DeviceQueueOp : public PipelineOp {
     stop_send_ = false;
   }
 
+#ifdef ENABLE_TDTQUE
+  void StopWaiting() { ascend_keep_waiting_ = false; }
+#endif
+
   // Name: Print()
   // Description: A function that prints info about the node
   void Print(std::ostream &out,              // In: The output stream to print to
@@ -159,6 +163,7 @@ class DeviceQueueOp : public PipelineOp {
  private:
 #ifdef ENABLE_TDTQUE
   Status SendDataToAscend();
+  bool ascend_keep_waiting_;
 #endif
 
 #ifdef ENABLE_GPUQUE

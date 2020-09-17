@@ -39,7 +39,11 @@ DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, i
       device_id_(device_id),
       prefetch_size_(prefetch_size),
       send_epoch_end_(send_epoch_end),
-      stop_send_(false) {}
+      stop_send_(false) {
+#ifdef ENABLE_TDTQUE
+  ascend_keep_waiting_ = true;
+#endif
+}
 
 DeviceQueueOp::~DeviceQueueOp() {}
 
@@ -120,7 +124,7 @@ Status DeviceQueueOp::SendDataToAscend() {
       TensorRow currRow;
       for (int row_id = 0; row_id < current_buffer->NumRows(); row_id++) {
         RETURN_IF_NOT_OK(current_buffer->GetRow(row_id, &currRow));
-        while (stop_send_) {
+        while (stop_send_ && ascend_keep_waiting_) {
           MS_LOG(DEBUG) << "stop_send flag is set, waiting for continue signal...";
           std::this_thread::sleep_for(std::chrono::microseconds(100));
         }
