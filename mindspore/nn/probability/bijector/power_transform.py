@@ -41,8 +41,7 @@ class PowerTransform(Bijector):
         name (str): The name of the bijector. Default: 'PowerTransform'.
         param (dict): The parameters used to initialize the bijector. These parameters are only used when other
             Bijectors inherit from powertransform to pass in parameters. In this case the derived Bijector may overwrite
-            the argument `param`.
-          Default: None.
+            the argument `param`. Default: None.
 
     Examples:
         >>> # To initialize a PowerTransform bijector of power 0.5.

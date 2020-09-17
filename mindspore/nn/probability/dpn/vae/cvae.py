@@ -42,8 +42,9 @@ class ConditionalVAE(Cell):
         num_classes(int): The number of classes.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor is the same shape as the input of encoder, with the shape
-        being :math:`(N, C, H, W)`.
+        - **input_x** (Tensor) - The shape of input tensor is :math:`(N, C, H, W)`, which is the same as the input of
+        encoder.
+
         - **input_y** (Tensor) - The tensor of the target data, the shape is :math:`(N,)`.
 
     Outputs:
