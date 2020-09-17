@@ -217,6 +217,7 @@ int DeConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::
     output_w = (input_w - 1) * stride_w + kernel_w;
   } else {
     MS_LOG(ERROR) << "unsupported pad mode for deconv";
+    return RET_ERROR;
   }
   std::vector<int> out_shape = {output_n, output_h, output_w, output_c};
   output->set_shape(out_shape);
@@ -230,6 +231,7 @@ int DeConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::
   } else if (pad_mode == schema::PadMode_CAFFE) {
   } else {
     MS_LOG(ERROR) << "unsupported pad mode for deconv";
+    return RET_ERROR;
   }
 
   return 0;

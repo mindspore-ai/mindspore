@@ -35,7 +35,7 @@ class CropInt8CPUKernel : public CropBaseCPUKernel {
     crop_para_ = reinterpret_cast<CropParameter *>(op_parameter_);
     crop_para_->thread_count_ = op_parameter_->thread_num_;
   }
-  ~CropInt8CPUKernel() = default;
+  ~CropInt8CPUKernel();
 
   int Init() override;
   int ReSize() override;

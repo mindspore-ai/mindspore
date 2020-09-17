@@ -64,6 +64,17 @@ int LeakyReluInt8CPUKernel::Init() {
 
   quant_prelu_parm_.quant_arg.output_activation_max_ = std::numeric_limits<int8_t>::max();
   quant_prelu_parm_.quant_arg.output_activation_min_ = std::numeric_limits<int8_t>::min();
+
+  quant_prelu_parm_.in_shape_ = reinterpret_cast<int *>(malloc(input_tensor->shape().size() * sizeof(int)));
+  if (quant_prelu_parm_.in_shape_ == nullptr) {
+    MS_LOG(ERROR) << "malloc memory failed";
+    return RET_MEMORY_FAILED;
+  }
+  quant_prelu_parm_.out_shape_ = reinterpret_cast<int *>(malloc(out_tensor->shape().size() * sizeof(int)));
+  if (quant_prelu_parm_.out_shape_ == nullptr) {
+    MS_LOG(ERROR) << "malloc memory failed";
+    return RET_MEMORY_FAILED;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -79,6 +90,14 @@ LeakyReluInt8CPUKernel::~LeakyReluInt8CPUKernel() {
     free(input_quant_);
     input_quant_ = nullptr;
   }
+  if (quant_prelu_parm_.in_shape_ != nullptr) {
+    free(const_cast<int *>(quant_prelu_parm_.in_shape_));
+    quant_prelu_parm_.in_shape_ = nullptr;
+  }
+  if (quant_prelu_parm_.out_shape_ != nullptr) {
+    free(const_cast<int *>(quant_prelu_parm_.out_shape_));
+    quant_prelu_parm_.out_shape_ = nullptr;
+  }
 }
 
 int LeakyReluInt8CPUKernel::ReSize() {
@@ -92,10 +111,26 @@ int LeakyReluInt8CPUKernel::ReSize() {
   }
   quant_prelu_parm_.input_dim_ = input_dim;
   quant_prelu_parm_.element_num = in_tensors_[0]->Size();
-  quant_prelu_parm_.in_shape_ = input_tensor->shape().data();
-  quant_prelu_parm_.out_shape_ = out_tensor->shape().data();
+  auto input_shape = input_tensor->shape();
+  if (quant_prelu_parm_.in_shape_ == nullptr) {
+    MS_LOG(ERROR) << "in_shape_ is nullptr";
+    return RET_ERROR;
+  } else {
+    memcpy(reinterpret_cast<void *>(const_cast<int *>(quant_prelu_parm_.in_shape_)), input_shape.data(),
+           sizeof(int) * input_dim);
+  }
+  auto output_shape = out_tensor->shape();
+  size_t output_dim = output_shape.size();
+  if (quant_prelu_parm_.out_shape_ == nullptr) {
+    MS_LOG(ERROR) << "out_shape_ is nullptr";
+    return RET_ERROR;
+  } else {
+    memcpy(reinterpret_cast<void *>(const_cast<int *>(quant_prelu_parm_.out_shape_)), output_shape.data(),
+           sizeof(int) * output_dim);
+  }
   input_quant_ = static_cast<QuantArg *>(malloc(sizeof(QuantArg) * input_dim));
   if (input_quant_ == nullptr) {
+    MS_LOG(ERROR) << "malloc memory failed";
     return RET_MEMORY_FAILED;
   }
   return RET_OK;

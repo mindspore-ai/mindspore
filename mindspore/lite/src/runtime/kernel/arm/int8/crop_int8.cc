@@ -22,6 +22,7 @@
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
@@ -43,18 +44,58 @@ int CropInt8CPUKernel::Init() {
 
   crop_para_->quant_arg.output_activation_max_ = std::numeric_limits<int8_t>::max();
   crop_para_->quant_arg.output_activation_min_ = std::numeric_limits<int8_t>::min();
+  crop_para_->in_shape_ = reinterpret_cast<int *>(malloc(input_tensor->shape().size() * sizeof(int)));
+  if (crop_para_->in_shape_ == nullptr) {
+    MS_LOG(ERROR) << "malloc memory failed";
+    return RET_MEMORY_FAILED;
+  }
+  crop_para_->out_shape_ = reinterpret_cast<int *>(malloc(out_tensor->shape().size() * sizeof(int)));
+  if (crop_para_->out_shape_ == nullptr) {
+    MS_LOG(ERROR) << "malloc memory failed";
+    return RET_MEMORY_FAILED;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
 
+CropInt8CPUKernel::~CropInt8CPUKernel() {
+  if (crop_para_->in_shape_ != nullptr) {
+    free(const_cast<int *>(crop_para_->in_shape_));
+    crop_para_->in_shape_ = nullptr;
+  }
+
+  if (crop_para_->out_shape_ != nullptr) {
+    free(const_cast<int *>(crop_para_->out_shape_));
+    crop_para_->out_shape_ = nullptr;
+  }
+}
+
 int CropInt8CPUKernel::ReSize() {
   auto *input_tensor = in_tensors_.at(kInputIndex);
-  crop_para_->in_shape_ = input_tensor->shape().data();
+  auto input_shape = input_tensor->shape();
+  size_t input_dim = input_shape.size();
+
+  if (crop_para_->in_shape_ == nullptr) {
+    MS_LOG(ERROR) << "in_shape_ is nullptr";
+    return RET_ERROR;
+  } else {
+    memcpy(reinterpret_cast<void *>(const_cast<int *>(crop_para_->in_shape_)), input_shape.data(),
+           sizeof(int) * input_dim);
+  }
+
   auto *out_tensor = out_tensors_.at(kOutputIndex);
-  crop_para_->out_shape_ = out_tensor->shape().data();
-  auto input_dim = input_tensor->shape().size();
+  auto output_shape = out_tensor->shape();
+  size_t output_dim = output_shape.size();
+
+  if (crop_para_->out_shape_ == nullptr) {
+    MS_LOG(ERROR) << "out_shape_ is nullptr";
+    return RET_ERROR;
+  } else {
+    memcpy(reinterpret_cast<void *>(const_cast<int *>(crop_para_->out_shape_)), output_shape.data(),
+           sizeof(int) * output_dim);
+  }
   MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
   crop_para_->input_dim_ = input_dim;
   PadOffset(input_dim, crop_para_);
