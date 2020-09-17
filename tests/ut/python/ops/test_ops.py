@@ -585,11 +585,11 @@ class NormalNet(nn.Cell):
 class LaplaceNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
         super(LaplaceNet, self).__init__()
-        self.laplace = P.Laplace(seed=seed)
         self.shape = shape
+        self.seed = seed
 
     def construct(self, mean, lambda_param):
-        out = self.laplace(self.shape, mean, lambda_param)
+        out = C.laplace(self.shape, mean, lambda_param, self.seed)
         return out
 
 
