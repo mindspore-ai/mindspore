@@ -759,6 +759,10 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
         bin_list.push_back(stod(overflow_time));
         std::fstream infile;
         infile.open(file_path.c_str(), std::ios::binary | std::ios::in);
+        if (!infile.is_open()) {
+          MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name;
+          continue;
+        }
         infile.seekg(313, std::ios::beg);
         std::vector<char> buffer;
         buffer.resize(BUF_SIZ);
