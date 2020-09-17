@@ -53,7 +53,11 @@ bool AssignAddCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   SetArgumentHandle(DNNL_ARG_SRC_1, inputs[1]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
   ExecutePrimitive();
-  memcpy_s(inputs[0]->addr, inputs[0]->size, outputs[0]->addr, outputs[0]->size);
+  auto ret = memcpy_s(inputs[0]->addr, inputs[0]->size, outputs[0]->addr, outputs[0]->size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "Memcpy_s error, errorno " << ret;
+    return false;
+  }
   return true;
 }
 }  // namespace kernel
