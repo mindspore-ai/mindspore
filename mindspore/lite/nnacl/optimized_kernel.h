@@ -24,14 +24,15 @@
 #include <asm/hwcap.h>
 #include "nnacl/nnacl_utils.h"
 #endif
+#include "utils/log_adapter.h"
 
-#define OPTIMIZE_SHARED_LIBRARY_PATH "liboptimize.so"
+#define OPTIMIZE_SHARED_LIBRARY_PATH "libmindspore-lite-optimize.so"
+#define FLOAT16_SHARED_LIBRARY_PATH "libmindspore-lite-fp16.so"
 
 class OptimizeModule {
  public:
   OptimizeModule() {
     bool support_optimize_ops = false;
-    bool support_fp16 = false;
 #ifdef __ANDROID__
     int hwcap_type = 16;
     uint32_t hwcap = getHwCap(hwcap_type);
@@ -40,8 +41,7 @@ class OptimizeModule {
 #elif defined(__arm__)
     if (hwcap & HWCAP_HALF) {
 #endif
-      MS_LOG(INFO) << "Hw cap support FP16, hwcap: 0x" << hwcap;
-      support_fp16 = true;
+
 #ifdef ENABLE_ARM64
     }
 #elif defined(__arm__)
@@ -57,7 +57,7 @@ class OptimizeModule {
     }
 #endif
 #endif
-    if (!(support_optimize_ops && support_fp16)) {
+    if (support_optimize_ops == false) {
       return;
     }
 #ifndef _WIN32
@@ -75,6 +75,46 @@ class OptimizeModule {
     return &opt_module;
   }
   void *optimized_op_handler_ = nullptr;
+};
+
+class Float16Module {
+ public:
+  Float16Module() {
+    bool support_fp16 = false;
+#ifdef __ANDROID__
+    int hwcap_type = 16;
+    uint32_t hwcap = getHwCap(hwcap_type);
+#ifdef ENABLE_ARM64
+    if (hwcap & HWCAP_FPHP) {
+#elif defined(__arm__)
+    if (hwcap & HWCAP_HALF) {
+#endif
+      MS_LOG(INFO) << "Hw cap support FP16, hwcap: 0x" << hwcap;
+      support_fp16 = true;
+#ifdef ENABLE_ARM64
+    }
+#elif defined(__arm__)
+    }
+#endif
+#endif
+    if (support_fp16 == false) {
+      return;
+    }
+#ifndef _WIN32
+    float16_op_handler_ = dlopen(FLOAT16_SHARED_LIBRARY_PATH, RTLD_LAZY);
+    if (float16_op_handler_ == nullptr) {
+      MS_LOG(INFO) << "Open optimize shared library failed: " << dlerror();
+    }
+#endif
+  }
+
+  ~Float16Module() = default;
+
+  static Float16Module *GetInstance() {
+    static Float16Module fp16_module;
+    return &fp16_module;
+  }
+  void *float16_op_handler_ = nullptr;
 };
 
 #endif  // MINDSPORE_LITE_NNACL_OPTIMIZED_KERNEL_H_

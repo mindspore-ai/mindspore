@@ -108,7 +108,6 @@ file(GLOB KERNEL_SRC
         ${ARM_DIR}/fp32/*.cc
         ${ARM_DIR}/int8/*.cc
         )
-list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/opt_op_handler.c)
 
 if (PLATFORM_ARM64)
     # assembly
