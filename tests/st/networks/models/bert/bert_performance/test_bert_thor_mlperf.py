@@ -108,9 +108,6 @@ def create_bert_dataset(device_num=1, rank=0, do_shuffle="true", data_dir=None, 
     return ds
 
 def train_process_bert_thor(q, device_id, epoch_size, device_num):
-    for i in range(device_num):
-        os.system("rm -rf " + str(i))
-
     os.system("mkdir " + str(device_id))
     os.chdir(str(device_id))
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id, save_graphs=False)
