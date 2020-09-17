@@ -20,8 +20,8 @@ python eval.py --data_path /YourDataPath --ckpt_path Your.ckpt
 
 import ast
 import argparse
-from src.config import alexnet_cfg as cfg
-from src.dataset import create_dataset_cifar10
+from src.config import alexnet_cifar10_cfg, alexnet_imagenet_cfg
+from src.dataset import create_dataset_cifar10, create_dataset_imagenet
 from src.alexnet import AlexNet
 import mindspore.nn as nn
 from mindspore import context
@@ -32,28 +32,50 @@ from mindspore.nn.metrics import Accuracy
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='MindSpore AlexNet Example')
+    parser.add_argument('--dataset_name', type=str, default='cifar10', choices=['imagenet', 'cifar10'],
+                        help='dataset name.')
     parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU'],
                         help='device where the code will be implemented (default: Ascend)')
     parser.add_argument('--data_path', type=str, default="./", help='path where the dataset is saved')
     parser.add_argument('--ckpt_path', type=str, default="./ckpt", help='if is test, must provide\
-                        path where the trained ckpt file')
+                            path where the trained ckpt file')
     parser.add_argument('--dataset_sink_mode', type=ast.literal_eval,
                         default=True, help='dataset_sink_mode is False or True')
     args = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 
-    network = AlexNet(cfg.num_classes)
-    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-    repeat_size = cfg.epoch_size
-    opt = nn.Momentum(network.trainable_params(), cfg.learning_rate, cfg.momentum)
-    model = Model(network, loss, opt, metrics={"Accuracy": Accuracy()})
-
     print("============== Starting Testing ==============")
-    param_dict = load_checkpoint(args.ckpt_path)
-    load_param_into_net(network, param_dict)
-    ds_eval = create_dataset_cifar10(args.data_path,
-                                     cfg.batch_size,
-                                     status="test")
-    acc = model.eval(ds_eval, dataset_sink_mode=args.dataset_sink_mode)
-    print("============== {} ==============".format(acc))
+
+    if args.dataset_name == 'cifar10':
+        cfg = alexnet_cifar10_cfg
+        network = AlexNet(cfg.num_classes)
+        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+        opt = nn.Momentum(network.trainable_params(), cfg.learning_rate, cfg.momentum)
+        ds_eval = create_dataset_cifar10(args.data_path, cfg.batch_size, status="test", target=args.device_target)
+
+        param_dict = load_checkpoint(args.ckpt_path)
+        print("load checkpoint from [{}].".format(args.ckpt_path))
+        load_param_into_net(network, param_dict)
+        network.set_train(False)
+
+        model = Model(network, loss, opt, metrics={"Accuracy": Accuracy()})
+
+    elif args.dataset_name == 'imagenet':
+        cfg = alexnet_imagenet_cfg
+        network = AlexNet(cfg.num_classes)
+        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+        ds_eval = create_dataset_imagenet(args.data_path, cfg.batch_size, training=False)
+
+        param_dict = load_checkpoint(args.ckpt_path)
+        print("load checkpoint from [{}].".format(args.ckpt_path))
+        load_param_into_net(network, param_dict)
+        network.set_train(False)
+
+        model = Model(network, loss_fn=loss, metrics={'top_1_accuracy', 'top_5_accuracy'})
+
+    else:
+        raise ValueError("Unsupport dataset.")
+
+    result = model.eval(ds_eval, dataset_sink_mode=args.dataset_sink_mode)
+    print("result : {}".format(result))
