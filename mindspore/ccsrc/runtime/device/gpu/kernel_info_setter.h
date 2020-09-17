@@ -54,6 +54,8 @@ static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>
   // Format insensitive.
   {prim::kPrimRelu->name(), {{0}, {0}}},
   {prim::kPrimReluGrad->name(), {{0, 1}, {0}}},
+  {prim::kPrimRelu6->name(), {{0}, {0}}},
+  {prim::kPrimRelu6Grad->name(), {{0, 1}, {0}}},
   {kSliceOpName, {{0}, {0}}},
   {kTensorAddOpName, {{0, 1}, {0}}},
   {prim::kPrimConcat->name(), {{}, {0}}},

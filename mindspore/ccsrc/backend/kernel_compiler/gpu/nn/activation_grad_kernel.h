@@ -49,7 +49,7 @@ class ActivationGradGpuKernel : public GpuKernel {
     }
     T *dy = nullptr;
     T *y = nullptr;
-    if (mode_ == CUDNN_ACTIVATION_RELU || mode_ == CUDNN_ACTIVATION_ELU) {
+    if (mode_ == CUDNN_ACTIVATION_RELU || mode_ == CUDNN_ACTIVATION_ELU || mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) {
       dy = GetDeviceAddress<T>(inputs, 0);
       y = GetDeviceAddress<T>(inputs, 1);
     } else {
@@ -90,7 +90,8 @@ class ActivationGradGpuKernel : public GpuKernel {
       return true;
     }
     std::vector<int> shape;
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_PROPAGATE_NAN, 0.0),
+    double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 5.999999 : 0.0;
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_PROPAGATE_NAN, coef),
                                 "SetActivationDescriptor failed");
 
     const int split_dim = 4;
@@ -138,6 +139,7 @@ class ActivationGradGpuKernel : public GpuKernel {
   }
 
   std::map<std::string, cudnnActivationMode_t> kernel_map = {{"ReluGrad", CUDNN_ACTIVATION_RELU},
+                                                             {"ReLU6Grad", CUDNN_ACTIVATION_CLIPPED_RELU},
                                                              {"TanhGrad", CUDNN_ACTIVATION_TANH},
                                                              {"ELUGrad", CUDNN_ACTIVATION_ELU},
                                                              {"SigmoidGrad", CUDNN_ACTIVATION_SIGMOID}};
