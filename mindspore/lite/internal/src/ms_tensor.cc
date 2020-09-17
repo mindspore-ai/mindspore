@@ -204,16 +204,16 @@ int MSTensor::ElementsC4Num() const {
   return result;
 }
 
-void *MSTensor::operator new(std::size_t sz) {
+void *MSTensor::operator new(size_t sz) {
   void *storage = malloc(sz);
   return storage;
 }
 
-void *MSTensor::operator new[](std::size_t sz) {
+void *MSTensor::operator new[](size_t sz) {
   void *storage = malloc(sz);
   return storage;
 }
 
-void MSTensor::operator delete(void *ptr, std::size_t sz) { free(ptr); }
+void MSTensor::operator delete(void *ptr, size_t sz) { free(ptr); }
 
-void MSTensor::operator delete[](void *ptr, std::size_t sz) { free(ptr); }
+void MSTensor::operator delete[](void *ptr, size_t sz) { free(ptr); }
