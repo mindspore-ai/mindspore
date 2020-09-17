@@ -201,10 +201,9 @@ int PadCPUKernel::CopyPaddingFromInput() {
 }
 
 void PadCPUKernel::CalculateStrides() {
-  auto input_shape = in_tensors_.at(0)->shape();
   pad_param_->in_strides[DEFAULT_PAD_NDIMS - 1] = 1;
   for (auto i = DEFAULT_PAD_NDIMS - 2; i >= 0; --i) {
-    pad_param_->in_strides[i] = input_shape[i + 1] * pad_param_->in_strides[i + 1];
+    pad_param_->in_strides[i] = in_[i + 1] * pad_param_->in_strides[i + 1];
   }
   for (auto i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
     out_[i] = in_[i] + pad_param_->paddings_[i * 2] + pad_param_->paddings_[i * 2 + 1];
