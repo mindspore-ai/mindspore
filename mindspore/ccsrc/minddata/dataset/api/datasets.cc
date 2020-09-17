@@ -29,17 +29,21 @@
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
 #include "minddata/dataset/engine/datasetops/source/csv_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/manifest_op.h"
+#endif
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
-#include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
 #endif
 // Dataset operator headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/batch_op.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/bucket_batch_by_length_op.h"
+#endif
 #include "minddata/dataset/engine/datasetops/build_vocab_op.h"
 #include "minddata/dataset/engine/datasetops/concat_op.h"
 #include "minddata/dataset/engine/datasetops/map_op/map_op.h"
@@ -286,6 +290,7 @@ std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remai
   return ds;
 }
 
+#ifndef ENABLE_ANDROID
 // Function to create a BucketBatchByLength dataset
 std::shared_ptr<BucketBatchByLengthDataset> Dataset::BucketBatchByLength(
   const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
@@ -305,7 +310,6 @@ std::shared_ptr<BucketBatchByLengthDataset> Dataset::BucketBatchByLength(
   return ds;
 }
 
-#ifndef ENABLE_ANDROID
 // Function to create a Vocab from dataset
 std::shared_ptr<Vocab> Dataset::BuildVocab(const std::vector<std::string> &columns,
                                            const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
@@ -1520,6 +1524,7 @@ std::vector<std::shared_ptr<DatasetOp>> TextFileDataset::Build() {
   return node_ops;
 }
 
+#ifndef ENABLE_ANDROID
 // Validator for TFRecordDataset
 bool TFRecordDataset::ValidateParams() { return true; }
 
@@ -1570,7 +1575,6 @@ std::vector<std::shared_ptr<DatasetOp>> TFRecordDataset::Build() {
   return node_ops;
 }
 
-#ifndef ENABLE_ANDROID
 // Constructor for VOCDataset
 VOCDataset::VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &usage,
                        const std::map<std::string, int32_t> &class_indexing, bool decode,
@@ -1685,6 +1689,7 @@ bool BatchDataset::ValidateParams() {
   return true;
 }
 
+#ifndef ENABLE_ANDROID
 BucketBatchByLengthDataset::BucketBatchByLengthDataset(
   const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
   const std::vector<int32_t> &bucket_batch_sizes, TensorRow (*element_length_function)(TensorRow),
@@ -1758,7 +1763,6 @@ bool BucketBatchByLengthDataset::ValidateParams() {
   return true;
 }
 
-#ifndef ENABLE_ANDROID
 BuildVocabDataset::BuildVocabDataset(std::shared_ptr<Vocab> vocab, const std::vector<std::string> &columns,
                                      const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
                                      const std::vector<std::string> &special_tokens, bool special_first)
