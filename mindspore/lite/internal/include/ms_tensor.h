@@ -137,13 +137,13 @@ typedef struct MSTensor {
   /// \return Byte size of data in MSTensor.
   size_t Size() const;
 
-  static void *operator new(std::size_t sz);
+  static void *operator new(size_t sz);
 
-  static void *operator new[](std::size_t sz);
+  static void *operator new[](size_t sz);
 
-  static void operator delete(void *ptr, std::size_t sz);
+  static void operator delete(void *ptr, size_t sz);
 
-  static void operator delete[](void *ptr, std::size_t sz);
+  static void operator delete[](void *ptr, size_t sz);
 } MSTensor;
 
 MSTensor *CreateTensor(TypeId data_type, const ShapeVector &shape);
