@@ -64,7 +64,6 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string quantSize;
   std::string bitNum;
   std::string configFile;
-  bool formatTrans = true;
   std::string convWeightQuantChannelThreshold;
   std::string trainModelIn;
   bool trainModel = false;

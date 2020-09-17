@@ -137,7 +137,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     }
   }
   // format transform
-  if (ctx.formatTrans) {
+  {
     Optimizer formatTransOptimizer;
     auto formatTransPass = new (std::nothrow) FormatTransPass();
     if (formatTransPass == nullptr) {

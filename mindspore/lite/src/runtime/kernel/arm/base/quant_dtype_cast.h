@@ -40,6 +40,7 @@ class QuantDTypeCastCPUKernel : public LiteKernel {
   int thread_n_stride_;
   int num_unit_;
   int8_t *int8_ptr_;
+  uint8_t *uint8_ptr_ = nullptr;
   float *float32_ptr_;
   bool inverse_;
 };

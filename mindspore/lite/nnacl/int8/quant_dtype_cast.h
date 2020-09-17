@@ -28,8 +28,10 @@ typedef struct QuantDTypeCastParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoDequantizeInt8(int8_t *quant_values, float *real_values, float scale, int32_t zp, int size);
-int DoQuantizeToInt8(float *real_values, int8_t *quant_values, float scale, int32_t zp, int size);
+int DoDequantizeInt8ToFp32(int8_t *quant_values, float *real_values, float scale, int32_t zp, int size);
+int DoQuantizeToInt8FromFp32(float *real_values, int8_t *quant_values, float scale, int32_t zp, int size);
+int DoDequantizeInt8ToUInt8(int8_t *quant_values, uint8_t *real_values, int size);
+int DoQuantizeToInt8FromUint8(uint8_t *real_values, int8_t *quant_values, int size);
 #ifdef __cplusplus
 }
 #endif

@@ -23,14 +23,14 @@ namespace mindspore {
 namespace lite {
 namespace converter {
 Flags::Flags() {
-  AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TFLITE | CAFFE | MS", "");
+  AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TFLITE | CAFFE | MINDIR | ONNX", "");
   AddFlag(&Flags::modelFile, "modelFile",
-          "Input model file path. TFLITE: *.tflite | CAFFE: *.prototxt | MS: *.mindir | ONNX: *.onnx", "");
+          "Input model file path. TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx", "");
   AddFlag(&Flags::outputFile, "outputFile", "Output model file path. Will add .ms automatically", "");
   AddFlag(&Flags::weightFile, "weightFile",
           "Input model weight file path. Needed when fmk is CAFFE. CAFFE: *.caffemodel", "");
-  AddFlag(&Flags::inferenceTypeIn, "inferenceType",
-          "Real data type saved in output file, reserved param, NOT used for now. SAME | FLOAT | INT8", "FLOAT");
+  AddFlag(&Flags::inferenceTypeIn, "inferenceType", "Data type of input and output tensors. FLOAT | INT8 | UINT8",
+          "FLOAT");
   AddFlag(&Flags::quantTypeIn, "quantType", "Quantization Type. AwareTraining | PostTraining | WeightQuant", "");
   AddFlag(&Flags::stdDev, "stdDev", "Standard deviation value for aware-quantization", "128");
   AddFlag(&Flags::mean, "mean", "Mean value for aware-quantization", "-0.5");
@@ -39,7 +39,6 @@ Flags::Flags() {
   AddFlag(&Flags::convWeightQuantChannelThreshold, "convWeightQuantChannelThreshold", "convWeightQuantChannelThreshold",
           "16");
   AddFlag(&Flags::configFile, "config_file", "Configuration for post-training.", "");
-  AddFlag(&Flags::formatTrans, "formatTrans", "whether transform format. true | false", "true");
   AddFlag(&Flags::trainModelIn, "trainModel",
           "whether the model is going to be trained on device."
           " true | false",
@@ -86,24 +85,24 @@ int Flags::Init(int argc, const char **argv) {
     this->inferenceType = TypeId::kNumberTypeFloat;
   } else if (this->inferenceTypeIn == "INT8") {
     this->inferenceType = TypeId::kNumberTypeInt8;
-  } else if (this->inferenceTypeIn == "SAME") {
-    this->inferenceType = TypeId::kTypeUnknown;
+  } else if (this->inferenceTypeIn == "UINT8") {
+    this->inferenceType = TypeId::kNumberTypeUInt8;
   } else {
-    std::cerr << "INPUT INVALID: inferenceType is invalid: %s, supported inferenceType: FLOAT | INT8 | SAME",
+    std::cerr << "INPUT INVALID: inferenceType is invalid: %s, supported inferenceType: FLOAT | INT8 | UINT8",
       this->inferenceTypeIn.c_str();
     return RET_INPUT_PARAM_INVALID;
   }
 
   if (this->fmkIn == "CAFFE") {
     this->fmk = FmkType_CAFFE;
-  } else if (this->fmkIn == "MS") {
+  } else if (this->fmkIn == "MINDIR") {
     this->fmk = FmkType_MS;
   } else if (this->fmkIn == "TFLITE") {
     this->fmk = FmkType_TFLITE;
   } else if (this->fmkIn == "ONNX") {
     this->fmk = FmkType_ONNX;
   } else {
-    std::cerr << "INPUT ILLEGAL: fmk must be TFLITE|CAFFE|MS|ONNX";
+    std::cerr << "INPUT ILLEGAL: fmk must be TFLITE|CAFFE|MINDIR|ONNX";
     return RET_INPUT_PARAM_INVALID;
   }
 
