@@ -489,15 +489,25 @@ AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr
     if (slide.step <= 0) {
       MS_LOG(EXCEPTION) << "Error slice[" << slide.start << ", " << slide.stop << ", " << slide.step << "]";
     }
+
     for (int i = slide.start; i < slide.stop; i += slide.step) {
       args.push_back(abstract::FromValue(i));
+      if (i > 0 && INT_MAX - i < slide.step) {
+        MS_EXCEPTION(ValueError) << "For make range, the required cycles number is greater than max cycles number, "
+                                    "will cause integer overflow.";
+      }
     }
   } else {
     if (slide.step >= 0) {
       MS_LOG(EXCEPTION) << "Error slice[" << slide.start << ", " << slide.stop << ", " << slide.step << "]";
     }
+
     for (int i = slide.start; i > slide.stop; i += slide.step) {
       args.push_back(abstract::FromValue(i));
+      if (i < 0 && INT_MIN - i > slide.step) {
+        MS_EXCEPTION(ValueError) << "For make range, the required cycles number is greater than max cycles number, "
+                                    "will cause integer overflow.";
+      }
     }
   }
 

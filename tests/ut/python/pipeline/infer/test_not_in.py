@@ -40,17 +40,17 @@ def test_number_not_in_tuple():
             if self.number_in not in self.tuple_:
                 ret += 1
             if self.number_not_in not in self.tuple_:
-                ret += 1
+                ret += 2
             if self.number_in not in self.list_:
                 ret += 3
             if self.number_not_in not in self.list_:
-                ret += 3
+                ret += 4
             if self.str_in not in self.dict_:
                 ret += 5
             if self.str_not_in not in self.dict_:
-                ret += 5
+                ret += 6
             return ret
 
     net = Net()
     output = net()
-    assert output == 9
+    assert output == 12
