@@ -26,13 +26,12 @@ scatter_update_op_info = TBERegOp("ScatterUpdate") \
     .attr("use_locking", "optional", "bool", "all") \
     .input(0, "var", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \
-    .input(1, "updates", False, "required", "all") \
+    .input(2, "updates", False, "required", "all") \
     .output(0, "var", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.I8_Default, DataType.I32_Default, DataType.I8_Default, DataType.I8_Default) \
     .dtype_format(DataType.U8_Default, DataType.I32_Default, DataType.U8_Default, DataType.U8_Default) \
-    .dtype_format(DataType.BOOL_Default, DataType.I32_Default, DataType.BOOL_Default, DataType.BOOL_Default) \
     .get_op_info()
 
 

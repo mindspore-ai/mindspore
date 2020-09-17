@@ -59,6 +59,7 @@ class ReduceLogSumExp(Cell):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = nn.ReduceLogSumExp(keep_dims=True)
         >>> output = op(input_x, 1)
+        (3, 1, 5, 6)
     """
 
     def __init__(self, axis, keep_dims=False):
@@ -217,9 +218,10 @@ class LGamma(Cell):
         Tensor, has the same shape and dtype as the `input_x`.
 
     Examples:
-        >>> input_x = Tensor(np.array(2, 3, 4).astype(np.float32))
+        >>> input_x = Tensor(np.array([2, 3, 4]).astype(np.float32))
         >>> op = nn.LGamma()
         >>> output = op(input_x)
+        [3.5762787e-07 6.9314754e-01 1.7917603e+00]
     """
 
     def __init__(self):

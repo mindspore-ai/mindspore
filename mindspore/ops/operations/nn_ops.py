@@ -2306,7 +2306,7 @@ class DropoutGenMask(Primitive):
 
     Inputs:
         - **shape** (tuple[int]) - The shape of target mask.
-        - **keep_prob** (Tensor) - The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
+        - **keep_prob** (Tensor) - The keep rate, greater than 0 and less equal than 1, e.g. keep_prob = 0.9,
           means dropping out 10% of input units.
 
     Outputs:
@@ -2314,9 +2314,10 @@ class DropoutGenMask(Primitive):
 
     Examples:
         >>> dropout_gen_mask = P.DropoutGenMask()
-        >>> shape = (20, 16, 50)
+        >>> shape = (2, 4, 5)
         >>> keep_prob = Tensor(0.5, mindspore.float32)
         >>> mask = dropout_gen_mask(shape, keep_prob)
+        [249, 11, 134, 133, 143, 246, 89, 52, 169, 15, 94, 63, 146, 103, 7, 101]
     """
 
     @prim_attr_register
@@ -2338,7 +2339,7 @@ class DropoutDoMask(PrimitiveWithInfer):
         - **mask** (Tensor) - The mask to be applied on `input_x`, which is the output of `DropoutGenMask`. And the
           shape of `input_x` must be the same as the value of `DropoutGenMask`'s input `shape`. If input wrong `mask`,
           the output of `DropoutDoMask` are unpredictable.
-        - **keep_prob** (Tensor) - The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
+        - **keep_prob** (Tensor) - The keep rate, greater than 0 and less equal than 1, e.g. keep_prob = 0.9,
           means dropping out 10% of input units. The value of `keep_prob` is the same as the input `keep_prob` of
           `DropoutGenMask`.
 
@@ -2346,14 +2347,18 @@ class DropoutDoMask(PrimitiveWithInfer):
         Tensor, the value that applied dropout on.
 
     Examples:
-        >>> x = Tensor(np.ones([20, 16, 50]), mindspore.float32)
-        >>> shape = (20, 16, 50)
+        >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
+        >>> shape = (2, 2, 3)
         >>> keep_prob = Tensor(0.5, mindspore.float32)
         >>> dropout_gen_mask = P.DropoutGenMask()
         >>> dropout_do_mask = P.DropoutDoMask()
         >>> mask = dropout_gen_mask(shape, keep_prob)
         >>> output = dropout_do_mask(x, mask, keep_prob)
-        >>> assert output.shape == (20, 16, 50)
+        >>> assert output.shape == (2, 2, 3)
+        [[[2.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0]],
+         [[0.0, 0.0, 0.0],
+          [2.0, 2.0, 2.0]]]
     """
 
     @prim_attr_register
@@ -2401,11 +2406,11 @@ class ResizeBilinear(PrimitiveWithInfer):
                        rescale by `new_height / height`. Default: False.
 
     Inputs:
-        - **input** (Tensor) - Image to be resized. Tensor of shape `(N_i, ..., N_n, height, width)`,
-          with data type of float32 or float16.
+        - **input** (Tensor) - Image to be resized. Input images must be a 4-D tensor with shape
+         [batch, channels, height, width], with data type of float32 or float16.
 
     Outputs:
-        Tensor, resized image. Tensor of shape `(N_i, ..., N_n, new_height, new_width)` in `float32`.
+        Tensor, resized image. 4-D with shape [batch, channels, new_height, new_width] in `float32`.
 
     Examples:
         >>> tensor = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
@@ -2419,6 +2424,7 @@ class ResizeBilinear(PrimitiveWithInfer):
         pass
 
     def infer_shape(self, input_shape):
+        validator.check("input shape rank", len(input_shape), "", 4, Rel.EQ, self.name)
         input_shape = list(input_shape)
         batch, channel, _, _ = input_shape
         out_shape = [batch, channel]
