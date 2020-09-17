@@ -39,8 +39,8 @@ class VAE(Cell):
         latent_size(int): The size of the latent space.
 
     Inputs:
-        - **input** (Tensor) - The input tensor is the same shape as the input of encoder, the shape
-        is :math:`(N, C, H, W)`.
+        - **input** (Tensor) - The shape of input tensor is :math:`(N, C, H, W)`, which is the same as the input of
+        encoder.
 
     Outputs:
         - **output** (Tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor)).
