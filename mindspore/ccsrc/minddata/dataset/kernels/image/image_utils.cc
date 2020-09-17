@@ -352,6 +352,14 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
     RETURN_STATUS_UNEXPECTED("Shape not <H,W,C> or <H,W>");
   }
+  // account for integer overflow
+  if (y < 0 || (y + h) > input_cv->shape()[0] || (y + h) < 0) {
+    RETURN_STATUS_UNEXPECTED("Invalid y coordinate value for crop");
+  }
+  // account for integer overflow
+  if (x < 0 || (x + w) > input_cv->shape()[1] || (x + w) < 0) {
+    RETURN_STATUS_UNEXPECTED("Invalid x coordinate value for crop");
+  }
   try {
     TensorShape shape{h, w};
     int num_channels = input_cv->shape()[2];
