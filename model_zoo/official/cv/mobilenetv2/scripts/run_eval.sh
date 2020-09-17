@@ -13,12 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# != 3 ]
+
+run_ascend()
+{
+    export DEVICE_ID=0
+    export RANK_ID=0
+    export RANK_SIZE=1
+ 
+
+}
+
+if [ $# -gt 4 ] || [ $# -lt 3 ]
 then
-    echo "Ascend: sh run_infer.sh [DEVICE_TARGET] [DATASET_PATH] [CHECKPOINT_PATH] \
-          GPU: sh run_infer.sh [DEVICE_TARGET] [DATASET_PATH] [CHECKPOINT_PATH]"
+    echo "Usage:
+          Ascend: sh run_eval.sh [PLATFORM] [DATASET_PATH] [PRETRAIN_CKPT]
+          GPU: sh run_eval.sh [PLATFORM] [DATASET_PATH] [PRETRAIN_CKPT]
+          CPU: sh run_eval.sh [PLATFORM] [DATASET_PATH] [PRETRAIN_CKPT]"
 exit 1
 fi
+
 
 # check dataset path
 if [ ! -d $2 ]
@@ -30,16 +43,13 @@ fi
 # check checkpoint file
 if [ ! -f $3 ]
 then
-    echo "error: CHECKPOINT_PATH=$3 is not a file"
+    echo "error: PRETRAIN_CKPT=$3 is not a file"
 exit 1
 fi
 
 # set environment
 BASEPATH=$(cd "`dirname $0`" || exit; pwd)
 export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-export DEVICE_ID=0
-export RANK_ID=0
-export RANK_SIZE=1
 if [ -d "../eval" ];
 then
     rm -rf ../eval
@@ -47,9 +57,14 @@ fi
 mkdir ../eval
 cd ../eval || exit
 
+if [ $1 = "CPU" ] ; then
+    run_ascend "$@"
+fi;
+
 # launch
 python ${BASEPATH}/../eval.py \
-        --device_target=$1 \
-        --dataset_path=$2 \
-        --checkpoint_path=$3 \
-        &> ../infer.log &  # dataset val folder path
+    --platform=$1 \
+    --dataset_path=$2 \
+    --pretrain_ckpt=$3 \
+    --head_ckpt=$4 \
+    &> ../eval.log &  # dataset val folder path

@@ -38,25 +38,24 @@ def launch_parse_args():
 
 def train_parse_args():
     train_parser = argparse.ArgumentParser(description='Image classification trian')
-    train_parser.add_argument('--dataset_path', type=str, required=True, help='Dataset path')
     train_parser.add_argument('--platform', type=str, default="Ascend", choices=("CPU", "GPU", "Ascend"), \
         help='run platform, only support CPU, GPU and Ascend')
+    train_parser.add_argument('--dataset_path', type=str, required=True, help='Dataset path')
+    train_parser.add_argument('--train_method', type=str, choices=("train", "fine_tune", "incremental_learn"), \
+        help="\"fine_tune\"or \"incremental_learn\" if to fine tune the net  after loading the ckpt, \"train\" to \
+        train from initialization model")
     train_parser.add_argument('--pretrain_ckpt', type=str, default=None, help='Pretrained checkpoint path \
         for fine tune or incremental learning')
     train_parser.add_argument('--run_distribute', type=ast.literal_eval, default=True, help='Run distribute')
-    train_parser.add_argument('--train_method', type=str, required=True, choices=("train", "fine_tune", \
-        "incremental_learn"), help="\"fine_tune\"or \"incremental_learn\" if to fine tune the net  after \
-        loading the ckpt, \"train\" to train from initialization model")
-
     train_args = train_parser.parse_args()
     return train_args
 
 def eval_parse_args():
     eval_parser = argparse.ArgumentParser(description='Image classification eval')
-    eval_parser.add_argument('--dataset_path', type=str, required=True, help='Dataset path')
     eval_parser.add_argument('--platform', type=str, default="Ascend", choices=("Ascend", "GPU", "CPU"), \
         help='run platform, only support GPU, CPU and Ascend')
-    eval_parser.add_argument('--pretrain_ckpt', type=str, default=None, help='Pretrained checkpoint path \
+    eval_parser.add_argument('--dataset_path', type=str, required=True, help='Dataset path')
+    eval_parser.add_argument('--pretrain_ckpt', type=str, required=True, help='Pretrained checkpoint path \
         for fine tune or incremental learning')
     eval_parser.add_argument('--head_ckpt', type=str, default=None, help='Pretrained checkpoint path \
         for fine tune or incremental learning')
