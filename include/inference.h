@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace inference {
-
 enum StatusCode { SUCCESS = 0, FAILED, INVALID_INPUTS };
 
 class Status {

@@ -33,7 +33,7 @@ inline void *GetMPIAdapterHandle() {
   return handle;
 }
 
-inline void *GetMPIAdapterFunc(const char *name) {
+void *GetMPIAdapterFunc(const char *name) {
   static void *handle = GetMPIAdapterHandle();
   if (handle == nullptr) {
     MS_LOG(EXCEPTION) << "Load lib " << name << " failed, make sure you have installed it!";

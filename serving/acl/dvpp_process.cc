@@ -28,7 +28,6 @@ DvppProcess::DvppProcess() {}
 DvppProcess::~DvppProcess() {}
 
 static uint32_t ToEven(uint32_t num) { return (num + 1) / 2 * 2; }
-
 static uint32_t ToOdd(uint32_t num) {
   if (num == 0) {
     return 1;

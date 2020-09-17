@@ -68,7 +68,6 @@ void E2eDumpUtil::DumpGPUMemToFile(const std::string &file_path, const std::stri
   TensorLoader *tensor_loader = debug_services->tensor_loader();
   auto ret = tensor_loader->DumpTensorToFile(original_kernel_name, trans_flag, file_path, format, int_shapes, type,
                                              addr->type_id(), addr->format(), slot);
-
   if (!ret) {
     MS_LOG(ERROR) << "DumpTensorToFile Failed: flag:" << std::to_string(trans_flag) << ", path:" << file_path
                   << ", host_format:" << format;

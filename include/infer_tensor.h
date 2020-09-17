@@ -30,7 +30,6 @@
 namespace mindspore {
 #define MS_API __attribute__((visibility("default")))
 namespace inference {
-
 enum DataType {
   kMSI_Unknown = 0,
   kMSI_Bool = 1,
@@ -209,7 +208,6 @@ class VectorInferTensorWrapRequest : public RequestBase {
   }
   const std::vector<InferTensor> &tensor_list_;
 };
-
 }  // namespace inference
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_INFER_TENSOR_H_

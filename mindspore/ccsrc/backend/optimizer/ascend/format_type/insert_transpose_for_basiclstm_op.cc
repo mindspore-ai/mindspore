@@ -57,7 +57,6 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
     } else {
       new_node = kernel_graph->NewCNode(cnode);
     }
-
   } else if (op_name == kBasicLSTMCellWeightGradOpName) {
     std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
     size_t out_num = AnfAlgo::GetOutputTensorNum(cnode);
