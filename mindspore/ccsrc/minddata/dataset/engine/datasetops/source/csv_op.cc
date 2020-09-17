@@ -495,6 +495,9 @@ Status CsvOp::LoadFile(const std::string &file, const int64_t start_offset, cons
   csv_parser.SetEndOffset(end_offset);
   std::ifstream ifs;
   ifs.open(file, std::ifstream::in);
+  if (!ifs.is_open()) {
+    RETURN_STATUS_UNEXPECTED("Error opening file: " + file);
+  }
   if (column_name_list_.empty()) {
     std::string tmp;
     getline(ifs, tmp);
@@ -793,6 +796,9 @@ int64_t CsvOp::CountTotalRows(const std::string &file) {
   CsvParser csv_parser(0, jagged_buffer_connector_, rows_per_buffer_, field_delim_, column_default_list_);
   std::ifstream ifs;
   ifs.open(file, std::ifstream::in);
+  if (!ifs.is_open()) {
+    return 0;
+  }
   if (column_name_list_.empty()) {
     std::string tmp;
     getline(ifs, tmp);
