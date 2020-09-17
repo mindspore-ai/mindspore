@@ -144,6 +144,7 @@ void WorkerProxy<T>::AddEmbeddingTable(const ::ps::Key &key, const size_t &row_c
     ::ps::Range range(begin, end);
     if (embedding_table_ranges_.count(key) == 0) {
       embedding_table_ranges_[key] = std::make_shared<std::vector<::ps::Range>>();
+      MS_EXCEPTION_IF_NULL(embedding_table_ranges_[key]);
     }
     embedding_table_ranges_[key]->push_back(range);
   }
@@ -168,6 +169,7 @@ template <typename T>
 void WorkerProxy<T>::EmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
                                      const ::ps::SArray<int> &lens, ::ps::SArray<T> *outs, int cmd, const Callback &cb,
                                      int priority) {
+  MS_EXCEPTION_IF_NULL(outs);
   int ts = AddLookupCB(keys, lookup_ids, outs, cmd, cb);
   ::ps::KVPairs<T> kvs;
   kvs.keys = keys;
@@ -265,6 +267,7 @@ void WorkerProxy<T>::PushSparseData(const ::ps::SArray<::ps::Key> &keys, const :
 template <typename T>
 void WorkerProxy<T>::PullData(const ::ps::SArray<::ps::Key> &keys, ::ps::SArray<T> *vals, ::ps::SArray<int> *lens,
                               int cmd, int priority) {
+  MS_EXCEPTION_IF_NULL(vals);
   int ts = AddGeneralRspCB(keys, vals, lens, cmd, nullptr);
   ::ps::KVPairs<T> kvs;
   kvs.keys = keys;
@@ -295,6 +298,7 @@ template <typename T>
 template <typename C>
 int WorkerProxy<T>::AddLookupCB(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
                                 C *lookup_result, int cmd, const Callback &cb) {
+  MS_EXCEPTION_IF_NULL(lookup_result);
   int ts = lookup_customer_->NewRequest(::ps::kServerGroup);
   const auto &callback = [this, ts, keys, lookup_ids, lookup_result, cb]() mutable {
     mutex_.lock();
@@ -310,17 +314,27 @@ int WorkerProxy<T>::AddLookupCB(const ::ps::SArray<::ps::Key> &keys, const ::ps:
         T *addr = s.vals.data() + offset;
         offset += len;
         id_addr_map[key] = std::make_shared<std::pair<T *, int>>(std::make_pair(addr, len));
+        MS_EXCEPTION_IF_NULL(id_addr_map[key]);
       }
     }
 
     T *result_addr = lookup_result->data();
+    MS_EXCEPTION_IF_NULL(result_addr);
     int offset = 0;
+    size_t dst_size = 0;
+    size_t src_size = 0;
+    void *dst_data = nullptr;
+    void *src_data = nullptr;
     for (size_t i = 0; i < lookup_ids.size(); i++) {
       auto &pair = id_addr_map[static_cast<Key>(lookup_ids[i])];
       int size = pair->second * sizeof(T);
-      size_t dst_size = size;
-      size_t src_size = size;
-      auto ret = memcpy_s(result_addr + offset, dst_size, pair->first, src_size);
+      dst_size = size;
+      src_size = size;
+      dst_data = result_addr + offset;
+      src_data = pair->first;
+      MS_EXCEPTION_IF_NULL(dst_data);
+      MS_EXCEPTION_IF_NULL(src_data);
+      auto ret = memcpy_s(dst_data, dst_size, src_data, src_size);
       if (ret != 0) {
         MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
         return;
@@ -373,6 +387,7 @@ template <typename T>
 void WorkerProxy<T>::LookupIdSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
                                     std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced,
                                     const std::map<int, int> &attrs) {
+  MS_EXCEPTION_IF_NULL(sliced);
   int *lookup_ids = send.lens.data();
   size_t id_size = send.lens.size();
 
@@ -414,6 +429,7 @@ template <typename T>
 void WorkerProxy<T>::SparseSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
                                   std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced,
                                   const std::map<int, int> &attrs) {
+  MS_EXCEPTION_IF_NULL(sliced);
   // Init variables
   T *data = send.vals.data();
 
@@ -527,15 +543,29 @@ void WorkerProxy<T>::PrepareSparseGradient(const size_t begin, const size_t end,
                                            const std::vector<std::pair<int, T *>> &indice_to_grads,
                                            const int *all_indice, const size_t segment_size, T *gradient,
                                            int *indices) {
+  MS_EXCEPTION_IF_NULL(all_indice);
+  MS_EXCEPTION_IF_NULL(gradient);
+  MS_EXCEPTION_IF_NULL(indices);
   int offset = 0;
   int index = 0;
   size_t segment_data_size = segment_size * sizeof(T);
+  size_t dst_size = 0;
+  size_t src_size = 0;
+  void *dst_data = nullptr;
+  void *src_data = nullptr;
   for (auto &pair : indice_to_grads) {
     if (distinct_ids.count(pair.first) == 0) {
       continue;
     }
     indices[index++] = pair.first;
-    auto ret = memcpy_s(gradient + offset, segment_data_size, pair.second, segment_data_size);
+
+    dst_size = segment_data_size;
+    src_size = segment_data_size;
+    dst_data = gradient + offset;
+    src_data = pair.second;
+    MS_EXCEPTION_IF_NULL(dst_data);
+    MS_EXCEPTION_IF_NULL(src_data);
+    auto ret = memcpy_s(gradient + offset, dst_size, pair.second, src_size);
     if (ret != 0) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
       return;
@@ -548,15 +578,25 @@ template <typename T>
 void WorkerProxy<T>::BuildSparseValue(const ::ps::SArray<int> &lengths, const size_t grad_index,
                                       const size_t indice_index, const T *original_data, const T *grads, int *indices,
                                       ::ps::SArray<T> *reduced_data) {
+  MS_EXCEPTION_IF_NULL(original_data);
+  MS_EXCEPTION_IF_NULL(grads);
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(reduced_data);
   int offset = 0;
   size_t dst_size = 0;
   size_t src_size = 0;
+  void *dst_data = nullptr;
+  void *src_data = nullptr;
   for (size_t i = 0; i < lengths.size(); i++) {
     if (i != grad_index && i != indice_index) {
       int data_size = lengths[i] * sizeof(T);
       dst_size = data_size;
       src_size = data_size;
-      auto ret = memcpy_s(reduced_data->data() + offset, dst_size, original_data + offset, src_size);
+      dst_data = reduced_data->data() + offset;
+      src_data = const_cast<T *>(original_data) + offset;
+      MS_EXCEPTION_IF_NULL(dst_data);
+      MS_EXCEPTION_IF_NULL(src_data);
+      auto ret = memcpy_s(dst_data, dst_size, src_data, src_size);
       if (ret != 0) {
         MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
         return;
@@ -573,7 +613,11 @@ void WorkerProxy<T>::BuildSparseValue(const ::ps::SArray<int> &lengths, const si
   int data_size = lengths[grad_index] * sizeof(T);
   dst_size = data_size;
   src_size = data_size;
-  auto ret = memcpy_s(reduced_data->data() + grad_offset, dst_size, grads, src_size);
+  dst_data = reduced_data->data() + grad_offset;
+  src_data = const_cast<T *>(grads);
+  MS_EXCEPTION_IF_NULL(dst_data);
+  MS_EXCEPTION_IF_NULL(src_data);
+  auto ret = memcpy_s(dst_data, dst_size, src_data, src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
@@ -585,7 +629,11 @@ void WorkerProxy<T>::BuildSparseValue(const ::ps::SArray<int> &lengths, const si
   T *indice_data = reduced_data->data() + indice_offset;
   dst_size = data_size;
   src_size = data_size;
-  ret = memcpy_s(indice_data, dst_size, indices, src_size);
+  dst_data = indice_data;
+  src_data = indices;
+  MS_EXCEPTION_IF_NULL(dst_data);
+  MS_EXCEPTION_IF_NULL(src_data);
+  ret = memcpy_s(dst_data, dst_size, src_data, src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
@@ -596,6 +644,7 @@ template <typename T>
 void WorkerProxy<T>::BroadcastSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
                                      std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced,
                                      const std::map<int, int> &attr) {
+  MS_EXCEPTION_IF_NULL(sliced);
   sliced->resize(server_num_);
   for (int i = 0; i < server_num_; i++) {
     sliced->at(i).first = true;
@@ -608,6 +657,7 @@ template <typename T>
 void WorkerProxy<T>::RoundRobinSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
                                       std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced,
                                       const std::map<int, int> &attr) {
+  MS_EXCEPTION_IF_NULL(sliced);
   sliced->resize(server_num_);
   auto keys = send.keys;
   auto vals = send.vals;
@@ -646,6 +696,7 @@ void WorkerProxy<T>::WorkerInitEmbeddingSlicer(int timestamp, const ::ps::KVPair
                                                const std::vector<::ps::Range> &,
                                                std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced,
                                                const std::map<int, int> &attrs) {
+  MS_EXCEPTION_IF_NULL(sliced);
   sliced->resize(server_num_);
   auto keys = send.keys;
   auto vals = send.vals;
@@ -714,6 +765,7 @@ void WorkerProxy<T>::ProcessResponse(const ::ps::Message &msg) {
 template <typename T>
 void WorkerProxy<T>::Send(::ps::Customer *customer, int timestamp, bool push, bool pull, int cmd,
                           const ::ps::KVPairs<T> &kvs, const Slicer &slicer, std::map<int, int> attrs) {
+  MS_EXCEPTION_IF_NULL(customer);
   SlicedKVs sliced;
   slicer(timestamp, kvs, ::ps::Postoffice::Get()->GetServerKeyRanges(), &sliced, attrs);
 

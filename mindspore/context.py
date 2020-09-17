@@ -639,14 +639,17 @@ def set_ps_context(**kwargs):
     Note:
         Some other environment variables should also be set for parameter server training mode.
         These environment variables are listed below:
+
+        .. code-block::
+
         MS_SERVER_NUM  # Server number
         MS_WORKER_NUM  # Worker number
         MS_SCHED_HOST  # Scheduler IP address
         MS_SCHED_PORT  # Scheduler port
         MS_ROLE        # The role of this process:
-                         MS_SCHED represents the scheduler,
-                         MS_WORKER represents the worker,
-                         MS_PSERVER represents the Server
+                       # MS_SCHED represents the scheduler,
+                       # MS_WORKER represents the worker,
+                       # MS_PSERVER represents the Server
 
 
     Args:

@@ -53,7 +53,7 @@ class Worker {
   void SetOptimInputShapes(size_t key, const ShapeVector &shape);
   void AddEmbeddingTable(const ::ps::Key &key, const size_t &row_count);
   void InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vector<size_t> shapes, const ShapeVector &sizes);
-  void InitPSParamAndOptim(const std::string &param_name, tensor::TensorPtr tensor);
+  void InitPSParamAndOptim(const std::string &param_name, const tensor::TensorPtr &tensor);
   void DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
                            const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int cmd);
   void Finalize();
@@ -132,10 +132,13 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
   size_t dst_size = 0;
   size_t src_size = 0;
   for (size_t i = 0; i < sizes.size(); i++) {
+    void *dst_data = total_buffer.data() + offset / sizeof(T);
+    void *src_data = reinterpret_cast<void *>(addrs[i]);
+    MS_EXCEPTION_IF_NULL(dst_data);
+    MS_EXCEPTION_IF_NULL(src_data);
     dst_size = sizes[i] * sizeof(T);
     src_size = sizes[i] * sizeof(T);
-    auto ret =
-      memcpy_s(total_buffer.data() + offset / sizeof(T), dst_size, reinterpret_cast<void *>(addrs[i]), src_size);
+    auto ret = memcpy_s(dst_data, dst_size, src_data, src_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
       return;
@@ -159,6 +162,7 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
 
 template <typename T>
 void Worker<T>::Pull(const size_t key, void *dev_addr, const size_t size) {
+  MS_EXCEPTION_IF_NULL(dev_addr);
   ::ps::SArray<T> variables(size / sizeof(T), 0);
   while (!kv_worker_->IsReadyForPull(key)) {
     continue;
@@ -176,6 +180,7 @@ void Worker<T>::Pull(const size_t key, void *dev_addr, const size_t size) {
 template <typename T>
 void Worker<T>::DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
                                     const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int cmd) {
+  MS_EXCEPTION_IF_NULL(lookup_result);
   kv_worker_->EmbeddingLookup(keys, lookup_ids, lens, lookup_result, cmd);
 }
 
@@ -192,6 +197,7 @@ void Worker<T>::Finalize() {
 
 template <typename T>
 void Worker<T>::InitPSParamData(const std::vector<size_t> &keys, void *origin_addr, size_t size) {
+  MS_EXCEPTION_IF_NULL(origin_addr);
   ::ps::SArray<T> addr(reinterpret_cast<T *>(origin_addr), size / sizeof(T));
   ::ps::SArray<::ps::Key> key(keys);
   ::ps::SArray<int> lens;
@@ -316,7 +322,8 @@ void Worker<T>::InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vecto
 }
 
 template <typename T>
-void Worker<T>::InitPSParamAndOptim(const std::string &param_name, tensor::TensorPtr tensor) {
+void Worker<T>::InitPSParamAndOptim(const std::string &param_name, const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
   void *param_data = tensor->data_c();
   size_t param_size = LongToSize(tensor->data().nbytes());
   ShapeVector param_shape = tensor->shape_c();
