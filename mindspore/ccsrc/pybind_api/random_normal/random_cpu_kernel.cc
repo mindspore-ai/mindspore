@@ -65,6 +65,6 @@ bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, 
 }
 
 REGISTER_PYBIND_DEFINE(random_normal,
-                       ([](py::module *m) { (void)m->def("random_normal", &InitRandomNormal, "testnormal"); }));
+                       ([](py::module *const m) { (void)m->def("random_normal", &InitRandomNormal, "testnormal"); }));
 
 }  // namespace mindspore
