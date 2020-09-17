@@ -34,12 +34,11 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::Tensor *> &in
   MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
 
   auto *weight_tensor = inputs.at(kWeightIndex);
-  auto *restore_data = weight_tensor->MutableData();
-  if (restore_data == nullptr) {
-    MS_LOG(ERROR) << "weight_tensor MutableData is nullptr.";
-    return nullptr;
-  }
-  if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+  auto *restore_data = weight_tensor->data_c();
+  auto is_const_quant_weight =
+    (restore_data != nullptr) &&
+    (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant);
+  if (is_const_quant_weight) {
     auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
       MS_LOG(ERROR) << "dequant data is nullptr.";
@@ -58,7 +57,7 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::Tensor *> &in
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
-    if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    if (is_const_quant_weight) {
       weight_tensor->FreeData();
       weight_tensor->SetData(restore_data);
     }
@@ -69,14 +68,14 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::Tensor *> &in
     delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    if (is_const_quant_weight) {
       weight_tensor->FreeData();
       weight_tensor->SetData(restore_data);
     }
     return nullptr;
   }
 
-  if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+  if (is_const_quant_weight) {
     weight_tensor->FreeData();
     weight_tensor->SetData(restore_data);
   }
