@@ -1542,17 +1542,8 @@ size_t CostGraph::GetNumEdges() const {
   }
   return sum;
 }
-Status CostGraph::InitSelectedStrategy() {
-  for (auto &op : ops_) {
-    MS_EXCEPTION_IF_NULL(op);
-    if (op->name().find(RESHAPEINFO) != std::string::npos) {
-      continue;
-    }
-    auto result = op->InitSelectedStrategy(op->selected_strategy());
-    if (result != SUCCESS) {
-      return result;
-    }
-  }
+
+Status CostGraph::InitReshapeStrategy() {
   // reshape init should be apply after the init of it's previous node and next node.
   for (size_t i = 0; i < ops_.size(); ++i) {
     if (ops_[i]->name().find(RESHAPEINFO) != std::string::npos) {
@@ -1604,6 +1595,21 @@ Status CostGraph::InitSelectedStrategy() {
     }
   }
   return SUCCESS;
+}
+
+Status CostGraph::InitSelectedStrategy() {
+  for (auto &op : ops_) {
+    MS_EXCEPTION_IF_NULL(op);
+    if (op->name().find(RESHAPEINFO) != std::string::npos) {
+      continue;
+    }
+    auto result = op->InitSelectedStrategy(op->selected_strategy());
+    if (result != SUCCESS) {
+      return result;
+    }
+  }
+  auto result = InitReshapeStrategy();
+  return result;
 }
 
 Status CostGraph::ComputeOpsAndEdgesParameterInvolved() {

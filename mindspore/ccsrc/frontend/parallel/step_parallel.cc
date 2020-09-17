@@ -2275,7 +2275,6 @@ std::vector<std::pair<std::string, int>> NodeParameterName(const CNodePtr &node)
 }
 
 void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes) {
-  MS_LOG(DEBUG) << "Save strategy to checkpoint begin";
   StrategyMap stra_map;
   TensorInfoMap tensor_info_map;
   ManualShapeMap manual_shape_map;
@@ -2298,10 +2297,8 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes) {
         continue;
       }
       std::vector<TensorInfo> input_tensor_info = operator_info->inputs_tensor_info();
-      StrategyPtr strategyPtr = operator_info->strategy();
-      MS_EXCEPTION_IF_NULL(node->scope());
       std::string stratey_key_name = prim->name() + "_" + param_name;
-      stra_map[stratey_key_name] = strategyPtr;
+      stra_map[stratey_key_name] = operator_info->strategy();
       for (auto param_name_pair : param_names) {
         if (param_name_pair.second - 1 >= UintToInt(input_tensor_info.size())) {
           continue;
