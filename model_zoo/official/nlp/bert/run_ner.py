@@ -230,7 +230,7 @@ def run_ner():
                                                            ds.get_dataset_size(), epoch_num, "ner")
 
     if args_opt.do_eval.lower() == "true":
-        ds = create_ner_dataset(batch_size=bert_net_cfg.batch_size, repeat_count=1,
+        ds = create_ner_dataset(batch_size=optimizer_cfg.batch_size, repeat_count=1,
                                 assessment_method=assessment_method, data_file_path=args_opt.eval_data_file_path,
                                 schema_file_path=args_opt.schema_file_path,
                                 do_shuffle=(args_opt.eval_data_shuffle.lower() == "true"))

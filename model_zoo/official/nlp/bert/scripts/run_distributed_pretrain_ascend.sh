@@ -16,8 +16,8 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_distributed_pretrain.sh DATA_DIR RANK_TABLE_FILE"
-echo "for example: bash run_distributed_pretrain.sh /path/dataset /path/hccl.json"
+echo "bash run_distributed_pretrain_ascend.sh DATA_DIR RANK_TABLE_FILE"
+echo "for example: bash run_distributed_pretrain_ascend.sh /path/dataset /path/hccl.json"
 echo "It is better to use absolute path."
 echo "For hyper parameter, please note that you should customize the scripts:
           '{CUR_DIR}/scripts/ascend_distributed_launcher/hyper_parameter_config.ini' "
