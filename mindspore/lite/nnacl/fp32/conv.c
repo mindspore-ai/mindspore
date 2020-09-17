@@ -258,9 +258,9 @@ void ConvFp32(float *input_data, float *packed_input, float *packed_weight, cons
 }
 
 // fp32 conv winograd
-void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, TmpBufferAddress *buffer_list,
-                      int task_id, ConvParameter *conv_param, InputTransFunc in_func, OutputTransFunc out_func,
-                      GEMM_FUNC_FP32 gemm_func) {
+void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, float *output_data,
+                      TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param, InputTransFunc in_func,
+                      OutputTransFunc out_func) {
   int thread_num = conv_param->thread_num_;
   int input_unit = conv_param->input_unit_;
   int in_batch = conv_param->input_batch_;
@@ -277,13 +277,11 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
 #endif
   int output_tile_count = UP_DIV(output_count, tile_num);
   int out_channel = conv_param->output_channel_;
-  int oc4 = UP_DIV(out_channel, C4NUM);
   int oc8 = UP_DIV(out_channel, C8NUM);
   int input_unit_square = input_unit * input_unit;
 
   float *trans_input = buffer_list[0];
   float *gemm_out = buffer_list[1];
-  float *tmp_out_data = buffer_list[2];
   float *tmp_data = buffer_list[3];
   float *col_buffer = buffer_list[4];
   int trans_input_offset = tile_num * input_unit_square * ic4 * C4NUM;
@@ -294,7 +292,7 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
   // step 2 : input transform (online)
   for (int b = 0; b < in_batch; b++) {
     int in_batch_offset = b * ic4 * C4NUM * conv_param->input_h_ * conv_param->input_w_;
-    int tmp_out_batch_offset = b * out_w_block * out_h_block * out_unit * out_unit * oc4 * C4NUM;
+    int out_batch_offset = b * out_channel * conv_param->output_w_ * conv_param->output_h_;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_num) {
       int out_tile_index = thread_id * tile_num;
       int cal_num = output_count - thread_id * tile_num;
@@ -317,8 +315,9 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
       }
 
       // step 4 : output transform
-      WinogradOutputTransform(dst_ptr, tmp_out_data + tmp_out_batch_offset, bias_data, cal_num, out_tile_index,
-                              out_w_block, conv_param, out_func);
+      float *output_ptr = output_data + out_batch_offset;
+      WinogradOutputTransform(dst_ptr, output_ptr, bias_data, cal_num, out_tile_index, out_w_block, conv_param,
+                              out_func);
     }
   }
 }

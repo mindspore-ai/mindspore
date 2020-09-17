@@ -31,7 +31,7 @@ extern "C" {
 typedef void (*InputTransFunc)(const float *src_data, float *dst_data, int src_step, int dst_step);
 
 typedef void (*OutputTransFunc)(const float *src_data, float *dst_data, const float *bias_data, int src_step,
-                                int dst_step);
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
 
 void GeneralInputTransformUnit(const float *src_data, float *dst_data, float *matrix_b, float *matrix_bt, int src_step,
                                int dst_step, int in_unit);
@@ -169,84 +169,144 @@ void InputTransform6x6Unit(const float *src_data, float *dst_data, int src_step,
 
 void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step, int dst_step);
 
-OutputTransFunc GetOutputTransFunc(int input_unit, int output_unit);
+OutputTransFunc GetOutputTransFunc(int input_unit, int output_unit, ActType act_type);
 
 #define Store4Data                              \
   vst1q_f32(dst_data, m[0]);                    \
-  vst1q_f32(dst_data + C4NUM, m[1]);            \
-  vst1q_f32(dst_data + dst_step * C4NUM, m[2]); \
-  vst1q_f32(dst_data + dst_step * C4NUM + C4NUM, m[3]);
+  vst1q_f32(dst_data + out_c, m[1]);            \
+  vst1q_f32(dst_data + dst_step * out_c, m[2]); \
+  vst1q_f32(dst_data + dst_step * out_c + out_c, m[3]);
 
 #define Store9Data                                          \
   vst1q_f32(dst_data, m[0]);                                \
-  vst1q_f32(dst_data + C4NUM, m[1]);                        \
-  vst1q_f32(dst_data + 2 * C4NUM, m[2]);                    \
-  vst1q_f32(dst_data + dst_step * C4NUM, m[3]);             \
-  vst1q_f32(dst_data + dst_step * C4NUM + C4NUM, m[4]);     \
-  vst1q_f32(dst_data + dst_step * C4NUM + 2 * C4NUM, m[5]); \
-  vst1q_f32(dst_data + 2 * dst_step * C4NUM, m[6]);         \
-  vst1q_f32(dst_data + 2 * dst_step * C4NUM + C4NUM, m[7]); \
-  vst1q_f32(dst_data + 2 * dst_step * C4NUM + 2 * C4NUM, m[8]);
+  vst1q_f32(dst_data + out_c, m[1]);                        \
+  vst1q_f32(dst_data + 2 * out_c, m[2]);                    \
+  vst1q_f32(dst_data + dst_step * out_c, m[3]);             \
+  vst1q_f32(dst_data + dst_step * out_c + out_c, m[4]);     \
+  vst1q_f32(dst_data + dst_step * out_c + 2 * out_c, m[5]); \
+  vst1q_f32(dst_data + 2 * dst_step * out_c, m[6]);         \
+  vst1q_f32(dst_data + 2 * dst_step * out_c + out_c, m[7]); \
+  vst1q_f32(dst_data + 2 * dst_step * out_c + 2 * out_c, m[8]);
 
 #define Store16Data                                              \
   vst1q_f32(dst_data, m[0]);                                     \
-  vst1q_f32(dst_data + C4NUM, m[1]);                             \
-  vst1q_f32(dst_data + 2 * C4NUM, m[2]);                         \
-  vst1q_f32(dst_data + 3 * C4NUM, m[3]);                         \
-  vst1q_f32(dst_data + dst_step * C4NUM, m[4]);                  \
-  vst1q_f32(dst_data + dst_step * C4NUM + C4NUM, m[5]);          \
-  vst1q_f32(dst_data + dst_step * C4NUM + 2 * C4NUM, m[6]);      \
-  vst1q_f32(dst_data + dst_step * C4NUM + 3 * C4NUM, m[7]);      \
-  vst1q_f32(dst_data + 2 * dst_step * C4NUM, m[8]);              \
-  vst1q_f32(dst_data + 2 * dst_step * C4NUM + C4NUM, m[9]);      \
-  vst1q_f32(dst_data + 2 * dst_step * C4NUM + 2 * C4NUM, m[10]); \
-  vst1q_f32(dst_data + 2 * dst_step * C4NUM + 3 * C4NUM, m[11]); \
-  vst1q_f32(dst_data + 3 * dst_step * C4NUM, m[12]);             \
-  vst1q_f32(dst_data + 3 * dst_step * C4NUM + C4NUM, m[13]);     \
-  vst1q_f32(dst_data + 3 * dst_step * C4NUM + 2 * C4NUM, m[14]); \
-  vst1q_f32(dst_data + 3 * dst_step * C4NUM + 3 * C4NUM, m[15]);
+  vst1q_f32(dst_data + out_c, m[1]);                             \
+  vst1q_f32(dst_data + 2 * out_c, m[2]);                         \
+  vst1q_f32(dst_data + 3 * out_c, m[3]);                         \
+  vst1q_f32(dst_data + dst_step * out_c, m[4]);                  \
+  vst1q_f32(dst_data + dst_step * out_c + out_c, m[5]);          \
+  vst1q_f32(dst_data + dst_step * out_c + 2 * out_c, m[6]);      \
+  vst1q_f32(dst_data + dst_step * out_c + 3 * out_c, m[7]);      \
+  vst1q_f32(dst_data + 2 * dst_step * out_c, m[8]);              \
+  vst1q_f32(dst_data + 2 * dst_step * out_c + out_c, m[9]);      \
+  vst1q_f32(dst_data + 2 * dst_step * out_c + 2 * out_c, m[10]); \
+  vst1q_f32(dst_data + 2 * dst_step * out_c + 3 * out_c, m[11]); \
+  vst1q_f32(dst_data + 3 * dst_step * out_c, m[12]);             \
+  vst1q_f32(dst_data + 3 * dst_step * out_c + out_c, m[13]);     \
+  vst1q_f32(dst_data + 3 * dst_step * out_c + 2 * out_c, m[14]); \
+  vst1q_f32(dst_data + 3 * dst_step * out_c + 3 * out_c, m[15]);
 
 #define Store25Data                                              \
   vst1q_f32(dst_data, m[0]);                                     \
-  vst1q_f32(dst_data + C4NUM, m[1]);                             \
-  vst1q_f32(dst_data + 2 * C4NUM, m[2]);                         \
-  vst1q_f32(dst_data + 3 * C4NUM, m[3]);                         \
-  vst1q_f32(dst_data + 4 * C4NUM, m[4]);                         \
-  vst1q_f32(dst_data + dst_step * C4NUM, m[5]);                  \
-  vst1q_f32(dst_data + dst_step * C4NUM + C4NUM, m[6]);          \
-  vst1q_f32(dst_data + dst_step * C4NUM + 2 * C4NUM, m[7]);      \
-  vst1q_f32(dst_data + dst_step * C4NUM + 3 * C4NUM, m[8]);      \
-  vst1q_f32(dst_data + dst_step * C4NUM + 4 * C4NUM, m[9]);      \
-  vst1q_f32(dst_data + 2 * dst_step * C4NUM, m[10]);              \
-  vst1q_f32(dst_data + 2 * dst_step * C4NUM + C4NUM, m[11]);      \
-  vst1q_f32(dst_data + 2 * dst_step * C4NUM + 2 * C4NUM, m[12]); \
-  vst1q_f32(dst_data + 2 * dst_step * C4NUM + 3 * C4NUM, m[13]); \
-  vst1q_f32(dst_data + 2 * dst_step * C4NUM + 4 * C4NUM, m[14]); \
-  vst1q_f32(dst_data + 3 * dst_step * C4NUM, m[15]);             \
-  vst1q_f32(dst_data + 3 * dst_step * C4NUM + C4NUM, m[16]);     \
-  vst1q_f32(dst_data + 3 * dst_step * C4NUM + 2 * C4NUM, m[17]); \
-  vst1q_f32(dst_data + 3 * dst_step * C4NUM + 3 * C4NUM, m[18]); \
-  vst1q_f32(dst_data + 3 * dst_step * C4NUM + 4 * C4NUM, m[19]); \
-  vst1q_f32(dst_data + 4 * dst_step * C4NUM, m[20]);             \
-  vst1q_f32(dst_data + 4 * dst_step * C4NUM + C4NUM, m[21]);     \
-  vst1q_f32(dst_data + 4 * dst_step * C4NUM + 2 * C4NUM, m[22]); \
-  vst1q_f32(dst_data + 4 * dst_step * C4NUM + 3 * C4NUM, m[23]); \
-  vst1q_f32(dst_data + 4 * dst_step * C4NUM + 4 * C4NUM, m[24]);
+  vst1q_f32(dst_data + out_c, m[1]);                             \
+  vst1q_f32(dst_data + 2 * out_c, m[2]);                         \
+  vst1q_f32(dst_data + 3 * out_c, m[3]);                         \
+  vst1q_f32(dst_data + 4 * out_c, m[4]);                         \
+  vst1q_f32(dst_data + dst_step * out_c, m[5]);                  \
+  vst1q_f32(dst_data + dst_step * out_c + out_c, m[6]);          \
+  vst1q_f32(dst_data + dst_step * out_c + 2 * out_c, m[7]);      \
+  vst1q_f32(dst_data + dst_step * out_c + 3 * out_c, m[8]);      \
+  vst1q_f32(dst_data + dst_step * out_c + 4 * out_c, m[9]);      \
+  vst1q_f32(dst_data + 2 * dst_step * out_c, m[10]);             \
+  vst1q_f32(dst_data + 2 * dst_step * out_c + out_c, m[11]);     \
+  vst1q_f32(dst_data + 2 * dst_step * out_c + 2 * out_c, m[12]); \
+  vst1q_f32(dst_data + 2 * dst_step * out_c + 3 * out_c, m[13]); \
+  vst1q_f32(dst_data + 2 * dst_step * out_c + 4 * out_c, m[14]); \
+  vst1q_f32(dst_data + 3 * dst_step * out_c, m[15]);             \
+  vst1q_f32(dst_data + 3 * dst_step * out_c + out_c, m[16]);     \
+  vst1q_f32(dst_data + 3 * dst_step * out_c + 2 * out_c, m[17]); \
+  vst1q_f32(dst_data + 3 * dst_step * out_c + 3 * out_c, m[18]); \
+  vst1q_f32(dst_data + 3 * dst_step * out_c + 4 * out_c, m[19]); \
+  vst1q_f32(dst_data + 4 * dst_step * out_c, m[20]);             \
+  vst1q_f32(dst_data + 4 * dst_step * out_c + out_c, m[21]);     \
+  vst1q_f32(dst_data + 4 * dst_step * out_c + 2 * out_c, m[22]); \
+  vst1q_f32(dst_data + 4 * dst_step * out_c + 3 * out_c, m[23]); \
+  vst1q_f32(dst_data + 4 * dst_step * out_c + 4 * out_c, m[24]);
 
-void OutputTransform4x2Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step);
-void OutputTransform4x3Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step);
+void OutputTransform4x2Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
+                            int out_c, int r_w, int r_h, int r_c);
+void OutputTransform4x2ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform4x2Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform4x3Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
+                            int out_c, int r_w, int r_h, int r_c);
+void OutputTransform4x3ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform4x3Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
 
-void OutputTransform6x2Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step);
-void OutputTransform6x3Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step);
-void OutputTransform6x4Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step);
-void OutputTransform6x5Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step);
+void OutputTransform6x2Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
+                            int out_c, int r_w, int r_h, int r_c);
+void OutputTransform6x2ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform6x2Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform6x3Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
+                            int out_c, int r_w, int r_h, int r_c);
+void OutputTransform6x3ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform6x3Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform6x4Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
+                            int out_c, int r_w, int r_h, int r_c);
+void OutputTransform6x4ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform6x4Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform6x5Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
+                            int out_c, int r_w, int r_h, int r_c);
+void OutputTransform6x5ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform6x5Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
 
-void OutputTransform8x2Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step);
-void OutputTransform8x3Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step);
-void OutputTransform8x4Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step);
-void OutputTransform8x5Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step);
-void OutputTransform8x6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step);
-void OutputTransform8x7Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step);
+void OutputTransform8x2Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
+                            int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x2ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x2Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x3Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
+                            int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x3ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x3Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x4Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
+                            int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x4ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x4Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x5Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
+                            int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x5ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x5Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
+                            int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x6ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x6Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x7Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
+                            int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x7ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                int dst_step, int out_c, int r_w, int r_h, int r_c);
+void OutputTransform8x7Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
+                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
 
 int SelectOutputUnit(ConvParameter *conv_param);
 
