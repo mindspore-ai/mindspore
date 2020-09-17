@@ -21,6 +21,7 @@
 
 namespace mindspore {
 namespace kernel {
+const int kMaxLSTMLayer = 100;
 void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 #ifdef PLATFORM_86
   _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -42,7 +43,7 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   weights_dims_ = {num_layers_, num_directions_, input_size_, 4, hidden_size_};
   weights_h_dims_ = {num_layers_, num_directions_, hidden_size_, 4, hidden_size_};
   bias_dims_ = {num_layers_, num_directions_, 4, hidden_size_};
-  dim dst_dims = {seq_len_, batch_size_, hidden_size_ * num_directions_};
+  dim dst_dims = {seq_len_, batch_size_, static_cast<int64_t>(hidden_size_) * num_directions_};
   dim dst_h_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   dim dst_c_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   dnnl::memory::desc src_desc = formatted_md(src_dims, tag::tnc);
@@ -89,6 +90,9 @@ void LstmCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   if (num_layers_ <= 0) {
     MS_LOG(EXCEPTION) << "layers must be greater than zero!";
   }
+  if (num_layers_ > kMaxLSTMLayer) {
+    MS_LOG(EXCEPTION) << "layers must be lower than 100!";
+  }
   for (int i = 0; i < num_layers_; ++i) {
     weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
     weight_h_size_ += gate_size * hidden_size_;
@@ -121,9 +125,8 @@ bool LstmCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   if (has_bias_) {
     bias_memory.set_data_handle(reinterpret_cast<float *>(inputs[3]->addr) + weight_size_ + weight_h_size_);
   } else {
-    auto ret =
-      memset_s(bias_memory.get_data_handle(), prim_desc_.bias_desc().get_size(), 0, prim_desc_.bias_desc().get_size());
-    if (ret != 0) {
+    if (memset_s(bias_memory.get_data_handle(), prim_desc_.bias_desc().get_size(), 0,
+                 prim_desc_.bias_desc().get_size())) {
       MS_LOG(EXCEPTION) << "bias memset error";
     }
   }

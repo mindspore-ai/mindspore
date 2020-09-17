@@ -22,6 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
+const int kMaxLSTMLayer = 100;
 void LSTMGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   using tag = dnnl::memory::format_tag;
@@ -38,7 +39,7 @@ void LSTMGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   weights_dims_ = {num_layers_, num_directions_, input_size_, 4, hidden_size_};
   weights_h_dims_ = {num_layers_, num_directions_, hidden_size_, 4, hidden_size_};
   bias_dims_ = {num_layers_, num_directions_, 4, hidden_size_};
-  dim dst_dims = {seq_len_, batch_size_, hidden_size_ * num_directions_};
+  dim dst_dims = {seq_len_, batch_size_, static_cast<int64_t>(hidden_size_) * num_directions_};
   dim dst_h_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   dim dst_c_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   dnnl::memory::desc src_desc = formatted_md(src_dims, tag::tnc);
@@ -106,6 +107,9 @@ void LSTMGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   const int gate_size = 4 * hidden_size_;
   if (num_layers_ <= 0) {
     MS_LOG(EXCEPTION) << "layers must be greater than zero!";
+  }
+  if (num_layers_ > kMaxLSTMLayer) {
+    MS_LOG(EXCEPTION) << "layers must be lower than 100!";
   }
   for (int i = 0; i < num_layers_; ++i) {
     weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
