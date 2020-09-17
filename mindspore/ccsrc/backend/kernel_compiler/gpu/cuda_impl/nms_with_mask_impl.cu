@@ -18,7 +18,7 @@
 #include <limits>
 #include <algorithm>
 
-int NMSRoundUpPower2(int v) {
+int NmsRoundUpPower2(int v) {
   v--;
   v |= v >> 1;
   v |= v >> 2;
@@ -46,12 +46,12 @@ __global__ void MaskInit(int numSq, bool *row_mask) {
 // copy data from input to output array sorted by indices returned from bitonic sort
 // flips boxes if asked to,  default - false -> if (x1/y1 > x2/y2)
 template <typename T>
-__global__ void PopulateOutput(T *data_in, T *data_out, int *index_buff, const int num, int box_size_,
+__global__ void PopulateOutput(T *data_in, T *data_out, int *index_buff, const int num, int box_size,
                                bool flip_mode = false) {
   for (int box_num = blockIdx.x * blockDim.x + threadIdx.x; box_num < num; box_num += blockDim.x * gridDim.x) {
     int correct_index = index_buff[(num - 1) - box_num];  // flip the array around
-    int correct_arr_start = correct_index * box_size_;
-    int current_arr_start = box_num * box_size_;
+    int correct_arr_start = correct_index * box_size;
+    int current_arr_start = box_num * box_size;
     if (flip_mode) {  // flip boxes
       // check x
       if (data_in[correct_arr_start + 0] > data_in[correct_arr_start + 2]) {
@@ -79,7 +79,7 @@ __global__ void PopulateOutput(T *data_in, T *data_out, int *index_buff, const i
 }
 
 template <typename T>
-__inline__ __device__ bool IOUDecision(T *output, int box_A_ix, int box_B_ix, int box_A_start, int box_B_start, T *area,
+__inline__ __device__ bool IouDecision(T *output, int box_A_ix, int box_B_ix, int box_A_start, int box_B_start,
                                        float IOU_value) {
   T x_1 = max(output[box_A_start + 0], output[box_B_start + 0]);
   T y_1 = max(output[box_A_start + 1], output[box_B_start + 1]);
@@ -87,37 +87,37 @@ __inline__ __device__ bool IOUDecision(T *output, int box_A_ix, int box_B_ix, in
   T y_2 = min(output[box_A_start + 3], output[box_B_start + 3]);
   T width = max(x_2 - x_1, T(0));  // in case of no overlap
   T height = max(y_2 - y_1, T(0));
-  T combined_area = area[box_A_ix] + area[box_B_ix];
-  // return decision to keep or remove box
+
+  T area1 = (output[box_A_start + 2] - output[box_A_start + 0]) * (output[box_A_start + 3] - output[box_A_start + 1]);
+  T area2 = (output[box_B_start + 2] - output[box_B_start + 0]) * (output[box_B_start + 3] - output[box_B_start + 1]);
+
+  T combined_area = area1 + area2;
   return !(((width * height) / (combined_area - (width * height))) > IOU_value);
 }
 
-// calculate areas for boxes -> sorted by output boxes
 // populated return mask (init to all true) and return index array
 template <typename T>
-__global__ void Preprocess(const int num, int *sel_idx, bool *sel_boxes, T *area, T *output, int box_size_) {
+__global__ void Preprocess(const int num, int *sel_idx, bool *sel_boxes, T *output, int box_size) {
   for (int box_num = blockIdx.x * blockDim.x + threadIdx.x; box_num < num; box_num += blockDim.x * gridDim.x) {
     sel_idx[box_num] = box_num;
     sel_boxes[box_num] = true;
-    area[box_num] = (output[(box_num * box_size_) + 2] - output[(box_num * box_size_) + 0]) *
-                    (output[(box_num * box_size_) + 3] - output[(box_num * box_size_) + 1]);
   }
 }
 
 // Run parallel NMS pass
-// Every box updates it's own mask in row_mask in sep threads
+// Every position in the row_mask array is updated wit correct IOU decision after being init to all True
 template <typename T>
-__global__ void NMSPass(const int num, const float IOU_value, T *output, T *area, bool *sel_boxes, int box_size_,
+__global__ void NmsPass(const int num, const float IOU_value, T *output, bool *sel_boxes, int box_size,
                         bool *row_mask) {
-  int box_i_start_index, box_j_start_index;  // actual input data indexing
-  int mask_offset = 0;
-  for (int box_i = blockIdx.x * blockDim.x + threadIdx.x; box_i < num - 1; box_i += blockDim.x * gridDim.x) {
-    mask_offset = box_i * num;
-    box_i_start_index = box_i * box_size_;  // adjust starting index
-    for (int box_j = box_i + 1; box_j < num; box_j++) {
-      box_j_start_index = box_j * box_size_;
-      row_mask[mask_offset + box_j] =
-        IOUDecision(output, box_i, box_j, box_i_start_index, box_j_start_index, area, IOU_value);
+  int box_i, box_j, box_i_start_index, box_j_start_index;  // actual input data indexing
+  for (int mask_index = blockIdx.x * blockDim.x + threadIdx.x; mask_index < num * num;
+       mask_index += blockDim.x * gridDim.x) {
+    box_i = mask_index / num;                // row in 2d row_mask array
+    box_j = mask_index % num;                // col in 2d row_mask array
+    if (box_j > box_i) {                     // skip when box_j index lower/equal to box_i - will remain true
+      box_i_start_index = box_i * box_size;  // adjust starting indices
+      box_j_start_index = box_j * box_size;
+      row_mask[mask_index] = IouDecision(output, box_i, box_j, box_i_start_index, box_j_start_index, IOU_value);
     }
   }
 }
@@ -139,10 +139,10 @@ __global__ void ReducePass(const int num, bool *sel_boxes, bool *row_mask) {
 
 // Sorting function based on BitonicSort from TopK kernel
 template <typename T>
-__global__ void NMS_BitonicSortByKeyKernel(const int outer, const int inner, const int ceil_power2, T *input,
-                                           T *data_buff, int *index_buff, int box_size_) {
+__global__ void NmsBitonicSortByKeyKernel(const int outer, const int inner, const int ceil_power2, T *input,
+                                           T *data_buff, int *index_buff, int box_size) {
   for (int i = threadIdx.x; i < ceil_power2; i += blockDim.x) {
-    data_buff[i] = (i < inner) ? input[(i * box_size_) + 4] : std::numeric_limits<T>::max();
+    data_buff[i] = (i < inner) ? input[(i * box_size) + 4] : std::numeric_limits<T>::max();
     index_buff[i] = i;
   }
   __syncthreads();
@@ -171,37 +171,38 @@ __global__ void NMS_BitonicSortByKeyKernel(const int outer, const int inner, con
 }
 
 template <typename T>
-void CalPreprocess(const int num, int *sel_idx, bool *sel_boxes, T *area, T *input, T *output, int *index_buff,
-                   int box_size_, bool *row_mask, cudaStream_t cuda_stream) {
+void CalPreprocess(const int num, int *sel_idx, bool *sel_boxes, T *input, T *output, int *index_buff, int box_size,
+                   bool *row_mask, cudaStream_t cuda_stream) {
   int total_val = num * num;
   MaskInit<<<GET_BLOCKS(total_val), GET_THREADS, 0, cuda_stream>>>(total_val, row_mask);
   // default for flipping boxes -> false (provision available to flip if API updated)
-  PopulateOutput<<<GET_BLOCKS(num), GET_THREADS, 0, cuda_stream>>>(input, output, index_buff, num, box_size_, false);
-  Preprocess<<<GET_BLOCKS(num), GET_THREADS, 0, cuda_stream>>>(num, sel_idx, sel_boxes, area, output, box_size_);
+  PopulateOutput<<<GET_BLOCKS(num), GET_THREADS, 0, cuda_stream>>>(input, output, index_buff, num, box_size, false);
+  Preprocess<<<GET_BLOCKS(num), GET_THREADS, 0, cuda_stream>>>(num, sel_idx, sel_boxes, output, box_size);
 }
 
 template <typename T>
-void CalSort(const int &num, T *data_in, T *data_out, int *index_buff, T *data_buff, int box_size_,
+void CalSort(const int &num, T *data_in, T *data_out, int *index_buff, T *data_buff, int box_size,
              cudaStream_t stream) {
-  int ceil_p_2 = NMSRoundUpPower2(num);
+  int ceil_p_2 = NmsRoundUpPower2(num);
   int thread = std::min(ceil_p_2, GET_THREADS);
-  NMS_BitonicSortByKeyKernel<<<1, thread, 0, stream>>>(1, num, ceil_p_2, data_in, data_buff, index_buff, box_size_);
+  NmsBitonicSortByKeyKernel<<<1, thread, 0, stream>>>(1, num, ceil_p_2, data_in, data_buff, index_buff, box_size);
 }
 
 template <typename T>
-void CalNMS(const int num, const float IOU_value, T *output, T *area, bool *sel_boxes, int box_size_, bool *row_mask,
+void CalNms(const int num, const float IOU_value, T *output, bool *sel_boxes, int box_size, bool *row_mask,
             cudaStream_t cuda_stream) {
-  NMSPass<<<GET_BLOCKS(num), GET_THREADS, 0, cuda_stream>>>(num, IOU_value, output, area, sel_boxes, box_size_,
-                                                            row_mask);
+  // run kernel for every position in row_mask array = (num * num) size
+  int row_mask_size = num * num;
+  NmsPass<<<GET_BLOCKS(row_mask_size), GET_THREADS, 0, cuda_stream>>>(num, IOU_value, output, sel_boxes, box_size,
+                                                                      row_mask);
   ReducePass<<<1, GET_THREADS, 0, cuda_stream>>>(num, sel_boxes, row_mask);
 }
 
 template void CalSort<float>(const int &inner, float *data_in, float *data_out, int *index_buff, float *data_buff,
-                             int box_size_, cudaStream_t stream);
+                             int box_size, cudaStream_t stream);
 
-template void CalPreprocess<float>(const int num, int *sel_idx, bool *sel_boxes, float *area, float *input,
-                                   float *output, int *index_buff, int box_size_, bool *row_mask,
-                                   cudaStream_t cuda_stream);
+template void CalPreprocess<float>(const int num, int *sel_idx, bool *sel_boxes, float *input, float *output,
+                                   int *index_buff, int box_size, bool *row_mask, cudaStream_t cuda_stream);
 
-template void CalNMS<float>(const int num, const float IOU_value, float *output, float *area, bool *sel_boxes,
-                            int box_size_, bool *row_mask, cudaStream_t cuda_stream);
+template void CalNms<float>(const int num, const float IOU_value, float *output, bool *sel_boxes, int box_size,
+                            bool *row_mask, cudaStream_t cuda_stream);

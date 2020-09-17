@@ -24,13 +24,13 @@ void CalSort(const int &inner, T *data_in, T *data_out, int *index_buff, T *data
              cudaStream_t stream);
 
 template <typename T>
-void CalPreprocess(const int num, int *sel_idx, bool *sel_boxes, T *area, T *input, T *output, int *index_buff,
-                   int box_size_, bool *row_mask, cudaStream_t cuda_stream);
+void CalPreprocess(const int num, int *sel_idx, bool *sel_boxes, T *input, T *output, int *index_buff, int box_size_,
+                   bool *row_mask, cudaStream_t cuda_stream);
 
 template <typename T>
-void CalNMS(const int num, const float IOU_value, T *output, T *area, bool *sel_boxes, int box_size_, bool *row_mask,
+void CalNms(const int num, const float IOU_value, T *output, bool *sel_boxes, int box_size_, bool *row_mask,
             cudaStream_t cuda_stream);
 
-int NMSRoundUpPower2(int v);
+int NmsRoundUpPower2(int v);
 
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_NMS_WITH_MASK_IMPL_H_
