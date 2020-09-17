@@ -268,7 +268,7 @@ int CsvOp::CsvParser::CountRows(int c) {
     m = Message::MS_NORMAL;
   }
   StateDiagram::iterator it = sdl.find({cur_state_, m});
-  if (it == sd.end()) {
+  if (it == sdl.end()) {
     return -1;
   }
   cur_state_ = it->second.first;
