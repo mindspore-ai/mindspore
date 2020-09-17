@@ -305,23 +305,19 @@ def _tensor_setitem_with_slice_v1(data, input_slice, value):
 
 @setitem.register("Tensor", "Number", "Number")
 def _tensor_setitem_with_int_v1(data, index, value):
-    """Syntax: A[1] = 3"""
     return compile_utils.tensor_setitem_by_number_with_number(data, index, value)
 
 
 @setitem.register("Tensor", "Number", "Tensor")
 def _tensor_setitem_with_int_v2(data, index, value):
-    """Syntax: A[1] = Tensor"""
     return compile_utils.tensor_setitem_by_number_with_tensor(data, index, value)
 
 
 @setitem.register("Tensor", "Ellipsis", "Number")
 def _tensor_setitem_with_ellipsis_v1(data, index, value):
-    """Syntax: A[...] = number."""
     return compile_utils.tensor_setitem_by_ellipsis_with_number(data, index, value)
 
 
 @setitem.register("Tensor", "Ellipsis", "Tensor")
 def _tensor_setitem_with_ellipsis_v2(data, index, value):
-    """Syntax: A[...] = Tensor."""
     return compile_utils.tensor_setitem_by_ellipsis_with_tensor(data, index, value)

@@ -320,8 +320,6 @@ class CusMatMulCube(PrimitiveWithInfer):
         from mindspore.ops._op_impl._custom_op.matmul_cube_impl import CusMatMulCube
 
     def infer_shape(self, data1_shape, data2_shape):
-        # shape = [1, data1_shape[1], data2_shape[2], 16, 16]
-        # return shape
         if self.transpose_a:
             k1, m = data1_shape
         else:

@@ -91,20 +91,16 @@ def check_tensor_setitem_index(index, element_type=None):
     """Checks tuple index type of tensor assignment."""
     if index is None:
         raise IndexError("Tensor's index cannot be None.")
-    # eg. Tensor[Slice] = u
     if isinstance(index, slice):
         return True
-    # eg. Tensor[tuple] = u
     if isinstance(index, tuple):
         if not index:
             raise IndexError("Tensor's index cannot be empty.")
-        # eg. Tensor[tuple(Slice,...)] = u
         for item in index:
             if not isinstance(item, (slice, type(...), int)):
                 raise IndexError(
                     "Index of type '{}' is not supported yet.".format(type(item)))
         return True
-    # eg. Tensor[Tensor[dtype=bool]] = u
     if isinstance(index, mstype.tensor_type):
         if element_type is None or element_type != mstype.bool_:
             raise TypeError(
