@@ -117,8 +117,8 @@ Status ImageFolderOp::PrescanMasterEntry(const std::string &filedir) {
   num_rows_ = image_label_pairs_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API ImageFolderDataset. Please check file path or dataset "
-      "API validation first.");
+      "Invalid data, no valid data matching the dataset API ImageFolderDataset. "
+      "Please check file path or dataset API.");
   }
   // free memory of two queues used for pre-scan
   folder_name_queue_->Reset();

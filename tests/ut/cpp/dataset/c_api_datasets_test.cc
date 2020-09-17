@@ -133,7 +133,7 @@ TEST_F(MindDataTestPipeline, TestMnistFailWithWrongDatasetDir) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithWrongDatasetDir.";
 
   // Create a Mnist Dataset
-  std::shared_ptr<Dataset> ds = Mnist("", std::string(), RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist("", "all", RandomSampler(false, 10));
   EXPECT_EQ(ds, nullptr);
 }
 
@@ -142,7 +142,7 @@ TEST_F(MindDataTestPipeline, TestMnistFailWithNullSampler) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, std::string(), nullptr);
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", nullptr);
   // Expect failure: sampler can not be nullptr
   EXPECT_EQ(ds, nullptr);
 }

@@ -16,6 +16,7 @@
 
 #include <fstream>
 #include <unordered_set>
+#include <algorithm>
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/samplers.h"
 #include "minddata/dataset/include/transforms.h"
@@ -729,7 +730,14 @@ bool ValidateDatasetSampler(const std::string &dataset_name, const std::shared_p
 }
 
 bool ValidateStringValue(const std::string &str, const std::unordered_set<std::string> &valid_strings) {
-  return valid_strings.find(str) != valid_strings.end();
+  if (valid_strings.find(str) == valid_strings.end()) {
+    std::string mode;
+    mode = std::accumulate(valid_strings.begin(), valid_strings.end(), mode,
+                           [](std::string a, std::string b) { return std::move(a) + " " + std::move(b); });
+    MS_LOG(ERROR) << str << " does not match any mode in [" + mode + " ]";
+    return false;
+  }
+  return true;
 }
 
 // Helper function to validate dataset input/output column parameter
@@ -841,8 +849,7 @@ Cifar10Dataset::Cifar10Dataset(const std::string &dataset_dir, const std::string
 
 bool Cifar10Dataset::ValidateParams() {
   return ValidateDatasetDirParam("Cifar10Dataset", dataset_dir_) &&
-         ValidateDatasetSampler("Cifar10Dataset", sampler_) &&
-         ValidateStringValue(usage_, {"train", "test", "all", ""});
+         ValidateDatasetSampler("Cifar10Dataset", sampler_) && ValidateStringValue(usage_, {"train", "test", "all"});
 }
 
 // Function to build CifarOp for Cifar10
@@ -870,8 +877,7 @@ Cifar100Dataset::Cifar100Dataset(const std::string &dataset_dir, const std::stri
 
 bool Cifar100Dataset::ValidateParams() {
   return ValidateDatasetDirParam("Cifar100Dataset", dataset_dir_) &&
-         ValidateDatasetSampler("Cifar100Dataset", sampler_) &&
-         ValidateStringValue(usage_, {"train", "test", "all", ""});
+         ValidateDatasetSampler("Cifar100Dataset", sampler_) && ValidateStringValue(usage_, {"train", "test", "all"});
 }
 
 // Function to build CifarOp for Cifar100
@@ -1359,7 +1365,7 @@ MnistDataset::MnistDataset(std::string dataset_dir, std::string usage, std::shar
     : dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
 
 bool MnistDataset::ValidateParams() {
-  return ValidateStringValue(usage_, {"train", "test", "all", ""}) &&
+  return ValidateStringValue(usage_, {"train", "test", "all"}) &&
          ValidateDatasetDirParam("MnistDataset", dataset_dir_) && ValidateDatasetSampler("MnistDataset", sampler_);
 }
 

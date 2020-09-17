@@ -158,7 +158,7 @@ void TensorShape::AddListToShape(const T &list) {
     }
     if (dim > kDeMaxDim) {
       std::stringstream ss;
-      ss << "Invalid shape data, dim (" << size << ") is larger than the maximum dim size(" << kDeMaxDim << ")!";
+      ss << "Invalid shape data, dim (" << dim << ") is larger than the maximum dim size(" << kDeMaxDim << ")!";
       MS_LOG(ERROR) << ss.str().c_str();
       known_ = false;
       raw_shape_.clear();

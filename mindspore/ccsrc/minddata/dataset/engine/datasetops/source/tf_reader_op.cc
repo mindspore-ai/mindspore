@@ -229,8 +229,7 @@ Status TFReaderOp::CalculateNumRowsPerShard() {
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));
   if (num_rows_per_shard_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API TFRecordDataset.Please check file path or dataset API "
-      "validation first.");
+      "Invalid data, no valid data matching the dataset API TFRecordDataset. Please check file path or dataset API.");
   }
   return Status::OK();
 }

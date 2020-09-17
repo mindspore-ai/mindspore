@@ -183,8 +183,8 @@ TEST_F(MindDataTestVocab, TestVocabFromVectorFail2) {
 TEST_F(MindDataTestVocab, TestVocabFromVectorFail3) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromVectorFail3.";
   // Build vocab from a vector
-  std::vector<std::string> list = {"apple", "dog", "egg", "<unk>", "<pad>"};
-  std::vector<std::string> sp_tokens = {"<pad>", "<unk>"};
+  std::vector<std::string> list = {"apple", "dog", "egg", "<unk>", ""};
+  std::vector<std::string> sp_tokens = {"", "<unk>"};
   std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
 
   // Expected failure: special tokens are already existed in word_list

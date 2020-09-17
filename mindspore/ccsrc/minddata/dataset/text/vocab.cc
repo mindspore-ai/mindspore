@@ -87,54 +87,25 @@ Status Vocab::BuildFromUnorderedMap(const std::unordered_map<WordType, WordIdTyp
 
 Status Vocab::BuildFromVector(const std::vector<WordType> &words, const std::vector<WordType> &special_tokens,
                               bool prepend_special, std::shared_ptr<Vocab> *vocab) {
-  // Validate parameters
-  std::string duplicate_word;
-  for (const WordType &word : words) {
-    if (std::count(words.begin(), words.end(), word) > 1) {
-      if (duplicate_word.find(word) == std::string::npos) {
-        duplicate_word = duplicate_word.empty() ? duplicate_word + word : duplicate_word + ", " + word;
-      }
-    }
-  }
-  if (!duplicate_word.empty()) {
-    MS_LOG(ERROR) << "words contains duplicate word: " << duplicate_word;
-    RETURN_STATUS_UNEXPECTED("words contains duplicate word: " + duplicate_word);
-  }
-
-  std::string duplicate_sp;
-  std::string existed_sp;
-  for (const WordType &sp : special_tokens) {
-    if (std::count(special_tokens.begin(), special_tokens.end(), sp) > 1) {
-      if (duplicate_sp.find(sp) == std::string::npos) {
-        duplicate_sp = duplicate_sp.empty() ? duplicate_sp + sp : duplicate_sp + ", " + sp;
-      }
-    }
-    if (std::count(words.begin(), words.end(), sp) >= 1) {
-      if (existed_sp.find(sp) == std::string::npos) {
-        existed_sp = existed_sp.empty() ? existed_sp + sp : existed_sp + ", " + sp;
-      }
-    }
-  }
-  if (!duplicate_sp.empty()) {
-    MS_LOG(ERROR) << "special_tokens contains duplicate word: " << duplicate_sp;
-    RETURN_STATUS_UNEXPECTED("special_tokens contains duplicate word: " + duplicate_sp);
-  }
-  if (!existed_sp.empty()) {
-    MS_LOG(ERROR) << "special_tokens and word_list contain duplicate word: " << existed_sp;
-    RETURN_STATUS_UNEXPECTED("special_tokens and word_list contain duplicate word: " + existed_sp);
-  }
-
   std::unordered_map<WordType, WordIdType> word2id;
 
   // if special is added in front, normal words id will start from number of special tokens
   WordIdType word_id = prepend_special ? static_cast<WordIdType>(special_tokens.size()) : 0;
   for (auto word : words) {
+    if (word2id.find(word) != word2id.end()) {
+      MS_LOG(ERROR) << "word_list contains duplicate word: " + word + ".";
+      RETURN_STATUS_UNEXPECTED("word_list contains duplicate word: " + word + ".");
+    }
     word2id[word] = word_id++;
   }
 
   word_id = prepend_special ? 0 : word2id.size();
 
   for (auto special_token : special_tokens) {
+    if (word2id.find(special_token) != word2id.end()) {
+      MS_LOG(ERROR) << "special_tokens and word_list contain duplicate word: " + special_token + ".";
+      RETURN_STATUS_UNEXPECTED("special_tokens and word_list contain duplicate word: " + special_token + ".");
+    }
     word2id[special_token] = word_id++;
   }
 

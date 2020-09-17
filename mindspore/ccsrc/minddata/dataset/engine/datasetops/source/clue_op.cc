@@ -192,7 +192,7 @@ Status ClueOp::LoadFile(const std::string &file, const int64_t start_offset, con
       js = nlohmann::json::parse(line);
     } catch (const std::exception &err) {
       // Catch any exception and convert to Status return code
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse json file: " + line);
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse json file: " + file);
     }
     int cols_count = cols_to_keyword_.size();
     TensorRow tRow(cols_count, nullptr);
@@ -482,8 +482,7 @@ Status ClueOp::CalculateNumRowsPerShard() {
   }
   if (all_num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API CLUEDataset. Please check file path or dataset API "
-      "validation first.");
+      "Invalid data, no valid data matching the dataset API CLUEDataset. Please check file path or dataset API.");
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(all_num_rows_ * 1.0 / num_devices_));

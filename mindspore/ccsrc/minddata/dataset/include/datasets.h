@@ -113,7 +113,7 @@ std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::s
 /// \notes The generated dataset has two columns ['image', 'attr'].
 ///      The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
-/// \param[in] usage One of "all", "train", "valid" or "test".
+/// \param[in] usage One of "all", "train", "valid" or "test" (default = "all").
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] decode Decode the images after reading (default=false).
@@ -126,21 +126,21 @@ std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std:
 /// \brief Function to create a Cifar10 Dataset
 /// \notes The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
-/// \param[in] usage of CIFAR10, can be "train", "test" or "all"
+/// \param[in] usage of CIFAR10, can be "train", "test" or "all" (default = "all").
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current Dataset
-std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::string &usage = std::string(),
+std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::string &usage = "all",
                                         const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 
 /// \brief Function to create a Cifar100 Dataset
 /// \notes The generated dataset has three columns ["image", "coarse_label", "fine_label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
-/// \param[in] usage of CIFAR100, can be "train", "test" or "all"
+/// \param[in] usage of CIFAR100, can be "train", "test" or "all" (default = "all").
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current Dataset
-std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::string &usage = std::string(),
+std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::string &usage = "all",
                                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 
 /// \brief Function to create a CLUEDataset
@@ -247,11 +247,11 @@ std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const
 /// \brief Function to create a MnistDataset
 /// \notes The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
-/// \param[in] usage of MNIST, can be "train", "test" or "all"
+/// \param[in] usage of MNIST, can be "train", "test" or "all" (default = "all").
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current MnistDataset
-std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage = std::string(),
+std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage = "all",
                                     const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 
 /// \brief Function to create a ConcatDataset
@@ -407,7 +407,7 @@ std::shared_ptr<TFRecordDataset> TFRecord(const std::vector<std::string> &datase
 ///     - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] task Set the task type of reading voc data, now only support "Segmentation" or "Detection"
-/// \param[in] usage The type of data list text file to be read
+/// \param[in] usage The type of data list text file to be read (default = "train").
 /// \param[in] class_indexing A str-to-int mapping from label name to index, only valid in "Detection" task
 /// \param[in] decode Decode the images after reading
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
