@@ -62,6 +62,7 @@ int ArgMax::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   MS_ASSERT(output != nullptr);
   if (inputs_.size() != kSingleNum || outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "tensor number is error.";
+    return RET_ERROR;
   }
 
   output->SetFormat(input->GetFormat());

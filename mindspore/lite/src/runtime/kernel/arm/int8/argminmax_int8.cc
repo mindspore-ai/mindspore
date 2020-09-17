@@ -59,25 +59,25 @@ int ArgMinMaxInt8CPUKernel::Run() {
   const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_.at(0)->MutableData());
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
-  auto in_shape = input->shape().data();
+  auto in_shape = input->shape();
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   if (param->topk_ == 1) {
-    Int8ArgMinMaxQuant(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+    Int8ArgMinMaxQuant(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
     return RET_OK;
   }
 
   switch (param->axis_) {
     case 0:
-      Int8ArgMinMaxDim0(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+      Int8ArgMinMaxDim0(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
       break;
     case 1:
-      Int8ArgMinMaxDim1(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+      Int8ArgMinMaxDim1(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
       break;
     case 2:
-      Int8ArgMinMaxDim2(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+      Int8ArgMinMaxDim2(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
       break;
     case 3:
-      Int8ArgMinMaxDim3(input_data, output_data, in_shape, param, &in_quant_arg_, &out_quant_arg_);
+      Int8ArgMinMaxDim3(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
       break;
   }
   return RET_OK;

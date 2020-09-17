@@ -71,13 +71,7 @@ int ArgMinMaxBaseCPUKernel::Run() {
   auto input_data = in_tensors_.at(0)->MutableData();
   auto output_data = out_tensors_.at(0)->MutableData();
 
-  auto in_tensor = in_tensors_.at(0)->shape();
-  auto shape = reinterpret_cast<int *>(malloc(in_tensor.size() * sizeof(int)));
-  if (shape == nullptr) {
-      MS_LOG(ERROR) << "malloc shape failed.";
-      return RET_ERROR;
-  }
-  memcpy(shape, in_tensor.data(), in_tensor.size() * sizeof(int));
+  auto shape = in_tensors_.at(0)->shape();
 
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   MS_ASSERT(context_->allocator != nullptr);
@@ -89,7 +83,7 @@ int ArgMinMaxBaseCPUKernel::Run() {
       return RET_ERROR;
     }
   }
-  ArgMinMax(input_data, output_data, reinterpret_cast<const int *>(shape), param);
+  ArgMinMax(input_data, output_data, reinterpret_cast<const int *>(shape.data()), param);
   context_->allocator->Free(param->arg_elements_);
   param->arg_elements_ = nullptr;
   return RET_OK;
