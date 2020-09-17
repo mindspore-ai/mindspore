@@ -20,6 +20,7 @@
 #include <string>
 #include <iomanip>
 #include <fstream>
+#include <memory>
 
 namespace mindspore {
 namespace system {
@@ -99,28 +100,29 @@ bool ProcessInner(const std::string &message, const int &bias, uint32_t *digest,
     w[i] = sigma3(w[i - 2]) + w[i - 7] + sigma2(w[i - 15]) + w[i - 16];
   }
 
-  uint32_t *hash = new uint32_t[digest_size];
-  auto ret = memcpy_s(hash, digest_size * sizeof(uint32_t), digest, digest_size * sizeof(uint32_t));
-  if (ret != 0) {
+  std::shared_ptr<uint32_t> hash(new uint32_t[digest_size], std::default_delete<uint32_t[]>());
+  size_t mem_size = digest_size * sizeof(uint32_t);
+  auto ret = memcpy_s(hash.get(), mem_size, digest, mem_size);
+  if (ret != EOK) {
     return false;
   }
   for (int i = 0; i < kIterationNumber; ++i) {
-    uint32_t t1 = w[i] + constant[i] + hash[7] + sigma1(hash[4]) + ch(hash[4], hash[5], hash[6]);
-    uint32_t t2 = sigma0(hash[0]) + ma(hash[0], hash[1], hash[2]);
+    uint32_t t1 =
+      w[i] + constant[i] + hash.get()[7] + sigma1(hash.get()[4]) + ch(hash.get()[4], hash.get()[5], hash.get()[6]);
+    uint32_t t2 = sigma0(hash.get()[0]) + ma(hash.get()[0], hash.get()[1], hash.get()[2]);
     for (int j = digest_size - 1; j >= 0; --j) {
       if (j == 4) {
-        hash[j] = hash[j - 1] + t1;
+        hash.get()[j] = hash.get()[j - 1] + t1;
       } else if (j == 0) {
-        hash[j] = t1 + t2;
+        hash.get()[j] = t1 + t2;
       } else {
-        hash[j] = hash[j - 1];
+        hash.get()[j] = hash.get()[j - 1];
       }
     }
   }
   for (int i = 0; i < digest_size; ++i) {
-    digest[i] += hash[i];
+    digest[i] += hash.get()[i];
   }
-  delete[](hash);
   return true;
 }
 
