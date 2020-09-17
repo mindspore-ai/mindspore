@@ -84,9 +84,10 @@ class FeatPyramidNeck(nn.Cell):
             self.fpn_convs_.append(fpn_conv)
         self.lateral_convs_list = nn.layer.CellList(self.lateral_convs_list_)
         self.fpn_convs_list = nn.layer.CellList(self.fpn_convs_)
-        self.interpolate1 = P.ResizeNearestNeighbor((48, 80))
-        self.interpolate2 = P.ResizeNearestNeighbor((96, 160))
-        self.interpolate3 = P.ResizeNearestNeighbor((192, 320))
+        self.interpolate1 = P.ResizeBilinear((48, 80))
+        self.interpolate2 = P.ResizeBilinear((96, 160))
+        self.interpolate3 = P.ResizeBilinear((192, 320))
+        self.cast = P.Cast()
         self.maxpool = P.MaxPool(ksize=1, strides=2, padding="same")
 
     def construct(self, inputs):
@@ -95,9 +96,9 @@ class FeatPyramidNeck(nn.Cell):
             x += (self.lateral_convs_list[i](inputs[i]),)
 
         y = (x[3],)
-        y = y + (x[2] + self.interpolate1(y[self.fpn_layer - 4]),)
-        y = y + (x[1] + self.interpolate2(y[self.fpn_layer - 3]),)
-        y = y + (x[0] + self.interpolate3(y[self.fpn_layer - 2]),)
+        y = y + (x[2] + self.cast(self.interpolate1(y[self.fpn_layer - 4]), mstype.float16),)
+        y = y + (x[1] + self.cast(self.interpolate2(y[self.fpn_layer - 3]), mstype.float16),)
+        y = y + (x[0] + self.cast(self.interpolate3(y[self.fpn_layer - 2]), mstype.float16),)
 
         z = ()
         for i in range(self.fpn_layer - 1, -1, -1):

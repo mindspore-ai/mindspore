@@ -16,6 +16,7 @@
 """train MaskRcnn and get checkpoint files."""
 
 import os
+import time
 import argparse
 import ast
 
@@ -26,7 +27,7 @@ from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, TimeMoni
 from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.nn import SGD
+from mindspore.nn import Momentum
 from mindspore.common import set_seed
 
 from src.maskrcnn.mask_rcnn_r50 import Mask_Rcnn_Resnet50
@@ -71,7 +72,7 @@ if __name__ == '__main__':
     prefix = "MaskRcnn.mindrecord"
     mindrecord_dir = config.mindrecord_dir
     mindrecord_file = os.path.join(mindrecord_dir, prefix + "0")
-    if not os.path.exists(mindrecord_file):
+    if rank == 0 and not os.path.exists(mindrecord_file):
         if not os.path.isdir(mindrecord_dir):
             os.makedirs(mindrecord_dir)
         if args_opt.dataset == "coco":
@@ -80,14 +81,16 @@ if __name__ == '__main__':
                 data_to_mindrecord_byte_image("coco", True, prefix)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
-                print("coco_root not exits.")
+                raise Exception("coco_root not exits.")
         else:
             if os.path.isdir(config.IMAGE_DIR) and os.path.exists(config.ANNO_PATH):
                 print("Create Mindrecord.")
                 data_to_mindrecord_byte_image("other", True, prefix)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
-                print("IMAGE_DIR or ANNO_PATH not exits.")
+                raise Exception("IMAGE_DIR or ANNO_PATH not exits.")
+    while not os.path.exists(mindrecord_file+".db"):
+        time.sleep(5)
 
     if not args_opt.only_create_dataset:
         loss_scale = float(config.loss_scale)
@@ -115,8 +118,8 @@ if __name__ == '__main__':
         loss = LossNet()
         lr = Tensor(dynamic_lr(config, rank_size=device_num, start_steps=config.pretrain_epoch_size * dataset_size),
                     mstype.float32)
-        opt = SGD(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum,
-                  weight_decay=config.weight_decay, loss_scale=config.loss_scale)
+        opt = Momentum(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum,
+                       weight_decay=config.weight_decay, loss_scale=config.loss_scale)
 
         net_with_loss = WithLossCell(net, loss)
         if args_opt.run_distribute:

@@ -30,7 +30,8 @@ class CropAndResize(PrimitiveWithInfer):
 
     Args:
         method (str):  	An optional string that specifies the sampling method for resizing.
-            It can be either "bilinear" or "nearest". Default: "bilinear"
+            It can be "bilinear", "nearest" or "bilinear_v2". The option "bilinear" stands for standard bilinear
+            interpolation algorithm, while "bilinear_v2" may result in better result in some cases. Default: "bilinear"
         extrapolation_value (float): An optional float value used extrapolation, if applicable. Default: 0.
 
     Inputs:
@@ -81,7 +82,7 @@ class CropAndResize(PrimitiveWithInfer):
         """init CropAndResize"""
         self.init_prim_io_names(inputs=['x', 'boxes', 'box_index', 'crop_size'], outputs=['y'])
         validator.check_value_type("method", method, [str], self.name)
-        validator.check_string("method", method, ["bilinear", "nearest"], self.name)
+        validator.check_string("method", method, ["bilinear", "nearest", "bilinear_v2"], self.name)
         self.method = method
         validator.check_value_type("extrapolation_value", extrapolation_value, [float], self.name)
         self.extrapolation_value = extrapolation_value

@@ -247,7 +247,6 @@ def get_seg_masks(mask_pred, det_bboxes, det_labels, img_meta, rescale, num_clas
     else:
         img_h = np.round(ori_shape[0] * scale_factor[0]).astype(np.int32)
         img_w = np.round(ori_shape[1] * scale_factor[1]).astype(np.int32)
-        scale_factor = 1.0
 
     for i in range(bboxes.shape[0]):
         bbox = (bboxes[i, :] / 1.0).astype(np.int32)
@@ -256,6 +255,10 @@ def get_seg_masks(mask_pred, det_bboxes, det_labels, img_meta, rescale, num_clas
         h = max(bbox[3] - bbox[1] + 1, 1)
         w = min(w, img_w - bbox[0])
         h = min(h, img_h - bbox[1])
+        if w <= 0 or h <= 0:
+            print("there is invalid proposal bbox, index={} bbox={} w={} h={}".format(i, bbox, w, h))
+            w = max(w, 1)
+            h = max(h, 1)
         mask_pred_ = mask_pred[i, :, :]
         im_mask = np.zeros((img_h, img_w), dtype=np.uint8)
         bbox_mask = mmcv.imresize(mask_pred_, (w, h))
