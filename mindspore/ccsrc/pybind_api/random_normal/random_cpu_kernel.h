@@ -25,7 +25,6 @@
 namespace py = pybind11;
 
 namespace mindspore {
-
 template <class T, typename vartype>
 class NormalDistribution;
 template <class T>
@@ -86,10 +85,8 @@ bool FillRandoms(PhiloxGenerator generator, float *output, int64_t vet_size, int
   }
   return true;
 }
-
 bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, int64_t seed,
                       const py::object &output_tensor);
-
 }  // namespace mindspore
 
 #endif  // PYBIND_API_API_IR_RANDOM_NORMAL_RANDOM_CPU_KERNEL_H_
