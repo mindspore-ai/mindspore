@@ -16,8 +16,8 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR"
-echo "for example: bash run_standalone_pretrain.sh 0 40 /path/zh-wiki/ /path/Schema.json"
+echo "bash run_standalone_pretrain_ascend.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR"
+echo "for example: bash run_standalone_pretrain_ascend.sh 0 40 /path/zh-wiki/ /path/Schema.json"
 echo "=============================================================================================================="
 
 DEVICE_ID=$1
