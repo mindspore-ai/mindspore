@@ -69,6 +69,8 @@ TEST_F(InferTest, TestSession) {
   }
   std::cout << "\n";
   CompareOutputData(reinterpret_cast<float *>(outvec.at(0)->data_), expect_out, kOutSize, 0.000001);
+  DestroyTensor(in);
+  DestroyTensor(out);
 }
 
 }  // namespace mindspore

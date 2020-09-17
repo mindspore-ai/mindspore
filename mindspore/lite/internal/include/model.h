@@ -205,6 +205,18 @@ enum ActivationType {
     UNKNOW = 16
 };
 
+enum ReduceMode {
+  ReduceMode_ReduceMean = 0,
+  ReduceMode_ReduceMax = 1,
+  ReduceMode_ReduceMin = 2,
+  ReduceMode_ReduceProd = 3,
+  ReduceMode_ReduceSum = 4,
+  ReduceMode_ReduceSumSquare = 5,
+  ReduceMode_ReduceASum = 6,
+  ReduceMode_MIN = ReduceMode_ReduceMean,
+  ReduceMode_MAX = ReduceMode_ReduceASum
+};
+
 typedef struct Node {
   String name_;
   NodeType node_type_;
