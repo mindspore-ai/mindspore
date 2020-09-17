@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace pipeline {
-
 class ResourceBase {
  public:
   ResourceBase() { manager_ = MakeManager(); }
@@ -59,7 +58,6 @@ class ResourceBase {
 };
 
 using ResourceBasePtr = std::shared_ptr<pipeline::ResourceBase>;
-
 }  // namespace pipeline
 }  // namespace mindspore
 

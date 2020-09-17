@@ -21,7 +21,6 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-
 TypePtr UndeterminedType::DeepCopy() const {
   MS_EXCEPTION_IF_NULL(element_type_);
   if (IsGeneric()) {
@@ -190,5 +189,4 @@ bool SparseTensorType::operator==(const Type &other) const {
   }
   return *element_type_ == *other_elem_type;
 }
-
 }  // namespace mindspore

@@ -264,7 +264,6 @@ extern const TypePtr kKeyword;
 extern const TypePtr kTensorType;
 extern const TypePtr kTensorTypeFP16;
 extern const TypePtr kTensorTypeFP32;
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_H_

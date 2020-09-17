@@ -34,7 +34,6 @@
 #include "ir/dtype/type.h"
 
 namespace mindspore {
-
 class UndeterminedType : public Object {
  public:
   UndeterminedType() : Object(kObjectTypeUndeterminedType) {}
@@ -126,7 +125,6 @@ class SparseTensorType : public Object {
   TypePtr element_type_;
 };
 using SparseTensorTypePtr = std::shared_ptr<SparseTensorType>;
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_TENSORTYPE_H_

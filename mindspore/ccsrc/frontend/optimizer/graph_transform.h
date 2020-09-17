@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace opt {
-
 bool CNodeHasTupleInput(const CNodePtr &cnode);
 bool FuncGraphHasTupleInput(const FuncGraphPtr &fg);
 std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const AnfNodePtr &node,
@@ -102,7 +101,6 @@ class GraphTupleParamTransform {
   }
   std::unordered_map<FuncGraphPtr, FuncGraphPtr> cache_;
 };
-
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_GRAPH_TRANSFORM_H

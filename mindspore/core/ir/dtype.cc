@@ -206,5 +206,4 @@ std::ostream &operator<<(std::ostream &os, const std::shared_ptr<Problem> proble
 
 const TypePtr kTensorTypeFP16 = std::make_shared<TensorType>(std::make_shared<Float>(16));
 const TypePtr kTensorTypeFP32 = std::make_shared<TensorType>(std::make_shared<Float>(32));
-
 }  // namespace mindspore

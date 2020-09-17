@@ -30,7 +30,6 @@
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
-
 // Common subexpression elimination.
 class CSEPass : public CSE {
  public:
