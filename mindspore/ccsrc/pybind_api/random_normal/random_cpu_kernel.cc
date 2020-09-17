@@ -20,7 +20,6 @@
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
-
 bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, int64_t seed,
                       const py::object &output_tensor) {
   if (out_shape.size() == 0) {
@@ -53,7 +52,6 @@ bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, 
     threads[thread_num - 1] =
       std::thread(mindspore::FillRandoms<mindspore::NormalDistribution<mindspore::PhiloxGenerator, float>>, generator,
                   offset_ptr, total_count - (thread_num - 1) * batchSize, thread_num - 1);
-
   } else {
     threads[0] = std::thread(mindspore::FillRandoms<mindspore::NormalDistribution<mindspore::PhiloxGenerator, float>>,
                              generator, start_ptr, total_count, 0);
@@ -66,5 +64,4 @@ bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, 
 
 REGISTER_PYBIND_DEFINE(random_normal,
                        ([](py::module *const m) { (void)m->def("random_normal", &InitRandomNormal, "testnormal"); }));
-
 }  // namespace mindspore

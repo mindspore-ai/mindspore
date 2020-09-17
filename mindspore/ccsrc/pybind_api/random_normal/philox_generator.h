@@ -20,7 +20,6 @@
 #include <array>
 
 namespace mindspore {
-
 static constexpr int gResultNum = 4;
 class PhiloxGenerator {
  public:
@@ -49,7 +48,6 @@ class PhiloxGenerator {
   std::array<uint32_t, 2> key_var_;
   static constexpr std::array<uint32_t, gResultNum> keyConstant = {0xD2511F53, 0x9E3779B9, 0xCD9E8D57, 0xBB67AE85};
 };
-
 }  // namespace mindspore
 
 #endif  // PYBIND_API_API_IR_RANDOM_NORMAL_PHILOX_GENERATOR_H_

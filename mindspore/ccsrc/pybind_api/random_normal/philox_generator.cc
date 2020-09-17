@@ -16,7 +16,6 @@
 #include "pybind_api/random_normal/philox_generator.h"
 
 namespace mindspore {
-
 void PhiloxGenerator::Jump() {
   if ((++counter_[0] == 0) && (++counter_[1] == 0) && (++counter_[2] == 0)) {
     ++counter_[3];
@@ -68,5 +67,4 @@ std::array<uint32_t, gResultNum> PhiloxGenerator::operator()() {
   Jump();
   return counter_;
 }
-
 }  // namespace mindspore
