@@ -23,10 +23,10 @@
 #include "ops/logging_ops.h"
 
 namespace mindspore::transform {
-#ifdef ENABLE_GE
 DECLARE_OP_ADAPTER(Print)
 DECLARE_OP_USE_DYN_INPUT(Print)
 
+#ifdef ENABLE_GE
 DECLARE_OP_ADAPTER(Assert)
 DECLARE_OP_USE_DYN_INPUT(Assert)
 #endif
