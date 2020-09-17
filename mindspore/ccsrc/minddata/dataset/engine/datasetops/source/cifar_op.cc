@@ -412,7 +412,7 @@ Status CifarOp::ParseCifarData() {
   if (num_rows_ == 0) {
     std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
     RETURN_STATUS_UNEXPECTED("Invalid data, no valid data matching the dataset API " + api +
-                             ". Please check file path or dataset API validation first.");
+                             ". Please check file path or dataset API.");
   }
   cifar_raw_data_block_->Reset();
   return Status::OK();

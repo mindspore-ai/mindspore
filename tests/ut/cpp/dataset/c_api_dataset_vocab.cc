@@ -80,6 +80,50 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
   }
 }
 
+TEST_F(MindDataTestPipeline, TestVocabLookupOpEmptyString) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOpEmptyString.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVocab/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::vector<std::string> list = {"home", "IS", "behind", "the", "world", "ahead", "!"};
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(list, {"<pad>", ""}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create Lookup operation on ds
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "", DataType("int32"));
+  EXPECT_NE(lookup, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({lookup}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  std::vector<int32_t> expected = {2, 1, 4, 5, 6, 7};
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind->shape() << " " << *ind;
+    std::shared_ptr<Tensor> expected_item;
+    Tensor::CreateScalar(expected[i], &expected_item);
+    EXPECT_EQ(*ind, *expected_item);
+    iter->GetNextRow(&row);
+    i++;
+  }
+}
+
 TEST_F(MindDataTestPipeline, TestVocabLookupOpFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOpFail1.";
   // Create a TextFile Dataset
@@ -106,27 +150,6 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpFail2) {
 
   // Create lookup op
   // Expected failure: vocab is null
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "", DataType("int32"));
-  EXPECT_EQ(lookup, nullptr);
-}
-
-TEST_F(MindDataTestPipeline, TestVocabLookupOpWithEmptyUnknownToken) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOpWithEmptyUnknownToken.";
-
-  // Create a TextFile dataset
-  std::string data_file = datasets_root_path_ + "/testVocab/words.txt";
-  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
-  EXPECT_NE(ds, nullptr);
-
-  // Create a vocab from map
-  std::unordered_map<std::string, int32_t> dict;
-  dict["Home"] = 3;
-  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
-  Status s = Vocab::BuildFromUnorderedMap(dict, &vocab);
-  EXPECT_EQ(s, Status::OK());
-
-  // Create Lookup operation on ds
-  // Expected failure: "" is not a word of vocab
   std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "", DataType("int32"));
   EXPECT_EQ(lookup, nullptr);
 }

@@ -468,6 +468,10 @@ Status CocoOp::ParseAnnotationIds() {
     if (coordinate_map_.find(img) != coordinate_map_.end()) image_ids_.push_back(img);
   }
   num_rows_ = image_ids_.size();
+  if (num_rows_ == 0) {
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid data, no valid data matching the dataset API CocoDataset. Please check file path or dataset API.");
+  }
   return Status::OK();
 }
 

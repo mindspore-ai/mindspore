@@ -237,8 +237,7 @@ Status CelebAOp::ParseImageAttrInfo() {
   num_rows_ = image_labels_vec_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API CelebADataset. "
-      "Please check file path or dataset API validation first");
+      "Invalid data, no valid data matching the dataset API CelebADataset. Please check file path or dataset API.");
   }
   MS_LOG(DEBUG) << "Celeba dataset rows number is " << num_rows_ << ".";
   return Status::OK();

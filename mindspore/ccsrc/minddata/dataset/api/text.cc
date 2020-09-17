@@ -42,15 +42,10 @@ bool LookupOperation::ValidateParams() {
     MS_LOG(ERROR) << "Lookup: vocab object type is incorrect or null.";
     return false;
   }
-  if (unknown_token_.empty()) {
-    MS_LOG(ERROR) << "Lookup: no unknown token is specified.";
+  default_id_ = vocab_->Lookup(unknown_token_);
+  if (default_id_ == Vocab::kNoTokenExists) {
+    MS_LOG(ERROR) << "Lookup: " << unknown_token_ << " doesn't exist in vocab.";
     return false;
-  } else {
-    default_id_ = vocab_->Lookup(unknown_token_);
-    if (default_id_ == Vocab::kNoTokenExists) {
-      MS_LOG(ERROR) << "Lookup: unknown_token: [" + unknown_token_ + "], does not exist in vocab.";
-      return false;
-    }
   }
   return true;
 }

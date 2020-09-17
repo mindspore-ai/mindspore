@@ -28,7 +28,7 @@ TEST_F(MindDataTestPipeline, TestIteratorEmptyColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorEmptyColumn.";
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, 5));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 5));
   EXPECT_NE(ds, nullptr);
 
   // Create a Rename operation on ds
@@ -64,7 +64,7 @@ TEST_F(MindDataTestPipeline, TestIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorOneColumn.";
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, std::string(), RandomSampler(false, 4));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 4));
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -103,7 +103,7 @@ TEST_F(MindDataTestPipeline, TestIteratorReOrder) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorReOrder.";
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), SequentialSampler(false, 4));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", SequentialSampler(false, 4));
   EXPECT_NE(ds, nullptr);
 
   // Create a Take operation on ds
@@ -186,7 +186,7 @@ TEST_F(MindDataTestPipeline, TestIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorOneColumn.";
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, std::string(), RandomSampler(false, 4));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 4));
   EXPECT_NE(ds, nullptr);
 
   // Pass wrong column name

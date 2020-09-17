@@ -783,8 +783,7 @@ Status CsvOp::CalculateNumRowsPerShard() {
   }
   if (all_num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API CsvDataset. Please check file path or CSV format "
-      "validation first.");
+      "Invalid data, no valid data matching the dataset API CsvDataset. Please check file path or CSV format.");
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(all_num_rows_ * 1.0 / num_devices_));

@@ -30,7 +30,7 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchSuccess1) {
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
   int number_of_classes = 10;
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -98,7 +98,7 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchSuccess2) {
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
   int number_of_classes = 10;
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -156,7 +156,7 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchFail1) {
   // Must fail because alpha can't be negative
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -181,7 +181,7 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchFail2) {
   // Must fail because prob can't be negative
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -206,7 +206,7 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchFail3) {
   // Must fail because alpha can't be zero
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -376,7 +376,7 @@ TEST_F(MindDataTestPipeline, TestHwcToChw) {
 TEST_F(MindDataTestPipeline, TestMixUpBatchFail1) {
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -400,7 +400,7 @@ TEST_F(MindDataTestPipeline, TestMixUpBatchFail2) {
   // This should fail because alpha can't be zero
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -423,7 +423,7 @@ TEST_F(MindDataTestPipeline, TestMixUpBatchFail2) {
 TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess1) {
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -472,7 +472,7 @@ TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess1) {
 TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess2) {
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -1118,7 +1118,7 @@ TEST_F(MindDataTestPipeline, TestRandomRotation) {
 TEST_F(MindDataTestPipeline, TestUniformAugWithOps) {
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "", RandomSampler(false, 20));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 20));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds

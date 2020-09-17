@@ -119,6 +119,10 @@ Status AlbumOp::PrescanEntry() {
 
   std::sort(image_rows_.begin(), image_rows_.end(), StrComp);
   num_rows_ = image_rows_.size();
+  if (num_rows_ == 0) {
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid data, no valid data matching the dataset API AlbumDataset. Please check file path or dataset API.");
+  }
   return Status::OK();
 }
 
