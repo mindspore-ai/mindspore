@@ -16,17 +16,17 @@
 
 #ifndef MINDSPORE_LITE_INTERNAL_INCLUDE_LITE_UTILS_H_
 #define MINDSPORE_LITE_INTERNAL_INCLUDE_LITE_UTILS_H_
-#include <vector>
 #include "internal/include/string.h"
+#include "internal/include/vector.h"
 
 struct MSTensor;
 struct Node;
 using TensorPtr = MSTensor *;
-using TensorPtrVector = std::vector<MSTensor *>;
-using Uint32Vector = std::vector<uint32_t>;
-using StringVector = std::vector<String>;
-using ShapeVector = std::vector<int>;
-using NodePtrVector = std::vector<struct Node *>;
-using Int32Vector = std::vector<int>;
-using Int32VectorVector = std::vector<Int32Vector>;
+using TensorPtrVector = Vector<MSTensor *>;
+using Uint32Vector = Vector<uint32_t>;
+using StringVector = Vector<String>;
+using ShapeVector = Vector<int>;
+using NodePtrVector = Vector<struct Node *>;
+using Int32Vector = Vector<int>;
+using Int32VectorVector = Vector<Int32Vector>;
 #endif  // MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_

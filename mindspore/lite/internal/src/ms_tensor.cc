@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 #include <iostream>
-#include <vector>
-#include <string>
+#include "internal/include/string.h"
+#include "internal/include/vector.h"
 #include "internal/include/ms_tensor.h"
 
 MSTensor *CreateTensor(TypeId data_type, const ShapeVector &shape) {
