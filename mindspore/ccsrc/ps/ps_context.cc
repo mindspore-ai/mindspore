@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/ps/ps_context.h"
+#include "ps/ps_context.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 std::shared_ptr<PSContext> PSContext::instance() {
   static std::shared_ptr<PSContext> ps_instance = nullptr;
@@ -82,5 +81,4 @@ void PSContext::SetPSRankId(int rank_id) { rank_id_ = rank_id; }
 
 int PSContext::ps_rank_id() const { return rank_id_; }
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore

@@ -27,7 +27,7 @@
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-#include "frontend/parallel/ps/util.h"
+#include "ps/util.h"
 #endif
 
 namespace mindspore {
@@ -69,7 +69,7 @@ GraphId CPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   SetKernelInfo(graph.get());
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   AssignParamKey(graph);
-  if (parallel::ps::Util::IsRoleOfWorker()) {
+  if (ps::Util::IsRoleOfWorker()) {
     Optimize(graph);
   }
 #endif

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_UTIL_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_UTIL_H_
+#ifndef MINDSPORE_CCSRC_PS_UTIL_H_
+#define MINDSPORE_CCSRC_PS_UTIL_H_
 
 #include <map>
 #include <string>
@@ -25,7 +25,6 @@
 #include "backend/kernel_compiler/cpu/sparse_optimizer_cpu_kernel.h"
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 class Util {
  public:
@@ -51,6 +50,5 @@ class Util {
   static int rank_id_;
 };
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_UTIL_H_
+#endif  // MINDSPORE_CCSRC_PS_UTIL_H_

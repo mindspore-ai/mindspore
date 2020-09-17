@@ -19,12 +19,12 @@
 #include <vector>
 #include <memory>
 #include "backend/kernel_compiler/kernel.h"
-#include "frontend/parallel/ps/util.h"
+#include "ps/util.h"
 
 namespace mindspore {
 namespace kernel {
 namespace ps {
-using mindspore::parallel::ps::Util;
+using mindspore::ps::Util;
 class PServerKernel {
  public:
   PServerKernel(size_t rank_id, size_t pserver_num, size_t worker_num)

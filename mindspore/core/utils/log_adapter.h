@@ -125,6 +125,7 @@ enum SubModuleId : int {
   SM_UTILS,        // utils
   SM_VM,           // VM
   SM_PROFILER,     // profiler
+  SM_PS,           // Parameter Server
   NUM_SUBMODUES    // number of submodules
 };
 

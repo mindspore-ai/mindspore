@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_BUILDER_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_BUILDER_H_
+#ifndef MINDSPORE_CCSRC_PS_OPTIMIZER_INFO_BUILDER_H_
+#define MINDSPORE_CCSRC_PS_OPTIMIZER_INFO_BUILDER_H_
 
 #include <vector>
 #include <memory>
 #include <string>
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/cpu/ps/pserver_kernel.h"
-#include "frontend/parallel/ps/optimizer_info.h"
+#include "ps/optimizer_info.h"
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 using mindspore::kernel::KernelMod;
 using mindspore::kernel::ps::PServerKernel;
@@ -55,6 +54,7 @@ class OptimizerInfoBuilder {
 class MomentumOptimInfoBuilder : public OptimizerInfoBuilder {
  public:
   explicit MomentumOptimInfoBuilder(size_t worker_num) : OptimizerInfoBuilder(worker_num) {}
+  ~MomentumOptimInfoBuilder() = default;
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
                              const InputsShapePtr &inputs_shape, size_t worker_num,
                              const std::shared_ptr<PServerKernel> &pserver_kernel) override;
@@ -63,6 +63,7 @@ class MomentumOptimInfoBuilder : public OptimizerInfoBuilder {
 class SparseAdamOptimInfoBuilder : public OptimizerInfoBuilder {
  public:
   explicit SparseAdamOptimInfoBuilder(size_t worker_num) : OptimizerInfoBuilder(worker_num) {}
+  ~SparseAdamOptimInfoBuilder() = default;
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
                              const InputsShapePtr &inputs_shape, size_t worker_num,
                              const std::shared_ptr<PServerKernel> &pserver_kernel) override;
@@ -71,11 +72,11 @@ class SparseAdamOptimInfoBuilder : public OptimizerInfoBuilder {
 class SparseFtrlOptimInfoBuilder : public OptimizerInfoBuilder {
  public:
   explicit SparseFtrlOptimInfoBuilder(size_t worker_num) : OptimizerInfoBuilder(worker_num) {}
+  ~SparseFtrlOptimInfoBuilder() = default;
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
                              const InputsShapePtr &inputs_shape, size_t worker_num,
                              const std::shared_ptr<PServerKernel> &pserver_kernel) override;
 };
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_BUILDER_H_
+#endif  // MINDSPORE_CCSRC_PS_OPTIMIZER_INFO_BUILDER_H_

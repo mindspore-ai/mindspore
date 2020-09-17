@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/ps/optimizer_info.h"
+#include "ps/optimizer_info.h"
 #include <map>
 #include <memory>
 #include <string>
 #include <functional>
-#include "frontend/parallel/ps/util.h"
+#include "ps/util.h"
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 void OptimizerInfo::AddWorkspace(const AddressPtr &workspace) { workspaces_.push_back(workspace); }
 
@@ -367,5 +366,4 @@ size_t SparseFtrlOptimInfo::indices_index() {
   return ps_indices_index;
 }
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore

@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_CONTEXT_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_CONTEXT_H_
+#ifndef MINDSPORE_CCSRC_PS_CONTEXT_H_
+#define MINDSPORE_CCSRC_PS_CONTEXT_H_
 
 #include <string>
 #include <memory>
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 constexpr char kEnvRole[] = "MS_ROLE";
 constexpr char kEnvRoleOfPServer[] = "MS_PSERVER";
@@ -55,7 +54,6 @@ class PSContext {
   int rank_id_;
 };
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_CONTEXT_H_
+#endif  // MINDSPORE_CCSRC_PS_CONTEXT_H_

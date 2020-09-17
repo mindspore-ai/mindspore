@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_PARAMETER_SERVER_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_PARAMETER_SERVER_H_
+#ifndef MINDSPORE_CCSRC_PS_PARAMETER_SERVER_H_
+#define MINDSPORE_CCSRC_PS_PARAMETER_SERVER_H_
 
 #include <unistd.h>
 #include <unordered_map>
@@ -36,11 +36,11 @@
 #include "backend/session/session_basic.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/session_factory.h"
-#include "frontend/parallel/ps/common.h"
-#include "frontend/parallel/ps/optimizer_info.h"
-#include "frontend/parallel/ps/optimizer_info_builder.h"
-#include "frontend/parallel/ps/util.h"
-#include "frontend/parallel/ps/ps_context.h"
+#include "ps/common.h"
+#include "ps/optimizer_info.h"
+#include "ps/optimizer_info_builder.h"
+#include "ps/util.h"
+#include "ps/ps_context.h"
 #include "runtime/device/cpu/kernel_select_cpu.h"
 #include "utils/ms_context.h"
 #include "backend/kernel_compiler/kernel.h"
@@ -53,7 +53,6 @@
 #include "backend/kernel_compiler/cpu/ps/embedding_look_up_ps_kernel.h"
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 using mindspore::kernel::ps::PServerKernel;
 using AnfAlgo = session::AnfRuntimeAlgorithm;
@@ -780,6 +779,5 @@ void ParameterServer<T>::Run(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "PServer finalized successfully.";
 }
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_PARAMETER_SERVER_H_
+#endif  // MINDSPORE_CCSRC_PS_PARAMETER_SERVER_H_

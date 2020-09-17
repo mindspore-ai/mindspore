@@ -34,9 +34,9 @@
 #include "runtime/device/gpu/distribution/collective_fake_init.h"
 #endif
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-#include "frontend/parallel/ps/util.h"
+#include "ps/util.h"
 #endif
-#include "frontend/parallel/ps/ps_context.h"
+#include "ps/ps_context.h"
 
 #include "pybind_api/gil_scoped_long_running.h"
 
@@ -53,7 +53,7 @@ using OpInfoLoaderPy = mindspore::kernel::OpInfoLoaderPy;
 using ParallelContext = mindspore::parallel::ParallelContext;
 using CostModelContext = mindspore::parallel::CostModelContext;
 using mindspore::MsCtxParam;
-using PSContext = mindspore::parallel::ps::PSContext;
+using PSContext = mindspore::ps::PSContext;
 
 // Interface with python
 PYBIND11_MODULE(_c_expression, m) {
