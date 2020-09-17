@@ -199,9 +199,16 @@ Status RecoverStrategy(std::vector<EliminationPtr> eliminations) {
       eliminated_node->SetSelectedStrategyAndCost(decision->eliminated_op_strategy_, decision->eliminated_op_cost_);
       left_edge->set_selected_cost(decision->left_edge_cost_);
       right_edge->set_selected_cost(decision->right_edge_cost_);
-      // Since Triangle is eliminated into 'left_node', only 'left_node' is needed to recover the strategy.
+      // 'left_node' recovers the strategy.
       left_node->SetSelectedStrategyAndCost(decision->left_node_strategy_, decision->left_node_cost_);
-      right_node->CheckSelectedStrategy(decision->right_node_strategy_);
+      if (TRIANGLE_STRATEGY_OVERWRITE) {
+        // 'right_node' recovers the strategy.
+        MS_LOG(INFO) << "Overwrite the right-node: " << right_node->name() << " in recovering triangle elimination.";
+        right_node->SetSelectedStrategyAndCost(decision->right_node_strategy_, decision->right_node_cost_);
+      } else {
+        // In this case, 'right_node' is not overwriten strategy, and it checks strategy consistency.
+        right_node->CheckSelectedStrategy(decision->right_node_strategy_);
+      }
       MS_LOG(INFO) << "Recover triangleElimination succeeded.";
     } else if ((*rit)->isa<StarElimination>()) {
       auto elimination = (*rit)->cast<StarEliminationPtr>();

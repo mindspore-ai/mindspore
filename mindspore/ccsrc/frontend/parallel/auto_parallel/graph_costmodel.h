@@ -46,6 +46,7 @@ extern bool FULLY_USE_DEVICES;
 extern bool ELEMENTWISE_OP_STRA_FOLLOW;
 extern bool MULTI_SUBGRAPHS;
 extern int32_t RUN_PHASE;
+extern bool TRIANGLE_STRATEGY_OVERWRITE;
 
 class CostGraph {
   // 'CostGraph' consists of Operators and edges between them. An edge is created between two Operators if they have

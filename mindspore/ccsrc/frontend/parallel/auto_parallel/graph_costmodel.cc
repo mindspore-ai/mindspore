@@ -40,6 +40,7 @@ bool FULLY_USE_DEVICES = DEFAULT_FULLY_USE_DEVICES;
 bool ELEMENTWISE_OP_STRA_FOLLOW = DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW;
 bool MULTI_SUBGRAPHS = DEFAULT_IS_MULTI_SUBGRAPHS;
 int32_t RUN_PHASE = DEFAULT_RUN_PHASE;
+bool TRIANGLE_STRATEGY_OVERWRITE = DEFAULT_TRIANGLE_STRATEGY_OVERWRITE;
 
 void CostGraph::SetDeviceMemoryAndCostParameter() {
   MS_EXCEPTION_IF_NULL(CostModelContext::GetInstance());
@@ -152,6 +153,14 @@ void CostGraph::SetDeviceMemoryAndCostParameter() {
     MS_LOG(INFO) << "multi_subgraphs: true.";
   } else {
     MS_LOG(INFO) << "multi_subgraphs: false.";
+  }
+
+  auto overwrite = CostModelContext::GetInstance()->triangle_strategy_overwrite();
+  TRIANGLE_STRATEGY_OVERWRITE = overwrite;
+  if (TRIANGLE_STRATEGY_OVERWRITE) {
+    MS_LOG(INFO) << "triangle_strategy_overwrite: true.";
+  } else {
+    MS_LOG(INFO) << "triangle_strategy_overwrite: false.";
   }
 
   // RUN_PHASE
@@ -1294,8 +1303,17 @@ void CostGraph::CreateTriangleEliminationSubCostList(StrategyPtr elimi_op_stra, 
           elimi_op_cost->communication_without_parameter_ + left_edge_cost->communication_without_parameter_ +
           left_node_cost->communication_without_parameter_ + right_edge_cost->communication_without_parameter_;
 
-        auto decision = std::make_shared<TriangleEliminationDecision>(
-          elimi_op_stra, elimi_op_cost, left_edge_cost, right_edge_cost, left_op_stra, left_node_cost, right_op_stra);
+        if (TRIANGLE_STRATEGY_OVERWRITE) {
+          new_computation += right_op_cost->computation_cost_;
+          new_memory += right_op_cost->memory_with_reuse_;
+          new_commu_cost += right_op_cost->communication_cost_;
+          new_commu_forward += right_op_cost->communication_forward_;
+          new_commu_without += right_op_cost->communication_without_parameter_;
+        }
+
+        auto decision =
+          std::make_shared<TriangleEliminationDecision>(elimi_op_stra, elimi_op_cost, left_edge_cost, right_edge_cost,
+                                                        left_op_stra, left_node_cost, right_op_stra, right_op_cost);
         auto new_cost = std::make_shared<Cost>(new_computation, new_commu_cost, decision);
         new_cost->communication_without_parameter_ = new_commu_without;
         new_cost->communication_with_partial_para_ =
