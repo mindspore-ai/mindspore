@@ -22,6 +22,7 @@
 namespace mindspore {
 namespace parallel {
 bool IsInBlackList(const PrimitivePtr &prim);
+bool IsInBatchParallelBlackList(const PrimitivePtr &prim);
 }  // namespace parallel
 }  // namespace mindspore
 

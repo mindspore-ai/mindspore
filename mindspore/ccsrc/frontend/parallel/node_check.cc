@@ -80,9 +80,17 @@ const std::set<std::string> BLACK_LIST = {TUPLE_GETITEM,
                                           REF_TO_EMBED,
                                           STOP_GRADIENT};
 
+const std::set<std::string> BATCH_PARALLEL_BLACK_LIST = {PACK, TENSOR_SCATTER_UPDATE, MIN_MAX_UPDATE_PER_LAYER};
+
 bool IsInBlackList(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
   return (BLACK_LIST.find(prim->name()) != BLACK_LIST.end());
 }
+
+bool IsInBatchParallelBlackList(const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(prim);
+  return (BATCH_PARALLEL_BLACK_LIST.find(prim->name()) != BATCH_PARALLEL_BLACK_LIST.end());
+}
+
 }  // namespace parallel
 }  // namespace mindspore

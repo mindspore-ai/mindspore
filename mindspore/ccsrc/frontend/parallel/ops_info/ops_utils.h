@@ -232,7 +232,6 @@ constexpr char SQUARE[] = "Square";
 constexpr char BATCHMATMUL[] = "BatchMatMul";
 constexpr char TOPK[] = "TopK";
 constexpr char IN_TOPK[] = "InTopK";
-constexpr char PACK[] = "Pack";
 constexpr char GATHER_ND[] = "GatherNd";
 constexpr char UNSORTEF_SEGMENT_MIND[] = "UnsortedSegmentMinD";
 constexpr char UNSORTEF_SEGMENT_PRODD[] = "UnsortedSegmentProdD";
@@ -297,6 +296,11 @@ constexpr char CREATINSTANCE[] = "create_instance";
 constexpr char ZEROSLIKE[] = "ZerosLike";
 constexpr char REF_TO_EMBED[] = "RefToEmbed";
 constexpr char STOP_GRADIENT[] = "stop_gradient";
+
+// Batch parallel black list
+constexpr char TENSOR_SCATTER_UPDATE[] = "TensorScatterUpdate";
+constexpr char MIN_MAX_UPDATE_PER_LAYER[] = "MinMaxUpdatePerLayer";
+constexpr char PACK[] = "Pack";
 
 constexpr size_t LAST_INDEX(size_t s) { return s - 1; }
 constexpr size_t SECOND_FROM_END(size_t s) { return s - 2; }
