@@ -228,4 +228,3 @@ void IndirectGemmFp32_Comm(float *output, const float *input, const float *weigh
   }
   return;
 }
-

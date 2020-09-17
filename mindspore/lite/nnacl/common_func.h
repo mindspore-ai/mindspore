@@ -46,16 +46,16 @@ void IndirectGemmFp32(float *output, const float *input, const float *weight, co
 int offset(const int *shape, const int dim0, const int dim1, const int dim2, const int dim3);
 int offsetComm(const int *shape, const int dim0, const int dim1, const int dim2);
 int offset4d(const int *shape, const int *dims);
-inline bool isAddOverflow(int32_t x, int32_t y) {
+
+static inline bool isAddOverflow(int32_t x, int32_t y) {
   int32_t sum = x + y;
   return (x > 0 && y > 0 && sum < 0) || (x < 0 && y < 0 && sum > 0);
 }
 
-inline bool isMulOverflow(int32_t x, int32_t y) {
+static inline bool isMulOverflow(int32_t x, int32_t y) {
   int32_t p = x * y;
   return (x != 0) && (p / x != y);
 }
-
 #ifdef ENABLE_ARM64
 void BiasAdd(const float *bias, float *data, size_t oc4, size_t plan_size);
 void BiasAddRelu6(const float *bias, float *data, size_t oc4, size_t plan_size);
