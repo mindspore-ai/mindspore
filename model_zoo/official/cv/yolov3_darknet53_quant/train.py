@@ -27,17 +27,15 @@ from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import ModelCheckpoint, RunContext
 from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
 import mindspore as ms
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.quant import quant
 from mindspore.common import set_seed
 
 from src.yolo import YOLOV3DarkNet53, YoloWithLossCell, TrainingWrapper
 from src.logger import get_logger
 from src.util import AverageMeter, get_param_groups
-from src.lr_scheduler import warmup_step_lr, warmup_cosine_annealing_lr, \
-    warmup_cosine_annealing_lr_V2, warmup_cosine_annealing_lr_sample
+from src.lr_scheduler import get_lr
 from src.yolo_dataset import create_yolo_dataset
-from src.initializer import default_recurisive_init
+from src.initializer import default_recurisive_init, load_yolov3_quant_params
 from src.config import ConfigYOLOV3DarkNet53
 from src.transforms import batch_preprocess_true_box, batch_preprocess_true_box_single
 from src.util import ShapeRecord
@@ -117,18 +115,6 @@ def parse_args():
     args.data_root = os.path.join(args.data_dir, 'train2014')
     args.annFile = os.path.join(args.data_dir, 'annotations/instances_train2014.json')
 
-    return args
-
-
-def conver_training_shape(args):
-    training_shape = [int(args.training_shape), int(args.training_shape)]
-    return training_shape
-
-
-def train():
-    """Train function."""
-    args = parse_args()
-
     # init distributed
     if args.is_distributed:
         init()
@@ -147,6 +133,17 @@ def train():
     args.outputs_dir = os.path.join(args.ckpt_path,
                                     datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
     args.logger = get_logger(args.outputs_dir, args.rank)
+    return args
+
+
+def conver_training_shape(args):
+    training_shape = [int(args.training_shape), int(args.training_shape)]
+    return training_shape
+
+
+def train():
+    """Train function."""
+    args = parse_args()
     args.logger.save_args(args)
 
     if args.need_profiler:
@@ -156,63 +153,17 @@ def train():
     loss_meter = AverageMeter('loss')
 
     context.reset_auto_parallel_context()
+    parallel_mode = ParallelMode.STAND_ALONE
+    degree = 1
     if args.is_distributed:
         parallel_mode = ParallelMode.DATA_PARALLEL
         degree = get_group_size()
-    else:
-        parallel_mode = ParallelMode.STAND_ALONE
-        degree = 1
     context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=degree)
 
     network = YOLOV3DarkNet53(is_training=True)
     # default is kaiming-normal
     default_recurisive_init(network)
-
-    if args.resume_yolov3:
-        param_dict = load_checkpoint(args.resume_yolov3)
-        param_dict_new = {}
-        for key, values in param_dict.items():
-            args.logger.info('ckpt param name = {}'.format(key))
-            if key.startswith('moments.') or key.startswith('global_') or \
-               key.startswith('learning_rate') or key.startswith('momentum'):
-                continue
-            elif key.startswith('yolo_network.'):
-                key_new = key[13:]
-
-                if key_new.endswith('1.beta'):
-                    key_new = key_new.replace('1.beta', 'batchnorm.beta')
-
-                if key_new.endswith('1.gamma'):
-                    key_new = key_new.replace('1.gamma', 'batchnorm.gamma')
-
-                if key_new.endswith('1.moving_mean'):
-                    key_new = key_new.replace('1.moving_mean', 'batchnorm.moving_mean')
-
-                if key_new.endswith('1.moving_variance'):
-                    key_new = key_new.replace('1.moving_variance', 'batchnorm.moving_variance')
-
-                if key_new.endswith('.weight'):
-                    if key_new.endswith('0.weight'):
-                        key_new = key_new.replace('0.weight', 'conv.weight')
-                    else:
-                        key_new = key_new.replace('.weight', '.conv.weight')
-
-                if key_new.endswith('.bias'):
-                    key_new = key_new.replace('.bias', '.conv.bias')
-                param_dict_new[key_new] = values
-
-                args.logger.info('in resume {}'.format(key_new))
-            else:
-                param_dict_new[key] = values
-                args.logger.info('in resume {}'.format(key))
-
-        args.logger.info('resume finished')
-        for _, param in network.parameters_and_names():
-            args.logger.info('network param name = {}'.format(param.name))
-            if param.name not in param_dict_new:
-                args.logger.info('not match param name = {}'.format(param.name))
-        load_param_into_net(network, param_dict_new)
-        args.logger.info('load_model {} success'.format(args.resume_yolov3))
+    load_yolov3_quant_params(args, network)
 
     config = ConfigYOLOV3DarkNet53()
     # convert fusion network to quantization aware network
@@ -244,38 +195,7 @@ def train():
     if not args.ckpt_interval:
         args.ckpt_interval = args.steps_per_epoch
 
-    # lr scheduler
-    if args.lr_scheduler == 'exponential':
-        lr = warmup_step_lr(args.lr,
-                            args.lr_epochs,
-                            args.steps_per_epoch,
-                            args.warmup_epochs,
-                            args.max_epoch,
-                            gamma=args.lr_gamma,
-                            )
-    elif args.lr_scheduler == 'cosine_annealing':
-        lr = warmup_cosine_annealing_lr(args.lr,
-                                        args.steps_per_epoch,
-                                        args.warmup_epochs,
-                                        args.max_epoch,
-                                        args.T_max,
-                                        args.eta_min)
-    elif args.lr_scheduler == 'cosine_annealing_V2':
-        lr = warmup_cosine_annealing_lr_V2(args.lr,
-                                           args.steps_per_epoch,
-                                           args.warmup_epochs,
-                                           args.max_epoch,
-                                           args.T_max,
-                                           args.eta_min)
-    elif args.lr_scheduler == 'cosine_annealing_sample':
-        lr = warmup_cosine_annealing_lr_sample(args.lr,
-                                               args.steps_per_epoch,
-                                               args.warmup_epochs,
-                                               args.max_epoch,
-                                               args.T_max,
-                                               args.eta_min)
-    else:
-        raise NotImplementedError(args.lr_scheduler)
+    lr = get_lr(args)
 
     opt = Momentum(params=get_param_groups(network),
                    learning_rate=Tensor(lr),

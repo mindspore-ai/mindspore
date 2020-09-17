@@ -19,6 +19,7 @@ from mindspore.common import initializer as init
 from mindspore.common.initializer import Initializer as MeInitializer
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 
 def calculate_gain(nonlinearity, param=None):
@@ -174,3 +175,51 @@ def default_recurisive_init(custom_cell):
                                           cell.bias.data.dtype))
         elif isinstance(cell, (nn.BatchNorm2d, nn.BatchNorm1d)):
             pass
+
+def load_yolov3_quant_params(args, network):
+    """Load quant yolov3 darknet parameter from checkpoint."""
+    if args.resume_yolov3:
+        param_dict = load_checkpoint(args.resume_yolov3)
+        param_dict_new = {}
+        for key, values in param_dict.items():
+            args.logger.info('ckpt param name = {}'.format(key))
+            if key.startswith('moments.') or key.startswith('global_') or \
+               key.startswith('learning_rate') or key.startswith('momentum'):
+                continue
+            elif key.startswith('yolo_network.'):
+                key_new = key[13:]
+
+                if key_new.endswith('1.beta'):
+                    key_new = key_new.replace('1.beta', 'batchnorm.beta')
+
+                if key_new.endswith('1.gamma'):
+                    key_new = key_new.replace('1.gamma', 'batchnorm.gamma')
+
+                if key_new.endswith('1.moving_mean'):
+                    key_new = key_new.replace('1.moving_mean', 'batchnorm.moving_mean')
+
+                if key_new.endswith('1.moving_variance'):
+                    key_new = key_new.replace('1.moving_variance', 'batchnorm.moving_variance')
+
+                if key_new.endswith('.weight'):
+                    if key_new.endswith('0.weight'):
+                        key_new = key_new.replace('0.weight', 'conv.weight')
+                    else:
+                        key_new = key_new.replace('.weight', '.conv.weight')
+
+                if key_new.endswith('.bias'):
+                    key_new = key_new.replace('.bias', '.conv.bias')
+                param_dict_new[key_new] = values
+
+                args.logger.info('in resume {}'.format(key_new))
+            else:
+                param_dict_new[key] = values
+                args.logger.info('in resume {}'.format(key))
+
+        args.logger.info('resume finished')
+        for _, param in network.parameters_and_names():
+            args.logger.info('network param name = {}'.format(param.name))
+            if param.name not in param_dict_new:
+                args.logger.info('not match param name = {}'.format(param.name))
+        load_param_into_net(network, param_dict_new)
+        args.logger.info('load_model {} success'.format(args.resume_yolov3))

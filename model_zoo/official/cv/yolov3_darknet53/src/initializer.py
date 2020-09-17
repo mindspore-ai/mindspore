@@ -18,8 +18,9 @@ from functools import reduce
 import numpy as np
 from mindspore.common import initializer as init
 from mindspore.common.initializer import Initializer as MeInitializer
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.nn as nn
-
+from .util import load_backbone
 
 def calculate_gain(nonlinearity, param=None):
     r"""Return the recommended gain value for the given nonlinearity function.
@@ -176,3 +177,28 @@ def default_recurisive_init(custom_cell):
                                                     cell.bias.dtype))
         elif isinstance(cell, (nn.BatchNorm2d, nn.BatchNorm1d)):
             pass
+
+def load_yolov3_params(args, network):
+    """Load yolov3 darknet parameter from checkpoint."""
+    if args.pretrained_backbone:
+        network = load_backbone(network, args.pretrained_backbone, args)
+        args.logger.info('load pre-trained backbone {} into network'.format(args.pretrained_backbone))
+    else:
+        args.logger.info('Not load pre-trained backbone, please be careful')
+
+    if args.resume_yolov3:
+        param_dict = load_checkpoint(args.resume_yolov3)
+        param_dict_new = {}
+        for key, values in param_dict.items():
+            if key.startswith('moments.'):
+                continue
+            elif key.startswith('yolo_network.'):
+                param_dict_new[key[13:]] = values
+                args.logger.info('in resume {}'.format(key))
+            else:
+                param_dict_new[key] = values
+                args.logger.info('in resume {}'.format(key))
+
+        args.logger.info('resume finished')
+        load_param_into_net(network, param_dict_new)
+        args.logger.info('load_model {} success'.format(args.resume_yolov3))

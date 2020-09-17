@@ -39,6 +39,58 @@ from src.utils import LossCallBack, BertLearningRate
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 
 
+def _set_bert_all_reduce_split():
+    """set bert all_reduce fusion split, support num_hidden_layers is 12 and 24."""
+    if bert_net_cfg.num_hidden_layers == 12:
+        if bert_net_cfg.use_relative_positions:
+            context.set_auto_parallel_context(all_reduce_fusion_config=[29, 58, 87, 116, 145, 174, 203, 217])
+        else:
+            context.set_auto_parallel_context(all_reduce_fusion_config=[28, 55, 82, 109, 136, 163, 190, 205])
+    elif bert_net_cfg.num_hidden_layers == 24:
+        if bert_net_cfg.use_relative_positions:
+            context.set_auto_parallel_context(all_reduce_fusion_config=[30, 90, 150, 210, 270, 330, 390, 421])
+        else:
+            context.set_auto_parallel_context(all_reduce_fusion_config=[38, 93, 148, 203, 258, 313, 368, 397])
+
+
+def _get_optimizer(args_opt, network):
+    """get bert optimizer, support Lamb, Momentum, AdamWeightDecay."""
+    if cfg.optimizer == 'Lamb':
+        lr_schedule = BertLearningRate(learning_rate=cfg.Lamb.learning_rate,
+                                       end_learning_rate=cfg.Lamb.end_learning_rate,
+                                       warmup_steps=cfg.Lamb.warmup_steps,
+                                       decay_steps=args_opt.train_steps,
+                                       power=cfg.Lamb.power)
+        params = network.trainable_params()
+        decay_params = list(filter(cfg.Lamb.decay_filter, params))
+        other_params = list(filter(lambda x: not cfg.Lamb.decay_filter(x), params))
+        group_params = [{'params': decay_params, 'weight_decay': cfg.Lamb.weight_decay},
+                        {'params': other_params},
+                        {'order_params': params}]
+        optimizer = Lamb(group_params, learning_rate=lr_schedule, eps=cfg.Lamb.eps)
+    elif cfg.optimizer == 'Momentum':
+        optimizer = Momentum(network.trainable_params(), learning_rate=cfg.Momentum.learning_rate,
+                             momentum=cfg.Momentum.momentum)
+    elif cfg.optimizer == 'AdamWeightDecay':
+        lr_schedule = BertLearningRate(learning_rate=cfg.AdamWeightDecay.learning_rate,
+                                       end_learning_rate=cfg.AdamWeightDecay.end_learning_rate,
+                                       warmup_steps=cfg.AdamWeightDecay.warmup_steps,
+                                       decay_steps=args_opt.train_steps,
+                                       power=cfg.AdamWeightDecay.power)
+        params = network.trainable_params()
+        decay_params = list(filter(cfg.AdamWeightDecay.decay_filter, params))
+        other_params = list(filter(lambda x: not cfg.AdamWeightDecay.decay_filter(x), params))
+        group_params = [{'params': decay_params, 'weight_decay': cfg.AdamWeightDecay.weight_decay},
+                        {'params': other_params, 'weight_decay': 0.0},
+                        {'order_params': params}]
+
+        optimizer = AdamWeightDecay(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
+    else:
+        raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecay]".
+                         format(cfg.optimizer))
+    return optimizer
+
+
 def run_pretrain():
     """pre-train bert_clue"""
     parser = argparse.ArgumentParser(description='bert pre_training')
@@ -88,16 +140,7 @@ def run_pretrain():
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                           device_num=device_num)
-        if bert_net_cfg.num_hidden_layers == 12:
-            if bert_net_cfg.use_relative_positions:
-                context.set_auto_parallel_context(all_reduce_fusion_config=[29, 58, 87, 116, 145, 174, 203, 217])
-            else:
-                context.set_auto_parallel_context(all_reduce_fusion_config=[28, 55, 82, 109, 136, 163, 190, 205])
-        elif bert_net_cfg.num_hidden_layers == 24:
-            if bert_net_cfg.use_relative_positions:
-                context.set_auto_parallel_context(all_reduce_fusion_config=[30, 90, 150, 210, 270, 330, 390, 421])
-            else:
-                context.set_auto_parallel_context(all_reduce_fusion_config=[38, 93, 148, 203, 258, 313, 368, 397])
+        _set_bert_all_reduce_split()
     else:
         rank = 0
         device_num = 1
@@ -127,39 +170,7 @@ def run_pretrain():
         args_opt.train_steps = args_opt.epoch_size * ds.get_dataset_size() // args_opt.accumulation_steps
         logger.info("train steps: {}".format(args_opt.train_steps))
 
-    if cfg.optimizer == 'Lamb':
-        lr_schedule = BertLearningRate(learning_rate=cfg.Lamb.learning_rate,
-                                       end_learning_rate=cfg.Lamb.end_learning_rate,
-                                       warmup_steps=cfg.Lamb.warmup_steps,
-                                       decay_steps=args_opt.train_steps,
-                                       power=cfg.Lamb.power)
-        params = net_with_loss.trainable_params()
-        decay_params = list(filter(cfg.Lamb.decay_filter, params))
-        other_params = list(filter(lambda x: not cfg.Lamb.decay_filter(x), params))
-        group_params = [{'params': decay_params, 'weight_decay': cfg.Lamb.weight_decay},
-                        {'params': other_params},
-                        {'order_params': params}]
-        optimizer = Lamb(group_params, learning_rate=lr_schedule, eps=cfg.Lamb.eps)
-    elif cfg.optimizer == 'Momentum':
-        optimizer = Momentum(net_with_loss.trainable_params(), learning_rate=cfg.Momentum.learning_rate,
-                             momentum=cfg.Momentum.momentum)
-    elif cfg.optimizer == 'AdamWeightDecay':
-        lr_schedule = BertLearningRate(learning_rate=cfg.AdamWeightDecay.learning_rate,
-                                       end_learning_rate=cfg.AdamWeightDecay.end_learning_rate,
-                                       warmup_steps=cfg.AdamWeightDecay.warmup_steps,
-                                       decay_steps=args_opt.train_steps,
-                                       power=cfg.AdamWeightDecay.power)
-        params = net_with_loss.trainable_params()
-        decay_params = list(filter(cfg.AdamWeightDecay.decay_filter, params))
-        other_params = list(filter(lambda x: not cfg.AdamWeightDecay.decay_filter(x), params))
-        group_params = [{'params': decay_params, 'weight_decay': cfg.AdamWeightDecay.weight_decay},
-                        {'params': other_params, 'weight_decay': 0.0},
-                        {'order_params': params}]
-
-        optimizer = AdamWeightDecay(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
-    else:
-        raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecay]".
-                         format(cfg.optimizer))
+    optimizer = _get_optimizer(args_opt, net_with_loss)
     callback = [TimeMonitor(args_opt.data_sink_steps), LossCallBack(ds.get_dataset_size())]
     if args_opt.enable_save_ckpt == "true" and args_opt.device_id % min(8, device_num) == 0:
         config_ck = CheckpointConfig(save_checkpoint_steps=args_opt.save_checkpoint_steps,

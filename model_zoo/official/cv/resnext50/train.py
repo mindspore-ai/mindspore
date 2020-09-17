@@ -25,17 +25,16 @@ from mindspore.nn.optim import Momentum
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import ModelCheckpoint
 from mindspore.train.callback import CheckpointConfig, Callback
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager, FixedLossScaleManager
 from mindspore.common import set_seed
 
 from src.dataset import classification_dataset
 from src.crossentropy import CrossEntropy
-from src.warmup_step_lr import warmup_step_lr
-from src.warmup_cosine_annealing_lr import warmup_cosine_annealing_lr
+from src.lr_generator import get_lr
 from src.utils.logging import get_logger
 from src.utils.optimizers__init__ import get_param_groups
+from src.utils.var_init import load_pretrain_model
 from src.image_classification import get_network
 from src.config import config
 
@@ -149,37 +148,11 @@ def parse_args(cloud_args=None):
     args.lr_epochs = list(map(int, args.lr_epochs.split(',')))
     args.image_size = list(map(int, args.image_size.split(',')))
 
-    return args
-
-def merge_args(args, cloud_args):
-    """dictionary"""
-    args_dict = vars(args)
-    if isinstance(cloud_args, dict):
-        for key in cloud_args.keys():
-            val = cloud_args[key]
-            if key in args_dict and val:
-                arg_type = type(args_dict[key])
-                if arg_type is not type(None):
-                    val = arg_type(val)
-                args_dict[key] = val
-    return args
-
-def train(cloud_args=None):
-    """training process"""
-    args = parse_args(cloud_args)
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
-                        device_target=args.platform, save_graphs=False)
-    if os.getenv('DEVICE_ID', "not_set").isdigit():
-        context.set_context(device_id=int(os.getenv('DEVICE_ID')))
-
     # init distributed
     if args.is_distributed:
         init()
         args.rank = get_rank()
         args.group_size = get_group_size()
-        parallel_mode = ParallelMode.DATA_PARALLEL
-        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size,
-                                          parameter_broadcast=True, gradients_mean=True)
     else:
         args.rank = 0
         args.group_size = 1
@@ -199,7 +172,35 @@ def train(cloud_args=None):
     args.outputs_dir = os.path.join(args.ckpt_path,
                                     datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
     args.logger = get_logger(args.outputs_dir, args.rank)
+    return args
 
+def merge_args(args, cloud_args):
+    """dictionary"""
+    args_dict = vars(args)
+    if isinstance(cloud_args, dict):
+        for key in cloud_args.keys():
+            val = cloud_args[key]
+            if key in args_dict and val:
+                arg_type = type(args_dict[key])
+                if arg_type is not type(None):
+                    val = arg_type(val)
+                args_dict[key] = val
+    return args
+
+
+def train(cloud_args=None):
+    """training process"""
+    args = parse_args(cloud_args)
+    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+                        device_target=args.platform, save_graphs=False)
+    if os.getenv('DEVICE_ID', "not_set").isdigit():
+        context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+
+    # init distributed
+    if args.is_distributed:
+        parallel_mode = ParallelMode.DATA_PARALLEL
+        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size,
+                                          parameter_broadcast=True, gradients_mean=True)
     # dataloader
     de_dataset = classification_dataset(args.data_dir, args.image_size,
                                         args.per_batch_size, 1,
@@ -216,38 +217,10 @@ def train(cloud_args=None):
     if network is None:
         raise NotImplementedError('not implement {}'.format(args.backbone))
 
-    # load pretrain model
-    if os.path.isfile(args.pretrained):
-        param_dict = load_checkpoint(args.pretrained)
-        param_dict_new = {}
-        for key, values in param_dict.items():
-            if key.startswith('moments.'):
-                continue
-            elif key.startswith('network.'):
-                param_dict_new[key[8:]] = values
-            else:
-                param_dict_new[key] = values
-        load_param_into_net(network, param_dict_new)
-        args.logger.info('load model {} success'.format(args.pretrained))
+    load_pretrain_model(args.pretrained, network, args)
 
     # lr scheduler
-    if args.lr_scheduler == 'exponential':
-        lr = warmup_step_lr(args.lr,
-                            args.lr_epochs,
-                            args.steps_per_epoch,
-                            args.warmup_epochs,
-                            args.max_epoch,
-                            gamma=args.lr_gamma,
-                            )
-    elif args.lr_scheduler == 'cosine_annealing':
-        lr = warmup_cosine_annealing_lr(args.lr,
-                                        args.steps_per_epoch,
-                                        args.warmup_epochs,
-                                        args.max_epoch,
-                                        args.T_max,
-                                        args.eta_min)
-    else:
-        raise NotImplementedError(args.lr_scheduler)
+    lr = get_lr(args)
 
     # optimizer
     opt = Momentum(params=get_param_groups(network),

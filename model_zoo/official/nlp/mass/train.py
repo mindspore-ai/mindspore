@@ -100,6 +100,81 @@ def _train(model, config: TransformerConfig,
                 pickle.dump(result, f, 1)
 
 
+def _load_checkpoint_to_net(config, network):
+    """load parameters to network from checkpoint."""
+    if config.existed_ckpt:
+        if config.existed_ckpt.endswith(".npz"):
+            weights = np.load(config.existed_ckpt)
+        else:
+            weights = load_checkpoint(config.existed_ckpt)
+        for param in network.trainable_params():
+            weights_name = param.name
+            if weights_name not in weights:
+                raise ValueError(f"Param {weights_name} is not found in ckpt file.")
+
+            if isinstance(weights[weights_name], Parameter):
+                param.set_data(weights[weights_name].data)
+            elif isinstance(weights[weights_name], Tensor):
+                param.set_data(Tensor(weights[weights_name].asnumpy(), config.dtype))
+            elif isinstance(weights[weights_name], np.ndarray):
+                param.set_data(Tensor(weights[weights_name], config.dtype))
+            else:
+                param.set_data(weights[weights_name])
+    else:
+        for param in network.trainable_params():
+            name = param.name
+            value = param.data
+            if isinstance(value, Tensor):
+                if name.endswith(".gamma"):
+                    param.set_data(one_weight(value.asnumpy().shape))
+                elif name.endswith(".beta") or name.endswith(".bias"):
+                    param.set_data(zero_weight(value.asnumpy().shape))
+                else:
+                    param.set_data(weight_variable(value.asnumpy().shape))
+
+
+def _get_lr(config, update_steps):
+    """generate learning rate."""
+    if config.lr_scheduler == "isr":
+        lr = Tensor(square_root_schedule(lr=config.lr,
+                                         update_num=update_steps,
+                                         decay_start_step=config.decay_start_step,
+                                         warmup_steps=config.warmup_steps,
+                                         min_lr=config.min_lr), dtype=mstype.float32)
+    elif config.lr_scheduler == "poly":
+        lr = Tensor(polynomial_decay_scheduler(lr=config.lr,
+                                               min_lr=config.min_lr,
+                                               decay_steps=config.decay_steps,
+                                               total_update_num=update_steps,
+                                               warmup_steps=config.warmup_steps,
+                                               power=config.poly_lr_scheduler_power), dtype=mstype.float32)
+    else:
+        lr = config.lr
+    return lr
+
+
+def _get_optimizer(config, network, lr):
+    """get mass optimizer, support Adam, Lamb, Momentum."""
+    if config.optimizer.lower() == "adam":
+        optimizer = Adam(network.trainable_params(), lr, beta1=0.9, beta2=0.98)
+    elif config.optimizer.lower() == "lamb":
+        lr = BertLearningRate(decay_steps=12000, learning_rate=config.lr, end_learning_rate=config.min_lr,
+                              power=10.0, warmup_steps=config.warmup_steps)
+        decay_params = list(filter(lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
+                                   network.trainable_params()))
+        other_params = list(filter(lambda x: 'layernorm' in x.name.lower() or 'bias' in x.name.lower(),
+                                   network.trainable_params()))
+        group_params = [{'params': decay_params, 'weight_decay': 0.01},
+                        {'params': other_params}]
+
+        optimizer = Lamb(group_params, lr, eps=1e-6)
+    elif config.optimizer.lower() == "momentum":
+        optimizer = Momentum(network.trainable_params(), lr, momentum=0.9)
+    else:
+        raise ValueError(f"optimizer only support `adam` and `momentum` now.")
+    return optimizer
+
+
 def _build_training_pipeline(config: TransformerConfig,
                              pre_training_dataset=None,
                              fine_tune_dataset=None,
@@ -116,36 +191,7 @@ def _build_training_pipeline(config: TransformerConfig,
     """
     net_with_loss = TransformerNetworkWithLoss(config, is_training=True)
     net_with_loss.init_parameters_data()
-
-    if config.existed_ckpt:
-        if config.existed_ckpt.endswith(".npz"):
-            weights = np.load(config.existed_ckpt)
-        else:
-            weights = load_checkpoint(config.existed_ckpt)
-        for param in net_with_loss.trainable_params():
-            weights_name = param.name
-            if weights_name not in weights:
-                raise ValueError(f"Param {weights_name} is not found in ckpt file.")
-
-            if isinstance(weights[weights_name], Parameter):
-                param.set_data(weights[weights_name].data)
-            elif isinstance(weights[weights_name], Tensor):
-                param.set_data(Tensor(weights[weights_name].asnumpy(), config.dtype))
-            elif isinstance(weights[weights_name], np.ndarray):
-                param.set_data(Tensor(weights[weights_name], config.dtype))
-            else:
-                param.set_data(weights[weights_name])
-    else:
-        for param in net_with_loss.trainable_params():
-            name = param.name
-            value = param.data
-            if isinstance(value, Tensor):
-                if name.endswith(".gamma"):
-                    param.set_data(one_weight(value.asnumpy().shape))
-                elif name.endswith(".beta") or name.endswith(".bias"):
-                    param.set_data(zero_weight(value.asnumpy().shape))
-                else:
-                    param.set_data(weight_variable(value.asnumpy().shape))
+    _load_checkpoint_to_net(config, net_with_loss)
 
     dataset = pre_training_dataset if pre_training_dataset is not None \
         else fine_tune_dataset
@@ -154,39 +200,10 @@ def _build_training_pipeline(config: TransformerConfig,
         raise ValueError("pre-training dataset or fine-tuning dataset must be provided one.")
 
     update_steps = config.epochs * dataset.get_dataset_size()
-    if config.lr_scheduler == "isr":
-        lr = Tensor(square_root_schedule(lr=config.lr,
-                                         update_num=update_steps,
-                                         decay_start_step=config.decay_start_step,
-                                         warmup_steps=config.warmup_steps,
-                                         min_lr=config.min_lr), dtype=mstype.float32)
-    elif config.lr_scheduler == "poly":
-        lr = Tensor(polynomial_decay_scheduler(lr=config.lr,
-                                               min_lr=config.min_lr,
-                                               decay_steps=config.decay_steps,
-                                               total_update_num=update_steps,
-                                               warmup_steps=config.warmup_steps,
-                                               power=config.poly_lr_scheduler_power), dtype=mstype.float32)
-    else:
-        lr = config.lr
 
-    if config.optimizer.lower() == "adam":
-        optimizer = Adam(net_with_loss.trainable_params(), lr, beta1=0.9, beta2=0.98)
-    elif config.optimizer.lower() == "lamb":
-        lr = BertLearningRate(decay_steps=12000, learning_rate=config.lr, end_learning_rate=config.min_lr,
-                              power=10.0, warmup_steps=config.warmup_steps)
-        decay_params = list(filter(lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
-                                   net_with_loss.trainable_params()))
-        other_params = list(filter(lambda x: 'layernorm' in x.name.lower() or 'bias' in x.name.lower(),
-                                   net_with_loss.trainable_params()))
-        group_params = [{'params': decay_params, 'weight_decay': 0.01},
-                        {'params': other_params}]
+    lr = _get_lr(config, update_steps)
 
-        optimizer = Lamb(group_params, lr, eps=1e-6)
-    elif config.optimizer.lower() == "momentum":
-        optimizer = Momentum(net_with_loss.trainable_params(), lr, momentum=0.9)
-    else:
-        raise ValueError(f"optimizer only support `adam` and `momentum` now.")
+    optimizer = _get_optimizer(config, net_with_loss, lr)
 
     # loss scale.
     if config.loss_scale_mode == "dynamic":
