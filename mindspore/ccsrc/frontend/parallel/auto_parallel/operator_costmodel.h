@@ -201,6 +201,8 @@ using TileCost = SoftmaxCost;
 using TileCostPtr = std::shared_ptr<TileCost>;
 using ConcatCost = TileCost;
 using ConcatCostPtr = std::shared_ptr<ConcatCost>;
+using SplitCost = TileCost;
+using SplitCostPtr = std::shared_ptr<SplitCost>;
 
 class TmpIdentityCost : public OperatorCost {
  public:
