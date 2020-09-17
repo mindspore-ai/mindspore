@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import cast_to_tensor, check_greater_zero, check_type, check_distribution_name, set_param_type
+from ._utils.utils import check_greater_zero, check_type, check_distribution_name
 from ._utils.custom_ops import exp_generic, log_generic
 
 
@@ -118,18 +118,14 @@ class Exponential(Distribution):
         Constructor of Exponential.
         """
         param = dict(locals())
+        param['param_dict'] = {'rate': rate}
         valid_dtype = mstype.float_type
         check_type(dtype, valid_dtype, type(self).__name__)
         super(Exponential, self).__init__(seed, dtype, name, param)
-        self.parameter_type = set_param_type({'rate': rate}, self.dtype)
-        if rate is not None:
-            self._rate = cast_to_tensor(rate, self.parameter_type)
-            check_greater_zero(self._rate, "rate")
-        else:
-            self._rate = rate
 
-        self.default_parameters = [self.rate]
-        self.parameter_names = ['rate']
+        self._rate = self._add_parameter(rate, 'rate')
+        if self.rate is not None:
+            check_greater_zero(self.rate, 'rate')
 
         self.minval = np.finfo(np.float).tiny
 
@@ -144,8 +140,6 @@ class Exponential(Distribution):
         self.less = P.Less()
         self.select = P.Select()
         self.shape = P.Shape()
-        self.sqrt = P.Sqrt()
-        self.sq = P.Square()
         self.uniform = C.uniform
 
     def extend_repr(self):

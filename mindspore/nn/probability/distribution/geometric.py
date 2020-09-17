@@ -18,8 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import cast_to_tensor, check_prob, check_type, check_distribution_name,\
-    set_param_type
+from ._utils.utils import check_prob, check_type, check_distribution_name
 from ._utils.custom_ops import exp_generic, log_generic
 
 
@@ -120,18 +119,14 @@ class Geometric(Distribution):
         Constructor of Geometric distribution.
         """
         param = dict(locals())
+        param['param_dict'] = {'probs': probs}
         valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
         check_type(dtype, valid_dtype, type(self).__name__)
         super(Geometric, self).__init__(seed, dtype, name, param)
-        self.parameter_type = set_param_type({'probs1': probs}, mstype.float32)
-        if probs is not None:
-            self._probs = cast_to_tensor(probs, self.parameter_type)
-            check_prob(self._probs)
-        else:
-            self._probs = probs
 
-        self.default_parameters = [self.probs]
-        self.parameter_names = ['probs1']
+        self._probs = self._add_parameter(probs, 'probs')
+        if self._probs is not None:
+            check_prob(self.probs)
 
         self.minval = np.finfo(np.float).tiny
 
@@ -150,7 +145,6 @@ class Geometric(Distribution):
         self.select = P.Select()
         self.shape = P.Shape()
         self.sq = P.Square()
-        self.sqrt = P.Sqrt()
         self.uniform = C.uniform
 
     def extend_repr(self):
@@ -181,7 +175,7 @@ class Geometric(Distribution):
             MODE(Geo) = 0
         """
         probs1 = self._check_param_type(probs1)
-        return self.fill(self.dtypeop(probs1), self.shape(probs1), 0.)
+        return self.fill(self.dtype, self.shape(probs1), 0.)
 
     def _var(self, probs1=None):
         r"""
@@ -229,7 +223,7 @@ class Geometric(Distribution):
         value = self.floor(value)
         probs1 = self._check_param_type(probs1)
         pmf = self.exp(self.log(1.0 - probs1) * value + self.log(probs1))
-        zeros = self.fill(self.dtypeop(probs1), self.shape(pmf), 0.0)
+        zeros = self.fill(self.dtypeop(pmf), self.shape(pmf), 0.0)
         comp = self.less(value, zeros)
         return self.select(comp, zeros, pmf)
 
@@ -252,7 +246,7 @@ class Geometric(Distribution):
         probs1 = self._check_param_type(probs1)
         probs0 = 1.0 - probs1
         cdf = 1.0 - self.pow(probs0, value + 1.0)
-        zeros = self.fill(self.dtypeop(probs1), self.shape(cdf), 0.0)
+        zeros = self.fill(self.dtypeop(cdf), self.shape(cdf), 0.0)
         comp = self.less(value, zeros)
         return self.select(comp, zeros, cdf)
 
