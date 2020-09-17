@@ -336,6 +336,8 @@ def set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.
 
+    Auto parallel context should be configured before the initialization of your network.
+
     Note:
         Attribute name is required for setting attributes.
         If a program has tasks with different parallel modes, then before setting new parallel mode for the
@@ -344,12 +346,25 @@ def set_auto_parallel_context(**kwargs):
         Setting or changing parallel modes must be called before any creating Initializer, otherwise,
         RuntimeError may be raised when compiling the network.
 
+    Some configurations are parallel mode specific, see the below table for details:
+
+    ===========================  ===========================  =================
+    Common                       AUTO_PARALLEL                DATA_PRALLEL
+    ===========================  ===========================  =================
+    device_num                   gradient_fp32_sync           enable_parallel_optimizer
+    global_rank                  loss_repeated_mean
+    gradients_mean               auto_parallel_search_mode
+    parallel_mode                strategy_ckpt_load_file
+    all_reduce_fusion_config     strategy_ckpt_save_file
+                                 full_batch
+    ===========================  ===========================  =================
+
     Args:
         device_num (int): Available device number, the value must be in [1, 4096]. Default: 1.
         global_rank (int): Global rank id, the value must be in [0, 4095]. Default: 0.
-        gradients_mean (bool): Whether to perform mean operator after all-reduce of mirror.
-                     "stand_alone" does not support `gradients_mean`. Default: False.
-        gradient_fp32_sync (bool): Gradients allreduce by fp32, even though gradients is fp16 if this flag is True..
+        gradients_mean (bool): Whether to perform mean operator after allreduce of gradients.
+                     "stand_alone" do not support gradients_mean. Default: False.
+        gradient_fp32_sync (bool): Run allreduce of gradients in fp32.
                      "stand_alone", "data_parallel" and "hybrid_parallel" do not support
                      gradient_fp32_sync. Default: True.
         parallel_mode (str): There are five kinds of parallel modes, "stand_alone", "data_parallel",
@@ -364,8 +379,8 @@ def set_auto_parallel_context(**kwargs):
                      - semi_auto_parallel: Achieves data parallelism and model parallelism by
                        setting parallel strategies.
 
-                     - auto_parallel: Achieves parallelism automatically.
-        auto_parallel_search_mode (str): There are two kinds of search modes, "recursive_programming"
+                     - auto_parallel: Achieving parallelism automatically.
+        auto_parallel_search_mode (str): There are two kinds of shard strategy search modes, "recursive_programming"
                      and "dynamic_programming". Default: "dynamic_programming".
 
                      - recursive_programming: Recursive programming search mode.
@@ -376,9 +391,11 @@ def set_auto_parallel_context(**kwargs):
                        broadcast. Default: False.
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
-        full_batch (bool): Whether to load the whole batch on each device. Default: False.
-        enable_parallel_optimizer (bool): This is a developing feature, which shards the weight update  computation in
-                       data parallel training in the benefit of time and memory saving.
+        full_batch (bool): If you load whole batch datasets in auto_parallel mode, this parameter
+                       should be set with True. Default: False.
+        enable_parallel_optimizer (bool): This is a developing feature, which shards the weight update computation for
+                       data parallel training in the benefit of time and memory saving. For now,
+                       `Lamb` and `AdamWeightDecay` are supported in data parallel mode.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP.
 
@@ -479,7 +496,7 @@ def set_context(**kwargs):
     Some configurations are device specific, see the bellow table for details:
 
     ===========================  ===========================  =================
-    Common(CPU/GPU/Asecend)      Ascend                       GPU
+    Common(CPU/GPU/Ascend)       Ascend                       GPU
     ===========================  ===========================  =================
     check_bprop                  enable_auto_mixed_precision  max_device_memory
     device_id                    enable_dump
