@@ -178,6 +178,7 @@ REGISTER(EmbeddingLookupInfo);
 REGISTER(TileInfo);
 REGISTER(StridedSliceInfo);
 REGISTER(DropoutInfo);
+REGISTER(PackInfo);
 REGISTER(ConcatInfo);
 REGISTER(SplitInfo);
 }  // namespace parallel

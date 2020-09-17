@@ -228,11 +228,19 @@ def get_bprop_virtual_div_operator(self):
             dx = op(dout, cast(F.scalar_to_array(divisor), dtype(dout)))
             return (dx,)
 
-        dx = ()
-        input_nums = F.tuple_len(dout)
+        if F.issubclass_(F.typeof(dout), mstype.tuple_):
+            dx = ()
+            input_nums = F.tuple_len(dout)
+            for i in range(input_nums):
+                ele_grad = op(dout[i], cast(F.scalar_to_array(divisor), dtype(dout[i])))
+                dx = dx + (ele_grad,)
+            return (dx,)
+
+        dx = []
+        input_nums = F.list_len(dout)
         for i in range(input_nums):
             ele_grad = op(dout[i], cast(F.scalar_to_array(divisor), dtype(dout[i])))
-            dx = dx + (ele_grad,)
+            dx.append(ele_grad)
         return (dx,)
     return bprop
 

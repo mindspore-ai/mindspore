@@ -450,7 +450,7 @@ void StepRedistribution(const CNodePtr &node, const OperatorInfoPtr &distribute_
   AnfNodeIndexSet node_set = manager->node_users()[node];
   CNodePtr insert_node_new;
 
-  if (AnfNodeIsPrimitive(node, MAKE_TUPLE)) {
+  if (AnfNodeIsPrimitive(node, MAKE_TUPLE) || AnfNodeIsPrimitive(node, MAKE_LIST)) {
     MS_LOG(INFO) << "No need to insert redistribution op betweend make_tuple node and the next node";
     return;
   }
@@ -851,7 +851,8 @@ void InsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node) {
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
 
-  if ((node->inputs().size() == 2) && AnfNodeIsPrimitive(node->input(1), MAKE_TUPLE)) {
+  if ((node->inputs().size() == 2) &&
+      (AnfNodeIsPrimitive(node->input(1), MAKE_TUPLE) || AnfNodeIsPrimitive(node->input(1), MAKE_LIST))) {
     MS_LOG(INFO) << "The mirror for " << GetPrimName(node) << " has handle by make_tuple node";
     return;
   }
@@ -1055,7 +1056,7 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
     MS_LOG(EXCEPTION) << "GetNodeShape: " << node->ToString() << " shape_ptr is nullptr, full name is "
                       << node->fullname_with_scope();
   }
-  auto tuple_shape_ptr = dyn_cast<abstract::TupleShape>(base_shape_ptr);
+  auto tuple_shape_ptr = dyn_cast<abstract::SequeueShape>(base_shape_ptr);
   if (tuple_shape_ptr != nullptr) {
     auto tuple_shape = tuple_shape_ptr->shape();
     for (auto &shape : tuple_shape) {
@@ -1436,7 +1437,7 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
     SetVirtualDatasetStrategy(cnode);
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-    if (prim->name() == MAKE_TUPLE) {
+    if (prim->name() == MAKE_TUPLE || prim->name() == MAKE_LIST) {
       continue;
     }
     auto attrs = prim->attrs();
@@ -2459,9 +2460,9 @@ Status ParallelInit() {
   return SUCCESS;
 }
 
-void HandleForwardMakeTuple(const std::vector<AnfNodePtr> &all_nodes) {
+void HandleForwardMakeTupleAndMakeList(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
-    if (!AnfNodeIsPrimitive(node, MAKE_TUPLE)) {
+    if (!AnfNodeIsPrimitive(node, MAKE_TUPLE) && !AnfNodeIsPrimitive(node, MAKE_LIST)) {
       continue;
     }
 
@@ -2473,25 +2474,28 @@ void HandleForwardMakeTuple(const std::vector<AnfNodePtr> &all_nodes) {
 
     FuncGraphManagerPtr manager = cnode->func_graph()->manager();
     MS_EXCEPTION_IF_NULL(manager);
-    auto make_tuple_user = manager->node_users()[cnode];
-    if (make_tuple_user.size() != 1) {
-      MS_LOG(EXCEPTION) << "Now the make_tuple's user must be 1, but got " << make_tuple_user.size();
-    }
-    CNodePtr make_tuple_next_cnode = make_tuple_user.pop().first->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(make_tuple_next_cnode);
+    std::string op_type = AnfNodeIsPrimitive(node, MAKE_TUPLE) ? MAKE_TUPLE : MAKE_LIST;
 
-    std::string make_tuple_user_prim_name = GetPrimName(make_tuple_next_cnode);
-    if (!IsParallelCareNode(make_tuple_next_cnode)) {
-      MS_LOG(INFO) << "The make_tuple's user is " << make_tuple_user_prim_name << ", no need to set operator info";
+    auto make_tuple_list_user = manager->node_users()[cnode];
+    if (make_tuple_list_user.size() != 1) {
+      MS_LOG(EXCEPTION) << "Now the " << op_type << "'s user must be 1, but got " << make_tuple_list_user.size();
+    }
+    CNodePtr make_tuple_list_next_cnode = make_tuple_list_user.pop().first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple_list_next_cnode);
+
+    std::string make_tuple__list_user_prim_name = GetPrimName(make_tuple_list_next_cnode);
+    if (!IsParallelCareNode(make_tuple_list_next_cnode)) {
+      MS_LOG(INFO) << "The " << op_type << "'s user is " << make_tuple__list_user_prim_name
+                   << ", no need to set operator info";
       continue;
     }
-    if (make_tuple_next_cnode->inputs().size() != 2) {
-      MS_LOG(EXCEPTION) << "Now the make_tuple's user only support 1 input, but got "
-                        << make_tuple_next_cnode->inputs().size() - 1;
+    if (make_tuple_list_next_cnode->inputs().size() != 2) {
+      MS_LOG(EXCEPTION) << "Now the " << op_type << "'s user only support 1 input, but got "
+                        << make_tuple_list_next_cnode->inputs().size() - 1;
     }
 
-    MS_LOG(INFO) << "Set the make_tuple's operator info, and the op name is " << make_tuple_user_prim_name;
-    OperatorInfoPtr op_info = GetDistributeOperator(make_tuple_next_cnode);
+    MS_LOG(INFO) << "Set the " << op_type << "'s operator info, and the op name is " << make_tuple__list_user_prim_name;
+    OperatorInfoPtr op_info = GetDistributeOperator(make_tuple_list_next_cnode);
     MS_EXCEPTION_IF_NULL(op_info);
     cnode->set_user_data<OperatorInfo>(op_info);
   }
@@ -2695,7 +2699,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
     ReshapeInit(all_nodes);
   }
 
-  HandleForwardMakeTuple(all_nodes);
+  HandleForwardMakeTupleAndMakeList(all_nodes);
 
   // if the input or parameter has multiple users, check whether its split strategies are consistent.
   CheckParameterSplit(all_nodes);

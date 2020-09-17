@@ -348,6 +348,16 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
     }
     auto tuple = std::make_shared<abstract::AbstractTuple>(ptr_list);
     return tuple;
+  } else if (py::isinstance<py::list>(shape_obj) && py::isinstance<py::list>(type_obj)) {
+    py::list shape_list = shape_obj.cast<py::list>();
+    py::list typeid_list = type_obj.cast<py::list>();
+    AbstractBasePtrList ptr_list;
+    for (size_t it = 0; it < shape_list.size(); ++it) {
+      auto tensor_it = PyListDtype2AbstractTensor(shape_list[it], typeid_list[it]);
+      ptr_list.push_back(tensor_it);
+    }
+    auto list = std::make_shared<abstract::AbstractList>(ptr_list);
+    return list;
   } else if (shape_obj.is_none() && type_obj.is_none()) {
     // AbstractNone indicates there is no output for this CNode node.
     auto abstract_none = std::make_shared<abstract::AbstractNone>();
