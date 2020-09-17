@@ -14,12 +14,12 @@
 # ============================================================================
 """lstm"""
 import math
+
 import numpy as np
-import mindspore.nn as nn
-from mindspore import context
+
 from mindspore._checkparam import Validator as validator
 from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.nn.cell import Cell
 from mindspore.ops import operations as P
@@ -118,83 +118,41 @@ class LSTM(Cell):
                  dropout=0,
                  bidirectional=False):
         super(LSTM, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.has_bias = has_bias
-        self.batch_first = validator.check_value_type("batch_first", batch_first, [bool], self.cls_name)
-        self.hidden_size = validator.check_integer("hidden_size", hidden_size, 0, Rel.GT, self.cls_name)
-        self.num_layers = validator.check_integer("num_layers", num_layers, 0, Rel.GT, self.cls_name)
-        self.dropout = float(dropout)
-        self.bidirectional = bidirectional
-        if self.batch_first:
-            self.transpose1 = P.Transpose()
-            self.transpose2 = P.Transpose()
-        num_directions = 2 if self.bidirectional else 1
-        self.cpu_target = False
-        enable_debug = context.get_context("enable_debug_runtime")
-        if context.get_context("device_target") == "CPU" and not enable_debug:
-            self.cpu_target = True
-        if not self.cpu_target:
-            self.lstm = P.LSTM(input_size=self.input_size,
-                               hidden_size=self.hidden_size,
-                               num_layers=self.num_layers,
-                               has_bias=self.has_bias,
-                               bidirectional=self.bidirectional,
-                               dropout=self.dropout)
-            weight_size = 0
-            gate_size = 4 * self.hidden_size
-            for layer in range(self.num_layers):
-                input_layer_size = self.input_size if layer == 0 else self.hidden_size * num_directions
-                increment_size = gate_size * input_layer_size
-                increment_size += gate_size * self.hidden_size
-                if self.has_bias:
-                    increment_size += 2 * gate_size
-                weight_size += increment_size * num_directions
-            stdv = 1 / math.sqrt(hidden_size)
-            w_np = np.random.uniform(-stdv, stdv, (weight_size, 1, 1)).astype(np.float32)
-            self.weight = Parameter(initializer(Tensor(w_np), [weight_size, 1, 1]), name='weight')
-        else:
-            input_size_list = []
-            input_size_list.append(self.input_size)
-            for i in range(self.num_layers - 1):
-                input_size_list.append(self.hidden_size * num_directions)
-            weights = []
-            layers = []
-            bias_size = 0 if not self.has_bias else num_directions * self.hidden_size * 4
-            stdv = 1 / math.sqrt(hidden_size)
-            for i in range(num_layers):
-                weight_size = (input_size_list[i] + self.hidden_size) * num_directions * self.hidden_size * 4
-                if has_bias:
-                    weight_size = weight_size + bias_size
-                w_np = np.random.uniform(-stdv, stdv, (weight_size, 1, 1)).astype(np.float32)
-                weights.append(Parameter(initializer(Tensor(w_np), w_np.shape), name='weight' + str(i)))
-                layers.append(nn.LSTMCell(input_size=input_size_list[i],
-                                          hidden_size=self.hidden_size,
-                                          has_bias=self.has_bias,
-                                          bidirectional=self.bidirectional,
-                                          dropout=self.dropout))
-            self.lstms = layers
-            self.weight = ParameterTuple(tuple(weights))
-        self.fill = P.Fill()
-        self.shape = P.Shape()
+        validator.check_value_type("batch_first", batch_first, [bool], self.cls_name)
+        validator.check_integer("hidden_size", hidden_size, 0, Rel.GT, self.cls_name)
+        validator.check_integer("num_layers", num_layers, 0, Rel.GT, self.cls_name)
+
+        self.batch_first = batch_first
+        self.transpose = P.Transpose()
+        self.lstm = P.LSTM(input_size=input_size,
+                           hidden_size=hidden_size,
+                           num_layers=num_layers,
+                           has_bias=has_bias,
+                           bidirectional=bidirectional,
+                           dropout=float(dropout))
+
+        weight_size = 0
+        gate_size = 4 * hidden_size
+        num_directions = 2 if bidirectional else 1
+        for layer in range(num_layers):
+            input_layer_size = input_size if layer == 0 else hidden_size * num_directions
+            increment_size = gate_size * input_layer_size
+            increment_size += gate_size * hidden_size
+            if has_bias:
+                increment_size += 2 * gate_size
+            weight_size += increment_size * num_directions
+        stdv = 1 / math.sqrt(hidden_size)
+        w_np = np.random.uniform(-stdv, stdv, (weight_size, 1, 1)).astype(np.float32)
+        self.weight = Parameter(initializer(Tensor(w_np), [weight_size, 1, 1]), name='weight')
 
     def construct(self, x, hx):
         if self.batch_first:
-            x = self.transpose1(x, (1, 0, 2))
-        if not self.cpu_target:
-            h, c = hx
-            output, h, c, _, _ = self.lstm(x, h, c, self.weight)
-            if self.batch_first:
-                output = self.transpose2(output, (1, 0, 2))
-            return (output, (h, c))
+            x = self.transpose(x, (1, 0, 2))
         h, c = hx
-        output, hn, cn, _, _ = self.lstms[0](x, h[0], c[0], self.weight[0])
-        for i in range(1, self.num_layers):
-            output, hn, cn, _, _ = self.lstms[i](output, h[i], c[i], self.weight[i])
+        x, h, c, _, _ = self.lstm(x, h, c, self.weight)
         if self.batch_first:
-            output = self.transpose2(output, (1, 0, 2))
-        return (output, (hn, cn))
+            x = self.transpose(x, (1, 0, 2))
+        return x, (h, c)
 
 
 class LSTMCell(Cell):
@@ -291,30 +249,19 @@ class LSTMCell(Cell):
                  dropout=0,
                  bidirectional=False):
         super(LSTMCell, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.has_bias = has_bias
         self.batch_first = validator.check_value_type("batch_first", batch_first, [bool], self.cls_name)
-        self.dropout = float(dropout)
-        self.bidirectional = bidirectional
-        self.num_directions = 1
-        if self.bidirectional:
-            self.num_directions = 2
-        if self.batch_first:
-            self.transpose1 = P.Transpose()
-            self.transpose2 = P.Transpose()
-
-        self.lstm = P.LSTM(input_size=self.input_size,
-                           hidden_size=self.hidden_size,
+        self.transpose = P.Transpose()
+        self.lstm = P.LSTM(input_size=input_size,
+                           hidden_size=hidden_size,
                            num_layers=1,
-                           has_bias=self.has_bias,
-                           bidirectional=self.bidirectional,
-                           dropout=self.dropout)
+                           has_bias=has_bias,
+                           bidirectional=bidirectional,
+                           dropout=float(dropout))
 
     def construct(self, x, h, c, w):
         if self.batch_first:
-            x = self.transpose1(x, (1, 0, 2))
-        output, hn, cn, _, _ = self.lstm(x, h, c, w)
+            x = self.transpose(x, (1, 0, 2))
+        x, h, c, _, _ = self.lstm(x, h, c, w)
         if self.batch_first:
-            output = self.transpose2(output, (1, 0, 2))
-        return output, hn, cn, _, _
+            x = self.transpose(x, (1, 0, 2))
+        return x, h, c, _, _

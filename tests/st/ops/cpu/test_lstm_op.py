@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import math
 
 import pytest
 import numpy as np
@@ -20,10 +21,81 @@ import mindspore.context as context
 from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import ParameterTuple, Parameter
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
+
+class StackLSTM(nn.Cell):
+    """
+    Stack multi-layers LSTM together.
+    """
+
+    def __init__(self,
+                 input_size,
+                 hidden_size,
+                 num_layers=1,
+                 has_bias=True,
+                 batch_first=False,
+                 dropout=0.0,
+                 bidirectional=False):
+        super(StackLSTM, self).__init__()
+        self.num_layers = num_layers
+        self.batch_first = batch_first
+        self.transpose = P.Transpose()
+
+        # direction number
+        num_directions = 2 if bidirectional else 1
+
+        # input_size list
+        input_size_list = [input_size]
+        for i in range(num_layers - 1):
+            input_size_list.append(hidden_size * num_directions)
+
+        # layers
+        layers = []
+        for i in range(num_layers):
+            layers.append(nn.LSTMCell(input_size=input_size_list[i],
+                                      hidden_size=hidden_size,
+                                      has_bias=has_bias,
+                                      batch_first=batch_first,
+                                      bidirectional=bidirectional,
+                                      dropout=dropout))
+
+        # weights
+        weights = []
+        for i in range(num_layers):
+            # weight size
+            weight_size = (input_size_list[i] + hidden_size) * num_directions * hidden_size * 4
+            if has_bias:
+                bias_size = num_directions * hidden_size * 4
+                weight_size = weight_size + bias_size
+
+            # numpy weight
+            stdv = 1 / math.sqrt(hidden_size)
+            w_np = np.random.uniform(-stdv, stdv, (weight_size, 1, 1)).astype(np.float32)
+
+            # lstm weight
+            weights.append(Parameter(initializer(Tensor(w_np), w_np.shape), name="weight" + str(i)))
+
+        #
+        self.lstms = layers
+        self.weight = ParameterTuple(tuple(weights))
+
+    def construct(self, x, hx):
+        """construct"""
+        if self.batch_first:
+            x = self.transpose(x, (1, 0, 2))
+        # stack lstm
+        h, c = hx
+        hn = cn = None
+        for i in range(self.num_layers):
+            x, hn, cn, _, _ = self.lstms[i](x, h[i], c[i], self.weight[i])
+        if self.batch_first:
+            x = self.transpose(x, (1, 0, 2))
+        return x, (hn, cn)
 
 
 class LstmNet(nn.Cell):
@@ -34,7 +106,7 @@ class LstmNet(nn.Cell):
         if bidirectional:
             num_directions = 2
 
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, has_bias, bidirectional, dropout)
+        self.lstm = StackLSTM(input_size, hidden_size, num_layers, has_bias, bidirectional, dropout)
         input_np = np.array([[[0.6755, -1.6607, 0.1367], [0.4276, -0.7850, -0.3758]],
                              [[-0.6424, -0.6095, 0.6639], [0.7918, 0.4147, -0.5089]],
                              [[-1.5612, 0.0120, -0.7289], [-0.6656, -0.6626, -0.5883]],
@@ -137,8 +209,8 @@ class MultiLayerBiLstmNet(nn.Cell):
         if bidirectional:
             num_directions = 2
 
-        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, has_bias=has_bias,
-                            bidirectional=bidirectional, dropout=dropout)
+        self.lstm = StackLSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, has_bias=has_bias,
+                              bidirectional=bidirectional, dropout=dropout)
 
         input_np = np.array([[[-0.1887, -0.4144, -0.0235, 0.7489, 0.7522, 0.5969, 0.3342, 1.2198, 0.6786, -0.9404],
                               [-0.8643, -1.6835, -2.4965, 2.8093, 0.1741, 0.2707, 0.7387, -0.0939, -1.7990, 0.4765]],
@@ -264,8 +336,8 @@ class Net(nn.Cell):
         bih = np.zeros((1, 8)).astype(np.float32)
         w_np = np.concatenate((wih, whh, bih), axis=1).reshape([-1, 1, 1])
         self.w = Parameter(initializer(Tensor(w_np), w_np.shape), name='weight0')
-        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers,
-                            has_bias=has_bias, bidirectional=bidirectional, dropout=dropout)
+        self.lstm = StackLSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers,
+                              has_bias=has_bias, bidirectional=bidirectional, dropout=dropout)
         self.lstm.weight = ParameterTuple(tuple([self.w]))
 
     @ms_function
