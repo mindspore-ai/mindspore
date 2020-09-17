@@ -1125,7 +1125,7 @@ class MixUp:
         batch_size (int): Batch size of dataset.
         alpha (float):  Mix up rate.
         is_single (bool): Identify if single batch or multi-batch mix up transformation is to be used
-        (Default=True, which is single batch).
+            (Default=True, which is single batch).
 
 
     Examples:
