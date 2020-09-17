@@ -103,38 +103,8 @@ class PoolingGpuFwdKernel : public GpuKernel {
     CHECK_CUDNN_RET_WITH_EXCEPT(
       cudnnSetTensorNdDescriptor(output_descriptor_, cudnn_data_type_, nbDims, dimAout, strideAout),
       "cudnnSetTensor4dDescriptor failed");
-    auto window = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ksize"));
-    int window_height = window[2];
-    int window_width = window[3];
-    stride_ = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("strides"));
     SetPoolingMode(kernel_node);
-    int windowDimA[2] = {window_height, window_width};
-    int paddingA[2] = {0, 0};
-    int strideA[2] = {stride_[2], stride_[3]};
-    if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
-      pad_height_ =
-        std::max<int>(0, (((old_height_ / stride_[2]) * stride_[2] == old_height_ ? (old_height_ / stride_[2])
-                                                                                  : (old_height_ / stride_[2]) + 1) -
-                          1) *
-                             stride_[2] +
-                           window_height - old_height_);
-      pad_width_ =
-        std::max<int>(0, (((old_width_ / stride_[3]) * stride_[3] == old_width_ ? (old_width_ / stride_[3])
-                                                                                : (old_width_ / stride_[3]) + 1) -
-                          1) *
-                             stride_[3] +
-                           window_width - old_width_);
-      pad_top_ = pad_height_ / 2;
-      pad_left_ = pad_width_ / 2;
-      paddingA[0] = pad_top_;
-      paddingA[1] = pad_left_;
-    } else {
-      pad_height_ = 0;
-      pad_width_ = 0;
-    }
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetPoolingNdDescriptor(pooling_descriptor_, pooling_mode_, CUDNN_NOT_PROPAGATE_NAN,
-                                                            2, windowDimA, paddingA, strideA),
-                                "cudnnSetPoolingNdDescriptor failed");
+    SetPad(kernel_node);
     InitSizeLists();
     return true;
   }
@@ -172,7 +142,6 @@ class PoolingGpuFwdKernel : public GpuKernel {
   }
 
   void SetPoolingMode(const CNodePtr &kernel_node) {
-    pad_mode_ = GetValue<std::string>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("padding"));
     mode_ = AnfAlgo::GetCNodeName(kernel_node);
     if (mode_ == "AvgPool") {
       pooling_mode_ = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
@@ -181,6 +150,40 @@ class PoolingGpuFwdKernel : public GpuKernel {
       pooling_mode_ = CUDNN_POOLING_MAX;
       pad_value_ = kSignedMinFloat;
     }
+  }
+  void SetPad(const CNodePtr &kernel_node) {
+    pad_mode_ = GetValue<std::string>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("padding"));
+    auto window = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ksize"));
+    int window_height = window[2];
+    int window_width = window[3];
+    stride_ = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("strides"));
+    int windowDimA[2] = {window_height, window_width};
+    int paddingA[2] = {0, 0};
+    int strideA[2] = {stride_[2], stride_[3]};
+    if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
+      pad_height_ =
+        std::max<int>(0, (((old_height_ / stride_[2]) * stride_[2] == old_height_ ? (old_height_ / stride_[2])
+                                                                                  : (old_height_ / stride_[2]) + 1) -
+                          1) *
+                             stride_[2] +
+                           window_height - old_height_);
+      pad_width_ =
+        std::max<int>(0, (((old_width_ / stride_[3]) * stride_[3] == old_width_ ? (old_width_ / stride_[3])
+                                                                                : (old_width_ / stride_[3]) + 1) -
+                          1) *
+                             stride_[3] +
+                           window_width - old_width_);
+      pad_top_ = pad_height_ / 2;
+      pad_left_ = pad_width_ / 2;
+      paddingA[0] = pad_top_;
+      paddingA[1] = pad_left_;
+    } else {
+      pad_height_ = 0;
+      pad_width_ = 0;
+    }
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetPoolingNdDescriptor(pooling_descriptor_, pooling_mode_, CUDNN_NOT_PROPAGATE_NAN,
+                                                            2, windowDimA, paddingA, strideA),
+                                "cudnnSetPoolingNdDescriptor failed");
   }
   void DestroyResource() noexcept {
     CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyPoolingDescriptor(pooling_descriptor_),
