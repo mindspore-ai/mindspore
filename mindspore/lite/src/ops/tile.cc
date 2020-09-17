@@ -28,6 +28,29 @@ std::vector<int> Tile::GetDims() const { return this->primitive_->value.AsTile()
 
 void Tile::SetDims(const std::vector<int> &dims) { this->primitive_->value.AsTile()->dims = dims; }
 
+int Tile::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Tile;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Tile) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    this->primitive_->value.value = new (std::nothrow) schema::TileT();
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 #else
 
 std::vector<int> Tile::GetMultiples() const {

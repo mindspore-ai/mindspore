@@ -45,17 +45,8 @@ int ApplyMomentumCPUKernel::Run() {
   float moment = reinterpret_cast<float *>(in_tensors_[4]->MutableData())[0];
   size_t elem_num = in_tensors_[0]->ElementsNum();
 
-  // align format
-  if (in_tensors_[3]->shape().size() == 4 && in_tensors_[3]->GetFormat() == schema::Format_NCHW &&
-      in_tensors_[0]->GetFormat() == schema::Format_KHWC) {
-    PackNCHWToNHWCFp32(gradient, workspace, in_tensors_[0]->Batch(), in_tensors_[0]->Height() * in_tensors_[0]->Width(),
-                       in_tensors_[0]->Channel());
-  } else {
-    memcpy(workspace, gradient, in_tensors_[3]->ElementsNum() * sizeof(float));
-  }
-
   for (size_t i = 0; i < elem_num; ++i) {
-    accumulate[i] = accumulate[i] * moment + workspace[i];  // * (1.0 - moment);
+    accumulate[i] = accumulate[i] * moment + gradient[i];  // * (1.0 - moment);
     weight[i] -= accumulate[i] * learning_rate;
   }
   return RET_OK;
@@ -67,12 +58,7 @@ int ApplyMomentumCPUKernel::Init() {
   auto accumulate = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
   for (size_t i = 0; i < elem_num; i++) accumulate[i] = 0.0;
 
-  workspace = new float[elem_num];
-  if (workspace == nullptr) {
-    MS_LOG(ERROR) << "apply momentum workspace fail to malloc!";
-    return RET_ERROR;
-  }
-  return 0;
+  return RET_OK;
 }
 
 kernel::LiteKernel *CpuApplyMomentumFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,

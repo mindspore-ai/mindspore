@@ -124,6 +124,7 @@
 #include "src/ops/sparse_to_dense.h"
 #include "src/ops/detection_post_process.h"
 #include "src/ops/dropout.h"
+#include "src/ops/real_div.h"
 #ifdef PRIMITIVE_WRITEABLE
 #include "tools/converter/quantizer/quantize_util.h"
 #endif
@@ -355,6 +356,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
   const auto &op_type = prim.name();
   if (op_type == "ReLU" || op_type == "ReLU6" || op_type == "Sigmoid") {
     return NewPrimitiveC<Activation>(prim, inputs, quantType);
+  } else if (op_type == "AddN") {
+    return NewPrimitiveC<AddN>(prim, inputs, quantType);
   } else if (op_type == "BatchNorm") {
     return NewPrimitiveC<BatchNorm>(prim, inputs, quantType);
   } else if (op_type == "BiasAdd") {
@@ -369,6 +372,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Dequant>(prim, inputs, quantType);
   } else if (op_type == "Flatten") {
     return NewPrimitiveC<Flatten>(prim, inputs, quantType);
+  } else if (op_type == "FusedBatchNorm") {
+    return NewPrimitiveC<FusedBatchNorm>(prim, inputs, quantType);
   } else if (op_type == "make_tuple") {
     return NewPrimitiveC<MakeTuple>(prim, inputs, quantType);
   } else if (op_type == "MatMul") {
@@ -379,7 +384,19 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Pooling>(prim, inputs, quantType);
   } else if (op_type == "Quant") {
     return NewPrimitiveC<Quant>(prim, inputs, quantType);
+  } else if (op_type == "RealDiv") {
+    return NewPrimitiveC<RealDiv>(prim, inputs, quantType);
+  } else if (op_type == "ReduceMax") {
+    return NewPrimitiveC<Reduce>(prim, inputs, quantType);
   } else if (op_type == "ReduceMean") {
+    return NewPrimitiveC<Reduce>(prim, inputs, quantType);
+  } else if (op_type == "ReduceMin") {
+    return NewPrimitiveC<Reduce>(prim, inputs, quantType);
+  } else if (op_type == "ReduceProd") {
+    return NewPrimitiveC<Reduce>(prim, inputs, quantType);
+  } else if (op_type == "ReduceSum") {
+    return NewPrimitiveC<Reduce>(prim, inputs, quantType);
+  } else if (op_type == "ReduceSumSquare") {
     return NewPrimitiveC<Reduce>(prim, inputs, quantType);
   } else if (op_type == "Reshape") {
     return NewPrimitiveC<Reshape>(prim, inputs, quantType);
@@ -402,7 +419,6 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
   } else if (op_type == "Cast") {
     return NewPrimitiveC<Cast>(prim, inputs, quantType);
 
-
 #ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
     return NewPrimitiveC<SoftmaxCrossEntropy>(prim, inputs, quantType);
@@ -424,14 +440,10 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
   } else if (op_type == "FlattenGrad") {
     return NewPrimitiveC<FlattenGrad>(prim, inputs, quantType);
-#endif
-#ifdef SUPPORT_TRAIN0
-  } else if (op_type == "PowerGrad") {
-    return NewPrimitiveC<PowerGrad>(prim, inputs, quantType);
-  } else if (op_type == "NegGrad") {
-    return NewPrimitiveC<NegGrad>(prim, inputs, quantType);
-  } else if (op_type == "LogGrad") {
-    return NewPrimitiveC<LogGrad>(prim, inputs, quantType);
+  } else if (op_type == "FusedBatchNormGrad") {
+    return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
+  } else if (op_type == "Tile") {
+    return NewPrimitiveC<Tile>(prim, inputs, quantType);
 #endif
   } else {
     MS_LOG(ERROR) << "Unsupported primitive type in Create : " << op_type;
@@ -929,9 +941,9 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
     case schema::PrimitiveType_MulGrad:
       return NewPrimitiveC<ArithmeticGrad>(primitive);
     case schema::PrimitiveType_DivGrad:
-     return NewPrimitiveC<ArithmeticGrad>(primitive);
+      return NewPrimitiveC<ArithmeticGrad>(primitive);
     case schema::PrimitiveType_SoftmaxCrossEntropy:
-      return  NewPrimitiveC<SoftmaxCrossEntropy>(primitive);
+      return NewPrimitiveC<SoftmaxCrossEntropy>(primitive);
     case schema::PrimitiveType_NegGrad:
       return NewPrimitiveC<NegGrad>(primitive);
     case schema::PrimitiveType_LogGrad:

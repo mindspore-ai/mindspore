@@ -13,47 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_INCLUDE_MODEL_H_
-#define MINDSPORE_LITE_INCLUDE_MODEL_H_
+#ifndef MINDSPORE_LITE_INCLUDE_TRAIN_MODEL_H_
+#define MINDSPORE_LITE_INCLUDE_TRAIN_MODEL_H_
 #include <vector>
-#include "include/lite_utils.h"
+#include "include/model.h"
 
 namespace mindspore::lite {
-class PrimitiveC;
-struct Model {
-  struct Node {
-    String name_;
-    NodeType node_type_;
-    PrimitiveC *primitive_;
-    Uint32Vector input_indices_;
-    Uint32Vector output_indices_;
-  };
-  using NodePtrVector = std::vector<Node *>;
-  String name_;
-  String version_;
-  TensorPtrVector all_tensors_;
-  Uint32Vector input_indices_;
-  Uint32Vector output_indices_;
-  NodePtrVector nodes_;
-  char *buf;
-
-  /// \brief Static method to create a Model pointer.
+struct TrainModel : public lite::Model {
+  /// \brief Static method to create a TrainModel pointer.
   ///
   /// \param[in] model_buf Define the buffer read from a model file.
   /// \param[in] size Define bytes number of model buffer.
   ///
-  /// \return Pointer of MindSpore Lite Model.
-  static Model *Import(const char *model_buf, size_t size);
+  /// \return Pointer of MindSpore Lite TrainModel.
+  static TrainModel *Import(const char *model_buf, size_t size);
 
   /// \brief Free meta graph temporary buffer
-  virtual void Free();
+  void Free() override;
 
-  /// \brief Free all temporay buffer
-  void Destroy();
+  /// \brief TrainModel destruct, free all memory
+  virtual ~TrainModel();
 
-  /// \brief Model destruct, free all memory
-  virtual ~Model();
+  /// \brief Export Model into buf.
+  ///
+  /// \param[in] buf Define the buffer to Export into. If nullptr, buf will be allocated
+  /// \param[in] len size of the buffer.
+  ///
+  /// \return Pointer to buffer with exported model
+  char* ExportBuf(char* buf, size_t* len) const;
+
+  size_t buf_size_;
 };
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_INCLUDE_MODEL_H_
+#endif  // MINDSPORE_LITE_INCLUDE_TRAIN_MODEL_H_

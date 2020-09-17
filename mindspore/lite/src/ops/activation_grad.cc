@@ -39,11 +39,11 @@ int ActivationGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodeP
     return RET_ERROR;
   }
   auto attr = std::make_unique<schema::ActivationGradT>();
-  if (prim.name() == "ReLU") {
+  if (prim.name() == "ReluGrad") {
     attr->type = schema::ActivationType_RELU;
-  } else if (prim.name() == "Sigmoid") {
+  } else if (prim.name() == "SigmoidGrad") {
     attr->type = schema::ActivationType_SIGMOID;
-  } else if (prim.name() == "ReLU6") {
+  } else if (prim.name() == "Relu6Grad") {
     attr->type = schema::ActivationType_RELU6;
   }
   // auto alpha = GetValue<float>(prim.GetAttr("alpha"));
@@ -64,7 +64,7 @@ int ActivationGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flat
     MS_LOG(ERROR) << "value_as_ActivationGrad return nullptr";
     return RET_ERROR;
   }
-  auto val_offset = schema::CreateActivationGrad(*fbb, attr->type());
+  auto val_offset = schema::CreateActivationGrad(*fbb, attr->type(), attr->alpha());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ActivationGrad, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;

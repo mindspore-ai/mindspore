@@ -43,8 +43,11 @@ int BNGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
-    attr->eps = GetValue<float>(prim.GetAttr("eps"));
     attr->momentum = GetValue<float>(prim.GetAttr("momentum"));
+    // FusedBatchNormGrad dows not get this attribute
+    if (prim.GetAttr("eps") != nullptr) {
+      attr->eps = GetValue<float>(prim.GetAttr("eps"));
+    }
     this->primitive_->value.value = attr;
     if (this->primitive_->value.value == nullptr) {
       MS_LOG(ERROR) << "primitive value is nullptr";

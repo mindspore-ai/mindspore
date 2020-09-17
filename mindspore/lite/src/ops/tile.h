@@ -34,6 +34,7 @@ class Tile : public PrimitiveC {
   explicit Tile(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetMultiples(const std::vector<int> &multiples);
   void SetDims(const std::vector<int> &dims);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 
 #else
   Tile() = default;

@@ -214,28 +214,8 @@ if (SUPPORT_TRAIN)
            # ${LITE_DIR}/src/train/ops/train_ops.cc
             ${LITE_DIR}/src/train/train_populate_parameter.cc
             ${LITE_DIR}/src/train/train_session.cc
+            ${LITE_DIR}/src/train/train_model.cc
             ${LITE_DIR}/src/lite_session.cc
-            #            ${SRC_DIR}/common/trans.cc
-            #            ${SRC_DIR}/common/lite/trans_extends.cc
-            #            ${SRC_DIR}/kernel/kernel_build_info.cc
-            #            ${SRC_DIR}/utils/lite/base_ref_utils.cc
-            #            ${SRC_DIR}/session/lite/anf_runtime_algorithm_extends.cc
-            #            ${SRC_DIR}/session/lite/session_basic_extends.cc
-            #            ${SRC_DIR}/session/anf_runtime_algorithm.cc
-            #            ${SRC_DIR}/session/anf_runtime_algorithm.cc
-            #            ${SRC_DIR}/session/session_basic.cc
-            #            ${SRC_DIR}/session/kernel_graph.cc
-            #            ${SRC_DIR}/session/session_factory.cc
-            #            ${SRC_DIR}/device/kernel_info.cc
-            #            ${SRC_DIR}/device/kernel_runtime.cc
-            #            ${SRC_DIR}/device/lite/kernel_runtime_extends.cc
-    #        ${LITE_DIR}/src/common/anf_importer/anf_importer.cc
-    #       ${LITE_DIR}/src/common/anf_importer/import_from_meta_graph.cc
-    #       ${LITE_DIR}/src/ir/primitive_value.cc
-    #       ${LITE_DIR}/src/train/lite_kernel_runtime.cc
-    #       ${LITE_DIR}/src/train/train_session.cc
-    #       ${LITE_DIR}/src/train/model.cc
-            ${LITE_DIR}/src/lite_session.cc  # temporary
             )
 else()
     set(TEST_LITE_SRC

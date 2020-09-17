@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_FP32_BATCH_NORM_H_
-#define MINDSPORE_LITE_NNACL_FP32_BATCH_NORM_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_GRAD_BATCH_NORM_H_
+#define MINDSPORE_LITE_NNACL_FP32_GRAD_BATCH_NORM_H_
 
 #include "nnacl/op_base.h"
 
@@ -39,4 +39,4 @@ void backwardScale(const float *x, const float *mean, const float *invar, const 
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP32_BATCH_NORM_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_GRAD_BATCH_NORM_H_

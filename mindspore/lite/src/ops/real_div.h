@@ -14,34 +14,35 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_OPS_ADDN_H_
-#define MINDSPORE_LITE_SRC_OPS_ADDN_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_REAL_DIV_H_
+#define MINDSPORE_LITE_SRC_OPS_REAL_DIV_H_
 
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
-#include "src/ops/primitive_c.h"
+#include "src/ops/arithmetic.h"
 
 namespace mindspore {
 namespace lite {
-class AddN : public PrimitiveC {
+class RealDiv : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(AddN, PrimitiveC);
-  AddN() = default;
-  explicit AddN(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  void SetN(int n);
+  MS_DECLARE_PARENT(RealDiv, Arithmetic);
+  RealDiv() = default;
+  explicit RealDiv(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
-#else
-  AddN() = default;
 
-  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
+#else
+  RealDiv() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override {
+    return RET_ERROR;
+  }
+
 #endif
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
-  int GetN() const;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_OPS_ADDN_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_REAL_DIV_H_

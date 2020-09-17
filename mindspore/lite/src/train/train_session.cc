@@ -18,8 +18,10 @@
 #include <algorithm>
 #include "utils/log_adapter.h"
 #include "include/context.h"
+#include "include/train_model.h"
+#include "include/errorcode.h"
 #include "src/common/utils.h"
-#include "mindspore/lite/src/tensor.h"
+#include "src/tensor.h"
 #include "src/train/loss_kernel.h"
 #include "src/train/train_populate_parameter.h"
 #include "src/runtime/runtime_api.h"
@@ -29,6 +31,15 @@
 
 namespace mindspore::session {
 
+static size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite::Tensor *searchParameter) {
+  for (size_t i = 0; i < where.size(); i++) {
+    if (where[i] == searchParameter) {
+      return i;
+    }
+  }
+  return where.size();
+}
+
 TrainSession::TrainSession() { kernel::PopulateTrainParameters(); }
 
 void TrainSession::ReplaceOps() {
@@ -37,118 +48,99 @@ void TrainSession::ReplaceOps() {
                                        mindspore::kernel::CpuConvTrainFp32KernelCreator);
 
   mindspore::lite::KernelRegistrar tmp0(mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32,
-                                       mindspore::schema::PrimitiveType_DepthwiseConv2D,
-                                       mindspore::kernel::CpuConvTrainFp32KernelCreator);
+                                        mindspore::schema::PrimitiveType_DepthwiseConv2D,
+                                        mindspore::kernel::CpuConvTrainFp32KernelCreator);
 }
 
 int TrainSession::CompileGraph(lite::Model *model) {
-  model_ = model;
-  ReplaceOps();
-  return LiteSession::CompileGraph(model);
-}
-
-TrainSession::~TrainSession() {
-  for (auto it1 = ext_output_map_.begin(); it1 != ext_output_map_.end(); ++it1) {
-    if ((output_node_map_.find(it1->first) == output_node_map_.end()) || train_mode_)  {
-      // Delete if not from output_node_map_
-      auto tensor_ptr = it1->second.back();
-      delete tensor_ptr;
-      it1->second.pop_back();
-    }
+  model_ = dynamic_cast<lite::TrainModel *>(model);
+  if (model_ == nullptr) {
+    MS_LOG(ERROR) << "TrainSession can only compile TrainModels";
+    return lite::RET_ERROR;
   }
+
+  ReplaceOps();
+  auto ret = LiteSession::CompileGraph(model);
+  orig_output_map_ = output_node_map_;
+  orig_output_tensor_map_ = output_tensor_map_;
+  return ret;
 }
 
-void *TrainSession::ExportToBuf(lite::Model *model, void *buf, size_t *len) const {
-  return nullptr;
-}
+TrainSession::~TrainSession() { delete model_; }
+
+void *TrainSession::ExportToBuf(char *buf, size_t *len) const { return model_->ExportBuf(buf, len); }
 
 int TrainSession::RunGraph(const session::KernelCallBack &before, const session::KernelCallBack &after) {
-  auto ms_output_tensors = GetOutputMap();
   this->outputs_.clear();
-  for (auto ms_tensors : ms_output_tensors)
+  for (auto ms_tensors : output_node_map_)
     for (auto ms_tensor : ms_tensors.second) this->outputs_.push_back((dynamic_cast<lite::Tensor *>(ms_tensor)));
   if (train_mode_) return LiteSession::RunGraph(before, after);
 
   // object is expected to run only inference part of graph
   // prepare a list of kernels till the loss function -- temporary solution
-  std::vector<kernel::LiteKernel *> infference_kernels;
+  std::vector<kernel::LiteKernel *> inference_kernels;
   for (auto kernel : this->kernels_) {
     if (dynamic_cast<const kernel::LossKernel *>(kernel) != nullptr) break;
-    infference_kernels.push_back(kernel);
+    inference_kernels.push_back(kernel);
   }
 
   MS_EXCEPTION_IF_NULL(this->context_);
   lite::Executor executor;
   if (before == nullptr && after == nullptr) {
-    return executor.Run(this->inputs_, this->outputs_, infference_kernels, this->context_->allocator.get());
+    return executor.Run(this->inputs_, this->outputs_, inference_kernels, this->context_->allocator.get());
   } else {
-    return executor.Run(this->inputs_, this->outputs_, infference_kernels, this->context_->allocator.get(), before,
+    return executor.Run(this->inputs_, this->outputs_, inference_kernels, this->context_->allocator.get(), before,
                         after);
   }
 }
 
-void TrainSession::train() {
+void TrainSession::Train() {
   for (auto *kernel : kernels_) {
     MS_ASSERT(nullptr != kernel);
     kernel->train();
   }
-  for (auto it1 = ext_output_map_.begin(); it1 != ext_output_map_.end(); ++it1) {
-    if ((output_node_map_.find(it1->first) == output_node_map_.end()) || train_mode_)  {
-      // Delete if not from output_node_map_
-      auto tensor_ptr = it1->second.back();
-      delete tensor_ptr;
-      it1->second.pop_back();
-    }
-  }
-  ext_output_map_.clear();
+  output_node_map_.clear();
+  output_tensor_map_.clear();
   train_mode_ = true;
   for (auto kernel : this->kernels_) {
     if (dynamic_cast<const kernel::LossKernel *>(kernel) != nullptr) {
-      auto *ms_tensor = new lite::Tensor(*kernel->out_tensors().at(0));
-      ext_output_map_[kernel->name()].emplace_back(ms_tensor);
+      auto *ms_tensor = kernel->out_tensors().at(0);
+      if (ms_tensor != nullptr) {
+        output_node_map_[kernel->name()].emplace_back(ms_tensor);
+        auto index = TSFindTensor(tensors_, ms_tensor);
+        if (index != tensors_.size()) {
+          output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
+        }
+      }
     }
   }
 }
 
-void TrainSession::eval() {
-  for (auto *kernel : kernels_) {
+void TrainSession::Eval() {
+  for (auto *kernel : this->kernels_) {
     MS_ASSERT(nullptr != kernel);
     kernel->eval();
   }
   kernel::LiteKernel *last_kernel = nullptr;
-  for (auto it1 = ext_output_map_.begin(); it1 != ext_output_map_.end(); ++it1) {
-    if ((output_node_map_.find(it1->first) == output_node_map_.end()) || train_mode_)  {
-      // Delete if not from output_node_map_
-      auto tensor_ptr = it1->second.back();
-      delete tensor_ptr;
-      it1->second.pop_back();
-    }
-  }
-  ext_output_map_ = output_node_map_;
+  output_node_map_ = orig_output_map_;
+  output_tensor_map_ = orig_output_tensor_map_;
+
   train_mode_ = false;
   for (auto kernel : this->kernels_) {
     if ((dynamic_cast<const kernel::LossKernel *>(kernel) != nullptr) && (last_kernel != nullptr)) {
-      if (ext_output_map_.find(last_kernel->name()) == ext_output_map_.end()) {
-        auto *ms_tensor = new lite::Tensor(*last_kernel->out_tensors().at(0));
-        ext_output_map_[last_kernel->name()].emplace_back(ms_tensor);
+      if (output_node_map_.find(last_kernel->name()) == output_node_map_.end()) {
+        auto *ms_tensor = last_kernel->out_tensors().at(0);
+        if (ms_tensor != nullptr) {
+          output_node_map_[last_kernel->name()].emplace_back(ms_tensor);
+          auto index = TSFindTensor(tensors_, ms_tensor);
+          if (index != tensors_.size()) {
+            output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
+          }
+        }
       }
     }
     last_kernel = kernel;
   }
 }
 
-std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> TrainSession::GetOutputMap() const {
-  return ext_output_map_;
-}
-std::vector<tensor::MSTensor *> TrainSession::GetOutputsByName(const std::string &name) const {
-  auto ret_vect = LiteSession::GetOutputsByNodeName(name);  // TODO(emir):  GetOutputsByTensorName?
-  if (ret_vect.size() > 0) return ret_vect;
-  auto ret = ext_output_map_.find(name);
-  if (ret == ext_output_map_.end()) {
-    MS_LOG(WARNING) << "Node  " << name << " is not an output node";
-    std::vector<mindspore::tensor::MSTensor *> empty_ret;
-    return empty_ret;
-  }
-  return ret->second;
-}
 }  // namespace mindspore::session
