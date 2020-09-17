@@ -119,10 +119,10 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   for (auto tensor : outputs) {
     delete tensor;
   }
-  delete param;
-  delete cast_kernel;
   delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
+
 TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   MS_LOG(INFO) << " begin test ";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
@@ -199,14 +199,14 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
+
   for (auto tensor : inputs) {
     delete tensor;
   }
   for (auto tensor : outputs) {
     delete tensor;
   }
-  delete param;
-  delete cast_kernel;
   delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore
