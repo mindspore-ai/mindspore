@@ -44,10 +44,10 @@ void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *out
     return;
   }
   param->num_axes_ = 4;
-  param->perm_[0] = 0;
-  param->perm_[1] = 3;
-  param->perm_[2] = 1;
-  param->perm_[3] = 2;
+  param->perm_[0] = shape[3];
+  param->perm_[1] = shape[4];
+  param->perm_[2] = shape[5];
+  param->perm_[3] = shape[6];
   auto allocator = ocl_runtime->GetAllocator();
   int h = shape[0];
   int w = shape[1];
@@ -60,9 +60,10 @@ void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *out
     MS_LOG(ERROR) << "tensor_x create error.";
     return;
   }
-  std::vector<int> out_shape = {1, c, h, w};
+  std::vector<int> out_shape = {input_shape[param->perm_[0]], input_shape[param->perm_[1]],
+                                input_shape[param->perm_[2]], input_shape[param->perm_[3]]};
   auto tensor_out_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
-                                                       out_shape, schema::Format_NCHW);
+                                                       out_shape, schema::Format_NHWC);
   auto tensor_out = tensor_out_ptr.get();
   if (tensor_out == nullptr) {
     MS_LOG(ERROR) << "tensor_out create error.";
@@ -105,24 +106,62 @@ void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *out
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
-TEST_F(TestTransposeOpenCL, TransposeFp32) {
+TEST_F(TestTransposeOpenCL, TransposeNHWC2NCHWFp32) {
   int h = 2;
   int w = 2;
   int c = 3;
-  std::vector<int> shape = {h, w, c};
+  int perm0 = 0;
+  int perm1 = 3;
+  int perm2 = 1;
+  int perm3 = 2;
+  std::vector<int> shape = {h, w, c, perm0, perm1, perm2, perm3};
   std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
   std::vector<float> output_data = {0.0f, 3.0f, 6.0f, 9.0f, 1.0f, 4.0f, 7.0f, 10.0f, 2.0f, 5.0f, 8.0f, 11.0f};
 
   RunTestTranspose(shape, input_data.data(), output_data.data(), false);
 }
 
-TEST_F(TestTransposeOpenCL, TransposeFp16) {
+TEST_F(TestTransposeOpenCL, TransposeNHWC2NCHWFp16) {
   int h = 2;
   int w = 2;
   int c = 3;
-  std::vector<int> shape = {h, w, c};
+  int perm0 = 0;
+  int perm1 = 3;
+  int perm2 = 1;
+  int perm3 = 2;
+  std::vector<int> shape = {h, w, c, perm0, perm1, perm2, perm3};
   std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
   std::vector<float16_t> output_data = {0.0f, 3.0f, 6.0f, 9.0f, 1.0f, 4.0f, 7.0f, 10.0f, 2.0f, 5.0f, 8.0f, 11.0f};
+
+  RunTestTranspose(shape, input_data.data(), output_data.data(), true);
+}
+
+TEST_F(TestTransposeOpenCL, TransposeNCHW2NHWCFp32) {
+  int h = 2;
+  int w = 2;
+  int c = 3;
+  int perm0 = 0;
+  int perm1 = 2;
+  int perm2 = 3;
+  int perm3 = 1;
+  std::vector<int> shape = {h, w, c, perm0, perm1, perm2, perm3};
+  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
+  std::vector<float> output_data = {0.0f, 6.0f, 1.0f, 7.0f, 2.0f, 8.0f, 3.0f, 9.0f, 4.0f, 10.0f, 5.0f, 11.0f};
+
+  RunTestTranspose(shape, input_data.data(), output_data.data(), false);
+}
+
+TEST_F(TestTransposeOpenCL, TransposeNCHW2NHWCFp16) {
+  int h = 2;
+  int w = 2;
+  int c = 3;
+  int perm0 = 0;
+  int perm1 = 2;
+  int perm2 = 3;
+  int perm3 = 1;
+  std::vector<int> shape = {h, w, c, perm0, perm1, perm2, perm3};
+  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
+  std::vector<float16_t> output_data = {0.0f, 6.0f, 1.0f, 7.0f, 2.0f, 8.0f, 3.0f, 9.0f, 4.0f, 10.0f, 5.0f, 11.0f};
 
   RunTestTranspose(shape, input_data.data(), output_data.data(), true);
 }

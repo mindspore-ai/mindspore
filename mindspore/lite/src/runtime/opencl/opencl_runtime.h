@@ -16,7 +16,8 @@ j* you may not use this file except in compliance with the License.
 
 #ifndef MINDSPORE_LITE_SRC_OPENCL_RUNTIME_H_
 #define MINDSPORE_LITE_SRC_OPENCL_RUNTIME_H_
-
+// Get from Device?
+#define MAX_IMAGE2D_SIZE 65535
 #include <vector>
 #include <map>
 #include <memory>
@@ -127,7 +128,6 @@ class OpenCLRuntime {
   int UnmapBuffer(const cl::Memory &buffer, void *host_ptr, cl::CommandQueue *command_queue = nullptr) const;
   int UnmapBuffer(void *host_ptr, cl::CommandQueue *command_queue = nullptr) const;
   bool SyncCommandQueue(cl::CommandQueue *command_queue = nullptr);
-  bool IsInitOK() {return init_done_;}
 
   /**
    * Get kernel max worker group size.

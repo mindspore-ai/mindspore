@@ -81,8 +81,10 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
 
   bool UseWinograd4x4To6x6() {
     auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
-    const bool attr_valid = param->kernel_h_ == 3 && param->kernel_w_ == 3 && param->dilation_h_ == 1 &&
-                            param->dilation_w_ == 1 && param->stride_h_ == 1 && param->stride_w_ == 1;
+    const bool attr_valid = param->kernel_h_ == 3 && param->kernel_w_ == 3 && param->stride_h_ == 1 &&
+                            param->stride_w_ == 1 && param->pad_u_ == 1 && param->pad_d_ == 1 && param->pad_l_ == 1 &&
+                            param->pad_r_ == 1 && param->dilation_h_ == 1 && param->dilation_w_ == 1 && IH_ == OH_ &&
+                            IW_ == OW_;
     const bool channel_good = CI_SLICES_ >= 12 && CO_SLICES_ >= 12;
     const bool hw_good = TILES_X_ * TILES_Y_ >= 16;
     return attr_valid && channel_good && hw_good;

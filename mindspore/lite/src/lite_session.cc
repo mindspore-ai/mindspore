@@ -346,8 +346,12 @@ int LiteSession::Init(Context *context) {
   if (context_->device_type_ == DT_GPU) {
     auto opencl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
     opencl_runtime->SetFp16Enable(context_->float16_priority);
-    opencl_runtime->Init();
-    MS_LOG(INFO) << "Init OpenCL runtime.";
+    if (opencl_runtime->Init() != RET_OK) {
+      context_->device_type_ = DT_CPU;
+      MS_LOG(WARNING) << "Init OpenCL runtime failed, change to CPU mode.";
+    } else {
+      MS_LOG(INFO) << "Init OpenCL runtime success.";
+    }
   }
 #endif
   executor = new Executor();
