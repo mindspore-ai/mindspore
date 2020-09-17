@@ -96,6 +96,10 @@ Status CallbackManager::RegisterCallback(rtCallback_t callback, const void *user
   ret = rtEventRecord(event, stream_);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Record event failed";
+    auto flag = rtEventDestroy(event);
+    if (flag != RT_ERROR_NONE) {
+      MS_LOG(ERROR) << "rtEventDestroy failed";
+    }
     return kFail;
   }
   auto cb = std::pair<rtCallback_t, const void *>(callback, user_data);
