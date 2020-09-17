@@ -23,7 +23,7 @@ from mindspore import log as logger
 from .._c_expression import generate_key, Executor_, Tensor, MetaTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_backend
 from .tensor import Tensor as MsTensor
-from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_tensor
+from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor
 from ..parallel._ps_context import _is_role_pserver
 # store ms_function class compiled pipeline cache
 ms_compile_cache = {}
@@ -384,6 +384,7 @@ class _Executor:
             Bool, if the graph has been compiled before, return False, else return True.
         """
         obj.check_names()
+        _check_full_batch()
         args_names, args_list = _generate_pip_args(obj, *args)
         dic = dict(zip(args_names, args_list))
         key = generate_key(phase, dic)

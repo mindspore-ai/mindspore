@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -88,3 +89,22 @@ def test_all_to_all():
     strategy1 = ((8, 1),)
     _reset_op_id()
     all_to_all_common(strategy1)
+
+def test_data_parallel_mode():
+    _reset_op_id()
+    learning_rate = 0.1
+    momentum = 0.9
+    epoch_size = 2
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, full_batch=True)
+    predict = Tensor(np.ones([256, 128]), dtype=ms.float32)
+    label = Tensor(np.ones([256]), dtype=ms.int32)
+    dataset = Dataset(predict, label, 2)
+    net = all_to_all_net(None)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+    opt = Momentum(net.trainable_params(), learning_rate, momentum)
+    model = Model(net, loss, opt)
+
+    with pytest.raises(RuntimeError):
+        model.train(epoch_size, dataset, dataset_sink_mode=False)
