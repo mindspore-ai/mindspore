@@ -62,11 +62,11 @@ LiteMat Lite3CImageProcess(LiteMat &lite_mat_bgr) {
     MS_LOG(ERROR) << "Crop error";
   }
 
-  float means[3] = {0.485, 0.456, 0.406};
-  float vars[3] = {1.0 / 0.229, 1.0 / 0.224, 1.0 / 0.225};
+  std::vector<float> means = {0.485, 0.456, 0.406};
+  std::vector<float> stds = {0.229, 0.224, 0.225};
 
   LiteMat lite_norm_mat_cut;
-  SubStractMeanNormalize(lite_mat_crop, lite_norm_mat_cut, means, vars);
+  SubStractMeanNormalize(lite_mat_crop, lite_norm_mat_cut, means, stds);
 
   return lite_norm_mat_cut;
 }
@@ -138,12 +138,12 @@ LiteMat Lite1CImageProcess(LiteMat &lite_mat_bgr) {
 
   Crop(lite_mat_convert_float, lite_mat_cut, 16, 16, 224, 224);
 
-  float means[1] = {0.485};
-  float vars[1] = {1.0 / 0.229};
+  std::vector<float> means = {0.485};
+  std::vector<float> stds = {0.229};
 
   LiteMat lite_norm_mat_cut;
 
-  SubStractMeanNormalize(lite_mat_cut, lite_norm_mat_cut, means, vars);
+  SubStractMeanNormalize(lite_mat_cut, lite_norm_mat_cut, means, stds);
   return lite_norm_mat_cut;
 }
 

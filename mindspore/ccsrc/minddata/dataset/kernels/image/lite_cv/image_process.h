@@ -63,7 +63,8 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale = 1.0);
 bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h);
 
 /// \brief normalize image, currently the supports data type is float
-bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, float *mean, float *norm);
+bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<float> &mean,
+                            const std::vector<float> &std);
 
 /// \brief padd image, the channel supports is 3 and 1
 bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
