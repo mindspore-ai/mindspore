@@ -50,7 +50,7 @@ int SpaceToDepthCPUKernel::ReSize() {
     return RET_FORMAT_ERR;
   }
 
-  num_unit_ = static_cast<int>(in_tensors_[0]->shape().at(kNHWC_H));
+  num_unit_ = static_cast<int>(out_tensors_[0]->shape().at(kNHWC_H));
   thread_h_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
   thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
   return RET_OK;
