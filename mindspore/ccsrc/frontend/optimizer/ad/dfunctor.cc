@@ -30,6 +30,8 @@
 #include "frontend/operator/ops.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
+#include "pipeline/jit/action.h"
+#include "pipeline/jit/parse/resolve.h"
 
 namespace mindspore {
 namespace ad {
@@ -183,6 +185,7 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
 
 // Map a morphism.
 AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
+  MS_LOG(DEBUG) << "start MapMorphism:" << morph->DebugString(4);
   // MapMorphism All type except CNode should already be mapped by MapObject.
   if (!morph->isa<CNode>()) {
     return nullptr;
@@ -238,8 +241,53 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
 
   // Do sens backpropagation
   BackPropagate(cnode_morph, k_app, node_adjoint);
-  MS_LOG(DEBUG) << "MapMorphism node " << morph->ToString() << ".";
+  MS_LOG(DEBUG) << "MapMorphism node " << morph->DebugString(4) << ".";
   return node_adjoint;
+}
+void TensorSetAddress(const ValuePtr &value, std::map<std::string, tensor::TensorPtr> *tuple_tensors) {
+  MS_LOG(DEBUG) << "Start set tensor address" << value->ToString() << value->isa<tensor::Tensor>();
+  if (value->isa<tensor::Tensor>()) {
+    auto tnode = value->cast<tensor::TensorPtr>();
+    if (tuple_tensors->find(tnode->id()) != tuple_tensors->end()) {
+      MS_LOG(DEBUG) << "Set tensor" << tnode->device_address();
+      (*tuple_tensors)[tnode->id()]->set_device_address(tnode->device_address());
+    }
+  }
+  if (value->isa<ValueTuple>()) {
+    auto tuple = value->cast<ValueTuplePtr>();
+    for (size_t i = 0; i < tuple->size(); i++) {
+      MS_LOG(DEBUG) << "Set tuple tensor" << (*tuple)[i]->ToString();
+      TensorSetAddress((*tuple)[i], tuple_tensors);
+    }
+  }
+}
+
+ValuePtr GenNewTensorInner(const ValuePtr &value) {
+  std::vector<ValuePtr> value_list;
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    // return std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape());
+    auto new_tensor = std::make_shared<tensor::Tensor>(*tensor);
+    new_tensor->set_device_address(nullptr);
+    return new_tensor;
+  }
+  if (value->isa<ValueTuple>()) {
+    auto tuple = value->cast<ValueTuplePtr>();
+    for (size_t i = 0; i < tuple->size(); i++) {
+      value_list.push_back(GenNewTensorInner((*tuple)[i]));
+    }
+    return std::make_shared<ValueTuple>(value_list);
+  }
+  return value;
+}
+
+ValuePtr GenNewTensor(const FuncGraphManagerPtr &mng, const AnfNodePtr &node, const ValuePtr &value) {
+  ValuePtr out = value;
+  auto ref_size = mng->node_users()[node].size();
+  if (ref_size < 2) {
+    out = GenNewTensorInner(value);
+  }
+  return out;
 }
 
 void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_morph) {
@@ -266,6 +314,7 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
   if (!IsValueNode<FuncGraph>(input_fg)) {
     return;
   }
+  std::map<std::string, tensor::TensorPtr> tuple_tensors;
   auto equivdout = cnode_input->cast<CNodePtr>();
   auto func_graph = GetValueNode<FuncGraphPtr>(input_fg);
   auto manager = Manage({fg, func_graph}, false);
@@ -273,15 +322,10 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
   auto forward_value = forward;
   if (!forward_id.empty() && ref_size > 1) {
     auto inst = pynative::PynativeExecutor::GetInstance();
-    inst->SaveOpForwardValue(forward_id, forward_value);
+    inst->SaveOpForwardValue(forward_id, forward_value, &tuple_tensors);
   }
-  if (ref_size < 2) {
-    auto tensor = forward->cast<tensor::TensorPtr>();
-    if (tensor != nullptr) {
-      auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape());
-      forward_value = new_tensor;
-    }
-  }
+
+  forward_value = GenNewTensor(manager, equivdout, forward);
   MS_LOG(DEBUG) << "Replace: " << equivdout->ToString() << " with " << forward;
   auto value_node = NewValueNode(forward_value);
   value_node->set_has_new_value(true);
@@ -300,13 +344,43 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
     if (para_ref_size > 0 && input_value.first != nullptr) {
       MS_LOG(DEBUG) << "Replace: " << paras[i]->ToString() << " with " << input_value.first;
       auto inst = pynative::PynativeExecutor::GetInstance();
-      inst->SaveOpForwardValue(input_value.second, input_value.first);
+      if (!input_value.second.empty()) {
+        inst->SaveOpForwardValue(input_value.second, input_value.first, &tuple_tensors);
+      }
       auto input_value_node = NewValueNode(input_value.first);
       input_value_node->set_has_new_value(true);
       manager->Replace(paras[i], input_value_node);
     }
   }
+  MS_LOG(DEBUG) << "Start opt node" << fg->output()->DebugString(4);
+  auto res = std::make_shared<pipeline::Resource>();
+  res->set_manager(manager);
+  res->set_func_graph(fg);
+  PynativeElimOpt(res);
+  auto out = fg->output()->cast<CNodePtr>();
+  auto c_input = out->input(1);
+  if (!c_input->isa<ValueNode>()) {
+    return;
+  }
+
+  auto out_node = c_input->cast<ValueNodePtr>();
+  out_node->set_value(GenNewTensor(manager, out_node, out_node->value()));
+
   cnode_morph->clear_inputs_value();
+
+  if (tuple_tensors.size() != 0) {
+    MS_LOG(DEBUG) << "Start tuple out" << fg->output()->DebugString(4);
+    for (auto &g : manager->func_graphs()) {
+      for (auto &node : g->value_nodes()) {
+        MS_LOG(DEBUG) << "Set Tensor addr" << node.first->ToString();
+        auto vnode = node.first->cast<ValueNodePtr>()->value();
+        TensorSetAddress(vnode, &tuple_tensors);
+      }
+    }
+  }
+
+  fg->ClearAllManagerInfo();
+  func_graph->ClearAllManagerInfo();
   return;
 }
 

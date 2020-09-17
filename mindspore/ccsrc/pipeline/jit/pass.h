@@ -38,6 +38,7 @@ bool ConvertPrepareAdapt(const ResourcePtr &res);
 bool AddControlDependPass(const ResourcePtr &res);
 bool InferenceOptPreparePass(const ResourcePtr &res);
 void ReclaimOptimizer();
+bool PynativeOptPass(const ResourcePtr &res);
 }  // namespace pipeline
 }  // namespace mindspore
 
