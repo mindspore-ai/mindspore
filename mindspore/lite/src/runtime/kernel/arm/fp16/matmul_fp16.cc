@@ -118,8 +118,8 @@ int MatmulFP16CPUKernel::ReSize() {
     output_ptr_ = reinterpret_cast<float16_t *>(
       ctx_->allocator->Malloc(params_->batch * params_->row_ * params_->col_ * sizeof(float16_t)));
     if (output_ptr_ == nullptr) {
-        MS_LOG(ERROR) << "malloc output_ptr_ failed.";
-        return RET_MEMORY_FAILED;
+      MS_LOG(ERROR) << "malloc output_ptr_ failed.";
+      return RET_MEMORY_FAILED;
     }
   }
   return RET_OK;
@@ -144,7 +144,7 @@ void MatmulFP16CPUKernel::InitMatrixA(float16_t *a_ptr, float16_t *a_pack_ptr) {
     if (params_->a_transpose_) {
       Fp16RowMajor2Fp16Row16Major(src, dst, params_->deep_, params_->row_);
     } else {
-      Fp16RowMajor2Fp16Col16Major(src, dst, params_->row_, params_->deep_);
+      RowMajor2Col16MajorFp16(src, dst, params_->row_, params_->deep_);
     }
   }
 }

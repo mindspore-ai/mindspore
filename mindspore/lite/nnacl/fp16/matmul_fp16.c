@@ -105,7 +105,6 @@ void RowMajor2Col16MajorFp16(float16_t *src_ptr, float16_t *dst_ptr, size_t row,
       float16_t *src_c = src_r + ci;
       float16_t *dst_c = dst_r + ci * C16NUM;
 
-      /* 16*8 row-major to col-major */
 #ifdef ENABLE_ARM64
       size_t stride = col * 2;
       asm volatile(
@@ -252,16 +251,6 @@ void Fp32RowMajor2Fp16Col16Major(float *src, float16_t *dst, size_t row, size_t 
       int r_div16 = r / 16;
       int r_mod16 = r % 16;
       dst[r_div16 * 16 * col + c * 16 + r_mod16] = (float16_t)(src[r * col + c]);
-    }
-  }
-}
-
-void Fp16RowMajor2Fp16Col16Major(float16_t *src, float16_t *dst, size_t row, size_t col) {
-  for (int r = 0; r < row; r++) {
-    for (int c = 0; c < col; c++) {
-      int r_div16 = r / 16;
-      int r_mod16 = r % 16;
-      dst[r_div16 * 16 * col + c * 16 + r_mod16] = src[r * col + c];
     }
   }
 }

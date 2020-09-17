@@ -212,7 +212,11 @@ int DeConvolutionCPUKernel::Run() {
     input_ptr_ = src_in + batch_index * input_plane_ * conv_param_->input_channel_;
     output_ptr_ = src_out + batch_index * output_plane_ * conv_param_->output_channel_;
 
-    RowMajor2Col12Major(input_ptr_, pack_input_, input_plane_, conv_param_->input_channel_);
+#ifdef ENABLE_ARM32
+    RowMajor2Col4Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+#else
+    RowMajor2Col12Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+#endif
 
     error_code = ParallelLaunch(this->context_->thread_pool_, DeConvFp32Run, this, thread_count_);
     if (error_code != RET_OK) {

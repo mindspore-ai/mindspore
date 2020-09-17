@@ -99,7 +99,7 @@ void FullconnectionFP16CPUKernel::InitMatrixA(float *a_ptr, float16_t *a_pack_pt
 }
 
 void FullconnectionFP16CPUKernel::InitMatrixA(float16_t *a_ptr, float16_t *a_pack_ptr) {
-  Fp16RowMajor2Fp16Col16Major(a_ptr, a_pack_ptr, fc_param_->row_, fc_param_->deep_);
+  RowMajor2Col16MajorFp16(a_ptr, a_pack_ptr, fc_param_->row_, fc_param_->deep_);
 }
 
 void FullconnectionFP16CPUKernel::InitMatrixB(float *b_ptr, float16_t *b_pack_ptr) {
