@@ -43,8 +43,7 @@ This object detection sample program on the Android device includes a Java layer
 
 ### Configuring MindSpore Lite Dependencies
 
-In Android Studio, place the compiled `libmindspore-lite.so` library file (which can contain multiple compatible architectures) in the `app/libs/ARM64-V8a` (Arm64) or `app/libs/armeabi-v7a` (Arm32) directory of the application project. In the `build.gradle` file of the application, configure the compilation support of CMake, `arm64-v8a`, and `armeabi-v7a`.　　
-
+In Android studio, the compiled mindpool-lite-x.x.x-mindata-armxx-cpu package (including ` libmindspot- lite.so `The library file and related header files, which can contain multiple compatible architectures), are unzipped and placed in the 'app / SRC / main / CPP' directory of the app project, and the` build.gradle `Cmake and 'arm64-v8a' and 'armeabi-v7a' are configured in the file as follows It is shown as follows:
 ```
 android{
     defaultConfig{
@@ -65,10 +64,14 @@ Create a link to the `.so` library file in the `app/CMakeLists.txt` file:
 
 ```
 # Set MindSpore Lite Dependencies.
-include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/include/MindSpore)
+set(MINDSPORELITE_VERSION  mindspore-lite-1.0.0-minddata-arm64-cpu)
+include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION})
 add_library(mindspore-lite SHARED IMPORTED )
-set_target_properties(mindspore-lite PROPERTIES
-    IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/libs/libmindspore-lite.so")
+add_library(minddata-lite SHARED IMPORTED )
+set_target_properties(mindspore-lite PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libmindspore-lite.so)
+set_target_properties(minddata-lite PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libminddata-lite.so)
 
 # Link target library.       
 target_link_libraries(

@@ -4,7 +4,7 @@
  * The libraries can be downloaded manually.
  */
 def targetMindSporeInclude = "src/main/cpp/"
-def mindsporeLite_Version = "mindspore-lite-0.7.0-minddata-arm64-cpu"
+def mindsporeLite_Version = "mindspore-lite-1.0.0-minddata-arm64-cpu"
 
 def targetModelFile = "src/main/assets/model/ssd.ms"
 def mindSporeLibrary_arm64 = "src/main/cpp/${mindsporeLite_Version}.tar.gz"

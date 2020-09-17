@@ -62,7 +62,7 @@ app
 |   |   └── ssd.ms # 存放模型文件
 │   |
 │   ├── cpp # 模型加载和预测主要逻辑封装类
-|   |   ├── mindspore-lite-...-cpu # minspore源码编译出的调用包,包含demo jni层依赖的库文件及相关的头文件
+|   |   ├── mindspore-lite-x.x.x-mindata-arm64-cpu # minspore源码编译出的调用包,包含demo jni层依赖的库文件及相关的头文件
 |   |   |   └── ...
 │   |   |
 |   |   ├── MindSporeNetnative.cpp # MindSpore调用相关的JNI方法
@@ -87,7 +87,7 @@ app
 
 Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通过MindSpore Lite[源码编译](https://www.mindspore.cn/lite/docs/zh-CN/master/deploy.html)生成`libmindspore-lite.so`库文件。
 
-在Android Studio中将编译完成的`libmindspore-lite.so`库文件（可包含多个兼容架构），分别放置在APP工程的`app/libs/arm64-v8a`（ARM64）或`app/libs/armeabi-v7a`（ARM32）目录下，并在app的`build.gradle`文件中配置CMake编译支持，以及`arm64-v8a`和`armeabi-v7a`的编译支持，如下所示：
+在Android Studio中将编译完成的mindspore-lite-X.X.X-mindata-armXX-cpu压缩包（包含`libmindspore-lite.so`库文件和相关头文件，可包含多个兼容架构），解压之后放置在APP工程的`app/src/main/cpp`目录下，并在app的`build.gradle`文件中配置CMake编译支持，以及`arm64-v8a`和`armeabi-v7a`的编译支持，如下所示：
 ```
 android{
     defaultConfig{
@@ -108,10 +108,14 @@ android{
 
 ```
 # Set MindSpore Lite Dependencies.
-include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/include/MindSpore)
+set(MINDSPORELITE_VERSION  mindspore-lite-1.0.0-minddata-arm64-cpu)
+include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION})
 add_library(mindspore-lite SHARED IMPORTED )
-set_target_properties(mindspore-lite PROPERTIES
-    IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/libs/libmindspore-lite.so")
+add_library(minddata-lite SHARED IMPORTED )
+set_target_properties(mindspore-lite PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libmindspore-lite.so)
+set_target_properties(minddata-lite PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libminddata-lite.so)
 
 # Link target library.       
 target_link_libraries(

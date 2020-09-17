@@ -243,9 +243,9 @@ bool PreProcessImageData(const LiteMat &lite_mat_bgr, LiteMat *lite_norm_mat_ptr
     MS_PRINT("Crop error");
     return false;
   }
-  float means[3] = {0.485, 0.456, 0.406};
-  float vars[3] = {1.0 / 0.229, 1.0 / 0.224, 1.0 / 0.225};
-  SubStractMeanNormalize(lite_mat_cut, lite_norm_mat_cut, means, vars);
+  std::vector<float> means = {0.485, 0.456, 0.406};
+  std::vector<float> stds = {0.229, 0.224, 0.225};
+  SubStractMeanNormalize(lite_mat_cut, lite_norm_mat_cut, means, stds);
   return true;
 }
 
