@@ -34,23 +34,26 @@ void CompareOutput(void *output, void *expect, size_t elem_num, T atol, float rt
   T *output_data = reinterpret_cast<T *>(output);
   T *expect_data = reinterpret_cast<T *>(expect);
 
-  printf("output[0:12]:");
+  std::cout << std::setprecision(5) << std::setiosflags(std::ios::fixed) << std::setw(7);
+  std::cout << "output[0:12]:";
   for (int i = 0; i < 12 && i < elem_num; i++) {
-    printf("[%d]:%.3f ", i, output_data[i]);
+    std::cout << output_data[i] << " ";
   }
-  printf("\n");
-  printf("expect[0:12]:");
+  std::cout << std::endl;
+  std::cout << "expect[0:12]:";
   for (int i = 0; i < 12 && i < elem_num; i++) {
-    printf("[%d]:%.3f ", i, expect_data[i]);
+    std::cout << expect_data[i] << " ";
   }
-  printf("\n");
+  std::cout << std::endl;
   for (int i = 0; i < elem_num; ++i) {
-    if (std::fabs(output_data[i] - expect_data[i]) > atol + rtol * std::fabs(expect_data[i])) {
-      printf("error at idx[%d] expect=%.3f output=%.3f \n", i, expect_data[i], output_data[i]);
-      return;
+    auto left = static_cast<float>(std::fabs(output_data[i] - expect_data[i]));
+    auto right = static_cast<float>(atol + rtol * std::fabs(expect_data[i]));
+    if (left > right) {
+      std::cout << "error at idx[" << i << "] expect=" << expect_data[i] << " output=" << output_data[i] << std::endl;
     }
+    ASSERT_LE(left, right);
   }
-  printf("compare success!\n");
+  std::cout << "compare success!" << std::endl;
 }
 
 template <typename T>

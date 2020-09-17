@@ -32,13 +32,9 @@ class TestTransposeOpenCL : public mindspore::CommonTest {
 void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  size_t dtype_size = sizeof(float);
-  if (enable_fp16) {
-    ocl_runtime->SetFp16Enable(true);
-    dtype_size = sizeof(float16_t);
-  }
-  auto param_ptr = std::make_unique<TransposeParameter>();
-  auto param = param_ptr.get();
+  size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
+  ocl_runtime->SetFp16Enable(enable_fp16);
+  auto param = static_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "param_ptr create error.";
     return;
@@ -73,7 +69,7 @@ void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *out
   std::vector<lite::Tensor *> outputs{tensor_out};
   auto arith_kernel_ptr =
     std::make_unique<kernel::TransposeOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  auto arith_kernel = arith_kernel_ptr.get();
+  auto arith_kernel = arith_kernel_ptr.release();
   if (arith_kernel == nullptr) {
     MS_LOG(ERROR) << "arith_kernel create error.";
     return;
@@ -99,8 +95,12 @@ void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *out
     CompareOutput(outputs[0]->data_c(), output_data, h * w * c, static_cast<float>(1e-5));
   }
 
-  inputs[0]->SetData(nullptr);
-  outputs[0]->SetData(nullptr);
+  for (auto t : inputs) {
+    t->SetData(nullptr);
+  }
+  for (auto t : outputs) {
+    t->SetData(nullptr);
+  }
 
   MS_LOG(INFO) << "Test TransposeFp32 passed";
   lite::opencl::OpenCLRuntime::DeleteInstance();

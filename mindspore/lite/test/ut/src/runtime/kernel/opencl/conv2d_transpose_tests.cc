@@ -34,11 +34,8 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
                                 void *output_data, bool enable_fp16) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  size_t dtype_size = sizeof(float);
-  if (enable_fp16) {
-    ocl_runtime->SetFp16Enable(true);
-    dtype_size = sizeof(float16_t);
-  }
+  size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
+  ocl_runtime->SetFp16Enable(enable_fp16);
   auto allocator = ocl_runtime->GetAllocator();
   int pad = shape[0];
   int n = shape[1];
@@ -89,8 +86,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
   }
   std::vector<lite::Tensor *> inputs{tensor_x, tensor_w, tensor_bias};
   std::vector<lite::Tensor *> outputs{tensor_out};
-  auto opParameter_ptr = std::make_unique<ConvParameter>();
-  auto opParameter = opParameter_ptr.get();
+  auto opParameter = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "opParameter create error.";
     return;
@@ -105,7 +101,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
   opParameter->output_channel_ = co;
   auto op_kernel_ptr = std::make_unique<kernel::Conv2dTransposeOpenCLKernel>(
     reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  auto op_kernel = op_kernel_ptr.get();
+  auto op_kernel = op_kernel_ptr.release();
   if (op_kernel == nullptr) {
     MS_LOG(ERROR) << "op_kernel create error.";
     return;
@@ -132,81 +128,16 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
     CompareOutput(outputs[0]->data_c(), output_data, n * oh * ow * co, static_cast<float>(1e-5));
   }
 
-  inputs[0]->SetData(nullptr);
-  outputs[0]->SetData(nullptr);
+  for (auto t : inputs) {
+    t->SetData(nullptr);
+  }
+  for (auto t : outputs) {
+    t->SetData(nullptr);
+  }
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
-void RunTestCaseConv2dTranspose(const std::vector<int> shape, const std::vector<std::string> file_path,
-                                bool enable_fp16) {
-  size_t input_size;
-  std::string input_path = file_path[0];
-  auto input_data = mindspore::lite::ReadFile(input_path.c_str(), &input_size);
-  if (input_data == nullptr) {
-    MS_LOG(ERROR) << "input_data load error.";
-    return;
-  }
-
-  size_t weight_size;
-  std::string weight_path = file_path[1];
-  auto weight_data = mindspore::lite::ReadFile(weight_path.c_str(), &weight_size);
-  if (weight_data == nullptr) {
-    MS_LOG(ERROR) << "weight_data load error.";
-    return;
-  }
-
-  size_t bias_size;
-  std::string bias_path = file_path[2];
-  auto bias_data = mindspore::lite::ReadFile(bias_path.c_str(), &bias_size);
-  if (bias_data == nullptr) {
-    MS_LOG(ERROR) << "bias_data load error.";
-    return;
-  }
-  size_t output_size;
-  std::string output_path = file_path[3];
-  auto output_data = mindspore::lite::ReadFile(output_path.c_str(), &output_size);
-  if (output_data == nullptr) {
-    MS_LOG(ERROR) << "output_data load error.";
-    return;
-  }
-  RunTestCaseConv2dTranspose(shape, input_data, weight_data, bias_data, output_data, enable_fp16);
-}
-
 TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
-  int pad = 0;
-  int n = 1;
-  int h = 240;
-  int w = 240;
-  int kh = 2;
-  int kw = 2;
-  int ci = 128;
-  int co = 128;
-  std::vector<int> shape = {pad, n, h, w, kh, kw, ci, co};
-  std::vector<std::string> file_path = {"./test_data/conv2d_transpose/conv2d_transpose_fp32_input.bin",
-                                        "./test_data/conv2d_transpose/conv2d_transpose_fp32_weight.bin",
-                                        "./test_data/conv2d_transpose/conv2d_transpose_fp32_bias.bin",
-                                        "./test_data/conv2d_transpose/conv2d_transpose_fp32_output.bin"};
-  RunTestCaseConv2dTranspose(shape, file_path, false);
-}
-
-TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp16) {
-  int pad = 0;
-  int n = 1;
-  int h = 240;
-  int w = 240;
-  int kh = 2;
-  int kw = 2;
-  int ci = 128;
-  int co = 128;
-  std::vector<int> shape = {pad, n, h, w, kh, kw, ci, co};
-  std::vector<std::string> file_path = {"./test_data/conv2d_transpose/conv2d_transpose_fp16_input.bin",
-                                        "./test_data/conv2d_transpose/conv2d_transpose_fp16_weight.bin",
-                                        "./test_data/conv2d_transpose/conv2d_transpose_fp16_bias.bin",
-                                        "./test_data/conv2d_transpose/conv2d_transpose_fp16_output.bin"};
-  RunTestCaseConv2dTranspose(shape, file_path, true);
-}
-
-TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32_2) {
   int pad = 0;
   int n = 1;
   int h = 2;
@@ -224,7 +155,7 @@ TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32_2) {
   RunTestCaseConv2dTranspose(shape, input_data.data(), weight_data.data(), bias_data.data(), output_data.data(), false);
 }
 
-TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp16_2) {
+TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp16) {
   int pad = 0;
   int n = 1;
   int h = 2;

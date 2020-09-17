@@ -25,7 +25,7 @@
 
 namespace mindspore::kernel {
 
-enum class TransposeType { NHWC2NCHW, NCHW2NHWC };
+enum class TransposeType { AXIS0312, AXIS0231 };
 
 class TransposeOpenCLKernel : public OpenCLKernel {
  public:
@@ -42,7 +42,7 @@ class TransposeOpenCLKernel : public OpenCLKernel {
  private:
   cl::Kernel kernel_;
   bool enable_fp16_{false};
-  TransposeType type{TransposeType::NHWC2NCHW};
+  TransposeType type{TransposeType::AXIS0312};
 };
 }  // namespace mindspore::kernel
 
