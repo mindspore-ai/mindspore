@@ -460,7 +460,7 @@ class Profiler:
         """
         result = dict()
         if not profile_option:
-            raise ValueError("Please call a profile function.")
+            raise ValueError("The parameter profile_option must pass a value using ProfileOption.")
 
         if profile_option == ProfileOption.trainable_parameters:
             if not isinstance(network, Cell):
