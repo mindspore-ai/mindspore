@@ -17,6 +17,7 @@
 #include <android/bitmap.h>
 #include <android/asset_manager_jni.h>
 #include <android/log.h>
+#include <utility>
 #include <cstring>
 #include <vector>
 #include <string>
@@ -33,6 +34,103 @@ using mindspore::dataset::LiteMat;
 using mindspore::dataset::LPixelType;
 using mindspore::dataset::LDataType;
 #define MS_PRINT(format, ...) __android_log_print(ANDROID_LOG_INFO, "MSJNI", format, ##__VA_ARGS__)
+
+static const int RET_CATEGORY_SUM = 601;
+static const char *labels_name_map[RET_CATEGORY_SUM] = {
+        {"Tortoise"}, {"Container"}, {"Magpie"}, {"Seaturtle"}, {"Football"}, {"Ambulance"}, {"Ladder"},
+        {"Toothbrush"}, {"Syringe"}, {"Sink"}, {"Toy"}, {"Organ(MusicalInstrument) "}, {"Cassettedeck"},
+        {"Apple"}, {"Humaneye"}, {"Cosmetics"}, {"Paddle"}, {"Snowman"}, {"Beer"}, {"Chopsticks"},
+        {"Humanbeard"}, {"Bird"}, {"Parkingmeter"}, {"Trafficlight"}, {"Croissant"}, {"Cucumber"},
+        {"Radish"}, {"Towel"}, {"Doll"}, {"Skull"}, {"Washingmachine"}, {"Glove"}, {"Tick"}, {"Belt"},
+        {"Sunglasses"}, {"Banjo"}, {"Cart"}, {"Ball"}, {"Backpack"}, {"Bicycle"}, {"Homeappliance"},
+        {"Centipede"}, {"Boat"}, {"Surfboard"}, {"Boot"}, {"Headphones"}, {"Hotdog"}, {"Shorts"},
+        {"Fastfood"}, {"Bus"}, {"Boy "}, {"Screwdriver"}, {"Bicyclewheel"}, {"Barge"}, {"Laptop"},
+        {"Miniskirt"}, {"Drill(Tool)"}, {"Dress"}, {"Bear"}, {"Waffle"}, {"Pancake"}, {"Brownbear"},
+        {"Woodpecker"}, {"Bluejay"}, {"Pretzel"}, {"Bagel"}, {"Tower"}, {"Teapot"}, {"Person"},
+        {"Bowandarrow"}, {"Swimwear"}, {"Beehive"}, {"Brassiere"}, {"Bee"}, {"Bat(Animal)"},
+        {"Starfish"}, {"Popcorn"}, {"Burrito"}, {"Chainsaw"}, {"Balloon"}, {"Wrench"}, {"Tent"},
+        {"Vehicleregistrationplate"}, {"Lantern"}, {"Toaster"}, {"Flashlight"}, {"Billboard"},
+        {"Tiara"}, {"Limousine"}, {"Necklace"}, {"Carnivore"}, {"Scissors"}, {"Stairs"},
+        {"Computerkeyboard"}, {"Printer"}, {"Trafficsign"}, {"Chair"}, {"Shirt"}, {"Poster"},
+        {"Cheese"}, {"Sock"}, {"Firehydrant"}, {"Landvehicle"}, {"Earrings"}, {"Tie"}, {"Watercraft"},
+        {"Cabinetry"}, {"Suitcase"}, {"Muffin"}, {"Bidet"}, {"Snack"}, {"Snowmobile"}, {"Clock"},
+        {"Medicalequipment"}, {"Cattle"}, {"Cello"}, {"Jetski"}, {"Camel"}, {"Coat"}, {"Suit"},
+        {"Desk"}, {"Cat"}, {"Bronzesculpture"}, {"Juice"}, {"Gondola"}, {"Beetle"}, {"Cannon"},
+        {"Computermouse"}, {"Cookie"}, {"Officebuilding"}, {"Fountain"}, {"Coin"}, {"Calculator"},
+        {"Cocktail"}, {"Computermonitor"}, {"Box"}, {"Stapler"}, {"Christmastree"}, {"Cowboyhat"},
+        {"Hikingequipment"}, {"Studiocouch"}, {"Drum"}, {"Dessert"}, {"Winerack"}, {"Drink"},
+        {"Zucchini"}, {"Ladle"}, {"Humanmouth"}, {"DairyProduct"}, {"Dice"}, {"Oven"}, {"Dinosaur"},
+        {"Ratchet(Device)"}, {"Couch"}, {"Cricketball"}, {"Wintermelon"}, {"Spatula"}, {"Whiteboard"},
+        {"Pencilsharpener"}, {"Door"}, {"Hat"}, {"Shower"}, {"Eraser"}, {"Fedora"}, {"Guacamole"},
+        {"Dagger"}, {"Scarf"}, {"Dolphin"}, {"Sombrero"}, {"Tincan"}, {"Mug"}, {"Tap"}, {"Harborseal"},
+        {"Stretcher"}, {"Canopener"}, {"Goggles"}, {"Humanbody"}, {"Rollerskates"}, {"Coffeecup"},
+        {"Cuttingboard"}, {"Blender"}, {"Plumbingfixture"}, {"Stopsign"}, {"Officesupplies"},
+        {"Volleyball(Ball)"}, {"Vase"}, {"Slowcooker"}, {"Wardrobe"}, {"Coffee"}, {"Whisk"},
+        {"Papertowel"}, {"Personalcare"}, {"Food"}, {"Sunhat"}, {"Treehouse"}, {"Flyingdisc"},
+        {"Skirt"}, {"Gasstove"}, {"Saltandpeppershakers"}, {"Mechanicalfan"}, {"Facepowder"}, {"Fax"},
+        {"Fruit"}, {"Frenchfries"}, {"Nightstand"}, {"Barrel"}, {"Kite"}, {"Tart"}, {"Treadmill"},
+        {"Fox"}, {"Flag"}, {"Frenchhorn"}, {"Windowblind"}, {"Humanfoot"}, {"Golfcart"}, {"Jacket"},
+        {"Egg(Food)"}, {"Streetlight"}, {"Guitar"}, {"Pillow"}, {"Humanleg"}, {"Isopod"}, {"Grape"},
+        {"Humanear"}, {"Powerplugsandsockets"}, {"Panda"}, {"Giraffe"}, {"Woman"}, {"Doorhandle"},
+        {"Rhinoceros"}, {"Bathtub"}, {"Goldfish"}, {"Houseplant"}, {"Goat"}, {"Baseballbat"},
+        {"Baseballglove"}, {"Mixingbowl"}, {"Marineinvertebrates"}, {"Kitchenutensil"}, {"Lightswitch"},
+        {"House"}, {"Horse"}, {"Stationarybicycle"}, {"Hammer"}, {"Ceilingfan"}, {"Sofabed"},
+        {"Adhesivetape "}, {"Harp"}, {"Sandal"}, {"Bicyclehelmet"}, {"Saucer"}, {"Harpsichord"},
+        {"Humanhair"}, {"Heater"}, {"Harmonica"}, {"Hamster"}, {"Curtain"}, {"Bed"}, {"Kettle"},
+        {"Fireplace"}, {"Scale"}, {"Drinkingstraw"}, {"Insect"}, {"Hairdryer"}, {"Kitchenware"},
+        {"Indoorrower"}, {"Invertebrate"}, {"Foodprocessor"}, {"Bookcase"}, {"Refrigerator"},
+        {"Wood-burningstove"}, {"Punchingbag"}, {"Commonfig"}, {"Cocktailshaker"}, {"Jaguar(Animal)"},
+        {"Golfball"}, {"Fashionaccessory"}, {"Alarmclock"}, {"Filingcabinet"}, {"Artichoke"}, {"Table"},
+        {"Tableware"}, {"Kangaroo"}, {"Koala"}, {"Knife"}, {"Bottle"}, {"Bottleopener"}, {"Lynx"},
+        {"Lavender(Plant)"}, {"Lighthouse"}, {"Dumbbell"}, {"Humanhead"}, {"Bowl"}, {"Humidifier"},
+        {"Porch"}, {"Lizard"}, {"Billiardtable"}, {"Mammal"}, {"Mouse"}, {"Motorcycle"},
+        {"Musicalinstrument"}, {"Swimcap"}, {"Fryingpan"}, {"Snowplow"}, {"Bathroomcabinet"},
+        {"Missile"}, {"Bust"}, {"Man"}, {"Waffleiron"}, {"Milk"}, {"Ringbinder"}, {"Plate"},
+        {"Mobilephone"}, {"Bakedgoods"}, {"Mushroom"}, {"Crutch"}, {"Pitcher(Container)"}, {"Mirror"},
+        {"Personalflotationdevice"}, {"Tabletennisracket"}, {"Pencilcase"}, {"Musicalkeyboard"},
+        {"Scoreboard"}, {"Briefcase"}, {"Kitchenknife"}, {"Nail(Construction)"}, {"Tennisball"},
+        {"Plasticbag"}, {"Oboe"}, {"Chestofdrawers"}, {"Ostrich"}, {"Piano"}, {"Girl"}, {"Plant"},
+        {"Potato"}, {"Hairspray"}, {"Sportsequipment"}, {"Pasta"}, {"Penguin"}, {"Pumpkin"}, {"Pear"},
+        {"Infantbed"}, {"Polarbear"}, {"Mixer"}, {"Cupboard"}, {"Jacuzzi"}, {"Pizza"}, {"Digitalclock"},
+        {"Pig"}, {"Reptile"}, {"Rifle"}, {"Lipstick"}, {"Skateboard"}, {"Raven"}, {"Highheels"},
+        {"Redpanda"}, {"Rose"}, {"Rabbit"}, {"Sculpture"}, {"Saxophone"}, {"Shotgun"}, {"Seafood"},
+        {"Submarinesandwich"}, {"Snowboard"}, {"Sword"}, {"Pictureframe"}, {"Sushi"}, {"Loveseat"},
+        {"Ski"}, {"Squirrel"}, {"Tripod"}, {"Stethoscope"}, {"Submarine"}, {"Scorpion"}, {"Segway"},
+        {"Trainingbench"}, {"Snake"}, {"Coffeetable"}, {"Skyscraper"}, {"Sheep"}, {"Television"},
+        {"Trombone"}, {"Tea"}, {"Tank"}, {"Taco"}, {"Telephone"}, {"Torch"}, {"Tiger"}, {"Strawberry"},
+        {"Trumpet"}, {"Tree"}, {"Tomato"}, {"Train"}, {"Tool"}, {"Picnicbasket"}, {"Cookingspray"},
+        {"Trousers"}, {"Bowlingequipment"}, {"Footballhelmet"}, {"Truck"}, {"Measuringcup"},
+        {"Coffeemaker"}, {"Violin"}, {"Vehicle"}, {"Handbag"}, {"Papercutter"}, {"Wine"}, {"Weapon"},
+        {"Wheel"}, {"Worm"}, {"Wok"}, {"Whale"}, {"Zebra"}, {"Autopart"}, {"Jug"}, {"Pizzacutter"},
+        {"Cream"}, {"Monkey"}, {"Lion"}, {"Bread"}, {"Platter"}, {"Chicken"}, {"Eagle"}, {"Helicopter"},
+        {"Owl"}, {"Duck"}, {"Turtle"}, {"Hippopotamus"}, {"Crocodile"}, {"Toilet"}, {"Toiletpaper"},
+        {"Squid"}, {"Clothing"}, {"Footwear"}, {"Lemon"}, {"Spider"}, {"Deer"}, {"Frog"}, {"Banana"},
+        {"Rocket"}, {"Wineglass"}, {"Countertop"}, {"Tabletcomputer"}, {"Wastecontainer"},
+        {"Swimmingpool"}, {"Dog"}, {"Book"}, {"Elephant"}, {"Shark"}, {"Candle"}, {"Leopard"}, {"Axe"},
+        {"Handdryer"}, {"Soapdispenser"}, {"Porcupine"}, {"Flower"}, {"Canary"}, {"Cheetah"},
+        {"Palmtree"}, {"Hamburger"}, {"Maple"}, {"Building"}, {"Fish"}, {"Lobster"},
+        {"GardenAsparagus"}, {"Furniture"}, {"Hedgehog"}, {"Airplane"}, {"Spoon"}, {"Otter"}, {"Bull"},
+        {"Oyster"}, {"Horizontalbar"}, {"Conveniencestore"}, {"Bomb"}, {"Bench"}, {"Icecream"},
+        {"Caterpillar"}, {"Butterfly"}, {"Parachute"}, {"Orange"}, {"Antelope"}, {"Beaker"},
+        {"Mothsandbutterflies"}, {"Window"}, {"Closet"}, {"Castle"}, {"Jellyfish"}, {"Goose"}, {"Mule"},
+        {"Swan"}, {"Peach"}, {"Coconut"}, {"Seatbelt"}, {"Raccoon"}, {"Chisel"}, {"Fork"}, {"Lamp"},
+        {"Camera"}, {"Squash(Plant)"}, {"Racket"}, {"Humanface"}, {"Humanarm"}, {"Vegetable"},
+        {"Diaper"}, {"Unicycle"}, {"Falcon"}, {"Chime"}, {"Snail"}, {"Shellfish"}, {"Cabbage"},
+        {"Carrot"}, {"Mango"}, {"Jeans"}, {"Flowerpot"}, {"Pineapple"}, {"Drawer"}, {"Stool"},
+        {"Envelope"}, {"Cake"}, {"Dragonfly"}, {"Commonsunflower"}, {"Microwaveoven"}, {"Honeycomb"},
+        {"Marinemammal"}, {"Sealion"}, {"Ladybug"}, {"Shelf"}, {"Watch"}, {"Candy"}, {"Salad"},
+        {"Parrot"}, {"Handgun"}, {"Sparrow"}, {"Van"}, {"Grinder"}, {"Spicerack"}, {"Lightbulb"},
+        {"Cordedphone"}, {"Sportsuniform"}, {"Tennisracket"}, {"Wallclock"}, {"Servingtray"},
+        {"Kitchen&diningroomtable"}, {"Dogbed"}, {"Cakestand"}, {"Catfurniture"}, {"Bathroomaccessory"},
+        {"Facialtissueholder"}, {"Pressurecooker"}, {"Kitchenappliance"}, {"Tire"}, {"Ruler"},
+        {"Luggageandbags"}, {"Microphone"}, {"Broccoli"}, {"Umbrella"}, {"Pastry"}, {"Grapefruit"},
+        {"Band-aid"}, {"Animal"}, {"Bellpepper"}, {"Turkey"}, {"Lily"}, {"Pomegranate"}, {"Doughnut"},
+        {"Glasses"}, {"Humannose"}, {"Pen"}, {"Ant"}, {"Car"}, {"Aircraft"}, {"Humanhand"}, {"Skunk"},
+        {"Teddybear"}, {"Watermelon"}, {"Cantaloupe"}, {"Dishwasher"}, {"Flute"}, {"Balancebeam"},
+        {"Sandwich"}, {"Shrimp"}, {"Sewingmachine"}, {"Binoculars"}, {"Raysandskates"}, {"Ipod"},
+        {"Accordion"}, {"Willow"}, {"Crab"}, {"Crown"}, {"Seahorse"}, {"Perfume"}, {"Alpaca"}, {"Taxi"},
+        {"Canoe"}, {"Remotecontrol"}, {"Wheelchair"}, {"Rugbyball"}, {"Armadillo"}, {"Maracas"},
+        {"Helmet"}};
 
 char *CreateLocalModelBuffer(JNIEnv *env, jobject modelBuffer) {
   jbyte *modelAddr = static_cast<jbyte *>(env->GetDirectBufferAddress(modelBuffer));
@@ -186,12 +284,12 @@ Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_loadModel(JNI
   context->thread_num_ = num_thread;
 
   labelNet->CreateSessionMS(modelBuffer, bufferLen, context);
-  delete (context);
+  delete context;
 
-  if (labelNet->session == nullptr) {
+  if (labelNet->session() == nullptr) {
     MS_PRINT("MindSpore create session failed!.");
-    delete (labelNet);
-    delete (labelEnv);
+    delete labelNet;
+    delete labelEnv;
     return (jlong) nullptr;
   }
 
@@ -234,7 +332,7 @@ Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_runNet(JNIEnv
   }
   MSNetWork *labelNet = static_cast<MSNetWork *>(*labelEnv);
 
-  auto mSession = labelNet->session;
+  auto mSession = labelNet->session();
   if (mSession == nullptr) {
     MS_PRINT("MindSpore error, Session is a nullptr.");
     return NULL;
@@ -272,8 +370,8 @@ Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_runNet(JNIEnv
     msOutputs.insert(std::pair<std::string, mindspore::tensor::MSTensor *> {name, temp_dat});
   }
 
-  std::string resultStr = ProcessRunnetResult(MSNetWork::RET_CATEGORY_SUM,
-                                              MSNetWork::labels_name_map, msOutputs);
+  std::string resultStr = ProcessRunnetResult(::RET_CATEGORY_SUM,
+                                              ::labels_name_map, msOutputs);
 
   const char *resultCharData = resultStr.c_str();
   return (env)->NewStringUTF(resultCharData);
