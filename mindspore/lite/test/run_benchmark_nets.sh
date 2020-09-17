@@ -487,30 +487,24 @@ function Run_arm64() {
         fi
         echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --fp16Priority=true --accuracyThreshold=5' >> "${run_benchmark_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --fp16Priority=true --accuracyThreshold=5' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --fp16Priority=true --accuracyThreshold=5' >> "${run_benchmark_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --fp16Priority=true --accuracyThreshold=5' >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='arm64_gpu_fp16: '${model_name}' pass'
-            echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='arm64_gpu_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='arm64_gpu_fp16: '${model_name}' failed'
-            echo ${run_result} >> ${run_benchmark_result_file}
-            return 1
+            run_result='arm64_gpu_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
         # run benchmark test without clib data
         echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --fp16Priority=true --accuracyThreshold=5' >> "${run_benchmark_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --fp16Priority=true --accuracyThreshold=5' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --fp16Priority=true' >> "${run_benchmark_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --fp16Priority=true' >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='arm64_gpu_fp16: '${model_name}' pass'
-            echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='arm64_gpu_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='arm64_gpu_fp16: '${model_name}' failed'
-	    echo ${run_result} >> ${run_benchmark_result_file}
-            return 1
+            run_result='arm64_gpu_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
 	#sleep 1
     done < ${models_fp16_gpu_config}
@@ -545,12 +539,72 @@ function Run_arm64() {
     done < ${models_mindspore_config}
 }
 
+# Run on arm32 platform:
+function Run_arm32() {
+    # Unzip arm32
+    cd ${arm32_path} || exit 1
+    tar -zxf mindspore-lite-${version}-runtime-arm32-${process_unit_arm32}.tar.gz || exit 1
+
+    # If build with minddata, copy the minddata related libs
+    cd ${benchmark_test_path} || exit 1
+    if [ -f ${arm32_path}/mindspore-lite-${version}-runtime-arm32-${process_unit_arm32}/lib/libminddata-lite.so ]; then
+        cp -a ${arm32_path}/mindspore-lite-${version}-runtime-arm32-${process_unit_arm32}/third_party/libjpeg-turbo/lib/libjpeg.so ${benchmark_test_path}/libjpeg.so || exit 1
+        cp -a ${arm32_path}/mindspore-lite-${version}-runtime-arm32-${process_unit_arm32}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${benchmark_test_path}/libturbojpeg.so || exit 1
+        cp -a ${arm32_path}/mindspore-lite-${version}-runtime-arm32-${process_unit_arm32}/third_party/opencv/lib/libopencv_core.so ${benchmark_test_path}/libopencv_core.so || exit 1
+        cp -a ${arm32_path}/mindspore-lite-${version}-runtime-arm32-${process_unit_arm32}/third_party/opencv/lib/libopencv_imgcodecs.so ${benchmark_test_path}/libopencv_imgcodecs.so || exit 1
+        cp -a ${arm32_path}/mindspore-lite-${version}-runtime-arm32-${process_unit_arm32}/third_party/opencv/lib/libopencv_imgproc.so ${benchmark_test_path}/libopencv_imgproc.so || exit 1
+        cp -a ${arm32_path}/mindspore-lite-${version}-runtime-arm32-${process_unit_arm32}/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    fi
+
+    cp -a ${arm32_path}/mindspore-lite-${version}-runtime-arm32-${process_unit_arm32}/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm32_path}/mindspore-lite-${version}-runtime-arm32-${process_unit_arm32}/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+
+    # adb push all needed files to the phone
+    adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
+
+    # run adb ,run session ,check the result:
+    echo 'cd  /data/local/tmp/benchmark_test' > adb_cmd.txt
+    echo 'cp  /data/local/tmp/arm32/libc++_shared.so ./' >> adb_cmd.txt
+    echo 'chmod 777 benchmark' >> adb_cmd.txt
+
+    adb -s ${device_id} shell < adb_cmd.txt
+
+    # Run fp32 models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_benchmark_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_benchmark_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm32: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm32: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+        # run benchmark test without clib data
+        echo ${model_name} >> "${run_benchmark_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_benchmark_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm32: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm32: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_arm32_config}
+}
+
 # Print start msg before run testcase
 function MS_PRINT_TESTCASE_START_MSG() {
     echo ""
     echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-    echo -e "env        Testcase                                                                                                       Result   "
-    echo -e "---        --------                                                                                                       ------   "
+    echo -e "env                  Testcase                                                                                             Result   "
+    echo -e "---                  --------                                                                                             ------   "
 }
 
 # Print start msg after run testcase
@@ -603,6 +657,13 @@ version=${file_name_array[2]}
 IFS="." read -r -a suffix <<< "${file_name_array[-1]}"
 process_unit_arm64=${suffix[0]}
 
+arm32_path=${release_path}/andriod_aarch32
+mv ${arm32_path}/*runtime-*train* ./train
+file_name=$(ls ${arm32_path}/*runtime-arm32*.tar.gz)
+IFS="-" read -r -a file_name_array <<< "$file_name"
+IFS="." read -r -a suffix <<< "${file_name_array[-1]}"
+process_unit_arm32=${suffix[0]}
+
 x86_path=${release_path}/ubuntu_x86
 file_name=$(ls ${x86_path}/*runtime-x86*.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
@@ -620,6 +681,7 @@ models_fp16_config=${basepath}/models_fp16.cfg
 models_mindspore_config=${basepath}/models_mindspore.cfg
 models_tflite_gpu_config=${basepath}/models_tflite_gpu.cfg
 models_fp16_gpu_config=${basepath}/models_fp16_gpu.cfg
+models_arm32_config=${basepath}/models_arm32.cfg
 
 ms_models_path=${basepath}/ms_models
 
@@ -682,28 +744,31 @@ sleep 1
 
 # Run on arm64
 echo "start Run arm64 ..."
-Run_arm64 &
-Run_arm64_PID=$!
+Run_arm64
+Run_arm64_status=$?
+sleep 1
+
+# Run on arm32
+echo "start Run arm32 ..."
+Run_arm32
+Run_arm32_status=$?
 sleep 1
 
 wait ${Run_x86_PID}
 Run_x86_status=$?
 
-wait ${Run_arm64_PID}
-Run_arm64_status=$?
-
 function Print_Benchmark_Result() {
     MS_PRINT_TESTCASE_START_MSG
     while read line; do
         arr=("${line}")
-        printf "%-10s %-110s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
+        printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
     done < ${run_benchmark_result_file}
     MS_PRINT_TESTCASE_END_MSG
 }
 
 # Check benchmark result and return value
-if [[ ${Run_x86_status} = 0 ]] && [[ ${Run_arm64_status} = 0 ]];then
-    echo "Run_x86 and Run_arm64 is ended"
+if [[ ${Run_x86_status} = 0 ]] && [[ ${Run_arm64_status} = 0 ]] && [[ ${Run_arm32_status} = 0 ]];then
+    echo "Run_x86 and Run_arm64 and Run_arm32 is ended"
     Print_Benchmark_Result
     exit 0
 else
