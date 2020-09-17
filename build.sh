@@ -236,7 +236,7 @@ checkopts()
       z)
         eval ARG=\$\{$OPTIND\}
         if [[ -n $ARG && $ARG != -* ]]; then
-          OPTARG=$ARG
+          OPTARG="$ARG"
           check_on_off $OPTARG z
           OPTIND=$((OPTIND + 1))
         else
