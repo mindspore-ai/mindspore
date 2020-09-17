@@ -172,6 +172,7 @@ class FuncGraph;
 template <typename T>
 void ParameterServer<T>::ServerHandler::operator()(const ::ps::KVMeta &req_meta, const ::ps::KVPairs<T> &req_data,
                                                    ::ps::KVServer<T> *server) {
+  MS_EXCEPTION_IF_NULL(server);
   ::ps::KVPairs<T> res;
   if (handlers_.count(req_meta.cmd) > 0) {
     auto &handler_ptr = handlers_[req_meta.cmd];
@@ -199,12 +200,14 @@ void ParameterServer<T>::ServerHandler::Init() {
 template <typename T>
 void ParameterServer<T>::ServerHandler::HandlePushReq(const ::ps::KVMeta &req_meta, const ::ps::KVPairs<T> &req_data,
                                                       ::ps::KVPairs<T> *res) {
+  MS_EXCEPTION_IF_NULL(res);
   ps_->AccumGrad(req_data.keys, req_data.vals, req_data.lens);
 }
 
 template <typename T>
 void ParameterServer<T>::ServerHandler::HandlePullReq(const ::ps::KVMeta &req_meta, const ::ps::KVPairs<T> &req_data,
                                                       ::ps::KVPairs<T> *res) {
+  MS_EXCEPTION_IF_NULL(res);
   res->keys = req_data.keys;
   ::ps::Key key = req_data.keys[0];
   res->vals = *(ps_->weight(key));
@@ -214,6 +217,7 @@ template <typename T>
 void ParameterServer<T>::ServerHandler::HandleInitWeights(const ::ps::KVMeta &req_meta,
                                                           const ::ps::KVPairs<T> &req_data, ::ps::KVPairs<T> *res) {
   std::unique_lock<std::mutex> lock(ps_->mutex());
+  MS_EXCEPTION_IF_NULL(res);
   size_t key_num = req_data.keys.size();
   T *data_ptr = req_data.vals.data();
   size_t pos = 0;
@@ -223,10 +227,12 @@ void ParameterServer<T>::ServerHandler::HandleInitWeights(const ::ps::KVMeta &re
 
     if (!ps_->HasWeight(key)) {
       WeightPtr weight_ptr = std::make_shared<::ps::SArray<T>>();
+      MS_EXCEPTION_IF_NULL(weight_ptr);
       weight_ptr->CopyFrom(data_ptr + pos, data_len);
       ps_->InitWeight(key, weight_ptr);
 
       GradPtr grad_ptr = std::make_shared<::ps::SArray<T>>(data_len, 0);
+      MS_EXCEPTION_IF_NULL(grad_ptr);
       ps_->InitGrad(key, grad_ptr);
     }
     pos += data_len;
@@ -238,6 +244,7 @@ void ParameterServer<T>::ServerHandler::HandleInitWeightToOptimId(const ::ps::KV
                                                                   const ::ps::KVPairs<T> &req_data,
                                                                   ::ps::KVPairs<T> *res) {
   std::unique_lock<std::mutex> lock(ps_->mutex());
+  MS_EXCEPTION_IF_NULL(res);
   size_t key_num = req_data.keys.size();
   for (size_t i = 0; i < key_num; i++) {
     Key key = req_data.keys[i];
@@ -255,6 +262,7 @@ template <typename T>
 void ParameterServer<T>::ServerHandler::HandleInitInputsShape(const ::ps::KVMeta &req_meta,
                                                               const ::ps::KVPairs<T> &req_data, ::ps::KVPairs<T> *res) {
   std::unique_lock<std::mutex> lock(ps_->mutex());
+  MS_EXCEPTION_IF_NULL(res);
   const Key &key = req_data.keys[0];
   if (init_optim_info_[key]) {
     return;
@@ -268,13 +276,18 @@ template <typename T>
 void ParameterServer<T>::ServerHandler::HandleInitEmbeddings(const ::ps::KVMeta &req_meta,
                                                              const ::ps::KVPairs<T> &req_data, ::ps::KVPairs<T> *res) {
   std::unique_lock<std::mutex> lock(ps_->mutex());
+  MS_EXCEPTION_IF_NULL(res);
   const Key &key = req_data.keys[0];
   MS_LOG(INFO) << "Initializing embedding table for key:" << key;
   std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> shapes =
     std::make_shared<std::vector<std::shared_ptr<std::vector<size_t>>>>();
+  MS_EXCEPTION_IF_NULL(shapes);
   std::shared_ptr<std::vector<size_t>> input_shape = std::make_shared<std::vector<size_t>>();
+  MS_EXCEPTION_IF_NULL(input_shape);
   std::shared_ptr<std::vector<size_t>> indices_shape = std::make_shared<std::vector<size_t>>();
+  MS_EXCEPTION_IF_NULL(indices_shape);
   std::shared_ptr<std::vector<size_t>> output_shape = std::make_shared<std::vector<size_t>>();
+  MS_EXCEPTION_IF_NULL(output_shape);
   shapes->push_back(input_shape);
   shapes->push_back(indices_shape);
   shapes->push_back(output_shape);
@@ -297,6 +310,7 @@ template <typename T>
 void ParameterServer<T>::ServerHandler::HandleCheckReadyForPush(const ::ps::KVMeta &req_meta,
                                                                 const ::ps::KVPairs<T> &req_data,
                                                                 ::ps::KVPairs<T> *res) {
+  MS_EXCEPTION_IF_NULL(res);
   const Key &key = req_data.keys[0];
   bool ready = ps_->ReadyForPush(key);
   res->keys.push_back(key);
@@ -307,6 +321,7 @@ template <typename T>
 void ParameterServer<T>::ServerHandler::HandleCheckReadyForPull(const ::ps::KVMeta &req_meta,
                                                                 const ::ps::KVPairs<T> &req_data,
                                                                 ::ps::KVPairs<T> *res) {
+  MS_EXCEPTION_IF_NULL(res);
   const Key &key = req_data.keys[0];
   bool ready = ps_->ReadyForPull(key);
   res->keys.push_back(key);
@@ -316,6 +331,7 @@ void ParameterServer<T>::ServerHandler::HandleCheckReadyForPull(const ::ps::KVMe
 template <typename T>
 void ParameterServer<T>::ServerHandler::HandleEmbeddingLookup(const ::ps::KVMeta &req_meta,
                                                               const ::ps::KVPairs<T> &req_data, ::ps::KVPairs<T> *res) {
+  MS_EXCEPTION_IF_NULL(res);
   const Key &key = req_data.keys[0];
   for (size_t i = 1; i < req_data.keys.size(); i++) {
     res->keys.push_back(req_data.keys[i]);
@@ -326,6 +342,7 @@ void ParameterServer<T>::ServerHandler::HandleEmbeddingLookup(const ::ps::KVMeta
 template <typename T>
 void ParameterServer<T>::ServerHandler::HandleFinalize(const ::ps::KVMeta &req_meta, const ::ps::KVPairs<T> &req_data,
                                                        ::ps::KVPairs<T> *res) {
+  MS_EXCEPTION_IF_NULL(res);
   ps_->Finalize();
 }
 
@@ -371,7 +388,9 @@ void ParameterServer<T>::InitWeightKeyToOptims(const Key &key, const int &optim_
 template <typename T>
 void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &values, const Lengths &lengths) {
   InputsShapePtr inputs_shape = std::make_shared<InputsShape>();
+  MS_EXCEPTION_IF_NULL(inputs_shape);
   InputsShapePtr original_inputs_shape = std::make_shared<InputsShape>();
+  MS_EXCEPTION_IF_NULL(original_inputs_shape);
   int val_idx = 0;
   const Key &key = keys[0];
   MS_LOG(INFO) << "Initializing optimizer inputs shape for key:" << key;
@@ -381,7 +400,9 @@ void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &va
   }
   for (size_t i = 0; i < keys.size(); i++) {
     auto shape = std::make_shared<std::vector<size_t>>();
+    MS_EXCEPTION_IF_NULL(shape);
     auto original_shape = std::make_shared<std::vector<size_t>>();
+    MS_EXCEPTION_IF_NULL(original_shape);
     inputs_shape->push_back(shape);
     original_inputs_shape->push_back(original_shape);
 
@@ -425,6 +446,7 @@ template <typename T>
 const CNodePtr ParameterServer<T>::GetCNode(const std::string &name) const {
   std::list<CNodePtr> cnodes = func_graph_->GetOrderedCnodes();
   for (CNodePtr cnode : cnodes) {
+    MS_EXCEPTION_IF_NULL(cnode);
     std::string fullname = cnode->fullname_with_scope();
     if (fullname.find(name) != std::string::npos && fullname.find("Push") != std::string::npos) {
       return cnode;
@@ -435,6 +457,7 @@ const CNodePtr ParameterServer<T>::GetCNode(const std::string &name) const {
 
 template <typename T>
 void ParameterServer<T>::InitWeight(const Key &key, const WeightPtr &weight) {
+  MS_EXCEPTION_IF_NULL(weight);
   if ((weights_.count(key) == 0) || (is_embedding_[key] && weights_.count(key) != 0)) {
     MS_LOG(INFO) << "Initializing weight for key " << key << ", server rank " << rank_id_;
     weights_[key] = weight;
@@ -445,6 +468,7 @@ void ParameterServer<T>::InitWeight(const Key &key, const WeightPtr &weight) {
 
 template <typename T>
 void ParameterServer<T>::InitGrad(const Key &key, const GradPtr &grad) {
+  MS_EXCEPTION_IF_NULL(grad);
   if (grads_.count(key) == 0) {
     grads_[key] = grad;
     grads_accum_counter_[key] = 0;
@@ -454,6 +478,7 @@ void ParameterServer<T>::InitGrad(const Key &key, const GradPtr &grad) {
 template <typename T>
 void ParameterServer<T>::InitEmbeddingTable(
   const Key &key, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
+  MS_EXCEPTION_IF_NULL(shapes);
   if (weights_.count(key) == 0) {
     std::shared_ptr<PServerKernel> lookup =
       std::make_shared<kernel::ps::EmbeddingLookUpPSKernel>(rank_id_, pserver_num_, worker_num_);
@@ -464,6 +489,7 @@ void ParameterServer<T>::InitEmbeddingTable(
     const std::vector<size_t> &input_shapes = lookup->input_sizes();
     size_t total_dims = std::accumulate(input_shapes.begin(), input_shapes.end(), 1, std::multiplies<size_t>());
     WeightPtr embedding = std::make_shared<Weight>(total_dims, 0);
+    MS_EXCEPTION_IF_NULL(embedding);
     T *embedding_data = embedding->data();
     std::default_random_engine engine;
     std::normal_distribution<float> random(0, 0.01);
@@ -580,7 +606,9 @@ WeightPtr ParameterServer<T>::weight(const Key &key) {
     MS_LOG(EXCEPTION) << "Invalid weight key " << key;
   }
   WeightPtr weight_ptr = weights_[key];
+  MS_EXCEPTION_IF_NULL(weight_ptr);
   WeightPtr copy_weight_ptr = std::make_shared<::ps::SArray<T>>(weight_ptr->size(), 0);
+  MS_EXCEPTION_IF_NULL(copy_weight_ptr);
   copy_weight_ptr->CopyFrom(weight_ptr->data(), weight_ptr->size());
   tokens_[key] -= 1;
   return copy_weight_ptr;
@@ -589,6 +617,7 @@ WeightPtr ParameterServer<T>::weight(const Key &key) {
 template <typename T>
 void ParameterServer<T>::DoEmbeddingLookup(Key key, const LookupIds &lookup_ids, ::ps::KVPairs<T> *res) {
   std::unique_lock<std::mutex> lock(mutex_);
+  MS_EXCEPTION_IF_NULL(res);
   if (weights_.count(key) == 0) {
     MS_LOG(ERROR) << "Invalid embedding table key " << key;
     return;
@@ -598,7 +627,9 @@ void ParameterServer<T>::DoEmbeddingLookup(Key key, const LookupIds &lookup_ids,
     return;
   }
   WeightPtr table_ptr = weights_[key];
+  MS_EXCEPTION_IF_NULL(table_ptr);
   std::shared_ptr<PServerKernel> table_lookup_op = embedding_lookup_ops_[key];
+  MS_EXCEPTION_IF_NULL(table_lookup_op);
 
   // Update shapes of lookup operator
   std::vector<std::vector<size_t>> shapes = {};
@@ -610,13 +641,16 @@ void ParameterServer<T>::DoEmbeddingLookup(Key key, const LookupIds &lookup_ids,
   const std::vector<size_t> output_shapes = table_lookup_op->output_sizes();
   std::vector<kernel::AddressPtr> inputs;
   AddressPtr embedding_table = std::make_shared<kernel::Address>();
+  MS_EXCEPTION_IF_NULL(embedding_table);
   AddressPtr indices = std::make_shared<kernel::Address>();
+  MS_EXCEPTION_IF_NULL(indices);
   inputs.push_back(embedding_table);
   inputs.push_back(indices);
   embedding_table->addr = table_ptr->data();
   embedding_table->size = table_ptr->size() * sizeof(T);
 
   std::unique_ptr<int[]> tmp_ids(new int[lookup_ids.size()]);
+  MS_EXCEPTION_IF_NULL(tmp_ids);
   for (size_t i = 0; i < lookup_ids.size(); i++) {
     tmp_ids[i] = static_cast<int>(lookup_ids[i]);
   }
@@ -626,7 +660,9 @@ void ParameterServer<T>::DoEmbeddingLookup(Key key, const LookupIds &lookup_ids,
   std::vector<kernel::AddressPtr> workspaces;
   std::vector<kernel::AddressPtr> outputs;
   AddressPtr output = std::make_shared<kernel::Address>();
+  MS_EXCEPTION_IF_NULL(output);
   std::shared_ptr<Values> addr = std::make_shared<Values>(output_shapes[0] / sizeof(T), 0);
+  MS_EXCEPTION_IF_NULL(addr);
 
   output->addr = addr->data();
   output->size = output_shapes[0];
@@ -680,6 +716,7 @@ void ParameterServer<T>::GetEmbeddingTableParamPtr() {
   auto cnodes = func_graph_->GetOrderedCnodes();
   Key count = 0;
   for (auto cnode : cnodes) {
+    MS_EXCEPTION_IF_NULL(cnode);
     std::string cnode_name = AnfAlgo::GetCNodeName(cnode);
     if (cnode_name == kEmbeddingLookupOpName) {
       auto embedding_table = AnfAlgo::GetInputNode(cnode, 0);
@@ -703,6 +740,7 @@ void ParameterServer<T>::SyncEmbeddingTables() {
     std::vector<int> new_tensor_shape(input_shapes.begin(), input_shapes.end());
 
     tensor::TensorPtr new_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, new_tensor_shape);
+    MS_EXCEPTION_IF_NULL(new_tensor);
     float *new_tensor_data_ptr = reinterpret_cast<float *>(new_tensor->data_c());
     size_t new_tensor_size = static_cast<size_t>(new_tensor->data().nbytes());
     size_t embedding_table_size = weights_[key]->size() * sizeof(float);
@@ -710,6 +748,8 @@ void ParameterServer<T>::SyncEmbeddingTables() {
       MS_LOG(EXCEPTION) << "Shape of embedding table can't match. New tensor size:" << new_tensor_size
                         << ", embedding_table size:" << embedding_table_size;
     }
+    MS_EXCEPTION_IF_NULL(new_tensor_data_ptr);
+    MS_EXCEPTION_IF_NULL(weights_[key]->data());
     int ret = memcpy_s(new_tensor_data_ptr, new_tensor_size, weights_[key]->data(), embedding_table_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
@@ -724,6 +764,7 @@ void ParameterServer<T>::SyncEmbeddingTables() {
 
 template <typename T>
 void ParameterServer<T>::Run(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "PServer starts connecting to scheduler and workers...";
   ::ps::Start(0);
   MS_LOG(INFO) << "PServer connected successfully.";
