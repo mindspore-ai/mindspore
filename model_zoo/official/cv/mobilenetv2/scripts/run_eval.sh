@@ -103,9 +103,9 @@ run_cpu()
 if [ $# -gt 4 ] || [ $# -lt 3 ]
 then
     echo "Usage:
-          Ascend: sh run_infer.sh [PLATFORM] [DATASET_PATH] [PRETRAIN_CKPT]
-          GPU: sh run_infer.sh [PLATFORM] [DATASET_PATH] [PRETRAIN_CKPT]
-          CPU: sh run_infer.sh [PLATFORM] [DATASET_PATH] [BACKBONE_CKPT] [HEAD_CKPT]"
+          Ascend: sh run_eval.sh [PLATFORM] [DATASET_PATH] [PRETRAIN_CKPT]
+          GPU: sh run_eval.sh [PLATFORM] [DATASET_PATH] [PRETRAIN_CKPT]
+          CPU: sh run_eval.sh [PLATFORM] [DATASET_PATH] [BACKBONE_CKPT] [HEAD_CKPT]"
 exit 1
 fi
 

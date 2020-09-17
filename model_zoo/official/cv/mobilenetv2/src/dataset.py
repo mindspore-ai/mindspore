@@ -36,7 +36,6 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1):
         config(struct): the config of train and eval in diffirent platform.
         repeat_num(int): the repeat times of dataset. Default: 1.
 
-
     Returns:
         dataset
     """
@@ -96,11 +95,7 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1):
     # apply dataset repeat operation
     ds = ds.repeat(repeat_num)
 
-    step_size = ds.get_dataset_size()
-    if step_size == 0:
-        raise ValueError("The step_size of dataset is zero. Check if the images of train dataset is more than batch_\
-            size in config.py")
-    return ds, step_size
+    return ds
 
 
 def extract_features(net, dataset_path, config):
@@ -112,12 +107,16 @@ def extract_features(net, dataset_path, config):
                              config=config,
                              repeat_num=1)
     step_size = dataset.get_dataset_size()
+    if step_size == 0:
+        raise ValueError("The step_size of dataset is zero. Check if the images count of train dataset is more \
+            than batch_size in config.py")
+
     model = Model(net)
 
     for i, data in enumerate(dataset.create_dict_iterator(output_numpy=True)):
         features_path = os.path.join(features_folder, f"feature_{i}.npy")
         label_path = os.path.join(features_folder, f"label_{i}.npy")
-        if not os.path.exists(features_path or not os.path.exists(label_path)):
+        if not os.path.exists(features_path) or not os.path.exists(label_path):
             image = data["image"]
             label = data["label"]
             features = model.predict(Tensor(image))

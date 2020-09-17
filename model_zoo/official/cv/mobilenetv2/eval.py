@@ -28,7 +28,7 @@ from src.utils import switch_precision, set_context
 if __name__ == '__main__':
     args_opt = eval_parse_args()
     config = set_config(args_opt)
-    backbone_net, head_net, net = define_net(args_opt, config)
+    backbone_net, head_net, net = define_net(config)
 
     #load the trained checkpoint file to the net for evaluation
     if args_opt.head_ckpt:
@@ -42,6 +42,10 @@ if __name__ == '__main__':
 
     dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, config=config)
     step_size = dataset.get_dataset_size()
+    if step_size == 0:
+        raise ValueError("The step_size of dataset is zero. Check if the images count of train dataset is more \
+            than batch_size in config.py")
+
     net.set_train(False)
 
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
