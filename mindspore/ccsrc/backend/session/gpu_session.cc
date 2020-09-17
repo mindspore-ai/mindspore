@@ -81,8 +81,6 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::AdamWeightDecayFusion>());
   pm->AddPass(std::make_shared<opt::AdamFusion>());
-  // pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayScaleFusion>());
-  // pm->AddPass(std::make_shared<opt::ApplyMomentumScaleFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceBNCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceBNGradCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
@@ -98,7 +96,6 @@ void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_gra
   pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
-  // pm->AddPass(std::make_shared<opt::BatchNormAddReluGradFusion>());
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOp>());
   pm->AddPass(std::make_shared<opt::RemoveFormatTransformPair>());
   pm->AddPass(std::make_shared<opt::RemoveRedundantFormatTransform>());

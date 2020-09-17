@@ -110,7 +110,6 @@ void ReplaceOutput(const FuncGraphPtr &graph, const AnfNodePtr &bn_grad, const A
   manager->Replace(relu_grad, bn_add_relu_grad_output[kBNAddReluGradOutputNum - 1]);
   return;
 }
-
 }  // namespace
 
 const BaseRef BatchNormAddReluGradFusion::DefinePattern() const {

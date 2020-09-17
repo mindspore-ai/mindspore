@@ -27,6 +27,5 @@ MS_REG_GPU_KERNEL_ONE(CTCLossV2,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       CtcLossGpuKernel, float)
-
 }  // namespace kernel
 }  // namespace mindspore
