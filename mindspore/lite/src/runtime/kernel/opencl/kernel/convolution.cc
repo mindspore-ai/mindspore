@@ -68,7 +68,7 @@ int ConvolutionOpenCLKernel::Init() {
   TILES_X_ = UP_DIV(OW_, 4);
   TILES_Y_ = UP_DIV(OH_, 4);
   TILES_XY_ = TILES_X_ * TILES_Y_;
-  use_winograd_ = UseWinograd4x4To6x6() && use_fp16_;
+  use_winograd_ = UseWinograd4x4To6x6();
 
   // build kernel
   if (use_winograd_) {
@@ -247,7 +247,7 @@ int ConvolutionOpenCLKernel::InitBuffer() {
 int ConvolutionOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
   if (in_tensors_[0]->GetFormat() == Format_NHWC4) {
-    if (out_tensors_[0]->Width() * CO_SLICES_ < 65536) {
+    if (out_tensors_[0]->Width() * CO_SLICES_ <= MAX_IMAGE2D_SIZE) {
       {
         im_dst_x = out_tensors_[0]->Width() * CO_SLICES_;
         im_dst_y = out_tensors_[0]->Height();
@@ -314,7 +314,8 @@ int ConvolutionOpenCLKernel::Run() {
 
   if (use_winograd_) {
     ocl_runtime_->RunKernel(kernel_4x4to36_, {size_t(TILES_XY_), 6, size_t(CI_SLICES_)}, {8, 6, 4}, nullptr);
-    ocl_runtime_->RunKernel(kernel_conv_, {size_t(TILES_XY_ / 2), 36, size_t(CO_SLICES_ / 2)}, {8, 6, 2}, nullptr);
+    ocl_runtime_->RunKernel(kernel_conv_, {size_t(UP_DIV(TILES_XY_, 2)), 36, size_t(UP_DIV(CO_SLICES_, 2))}, {8, 6, 2},
+                            nullptr);
     ocl_runtime_->RunKernel(kernel_36to4x4_, {size_t(TILES_XY_), 4, size_t(CO_SLICES_)}, {32, 4, 2}, nullptr);
   } else {
     std::vector<size_t> global, local;
@@ -414,7 +415,7 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNHWC4() {
     code += "    out0_c4_bias = clamp(out0_c4_bias, (FLT4)(0.0f), (FLT4)(6.0f));\n";
   }
 
-  if (OW_ * CO_SLICES_ < 65536) {
+  if (OW_ * CO_SLICES_ <= MAX_IMAGE2D_SIZE) {
     code += "    WRITE_IMAGE(output, (int2)(ow * CO_SLICES + co_slice, oh), out0_c4_bias);// NHWC4: H WC\n}";
   } else {
     code += "    WRITE_IMAGE(output, (int2)(oh * CO_SLICES + co_slice, ow), out0_c4_bias);// NHWC4: H WC\n}";
@@ -616,23 +617,27 @@ std::string ConvolutionOpenCLKernel::CodeGenWinograd4x4To36() {
     "    FLT4 BtD_row[6] = {0};\n"
     "    for (int y = 0; y < 6; y++)\n"
     "    {\n"
-    "        int y_idx = tile_y * 4 - PAD + y;\n";
+    "        int ih = tile_y * 4 - PAD + y;\n";
+
+  if (op_format_ == Format_NHWC4) {
+    code += "        int y_idx = ih;\n";
+  } else if (op_format_ == Format_NC4HW4) {
+    code +=
+      "        if(ih < 0 || ih >= IH) {continue;}\n"
+      "        int y_idx = slice * IH + ih;\n";
+  }
+
+  code +=
+    "        for (int x = 0; x < 6; x++)\n"
+    "        {\n"
+    "            int iw = tile_x * 4 - PAD + x;\n";
 
   if (op_format_ == Format_NHWC4) {
     code +=
-      "        for (int x = 0; x < 6; x++)\n"
-      "        {\n"
-      "             int x_idx = (tile_x * 4 - PAD + x) * SLICES + slice;\n";
+      "            if(iw < 0 || iw >= IW) {continue;}\n"
+      "            int x_idx = iw * SLICES + slice;\n";
   } else if (op_format_ == Format_NC4HW4) {
-    code +=
-      "        if(y_idx < 0 || y_idx >= IH)\n"
-      "        {\n"
-      "            continue;\n"
-      "        }\n"
-      "        y_idx += slice * IH;\n"
-      "        for (int x = 0; x < 6; x++)\n"
-      "        {\n"
-      "            int x_idx = tile_x * 4 - PAD + x;\n";
+    code += "            int x_idx = iw;\n";
   }
 
   code +=
@@ -792,9 +797,9 @@ std::string ConvolutionOpenCLKernel::CodeGenWinograd36To4x4() {
 
   auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
   if (param->act_type_ == ActType_Relu) {
-    code += "    acc = max(acc, (FLT4)(0.0f));\n";
+    code += "        acc = max(acc, (FLT4)(0.0f));\n\n";
   } else if (param->act_type_ == ActType_Relu6) {
-    code += "    acc = clamp(acc, (FLT4)(0.0f), (FLT4)(6.0f));\n";
+    code += "        acc = clamp(acc, (FLT4)(0.0f), (FLT4)(6.0f));\n\n";
   }
 
   code +=
@@ -838,7 +843,7 @@ int ConvolutionOpenCLKernel::SetGlobalLocalConv(std::vector<size_t> *global, std
   }
 
   if (op_format_ == Format_NHWC4) {
-    if (OW_ * CO_SLICES_ > 65536) {
+    if (OW_ * CO_SLICES_ > MAX_IMAGE2D_SIZE) {
       local_w = 4;
     }
   }

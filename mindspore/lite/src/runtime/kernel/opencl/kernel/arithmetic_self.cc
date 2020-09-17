@@ -97,6 +97,7 @@ void ArithmeticSelfOpenCLKernel::GetKernelName(std::string *kernel_name, Arithme
       break;
     case PrimitiveType_Round:
       kernel_name[0] += "_ElementRound";
+      break;
     case PrimitiveType_Neg:
       kernel_name[0] += "_ElementNeg";
       break;
