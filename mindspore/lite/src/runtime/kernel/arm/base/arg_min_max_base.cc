@@ -73,6 +73,10 @@ int ArgMinMaxBaseCPUKernel::Run() {
 
   auto in_tensor = in_tensors_.at(0)->shape();
   auto shape = reinterpret_cast<int *>(malloc(in_tensor.size() * sizeof(int)));
+  if (shape == nullptr) {
+      MS_LOG(ERROR) << "malloc shape failed.";
+      return RET_ERROR;
+  }
   memcpy(shape, in_tensor.data(), in_tensor.size() * sizeof(int));
 
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);

@@ -83,6 +83,10 @@ int SplitFp16CPUKernel::Run() {
   if (in_tensor->data_type() == kNumberTypeFloat32) {
     input_ptr_ =
       reinterpret_cast<float16_t *>(context_->allocator->Malloc(in_tensor->ElementsNum() * sizeof(float16_t)));
+    if (input_ptr_ == nullptr) {
+        MS_LOG(ERROR) << "malloc input_ptr_ failed.";
+        return RET_ERROR;
+    }
     Float32ToFloat16(reinterpret_cast<float *>(in_tensor->MutableData()), input_ptr_, in_tensor->ElementsNum());
   } else {
     input_ptr_ = reinterpret_cast<float16_t *>(in_tensor->MutableData());
@@ -91,6 +95,10 @@ int SplitFp16CPUKernel::Run() {
     if (in_tensor->data_type() == kNumberTypeFloat32) {
       output_ptr_[i] = reinterpret_cast<float16_t *>(
         context_->allocator->Malloc(out_tensors_.at(i)->ElementsNum() * sizeof(float16_t)));
+      if (output_ptr_[i] == nullptr) {
+          MS_LOG(ERROR) << "malloc output_ptr_[" << i << "]" << " failed.";
+          return RET_ERROR;
+      }
       Float32ToFloat16(reinterpret_cast<float *>(out_tensors_.at(i)->MutableData()), output_ptr_[i],
                        out_tensors_.at(i)->ElementsNum());
     } else {

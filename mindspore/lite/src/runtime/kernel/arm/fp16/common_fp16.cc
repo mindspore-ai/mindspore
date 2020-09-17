@@ -24,6 +24,10 @@ float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::InnerContext 
   if (data_type == kNumberTypeFloat32) {
     auto ele_num = input->ElementsNum();
     fp16_data = reinterpret_cast<float16_t *>(ctx->allocator->Malloc(ele_num * sizeof(float16_t)));
+    if (fp16_data == nullptr) {
+      MS_LOG(ERROR) << "malloc fp16_data failed.";
+      return nullptr;
+    }
     auto ori_data = reinterpret_cast<float *>(input->MutableData());
     Float32ToFloat16(ori_data, fp16_data, ele_num);
   } else {
@@ -38,6 +42,10 @@ float16_t *MallocOutputFp16(lite::Tensor *output, const lite::InnerContext *ctx)
   if (data_type == kNumberTypeFloat32) {
     auto ele_num = output->ElementsNum();
     fp16_data = reinterpret_cast<float16_t *>(ctx->allocator->Malloc(ele_num * sizeof(float16_t)));
+    if (fp16_data == nullptr) {
+      MS_LOG(ERROR) << "malloc fp16_data failed.";
+      return nullptr;
+    }
   } else {
     fp16_data = reinterpret_cast<float16_t *>(output->MutableData());
   }

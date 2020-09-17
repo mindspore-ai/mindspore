@@ -88,13 +88,27 @@ int DetectionPostProcessCPUKernel::Run() {
   parameter->nms_candidate_ = context_->allocator->Malloc(num_boxes * sizeof(uint8_t));
   parameter->selected_ = context_->allocator->Malloc(num_boxes * sizeof(int));
   parameter->score_with_class_ = context_->allocator->Malloc(num_boxes * sizeof(ScoreWithIndex));
+  if (!parameter->decoded_boxes_ || !parameter->nms_candidate_ || !parameter->selected_ ||
+      !parameter->score_with_class_) {
+    MS_LOG(ERROR) << "malloc parameter->decoded_boxes_ || parameter->nms_candidate_ || parameter->selected_ || "
+                     "parameter->score_with_class_ failed.";
+    return RET_ERROR;
+  }
   if (parameter->use_regular_nms_) {
     parameter->score_with_class_all_ =
       context_->allocator->Malloc((num_boxes + parameter->max_detections_) * sizeof(ScoreWithIndex));
     parameter->indexes_ = context_->allocator->Malloc((num_boxes + parameter->max_detections_) * sizeof(int));
+    if (!parameter->score_with_class_all_ || !parameter->indexes_) {
+      MS_LOG(ERROR) << "malloc parameter->score_with_class_all_ || parameter->indexes_ failed.";
+      return RET_ERROR;
+    }
   } else {
     parameter->score_with_class_all_ =
       context_->allocator->Malloc((num_boxes * parameter->num_classes_) * sizeof(ScoreWithIndex));
+    if (!parameter->score_with_class_all_) {
+      MS_LOG(ERROR) << "malloc parameter->score_with_class_all_ failed.";
+      return RET_ERROR;
+    }
   }
   DetectionPostProcess(num_boxes, num_classes_with_bg, input_boxes, input_scores, parameter->anchors_, output_boxes,
                        output_classes, output_scores, output_num, parameter);

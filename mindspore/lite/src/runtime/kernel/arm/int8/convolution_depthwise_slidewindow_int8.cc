@@ -153,7 +153,15 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto channel = conv_param_->input_channel_;
   input_scale_ = reinterpret_cast<float *>(malloc(channel * sizeof(float)));
+  if (input_scale_ == nullptr) {
+    MS_LOG(ERROR) << "malloc input_sacle_ failed.";
+    return RET_ERROR;
+  }
   input_zp_ = reinterpret_cast<int8_t *>(malloc(channel * sizeof(int8_t)));
+  if (input_zp_ == nullptr) {
+    MS_LOG(ERROR) << "malloc input_zp_ failed.";
+    return RET_ERROR;
+  }
   if (input_tensor->GetQuantParams().size() == kPerTensor) {
     for (int i = 0; i < channel; i++) {
       auto input_quant_arg = input_tensor->GetQuantParams().front();
@@ -170,7 +178,15 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_scale_ = reinterpret_cast<float *>(malloc(channel * sizeof(float)));
+  if (output_scale_ == nullptr) {
+    MS_LOG(ERROR) << "malloc output_scale_ failed.";
+    return RET_ERROR;
+  }
   output_zp_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
+  if (output_zp_ == nullptr) {
+    MS_LOG(ERROR) << "malloc output_zp_ failed.";
+    return RET_ERROR;
+  }
   if (output_tensor->GetQuantParams().size() == kPerTensor) {
     for (int i = 0; i < channel; i++) {
       auto output_quant_arg = output_tensor->GetQuantParams().front();
@@ -186,13 +202,41 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
   }
 
   conv_quant_arg_->real_multiplier_ = reinterpret_cast<double *>(malloc(channel * sizeof(double)));
+  if (conv_quant_arg_->real_multiplier_ == nullptr) {
+    MS_LOG(ERROR) << "malloc conv_quant_arg_->real_multiplier_ failed.";
+    return RET_ERROR;
+  }
   conv_quant_arg_->left_shift_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
+  if (conv_quant_arg_->left_shift_ == nullptr) {
+    MS_LOG(ERROR) << "malloc conv_quant_arg_->left_shift_ failed.";
+    return RET_ERROR;
+  }
   conv_quant_arg_->right_shift_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
+  if (conv_quant_arg_->right_shift_ == nullptr) {
+    MS_LOG(ERROR) << "malloc conv_quant_arg_->right_shift_ failed.";
+    return RET_ERROR;
+  }
   conv_quant_arg_->quant_multiplier_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
+  if (conv_quant_arg_->quant_multiplier_ == nullptr) {
+    MS_LOG(ERROR) << "malloc conv_quant_arg_->quant_multiplier_ failed.";
+    return RET_ERROR;
+  }
   conv_quant_arg_->out_act_min_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
+  if (conv_quant_arg_->out_act_min_ == nullptr) {
+    MS_LOG(ERROR) << "malloc conv_quant_arg_->out_act_min_ failed.";
+    return RET_ERROR;
+  }
   conv_quant_arg_->out_act_max_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
+  if (conv_quant_arg_->out_act_max_ == nullptr) {
+    MS_LOG(ERROR) << "malloc conv_quant_arg_->out_act_max_ failed.";
+    return RET_ERROR;
+  }
 
   weight_scale_ = reinterpret_cast<float *>(malloc(channel * sizeof(float)));
+  if (weight_scale_ == nullptr) {
+    MS_LOG(ERROR) << "malloc weight_scale_ failed.";
+    return RET_ERROR;
+  }
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   if (weight_tensor->GetQuantParams().size() == kPerTensor) {
     for (int i = 0; i < channel; i++) {

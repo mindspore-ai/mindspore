@@ -29,7 +29,12 @@ class ROIPoolingCPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     param_ = reinterpret_cast<ROIPoolingParameter *>(parameter);
   }
-  ~ROIPoolingCPUKernel() override = default;
+  ~ROIPoolingCPUKernel() override {
+    if (max_c_ != nullptr) {
+      free(max_c_);
+      max_c_ = nullptr;
+    }
+  };
 
   int Init() override;
   int ReSize() override;
@@ -40,6 +45,7 @@ class ROIPoolingCPUKernel : public LiteKernel {
   float *in_ptr_;
   float *out_ptr_;
   float *roi_ptr_;
+  float *max_c_ = nullptr;
   ROIPoolingParameter *param_;
 };
 }  // namespace mindspore::kernel

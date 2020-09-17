@@ -24,6 +24,7 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Pooling;
 
@@ -31,8 +32,20 @@ namespace mindspore::kernel {
 int PoolingBaseCPUKernel::SetQuantParam() {
   // per tensor init
   pooling_quant_arg_ = reinterpret_cast<QuantArg **>(malloc(2 * sizeof(QuantArg *)));
+  if (pooling_quant_arg_ == nullptr) {
+    MS_LOG(ERROR) << "malloc pooling_quant_arg failed.";
+    return RET_MEMORY_FAILED;
+  }
   pooling_quant_arg_[0] = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
+  if (pooling_quant_arg_[0] == nullptr) {
+    MS_LOG(ERROR) << "malloc pooling_quant_arg[0] failed.";
+    return RET_MEMORY_FAILED;
+  }
   pooling_quant_arg_[1] = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
+  if (pooling_quant_arg_[1] == nullptr) {
+    MS_LOG(ERROR) << "malloc pooling_quant_arg[1] failed.";
+    return RET_MEMORY_FAILED;
+  }
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_arg = input_tensor->GetQuantParams();
   auto *out_tensor = out_tensors_.at(kOutputIndex);

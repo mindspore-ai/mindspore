@@ -24,6 +24,7 @@
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ROIPooling;
 
@@ -37,6 +38,10 @@ int ROIPoolingCPUKernel::Init() {
 }
 
 int ROIPoolingCPUKernel::ReSize() {
+  if (max_c_ != nullptr) {
+    free(max_c_);
+    max_c_ = nullptr;
+  }
   auto in_shape = in_tensors_.front()->shape();
   auto out_shape = out_tensors_.front()->shape();
   int ndims = in_shape.size();
@@ -60,11 +65,16 @@ int ROIPoolingCPUKernel::ReSize() {
     param_->out_strides_[i] = out_shape[i + 1] * param_->out_strides_[i + 1];
   }
   param_->thread_num_ = MSMIN(param_->op_parameter_.thread_num_, out_shape[0]);
+  max_c_ = reinterpret_cast<float *>(malloc(param_->input_c_ * sizeof(float)));
+  if (max_c_ == nullptr) {
+    MS_LOG(ERROR) << "malloc max_c failed.";
+    return RET_MEMORY_FAILED;
+  }
   return RET_OK;
 }
 
 int ROIPoolingCPUKernel::DoExecute(int task_id) {
-  auto ret = ROIPooling(in_ptr_, out_ptr_, roi_ptr_, task_id, param_);
+  auto ret = ROIPooling(in_ptr_, out_ptr_, roi_ptr_, max_c_, task_id, param_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ROIPooling Execute error task_id[" << task_id << "] error_code[" << ret << "]";
     return ret;

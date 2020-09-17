@@ -30,11 +30,11 @@ void DiagonalPlusMatrix(float *matrix, float *diagonal_matrix, int degree);
 
 void ResidueMatrix(float *interval, float *b, int row, int col);
 
-void LT(float *poly_array, float *matrix_lt, int n);
+int LT(float *poly_array, float *matrix_lt, int n);
 
 void T(float *poly_array, float *matrix_t, int n);
 
-void B(float *poly_array, float *matrix_b, int in_unit);
+int B(float *poly_array, float *matrix_b, int in_unit);
 
 void GenerateIntervalArray(float *array, float interval, int degree);
 
@@ -42,7 +42,7 @@ void MatrixTranspose(float *matrix, float *trans_matrix, int row, int col);
 
 void MatrixMultiply(const float *matrix_a, const float *matrix_b, float *matrix_c, int m, int k, int n);
 
-void CookToomFilter(float *matrix_a, float *matrix_at, float *matrix_b, float *matrix_bt, float *matrix_g,
+int CookToomFilter(float *matrix_a, float *matrix_at, float *matrix_b, float *matrix_bt, float *matrix_g,
                     float *matrix_gt, float coefficient, int out_unit, int filter_size);
 
 #ifdef ENABLE_ARM

@@ -45,15 +45,35 @@ int ConvolutionWinogradFP16CPUKernel::WinogradFilterTransformFp16(const float16_
   int oc_block_num = UP_DIV(channel_out, oc_block);
 
   auto matrix_g_data_fp16 = reinterpret_cast<float16_t *>(malloc(input_unit_ * kernel_unit_ * sizeof(float16_t)));
+  if (matrix_g_data_fp16 == nullptr) {
+    MS_LOG(ERROR) << "malloc matrix_g_data_fp16 failed.";
+    return RET_ERROR;
+  }
   auto matrix_gt_data_fp16 = reinterpret_cast<float16_t *>(malloc(input_unit_ * kernel_unit_ * sizeof(float16_t)));
+  if (matrix_gt_data_fp16 == nullptr) {
+    MS_LOG(ERROR) << "malloc matrix_gt_data_fp16 failed.";
+    return RET_ERROR;
+  }
   Float32ToFloat16(matrix_g, matrix_g_data_fp16, input_unit_ * kernel_unit_);
   Float32ToFloat16(matrix_gt, matrix_gt_data_fp16, input_unit_ * kernel_unit_);
 
   // trans_filter = G*g*GT (g represents weight_data)
   // separate into two steps ===> tmp = G*g ===> out = tmp * GT
   auto tmp_weight_data = reinterpret_cast<float16_t *>(malloc(kernel_unit_ * kernel_unit_ * sizeof(float16_t)));
+  if (tmp_weight_data == nullptr) {
+    MS_LOG(ERROR) << "malloc tmp_weight_data failed.";
+    return RET_ERROR;
+  }
   auto tmp_data = reinterpret_cast<float16_t *>(malloc(input_unit_ * kernel_unit_ * sizeof(float16_t)));
+  if (tmp_data == nullptr) {
+    MS_LOG(ERROR) << "malloc tmp_data failed.";
+    return RET_ERROR;
+  }
   auto trans_out_data = reinterpret_cast<float16_t *>(malloc(input_unit_ * input_unit_ * sizeof(float16_t)));
+  if (trans_out_data == nullptr) {
+    MS_LOG(ERROR) << "malloc trans_out_data failed.";
+    return RET_ERROR;
+  }
   std::vector<int> shape{input_unit_ * input_unit_, oc_block_num, ic4, C4NUM, oc_block};
   std::vector<int> strides;
   for (int i = 0; i < 4; i++) {
@@ -180,7 +200,15 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
   }
   memset(trans_weight_, 0, trans_matrix_data_size);
   auto *matrix_g = reinterpret_cast<float *>(malloc(input_unit_ * kernel_unit_ * sizeof(float)));
+  if (matrix_g == nullptr) {
+    MS_LOG(ERROR) << "malloc matrix_g failed.";
+    return RET_ERROR;
+  }
   auto matrix_gt = reinterpret_cast<float *>(malloc(input_unit_ * kernel_unit_ * sizeof(float)));
+  if (matrix_gt == nullptr) {
+    MS_LOG(ERROR) << "malloc matrix_gt failed.";
+    return RET_ERROR;
+  }
   ret = MallocTransformMatrices();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc transform matrices failed.";
@@ -191,7 +219,11 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
   float matrix_at[MAX_LEN];
   float matrix_b[MAX_LEN];
   float matrix_bt[MAX_LEN];
-  CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, 0.5f, output_unit_, kernel_unit_);
+  ret = CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, 0.5f, output_unit_, kernel_unit_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "get matrix g from CookToomFilter failed.";
+    return ret;
+  }
   Float32ToFloat16(matrix_a, matrix_a_, input_unit_ * output_unit_);
   Float32ToFloat16(matrix_at, matrix_at_, input_unit_ * output_unit_);
   Float32ToFloat16(matrix_b, matrix_b_, input_unit_ * input_unit_);
