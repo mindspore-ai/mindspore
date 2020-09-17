@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
+#include "src/runtime/kernel/opencl/kernel/conv2d_transpose.h"
 #include <string>
 #include <set>
 #include "nnacl/fp32/common_func.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/opencl/kernel/conv2d_transpose.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/conv2d_transpose2x2.cl.inc"
 #endif
@@ -41,16 +40,15 @@ int Conv2dTransposeOpenCLKernel::Init() {
     return RET_ERROR;
   }
   std::string kernel_name = "conv2d_transpose2x2_" + std::string(EnumNameFormat(op_format_));
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  enable_fp16_ = ocl_runtime->GetFp16Enable();
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
 #ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
+  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
   std::string source = conv2d_transpose2x2_source;
   std::set<std::string> build_options;
   std::string program_name = "conv2d_transpose2x2";
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   PadWeight();
   in_ori_format_ = in_tensors_[0]->GetFormat();
@@ -71,7 +69,7 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
   int kw = param->kernel_w_;
   int div_ci = UP_DIV(ci, C4NUM);
   int div_co = UP_DIV(co, C4NUM);
-  auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  auto allocator = ocl_runtime_->GetAllocator();
   auto data_size = enable_fp16_ ? sizeof(int16_t) : sizeof(float);
 
   // IHWO to OHWI4(I)4(O)(converter format is IHWO)
@@ -188,7 +186,6 @@ int Conv2dTransposeOpenCLKernel::Run() {
   int ow = out_tensors_[0]->shape()[2];
   int h = in_tensors_[0]->shape()[1];
   int w = in_tensors_[0]->shape()[2];
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   // local size should less than MAX_GROUP_SIZE
   std::vector<size_t> local = {16, 1, 16};
   std::vector<size_t> global = {UP_ROUND((size_t)UP_ROUND(oh / 2, 2), local[0]),
@@ -200,16 +197,16 @@ int Conv2dTransposeOpenCLKernel::Run() {
   cl_int4 src_size = {h, w, UP_DIV(ci, C4NUM), 1};
   cl_int4 dst_size = {oh, ow, UP_DIV(co, C4NUM), 1};
   int arg_cnt = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, padWeight_, lite::opencl::MemType::BUF);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, bias_);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, kernel_size);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, stride);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, padding);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, src_size);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, dst_size);
-  ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padWeight_, lite::opencl::MemType::BUF);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, bias_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, kernel_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, stride);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padding);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size);
+  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }
 

@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+#include "src/runtime/kernel/opencl/kernel/biasadd.h"
 #include <string>
 #include <map>
 #include <set>
@@ -23,7 +24,6 @@
 
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/opencl/kernel/biasadd.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/cl/biasadd.cl.inc"
 
@@ -38,7 +38,7 @@ namespace mindspore::kernel {
 void BiasAddOpenCLKernel::InitBuffer() {
   int C = in_tensors_[1]->shape()[0];
   int div_ci = UP_DIV(C, C4NUM);
-  auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  auto allocator = ocl_runtime_->GetAllocator();
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
     img_dtype = CL_HALF_FLOAT;
@@ -57,8 +57,7 @@ int BiasAddOpenCLKernel::Init() {
   for (int i = 0; i < in_size_; ++i) {
     input_shape_.s[i + 4 - in_size_] = in_tensors_[0]->shape()[i];
   }
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  enable_fp16_ = ocl_runtime->GetFp16Enable();
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
   fp_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   if (in_size_ != 4 && in_size_ != 2) {
     MS_LOG(ERROR) << "BiasAdd only support dim=4 or 2, but your dim=" << in_size_;
@@ -75,8 +74,8 @@ int BiasAddOpenCLKernel::Init() {
   std::string source = biasadd_source;
   std::string program_name = "BiasAdd";
   std::string kernel_name = "BiasAdd";
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
@@ -89,18 +88,17 @@ int BiasAddOpenCLKernel::Init() {
 int BiasAddOpenCLKernel::Run() {
   cl_int4 global_size = GetGlobalshape();
   MS_LOG(DEBUG) << op_parameter_->name_ << " Running!";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   int arg_idx = 0;
   std::map<schema::Format, int> data_type{
     {schema::Format::Format_NC4, 1}, {schema::Format::Format_NHWC4, 2}, {schema::Format::Format_NC4HW4, 3}};
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape_);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, BiasAdd_);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, data_type[op_format_]);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_shape_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, BiasAdd_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, data_type[op_format_]);
   std::vector<size_t> local = {1, 1};
   std::vector<size_t> global = {static_cast<size_t>(global_size.s[1]), static_cast<size_t>(global_size.s[2])};
-  auto ret = ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  auto ret = ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
     return RET_ERROR;

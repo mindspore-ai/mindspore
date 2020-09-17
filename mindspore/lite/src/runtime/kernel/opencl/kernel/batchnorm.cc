@@ -18,7 +18,6 @@
 #include <set>
 #include <string>
 #include "src/kernel_registry.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/batchnorm.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/batchnorm.cl.inc"
@@ -40,8 +39,7 @@ int BatchNormOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_siz
     im_dst_x = out_tensors_[0]->Width();
   }
   size_t img_dtype = CL_FLOAT;
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  auto enable_fp16_ = ocl_runtime->GetFp16Enable();
+  auto enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if (enable_fp16_) {
     img_dtype = CL_HALF_FLOAT;
   }
@@ -72,9 +70,8 @@ int BatchNormOpenCLKernel::Init() {
   std::set<std::string> build_options;
   std::string source = batchnorm_source;
   std::string program_name = "Batch_normalization";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 
   return RET_OK;
 }
@@ -98,7 +95,6 @@ void BatchNormGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t
 int BatchNormOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   auto param = reinterpret_cast<BatchNormParameter *>(this->op_parameter_);
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto input0_shape = in_tensors_[0]->shape();
   auto output_shape = out_tensors_[0]->shape();
   cl_int4 input_shape_ = {input0_shape[0], input0_shape[1], input0_shape[2], UP_DIV(input0_shape[3], C4NUM)};
@@ -107,20 +103,20 @@ int BatchNormOpenCLKernel::Run() {
   uint32_t OW = output_shape[2];
   uint32_t OC = UP_DIV(output_shape[3], C4NUM);
 
-  const std::vector<size_t> &max_global = ocl_runtime->GetWorkItemSize();
+  const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
   std::vector<size_t> local = {1, 1, 1};  // init local
   std::vector<size_t> global = {OH, OW, OC};
   BatchNormGetWorkGroup(global, &local, max_global[0]);
   int arg_cn = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());   // input tensor
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());   // scale
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->data_c());   // offest
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[3]->data_c());   // mean
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[4]->data_c());   // variance
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());  // out tensor
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape_);
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, param->epsilon_);
-  ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());   // input tensor
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());   // scale
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->data_c());   // offest
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[3]->data_c());   // mean
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[4]->data_c());   // variance
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());  // out tensor
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, param->epsilon_);
+  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
 
   return RET_OK;
 }

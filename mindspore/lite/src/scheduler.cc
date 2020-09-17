@@ -244,7 +244,7 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<Tensor *> &in_tens
   TypeId data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(primitive->Type())};
 #if SUPPORT_GPU
-  if (context_->device_type_ == DT_GPU && lite::opencl::OpenCLRuntime::GetInstance()->IsInitOK()) {
+  if (context_->device_type_ == DT_GPU) {
     desc.arch = kernel::KERNEL_ARCH::kGPU;
     auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
     if (kernel != nullptr) {

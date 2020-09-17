@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "src/runtime/kernel/opencl/kernel/concat.h"
 #include <cstring>
 #include <string>
 #include <algorithm>
 #include <set>
 #include "src/kernel_registry.h"
-#include "src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/opencl/kernel/concat.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/concat.cl.inc"
 
@@ -40,8 +40,7 @@ int ConcatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
     im_dst_x = out_tensors_[0]->Width();
   }
   size_t img_dtype = CL_FLOAT;
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  auto enable_fp16_ = ocl_runtime->GetFp16Enable();
+  auto enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if (enable_fp16_) {
     img_dtype = CL_HALF_FLOAT;
   }
@@ -52,8 +51,7 @@ int ConcatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
 }
 
 int ConcatOpenCLKernel::RunAxis0() {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  auto allocator_ = ocl_runtime->GetAllocator();
+  auto allocator_ = ocl_runtime_->GetAllocator();
   std::vector<size_t> img_size;
   auto dst_data = out_tensors_[0]->data_c();
   auto dst_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
@@ -64,7 +62,7 @@ int ConcatOpenCLKernel::RunAxis0() {
     auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
     auto region = cl::array<cl::size_type, 3U>{img_size[0], img_size[1], 1};
     cl::Image2D *input_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
-    ocl_runtime->GetDefaultCommandQueue()->enqueueCopyImage(*input_image, *out_image, src_origin, dst_origin, region);
+    ocl_runtime_->GetDefaultCommandQueue()->enqueueCopyImage(*input_image, *out_image, src_origin, dst_origin, region);
     dst_origin[1] += region[1];
   }
   return RET_OK;
@@ -112,9 +110,8 @@ int ConcatOpenCLKernel::Init() {
   std::set<std::string> build_options;
   std::string source = concat_source;
   std::string program_name = "Concat";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 
   return RET_OK;
 }
@@ -155,7 +152,6 @@ int ConcatOpenCLKernel::Run() {
     return RunAxis0();
   }
 
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto input1_shape = in_tensors_[0]->shape();
   auto input2_shape = in_tensors_[1]->shape();
   auto output_shape = out_tensors_[0]->shape();
@@ -168,7 +164,7 @@ int ConcatOpenCLKernel::Run() {
   uint32_t OW = output_shape[2];
   uint32_t OC = UP_DIV(output_shape[3], C4NUM);
 
-  const std::vector<size_t> &max_global = ocl_runtime->GetWorkItemSize();
+  const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
   std::vector<size_t> local = {1, 1, 1};  // init local
   std::vector<size_t> global = {OH, OW, OC};
   ConcatGetWorkGroup(global, &local, max_global[0]);
@@ -176,48 +172,48 @@ int ConcatOpenCLKernel::Run() {
 
   int arg_cn = 0;
   if (in_tensors_.size() == 2) {
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape1_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape2_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, param->axis_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape1_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape2_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, param->axis_);
   } else if (in_tensors_.size() == 3) {
     auto input3_shape = in_tensors_[2]->shape();
     cl_int4 input_shape3_ = {input3_shape[0], input3_shape[1], input3_shape[2], UP_DIV(input3_shape[3], C4NUM)};
 
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->data_c());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape1_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape2_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape3_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, param->axis_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape1_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape2_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape3_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, param->axis_);
   } else if (in_tensors_.size() == 4) {
     auto input3_shape = in_tensors_[2]->shape();
     auto input4_shape = in_tensors_[3]->shape();
     cl_int4 input_shape3_ = {input3_shape[0], input3_shape[1], input3_shape[2], UP_DIV(input3_shape[3], C4NUM)};
     cl_int4 input_shape4_ = {input4_shape[0], input4_shape[1], input4_shape[2], UP_DIV(input4_shape[3], C4NUM)};
 
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->data_c());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[3]->data_c());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape1_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape2_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape3_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, input_shape4_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
-    ocl_runtime->SetKernelArg(kernel_, arg_cn++, param->axis_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[2]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[3]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape1_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape2_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape3_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape4_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, param->axis_);
   } else {
     MS_LOG(ERROR) << " input sizes must 2 or 3 or 4";
     return RET_ERROR;
   }
-  ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
 
   return RET_OK;
 }

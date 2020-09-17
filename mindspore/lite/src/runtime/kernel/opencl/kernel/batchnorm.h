@@ -20,7 +20,6 @@
 #include <vector>
 #include "ir/anf.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "nnacl/fp32/batchnorm.h"
 
 namespace mindspore::kernel {

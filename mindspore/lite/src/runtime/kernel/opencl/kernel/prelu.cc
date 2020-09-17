@@ -24,7 +24,6 @@
 #include "include/errorcode.h"
 #include "nnacl/fp32/common_func.h"
 #include "src/runtime/kernel/opencl/kernel/prelu.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/cl/prelu.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -36,7 +35,7 @@ using mindspore::schema::PrimitiveType_PReLU;
 namespace mindspore::kernel {
 
 void PReluOpenCLKernel::InitBuffer() {
-  auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  auto allocator = ocl_runtime_->GetAllocator();
   int elem_num = in_tensors_[0]->shape().size() == 2 ? in_tensors_[0]->shape()[1] : in_tensors_[0]->shape()[3];
   int elem_num_c4 = UP_DIV(elem_num, C4NUM);
   size_t img_dtype = CL_FLOAT;
@@ -91,12 +90,11 @@ int PReluOpenCLKernel::Init() {
   std::string source = prelu_source;
   std::string program_name = "PRelu";
   std::string kernel_name = "PRelu";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  enable_fp16_ = ocl_runtime->GetFp16Enable();
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
   fp_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   InitBuffer();
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
   in_ori_format_ = in_tensors_[0]->GetFormat();
   in_tensors_[0]->SetFormat(op_format_);
   out_ori_format_ = out_tensors_[0]->GetFormat();
@@ -107,18 +105,17 @@ int PReluOpenCLKernel::Init() {
 
 int PReluOpenCLKernel::Run() {
   MS_LOG(DEBUG) << op_parameter_->name_ << " Running!";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::map<schema::Format, int> data_type{{schema::Format::Format_NHWC4, 1}, {schema::Format::Format_NC4HW4, 2}};
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape_);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, PReluWeight_);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, data_type[op_format_]);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, reinterpret_cast<int>(in_tensors_[1]->shape()[0]));
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_shape_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, PReluWeight_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, data_type[op_format_]);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, reinterpret_cast<int>(in_tensors_[1]->shape()[0]));
   std::vector<size_t> local = {1, 1};
   std::vector<size_t> global = {static_cast<size_t>(global_shape_.s[1]), static_cast<size_t>(global_shape_.s[2])};
-  auto ret = ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  auto ret = ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
     return RET_ERROR;

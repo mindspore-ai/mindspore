@@ -78,7 +78,6 @@ void test_main_gather(void *input_data, void *correct_data, const std::vector<in
   std::cout << "==================output data================" << std::endl;
   auto *output_data = reinterpret_cast<T *>(outputs[0]->data_c());
   CommonTest::CompareOutputData<T>(output_data, static_cast<T*>(correct_data), outputs[0]->ElementsNum(), 0.0001);
-  delete pkernel;
   delete sub_graph;
 }
 TEST_F(TestGatherOpenCL, Axis1Fp32) {

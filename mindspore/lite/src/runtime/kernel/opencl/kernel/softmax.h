@@ -21,7 +21,6 @@
 
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/fp32/softmax.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 
 namespace mindspore::kernel {
 
@@ -46,7 +45,6 @@ class SoftmaxOpenCLKernel : public OpenCLKernel {
  private:
   cl::Kernel kernel_;
   SoftmaxParameter *parameter_;
-  lite::opencl::OpenCLRuntime *runtime_;
 
   bool onexone_flag_{false};
   std::vector<size_t> local_size_;

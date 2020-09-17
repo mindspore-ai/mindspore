@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <set>
 #include "src/kernel_registry.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/arithmetic_self.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/arithmeticself.cl.inc"
@@ -51,8 +50,7 @@ int ArithmeticSelfOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *im
     im_dst_x = out_tensors_[0]->Width();
   }
   size_t img_dtype = CL_FLOAT;
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  auto enable_fp16_ = ocl_runtime->GetFp16Enable();
+  auto enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if (enable_fp16_) {
     img_dtype = CL_HALF_FLOAT;
   }
@@ -136,9 +134,8 @@ int ArithmeticSelfOpenCLKernel::Init() {
   std::set<std::string> build_options;
   std::string source = arithmeticself_source;
   std::string program_name = "ArithmeticSelf";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 
   return RET_OK;
 }
@@ -162,7 +159,6 @@ void ArithmeticSelfGetWorkGroup(const std::vector<size_t> &global, std::vector<s
 int ArithmeticSelfOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
 
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto output_shape = out_tensors_[0]->shape();
   cl_int4 output_shape_ = {output_shape[0], output_shape[1], output_shape[2], UP_DIV(output_shape[3], C4NUM)};
 
@@ -170,17 +166,17 @@ int ArithmeticSelfOpenCLKernel::Run() {
   uint32_t OW = output_shape[2];
   uint32_t OC = UP_DIV(output_shape[3], C4NUM);
 
-  const std::vector<size_t> &max_global = ocl_runtime->GetWorkItemSize();
+  const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
   std::vector<size_t> local = {1, 1, 1};  // init local
   std::vector<size_t> global = {OH, OW, OC};
   ArithmeticSelfGetWorkGroup(global, &local, max_global[0]);
 
   int arg_cn = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape_);
 
-  ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
 
   return RET_OK;
 }

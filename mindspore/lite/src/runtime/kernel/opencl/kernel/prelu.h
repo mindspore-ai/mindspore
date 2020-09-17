@@ -22,7 +22,6 @@
 #include "src/tensor.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "schema/model_generated.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 
 namespace mindspore::kernel {
 

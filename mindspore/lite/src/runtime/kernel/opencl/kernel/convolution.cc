@@ -39,12 +39,11 @@ constexpr size_t CO_TILE = C4NUM;
 
 int ConvolutionOpenCLKernel::Init() {
   static int init_count = 0;
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  auto allocator = ocl_runtime->GetAllocator();
+  auto allocator = ocl_runtime_->GetAllocator();
   auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
   std::set<std::string> build_options;
   init_count++;
-  use_fp16_ = ocl_runtime->GetFp16Enable();
+  use_fp16_ = ocl_runtime_->GetFp16Enable();
 
   if (op_format_ != Format_NHWC4 && op_format_ != Format_NC4HW4) {
     MS_LOG(ERROR) << "op_format_ " << op_format_ << " not support!";
@@ -76,21 +75,21 @@ int ConvolutionOpenCLKernel::Init() {
     MS_LOG(DEBUG) << "use winograd";
     std::string program_name;
     program_name = "Winograd4x4To36" + std::to_string(init_count);
-    ocl_runtime->LoadSource(program_name, CodeGenWinograd4x4To36());
-    ocl_runtime->BuildKernel(kernel_4x4to36_, program_name, "Winograd4x4To36", build_options);
+    ocl_runtime_->LoadSource(program_name, CodeGenWinograd4x4To36());
+    ocl_runtime_->BuildKernel(kernel_4x4to36_, program_name, "Winograd4x4To36", build_options);
 
     program_name = "WinogradConvolution" + std::to_string(init_count);
-    ocl_runtime->LoadSource(program_name, CodeGenWinogradConvolution());
-    ocl_runtime->BuildKernel(kernel_conv_, program_name, "WinogradConvolution", build_options);
+    ocl_runtime_->LoadSource(program_name, CodeGenWinogradConvolution());
+    ocl_runtime_->BuildKernel(kernel_conv_, program_name, "WinogradConvolution", build_options);
 
     program_name = "Winograd36To4x4" + std::to_string(init_count);
-    ocl_runtime->LoadSource(program_name, CodeGenWinograd36To4x4());
-    ocl_runtime->BuildKernel(kernel_36to4x4_, program_name, "Winograd36To4x4", build_options);
+    ocl_runtime_->LoadSource(program_name, CodeGenWinograd36To4x4());
+    ocl_runtime_->BuildKernel(kernel_36to4x4_, program_name, "Winograd36To4x4", build_options);
   } else {
     std::string program_name = "convolution" + std::to_string(init_count);
     std::string source = op_format_ == Format_NHWC4 ? CodeGenConvolutionNHWC4() : CodeGenConvolutionNC4HW4();
-    ocl_runtime->LoadSource(program_name, source);
-    ocl_runtime->BuildKernel(kernel_conv_, program_name, "Convolution", build_options);
+    ocl_runtime_->LoadSource(program_name, source);
+    ocl_runtime_->BuildKernel(kernel_conv_, program_name, "Convolution", build_options);
   }
 
   // allocate winograd memory
@@ -167,7 +166,7 @@ int ConvolutionOpenCLKernel::GenerateWinogradWeight() {
 }
 
 int ConvolutionOpenCLKernel::InitWeight() {
-  auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  auto allocator = ocl_runtime_->GetAllocator();
 
   // allocate memory
   size_t packed_weight_size;
@@ -205,8 +204,7 @@ int ConvolutionOpenCLKernel::InitWeight() {
 }
 
 int ConvolutionOpenCLKernel::InitBias() {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  auto allocator = ocl_runtime->GetAllocator();
+  auto allocator = ocl_runtime_->GetAllocator();
 
   // align bias from C to C4
   auto bias_tensor = in_tensors_[2];
@@ -272,57 +270,56 @@ int ConvolutionOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_s
 
 int ConvolutionOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
   int arg_cn = 0;
   if (use_winograd_) {
     arg_cn = 0;
     cl_int4 _4x4to36_in_shape = {1, IH_, IW_, CI_SLICES_};
     cl_int4 _4x4to36_out_shape = {1, 36, TILES_XY_, CI_SLICES_};
-    ocl_runtime->SetKernelArg(kernel_4x4to36_, arg_cn++, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-    ocl_runtime->SetKernelArg(kernel_4x4to36_, arg_cn++, winograd_mem0_, lite::opencl::MemType::IMG);
-    ocl_runtime->SetKernelArg(kernel_4x4to36_, arg_cn++, _4x4to36_in_shape);
-    ocl_runtime->SetKernelArg(kernel_4x4to36_, arg_cn++, _4x4to36_out_shape);
+    ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
+    ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, winograd_mem0_, lite::opencl::MemType::IMG);
+    ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, _4x4to36_in_shape);
+    ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, _4x4to36_out_shape);
 
     arg_cn = 0;
     cl_int4 conv_in_shape = {1, 36, TILES_XY_, CI_SLICES_};
     cl_int4 conv_out_shape = {1, 36, TILES_XY_, CO_SLICES_};
-    ocl_runtime->SetKernelArg(kernel_conv_, arg_cn++, winograd_mem0_, lite::opencl::MemType::IMG);
-    ocl_runtime->SetKernelArg(kernel_conv_, arg_cn++, winograd_mem1_, lite::opencl::MemType::IMG);
-    ocl_runtime->SetKernelArg(kernel_conv_, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
-    ocl_runtime->SetKernelArg(kernel_conv_, arg_cn++, conv_in_shape);
-    ocl_runtime->SetKernelArg(kernel_conv_, arg_cn++, conv_out_shape);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, winograd_mem0_, lite::opencl::MemType::IMG);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, winograd_mem1_, lite::opencl::MemType::IMG);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, conv_in_shape);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, conv_out_shape);
 
     arg_cn = 0;
     cl_int4 _36to4x4_in_shape = {1, 16, TILES_XY_, CO_SLICES_};
     cl_int4 _36to4x4_out_shape = {1, OH_, OW_, CO_SLICES_};
-    ocl_runtime->SetKernelArg(kernel_36to4x4_, arg_cn++, winograd_mem1_, lite::opencl::MemType::IMG);
-    ocl_runtime->SetKernelArg(kernel_36to4x4_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-    ocl_runtime->SetKernelArg(kernel_36to4x4_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
-    ocl_runtime->SetKernelArg(kernel_36to4x4_, arg_cn++, _36to4x4_in_shape);
-    ocl_runtime->SetKernelArg(kernel_36to4x4_, arg_cn++, _36to4x4_out_shape);
+    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, winograd_mem1_, lite::opencl::MemType::IMG);
+    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
+    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
+    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, _36to4x4_in_shape);
+    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, _36to4x4_out_shape);
   } else {
     arg_cn = 0;
-    ocl_runtime->SetKernelArg(kernel_conv_, arg_cn++, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-    ocl_runtime->SetKernelArg(kernel_conv_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-    ocl_runtime->SetKernelArg(kernel_conv_, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
-    ocl_runtime->SetKernelArg(kernel_conv_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
     if (op_format_ == Format_NC4HW4) {
       cl_int4 input_shape = {1, IH_, IW_, CI_SLICES_};
       cl_int4 output_shape = {1, OH_, OW_, CO_SLICES_};
-      ocl_runtime->SetKernelArg(kernel_conv_, arg_cn++, input_shape);
-      ocl_runtime->SetKernelArg(kernel_conv_, arg_cn++, output_shape);
+      ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, input_shape);
+      ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, output_shape);
     }
   }
 
   if (use_winograd_) {
-    ocl_runtime->RunKernel(kernel_4x4to36_, {size_t(TILES_XY_), 6, size_t(CI_SLICES_)}, {8, 6, 4}, nullptr);
-    ocl_runtime->RunKernel(kernel_conv_, {size_t(TILES_XY_ / 2), 36, size_t(CO_SLICES_ / 2)}, {8, 6, 2}, nullptr);
-    ocl_runtime->RunKernel(kernel_36to4x4_, {size_t(TILES_XY_), 4, size_t(CO_SLICES_)}, {32, 4, 2}, nullptr);
+    ocl_runtime_->RunKernel(kernel_4x4to36_, {size_t(TILES_XY_), 6, size_t(CI_SLICES_)}, {8, 6, 4}, nullptr);
+    ocl_runtime_->RunKernel(kernel_conv_, {size_t(TILES_XY_ / 2), 36, size_t(CO_SLICES_ / 2)}, {8, 6, 2}, nullptr);
+    ocl_runtime_->RunKernel(kernel_36to4x4_, {size_t(TILES_XY_), 4, size_t(CO_SLICES_)}, {32, 4, 2}, nullptr);
   } else {
     std::vector<size_t> global, local;
     SetGlobalLocalConv(&global, &local);
-    ocl_runtime->RunKernel(kernel_conv_, global, local, nullptr);
+    ocl_runtime_->RunKernel(kernel_conv_, global, local, nullptr);
   }
 
   return RET_OK;
@@ -819,10 +816,9 @@ std::string ConvolutionOpenCLKernel::CodeGenWinograd36To4x4() {
 }
 
 int ConvolutionOpenCLKernel::SetGlobalLocalConv(std::vector<size_t> *global, std::vector<size_t> *local) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   constexpr size_t work_group_size[] = {4, 4, 1};
-  auto max_work_item_sizes = ocl_runtime->GetWorkItemSize();
-  size_t max_work_group_size = ocl_runtime->GetKernelMaxWorkGroupSize(kernel_conv_(), (*ocl_runtime->Device())());
+  auto max_work_item_sizes = ocl_runtime_->GetWorkItemSize();
+  size_t max_work_group_size = ocl_runtime_->GetKernelMaxWorkGroupSize(kernel_conv_(), (*ocl_runtime_->Device())());
   const size_t max_z_size = std::min<size_t>(16, max_work_item_sizes[2]);
 
   size_t global_h = UP_DIV(OH_, work_group_size[0]) * work_group_size[0];

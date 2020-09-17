@@ -223,7 +223,6 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   delete[] data_out_ocl;
 
   delete kernel;
-  delete scale_kernel;
   delete param;
   for (auto tensor : inputs) {
     delete tensor;

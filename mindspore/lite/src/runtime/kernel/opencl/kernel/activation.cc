@@ -55,8 +55,7 @@ int ActivationOpenClKernel::Init() {
     c = in_tensors_[0]->shape()[3];
   }
   nhwc_shape_ = {n, h, w, c};
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  enable_fp16_ = ocl_runtime->GetFp16Enable();
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
   fp_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   if (in_size_ != 2 && in_size_ != 4) {
     MS_LOG(ERROR) << "Activate fun only support dim=4 or 2, but your dim=" << in_size_;
@@ -75,9 +74,9 @@ int ActivationOpenClKernel::Init() {
 
   std::string source = activation_source;
   std::set<std::string> build_options;
-  ocl_runtime->LoadSource(Program_Kernel[type_][0], source);
+  ocl_runtime_->LoadSource(Program_Kernel[type_][0], source);
   std::string kernel_name = Program_Kernel[type_][1];
-  ocl_runtime->BuildKernel(kernel_, Program_Kernel[type_][0], kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, Program_Kernel[type_][0], kernel_name, build_options);
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
   in_tensors_[0]->SetFormat(op_format_);
@@ -89,17 +88,16 @@ int ActivationOpenClKernel::Init() {
 int ActivationOpenClKernel::Run() {
   MS_LOG(DEBUG) << op_parameter_->name_ << " begin running!";
   cl_int4 img2d_shape = GetImg2dShape();
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, img2d_shape);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, img2d_shape);
   if (type_ == ActivationType_LEAKY_RELU) {
-    ocl_runtime->SetKernelArg(kernel_, arg_idx++, alpha_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, alpha_);
   }
   std::vector<size_t> local = {};
   std::vector<size_t> global = {static_cast<size_t>(img2d_shape.s[1]), static_cast<size_t>(img2d_shape.s[2])};
-  auto ret = ocl_runtime->RunKernel(kernel_, global, local, nullptr);
+  auto ret = ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run kernel:" << op_parameter_->name_ << " fail.";
     return RET_ERROR;

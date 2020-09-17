@@ -20,8 +20,6 @@
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#include "src/runtime/opencl/opencl_wrapper.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/image_format.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/avg_pool2d.cl.inc"
@@ -59,10 +57,9 @@ int PoolingOpenCLKernel::Init() {
     MS_LOG(ERROR) << "Init `Pooling2d` kernel failed!";
     return RET_INVALID_OP_NAME;
   }
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  enable_fp16_ = ocl_runtime->GetFp16Enable();
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
 #ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
+  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
   kernel_name += "_" + std::string(EnumNameFormat(op_format_));
   if (out_mem_type_ == OpenCLMemType::BUF) {
@@ -72,8 +69,8 @@ int PoolingOpenCLKernel::Init() {
     kernel_name += "_IMG";
   }
   std::set<std::string> build_options;
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
@@ -124,7 +121,6 @@ int PoolingOpenCLKernel::ReSize() { return RET_OK; }
 
 int PoolingOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
   int slices = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
   cl_int4 input_shape = {in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2], in_tensors_[0]->shape()[3], slices};
@@ -135,21 +131,21 @@ int PoolingOpenCLKernel::Run() {
   cl_int2 padding = {parameter_->pad_u_, parameter_->pad_l_};
 
   int arg_idx = 0;
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, output_shape);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, stride);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, kernel_size);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, padding);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_shape);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, stride);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, kernel_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, padding);
 
   std::vector<size_t> local_size;
   std::vector<size_t> global_size = InitGlobalSize();
-  int max_work_group_size = ocl_runtime->GetKernelMaxWorkGroupSize(kernel_(), (*ocl_runtime->Device())());
+  int max_work_group_size = ocl_runtime_->GetKernelMaxWorkGroupSize(kernel_(), (*ocl_runtime_->Device())());
   local_size = GetCommonLocalSize(global_size, max_work_group_size);
   global_size = GetCommonGlobalSize(local_size, global_size);
 
-  ocl_runtime->RunKernel(kernel_, global_size, local_size, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_size, local_size, nullptr);
   return RET_OK;
 }
 

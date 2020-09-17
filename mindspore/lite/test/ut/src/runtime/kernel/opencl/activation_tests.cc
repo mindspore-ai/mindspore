@@ -157,7 +157,6 @@ TEST_F(TestActivationOpenCL, ReluFp_dim4) {
   ret = sub_graph->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init sub_graph error.";
-    delete kernel;
     delete param;
     delete input_tensor;
     delete output_tensor;
@@ -167,7 +166,6 @@ TEST_F(TestActivationOpenCL, ReluFp_dim4) {
   MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
   ret = sub_graph->Run();
   if (ret != RET_OK) {
-    delete kernel;
     delete param;
     delete input_tensor;
     delete output_tensor;
@@ -182,7 +180,6 @@ TEST_F(TestActivationOpenCL, ReluFp_dim4) {
     printf_tensor<float>("ReluFp32--output data--", outputs[0]);
     CompareRes<float>(output_tensor, out_file);
   }
-  delete kernel;
   delete param;
   delete input_tensor;
   delete output_tensor;
@@ -271,7 +268,6 @@ TEST_F(TestActivationOpenCL, Relu6Fp_dim4) {
   ret = sub_graph->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init sub_graph error.";
-    delete kernel;
     delete param;
     delete input_tensor;
     delete output_tensor;
@@ -281,7 +277,6 @@ TEST_F(TestActivationOpenCL, Relu6Fp_dim4) {
   MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
   ret = sub_graph->Run();
   if (ret != RET_OK) {
-    delete kernel;
     delete param;
     delete input_tensor;
     delete output_tensor;
@@ -297,7 +292,6 @@ TEST_F(TestActivationOpenCL, Relu6Fp_dim4) {
     printf_tensor<float>("Relu6:FP32--output data---", outputs[0]);
     CompareRes<float>(output_tensor, out_file);
   }
-  delete kernel;
   delete param;
   delete input_tensor;
   delete output_tensor;
@@ -386,7 +380,6 @@ TEST_F(TestActivationOpenCL, SigmoidFp_dim4) {
   ret = sub_graph->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init sub_graph error.";
-    delete kernel;
     delete param;
     delete input_tensor;
     delete output_tensor;
@@ -396,7 +389,6 @@ TEST_F(TestActivationOpenCL, SigmoidFp_dim4) {
   MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
   ret = sub_graph->Run();
   if (ret != RET_OK) {
-    delete kernel;
     delete param;
     delete input_tensor;
     delete output_tensor;
@@ -412,7 +404,6 @@ TEST_F(TestActivationOpenCL, SigmoidFp_dim4) {
     printf_tensor<float>("Sigmoid:FP32--output data---", outputs[0]);
     CompareRes<float>(output_tensor, out_file);
   }
-  delete kernel;
   delete param;
   delete input_tensor;
   delete output_tensor;
@@ -502,7 +493,6 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
   ret = sub_graph->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init sub_graph error.";
-    delete kernel;
     delete param;
     delete input_tensor;
     delete output_tensor;
@@ -512,7 +502,6 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
   MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
   ret = sub_graph->Run();
   if (ret != RET_OK) {
-    delete kernel;
     delete param;
     delete input_tensor;
     delete output_tensor;
@@ -527,7 +516,6 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
     printf_tensor<float>("Leaky Relu:FP32--output data---", outputs[0]);
     CompareRes<float>(output_tensor, out_file);
   }
-  delete kernel;
   delete param;
   delete input_tensor;
   delete output_tensor;
@@ -616,7 +604,6 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
   ret = sub_graph->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init sub_graph error.";
-    delete kernel;
     delete param;
     delete input_tensor;
     delete output_tensor;
@@ -626,7 +613,6 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
   MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
   ret = sub_graph->Run();
   if (ret != RET_OK) {
-    delete kernel;
     delete param;
     delete input_tensor;
     delete output_tensor;
@@ -642,7 +628,6 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
     printf_tensor<float>("Tanh:FP32--output data---", outputs[0]);
     CompareRes<float>(output_tensor, out_file);
   }
-  delete kernel;
   delete param;
   delete input_tensor;
   delete output_tensor;

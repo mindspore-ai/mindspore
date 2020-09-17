@@ -174,7 +174,6 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
     delete weight_tensor;
     delete sub_graph;
     delete param;
-    delete biasadd_kernel;
     return;
   }
   MS_LOG(INFO) << "Sub graph begin running!";
@@ -186,7 +185,6 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
     delete weight_tensor;
     delete sub_graph;
     delete param;
-    delete biasadd_kernel;
     return;
   }
 
@@ -202,7 +200,6 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
   delete output_tensor;
   delete sub_graph;
   delete param;
-  delete biasadd_kernel;
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore
