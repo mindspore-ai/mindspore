@@ -15,7 +15,7 @@
 """hub config."""
 from src.resnet import resnet50, resnet101, se_resnet50
 
-def create_network(name, **kwargs):
+def create_network(name, *args, **kwargs):
     if name == 'resnet50':
         return resnet50(*args, **kwargs)
     if name == 'resnet101':
