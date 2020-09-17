@@ -127,8 +127,8 @@ class TensorAdd(_MathBinaryOp):
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
           or a tensor whose data type is number or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number,
-          or a bool when the first input is a tensor, or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number,  or a bool when the first input
+          is a tensor, or a tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -1081,8 +1081,8 @@ class Sub(_MathBinaryOp):
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
           or a tensor whose data type is number or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number,
-        or a bool when the first input is a tensor, or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number, or a bool when the first input
+          is a tensor, or a tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -1159,9 +1159,8 @@ class SquaredDifference(_MathBinaryOp):
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
           or a tensor whose data type is float16, float32, int32 or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number,
-          or a bool when the first input is a tensor or a tensor whose data type is
-          float16, float32, int32 or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number, or a bool when the first input
+          is a tensor or a tensor whose data type isfloat16, float32, int32 or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -1865,8 +1864,8 @@ class TruncateDiv(_MathBinaryOp):
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
           or a tensor whose data type is number or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number,
-          or a bool when the first input is a tensor, or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number, or a bool when the first input
+          is a tensor, or a tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -1895,8 +1894,8 @@ class TruncateMod(_MathBinaryOp):
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
           or a tensor whose data type is number or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number,
-          or a bool when the first input is a tensor, or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number, or a bool when the first input
+          is a tensor, or a tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,

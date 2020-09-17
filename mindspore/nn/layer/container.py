@@ -149,13 +149,17 @@ class SequentialCell(Cell):
         """Appends a given cell to the end of the list.
 
         Examples:
-        >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid')
-        >>> bn = nn.BatchNorm2d(2)
-        >>> relu = nn.ReLU()
-        >>> seq = nn.SequentialCell([conv, bn])
-        >>> seq.append(relu)
-        >>> x = Tensor(np.random.random((1, 3, 4, 4)), dtype=mindspore.float32)
-        >>> seq(x)
+            >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid')
+            >>> bn = nn.BatchNorm2d(2)
+            >>> relu = nn.ReLU()
+            >>> seq = nn.SequentialCell([conv, bn])
+            >>> seq.append(relu)
+            >>> x = Tensor(np.ones([1, 3, 4, 4]), dtype=mindspore.float32)
+            >>> seq(x)
+            [[[[0.12445523 0.12445523]
+               [0.12445523 0.12445523]]
+              [[0.         0.        ]
+               [0.         0.        ]]]]
         """
         if _valid_cell(cell):
             self._cells[str(len(self))] = cell
