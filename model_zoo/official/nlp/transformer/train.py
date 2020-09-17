@@ -103,8 +103,7 @@ def argparse_init():
     parser.add_argument("--save_checkpoint_steps", type=int, default=2500, help="Save checkpoint steps, "
                                                                                 "default is 2500.")
     parser.add_argument("--save_checkpoint_num", type=int, default=30, help="Save checkpoint numbers, default is 30.")
-    parser.add_argument("--save_checkpoint_path", type=str, default="./checkpoint/", help="Save checkpoint file path, "
-                                                                                          "default is ./checkpoint/")
+    parser.add_argument("--save_checkpoint_path", type=str, default="./", help="Save checkpoint file path")
     parser.add_argument("--data_path", type=str, default="", help="Data path, it is better to use absolute path")
     parser.add_argument("--bucket_boundaries", type=ast.literal_eval, default=[16, 32, 48, 64, 128],
                         help="sequence length for different bucket")
