@@ -26,6 +26,8 @@ class SSDModelUtil {
     // Constructor.
     SSDModelUtil(int srcImageWidth, int srcImgHeight);
 
+    ~SSDModelUtil();
+
     /**
      * Return the SSD model post-processing result.
      * @param branchScores
@@ -33,10 +35,6 @@ class SSDModelUtil {
      * @return
      */
     std::string getDecodeResult(float *branchScores, float *branchBoxData);
-
-    // ============= variables =============.
-    int inputImageHeight;
-    int inputImageWidth;
 
     struct NormalBox {
         float y;
@@ -64,7 +62,8 @@ class SSDModelUtil {
 
  private:
     std::vector<struct NormalBox> mDefaultBoxes;
-
+    int inputImageHeight;
+    int inputImageWidth;
 
     void getDefaultBoxes();
 
@@ -79,7 +78,6 @@ class SSDModelUtil {
                                const int count = 1917, const int max_results = 100);
 
     double IOU(float r1[4], float r2[4]);
-
 
     // ============= variables =============.
     struct network {

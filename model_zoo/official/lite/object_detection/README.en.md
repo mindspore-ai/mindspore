@@ -88,7 +88,7 @@ In this example, the  download.gradle File configuration auto download library f
 
 Note: if the automatic download fails, please manually download the relevant library files and put them in the corresponding location.
 
-libmindspore-lite.so [libmindspore-lite.so]( https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%200.7/libmindspore-lite.so)
+mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz [Download link](https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%201.0/mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz)
 
 
 
@@ -365,188 +365,188 @@ The inference code process is as follows. For details about the complete code, s
 
    - For the targets whose probability is greater than the threshold value, the output rectangle box needs to be restored to the original size after the rectangular box is filtered by NMS algorithm.
 
-```cpp
-std::string SSDModelUtil::getDecodeResult(float *branchScores, float *branchBoxData) {
-    std::string result = "";
-    NormalBox tmpBox[1917] = {0};
-    float mScores[1917][81] = {0};
+    ```cpp
+    std::string SSDModelUtil::getDecodeResult(float *branchScores, float *branchBoxData) {
+        std::string result = "";
+        NormalBox tmpBox[1917] = {0};
+        float mScores[1917][81] = {0};
 
-    float outBuff[1917][7] = {0};
+        float outBuff[1917][7] = {0};
 
-    float scoreWithOneClass[1917] = {0};
-    int outBoxNum = 0;
-    YXBoxes decodedBoxes[1917] = {0};
+        float scoreWithOneClass[1917] = {0};
+        int outBoxNum = 0;
+        YXBoxes decodedBoxes[1917] = {0};
 
-    // Copy branch outputs box data to tmpBox.
-    for (int i = 0; i < 1917; ++i) {
-        tmpBox[i].y = branchBoxData[i * 4 + 0];
-        tmpBox[i].x = branchBoxData[i * 4 + 1];
-        tmpBox[i].h = branchBoxData[i * 4 + 2];
-        tmpBox[i].w = branchBoxData[i * 4 + 3];
-    }
-
-    // Copy branch outputs score to mScores.
-    for (int i = 0; i < 1917; ++i) {
-        for (int j = 0; j < 81; ++j) {
-            mScores[i][j] = branchScores[i * 81 + j];
+        // Copy branch outputs box data to tmpBox.
+        for (int i = 0; i < 1917; ++i) {
+            tmpBox[i].y = branchBoxData[i * 4 + 0];
+            tmpBox[i].x = branchBoxData[i * 4 + 1];
+            tmpBox[i].h = branchBoxData[i * 4 + 2];
+            tmpBox[i].w = branchBoxData[i * 4 + 3];
         }
-    }
 
-    // NMS processing.
-    ssd_boxes_decode(tmpBox, decodedBoxes);
-  //  const float nms_threshold = 0.6;
-    const float nms_threshold = 0.3;
-    for (int i = 1; i < 81; i++) {
-        std::vector<int> in_indexes;
-        for (int j = 0; j < 1917; j++) {
-            scoreWithOneClass[j] = mScores[j][i];
-         //   if (mScores[j][i] > 0.1) {
-            if (mScores[j][i] > g_thres_map[i]) {
-                in_indexes.push_back(j);
+        // Copy branch outputs score to mScores.
+        for (int i = 0; i < 1917; ++i) {
+            for (int j = 0; j < 81; ++j) {
+                mScores[i][j] = branchScores[i * 81 + j];
             }
         }
-        if (in_indexes.size() == 0) {
-            continue;
+
+        // NMS processing.
+        ssd_boxes_decode(tmpBox, decodedBoxes);
+      //  const float nms_threshold = 0.6;
+        const float nms_threshold = 0.3;
+        for (int i = 1; i < 81; i++) {
+            std::vector<int> in_indexes;
+            for (int j = 0; j < 1917; j++) {
+                scoreWithOneClass[j] = mScores[j][i];
+             //   if (mScores[j][i] > 0.1) {
+                if (mScores[j][i] > g_thres_map[i]) {
+                    in_indexes.push_back(j);
+                }
+            }
+            if (in_indexes.size() == 0) {
+                continue;
+            }
+
+            sort(in_indexes.begin(), in_indexes.end(),
+                 [&](int a, int b) { return scoreWithOneClass[a] > scoreWithOneClass[b]; });
+            std::vector<int> out_indexes;
+
+            nonMaximumSuppression(decodedBoxes, scoreWithOneClass, in_indexes, out_indexes,
+                                  nms_threshold);
+            for (int k = 0; k < out_indexes.size(); k++) {
+                outBuff[outBoxNum][0] = out_indexes[k]; //image id
+                outBuff[outBoxNum][1] = i; //labelid
+                outBuff[outBoxNum][2] = scoreWithOneClass[out_indexes[k]]; //scores
+                outBuff[outBoxNum][3] =
+                        decodedBoxes[out_indexes[k]].xmin * inputImageWidth / 300;
+                outBuff[outBoxNum][4] =
+                        decodedBoxes[out_indexes[k]].ymin * inputImageHeight / 300;
+                outBuff[outBoxNum][5] =
+                        decodedBoxes[out_indexes[k]].xmax * inputImageWidth / 300;
+                outBuff[outBoxNum][6] =
+                        decodedBoxes[out_indexes[k]].ymax * inputImageHeight / 300;
+                outBoxNum++;
+            }
+        }
+        MS_PRINT("outBoxNum %d", outBoxNum);
+
+        for (int i = 0; i < outBoxNum; ++i) {
+            std::string tmpid_str = std::to_string(outBuff[i][0]);
+            result += tmpid_str; // image ID
+            result += "_";
+            // tmpid_str = std::to_string(outBuff[i][1]);
+            MS_PRINT("label_classes i %d, outBuff %d",i, (int) outBuff[i][1]);
+            tmpid_str = label_classes[(int) outBuff[i][1]];
+            result += tmpid_str; // label id
+            result += "_";
+            tmpid_str = std::to_string(outBuff[i][2]);
+            result += tmpid_str; // scores
+            result += "_";
+            tmpid_str = std::to_string(outBuff[i][3]);
+            result += tmpid_str; // xmin
+            result += "_";
+            tmpid_str = std::to_string(outBuff[i][4]);
+            result += tmpid_str; // ymin
+            result += "_";
+            tmpid_str = std::to_string(outBuff[i][5]);
+            result += tmpid_str; // xmax
+            result += "_";
+            tmpid_str = std::to_string(outBuff[i][6]);
+            result += tmpid_str; // ymax
+            result += ";";
         }
 
-        sort(in_indexes.begin(), in_indexes.end(),
-             [&](int a, int b) { return scoreWithOneClass[a] > scoreWithOneClass[b]; });
-        std::vector<int> out_indexes;
+        return result;
+    }
+    std::string SSDModelUtil::getDecodeResult(float *branchScores, float *branchBoxData) {
+        std::string result = "";
+        NormalBox tmpBox[1917] = {0};
+        float mScores[1917][81] = {0};
+        float outBuff[1917][7] = {0};
+        float scoreWithOneClass[1917] = {0};
+        int outBoxNum = 0;
+        YXBoxes decodedBoxes[1917] = {0};
 
-        nonMaximumSuppression(decodedBoxes, scoreWithOneClass, in_indexes, out_indexes,
-                              nms_threshold);
-        for (int k = 0; k < out_indexes.size(); k++) {
-            outBuff[outBoxNum][0] = out_indexes[k]; //image id
-            outBuff[outBoxNum][1] = i; //labelid
-            outBuff[outBoxNum][2] = scoreWithOneClass[out_indexes[k]]; //scores
-            outBuff[outBoxNum][3] =
-                    decodedBoxes[out_indexes[k]].xmin * inputImageWidth / 300;
-            outBuff[outBoxNum][4] =
-                    decodedBoxes[out_indexes[k]].ymin * inputImageHeight / 300;
-            outBuff[outBoxNum][5] =
-                    decodedBoxes[out_indexes[k]].xmax * inputImageWidth / 300;
-            outBuff[outBoxNum][6] =
-                    decodedBoxes[out_indexes[k]].ymax * inputImageHeight / 300;
-            outBoxNum++;
+        // Copy branch outputs box data to tmpBox.
+        for (int i = 0; i < 1917; ++i) {
+            tmpBox[i].y = branchBoxData[i * 4 + 0];
+            tmpBox[i].x = branchBoxData[i * 4 + 1];
+            tmpBox[i].h = branchBoxData[i * 4 + 2];
+            tmpBox[i].w = branchBoxData[i * 4 + 3];
         }
-    }
-    MS_PRINT("outBoxNum %d", outBoxNum);
 
-    for (int i = 0; i < outBoxNum; ++i) {
-        std::string tmpid_str = std::to_string(outBuff[i][0]);
-        result += tmpid_str; // image ID
-        result += "_";
-        // tmpid_str = std::to_string(outBuff[i][1]);
-        MS_PRINT("label_classes i %d, outBuff %d",i, (int) outBuff[i][1]);
-        tmpid_str = label_classes[(int) outBuff[i][1]];
-        result += tmpid_str; // label id
-        result += "_";
-        tmpid_str = std::to_string(outBuff[i][2]);
-        result += tmpid_str; // scores
-        result += "_";
-        tmpid_str = std::to_string(outBuff[i][3]);
-        result += tmpid_str; // xmin
-        result += "_";
-        tmpid_str = std::to_string(outBuff[i][4]);
-        result += tmpid_str; // ymin
-        result += "_";
-        tmpid_str = std::to_string(outBuff[i][5]);
-        result += tmpid_str; // xmax
-        result += "_";
-        tmpid_str = std::to_string(outBuff[i][6]);
-        result += tmpid_str; // ymax
-        result += ";";
-    }
-
-    return result;
-}
-std::string SSDModelUtil::getDecodeResult(float *branchScores, float *branchBoxData) {
-    std::string result = "";
-    NormalBox tmpBox[1917] = {0};
-    float mScores[1917][81] = {0};
-    float outBuff[1917][7] = {0};
-    float scoreWithOneClass[1917] = {0};
-    int outBoxNum = 0;
-    YXBoxes decodedBoxes[1917] = {0};
-
-    // Copy branch outputs box data to tmpBox.
-    for (int i = 0; i < 1917; ++i) {
-        tmpBox[i].y = branchBoxData[i * 4 + 0];
-        tmpBox[i].x = branchBoxData[i * 4 + 1];
-        tmpBox[i].h = branchBoxData[i * 4 + 2];
-        tmpBox[i].w = branchBoxData[i * 4 + 3];
-    }
-
-    // Copy branch outputs score to mScores.
-    for (int i = 0; i < 1917; ++i) {
-        for (int j = 0; j < 81; ++j) {
-            mScores[i][j] = branchScores[i * 81 + j];
+        // Copy branch outputs score to mScores.
+        for (int i = 0; i < 1917; ++i) {
+            for (int j = 0; j < 81; ++j) {
+                mScores[i][j] = branchScores[i * 81 + j];
+            }
         }
-    }
 
-     ssd_boxes_decode(tmpBox, decodedBoxes);
-     const float nms_threshold = 0.3;
-     for (int i = 1; i < 81; i++) {
-         std::vector<int> in_indexes;
-         for (int j = 0; j < 1917; j++) {
-             scoreWithOneClass[j] = mScores[j][i];
-             if (mScores[j][i] > g_thres_map[i]) {
-                 in_indexes.push_back(j);
+         ssd_boxes_decode(tmpBox, decodedBoxes);
+         const float nms_threshold = 0.3;
+         for (int i = 1; i < 81; i++) {
+             std::vector<int> in_indexes;
+             for (int j = 0; j < 1917; j++) {
+                 scoreWithOneClass[j] = mScores[j][i];
+                 if (mScores[j][i] > g_thres_map[i]) {
+                     in_indexes.push_back(j);
+                 }
+             }
+             if (in_indexes.size() == 0) {
+                 continue;
+             }
+
+             sort(in_indexes.begin(), in_indexes.end(),
+                  [&](int a, int b) { return scoreWithOneClass[a] > scoreWithOneClass[b]; });
+             std::vector<int> out_indexes;
+
+             nonMaximumSuppression(decodedBoxes, scoreWithOneClass, in_indexes, out_indexes,
+                                   nms_threshold);
+             for (int k = 0; k < out_indexes.size(); k++) {
+                 outBuff[outBoxNum][0] = out_indexes[k]; //image id
+                 outBuff[outBoxNum][1] = i; //labelid
+                 outBuff[outBoxNum][2] = scoreWithOneClass[out_indexes[k]]; //scores
+                 outBuff[outBoxNum][3] =
+                         decodedBoxes[out_indexes[k]].xmin * inputImageWidth / 300;
+                 outBuff[outBoxNum][4] =
+                         decodedBoxes[out_indexes[k]].ymin * inputImageHeight / 300;
+                 outBuff[outBoxNum][5] =
+                         decodedBoxes[out_indexes[k]].xmax * inputImageWidth / 300;
+                 outBuff[outBoxNum][6] =
+                         decodedBoxes[out_indexes[k]].ymax * inputImageHeight / 300;
+                 outBoxNum++;
              }
          }
-         if (in_indexes.size() == 0) {
-             continue;
+         MS_PRINT("outBoxNum %d", outBoxNum);
+
+         for (int i = 0; i < outBoxNum; ++i) {
+             std::string tmpid_str = std::to_string(outBuff[i][0]);
+             result += tmpid_str; // image ID
+             result += "_";
+             // tmpid_str = std::to_string(outBuff[i][1]);
+             MS_PRINT("label_classes i %d, outBuff %d",i, (int) outBuff[i][1]);
+             tmpid_str = label_classes[(int) outBuff[i][1]];
+             result += tmpid_str; // label id
+             result += "_";
+             tmpid_str = std::to_string(outBuff[i][2]);
+             result += tmpid_str; // scores
+             result += "_";
+             tmpid_str = std::to_string(outBuff[i][3]);
+             result += tmpid_str; // xmin
+             result += "_";
+             tmpid_str = std::to_string(outBuff[i][4]);
+             result += tmpid_str; // ymin
+             result += "_";
+             tmpid_str = std::to_string(outBuff[i][5]);
+             result += tmpid_str; // xmax
+             result += "_";
+             tmpid_str = std::to_string(outBuff[i][6]);
+             result += tmpid_str; // ymax
+             result += ";";
          }
-
-         sort(in_indexes.begin(), in_indexes.end(),
-              [&](int a, int b) { return scoreWithOneClass[a] > scoreWithOneClass[b]; });
-         std::vector<int> out_indexes;
-
-         nonMaximumSuppression(decodedBoxes, scoreWithOneClass, in_indexes, out_indexes,
-                               nms_threshold);
-         for (int k = 0; k < out_indexes.size(); k++) {
-             outBuff[outBoxNum][0] = out_indexes[k]; //image id
-             outBuff[outBoxNum][1] = i; //labelid
-             outBuff[outBoxNum][2] = scoreWithOneClass[out_indexes[k]]; //scores
-             outBuff[outBoxNum][3] =
-                     decodedBoxes[out_indexes[k]].xmin * inputImageWidth / 300;
-             outBuff[outBoxNum][4] =
-                     decodedBoxes[out_indexes[k]].ymin * inputImageHeight / 300;
-             outBuff[outBoxNum][5] =
-                     decodedBoxes[out_indexes[k]].xmax * inputImageWidth / 300;
-             outBuff[outBoxNum][6] =
-                     decodedBoxes[out_indexes[k]].ymax * inputImageHeight / 300;
-             outBoxNum++;
-         }
-     }
-     MS_PRINT("outBoxNum %d", outBoxNum);
-
-     for (int i = 0; i < outBoxNum; ++i) {
-         std::string tmpid_str = std::to_string(outBuff[i][0]);
-         result += tmpid_str; // image ID
-         result += "_";
-         // tmpid_str = std::to_string(outBuff[i][1]);
-         MS_PRINT("label_classes i %d, outBuff %d",i, (int) outBuff[i][1]);
-         tmpid_str = label_classes[(int) outBuff[i][1]];
-         result += tmpid_str; // label id
-         result += "_";
-         tmpid_str = std::to_string(outBuff[i][2]);
-         result += tmpid_str; // scores
-         result += "_";
-         tmpid_str = std::to_string(outBuff[i][3]);
-         result += tmpid_str; // xmin
-         result += "_";
-         tmpid_str = std::to_string(outBuff[i][4]);
-         result += tmpid_str; // ymin
-         result += "_";
-         tmpid_str = std::to_string(outBuff[i][5]);
-         result += tmpid_str; // xmax
-         result += "_";
-         tmpid_str = std::to_string(outBuff[i][6]);
-         result += tmpid_str; // ymax
-         result += ";";
-     }
-    return result;
-}
-```
+        return result;
+    }
+    ```
 
