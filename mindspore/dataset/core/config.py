@@ -13,7 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 """
-The configuration manager.
+The configuration module provides various functions to set and get the supported
+configuration parameters, and read a configuration file.
 """
 import random
 import numpy
@@ -35,18 +36,20 @@ def set_seed(seed):
     Note:
         This set_seed function sets the seed in the Python random library and numpy.random library
         for deterministic Python augmentations using randomness. This set_seed function should
-        be called with every iterator created to reset the random seed. In our pipeline this
+        be called with every iterator created to reset the random seed. In the pipeline, this
         does not guarantee deterministic results with num_parallel_workers > 1.
 
     Args:
-        seed(int): seed to be set.
+        seed(int): Seed to be set.
 
     Raises:
         ValueError: If seed is invalid (< 0 or > MAX_UINT_32).
 
     Examples:
         >>> import mindspore.dataset as ds
-        >>> # sets the new seed value, now operators with a random seed will use new seed value.
+        >>>
+        >>> # Set a new global configuration value for the seed value.
+        >>> # Operations with randomness will use the seed value to generate random values.
         >>> ds.config.set_seed(1000)
     """
     if seed < 0 or seed > UINT32_MAX:
@@ -72,14 +75,15 @@ def set_prefetch_size(size):
     Set the number of rows to be prefetched.
 
     Args:
-        size (int): total number of rows to be prefetched.
+        size (int): Total number of rows to be prefetched.
 
     Raises:
         ValueError: If prefetch_size is invalid (<= 0 or > MAX_INT_32).
 
     Examples:
         >>> import mindspore.dataset as ds
-        >>> # sets the new prefetch value.
+        >>>
+        >>> # Set a new global configuration value for the prefetch size.
         >>> ds.config.set_prefetch_size(1000)
     """
     if size <= 0 or size > INT32_MAX:
@@ -102,18 +106,20 @@ def set_num_parallel_workers(num):
     Set the default number of parallel workers.
 
     Args:
-        num (int): number of parallel workers to be used as a default for each operation.
+        num (int): Number of parallel workers to be used as a default for each operation.
 
     Raises:
         ValueError: If num_parallel_workers is invalid (<= 0 or > MAX_INT_32).
 
     Examples:
         >>> import mindspore.dataset as ds
-        >>> # sets the new parallel_workers value, now parallel dataset operators will run with 8 workers.
+        >>>
+        >>> # Set a new global configuration value for the number of parallel workers.
+        >>> # Now parallel dataset operators will run with 8 workers.
         >>> ds.config.set_num_parallel_workers(8)
     """
     if num <= 0 or num > INT32_MAX:
-        raise ValueError("Num workers given is not within the required range.")
+        raise ValueError("Number of parallel workers given is not within the required range.")
     _config.set_num_parallel_workers(num)
 
 
@@ -129,17 +135,18 @@ def get_num_parallel_workers():
 
 def set_monitor_sampling_interval(interval):
     """
-    Set the default interval(ms) of monitor sampling.
+    Set the default interval (in milliseconds) for monitor sampling.
 
     Args:
-        interval (int): interval(ms) to be used to performance monitor sampling.
+        interval (int): Interval (in milliseconds) to be used for performance monitor sampling.
 
     Raises:
         ValueError: If interval is invalid (<= 0 or > MAX_INT_32).
 
     Examples:
         >>> import mindspore.dataset as ds
-        >>> # sets the new interval value.
+        >>>
+        >>> # Set a new global configuration value for the monitor sampling interval.
         >>> ds.config.set_monitor_sampling_interval(100)
     """
     if interval <= 0 or interval > INT32_MAX:
@@ -152,7 +159,7 @@ def get_monitor_sampling_interval():
     Get the default interval of performance monitor sampling.
 
     Returns:
-        Interval: interval(ms) of performance monitor sampling.
+        Interval: interval (in milliseconds) for performance monitor sampling.
     """
     return _config.get_monitor_sampling_interval()
 
@@ -163,18 +170,19 @@ def set_callback_timeout(timeout):
     In case of a deadlock, the wait function will exit after the timeout period.
 
     Args:
-        timeout (int): timeout(s) to be used to end teh wait in DSWaitedCallback in case of a deadlock.
+        timeout (int): Timeout (in seconds) to be used to end the wait in DSWaitedCallback in case of a deadlock.
 
     Raises:
         ValueError: If timeout is invalid (<= 0 or > MAX_INT_32).
 
     Examples:
         >>> import mindspore.dataset as ds
-        >>> # sets the new timout value.
+        >>>
+        >>> # Set a new global configuration value for the timeout value.
         >>> ds.config.set_callback_timeout(100)
     """
     if timeout <= 0 or timeout > INT32_MAX:
-        raise ValueError("timeout given is not within the required range.")
+        raise ValueError("Timeout given is not within the required range.")
     _config.set_callback_timeout(timeout)
 
 
@@ -201,25 +209,23 @@ def __str__():
 
 def load(file):
     """
-    Load configuration from a file.
+    Load configurations from a file.
 
     Args:
-        file (str): path the config file to be loaded.
+        file (str): Path of the configuration file to be loaded.
 
     Raises:
         RuntimeError: If file is invalid and parsing fails.
 
     Examples:
         >>> import mindspore.dataset as ds
-        >>> # sets the default value according to values in configuration file.
+        >>>
+        >>> # Set new default configuration values according to values in the configuration file.
         >>> ds.config.load("path/to/config/file")
         >>> # example config file:
         >>> # {
         >>> #     "logFilePath": "/tmp",
-        >>> #     "rowsPerBuffer": 32,
         >>> #     "numParallelWorkers": 4,
-        >>> #     "workerConnectorSize": 16,
-        >>> #     "opConnectorSize": 16,
         >>> #     "seed": 5489,
         >>> #     "monitorSamplingInterval": 30
         >>> # }

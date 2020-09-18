@@ -22,26 +22,26 @@ to improve their training models.
     A constructor's arguments for every class in this module must be saved into the
     class attributes (self.xxx) to support save() and load().
 
-    Examples:
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>> import mindspore.dataset.vision.c_transforms as c_vision
-        >>> from mindspore.dataset.vision import Border, Inter
-        >>>
-        >>> dataset_dir = "path/to/imagefolder_directory"
-        >>> # create a dataset that reads all files in dataset_dir with 8 threads
-        >>> data1 = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8)
-        >>> # create a list of transformations to be applied to the image data
-        >>> transforms_list = [c_vision.Decode(),
-        >>>                    c_vision.Resize((256, 256), interpolation=Inter.LINEAR),
-        >>>                    c_vision.RandomCrop(200, padding_mode=Border.EDGE),
-        >>>                    c_vision.RandomRotation((0, 15)),
-        >>>                    c_vision.Normalize((100, 115.0, 121.0), (71.0, 68.0, 70.0)),
-        >>>                    c_vision.HWC2CHW()]
-        >>> onehot_op = c_transforms.OneHot(num_classes=10)
-        >>> # apply the transformation to the dataset through data1.map()
-        >>> data1 = data1.map(operations=transforms_list, input_columns="image")
-        >>> data1 = data1.map(operations=onehot_op, input_columns="label")
+Examples:
+    >>> import mindspore.dataset as ds
+    >>> import mindspore.dataset.transforms.c_transforms as c_transforms
+    >>> import mindspore.dataset.vision.c_transforms as c_vision
+    >>> from mindspore.dataset.vision import Border, Inter
+    >>>
+    >>> dataset_dir = "path/to/imagefolder_directory"
+    >>> # create a dataset that reads all files in dataset_dir with 8 threads
+    >>> data1 = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8)
+    >>> # create a list of transformations to be applied to the image data
+    >>> transforms_list = [c_vision.Decode(),
+    >>>                    c_vision.Resize((256, 256), interpolation=Inter.LINEAR),
+    >>>                    c_vision.RandomCrop(200, padding_mode=Border.EDGE),
+    >>>                    c_vision.RandomRotation((0, 15)),
+    >>>                    c_vision.Normalize((100, 115.0, 121.0), (71.0, 68.0, 70.0)),
+    >>>                    c_vision.HWC2CHW()]
+    >>> onehot_op = c_transforms.OneHot(num_classes=10)
+    >>> # apply the transformation to the dataset through data1.map()
+    >>> data1 = data1.map(operations=transforms_list, input_columns="image")
+    >>> data1 = data1.map(operations=onehot_op, input_columns="label")
 """
 import numbers
 import mindspore._c_dataengine as cde

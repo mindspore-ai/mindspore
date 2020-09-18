@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-The module text.transforms is inheritted from _c_dataengine
+The module text.transforms is inherited from _c_dataengine
 and is implemented based on ICU4C and cppjieba in C++.
 It's a high performance module to process NLP text.
 Users can use Vocab to build their own dictionary,
@@ -23,26 +23,26 @@ and use Lookup to find the index of tokens in Vocab.
     A constructor's arguments for every class in this module must be saved into the
     class attributes (self.xxx) to support save() and load().
 
-    Examples:
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.text as text
-        >>>
-        >>> dataset_file = "path/to/text_file_path"
-        >>> # sentences as line data saved in a file
-        >>> dataset = ds.TextFileDataset(dataset_file, shuffle=False)
-        >>> # tokenize sentence to unicode characters
-        >>> tokenizer = text.UnicodeCharTokenizer()
-        >>> # load vocabulary form list
-        >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
-        >>> # lookup is an operation for mapping tokens to ids
-        >>> lookup = text.Lookup(vocab)
-        >>> dataset = dataset.map(operations=[tokenizer, lookup])
-        >>> for i in dataset.create_dict_iterator():
-        >>>     print(i)
-        >>> # if text line in dataset_file is:
-        >>> # 深圳欢迎您
-        >>> # then the output will be:
-        >>> # {'text': array([0, 1, 2, 3, 4], dtype=int32)}
+Examples:
+    >>> import mindspore.dataset as ds
+    >>> import mindspore.dataset.text as text
+    >>>
+    >>> dataset_file = "path/to/text_file_path"
+    >>> # sentences as line data saved in a file
+    >>> dataset = ds.TextFileDataset(dataset_file, shuffle=False)
+    >>> # tokenize sentence to unicode characters
+    >>> tokenizer = text.UnicodeCharTokenizer()
+    >>> # load vocabulary form list
+    >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
+    >>> # lookup is an operation for mapping tokens to ids
+    >>> lookup = text.Lookup(vocab)
+    >>> dataset = dataset.map(operations=[tokenizer, lookup])
+    >>> for i in dataset.create_dict_iterator():
+    >>>     print(i)
+    >>> # if text line in dataset_file is:
+    >>> # 深圳欢迎您
+    >>> # then the output will be:
+    >>> # {'text': array([0, 1, 2, 3, 4], dtype=int32)}
 """
 import os
 import re
