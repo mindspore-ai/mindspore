@@ -254,7 +254,6 @@ def _setup_parallel_env(platform):
     context.set_auto_parallel_context(
         parallel_mode=ParallelMode.DATA_PARALLEL,
         device_num=MultiAscend.get_group_size(),
-        parameter_broadcast=True,
         gradients_mean=True
     )
 

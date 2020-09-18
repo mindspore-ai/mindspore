@@ -74,7 +74,6 @@ if __name__ == '__main__':
     if run_distribute:
         context.set_auto_parallel_context(device_num=rank_size,
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          parameter_broadcast=True,
                                           gradients_mean=True)
         init()
         context.set_auto_parallel_context(device_num=args_opt.device_num,

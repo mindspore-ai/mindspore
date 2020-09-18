@@ -123,7 +123,7 @@ def run_transformer_train():
         device_num = args.device_num
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
-                                          parameter_broadcast=True, device_num=device_num)
+                                          device_num=device_num)
         D.init()
         rank_id = args.device_id % device_num
         save_ckpt_path = os.path.join(args.save_checkpoint_path, 'ckpt_' + str(get_rank()) + '/')
