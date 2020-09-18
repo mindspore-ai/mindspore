@@ -49,7 +49,7 @@ def context_device_init(config):
         if config.run_distribute:
             context.set_auto_parallel_context(device_num=config.rank_size,
                                               parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              parameter_broadcast=True, gradients_mean=True,
+                                              gradients_mean=True,
                                               all_reduce_fusion_config=[140])
             init()
     else:

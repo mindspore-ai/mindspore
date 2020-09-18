@@ -268,7 +268,7 @@ def train(cloud_args=None):
         loss_scale_manager = FixedLossScaleManager(args.loss_scale, drop_overflow_update=False)
 
     context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size,
-                                      parameter_broadcast=True, gradients_mean=True)
+                                      gradients_mean=True)
     model = Model(train_net, optimizer=opt, metrics=None, loss_scale_manager=loss_scale_manager, amp_level="O3")
 
     # checkpoint save

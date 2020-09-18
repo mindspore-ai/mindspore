@@ -139,7 +139,7 @@ if __name__ == '__main__':
         device_num = args.group_size
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          parameter_broadcast=True, gradients_mean=True)
+                                          gradients_mean=True)
     else:
         context.set_context(device_id=args.device_id)
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)

@@ -178,7 +178,7 @@ def test(cloud_args=None):
     if args.is_distributed:
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size,
-                                          parameter_broadcast=True, gradients_mean=True)
+                                          gradients_mean=True)
 
     args.logger.save_args(args)
 

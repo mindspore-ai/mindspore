@@ -51,7 +51,6 @@ def train_net(data_dir,
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode,
                                           device_num=group_size,
-                                          parameter_broadcast=True,
                                           gradients_mean=False)
     net = UNet(n_channels=cfg['num_channels'], n_classes=cfg['num_classes'])
 
