@@ -32,6 +32,4 @@ __all__ = [
     'expm1_generic',
     'log_generic',
     'log1p_generic',
-    'erf_generic',
-    'erfc_generic',
 ]
