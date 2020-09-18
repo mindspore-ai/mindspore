@@ -245,6 +245,10 @@ class _AutoParallelContext:
             strategy_ckpt_save_file (bool): Path to save parallel strategy checkpoint.
         """
         self.check_context_handle()
+        import os
+        dir_path = os.path.dirname(strategy_ckpt_save_file)
+        if dir_path and not os.path.exists(dir_path):
+            os.makedirs(dir_path)
         self._context_handle.set_strategy_ckpt_save_file(strategy_ckpt_save_file)
 
     def get_strategy_ckpt_save_file(self):

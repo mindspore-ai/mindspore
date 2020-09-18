@@ -395,9 +395,10 @@ def set_auto_parallel_context(**kwargs):
                        should be set with True. Default: False.
         enable_parallel_optimizer (bool): This is a developing feature, which shards the weight update computation for
                        data parallel training in the benefit of time and memory saving. For now,
-                       `Lamb` and `AdamWeightDecay` are supported in data parallel mode.
+                       `Lamb` and `AdamWeightDecay` are supported in data parallel mode. No Default, if it is not set,
+                       the fusion is closed.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
-                       and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP.
+                       and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -408,9 +409,13 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(gradients_mean=True)
         >>> context.set_auto_parallel_context(gradient_fp32_sync=False)
         >>> context.set_auto_parallel_context(parallel_mode="auto_parallel")
+        >>> context.set_auto_parallel_context(auto_parallel_search_mode="dynamic_programming")
         >>> context.set_auto_parallel_context(parameter_broadcast=False)
         >>> context.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
         >>> context.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
+        >>> context.set_auto_parallel_context(full_batch=True)
+        >>> context.set_auto_parallel_context(enable_parallel_optimizer=False)
+        >>> context.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
     """
     _set_auto_parallel_context(**kwargs)
 
@@ -439,10 +444,12 @@ def reset_auto_parallel_context():
     - global_rank: 0.
     - gradients_mean: False.
     - gradient_fp32_sync: True.
-    - parallel_mode: "stand_alone".
+    - parallel_mode: 'stand_alone'.
+    - auto_parallel_search_mode: 'dynamic_programming'.
     - parameter_broadcast: False.
-    - strategy_ckpt_load_file: "".
-    - strategy_ckpt_save_file: "".
+    - strategy_ckpt_load_file: ''.
+    - strategy_ckpt_save_file: ''.
+    - full_batch: False.
     - enable_parallel_optimizer: False.
     """
     _reset_auto_parallel_context()

@@ -186,6 +186,7 @@ class CostGraph {
 
   std::vector<OperatorInfoPtr> GetOperators() const { return ops_; }
   size_t GetNumEdges() const;
+  Status InitReshapeStrategy();
   Status InitSelectedStrategy();
   OperatorInfoPtr FindTmpIdentityByParameterName(std::string &) const;
   // When TmpIdentity is used by mulitple operators, the corresponding parameter's memory cost should be calculated only
