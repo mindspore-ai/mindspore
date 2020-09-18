@@ -271,8 +271,6 @@ class ExecutionTree {
   std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
   bool optimize_;                                        // Flag to enable optional optimizations
 };
-
-inline bool operator==(const ExecutionTree::Iterator &lhs, const ExecutionTree::Iterator &rhs) { return lhs == rhs; }
 }  // namespace dataset
 }  // namespace mindspore
 

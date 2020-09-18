@@ -62,7 +62,7 @@ class Cifar100Dataset;
 class CLUEDataset;
 class CocoDataset;
 class CSVDataset;
-struct CsvBase;
+class CsvBase;
 class ImageFolderDataset;
 #ifndef ENABLE_ANDROID
 class ManifestDataset;
@@ -70,14 +70,14 @@ class ManifestDataset;
 class MnistDataset;
 class RandomDataset;
 class TextFileDataset;
-class TFRecordDataset;
 #ifndef ENABLE_ANDROID
+class TFRecordDataset;
 class VOCDataset;
 #endif
 // Dataset Op classes (in alphabetical order)
 class BatchDataset;
-class BucketBatchByLengthDataset;
 #ifndef ENABLE_ANDROID
+class BucketBatchByLengthDataset;
 class BuildVocabDataset;
 #endif
 class ConcatDataset;
@@ -325,6 +325,7 @@ std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &datase
                                           ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
                                           int32_t shard_id = 0);
 
+#ifndef ENABLE_ANDROID
 /// \brief Function to create a TFRecordDataset
 /// \param[in] dataset_files List of files to be read to search for a pattern of files. The list
 ///     will be sorted in a lexicographical order.
@@ -399,7 +400,6 @@ std::shared_ptr<TFRecordDataset> TFRecord(const std::vector<std::string> &datase
   return ds;
 }
 
-#ifndef ENABLE_ANDROID
 /// \brief Function to create a VOCDataset
 /// \notes The generated dataset has multi-columns :
 ///     - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
@@ -481,6 +481,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return Shared pointer to the current BatchDataset
   std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false);
 
+#ifndef ENABLE_ANDROID
   /// \brief Function to create a BucketBatchByLengthDataset
   /// \notes Combines batch_size number of consecutive rows into batches
   /// \param[in] column_names Columns passed to element_length_function
@@ -510,7 +511,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
     const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info = {},
     bool pad_to_bucket_boundary = false, bool drop_remainder = false);
 
-#ifndef ENABLE_ANDROID
   /// \brief Function to create a Vocab from source dataset
   /// \notes Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
   ///    which contains top_k most frequent words (if top_k is specified)
@@ -1150,6 +1150,7 @@ class BatchDataset : public Dataset {
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map_;
 };
 
+#ifndef ENABLE_ANDROID
 class BucketBatchByLengthDataset : public Dataset {
  public:
   /// \brief Constructor
@@ -1180,7 +1181,6 @@ class BucketBatchByLengthDataset : public Dataset {
   bool drop_remainder_;
 };
 
-#ifndef ENABLE_ANDROID
 class BuildVocabDataset : public Dataset {
  public:
   /// \brief Constructor
