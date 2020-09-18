@@ -225,7 +225,7 @@ class Geometric(Distribution):
             pmf(k) = 0 if k < 0.
         """
         value = self._check_value(value, 'value')
-        value = self.cast(value, mstype.float32)
+        value = self.cast(value, self.parameter_type)
         value = self.floor(value)
         probs1 = self._check_param_type(probs1)
         pmf = self.exp(self.log(1.0 - probs1) * value + self.log(probs1))
@@ -247,7 +247,7 @@ class Geometric(Distribution):
 
         """
         value = self._check_value(value, 'value')
-        value = self.cast(value, mstype.float32)
+        value = self.cast(value, self.parameter_type)
         value = self.floor(value)
         probs1 = self._check_param_type(probs1)
         probs0 = 1.0 - probs1
