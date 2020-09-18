@@ -24,6 +24,7 @@
 #include <cstring>
 #include <utility>
 #include <map>
+#include <regex>
 #include "debug/debugger/debugger.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "pipeline/jit/pipeline.h"
@@ -98,8 +99,21 @@ void Debugger::EnableDebugger() {
   const char *env_host_str = std::getenv("MS_DEBUGGER_HOST");
   std::string host;
   if (env_host_str != nullptr) {
-    MS_LOG(INFO) << "Getenv MS_DEBUGGER_HOST: " << env_host_str;
-    host = std::string(env_host_str);
+    std::regex reg_ip(
+      "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])"
+      "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
+      "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
+      "[.](25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])");
+    std::smatch smat;
+    std::string host_str = std::string(env_host_str);
+    if (std::regex_match(host_str, smat, reg_ip)) {
+      MS_LOG(INFO) << "Getenv MS_DEBUGGER_HOST: " << env_host_str;
+      host = std::string(env_host_str);
+    } else {
+      MS_LOG(ERROR) << "Environment variable MS_DEBUGGER_HOST isn't a valid IP address. "
+                       "Please set environment variable MS_DEBUGGER_HOST=x.x.x.x to a valid IP";
+      debugger_enabled_ = false;
+    }
   } else {
     MS_LOG(INFO) << "Environment variable MS_DEBUGGER_HOST doesn't exist. Using default debugger host: localhost";
     host = "localhost";
@@ -108,8 +122,13 @@ void Debugger::EnableDebugger() {
   const char *env_port_str = std::getenv("MS_DEBUGGER_PORT");
   std::string port;
   if (env_port_str != nullptr) {
-    MS_LOG(INFO) << "Getenv MS_DEBUGGER_PORT: " << env_port_str;
-    port = std::string(env_port_str);
+    if (CheckPort(env_port_str)) {
+      MS_LOG(INFO) << "Getenv MS_DEBUGGER_PORT: " << env_port_str;
+      port = std::string(env_port_str);
+    } else {
+      MS_LOG(ERROR) << "Environment variable MS_DEBUGGER_PORT is not valid. Custom port ranging from 0 to 65535";
+      debugger_enabled_ = false;
+    }
   } else {
     MS_LOG(INFO) << "Environment variable MS_DEBUGGER_PORT doesn't exist. Using default debugger port: 50051";
     port = "50051";
@@ -799,5 +818,18 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
 }
 
 void Debugger::SetTrainingDone(bool training_done) { training_done_ = training_done; }
+
+bool Debugger::CheckPort(const char *port) {
+  char *p = const_cast<char *>(port);
+  int num = 0;
+  if (*p == '0' && *(p + 1) != '\0') return false;
+  while (*p != '\0') {
+    if (*p <= '0' && *p >= '9') return false;
+    num = num * 10 + (*p) - '0';
+    if (num < 0 || num > 65535) return false;
+    p++;
+  }
+  return true;
+}
 
 }  // namespace mindspore
