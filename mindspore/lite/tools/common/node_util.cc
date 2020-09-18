@@ -93,7 +93,7 @@ std::vector<schema::PrimitiveType> GetNhwcAllInputOpList() { return nhwcOpAllInp
 
 std::vector<schema::PrimitiveType> GetUint8NhwcOpList() { return int8NeedNhwcOpList; }
 
-std::vector<schema::PrimitiveType> GetUint8OpList() { return int8OpList; }
+std::vector<schema::PrimitiveType> GetInt8OpList() { return int8OpList; }
 
 STATUS NodeUtils::ConvertDims(mindspore::schema::Format src_format, const std::vector<int32_t> &src_dims,
                               mindspore::schema::Format dst_format, std::vector<int32_t> *dst_dims) {
