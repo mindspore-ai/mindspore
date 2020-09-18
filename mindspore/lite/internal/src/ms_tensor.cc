@@ -17,6 +17,7 @@
 #include "internal/include/string.h"
 #include "internal/include/vector.h"
 #include "internal/include/ms_tensor.h"
+#include "internal/src/lite_log.h"
 
 MSTensor *CreateTensor(TypeId data_type, const ShapeVector &shape) {
   MSTensor *tensor = new MSTensor();
@@ -28,7 +29,12 @@ MSTensor *CreateTensor(TypeId data_type, const ShapeVector &shape) {
   return tensor;
 }
 
-void DestroyTensor(MSTensor *ptr) { delete ptr; }
+void DestroyTensor(MSTensor *ptr) {
+  if (ptr == nullptr) {
+    return;
+  }
+  delete ptr;
+}
 
 int MSTensor::ElementsNum() const {
   int result = 1;
@@ -206,14 +212,30 @@ int MSTensor::ElementsC4Num() const {
 
 void *MSTensor::operator new(size_t sz) {
   void *storage = malloc(sz);
+  if (storage == nullptr) {
+    MS_C_EXCEPTION("malloc tensor fail!");
+  }
   return storage;
 }
 
 void *MSTensor::operator new[](size_t sz) {
   void *storage = malloc(sz);
+  if (storage == nullptr) {
+    MS_C_EXCEPTION("malloc tensor array fail!");
+  }
   return storage;
 }
 
-void MSTensor::operator delete(void *ptr, size_t sz) { free(ptr); }
+void MSTensor::operator delete(void *ptr, size_t sz) {
+  if (ptr == nullptr) {
+    return;
+  }
+  free(ptr);
+}
 
-void MSTensor::operator delete[](void *ptr, size_t sz) { free(ptr); }
+void MSTensor::operator delete[](void *ptr, size_t sz) {
+  if (ptr == nullptr) {
+    return;
+  }
+  free(ptr);
+}

@@ -155,6 +155,7 @@ int DoMatMul(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tenso
   kernel_data->a_c12_ptr_
     = reinterpret_cast<float *>(allocator->Malloc(params->batch * params->row_12_ * params->deep_ * sizeof(float)));
   if (kernel_data->a_c12_ptr_ == NULL) {
+    FreeMatMulKernelData(kernel_data, allocator);
     return RET_MEMORY_FAILED;
   }
   memset(kernel_data->a_c12_ptr_, 0, params->row_12_ * params->deep_ * sizeof(float));
