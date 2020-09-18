@@ -103,9 +103,10 @@ enum EltwiseMode : byte {
 
 enum PadMode : byte {
     NOTSET = 0,
-    SAME = 1,
+    SAME_UPPER = 1,
     VALID = 2,
-    CAFFE = 4
+    CAFFE = 4,
+    SAME_LOWER = 5
 }
 
 enum RoundMode : byte {

@@ -93,7 +93,7 @@ void DeConv2D::PopulaterDeConv2DSingleGroup(const Primitive &prim, schema::Primi
   if (pad_mode == "valid" || pad_mode == "VALID") {
     attr->padMode = schema::PadMode_VALID;
   } else if (pad_mode == "same" || pad_mode == "SAME") {
-    attr->padMode = schema::PadMode_SAME;
+    attr->padMode = schema::PadMode_SAME_UPPER;
   } else {
     attr->padMode = schema::PadMode_NOTSET;
   }
@@ -105,8 +105,6 @@ void DeConv2D::PopulaterDeConv2DSingleGroup(const Primitive &prim, schema::Primi
     attr->activationType = schema::ActivationType_NO_ACTIVATION;
   }
 
-  //  attr->padMode = schema::PadMode_SAME;
-  //  attr->activationType = schema::ActivationType_RELU;
   primitive->value.type = schema::PrimitiveType_DeConv2D;
   primitive->value.value = attr.release();
 }
@@ -206,10 +204,10 @@ int DeConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::
   pad_d_ = GetPadDown();
   pad_r_ = GetPadRight();
   auto pad_mode = (schema::PadMode)GetPadMode();
-  if (pad_mode == schema::PadMode_CAFFE) {
+  if (pad_mode == schema::PadMode_CAFFE || pad_mode == schema::PadMode_NOTSET) {
     output_h = (input_h - 1) * stride_h + ((kernel_h - 1) * dilate_h + 1) - pad_u_ - pad_d_;
     output_w = (input_w - 1) * stride_w + ((kernel_w - 1) * dilate_w + 1) - pad_l_ - pad_r_;
-  } else if (pad_mode == schema::PadMode_SAME) {
+  } else if (pad_mode == schema::PadMode_SAME_UPPER) {
     output_h = input_h * stride_h;
     output_w = input_w * stride_w;
   } else if (pad_mode == schema::PadMode_VALID) {
@@ -222,13 +220,13 @@ int DeConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::
   std::vector<int> out_shape = {output_n, output_h, output_w, output_c};
   output->set_shape(out_shape);
 
-  if (pad_mode == schema::PadMode_SAME) {
+  if (pad_mode == schema::PadMode_SAME_UPPER) {
     pad_u_ = ((input_h - 1) * stride_h + (kernel_h - 1) * dilate_h + 1 - output_h) / 2;
     pad_l_ = ((input_w - 1) * stride_w + (kernel_w - 1) * dilate_w + 1 - output_w) / 2;
   } else if (pad_mode == schema::PadMode_VALID) {
     pad_u_ = 0;
     pad_l_ = 0;
-  } else if (pad_mode == schema::PadMode_CAFFE) {
+  } else if (pad_mode == schema::PadMode_CAFFE || pad_mode == schema::PadMode_NOTSET) {
   } else {
     MS_LOG(ERROR) << "unsupported pad mode for deconv";
     return RET_ERROR;

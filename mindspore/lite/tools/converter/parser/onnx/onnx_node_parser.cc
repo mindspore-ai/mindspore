@@ -22,8 +22,10 @@ namespace lite {
 schema::PadMode OnnxNodeParser::GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr) {
   if (onnx_node_attr.s() == "NOTSET") {
     return schema::PadMode_NOTSET;
-  } else if (onnx_node_attr.s() == "SAME_UPPER" || onnx_node_attr.s() == "SAME_LOWER") {
-    return schema::PadMode_SAME;
+  } else if (onnx_node_attr.s() == "SAME_UPPER") {
+    return schema::PadMode_SAME_UPPER;
+  } else if (onnx_node_attr.s() == "SAME_LOWER") {
+    return schema::PadMode_SAME_LOWER;
   } else if (onnx_node_attr.s() == "VALID") {
     return schema::PadMode_VALID;
   } else {

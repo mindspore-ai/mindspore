@@ -157,7 +157,7 @@ TypeId GetTfliteDataType(const tflite::TensorType &tflite_data_type) {
 
 schema::PadMode GetPadMode(tflite::Padding tflite_padmode) {
   if (tflite_padmode == tflite::Padding_SAME) {
-    return schema::PadMode_SAME;
+    return schema::PadMode_SAME_UPPER;
   } else if (tflite_padmode == tflite::Padding_VALID) {
     return schema::PadMode_VALID;
   } else {
@@ -198,7 +198,7 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, schema::P
   int padDown = 0;
   int padLeft = 0;
   int padRight = 0;
-  if (pad_mode == schema::PadMode_SAME) {
+  if (pad_mode == schema::PadMode_SAME_UPPER) {
     auto shape = tensor->shape;
     int H_input = shape.at(1);
     int W_input = shape.at(2);

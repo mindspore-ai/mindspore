@@ -351,7 +351,7 @@ int LiteSession::Init(Context *context) {
     }
   }
 #endif
-  executor = new Executor();
+  executor = new(std::nothrow) Executor();
   if (nullptr == executor) {
     MS_LOG(ERROR) << "New Executor failed";
     is_running_.store(false);

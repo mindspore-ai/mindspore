@@ -104,7 +104,7 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
   if (pad_mode == "valid") {
     attr->padMode = schema::PadMode_VALID;
   } else if (pad_mode == "same") {
-    attr->padMode = schema::PadMode_SAME;
+    attr->padMode = schema::PadMode_SAME_UPPER;
   } else {
     attr->padMode = schema::PadMode_NOTSET;
   }
@@ -114,8 +114,6 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
   } else {
     attr->activationType = schema::ActivationType_NO_ACTIVATION;
   }
-  //  attr->padMode = schema::PadMode_SAME;
-  //  attr->activationType = schema::ActivationType_RELU;
   auto channel_multiplier = GetValue<int>(prim.GetAttr("channel_multiplier"));
   attr->channelMultiplier = channel_multiplier;
 
@@ -220,7 +218,7 @@ int DepthwiseConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector
   pad_u_ = GetPadUp();
   pad_d_ = GetPadDown();
   pad_r_ = GetPadRight();
-  if (GetPadMode() == schema::PadMode_SAME) {
+  if (GetPadMode() == schema::PadMode_SAME_UPPER) {
     output_h = std::ceil(static_cast<float>(input_h) / static_cast<float>(GetStrideH()));
     output_w = std::ceil(static_cast<float>(input_w) / static_cast<float>(GetStrideW()));
     auto pad_h_all = ((output_h - 1) * GetStrideH() + (GetKernelH() - 1) * GetDilateH() + 1 - input_h);

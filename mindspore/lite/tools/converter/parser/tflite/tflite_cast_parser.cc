@@ -49,6 +49,9 @@ STATUS TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
     return RET_NULL_PTR;
   }
   attr->srcT = GetTfliteDataType(in_tensor->type);
+  if (attr->srcT == TypeId::kNumberTypeBool) {
+    attr->srcT = TypeId::kNumberTypeUInt8;
+  }
   const auto &out_tensor = tflite_tensors[tflite_op->outputs[0]];
   if (out_tensor == nullptr) {
     MS_LOG(ERROR) << "tensor is null";

@@ -101,7 +101,7 @@ int Pooling::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
     if (pad_mode == "VALID") {
       attr->padMode = schema::PadMode_VALID;
     } else if (pad_mode == "SAME") {
-      attr->padMode = schema::PadMode_SAME;
+      attr->padMode = schema::PadMode_SAME_UPPER;
     } else {
       attr->padMode = schema::PadMode_NOTSET;
     }
@@ -192,7 +192,7 @@ int Pooling::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   pad_u_ = GetPadUp();
   pad_d_ = GetPadDown();
   pad_r_ = GetPadRight();
-  if (GetPadMode() == schema::PadMode_SAME) {
+  if (GetPadMode() == schema::PadMode_SAME_UPPER) {
     output_w = std::ceil(static_cast<float>(input_w) / static_cast<float>(GetStrideW()));
     output_h = std::ceil(static_cast<float>(input_h) / static_cast<float>(GetStrideH()));
     auto pad_h_all = ((output_h - 1) * GetStrideH() + (window_h - 1) + 1 - input_h);

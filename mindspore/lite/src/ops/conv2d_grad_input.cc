@@ -118,7 +118,7 @@ int Conv2DGradInput::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
     if (pad_mode == "valid") {
       attr->padMode = schema::PadMode_VALID;
     } else if (pad_mode == "same") {
-      attr->padMode = schema::PadMode_SAME;
+      attr->padMode = schema::PadMode_SAME_UPPER;
     } else {
       attr->padMode = schema::PadMode_NOTSET;
     }

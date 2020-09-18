@@ -42,7 +42,7 @@ CNodeTptr BuildConv2D() {
   convNode->primitive = std::make_unique<schema::PrimitiveT>();
   convNode->primitive->value.type = schema::PrimitiveType_Conv2D;
   auto prim1 = new schema::Conv2DT;
-  prim1->padMode = schema::PadMode_SAME;
+  prim1->padMode = schema::PadMode_SAME_UPPER;
   prim1->format = schema::Format_NHWC;
   prim1->strideH = 1;
   prim1->strideW = 1;
@@ -62,7 +62,7 @@ CNodeTptr BuildDepthwiseConv2D() {
   convNode->primitive = std::make_unique<schema::PrimitiveT>();
   convNode->primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
   auto prim1 = new schema::DepthwiseConv2DT;
-  prim1->padMode = schema::PadMode_SAME;
+  prim1->padMode = schema::PadMode_SAME_UPPER;
   prim1->format = schema::Format_NHWC;
   prim1->strideH = 1;
   prim1->strideW = 1;

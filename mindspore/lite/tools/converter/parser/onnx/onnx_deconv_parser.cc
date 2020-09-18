@@ -71,6 +71,13 @@ STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
     return RET_NULL_PTR;
   }
 
+  // set default params
+  attr->padMode = schema::PadMode_NOTSET;
+  attr->group = 1;
+  attr->strideW = 1;
+  attr->strideH = 1;
+  attr->dilateW = 1;
+  attr->dilateH = 1;
   // set opdef each attr params
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "group") {
@@ -121,6 +128,9 @@ STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
         MS_LOG(ERROR) << "Unsupported format: " << onnx_node_attr.s().c_str();
         return RET_ERROR;
       }
+    } else if (onnx_node_attr.name() == "output_padding") {
+      MS_LOG(ERROR) << "output_padding param hasn't been supported";
+      return RET_NOT_SUPPORT;
     }
   }
 
