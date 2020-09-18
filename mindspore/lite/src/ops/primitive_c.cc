@@ -446,6 +446,9 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
   } else if (op_type == "Tile") {
     return NewPrimitiveC<Tile>(prim, inputs, quantType);
+#else
+  } else if (op_type == "Conv2DBackpropInput") {
+    return NewPrimitiveC<DeConv2D>(prim, inputs, quantType);
 #endif
   } else {
     MS_LOG(ERROR) << "Unsupported primitive type in Create : " << op_type;
