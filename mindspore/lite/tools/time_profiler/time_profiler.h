@@ -57,7 +57,11 @@ class MS_API TimeProfilerFlags : public virtual FlagParser {
 class MS_API TimeProfiler {
  public:
   explicit TimeProfiler(TimeProfilerFlags *flags) : _flags(flags) {}
-  ~TimeProfiler() = default;
+  ~TimeProfiler() {
+    if (ctx != nullptr) {
+      delete ctx;
+    }
+  }
 
   int Init();
   int RunTimeProfiler();
@@ -72,6 +76,7 @@ class MS_API TimeProfiler {
   int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
 
  private:
+  Context *ctx = nullptr;
   TimeProfilerFlags *_flags;
   std::vector<mindspore::tensor::MSTensor *> ms_inputs_;
   session::LiteSession *session_;
