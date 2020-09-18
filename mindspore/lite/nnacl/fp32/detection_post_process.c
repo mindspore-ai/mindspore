@@ -55,8 +55,8 @@ void DecodeBoxes(const int num_boxes, const float *input_boxes, const float *anc
     BboxCorner *decoded_box = (BboxCorner *)(decoded_boxes) + i;
     float y_center = box->y / scaler.y * anchor->h + anchor->y;
     float x_center = box->x / scaler.x * anchor->w + anchor->x;
-    float h_half = 0.5f * expf(box->h / scaler.h) * anchor->h;
-    float w_half = 0.5f * expf(box->w / scaler.w) * anchor->w;
+    const float h_half = 0.5f * expf(box->h / scaler.h) * anchor->h;
+    const float w_half = 0.5f * expf(box->w / scaler.w) * anchor->w;
     decoded_box->ymin = y_center - h_half;
     decoded_box->xmin = x_center - w_half;
     decoded_box->ymax = y_center + h_half;
