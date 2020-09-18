@@ -130,7 +130,11 @@ package_data = {
         'lib/*.so*',
         'lib/*.a',
         '.commit_id',
-        'ms_serving'
+        'ms_serving',
+        'include/*',
+        'include/*/*',
+        'include/*/*/*',
+        'include/*/*/*/*'
     ]
 }
 

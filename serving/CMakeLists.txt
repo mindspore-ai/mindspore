@@ -76,8 +76,6 @@ file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 
 list(APPEND SERVING_SRC "main.cc" ${hw_proto_srcs} ${hw_grpc_srcs} ${CORE_SRC_LIST})
 
-option(ENABLE_ACL "enable acl" OFF)
-
 if (ENABLE_ACL)
     if (DEFINED ENV{ASCEND_CUSTOM_PATH})
         set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
@@ -85,9 +83,11 @@ if (ENABLE_ACL)
         set(ASCEND_PATH /usr/local/Ascend)
     endif ()
     set(ACL_LIB_DIR ${ASCEND_PATH}/acllib/)
-    MESSAGE("acl lib dir " ${ACL_LIB_DIR})
+    set(ATLAS_ACL_LIB_DIR ${ASCEND_PATH}/ascend-toolkit/latest/acllib)
+    MESSAGE("hisi acl lib dir " ${ACL_LIB_DIR} " ,atlas acl lib dir " ${ATLAS_ACL_LIB_DIR})
 
     include_directories(${ACL_LIB_DIR}/include/)
+    include_directories(${ATLAS_ACL_LIB_DIR}/include/)
     file(GLOB_RECURSE ACL_SESSION_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "acl/*.cc")
     list(APPEND SERVING_SRC ${ACL_SESSION_SRC_LIST})
 endif ()
@@ -112,10 +112,13 @@ endif ()
 if (ENABLE_ACL)
     add_compile_definitions(ENABLE_ACL)
     add_compile_definitions(ENABLE_DVPP_INTERFACE)
-    set(ALC_LIB_SO ${ACL_LIB_DIR}/lib64/libruntime.so ${ACL_LIB_DIR}/lib64/libascendcl.so
-            ${ACL_LIB_DIR}/lib64/libacl_retr.so ${ACL_LIB_DIR}/lib64/libacl_cblas.so
-            ${ACL_LIB_DIR}/lib64/libacl_dvpp.so)
-    target_link_libraries(ms_serving ${ALC_LIB_SO})
+    find_library(acl libascendcl.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
+    find_library(acl_retr libacl_retr.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
+    find_library(acl_cblas libacl_cblas.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
+    find_library(acl_dvpp libacl_dvpp.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
+    find_library(acl_runtime libruntime.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
+
+    target_link_libraries(ms_serving ${acl} ${acl_retr} ${acl_cblas} ${acl_dvpp} ${acl_runtime})
     target_link_libraries(ms_serving jpeg_turbo::jpeg securec)
 else ()
     target_link_libraries(ms_serving inference mindspore_gvar)

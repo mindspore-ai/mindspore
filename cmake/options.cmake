@@ -19,6 +19,7 @@ option(ENABLE_AKG "enable akg" OFF)
 option(ENABLE_DEBUGGER "enable debugger" OFF)
 option(ENABLE_IBVERBS "enable IBVERBS for parameter server" OFF)
 option(ENABLE_PYTHON "Enable python" ON)
+option(ENABLE_ACL "enable acl" OFF)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if (WIN32)
