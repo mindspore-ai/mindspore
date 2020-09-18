@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <float.h>
 #include "nnacl/fp32/reduce.h"
+#include <float.h>
 #include "nnacl/errorcode.h"
 #include "nnacl/common_func.h"
 
@@ -45,11 +45,27 @@ int ReduceSum(const int outer_size, const int inner_size, const int axis_size, c
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
-  int i, j, k;
+  int i, j;
+#ifdef ENABLE_NEON
+  int block_mod = inner_size % C4NUM;
+  int block_c4 = inner_size - block_mod;
+#endif
   for (j = tid; j < outer_size; j += thread_num) {
     const float *outer_src = src_data + j * axis_size * inner_size;
     float *outer_dst = dst_data + j * inner_size;
-    for (k = 0; k < inner_size; k++) {
+    int k = 0;
+#ifdef ENABLE_NEON
+    for (; k < block_c4; k += C4NUM) {
+      const float *inner_src = outer_src + k;
+      float *inner_dst = outer_dst + k;
+      float32x4_t tmp = {0, 0, 0, 0};
+      for (i = 0; i < axis_size; i++) {
+        tmp = vaddq_f32(tmp, vld1q_f32(inner_src + i * inner_size));
+      }
+      vst1q_f32(inner_dst, tmp);
+    }
+#endif
+    for (; k < inner_size; k++) {
       const float *inner_src = outer_src + k;
       float *inner_dst = outer_dst + k;
       float tmp = 0.0f;
