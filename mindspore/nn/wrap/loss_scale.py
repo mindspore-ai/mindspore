@@ -174,8 +174,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
     TrainOneStepWithLossScaleCell will be compiled to be graph which takes `*inputs` as input data.
     The Tensor type of `scale_sense` is acting as loss scaling value. If you want to update it on host side,
     the value should be provided. If  the Tensor type of `scale_sense` is not given, the loss scale update logic
-    should be provied by Cell type of `scale_sense`. If  Cell type of `scale_sense` is not None and Tensor type
-    of `scale_sense` is provided, the Cell type of `scale_sense` will be ignored.
+    should be provied by Cell type of `scale_sense`.
 
     Args:
         network (Cell): The training network. The network only supports single output.
