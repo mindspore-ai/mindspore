@@ -18,6 +18,7 @@
 #include <string>
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/datasetops/shuffle_op.h"
+#include "minddata/dataset/engine/datasetops/device_queue_op.h"
 #include "minddata/dataset/util/task_manager.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/opt/pre/removal_pass.h"
@@ -42,7 +43,15 @@ ExecutionTree::ExecutionTree() : id_count_(0) {
 }
 
 // Destructor
-ExecutionTree::~ExecutionTree() { (void)tg_->ServiceStop(); }
+ExecutionTree::~ExecutionTree() {
+#ifdef ENABLE_TDTQUE
+  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root_.get());
+  if (op != nullptr) {
+    op->StopWaiting();
+  }
+#endif
+  (void)tg_->ServiceStop();
+}
 
 // Associates a DatasetOp with this tree. This assigns a valid node id to the operator and
 // provides it with a link to the tree. A node cannot form any relationships (parent/child) with
