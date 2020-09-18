@@ -36,7 +36,9 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
   ReduceCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                   const mindspore::lite::PrimitiveC *primitive)
-      : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive) {}
+      : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive) {
+    reduce_param_ = reinterpret_cast<ReduceParameter *>(param);
+  }
   ~ReduceCPUKernel() {
     src_data_ = nullptr;
     dst_data_ = nullptr;
@@ -50,6 +52,7 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
   int CallReduceUnit(int task_id);
 
  private:
+  ReduceParameter *reduce_param_;
   Reducer reducer_ = nullptr;
   IntReducer int_reducer_ = nullptr;
   std::vector<void *> data_buffers_;
@@ -61,6 +64,8 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
  private:
   int MallocTmpBuffer();
   void FreeTmpBuffer();
+  int CalculateCoeffOutput();
+  void PreProcess();
 };
 }  // namespace mindspore::kernel
 
