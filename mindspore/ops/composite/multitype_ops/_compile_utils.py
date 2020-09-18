@@ -268,7 +268,7 @@ def _tensor_index_by_tuple_slice(data, t):
 def tensor_index_by_tuple(data, tuple_index):
     """Tensor getitem by tuple of various types"""
     if len(tuple_index) == 1:
-        return  data[tuple_index[0]]
+        return data[tuple_index[0]]
     indexes_types = hyper_map(F.typeof, tuple_index)
     index_elements_type = const_utils.tuple_index_elements_type(indexes_types, const_utils.TENSOR_GETITEM)
     if index_elements_type == const_utils.NO_TENSOR:
