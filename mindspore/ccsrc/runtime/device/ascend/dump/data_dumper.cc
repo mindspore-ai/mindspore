@@ -333,14 +333,14 @@ void DataDumper::RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, voi
     MS_LOG(EXCEPTION) << "[DataDump] Protobuf SerializeToString failed, proto size %zu.";
   }
 
-  rtError_t rt_ret = rtMalloc(ptr, proto_size, RT_MEMORY_HBM);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "[DataDump] Call rtMalloc failed";
-  }
-
   if (ptr == nullptr) {
     MS_LOG(ERROR) << "[DataDump] rtMalloc failed, ptr is nullptr";
     return;
+  }
+
+  rtError_t rt_ret = rtMalloc(ptr, proto_size, RT_MEMORY_HBM);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "[DataDump] Call rtMalloc failed";
   }
   rt_ret = rtMemcpy(*ptr, proto_size, proto_str.c_str(), proto_size, RT_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != RT_ERROR_NONE) {
