@@ -37,6 +37,7 @@ int Pooling::GetPadLeft() const { return this->primitive_->value.AsPooling()->pa
 int Pooling::GetPadRight() const { return this->primitive_->value.AsPooling()->padRight; }
 int Pooling::GetRoundMode() const { return this->primitive_->value.AsPooling()->roundMode; }
 int Pooling::GetActivationType() const { return this->primitive_->value.AsPooling()->activationType; }
+int Pooling::GetAvgMode() const { return this->primitive_->value.AsPooling()->avgMode; }
 
 void Pooling::SetFormat(int format) { this->primitive_->value.AsPooling()->format = (schema::Format)format; }
 void Pooling::SetPoolingMode(int pooling_mode) {
@@ -58,6 +59,7 @@ void Pooling::SetRoundMode(int round_mode) {
 void Pooling::SetActivationType(int activation_type) {
   this->primitive_->value.AsPooling()->activationType = (schema::ActivationType)activation_type;
 }
+void Pooling::SetAvgMode(int avg_mode) { this->primitive_->value.AsPooling()->avgMode = avg_mode; }
 
 int Pooling::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   if (this->primitive_ == nullptr) {
@@ -92,6 +94,8 @@ int Pooling::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
     } else {
       attr->format = schema::Format::Format_NUM_OF_FORMAT;
     }
+
+    attr->avgMode = 1;
 
     auto pad_mode = GetValue<std::string>(prim.GetAttr("padding"));
     if (pad_mode == "VALID") {
@@ -135,6 +139,7 @@ int Pooling::GetPadLeft() const { return this->primitive_->value_as_Pooling()->p
 int Pooling::GetPadRight() const { return this->primitive_->value_as_Pooling()->padRight(); }
 int Pooling::GetRoundMode() const { return this->primitive_->value_as_Pooling()->roundMode(); }
 int Pooling::GetActivationType() const { return this->primitive_->value_as_Pooling()->activationType(); }
+int Pooling::GetAvgMode() const { return this->primitive_->value_as_Pooling()->avgMode(); }
 
 int Pooling::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
@@ -144,10 +149,10 @@ int Pooling::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
     MS_LOG(ERROR) << "value_as_Pooling return nullptr";
     return RET_ERROR;
   }
-  auto val_offset =
-    schema::CreatePooling(*fbb, attr->format(), attr->poolingMode(), attr->global(), attr->windowW(), attr->windowH(),
-                          attr->strideW(), attr->strideH(), attr->padMode(), attr->padUp(), attr->padDown(),
-                          attr->padLeft(), attr->padRight(), attr->roundMode(), attr->activationType());
+  auto val_offset = schema::CreatePooling(*fbb, attr->format(), attr->poolingMode(), attr->global(), attr->windowW(),
+                                          attr->windowH(), attr->strideW(), attr->strideH(), attr->padMode(),
+                                          attr->padUp(), attr->padDown(), attr->padLeft(), attr->padRight(),
+                                          attr->roundMode(), attr->activationType(), attr->avgMode());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Pooling, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;

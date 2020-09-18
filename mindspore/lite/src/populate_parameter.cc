@@ -293,6 +293,7 @@ OpParameter *PopulatePoolingParameter(const mindspore::lite::PrimitiveC *primiti
   pooling_param->pad_r_ = pooling_lite_primitive->PadRight();
   pooling_param->stride_w_ = pooling_primitive->GetStrideW();
   pooling_param->stride_h_ = pooling_primitive->GetStrideH();
+  pooling_param->avg_mode_ = pooling_primitive->GetAvgMode();
 
   auto is_global = pooling_primitive->GetGlobal();
   pooling_param->global_ = is_global;

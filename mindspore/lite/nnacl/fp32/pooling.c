@@ -26,7 +26,7 @@ void AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
   int win_w = pooling_param->window_w_;
   int win_h = pooling_param->window_h_;
   int channel = pooling_param->input_channel_;
-  int c4 = UP_DIV(channel, C4NUM); /* oc && ic */
+  int c4 = channel / C4NUM; /* oc && ic */
   int in_w = pooling_param->input_w_;
   int in_h = pooling_param->input_h_;
   int output_w = pooling_param->output_w_;
@@ -35,6 +35,7 @@ void AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
   int out_plane = output_w * output_h;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
   int thread_num = pooling_param->thread_num_;
+  int window = win_w * win_h;
 
 #ifdef ENABLE_NEON
   float32x4_t min_value = vdupq_n_f32(minf);
@@ -59,10 +60,10 @@ void AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
 
         int real_win_h_start = MSMAX(0, -in_h_index);
         int real_win_h_end = MSMIN(win_h, in_h - in_h_index);
-        int resl_win_w_start = MSMAX(0, -in_w_index);
+        int real_win_w_start = MSMAX(0, -in_w_index);
         int real_win_w_end = MSMIN(win_w, in_w - in_w_index);
 
-        for (int ci = 0; ci < c4 - 1; ci++) {
+        for (int ci = 0; ci < c4; ci++) {
           const float *src_c_ptr = src_plane_ptr + ci * C4NUM;
           float *dst_c_ptr = dst_plane_ptr + ci * C4NUM;
 #ifdef ENABLE_NEON
@@ -75,7 +76,7 @@ void AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
 #endif
           int real_count = 0;
           for (int h = real_win_h_start; h < real_win_h_end; h++) {
-            for (int w = resl_win_w_start; w < real_win_w_end; w++) {
+            for (int w = real_win_w_start; w < real_win_w_end; w++) {
               const float *src_win_ptr = src_c_ptr + ((in_h_index + h) * in_w + in_w_index + w) * channel;
 #ifdef ENABLE_NEON
               tmp_avg = vaddq_f32(tmp_avg, vld1q_f32(src_win_ptr));
@@ -88,6 +89,9 @@ void AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
               ++real_count;
             }  // win_w loop
           }    // win_h loop
+          if (pooling_param->avg_mode_ == 1) {
+            real_count = window;
+          }
 #ifdef ENABLE_NEON
           tmp_avg = tmp_avg / vdupq_n_f32(real_count);
           tmp_avg = vmaxq_f32(tmp_avg, min_value);
@@ -112,19 +116,22 @@ void AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
           dst_c_ptr[3] = tmp_avg4;
 #endif
         }  // ic4-1 loop
-        int channel_s = (c4 - 1) * C4NUM;
+        int channel_s = c4 * C4NUM;
         for (int ci = channel_s; ci < channel; ci++) {
           const float *src_c_ptr = src_plane_ptr + ci;
           float *dst_c_ptr = dst_plane_ptr + ci;
           float tmp_avg = 0;
           int real_count = 0;
           for (int h = real_win_h_start; h < real_win_h_end; h++) {
-            for (int w = resl_win_w_start; w < real_win_w_end; w++) {
+            for (int w = real_win_w_start; w < real_win_w_end; w++) {
               const float *src_win_ptr = src_c_ptr + ((in_h_index + h) * in_w + in_w_index + w) * channel;
               tmp_avg += src_win_ptr[0];
               ++real_count;
             }  // win_w loop
           }    // win_h loop
+          if (pooling_param->avg_mode_ == 1) {
+            real_count = window;
+          }
           tmp_avg = tmp_avg / (float)real_count;
           tmp_avg = fmax(tmp_avg, minf);
           tmp_avg = fmin(tmp_avg, maxf);
@@ -152,7 +159,7 @@ void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
   int out_plane = output_w * output_h;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
   int thread_num = pooling_param->thread_num_;
-  int c4 = UP_DIV(channel, C4NUM); /* oc && ic */
+  int c4 = channel / C4NUM; /* oc && ic */
 
 #ifdef ENABLE_NEON
   float32x4_t min_value = vdupq_n_f32(minf);
@@ -177,10 +184,10 @@ void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
 
         int real_win_h_start = MSMAX(0, -in_h_index);
         int real_win_h_end = MSMIN(win_h, in_h - in_h_index);
-        int resl_win_w_start = MSMAX(0, -in_w_index);
+        int real_win_w_start = MSMAX(0, -in_w_index);
         int real_win_w_end = MSMIN(win_w, in_w - in_w_index);
 
-        for (int ci = 0; ci < c4 - 1; ci++) {
+        for (int ci = 0; ci < c4; ci++) {
           const float *src_c_ptr = src_plane_ptr + ci * C4NUM;
           float *dst_c_ptr = dst_plane_ptr + ci * C4NUM;
 #ifdef ENABLE_NEON
@@ -193,7 +200,7 @@ void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
 #endif
 
           for (int kh = real_win_h_start; kh < real_win_h_end; kh++) {
-            for (int kw = resl_win_w_start; kw < real_win_w_end; kw++) {
+            for (int kw = real_win_w_start; kw < real_win_w_end; kw++) {
               const float *src_win_ptr = src_c_ptr + ((in_h_index + kh) * in_w + in_w_index + kw) * channel;
 #ifdef ENABLE_NEON
               tmp_max = vmaxq_f32(tmp_max, vld1q_f32(src_win_ptr));
@@ -224,14 +231,14 @@ void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
           dst_c_ptr[3] = tmp_max4;
 #endif
         }  // ic4-1 loop
-        int channel_s = (c4 - 1) * C4NUM;
+        int channel_s = c4 * C4NUM;
         for (int ci = channel_s; ci < channel; ci++) {
           float *dst_c_ptr = dst_plane_ptr + ci;
           const float *src_c_ptr = src_plane_ptr + ci;
           float tmp_max = -FLT_MAX;
 
           for (int kh = real_win_h_start; kh < real_win_h_end; kh++) {
-            for (int kw = resl_win_w_start; kw < real_win_w_end; kw++) {
+            for (int kw = real_win_w_start; kw < real_win_w_end; kw++) {
               const float *src_win_ptr = src_c_ptr + ((in_h_index + kh) * in_w + in_w_index + kw) * channel;
               tmp_max = fmax(tmp_max, src_win_ptr[0]);
             }  // win_w loop

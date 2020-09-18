@@ -46,6 +46,7 @@ typedef struct PoolingParameter {
   int stride_w_;
   int stride_h_;
   int thread_num_;
+  int avg_mode_;
   bool global_;
   bool quantize_;
 } PoolingParameter;
