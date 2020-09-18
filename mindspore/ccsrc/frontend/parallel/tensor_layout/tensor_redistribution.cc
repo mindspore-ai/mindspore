@@ -218,6 +218,5 @@ Status TensorRedistribution::ComputeConcatCost(double input_size, Shape attrs) {
   }
   return Status::SUCCESS;
 }
-
 }  // namespace parallel
 }  // namespace mindspore
