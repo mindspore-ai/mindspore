@@ -21,7 +21,6 @@
 namespace mindspore {
 namespace profiler {
 namespace gpu {
-
 inline void *LoadLibrary(const char *name) {
   auto handle = dlopen(name, RTLD_LAZY | RTLD_LOCAL);
   if (handle == nullptr) {

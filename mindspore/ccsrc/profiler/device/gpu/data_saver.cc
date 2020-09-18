@@ -22,7 +22,6 @@
 namespace mindspore {
 namespace profiler {
 namespace gpu {
-
 OpDetailInfo::OpDetailInfo(std::shared_ptr<OpInfo> op_info, float proportion)
     : op_info_(op_info), proportion_(proportion) {
   // op_full_name is like 'xxx/xxx/{op_type}-op{node_id}'
@@ -256,7 +255,6 @@ void DataSaver::WriteOpTimestamp(const std::string &saver_base_dir) {
   }
   ofs.close();
 }
-
 }  // namespace gpu
 }  // namespace profiler
 }  // namespace mindspore

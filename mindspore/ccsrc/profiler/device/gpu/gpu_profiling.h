@@ -129,6 +129,7 @@ class GPUProfiler {
   void CUPTIAPI ProcessBuffer(CUcontext ctx, uint32_t streamId, uint8_t *buffer, size_t size, size_t validSize);
   void OpDataProducerBegin(const std::string op_name, void *stream);
   void OpDataProducerEnd();
+  void ProcessEvents();
 
  private:
   GPUProfiler() = default;
