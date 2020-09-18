@@ -14,7 +14,6 @@
 # ============================================================================
 """THOR"""
 from mindspore.ops import functional as F, composite as C, operations as P
-from mindspore.ops import _selected_ops
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
@@ -62,7 +61,7 @@ class THOR_GPU(Optimizer):
         self.use_nesterov = check_bool(use_nesterov)
         self.moments = self.params.clone(prefix="moments", init='zeros')
         self.hyper_map = C.HyperMap()
-        self.opt = _selected_ops.ApplyMomentum(use_nesterov=self.use_nesterov)
+        self.opt = P.ApplyMomentum(use_nesterov=self.use_nesterov)
 
         self.feature_map = [1.0 / 12544, 1.0 / 3136, 1.0 / 3136, 1.0 / 3136, 1.0 / 3136, 1.0 / 3136, 1.0 / 3136,
                             1.0 / 3136, 1.0 / 3136, 1.0 / 3136, 1.0 / 3136, 1.0 / 3136,
