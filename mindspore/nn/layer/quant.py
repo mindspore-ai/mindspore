@@ -1446,7 +1446,6 @@ class QuantMindirBlock(Cell):
         if isinstance(activation, ReLU):
             self.activation = None
             self.has_act = False
-        self.bias_add = P.BiasAdd()
 
     def construct(self, x):
         if self.has_bias:

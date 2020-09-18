@@ -361,12 +361,12 @@ class ExportToQuantInferNetwork:
         param_dict["symmetric"] = fake_quant_a_out.symmetric
         if self.is_mindir:
             scale_w, zp_w, param_dict["filter_maxq"], param_dict["filter_minq"] = \
-                quant_utils.scale_zp_max_min_from_fack_quant_cell(cell_core.fake_quant_weight, np_type)
+                quant_utils.scale_zp_max_min_from_fake_quant_cell(cell_core.fake_quant_weight, np_type)
             scale_a_out, _, param_dict["output_maxq"], param_dict["output_minq"] = \
-                quant_utils.scale_zp_max_min_from_fack_quant_cell(fake_quant_a_out, np_type)
+                quant_utils.scale_zp_max_min_from_fake_quant_cell(fake_quant_a_out, np_type)
         else:
-            scale_w, zp_w = quant_utils.scale_zp_from_fack_quant_cell(cell_core.fake_quant_weight, np_type)
-            scale_a_out, _ = quant_utils.scale_zp_from_fack_quant_cell(fake_quant_a_out, np_type)
+            scale_w, zp_w = quant_utils.scale_zp_from_fake_quant_cell(cell_core.fake_quant_weight, np_type)
+            scale_a_out, _ = quant_utils.scale_zp_from_fake_quant_cell(fake_quant_a_out, np_type)
         info = self.quant_info_table.get(w_minq_name, None)
         if info:
             fack_quant_a_in_op, minq_name = info
@@ -432,7 +432,8 @@ class ExportToQuantInferNetwork:
             op_core = cell_core.conv
         weight = Tensor(weight, self.data_type)
         weight_b = Tensor(weight_b)
-        bias_b = Tensor(bias_b, mstype.float32)
+        if bias_b is not None:
+            bias_b = Tensor(bias_b, mstype.float32)
         if self.is_mindir:
             block = quant.QuantMindirBlock(op_core, weight_b, bias_b, activation, param_dict)
         else:
