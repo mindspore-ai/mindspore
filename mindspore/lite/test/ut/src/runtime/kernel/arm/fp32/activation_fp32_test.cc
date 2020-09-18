@@ -126,4 +126,93 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   input0_tensor.SetData(nullptr);
   output0_tensor.SetData(nullptr);
 }
+
+TEST_F(TestActivationFp32, HardTanh1) {
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
+
+  ActivationParameter op_param;
+  op_param.op_parameter_.type_ = schema::PrimitiveType_Activation;
+  op_param.type_ = schema::ActivationType_HARD_TANH;
+  op_param.min_val_ = -1.0f;
+  op_param.max_val_ = 1.0f;
+
+  std::vector<float> input = {-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 5.0, 6.0};
+  std::vector<int> in_shape = {8};
+
+  lite::Tensor input0_tensor;
+  inputs_tensor.push_back(&input0_tensor);
+  input0_tensor.SetData(input.data());
+  input0_tensor.set_shape(in_shape);
+
+  std::vector<float> output(8);
+  std::vector<int> output_shape = {8};
+
+  lite::Tensor output0_tensor;
+  outputs_tensor.push_back(&output0_tensor);
+  output0_tensor.SetData(output.data());
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Activation};
+  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
+  lite::InnerContext ctx;
+  ctx.thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
+  kernel::LiteKernel *kernel =
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
+  auto output_tensor_shape = output0_tensor.shape();
+  kernel->Run();
+
+  std::vector<float> expect_output = {-1.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.0, 1.0};
+  CompareOutputData(output.data(), expect_output.data(), 8, 0.00001);
+
+  input0_tensor.SetData(nullptr);
+  output0_tensor.SetData(nullptr);
+}
+
+TEST_F(TestActivationFp32, HardTanh2) {
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
+
+  ActivationParameter op_param;
+  op_param.op_parameter_.type_ = schema::PrimitiveType_Activation;
+  op_param.type_ = schema::ActivationType_HARD_TANH;
+  op_param.min_val_ = -2.0f;
+  op_param.max_val_ = 2.0f;
+
+  std::vector<float> input = {-3.0, -2.0, -1.0, 0.0, 1.0, 5.0, 6.0, 7.0};
+  std::vector<int> in_shape = {8};
+
+  lite::Tensor input0_tensor;
+  inputs_tensor.push_back(&input0_tensor);
+  input0_tensor.SetData(input.data());
+  input0_tensor.set_shape(in_shape);
+
+  std::vector<float> output(8);
+  std::vector<int> output_shape = {8};
+
+  lite::Tensor output0_tensor;
+  outputs_tensor.push_back(&output0_tensor);
+  output0_tensor.SetData(output.data());
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Activation};
+  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
+  lite::InnerContext ctx;
+  ctx.thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
+  kernel::LiteKernel *kernel =
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
+  auto output_tensor_shape = output0_tensor.shape();
+  kernel->Run();
+
+  std::vector<float> expect_output = {-2.0, -2.0, -1.0, 0.0, 1.0, 2.0, 2.0, 2.0};
+  CompareOutputData(output.data(), expect_output.data(), 8, 0.00001);
+
+  input0_tensor.SetData(nullptr);
+  output0_tensor.SetData(nullptr);
+}
+
 }  // namespace mindspore

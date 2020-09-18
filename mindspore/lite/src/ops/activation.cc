@@ -22,9 +22,13 @@ namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 int Activation::GetType() const { return this->primitive_->value.AsActivation()->type; }
 float Activation::GetAlpha() const { return this->primitive_->value.AsActivation()->alpha; }
+float Activation::GetMinVal() const { return this->primitive_->value.AsActivation()->min_val; }
+float Activation::GetMaxVal() const { return this->primitive_->value.AsActivation()->max_val; }
 
 void Activation::SetType(int type) { this->primitive_->value.AsActivation()->type = (schema::ActivationType)type; }
 void Activation::SetAlpha(float alpha) { this->primitive_->value.AsActivation()->alpha = alpha; }
+void Activation::SetMinVal(float min_val) { this->primitive_->value.AsActivation()->min_val = min_val; }
+void Activation::SetMaxVal(float max_val) { this->primitive_->value.AsActivation()->max_val = max_val; }
 
 int Activation::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   if (this->primitive_ == nullptr) {
@@ -63,13 +67,15 @@ int Activation::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuff
     MS_LOG(ERROR) << "value_as_Activation return nullptr";
     return RET_ERROR;
   }
-  auto val_offset = schema::CreateActivation(*fbb, attr->type(), attr->alpha());
+  auto val_offset = schema::CreateActivation(*fbb, attr->type(), attr->alpha(), attr->min_val(), attr->max_val());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Activation, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
 }
 int Activation::GetType() const { return this->primitive_->value_as_Activation()->type(); }
 float Activation::GetAlpha() const { return this->primitive_->value_as_Activation()->alpha(); }
+float Activation::GetMinVal() const { return this->primitive_->value_as_Activation()->min_val(); }
+float Activation::GetMaxVal() const { return this->primitive_->value_as_Activation()->max_val(); }
 #endif
 }  // namespace lite
 }  // namespace mindspore

@@ -57,7 +57,8 @@ enum ActivationType : byte {
     HSIGMOID = 13,
     THRESHOLDRELU = 14,
     LINEAR = 15,
-    UNKNOW = 16
+    HARD_TANH = 16,
+    UNKNOW = 17
 }
 enum ActivationGradType : byte {
     NO_ACTIVATION = 0,
@@ -155,6 +156,8 @@ table SoftMax {
 table Activation {
     type: ActivationType = 0;
     alpha: float = 0.2;
+    min_val: float = -1.0;
+    max_val: float = 1.0;
 }
 table ActivationGrad {
     type: ActivationType = 0;
