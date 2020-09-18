@@ -49,7 +49,7 @@ def train():
     """Train model."""
     parser = argparse.ArgumentParser(description='GCN')
     parser.add_argument('--data_dir', type=str, default='./data/cora/cora_mr', help='Dataset directory')
-    parser.add_argument('--seed', type=int, default=123, help='Random seed')
+    parser.add_argument('--seed', type=int, default=0, help='Random seed')
     parser.add_argument('--train_nodes_num', type=int, default=140, help='Nodes numbers for training')
     parser.add_argument('--eval_nodes_num', type=int, default=500, help='Nodes numbers for evaluation')
     parser.add_argument('--test_nodes_num', type=int, default=1000, help='Nodes numbers for test')
