@@ -16,7 +16,7 @@ else()
             VER 67.1
             LIBS ${LIB_ICU_COMMON} ${LIB_ICU_DATA} ${LIB_ICU_I18N}
             URL https://github.com/unicode-org/icu/archive/release-67-1.tar.gz
-            MD5 0c2662a2b0bc80b0eb56495205247c8f
+            MD5 fd525fb47d8827b0b7da78b51dd2d93f
             PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/icu4c/icu4c.patch01
             CONFIGURE_COMMAND ./icu4c/source/runConfigureICU Linux --enable-rpath --disable-tests --disable-samples --disable-icuio --disable-extras ICU_DATA_FILTER_FILE=${CMAKE_BINARY_DIR}/icu4c_filter.json
             )
