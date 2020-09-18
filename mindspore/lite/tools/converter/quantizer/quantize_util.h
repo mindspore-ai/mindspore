@@ -24,6 +24,7 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
+#include <utility>
 #include "tools/converter/quantizer/quantizer.h"
 #include "src/ops/primitive_c.h"
 #include "include/errorcode.h"
@@ -61,11 +62,25 @@ class QuantStrategy {
   static const std::vector<schema::PrimitiveType> mul_types;
 };
 
+constexpr float delta = 0.1;
+constexpr float ratio = 10.0;
+constexpr int percent = 10;
+
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
                              int quant_min, int num_bits);
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange = false,
                              int numBits = UINT8_QUANTIZATION);
+
+bool SearchLowerBound(const std::vector<float> &data, const size_t &index, const float &max_tmp, float *min_tmp,
+                      size_t *min_idx);
+
+bool SearchUpperBound(const std::vector<float> &data, const size_t &index, float *max_tmp, const float &min_tmp,
+                      size_t *max_idx);
+
+float CalPercentile(const std::vector<float> &datas, const int &percent);
+
+std::pair<float, float> PercentMethod(std::vector<float> min_datas, std::vector<float> max_datas);
 
 template <typename T>
 T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {

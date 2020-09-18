@@ -304,6 +304,74 @@ STATUS PostBitPack(float *weight, size_t shapeSize, size_t bitNum) {
 
   return RET_OK;
 }
+
+bool SearchLowerBound(const std::vector<float> &data, const size_t &index, const float &max_tmp, float *min_tmp,
+                      size_t *min_idx) {
+  size_t length = data.size();
+  if (max_tmp - data.at(index) < delta) {
+    return false;
+  }
+  float range_ratio = (data.at(index) - *min_tmp) / (max_tmp - *min_tmp);
+  float index_ratio = static_cast<float>(index - *min_idx) / (length - *min_idx);
+  if (index_ratio > 0 && range_ratio / index_ratio > ratio) {
+    *min_idx = index;
+    *min_tmp = data.at(index);
+  }
+  return true;
+}
+
+bool SearchUpperBound(const std::vector<float> &data, const size_t &index, float *max_tmp, const float &min_tmp,
+                      size_t *max_idx) {
+  size_t length = data.size();
+  if (data.at(index) - min_tmp < delta) {
+    return false;
+  }
+  float range_ratio = (*max_tmp - data.at(index)) / (*max_tmp - min_tmp);
+  float index_ratio = static_cast<float>(index - *max_idx) / (length - *max_idx);
+  if (index_ratio > 0 && range_ratio / index_ratio > ratio) {
+    *max_idx = index;
+    *max_tmp = data.at(index);
+  }
+  return true;
+}
+
+float CalPercentile(const std::vector<float> &datas, const int &outlier_percent) {
+  const int size = datas.size();
+  float val = outlier_percent / 100.0 * size;
+  int index = std::ceil(val);
+  float result = 0.0;
+  if (index - val > 0) {
+    result = datas.at(index - 1);
+  } else {
+    result = (datas.at(index - 1) + datas.at(index)) / 2;
+  }
+  return result;
+}
+
+std::pair<float, float> PercentMethod(std::vector<float> min_datas, std::vector<float> max_datas) {
+  std::sort(max_datas.begin(), max_datas.end());
+  std::sort(min_datas.begin(), min_datas.end());
+  float min_val = CalPercentile(min_datas, percent);
+  float max_val = CalPercentile(max_datas, 100 - percent);
+  std::reverse(max_datas.begin(), max_datas.end());
+  MS_ASSERT(min_val < max_val);
+  MS_ASSERT(min_datas.size() == max_datas.size());
+  float min_tmp = min_val;
+  float max_tmp = max_val;
+  size_t min_idx = 0;
+  size_t max_idx = 0;
+  size_t length = min_datas.size();
+  for (size_t i = 0; i < length; i++) {
+    if (!SearchLowerBound(min_datas, i, max_tmp, &min_tmp, &min_idx)) {
+      break;
+    }
+    if (!SearchUpperBound(min_datas, i, &max_tmp, min_tmp, &max_idx)) {
+      break;
+    }
+  }
+  std::pair<float, float> result{min_tmp, max_tmp};
+  return result;
+}
 }  // namespace quant
 }  // namespace lite
 }  // namespace mindspore

@@ -42,6 +42,7 @@ struct MaxMin {
 
 const char kMethodMaxMin[] = "MAX_MIN";
 const char kMethodKL[] = "KL";
+const char kMethodOutlier[] = "RemovalOutlier";
 constexpr int kDefaultBinNumber = 2048;
 
 struct ConfigParam {
@@ -127,6 +128,10 @@ struct DivergInfo {
   int quant_max = 255;
   int quant_min = 0;
   std::string method_x = kMethodKL;
+  std::vector<float> min_datas;
+  std::vector<float> max_datas;
+  std::pair<float, float> percent_result{0.0, 0.0};
+  float scale_tmp = 0;
 
   DivergInfo(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min, const std::string &method_x) {
     this->method_x = method_x;
@@ -142,6 +147,8 @@ struct DivergInfo {
   }
 
   STATUS RecordMaxValue(const std::vector<float> &datas);
+
+  STATUS RecordMaxValueArray(const std::vector<float> &datas);
 
   void UpdateInterval();
 
