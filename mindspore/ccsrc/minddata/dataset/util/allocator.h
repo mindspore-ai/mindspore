@@ -92,21 +92,27 @@ template <typename T, typename... Args>
 Status MakeUnique(std::unique_ptr<T[], std::function<void(T *)>> *out, Allocator<T> alloc, size_t n, Args &&... args) {
   RETURN_UNEXPECTED_IF_NULL(out);
   CHECK_FAIL_RETURN_UNEXPECTED(n > 0, "size must be positive");
-  T *data = alloc.allocate(n);
-  if (!std::is_arithmetic<T>::value) {
-    for (auto i = 0; i < n; i++) {
-      std::allocator_traits<Allocator<T>>::construct(alloc, &(data[i]), std::forward<Args>(args)...);
-    }
-  }
-  auto deleter = [](T *p, Allocator<T> f_alloc, size_t f_n) {
-    if (!std::is_arithmetic<T>::value && std::is_destructible<T>::value) {
-      for (auto i = 0; i < f_n; ++i) {
-        std::allocator_traits<Allocator<T>>::destroy(f_alloc, &p[i]);
+  try {
+    T *data = alloc.allocate(n);
+    if (!std::is_arithmetic<T>::value) {
+      for (auto i = 0; i < n; i++) {
+        std::allocator_traits<Allocator<T>>::construct(alloc, &(data[i]), std::forward<Args>(args)...);
       }
     }
-    f_alloc.deallocate(p, f_n);
-  };
-  *out = std::unique_ptr<T[], std::function<void(T *)>>(data, std::bind(deleter, std::placeholders::_1, alloc, n));
+    auto deleter = [](T *p, Allocator<T> f_alloc, size_t f_n) {
+      if (!std::is_arithmetic<T>::value && std::is_destructible<T>::value) {
+        for (auto i = 0; i < f_n; ++i) {
+          std::allocator_traits<Allocator<T>>::destroy(f_alloc, &p[i]);
+        }
+      }
+      f_alloc.deallocate(p, f_n);
+    };
+    *out = std::unique_ptr<T[], std::function<void(T *)>>(data, std::bind(deleter, std::placeholders::_1, alloc, n));
+  } catch (const std::bad_alloc &e) {
+    return Status(StatusCode::kOutOfMemory);
+  } catch (const std::exception &e) {
+    RETURN_STATUS_UNEXPECTED(e.what());
+  }
   return Status::OK();
 }
 
