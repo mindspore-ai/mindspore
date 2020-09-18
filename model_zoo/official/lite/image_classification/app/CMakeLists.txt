@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.4.1)
 set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  ${CMAKE_SOURCE_DIR}/libs/${ANDROID_ABI})
 
-set(MINDSPORELITE_VERSION  mindspore-lite-0.7.0-minddata-arm64-cpu)
+set(MINDSPORELITE_VERSION  mindspore-lite-1.0.0-minddata-arm64-cpu)
 
 # ============== Set MindSpore Dependencies. =============
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp)
