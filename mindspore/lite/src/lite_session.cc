@@ -284,7 +284,6 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-  model->Free();
   is_running_.store(false);
   return RET_OK;
 }

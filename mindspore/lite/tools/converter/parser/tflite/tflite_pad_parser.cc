@@ -17,8 +17,8 @@
 #include "tools/converter/parser/tflite/tflite_pad_parser.h"
 #include <vector>
 #include <memory>
-#include <map>
 #include <string>
+#include <map>
 
 namespace mindspore {
 namespace lite {
