@@ -116,7 +116,7 @@ __kernel void ElementFloorDiv_IMG(__read_only image2d_t input_a, __read_only ima
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), floor(a / b));
+  WRITE_IMAGE(output, (int2)(X, Y), floor(divide_no_check(a, b)));
 }
 
 __kernel void ElementFloorMod_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
@@ -155,7 +155,7 @@ __kernel void ElementEqual_IMG(__read_only image2d_t input_a, __read_only image2
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(a == b));
+  WRITE_IMAGE(output, (int2)(X, Y), a == b ? (FLT4)1.f : (FLT4).0f);
 }
 
 __kernel void ElementNotEqual_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
@@ -168,7 +168,7 @@ __kernel void ElementNotEqual_IMG(__read_only image2d_t input_a, __read_only ima
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(a != b));
+  WRITE_IMAGE(output, (int2)(X, Y), a != b ? (FLT4)1.f : (FLT4).0f);
 }
 
 __kernel void ElementLess_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
@@ -181,7 +181,7 @@ __kernel void ElementLess_IMG(__read_only image2d_t input_a, __read_only image2d
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(a < b));
+  WRITE_IMAGE(output, (int2)(X, Y), a < b ? (FLT4)1.f : (FLT4).0f);
 }
 
 __kernel void ElementLessEqual_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
@@ -194,7 +194,7 @@ __kernel void ElementLessEqual_IMG(__read_only image2d_t input_a, __read_only im
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(a <= b));
+  WRITE_IMAGE(output, (int2)(X, Y), a <= b ? (FLT4)1.f : (FLT4).0f);
 }
 
 __kernel void ElementGreater_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
@@ -207,7 +207,7 @@ __kernel void ElementGreater_IMG(__read_only image2d_t input_a, __read_only imag
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(a > b));
+  WRITE_IMAGE(output, (int2)(X, Y), a > b ? (FLT4)1.f : (FLT4).0f);
 }
 
 __kernel void ElementGreaterEqual_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
@@ -220,7 +220,7 @@ __kernel void ElementGreaterEqual_IMG(__read_only image2d_t input_a, __read_only
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(a >= b));
+  WRITE_IMAGE(output, (int2)(X, Y), a >= b ? (FLT4)1.f : (FLT4).0f);
 }
 
 __kernel void BroadcastAdd_IMG(__read_only image2d_t input_a, float b, __write_only image2d_t output,
@@ -327,7 +327,7 @@ __kernel void BroadcastFloorDiv_IMG(__read_only image2d_t input_a, float b, __wr
   }
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), floor(a / (FLT4)b));
+  WRITE_IMAGE(output, (int2)(X, Y), floor(divide_no_check(a, (FLT4)b)));
 }
 
 __kernel void BroadcastFloorMod_IMG(__read_only image2d_t input_a, float b, __write_only image2d_t output,
@@ -363,7 +363,7 @@ __kernel void BroadcastEqual_IMG(__read_only image2d_t input_a, float b, __write
   }
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(a == (FLT4)b));
+  WRITE_IMAGE(output, (int2)(X, Y), a == (FLT4)b ? (FLT4)1.f : (FLT4).0f);
 }
 
 __kernel void BroadcastNotEqual_IMG(__read_only image2d_t input_a, float b, __write_only image2d_t output,
@@ -375,7 +375,7 @@ __kernel void BroadcastNotEqual_IMG(__read_only image2d_t input_a, float b, __wr
   }
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(a != (FLT4)b));
+  WRITE_IMAGE(output, (int2)(X, Y), a != (FLT4)b ? (FLT4)1.f : (FLT4).0f);
 }
 
 __kernel void BroadcastLess_IMG(__read_only image2d_t input_a, float b, __write_only image2d_t output,
@@ -387,7 +387,7 @@ __kernel void BroadcastLess_IMG(__read_only image2d_t input_a, float b, __write_
   }
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(a < (FLT4)b));
+  WRITE_IMAGE(output, (int2)(X, Y), a < (FLT4)b ? (FLT4)1.f : (FLT4).0f);
 }
 
 __kernel void BroadcastLessEqual_IMG(__read_only image2d_t input_a, float b, __write_only image2d_t output,
@@ -399,7 +399,7 @@ __kernel void BroadcastLessEqual_IMG(__read_only image2d_t input_a, float b, __w
   }
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(a <= (FLT4)b));
+  WRITE_IMAGE(output, (int2)(X, Y), a <= (FLT4)b ? (FLT4)1.f : (FLT4).0f);
 }
 
 __kernel void BroadcastGreater_IMG(__read_only image2d_t input_a, float b, __write_only image2d_t output,
@@ -411,7 +411,7 @@ __kernel void BroadcastGreater_IMG(__read_only image2d_t input_a, float b, __wri
   }
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(a > (FLT4)b));
+  WRITE_IMAGE(output, (int2)(X, Y), a > (FLT4)b ? (FLT4)1.f : (FLT4).0f);
 }
 
 __kernel void BroadcastGreaterEqual_IMG(__read_only image2d_t input_a, float b, __write_only image2d_t output,
@@ -423,7 +423,7 @@ __kernel void BroadcastGreaterEqual_IMG(__read_only image2d_t input_a, float b, 
   }
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), AS_FLT4(a >= (FLT4)b));
+  WRITE_IMAGE(output, (int2)(X, Y), a >= (FLT4)b ? (FLT4)1.f : (FLT4).0f);
 }
 
 __kernel void ElementAdd_BUF(__global float *input_a, __global float *input_b, __global float *output,

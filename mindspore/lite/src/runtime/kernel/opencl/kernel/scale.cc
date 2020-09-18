@@ -311,26 +311,19 @@ int ScaleOpenCLKernel::Run() {
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale);
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, offset);
   } else {
-    if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
+    if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
       float scale = static_cast<float *>(in_tensors_[1]->data_c())[0];
       float offset = static_cast<float *>(in_tensors_[2]->data_c())[0];
       ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale);
       ocl_runtime_->SetKernelArg(kernel_, arg_idx++, offset);
-    } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
-      if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
-        float scale = static_cast<float *>(in_tensors_[1]->data_c())[0];
-        float offset = static_cast<float *>(in_tensors_[2]->data_c())[0];
-        ocl_runtime_->SetKernelArg(kernel_, arg_idx++, Float32ToShort(scale));
-        ocl_runtime_->SetKernelArg(kernel_, arg_idx++, Float32ToShort(offset));
-      } else if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
-        float16_t scale = static_cast<float16_t *>(in_tensors_[1]->data_c())[0];
-        float16_t offset = static_cast<float16_t *>(in_tensors_[2]->data_c())[0];
-        ocl_runtime_->SetKernelArg(kernel_, arg_idx++, Float32ToShort(scale));
-        ocl_runtime_->SetKernelArg(kernel_, arg_idx++, Float32ToShort(offset));
-      } else {
-        MS_LOG(ERROR) << "Unsupport data type " << in_tensors_[1]->data_type();
-        return RET_ERROR;
-      }
+    } else if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
+      float16_t scale = static_cast<float16_t *>(in_tensors_[1]->data_c())[0];
+      float16_t offset = static_cast<float16_t *>(in_tensors_[2]->data_c())[0];
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<float>(scale));
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<float>(offset));
+    } else {
+      MS_LOG(ERROR) << "Unsupport data type " << in_tensors_[1]->data_type();
+      return RET_ERROR;
     }
   }
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
