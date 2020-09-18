@@ -30,7 +30,15 @@ void AscendMemoryManager::MallocDeviceMemory() {
   device_mem_size_ = context_mem == 0 ? kAscendDeviceMemSize : context_mem;
   auto ret = rtMalloc(reinterpret_cast<void **>(&device_mem_base_), device_mem_size_, RT_MEMORY_HBM);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_size_ << "] fail, ret[" << ret << "]";
+    if (ret == RT_ERROR_DRV_ERR) {
+      auto context_ptr = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(context_ptr);
+      unsigned int device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+      MS_LOG(EXCEPTION) << "Device " << device_id << " is occupied, malloc device memory failed, size["
+                        << device_mem_size_ << "], ret[" << ret << "]";
+    } else {
+      MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_size_ << "] fail, ret[" << ret << "]";
+    }
   }
 
   AscendMemoryPool::GetInstance().Init(device_mem_base_, device_mem_size_, dynamic_mem_offset_);
