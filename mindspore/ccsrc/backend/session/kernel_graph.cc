@@ -1188,6 +1188,19 @@ void KernelGraph::UpdateChildGraphOrder() {
   child_graph_order_ = child_graph_order;
 }
 
+void KernelGraph::RemoveNodeFromGraph(const AnfNodePtr &node) {
+  if (backend_front_anf_map_.find(node) != backend_front_anf_map_.end()) {
+    auto front_node = backend_front_anf_map_[node];
+    (void)backend_front_anf_map_.erase(node);
+    (void)front_backend_anf_map_.erase(front_node);
+  }
+  if (node->isa<ValueNode>()) {
+    if (graph_value_nodes_.find(node->cast<ValueNodePtr>()) != graph_value_nodes_.end()) {
+      (void)graph_value_nodes_.erase(node->cast<ValueNodePtr>());
+    }
+  }
+}
+
 std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
 
 KernelGraph::~KernelGraph() {

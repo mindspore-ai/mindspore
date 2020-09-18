@@ -565,6 +565,7 @@ void AscendControlParser::RecurseCall(NotNull<KernelGraphPtr> kg, NotNull<CNodeP
   cur_node->set_inputs(new_inputs);
   cur_node->set_abstract(nullptr);
   AnfAlgo::SetNodeAttr(kAttrChildGraph, MakeValue<std::vector<KernelGraphPtr>>({call_kg}), cur_node.get());
+  kg->RemoveNodeFromGraph(origin_inputs[kCNodeCallArg]);
   origin_inputs.assign(origin_inputs.begin() + kCNodeCallArg + 1, origin_inputs.end());
   AttachOriginalInputsToGraph(kg, origin_inputs);
   MS_LOG(INFO) << "Succeed processing call func " << cur_node->DebugString();

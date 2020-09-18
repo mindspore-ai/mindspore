@@ -174,6 +174,7 @@ class KernelGraph : public FuncGraph {
       return nullptr;
     }
   }
+  void RemoveNodeFromGraph(const AnfNodePtr &node);
 
  private:
   // remove value node form graph
