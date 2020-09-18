@@ -50,7 +50,7 @@ Dataset used: [CIFAR-10](<http://www.cs.toronto.edu/~kriz/cifar.html>)
 - Hardware（Ascend/GPU）
   - Prepare hardware environment with Ascend or GPU processor.
 - Framework
-  - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
+  - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
   - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
   - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)

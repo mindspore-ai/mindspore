@@ -156,6 +156,7 @@ class WideDeepModel(nn.Cell):
         emb64_multi_size = 20900
         indicator_size = 16
         deep_dim_list = [1024, 1024, 1024, 1024, 1024]
+
         wide_reg_coef = [0.0, 0.0]
         deep_reg_coef = [0.0, 0.0]
         wide_lr = 0.2

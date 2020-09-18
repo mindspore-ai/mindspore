@@ -14,7 +14,6 @@
 # ============================================================================
 """
 #################train lstm example on aclImdb########################
-python train.py --preprocess=true --aclimdb_path=your_imdb_path --glove_path=your_glove_path
 """
 import argparse
 import os

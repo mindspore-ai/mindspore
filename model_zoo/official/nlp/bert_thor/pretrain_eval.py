@@ -110,7 +110,7 @@ class BertPretrainEva(nn.Cell):
 
 def get_enwiki_512_dataset(batch_size=1, repeat_count=1, distribute_file=''):
     '''
-    Get enwiki seq_length=512 dataset
+    Get enwiki dataset when seq_length is 512.
     '''
     ds = de.TFRecordDataset([cfg.data_file], cfg.schema_file, columns_list=["input_ids", "input_mask", "segment_ids",
                                                                             "masked_lm_positions", "masked_lm_ids",

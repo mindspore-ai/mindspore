@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """fused layernorm"""
+import numpy as np
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
@@ -20,8 +21,6 @@ from mindspore.common.initializer import initializer
 from mindspore.ops.primitive import constexpr
 import mindspore.common.dtype as mstype
 from mindspore.nn.cell import Cell
-
-import numpy as np
 
 
 __all__ = ['FusedLayerNorm']

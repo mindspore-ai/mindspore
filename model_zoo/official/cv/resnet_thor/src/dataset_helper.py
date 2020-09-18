@@ -151,7 +151,7 @@ class _DatasetIter:
 
 
 class _DatasetIterMSLoopSink(_DatasetIter):
-    """Iter for context (device_target=Ascend)"""
+    """Iter for context when device_target is Ascend"""
     def __init__(self, dataset, sink_size, epoch_num, iter_first_order):
         super().__init__(dataset, sink_size, epoch_num)
         sink_count = 1
@@ -179,7 +179,7 @@ class _DatasetIterMSLoopSink(_DatasetIter):
 
 
 class _DatasetIterMS(_DatasetIter):
-    """Iter for MS(enable_loop_sink=False)."""
+    """Iter for MS when enable_loop_sink is False."""
     def __init__(self, dataset, sink_size, epoch_num):
         super().__init__(dataset, sink_size, epoch_num)
         if sink_size > 0:

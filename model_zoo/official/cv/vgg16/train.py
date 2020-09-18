@@ -14,7 +14,6 @@
 # ============================================================================
 """
 #################train vgg16 example on cifar10########################
-python train.py --data_path=$DATA_HOME --device_id=$DEVICE_ID
 """
 import argparse
 import datetime

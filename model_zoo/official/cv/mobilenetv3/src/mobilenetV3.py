@@ -83,7 +83,7 @@ class SE(nn.Cell):
     SE warpper definition.
 
     Args:
-        num_out (int): Output channel.
+        num_out (int): Numbers of output channels.
         ratio (int): middle output ratio.
 
     Returns:
@@ -301,7 +301,7 @@ class MobileNetV3(nn.Cell):
     def _make_layer(self, kernel_size, exp_ch, out_channel, use_se, act_func, stride=1):
         mid_planes = exp_ch
         out_planes = out_channel
-        #num_in, num_mid, num_out, kernel_size, stride=1, act_type='relu', use_se=False):
+
         layer = ResUnit(self.inplanes, mid_planes, out_planes,
                         kernel_size, stride=stride, act_type=act_func, use_se=use_se)
         self.inplanes = out_planes

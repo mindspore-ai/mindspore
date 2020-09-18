@@ -105,7 +105,7 @@ class SE(nn.Cell):
     SE warpper definition.
 
     Args:
-        num_out (int): Output channel.
+        num_out (int): output channel.
         ratio (int): middle output ratio.
 
     Returns:

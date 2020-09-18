@@ -149,7 +149,6 @@ if __name__ == "__main__":
     # pass mr_api arguments
     os.environ['graph_api_args'] = args.graph_api_args
 
-    # import mr_api
     try:
         mr_api = import_module(args.mindrecord_script + '.mr_api')
     except ModuleNotFoundError:

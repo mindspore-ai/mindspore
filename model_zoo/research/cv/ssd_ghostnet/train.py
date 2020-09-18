@@ -23,10 +23,8 @@ from mindspore import context, Tensor
 from mindspore.communication.management import init
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, LossMonitor, TimeMonitor
 from mindspore.train import Model, ParallelMode
-# from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.ssd_ghostnet import SSD300, SSDWithLossCell, TrainingWrapper, ssd_ghostnet
-# from src.config_ghostnet_1x import config
 from src.config_ghostnet_13x import config
 from src.dataset import create_ssd_dataset, data_to_mindrecord_byte_image, voc_data_to_mindrecord
 from src.lr_schedule import get_lr
@@ -124,7 +122,6 @@ def main():
 
         backbone = ssd_ghostnet()
         ssd = SSD300(backbone=backbone, config=config)
-        # print(ssd)
         net = SSDWithLossCell(ssd, config)
         init_net_param(net)
 

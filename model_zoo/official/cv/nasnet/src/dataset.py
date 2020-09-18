@@ -47,7 +47,6 @@ def create_dataset(dataset_path, config, do_train, repeat_num=1):
             C.RandomCropDecodeResize(config.image_size),
             C.RandomHorizontalFlip(prob=0.5),
             C.RandomColorAdjust(brightness=0.4, saturation=0.5)  # fast mode
-            # C.RandomColorAdjust(brightness=0.4, contrast=0.5, saturation=0.5, hue=0.2)
         ]
     else:
         trans = [

@@ -94,7 +94,6 @@ class TileBeam(nn.Cell):
         # add an dim
         input_tensor = self.expand(input_tensor, 1)
         # get tile shape: [1, beam, ...]
-        # shape = self.shape(input_tensor)
         tile_shape = (1,) + (self.beam_width,)
         for _ in range(len(shape) - 1):
             tile_shape = tile_shape + (1,)
@@ -349,7 +348,7 @@ class BeamSearchDecoder(nn.Cell):
 
         # add length penalty scores
         penalty_len = self.length_penalty(state_length)
-        # return penalty_len
+        # get penalty length
         log_probs = self.real_div(state_log_probs, penalty_len)
 
         # sort according to scores

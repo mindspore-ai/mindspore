@@ -21,7 +21,7 @@ class LeNet5(nn.Cell):
     Lenet network
 
     Args:
-        num_class (int): Num classes. Default: 10.
+        num_class (int): Number of classes. Default: 10.
 
     Returns:
         Tensor, output tensor

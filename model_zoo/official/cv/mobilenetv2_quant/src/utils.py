@@ -83,8 +83,8 @@ class CrossEntropyWithLabelSmooth(_Loss):
     CrossEntropyWith LabelSmooth.
 
     Args:
-        smooth_factor (float): smooth factor, default=0.
-        num_classes (int): num classes
+        smooth_factor (float): smooth factor for label smooth. Default is 0.
+        num_classes (int): number of classes. Default is 1000.
 
     Returns:
         None.

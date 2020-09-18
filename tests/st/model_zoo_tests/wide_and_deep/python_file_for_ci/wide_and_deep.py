@@ -13,22 +13,19 @@
 # limitations under the License.
 # ============================================================================
 """wide and deep model"""
+import numpy as np
 from mindspore import nn
 from mindspore import Parameter, ParameterTuple
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-# from mindspore.nn import Dropout
 from mindspore.nn.optim import Adam, FTRL
-# from mindspore.nn.metrics import Metric
 from mindspore.common.initializer import Uniform, initializer
-# from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.communication.management import get_group_size
-import numpy as np
 
 np_type = np.float32
 ms_type = mstype.float32
@@ -110,8 +107,6 @@ class DenseLayer(nn.Cell):
 
     def construct(self, x):
         x = self.act_func(x)
-        # if self.training:
-        #    x = self.dropout(x)
         x = self.mul(x, self.scale_coef)
         if self.convert_dtype:
             x = self.cast(x, mstype.float16)
