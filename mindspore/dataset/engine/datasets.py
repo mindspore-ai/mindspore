@@ -46,6 +46,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
     check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, \
     check_paddeddataset, check_iterator
+from ..core.config import get_callback_timeout
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 from ..text.utils import DE_C_INTER_SENTENCEPIECE_MODE
 
@@ -1839,9 +1840,20 @@ class BlockReleasePair:
         self.default_rows *= batch_size
 
     def block_func(self):
+        """
+        Function for handing blocking condition.
+
+        Return:
+            True
+        """
         with self.cv:
             # if disable is true, the always evaluate to true
-            self.cv.wait_for(lambda: (self.row_count < 0 or self.disable))
+            not_time_out = self.cv.wait_for(lambda: (self.row_count < 0 or self.disable),
+                                            timeout=get_callback_timeout())
+            # time_out will be False if time out occurs
+            if not not_time_out:
+                logger.warning("Timeout happened in sync_wait, disabling lock")
+                self.disable = True
             self.row_count += 1
         return True
 
