@@ -433,8 +433,6 @@ class Multinomial(PrimitiveWithInfer):
     Args:
         seed (int): Seed data is used as entropy source for Random number engines to generate pseudo-random numbers.
           Must be non-negative. Default: 0.
-        replacement(bool): Whether to draw with replacement or not.
-
     Inputs:
         - **input** (Tensor[float32]) - the input tensor containing the cumsum of probabilities, must be 1 or 2
             dimensions.
@@ -445,16 +443,15 @@ class Multinomial(PrimitiveWithInfer):
 
     Examples:
         >>> input = Tensor([0., 9., 4., 0.], mstype.float32)
-        >>> multinomial = P.Multinomial(replacement=True, seed=10)
+        >>> multinomial = P.Multinomial(seed=10)
         >>> output = multinomial(input, 2)
     """
 
     @prim_attr_register
-    def __init__(self, replacement=True, seed=0):
+    def __init__(self, seed=0):
         """init"""
         validator.check_value_type("seed", seed, [int], self.name)
         validator.check_integer("seed", seed, 0, Rel.GE, self.name)
-        validator.check_value_type("replacement", replacement, [bool], self.name)
         self.init_prim_io_names(inputs=['input', 'num_sample'], outputs=['output'])
 
     def __infer__(self, inputs, num_samples):

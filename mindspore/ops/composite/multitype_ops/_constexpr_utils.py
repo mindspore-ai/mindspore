@@ -39,6 +39,9 @@ TENSOR_GETITEM = "tensor getitem"
 SET_ITEM_BY_ONE_TENSOR = 0
 SET_ITEM_BY_TUPLE_OF_TENSOR = 1
 
+@constexpr
+def raise_value_error(msg):
+    raise ValueError(msg)
 
 @constexpr
 def raise_index_error(msg):

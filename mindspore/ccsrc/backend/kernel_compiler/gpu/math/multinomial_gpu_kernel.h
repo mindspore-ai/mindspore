@@ -25,7 +25,6 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/multinomial_impl.cuh"
-#include "backend/kernel_compiler/gpu/cuda_impl/float_status_impl.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/cumsum_impl.cuh"
 
 namespace mindspore {
@@ -33,12 +32,7 @@ namespace kernel {
 template <typename T>
 class MultinomialGpuKernel : public GpuKernel {
  public:
-  MultinomialGpuKernel()
-      : input_size_0_(0),
-        output_size_(0),
-        distributions_(0),
-        workspace_size_(sizeof(curandState)),
-        replacement_(true) {}
+  MultinomialGpuKernel() : input_size_0_(0), output_size_(0), distributions_(0), workspace_size_(sizeof(curandState)) {}
   ~MultinomialGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -54,52 +48,13 @@ class MultinomialGpuKernel : public GpuKernel {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     int categories = SizeToInt(inputs[0]->size / sizeof(T)) / distributions_;
     int num_sample = SizeToInt(outputs[0]->size / sizeof(int)) / distributions_;
-    // check input
-    CheckPeram(input_addr, cum_sum_input, categories, stream_ptr);
-    if (replacement_) {
-      NormInput(cum_sum_input, IntToSize(distributions_), IntToSize(categories),
-                reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaStreamSynchronize failed.");
-      Multinomial(seed_, cum_sum_input, num_sample, devStates, output_addr, IntToSize(distributions_),
-                  IntToSize(categories), reinterpret_cast<cudaStream_t>(stream_ptr));
-    }
-    return true;
-  }
-
-  void CheckPeram(const T *input_addr, T *cum_sum_input, int categories, void *stream_ptr) {
-    T *flag = nullptr;
-    T *cflag = nullptr;
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMalloc(reinterpret_cast<void **>(&cflag), sizeof(T)), "cudaMalloc failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMallocHost(&flag, sizeof(T)), "cudaMallocHost failed.");
-    CalFloatStatus(input_size_0_ / sizeof(T), input_addr, cflag, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaStreamSynchronize failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpy(flag, cflag, sizeof(T), cudaMemcpyDeviceToHost), "cudaMemcpyAsync failed.");
-    if (*flag > 0) {
-      MS_LOG(EXCEPTION) << "Input is invalid (containing NaN, -inf or inf)";
-    }
-    CheckNonNeg(input_size_0_ / sizeof(T), input_addr, cflag, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaStreamSynchronize failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpy(flag, cflag, sizeof(T), cudaMemcpyDeviceToHost), "cudaMemcpyAsync failed.");
-    if (*flag > 0) {
-      MS_LOG(EXCEPTION) << "Input is invalid (input element < 0)";
-    }
     CumSum(input_addr, cum_sum_input, cum_sum_input, IntToSize(distributions_), IntToSize(categories), 1,
            IntToSize(categories), 1, false, false, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaStreamSynchronize failed.");
-    CheckZero(IntToSize(distributions_), IntToSize(categories), cum_sum_input, cflag,
+    NormInput(cum_sum_input, IntToSize(distributions_), IntToSize(categories),
               reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaStreamSynchronize failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpy(flag, cflag, sizeof(T), cudaMemcpyDeviceToHost), "cudaMemcpyAsync failed.");
-    if (*flag > 0) {
-      MS_LOG(EXCEPTION) << "Input is invalid (sum <= 0)";
-    }
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaFree(cflag), "cudaFree failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaFreeHost(flag), "cudaFreeHost failed.");
+    Multinomial(seed_, cum_sum_input, num_sample, devStates, output_addr, IntToSize(distributions_),
+                IntToSize(categories), reinterpret_cast<cudaStream_t>(stream_ptr));
+    return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
@@ -127,15 +82,10 @@ class MultinomialGpuKernel : public GpuKernel {
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     output_size_ = sizeof(int);
     workspace_size_ = sizeof(int);
-    replacement_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("replacement"));
-    if (replacement_) {
-      for (size_t i = 0; i < output_shape.size(); i++) {
-        output_size_ *= output_shape[i];
-      }
+    for (size_t i = 0; i < output_shape.size(); i++) {
+      output_size_ *= output_shape[i];
     }
-    if (replacement_) {
-      workspace_size_ = output_size_;
-    }
+    workspace_size_ = output_size_;
     seed_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed"));
     InitSizeLists();
     return true;
@@ -155,7 +105,6 @@ class MultinomialGpuKernel : public GpuKernel {
   size_t output_size_;
   size_t distributions_;
   size_t workspace_size_;
-  bool replacement_;
   int seed_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

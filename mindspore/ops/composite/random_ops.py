@@ -255,11 +255,10 @@ def multinomial(inputs, num_sample, replacement=True, seed=0):
     shape = P.Shape()
     reshape = P.Reshape()
     if inputs.dim() != 1 and inputs.dim() != 2:
-        raise ValueError("inputs dim must be 1d or 2d")
+        const_utils.raise_value_error("inputs dim must be 1d or 2d")
     if not replacement:
-        P.Multinomial(replacement=replacement, seed=seed)(inputs, num_sample)
         if shape(inputs)[-1] < num_sample:
-            raise ValueError("num_sample must be less than shape(input)[-1] without replacement")
+            const_utils.raise_value_error("num_sample must be less than shape(input)[-1] without replacement")
         n_dist = 1
         if len(shape(inputs)) > 1:
             n_dist = shape(inputs)[-2]
@@ -269,4 +268,4 @@ def multinomial(inputs, num_sample, replacement=True, seed=0):
         vals = P.RealDiv()(P.Log()(random_uniform), inputs + 1e-6)
         _, indices = P.TopK()(vals, num_sample)
         return indices
-    return P.Multinomial(replacement=replacement, seed=seed)(inputs, num_sample)
+    return P.Multinomial(seed=seed)(inputs, num_sample)
