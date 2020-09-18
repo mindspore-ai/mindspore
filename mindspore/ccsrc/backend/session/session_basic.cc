@@ -1173,6 +1173,10 @@ bool CNodeFirstInputIsPrimitive(const AnfNodePtr &node) {
 void HandleInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &backend_node,
                           const FuncGraphManagerPtr &front_func_graph_manager,
                           const std::shared_ptr<KernelGraph> &backend_graph) {
+  // When init parameter from cnode of other graphs, the cnode will not be real kernel except for tuple_getitem.
+  if (!AnfAlgo::IsRealKernel(front_node) && !AnfAlgo::CheckPrimitiveType(front_node, prim::kPrimTupleGetItem)) {
+    return;
+  }
   auto node_users = front_func_graph_manager->node_users();
   auto users = node_users[front_node];
   auto front_real_kernel_pair = AnfAlgo::VisitKernel(front_node, 0);
@@ -1205,8 +1209,8 @@ void HandleInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &backen
     }
   }
   if (internal_output) {
-    MS_LOG(INFO) << "Internal output: " << front_node->DebugString() << "To "
-                 << backend_real_kernel_pair.first->DebugString();
+    MS_LOG(INFO) << "Internal output: " << front_node->DebugString() << " To "
+                 << backend_real_kernel_pair.first->DebugString() << ", unique_target: " << unique_target;
     backend_graph->AddInternalOutput(front_node, backend_real_kernel_pair.first, backend_real_kernel_pair.second,
                                      unique_target);
   }
