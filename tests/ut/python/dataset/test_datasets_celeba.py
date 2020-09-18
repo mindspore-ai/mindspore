@@ -25,6 +25,10 @@ def test_celeba_dataset_label():
         [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1,
          0, 0, 1],
         [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+         0, 0, 1],
+        [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+         0, 0, 1],
+        [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1,
          0, 0, 1]]
     count = 0
     for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -35,7 +39,7 @@ def test_celeba_dataset_label():
         for index in range(len(expect_labels[count])):
             assert item["attr"][index] == expect_labels[count][index]
         count = count + 1
-    assert count == 2
+    assert count == 4
 
 
 def test_celeba_dataset_op():
@@ -54,14 +58,17 @@ def test_celeba_dataset_op():
         logger.info("----------image--------")
         logger.info(item["image"])
         count = count + 1
-    assert count == 4
+    assert count == 8
 
 
 def test_celeba_dataset_ext():
     ext = [".JPEG"]
     data = ds.CelebADataset(DATA_DIR, decode=True, extensions=ext)
-    expect_labels = [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1,
-                     0, 1, 0, 1, 0, 0, 1],
+    expect_labels = [
+        [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1,
+         0, 1, 0, 1, 0, 0, 1],
+        [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1,
+         0, 1, 0, 1, 0, 0, 1]]
     count = 0
     for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info("----------image--------")
@@ -71,7 +78,7 @@ def test_celeba_dataset_ext():
         for index in range(len(expect_labels[count])):
             assert item["attr"][index] == expect_labels[count][index]
         count = count + 1
-    assert count == 1
+    assert count == 2
 
 
 def test_celeba_dataset_distribute():
@@ -83,14 +90,25 @@ def test_celeba_dataset_distribute():
         logger.info("----------attr--------")
         logger.info(item["attr"])
         count = count + 1
-    assert count == 1
+    assert count == 2
 
 
 def test_celeba_get_dataset_size():
     data = ds.CelebADataset(DATA_DIR, shuffle=False, decode=True)
     size = data.get_dataset_size()
+    assert size == 4
+
+    data = ds.CelebADataset(DATA_DIR, shuffle=False, decode=True, usage="train")
+    size = data.get_dataset_size()
     assert size == 2
 
+    data = ds.CelebADataset(DATA_DIR, shuffle=False, decode=True, usage="valid")
+    size = data.get_dataset_size()
+    assert size == 1
+
+    data = ds.CelebADataset(DATA_DIR, shuffle=False, decode=True, usage="test")
+    size = data.get_dataset_size()
+    assert size == 1
 
 if __name__ == '__main__':
     test_celeba_dataset_label()
