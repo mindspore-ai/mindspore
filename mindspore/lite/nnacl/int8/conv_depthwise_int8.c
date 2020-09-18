@@ -295,7 +295,7 @@ void ConvDwSWInt8(int8_t *output_data, const int8_t *input_data, const int16_t *
         int in_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_l_;
         const int8_t *in_t = src_data + in_h_start * sliding->in_h_step_ + in_w_start * sliding->block_channel_;
         int8_t *out_t = dst_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
         ConvDwInt8Center(out_t, in_t, weight, bias, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
                          conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_ * sizeof(int8_t),
                          sliding->block_channel_ * sizeof(int8_t), sliding->in_sh_step_ * sizeof(int8_t),
