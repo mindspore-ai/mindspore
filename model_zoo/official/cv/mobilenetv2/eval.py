@@ -46,6 +46,10 @@ if __name__ == '__main__':
 
     dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, config=config)
     step_size = dataset.get_dataset_size()
+    if step_size == 0:
+        raise ValueError("The step_size of dataset is zero. Check if the images count of train dataset is more \
+            than batch_size in config.py")
+
     net.set_train(False)
 
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
