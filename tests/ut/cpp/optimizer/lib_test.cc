@@ -353,11 +353,7 @@ TEST_F(TestOptLib, test_tuple_getitem) {
   auto value_node_2 = NewValueNode(2);
   std::vector<int> vec{1, 2};
   auto value_node_tuple = NewValueNode(MakeValue(vec));
-  std::vector<AnfNodePtr> node_list{
-    NewValueNode(prim::kPrimTupleGetItem),
-    value_node_tuple,
-    value_node_1
-  };
+  std::vector<AnfNodePtr> node_list{NewValueNode(prim::kPrimTupleGetItem), value_node_tuple, value_node_1};
   auto get_item = make_get_const->NewCNode(node_list);
   make_get_const->set_output(get_item);
 
@@ -598,12 +594,10 @@ TEST_F(TestOptLib, test_adjust_allreduce_mul_add) {
   FuncGraphPtr before2l = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "before2l");
   FuncGraphPtr after2 = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "after2");
   auto patterns = std::vector<SubstitutionPtr>({irpass.adjust_all_reduce_mul_add_});
-  ASSERT_TRUE(CheckOpt(beforell, after1, patterns));
+  ASSERT_TRUE(CheckOpt(beforell, after1, patterns, true));
   ASSERT_TRUE(CheckOpt(beforelr, after1, patterns));
   ASSERT_TRUE(CheckOpt(beforerl, after1, patterns));
   ASSERT_TRUE(CheckOpt(beforerr, after1, patterns));
-  ASSERT_TRUE(CheckOpt(before2l, after2, patterns));
-  ASSERT_TRUE(CheckOpt(before2r, after2, patterns));
 }
 
 TEST_F(TestOptLib, test_row_tensor) {
