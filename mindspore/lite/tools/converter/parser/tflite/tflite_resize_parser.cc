@@ -85,16 +85,22 @@ STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
   auto buffData = reinterpret_cast<int32_t *>(buff->data.data());
-  auto height = buffData[0];
-  auto width = buffData[1];
-  attr->newWidth = width;
-  attr->newHeight = height;
+  if (buffData != nullptr) {
+    auto height = buffData[0];
+    auto width = buffData[1];
+    attr->newWidth = width;
+    attr->newHeight = height;
+  }
 
   op->primitive->value.type = schema::PrimitiveType_Resize;
   op->primitive->value.value = attr.release();
 
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
              tflite_tensors.size(), schema::Format::Format_NHWC);
+  if (buffData == nullptr) {
+    AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[1], tensors_id->size(),
+               tflite_tensors.size(), schema::Format::Format_NHWC);
+  }
   AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
               tflite_tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
