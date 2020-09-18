@@ -41,6 +41,8 @@ class WeightQuantizer : public Quantizer {
   STATUS DoQuantize(FuncGraphPtr funcGraph) override;
   STATUS DoConvQuantize(const std::list<CNodePtr> &nodes);
   STATUS DoMulQuantize(const std::list<CNodePtr> &nodes);
+  static STATUS WeightQuantInputCheck(const converter::Flags *config);
+  static bool IsPosNum(const std::string &str);
   int quant_max{INT8_MAX};
   int quant_min{INT8_MIN};
  private:
