@@ -58,12 +58,14 @@ int MallocTmpBuffer(std::vector<float *> *data_buffers, const ShapeVector &shape
   return RET_OK;
 }
 
-int FreeTmpBuffer(std::vector<float *> *data_buffers, mindspore::lite::Allocator *allocator) {
+void FreeTmpBuffer(std::vector<float *> *data_buffers, mindspore::lite::Allocator *allocator) {
+  if (data_buffers == nullptr) {
+    return;
+  }
   for (int i = 0; i < data_buffers->size(); ++i) {
     allocator->Free(data_buffers->at(i));
   }
   data_buffers->clear();
-  return RET_OK;
 }
 
 int RunReduce(Reducer reducer, std::vector<float *> data_buffers, float *in_data, float *out_data, Int32Vector axes,
@@ -220,13 +222,11 @@ int DoReduce(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tenso
   }
   status = RunReduce(reducer, data_buffers, reinterpret_cast<float *>(in_tensors[0]->data_),
                      reinterpret_cast<float *>(out_tensors[0]->data_), axes, in_tensors[0]->shape_);
-  if (status != RET_OK) {
-    return status;
-  }
 
-  status = FreeTmpBuffer(&data_buffers, allocator);
+  FreeTmpBuffer(&data_buffers, allocator);
+
   if (status != RET_OK) {
-    return status;
+    return RET_ERROR;
   }
   return RET_OK;
 }

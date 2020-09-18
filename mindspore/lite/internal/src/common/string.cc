@@ -199,7 +199,7 @@ void String::clear() noexcept {
 String &String::operator+=(const String &str) {
   size_t new_size = size_ + str.size_;
   char *tmp = reinterpret_cast<char *>(malloc(sizeof(char) * (new_size + 1)));
-  if (buffer_ == nullptr) {
+  if (tmp == nullptr) {
     MS_C_EXCEPTION("malloc data failed");
   }
   memcpy(tmp, this->buffer_, size_ + 1);
@@ -218,7 +218,7 @@ String &String::operator+=(const char *str) {
   size_t str_size = strlen(str);
   size_t new_size = size_ + str_size;
   char *tmp = reinterpret_cast<char *>(malloc(sizeof(char) * (new_size + 1)));
-  if (buffer_ == nullptr) {
+  if (tmp == nullptr) {
     MS_C_EXCEPTION("malloc data failed");
   }
   memcpy(tmp, this->buffer_, size_ + 1);
@@ -232,7 +232,7 @@ String &String::operator+=(const char *str) {
 
 String &String::operator+=(const char ch) {
   char *tmp = reinterpret_cast<char *>(malloc(sizeof(char) * (size_ + 2)));
-  if (buffer_ == nullptr) {
+  if (tmp == nullptr) {
     MS_C_EXCEPTION("malloc data failed");
   }
   memcpy(tmp, this->buffer_, size_ + 1);
