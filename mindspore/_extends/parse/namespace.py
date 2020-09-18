@@ -18,6 +18,8 @@
 
 import builtins
 
+from mindspore import log as logger
+
 
 class Namespace:
     """
@@ -115,3 +117,6 @@ class ClassMemberNamespace(Namespace):
             return d.__dict__[name]
         except ValueError:
             raise UnboundLocalError(name)
+        except KeyError:
+            logger.warning(f"'{d.__class__.__name__ }' object has no attribute or method: '{name}', "
+                           f"so will return None.")
