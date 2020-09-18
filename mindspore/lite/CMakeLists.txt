@@ -232,7 +232,7 @@ if (BUILD_DEVICE)
     if (NOT WIN32)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/benchmark)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
-        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/time_profile)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/time_profiler)
     endif ()
 endif ()
 
