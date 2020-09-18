@@ -47,11 +47,14 @@ int ConvolutionWinogradCPUKernel::WinogradFilterTransform(const float *weight_da
   }
   auto tmp_data = reinterpret_cast<float *>(malloc(input_unit_ * kernel_unit_ * sizeof(float)));
   if (tmp_data == nullptr) {
+    free(tmp_weight_data);
     MS_LOG(ERROR) << "malloc tmp_data failed.";
     return RET_MEMORY_FAILED;
   }
   auto trans_out_data = reinterpret_cast<float *>(malloc(input_unit_ * input_unit_ * sizeof(float)));
   if (trans_out_data == nullptr) {
+    free(tmp_data);
+    free(tmp_weight_data);
     MS_LOG(ERROR) << "malloc trans_out_data failed.";
     return RET_MEMORY_FAILED;
   }

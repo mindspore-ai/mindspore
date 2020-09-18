@@ -200,7 +200,7 @@ int MatmulFP16CPUKernel::Run() {
   }
   auto b = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
   auto out_tensor = out_tensors_[0];
-  float16_t *c_ptr;
+  float16_t *c_ptr = nullptr;
   if (out_tensor->data_type() == kNumberTypeFloat32) {
     c_ptr = output_ptr_;
   } else {

@@ -271,9 +271,9 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
   int out_h_block = UP_DIV(conv_param->output_h_, out_unit);
   int output_count = out_w_block * out_h_block;
 #ifdef ENABLE_ARM32
-  int tile_num = 4;
+  const int tile_num = 4;
 #else
-  int tile_num = 12;
+  const int tile_num = 12;
 #endif
   int output_tile_count = UP_DIV(output_count, tile_num);
   int out_channel = conv_param->output_channel_;
@@ -470,9 +470,9 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
   int out_h_block = UP_DIV(conv_param->output_h_, OUPUT_UNIT);
   int output_count = out_w_block * out_h_block;
 #ifdef ENABLE_ARM32
-  int tile_num = 4;
+  const int tile_num = 4;
 #else
-  int tile_num = 12;
+  const int tile_num = 12;
 #endif
   int output_tile_count = UP_DIV(output_count, tile_num);
   const int input_unit_square = 4 * 4;

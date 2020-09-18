@@ -201,7 +201,7 @@ int ReduceCPUKernel::CalculateCoeffOutput() {
 int ReduceCPUKernel::MallocTmpBuffer() {
   data_buffers_.clear();
   for (auto size : buffer_sizes_) {
-    void *buffer;
+    void *buffer = nullptr;
     if (data_type_ == kDataTypeFloat) {
       buffer = context_->allocator->Malloc(size * sizeof(float));
     } else {

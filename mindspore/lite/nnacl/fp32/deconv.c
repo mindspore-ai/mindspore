@@ -41,9 +41,9 @@ int DeConvPostFp32C12x8(const float *src, float *tmp, const float *bias, float *
   size_t output_plane = conv_param->output_w_ * conv_param->output_h_;
   int oc8 = UP_ROUND(output_channel, C8NUM);
 #ifdef ENABLE_ARM32
-  int tile_num = 4;
+  const int tile_num = 4;
 #else
-  int tile_num = 12;
+  const int tile_num = 12;
 #endif
   int in_plane12 = UP_ROUND(input_plane, tile_num);
   int src_iw_stride = C8NUM;

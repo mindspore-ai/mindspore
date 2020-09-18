@@ -96,9 +96,9 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
   MS_ASSERT(ctx_->allocator != nullptr);
 
 #ifdef ENABLE_ARM32
-  int tile_num = 4;
+  const int tile_num = 4;
 #else
-  int tile_num = 12;
+  const int tile_num = 12;
 #endif
   size_t nhwc4_input_size =
     ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);

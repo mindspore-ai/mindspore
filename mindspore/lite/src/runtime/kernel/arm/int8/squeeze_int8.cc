@@ -143,6 +143,7 @@ int SqueezeInt8CPUKernel::Run() {
     auto input_size = quant_Squeeze_parm_->input_sizes_[i];
     inputs_array[i] = reinterpret_cast<int8_t *>(malloc(sizeof(int8_t) * input_size));
     if (inputs_array[i] == nullptr) {
+      free(inputs_array);
       MS_LOG(ERROR) << "malloc inputs_array[" << i << "]"
                     << " failed.";
       return RET_ERROR;
