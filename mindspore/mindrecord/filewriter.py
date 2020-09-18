@@ -34,6 +34,9 @@ class FileWriter:
     """
     Class to write user defined raw data into MindRecord File series.
 
+    Note:
+        The mindrecord file may fail to be read if the file name is modified.
+
     Args:
         file_name (str): File name of MindRecord File.
         shard_num (int, optional): Number of MindRecord File (default=1).
