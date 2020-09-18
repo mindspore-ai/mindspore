@@ -24,7 +24,7 @@
 #include <android/log.h>
 #endif
 
-// namespace to support utils module definitionnamespace mindspore constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
+// namespace to support utils module definition namespace mindspore constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 namespace mindspore {
 constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 
@@ -109,18 +109,13 @@ static std::string ExceptionTypeToString(ExceptionType type) {
 }
 
 void LogWriter::OutputLog(const std::ostringstream &msg) const {
-  if (IsPrint(log_level_)) {
-    std::string sm = "";
-    if (submodule_ != SM_UNKNOWN) {
-      sm = std::to_string(submodule_) + " ";
-    }
-// #ifdef USE_ANDROID_LOG
+  if (IsPrint(log_level_) && submodule_ != SM_UNKNOWN) {
 #ifdef ENABLE_ARM
-    __android_log_print(GetAndroidLogLevel(log_level_), ANDROID_LOG_TAG, "[%s:%d] %s] %s%s", location_.file_,
-                        location_.line_, location_.func_, sm.c_str(), msg.str().c_str());
+    __android_log_print(GetAndroidLogLevel(log_level_), ANDROID_LOG_TAG, "[%s:%d] %s] %s", location_.file_,
+                        location_.line_, location_.func_, msg.str().c_str());
 #else
-    printf("%s [%s:%d] %s] %s%s\n", EnumStrForMsLogLevel(log_level_), location_.file_, location_.line_, location_.func_,
-           sm.c_str(), msg.str().c_str());
+    printf("%s [%s:%d] %s] %s\n", EnumStrForMsLogLevel(log_level_), location_.file_, location_.line_,
+           location_.func_, msg.str().c_str());
 #endif
   }
 }
