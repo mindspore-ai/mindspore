@@ -45,7 +45,6 @@ log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)
 context.set_context(mode=context.GRAPH_MODE)
 
-
 # Test case: use the parse obj interface use default parameter
 class Net(nn.Cell):
     """ Net definition """
@@ -55,7 +54,7 @@ class Net(nn.Cell):
         self.softmax1 = nn.Softmax(dim)
         self.softmax2 = nn.Softmax(dim + 1)
 
-    def construct(self, input_data, input1=ms.Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))):
+    def construct(self, input_data, input1=1+2+3+4):
         return self.softmax1(input_data)
 
 
