@@ -68,10 +68,10 @@ class Momentum(Optimizer):
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
-            the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
+            the element in `params` must be class `Parameter`. When the `params` is a list of `dict`, the "params",
             "lr", "weight_decay" and "order_params" are the keys can be parsed.
 
-            - params: Required. The value should be a list of `Parameter`.
+            - params: Required. The value must be a list of `Parameter`.
 
             - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
               If not, the `learning_rate` in the API will be used.
@@ -79,21 +79,21 @@ class Momentum(Optimizer):
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
               will be used. If not, the `weight_decay` in the API will be used.
 
-            - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
+            - order_params: Optional. If "order_params" in the keys, the value must be the order of parameters and
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
-              in the value of 'order_params' should be in one of group parameters.
+              in the value of 'order_params' must be in one of group parameters.
 
         learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning rate.
             When the learning_rate is an Iterable or a Tensor in a 1D dimension, use dynamic learning rate, then
             the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
             use dynamic learning rate, the i-th learning rate will be calculated during the process of training
             according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor in a zero
-            dimension, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            dimension, use fixed learning rate. Other cases are not supported. The float learning rate must be
             equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
         momentum (float): Hyperparameter of type float, means momentum for the moving average.
-            It should be at least 0.0.
-        weight_decay (int, float): Weight decay (L2 penalty). It should be equal to or greater than 0.0. Default: 0.0.
-        loss_scale (int, float): A floating point value for the loss scale. It should be greater than 0.0. Default: 1.0.
+            It must be at least 0.0.
+        weight_decay (int, float): Weight decay (L2 penalty). It must be equal to or greater than 0.0. Default: 0.0.
+        loss_scale (int, float): A floating point value for the loss scale. It must be greater than 0.0. Default: 1.0.
         use_nesterov (bool): Enable Nesterov momentum. Default: False.
 
     Inputs:

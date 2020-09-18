@@ -50,7 +50,7 @@ class Categorical(Distribution):
         >>>
         >>>         # Similar calls can be made to logits
         >>>         ans = self.ca.probs
-        >>>         # value should be Tensor(mstype.float32, bool, mstype.int32)
+        >>>         # value must be Tensor(mstype.float32, bool, mstype.int32)
         >>>         ans = self.ca.log_prob(value)
         >>>
         >>>         # Usage of enumerate_support

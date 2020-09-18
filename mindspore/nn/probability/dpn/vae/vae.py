@@ -29,8 +29,8 @@ class VAE(Cell):
 
     Note:
         When the encoder and decoder are defined, the shape of the encoder's output tensor and decoder's input tensor
-        should be :math:`(N, hidden\_size)`.
-        The latent_size should be less than or equal to the hidden_size.
+        must be :math:`(N, hidden\_size)`.
+        The latent_size must be less than or equal to the hidden_size.
 
     Args:
         encoder(Cell): The Deep Neural Network (DNN) model defined as encoder.
@@ -89,7 +89,7 @@ class VAE(Cell):
 
         Args:
             generate_nums (int): The number of samples to generate.
-            shape(tuple): The shape of sample, it should be (generate_nums, C, H, W) or (-1, C, H, W).
+            shape(tuple): The shape of sample, it must be (generate_nums, C, H, W) or (-1, C, H, W).
 
         Returns:
             Tensor, the generated samples.

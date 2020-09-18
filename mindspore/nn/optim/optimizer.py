@@ -58,13 +58,13 @@ class Optimizer(Cell):
             the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
             use dynamic learning rate, the i-th learning rate will be calculated during the process of training
             according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor in a zero
-            dimension, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            dimension, use fixed learning rate. Other cases are not supported. The float learning rate must be
             equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
         parameters (Union[list[Parameter], list[dict]]): When the `parameters` is a list of `Parameter` which will be
-            updated, the element in `parameters` should be class `Parameter`. When the `parameters` is a list of `dict`,
+            updated, the element in `parameters` must be class `Parameter`. When the `parameters` is a list of `dict`,
             the "params", "lr", "weight_decay" and "order_params" are the keys can be parsed.
 
-            - params: Required. The value should be a list of `Parameter`.
+            - params: Required. The value must be a list of `Parameter`.
 
             - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
               If not, the `learning_rate` in the API will be used.
@@ -72,13 +72,13 @@ class Optimizer(Cell):
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
               will be used. If not, the `weight_decay` in the API will be used.
 
-            - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
+            - order_params: Optional. If "order_params" in the keys, the value must be the order of parameters and
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
-              in the value of 'order_params' should be in one of group parameters.
+              in the value of 'order_params' must be in one of group parameters.
 
-        weight_decay (float): A floating point value for the weight decay. It should be equal to or greater than 0.
+        weight_decay (float): A floating point value for the weight decay. It must be equal to or greater than 0.
             If the type of `weight_decay` input is int, it will be converted to float. Default: 0.0.
-        loss_scale (float): A floating point value for the loss scale. It should be greater than 0. If the
+        loss_scale (float): A floating point value for the loss scale. It must be greater than 0. If the
             type of `loss_scale` input is int, it will be converted to float. Default: 1.0.
 
     Raises:
@@ -315,7 +315,7 @@ class Optimizer(Cell):
                         raise ValueError("The Tensor type dynamic learning rate in group should be the same size.")
 
     def _init_group_params(self, parameters, learning_rate, weight_decay):
-        """Init learning rate or weight decay in group params."""
+        """Initialize learning rate or weight decay in group params."""
         self._parse_group_params(parameters, learning_rate)
         default_lr = self._build_single_lr(learning_rate, 'learning_rate')
 

@@ -65,14 +65,14 @@ class Conv2dBnAct(Cell):
             and width of the 2D convolution window. Single int means the value is for both height and width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
-        stride (int): Specifies stride for all spatial dimensions with the same value. The value of stride should be
+        stride (int): Specifies stride for all spatial dimensions with the same value. The value of stride must be
             greater than or equal to 1 and lower than any one of the height and width of the input. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
         padding (int): Implicit paddings on both sides of the input. Default: 0.
-        dilation (int): Specifying the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
-            there will be :math:`k - 1` pixels skipped for each sampling location. Its value should be greater than
+        dilation (int): Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
+            there will be :math:`k - 1` pixels skipped for each sampling location. Its value must be greater than
             or equal to 1 and lower than any one of the height and width of the input. Default: 1.
-        group (int): Split filter into groups, `in_ channels` and `out_channels` should be
+        group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
@@ -85,14 +85,14 @@ class Conv2dBnAct(Cell):
             Initializer and string are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: 'zeros'.
         has_bn (bool): Specifies to used batchnorm or not. Default: False.
-        momentum (float): Momentum for moving average.Momentum value should be [0, 1].Default:0.9
+        momentum (float): Momentum for moving average.Momentum value must be [0, 1].Default:0.9
         eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
                      1e-5.
         activation (Cell): Specifies activation type. The optional values are as following:
             'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
             'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
         alpha (float): Slope of the activation function at x < 0. Default: 0.2.
-        after_fake(bool): Determin whether there should be a fake quantization operation after Cond2dBnAct.
+        after_fake(bool): Determin whether there must be a fake quantization operation after Cond2dBnAct.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -176,7 +176,7 @@ class DenseBnAct(Cell):
         activation (string): Specifies activation type. The optional values are as following:
             'Softmax', 'LogSoftmax', 'ReLU', 'ReLU6', 'Tanh', 'GELU', 'Sigmoid',
             'PReLU', 'LeakyReLU', 'h-Swish', and 'h-Sigmoid'. Default: None.
-        after_fake(bool): Determin whether there should be a fake quantization operation after DenseBnAct.
+        after_fake(bool): Determin whether there must be a fake quantization operation after DenseBnAct.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
@@ -227,7 +227,7 @@ class BatchNormFoldCell(Cell):
     Batch normalization folded.
 
     Args:
-        momentum (float): Momentum value should be [0, 1]. Default: 0.9.
+        momentum (float): Momentum value must be [0, 1]. Default: 0.9.
         epsilon (float): A small float number to avoid dividing by 0. 1e-5 if dtype in
             float32 else 1e-3. Default: 1e-5.
         freeze_bn (int): Delay in steps at which computation switches from regular batch
@@ -250,7 +250,7 @@ class BatchNormFoldCell(Cell):
     """
 
     def __init__(self, momentum=0.9, epsilon=1e-5, freeze_bn=0):
-        """init batch norm fold layer"""
+        """Initialize batch norm fold layer"""
         super(BatchNormFoldCell, self).__init__()
         self.epsilon = epsilon
         self.is_gpu = context.get_context('device_target') == "GPU"
@@ -323,7 +323,7 @@ class FakeQuantWithMinMax(Cell):
                  symmetric=False,
                  narrow_range=False,
                  quant_delay=0):
-        """init FakeQuantWithMinMax layer"""
+        """Initialize FakeQuantWithMinMax layer"""
         super(FakeQuantWithMinMax, self).__init__()
         validator.check_type("min_init", min_init, [int, float])
         validator.check_type("max_init", max_init, [int, float])
@@ -470,7 +470,7 @@ class Conv2dBnFoldQuant(Cell):
                  narrow_range=False,
                  quant_delay=0,
                  freeze_bn=100000):
-        """init Conv2dBnFoldQuant layer"""
+        """Initialize Conv2dBnFoldQuant layer"""
         super(Conv2dBnFoldQuant, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -611,8 +611,8 @@ class Conv2dBnWithoutFoldQuant(Cell):
         stride (int): Specifies stride for all spatial dimensions with the same value. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
         padding (int): Implicit paddings on both sides of the input. Default: 0.
-        dilation (int): Specifying the dilation rate to use for dilated convolution. Default: 1.
-        group (int): Split filter into groups, `in_ channels` and `out_channels` should be
+        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         eps (float): Parameters for BatchNormal. Default: 1e-5.
@@ -743,8 +743,8 @@ class Conv2dQuant(Cell):
         stride (int): Specifies stride for all spatial dimensions with the same value. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
         padding (int): Implicit paddings on both sides of the input. Default: 0.
-        dilation (int): Specifying the dilation rate to use for dilated convolution. Default: 1.
-        group (int): Split filter into groups, `in_ channels` and `out_channels` should be
+        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.

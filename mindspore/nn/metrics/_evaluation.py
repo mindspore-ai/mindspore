@@ -77,7 +77,7 @@ class EvaluationBase(Metric):
         A interface describes the behavior of clearing the internal evaluation result.
 
         Note:
-            All subclasses should override this interface.
+            All subclasses must override this interface.
         """
         raise NotImplementedError
 
@@ -86,7 +86,7 @@ class EvaluationBase(Metric):
         A interface describes the behavior of updating the internal evaluation result.
 
         Note:
-            All subclasses should override this interface.
+            All subclasses must override this interface.
 
         Args:
             inputs: The first item is predicted array and the second item is target array.
@@ -98,6 +98,6 @@ class EvaluationBase(Metric):
         A interface describes the behavior of computing the evaluation result.
 
         Note:
-            All subclasses should override this interface.
+            All subclasses must override this interface.
         """
         raise NotImplementedError

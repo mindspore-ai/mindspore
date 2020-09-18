@@ -93,29 +93,29 @@ class FTRL(Optimizer):
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
-            the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
+            the element in `params` must be class `Parameter`. When the `params` is a list of `dict`, the "params",
             "lr", "weight_decay" and "order_params" are the keys can be parsed.
 
-            - params: Required. The value should be a list of `Parameter`.
+            - params: Required. The value must be a list of `Parameter`.
 
             - lr: Using different learning rate by separating parameters is currently not supported.
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
               will be used. If not, the `weight_decay` in the API will be used.
 
-            - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
+            - order_params: Optional. If "order_params" in the keys, the value must be the order of parameters and
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
-              in the value of 'order_params' should be in one of group parameters.
+              in the value of 'order_params' must be in one of group parameters.
 
         initial_accum (float): The starting value for accumulators, must be zero or positive values. Default: 0.1.
-        learning_rate (float): The learning rate value, should be zero or positive, dynamic learning rate is currently
+        learning_rate (float): The learning rate value, must be zero or positive, dynamic learning rate is currently
             not supported. Default: 0.001.
         lr_power (float): Learning rate power controls how the learning rate decreases during training, must be less
             than or equal to zero. Use fixed learning rate if lr_power is zero. Default: -0.5.
         l1 (float): l1 regularization strength, must be greater than or equal to zero. Default: 0.0.
         l2 (float): l2 regularization strength, must be greater than or equal to zero. Default: 0.0.
-        use_locking (bool): If True, use locks for updating operation. Default: False.
-        loss_scale (float): Value for the loss scale. It should be equal to or greater than 1.0. Default: 1.0.
+        use_locking (bool): If true, use locks for updating operation. Default: False.
+        loss_scale (float): Value for the loss scale. It must be equal to or greater than 1.0. Default: 1.0.
         weight_decay (float): Weight decay value to multiply weight, must be zero or positive value. Default: 0.0.
 
     Inputs:

@@ -193,8 +193,8 @@ class SSIM(Cell):
         k2 (float): The constant used to generate c2 in the contrast comparison function. Default: 0.03.
 
     Inputs:
-        - **img1** (Tensor) - The first image batch with format 'NCHW'. It should be the same shape and dtype as img2.
-        - **img2** (Tensor) - The second image batch with format 'NCHW'. It should be the same shape and dtype as img1.
+        - **img1** (Tensor) - The first image batch with format 'NCHW'. It must be the same shape and dtype as img2.
+        - **img2** (Tensor) - The second image batch with format 'NCHW'. It must be the same shape and dtype as img1.
 
     Outputs:
         Tensor, has the same dtype as img1. It is a 1-D tensor with shape N, where N is the batch num of img1.
@@ -267,8 +267,8 @@ class MSSSIM(Cell):
         k2 (float): The constant used to generate c2 in the contrast comparison function. Default: 0.03.
 
     Inputs:
-        - **img1** (Tensor) - The first image batch with format 'NCHW'. It should be the same shape and dtype as img2.
-        - **img2** (Tensor) - The second image batch with format 'NCHW'. It should be the same shape and dtype as img1.
+        - **img1** (Tensor) - The first image batch with format 'NCHW'. It must be the same shape and dtype as img2.
+        - **img2** (Tensor) - The second image batch with format 'NCHW'. It must be the same shape and dtype as img1.
 
     Outputs:
         Tensor, has the same dtype as img1. It is a 1-D tensor with shape N, where N is the batch num of img1.
@@ -352,8 +352,8 @@ class PSNR(Cell):
           Default: 1.0.
 
     Inputs:
-        - **img1** (Tensor) - The first image batch with format 'NCHW'. It should be the same shape and dtype as img2.
-        - **img2** (Tensor) - The second image batch with format 'NCHW'. It should be the same shape and dtype as img1.
+        - **img1** (Tensor) - The first image batch with format 'NCHW'. It must be the same shape and dtype as img2.
+        - **img2** (Tensor) - The second image batch with format 'NCHW'. It must be the same shape and dtype as img1.
 
     Outputs:
         Tensor, with dtype mindspore.float32. It is a 1-D tensor with shape N, where N is the batch num of img1.

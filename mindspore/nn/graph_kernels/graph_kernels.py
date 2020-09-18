@@ -106,11 +106,11 @@ class MinimumGrad(GraphKernel):
     """
     Backprop function for Minimum operator.
 
-    Compares x and y elementwise, dout should has the same shape with x and y.
+    Compares x and y elementwise, dout must has the same shape with x and y.
 
     Inputs:
         - **x** (Tensor) - The first input
-        - **y** (Tensor) - x and y should have same shape
+        - **y** (Tensor) - x and y must have same shape
         - **dout** (Tensor) - Has the same shape as x and y, next operator's backprop output
 
     Outputs:
@@ -274,7 +274,7 @@ class EqualCount(GraphKernel):
     """
     Computes the number of the same elements of two tensors.
 
-    The two input tensors should have the same shape and data type.
+    The two input tensors must have the same shape and data type.
 
     Inputs:
         x (Tensor): the first input tensor.
@@ -309,8 +309,8 @@ class ReduceMean(GraphKernel):
     The dtype of the tensor to be reduced is number.
 
     Args:
-        keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                          If False, don't keep these dimensions. Default: False.
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default: False.
 
     Inputs:
         - **input_x** (Tensor[Number]) - The input tensor.
@@ -1000,10 +1000,10 @@ class LayerNorm(Cell):
         normalized_shape (Union(tuple[int], list[int]): The normalization is performed over axis
             `begin_norm_axis ... R - 1`.
         begin_norm_axis (int): It first normalization dimension: normalization will be performed along dimensions
-            `begin_norm_axis: rank(inputs)`, the value should be in [-1, rank(input)). Default: -1.
+            `begin_norm_axis: rank(inputs)`, the value must be in [-1, rank(input)). Default: -1.
         begin_params_axis (int): The first parameter(beta, gamma)dimension: scale and centering parameters
             will have dimensions `begin_params_axis: rank(inputs)` and will be broadcast with
-            the normalized inputs accordingly, the value should be in [-1, rank(input)). Default: -1.
+            the normalized inputs accordingly, the value must be in [-1, rank(input)). Default: -1.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
             The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
             'he_uniform', etc. Default: 'ones'.

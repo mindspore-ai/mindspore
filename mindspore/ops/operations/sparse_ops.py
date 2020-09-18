@@ -24,7 +24,7 @@ from ..primitive import PrimitiveWithInfer, prim_attr_register
 
 class SparseToDense(PrimitiveWithInfer):
     """
-    Convert a sparse representation into a dense tensor.
+    Converts a sparse representation into a dense tensor.
 
     Inputs:
         - **indices** (Tensor) - The indices of sparse representation.
@@ -43,7 +43,7 @@ class SparseToDense(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init index_select"""
+        """Initialize index_select"""
         self.init_prim_io_names(inputs=['indices', 'values', 'dense_shape'], outputs=['output'])
 
     def __infer__(self, indices, values, dense_shape):

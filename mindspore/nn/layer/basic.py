@@ -279,7 +279,7 @@ class ClipByNorm(Cell):
     where :math:`L_2(X)` is the :math:`L_2`-norm of :math:`X`.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape N-D. The type should be float32 or float16.
+        - **input** (Tensor) - Tensor of shape N-D. The type must be float32 or float16.
         - **clip_norm** (Tensor) - A scalar Tensor of shape :math:`()` or :math:`(1)`.
 
     Outputs:
@@ -336,7 +336,7 @@ class Norm(Cell):
 
     Args:
         axis (Union[tuple, int]): The axis over which to compute vector norms. Default: ().
-        keep_dims (bool): If True, the axis indicated in `axis` are kept with size 1. Otherwise,
+        keep_dims (bool): If true, the axis indicated in `axis` are kept with size 1. Otherwise,
                    the dimensions in `axis` are removed from the output shape. Default: False.
 
     Inputs:
@@ -507,12 +507,12 @@ class Unfold(Cell):
     The input tensor must be a 4-D tensor and the data format is NCHW.
 
     Args:
-        ksizes (Union[tuple[int], list[int]]): The size of sliding window, should be a tuple or a list of integers,
+        ksizes (Union[tuple[int], list[int]]): The size of sliding window, must be a tuple or a list of integers,
             and the format is [1, ksize_row, ksize_col, 1].
         strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
-            should be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
+            must be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
         rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
-            pixel positions, should be a tuple or a list of integers, and the format is [1, rate_row, rate_col, 1].
+            pixel positions, must be a tuple or a list of integers, and the format is [1, rate_row, rate_col, 1].
         padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
             not case sensitive. Default: "valid".
 
@@ -575,7 +575,7 @@ class MatrixDiag(Cell):
           float32, float16, int32, int8, and uint8.
 
     Outputs:
-        Tensor, has the same type as input `x`. The shape should be x.shape + (x.shape[-1], ).
+        Tensor, has the same type as input `x`. The shape must be x.shape + (x.shape[-1], ).
 
     Examples:
         >>> x = Tensor(np.array([1, -1]), mstype.float32)
@@ -606,7 +606,7 @@ class MatrixDiagPart(Cell):
           float32, float16, int32, int8, and uint8.
 
     Outputs:
-        Tensor, has the same type as input `x`. The shape should be x.shape[:-2] + [min(x.shape[-2:])].
+        Tensor, has the same type as input `x`. The shape must be x.shape[:-2] + [min(x.shape[-2:])].
 
     Examples:
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)

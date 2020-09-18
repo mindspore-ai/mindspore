@@ -416,7 +416,7 @@ class _AlltoAll(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, split_count, split_dim, concat_dim, group=GlobalComm.WORLD_COMM_GROUP):
-        """init AlltoAll"""
+        """Initialize AlltoAll"""
         validator.check_value_type('group', _get_group(group), (str,), self.name)
         self.split_count = split_count
         self.split_dim = split_dim
@@ -520,7 +520,7 @@ class _GetTensorSlice(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init ChunkTensor"""
+        """Initialize ChunkTensor"""
 
     def infer_value(self, x, dev_mat, tensor_map):
         from mindspore.parallel._tensor import _load_tensor

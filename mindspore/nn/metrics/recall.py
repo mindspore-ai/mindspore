@@ -34,7 +34,7 @@ class Recall(EvaluationBase):
         \text{recall} = \frac{\text{true_positive}}{\text{true_positive} + \text{false_negative}}
 
     Note:
-        In the multi-label cases, the elements of :math:`y` and :math:`y_{pred}` should be 0 or 1.
+        In the multi-label cases, the elements of :math:`y` and :math:`y_{pred}` must be 0 or 1.
 
     Args:
         eval_type (str): Metric to calculate the recall over a dataset, for classification or

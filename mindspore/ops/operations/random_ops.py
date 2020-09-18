@@ -27,8 +27,8 @@ class StandardNormal(PrimitiveWithInfer):
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
 
     Args:
-        seed (int): Random seed. Must be non-negative. Default: 0.
-        seed2 (int): Random seed2. Must be non-negative. Default: 0.
+        seed (int): Random seed, must be non-negative. Default: 0.
+        seed2 (int): Random seed2, must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -44,7 +44,7 @@ class StandardNormal(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
-        """Init StandardNormal"""
+        """Initialize StandardNormal"""
         self.init_prim_io_names(inputs=['shape'], outputs=['output'])
         validator.check_integer("seed", seed, 0, Rel.GE, self.name)
         validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
@@ -89,7 +89,7 @@ class StandardLaplace(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
-        """Init StandardLaplace"""
+        """Initialize StandardLaplace"""
         self.init_prim_io_names(inputs=['shape'], outputs=['output'])
         validator.check_value_type('seed', seed, [int], self.name)
         validator.check_value_type('seed2', seed2, [int], self.name)
@@ -117,18 +117,18 @@ class Gamma(PrimitiveWithInfer):
         \text{P}(x|α,β) = \frac{\exp(-x/β)}{{β^α}\cdot{\Gamma(α)}}\cdot{x^{α-1}},
 
     Args:
-        seed (int): Random seed. Must be non-negative. Default: 0.
-        seed2 (int): Random seed2. Must be non-negative. Default: 0.
+        seed (int): Random seed, must be non-negative. Default: 0.
+        seed2 (int): Random seed2, must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
-        - **alpha** (Tensor) - The α distribution parameter. It should be greater than 0.
+        - **alpha** (Tensor) - The α distribution parameter. It must be greater than 0.
           It is also known as the shape parameter with float32 data type.
-        - **beta** (Tensor) - The β distribution parameter. It should be greater than 0.
+        - **beta** (Tensor) - The β distribution parameter. It must be greater than 0.
           It is also known as the scale parameter with float32 data type.
 
     Outputs:
-        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of alpha and beta.
+        Tensor. The shape must be the broadcasted shape of Input "shape" and shapes of alpha and beta.
         The dtype is float32.
 
     Examples:
@@ -141,7 +141,7 @@ class Gamma(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
-        """Init Gamma"""
+        """Initialize Gamma"""
         self.init_prim_io_names(inputs=['shape', 'alpha', 'beta'], outputs=['output'])
         validator.check_integer("seed", seed, 0, Rel.GE, self.name)
         validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
@@ -172,16 +172,16 @@ class Poisson(PrimitiveWithInfer):
         \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!},
 
     Args:
-        seed (int): Random seed. Must be non-negative. Default: 0.
-        seed2 (int): Random seed2. Must be non-negative. Default: 0.
+        seed (int): Random seed, must be non-negative. Default: 0.
+        seed2 (int): Random seed2, must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
         - **mean** (Tensor) - μ parameter the distribution was constructed with. The parameter defines mean number
-          of occurrences of the event. It should be greater than 0. With float32 data type.
+          of occurrences of the event. It must be greater than 0. With float32 data type.
 
     Outputs:
-        Tensor. Its shape should be the broadcasted shape of `shape` and the shape of `mean`.
+        Tensor. Its shape must be the broadcasted shape of `shape` and the shape of `mean`.
         The dtype is int32.
 
     Examples:
@@ -193,7 +193,7 @@ class Poisson(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
-        """Init Poisson"""
+        """Initialize Poisson"""
         self.init_prim_io_names(inputs=['shape', 'mean'], outputs=['output'])
         validator.check_integer("seed", seed, 0, Rel.GE, self.name)
         validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
@@ -223,11 +223,11 @@ class UniformInt(PrimitiveWithInfer):
         \text{P}(i|a,b) = \frac{1}{b-a+1},
 
     Note:
-        The number in tensor minval should be strictly less than maxval at any position after broadcasting.
+        The number in tensor minval must be strictly less than maxval at any position after broadcasting.
 
     Args:
-        seed (int): Random seed. Must be non-negative. Default: 0.
-        seed2 (int): Random seed2. Must be non-negative. Default: 0.
+        seed (int): Random seed, must be non-negative. Default: 0.
+        seed2 (int): Random seed2, must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -249,7 +249,7 @@ class UniformInt(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
-        """Init UniformInt"""
+        """Initialize UniformInt"""
         self.init_prim_io_names(inputs=['shape', 'minval', 'maxval'], outputs=['output'])
         validator.check_integer("seed", seed, 0, Rel.GE, self.name)
         validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
@@ -279,8 +279,8 @@ class UniformReal(PrimitiveWithInfer):
     Produces random floating-point values i, uniformly distributed to the interval [0, 1).
 
     Args:
-        seed (int): Random seed. Must be non-negative. Default: 0.
-        seed2 (int): Random seed2. Must be non-negative. Default: 0.
+        seed (int): Random seed, must be non-negative. Default: 0.
+        seed2 (int): Random seed2, must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -296,7 +296,7 @@ class UniformReal(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
-        """Init UniformReal"""
+        """Initialize UniformReal"""
         self.init_prim_io_names(inputs=['shape'], outputs=['output'])
         validator.check_integer("seed", seed, 0, Rel.GE, self.name)
         validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
@@ -325,13 +325,13 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
     sample, while the mask tensor denotes which elements in the index tensor are valid.
 
     Args:
-        count (int): Number of items expected to get and the number should be greater than 0. Default: 256.
+        count (int): Number of items expected to get and the number must be greater than 0. Default: 256.
         seed (int): Random seed. Default: 0.
         seed2 (int): Random seed2. Default: 0.
 
     Inputs:
         - **input_x** (Tensor[bool]) - The input tensor.
-            The input tensor rank should be greater than or equal to 1 and less than or equal to 5.
+            The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
 
     Outputs:
         Two tensors, the first one is the index tensor and the other one is the mask tensor.
@@ -347,7 +347,7 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, count=256, seed=0, seed2=0):
-        """Init RandomChoiceWithMask"""
+        """Initialize RandomChoiceWithMask"""
         validator.check_value_type("count", count, [int], self.name)
         validator.check_integer("count", count, 0, Rel.GT, self.name)
         validator.check_value_type('seed', seed, [int], self.name)
@@ -368,7 +368,7 @@ class RandomCategorical(PrimitiveWithInfer):
     Generates random samples from a given categorical distribution tensor.
 
     Args:
-        dtype (mindspore.dtype): The type of output. Its value should be one of mindspore.int16,
+        dtype (mindspore.dtype): The type of output. Its value must be one of mindspore.int16,
             mindspore.int32 and mindspore.int64. Default: mindspore.int64.
 
     Inputs:
@@ -395,7 +395,7 @@ class RandomCategorical(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, dtype=mstype.int64):
-        """Init RandomCategorical"""
+        """Initialize RandomCategorical"""
         self.dtype = dtype
 
         valid_values = (mstype.int32, mstype.int16, mstype.int64)

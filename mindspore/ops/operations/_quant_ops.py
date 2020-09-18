@@ -44,10 +44,10 @@ __all__ = ["MinMaxUpdatePerLayer",
 
 class MinMaxUpdatePerLayer(PrimitiveWithInfer):
     r"""
-    Update min and max per layer.
+    Updates min and max per layer.
 
     Args:
-        ema (bool): Use EMA algorithm update value min and max. Default: False.
+        ema (bool): Uses EMA algorithm update value min and max. Default: False.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
 
     Inputs:
@@ -56,7 +56,7 @@ class MinMaxUpdatePerLayer(PrimitiveWithInfer):
         - **max** (Tensor) : Value of the max range of the input data x.
 
     Outputs:
-        - Tensor: Simulate quantize tensor of x.
+        - Tensor: Simulates quantize tensor of x.
 
     Examples:
         >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
@@ -68,7 +68,7 @@ class MinMaxUpdatePerLayer(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, ema=False, ema_decay=0.999):
-        """init FakeQuantMinMaxPerLayerUpdate OP"""
+        """Initialize FakeQuantMinMaxPerLayerUpdate OP"""
         if context.get_context('device_target') == "Ascend":
             from mindspore.ops._op_impl._custom_op import minmax_update_perlayer
         if ema and not ema_decay:
@@ -101,10 +101,10 @@ class MinMaxUpdatePerLayer(PrimitiveWithInfer):
 
 class MinMaxUpdatePerChannel(PrimitiveWithInfer):
     r"""
-     Update min and max per channel.
+     Updates min and max per channel.
 
     Args:
-        ema (bool): Use EMA algorithm update value min and max. Default: False.
+        ema (bool): Uses EMA algorithm update value min and max. Default: False.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
         channel_axis (int): Quantization by channel axis. Ascend backend only supports 0 or 1. Default: 1.
 
@@ -114,7 +114,7 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
         - **max** (Tensor) : Value of the max range of the input data x.
 
     Outputs:
-        - Tensor: Simulate quantize tensor of x.
+        - Tensor: Simulates quantize tensor of x.
 
     Examples:
         >>> x = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
@@ -127,7 +127,7 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, ema=False, ema_decay=0.999, channel_axis=1):
-        """init FakeQuantPerChannelUpdate OP for Ascend"""
+        """Initialize FakeQuantPerChannelUpdate OP for Ascend"""
         self.is_ascend = context.get_context('device_target') == "Ascend"
         if self.is_ascend:
             from mindspore.ops._op_impl._custom_op import minmax_update_perchannel
@@ -169,11 +169,11 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
 
 class FakeQuantPerLayer(PrimitiveWithInfer):
     r"""
-    Simulate the quantize and dequantize operations in training time.
+    Simulates the quantize and dequantize operations in training time.
 
     Args:
         num_bits (int) : Number bits for quantization aware. Default: 8.
-        ema (bool): Use EMA algorithm update value min and max. Default: False.
+        ema (bool): Uses EMA algorithm update value min and max. Default: False.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
         quant_delay (int): Quantilization delay parameter. Before delay step in training time not update
             simulate quantization aware funcion. After delay step in training time begin simulate the aware
@@ -188,7 +188,7 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
         - **max** (Tensor) : Value of the max range of the input data x.
 
     Outputs:
-        - Tensor: Simulate quantize tensor of x.
+        - Tensor: Simulates quantize tensor of x.
 
     Examples:
         >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
@@ -207,7 +207,7 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
                  symmetric=False,
                  narrow_range=False,
                  training=True):
-        """init FakeQuantPerLayer OP"""
+        """Initialize FakeQuantPerLayer OP"""
         if context.get_context('device_target') == "Ascend":
             from mindspore.ops._op_impl._custom_op import fake_quant_perlayer
         if num_bits not in self.support_quant_bit:
@@ -309,11 +309,11 @@ class FakeQuantPerLayerGrad(PrimitiveWithInfer):
 
 class FakeQuantPerChannel(PrimitiveWithInfer):
     r"""
-    Simulate the quantize and dequantize operations in training time base on per channel.
+    Simulates the quantize and dequantize operations in training time base on per channel.
 
     Args:
         num_bits (int) : Number bits to quantilization. Default: 8.
-        ema (bool): Use EMA algorithm update tensor min and tensor max. Default: False.
+        ema (bool): Uses EMA algorithm update tensor min and tensor max. Default: False.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
         quant_delay (int): Quantilization delay  parameter. Before delay step in training time not
             update the weight data to simulate quantize operation. After delay step in training time
@@ -351,7 +351,7 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
                  narrow_range=False,
                  training=True,
                  channel_axis=1):
-        """init FakeQuantPerChannel OP"""
+        """Initialize FakeQuantPerChannel OP"""
         self.is_ascend = context.get_context('device_target') == "Ascend"
         if self.is_ascend:
             from mindspore.ops._op_impl._custom_op import fake_quant_perchannel
@@ -426,7 +426,7 @@ class FakeQuantPerChannelGrad(PrimitiveWithInfer):
                  symmetric=False,
                  narrow_range=False,
                  channel_axis=1):
-        """init FakeQuantPerChannelGrad Fill"""
+        """Initialize FakeQuantPerChannelGrad Fill"""
         if context.get_context('device_target') == "Ascend":
             from mindspore.ops._op_impl._custom_op import fake_quant_perchannel_grad
         if num_bits not in self.support_quant_bit:
@@ -468,7 +468,7 @@ class BatchNormFold(PrimitiveWithInfer):
     Batch normalization folded.
 
     Args:
-        momentum (float): Momentum value should be [0, 1]. Default: 0.9.
+        momentum (float): Momentum value must be [0, 1]. Default: 0.9.
         epsilon (float): A small float number to avoid dividing by 0. 1e-5 if dtype in
             float32 else 1e-3. Default: 1e-5.
         is_training (bool): In training mode set True, else set False. Default: True.
@@ -501,7 +501,7 @@ class BatchNormFold(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, momentum=0.9, epsilon=1e-5, is_training=True, freeze_bn=0):
-        """init batch norm fold layer"""
+        """Initialize batch norm fold layer"""
         self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
         self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
@@ -543,7 +543,7 @@ class BatchNormFoldGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, epsilon=1e-5, is_training=True, freeze_bn=0):
-        """init BatchNormGrad layer"""
+        """Initialize BatchNormGrad layer"""
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
         self.freeze_bn = validator.check_value_type('freeze_bn', freeze_bn, (int,), self.name)
         self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
@@ -574,7 +574,7 @@ class BatchNormFoldGrad(PrimitiveWithInfer):
 
 class CorrectionMul(PrimitiveWithInfer):
     """
-    Scale the weights with a correction factor to the long term statistics
+    Scales the weights with a correction factor to the long term statistics
     prior to quantization. This ensures that there is no jitter in the quantized weights
     due to batch to batch variation.
 
@@ -596,7 +596,7 @@ class CorrectionMul(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, channel_axis=0):
-        """init correction mul layer"""
+        """Initialize correction mul layer"""
         if context.get_context('device_target') == "Ascend":
             from mindspore.ops._op_impl._custom_op import correction_mul
         self.channel_axis = channel_axis
@@ -630,7 +630,7 @@ class CorrectionMulGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, channel_axis=0):
-        """init correction mul layer"""
+        """Initialize correction mul layer"""
         if context.get_context('device_target') == "Ascend":
             from mindspore.ops._op_impl._custom_op import correction_mul_grad
         self.channel_axis = channel_axis
@@ -670,7 +670,7 @@ class CorrectionMulGradReduce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, channel_axis=0):
-        """init correction mul reduce layer"""
+        """Initialize correction mul reduce layer"""
         if context.get_context('device_target') == "Ascend":
             from mindspore.ops._op_impl._custom_op import correction_mul_grad
         self.channel_axis = channel_axis
@@ -686,7 +686,7 @@ class CorrectionMulGradReduce(PrimitiveWithInfer):
 
 class BatchNormFold2(PrimitiveWithInfer):
     """
-    Scale the bias with a correction factor to the long term statistics
+    Scales the bias with a correction factor to the long term statistics
     prior to quantization. This ensures that there is no jitter in the quantized bias
     due to batch to batch variation.
 
@@ -720,7 +720,7 @@ class BatchNormFold2(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, freeze_bn=0):
-        """init conv2d fold layer"""
+        """Initialize conv2d fold layer"""
         self.freeze_bn = validator.check_value_type('freeze_bn', freeze_bn, (int,), self.name)
         self.init_prim_io_names(inputs=['x', 'beta', 'gamma', 'batch_std', 'batch_mean',
                                         'running_std', 'running_mean', 'global_step'],
@@ -767,7 +767,7 @@ class BatchNormFold2Grad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, freeze_bn=0):
-        """init MulFold layer"""
+        """Initialize MulFold layer"""
         self.freeze_bn = freeze_bn
         self.init_prim_io_names(inputs=['dout', 'x', 'gamma',
                                         'batch_std', 'batch_mean',
@@ -811,7 +811,7 @@ class BatchNormFoldD(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, momentum=0.9, epsilon=1e-5, is_training=True, freeze_bn=0):
-        """init _BatchNormFold layer"""
+        """Initialize _BatchNormFold layer"""
         from mindspore.ops._op_impl._custom_op import batchnorm_fold
         self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
         self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
@@ -840,7 +840,7 @@ class BatchNormFoldGradD(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, epsilon=1e-5, is_training=True, freeze_bn=0):
-        """init _BatchNormFoldGrad layer"""
+        """Initialize _BatchNormFoldGrad layer"""
         from mindspore.ops._op_impl._custom_op import batchnorm_fold_grad
         self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
@@ -867,7 +867,7 @@ class BatchNormFoldGradD(PrimitiveWithInfer):
 
 class BatchNormFold2_D(PrimitiveWithInfer):
     """
-    Scale the bias with a correction factor to the long term statistics
+    Scales the bias with a correction factor to the long term statistics
     prior to quantization. This ensures that there is no jitter in the quantized bias
     due to batch to batch variation.
 
@@ -889,7 +889,7 @@ class BatchNormFold2_D(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, freeze_bn=0):
-        """init conv2d fold layer"""
+        """Initialize conv2d fold layer"""
         from mindspore.ops._op_impl._custom_op import batchnorm_fold2
         self.init_prim_io_names(inputs=['x', 'beta', 'gamma', 'batch_std', 'batch_mean', 'running_std'],
                                 outputs=['y'])
@@ -916,7 +916,7 @@ class BatchNormFold2GradD(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, freeze_bn=False):
-        """init MulFold layer"""
+        """Initialize MulFold layer"""
         from mindspore.ops._op_impl._custom_op import batchnorm_fold2_grad
         self.freeze_bn = freeze_bn
         self.init_prim_io_names(
@@ -954,7 +954,7 @@ class BatchNormFold2GradReduce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, freeze_bn=False):
-        """init MulFold layer"""
+        """Initialize MulFold layer"""
         from mindspore.ops._op_impl._custom_op import batchnorm_fold2_grad_reduce
         self.freeze_bn = freeze_bn
         self.init_prim_io_names(inputs=['dout', 'x'],

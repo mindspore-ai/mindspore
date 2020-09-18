@@ -32,10 +32,10 @@ class LearningRateSchedule(Cell):
         """
         Defines the computation to get the current learning rate.
 
-        This method should be overridden by all subclasses.
+        This method must be overridden by all subclasses.
 
         Note:
-            The output should be a Tensor of scalar.
+            The output must be a Tensor of scalar.
 
         Inputs:
             Tensor. The current step number.
@@ -73,7 +73,7 @@ class ExponentialDecayLR(LearningRateSchedule):
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
         decay_steps (int): A value used to calculate decayed learning rate.
-        is_stair (bool): If True, learning rate is decayed once every `decay_steps` time. Default: False.
+        is_stair (bool): If true, learning rate is decayed once every `decay_steps` time. Default: False.
 
     Inputs:
         Tensor. The current step number.
@@ -127,7 +127,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
         decay_steps (int): A value used to calculate decayed learning rate.
-        is_stair (bool): If True, learning rate is decayed once every `decay_steps` time. Default: False.
+        is_stair (bool): If true, learning rate is decayed once every `decay_steps` time. Default: False.
 
     Inputs:
         Tensor. The current step number.
@@ -292,8 +292,8 @@ class PolynomialDecayLR(LearningRateSchedule):
         learning_rate (float): The initial value of learning rate.
         end_learning_rate (float): The end value of learning rate.
         decay_steps (int): A value used to calculate decayed learning rate.
-        power (float): A value used to calculate decayed learning rate. This parameter should be greater than 0.
-        update_decay_steps (bool): If True, learning rate is decayed once every `decay_steps` time. Default: False.
+        power (float): A value used to calculate decayed learning rate. This parameter must be greater than 0.
+        update_decay_steps (bool): If true, learning rate is decayed once every `decay_steps` time. Default: False.
 
     Inputs:
         Tensor. The current step number.

@@ -85,7 +85,7 @@ class Metric(metaclass=ABCMeta):
         An interface describes the behavior of clearing the internal evaluation result.
 
         Note:
-            All subclasses should override this interface.
+            All subclasses must override this interface.
         """
         raise NotImplementedError('Must define clear function to use this base class')
 
@@ -95,7 +95,7 @@ class Metric(metaclass=ABCMeta):
         An interface describes the behavior of computing the evaluation result.
 
         Note:
-            All subclasses should override this interface.
+            All subclasses must override this interface.
         """
         raise NotImplementedError('Must define eval function to use this base class')
 
@@ -105,7 +105,7 @@ class Metric(metaclass=ABCMeta):
         An interface describes the behavior of updating the internal evaluation result.
 
         Note:
-            All subclasses should override this interface.
+            All subclasses must override this interface.
 
         Args:
             inputs: A variable-length input argument list.

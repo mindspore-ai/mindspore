@@ -22,7 +22,7 @@ from ..primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 
 
 def _check_summary_param(name, value, class_name):
-    """Check the name and value is valid for summary."""
+    """Checks the name and value is valid for summary."""
     n_type = name['dtype']
     n_value = name['value']
     validator.check_value_type('name', n_type, [type(mstype.string)], class_name)
@@ -42,11 +42,11 @@ SUMMARY_RETURN_VALUE = {'dtype': mstype.int32, 'shape': [1], 'value': None}
 
 class ScalarSummary(PrimitiveWithInfer):
     """
-    Output a scalar to a protocol buffer through a scalar summary operator.
+    Outputs a scalar to a protocol buffer through a scalar summary operator.
 
     Inputs:
-        - **name** (str) - The name of the input variable, it should not be an empty string.
-        - **value** (Tensor) - The value of scalar, and the shape of value should be [] or [1].
+        - **name** (str) - The name of the input variable, it must not be an empty string.
+        - **value** (Tensor) - The value of scalar, and the shape of value must be [] or [1].
 
     Examples:
         >>> class SummaryDemo(nn.Cell):
@@ -80,11 +80,11 @@ class ScalarSummary(PrimitiveWithInfer):
 
 class ImageSummary(PrimitiveWithInfer):
     """
-    Output image tensor to protocol buffer through image summary operator.
+    Outputs image tensor to protocol buffer through image summary operator.
 
     Inputs:
-        - **name** (str) - The name of the input variable, it should not be an empty string.
-        - **value** (Tensor) - The value of image, the rank of tensor should be 4.
+        - **name** (str) - The name of the input variable, it must not be an empty string.
+        - **value** (Tensor) - The value of image, the rank of tensor must be 4.
 
     Examples:
         >>> class Net(nn.Cell):
@@ -117,11 +117,11 @@ class ImageSummary(PrimitiveWithInfer):
 
 class TensorSummary(PrimitiveWithInfer):
     """
-    Output a tensor to a protocol buffer through a tensor summary operator.
+    Outputs a tensor to a protocol buffer through a tensor summary operator.
 
     Inputs:
         - **name** (str) - The name of the input variable.
-        - **value** (Tensor) - The value of tensor, and the rank of tensor should be greater than 0.
+        - **value** (Tensor) - The value of tensor, and the rank of tensor must be greater than 0.
 
     Examples:
         >>> class SummaryDemo(nn.Cell):
@@ -155,11 +155,11 @@ class TensorSummary(PrimitiveWithInfer):
 
 class HistogramSummary(PrimitiveWithInfer):
     """
-    Output tensor to protocol buffer through histogram summary operator.
+    Outputs tensor to protocol buffer through histogram summary operator.
 
     Inputs:
         - **name** (str) - The name of the input variable.
-        - **value** (Tensor) - The value of tensor, and the rank of tensor should be greater than 0.
+        - **value** (Tensor) - The value of tensor, and the rank of tensor must be greater than 0.
 
     Examples:
         >>> class SummaryDemo(nn.Cell):
@@ -193,7 +193,7 @@ class HistogramSummary(PrimitiveWithInfer):
 
 class InsertGradientOf(PrimitiveWithInfer):
     """
-    Attach callback to graph node that will be invoked on the node's gradient.
+    Attaches callback to graph node that will be invoked on the node's gradient.
 
     Args:
         f (Function): MindSpore's Function. Callback function.
@@ -252,7 +252,7 @@ class HookBackward(PrimitiveWithInfer):
     is only supported in Pynative Mode.
 
     Note:
-        The hook function should be defined like `hook_fn(grad) -> Tensor or None`,
+        The hook function must be defined like `hook_fn(grad) -> Tensor or None`,
         where grad is the gradient passed to the primitive and gradient may be
         modified and passed to next primitive. The difference between a hook function and
         callback of InsertGradientOf is that a hook function is executed in the python
@@ -305,7 +305,7 @@ class HookBackward(PrimitiveWithInfer):
 
 class Print(PrimitiveWithInfer):
     """
-    Output tensor or string to stdout.
+    Outputs tensor or string to stdout.
 
     Note:
         In pynative mode, please use python print function.
@@ -344,7 +344,7 @@ class Print(PrimitiveWithInfer):
 
 class Debug(Primitive):
     """
-    Print tensor value.
+    Prints tensor value.
 
     Inputs:
         - **value** (Tensor) - The value of tensor.
@@ -395,7 +395,7 @@ class Assert(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, summarize=3):
-        """init Assert"""
+        """Initialize Assert"""
         self.summarize = validator.check_value_type("summarize", summarize, [int], self.name)
 
     def infer_shape(self, condition, inputs):

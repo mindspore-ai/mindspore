@@ -34,9 +34,9 @@ class Uniform(Distribution):
         name (str): The name of the distribution. Default: 'Uniform'.
 
     Note:
-        `low` should be stricly less than `high`.
+        `low` must be stricly less than `high`.
         `dist_spec_args` are `high` and `low`.
-        `dtype` should be float type because Uniform distributions are continuous.
+        `dtype` must be float type because Uniform distributions are continuous.
 
     Examples:
         >>> # To initialize a Uniform distribution of the lower bound 0.0 and the higher bound 1.0.

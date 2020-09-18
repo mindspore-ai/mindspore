@@ -36,7 +36,7 @@ class Embedding(Cell):
     the corresponding word embeddings.
 
     Note:
-        When 'use_one_hot' is set to True, the type of the input should be mindspore.int32.
+        When 'use_one_hot' is set to True, the type of the input must be mindspore.int32.
 
     Args:
         vocab_size (int): Size of the dictionary of embeddings.
@@ -49,7 +49,7 @@ class Embedding(Cell):
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(\text{batch_size}, \text{input_length})`. The elements of
-          the Tensor should be integer and not larger than vocab_size. Otherwise the corresponding embedding vector will
+          the Tensor must be integer and not larger than vocab_size. Otherwise the corresponding embedding vector will
           be zero.
 
     Outputs:
@@ -120,7 +120,7 @@ class EmbeddingLookup(Cell):
         specified 'offset = 0' to lookup table.
         When 'target' is set to 'DEVICE', this module will use P.GatherV2() which
         specified 'axis = 0' to lookup table.
-        In field slice mode, the manual_shapes should be given. It is a tuple ,where
+        In field slice mode, the manual_shapes must be given. It is a tuple ,where
         the element is vocab[i], vocab[i] is the row numbers for i-th
         part.
 
@@ -128,16 +128,16 @@ class EmbeddingLookup(Cell):
         vocab_size (int): Size of the dictionary of embeddings.
         embedding_size (int): The size of each embedding vector.
         param_init (str): The initialize way of embedding table. Default: 'normal'.
-        target (str): Specify the target where the op is executed. The value should in
+        target (str): Specifies the target where the op is executed. The value must in
             ['DEVICE', 'CPU']. Default: 'CPU'.
-        slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value should get through
+        slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
             nn.EmbeddingLookup. Default: nn.EmbeddingLookup.BATCH_SLICE.
         manual_shapes (tuple): The accompaniment array in field slice mode.
 
     Inputs:
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
           Specifies the indices of elements of the original Tensor. Values can be out of range of embedding_table,
-          and the exceeding part will be filled with 0 in the output. Input_indices should only be a 2d tensor in
+          and the exceeding part will be filled with 0 in the output. Input_indices must only be a 2d tensor in
           this interface.
 
     Outputs:

@@ -160,7 +160,7 @@ class Conv2d(_Conv):
               must be 0.
 
             - pad: Implicit paddings on both sides of the input. The number of `padding` will be padded to the input
-              Tensor borders. `padding` should be greater than or equal to 0.
+              Tensor borders. `padding` must be greater than or equal to 0.
 
         padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. If `padding` is one integer,
                     the paddings of top, bottom, left and right are the same, equal to padding. If `padding` is a tuple
@@ -168,10 +168,10 @@ class Conv2d(_Conv):
                     padding[1], padding[2], and padding[3] accordingly. Default: 0.
         dilation (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
-                                      be :math:`k - 1` pixels skipped for each sampling location. Its value should
+                                      be :math:`k - 1` pixels skipped for each sampling location. Its value must
                                       be greater or equal to 1 and bounded by the height and width of the
                                       input. Default: 1.
-        group (int): Split filter into groups, `in_ channels` and `out_channels` should be
+        group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. If the group is equal to `in_channels` and `out_channels`,
             this 2D convolution layer also can be called 2D depthwise convolution layer. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
@@ -239,7 +239,7 @@ class Conv2d(_Conv):
         self.bias_add = P.BiasAdd()
 
     def _init_depthwise_conv2d(self):
-        """Init depthwise conv2d op"""
+        """Initialize depthwise conv2d op"""
         if context.get_context("device_target") == "Ascend" and self.group > 1:
             self.dilation = self._dilation
             validator.check_integer('group', self.group, self.in_channels, Rel.EQ)
@@ -335,15 +335,15 @@ class Conv1d(_Conv):
               must be 0.
 
             - pad: Implicit paddings on both sides of the input. The number of `padding` will be padded to the input
-              Tensor borders. `padding` should be greater than or equal to 0.
+              Tensor borders. `padding` must be greater than or equal to 0.
 
         padding (int): Implicit paddings on both sides of the input. Default: 0.
         dilation (int): The data type is int. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
-                                      be :math:`k - 1` pixels skipped for each sampling location. Its value should
+                                      be :math:`k - 1` pixels skipped for each sampling location. Its value must
                                       be greater or equal to 1 and bounded by the height and width of the
                                       input. Default: 1.
-        group (int): Split filter into groups, `in_ channels` and `out_channels` should be
+        group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): An initializer for the convolution kernel.
@@ -481,7 +481,7 @@ class Conv2dTranspose(_Conv):
             width of the kernel.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Its value should be equal to or greater than 1.
+            represent height and width of movement respectively. Its value must be equal to or greater than 1.
             Default: 1.
         pad_mode (str): Select the mode of the pad. The optional values are
             "pad", "same", "valid". Default: "same".
@@ -497,10 +497,10 @@ class Conv2dTranspose(_Conv):
                     padding[1], padding[2], and padding[3] accordingly. Default: 0.
         dilation (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
-                                      be :math:`k - 1` pixels skipped for each sampling location. Its value should
+                                      be :math:`k - 1` pixels skipped for each sampling location. Its value must
                                       be greater than or equal to 1 and bounded by the height and width of the
                                       input. Default: 1.
-        group (int): Split filter into groups, `in_channels` and `out_channels` should be
+        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by the number of groups. This does not support for Davinci devices when group > 1. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
@@ -662,10 +662,10 @@ class Conv1dTranspose(_Conv):
         padding (int): Implicit paddings on both sides of the input. Default: 0.
         dilation (int): The data type is int. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
-                                      be :math:`k - 1` pixels skipped for each sampling location. Its value should
+                                      be :math:`k - 1` pixels skipped for each sampling location. Its value must
                                       be greater or equal to 1 and bounded by the width of the
                                       input. Default: 1.
-        group (int): Split filter into groups, `in_channels` and `out_channels` should be
+        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by the number of groups. This is not support for Davinci devices when group > 1. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.

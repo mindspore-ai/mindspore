@@ -83,9 +83,9 @@ class L1Loss(_Loss):
             Default: "mean".
 
     Inputs:
-        - **input_data** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`. The data type should be float16 or
+        - **input_data** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`. The data type must be float16 or
           float32.
-        - **target_data** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_S)`. The data type should be float16 or
+        - **target_data** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_S)`. The data type must be float16 or
           float32.
 
     Outputs:
@@ -344,14 +344,14 @@ class CosineEmbeddingLoss(_Loss):
 
     Args:
         margin (float): Should be in [-1.0, 1.0]. Default 0.0.
-        reduction (str): Specifies which reduction to be applied to the output. It should be one of
+        reduction (str): Specifies which reduction to be applied to the output. It must be one of
           "none", "mean", and "sum", meaning no reduction, reduce mean and sum on output, respectively. Default "mean".
 
     Inputs:
         - **input_x1** (Tensor) - Input tensor.
-        - **input_x2** (Tensor) - Its shape and data type should be the same as `input_x1`'s shape and data type.
+        - **input_x2** (Tensor) - Its shape and data type must be the same as `input_x1`'s shape and data type.
         - **y** (Tensor) - Contains value 1 or -1. Suppose the shape of `input_x1` is
-          :math:`(x_1, x_2, x_3,..., x_R)`, then the shape of `target` should be :math:`(x_1, x_3, x_4, ..., x_R)`.
+          :math:`(x_1, x_2, x_3,..., x_R)`, then the shape of `target` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
 
     Outputs:
         - **loss** (Tensor) - If `reduction` is "none", its shape is the same as `y`'s shape, otherwise a scalar value

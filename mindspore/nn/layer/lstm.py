@@ -78,7 +78,7 @@ class LSTM(Cell):
         - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`).
         - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32 or
           mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
-          Data type of `hx` should be the same as `input`.
+          Data type of `hx` must be the same as `input`.
 
     Outputs:
         Tuple, a tuple constains (`output`, (`h_n`, `c_n`)).
@@ -208,7 +208,7 @@ class LSTMCell(Cell):
           mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
         - **c** - data type mindspore.float32 or
           mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
-          Data type of `h' and 'c' should be the same of `input`.
+          Data type of `h' and 'c' must be the same of `input`.
 
     Outputs:
         `output`, `h_n`, `c_n`, 'reserve', 'state'.

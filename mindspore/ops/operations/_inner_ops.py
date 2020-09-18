@@ -34,7 +34,7 @@ class StridedSliceAICPU(PrimitiveWithInfer):
 
     Note:
         The stride may be negative value, which causes reverse slicing.
-        The shape of `begin`, `end` and `strides` should be the same.
+        The shape of `begin`, `end` and `strides` must be the same.
 
     Args:
         begin_mask (int): Starting index of the slice. Default: 0.
@@ -85,7 +85,7 @@ class StridedSliceAICPU(PrimitiveWithInfer):
                  ellipsis_mask=0,
                  new_axis_mask=0,
                  shrink_axis_mask=0):
-        """init StrideSlice"""
+        """Initialize StrideSlice"""
         self.init_prim_io_names(inputs=['x', 'begin', 'end', 'strides'], outputs=['output'])
         validator.check_value_type('begin_mask', begin_mask, [int], self.name)
         validator.check_value_type('end_mask', end_mask, [int], self.name)
@@ -155,16 +155,16 @@ class StridedSliceAICPU(PrimitiveWithInfer):
 
 class ExtractImagePatches(PrimitiveWithInfer):
     """
-    Extract patches from images.
+    Extracts patches from images.
     The input tensor must be a 4-D tensor and the data format is NHWC.
 
     Args:
-        ksizes (Union[tuple[int], list[int]]): The size of sliding window, should be a tuple or a list of integers,
+        ksizes (Union[tuple[int], list[int]]): The size of sliding window, must be a tuple or a list of integers,
             and the format is [1, ksize_row, ksize_col, 1].
         strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
-            should be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
+            must be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
         rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
-            pixel positions, should be a tuple or a list of integers, and the format is [1, rate_row, rate_col, 1].
+            pixel positions, must be a tuple or a list of integers, and the format is [1, rate_row, rate_col, 1].
         padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
             not case sensitive. Default: "valid".
 
@@ -311,11 +311,11 @@ class Quant(PrimitiveWithInfer):
         scale (float) : Specifies the scaling ratio.
         offset (float): Specifies the offset.
         sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Default: False.
-        round_mode (str): Specifies the way to round. Should be one of ["Round", "Floor", "Ceil", "Trunc"].
+        round_mode (str): Specifies the way to round. Must be one of ["Round", "Floor", "Ceil", "Trunc"].
           Default: "Round".
 
     Inputs:
-        - **input_x** (Tensor) : Input tensor. Its data type should be mindspore.float16 or mindspore.float32.
+        - **input_x** (Tensor) : Input tensor. Its data type must be mindspore.float16 or mindspore.float32.
 
     Outputs:
         - Tensor: The quantized output tensor of type mindspore.int8.
@@ -367,9 +367,9 @@ class Dequant(PrimitiveWithInfer):
         relu_flag (bool): Specifies whether to perform ReLU. Default: False.
 
     Inputs:
-        - **input_x** (Tensor) : Input tensor. Should be mindspore.int32.
+        - **input_x** (Tensor) : Input tensor. Must be mindspore.int32.
         - **deq_scale** (Tensor) : Specifies the scaling ratio.
-          Data type should be mindspore.float16 or mindspore.uint64
+          Data type must be mindspore.float16 or mindspore.uint64
 
     Outputs:
         - Tensor: The quantized output tensor of type mindspore.float16.
@@ -463,7 +463,7 @@ class MatrixDiag(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init MatrixDiag"""
+        """Initialize MatrixDiag"""
 
     def infer_dtype(self, x_dtype, assist_dtype):
         valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
@@ -499,7 +499,7 @@ class MatrixDiagPart(PrimitiveWithInfer):
         - **assist** (Tensor) - A eye tensor of the same type as `x`. With shape same as `x`.
 
     Outputs:
-        Tensor, data type same as input `x`. The shape should be x.shape[:-2] + [min(x.shape[-2:])].
+        Tensor, data type same as input `x`. The shape must be x.shape[:-2] + [min(x.shape[-2:])].
 
     Examples:
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
@@ -511,7 +511,7 @@ class MatrixDiagPart(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init MatrixDiagPart"""
+        """Initialize MatrixDiagPart"""
 
     def infer_dtype(self, x_dtype, assist_dtype):
         valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
@@ -532,7 +532,7 @@ class MatrixDiagPart(PrimitiveWithInfer):
 
 class MatrixSetDiag(PrimitiveWithInfer):
     r"""
-    Modify the batched diagonal part of a batched tensor.
+    Modifies the batched diagonal part of a batched tensor.
 
     Inputs:
         - **x** (Tensor) - The batched tensor. It can be one of the following data types:
@@ -554,7 +554,7 @@ class MatrixSetDiag(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init MatrixSetDiag"""
+        """Initialize MatrixSetDiag"""
 
     def infer_dtype(self, x_dtype, diagonal_dtype, assist_dtype):
         valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]

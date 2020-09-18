@@ -35,9 +35,9 @@ class Normal(Distribution):
         name (str): The name of the distribution. Default: 'Normal'.
 
     Note:
-        `sd` should be greater than zero.
+        `sd` must be greater than zero.
         `dist_spec_args` are `mean` and `sd`.
-        `dtype` should be a float type because Normal distributions are continuous.
+        `dtype` must be a float type because Normal distributions are continuous.
 
     Examples:
         >>> # To initialize a Normal distribution of the mean 3.0 and the standard deviation 4.0.
