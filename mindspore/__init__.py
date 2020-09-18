@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""MindSpore package."""
+""".. MindSpore package."""
 
 from ._version_check import check_version_and_env_config
 from . import common, train
