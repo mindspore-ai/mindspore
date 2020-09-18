@@ -86,6 +86,7 @@ class PoolingGradGpuKernel : public GpuKernel {
     auto dout_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(input_mask);
     if (is_null_input_) {
       MS_LOG(WARNING) << "PoolingGradGpuKernel input is null.";
@@ -204,7 +205,6 @@ class PoolingGradGpuKernel : public GpuKernel {
                                 "cudnnSetPoolingNdDescriptor failed");
   }
   void SetPoolingMode(const CNodePtr &kernel_node) {
-    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     mode_ = AnfAlgo::GetCNodeName(kernel_node);
     if (mode_ == "AvgPoolGradGpu") {
       pooling_mode_ = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
