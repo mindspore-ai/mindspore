@@ -43,7 +43,7 @@ class ConditionalVAE(Cell):
 
     Inputs:
         - **input_x** (Tensor) - The shape of input tensor is :math:`(N, C, H, W)`, which is the same as the input of
-        encoder.
+          encoder.
 
         - **input_y** (Tensor) - The tensor of the target data, the shape is :math:`(N,)`.
 

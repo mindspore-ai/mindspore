@@ -40,7 +40,7 @@ class VAE(Cell):
 
     Inputs:
         - **input** (Tensor) - The shape of input tensor is :math:`(N, C, H, W)`, which is the same as the input of
-        encoder.
+          encoder.
 
     Outputs:
         - **output** (Tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor)).
