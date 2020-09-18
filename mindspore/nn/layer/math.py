@@ -41,7 +41,7 @@ class ReduceLogSumExp(Cell):
                           Default : False.
 
     Inputs:
-        - **input_x** (Tensor[Number]) - The input tensor.
+        - **input_x** (Tensor[Number]) - The input tensor. With float16 or float32 data type.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed.
 

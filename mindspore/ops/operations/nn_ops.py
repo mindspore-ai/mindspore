@@ -4365,11 +4365,11 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float16 or float32.
         - **accum** (Parameter) - Variable tensor to be updated, has the same dtype as `var`.
-        - **lr** (Union[Number, Tensor]) - The learning rate value. should be a float number or
+        - **lr** (Union[Number, Tensor]) - The learning rate value, should be a float number or
           a scalar tensor with float16 or float32 data type.
-        - **l1** (Union[Number, Tensor]) - l1 regularization strength. should be a float number or
+        - **l1** (Union[Number, Tensor]) - l1 regularization strength, should be a float number or
           a scalar tensor with float16 or float32 data type.
-        - **l2** (Union[Number, Tensor]) - l2 regularization strength. should be a float number or
+        - **l2** (Union[Number, Tensor]) - l2 regularization strength, should be a float number or
           a scalar tensor with float16 or float32 data type..
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
         - **indices** (Tensor) - A vector of indices in the first dimension of `var` and `accum`.
@@ -5444,7 +5444,8 @@ class InTopK(PrimitiveWithInfer):
     Inputs:
         - **x1** (Tensor) - A 2D Tensor defines the predictions of a batch of samples with float16 or float32 data type.
         - **x2** (Tensor) - A 1D Tensor defines the labels of a batch of samples with int32 data type. The size of x2
-          must be equal to x1's first dimension.
+          must be equal to x1's first dimension. The values of `x2` can not be negative and
+          must be equal to or less than index of x1's second dimension.
 
     Outputs:
         Tensor has 1 dimension of type bool and the same shape with `x2`. For labeling sample `i` in `x2`,
