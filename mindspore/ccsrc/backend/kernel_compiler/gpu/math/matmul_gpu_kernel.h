@@ -86,7 +86,7 @@ class MatMulGpuKernel : public GpuKernel {
     dtype_b_ = GetCudaDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 1)));
     dtype_c_ = GetCudaDataType(TypeIdLabel(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0)));
     if (dtype_a_ == CUDA_R_16F && dtype_b_ == CUDA_R_16F && dtype_c_ == CUDA_R_16F) {
-      MS_LOG(WARNING) << "input and output type is float16, allow to use Tensor Core operations if possible";
+      MS_LOG(INFO) << "input and output type is float16, allow to use Tensor Core operations if possible";
       algo_ = CUBLAS_GEMM_DEFAULT_TENSOR_OP;
     }
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
