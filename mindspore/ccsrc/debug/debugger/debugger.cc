@@ -126,7 +126,7 @@ void Debugger::EnableDebugger() {
       MS_LOG(INFO) << "Getenv MS_DEBUGGER_PORT: " << env_port_str;
       port = std::string(env_port_str);
     } else {
-      MS_LOG(ERROR) << "Environment variable MS_DEBUGGER_PORT is not valid. Custom port ranging from 0 to 65535";
+      MS_LOG(ERROR) << "Environment variable MS_DEBUGGER_PORT is not valid. Custom port ranging from 1 to 65535";
       debugger_enabled_ = false;
     }
   } else {
@@ -180,6 +180,7 @@ void Debugger::EnableDebugger() {
       }
     }
     MS_LOG(INFO) << "last op overflow bin folder" << last_overflow_bin_;
+    closedir(d);
   }
 #endif
 
@@ -824,9 +825,9 @@ bool Debugger::CheckPort(const char *port) {
   int num = 0;
   if (*p == '0' && *(p + 1) != '\0') return false;
   while (*p != '\0') {
-    if (*p <= '0' && *p >= '9') return false;
+    if (*p < '0' || *p > '9') return false;
     num = num * 10 + (*p) - '0';
-    if (num < 0 || num > 65535) return false;
+    if (num < 1 || num > 65535) return false;
     p++;
   }
   return true;
