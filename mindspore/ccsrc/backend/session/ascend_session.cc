@@ -174,11 +174,9 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   device::KernelAdjust::GetInstance().Profiling(NOT_NULL(root_graph.get()));
   // build kernel
   BuildKernel(root_graph);
-#ifdef ENABLE_DEBUGGER
   if (debugger_) {
     debugger_->PreExecute(root_graph);
   }
-#endif
   // alloc mem
   MemoryAlloc(root_graph.get());
   // generate and load task into device
@@ -249,11 +247,9 @@ void AscendSession::BuildGraph(GraphId graph_id) {
   BuildKernel(graph);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-#ifdef ENABLE_DEBUGGER
   if (debugger_) {
     debugger_->PreExecute(graph);
   }
-#endif
   if (ms_context->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
     MS_LOG(INFO) << "Precompile only, stop in build kernel step";
   } else {
@@ -325,18 +321,14 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
   }
   // summary
   Summary(kernel_graph.get());
-#ifdef ENABLE_DEBUGGER
   // load tensor from device for debugger
   if (debugger_ && debugger_->debugger_enabled()) {
     LoadTensor(kernel_graph);
   }
-#endif
-#ifdef ENABLE_DEBUGGER
   // debugger post-execution processing
   if (debugger_) {
     debugger_->PostExecute();
   }
-#endif
   MS_LOG(INFO) << "Finish!";
 }
 

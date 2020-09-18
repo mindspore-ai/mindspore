@@ -75,7 +75,6 @@ bool GPUKernelRuntime::Init() {
   return ret;
 }
 
-#ifdef ENABLE_DEBUGGER
 namespace {
 void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
                     const std::vector<mindspore::kernel::AddressPtr> &kernel_inputs,
@@ -187,7 +186,6 @@ void ClearCurrentData(Debugger *debugger, bool dump_enabled) {
   }
 }
 }  // namespace
-#endif
 
 DeviceAddressPtr GPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                        TypeId type_id) {
@@ -546,13 +544,11 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
   // The inputs and outputs memory of communication kernel need be continuous, so separate processing.
   AllocCommunicationOpDynamicRes(graph);
 
-#ifdef ENABLE_DEBUGGER
   debugger_ = debugger;
   bool dump_enabled = GPUKernelRuntime::DumpDataEnabledIteration();
   if (!mock) {
     UpdateStepNum(debugger, dump_enabled);
   }
-#endif
   auto &kernels = graph->execution_order();
   int exec_order = 1;
 
@@ -567,12 +563,10 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
     AddressPtrList kernel_outputs;
     auto ret = AllocKernelDynamicRes(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs, mock);
     if (!ret) {
-#ifdef ENABLE_DEBUGGER
       if (!mock) {
         // invalidate current data collected by the debugger
         ClearCurrentData(debugger, dump_enabled);
       }
-#endif
       return false;
     }
     if (!mock) {
@@ -591,29 +585,23 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
       } else {
         LaunchKernelWithTimeProfiling(kernel, kernel_inputs, kernel_workspaces, kernel_outputs);
       }
-#ifdef ENABLE_DEBUGGER
       // called once per kernel to collect the outputs to the kernel (does a SyncDeviceToHost)
       LoadKernelData(debugger, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, exec_order, stream_,
                      dump_enabled);
-#endif
     }
     exec_order = exec_order + 1;
     FreeKernelDynamicRes(kernel);
     if (!UpdateMemorySwapTask(kernel, mock, profiling)) {
-#ifdef ENABLE_DEBUGGER
       if (!mock) {
         // invalidate current data collected by the debugger
         ClearCurrentData(debugger, dump_enabled);
       }
-#endif
       return false;
     }
   }
   if (!mock) {
-#ifdef ENABLE_DEBUGGER
     // collect weights and bias for dump mode
     LoadParameters(graph, debugger, dump_enabled);
-#endif
     CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
   }
   ClearSwapInfo(mock);

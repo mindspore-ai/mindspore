@@ -281,9 +281,7 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
 
 void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   auto &kernel_graph = graphs_[graph_id];
-#ifdef ENABLE_DEBUGGER
   PreIterationDbg(kernel_graph);
-#endif
   // Load input data from user input
   LoadInputData(kernel_graph, inputs);
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
@@ -292,18 +290,14 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
 #endif
   MS_EXCEPTION_IF_NULL(kernel_graph);
   Execute(kernel_graph);
-#ifdef ENABLE_DEBUGGER
   PostLoadTensor(kernel_graph);
-#endif
   // Summary
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY)) {
     Summary(kernel_graph.get());
   }
-#ifdef ENABLE_DEBUGGER
   PostIterationDbg(kernel_graph);
-#endif
 }
 
 void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
@@ -338,7 +332,6 @@ void GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info
   RunOpClearMemory(kernel_graph.get());
 }
 
-#ifdef ENABLE_DEBUGGER
 void GPUSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   if (debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -397,7 +390,6 @@ void GPUSession::PostLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph
   TensorLoader *tensor_loader = debug_services->tensor_loader();
   tensor_loader->EmptyPrevTensor();
 }
-#endif
 }  // namespace gpu
 }  // namespace session
 }  // namespace mindspore
