@@ -48,7 +48,7 @@ if __name__ == "__main__":
     network = LeNet5Fusion(cfg.num_classes)
     # convert fusion network to quantization aware network
     network = quant.convert_quant_network(network, quant_delay=0, bn_fold=False, freeze_bn=10000,
-                                          per_channel=[True, False])
+                                          per_channel=[True, False], symmetric=[True, False])
 
     # define loss
     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
