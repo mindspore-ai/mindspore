@@ -1816,8 +1816,6 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
     parse::UpdateFuncGraphFlags(cell.attr("construct"), func_graph);
   }
 
-  UpdataParam(func_graph, cell);
-
   // ret = cell_obj(*arg, *kwargs)
   auto call_fn = MakeUnpackCall(func_graph, NewValueNode(cell_ptr), {param_vargs, param_vkwargs});
 
