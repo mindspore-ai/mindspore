@@ -45,6 +45,7 @@ class Pooling : public PrimitiveC {
   void SetPadRight(int pad_right);
   void SetRoundMode(int round_mode);
   void SetActivationType(int activation_type);
+  void SetAvgMode(int avg_mode);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   Pooling() = default;
@@ -66,6 +67,7 @@ class Pooling : public PrimitiveC {
   int GetPadRight() const;
   int GetRoundMode() const;
   int GetActivationType() const;
+  int GetAvgMode() const;
 
   int PadUp() const;
   int PadDown() const;
