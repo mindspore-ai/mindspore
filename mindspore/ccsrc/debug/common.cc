@@ -119,7 +119,11 @@ std::optional<std::string> Common::GetConfigFile(const std::string &env) {
     MS_LOG(ERROR) << dump_config_file << " not exist.";
     return {};
   }
-  auto suffix = dump_config_file.substr(dump_config_file.find_last_of('.') + 1);
+  auto point_pos = dump_config_file.find_last_of('.');
+  if (point_pos == std::string::npos) {
+    MS_LOG(EXCEPTION) << "Invalid json file name:" << dump_config_file;
+  }
+  auto suffix = dump_config_file.substr(point_pos + 1);
   if (suffix != "json") {
     MS_LOG(EXCEPTION) << "[DataDump] dump config file suffix only support json! But got:." << suffix;
   }
