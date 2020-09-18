@@ -50,14 +50,8 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
       } else {
         ret_py_obj = this->py_func_ptr_();
       }
-      // Object is none if pyfunc timeout
-      if (ret_py_obj.is_none()) {
-        MS_LOG(INFO) << "Pyfunc execute time out";
-        goto TimeoutError;
-      }
       if (output_type_ != DataType::DE_UNKNOWN) {
         RETURN_IF_NOT_OK(CastOutput(ret_py_obj, output));
-
       } else {
         if (py::isinstance<py::tuple>(ret_py_obj)) {
           // In case of a n-m mapping, the return value will be a tuple of numpy arrays
@@ -65,6 +59,10 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
           // Iterate over two containers simultaneously for memory copy
           for (size_t i = 0; i < ret_py_tuple.size(); i++) {
             py::object ret_py_ele = ret_py_tuple[i];
+            // Object is none if pyfunc timeout
+            if (ret_py_ele.is_none()) {
+              goto TimeoutError;
+            }
             if (!py::isinstance<py::array>(ret_py_ele)) {
               goto ShapeMisMatch;
             }

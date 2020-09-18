@@ -1979,7 +1979,7 @@ class _PythonCallable:
                 return result.get(60)
             except multiprocessing.TimeoutError:
                 # Ensure c++ pyfunc threads exit normally if python sub-process is killed unnormally.
-                return None
+                return (None,)
             except KeyboardInterrupt:
                 self.pool.terminate()
                 self.pool.join()
