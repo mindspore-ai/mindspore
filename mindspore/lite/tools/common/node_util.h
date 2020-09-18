@@ -42,7 +42,7 @@ std::vector<schema::PrimitiveType> Getfp32FullOpList();
 
 std::vector<schema::PrimitiveType> GetUint8NhwcOpList();
 
-std::vector<schema::PrimitiveType> GetUint8OpList();
+std::vector<schema::PrimitiveType> GetInt8OpList();
 
 class NodeUtils {
  public:

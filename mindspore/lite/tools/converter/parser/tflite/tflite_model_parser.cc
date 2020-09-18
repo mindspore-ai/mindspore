@@ -79,6 +79,7 @@ void TfliteModelParser::SetTensorQuantParam(const std::unique_ptr<tflite::Tensor
   // change quant param min to 0 to fit ms-lite ops
   if (GetTfliteDataType(tflite_tensor->type) == TypeId::kNumberTypeUInt8 && tensor->data.empty()) {
     quant_param->zeroPoint = quant_param->zeroPoint - 128;
+    tensor->dataType = TypeId::kNumberTypeInt8;
   }
 
   if (!tflite_tensor->quantization->min.empty()) {
@@ -164,11 +165,7 @@ STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT>
           MS_LOG(ERROR) << "obtain const tensor failed";
           return status;
       }
-    } else if (quantType == QuantType_AwareTraining && tensor->dataType == TypeId::kNumberTypeUInt8) {
-      // set in/out tensor to int8 to fit ms-lite op
-      tensor->dataType = TypeId::kNumberTypeInt8;
     }
-
     // set tensor attr
     if (isInput || isConst) {
       tensor->nodeType = schema::NodeType::NodeType_ValueNode;

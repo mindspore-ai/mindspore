@@ -145,7 +145,7 @@ STATUS AwareQuantizer::GenerateQuantParam() {
 STATUS AwareQuantizer::DoQuantize() {
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto &node = *iter;
-    if (!IsContain(GetUint8OpList(), GetCNodeTType(*node))) {
+    if (!IsContain(GetInt8OpList(), GetCNodeTType(*node))) {
       continue;
     }
     if (node->quantType != schema::QuantType_AwareTraining) {
@@ -388,7 +388,7 @@ STATUS AwareQuantizer::DetermineNodeQuantType() {
       }
     }
 
-    if (canQuant && IsContain(GetUint8OpList(), GetCNodeTType(*node))) {
+    if (canQuant && IsContain(GetInt8OpList(), GetCNodeTType(*node))) {
       node->quantType = schema::QuantType_AwareTraining;
     } else {
       node->quantType = schema::QuantType_QUANT_NONE;
