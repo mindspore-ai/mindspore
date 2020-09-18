@@ -124,7 +124,7 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
   auto dims = weight->tensor_shape();
   if (per_channel) {
     if (dims.size() != 4) {
-      MS_LOG(ERROR) << "weight dims size error: " << dims.size() << " Back to per layer.";
+      MS_LOG(ERROR) << "weight dims size: " << dims.size() << " switch to per-layer quant mode.";
       per_channel = false;
     } else {
       uint32_t channels = dims[0];

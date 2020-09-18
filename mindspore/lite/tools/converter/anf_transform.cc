@@ -80,9 +80,8 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
         return nullptr;
       }
     } else if (config->quantType == schema::QuantType_WeightQuant) {
-      auto bitNum = static_cast<size_t>(std::stoull(config->bitNum));
-      if (bitNum != quant::UINT8_QUANTIZATION) {
-        MS_LOG(ERROR) << "Current Only Support 8 bit weight quant";
+      if (quant::WeightQuantizer::WeightQuantInputCheck(config) != RET_OK) {
+        MS_LOG(ERROR) << "weight quant input param error";
         ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
         return nullptr;
       }
