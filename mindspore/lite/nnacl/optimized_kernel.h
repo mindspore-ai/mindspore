@@ -33,22 +33,11 @@ class OptimizeModule {
  public:
   OptimizeModule() {
     bool support_optimize_ops = false;
-#ifdef __ANDROID__
+
+#ifdef ENABLE_ARM64
     int hwcap_type = 16;
     uint32_t hwcap = getHwCap(hwcap_type);
-#ifdef ENABLE_ARM64
-    if (hwcap & HWCAP_FPHP) {
-#elif defined(__arm__)
-    if (hwcap & HWCAP_HALF) {
-#endif
 
-#ifdef ENABLE_ARM64
-    }
-#elif defined(__arm__)
-    }
-#endif
-
-#ifdef ENABLE_ARM64
     if (hwcap & HWCAP_ASIMDDP) {
       MS_LOG(INFO) << "Hw cap support SMID Dot Product, hwcap: 0x" << hwcap;
       support_optimize_ops = true;
@@ -56,11 +45,10 @@ class OptimizeModule {
       MS_LOG(INFO) << "Hw cap NOT support SIMD Dot Product, hwcap: 0x" << hwcap;
     }
 #endif
-#endif
     if (support_optimize_ops == false) {
       return;
     }
-#ifndef _WIN32
+#ifdef ENABLE_ARM64
     optimized_op_handler_ = dlopen(OPTIMIZE_SHARED_LIBRARY_PATH, RTLD_LAZY);
     if (optimized_op_handler_ == nullptr) {
       MS_LOG(INFO) << "Open optimize shared library failed: " << dlerror();
@@ -81,26 +69,19 @@ class Float16Module {
  public:
   Float16Module() {
     bool support_fp16 = false;
-#ifdef __ANDROID__
+#ifdef ENABLE_ARM64
     int hwcap_type = 16;
     uint32_t hwcap = getHwCap(hwcap_type);
-#ifdef ENABLE_ARM64
+
     if (hwcap & HWCAP_FPHP) {
-#elif defined(__arm__)
-    if (hwcap & HWCAP_HALF) {
-#endif
       MS_LOG(INFO) << "Hw cap support FP16, hwcap: 0x" << hwcap;
       support_fp16 = true;
-#ifdef ENABLE_ARM64
     }
-#elif defined(__arm__)
-    }
-#endif
 #endif
     if (support_fp16 == false) {
       return;
     }
-#ifndef _WIN32
+#ifdef ENABLE_ARM64
     float16_op_handler_ = dlopen(FLOAT16_SHARED_LIBRARY_PATH, RTLD_LAZY);
     if (float16_op_handler_ == nullptr) {
       MS_LOG(INFO) << "Open optimize shared library failed: " << dlerror();

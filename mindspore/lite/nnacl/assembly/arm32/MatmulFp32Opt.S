@@ -300,6 +300,7 @@ LoopCol:
             vst1.32 {q10, q11}, [r2]!
             vst1.32 {q12, q13}, [r2]!
             vst1.32 {q14, q15}, [r2]!
+            str r2, [sp, #-40]
             b WriteEnd
         WriteWino:
             vst1.32 {q8, q9}, [r2]

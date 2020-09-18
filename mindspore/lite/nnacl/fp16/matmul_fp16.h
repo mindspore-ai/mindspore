@@ -41,8 +41,6 @@ void MatmulFp16Neon64(const float16_t *a, const float16_t *b, float16_t *c, cons
 
 void Fp32RowMajor2Fp16Col16Major(float *src, float16_t *dst, size_t row, size_t col);
 
-void Fp16RowMajor2Fp16Col16Major(float16_t *src, float16_t *dst, size_t row, size_t col);
-
 void Fp32RowMajor2Fp16Row16Major(float *src, float16_t *dst, size_t row, size_t col);
 
 void Fp16RowMajor2Fp16Row16Major(float16_t *src, float16_t *dst, size_t row, size_t col);
