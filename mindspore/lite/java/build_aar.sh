@@ -28,7 +28,8 @@ build_mslite_arm64() {
     mkdir -p ${BASE_PATH}/java/app/libs/arm64-v8a/
     rm -rf ${BASE_PATH}/java/app/libs/arm64-v8a/*
     cp ${TOP_PATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite.so ${BASE_PATH}/java/app/libs/arm64-v8a/
-    cp ${TOP_PATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/liboptimize.so ${BASE_PATH}/java/app/libs/arm64-v8a/
+    cp ${TOP_PATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite-fp16.so ${BASE_PATH}/java/app/libs/arm64-v8a/
+    cp ${TOP_PATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite-optimize.so ${BASE_PATH}/java/app/libs/arm64-v8a/
     cp ${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/libs/arm64-v8a/libc++_shared.so ${BASE_PATH}/java/app/libs/arm64-v8a/
 }
 

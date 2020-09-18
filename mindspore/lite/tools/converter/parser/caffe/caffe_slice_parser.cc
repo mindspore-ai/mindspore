@@ -41,6 +41,7 @@ STATUS CaffeSliceParser::Parse(const caffe::LayerParameter &proto, const caffe::
 
   const caffe::SliceParameter &slice_param = proto.slice_param();
 
+  attr->numberSplit = 2;
   if (!slice_param.slice_point().empty()) {
     attr->numberSplit = slice_param.slice_point_size() + 1;
     std::vector<int32_t> size_splits;
