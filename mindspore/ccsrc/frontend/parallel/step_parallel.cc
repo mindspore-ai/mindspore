@@ -1029,7 +1029,10 @@ OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs 
                                  const std::vector<Shapes> &shape_list) {
   MS_EXCEPTION_IF_NULL(prim);
   OperatorInfoPtr operator_ = OperatorInstanceByName(prim->name(), attrs, shape_list);
-  if ((operator_ == nullptr) && (prim->name() != MAKE_TUPLE)) {
+  if (operator_ == nullptr) {
+    if (IsInBatchParallelBlackList(prim)) {
+      MS_LOG(EXCEPTION) << "Operator " << prim->name() << " is not supported yet in auto parallel mode.";
+    }
     MS_LOG(INFO) << "Creat " << prim->name() << " failed, use batch parallel";
     operator_ = OperatorInstanceByName(BATCH_PARALLEL, attrs, shape_list);
     MS_EXCEPTION_IF_NULL(operator_);
