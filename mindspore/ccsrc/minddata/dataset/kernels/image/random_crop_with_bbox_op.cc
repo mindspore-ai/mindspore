@@ -46,8 +46,8 @@ Status RandomCropWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) 
                                &padded_image_w, &padded_image_h, &crop_further));
 
   // update bounding boxes with new values based on relevant image padding
-  if (t_pad_left || t_pad_bottom) {
-    RETURN_IF_NOT_OK(BoundingBox::PadBBoxes(&(*output)[1], boxCount, t_pad_left, t_pad_top));
+  if (t_pad_left || t_pad_top) {
+    RETURN_IF_NOT_OK(BoundingBox::PadBBoxes(&(*output)[1], boxCount, t_pad_top, t_pad_left));
   }
   if (!crop_further) {
     // no further cropping required
