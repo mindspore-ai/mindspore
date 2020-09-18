@@ -121,8 +121,6 @@ Status MapOp::GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job)
   for (size_t i = 0; i < tfuncs_.size(); i++) {
     // Currently we only have CPU as the device target
     // In the future, we will have heuristic or control from user to select target device
-    // MapTargetDevice target_device;
-    // RETURN_IF_NOT_OK(SelectTarget(tfuncs_[i], &target_device));
     MapTargetDevice target_device = MapTargetDevice::kCpu;
 
     switch (target_device) {
@@ -222,7 +220,6 @@ Status MapOp::operator()() {
     RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buff, 0));
   }
   // End() is commented out because it might never be called due to the lack of EOF when EpochCtrl is -1
-  // RETURN_IF_NOT_OK(callback_manager_.End(CallbackParam(op_current_epochs_, ep_step, total_step)));
   // Handle eof logic, this code might never be reached if epoch_ctrl = -1.
   std::unique_ptr<MapWorkerJob> worker_job = std::make_unique<MapWorkerJob>(std::move(buff));
   RETURN_IF_NOT_OK(local_queues_[num_buf++ % num_workers_]->Add(std::move(worker_job)));

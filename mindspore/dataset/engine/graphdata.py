@@ -89,7 +89,6 @@ class GraphData:
                 while self._graph_data.is_stoped() is not True:
                     time.sleep(1)
             except KeyboardInterrupt:
-                # self._graph_data.stop()
                 raise Exception("Graph data server receives KeyboardInterrupt")
 
     @check_gnn_get_all_nodes

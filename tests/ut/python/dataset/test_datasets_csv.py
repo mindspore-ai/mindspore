@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import mindspore.dataset as ds
 import numpy as np
 import pytest
+import mindspore.dataset as ds
 
 DATA_FILE = '../data/dataset/testCSV/1.csv'
 

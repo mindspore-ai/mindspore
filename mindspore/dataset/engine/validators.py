@@ -1235,5 +1235,4 @@ def check_cache_option(cache):
     """Sanity check for cache parameter"""
     if cache is not None:
         # temporary disable cache feature in the current release
-        # type_check(cache, (cache_client.DatasetCache,), "cache")
         raise ValueError("Caching is disabled in the current release")

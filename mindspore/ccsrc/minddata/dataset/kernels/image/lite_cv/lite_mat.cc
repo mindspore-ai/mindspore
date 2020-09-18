@@ -40,6 +40,7 @@ LiteMat::LiteMat(int width, LDataType data_type) {
   dims_ = 0;
   data_type_ = LDataType::UINT8;
   ref_count_ = 0;
+  size_ = 0;
   Init(width, data_type);
 }
 
@@ -53,6 +54,7 @@ LiteMat::LiteMat(int width, int height, LDataType data_type) {
   dims_ = 0;
   data_type_ = LDataType::UINT8;
   ref_count_ = 0;
+  size_ = 0;
   Init(width, height, data_type);
 }
 
@@ -66,6 +68,7 @@ LiteMat::LiteMat(int width, int height, int channel, LDataType data_type) {
   dims_ = 0;
   data_type_ = LDataType::UINT8;
   ref_count_ = 0;
+  size_ = 0;
   Init(width, height, channel, data_type);
 }
 
@@ -87,6 +90,7 @@ LiteMat::LiteMat(const LiteMat &m) {
   dims_ = m.dims_;
   data_type_ = m.data_type_;
   ref_count_ = m.ref_count_;
+  size_ = 0;
   if (ref_count_) {
     addRef(ref_count_, 1);
   }
@@ -111,6 +115,7 @@ LiteMat &LiteMat::operator=(const LiteMat &m) {
   dims_ = m.dims_;
   data_type_ = m.data_type_;
   ref_count_ = m.ref_count_;
+  size_ = 0;
   return *this;
 }
 
@@ -180,6 +185,7 @@ void LiteMat::Release() {
   channel_ = 0;
   c_step_ = 0;
   ref_count_ = 0;
+  size_ = 0;
 }
 
 void *LiteMat::AlignMalloc(unsigned int size) {

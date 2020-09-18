@@ -17,11 +17,11 @@ This is the test module for saveOp.
 """
 import os
 from string import punctuation
+import numpy as np
+import pytest
 import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter
-import numpy as np
-import pytest
 
 CV_FILE_NAME1 = "../data/mindrecord/testMindDataSet/temp.mindrecord"
 CV_FILE_NAME2 = "../data/mindrecord/testMindDataSet/auto.mindrecord"

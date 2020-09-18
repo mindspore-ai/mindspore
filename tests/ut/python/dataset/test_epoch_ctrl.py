@@ -16,9 +16,9 @@
 Testing Epoch Control op in DE
 """
 import itertools
-import cv2
 import numpy as np
 import pytest
+import cv2
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as vision

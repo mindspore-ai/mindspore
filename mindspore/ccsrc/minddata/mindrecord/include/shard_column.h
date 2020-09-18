@@ -48,7 +48,6 @@ enum ColumnDataType {
   ColumnNoDataType = 6
 };
 
-// mapping as {"bytes", "string", "int32", "int64", "float32", "float64"};
 const uint32_t ColumnDataTypeSize[kDataTypes] = {1, 1, 4, 8, 4, 8};
 
 const std::vector<std::string> ColumnDataTypeNameNormalized = {"uint8", "string",  "int32",

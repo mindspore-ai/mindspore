@@ -16,7 +16,6 @@
 """
 
 import copy
-# from mindspore._c_dataengine import CacheClient
 
 from ..core.validator_helpers import type_check, check_uint32, check_uint64
 
@@ -39,7 +38,6 @@ class DatasetCache:
         self.port = port
         self.prefetch_size = prefetch_size
         # temporary disable cache feature in the current release
-        # self.cache_client = CacheClient(session_id, size, spilling, hostname, port, prefetch_size)
         self.cache_client = None
 
     def GetStat(self):

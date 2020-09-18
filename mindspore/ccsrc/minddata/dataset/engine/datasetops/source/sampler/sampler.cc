@@ -155,8 +155,6 @@ Status Sampler::AddChild(std::shared_ptr<Sampler> child) {
 
   child_.push_back(child);
 
-  // doesn't work, protected?
-  // child->AddParent(this);
   return Status::OK();
 }
 

@@ -199,9 +199,6 @@ class ShardReader {
   /// \return null
   void SetAllInIndex(bool all_in_index) { all_in_index_ = all_in_index; }
 
-  /// \brief get NLP flag
-  bool GetNlpFlag();
-
   /// \brief get all classes
   MSRStatus GetAllClasses(const std::string &category_field, std::set<std::string> &categories);
 
@@ -263,9 +260,6 @@ class ShardReader {
   /// \brief crate task list
   MSRStatus CreateTasks(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
                         const std::vector<std::shared_ptr<ShardOperator>> &operators);
-
-  /// \brief set NLP flag
-  void CheckNlp();
 
   /// \brief check if all specified columns are in index table
   void CheckIfColumnInIndex(const std::vector<std::string> &columns);

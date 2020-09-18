@@ -51,7 +51,6 @@ Status GraphDataServer::Init() {
 #else
   set_state(kGdsInitializing);
   RETURN_IF_NOT_OK(async_server_->Run());
-  // RETURN_IF_NOT_OK(InitGraphDataImpl());
   RETURN_IF_NOT_OK(tg_->CreateAsyncTask("init graph data impl", std::bind(&GraphDataServer::InitGraphDataImpl, this)));
   for (int32_t i = 0; i < num_workers_; ++i) {
     RETURN_IF_NOT_OK(
