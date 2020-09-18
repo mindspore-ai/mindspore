@@ -118,7 +118,8 @@ int Reduce::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
       axes.push_back(attr->axes()->data()[i]);
     }
   }
-  auto val_offset = schema::CreateReduceDirect(*fbb, &axes, attr->keepDims(), attr->mode());
+  auto val_offset =
+    schema::CreateReduceDirect(*fbb, &axes, attr->keepDims(), attr->mode(), attr->reduceToEnd(), attr->coeff());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Reduce, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
