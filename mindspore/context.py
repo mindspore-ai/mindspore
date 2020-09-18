@@ -666,14 +666,14 @@ def set_ps_context(**kwargs):
 
         .. code-block::
 
-        MS_SERVER_NUM  # Server number
-        MS_WORKER_NUM  # Worker number
-        MS_SCHED_HOST  # Scheduler IP address
-        MS_SCHED_PORT  # Scheduler port
-        MS_ROLE        # The role of this process:
-                       # MS_SCHED represents the scheduler,
-                       # MS_WORKER represents the worker,
-                       # MS_PSERVER represents the Server
+            MS_SERVER_NUM  # Server number
+            MS_WORKER_NUM  # Worker number
+            MS_SCHED_HOST  # Scheduler IP address
+            MS_SCHED_PORT  # Scheduler port
+            MS_ROLE        # The role of this process:
+                           # MS_SCHED represents the scheduler,
+                           # MS_WORKER represents the worker,
+                           # MS_PSERVER represents the Server
 
 
     Args:

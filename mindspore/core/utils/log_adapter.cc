@@ -181,7 +181,8 @@ static const char *GetSubModuleName(SubModuleId module_id) {
     "SESSION",    // SM_SESSION
     "UTILS",      // SM_UTILS
     "VM",         // SM_VM
-    "PROFILER"    // SM_PROFILER
+    "PROFILER",   // SM_PROFILER
+    "PS"          // SM_PS
   };
 
   return sub_module_names[module_id % NUM_SUBMODUES];

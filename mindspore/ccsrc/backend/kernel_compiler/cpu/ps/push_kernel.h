@@ -19,8 +19,8 @@
 
 #include <vector>
 #include <algorithm>
-#include "frontend/parallel/ps/worker.h"
-#include "frontend/parallel/ps/util.h"
+#include "ps/worker.h"
+#include "ps/util.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -45,7 +45,7 @@ class PushKernel : public CPUKernel {
       addrs.push_back(reinterpret_cast<uintptr_t>(input->addr));
       sizes.push_back(SizeToInt(input->size) / sizeof(T));
     }
-    parallel::ps::Worker<T>::GetInstance().Push(keys, addrs, sizes);
+    mindspore::ps::worker.Push(keys, addrs, sizes);
     auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, &key_, sizeof(size_t));
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
@@ -62,7 +62,7 @@ class PushKernel : public CPUKernel {
     MS_LOG(INFO) << "Only init shape indices are " << only_shape_indices;
     for (size_t i = 0; i < optim_input_shapes.size(); i++) {
       auto shape = optim_input_shapes[i];
-      parallel::ps::worker.SetOptimInputShapes(key_, shape);
+      mindspore::ps::worker.SetOptimInputShapes(key_, shape);
       if (std::count(only_shape_indices.begin(), only_shape_indices.end(), i) == 0) {
         size_t size = sizeof(T);
         for (size_t j = 0; j < shape.size(); j++) {

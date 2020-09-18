@@ -19,8 +19,8 @@
 
 #include <vector>
 #include <string>
-#include "frontend/parallel/ps/worker.h"
-#include "frontend/parallel/ps/util.h"
+#include "ps/worker.h"
+#include "ps/util.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -36,10 +36,10 @@ class PullKernel : public CPUKernel {
     if (inputs.size() != 2) {
       MS_LOG(EXCEPTION) << "Inputs size is " << inputs.size() << ", but PullKernel needs 2.";
     }
-    bool init_in_server = parallel::ps::worker.GetParamInitInServer(param_name_);
+    bool init_in_server = mindspore::ps::worker.GetParamInitInServer(param_name_);
     // If init_in_server, forward kernel should run in server too.
     if (!init_in_server) {
-      parallel::ps::Worker<T>::GetInstance().Pull(key_, inputs[1]->addr, inputs[1]->size);
+      mindspore::ps::worker.Pull(key_, inputs[1]->addr, inputs[1]->size);
     }
     return true;
   }
@@ -62,7 +62,7 @@ class PullKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(param_node);
     param_name_ = param_node->fullname_with_scope();
 
-    if (mindspore::parallel::ps::Util::IsRoleOfWorker()) {
+    if (mindspore::ps::Util::IsRoleOfWorker()) {
       key_ = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
     }
     InitSizeLists();

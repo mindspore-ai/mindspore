@@ -15,7 +15,7 @@
  */
 #include "backend/kernel_compiler/cpu/ps/embedding_look_up_proxy_kernel.h"
 #include <vector>
-#include "frontend/parallel/ps/worker.h"
+#include "ps/worker.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,7 +30,7 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
     input_dims_ *= dim;
   }
 
-  if (mindspore::parallel::ps::Util::IsRoleOfWorker()) {
+  if (mindspore::ps::Util::IsRoleOfWorker()) {
     key_ = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
   }
   std::vector<size_t> keys{key_, key_, key_};
@@ -41,9 +41,9 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_LOG(INFO) << "Init embedding lookup proxy kernel, input shape:" << input_shape
                << ", indices_shape:" << indices_shape << ", output_shape:" << output_shape;
   std::vector<int> lens{SizeToInt(input_shape.size()), SizeToInt(indices_shape.size()), SizeToInt(output_shape.size())};
-  if (mindspore::parallel::ps::Util::IsRoleOfWorker()) {
-    parallel::ps::worker.AddEmbeddingTable(key_, input_shape[axis]);
-    parallel::ps::worker.InitPSEmbeddingTable(keys, values, lens);
+  if (mindspore::ps::Util::IsRoleOfWorker()) {
+    mindspore::ps::worker.AddEmbeddingTable(key_, input_shape[axis]);
+    mindspore::ps::worker.InitPSEmbeddingTable(keys, values, lens);
   }
 }
 
@@ -70,8 +70,8 @@ bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &i
     MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
     return false;
   }
-  parallel::ps::worker.DoPSEmbeddingLookup({key_}, lookup_ids, lengths, &lookup_result,
-                                           parallel::ps::kEmbeddingLookupCmd);
+  mindspore::ps::worker.DoPSEmbeddingLookup({key_}, lookup_ids, lengths, &lookup_result,
+                                            mindspore::ps::kEmbeddingLookupCmd);
 
   auto ret2 = memcpy_s(output_addr, outputs[0]->size, lookup_result.data(), output_size);
   if (ret2 != EOK) {

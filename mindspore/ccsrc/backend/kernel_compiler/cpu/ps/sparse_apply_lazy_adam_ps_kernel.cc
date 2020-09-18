@@ -17,7 +17,7 @@
 #include <memory>
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/cpu/cpu_device_address.h"
-#include "frontend/parallel/ps/util.h"
+#include "ps/util.h"
 
 namespace mindspore {
 namespace kernel {

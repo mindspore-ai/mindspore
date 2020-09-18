@@ -19,12 +19,12 @@
 #include <memory>
 #include <functional>
 #include "backend/kernel_compiler/common_utils.h"
-#include "frontend/parallel/ps/util.h"
+#include "ps/util.h"
 
 namespace mindspore {
 namespace kernel {
 namespace ps {
-using mindspore::parallel::ps::Util;
+using mindspore::ps::Util;
 constexpr int kAxis = 0;
 void EmbeddingLookUpPSKernel::InitKernel(
   const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {

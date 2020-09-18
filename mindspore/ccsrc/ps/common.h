@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_COMMON_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_COMMON_H_
+#ifndef MINDSPORE_CCSRC_PS_COMMON_H_
+#define MINDSPORE_CCSRC_PS_COMMON_H_
 
 #include <iostream>
 #include <vector>
@@ -25,7 +25,6 @@
 #include "ps/ps.h"
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 constexpr char kEnvCommType[] = "MS_COMM_TYPE";
 constexpr char kEnvInterface[] = "MS_INTERFACE";
@@ -131,6 +130,5 @@ const std::map<std::string, OptimOriginIdx> kOptimToPSSendIdx = {{kApplyMomentum
     }                                                                                           \
   }
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_COMMON_H_
+#endif  // MINDSPORE_CCSRC_PS_COMMON_H_

@@ -42,9 +42,9 @@
 #include "parse/python_adapter.h"
 #include "frontend/optimizer/py_pass_manager.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-#include "frontend/parallel/ps/parameter_server.h"
-#include "frontend/parallel/ps/scheduler.h"
-#include "frontend/parallel/ps/worker.h"
+#include "ps/parameter_server.h"
+#include "ps/scheduler.h"
+#include "ps/worker.h"
 #endif
 
 namespace mindspore {
@@ -419,19 +419,19 @@ bool ExecuteAction(const ResourcePtr &res) {
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 bool StartPSWorkerAction(const ResourcePtr &res) {
-  parallel::ps::worker.Run();
+  ps::worker.Run();
   return true;
 }
 
 bool StartPSServerAction(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
-  auto &ps = parallel::ps::ParameterServer<float>::GetInstance();
+  auto &ps = ps::ParameterServer<float>::GetInstance();
   ps.Run(func_graph);
   return true;
 }
 
 bool StartPSSchedulerAction(const ResourcePtr &res) {
-  parallel::ps::Scheduler::GetInstance().Run();
+  ps::Scheduler::GetInstance().Run();
   return true;
 }
 #endif
@@ -585,7 +585,7 @@ std::vector<ActionItem> VmPipeline() {
 
   actions.emplace_back(std::make_pair("validate", ValidateAction));
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (parallel::ps::Util::IsRoleOfWorker()) {
+  if (ps::Util::IsRoleOfWorker()) {
     actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
   }
 #endif

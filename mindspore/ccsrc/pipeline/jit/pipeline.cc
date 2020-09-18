@@ -47,9 +47,9 @@
 #include "pybind_api/pybind_patch.h"
 #include "utils/shape_utils.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-#include "frontend/parallel/ps/common.h"
-#include "frontend/parallel/ps/util.h"
-#include "frontend/parallel/ps/worker.h"
+#include "ps/common.h"
+#include "ps/util.h"
+#include "ps/worker.h"
 #endif
 
 #if (ENABLE_GE || ENABLE_D)
@@ -413,14 +413,14 @@ std::vector<ActionItem> GetPipline(const ResourcePtr &resource, const std::strin
   std::string backend = MsContext::GetInstance()->backend_policy();
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (mindspore::parallel::ps::Util::IsParamServerMode()) {
-    mindspore::parallel::ps::Util::SetInternalEnvVar();
+  if (mindspore::ps::Util::IsParamServerMode()) {
+    mindspore::ps::Util::SetInternalEnvVar();
   }
-  if (parallel::ps::Util::IsRoleOfPServer()) {
+  if (ps::Util::IsRoleOfPServer()) {
     resource->results()[kBackend] = compile::CreateBackend();
     return PServerPipeline();
   }
-  if (parallel::ps::Util::IsRoleOfScheduler()) {
+  if (ps::Util::IsRoleOfScheduler()) {
     return PSchedulerPipeline();
   }
 #endif
@@ -1002,9 +1002,9 @@ void ClearResAtexit() {
   pynative::ClearPyNativeSession();
   session::ClearPythonParasMap();
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (parallel::ps::Util::IsParamServerMode()) {
-    if (parallel::ps::Util::IsRoleOfWorker()) {
-      parallel::ps::worker.Finalize();
+  if (ps::Util::IsParamServerMode()) {
+    if (ps::Util::IsRoleOfWorker()) {
+      ps::worker.Finalize();
     }
   }
 #endif

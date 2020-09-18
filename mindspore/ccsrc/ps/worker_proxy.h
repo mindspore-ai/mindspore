@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_WORKER_PROXY_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_WORKER_PROXY_H_
+#ifndef MINDSPORE_CCSRC_PS_WORKER_PROXY_H_
+#define MINDSPORE_CCSRC_PS_WORKER_PROXY_H_
 
 #include <map>
 #include <numeric>
@@ -27,12 +27,11 @@
 #include <memory>
 #include <vector>
 #include "ps/ps.h"
-#include "frontend/parallel/ps/util.h"
+#include "ps/util.h"
 #include "backend/kernel_compiler/common_utils.h"
-#include "frontend/parallel/ps/ps_context.h"
+#include "ps/ps_context.h"
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 template <typename T>
 class WorkerProxy : public ::ps::KVWorker<T> {
@@ -794,6 +793,5 @@ void WorkerProxy<T>::Send(::ps::Customer *customer, int timestamp, bool push, bo
   }
 }
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_WORKER_PROXY_H_
+#endif  // MINDSPORE_CCSRC_PS_WORKER_PROXY_H_

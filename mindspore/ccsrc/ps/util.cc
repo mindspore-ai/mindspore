@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/ps/util.h"
+#include "ps/util.h"
 #include <unordered_map>
 #include <vector>
-#include "frontend/parallel/ps/common.h"
-#include "frontend/parallel/ps/ps_context.h"
+#include "ps/common.h"
+#include "ps/ps_context.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 int Util::rank_id_ = -1;
 
@@ -58,19 +57,19 @@ bool Util::IsRoleOfScheduler() { return PSContext::instance()->is_role_sched(); 
 void Util::SetInternalEnvVar() {
   if (IsParamServerMode()) {
     auto comm_type = common::GetEnv(kEnvCommType);
-    if (comm_type.size() > 0) {
+    if (!comm_type.empty()) {
       (void)common::SetEnv(kDmlcCommType, comm_type.c_str());
     }
     auto interface = common::GetEnv(kEnvInterface);
-    if (interface.size() > 0) {
+    if (!interface.empty()) {
       (void)common::SetEnv(kDmlcInterface, interface.c_str());
     }
     auto server_num = common::GetEnv(kEnvPServerNum);
-    if (server_num.size() > 0) {
+    if (!server_num.empty()) {
       (void)common::SetEnv(kDmlcPServerNum, server_num.c_str());
     }
     auto worker_num = common::GetEnv(kEnvWorkerNum);
-    if (worker_num.size() > 0) {
+    if (!worker_num.empty()) {
       (void)common::SetEnv(kDmlcWorkerNum, worker_num.c_str());
     }
     if (IsRoleOfScheduler()) {
@@ -81,11 +80,11 @@ void Util::SetInternalEnvVar() {
       (void)common::SetEnv(kDmlcRole, kRoleOfWorker);
     }
     auto scheduler_host = common::GetEnv(kEnvSchedulerHost);
-    if (scheduler_host.size() > 0) {
+    if (!scheduler_host.empty()) {
       (void)common::SetEnv(kDmlcSchedulerHost, scheduler_host.c_str());
     }
     auto scheduler_port = common::GetEnv(kEnvSchedulerPort);
-    if (scheduler_port.size() > 0) {
+    if (!scheduler_port.empty()) {
       (void)common::SetEnv(kDmlcSchedulerPort, scheduler_port.c_str());
     }
   }
@@ -167,5 +166,4 @@ void Util::ReduceSparseGradient(float *gradients, int *indices, const size_t ind
   mindspore::kernel::SparseOptimizerCPUKernel::BucketReduceSparseGradient(param);
 }
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore

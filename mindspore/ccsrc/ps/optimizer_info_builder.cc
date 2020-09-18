@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/ps/optimizer_info_builder.h"
+#include "ps/optimizer_info_builder.h"
 #include <vector>
 #include <memory>
 #include <functional>
 #include "backend/kernel_compiler/cpu/ps/sparse_apply_ftrl_ps_kernel.h"
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 using mindspore::kernel::ps::SparseApplyFtrlPSKernel;
 OptimizerInfo *OptimizerInfoBuilder::Build(const std::shared_ptr<PServerKernel> &pserver_kernel,
@@ -101,6 +100,7 @@ AddressPtr OptimizerInfoBuilder::GenInputAddrPtr(const std::string &optim_type, 
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     delete[] buffer;
+    buffer = nullptr;
     return nullptr;
   }
   return addr_ptr;
@@ -123,6 +123,7 @@ OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, co
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     delete[] reinterpret_cast<float *>(accumulate->addr);
+    accumulate->addr = nullptr;
     return nullptr;
   }
 
@@ -149,6 +150,7 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     delete[] reinterpret_cast<float *>(m->addr);
+    m->addr = nullptr;
     return nullptr;
   }
 
@@ -161,7 +163,9 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     delete[] reinterpret_cast<float *>(v->addr);
+    v->addr = nullptr;
     delete[] reinterpret_cast<float *>(m->addr);
+    m->addr = nullptr;
     return nullptr;
   }
 
@@ -205,6 +209,7 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     delete[] reinterpret_cast<float *>(linear->addr);
+    linear->addr = nullptr;
     return nullptr;
   }
   linear->size = weight->size() * sizeof(float);
@@ -214,5 +219,4 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   return new SparseFtrlOptimInfo(weight_addr, accum, linear, grad, indices);
 }
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore

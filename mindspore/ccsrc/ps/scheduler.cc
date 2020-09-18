@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/ps/scheduler.h"
+#include "ps/scheduler.h"
 #include "ps/ps.h"
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 void Scheduler::Run() {
   ::ps::Start(0);
@@ -26,5 +25,4 @@ void Scheduler::Run() {
   exit(1);
 }
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore

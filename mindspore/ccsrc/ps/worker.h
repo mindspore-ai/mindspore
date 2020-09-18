@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_WORKER_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_WORKER_H_
+#ifndef MINDSPORE_CCSRC_PS_WORKER_H_
+#define MINDSPORE_CCSRC_PS_WORKER_H_
 
 #include <utility>
 #include <memory>
@@ -27,13 +27,12 @@
 #include "ps/ps.h"
 #include "utils/log_adapter.h"
 #include "ir/tensor.h"
-#include "frontend/parallel/ps/util.h"
-#include "frontend/parallel/ps/common.h"
-#include "frontend/parallel/ps/worker_proxy.h"
+#include "ps/util.h"
+#include "ps/common.h"
+#include "ps/worker_proxy.h"
 #include "utils/shape_utils.h"
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 template <typename T>
 class Worker {
@@ -363,6 +362,5 @@ void Worker<T>::AddEmbeddingTable(const ::ps::Key &key, const size_t &row_count)
 
 static Worker<float> &worker = Worker<float>::GetInstance();
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_WORKER_H_
+#endif  // MINDSPORE_CCSRC_PS_WORKER_H_

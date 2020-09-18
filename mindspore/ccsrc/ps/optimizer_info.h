@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_H_
+#ifndef MINDSPORE_CCSRC_PS_OPTIMIZER_INFO_H_
+#define MINDSPORE_CCSRC_PS_OPTIMIZER_INFO_H_
 
 #include <vector>
 #include <string>
 #include "backend/kernel_compiler/kernel.h"
-#include "frontend/parallel/ps/common.h"
+#include "ps/common.h"
 
 namespace mindspore {
-namespace parallel {
 namespace ps {
 using mindspore::kernel::AddressPtr;
 class OptimizerInfo {
@@ -126,6 +125,5 @@ class SparseFtrlOptimInfo : public SparseOptimInfo {
   size_t indices_index() override;
 };
 }  // namespace ps
-}  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_H_
+#endif  // MINDSPORE_CCSRC_PS_OPTIMIZER_INFO_H_
