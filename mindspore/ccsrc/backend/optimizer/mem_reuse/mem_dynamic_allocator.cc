@@ -172,13 +172,13 @@ void DynamicMemPoolBestFit::DivideMemBuf(size_t size, const DynamicMemBufPtr &me
   (void)global_idle_mem_buf_map_.emplace(newbuf_size, new_mem_buf);
 }
 
-bool DynamicMemPoolBestFit::CmpMemBlock(const DeviceMemPtr device_addr, const DynamicMemBlockPtr mem_block) {
+bool DynamicMemPoolBestFit::CmpMemBlock(const DeviceMemPtr &device_addr, const DynamicMemBlockPtr &mem_block) {
   MS_EXCEPTION_IF_NULL(device_addr);
   MS_EXCEPTION_IF_NULL(mem_block);
   return device_addr < mem_block->device_addr();
 }
 
-DynamicMemBlockPtr DynamicMemPoolBestFit::FindMemBlock(const DeviceMemPtr device_addr) {
+DynamicMemBlockPtr DynamicMemPoolBestFit::FindMemBlock(const DeviceMemPtr &device_addr) {
   MS_EXCEPTION_IF_NULL(device_addr);
   auto iter = std::upper_bound(global_mem_block_list_.begin(), global_mem_block_list_.end(), device_addr, CmpMemBlock);
   if (iter != global_mem_block_list_.begin()) {
@@ -187,7 +187,7 @@ DynamicMemBlockPtr DynamicMemPoolBestFit::FindMemBlock(const DeviceMemPtr device
   return nullptr;
 }
 
-void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr device_addr) {
+void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
   MS_EXCEPTION_IF_NULL(device_addr);
   auto mem_block = FindMemBlock(device_addr);
   if (mem_block == nullptr) {
@@ -198,7 +198,7 @@ void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr device_addr) {
   CombineMemBuf(mem_block, device_addr);
 }
 
-void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr device_addr) {
+void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr &device_addr) {
   MS_EXCEPTION_IF_NULL(mem_block);
   MS_EXCEPTION_IF_NULL(device_addr);
   auto iter = mem_block->block_all_mem_buf_map_.find(device_addr);
@@ -247,7 +247,7 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, c
   }
 }
 
-void DynamicMemPoolBestFit::EraseIdleMemBuf(size_t size, const DeviceMemPtr device_addr) {
+void DynamicMemPoolBestFit::EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr) {
   MS_EXCEPTION_IF_NULL(device_addr);
   auto iter = global_idle_mem_buf_map_.equal_range(size);
   while (iter.first != iter.second) {

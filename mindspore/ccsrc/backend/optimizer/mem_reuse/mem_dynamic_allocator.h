@@ -38,7 +38,7 @@ static const size_t DYNAMIC_MEM_ALLOC_UNIT_SIZE = 500 << 20;
 
 // The Comparator of device address from small to large.
 struct DeviceAddrCmp {
-  bool operator()(const DeviceMemPtr addr1, const DeviceMemPtr addr2) const { return addr1 < addr2; }
+  bool operator()(const DeviceMemPtr &addr1, const DeviceMemPtr &addr2) const { return addr1 < addr2; }
 };
 
 // Memory buf is the smallest operation object of dynamic memory pool.
@@ -82,7 +82,7 @@ class DynamicMemPoolBestFit {
   // The main program entry of continuous memory alloc.
   std::vector<DeviceMemPtr> AllocContinuousTensorMem(size_t total_size, std::vector<size_t> size_list);
   // The main program entry of memory free.
-  void FreeTensorMem(const DeviceMemPtr device_addr);
+  void FreeTensorMem(const DeviceMemPtr &device_addr);
   // Release the real device memory.
   void ReleaseDeviceRes();
   // Display the information of memory block and memory buf.
@@ -118,14 +118,14 @@ class DynamicMemPoolBestFit {
   // Divide the memory buf by alloc size.
   void DivideMemBuf(size_t size, const DynamicMemBufPtr &mem_buf);
   // Find the memory block by deivce address.
-  DynamicMemBlockPtr FindMemBlock(const DeviceMemPtr device_addr);
+  DynamicMemBlockPtr FindMemBlock(const DeviceMemPtr &device_addr);
   // The Comparator of memory block by device address, because memory blocks are arranged in order by device address.
-  static bool CmpMemBlock(const DeviceMemPtr device_addr, const DynamicMemBlockPtr mem_block);
+  static bool CmpMemBlock(const DeviceMemPtr &device_addr, const DynamicMemBlockPtr &mem_block);
 
   // Combine the memory buf when memory free, to avoid the memory fragmentation.
-  void CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr device_addr);
+  void CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr &device_addr);
   // Erase the idle memory buf by size and device address when idle memory buf is combined.
-  void EraseIdleMemBuf(size_t size, const DeviceMemPtr device_addr);
+  void EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr);
 
   // The global memory block list which is arranged in order by base device address of memory block.
   std::vector<DynamicMemBlockPtr> global_mem_block_list_;
