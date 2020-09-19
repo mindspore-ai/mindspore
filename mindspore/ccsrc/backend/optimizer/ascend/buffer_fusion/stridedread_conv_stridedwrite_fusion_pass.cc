@@ -33,11 +33,9 @@ void StridedReadConvStridedWriteFusionPass::MatchStridedReadConvStridedWrite(con
                                                                              FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  auto manager = kernel_graph.manager();
-  MS_EXCEPTION_IF_NULL(manager);
   std::unordered_set<AnfNodePtr> record{cnode};
   auto write_input = cnode->input(1);
-  if (CheckEltWiseNode(manager.get(), write_input)) {
+  if (CheckEltWiseNode(kernel_graph, write_input)) {
     (void)record.insert(write_input);
     auto input_cnode = write_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(input_cnode);

@@ -61,9 +61,9 @@ class FusionBasePass : public Pass {
   virtual void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph,
                                         FusedNodeRecord *candidate_fusion) = 0;
   void SetRecordFusionId(const std::unordered_set<AnfNodePtr> &record);
-  bool CheckEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node);
-  bool CheckDoubleInEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node);
-  bool CheckMultiOutputEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node);
+  bool CheckEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
+  bool CheckDoubleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
+  bool CheckMultiOutputEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
   FusionIdAllocatorPtr fusion_id_allocator;
 };
 }  // namespace opt

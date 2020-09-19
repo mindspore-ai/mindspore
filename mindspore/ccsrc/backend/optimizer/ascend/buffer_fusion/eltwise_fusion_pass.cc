@@ -30,12 +30,10 @@ void EltwiseFusionPass::MatchEltwise(const CNodePtr &cnode, const session::Kerne
                                      FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  auto manager = kernel_graph.manager();
-  MS_EXCEPTION_IF_NULL(manager);
   std::unordered_set<AnfNodePtr> record{cnode};
   auto eltwise_input = cnode->input(1);
   MS_EXCEPTION_IF_NULL(eltwise_input);
-  while (CheckEltWiseNode(manager.get(), eltwise_input)) {
+  while (CheckEltWiseNode(kernel_graph, eltwise_input)) {
     (void)record.insert(eltwise_input);
     if (record.size() == MAX_ELTWISE_SIZE) {
       break;

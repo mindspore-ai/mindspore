@@ -31,11 +31,9 @@ void ReduceEltwiseFusionPass::MatchReduceEltwise(const CNodePtr &cnode, const se
                                                  FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  auto manager = kernel_graph.manager();
-  MS_EXCEPTION_IF_NULL(manager);
   std::unordered_set<AnfNodePtr> record{cnode};
   auto eltwise_input = cnode->input(1);
-  while (CheckEltWiseNode(manager.get(), eltwise_input)) {
+  while (CheckEltWiseNode(kernel_graph, eltwise_input)) {
     (void)record.insert(eltwise_input);
     auto input_cnode = eltwise_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(input_cnode);
@@ -56,7 +54,7 @@ void ReduceEltwiseFusionPass::MatchReduceEltwise(const CNodePtr &cnode, const se
     MS_EXCEPTION_IF_NULL(previous_input_cnode);
     auto previous_eltwise_input = previous_input_cnode->input(1);
     auto previous_size = record.size();
-    while (CheckEltWiseNode(manager.get(), previous_eltwise_input)) {
+    while (CheckEltWiseNode(kernel_graph, previous_eltwise_input)) {
       (void)record.insert(previous_eltwise_input);
       auto previous_node = previous_eltwise_input->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(previous_node);

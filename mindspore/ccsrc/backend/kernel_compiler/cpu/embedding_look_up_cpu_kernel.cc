@@ -23,7 +23,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 template <typename T>
-void LookUpTableTask(const float *input_addr, const T *indices_addr, float *output_addr, float *output_max_addr,
+void LookUpTableTask(const float *input_addr, const T *indices_addr, const float *output_max_addr, float *output_addr,
                      size_t indices_lens, size_t outer_dim_size, T offset, size_t first_dim_size) {
   size_t lens = outer_dim_size * sizeof(float);
   for (size_t i = 0; i < indices_lens; ++i) {
@@ -82,9 +82,9 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
       break;
     }
     MS_LOG(DEBUG) << "task_offset: " << task_offset << " task_proc_lenss:" << task_proc_lens;
-    threads[i] = std::thread(LookUpTableTask<T>, input_addr, indices_addr + task_offset,
-                             output_addr + task_offset * outer_dim_size_, output_addr + outputs[0]->size,
-                             task_proc_lens, outer_dim_size_, offset_, first_dim_size_);
+    threads[i] = std::thread(LookUpTableTask<T>, input_addr, indices_addr + task_offset, output_addr + outputs[0]->size,
+                             output_addr + task_offset * outer_dim_size_, task_proc_lens, outer_dim_size_, offset_,
+                             first_dim_size_);
     task_offset += task_proc_lens;
     if (task_offset + task_proc_lens > indices_lens_) {
       task_proc_lens = indices_lens_ - task_offset;

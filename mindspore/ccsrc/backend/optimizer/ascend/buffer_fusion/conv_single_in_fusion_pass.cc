@@ -30,11 +30,9 @@ void ConvSingleInFusionPass::MatchConvSingleInEltwise(const CNodePtr &cnode, con
                                                       FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  auto manager = kernel_graph.manager();
-  MS_EXCEPTION_IF_NULL(manager);
   std::unordered_set<AnfNodePtr> record{cnode};
   auto eltwise_input = cnode->input(1);
-  while (CheckEltWiseNode(manager.get(), eltwise_input)) {
+  while (CheckEltWiseNode(kernel_graph, eltwise_input)) {
     (void)record.insert(eltwise_input);
     auto input_cnode = eltwise_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(input_cnode);
