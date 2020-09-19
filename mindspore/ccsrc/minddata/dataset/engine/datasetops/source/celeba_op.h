@@ -229,6 +229,8 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   std::unique_ptr<DataSchema> data_schema_;
   std::unique_ptr<Queue<std::vector<std::string>>> attr_info_queue_;
   int64_t num_rows_in_attr_file_;  // rows number specified in attr file
+  QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
+  WaitPost wp_;
   std::vector<std::pair<std::string, std::vector<int32_t>>> image_labels_vec_;
   std::string usage_;
   std::ifstream partition_file_;

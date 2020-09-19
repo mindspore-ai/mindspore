@@ -26,6 +26,7 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/queue.h"
@@ -232,10 +233,11 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
   int32_t rows_per_buffer_;
   std::string folder_path_;
   std::unique_ptr<DataSchema> data_schema_;
-
   int64_t row_cnt_;
   int64_t buf_cnt_;
   const std::string usage_;  // can only be either "train" or "test"
+  WaitPost wp_;
+  QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
   std::unique_ptr<Queue<std::vector<unsigned char>>> cifar_raw_data_block_;
   std::vector<std::string> cifar_files_;
   std::vector<std::pair<std::shared_ptr<Tensor>, std::vector<uint32_t>>> cifar_image_label_pairs_;

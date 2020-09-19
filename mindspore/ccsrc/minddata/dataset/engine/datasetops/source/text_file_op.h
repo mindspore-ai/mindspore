@@ -27,6 +27,7 @@
 #include "minddata/dataset/util/auto_index.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/util/queue.h"
 #include "minddata/dataset/util/wait_post.h"
 #include "minddata/dataset/engine/jagged_connector.h"

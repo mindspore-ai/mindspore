@@ -26,6 +26,7 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/path.h"
@@ -282,7 +283,9 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   int32_t rows_per_buffer_;
   std::unique_ptr<DataSchema> data_schema_;
 
+  WaitPost wp_;
   std::vector<std::string> image_ids_;
+  QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
   std::map<std::string, int32_t> class_index_;
   std::map<std::string, int32_t> label_index_;
   std::map<std::string, Annotation> annotation_map_;

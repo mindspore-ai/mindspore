@@ -29,6 +29,7 @@
 
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/util/queue.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/mindrecord/include/shard_column.h"
@@ -246,6 +247,8 @@ class MindRecordOp : public ParallelOp {
   std::vector<int32_t> columns_blob_index_;  // Blob Columns to load from dataset
 
   std::unique_ptr<ShardReader> shard_reader_;
+  WaitPost shard_reader_wait_post_;
+  QueueList<std::unique_ptr<IOBlock>> io_blk_queues_;
 
   std::mutex ended_worker_mutex_;
 };

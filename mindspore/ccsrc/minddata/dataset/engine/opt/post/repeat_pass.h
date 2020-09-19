@@ -106,6 +106,15 @@ class RepeatPass : public NodePass {
   Status RunOnNode(std::shared_ptr<DatasetOp> node, bool *modified) override;
 
  private:
+  /// \brief Adds an operator to the eoe operator stack save area
+  /// \param op - The dataset op to work add to eoe stack
+  /// \return Status - The error code return
+  void AddToEOEOpStack(std::shared_ptr<DatasetOp> dataset_op);
+
+  /// \brief Pops an operator from the eoe operator stack save area
+  /// \return shared_ptr to the popped operator
+  std::shared_ptr<DatasetOp> PopFromEOEOpStack();
+
   /// \brief Adds an operator to the cached operator stack save area
   /// \param op - The dataset op to work add to cached stack
   /// \return Status - The error code return
@@ -115,12 +124,15 @@ class RepeatPass : public NodePass {
   /// \return shared_ptr to the popped operator
   std::shared_ptr<DatasetOp> PopFromCachedOpStack();
 
-  bool is_merge_;                            // T/F if we are processing under a cache merge op
-  bool is_cached_;                           // T/F is we are processing under a cache op
-  int32_t num_repeats_;                      // A multiplier to the total number of repeats
-  int32_t num_epochs_;                       // To save the total number of epochs
-  op_stack cached_op_stacks_;                // A save area for ops under a cache op
-  std::shared_ptr<DatasetOp> cache_lookup_;  // A save area for a cache lookup op
+  bool is_repeated_;                                     // T/F if we are processing under a repeat
+  bool is_merge_;                                        // T/F if we are processing under a cache merge op
+  bool is_cached_;                                       // T/F is we are processing under a cache op
+  int32_t nested_repeats_;                               // A counter for nested repeats
+  int32_t num_repeats_;                                  // A multiplier to the total number of repeats
+  int32_t num_epochs_;                                   // To save the total number of epochs
+  std::stack<std::unique_ptr<op_stack>> eoe_op_stacks_;  // A save area for leaf/eoe ops (with nesting)
+  op_stack cached_op_stacks_;                            // A save area for ops under a cache op
+  std::shared_ptr<DatasetOp> cache_lookup_;              // A save area for a cache lookup op
 };
 }  // namespace dataset
 }  // namespace mindspore

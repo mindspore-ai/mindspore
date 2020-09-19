@@ -129,9 +129,7 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buf
       num_padded_(num_padded),
       sample_json_(sample_json),
       sample_bytes_(sample_bytes) {
-  io_block_queues_.Init(num_workers_, op_connector_queue_size);
-  epoch_sync_flag_ = true;  // MindRecordOp needs to turn this flag on, otherwise, calling ShuffleTask() before all
-                            // tasks are consumed by the worker threads would cause problem.
+  io_blk_queues_.Init(num_workers_, op_connector_queue_size);
 }
 
 // Private helper method to encapsulate some common construction/reset tasks
@@ -221,27 +219,18 @@ void MindRecordOp::Print(std::ostream &out, bool show_all) const {
 Status MindRecordOp::WorkerEntry(int32_t worker_id) {
   TaskManager::FindMe()->Post();
   std::unique_ptr<IOBlock> io_block;
-  RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
+  RETURN_IF_NOT_OK(io_blk_queues_[worker_id]->PopFront(&io_block));
   while (io_block != nullptr) {
-    if (io_block->wait()) {
-      // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
-      // The last guy who comes to this sync point should reset the counter and wake up the master thread.
-      if (++num_workers_paused_ == num_workers_) {
-        wait_for_workers_post_.Set();
-      }
-      RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
-      continue;
-    }
     if (io_block->eoe()) {
       RETURN_IF_NOT_OK(
         out_connector_->Add(worker_id, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
-      RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
+      RETURN_IF_NOT_OK(io_blk_queues_[worker_id]->PopFront(&io_block));
       continue;
     }
     if (io_block->eof()) {
       RETURN_IF_NOT_OK(
         out_connector_->Add(worker_id, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
-      RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
+      RETURN_IF_NOT_OK(io_blk_queues_[worker_id]->PopFront(&io_block));
       continue;
     }
 
@@ -266,7 +255,7 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
     }
     RETURN_IF_NOT_OK(GetBufferFromReader(&fetched_buffer, buffer_id, worker_id));
     RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(fetched_buffer)));
-    RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
+    RETURN_IF_NOT_OK(io_blk_queues_[worker_id]->PopFront(&io_block));
   }
   RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
 }
@@ -388,31 +377,27 @@ Status MindRecordOp::operator()() {
   while (true) {  // each iterator is 1 epoch
     for (int32_t i = 0; i < buffers_needed_; ++i) {
       std::vector<int64_t> keys(1, i);
-      RETURN_IF_NOT_OK(io_block_queues_[buf_cnt_++ % num_workers_]->Add(
+      RETURN_IF_NOT_OK(io_blk_queues_[buf_cnt_++ % num_workers_]->Add(
         std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
     }
     if (IsLastIteration()) {
       RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
+        io_blk_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
+        io_blk_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
       for (int32_t i = 0; i < num_workers_; i++) {
-        RETURN_IF_NOT_OK(io_block_queues_[i]->Add(
+        RETURN_IF_NOT_OK(io_blk_queues_[i]->Add(
           std::move(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone))));
       }
       return Status::OK();
-    } else {
+    } else {  // not the last repeat. Acquire lock, sleeps master thread, wait for the wake-up from reset
       RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-    }
+        io_blk_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
 
-    if (epoch_sync_flag_) {
-      // If epoch_sync_flag_ is set, then master thread sleeps until all the worker threads have finished their job for
-      // the current epoch.
-      RETURN_IF_NOT_OK(WaitForWorkers());
+      // reset our buffer count and go to loop again.
+      RETURN_IF_NOT_OK(shard_reader_wait_post_.Wait());
+      shard_reader_wait_post_.Clear();
     }
-    // If not the last repeat, self-reset and go to loop again.
-    if (!IsLastIteration()) RETURN_IF_NOT_OK(Reset());
     UpdateRepeatAndEpochCounter();
   }
 }
@@ -421,10 +406,10 @@ Status MindRecordOp::operator()() {
 // info from it's previous execution and then initializes itself so that it can be executed
 // again.
 Status MindRecordOp::Reset() {
-  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   RETURN_IF_NOT_OK(ParallelOp::Reset());  // Call our super class reset first.
 
   shard_reader_->ShuffleTask();
+  shard_reader_wait_post_.Set();
 
   return Status::OK();
 }
@@ -434,8 +419,8 @@ Status MindRecordOp::LaunchThreadAndInitOp() {
     RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
   }
 
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
+  RETURN_IF_NOT_OK(io_blk_queues_.Register(tree_->AllTasks()));
+  RETURN_IF_NOT_OK(shard_reader_wait_post_.Register(tree_->AllTasks()));
   if (shard_reader_->Launch(true) == MSRStatus::FAILED) {
     RETURN_STATUS_UNEXPECTED("MindRecordOp launch failed.");
   }

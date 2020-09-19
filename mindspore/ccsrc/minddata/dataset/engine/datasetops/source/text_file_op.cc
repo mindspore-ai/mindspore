@@ -136,7 +136,6 @@ Status TextFileOp::Init() {
 }
 
 Status TextFileOp::Reset() {
-  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   load_jagged_connector_ = true;
   load_io_block_queue_ = true;
 
@@ -433,8 +432,6 @@ Status TextFileOp::operator()() {
     } else {
       jagged_buffer_connector_->DoReset();
       buffer_id = 0;
-      // Self-reset to start a new iteration
-      RETURN_IF_NOT_OK(Reset());
     }
     UpdateRepeatAndEpochCounter();
   }

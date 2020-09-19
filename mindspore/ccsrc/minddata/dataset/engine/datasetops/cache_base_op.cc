@@ -42,7 +42,8 @@ Status CacheBase::Reset() {
     RETURN_IF_NOT_OK(sampler_->ResetSampler());
   }
   // Wake up the workers to get them going again in a new epoch
-  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
+  MS_LOG(DEBUG) << Name() << " resetting.";
+  epoch_sync_.Set();
   return Status::OK();
 }
 CacheBase::CacheBase(int32_t num_workers, int32_t op_connector_size, int32_t rows_per_buf,
@@ -71,6 +72,7 @@ Status CacheBase::FetchSamplesToWorkers() {
   // Instead of sending sampler id to WorkerEntry, we send them to the Prefetcher which will redirect them
   // to the WorkerEntry.
   do {
+    epoch_sync_.Clear();
     if (AllowCacheMiss() && wait_cnt > 0) {
       MS_LOG(WARNING) << "Epoch: " << wait_cnt << " Cache Miss : " << num_cache_miss_
                       << " Total number of rows : " << row_cnt_;
@@ -110,17 +112,11 @@ Status CacheBase::FetchSamplesToWorkers() {
     // If repeat but the not last repeat, wait for reset.
     if (!IsLastIteration()) {
       MS_LOG(DEBUG) << Name() << " Waiting for reset. Count " << wait_cnt << " Buffer sent " << buf_cnt;
+      RETURN_IF_NOT_OK(epoch_sync_.Wait());
     } else {
       // We can break out from the loop.
       break;
     }
-    if (epoch_sync_flag_) {
-      // If epoch_sync_flag_ is set, then master thread sleeps until all the worker threads have finished their job for
-      // the current epoch.
-      RETURN_IF_NOT_OK(WaitForWorkers());
-    }
-    // If not the last repeat, self-reset and go to loop again.
-    if (!IsLastIteration()) RETURN_IF_NOT_OK(Reset());
     UpdateRepeatAndEpochCounter();
   } while (true);
   // Flow the eof before exit
@@ -146,13 +142,7 @@ Status CacheBase::FetchFromCache(int32_t worker_id) {
   std::unique_ptr<IOBlock> blk;
   do {
     RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&blk));
-    if (blk->wait()) {
-      // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
-      // The last guy who comes to this sync point should reset the counter and wake up the master thread.
-      if (++num_workers_paused_ == num_workers_) {
-        wait_for_workers_post_.Set();
-      }
-    } else if (blk->eof()) {
+    if (blk->eof()) {
       RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
     } else if (blk->eoe()) {
       if (AllowCacheMiss()) {
@@ -196,7 +186,7 @@ Status CacheBase::FetchFromCache(int32_t worker_id) {
 }
 
 Status CacheBase::RegisterResources() {
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
+  RETURN_IF_NOT_OK(epoch_sync_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(prefetch_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(sampler_queue_->Register(tree_->AllTasks()));
