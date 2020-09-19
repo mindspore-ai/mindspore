@@ -126,9 +126,22 @@ Status DeviceMatrix::GetDevicesByTensorMap(const Shape &tensor_map, RankList *ra
     }
   }
 
-  Shape current_rank_coordinate = ConvertRankToCoordinate(rank_, dev_shape_);
+  // Convert the global rank to the local rank(The index of the array) to compute the coordinate
+  uint32_t local_rank = 0;
   for (auto &tmp_rank : dev_list_) {
-    Shape tmp_rank_coordinate = ConvertRankToCoordinate(tmp_rank, dev_shape_);
+    if (tmp_rank == rank_) {
+      break;
+    }
+    ++local_rank;
+  }
+  if (local_rank == dev_list_.size()) {
+    MS_LOG(ERROR) << "Rank id: " << local_rank << "is not in the device list.";
+    return FAILED;
+  }
+
+  Shape current_rank_coordinate = ConvertRankToCoordinate((int32_t)local_rank, dev_shape_);
+  for (uint32_t loop_local_rank = 0; loop_local_rank < dev_list_.size(); ++loop_local_rank) {
+    Shape tmp_rank_coordinate = ConvertRankToCoordinate(loop_local_rank, dev_shape_);
     bool matched = true;
     for (auto &map : tensor_map) {
       if (map == MAP_NONE) {
@@ -141,7 +154,7 @@ Status DeviceMatrix::GetDevicesByTensorMap(const Shape &tensor_map, RankList *ra
       }
     }
     if (matched) {
-      rank_list->push_back(tmp_rank);
+      rank_list->push_back(dev_list_[loop_local_rank]);
     }
   }
 

@@ -70,7 +70,7 @@ class Stage {
 
 // This method is used for initializing the global DeviceManager 'g_device_manager',
 // arguments including 'device_num' and 'global_rank'
-bool InitDevice(int32_t device_num, int32_t global_rank, const std::string &backend);
+bool InitDevice(int32_t device_num, int32_t global_rank, const std::string &backend, const std::vector<int32_t> &stage);
 
 void CheckGlobalDeviceManager();
 

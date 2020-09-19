@@ -152,6 +152,9 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set strategy checkpoint save file.")
     .def("get_strategy_ckpt_load_file", &ParallelContext::strategy_ckpt_load_file, "Get strategy checkpoint load file.")
     .def("get_strategy_ckpt_save_file", &ParallelContext::strategy_ckpt_save_file, "Get strategy checkpoint save file.")
+    .def("set_pipeline_stage_split_num", &ParallelContext::set_pipeline_stage_split_num,
+         "Set pipeline stage split num.")
+    .def("get_pipeline_stage_split_num", &ParallelContext::pipeline_stage_split_num, "Get pipeline stage split num.")
     .def("set_full_batch", &ParallelContext::set_full_batch, "Set whether load full batch on each device.")
     .def("get_full_batch", &ParallelContext::full_batch, "Get whether load full batch on each device.")
     .def("set_enable_parallel_optimizer", &ParallelContext::set_enable_parallel_optimizer,

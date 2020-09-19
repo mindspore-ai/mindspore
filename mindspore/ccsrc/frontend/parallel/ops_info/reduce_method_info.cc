@@ -133,9 +133,9 @@ Status ReduceMethod::InferTensorMap() {
   return SUCCESS;
 }
 
-bool IsDataParallelStrategy(const Dimensions &strategy) {
+bool IsDataParallelStrategy(const Dimensions &strategy, int32_t stage_id) {
   CheckGlobalDeviceManager();
-  size_t total_dev_num = g_device_manager->GetDeviceListByStageId(0).size();
+  size_t total_dev_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
   if (strategy.empty()) {
     MS_LOG(EXCEPTION) << "IsDataParallelStrategy: strategy is empty";
   }
@@ -145,7 +145,7 @@ bool IsDataParallelStrategy(const Dimensions &strategy) {
 
 Status ReduceMethod::InferForwardCommunication() {
   Dimensions stra = strategy_->GetInputDim().at(0);
-  if (cross_batch_ && IsDataParallelStrategy(stra)) {
+  if (cross_batch_ && IsDataParallelStrategy(stra, stage_id_)) {
     MS_LOG(INFO) << name_ << ": cross_batch is True, don't need to InferForwardCommunication";
     return SUCCESS;
   }
@@ -211,7 +211,7 @@ ForwardOp CreatReduceMeanForwardOp(const std::vector<Group> &forward_group, cons
 
 Status ReduceMeanInfo::InferForwardCommunication() {
   Dimensions stra = strategy_->GetInputDim().at(0);
-  if (cross_batch_ && IsDataParallelStrategy(stra)) {
+  if (cross_batch_ && IsDataParallelStrategy(stra, stage_id_)) {
     MS_LOG(INFO) << name_ << ": cross_batch is True, don't need to InferForwardCommunication";
     return SUCCESS;
   }

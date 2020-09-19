@@ -83,6 +83,39 @@ TEST_F(TestDeviceMatrix, TestCornerCaseGetAlongDim) {
   EXPECT_THROW({ DeviceMatrix arr(3, dev_list, shape); }, std::runtime_error);
 }
 
+TEST_F(TestDeviceMatrix, TestGetDeviceByTensorMapRandomOrderSliceOne) {
+  RankList dev_list = {10, 3, 2, 9, 11, 100, 1, 0};
+  Shape tensor_map = {-1, 0};
+  RankList rank_list;
+  Shape shape = {4, 2};
+  DeviceMatrix arr(0, dev_list, shape);
+  arr.GetDevicesByTensorMap(tensor_map, &rank_list);
+  RankList rank_list_except = {3, 9, 100, 0};
+  ASSERT_EQ(rank_list, rank_list_except);
+}
+
+TEST_F(TestDeviceMatrix, TestGetDeviceByTensorMapRandomOrderSliceTwo) {
+  RankList dev_list = {10, 3, 2, 9, 11, 100, 1, 0};
+  Shape tensor_map = {1, 0};
+  RankList rank_list;
+  Shape shape = {4, 2};
+  DeviceMatrix arr(0, dev_list, shape);
+  arr.GetDevicesByTensorMap(tensor_map, &rank_list);
+  RankList rank_list_except = {0};
+  ASSERT_EQ(rank_list, rank_list_except);
+}
+
+TEST_F(TestDeviceMatrix, TestGetDeviceByTensorMapNoramalOrder2D) {
+  RankList dev_list = {0, 1, 2, 3, 4, 5, 6, 7};
+  Shape tensor_map = {-1, 0};
+  RankList rank_list;
+  Shape shape = {4, 2};
+  DeviceMatrix arr(6, dev_list, shape);
+  arr.GetDevicesByTensorMap(tensor_map, &rank_list);
+  RankList rank_list_except = {0, 2, 4, 6};
+  ASSERT_EQ(rank_list, rank_list_except);
+}
+
 TEST_F(TestDeviceMatrix, TestCornerCase2GetAlongDim) {
   // Rank is out of range
   RankList dev_list = {0, 1, 2, 3, 4, 5, 6, 7};

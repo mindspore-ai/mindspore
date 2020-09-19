@@ -102,6 +102,20 @@ class Primitive(Primitive_):
         self.add_attr(name, value)
         return self
 
+    def set_stage(self, stage):
+        """
+        Add stage id to primitive attribute.
+
+        Note:
+            It is valid only in semi auto parallel.
+            In other parallel modes, please set it to be 0.
+
+        Args:
+            stage (int): The stage id for the current operation
+        """
+        self.add_prim_attr("stage", stage)
+        return self
+
     def shard(self, strategy):
         """
         Add strategies to primitive attribute.
