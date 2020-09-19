@@ -6,6 +6,7 @@ MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
 ENV CMAKE_ROOT_PATH /usr/local/cmake-3.14.1
 ENV PATH ${CMAKE_ROOT_PATH}/bin:/usr/local/bin:$PATH
+ENV LD_LIBRARY_PATH ${PYTHON_ROOT_PATH}/lib
 
 # Install base tools
 RUN apt update \
@@ -51,7 +52,7 @@ RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
     && tar -xvf v3.7.5.tar.gz \
     && cd /tmp/cpython-3.7.5 \
     && mkdir -p ${PYTHON_ROOT_PATH} \
-    && ./configure --prefix=${PYTHON_ROOT_PATH} \
+    && ./configure --prefix=${PYTHON_ROOT_PATH} --enable-shared \
     && make -j4 \
     && make install -j4 \
     && rm -f /usr/local/bin/python \
