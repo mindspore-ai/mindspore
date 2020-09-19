@@ -52,7 +52,15 @@ Status GetPostMessage(struct evhttp_request *const req, std::string *const buf) 
     return status;
   } else {
     buf->resize(post_size);
-    memcpy_s(buf->data(), post_size, evbuffer_pullup(req->input_buffer, -1), post_size);
+    auto src_data = evbuffer_pullup(req->input_buffer, -1);
+    if (src_data == nullptr) {
+      ERROR_INFER_STATUS(status, FAILED, "get http message failed.");
+      return status;
+    }
+    if (memcpy_s(buf->data(), post_size, src_data, post_size) != EOK) {
+      ERROR_INFER_STATUS(status, FAILED, "copy http message failed.");
+      return status;
+    }
     return status;
   }
 }

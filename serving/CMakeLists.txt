@@ -116,7 +116,7 @@ if (ENABLE_ACL)
             ${ACL_LIB_DIR}/lib64/libacl_retr.so ${ACL_LIB_DIR}/lib64/libacl_cblas.so
             ${ACL_LIB_DIR}/lib64/libacl_dvpp.so)
     target_link_libraries(ms_serving ${ALC_LIB_SO})
-    target_link_libraries(ms_serving jpeg_turbo::jpeg)
+    target_link_libraries(ms_serving jpeg_turbo::jpeg securec)
 else ()
     target_link_libraries(ms_serving inference mindspore_gvar)
 endif ()
