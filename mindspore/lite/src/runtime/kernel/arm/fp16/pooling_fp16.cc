@@ -56,7 +56,11 @@ int PoolingFp16CPUKernel::RunImpl(int task_id) {
   if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
     MaxPoolingFp16(fp16_input_, fp16_output_, pooling_param_, task_id);
   } else {
-    AvgPoolingFp16(fp16_input_, fp16_output_, pooling_param_, task_id);
+    auto ret = AvgPoolingFp16(fp16_input_, fp16_output_, pooling_param_, task_id);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "AvgPooling run failed.";
+      return ret;
+    }
   }
   return RET_OK;
 }

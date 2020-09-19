@@ -361,12 +361,12 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
 }
 
 OutputTransFunc GetOutputTransFunc(int input_unit, int output_unit) {
-  if (input_unit == 4) {
-    return OutputTransFuncList4[output_unit];
-  } else if (input_unit == 6) {
-    return OutputTransFuncList6[output_unit];
-  } else if (input_unit == 8) {
-    return OutputTransFuncList8[output_unit];
+  if (input_unit == 4 && output_unit < 4) {
+      return OutputTransFuncList4[output_unit];
+  } else if (input_unit == 6 && output_unit < 6) {
+      return OutputTransFuncList6[output_unit];
+  } else if (input_unit == 8 && output_unit < 8) {
+      return OutputTransFuncList8[output_unit];
   } else {
     return NULL;
   }

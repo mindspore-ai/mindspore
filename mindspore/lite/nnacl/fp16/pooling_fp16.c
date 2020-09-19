@@ -15,8 +15,9 @@
  */
 #include "nnacl/fp16/pooling_fp16.h"
 #include <float.h>
+#include "nnacl/errorcode.h"
 
-void AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
+int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
@@ -83,6 +84,9 @@ void AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
           if (pooling_param->avg_mode_ == 1) {
             real_count = window;
           }
+          if (real_count == 0) {
+            return NNACL_ERR;
+          }
 #ifdef ENABLE_NEON
           vst1q_f16(output_ptr + out_channel_offset, tmp_avg / vdupq_n_f16(real_count));
 #else
@@ -118,6 +122,9 @@ void AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
           if (pooling_param->avg_mode_ == 1) {
             real_count = window;
           }
+          if (real_count == 0) {
+            return NNACL_ERR;
+          }
 #ifdef ENABLE_NEON
           vst1_f16(output_ptr + out_channel_offset, tmp_avg / vdup_n_f16(real_count));
 #else
@@ -140,11 +147,15 @@ void AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
               ++real_count;
             }  // win_w loop
           }    // win_h loop
+          if (real_count == 0) {
+            return NNACL_ERR;
+          }
           *(output_ptr + out_channel_offset) = tmp_avg / (float16_t)real_count;
         }  // channel_res loop
       }    // real_cal_num loop
     }      // out_plane loop
   }        // out_batch loop
+  return NNACL_OK;
 }
 
 void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
