@@ -22,9 +22,11 @@ greater_equal_op_info = AkgGpuRegOp("GreaterEqual") \
     .output(0, "output") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.F64_Default, DataType.F64_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.I16_Default, DataType.I16_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default, DataType.BOOL_Default) \
     .get_op_info()
 
 
