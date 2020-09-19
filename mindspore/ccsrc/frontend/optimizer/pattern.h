@@ -259,7 +259,7 @@ class MatchResult {
   MatchResult() {}
   ~MatchResult() = default;
   void add_entry(PatternPtr pattern, AnfNodePtr node) { match_result_[pattern] = node; }
-  PatternNodeMap &result() { return match_result_; }
+  const PatternNodeMap &result() { return match_result_; }
   AnfNodePtr get_node(const PatternPtr &pattern);
   void merge(const MatchResultPtr &other_result);
   void clear() { match_result_.clear(); }

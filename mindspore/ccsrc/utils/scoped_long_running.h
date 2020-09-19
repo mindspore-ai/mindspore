@@ -21,7 +21,6 @@
 #include <utility>
 
 namespace mindspore {
-
 // Base Class for scoped long running code.
 // Enter() should release some global resoure, like Python GIL;
 // Leave() should acquire the same global resource released.
