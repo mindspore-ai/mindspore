@@ -32,7 +32,6 @@ from ..nn.metrics import Loss
 from .. import nn
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from ..context import ParallelMode
-from ..parallel._utils import _need_to_full, _to_full_tensor
 from ..parallel._cost_model_context import _set_multi_subgraphs
 from .dataset_helper import DatasetHelper, connect_network_with_dataset
 from . import amp
@@ -436,8 +435,6 @@ class Model:
 
             # for data sink dataset_helper only iter once, other wise iter epoch_size times.
             for inputs in dataset_helper:
-                if _need_to_full() and context.get_context("device_target") == "GPU":
-                    inputs = _to_full_tensor(inputs, self._device_number, self._global_rank)
                 cb_params.train_dataset_element = inputs
                 list_callback.step_begin(run_context)
                 outputs = self._train_network(*inputs)

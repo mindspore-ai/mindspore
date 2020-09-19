@@ -39,6 +39,7 @@ const uint64_t kUSecondInSecond = 1000000;
 struct LossNodeInfo {
   bool has_tuple_getitem = false;
   int dout_index = 0;  // now don't support the sens is a tuple
+  CNodePtr loss_node = nullptr;
 };
 
 std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name);
@@ -82,7 +83,7 @@ std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &
 void InsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node);
 
 void BackwardCommunication(const OperatorInfoPtr &distribute_operator, const CNodePtr &node,
-                           const std::vector<std::pair<CNodePtr, CNodePtr>> &sens_loss_pairs);
+                           const std::vector<std::pair<CNodePtr, LossNodeInfo>> &sens_loss_pairs);
 
 // Generate and init parallel operator
 OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
