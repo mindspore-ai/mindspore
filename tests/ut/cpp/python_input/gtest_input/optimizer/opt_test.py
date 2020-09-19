@@ -1095,36 +1095,40 @@ def test_adjust_allreduce_mul_add(tag):
     AddN = Primitive('AddN')
     AllReduce = Primitive('AllReduce')
 
+    x = Tensor(np.ones(shape=(64, 32)).astype(np.float32))
+    y = Tensor(np.ones(shape=(64, 32)).astype(np.float32))
+    z = Tensor(np.ones(shape=(64, 32)).astype(np.float32))
+
     @fns
-    def beforell(x, y, z):
+    def beforell():
         return AddN((z, Mul(y, AllReduce(x))))
 
     @fns
-    def beforelr(x, y, z):
+    def beforelr():
         return AddN((z, Mul(AllReduce(x), y)))
 
     @fns
-    def beforerl(x, y, z):
+    def beforerl():
         return AddN((Mul(y, AllReduce(x)), z))
 
     @fns
-    def beforerr(x, y, z):
+    def beforerr():
         return AddN((Mul(AllReduce(x), y), z))
 
     @fns
-    def after1(x, y, z):
+    def after1():
         return Mul(AllReduce(AddN((z, x))), y)
 
     @fns
-    def before2r(x, y, z):
+    def before2r():
         return AddN((Mul(AllReduce(x), y), Mul(z, z)))
 
     @fns
-    def before2l(x, y, z):
+    def before2l():
         return AddN((Mul(z, z), Mul(AllReduce(x), y)))
 
     @fns
-    def after2(x, y, z):
+    def after2():
         return Mul(AllReduce(AddN((Mul(z, z), x))), y)
 
     return fns[tag]
