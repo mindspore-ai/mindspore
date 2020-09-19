@@ -41,7 +41,6 @@ fi
 
 python ${current_exec_path}/src/generate_hccn_file.py
 
-ulimit -u unlimited
 export DEVICE_NUM=4
 export RANK_SIZE=4
 export RANK_TABLE_FILE=${current_exec_path}/rank_table_4p.json

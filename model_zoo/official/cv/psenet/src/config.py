@@ -30,7 +30,7 @@ config = ed({
     'NECK_OUT_CHANNEL': 256,
 
     # dataset for train
-    "TRAIN_ROOT_DIR": '/autotest/lqk/modelzoo/psenet/ic15/',
+    "TRAIN_ROOT_DIR": 'psenet/ic15/',
     "TRAIN_IS_TRANSFORM": True,
     "TRAIN_LONG_SIZE": 640,
     "TRAIN_DATASET_SIZE": 1000,
@@ -43,7 +43,7 @@ config = ed({
     "TRAIN_MODEL_SAVE_PATH": './checkpoints/',
 
     # dataset for test
-    "TEST_ROOT_DIR": '/autotest/lqk/modelzoo/psenet/ic15/',
+    "TEST_ROOT_DIR": 'psenet/ic15/',
     "TEST_DATASET_SIZE": 500,
     "TEST_BUFFER_SIZE": 4,
     "TEST_DROP_REMAINDER": False,

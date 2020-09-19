@@ -25,7 +25,7 @@ from mindspore.nn import Momentum
 from mindspore.nn.optim import Adam, Lamb
 from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager, FixedLossScaleManager
-from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
+from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, TimeMonitor
 from mindspore import context, Parameter
 from mindspore.context import ParallelMode
 from mindspore.communication import management as MultiAscend
@@ -216,11 +216,13 @@ def _build_training_pipeline(config: TransformerConfig,
                                                               scale_update_cell=scale_manager.get_update_cell())
     net_with_grads.set_train(True)
     model = Model(net_with_grads)
+    time_cb = TimeMonitor(data_size=dataset.get_dataset_size())
     ckpt_config = CheckpointConfig(save_checkpoint_steps=config.save_ckpt_steps,
                                    keep_checkpoint_max=config.keep_ckpt_max)
 
     rank_size = os.getenv('RANK_SIZE')
     callbacks = []
+    callbacks.append(time_cb)
     if rank_size is not None and int(rank_size) > 1:
         loss_monitor = LossCallBack(config, rank_id=MultiAscend.get_rank())
         callbacks.append(loss_monitor)

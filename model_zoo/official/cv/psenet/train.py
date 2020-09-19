@@ -54,7 +54,7 @@ def train():
         rank_id = get_rank()
 
     # dataset/network/criterion/optim
-    ds = train_dataset_creator()
+    ds = train_dataset_creator(args.device_id, args.device_num)
     step_size = ds.get_dataset_size()
     print('Create dataset done!')
 
