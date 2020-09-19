@@ -9,7 +9,7 @@ MindSpore Lite是MindSpore推出的端云协同的、轻量化、高性能AI推�
 
 <img src="../../docs/MindSpore-Lite-architecture.png" alt="MindSpore Lite Architecture" width="600"/>
 
-欲了解更多详情，请查看我们的[MindSpore Lite 总体架构](https://www.mindspore.cn/lite/doc/note/zh-CN/master/design/mindspore/architecture_lite.html)。
+欲了解更多详情，请查看我们的[MindSpore Lite 总体架构](https://www.mindspore.cn/doc/note/zh-CN/master/design/mindspore/architecture_lite.html)。
 
 ## MindSpore Lite技术特点
 

@@ -236,7 +236,7 @@ step: 300, loss is 0.18949677, fps is 57.63118508760329
 ## [How to use](#contents)
 ### Inference
 
-If you need to use the trained model to perform inference on multiple hardware platforms, such as Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/training/master/advanced_use/migrate_3rd_scripts.html). Following the steps below, this is a simple example:
+If you need to use the trained model to perform inference on multiple hardware platforms, such as Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html). Following the steps below, this is a simple example:
 
 - Running on Ascend
   
