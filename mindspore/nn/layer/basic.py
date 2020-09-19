@@ -165,7 +165,7 @@ class Dense(Cell):
         \text{outputs} = \text{activation}(\text{inputs} * \text{kernel} + \text{bias}),
 
     where :math:`\text{activation}` is the activation function passed as the activation
-    argument (if passed in), :math:`\text{activation}` is a weight matrix with the same
+    argument (if passed in), :math:`\text{kernel}` is a weight matrix with the same
     data type as the inputs created by the layer, and :math:`\text{bias}` is a bias vector
     with the same data type as the inputs created by the layer (only if has_bias is True).
 
