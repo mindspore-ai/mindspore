@@ -127,9 +127,9 @@ You can start training using python or shell scripts. The usage of shell scripts
 - Ascend: 
 ```
 # distribute training example(8p)
-sh run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
 # standalone training
-sh run_standalone_train.sh DEVICE_ID DATA_PATH
+sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
 > Notes: 
     RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training_ascend.html)  , and the device_ip can be got as [Link]https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
@@ -139,9 +139,9 @@ sh run_standalone_train.sh DEVICE_ID DATA_PATH
 - GPU:
 ```
 # distribute training example(8p)
-sh run_distribute_train_gpu.sh DATA_DIR 
+sh scripts/run_distribute_train_gpu.sh DATA_DIR 
 # standalone training
-sh run_standalone_train_gpu.sh DEVICE_ID DATA_DIR
+sh scripts/run_standalone_train_gpu.sh DEVICE_ID DATA_DIR
 ```
 
 ### Launch
@@ -155,9 +155,9 @@ sh run_standalone_train_gpu.sh DEVICE_ID DATA_DIR
   shell:
       Ascend:
       # distribute training example(8p)
-      sh run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+      sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
       # standalone training
-      sh run_standalone_train.sh DEVICE_ID DATA_PATH
+      sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 	  GPU:
       # distributed training example(8p)
 	  sh scripts/run_distribute_train_gpu.sh /dataset/train
@@ -183,11 +183,11 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 - Ascend:
 ```
-	sh run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+	sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 - GPU:
 ```
-	sh run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+	sh scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
 ### Launch
@@ -199,8 +199,8 @@ You can start training using python or shell scripts. The usage of shell scripts
       GPU: python eval.py --dataset_path DATA_DIR --checkpoint PATH_CHECKPOINT --platform GPU
 
   shell:
-      Ascend: sh run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
-      GPU: sh run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+      Ascend: sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+      GPU: sh scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
 > checkpoint can be produced in training process. 
