@@ -38,16 +38,20 @@ Tensor::Tensor(const Tensor &tensor) {
 int Tensor::CopyTensorData(const Tensor &srcTensor) {
   if (srcTensor.data_ == nullptr) {
     MS_LOG(ERROR) << "data of srcTensor is nullptr";
-    return mindspore::lite::RET_PARAM_INVALID;
+    return RET_PARAM_INVALID;
   }
   size_t data_size = this->Size();
   MS_ASSERT(data_size == srcTensor.Size());
   if (this->data_ == nullptr) {
     if (data_size > kMaxMallocSize) {
       MS_LOG(ERROR) << "Malloc size is too big while coping data, " << data_size << " bytes";
-      return mindspore::lite::RET_ERROR;
+      return RET_ERROR;
     }
     this->data_ = malloc(data_size);
+    if (this->data_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc memory failed";
+      return RET_ERROR;
+    }
   }
   memcpy(this->data_, srcTensor.data_, data_size);
   return 0;
@@ -62,7 +66,7 @@ int Tensor::CopyTensor(const Tensor &srcTensor, bool copyData) {
     auto ret = CopyTensorData(srcTensor);
     if (0 != ret) {
       MS_LOG(ERROR) << "CopyTensorData error";
-      return mindspore::lite::RET_ERROR;
+      return RET_ERROR;
     }
   }
   return 0;

@@ -38,7 +38,7 @@ IF "%1%" == "lite" (
         call :run_cmake
         IF errorlevel 1 (
             echo "cmake fail."
-            goto run_fail
+            call :run_fail
         )
     ) ELSE (
         call :gene_protobuf
@@ -53,7 +53,7 @@ IF "%1%" == "lite" (
     )
     IF errorlevel 1 (
         echo "build fail."
-        goto run_fail
+        call :run_fail
     ) ELSE (
         cd %BASEPATH%/output
         rd /s /q _CPack_Packages
@@ -63,7 +63,7 @@ IF "%1%" == "lite" (
     -G "CodeBlocks - MinGW Makefiles" ../..
     IF NOT %errorlevel% == 0 (
         echo "cmake fail."
-        goto run_fail
+        call :run_fail
     )
 
     IF "%1%" == "" (
@@ -73,7 +73,7 @@ IF "%1%" == "lite" (
     )
     IF NOT %errorlevel% == 0 (
         echo "build fail."
-        goto run_fail
+        call :run_fail
     )
 )
 
@@ -123,5 +123,6 @@ GOTO:EOF
 :run_fail
     cd %BASEPATH%
     set errorlevel=1
+    EXIT
 
 :run_eof
