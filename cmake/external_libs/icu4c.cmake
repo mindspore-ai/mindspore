@@ -8,7 +8,7 @@ else()
             VER 67.1
             LIBS ${LIB_ICU_COMMON} ${LIB_ICU_DATA} ${LIB_ICU_I18N}
             URL https://github.com/unicode-org/icu/archive/release-67-1.tar.gz
-            MD5 0c2662a2b0bc80b0eb56495205247c8f
+            MD5 fd525fb47d8827b0b7da78b51dd2d93f
             CONFIGURE_COMMAND ${CMAKE_SOURCE_DIR}/scripts/build_icu4c.sh
             )
     include_directories(${icu4c_INC})
