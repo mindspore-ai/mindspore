@@ -138,7 +138,7 @@ class TensorDataNumpy : public TensorData {
   ssize_t ndim() const override { return buffer_.ndim; }
 
   /// Data pointer.
-  void *data() override { return buffer_.ptr; }
+  void *data() override { return buffer_data(); }
 
   const void *const_data() const override { return buffer_.ptr; }
 
@@ -162,6 +162,9 @@ class TensorDataNumpy : public TensorData {
     py::str dummyOwner;
     return py::array(py::dtype(buffer_), buffer_.shape, buffer_.strides, buffer_.ptr, dummyOwner);
   }
+
+ private:
+  void *buffer_data() { return buffer_.ptr; }
 
   // The internal buffer.
   py::buffer_info buffer_;
