@@ -125,6 +125,32 @@ def test_iterator_weak_ref():
 
     _cleanup()
 
+def test_iterator_exception():
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
+    try:
+        _ = data.create_dict_iterator(output_numpy="123")
+        assert False
+    except TypeError as e:
+        assert "Argument output_numpy with value 123 is not of type" in str(e)
+
+    try:
+        _ = data.create_dict_iterator(output_numpy=123)
+        assert False
+    except TypeError as e:
+        assert "Argument output_numpy with value 123 is not of type" in str(e)
+
+    try:
+        _ = data.create_tuple_iterator(output_numpy="123")
+        assert False
+    except TypeError as e:
+        assert "Argument output_numpy with value 123 is not of type" in str(e)
+
+    try:
+        _ = data.create_tuple_iterator(output_numpy=123)
+        assert False
+    except TypeError as e:
+        assert "Argument output_numpy with value 123 is not of type" in str(e)
+
 
 class MyDict(dict):
     def __getattr__(self, key):
@@ -157,4 +183,5 @@ def test_tree_copy():
 if __name__ == '__main__':
     test_iterator_create_tuple_numpy()
     test_iterator_weak_ref()
+    test_iterator_exception()
     test_tree_copy()

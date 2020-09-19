@@ -276,6 +276,18 @@ def check_save(method):
 
     return new_method
 
+def check_iterator(method):
+    """A wrapper that wraps a parameter checker around the original create_tuple_iterator and create_dict_iterator."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+        nreq_param_bool = ['output_numpy']
+        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+        return method(self, *args, **kwargs)
+
+    return new_method
+
 
 def check_minddataset(method):
     """A wrapper that wraps a parameter checker around the original Dataset(MindDataset)."""
