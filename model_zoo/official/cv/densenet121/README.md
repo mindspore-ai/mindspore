@@ -18,7 +18,7 @@
 - [Model Description](#model-description)
     - [Performance](#performance)  
         - [Training accuracy results](#training-accuracy-results)
-        - [Training performance results](#yraining-performance-results)
+        - [Training performance results](#training-performance-results)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -80,13 +80,13 @@ After installing MindSpore via the official website, you can start training and 
 
   ```python
   # run training example
-  python train.py --data_dir /PATH/TO/DATASET --is_distributed 0> train.log 2>&1 & 
+  python train.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 & 
   
   # run distributed training example
-  sh scripts/run_distribute_train.sh 8 rank_table.json /PATH/TO/DATASET
+  sh scripts/run_distribute_train.sh 8 rank_table.json /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
   
   # run evaluation example
-  python eval.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT> eval.log 2>&1 & 
+  python eval.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 & 
   OR
   sh scripts/run_distribute_eval.sh 8 rank_table.json /PATH/TO/DATASET /PATH/TO/CHECKPOINT
   ```
@@ -168,7 +168,7 @@ You can modify the training behaviour through the various flags in the `train.py
 - running on Ascend
 
   ```
-  python train.py --data_dir /PATH/TO/DATASET --is_distributed 0 > train.log 2>&1 & 
+  python train.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 & 
   ```
   
   The python command above will run in the background, The log and model checkpoint will be generated in `output/202x-xx-xx_time_xx_xx_xx/`. The loss value will be achieved as follows:
@@ -190,7 +190,7 @@ You can modify the training behaviour through the various flags in the `train.py
 - running on Ascend
 
   ```
-  sh scripts/run_distribute_train.sh 8 rank_table.json /PATH/TO/DATASET
+  sh scripts/run_distribute_train.sh 8 rank_table.json /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
   ```
   
   The above shell script will run distribute training in the background. You can view the results log and model checkpoint through the file `train[X]/output/202x-xx-xx_time_xx_xx_xx/`. The loss value will be achieved as follows:
@@ -217,7 +217,7 @@ You can modify the training behaviour through the various flags in the `train.py
   running the command below for evaluation. 
   
   ```
-  python eval.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT> eval.log 2>&1 & 
+  python eval.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 & 
   OR
   sh scripts/run_distribute_eval.sh 8 rank_table.json /PATH/TO/DATASET /PATH/TO/CHECKPOINT
   ```

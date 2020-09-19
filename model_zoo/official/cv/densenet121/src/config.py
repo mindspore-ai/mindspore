@@ -37,7 +37,7 @@ config = ed({
     "label_smooth_factor": 0.1,
 
     "log_interval": 100,
-    "ckpt_interval": 2000,
+    "ckpt_interval": 50000,
     "ckpt_path": 'outputs/',
     "is_save_on_master": 1,
 
