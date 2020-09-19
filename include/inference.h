@@ -81,7 +81,6 @@ class MS_API InferSession {
   }
   static std::shared_ptr<InferSession> CreateSession(const std::string &device, uint32_t device_id);
 };
-
 }  // namespace inference
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_MS_SESSION_H

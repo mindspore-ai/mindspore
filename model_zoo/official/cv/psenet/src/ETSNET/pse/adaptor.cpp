@@ -63,10 +63,8 @@ namespace pse_adaptor {
             vector<int> row(label_mat.cols);
             for (int y = 0; y < label_mat.cols; ++y) {
                 int label = label_mat.at<int>(x, y);
-
                 if (label == 0) continue;
                 if (area[label] < min_area) continue;
-
                 Point point(x, y);
                 queue.push(point);
                 row[y] = label;

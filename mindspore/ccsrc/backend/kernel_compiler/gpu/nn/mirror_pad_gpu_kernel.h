@@ -66,7 +66,6 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
     }
 
     string mode = GetValue<string>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("mode"));
-
     if (mode == "REFLECT") {
       mode_ = 0;  // reflected mirroring
     } else {

@@ -16,12 +16,13 @@
 @title mindspore_build
 
 SET BASEPATH=%CD%
-IF NOT EXIST "%BASEPATH%/build" (
+SET BUILD_PATH=%BASEPATH%/build
+
+IF NOT EXIST "%BUILD_PATH%" (
     md "build"
 )
 
-cd %BASEPATH%/build
-set BUILD_PATH=%CD%
+cd %BUILD_PATH%
 
 IF NOT EXIST "%BUILD_PATH%/mindspore" (
     md "mindspore"

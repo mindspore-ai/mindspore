@@ -52,7 +52,7 @@ class MSNetWork {
 
   int ReleaseNets(void);
 
-  mindspore::session::LiteSession * session() const { return session_; }
+  mindspore::session::LiteSession *session() const { return session_; }
  private:
   mindspore::session::LiteSession *session_;
 };

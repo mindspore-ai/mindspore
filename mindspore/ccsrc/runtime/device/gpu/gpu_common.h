@@ -141,7 +141,6 @@ inline bool CheckNullInput(std::vector<size_t> input_shape) {
       MS_LOG(EXCEPTION) << "CUAD curand Error: " << message << " | curandStatus: " << status; \
     }                                                                                         \
   }
-
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
