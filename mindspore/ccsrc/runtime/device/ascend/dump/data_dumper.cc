@@ -116,7 +116,7 @@ void DataDumper::LoadDumpInfo() {
   auto debugger = mindspore::Debugger::GetInstance();
   MS_EXCEPTION_IF_NULL(debugger);
   if (debugger->DebuggerBackendEnabled()) {
-    std::map<std::pair<uint32_t, uint32_t>, std::string> &stream_task_to_opname = debugger->GetStreamTaskToOpnameMap();
+    std::map<std::pair<uint32_t, uint32_t>, std::string> stream_task_to_opname = debugger->GetStreamTaskToOpnameMap();
     // extract stream id, task id and opname from runtime_info_map for overflow detection
     std::transform(runtime_info_map_.begin(), runtime_info_map_.end(),
                    std::inserter(stream_task_to_opname, stream_task_to_opname.end()),

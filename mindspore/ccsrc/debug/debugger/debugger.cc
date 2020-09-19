@@ -306,7 +306,7 @@ void Debugger::PostDebugOp() {
   }
 }
 
-std::map<std::pair<uint32_t, uint32_t>, std::string> &Debugger::GetStreamTaskToOpnameMap() {
+std::map<std::pair<uint32_t, uint32_t>, std::string> Debugger::GetStreamTaskToOpnameMap() const {
   return stream_task_to_opname_;
 }
 
@@ -749,7 +749,8 @@ uint64_t BytestoInt64(const std::vector<char> &buffer) {
   uint64_t ret;
 
   ret = ((uint64_t)buffer[7] << 56) | ((uint64_t)buffer[6] << 48) | ((uint64_t)buffer[5] << 40) |
-        ((uint64_t)buffer[4] << 32) | (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
+        ((uint64_t)buffer[4] << 32) | ((uint64_t)buffer[3] << 24) | ((uint64_t)buffer[2] << 16) |
+        ((uint64_t)buffer[1] << 8) | ((uint64_t)buffer[0]);
 
   return ret;
 }
