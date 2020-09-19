@@ -336,6 +336,7 @@ class IsInstance(PrimitiveWithInfer):
     Examples:
         >>> a = 1
         >>> result = P.IsInstance()(a, mindspore.int32)
+        True
     """
 
     @prim_attr_register
@@ -634,6 +635,9 @@ class GatherV2(PrimitiveWithCheck):
         >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
         >>> axis = 1
         >>> out = P.GatherV2()(input_params, input_indices, axis)
+        [[2.0, 7.0],
+         [4.0, 54.0],
+         [2.0, 55.0]]
     """
 
     @prim_attr_register
@@ -940,6 +944,8 @@ class OnesLike(PrimitiveWithInfer):
         >>> oneslike = P.OnesLike()
         >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
         >>> output = oneslike(x)
+        [[1, 1],
+         [1, 1]]
     """
 
     @prim_attr_register
@@ -970,6 +976,8 @@ class ZerosLike(PrimitiveWithInfer):
         >>> zeroslike = P.ZerosLike()
         >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> output = zeroslike(x)
+        [[0.0, 0.0],
+         [0.0, 0.0]]
     """
 
     @prim_attr_register
@@ -1628,6 +1636,10 @@ class Concat(PrimitiveWithInfer):
         >>> data2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
         >>> op = P.Concat()
         >>> output = op((data1, data2))
+        [[0, 1],
+         [2, 1],
+         [0, 1],
+         [2, 1]]
     """
 
     @prim_attr_register
@@ -2502,6 +2514,7 @@ class GatherNd(PrimitiveWithInfer):
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> op = P.GatherNd()
         >>> output = op(input_x, indices)
+        [-0.1, 0.5]
     """
 
     @prim_attr_register
@@ -2525,10 +2538,10 @@ class TensorScatterUpdate(PrimitiveWithInfer):
     Update tensor value using given values, along with the input indices.
 
     Inputs:
-        - **input_x** (Tensor) - The target tensor.
+        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be equal to indices.shape[-1].
         - **indices** (Tensor) - The index of input tensor whose data type is int32.
         - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and update.shape = indices.shape + input_x.shape[1:].
+          and update.shape = indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -2539,6 +2552,8 @@ class TensorScatterUpdate(PrimitiveWithInfer):
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
         >>> op = P.TensorScatterUpdate()
         >>> output = op(input_x, indices, update)
+        [[1.0, 0.3, 3.6],
+         [0.4, 2.2, -3.2]]
     """
 
     @prim_attr_register
@@ -2591,6 +2606,8 @@ class ScatterUpdate(_ScatterOp):
         >>> updates = Tensor(np_updates, mindspore.float32)
         >>> op = P.ScatterUpdate()
         >>> output = op(input_x, indices, updates)
+        [[2.0, 1.2, 1.0],
+         [3.0, 1.2, 1.0]]
     """
 
     @prim_attr_register

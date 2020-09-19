@@ -3487,7 +3487,9 @@ class Eps(PrimitiveWithInfer):
         Tensor, has the same type and shape as `input_x`, but filled with `input_x` dtype minimum val.
 
     Examples:
+        >>> input_x = Tensor([4, 1, 2, 3], mindspore.float32)
         >>> out = P.Eps()(input_x)
+        [1.52587891e-05, 1.52587891e-05, 1.52587891e-05, 1.52587891e-05]
     """
 
     @prim_attr_register
