@@ -548,8 +548,8 @@ void WorkerProxy<T>::PrepareSparseGradient(const size_t begin, const size_t end,
   int offset = 0;
   int index = 0;
   size_t segment_data_size = segment_size * sizeof(T);
-  size_t dst_size = 0;
-  size_t src_size = 0;
+  size_t dst_size;
+  size_t src_size;
   void *dst_data = nullptr;
   void *src_data = nullptr;
   for (auto &pair : indice_to_grads) {
