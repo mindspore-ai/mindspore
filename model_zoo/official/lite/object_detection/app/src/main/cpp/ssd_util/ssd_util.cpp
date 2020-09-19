@@ -20,6 +20,7 @@
 
 #define MS_PRINT(format, ...) __android_log_print(ANDROID_LOG_INFO, "MSJNI", format, ##__VA_ARGS__)
 
+SSDModelUtil::~SSDModelUtil(void) {}
 
 /**
  * SSD model util constructor.
@@ -61,8 +62,7 @@ std::string SSDModelUtil::getDecodeResult(float *branchScores, float *branchBoxD
     }
 
     // NMS processing.
-    ssd_boxes_decode(tmpBox, decodedBoxes);
-  //  const float nms_threshold = 0.6;
+    ssd_boxes_decode(tmpBox, decodedBoxes, 0.1, 0.2, 1917);
     const float nms_threshold = 0.3;
     for (int i = 1; i < 81; i++) {
         std::vector<int> in_indexes;

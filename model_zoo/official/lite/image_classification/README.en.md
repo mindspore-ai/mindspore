@@ -126,11 +126,11 @@ target_link_libraries(
 )
 ```
 
-* In this example, the  download.gradle File configuration auto download MindSpore Lite version,  placed in the 'app / src / main/cpp/mindspore_lite_x.x.x-minddata-arm64-cpu' directory.
+* In this example, the  download.gradle File configuration auto download MindSpore Lite version,  placed in the 'app/src/main/cpp/' directory.
 
   Note: if the automatic download fails, please manually download the relevant library files and put them in the corresponding location.
 
-  MindSpore Lite version [MindSpore Lite version]( https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%200.7/libmindspore-lite.so)
+  mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz [Download link](https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%201.0/mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz)
 
 ### Downloading and Deploying a Model File
 
@@ -189,32 +189,32 @@ The inference code process is as follows. For details about the complete code, s
 
    Convert the image data to be detected into the Tensor format of the MindSpore model.
 
-   ```cpp
-   // Convert the Bitmap image passed in from the JAVA layer to Mat for OpenCV processing
-   BitmapToMat(env, srcBitmap, matImageSrc);
-   // Processing such as zooming the picture size.
-    matImgPreprocessed = PreProcessImageData(matImageSrc);  
-   
-    ImgDims inputDims; 
-    inputDims.channel = matImgPreprocessed.channels();
-    inputDims.width = matImgPreprocessed.cols;
-    inputDims.height = matImgPreprocessed.rows;
-    float *dataHWC = new float[inputDims.channel * inputDims.width * inputDims.height]
-   
-    // Copy the image data to be detected to the dataHWC array.
-    // The dataHWC[image_size] array here is the intermediate variable of the input MindSpore model tensor.
-    float *ptrTmp = reinterpret_cast<float *>(matImgPreprocessed.data);
-    for(int i = 0; i < inputDims.channel * inputDims.width * inputDims.height; i++){
-       dataHWC[i] = ptrTmp[i];
-    }
-   
-    // Assign dataHWC[image_size] to the input tensor variable.
-    auto msInputs = mSession->GetInputs();
-    auto inTensor = msInputs.front();
-    memcpy(inTensor->MutableData(), dataHWC,
-        inputDims.channel * inputDims.width * inputDims.height * sizeof(float));
-    delete[] (dataHWC);
-   ```
+     ```cpp
+     // Convert the Bitmap image passed in from the JAVA layer to Mat for OpenCV processing
+     BitmapToMat(env, srcBitmap, matImageSrc);
+     // Processing such as zooming the picture size.
+     matImgPreprocessed = PreProcessImageData(matImageSrc);
+
+     ImgDims inputDims;
+     inputDims.channel = matImgPreprocessed.channels();
+     inputDims.width = matImgPreprocessed.cols;
+     inputDims.height = matImgPreprocessed.rows;
+     float *dataHWC = new float[inputDims.channel * inputDims.width * inputDims.height]
+
+     // Copy the image data to be detected to the dataHWC array.
+     // The dataHWC[image_size] array here is the intermediate variable of the input MindSpore model tensor.
+     float *ptrTmp = reinterpret_cast<float *>(matImgPreprocessed.data);
+     for(int i = 0; i < inputDims.channel * inputDims.width * inputDims.height; i++){
+        dataHWC[i] = ptrTmp[i];
+     }
+
+     // Assign dataHWC[image_size] to the input tensor variable.
+     auto msInputs = mSession->GetInputs();
+     auto inTensor = msInputs.front();
+     memcpy(inTensor->MutableData(), dataHWC,
+         inputDims.channel * inputDims.width * inputDims.height * sizeof(float));
+     delete[] (dataHWC);
+     ```
 
 3. Perform inference on the input tensor based on the model, obtain the output tensor, and perform post-processing.    
 

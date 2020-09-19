@@ -27,7 +27,7 @@
 2. 连接Android设备，运行目标检测示例应用程序。
 
     通过USB连接Android设备调试，点击`Run 'app'`即可在你的设备上运行本示例项目。
-    * 注：编译过程中Android Studio会自动下载MindSpore Lite、OpenCV、模型文件等相关依赖项，编译过程需做耐心等待。
+    * 注：编译过程中Android Studio会自动下载MindSpore Lite、模型文件等相关依赖项，编译过程需做耐心等待。
 
     ![run_app](images/run_app.PNG)
 
@@ -85,9 +85,9 @@ app
 
 ### 配置MindSpore Lite依赖项
 
-Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通过MindSpore Lite[源码编译](https://www.mindspore.cn/lite/docs/zh-CN/master/deploy.html)生成`libmindspore-lite.so`库文件。
+Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通过MindSpore Lite[源码编译](https://www.mindspore.cn/lite/tutorial/zh-CN/master/build.html)生成"mindspore-lite-X.X.X-mindata-armXX-cpu"库文件包（包含`libmindspore-lite.so`库文件和相关头文件，可包含多个兼容架构）。
 
-在Android Studio中将编译完成的mindspore-lite-X.X.X-mindata-armXX-cpu压缩包（包含`libmindspore-lite.so`库文件和相关头文件，可包含多个兼容架构），解压之后放置在APP工程的`app/src/main/cpp`目录下，并在app的`build.gradle`文件中配置CMake编译支持，以及`arm64-v8a`和`armeabi-v7a`的编译支持，如下所示：
+在Android Studio中将编译完成的mindspore-lite-X.X.X-mindata-armXX-cpu压缩包，解压之后放置在APP工程的`app/src/main/cpp`目录下，并在app的`build.gradle`文件中配置CMake编译支持，以及`arm64-v8a`和`armeabi-v7a`的编译支持，如下所示：
 ```
 android{
     defaultConfig{
@@ -130,7 +130,7 @@ target_link_libraries(
 
 
 * 注：若自动下载失败，请手动下载相关库文件并将其放在对应位置：
-* libmindspore-lite.so [下载链接](https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%200.7/libmindspore-lite.so)
+* mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz [下载链接](https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%201.0/mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz)
 
 
 ### 下载及部署模型文件
@@ -235,7 +235,7 @@ target_link_libraries(
 3. 进行模型推理前，输入tensor格式为 NHWC，shape为1:300:300:3，格式为RGB,  并对输入tensor做标准化处理.
 
    ```cpp
-bool PreProcessImageData(LiteMat &lite_mat_bgr,LiteMat &lite_norm_mat_cut) {
+    bool PreProcessImageData(LiteMat &lite_mat_bgr,LiteMat &lite_norm_mat_cut) {
        bool ret=false;
        LiteMat lite_mat_resize;
        ret = ResizeBilinear(lite_mat_bgr, lite_mat_resize, 300, 300);
@@ -273,12 +273,12 @@ bool PreProcessImageData(LiteMat &lite_mat_bgr,LiteMat &lite_norm_mat_cut) {
                     std::vector<mindspore::tensor::MSTensor *>> Msout;
         std::unordered_map<std::string,
                     mindspore::tensor::MSTensor *> msOutputs;
-     for (const auto &name : names) {
+        for (const auto &name : names) {
                 auto temp_dat =mSession->GetOutputByTensorName(name);  
                 msOutputs.insert(std::pair<std::string, mindspore::tensor::MSTensor *> {name, temp_dat});  
             }
         std::string retStr = ProcessRunnetResult(msOutputs, ret);
-     ```
+        ```
      
    - 模型有2个输出，输出1是目标的类别置信度，维度为1：1917: 81； 输出2是目标的矩形框坐标偏移量，维度为1:1917:4。 为了得出目标的实际矩形框，需要根据偏移量计算出矩形框的位置。这部分在 getDefaultBoxes中实现。 
    

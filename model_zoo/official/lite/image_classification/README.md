@@ -86,13 +86,13 @@ app
 
 ### 配置MindSpore Lite依赖项
 
-Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通过MindSpore Lite源码编译生成`libmindspore-lite.so`库文件。
+Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通过MindSpore Lite[源码编译](https://www.mindspore.cn/lite/tutorial/zh-CN/master/build.html)生成"mindspore-lite-X.X.X-mindata-armXX-cpu"库文件包（包含`libmindspore-lite.so`库文件和相关头文件，可包含多个兼容架构）。
 
-本示例中，build过程由download.gradle文件自动从华为服务器下载MindSpore Lite 版本文件，并放置在`app / src / main/cpp/mindspore_lite_x.x.x-minddata-arm64-cpu`目录下。
+本示例中，build过程由download.gradle文件自动从华为服务器下载MindSpore Lite 版本文件，并放置在`app / src / main/cpp/`目录下。
 
 * 注：若自动下载失败，请手动下载相关库文件并将其放在对应位置：
 
-  MindSpore Lite版本 [下载链接](https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%200.7/libmindspore-lite.so)
+  mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz [下载链接](https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%201.0/mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz)
 
 
 ```
@@ -243,20 +243,22 @@ target_link_libraries(
         
    - 输出数据的后续处理。
         ```cpp
-        std::string ProcessRunnetResult(std::unordered_map<std::string,
-                mindspore::tensor::MSTensor *> msOutputs, int runnetRet) {
-        
-       std::unordered_map<std::string, mindspore::tensor::MSTensor *>::iterator iter;
+        std::string ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const labels_name_map[],
+                            std::unordered_map<std::string, mindspore::tensor::MSTensor *> msOutputs) {
+          // Get the branch of the model output.
+          // Use iterators to get map elements.
+          std::unordered_map<std::string, mindspore::tensor::MSTensor *>::iterator iter;
           iter = msOutputs.begin();
-        
+
           // The mobilenetv2.ms model output just one branch.
-    auto outputTensor = iter->second;
+          auto outputTensor = iter->second;
+
           int tensorNum = outputTensor->ElementsNum();
           MS_PRINT("Number of tensor elements:%d", tensorNum);
-        
-     // Get a pointer to the first score.
+
+          // Get a pointer to the first score.
           float *temp_scores = static_cast<float * >(outputTensor->MutableData());
-        
+
           float scores[RET_CATEGORY_SUM];
           for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
             if (temp_scores[i] > 0.5) {
@@ -264,7 +266,7 @@ target_link_libraries(
             }
             scores[i] = temp_scores[i];
           }
-   
+
           // Score for each category.
           // Converted to text information that needs to be displayed in the APP.
           std::string categoryScore = "";
@@ -276,5 +278,5 @@ target_link_libraries(
             categoryScore += ";";
           }
           return categoryScore;
-        }      
-     ```
+        }
+        ```
