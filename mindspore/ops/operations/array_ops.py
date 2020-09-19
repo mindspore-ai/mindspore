@@ -2360,6 +2360,9 @@ class DiagPart(PrimitiveWithInfer):
             raise ValueError(f"For \'{self.name}\' input rank must be non-zero and even, but got rank {len(x_shape)}, "
                              f"with shapes {x_shape}")
         length = len(x_shape) // 2
+        for i in range(length):
+            validator.check('input_shape[i + len(input_shape)/2]', x_shape[i + length],
+                            'input_shape[i]', x_shape[i], Rel.EQ, self.name)
         ret_shape = x_shape[0:length]
         return ret_shape
 
