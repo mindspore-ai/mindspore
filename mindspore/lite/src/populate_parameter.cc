@@ -1536,6 +1536,11 @@ OpParameter *PopulateL2NormParameter(const mindspore::lite::PrimitiveC *primitiv
   auto axis_vec = param->GetAxis();
   l2_norm_parameter->axis_num_ = axis_vec.size();
   l2_norm_parameter->axis_ = reinterpret_cast<int *>(malloc(axis_vec.size() * sizeof(int)));
+  if (l2_norm_parameter->axis_ == nullptr) {
+    MS_LOG(ERROR) << "malloc axis_ data failed";
+    free(l2_norm_parameter);
+    return nullptr;
+  }
   for (size_t i = 0; i < axis_vec.size(); i++) {
     l2_norm_parameter->axis_[i] = axis_vec[i];
   }
