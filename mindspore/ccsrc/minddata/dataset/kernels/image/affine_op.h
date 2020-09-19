@@ -39,7 +39,6 @@ class AffineOp : public TensorOp {
   static const std::vector<uint8_t> kFillValue;
 
   /// Constructor
- public:
   explicit AffineOp(float_t degrees, const std::vector<float_t> &translation = kTranslation, float_t scale = kScale,
                     const std::vector<float_t> &shear = kShear, InterpolationMode interpolation = kDefInterpolation,
                     const std::vector<uint8_t> &fill_value = kFillValue);

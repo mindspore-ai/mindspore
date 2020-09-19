@@ -343,8 +343,12 @@ bool CenterCropOperation::ValidateParams() {
   }
   // We have to limit crop size due to library restrictions, optimized to only iterate over size_ once
   for (int i = 0; i < size_.size(); ++i) {
-    if (size_[i] <= 0 || size_[i] == INT_MAX) {
-      MS_LOG(ERROR) << "Crop: invalid size, size must be greater than zero, got: " << size_[i];
+    if (size_[i] <= 0) {
+      MS_LOG(ERROR) << "CenterCrop: invalid size, size must be greater than 0, got: " << size_[i];
+      return false;
+    }
+    if (size_[i] == INT_MAX) {
+      MS_LOG(ERROR) << "CenterCrop: invalid size, size too large, got: " << size_[i];
       return false;
     }
   }
@@ -381,8 +385,12 @@ bool CropOperation::ValidateParams() {
   }
   // We have to limit crop size due to library restrictions, optimized to only iterate over size_ once
   for (int i = 0; i < size_.size(); ++i) {
-    if (size_[i] <= 0 || size_[i] == INT_MAX) {
-      MS_LOG(ERROR) << "Crop: invalid size, size must be greater than zero, got: " << size_[i];
+    if (size_[i] <= 0) {
+      MS_LOG(ERROR) << "Crop: invalid size, size must be greater than 0, got: " << size_[i];
+      return false;
+    }
+    if (size_[i] == INT_MAX) {
+      MS_LOG(ERROR) << "Crop: invalid size, size too large, got: " << size_[i];
       return false;
     }
   }
@@ -490,7 +498,7 @@ bool NormalizeOperation::ValidateParams() {
   }
   // check std value
   for (int i = 0; i < std_.size(); ++i) {
-    if (std_[i] < 0.0f || mean_[i] > 255.0f || CmpFloat(std_[i], 0.0f)) {
+    if (std_[i] < 0.0f || std_[i] > 255.0f || CmpFloat(std_[i], 0.0f)) {
       MS_LOG(ERROR) << "Normalize: std vector has incorrect value: " << std_[i];
       return false;
     }
