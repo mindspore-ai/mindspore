@@ -91,6 +91,5 @@ bool IsInBatchParallelBlackList(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
   return (BATCH_PARALLEL_BLACK_LIST.find(prim->name()) != BATCH_PARALLEL_BLACK_LIST.end());
 }
-
 }  // namespace parallel
 }  // namespace mindspore
