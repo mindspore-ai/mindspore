@@ -118,5 +118,5 @@ class ClassMemberNamespace(Namespace):
         except ValueError:
             raise UnboundLocalError(name)
         except KeyError:
-            logger.warning(f"'{d.__class__.__name__ }' object has no attribute or method: '{name}', "
-                           f"so will return None.")
+            logger.info(f"'{d.__class__.__name__ }' object has no attribute or method: '{name}', so will return None.")
+            raise AttributeError(name)

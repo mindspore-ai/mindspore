@@ -122,7 +122,6 @@ class SummaryDemo(nn.Cell):
         self.s("y1", y)
         return z
 
-
 def test_tensor_summary_with_ge():
     """ test_tensor_summary_with_ge """
     log.debug("begin test_tensor_summary_with_ge")

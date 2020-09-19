@@ -1355,8 +1355,8 @@ void PynativeExecutor::EndGraphByOutId(const std::string &out_id, const py::obje
     auto params = newfg->parameters();
     auto manager = Manage({newfg}, false);
     if (args.size() > params.size()) {
-      MS_EXCEPTION(ValueError) << "The number of arguments " << args.size()
-                               << " is more than the number of parameters required, which is " << params.size();
+      MS_EXCEPTION(TypeError) << "The number of arguments " << args.size()
+                              << " is more than the number of parameters required, which is " << params.size();
     }
     for (size_t i = 0; i < args.size(); i++) {
       ValuePtr value = PyAttrValue(args[i]);
