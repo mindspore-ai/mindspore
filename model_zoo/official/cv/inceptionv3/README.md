@@ -134,6 +134,8 @@ sh run_standalone_train.sh DEVICE_ID DATA_PATH
 > Notes: 
     RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training_ascend.html)  , and the device_ip can be got as [Link]https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
+> This is processor cores binding operation regarding the `device_num` and total processor numbers. If you are not expect to do it, remove the operations `taskset` in `scripts/run_distribute_train.sh`
+
 - GPU:
 ```
 # distribute training example(8p)
