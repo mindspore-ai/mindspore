@@ -121,7 +121,7 @@ def load_ckpt(network, pretrain_ckpt_path, trainable=True):
 
 def define_net(config):
     backbone_net = MobileNetV2Backbone()
+    activation = config.activation if not args.is_training else "None"
     head_net = MobileNetV2Head(input_channel=backbone_net.out_channels, num_classes=config.num_classes)
-    net = mobilenet_v2(backbone_net, head_net)
-
+    net = mobilenet_v2(backbone_net, head_net, activation=activation)
     return backbone_net, head_net, net

@@ -48,6 +48,7 @@ def train_parse_args():
         for fine tune or incremental learning')
     train_parser.add_argument('--run_distribute', type=ast.literal_eval, default=True, help='Run distribute')
     train_args = train_parser.parse_args()
+    train_args.is_training = True
     return train_args
 
 def eval_parse_args():
@@ -61,5 +62,6 @@ def eval_parse_args():
         for incremental learning')
     eval_parser.add_argument('--run_distribute', type=ast.literal_eval, default=False, help='If run distribute in GPU.')
     eval_args = eval_parser.parse_args()
+    eval_args.is_training = False
     return eval_args
     
