@@ -101,7 +101,6 @@ grpc::Status GraphDataServiceImpl::ClientUnRegister(grpc::ServerContext *context
 
 grpc::Status GraphDataServiceImpl::GetGraphData(grpc::ServerContext *context, const GnnGraphDataRequestPb *request,
                                                 GnnGraphDataResponsePb *response) {
-  // MS_LOG(INFO) << "#### receive GetGraphData:" << request->op_name();
   Status s;
   auto iter = g_get_graph_data_func_.find(request->op_name());
   if (iter != g_get_graph_data_func_.end()) {
@@ -115,7 +114,6 @@ grpc::Status GraphDataServiceImpl::GetGraphData(grpc::ServerContext *context, co
   } else {
     response->set_error_msg("Invalid op name.");
   }
-  // MS_LOG(INFO) << "#### end receive GetGraphData:" << request->op_name();
   return ::grpc::Status::OK;
 }
 

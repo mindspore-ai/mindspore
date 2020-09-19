@@ -257,7 +257,9 @@ std::pair<MSRStatus, sqlite3 *> ShardIndexGenerator::CreateDatabase(int shard_no
     sql += ",INC_" + std::to_string(field_no++) + " INT, " + ret.second + " " + type;
   }
   sql += ", PRIMARY KEY(ROW_ID";
-  for (uint64_t i = 0; i < fields_.size(); ++i) sql += ",INC_" + std::to_string(i);
+  for (uint64_t i = 0; i < fields_.size(); ++i) {
+    sql += ",INC_" + std::to_string(i);
+  }
   sql += "));";
   if (ExecuteSQL(sql, db, "create table successfully.") != SUCCESS) {
     return {FAILED, nullptr};

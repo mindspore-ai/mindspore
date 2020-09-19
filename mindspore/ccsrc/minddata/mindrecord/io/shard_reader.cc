@@ -35,17 +35,16 @@ Type StringToNum(const std::string &str) {
   return num;
 }
 
-ShardReader::ShardReader() {
-  task_id_ = 0;
-  deliver_id_ = 0;
-  shard_count_ = 0;
-  n_consumer_ = 0;
-  page_size_ = 0;
-  header_size_ = 0;
-  num_rows_ = 0;
-  total_blob_size_ = 0;
-  num_padded_ = 0;
-}
+ShardReader::ShardReader()
+    : header_size_(0),
+      page_size_(0),
+      shard_count_(0),
+      n_consumer_(0),
+      num_padded_(0),
+      num_rows_(0),
+      total_blob_size_(0),
+      task_id_(0),
+      deliver_id_(0) {}
 
 std::pair<MSRStatus, std::vector<std::string>> ShardReader::GetMeta(const std::string &file_path, json &meta_data) {
   if (!IsLegalFile(file_path)) {
@@ -880,13 +879,7 @@ MSRStatus ShardReader::Open(const std::vector<std::string> &file_paths, bool loa
   if (n_consumer < kMinConsumerCount) {
     n_consumer = kMinConsumerCount;
   }
-  vector<std::string> blob_fields = GetBlobFields().second;
-  for (unsigned int i = 0; i < selected_columns.size(); ++i) {
-    if (!std::any_of(blob_fields.begin(), blob_fields.end(),
-                     [&selected_columns, i](std::string item) { return selected_columns[i] == item; })) {
-      selected_columns_.push_back(selected_columns[i]);
-    }
-  }
+
   selected_columns_ = selected_columns;
 
   if (CheckColumnList(selected_columns_) == FAILED) {
