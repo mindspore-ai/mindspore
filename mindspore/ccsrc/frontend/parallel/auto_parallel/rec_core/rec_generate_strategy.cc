@@ -487,6 +487,9 @@ Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_pt
   }
   if (ops[incoming_op_index]->type() == GATHERV2) {
     auto pos = ops[incoming_op_index]->name().find("Info");
+    if (pos == std::string::npos) {
+      return s;
+    }
     auto name = ops[incoming_op_index]->name().substr(0, pos);
     if (name == "GatherV2") {
       return s;
