@@ -252,6 +252,7 @@ void LoadOutput(mindspore::session::KernelGraph *graph, Debugger *debugger) {
       auto format = kOpFormat_DEFAULT;
       string tensor_name = kernel_name + ':' + std::to_string(j);
       auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
+      MS_EXCEPTION_IF_NULL(ascend_addr);
       ShapeVector int_shapes;
       if (trans_flag) {
         int_shapes = trans::GetRuntimePaddingShape(node, j);
@@ -288,6 +289,7 @@ void LoadParameters(mindspore::session::KernelGraph *graph, Debugger *debugger) 
     auto format = kOpFormat_DEFAULT;
     string tensor_name = parameter_name + ':' + "0";
     auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
+    MS_EXCEPTION_IF_NULL(ascend_addr);
     ShapeVector int_shapes;
     if (trans_flag) {
       int_shapes = trans::GetRuntimePaddingShape(item, PRAMATER_OUTPUT_INDEX);

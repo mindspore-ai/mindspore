@@ -668,7 +668,9 @@ bool AscendDeviceAddress::LoadMemToHost(bool trans_flag, const std::string &tens
                                         size_t slot, Debugger *debugger, bool keep_prev) const {
   bool ret = false;
   DebugServices *debug_services = debugger->debug_services();
+  MS_EXCEPTION_IF_NULL(debug_services);
   TensorLoader *tensor_loader = debug_services->tensor_loader();
+  MS_EXCEPTION_IF_NULL(tensor_loader);
   // TensorData is freed up in AscendSession class
   auto tensor_data = std::make_shared<mindspore::TensorData>();
   tensor_data->SetName(tensor_name);
