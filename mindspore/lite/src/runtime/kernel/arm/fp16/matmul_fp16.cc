@@ -91,17 +91,21 @@ int MatmulFP16CPUKernel::ReSize() {
   }
   memset(b_pack_ptr_, 0, params_->batch * params_->col_8_ * params_->deep_ * sizeof(float16_t));
 
-  params_->a_const_ = (in_tensors_[0]->MutableData() != nullptr);
-  params_->b_const_ = (in_tensors_[1]->MutableData() != nullptr);
+  params_->a_const_ = (in_tensors_[0]->data_c() != nullptr);
+  params_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
   if (params_->a_const_ == true) {
     if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-      InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->MutableData()), a_pack_ptr_);
+      InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_pack_ptr_);
     } else {
-      InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->MutableData()), a_pack_ptr_);
+      InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->data_c()), a_pack_ptr_);
     }
   }
   if (params_->b_const_ == true) {
-    InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->MutableData()), b_pack_ptr_);
+    if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
+      InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+    } else {
+      InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+    }
   }
 
   if (in_tensors_.size() == 3) {
@@ -111,7 +115,7 @@ int MatmulFP16CPUKernel::ReSize() {
       return RET_MEMORY_FAILED;
     }
     memset(bias_ptr_, 0, params_->col_8_ * sizeof(float16_t));
-    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->MutableData()), bias_ptr_, params_->col_);
+    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->data_c()), bias_ptr_, params_->col_);
   }
 
   if (out_tensors_[0]->data_type() == kNumberTypeFloat32) {
@@ -130,9 +134,9 @@ void MatmulFP16CPUKernel::InitMatrixA(float *a_ptr, float16_t *a_pack_ptr) {
     float *src = a_ptr + i * params_->deep_ * params_->row_;
     float16_t *dst = a_pack_ptr + i * params_->deep_ * params_->row_16_;
     if (params_->a_transpose_) {
-      Fp32RowMajor2Fp16Row16Major(src, dst, params_->deep_, params_->row_);
+      RowMajor2Row16MajorFp16(reinterpret_cast<void *>(src), dst, params_->deep_, params_->row_, true);
     } else {
-      Fp32RowMajor2Fp16Col16Major(src, dst, params_->row_, params_->deep_);
+      RowMajor2Col16MajorFp16(reinterpret_cast<void *>(src), dst, params_->row_, params_->deep_, true);
     }
   }
 }
@@ -142,9 +146,9 @@ void MatmulFP16CPUKernel::InitMatrixA(float16_t *a_ptr, float16_t *a_pack_ptr) {
     float16_t *src = a_ptr + i * params_->deep_ * params_->row_;
     float16_t *dst = a_pack_ptr + i * params_->deep_ * params_->row_16_;
     if (params_->a_transpose_) {
-      Fp16RowMajor2Fp16Row16Major(src, dst, params_->deep_, params_->row_);
+      RowMajor2Row16MajorFp16(reinterpret_cast<void *>(src), dst, params_->deep_, params_->row_, false);
     } else {
-      RowMajor2Col16MajorFp16(src, dst, params_->row_, params_->deep_);
+      RowMajor2Col16MajorFp16(reinterpret_cast<void *>(src), dst, params_->row_, params_->deep_, false);
     }
   }
 }
@@ -154,9 +158,21 @@ void MatmulFP16CPUKernel::InitMatrixB(float *b_ptr, float16_t *b_pack_ptr) {
     float *src = b_ptr + i * params_->deep_ * params_->col_;
     float16_t *dst = b_pack_ptr + i * params_->deep_ * params_->col_8_;
     if (params_->b_transpose_) {
-      Fp32RowMajor2Fp16Col8Major(src, dst, params_->col_, params_->deep_);
+      RowMajor2Col8MajorFp16(reinterpret_cast<void *>(src), dst, params_->col_, params_->deep_, true);
     } else {
-      Fp32RowMajor2Fp16Row8Major(src, dst, params_->deep_, params_->col_);
+      RowMajor2Row8MajorFp16(reinterpret_cast<void *>(src), dst, params_->deep_, params_->col_, true);
+    }
+  }
+}
+
+void MatmulFP16CPUKernel::InitMatrixB(float16_t *b_ptr, float16_t *b_pack_ptr) {
+  for (int i = 0; i < params_->batch; i++) {
+    float16_t *src = b_ptr + i * params_->deep_ * params_->col_;
+    float16_t *dst = b_pack_ptr + i * params_->deep_ * params_->col_8_;
+    if (params_->b_transpose_) {
+      RowMajor2Col8MajorFp16(reinterpret_cast<void *>(src), dst, params_->col_, params_->deep_, false);
+    } else {
+      RowMajor2Row8MajorFp16(reinterpret_cast<void *>(src), dst, params_->deep_, params_->col_, false);
     }
   }
 }
@@ -198,23 +214,26 @@ int MatmulFP16CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto b = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
   auto out_tensor = out_tensors_[0];
   float16_t *c_ptr = nullptr;
   if (out_tensor->data_type() == kNumberTypeFloat32) {
     c_ptr = output_ptr_;
   } else {
-    c_ptr = reinterpret_cast<float16_t *>(out_tensor->MutableData());
+    c_ptr = reinterpret_cast<float16_t *>(out_tensor->data_c());
   }
   if (params_->a_const_ == false) {
     if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-      InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->MutableData()), a_pack_ptr_);
+      InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_pack_ptr_);
     } else {
-      InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->MutableData()), a_pack_ptr_);
+      InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->data_c()), a_pack_ptr_);
     }
   }
   if (params_->b_const_ == false) {
-    InitMatrixB(b, b_pack_ptr_);
+    if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
+      InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+    } else {
+      InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+    }
   }
   for (int i = 0; i < params_->batch; ++i) {
     current_a_ = a_pack_ptr_ + i * params_->row_16_ * params_->deep_;
@@ -224,7 +243,7 @@ int MatmulFP16CPUKernel::Run() {
   }
   if (out_tensor->data_type() == kNumberTypeFloat32) {
     auto size = out_tensor->ElementsNum();
-    auto out_tensor_data = reinterpret_cast<float *>(out_tensor->MutableData());
+    auto out_tensor_data = reinterpret_cast<float *>(out_tensor->data_c());
     Float16ToFloat32(output_ptr_, out_tensor_data, size);
   }
   return RET_OK;
