@@ -150,7 +150,13 @@ bool TbeKernelJsonCreator::GenInputDescJson(const std::shared_ptr<AnfNode> &anf_
   MS_EXCEPTION_IF_NULL(input_ptr);
   MS_EXCEPTION_IF_NULL(input_list);
   std::string op_name = AnfAlgo::GetCNodeName(anf_node);
-  if (input_ptr->name() == "input_indices" && op_name == kTopKOpName) {
+  if (op_name == kDynamicRNNOpName && input_ptr->name() == "seq_length") {
+    nlohmann::json input_desc_json;
+    auto in_name = input_ptr->name();
+    input_desc_json[kJName] = in_name + std::to_string(input_i);
+    input_desc_json[kJValid] = false;
+    input_list->emplace_back(input_desc_json);
+  } else if (input_ptr->name() == "input_indices" && op_name == kTopKOpName) {
     TbeAdapter::GenTopKV2IndicesTensorInfo(anf_node, real_input_index, input_list, creater_type_);
   } else {
     auto dtype = GetDeviceInputType(anf_node, real_input_index);

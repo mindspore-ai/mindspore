@@ -21,11 +21,10 @@
 
 namespace mindspore {
 namespace opt {
-const std::set<std::pair<string, string>> invalid_formats_pair = {{kOpFormat_C1HWNCoC0, kOpFormat_NCHW},
-                                                                  {kOpFormat_NCHW, kOpFormat_C1HWNCoC0},
-                                                                  {kOpFormat_C1HWNCoC0, kOpFormat_DEFAULT},
-                                                                  {kOpFormat_DEFAULT, kOpFormat_FRACTAL_ZN_LSTM},
-                                                                  {kOpFormat_DEFAULT, kOpFormat_C1HWNCoC0}};
+const std::set<std::pair<string, string>> invalid_formats_pair = {
+  {kOpFormat_C1HWNCoC0, kOpFormat_NCHW},          {kOpFormat_NCHW, kOpFormat_C1HWNCoC0},
+  {kOpFormat_C1HWNCoC0, kOpFormat_DEFAULT},       {kOpFormat_DEFAULT, kOpFormat_FRACTAL_ZN_LSTM},
+  {kOpFormat_FRACTAL_ZN_LSTM, kOpFormat_DEFAULT}, {kOpFormat_DEFAULT, kOpFormat_C1HWNCoC0}};
 
 bool TransDataSplit::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -83,6 +82,9 @@ bool TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &n
     new_transpose_node = NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), kernel_select_,
                                         false, prim::kPrimTranspose->name());
     AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int>{2, 3, 1, 0}), new_transpose_node);
+    if (output_format == kOpFormat_FRACTAL_ZN_LSTM) {
+      AnfAlgo::SetNodeAttr("nop_op", MakeValue(true), new_transpose_node);
+    }
     RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transpose_node);
 
     // trans hwcn to output_format

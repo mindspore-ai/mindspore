@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include "backend/optimizer/common/optimizer.h"
+#include "backend/optimizer/ascend/ir_fission/dynamic_rnn_grad_fission.h"
 #include "backend/optimizer/ascend/ir_fission/bn_split.h"
 #include "backend/optimizer/ascend/ir_fission/bn_grad_split.h"
 #include "backend/optimizer/ascend/ir_fission/batch_norm_grad_split.h"
@@ -107,6 +108,7 @@
 #include "backend/optimizer/ascend/ir_fission/concat_fission.h"
 #include "backend/optimizer/ascend/ir_fission/pack_fission.h"
 #include "backend/optimizer/ascend/enhancer/concat_outputs_for_all_gather.h"
+#include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
@@ -278,6 +280,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   }
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicRNNGradFission>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
   AddAscendIRFusionPass(ir_fusion_pm.get());
 

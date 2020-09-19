@@ -140,7 +140,8 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"i_fmr", "ifmr"},
   {"matrix_diag", "matrix_diag_d"},
   {"matrix_diag_part", "matrix_diag_part_d"},
-  {"matrix_set_diag", "matrix_set_diag_d"}};
+  {"matrix_set_diag", "matrix_set_diag_d"},
+  {"l_stm_input_grad", "lstm_input_grad"}};
 
 void TbeAdapter::NormalizeFuncName(std::string *func_name) {
   if (func_name == nullptr) {
