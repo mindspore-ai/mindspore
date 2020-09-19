@@ -36,6 +36,9 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
+  if (dtype == kNumberTypeFloat16) {
+    ocl_runtime->SetFp16Enable(true);
+  }
 
   // pack input
   int IC4 = UP_DIV(conv_param->input_channel_, C4NUM);
@@ -101,7 +104,7 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
   pKernel->SetFormatType(format);
   pKernel->Init();
 
-  std::vector<kernel::LiteKernel *> kernels{pKernel.get()};
+  std::vector<kernel::LiteKernel *> kernels{pKernel.release()};
   std::vector<lite::Tensor *> inputs_{&tensor_a};
   auto pGraph = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_, outputs, kernels, kernels, kernels);
   if (pGraph.get() == nullptr) {
@@ -117,18 +120,18 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
   pGraph->Run();
   if (is_compare) {
     T2 *packed_output = reinterpret_cast<T2 *>(outputs[0]->data_c());
-    auto packed_correct_data = std::make_unique<T2>(packed_output_size);
-    if (packed_correct_data.get() == nullptr) {
+    auto packed_correct_data = new (std::nothrow) T2[packed_output_size];
+    if (packed_correct_data == nullptr) {
       delete[] packed_input;
       return;
     }
-    memset(packed_correct_data.get(), 0, packed_output_size * sizeof(T2));
+    memset(packed_correct_data, 0, packed_output_size * sizeof(T2));
     if (format == schema::Format_NC4HW4) {
-      kernel::PackNHWCToNC4HW4<T2, T2>(gnd_data, packed_correct_data.get(), conv_param->output_batch_,
+      kernel::PackNHWCToNC4HW4<T2, T2>(gnd_data, packed_correct_data, conv_param->output_batch_,
                                        conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_,
                                        to_dtype);
     } else {
-      kernel::PackNHWCToNHWC4<T2, T2>(gnd_data, packed_correct_data.get(), conv_param->output_batch_,
+      kernel::PackNHWCToNHWC4<T2, T2>(gnd_data, packed_correct_data, conv_param->output_batch_,
                                       conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_,
                                       to_dtype);
     }
@@ -153,22 +156,25 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
     std::cout << std::endl;
     printf("==================expected output data=================\n");
     for (int i = 0; i < packed_output_size; i++) {
-      std::cout << packed_correct_data.get()[i] << ", ";
+      std::cout << packed_correct_data[i] << ", ";
     }
     std::cout << std::endl;
     // compare
-    CommonTest::CompareOutputData<T2>(packed_output, packed_correct_data.get(), packed_output_size, err_max);
+    CommonTest::CompareOutputData<T2>(packed_output, packed_correct_data, packed_output_size, err_max);
+    delete [] packed_correct_data;
   }
 
   inputs[1]->SetData(nullptr);
   inputs[2]->SetData(nullptr);
   delete[] packed_input;
   lite::opencl::OpenCLRuntime::DeleteInstance();
+  inputs[0]->SetData(nullptr);
+  outputs[0]->SetData(nullptr);
   return;
 }
 
 TEST_F(TestConvolutionDwOpenCL, NoPadNC4HW4Fp32) {
-  auto conv_param = std::make_unique<ConvParameter>();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   {
     conv_param->input_batch_ = 1;
     conv_param->input_h_ = 4;
@@ -209,11 +215,11 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNC4HW4Fp32) {
   float gnd_data[] = {3.3848767, 1.4446403, 1.8428744, 1.3194335, 2.5873442, 2.1384869, 2.04022,  1.1872686,
                       2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
-  DepthWiseTestMain<float, float>(conv_param.release(), input_data, weight_data, gnd_data, schema::Format_NC4HW4);
+  DepthWiseTestMain<float, float>(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4);
 }
 
 TEST_F(TestConvolutionDwOpenCL, PadNC4HW4Fp32) {
-  auto conv_param = std::make_unique<ConvParameter>();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   {
     conv_param->input_batch_ = 1;
     conv_param->input_h_ = 3;
@@ -281,11 +287,11 @@ TEST_F(TestConvolutionDwOpenCL, PadNC4HW4Fp32) {
                       0.8749627,  0.8953936,  0.5093431,  1.5496738,  0.54936385, 0.7683113,  1.165742,  1.3682933,
                       1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
 
-  DepthWiseTestMain<float, float>(conv_param.release(), input_data, weight_data, gnd_data, schema::Format_NC4HW4);
+  DepthWiseTestMain<float, float>(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4);
 }
 
 TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp32) {
-  auto conv_param = std::make_unique<ConvParameter>();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   {
     conv_param->input_batch_ = 1;
     conv_param->input_h_ = 4;
@@ -326,12 +332,12 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp32) {
   float gnd_data[] = {3.3848767, 1.4446403, 1.8428744, 1.3194335, 2.5873442, 2.1384869, 2.04022,  1.1872686,
                       2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
-  DepthWiseTestMain<float, float>(conv_param.release(), input_data, weight_data, gnd_data, schema::Format_NHWC4);
+  DepthWiseTestMain<float, float>(conv_param, input_data, weight_data, gnd_data, schema::Format_NHWC4);
   // delete conv_param;
 }
 
 TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp32) {
-  auto conv_param = std::make_unique<ConvParameter>();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   {
     conv_param->input_batch_ = 1;
     conv_param->input_h_ = 3;
@@ -399,11 +405,11 @@ TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp32) {
                       0.8749627,  0.8953936,  0.5093431,  1.5496738,  0.54936385, 0.7683113,  1.165742,  1.3682933,
                       1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
 
-  DepthWiseTestMain<float, float>(conv_param.release(), input_data, weight_data, gnd_data, schema::Format_NHWC4);
+  DepthWiseTestMain<float, float>(conv_param, input_data, weight_data, gnd_data, schema::Format_NHWC4);
 }
 
 TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp16) {
-  auto conv_param = std::make_unique<ConvParameter>();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   {
     conv_param->input_batch_ = 1;
     conv_param->input_h_ = 4;
@@ -446,12 +452,12 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp16) {
                           2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
   lite::opencl::OpenCLRuntime::GetInstance()->SetFp16Enable(true);
-  DepthWiseTestMain<float16_t, float16_t>(conv_param.release(), input_data, weight_data, gnd_data, schema::Format_NHWC4,
+  DepthWiseTestMain<float16_t, float16_t>(conv_param, input_data, weight_data, gnd_data, schema::Format_NHWC4,
                                           kNumberTypeFloat16, true, 1e-2);
 }
 
 TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp16) {
-  auto conv_param = std::make_unique<ConvParameter>();
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   {
     conv_param->input_batch_ = 1;
     conv_param->input_h_ = 3;
@@ -519,8 +525,7 @@ TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp16) {
                           0.8749627,  0.8953936,  0.5093431,  1.5496738,  0.54936385, 0.7683113,  1.165742,  1.3682933,
                           1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
 
-  lite::opencl::OpenCLRuntime::GetInstance()->SetFp16Enable(true);
-  DepthWiseTestMain<float16_t, float16_t>(conv_param.release(), input_data, weight_data, gnd_data, schema::Format_NHWC4,
+  DepthWiseTestMain<float16_t, float16_t>(conv_param, input_data, weight_data, gnd_data, schema::Format_NHWC4,
                                           kNumberTypeFloat16, true, 1e-2);
 }
 
@@ -565,31 +570,30 @@ TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2Fp32) {
       printf("========profiling depthwise, in shape(%d,%d,%d,%d), out shape(%d,%d,%d,%d), iter%d========\n",
              src_shape[i][0], src_shape[i][1], src_shape[i][2], src_shape[i][3], dst_shape[i][0], dst_shape[i][1],
              dst_shape[i][2], dst_shape[i][3], j);
-      auto conv_param = ConvParameter();
+      auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
       {
-        conv_param.input_batch_ = 1;
-        conv_param.input_h_ = src_shape[i][2];
-        conv_param.input_w_ = src_shape[i][3];
-        conv_param.input_channel_ = src_shape[i][1];
-        conv_param.output_batch_ = 1;
-        conv_param.output_h_ = dst_shape[i][2];
-        conv_param.output_w_ = dst_shape[i][3];
-        conv_param.output_channel_ = dst_shape[i][1];
-        conv_param.kernel_h_ = filter_shape[i][1];
-        conv_param.kernel_w_ = filter_shape[i][2];
-        conv_param.stride_h_ = conv_param.output_h_ / conv_param.input_h_;
-        conv_param.stride_w_ = conv_param.output_w_ / conv_param.input_w_;
-        conv_param.pad_u_ = (conv_param.kernel_h_ - 1) / 2;
-        conv_param.pad_l_ = (conv_param.kernel_w_ - 1) / 2;
-        conv_param.dilation_h_ = 1;
-        conv_param.dilation_w_ = 1;
+        conv_param->input_batch_ = 1;
+        conv_param->input_h_ = src_shape[i][2];
+        conv_param->input_w_ = src_shape[i][3];
+        conv_param->input_channel_ = src_shape[i][1];
+        conv_param->output_batch_ = 1;
+        conv_param->output_h_ = dst_shape[i][2];
+        conv_param->output_w_ = dst_shape[i][3];
+        conv_param->output_channel_ = dst_shape[i][1];
+        conv_param->kernel_h_ = filter_shape[i][1];
+        conv_param->kernel_w_ = filter_shape[i][2];
+        conv_param->stride_h_ = conv_param->output_h_ / conv_param->input_h_;
+        conv_param->stride_w_ = conv_param->output_w_ / conv_param->input_w_;
+        conv_param->pad_u_ = (conv_param->kernel_h_ - 1) / 2;
+        conv_param->pad_l_ = (conv_param->kernel_w_ - 1) / 2;
+        conv_param->dilation_h_ = 1;
+        conv_param->dilation_w_ = 1;
       }
-      DepthWiseTestMain<float, float>(&conv_param, input_data, weight_data, nullptr, schema::Format_NHWC4,
+      DepthWiseTestMain<float, float>(conv_param, input_data, weight_data, nullptr, schema::Format_NHWC4,
                                       kNumberTypeFloat32, false);
     }
   }
   delete[] input_data;
   delete[] weight_data;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore
