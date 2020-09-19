@@ -207,7 +207,7 @@ class PoolingGradGpuKernel : public GpuKernel {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     mode_ = AnfAlgo::GetCNodeName(kernel_node);
     if (mode_ == "AvgPoolGradGpu") {
-      pooling_mode_ = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
+      pooling_mode_ = CUDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING;
       pad_value_ = 0.0;
     } else {
       pooling_mode_ = CUDNN_POOLING_MAX;

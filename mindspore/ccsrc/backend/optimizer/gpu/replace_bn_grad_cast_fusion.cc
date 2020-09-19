@@ -68,8 +68,9 @@ const AnfNodePtr ReplaceBNGradCastFusion::Process(const FuncGraphPtr &graph, con
   auto dy_before = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(dy_after), 0);
   auto x_ = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(fbn2g), 1);
   MS_EXCEPTION_IF_NULL(x_);
-  // if x_type is fp32, the cast is necessary.
-  if (AnfAlgo::GetOutputInferDataType(x_, 0) == kNumberTypeFloat32) {
+  // if x_type is fp32, the cast is necessary or dy_afer is fp32: dy 16->32->bng->16->32.
+  if (AnfAlgo::GetOutputInferDataType(x_, 0) == kNumberTypeFloat32 ||
+      AnfAlgo::GetOutputInferDataType(dy_after, 0) == kNumberTypeFloat16) {
     return nullptr;
   }
   MS_EXCEPTION_IF_NULL(fbn2g);
