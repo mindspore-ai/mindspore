@@ -8,6 +8,7 @@
 - [Environment Requirements](#environment-requirements)
 - [Script Description](#script-description)
     - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
 - [Model Description](#model-description)
@@ -82,6 +83,31 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   ├── eval.py       # evaluation script
   ├── export.py     # export checkpoint files into air/onnx
 ```
+
+
+## [Script Parameters](#contents)
+
+Parameters for both training and evaluation can be set in config.py
+
+- config for MobileNetV2-quant, ImageNet2012 dataset
+
+  ```python
+  'class_num': 1000         # the number of classes in the dataset
+  'batch_size': 134         # training batch size
+  'epoch_size': 60         # training epochs of mobilenetv2-quant
+  'start epoch':200         # pretraining epochs of unquantative network
+  'warmup_epochs': 0        # number of warmup epochs
+  'lr': 0.3                 #learning rate
+  'momentum': 0.9           # momentum
+  'weight_decay': 4e-5      # weight decay value
+  'loss_scale': 1024        # the initial loss_scale value
+  'label_smooth': 0.1       #label smooth factor
+  'loss_scale': 1024        # the initial loss_scale value
+  'save_checkpoint':True    # whether save checkpoint file after training finish
+  'save_checkpoint_epochs': 1 # the step from which start to save checkpoint file.
+  'keep_checkpoint_max': 300  #  only keep the last keep_checkpoint_max checkpoint
+  'save_checkpoint_path': './checkpoint'  # the absolute full path to save the checkpoint file
+  ```
 
 ## [Training process](#contents)
 

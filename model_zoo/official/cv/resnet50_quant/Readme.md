@@ -8,6 +8,7 @@
 - [Environment Requirements](#environment-requirements)
 - [Script Description](#script-description)
     - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
 - [Model Description](#model-description)
@@ -82,6 +83,33 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   ├── eval.py       # evaluation script
 
 ```
+
+## [Script Parameters](#contents)
+
+Parameters for both training and evaluation can be set in config.py
+
+- config for Resnet50-quant, ImageNet2012 dataset
+
+  ```python
+  'class_num': 10           # the number of classes in the dataset
+  'batch_size': 32          # training batch size
+  'loss_scale': 1024        # the initial loss_scale value
+  'momentum': 0.9           # momentum
+  'weight_decay': 1e-4      # weight decay value
+  'epoch_size': 120         # total training epochs
+  'pretrained_epoch_size': 90   # pretraining epochs of resnet50, which is unquantative network of resnet50_quant
+  'data_load_mode': 'mindata' # the style of loading data into device
+  'save_checkpoint':True    # whether save checkpoint file after training finish
+  'save_checkpoint_epochs': 1 # the step from which start to save checkpoint file.
+  'keep_checkpoint_max': 50  #  only keep the last keep_checkpoint_max checkpoint
+  'save_checkpoint_path': './'  # the absolute full path to save the checkpoint file
+  "warmup_epochs": 0        # number of warmup epochs
+  'lr_decay_mode': "cosine" #learning rate decay mode, including steps, steps_decay, cosine or liner
+  'use_label_smooth': True  #whether use label smooth
+  'label_smooth_factor': 0.1 #label smooth factor
+  'lr_init': 0              # initial learning rate
+  'lr_max': 0.005           # the max learning rate
+  ```
 
 ## [Training process](#contents)
 

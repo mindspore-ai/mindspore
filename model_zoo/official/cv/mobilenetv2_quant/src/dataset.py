@@ -64,7 +64,7 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
     else:
         raise ValueError("Unsupported device_target.")
 
-    resize_height = config.image_height
+    resize_height = 224
 
     if do_train:
         buffer_size = 20480
@@ -128,7 +128,7 @@ def create_dataset_py(dataset_path, do_train, config, device_target, repeat_num=
     else:
         raise ValueError("Unsupported device target.")
 
-    resize_height = config.image_height
+    resize_height = 224
 
     if do_train:
         buffer_size = 20480

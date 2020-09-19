@@ -39,8 +39,6 @@ config_ascend_quant = ed({
 
 config_gpu_quant = ed({
     "num_classes": 1000,
-    "image_height": 224,
-    "image_width": 224,
     "batch_size": 134,
     "epoch_size": 60,
     "start_epoch": 200,
@@ -54,5 +52,4 @@ config_gpu_quant = ed({
     "save_checkpoint_epochs": 1,
     "keep_checkpoint_max": 300,
     "save_checkpoint_path": "./checkpoint",
-    "quantization_aware": True,
 })
