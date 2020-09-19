@@ -255,7 +255,7 @@ class PynativeEliminater : public OptimizerCaller {
     MS_LOG(DEBUG) << "Start FillZero";
     ValuePtr out = nullptr;
     if (value->isa<Int32Imm>()) {
-      return MakeValue(0);
+      return value;
     }
 
     if (value->isa<tensor::Tensor>()) {
