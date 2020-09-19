@@ -84,7 +84,10 @@ int TrainSession::RunGraph(const session::KernelCallBack &before, const session:
     inference_kernels.push_back(kernel);
   }
 
-  MS_EXCEPTION_IF_NULL(this->context_);
+  if (this->context_ == nullptr) {
+    MS_LOG(ERROR) << "context is null";
+    return lite::RET_NULL_PTR;
+  }
   lite::Executor executor;
   if (before == nullptr && after == nullptr) {
     return executor.Run(this->inputs_, this->outputs_, inference_kernels, this->context_->allocator.get());

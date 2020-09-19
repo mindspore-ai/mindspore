@@ -34,14 +34,18 @@ const BaseRef QuantDtypeCastFusion::DefinePattern() const {
 const AnfNodePtr QuantDtypeCastFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                const EquivPtr &) const {
   MS_LOG(DEBUG) << "quant dtype cast fusion pass process";
-  CheckIfFuncGraphIsNull(func_graph);
-
-  CheckIfAnfNodeIsNull(node);
+  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+    return nullptr;
+  }
   auto act_node = node->cast<CNodePtr>();
-  CheckIfCNodeIsNull(act_node);
-  CheckInputSize(act_node, kActivationInputsLength);
+  if (CheckIfCNodeIsNull(act_node) != lite::RET_OK ||
+      CheckInputSize(act_node, kActivationInputsLength) != lite::RET_OK) {
+    return nullptr;
+  }
   AnfNodePtr pre_node = act_node->input(1);
-  CheckIfAnfNodeIsNull(pre_node);
+  if (CheckIfAnfNodeIsNull(pre_node) != lite::RET_OK) {
+    return nullptr;
+  }
   return pre_node;
 }
 }  // namespace mindspore::opt

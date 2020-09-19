@@ -43,8 +43,8 @@ class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
       delete[] sum_data_;
   }
 
-  void ForwardPostExecute(const int *labels, const float *losses, float *output) const;
-  void GradPostExecute(const int *labels, const float *losses, float *grads, float *output) const;
+  int ForwardPostExecute(const int *labels, const float *losses, float *output) const;
+  int GradPostExecute(const int *labels, const float *losses, float *grads, float *output) const;
 
   int Init() override;
   int ReSize() override;

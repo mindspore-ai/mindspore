@@ -56,20 +56,28 @@ const void ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kerne
     scale_weight_node = scale_node->input(kScaleWeightIndex);
     scale_bias_node = scale_node->input(kScaleBiasIndex);
   } else {
-    MS_LOG(EXCEPTION) << "Scale should has 2 or 3 input tensors, current inputs is" << scale_node->inputs().size();
+    MS_LOG(ERROR) << "Scale should has 2 or 3 input tensors, current inputs is" << scale_node->inputs().size();
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INPUT_TENSOR_ERROR);
+    return;
   }
   if (!scale_weight_node->isa<Parameter>()) {
-    MS_LOG(EXCEPTION) << "scale weight node not paramter node";
+    MS_LOG(ERROR) << "scale weight node not paramter node";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
+    return;
   }
   if (scale_bias_node != nullptr && !scale_bias_node->isa<Parameter>()) {
-    MS_LOG(EXCEPTION) << "scale bias node not paramter node";
+    MS_LOG(ERROR) << "scale bias node not paramter node";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
+    return;
   }
   auto scale_weight_param = scale_weight_node->cast<ParameterPtr>()->default_param();
   auto weight_value = std::dynamic_pointer_cast<ParamValueLite>(scale_weight_param);
   auto weight_data = reinterpret_cast<const float *>(weight_value->tensor_addr());
 
   if (EOK != memcpy_s(trans_scale, kernel_num * sizeof(float), weight_data, kernel_num * sizeof(float))) {
-    MS_LOG(EXCEPTION) << "memcpy_s transScale failed";
+    MS_LOG(ERROR) << "memcpy_s transScale failed";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+    return;
   }
 
   if (scale_bias_node != nullptr) {
@@ -77,7 +85,8 @@ const void ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kerne
     auto bias_value = std::dynamic_pointer_cast<ParamValueLite>(scale_bias_param);
     auto bias_data = reinterpret_cast<const float *>(bias_value->tensor_addr());
     if (EOK != memcpy_s(trans_bias, kernel_num * sizeof(float), bias_data, kernel_num * sizeof(float))) {
-      MS_LOG(EXCEPTION) << "memcpy_s transScale failed";
+      MS_LOG(ERROR) << "memcpy_s transScale failed";
+      lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
     }
   }
 }

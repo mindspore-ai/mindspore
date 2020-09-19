@@ -25,6 +25,7 @@
 #include "backend/optimizer/common/pattern_engine.h"
 #include "schema/inner/model_generated.h"
 #include "src/param_value_lite.h"
+#include "tools/converter/return_code.h"
 
 using PrimitiveCPtr = std::shared_ptr<mindspore::lite::PrimitiveC>;
 namespace mindspore {
@@ -33,19 +34,19 @@ bool IsRealCNodeKernel(const AnfNodePtr &node);
 
 bool IsGraphKernel(const AnfNodePtr &node);
 
-void CheckIfFuncGraphIsNull(const FuncGraphPtr &graph);
+int CheckIfFuncGraphIsNull(const FuncGraphPtr &graph);
 
-void CheckIfAnfNodeIsNull(const AnfNodePtr &node);
+int CheckIfAnfNodeIsNull(const AnfNodePtr &node);
 
-void CheckIfCNodeIsNull(const CNodePtr &node);
+int CheckIfCNodeIsNull(const CNodePtr &node);
 
-void CheckIfVarIsNull(const VarPtr &var);
+int CheckIfVarIsNull(const VarPtr &var);
 
-void CheckInputSize(const CNodePtr &node, int size);
+int CheckInputSize(const CNodePtr &node, int size);
 
-void CheckIfNodeIsParam(const AnfNodePtr &node);
+int CheckIfNodeIsParam(const AnfNodePtr &node);
 
-void CheckLeastInputSize(const CNodePtr &node, int size);
+int CheckLeastInputSize(const CNodePtr &node, int size);
 
 ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num,
                             const ParamValueLitePtr &weight_tensor);

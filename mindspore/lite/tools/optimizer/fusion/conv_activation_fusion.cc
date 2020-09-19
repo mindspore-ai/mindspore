@@ -39,13 +39,15 @@ const BaseRef ConvActivationFusion::DefinePattern() const {
 const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                const EquivPtr &) const {
   MS_LOG(DEBUG) << "conv activation pass process:" << schema::EnumNamesPrimitiveType()[primitive_type];
-  CheckIfFuncGraphIsNull(func_graph);
-
-  CheckIfAnfNodeIsNull(node);
+  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return nullptr;
+  }
   auto act_node = node->cast<CNodePtr>();
-  CheckIfCNodeIsNull(act_node);
-  CheckInputSize(act_node, kActivationInputsLength);
-
+  if (CheckIfCNodeIsNull(act_node) != lite::RET_OK ||
+      CheckInputSize(act_node, kActivationInputsLength) != lite::RET_OK) {
+    return nullptr;
+  }
   auto primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(act_node->input(0));
   MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Activation>>(primitivec));
   auto act_primitivec = utils::cast<std::shared_ptr<mindspore::lite::Activation>>(primitivec);
@@ -54,7 +56,9 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
     return nullptr;
   }
   AnfNodePtr pre_node = act_node->input(1);
-  CheckIfAnfNodeIsNull(pre_node);
+  if (CheckIfAnfNodeIsNull(pre_node) != lite::RET_OK) {
+    return nullptr;
+  }
   if (pre_node != nullptr && pre_node->isa<CNode>()) {
     if (IsMultiOutputTensors(func_graph, pre_node)) {
       return nullptr;

@@ -30,34 +30,39 @@ namespace mindspore::kernel {
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() { return RET_OK; }
 
-void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *labels, const float *losses,
+int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *labels, const float *losses,
                                                                       float *output) const {
   float total_loss = 0;
   for (int i = 0; i < param->batch_size_; ++i) {
     if (labels[i] < 0) {
-      MS_LOG(EXCEPTION) << "label value must >= 0";
+      MS_LOG(ERROR) << "label value must >= 0";
+      return RET_ERROR;
     }
     size_t label = labels[i];
     if (label > param->number_of_classes_) {
-      MS_LOG(EXCEPTION) << "error label input!";
+      MS_LOG(ERROR) << "error label input!";
+      return RET_ERROR;
     } else {
       total_loss -= logf(losses[i * param->number_of_classes_ + label]);
     }
   }
   output[0] = total_loss / param->batch_size_;
+  return RET_OK;
 }
 
-void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *labels, const float *losses, float *grads,
+int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *labels, const float *losses, float *grads,
                                                                    float *output) const {
   size_t row_start = 0;
   float total_loss = 0;
   for (int i = 0; i < param->batch_size_; ++i) {
     if (labels[i] < 0) {
-      MS_LOG(EXCEPTION) << "label value must >= 0";
+      MS_LOG(ERROR) << "label value must >= 0";
+      return RET_ERROR;
     }
     size_t label = labels[i];
     if (label > param->number_of_classes_) {
-      MS_LOG(EXCEPTION) << "error label input!";
+      MS_LOG(ERROR) << "error label input!";
+      return RET_ERROR;
     } else {
       total_loss -= logf(losses[i * param->number_of_classes_ + label]);
       for (size_t j = 0; j < param->number_of_classes_; ++j) {
@@ -72,6 +77,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *la
     row_start += param->number_of_classes_;
   }
   output[0] = total_loss / param->batch_size_;
+  return RET_OK;
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {

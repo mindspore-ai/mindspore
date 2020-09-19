@@ -89,11 +89,12 @@ int GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, co
     conv_weight_node = conv_node->input(kConvWeightIndex);
     conv_bias_node = conv_node->input(kConvBiasIndex);
   } else {
-    MS_LOG(EXCEPTION) << "conv node:" << conv_node->DebugString() << "inputs size must 3 or 4";
+    MS_LOG(ERROR) << "conv node:" << conv_node->DebugString() << "inputs size must 3 or 4";
+    return lite::RET_INPUT_TENSOR_ERROR;
   }
   auto kernel_nums = Get_Kenrnel_nums(conv_node);
   if (kernel_nums <= 0) {
-    MS_LOG(EXCEPTION) << "kernel num less than 0";
+    MS_LOG(ERROR) << "kernel num less than 0";
     return lite::RET_INVALID_OP_ATTR;
   }
   auto add_bias_data = new (std::nothrow) float[kernel_nums];
@@ -102,7 +103,9 @@ int GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, co
     return lite::RET_MEMORY_FAILED;
   }
   auto bias_add_weight = bias_node->input(kAddWEIGHTINDEX);
-  CheckIfNodeIsParam(bias_add_weight);
+  if (CheckIfNodeIsParam(bias_add_weight) != lite::RET_OK) {
+      return lite::RET_INVALID_OP_ATTR;
+  }
   auto add_weight_param = bias_add_weight->cast<ParameterPtr>()->default_param();
   auto add_weight_tensor = std::dynamic_pointer_cast<ParamValueLite>(add_weight_param);
   auto add_weight_data = reinterpret_cast<float *>(add_weight_tensor->tensor_addr());
@@ -113,17 +116,20 @@ int GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, co
     }
   } else {
     if (EOK != memcpy_s(add_bias_data, kernel_nums * sizeof(float), add_weight_data, kernel_nums * sizeof(float))) {
-      MS_LOG(EXCEPTION) << "memset_s conv_bias_data failed";
+      MS_LOG(ERROR) << "memset_s conv_bias_data failed";
       delete[] add_bias_data;
       return lite::RET_MEMORY_FAILED;
     }
   }
   if (conv_bias_node != nullptr) {
-    CheckIfNodeIsParam(conv_bias_node);
+    if (CheckIfNodeIsParam(conv_bias_node) != lite::RET_OK) {
+      return lite::RET_INVALID_OP_ATTR;
+    }
     auto conv_bias_param = conv_bias_node->cast<ParameterPtr>()->default_param();
     auto conv_bias_tensor = std::dynamic_pointer_cast<ParamValueLite>(conv_bias_param);
     if (conv_bias_tensor->tensor_shape().empty() || conv_bias_tensor->tensor_shape()[0] != kernel_nums) {
-      MS_LOG(EXCEPTION) << "conv_bias_node shape error";
+      MS_LOG(ERROR) << "conv_bias_node shape error";
+      delete[] add_bias_data;
       return lite::RET_INVALID_OP_ATTR;
     }
     auto conv_bias_data = reinterpret_cast<float *>(conv_bias_tensor->tensor_addr());
@@ -151,12 +157,13 @@ const BaseRef ConvBiasaddFusion::DefinePattern() const {
 const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                             const EquivPtr &) const {
   MS_LOG(DEBUG) << "Enter pass process";
-  CheckIfFuncGraphIsNull(func_graph);
-
-  CheckIfAnfNodeIsNull(node);
+  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+    return nullptr;
+  }
   auto add_node = node->cast<CNodePtr>();
-  CheckIfCNodeIsNull(add_node);
-  CheckInputSize(add_node, kAddInputsLength);
+  if (CheckIfCNodeIsNull(add_node) != lite::RET_OK || CheckInputSize(add_node, kAddInputsLength) != lite::RET_OK) {
+    return nullptr;
+  }
   if (GetCNodeType(add_node) == schema::PrimitiveType_Add) {
     auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(add_node->input(0));
     MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Add>>(primitive_c));
@@ -168,12 +175,13 @@ const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, cons
   }
 
   AnfNodePtr conv_node_anf = add_node->input(1);
-  CheckIfAnfNodeIsNull(conv_node_anf);
-  if (IsMultiOutputTensors(func_graph, conv_node_anf)) {
+  if (CheckIfAnfNodeIsNull(conv_node_anf) != lite::RET_OK || IsMultiOutputTensors(func_graph, conv_node_anf)) {
     return nullptr;
   }
   auto conv_node = conv_node_anf->cast<CNodePtr>();
-  CheckIfCNodeIsNull(conv_node);
+  if (CheckIfCNodeIsNull(conv_node) != lite::RET_OK) {
+    return nullptr;
+  }
   int ret = GenConvNewBias(func_graph, conv_node, add_node);
   if (ret != lite::RET_OK) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);

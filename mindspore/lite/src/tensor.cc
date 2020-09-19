@@ -31,7 +31,7 @@ Tensor::Tensor(const TypeId data_type, const std::vector<int> &shape, const sche
 Tensor::Tensor(const Tensor &tensor) {
   auto ret = CopyTensor(tensor, true);
   if (0 != ret) {
-    MS_LOG(EXCEPTION) << "CopyTensorData error";
+    MS_LOG(ERROR) << "CopyTensorData error";
   }
 }
 

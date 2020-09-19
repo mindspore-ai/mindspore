@@ -396,7 +396,10 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
       std::vector<int32_t> shape;
       for (std::size_t i = 0; i < abstractTuple->size(); ++i) {
         auto value_track = x_shape_data[i]->GetValueTrack();
-        MS_EXCEPTION_IF_NULL(value_track);
+        if (value_track == nullptr) {
+          ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NULL_PTR);
+          return RET_NULL_PTR;
+        }
         if (value_track->isa<Int32Imm>()) {
           shape.push_back((GetValue<int>(value_track)));
         } else {

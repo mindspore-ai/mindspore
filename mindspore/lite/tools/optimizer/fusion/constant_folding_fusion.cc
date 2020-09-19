@@ -63,7 +63,9 @@ std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
     if (ret != EOK) {
       delete lite_tensor;
       delete[](tensor_data);
-      MS_LOG(EXCEPTION) << "memcpy error: " << ret;
+      MS_LOG(ERROR) << "memcpy error: " << ret;
+      lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+      return {};
     }
     lite_tensor->SetData(tensor_data);
     input_tensors.emplace_back(lite_tensor);
@@ -171,13 +173,14 @@ void FreeTensors(std::vector<Tensor *> *input_tensor, std::vector<Tensor *> *out
 
 const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const EquivPtr &) const {
-  CheckIfFuncGraphIsNull(func_graph);
-  CheckIfAnfNodeIsNull(node);
-  if (!node->isa<CNode>()) {
+  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK ||
+      !node->isa<CNode>()) {
     return nullptr;
   }
   auto any_node = node->cast<CNodePtr>();
-  CheckIfCNodeIsNull(any_node);
+  if (CheckIfCNodeIsNull(any_node) != lite::RET_OK) {
+    return nullptr;
+  }
   bool changed = false;
   for (size_t i = 1; i < any_node->inputs().size(); i++) {
     auto input_node = any_node->input(i);
