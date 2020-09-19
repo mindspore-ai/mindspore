@@ -37,7 +37,6 @@ class OptimizeModule {
 #ifdef ENABLE_ARM64
     int hwcap_type = 16;
     uint32_t hwcap = getHwCap(hwcap_type);
-
     if (hwcap & HWCAP_ASIMDDP) {
       MS_LOG(INFO) << "Hw cap support SMID Dot Product, hwcap: 0x" << hwcap;
       support_optimize_ops = true;
@@ -72,7 +71,6 @@ class Float16Module {
 #ifdef ENABLE_ARM64
     int hwcap_type = 16;
     uint32_t hwcap = getHwCap(hwcap_type);
-
     if (hwcap & HWCAP_FPHP) {
       MS_LOG(INFO) << "Hw cap support FP16, hwcap: 0x" << hwcap;
       support_fp16 = true;

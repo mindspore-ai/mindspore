@@ -80,6 +80,7 @@ int TimeProfiler::ReadInputFile() {
   }
   auto input_data = inTensor->MutableData();
   memcpy(input_data, bin_buf, tensor_data_size);
+  delete bin_buf;
   return RET_OK;
 }
 
@@ -104,15 +105,10 @@ int TimeProfiler::LoadInput() {
 }
 
 int TimeProfiler::InitSession() {
-  size_t size = 0;
-  char *graph_buf = ReadFile(_flags->model_path_.c_str(), &size);
-  if (graph_buf == nullptr) {
-    MS_LOG(ERROR) << "Load graph failed, path " << _flags->model_path_;
-    std::cerr << "Load graph failed, path " << _flags->model_path_ << std::endl;
+  ctx = new (std::nothrow) lite::Context;
+  if (ctx == nullptr) {
     return RET_ERROR;
   }
-
-  auto ctx = new lite::Context;
   ctx->cpu_bind_mode_ = static_cast<CpuBindMode>(_flags->cpu_bind_mode_);
   ctx->device_type_ = lite::DT_CPU;
   ctx->thread_num_ = _flags->num_threads_;
@@ -239,7 +235,7 @@ int TimeProfiler::Init() {
 }
 
 int TimeProfiler::PrintResult(const std::vector<std::string> &title,
-                             const std::map<std::string, std::pair<int, float>> &result) {
+                              const std::map<std::string, std::pair<int, float>> &result) {
   std::vector<size_t> columnLenMax(5);
   std::vector<std::vector<std::string>> rows;
 

@@ -48,7 +48,7 @@ void backwardX(const float *in, const float *dout, const float *scale, const int
   meanVar(in, size, channels, eps, mean, invar);
   for (int i = 0; i < size; i++) {
     for (int f = 0; f < channels; f++) {
-      int ix = i*channels + f;
+      int ix = i * channels + f;
       float x_hat = (in[ix] - mean[f]) * invar[f];
       float dxhat = dout[ix] * scale[f];
       dxhat_sum[f] += dxhat;
@@ -57,7 +57,7 @@ void backwardX(const float *in, const float *dout, const float *scale, const int
   }
   for (int i = 0; i < size; i++) {
     for (int f = 0; f < channels; f++) {
-      int ix = i*channels + f;
+      int ix = i * channels + f;
       float x_hat = (in[ix] - mean[f]) * invar[f];
       float dxhat = dout[ix] * scale[f];
       out[ix] = 1.f / size * invar[f] * (size * dxhat - dxhat_sum[f] - x_hat * dxhathat_sum[f]);
