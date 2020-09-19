@@ -355,10 +355,6 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
     return RET_ERROR;
   }
   auto model = lite::Model::Import(graphBuf, size);
-  auto model_version = model->version_;
-  if (model_version != Version()) {
-    MS_LOG(WARNING) << "model version is " << model_version << ", inference version is " << Version() << " not equal";
-  }
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model file failed while running " << modelName.c_str();
     std::cerr << "Import model file failed while running " << modelName.c_str() << std::endl;
@@ -404,6 +400,7 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
     delete (model);
     return ret;
   }
+  model->Free();
   msInputs = session->GetInputs();
   auto endPrepareTime = GetTimeUs();
 #if defined(__arm__)
