@@ -580,5 +580,6 @@ def _reset_auto_parallel_context():
     - strategy_ckpt_load_file: ""
     - strategy_ckpt_save_file: ""
     - enable_parallel_optimizer: False
+    - auto_parallel_search_mode: dynamic_programming
     """
     auto_parallel_context().reset()

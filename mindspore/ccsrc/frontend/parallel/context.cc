@@ -62,6 +62,7 @@ void ParallelContext::Reset() {
   enable_parallel_optimizer_ = false;
   all_reduce_fusion_split_indices_.clear();
   all_reduce_fusion_split_sizes_.clear();
+  strategy_search_mode_ = DYNAMIC_PROGRAMMING;
 }
 
 void ParallelContext::set_device_num(int32_t device_num) {
