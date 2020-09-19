@@ -23,7 +23,8 @@
 
 namespace mindspore {
 namespace opt {
-bool FusionBasePass::CheckEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node) {
+bool FusionBasePass::CheckEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
+  auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node)) {
@@ -37,7 +38,8 @@ bool FusionBasePass::CheckEltWiseNode(FuncGraphManager *manager, const AnfNodePt
          cnode->inputs().size() == ELTWISE_INPUT_SIZE;
 }
 
-bool FusionBasePass::CheckDoubleInEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node) {
+bool FusionBasePass::CheckDoubleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
+  auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node)) {
@@ -51,7 +53,8 @@ bool FusionBasePass::CheckDoubleInEltWiseNode(FuncGraphManager *manager, const A
          cnode->inputs().size() == ELTWISE_DOUBLE_IN_INPUT_SIZE;
 }
 
-bool FusionBasePass::CheckMultiOutputEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node) {
+bool FusionBasePass::CheckMultiOutputEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
+  auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node)) {
