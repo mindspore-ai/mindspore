@@ -26,7 +26,7 @@ from src.dataset import load_and_process
 from src.gat import GAT
 from src.utils import LossAccuracyWrapper, TrainGAT
 
-set_seed(1)
+set_seed(0)
 
 def train():
     """Train GAT model."""
