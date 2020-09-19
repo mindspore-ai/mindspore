@@ -20,7 +20,7 @@
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T, typename S, typename G>
 void MomentumUpdateVariable(const size_t size, T *variable, T *accumulation, const S *learning_rate, const G *gradient,
-                            const S *momentum, cudaStream_t cuda_stream);
+                            const S *momentum, bool use_nesterov, cudaStream_t cuda_stream);
 template <typename T, typename S>
 void FusedWeightDecayScaleMomentum(const size_t element_num, T *weight_decay, T *scale, T *variable, T *accumulation,
                                    const T *learning_rate, const S *gradient, const T *momentum,
