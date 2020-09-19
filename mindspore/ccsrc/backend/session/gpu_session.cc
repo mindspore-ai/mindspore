@@ -371,7 +371,14 @@ void GPUSession::PostIterationDbg(const std::shared_ptr<KernelGraph> &kernel_gra
 }
 
 void GPUSession::PreLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  // check the dump_enabled and dataset_sink_mode
   bool dump_enabled = DumpDataEnabledIteration();
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (dump_enabled && context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
+    MS_EXCEPTION(NotSupportError) << "Don't support set dataset_sink_mode to True when using e2e_dump";
+  }
+
   if (!(debugger_ && (debugger_->debugger_enabled() || dump_enabled))) {
     return;
   }

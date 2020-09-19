@@ -283,12 +283,15 @@ void Debugger::PostExecuteNode() {
     auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_, watchpoint_table);
 
     // if kernel is watchpoint,and get hit. suspend.
+    bool hit_empty_flag = true;
     if (is_watchpoint) {
       auto hits = CheckWatchpoints(cur_name_);
       if (!hits.empty()) {
         SendWatchpointsAndSuspend(hits);
+        hit_empty_flag = false;
       }
-    } else if (run_level_ == "node" && (node_name_ == "" || node_name_ == cur_name_)) {
+    }
+    if (hit_empty_flag && run_level_ == "node" && (node_name_ == "" || node_name_ == cur_name_)) {
       // if kernel is not watchpoint and is next_to or continue_to node, suspend
       CommandLoop();
     }
@@ -405,7 +408,9 @@ void Debugger::CommandLoop() {
       MS_LOG(ERROR) << "Error: WaitForCommand failed";
       num_wait_fail++;
       if (num_wait_fail > max_num_wait_fail) {
-        MS_LOG(ERROR) << "Maximum number of WaitForCommand retry reached: exiting training session";
+        MS_LOG(ERROR) << "Maximum number of WaitForCommand retry reached: exiting training session.";
+        MS_LOG(ERROR) << "Failed to connect to MindInsight debugger server. Please check the config "
+                         "of debugger host and port.";
         Exit();
       }
       MS_LOG(ERROR) << "Number of consecutive WaitForCommand fail:" << num_wait_fail << "; Retry after "
@@ -417,11 +422,11 @@ void Debugger::CommandLoop() {
     // get type of the command in reply
     DebuggerCommand cmd = GetCommand(reply);
     if (cmd == DebuggerCommand::kUnknownCMD) {
-      MS_LOG(DEBUG) << "Debug: debugger recieved unknown command";
+      MS_LOG(DEBUG) << "Debug: debugger received unknown command";
       continue;
     }
 
-    MS_LOG(INFO) << "recieved command: ";
+    MS_LOG(INFO) << "received command: ";
     switch (cmd) {
       case DebuggerCommand::kUnknownCMD:
         MS_LOG(INFO) << "UnknownCMD";
