@@ -321,6 +321,7 @@ class SummaryCollector(Callback):
             self._tensor_collect_range = self._get_tensor_collect_range(cb_params, self._dataset_sink_mode)
             self._collect_at_step_end(cb_params, plugin_filter=None)
             self._first_step = False
+            self._record.flush()
         else:
             current = cb_params.cur_epoch_num if self._dataset_sink_mode else cb_params.cur_step_num
             if current % self._collect_freq == 0 and current in self._tensor_collect_range:
@@ -353,6 +354,9 @@ class SummaryCollector(Callback):
         self._collect_metric(cb_params)
         self._collect_histogram(cb_params)
         self._record.record(cb_params.cur_step_num, plugin_filter=plugin_filter)
+
+    def epoch_end(self, run_context):
+        self._record.flush()
 
     def end(self, run_context):
         cb_params = run_context.original_args()
