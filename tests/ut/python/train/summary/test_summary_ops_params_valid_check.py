@@ -143,6 +143,7 @@ class TestSummaryOps:
             (SummaryEnum.TENSOR.value, Tensor(0)),
             (SummaryEnum.HISTOGRAM.value, Tensor(0))
         ])
+
     def test_value_shape_invalid(self, summary_type, value):
         """Test invalid shape of every summary operators."""
         net = SummaryNet(summary_type, tag='tag', data=value)

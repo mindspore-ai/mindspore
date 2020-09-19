@@ -1014,7 +1014,8 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     // create class instance
     auto obj = parse::data_converter::CreatePythonObject(class_type, params);
     if (py::isinstance<py::none>(obj)) {
-      MS_LOG(EXCEPTION) << "Create python object failed, only support Cell and Primitive type";
+      MS_LOG(EXCEPTION) << "Create python object" << py::str(class_type)
+                        << " failed, only support create Cell or Primitive object.";
     }
 
     // process the object

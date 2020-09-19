@@ -89,7 +89,7 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
     MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
   }
 
-  std::string param_name = py::cast<std::string>(name_attr);
+  auto param_name = py::cast<std::string>(name_attr);
   auto top_graph = Parser::GetTopFuncGraph();
   // if the parameter node has been created , return it
   AnfNodePtr para_node = nullptr;
@@ -115,7 +115,7 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
 
 bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, AnfNodePtr *const node) {
   AnfNodePtr output = nullptr;
-  if (py::hasattr(obj, "__parameter__")) {
+  if (py::hasattr(obj, "__parameter__") && py::isinstance<tensor::MetaTensor>(obj)) {
     auto param = ResolveParameterObj(func_graph, obj);
     if (param == nullptr) {
       MS_LOG(ERROR) << "Resolve parameter object failed, got nullptr";

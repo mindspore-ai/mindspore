@@ -48,6 +48,8 @@ class Parameter(MetaTensor):
     Note:
         Each parameter of Cell is represented by Parameter class.
         A Parameter has to belong to a Cell.
+        If there is an operator in the network that requires part of the inputs to be Parameter,
+        then the Parameters as this part of the inputs are not allowed to be cast.
 
     Args:
         default_input (Union[Tensor, Initializer, Number]): Parameter data, to be set initialized.
