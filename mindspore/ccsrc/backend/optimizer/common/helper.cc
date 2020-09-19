@@ -485,6 +485,12 @@ void RemoveNopNode(session::KernelGraph *const graph) {
   }
 }
 
+size_t GetRealNodeNum(const FuncGraphPtr &graph, const AnfNodePtr &node) {
+  auto out_list = GetRealNodeUsedList(graph, node);
+  MS_EXCEPTION_IF_NULL(out_list);
+  return out_list->size();
+}
+
 std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
                                                                              const AnfNodePtr &node) {
   auto output_node_list = std::make_shared<std::vector<std::pair<AnfNodePtr, int>>>();
