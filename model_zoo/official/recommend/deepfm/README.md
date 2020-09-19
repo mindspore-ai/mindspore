@@ -44,8 +44,8 @@ The FM and deep component share the same input raw feature vector, which enables
 - Framework
   - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html) 
-  - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
+  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 
 

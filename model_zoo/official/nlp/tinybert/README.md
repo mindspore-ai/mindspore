@@ -50,8 +50,8 @@ The backbone structure of TinyBERT is transformer, the transformer contains four
 - Framework
   - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
-  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/en/master/index.html) 
-  - [MindSpore API](https://www.mindspore.cn/api/en/master/index.html)
+  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Quick Start](#contents)
 After installing MindSpore via the official website, you can start general distill, task distill and evaluation as follows:
@@ -80,7 +80,7 @@ For distributed training on Ascend, a hccl configuration file with JSON format n
 Please follow the instructions in the link below:
 https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
-For dataset, if you want to set the format and parameters, a schema configuration file with JSON format needs to be created, please refer to [tfrecord](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#tfrecord) format. 
+For dataset, if you want to set the format and parameters, a schema configuration file with JSON format needs to be created, please refer to [tfrecord](https://www.mindspore.cn/doc/programming_guide/zh-CN/master/dataset_loading.html#tfrecord) format. 
 ```
 For general task, schema file contains ["input_ids", "input_mask", "segment_ids"].
 

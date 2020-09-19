@@ -2,32 +2,34 @@
 
 <!-- TOC -->
 
-- [MASS: Masked Sequence to Sequence Pre-training for Language Generation Description](#mass-description)
+- [MASS: Masked Sequence to Sequence Pre-training for Language Generation Description](#mass-masked-sequence-to-sequence-pre-training-for-language-generation-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
 - [Script description](#script-description)
-    - [Data Preparation](#Data-Preparation)
-        - [Tokenization](#Tokenization)
-        - [Byte Pair Encoding](#Byte-Pair-Encoding)
-        - [Build Vocabulary](#Build-Vocabulary)
-        - [Generate Dataset](#Generate-Dataset)
-            - [News Crawl Corpus](#News-Crawl-Corpus)
-            - [Gigaword Corpus](#Gigaword-Corpus)
-            - [Cornell Movie Dialog Corpus](#Cornell-Movie-Dialog-Corpus)
-    - [Configuration](#Configuration)
-    - [Training & Evaluation process](#Training-&-Evaluation-process)
-    - [Weights average](#Weights-average)
-    - [Learning rate scheduler](#Learning-rate-scheduler)
+    - [Data Preparation](#data-preparation)
+        - [Tokenization](#tokenization)
+        - [Byte Pair Encoding](#byte-pair-encoding)
+        - [Build Vocabulary](#build-vocabulary)
+        - [Generate Dataset](#generate-dataset)
+            - [News Crawl Corpus](#news-crawl-corpus)
+            - [Gigaword Corpus](#gigaword-corpus)
+            - [Cornell Movie Dialog Corpus](#cornell-movie-dialog-corpus)
+    - [Configuration](#configuration)
+    - [Training & Evaluation process](#training--evaluation-process)
+    - [Weights average](#weights-average)
+    - [Learning rate scheduler](#learning-rate-scheduler)
 - [Environment Requirements](#environment-requirements)
-    - [Platform](#Platform)
-    - [Requirements](#Requirements)
+    - [Platform](#platform)
+    - [Requirements](#requirements)
 - [Get started](#get-started)
-    - [Pre-training](#Pre-training)
-    - [Fine-tuning](#Fine-tuning)
-    - [Inference](#Inference)
+    - [Pre-training](#pre-training)
+    - [Fine-tuning](#fine-tuning)
+    - [Inference](#inference)
 - [Performance](#performance)
     - [Results](#results)
+        - [Fine-Tuning on Text Summarization](#fine-tuning-on-text-summarization)
+        - [Fine-Tuning on Conversational ResponseGeneration](#fine-tuning-on-conversational-responsegeneration)
         - [Training Performance](#training-performance)
         - [Inference Performance](#inference-performance)
 - [Description of random situation](#description-of-random-situation)
@@ -474,8 +476,8 @@ More detail about LR scheduler could be found in `src/utils/lr_scheduler.py`.
 - Framework
   - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html) 
-  - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
+  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
   
 ## Requirements
 
@@ -486,7 +488,7 @@ subword-nmt
 rouge
 ```
 
-https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/network_migration.html
+https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html
 
 
 # Get started
@@ -542,7 +544,7 @@ sh run_gpu.sh -t t -n 1 -i 1 -c config/config.json
 Get the log and output files under the path `./train_mass_*/`, and the model file under the path assigned in the `config/config.json` file.
 
 ## Inference
-If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/network_migration.html).
+If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html).
 For inference, config the options in `config.json` firstly:
 - Assign the `test_dataset` under `dataset_config` node to the dataset path.
 - Assign the `existed_ckpt` under `checkpoint_path` node to the model file produced by fine-tuning.

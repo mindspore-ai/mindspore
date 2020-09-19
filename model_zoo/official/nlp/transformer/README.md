@@ -44,8 +44,8 @@ Specifically, Transformer contains six encoder modules and six decoder modules. 
 - Framework
   - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
-  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/en/master/index.html) 
-  - [MindSpore API](https://www.mindspore.cn/api/en/master/index.html)
+  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 
 # [Quick Start](#contents)
@@ -191,7 +191,7 @@ Parameters for learning rate:
 
 ## [Training Process](#contents)
 
-- Set options in `config.py`, including loss_scale, learning rate and network hyperparameters. Click [here](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#mindspore) for more information about dataset.
+- Set options in `config.py`, including loss_scale, learning rate and network hyperparameters. Click [here](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
 
 - Run `run_standalone_train_ascend.sh` for non-distributed training of Transformer model.
 

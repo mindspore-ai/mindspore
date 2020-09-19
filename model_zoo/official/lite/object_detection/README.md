@@ -44,7 +44,7 @@
 
 ## 示例程序详细说明  
 
-本端侧目标检测Android示例程序分为JAVA层和JNI层，其中，JAVA层主要通过Android Camera 2 API实现摄像头获取图像帧，以及相应的图像处理（针对推理结果画框）等功能；JNI层在[Runtime](https://www.mindspore.cn/tutorial/zh-CN/master/use/lite_runtime.html)中完成模型推理的过程。
+本端侧目标检测Android示例程序分为JAVA层和JNI层，其中，JAVA层主要通过Android Camera 2 API实现摄像头获取图像帧，以及相应的图像处理（针对推理结果画框）等功能；JNI层在[Runtime](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/runtime.html)中完成模型推理的过程。
 
 > 此处详细说明示例程序的JNI层实现，JAVA层运用Android Camera 2 API实现开启设备摄像头以及图像帧处理等功能，需读者具备一定的Android开发基础知识。
 
@@ -85,7 +85,7 @@ app
 
 ### 配置MindSpore Lite依赖项
 
-Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通过MindSpore Lite[源码编译](https://www.mindspore.cn/lite/tutorial/zh-CN/master/build.html)生成"mindspore-lite-X.X.X-mindata-armXX-cpu"库文件包（包含`libmindspore-lite.so`库文件和相关头文件，可包含多个兼容架构）。
+Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通过MindSpore Lite[源码编译](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/build.html)生成"mindspore-lite-X.X.X-mindata-armXX-cpu"库文件包（包含`libmindspore-lite.so`库文件和相关头文件，可包含多个兼容架构）。
 
 在Android Studio中将编译完成的mindspore-lite-X.X.X-mindata-armXX-cpu压缩包，解压之后放置在APP工程的`app/src/main/cpp`目录下，并在app的`build.gradle`文件中配置CMake编译支持，以及`arm64-v8a`和`armeabi-v7a`的编译支持，如下所示：
 ```

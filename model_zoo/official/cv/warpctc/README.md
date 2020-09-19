@@ -42,8 +42,8 @@ The dataset is self-generated using a third-party library called [captcha](https
 - Framework
   - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
-  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/en/master/index.html) 
-  - [MindSpore API](https://www.mindspore.cn/api/en/master/index.html)
+  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 
 # [Quick Start](#contents)
@@ -161,7 +161,7 @@ Parameters for both training and evaluation can be set in config.py.
 
 ## [Training Process](#contents)
 
-- Set options in `config.py`, including learning rate and other network hyperparameters. Click [MindSpore dataset preparation tutorial](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#mindspore) for more information about dataset.
+- Set options in `config.py`, including learning rate and other network hyperparameters. Click [MindSpore dataset preparation tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
    
 ### [Training](#contents)
 - Run `run_standalone_train.sh` for non-distributed training of WarpCTC model, either on Ascend or on GPU.
