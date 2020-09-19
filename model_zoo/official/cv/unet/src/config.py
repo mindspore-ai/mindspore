@@ -27,4 +27,7 @@ cfg_unet = {
     'weight_decay': 0.0005,
     'loss_scale': 1024.0,
     'FixedLossScaleManager': 1024.0,
+
+    'resume': False,
+    'resume_ckpt': './',
 }
