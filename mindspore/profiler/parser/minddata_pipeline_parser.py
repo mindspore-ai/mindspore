@@ -16,6 +16,7 @@
 import csv
 import json
 import os
+import stat
 from queue import Queue
 
 from mindspore.profiler.common.exceptions.exceptions import \
@@ -167,6 +168,7 @@ class MinddataPipelineParser:
             self._parse_and_save_op_info(
                 csv_writer, op_id_info_cache, sample_interval
             )
+        os.chmod(self._save_path, stat.S_IREAD | stat.S_IWRITE)
 
     def _parse_and_save_op_info(self, csv_writer, op_id_info_cache,
                                 sample_interval):

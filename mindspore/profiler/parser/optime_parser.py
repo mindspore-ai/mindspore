@@ -14,6 +14,7 @@
 # ============================================================================
 """Op compute time files parser."""
 import os
+import stat
 from mindspore.profiler.common.util import fwrite_format
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException
@@ -163,6 +164,7 @@ class OPComputeTimeParser:
                 for timeline in timeline_data:
                     timeline = [str(item) for item in timeline]
                     f_obj.write(','.join(timeline) + '\n')
+            os.chmod(file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.error('Error occurred when writing intermediate timeline file: %s', err)
             raise ProfilerIOException

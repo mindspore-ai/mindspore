@@ -17,7 +17,8 @@ import os
 import struct
 from mindspore.profiler.common.util import fwrite_format, get_file_join_name
 from mindspore import log as logger
-
+from mindspore.profiler.common.validator.validate_path import \
+    validate_and_normalize_path
 
 class HWTSLogParser:
     """
@@ -68,8 +69,10 @@ class HWTSLogParser:
 
         result_data = ""
 
+        self._source_flie_name = validate_and_normalize_path(self._source_flie_name)
         with open(self._source_flie_name, 'rb') as hwts_data:
             while True:
+                # read 64 bit data
                 line = hwts_data.read(64)
                 if line:
                     if not line.strip():
@@ -77,6 +80,8 @@ class HWTSLogParser:
                 else:
                     break
                 byte_first_four = struct.unpack('BBHHH', line[0:8])
+                # byte_first[0:4] refers to count. byte_first[4] refers to is_warn_res0_0v.
+                # byte_first[5:8] refers to the type of ms.
                 byte_first = bin(byte_first_four[0]).replace('0b', '').zfill(8)
                 ms_type = byte_first[-3:]
                 is_warn_res0_ov = byte_first[4]

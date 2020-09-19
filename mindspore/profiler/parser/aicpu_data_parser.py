@@ -16,6 +16,7 @@
 The parser for AI CPU preprocess data.
 """
 import os
+import stat
 
 from mindspore.profiler.common.util import fwrite_format, get_file_join_name
 from mindspore import log as logger
@@ -96,7 +97,7 @@ class DataPreProcessParser:
             ai_cpu_str = str(ai_cpu_data.read().replace(b'\n\x00', b' ___ ')
                              .replace(b'\x00', b' ___ '))[2:-1]
             ai_cpu_lines = ai_cpu_str.split(" ___ ")
-
+        os.chmod(self._source_file_name, stat.S_IREAD | stat.S_IWRITE)
         result_list = list()
         ai_cpu_total_time_summary = 0
         # Node serial number.

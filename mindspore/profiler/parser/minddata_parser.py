@@ -17,7 +17,8 @@ import os
 
 from mindspore.profiler.common.util import get_file_join_name, fwrite_format
 from mindspore import log as logger
-
+from mindspore.profiler.common.validator.validate_path import \
+    validate_and_normalize_path
 
 class MinddataParser:
     """Minddata Aicpu Parser."""
@@ -34,6 +35,7 @@ class MinddataParser:
         """
         result = list()
         try:
+            minddata_aicpu_source_path = validate_and_normalize_path(minddata_aicpu_source_path)
             with open(minddata_aicpu_source_path) as source_data_file:
                 source_data = source_data_file.read()
                 step_data = source_data.split("\x00")
@@ -77,6 +79,7 @@ class MinddataParser:
             device_id (str): the device id.
         """
         col_names = ["node_name", "start_time", "end_time", "queue_size"]
+        source_path = validate_and_normalize_path(source_path)
         minddata_aicpu_source_path = get_file_join_name(
             input_path=source_path, file_name='DATA_PREPROCESS.AICPUMI')
         if not minddata_aicpu_source_path:
