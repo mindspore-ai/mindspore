@@ -172,6 +172,8 @@ bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
 std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
                                                                              const AnfNodePtr &node);
 
+size_t GetRealNodeNum(const FuncGraphPtr &graph, const AnfNodePtr &node);
+
 std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOutputIdx(const FuncGraphPtr &graph,
                                                                                         const AnfNodePtr &node,
                                                                                         size_t output_index);
