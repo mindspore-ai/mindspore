@@ -28,7 +28,7 @@ MindSpore提供了友好的设计和高效的执行，旨在提升数据科学�
 
 <img src="docs/MindSpore-architecture.png" alt="MindSpore Architecture" width="600"/>
 
-欲了解更多详情，请查看我们的[总体架构](https://www.mindspore.cn/docs/zh-CN/master/architecture.html)。
+欲了解更多详情，请查看我们的[总体架构](https://www.mindspore.cn/doc/note/zh-CN/master/design/mindspore/architecture.html)。
 
 ### 自动微分
 
@@ -201,7 +201,7 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
 
 ## 快速入门
 
-参考[快速入门](https://www.mindspore.cn/tutorial/zh-CN/master/quick_start/quick_start.html)实现图片分类。
+参考[快速入门](https://www.mindspore.cn/tutorial/training/zh-CN/master/quick_start/quick_start.html)实现图片分类。
 
 
 ## 文档

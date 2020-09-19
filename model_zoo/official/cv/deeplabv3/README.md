@@ -67,8 +67,8 @@ Before running code of this project，please ensure you have the following envir
 
 
   For more information about how to get started with MindSpore, see the following sections:
-  - [MindSpore's Tutorial](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
-  - [MindSpore's Api](https://www.mindspore.cn/api/zh-CN/master/index.html)
+  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 
 ## Quick Start Guide

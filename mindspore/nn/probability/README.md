@@ -41,7 +41,7 @@ MDP requires MindSpore version 0.7.0-beta or later. MDP is actively evolving. In
 
 ### Tutorial
  **Bayesian Neural Network** 
-1. Process the required dataset. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorial/en/master/quick_start/quick_start.html) in Tutorial.
+1. Process the required dataset. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorial/training/en/master/quick_start/quick_start.html) in Tutorial.
 
 2. Define a Bayesian Neural Network. The bayesian LeNet is used in this example.
 
@@ -220,7 +220,7 @@ net_loss = ELBO(latent_prior='Normal', output_prior='Normal')
 optimizer = nn.Adam(params=vae.trainable_params(), learning_rate=0.001)
 net_with_loss = nn.WithLossCell(vae, net_loss)
 ```
-3. Process the required dataset. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorial/en/master/quick_start/quick_start.html) in Tutorial.
+3. Process the required dataset. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorial/training/en/master/quick_start/quick_start.html) in Tutorial.
 4. Use SVI interface to train VAE network. vi.run can return the trained network, get_train_loss can get the loss after training.
 
 ```
@@ -423,7 +423,7 @@ if __name__ == "__main__":
 **Uncertainty Evaluation**
 The uncertainty estimation toolbox is based on MindSpore Deep Probabilistic Programming (MDP), and it is suitable for mainstream deep learning models, such as regression, classification, target detection and so on. In the inference stage, with the uncertainy estimation toolbox, developers only need to pass in the trained model and training dataset, specify the task and the samples to be estimated, then can obtain the aleatoric uncertainty and epistemic uncertainty. Based the uncertainty information, developers can understand the model and the dataset better.
 
-In classification task, for example, the model is lenet model. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorial/en/master/quick_start/quick_start.html) in Tutorial. For evaluating the uncertainty of test examples, the use of the toolbox is as follows:
+In classification task, for example, the model is lenet model. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorial/training/en/master/quick_start/quick_start.html) in Tutorial. For evaluating the uncertainty of test examples, the use of the toolbox is as follows:
 ```
 from mindspore.nn.probability.toolbox.uncertainty_evaluation import UncertaintyEvaluation
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
