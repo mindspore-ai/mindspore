@@ -119,10 +119,10 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
 | 硬件平台   | Docker镜像仓库                | 标签                       | 说明                                       |
 | :----- | :------------------------ | :----------------------- | :--------------------------------------- |
 | CPU    | `mindspore/mindspore-cpu` | `x.y.z`                  | 已经预安装MindSpore `x.y.z` CPU版本的生产环境。       |
-|        |                           | `devel`                  | 提供开发环境从源头构建MindSpore（`CPU`后端）。安装详情请参考https://www.mindspore.cn/install。 |
+|        |                           | `devel`                  | 提供开发环境从源头构建MindSpore（`CPU`后端）。安装详情请参考https://www.mindspore.cn/install 。 |
 |        |                           | `runtime`                | 提供运行时环境安装MindSpore二进制包（`CPU`后端）。         |
 | GPU    | `mindspore/mindspore-gpu` | `x.y.z`                  | 已经预安装MindSpore `x.y.z` GPU版本的生产环境。       |
-|        |                           | `devel`                  | 提供开发环境从源头构建MindSpore（`GPU CUDA10.1`后端）。安装详情请参考https://www.mindspore.cn/install。 |
+|        |                           | `devel`                  | 提供开发环境从源头构建MindSpore（`GPU CUDA10.1`后端）。安装详情请参考https://www.mindspore.cn/install 。 |
 |        |                           | `runtime`                | 提供运行时环境安装MindSpore二进制包（`GPU CUDA10.1`后端）。 |
 | Ascend | <center>&mdash;</center>  | <center>&mdash;</center> | 即将推出，敬请期待。                               |
 
