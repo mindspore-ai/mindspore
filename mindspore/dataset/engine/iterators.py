@@ -27,15 +27,29 @@ from mindspore import log as logger
 from . import datasets as de
 
 
+_ITERATOR_CLEANUP = False
+
+def _set_iterator_cleanup():
+    global _ITERATOR_CLEANUP
+    _ITERATOR_CLEANUP = True
+
+def _unset_iterator_cleanup():
+    global _ITERATOR_CLEANUP
+    _ITERATOR_CLEANUP = False
+
+def check_iterator_cleanup():
+    global _ITERATOR_CLEANUP
+    return _ITERATOR_CLEANUP
+
 ITERATORS_LIST = list()
 
 def _cleanup():
     """Release all the Iterator."""
+    _set_iterator_cleanup()
     for itr_ref in ITERATORS_LIST:
         itr = itr_ref()
         if itr is not None:
             itr.release()
-
 
 def alter_tree(node):
     """Traversing the Python dataset tree/graph to perform some alteration to some specific nodes."""
@@ -71,6 +85,7 @@ class Iterator:
         self.num_epochs = num_epochs
         self.output_numpy = output_numpy
         ITERATORS_LIST.append(weakref.ref(self))
+        _unset_iterator_cleanup()
         # create a copy of tree and work on it.
         self.dataset = copy.deepcopy(dataset)
         self.ori_dataset = dataset
