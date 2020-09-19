@@ -100,7 +100,7 @@ TEST_F(MindDataTestPipeline, TestCelebADefault) {
     i++;
   }
 
-  EXPECT_EQ(i, 2);
+  EXPECT_EQ(i, 4);
 
   // Manually terminate the pipeline
   iter->Stop();

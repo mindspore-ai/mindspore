@@ -4982,9 +4982,30 @@ class CelebADataset(MappableDataset):
                 with open(attr_file, 'r') as f:
                     num_rows = int(f.readline())
             except FileNotFoundError:
-                raise RuntimeError("attr_file not found.")
+                raise RuntimeError("attr file can not be found.")
             except BaseException:
                 raise RuntimeError("Get dataset size failed from attribution file.")
+            if self.usage != 'all':
+                partition_file = os.path.join(dir, "list_eval_partition.txt")
+                usage_type = 0
+                partition_num = 0
+                if self.usage == "train":
+                    usage_type = 0
+                elif self.usage == "valid":
+                    usage_type = 1
+                elif self.usage == "test":
+                    usage_type = 2
+                try:
+                    with open(partition_file, 'r') as f:
+                        for line in f.readlines():
+                            split_line = line.split(' ')
+                            if int(split_line[1]) == usage_type:
+                                partition_num += 1
+                except FileNotFoundError:
+                    raise RuntimeError("Partition file can not be found")
+                if partition_num < num_rows:
+                    num_rows = partition_num
+
             self.dataset_size = get_num_rows(num_rows, self.num_shards)
             if self.num_samples is not None and self.num_samples < self.dataset_size:
                 self.dataset_size = self.num_samples
