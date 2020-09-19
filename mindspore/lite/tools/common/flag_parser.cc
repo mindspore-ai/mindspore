@@ -38,13 +38,13 @@ Option<std::string> FlagParser::ParseFlags(int argc, const char *const *argv, bo
     }
 
     if (flagItem.find("--") == std::string::npos) {
-      continue;
+      return Option<std::string>("Failed: flag " + flagItem + " is not valid.");
     }
 
     std::string key;
     Option<std::string> value = Option<std::string>(None());
 
-    size_t pos = flagItem.find_first_of("=");
+    size_t pos = flagItem.find_first_of('=');
     if (pos == std::string::npos && flagItem.find("--no-") != std::string::npos) {
       key = flagItem.substr(FLAG_PREFIX_LEN);
     } else if (pos == std::string::npos) {

@@ -79,13 +79,8 @@ AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph, const TypeId &inferTyp
   const float stdValue = std::stof(stdValues, &sz);
   sz = 0;
   const float mean = std::stof(meanValues, &sz);
-  std::unique_ptr<InputArray> inArr = nullptr;
-  if (inferType == kNumberTypeFloat) {
-    inArr.reset(new (std::nothrow) InputArray(mean, stdValue));
-  } else {
-    inArr.reset(new (std::nothrow) InputArray(mean, stdValue, TypeId::kNumberTypeInt8));
-  }
-  mInputArray = inArr.get();
+  mInputArray = new (std::nothrow) InputArray(mean, stdValue);
+  mInputArray->dataType = inferType;
   mInputArray->InitQuantParam();
 }
 
@@ -132,7 +127,7 @@ STATUS AwareQuantizer::GenerateQuantParam() {
     } else {
       auto status = quantParamCalcer->Calc(graph, *node);
       if (status != RET_OK) {
-        MS_LOG(ERROR) << "quantParamCalcer failed: " << status << " node: " << node->name.c_str();
+        MS_LOG(WARNING) << "quantParamCalcer failed: " << status << " node: " << node->name.c_str();
         node->quantType = schema::QuantType_QUANT_NONE;
       } else {
         node->quantType = schema::QuantType_AwareTraining;

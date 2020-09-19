@@ -78,7 +78,7 @@ Model *Model::Import(const char *model_buf, size_t size) {
     MS_LOG(ERROR) << "The buffer is invalid and fail to create graph.";
     return nullptr;
   }
-  Model *model = new (std::nothrow) Model();
+  auto *model = new (std::nothrow) Model();
   if (model == nullptr) {
     MS_LOG(ERROR) << "new model fail!";
     return nullptr;
@@ -86,14 +86,14 @@ Model *Model::Import(const char *model_buf, size_t size) {
   model->buf = reinterpret_cast<char *>(malloc(size));
   if (model->buf == nullptr) {
     MS_LOG(ERROR) << "new inner model buf fail!";
-    delete(model);
+    delete (model);
     return nullptr;
   }
   memcpy(model->buf, model_buf, size);
   auto meta_graph = schema::GetMetaGraph(model->buf);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "meta_graph is nullptr!";
-    delete(model);
+    delete (model);
     return nullptr;
   }
 
