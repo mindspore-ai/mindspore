@@ -33,6 +33,10 @@ void Sqrt(T *input, T *output, size_t count, cudaStream_t cuda_stream);
 template <typename T>
 void Rsqrt(T *input, T *output, size_t count, cudaStream_t cuda_stream);
 template <typename T>
+void Sin(T *input, T *output, size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void Cos(T *input, T *output, size_t count, cudaStream_t cuda_stream);
+template <typename T>
 void Zeroslike(T *output, size_t count, cudaStream_t cuda_stream);
 template <typename T>
 void Abs(T *input, T *output, size_t count, cudaStream_t cuda_stream);
