@@ -186,7 +186,7 @@ int DeConvolutionFp16CPUKernel::Run() {
   }
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
-    RowMajor2Col16MajorFp16(execute_input_, pack_input_, input_plane_, conv_param_->input_channel_);
+    RowMajor2Col16MajorFp16Opt(execute_input_, pack_input_, input_plane_, conv_param_->input_channel_);
 
     error_code = ParallelLaunch(this->context_->thread_pool_, DeConvFp16Run, this, thread_count_);
     if (error_code != RET_OK) {

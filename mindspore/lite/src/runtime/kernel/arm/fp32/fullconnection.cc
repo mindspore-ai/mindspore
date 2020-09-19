@@ -43,8 +43,10 @@ void FullconnectionCPUKernel::FreeBuf() {
 
 int FullconnectionCPUKernel::ReSize() {
   FreeBuf();
-  fc_param_->row_ = (in_tensors_[0]->shape())[0];
-  fc_param_->col_ = (in_tensors_[1]->shape())[0];
+  int row = 1;
+  for (size_t i = 0; i < out_tensors_[0]->shape().size() - 1; ++i) row *= (out_tensors_[0]->shape())[i];
+  fc_param_->row_ = row;
+  fc_param_->col_ = out_tensors_[0]->shape().back();
   fc_param_->deep_ = (in_tensors_[1]->shape())[1];
 
   fc_param_->row_12_ = UP_ROUND(fc_param_->row_, C12NUM);

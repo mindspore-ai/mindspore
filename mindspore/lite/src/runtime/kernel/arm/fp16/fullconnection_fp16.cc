@@ -52,8 +52,10 @@ void FullconnectionFP16CPUKernel::FreeTmpBuffer() {
 
 int FullconnectionFP16CPUKernel::ReSize() {
   FreeTmpBuffer();
-  fc_param_->row_ = (in_tensors_[0]->shape())[0];
-  fc_param_->col_ = (in_tensors_[1]->shape())[0];
+  int row = 1;
+  for (size_t i = 0; i < out_tensors_[0]->shape().size() - 1; ++i) row *= (out_tensors_[0]->shape())[i];
+  fc_param_->row_ = row;
+  fc_param_->col_ = out_tensors_[0]->shape().back();
   fc_param_->deep_ = (in_tensors_[1]->shape())[1];
   fc_param_->row_16_ = UP_ROUND(fc_param_->row_, C16NUM);
   fc_param_->col_8_ = UP_ROUND(fc_param_->col_, C8NUM);
@@ -76,7 +78,7 @@ int FullconnectionFP16CPUKernel::ReSize() {
   }
   memset(b_pack_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(float16_t));
 
-  InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->MutableData()), b_pack_ptr_);
+  InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
   if (in_tensors_.size() == 3) {
     bias_ptr_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(fc_param_->col_8_ * sizeof(float16_t)));
     if (bias_ptr_ == nullptr) {
@@ -84,7 +86,7 @@ int FullconnectionFP16CPUKernel::ReSize() {
       return RET_MEMORY_FAILED;
     }
     memset(bias_ptr_, 0, fc_param_->col_8_ * sizeof(float16_t));
-    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->MutableData()), bias_ptr_, fc_param_->col_);
+    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->data_c()), bias_ptr_, fc_param_->col_);
   }
 
   if (out_tensors_[0]->data_type() == kNumberTypeFloat32) {
@@ -95,15 +97,15 @@ int FullconnectionFP16CPUKernel::ReSize() {
 }
 
 void FullconnectionFP16CPUKernel::InitMatrixA(float *a_ptr, float16_t *a_pack_ptr) {
-  Fp32RowMajor2Fp16Col16Major(a_ptr, a_pack_ptr, fc_param_->row_, fc_param_->deep_);
+  RowMajor2Col16MajorFp16(reinterpret_cast<void *>(a_ptr), a_pack_ptr, fc_param_->row_, fc_param_->deep_, true);
 }
 
 void FullconnectionFP16CPUKernel::InitMatrixA(float16_t *a_ptr, float16_t *a_pack_ptr) {
-  RowMajor2Col16MajorFp16(a_ptr, a_pack_ptr, fc_param_->row_, fc_param_->deep_);
+  RowMajor2Col16MajorFp16(reinterpret_cast<void *>(a_ptr), a_pack_ptr, fc_param_->row_, fc_param_->deep_, false);
 }
 
 void FullconnectionFP16CPUKernel::InitMatrixB(float *b_ptr, float16_t *b_pack_ptr) {
-  Fp32RowMajor2Fp16Col8Major(b_ptr, b_pack_ptr, fc_param_->col_, fc_param_->deep_);
+  RowMajor2Col8MajorFp16(reinterpret_cast<void *>(b_ptr), b_pack_ptr, fc_param_->col_, fc_param_->deep_, true);
 }
 
 int FullconnectionFP16CPUKernel::Init() {
@@ -147,17 +149,17 @@ int FullconnectionFP16CPUKernel::Run() {
   if (out_tensor->data_type() == kNumberTypeFloat32) {
     output_ptr_ = output_fp16_;
   } else {
-    output_ptr_ = reinterpret_cast<float16_t *>(out_tensor->MutableData());
+    output_ptr_ = reinterpret_cast<float16_t *>(out_tensor->data_c());
   }
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->MutableData()), a_pack_ptr_);
+    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_pack_ptr_);
   } else {
-    InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->MutableData()), a_pack_ptr_);
+    InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->data_c()), a_pack_ptr_);
   }
   ParallelLaunch(this->context_->thread_pool_, FcFP16Run, this, thread_count_);
   if (out_tensor->data_type() == kNumberTypeFloat32) {
     auto size = out_tensor->ElementsNum();
-    auto out_tensor_data = reinterpret_cast<float *>(out_tensor->MutableData());
+    auto out_tensor_data = reinterpret_cast<float *>(out_tensor->data_c());
     Float16ToFloat32(output_fp16_, out_tensor_data, size);
   }
   return RET_OK;

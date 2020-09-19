@@ -161,7 +161,7 @@ void Convolution1x1FP16CPUKernel::Pre1x1Trans(float16_t *src_input, float16_t *s
     input_ptr_ = src_input;
   }
 
-  RowMajor2Col16MajorFp16(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+  RowMajor2Col16MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
   return;
 }
 

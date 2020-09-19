@@ -91,7 +91,7 @@ void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const floa
   return;
 }
 
-void RowMajor2Col16MajorFp16(float16_t *src_ptr, float16_t *dst_ptr, size_t row, size_t col) {
+void RowMajor2Col16MajorFp16Opt(float16_t *src_ptr, float16_t *dst_ptr, size_t row, size_t col) {
   size_t row_up_16 = UP_ROUND(row, C16NUM);
   size_t row16 = row / C16NUM * C16NUM;
   size_t col8 = col / C8NUM * C8NUM;
@@ -245,52 +245,58 @@ void RowMajor2Col16MajorFp16(float16_t *src_ptr, float16_t *dst_ptr, size_t row,
   return;
 }
 
-void Fp32RowMajor2Fp16Col16Major(float *src, float16_t *dst, size_t row, size_t col) {
+void RowMajor2Col16MajorFp16(void *src, float16_t *dst, int row, int col, bool is_fp32_src) {
   for (int r = 0; r < row; r++) {
     for (int c = 0; c < col; c++) {
       int r_div16 = r / 16;
       int r_mod16 = r % 16;
-      dst[r_div16 * 16 * col + c * 16 + r_mod16] = (float16_t)(src[r * col + c]);
+      if (is_fp32_src) {
+        dst[r_div16 * 16 * col + c * 16 + r_mod16] = (float16_t)(((float *)src)[r * col + c]);
+      } else {
+        dst[r_div16 * 16 * col + c * 16 + r_mod16] = ((float16_t *)src)[r * col + c];
+      }
     }
   }
 }
 
-void Fp32RowMajor2Fp16Row16Major(float *src, float16_t *dst, size_t row, size_t col) {
+void RowMajor2Row16MajorFp16(void *src, float16_t *dst, int row, int col, bool is_fp32_src) {
   for (int r = 0; r < row; r++) {
     for (int c = 0; c < col; c++) {
       int c_div16 = c / 16;
       int c_mod16 = c % 16;
-      dst[c_div16 * 16 * row + r * 16 + c_mod16] = (float16_t)(src[r * col + c]);
+      if (is_fp32_src) {
+        dst[c_div16 * 16 * row + r * 16 + c_mod16] = (float16_t)(((float *)src)[r * col + c]);
+      } else {
+        dst[c_div16 * 16 * row + r * 16 + c_mod16] = ((float16_t *)src)[r * col + c];
+      }
     }
   }
 }
 
-void Fp16RowMajor2Fp16Row16Major(float16_t *src, float16_t *dst, size_t row, size_t col) {
-  for (int r = 0; r < row; r++) {
-    for (int c = 0; c < col; c++) {
-      int c_div16 = c / 16;
-      int c_mod16 = c % 16;
-      dst[c_div16 * 16 * row + r * 16 + c_mod16] = src[r * col + c];
-    }
-  }
-}
-
-void Fp32RowMajor2Fp16Row8Major(float *src, float16_t *dst, size_t row, size_t col) {
+void RowMajor2Row8MajorFp16(void *src, float16_t *dst, int row, int col, bool is_fp32_src) {
   for (int r = 0; r < row; r++) {
     for (int c = 0; c < col; c++) {
       int c_div8 = c / 8;
       int c_mod8 = c % 8;
-      dst[c_div8 * 8 * row + r * 8 + c_mod8] = (float16_t)src[r * col + c];
+      if (is_fp32_src) {
+        dst[c_div8 * 8 * row + r * 8 + c_mod8] = (float16_t)(((float *)src)[r * col + c]);
+      } else {
+        dst[c_div8 * 8 * row + r * 8 + c_mod8] = ((float16_t *)src)[r * col + c];
+      }
     }
   }
 }
 
-void Fp32RowMajor2Fp16Col8Major(float *src, float16_t *dst, size_t row, size_t col) {
+void RowMajor2Col8MajorFp16(void *src, float16_t *dst, int row, int col, bool is_fp32_src) {
   for (int r = 0; r < row; r++) {
     for (int c = 0; c < col; c++) {
       int r_div8 = r / 8;
       int r_mod8 = r % 8;
-      dst[r_div8 * 8 * col + c * 8 + r_mod8] = (float16_t)src[r * col + c];
+      if (is_fp32_src) {
+        dst[r_div8 * 8 * col + c * 8 + r_mod8] = (float16_t)(((float *)src)[r * col + c]);
+      } else {
+        dst[r_div8 * 8 * col + c * 8 + r_mod8] = ((float16_t *)src)[r * col + c];
+      }
     }
   }
 }
