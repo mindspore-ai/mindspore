@@ -17,7 +17,6 @@
 import inspect
 import copy
 from mindspore.common.api import _wrap_func
-from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore import context
 from .._c_expression import Primitive_, real_run_op, prim_type
 from . import signature as sig
@@ -496,16 +495,7 @@ def constexpr(fn=None, get_instance=True, name=None):
 @_wrap_func
 def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
-    cast = tensor_operator_registry.get("cast")
-    if op_name == "Cast" or obj.update_parameter:
-        cast_args = args
-    else:
-        cast_args = list(args)
-        for idx, arg in enumerate(args):
-            cast_type = getattr(arg, "cast_type", None)
-            if cast_type:
-                cast_args[idx] = cast(arg, cast_type)
-    output = real_run_op(obj, op_name, cast_args)
+    output = real_run_op(obj, op_name, args)
     if not output:
         raise RuntimeError("Pynative run op %s failed!" % op_name)
     if len(output) == 1:

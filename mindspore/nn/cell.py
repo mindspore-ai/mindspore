@@ -61,15 +61,17 @@ class Cell(Cell_):
     """
     IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_construct_inputs_names',
                    '_construct_inputs_num', '_create_time', '_mindspore_flags', '_parallel_inputs_run',
-                   '_parameter_layout_dict', '_already_run', '_params_list', '_phase', '_auto_parallel_mode',
-                   '_backward_hook', '_bprop_debug', '_is_run', '_param_prefix', '_attr_synced',
-                   'enable_hook', 'pynative', 'requires_grad', '_auto_parallel_compile_and_run', 'cell_type']
+                   '_parameter_layout_dict', '_already_run', '_params_list', '_tensor_list', '_phase',
+                   '_auto_parallel_mode', '_backward_hook', '_bprop_debug', '_is_run', '_param_prefix',
+                   '_attr_synced', 'enable_hook', 'pynative', 'requires_grad',
+                   '_auto_parallel_compile_and_run', 'cell_type']
 
     def __init__(self, auto_prefix=True, flags=None):
         Cell_.__init__(self, self._cell_tag)
         self._params = OrderedDict()
         self._cells = OrderedDict()
         self._params_list = OrderedDict()
+        self._tensor_list = OrderedDict()
         self.training = False
         self.requires_grad = False
         self.pynative = False
@@ -228,6 +230,9 @@ class Cell(Cell_):
                 return cells[name]
         if context.get_context("mode") == context.PYNATIVE_MODE and '_params_list' in self.__dict__:
             params_list = self.__dict__['_params_list']
+            tensor_list = self.__dict__['_tensor_list']
+            if name in tensor_list:
+                return self.cast_param(tensor_list[name])
             if name in params_list:
                 para_list = params_list[name]
                 cast_list = list()
@@ -339,6 +344,7 @@ class Cell(Cell_):
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
         params_list = self.__dict__.get('_params_list')
+        tensor_list = self.__dict__.get('_tensor_list')
         if isinstance(value, Parameter):
             if params is None:
                 raise AttributeError("Can not assign params before Cell.__init__() call.")
@@ -383,6 +389,13 @@ class Cell(Cell_):
             if value is not None:
                 raise TypeError("Expected type is cell, but got {}.".format(type(value)))
             self._cells[name] = None
+        elif isinstance(value, Tensor):
+            if context.get_context("mode") == context.PYNATIVE_MODE:
+                if name in self.__dict__:
+                    del self.__dict__[name]
+                tensor_list[name] = value
+            else:
+                object.__setattr__(self, name, value)
         else:
             if isinstance(value, Primitive):
                 value.set_prim_instance_name(name)
@@ -570,11 +583,9 @@ class Cell(Cell_):
         """
         if hasattr(self, "_mindspore_flags"):
             if self._mindspore_flags.get('fp16'):
-                param.cast_type = mstype.float16
-            elif self._mindspore_flags.get('fp32'):
-                param.cast_type = mstype.float32
-            else:
-                param.cast_type = None
+                param.set_cast_dtype(mstype.float16)
+            if self._mindspore_flags.get('fp32'):
+                param.set_cast_dtype(mstype.float32)
         return param
 
     def insert_child_to_cell(self, child_name, child):

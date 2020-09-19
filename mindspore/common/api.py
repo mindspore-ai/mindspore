@@ -292,6 +292,7 @@ class _PynativeExecutor:
     def __init__(self):
         self._executor = PynativeExecutor_.get_instance()
 
+    #TODO(kpy):add a type arg
     def new_graph(self, obj, *args, **kwargs):
         self._executor.new_graph(obj, *args, *(kwargs.values()))
 
