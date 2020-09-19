@@ -504,7 +504,7 @@ def test_celeba_padded():
     count = 0
     for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         count = count + 1
-    assert count == 4 
+    assert count == 2
 
 
 if __name__ == '__main__':
