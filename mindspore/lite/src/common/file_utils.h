@@ -37,6 +37,10 @@ template <typename T>
 void WriteToTxt(const std::string &file_path, void *data, size_t element_size) {
   std::ofstream out_file;
   out_file.open(file_path, std::ios::out);
+  if (!out_file.is_open()) {
+    MS_LOG(ERROR) << "file open failed";
+    return;
+  }
   auto real_data = reinterpret_cast<T *>(data);
   for (size_t i = 0; i < element_size; i++) {
     out_file << real_data[i] << " ";

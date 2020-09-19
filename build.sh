@@ -412,7 +412,7 @@ build_flatbuffer() {
     cd ${BASEPATH}
     FLATC="${BASEPATH}"/third_party/flatbuffers/build/flatc
     if [[ ! -f "${FLATC}" ]]; then
-        if [[ ${MSLIBS_SERVER} ]]; then
+        if [[ "${MSLIBS_SERVER}" ]]; then
             cd "${BASEPATH}"/third_party/
             rm -rf ./v1.11.0.tar.gz ./flatbuffers
             wget http://${MSLIBS_SERVER}:8081/libs/flatbuffers/v1.11.0.tar.gz
@@ -441,7 +441,7 @@ build_protobuf() {
     cd ${BASEPATH}
     PROTOC="${BASEPATH}"/third_party/protobuf/build/bin/protoc
     if [[ ! -f "${PROTOC}" ]]; then
-        if [[ ${MSLIBS_SERVER} ]]; then
+        if [[ "${MSLIBS_SERVER}" ]]; then
             cd "${BASEPATH}"/third_party/
             rm -rf ./v3.8.0.tar.gz ./protobuf
             wget http://${MSLIBS_SERVER}:8081/libs/protobuf/v3.8.0.tar.gz
@@ -468,7 +468,7 @@ build_gtest() {
 
 gene_clhpp() {
     CL_SRC_DIR="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl"
-    if [ ! -d ${CL_SRC_DIR} ]; then
+    if [ ! -d "${CL_SRC_DIR}" ]; then
       return
     fi
     cd ${CL_SRC_DIR}/
@@ -477,33 +477,33 @@ gene_clhpp() {
     for file_path in "${CL_SRC_DIR}"/*
     do
         file="$(basename ${file_path})"
-        inc_file=`echo ${CL_SRC_DIR}/${file} | sed 's/$/.inc/'`
+        inc_file=$(echo ${CL_SRC_DIR}/${file} | sed 's/$/.inc/')
         sed 's/^/\"/;s/$/    \\n\" \\/' ${CL_SRC_DIR}/${file} > ${inc_file}
-        kernel_name=`echo ${file} | sed s'/.\{3\}$//'`
+        kernel_name=$(echo ${file} | sed s'/.\{3\}$//')
   sed -i "1i\static const char *${kernel_name}_source =\"\\n\" \\" ${inc_file}
         sed -i '$a\;' ${inc_file}
     done
 }
 
 gene_ocl_program() {
-    CL_SRC_DIR="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl"
+    OCL_SRC_DIR="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl"
     SPIRV_DIR=build/spirv
-    rm -rf ${SPIRV_DIR}
+    [ -n "${SPIRV_DIR}" ] && rm -rf ${SPIRV_DIR}
     mkdir -pv ${SPIRV_DIR}
-    if [ ! -d ${CL_SRC_DIR} ]; then
+    if [ ! -d "${OCL_SRC_DIR}" ]; then
       return
     fi
-    for file_path in "${CL_SRC_DIR}"/*
+    for file_path in "${OCL_SRC_DIR}"/*
     do
-      file="$(basename ${file_path})"
-      if [ "${file##*.}" != "cl" ]; then
+      ocl_file="$(basename ${file_path})"
+      if [ "${ocl_file##*.}" != "cl" ]; then
         continue
       fi
       clang -Xclang -finclude-default-header -cl-std=CL2.0 --target=spir64-unknown-unknown -emit-llvm \
-            -c -O0 -o ${SPIRV_DIR}/${file%.*}.bc ${CL_SRC_DIR}/${file}
+            -c -O0 -o ${SPIRV_DIR}/${ocl_file%.*}.bc ${OCL_SRC_DIR}/${ocl_file}
     done
 
-    bcs=`ls ${SPIRV_DIR}/*.bc`
+    bcs=$(ls ${SPIRV_DIR}/*.bc)
     llvm-link ${bcs} -o ${SPIRV_DIR}/program.bc
     llvm-spirv -o ${SPIRV_DIR}/program.spv ${SPIRV_DIR}/program.bc
 
@@ -539,7 +539,7 @@ build_opencv() {
 	
     fi
     if [[ ! -f "${OPENCV_BIN}" ]]; then
-        if [[ ${MSLIBS_SERVER} ]]; then
+        if [[ "${MSLIBS_SERVER}" ]]; then
 	    cd "${BASEPATH}"/third_party/
 	    rm -rf 4.2.0.tar.gz ./opencv
 	    wget http://${MSLIBS_SERVER}:8081/libs/opencv/4.2.0.tar.gz
@@ -564,7 +564,7 @@ build_jpeg_turbo() {
     fi
 
     if [[ ! -f "${JPEG_TURBO}" ]]; then
-        if [[ ${MSLIBS_SERVER} ]]; then
+        if [[ "${MSLIBS_SERVER}" ]]; then
             cd "${BASEPATH}"/third_party/
 	    rm -rf 2.0.4.tar.gz ./libjpeg-turbo
 	    wget http://${MSLIBS_SERVER}:8081/libs/jpeg_turbo/2.0.4.tar.gz
@@ -583,7 +583,7 @@ build_jpeg_turbo() {
 
 build_eigen() {
     cd ${BASEPATH}
-    if [[ ${MSLIBS_SERVER} ]]; then
+    if [[ "${MSLIBS_SERVER}" ]]; then
         cd "${BASEPATH}"/third_party/
 	rm -rf ./eigen-3.*.tar.gz ./eigen
         wget http://${MSLIBS_SERVER}:8081/libs/eigen3/eigen-3.3.7.tar.gz
@@ -617,9 +617,9 @@ build_minddata_lite_deps()
 
 build_lite()
 {
-    VERSION_MAJOR=`grep "const int ms_version_major =" mindspore/lite/include/version.h | tr -dc "[0-9]"`
-    VERSION_MINOR=`grep "const int ms_version_minor =" mindspore/lite/include/version.h | tr -dc "[0-9]"`
-    VERSION_REVISION=`grep "const int ms_version_revision =" mindspore/lite/include/version.h | tr -dc "[0-9]"`
+    VERSION_MAJOR=$(grep "const int ms_version_major =" mindspore/lite/include/version.h | tr -dc "[0-9]")
+    VERSION_MINOR=$(grep "const int ms_version_minor =" mindspore/lite/include/version.h | tr -dc "[0-9]")
+    VERSION_REVISION=$(grep "const int ms_version_revision =" mindspore/lite/include/version.h | tr -dc "[0-9]")
     echo "============ Start building MindSpore Lite ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION} ============"
     if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ]; then
       echo "start build opencl"
