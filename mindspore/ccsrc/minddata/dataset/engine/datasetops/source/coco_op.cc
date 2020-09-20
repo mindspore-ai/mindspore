@@ -185,16 +185,8 @@ Status CocoOp::operator()() {
     } else {
       RETURN_IF_NOT_OK(
         io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-    }
-
-    if (epoch_sync_flag_) {
-      // If epoch_sync_flag_ is set, then master thread sleeps until all the worker threads have finished their job for
-      // the current epoch.
-      RETURN_IF_NOT_OK(WaitForWorkers());
-    }
-    // If not the last repeat, self-reset and go to loop again.
-    if (!IsLastIteration()) {
-      RETURN_IF_NOT_OK(Reset());
+      RETURN_IF_NOT_OK(wp_.Wait());
+      wp_.Clear();
       RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
     UpdateRepeatAndEpochCounter();
@@ -216,9 +208,9 @@ void CocoOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status CocoOp::Reset() {
-  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   RETURN_IF_NOT_OK(sampler_->ResetSampler());
   row_cnt_ = 0;
+  wp_.Set();
   return Status::OK();
 }
 
@@ -385,13 +377,7 @@ Status CocoOp::WorkerEntry(int32_t worker_id) {
   std::unique_ptr<IOBlock> io_block;
   RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
   while (io_block != nullptr) {
-    if (io_block->wait() == true) {
-      // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
-      // The last guy who comes to this sync point should reset the counter and wake up the master thread.
-      if (++num_workers_paused_ == num_workers_) {
-        wait_for_workers_post_.Set();
-      }
-    } else if (io_block->eoe() == true) {
+    if (io_block->eoe() == true) {
       RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
       buffer_id = worker_id;
     } else if (io_block->eof() == true) {
@@ -627,7 +613,7 @@ Status CocoOp::LaunchThreadsAndInitOp() {
     RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
+  RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&CocoOp::WorkerEntry, this, std::placeholders::_1)));
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(this->ParseAnnotationIds());

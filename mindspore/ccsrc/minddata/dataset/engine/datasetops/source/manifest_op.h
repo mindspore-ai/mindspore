@@ -26,6 +26,7 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/queue.h"
@@ -241,6 +242,8 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   std::string usage_;
   int64_t buf_cnt_;
 
+  WaitPost wp_;
+  QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
   std::map<std::string, int32_t> label_index_;
   std::vector<std::pair<std::string, std::vector<std::string>>> image_labelname_;
 };

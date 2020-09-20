@@ -27,6 +27,7 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/queue.h"
@@ -244,6 +245,7 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
 
   int64_t buf_cnt_;
   int64_t row_cnt_;
+  WaitPost wp_;
   std::string folder_path_;  // directory of image folder
   int32_t rows_per_buffer_;
   const std::string usage_;  // can only be either "train" or "test"
@@ -251,6 +253,7 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   std::vector<MnistLabelPair> image_label_pairs_;
   std::vector<std::string> image_names_;
   std::vector<std::string> label_names_;
+  QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -123,6 +123,7 @@ Status FilterOp::WorkerEntry(int32_t worker_id) {
     RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&in_buffer, worker_id));
     if (in_buffer->eoe()) {
       filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_buffer), filterCtrl::kFilterEoe));
+      UpdateRepeatAndEpochCounter();
       continue;
     } else if (in_buffer->eof()) {
       filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_buffer), filterCtrl::kFilterEof));
@@ -199,7 +200,6 @@ Status FilterOp::Collector() {
     RETURN_IF_NOT_OK(filter_queues_[w_id]->PopFront(&in_pair));
     if (in_pair.second == filterCtrl::kFilterFull || in_pair.second == filterCtrl::kFilterPartial ||
         in_pair.second == filterCtrl::kFilterEoe) {
-      if (in_pair.second == filterCtrl::kFilterEoe) UpdateRepeatAndEpochCounter();
       uint32_t out_task_id = out_id_cnt % num_workers_;
       RETURN_IF_NOT_OK(out_connector_->Add(static_cast<int>(out_task_id), std::move(in_pair.first)));
       out_id_cnt++;

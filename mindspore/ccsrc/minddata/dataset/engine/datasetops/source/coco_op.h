@@ -27,6 +27,7 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/path.h"
@@ -326,8 +327,10 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
   std::shared_ptr<Sampler> sampler_;
   std::unique_ptr<DataSchema> data_schema_;
 
+  WaitPost wp_;
   std::vector<std::string> image_ids_;
   std::map<int32_t, std::string> image_index_;
+  QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
   std::vector<std::pair<std::string, std::vector<int32_t>>> label_index_;
   std::map<std::string, CoordinateRow> coordinate_map_;
   std::map<std::string, std::vector<uint32_t>> simple_item_map_;

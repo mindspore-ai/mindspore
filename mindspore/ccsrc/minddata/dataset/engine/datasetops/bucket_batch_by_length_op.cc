@@ -218,6 +218,16 @@ Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, int32_t ba
   return Status::OK();
 }
 
+Status BucketBatchByLengthOp::Reset() {
+  batch_count_ = 0;
+
+  for (int i = 0; i < buckets_.size(); i++) {
+    buckets_[i] = std::make_unique<TensorQTable>();
+  }
+
+  return Status::OK();
+}
+
 // Computing the assignment of the column name map and check compute input columns.
 Status BucketBatchByLengthOp::ComputeColMap() {
   RETURN_IF_NOT_OK(DatasetOp::ComputeColMap());

@@ -29,6 +29,7 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/path.h"
@@ -262,7 +263,9 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   int64_t buf_cnt_;
   int64_t sampler_ind_;
   int64_t dirname_offset_;
+  WaitPost wp_;
   std::vector<ImageLabelPair> image_label_pairs_;
+  QueueList<std::unique_ptr<IOBlock>> io_block_queues_;  // queues of IOBlocks
   std::unique_ptr<Queue<std::string>> folder_name_queue_;
   std::unique_ptr<Queue<FolderImagesPair>> image_name_queue_;
 };
