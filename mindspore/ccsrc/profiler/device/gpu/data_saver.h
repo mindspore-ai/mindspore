@@ -145,6 +145,8 @@ class DataSaver {
 
   void WriteOpTimestamp(const std::string &saver_base_dir);
 
+  void ChangeFileMode(const std::string &file_path);
+
   std::string device_id_;
   AllActivityInfos activity_infos_;
   OpTypeInfos op_type_infos_;

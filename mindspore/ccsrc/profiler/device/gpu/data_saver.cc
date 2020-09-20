@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "profiler/device/gpu/data_saver.h"
 #include <fstream>
 #include <numeric>
+#include "sys/stat.h"
 #include "utils/log_adapter.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace profiler {
@@ -183,6 +184,7 @@ void DataSaver::WriteOpType(const std::string &saver_base_dir) {
     ofs << op_type_info.second << std::endl;
   }
   ofs.close();
+  ChangeFileMode(file_path);
   MS_LOG(INFO) << "Write " << op_type_infos_.size() << " op type infos into file: " << file_path;
 }
 
@@ -199,6 +201,7 @@ void DataSaver::WriteOpDetail(const std::string &saver_base_dir) {
     ofs << op_detail << std::endl;
   }
   ofs.close();
+  ChangeFileMode(file_path);
   MS_LOG(INFO) << "Write " << op_detail_infos_.size() << " op detail infos into file: " << file_path;
 }
 
@@ -232,7 +235,9 @@ void DataSaver::WriteActivity(const std::string &saver_base_dir) {
       }
     }
     ofs.close();
+    ChangeFileMode(file_path);
     activity_timestamp_ofs.close();
+    ChangeFileMode(timestamp_file_path);
     MS_LOG(INFO) << "Write " << device_info.second.size() << " activity infos into file: " << file_path;
   }
 }
@@ -254,6 +259,14 @@ void DataSaver::WriteOpTimestamp(const std::string &saver_base_dir) {
     ofs << std::endl;
   }
   ofs.close();
+  ChangeFileMode(file_path);
+}
+
+void DataSaver::ChangeFileMode(const std::string &file_path) {
+  if (chmod(common::SafeCStr(file_path), S_IRUSR | S_IWUSR) == -1) {
+    MS_LOG(INFO) << "Modify file:" << file_path << " to rw fail.";
+    return;
+  }
 }
 }  // namespace gpu
 }  // namespace profiler
