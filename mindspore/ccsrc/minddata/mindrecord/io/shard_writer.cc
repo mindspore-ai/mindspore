@@ -90,14 +90,14 @@ MSRStatus ShardWriter::OpenDataFiles(bool append) {
       // open the mindrecord file to write
       fs->open(common::SafeCStr(file), std::ios::out | std::ios::in | std::ios::binary | std::ios::trunc);
       if (!fs->good()) {
-        MS_LOG(ERROR) << "MindRecord file could not opened.";
+        MS_LOG(ERROR) << "MindRecord file could not opened: " << file;
         return FAILED;
       }
     } else {
       // open the mindrecord file to append
       fs->open(common::SafeCStr(file), std::ios::out | std::ios::in | std::ios::binary);
       if (!fs->good()) {
-        MS_LOG(ERROR) << "MindRecord file could not opened for append.";
+        MS_LOG(ERROR) << "MindRecord file could not opened for append: " << file;
         return FAILED;
       }
     }
@@ -140,11 +140,11 @@ MSRStatus ShardWriter::InitLockFile() {
 MSRStatus ShardWriter::Open(const std::vector<std::string> &paths, bool append) {
   shard_count_ = paths.size();
   if (shard_count_ > kMaxShardCount || shard_count_ == 0) {
-    MS_LOG(ERROR) << "The Shard Count greater than max value or equal to 0.";
+    MS_LOG(ERROR) << "The Shard Count greater than max value(1000) or equal to 0, but got " << shard_count_;
     return FAILED;
   }
   if (schema_count_ > kMaxSchemaCount) {
-    MS_LOG(ERROR) << "The schema Count greater than max value.";
+    MS_LOG(ERROR) << "The schema Count greater than max value(1), but got " << schema_count_;
     return FAILED;
   }
 
@@ -202,7 +202,7 @@ MSRStatus ShardWriter::OpenForAppend(const std::string &path) {
   compression_size_ = shard_header_->GetCompressionSize();
   ret = Open(real_addresses, true);
   if (ret == FAILED) {
-    MS_LOG(ERROR) << "Open file failed";
+    MS_LOG(ERROR) << "Invalid file, failed to open file: " << real_addresses;
     return FAILED;
   }
   shard_column_ = std::make_shared<ShardColumn>(shard_header_);
@@ -564,14 +564,14 @@ int ShardWriter::LockWriter(bool parallel_writer) {
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
     fs->open(common::SafeCStr(file), std::ios::in | std::ios::out | std::ios::binary);
     if (fs->fail()) {
-      MS_LOG(ERROR) << "File could not opened";
+      MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
       return -1;
     }
     file_streams_.push_back(fs);
   }
 
   if (shard_header_->FileToPages(pages_file_) == FAILED) {
-    MS_LOG(ERROR) << "Read pages from file failed";
+    MS_LOG(ERROR) << "Invalid data, failed to read pages from file.";
     return -1;
   }
   return fd;

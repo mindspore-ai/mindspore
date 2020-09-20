@@ -101,7 +101,7 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
     // sqlite3_open create a database if not found, use sqlite3_open_v2 instead of it
     int rc = sqlite3_open_v2(common::SafeCStr(file + ".db"), &db, SQLITE_OPEN_READONLY, nullptr);
     if (rc != SQLITE_OK) {
-      MS_LOG(ERROR) << "Can't open database, error: " << sqlite3_errmsg(db);
+      MS_LOG(ERROR) << "Invalid file, failed to open database: " << file + ".db, error: " << sqlite3_errmsg(db);
       return FAILED;
     }
     MS_LOG(DEBUG) << "Opened database successfully";
@@ -120,7 +120,7 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
       MS_LOG(DEBUG) << "Get " << static_cast<int>(name.size()) << " records from index.";
       string shardName = GetFileName(file).second;
       if (name.empty() || name[0][0] != shardName) {
-        MS_LOG(ERROR) << "DB file can not match file " << file;
+        MS_LOG(ERROR) << "Invalid file, DB file can not match file: " << file;
         sqlite3_free(errmsg);
         sqlite3_close(db);
         db = nullptr;
@@ -182,7 +182,7 @@ MSRStatus ShardReader::Open() {
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
     fs->open(common::SafeCStr(file), std::ios::in | std::ios::binary);
     if (!fs->good()) {
-      MS_LOG(ERROR) << "File could not opened";
+      MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
       return FAILED;
     }
     MS_LOG(INFO) << "Open shard file successfully.";
@@ -200,7 +200,7 @@ MSRStatus ShardReader::Open(int n_consumer) {
       std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
       fs->open(common::SafeCStr(file), std::ios::in | std::ios::binary);
       if (!fs->good()) {
-        MS_LOG(ERROR) << "File could not opened";
+        MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
         return FAILED;
       }
       file_streams_random_[j].push_back(fs);
@@ -385,7 +385,7 @@ MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, 
   if (!all_in_index_) {
     fs->open(common::SafeCStr(file_name), std::ios::in | std::ios::binary);
     if (!fs->good()) {
-      MS_LOG(ERROR) << "File could not opened";
+      MS_LOG(ERROR) << "Invalid file, failed to open file: " << file_name;
       return FAILED;
     }
   }
@@ -430,7 +430,7 @@ void ShardReader::GetClassesInShard(sqlite3 *db, int shard_id, const std::string
     sqlite3_free(errmsg);
     sqlite3_close(db);
     db = nullptr;
-    MS_LOG(ERROR) << "Error in select sql statement, sql:" << common::SafeCStr(sql) << ", error: " << errmsg;
+    MS_LOG(ERROR) << "Error in select sql statement, sql: " << common::SafeCStr(sql) << ", error: " << errmsg;
     return;
   }
   MS_LOG(INFO) << "Get " << static_cast<int>(columns.size()) << " records from shard " << shard_id << " index.";
@@ -602,7 +602,7 @@ MSRStatus ShardReader::QueryWithCriteria(sqlite3 *db, string &sql, string criter
                                          std::vector<std::vector<std::string>> &labels) {
   sqlite3_stmt *stmt = nullptr;
   if (sqlite3_prepare_v2(db, common::SafeCStr(sql), -1, &stmt, 0) != SQLITE_OK) {
-    MS_LOG(ERROR) << "SQL error: could not prepare statement";
+    MS_LOG(ERROR) << "SQL error: could not prepare statement, sql: " << sql;
     return FAILED;
   }
   int index = sqlite3_bind_parameter_index(stmt, ":criteria");
@@ -631,7 +631,7 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabelsFromBinaryFile(
   std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
   fs->open(common::SafeCStr(file_name), std::ios::in | std::ios::binary);
   if (!fs->good()) {
-    MS_LOG(ERROR) << "File could not opened";
+    MS_LOG(ERROR) << "Invalid file, failed to open file: " << file_name;
     return {FAILED, {}};
   }
 
@@ -795,7 +795,8 @@ int64_t ShardReader::GetNumClasses(const std::string &category_field) {
     sqlite3 *db = nullptr;
     int rc = sqlite3_open_v2(common::SafeCStr(file_paths_[x] + ".db"), &db, SQLITE_OPEN_READONLY, nullptr);
     if (SQLITE_OK != rc) {
-      MS_LOG(ERROR) << "Can't open database, error: " << sqlite3_errmsg(db);
+      MS_LOG(ERROR) << "Invalid file, failed to open database: " << file_paths_[x] + ".db, error: "
+                    << sqlite3_errmsg(db);
       return -1;
     }
     threads[x] = std::thread(&ShardReader::GetClassesInShard, this, db, x, sql, std::ref(categories));
@@ -970,19 +971,19 @@ MSRStatus ShardReader::CreateTasksByCategory(const std::vector<std::tuple<int, i
   if (std::dynamic_pointer_cast<ShardPkSample>(op)) {
     num_samples = std::dynamic_pointer_cast<ShardPkSample>(op)->GetNumSamples();
     if (num_samples < 0) {
-      MS_LOG(ERROR) << "Parameter num_samples is not positive or zero";
+      MS_LOG(ERROR) << "Invalid parameter, num_samples must be greater than or equal to 0, but got " << num_samples;
       return FAILED;
     }
   }
   if (num_elements <= 0) {
-    MS_LOG(ERROR) << "Parameter num_element is not positive";
+    MS_LOG(ERROR) << "Invalid parameter, num_elements must be greater than 0, but got " << num_elements;
     return FAILED;
   }
   if (categories.empty() == true) {
     std::string category_field = category_op->GetCategoryField();
     int64_t num_categories = category_op->GetNumCategories();
     if (num_categories <= 0) {
-      MS_LOG(ERROR) << "Parameter num_categories is not positive";
+      MS_LOG(ERROR) << "Invalid parameter, num_categories must be greater than 0, but got " << num_elements;
       return FAILED;
     }
     std::set<std::string> categories_set;
