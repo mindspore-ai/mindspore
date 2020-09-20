@@ -64,6 +64,7 @@ typedef struct Thread {
   atomic_bool activate;
   atomic_bool is_running;
   sem_t sem;
+  sem_t sem_inited;
 } Thread;
 
 typedef struct {
@@ -119,7 +120,6 @@ void FreeThread(ThreadList *thread_list, Thread *thread) {
   // only support sequential release
   thread_list->head = thread->next;
   sem_post(&thread->sem);
-  pthread_join(thread->pthread, NULL);
   while (true) {
     if (thread != NULL && !thread->is_running) {
       sem_destroy(&thread->sem);
@@ -525,6 +525,7 @@ void ThreadRun(Thread *thread) {
   Task *task = NULL;
   int thread_id = thread->thread_id;
   int spin_count = 0;
+  sem_post(&thread->sem_inited);
   while (thread_pool->is_alive) {
     while (thread->activate) {
       if (PopTaskFromQueue(thread, &task)) {
@@ -589,8 +590,10 @@ int CreateNewThread(struct ThreadPool *thread_pool, int thread_id) {
   thread->is_running = ATOMIC_VAR_INIT(true);
   thread->next = NULL;
   sem_init(&thread->sem, 0, 0);
+  sem_init(&thread->sem_inited, 0, 0);
   PushThreadToList(thread_pool, thread);
   pthread_create(&thread->pthread, NULL, (void *)ThreadRun, thread);
+  sem_wait(&thread->sem_inited);
   pthread_detach(thread->pthread);
   return RET_TP_OK;
 }
