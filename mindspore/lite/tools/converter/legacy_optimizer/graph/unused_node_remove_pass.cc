@@ -25,15 +25,29 @@
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "mindspore/lite/schema/inner/model_generated.h"
+#include "mindspore/core/ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace lite {
+bool IsUnusedNode(const CNodeT &node) {
+  if (node.primitive->value.type == schema::PrimitiveType_TupleGetItem) {
+    return true;
+  }
+  if (node.primitive->value.type == schema::PrimitiveType_Cast) {
+    auto attr = reinterpret_cast<schema::CastT *>(node.primitive->value.value);
+    if (attr->srcT == kNumberTypeFloat32 && attr->dstT == kNumberTypeFloat16) {
+      return true;
+    }
+  }
+  return false;
+}
+
 STATUS UnusedNodeRemovePass::Run(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   bool ifChanged = false;
   for (size_t i = 0; i < graph->nodes.size(); i++) {
     auto &node = graph->nodes.at(i);
-    if (node->primitive->value.type == schema::PrimitiveType_TupleGetItem) {
+    if (IsUnusedNode(*node)) {
       ifChanged = true;
       auto status = IsolateOneWayNode(graph, i);
       if (status != RET_OK) {

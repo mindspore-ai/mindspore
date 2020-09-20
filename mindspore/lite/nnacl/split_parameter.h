@@ -24,8 +24,8 @@ typedef struct SplitParameter {
   OpParameter op_parameter_;
   SplitQuantArg quant_arg_;
   int num_split_;
-  int split_sizes_[20];
-  int strides_[20];
+  int split_sizes_[32];
+  int strides_[32];
   int split_dim_;
   int n_dims_;
   int split_count_;
