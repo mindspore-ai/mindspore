@@ -158,7 +158,7 @@ STATUS DTypeTransPass::DoNodeInoutDTypeTrans(schema::MetaGraphT *graph) {
       if (!preTensor->data.empty() && !IsContain(graphInIdxes, (*iter)->inputIndex.at(i))) {
         continue;
       }
-      if (IsContain(graphInIdxes, (*iter)->inputIndex.at(i))) {
+      if ((preTensor->dataType != TypeId::kNumberTypeInt8) && (IsContain(graphInIdxes, (*iter)->inputIndex.at(i)))) {
         continue;
       }
       iter = InsertDTypeTransNode(graph, iter, kBefore, i, kInt8ToFP32, &status);
