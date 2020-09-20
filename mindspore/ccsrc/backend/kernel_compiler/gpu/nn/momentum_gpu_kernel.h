@@ -27,7 +27,12 @@ template <typename T, typename S, typename G>
 class MomentumGpuKernel : public GpuKernel {
  public:
   MomentumGpuKernel()
-      : variable_size_(0), accumulation_size_(0), learning_rate_size_(0), gradient_size_(0), momentum_size_(0) {}
+      : use_nesterov_(false),
+        variable_size_(0),
+        accumulation_size_(0),
+        learning_rate_size_(0),
+        gradient_size_(0),
+        momentum_size_(0) {}
   ~MomentumGpuKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -41,7 +46,7 @@ class MomentumGpuKernel : public GpuKernel {
     G *gradient = GetDeviceAddress<G>(inputs, 3);
     S *momentum = GetDeviceAddress<S>(inputs, 4);
     MomentumUpdateVariable(inputs[0]->size / sizeof(T), variable, accumulation, learning_rate, gradient, momentum,
-                           reinterpret_cast<cudaStream_t>(stream_ptr));
+                           use_nesterov_, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
@@ -50,6 +55,7 @@ class MomentumGpuKernel : public GpuKernel {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but momentum needs 5 inputs.";
       return false;
     }
+    use_nesterov_ = GetAttr<bool>(kernel_node, "use_nesterov");
 
     variable_size_ = sizeof(T);
     accumulation_size_ = sizeof(T);
@@ -84,6 +90,7 @@ class MomentumGpuKernel : public GpuKernel {
   }
 
  private:
+  bool use_nesterov_;
   size_t variable_size_;
   size_t accumulation_size_;
   size_t learning_rate_size_;
