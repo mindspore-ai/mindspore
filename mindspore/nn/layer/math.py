@@ -59,6 +59,7 @@ class ReduceLogSumExp(Cell):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = nn.ReduceLogSumExp(keep_dims=True)
         >>> output = op(input_x, 1)
+        >>> output.shape
         (3, 1, 5, 6)
     """
 
