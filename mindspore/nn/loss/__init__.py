@@ -20,9 +20,8 @@ It shows how well the model works on a dataset and the optimization target which
 """
 
 from .loss import L1Loss, MSELoss, SmoothL1Loss, \
-    SoftmaxCrossEntropyWithLogits, SoftmaxCrossEntropyExpand, CosineEmbeddingLoss
+    SoftmaxCrossEntropyWithLogits, CosineEmbeddingLoss
 
 __all__ = ['L1Loss', 'MSELoss', 'SmoothL1Loss',
            'SoftmaxCrossEntropyWithLogits',
-           'SoftmaxCrossEntropyExpand',
            'CosineEmbeddingLoss']
