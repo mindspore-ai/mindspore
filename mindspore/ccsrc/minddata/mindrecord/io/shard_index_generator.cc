@@ -184,14 +184,14 @@ std::pair<MSRStatus, sqlite3 *> ShardIndexGenerator::CheckDatabase(const std::st
   sqlite3 *db = nullptr;
   std::ifstream fin(common::SafeCStr(shard_address));
   if (!append_ && fin.good()) {
-    MS_LOG(ERROR) << "DB file already exist";
+    MS_LOG(ERROR) << "Invalid file, DB file already exist: " << shard_address;
     fin.close();
     return {FAILED, nullptr};
   }
   fin.close();
   int rc = sqlite3_open_v2(common::SafeCStr(shard_address), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr);
   if (rc) {
-    MS_LOG(ERROR) << "Can't open database, error: " << sqlite3_errmsg(db);
+    MS_LOG(ERROR) << "Invalid file, failed to open database: " << shard_address << ", error" << sqlite3_errmsg(db);
     return {FAILED, nullptr};
   } else {
     MS_LOG(DEBUG) << "Opened database successfully";
@@ -522,14 +522,14 @@ MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, std::pair
   // Add index data to database
   std::string shard_address = shard_header_.GetShardAddressByID(shard_no);
   if (shard_address.empty()) {
-    MS_LOG(ERROR) << "Shard address is null";
+    MS_LOG(ERROR) << "Invalid data, shard address is null";
     return FAILED;
   }
 
   std::fstream in;
   in.open(common::SafeCStr(shard_address), std::ios::in | std::ios::binary);
   if (!in.good()) {
-    MS_LOG(ERROR) << "File could not opened";
+    MS_LOG(ERROR) << "Invalid file, failed to open file: " << shard_address;
     return FAILED;
   }
   (void)sqlite3_exec(db.second, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
