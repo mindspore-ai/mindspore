@@ -45,6 +45,7 @@
 #include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/ms_utils.h"
+#include "utils/config_manager.h"
 #include "common/trans.h"
 #include "utils/ms_context.h"
 #include "debug/data_dump/e2e_dump_util.h"
@@ -375,7 +376,7 @@ void GPUSession::PreLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph)
   bool dump_enabled = DumpDataEnabledIteration();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (dump_enabled && context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
+  if (dump_enabled && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
     MS_EXCEPTION(NotSupportError) << "Don't support set dataset_sink_mode to True when using e2e_dump";
   }
 

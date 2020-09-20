@@ -283,12 +283,35 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
   }
 }
 
+void DumpJsonParser::JsonConfigToString() {
+  std::string cur_config;
+  cur_config.append("dump_mode:");
+  cur_config.append(std::to_string(dump_mode_));
+  cur_config.append(" path:");
+  cur_config.append(path_);
+  cur_config.append(" net_name:");
+  cur_config.append(net_name_);
+  cur_config.append(" iteration:");
+  cur_config.append(std::to_string(iteration_));
+  cur_config.append(" input_output:");
+  cur_config.append(std::to_string(input_output_));
+  cur_config.append("e2e_enable:");
+  cur_config.append(std::to_string(e2e_dump_enabled_));
+  cur_config.append(" async_dump_enable:");
+  cur_config.append(std::to_string(async_dump_enabled_));
+  MS_LOG(INFO) << cur_config;
+}
+
 void DumpJsonParser::JudgeDumpEnabled() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
     async_dump_enabled_ = false;
+    // GPU not support dump kernel inputs
+    if (input_output_ != kDumpOutputOnly) {
+      MS_LOG(WARNING) << "Data dump only support dump kernel output when device target is GPU";
+      input_output_ = kDumpOutputOnly;
+    }
   }
 
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
@@ -309,8 +332,7 @@ void DumpJsonParser::JudgeDumpEnabled() {
     MS_LOG(WARNING) << "Dump not enabled. device_id:" << device_id << " not support";
   }
   context->set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, !e2e_dump_enabled_);
-  MS_LOG(INFO) << "Dump status, e2e_dump_enabled:" << e2e_dump_enabled_
-               << " async_dump_enabled:" << async_dump_enabled_;
+  JsonConfigToString();
 }
 
 bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {

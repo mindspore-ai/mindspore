@@ -99,10 +99,9 @@ class TensorLoader {
   bool DumpTensorToFile(std::string tensor_name, bool trans_flag, const std::string &filepath,
                         const std::string &host_fmt, const std::vector<int> &host_shape, TypeId host_type,
                         TypeId addr_type_id, std::string addr_format, size_t slot) const {
-    bool ret = false;
     if (filepath.empty()) {
       MS_LOG(ERROR) << "Dump file path is null!";
-      return ret;
+      return false;
     }
     std::string shape = "shape";
     if (host_shape.size()) {
@@ -129,10 +128,10 @@ class TensorLoader {
       mindspore::tensor::TensorPtr out_tensor = node->GetTensor();
       size_t host_size = out_tensor->data().nbytes();
 
-      ret = DumpJsonParser::DumpToFile(path, out_tensor->data_c(), host_size);
+      return DumpJsonParser::DumpToFile(path, out_tensor->data_c(), host_size);
     }
-
-    return ret;
+    MS_LOG(INFO) << "Tensor name:" << tensor_name << " not found in tensor_list_map";
+    return true;
   }
 
  private:
