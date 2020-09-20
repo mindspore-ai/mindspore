@@ -28,7 +28,6 @@ def print_usage():
     print('  -o <prefix>\toutput split graphs')
     print('  -v \t\tverbose mode')
     print('  -h \t\tprint this help')
-    print('Report bugs to xiong.gao@huawei.com')
 
 
 class Option:
