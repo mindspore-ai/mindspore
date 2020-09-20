@@ -239,10 +239,15 @@ Status RandomDataOp::EpochSync(int32_t worker_id, bool *quitting) {
     }
   }
 
-  // Wait for the reset to wake us up if we're not quitting
   if (!(*quitting)) {
     MS_LOG(INFO) << "RandomDataOp worker " << worker_id << " entering sync wait.";
-    RETURN_IF_NOT_OK(epoch_sync_wait_post_.Wait());
+    if (last_guy_in) {
+      // If we are the last worker, do reset to wake other workers up
+      RETURN_IF_NOT_OK(Reset());
+    } else {
+      // If we are not the last worker, wait for the reset
+      RETURN_IF_NOT_OK(epoch_sync_wait_post_.Wait());
+    }
     prev = guys_out_.fetch_add(1);
     bool last_guy_out = (prev + 1) == num_workers_;
     // Last guy out will clear the wait post and set the row counts
@@ -365,7 +370,7 @@ Status RandomDataOp::CreateRandomRow(int32_t worker_id, TensorRow *new_row) {
 // info from it's previous execution and then initializes itself so that it can be executed
 // again.
 Status RandomDataOp::Reset() {
-  MS_LOG(INFO) << "RandomDataOp resetting.";
+  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
 
   // Ensure all guys are in the waitpost
   if (guys_in_ != num_workers_) {

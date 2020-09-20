@@ -144,8 +144,6 @@ class GeneratorOp : public PipelineOp {
   py::object generator_;
   int32_t buffer_id_;
 
-  WaitPost wp_;
-
   Status Init();
 
   void Dealloc() noexcept;

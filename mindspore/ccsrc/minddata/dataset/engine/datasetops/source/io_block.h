@@ -33,8 +33,9 @@ class IOBlock {
  public:
   enum IOBlockFlags : uint32_t {
     kDeIoBlockNone = 0,
-    kDeIoBlockFlagEoe = 1u,      // end of IOBlocks for one epoch
-    kDeIoBlockFlagEof = 1u << 1  // end of IOBlocks for entire program
+    kDeIoBlockFlagEoe = 1u,       // end of IOBlocks for one epoch
+    kDeIoBlockFlagEof = 1u << 1,  // end of IOBlocks for entire program
+    kDeIoBlockFlagWait = 1u << 2  // control signal for workers to suspend operations
   };
 
   // Constructor of the IOBlock (1).  A simpler one for the case when the block only has 1 key.
@@ -72,6 +73,10 @@ class IOBlock {
   // Does this block have the eof flag turned on?
   // @return T/F if the IOBlock is eof
   bool eof() const { return static_cast<uint32_t>(io_block_flags_) & static_cast<uint32_t>(kDeIoBlockFlagEof); }
+
+  // Does this block have the wait flag turned on?
+  // @return T/F is the IOBlock is wait
+  bool wait() const { return static_cast<uint32_t>(io_block_flags_) & static_cast<uint32_t>(kDeIoBlockFlagWait); }
 
   // Adds a key to this block
   // @param key - The key to add to this block
