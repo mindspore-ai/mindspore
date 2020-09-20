@@ -3737,6 +3737,10 @@ class TFRecordDataset(SourceDataset):
         """
         Get the number of batches in an epoch.
 
+        Note:
+            Because the TFRecord format does not save metadata, all files need to be traversed to obtain
+            the total amount of data. Therefore, this api is slow.
+
         Args:
             estimate (bool, optional): Fast estimation of the dataset size instead of a full scan.
 
