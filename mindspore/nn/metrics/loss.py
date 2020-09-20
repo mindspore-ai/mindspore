@@ -46,7 +46,7 @@ class Loss(Metric):
 
         Args:
             inputs: Inputs contain only one element, the element is loss. The dimension of
-                loss should be 0 or 1.
+                loss must be 0 or 1.
 
         Raises:
             ValueError: If the length of inputs is not 1.

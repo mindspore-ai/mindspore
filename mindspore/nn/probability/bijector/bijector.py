@@ -121,7 +121,7 @@ class Bijector(Cell):
         This __call__ may go into two directions:
         If args[0] is a distribution instance, the call will generate a new distribution derived from
         the input distribution.
-        Otherwise, input[0] should be the name of a Bijector function, e.g. "forward", then this call will
+        Otherwise, input[0] must be the name of a Bijector function, e.g. "forward", then this call will
         go in the construct and invoke the correstpoding Bijector function.
 
         Args:

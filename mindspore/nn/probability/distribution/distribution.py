@@ -34,9 +34,9 @@ class Distribution(Cell):
         param (dict): The parameters used to initialize the distribution.
 
     Note:
-        Derived class should override operations such as `_mean`, `_prob`,
+        Derived class must override operations such as `_mean`, `_prob`,
         and `_log_prob`. Required arguments, such as `value` for `_prob`,
-        should be passed in through `args` or `kwargs`. `dist_spec_args` which specifies
+        must be passed in through `args` or `kwargs`. `dist_spec_args` which specifies
         a new distribution are optional.
 
         `dist_spec_args` is unique for each type of distribution. For example, `mean` and `sd`

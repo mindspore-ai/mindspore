@@ -48,8 +48,8 @@ class UncertaintyEvaluation:
         epochs (int): Total number of iterations on the data. Default: 1.
         epi_uncer_model_path (str): The save or read path of the epistemic uncertainty model. Default: None.
         ale_uncer_model_path (str): The save or read path of the aleatoric uncertainty model. Default: None.
-        save_model (bool): Whether to save the uncertainty model or not, if True, the epi_uncer_model_path
-                        and ale_uncer_model_path should not be None. If False, the model to evaluate will be loaded from
+        save_model (bool): Whether to save the uncertainty model or not, if true, the epi_uncer_model_path
+                        and ale_uncer_model_path must not be None. If false, the model to evaluate will be loaded from
                         the the path of the uncertainty model; if the path is not given , it will not save or load the
                         uncertainty model. Default: False.
 
@@ -192,7 +192,7 @@ class UncertaintyEvaluation:
         Evaluate the epistemic uncertainty of inference results, which also called model uncertainty.
 
         Args:
-            eval_data (Tensor): The data samples to be evaluated, the shape should be (N,C,H,W).
+            eval_data (Tensor): The data samples to be evaluated, the shape must be (N,C,H,W).
 
         Returns:
             numpy.dtype, the epistemic uncertainty of inference results of data samples.
@@ -205,7 +205,7 @@ class UncertaintyEvaluation:
         Evaluate the aleatoric uncertainty of inference results, which also called data uncertainty.
 
         Args:
-            eval_data (Tensor): The data samples to be evaluated, the shape should be (N,C,H,W).
+            eval_data (Tensor): The data samples to be evaluated, the shape must be (N,C,H,W).
 
         Returns:
             numpy.dtype, the aleatoric uncertainty of inference results of data samples.
@@ -258,7 +258,7 @@ class EpistemicUncertaintyModel(Cell):
 class AleatoricUncertaintyModel(Cell):
     """
     The aleatoric uncertainty (also called data uncertainty) is caused by input data, to obtain this
-    uncertainty, the loss function should be modified in order to add variance into loss.
+    uncertainty, the loss function must be modified in order to add variance into loss.
 
     See more details in `What Uncertainties Do We Need in Bayesian Deep Learning for Computer Vision?
     <https://arxiv.org/abs/1703.04977>`_.

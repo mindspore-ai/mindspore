@@ -36,8 +36,8 @@ class ReduceLogSumExp(Cell):
     The dtype of the tensor to be reduced is number.
 
     Args:
-        keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                          If False, don't keep these dimensions.
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions.
                           Default : False.
 
     Inputs:
@@ -357,16 +357,16 @@ class MatMul(Cell):
     will be broadcasted and must be broadcastable.
 
     Args:
-        transpose_x1 (bool): If True, `a` is transposed before multiplication. Default: False.
-        transpose_x2 (bool): If True, `b` is transposed before multiplication. Default: False.
+        transpose_x1 (bool): If true, `a` is transposed before multiplication. Default: False.
+        transpose_x2 (bool): If true, `b` is transposed before multiplication. Default: False.
 
     Inputs:
         - **input_x1** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(*A, N, C)`,
           where :math:`*A` represents the batch size of `x1` which can be multidimensional.
-          If `transpose_a` is True, its shape should be :math:`(*A, N, C)` after transposing.
+          If `transpose_a` is True, its shape must be :math:`(*A, N, C)` after transposing.
         - **input_x2** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`,
           where :math:`*B` represents the batch size of `x2` which can be multidimensional.
-          If `transpose_b` is True, its shape should be :math:`(*B, C, M)` after transposing.
+          If `transpose_b` is True, its shape must be :math:`(*B, C, M)` after transposing.
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(*L, N, M)`. :math:`*L` is the batch size after broadcasting.

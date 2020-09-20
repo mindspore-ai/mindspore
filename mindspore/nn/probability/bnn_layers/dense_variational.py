@@ -166,19 +166,19 @@ class DenseReparam(_DenseVariational):
             can be a string (eg. 'relu') or a Cell (eg. nn.ReLU()). Note that if the type of activation is Cell, it must
             be instantiated beforehand. Default: None.
         weight_prior_fn: The prior distribution for weight.
-            It should return a mindspore distribution instance.
+            It must return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
             normal distribution). The current version only supports normal distribution.
         weight_posterior_fn: The posterior distribution for sampling weight.
-            It should be a function handle which returns a mindspore
+            It must be a function handle which returns a mindspore
             distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
             The current version only supports normal distribution.
-        bias_prior_fn: The prior distribution for bias vector. It should return
+        bias_prior_fn: The prior distribution for bias vector. It must return
             a mindspore distribution. Default: NormalPrior(which creates an
             instance of standard normal distribution). The current version
             only supports normal distribution.
         bias_posterior_fn: The posterior distribution for sampling bias vector.
-            It should be a function handle which returns a mindspore
+            It must be a function handle which returns a mindspore
             distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
             The current version only supports normal distribution.
 

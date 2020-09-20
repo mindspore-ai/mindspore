@@ -88,7 +88,7 @@ class CusBatchMatMul(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init CusBatchMatMul"""
+        """Initialize CusBatchMatMul"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
         from mindspore.ops._op_impl._custom_op.batch_matmul_impl import CusBatchMatMul
 
@@ -121,7 +121,7 @@ class CusCholeskyTrsm(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init CusCholeskyTrsm"""
+        """Initialize CusCholeskyTrsm"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
         from mindspore.ops._op_impl._custom_op.cholesky_trsm_impl import CusCholeskyTrsm
 
@@ -140,7 +140,7 @@ class CusCholeskyTrsm(PrimitiveWithInfer):
 
 class CusFusedAbsMax1(PrimitiveWithInfer):
     """
-    Compute the abs max of Tensor input.
+    Computes the abs max of Tensor input.
 
     The rank of input tensors must be `4` or `2`.
     Inputs:
@@ -157,7 +157,7 @@ class CusFusedAbsMax1(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, origin_shape=[-1, -1]):
-        """init CusFusedAbsMax1"""
+        """Initialize CusFusedAbsMax1"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
         self.origin_shape = origin_shape
         from mindspore.ops._op_impl._custom_op.fused_abs_max1_impl import CusFusedAbsMax1
@@ -176,7 +176,7 @@ class CusFusedAbsMax1(PrimitiveWithInfer):
 
 class CusImg2Col(PrimitiveWithInfer):
     """
-    Img2col the feature map and the result in reorganized in NC1HWC0.
+    Img2cols the feature map and the result in reorganized in NC1HWC0.
 
     Args:
         - **strides** (listInt) - the stride of the ops.
@@ -193,7 +193,7 @@ class CusImg2Col(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, ksizes, strides, dilates=(1, 1, 1, 1), mode="NC1HWC0"):
-        """init CusImg2Col"""
+        """Initialize CusImg2Col"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
         self.ksizes = ksizes
         self.strides = strides
@@ -239,7 +239,7 @@ class CusMatMulCubeDenseLeft(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init CusMatMulCubeDenseLeft"""
+        """Initialize CusMatMulCubeDenseLeft"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
         from mindspore.ops._op_impl._custom_op.matmul_cube_dense_left_impl import CusMatMulCubeDenseLeft
 
@@ -274,7 +274,7 @@ class CusMatMulCubeFraczRightMul(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init CusMatMulCubeFraczRightMul"""
+        """Initialize CusMatMulCubeFraczRightMul"""
         self.init_prim_io_names(inputs=['x1', 'x2', 'x3'], outputs=['y'])
         from mindspore.ops._op_impl._custom_op.matmul_cube_fracz_right_mul_impl import CusMatMulCubeFraczRightMul
 
@@ -292,14 +292,14 @@ class CusMatMulCube(PrimitiveWithInfer):
     The rank of input tensors must be `2`.
 
     Args:
-        transpose_a (bool): If True, `a` is transposed before multiplication. Default: False.
-        transpose_b (bool): If True, `b` is transposed before multiplication. Default: False.
+        transpose_a (bool): If true, `a` is transposed before multiplication. Default: False.
+        transpose_b (bool): If true, `b` is transposed before multiplication. Default: False.
 
     Inputs:
         - **input_x** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, C)`. If
-          `transpose_a` is True, its shape should be :math:`(N, C)` after transposing.
+          `transpose_a` is True, its shape must be :math:`(N, C)` after transposing.
         - **input_y** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(C, M)`. If
-          `transpose_b` is True, its shape should be :math:`(C, M)` after transpose.
+          `transpose_b` is True, its shape must be :math:`(C, M)` after transpose.
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N, M)`.
@@ -313,7 +313,7 @@ class CusMatMulCube(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, transpose_a=False, transpose_b=False):
-        """init CusMatMulCube"""
+        """Initialize CusMatMulCube"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
         self.transpose_a = transpose_a
         self.transpose_b = transpose_b
@@ -355,7 +355,7 @@ class CusMatrixCombine(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init CusMatrixCombine"""
+        """Initialize CusMatrixCombine"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         from mindspore.ops._op_impl._custom_op.matrix_combine_impl import CusMatrixCombine
 
@@ -389,7 +389,7 @@ class CusTranspose02314(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init CusTranspose02314"""
+        """Initialize CusTranspose02314"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
         from mindspore.ops._op_impl._custom_op.transpose02314_impl import CusTranspose02314
 
@@ -435,7 +435,7 @@ class CusMatMulCubeDenseRight(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init CusMatMulCubeDenseRight"""
+        """Initialize CusMatMulCubeDenseRight"""
         self.init_prim_io_names(inputs=['x1', 'x2', 'x3'], outputs=['y'])
         from mindspore.ops._op_impl._custom_op.matmul_cube_dense_right_impl import CusMatMulCubeDenseRight
 
@@ -470,7 +470,7 @@ class CusMatMulCubeFraczLeftCast(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init CusMatMulCubeFraczLeftCast"""
+        """Initialize CusMatMulCubeFraczLeftCast"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
         from mindspore.ops._op_impl._custom_op.matmul_cube_fracz_left_cast_impl import CusMatMulCubeFraczLeftCast
 
@@ -483,7 +483,7 @@ class CusMatMulCubeFraczLeftCast(PrimitiveWithInfer):
 
 class Im2Col(PrimitiveWithInfer):
     """
-    extract image pathes from image.
+    extracts image pathes from image.
 
     The rank of input_x1 must be `4`, data_format is "NCHW".
 
@@ -504,7 +504,7 @@ class Im2Col(PrimitiveWithInfer):
                  pad=0,
                  stride=1,
                  dilation=1):
-        """init Im2Col"""
+        """Initialize Im2Col"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
         self.add_prim_attr('kernel_size', self.kernel_size)
@@ -564,7 +564,7 @@ class Im2Col(PrimitiveWithInfer):
 
 class UpdateThorGradient(PrimitiveWithInfer):
     """
-    Update Thor Gradient with Approximate Fisher info matrix(for GPU backend).
+    Updates Thor Gradient with Approximate Fisher info matrix(for GPU backend).
 
     The rank of input_x1 must be `3`, which indicates the A matrix.
     The rank of input_x2 must be `2`, which indicates the 1st-order gradient.
@@ -593,7 +593,7 @@ class UpdateThorGradient(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, split_dim=0):
-        """init UpdateThorGradient"""
+        """Initialize UpdateThorGradient"""
         self.init_prim_io_names(inputs=['x1', 'x2', 'x3'], outputs=['y'])
         self.split_dim = split_dim
         self.add_prim_attr('split_dim', self.split_dim)

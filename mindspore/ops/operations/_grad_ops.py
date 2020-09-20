@@ -27,7 +27,7 @@ class AbsGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init AbsGrad"""
+        """Initialize AbsGrad"""
 
     def infer_shape(self, y, dy):
         return y
@@ -46,7 +46,7 @@ class ACosGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init ACosGrad"""
+        """Initialize ACosGrad"""
 
     def infer_shape(self, x, dout):
         validator.check("x shape", x, "dout shape", dout, Rel.EQ, self.name)
@@ -63,7 +63,7 @@ class AcoshGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init AcoshGrad"""
+        """Initialize AcoshGrad"""
 
     def infer_shape(self, x, dout):
         validator.check("x shape", x, "dout shape", dout, Rel.EQ, self.name)
@@ -85,7 +85,7 @@ class AsinGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """Init AsinGrad"""
+        """Initialize AsinGrad"""
 
     def infer_shape(self, x, dout):
         validator.check("x shape", x, "dout shape", dout, Rel.EQ, self.name)
@@ -102,7 +102,7 @@ class AsinhGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init AsinhGrad"""
+        """Initialize AsinhGrad"""
 
     def infer_shape(self, x, dout):
         validator.check("x shape", x, "dout shape", dout, Rel.EQ, self.name)
@@ -119,7 +119,7 @@ class ReciprocalGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init ReciprocalGrad"""
+        """Initialize ReciprocalGrad"""
 
     def infer_shape(self, x_shape, dout_shape):
         validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
@@ -136,7 +136,7 @@ class RsqrtGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init RsqrtGrad"""
+        """Initialize RsqrtGrad"""
 
     def infer_shape(self, x_shape, dout_shape):
         validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
@@ -153,7 +153,7 @@ class SoftmaxGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init SoftmaxGrad"""
+        """Initialize SoftmaxGrad"""
 
     def infer_shape(self, x_shape, dout_shape):
         validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
@@ -170,7 +170,7 @@ class SqrtGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init SqrtGrad"""
+        """Initialize SqrtGrad"""
 
     def infer_shape(self, x_shape, dout_shape):
         validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
@@ -254,7 +254,7 @@ class ConcatOffset(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, N=2, axis=0):
-        """init ConcatOffset"""
+        """Initialize ConcatOffset"""
 
     def __infer__(self, input_x):
         axis = self.axis
@@ -307,7 +307,7 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
                  stride=(1, 1),
                  dilation=(1, 1, 1, 1),
                  group=1):
-        """init Convolution"""
+        """Initialize Convolution"""
         self.init_prim_io_names(inputs=['out_backprop', 'input', 'filter_sizes'], outputs=['output'])
         self.out_channel = out_channel
         self.kernel_size = kernel_size
@@ -373,7 +373,7 @@ class DepthwiseConv2dNativeBackpropFilter(PrimitiveWithInfer):
                  stride=1,
                  dilation=1,
                  group=1):
-        """init Convolution"""
+        """Initialize Convolution"""
         self.init_prim_io_names(inputs=['input', 'filter_size', 'dout'], outputs=['output'])
         self.channel_multiplier = channel_multiplier
         self.kernel_size = kernel_size
@@ -434,7 +434,7 @@ class DepthwiseConv2dNativeBackpropInput(PrimitiveWithInfer):
                  stride=1,
                  dilation=1,
                  group=1):
-        """init Convolution"""
+        """Initialize Convolution"""
         self.init_prim_io_names(inputs=['input_size', 'filter', 'dout'], outputs=['output'])
         self.channel_multiplier = channel_multiplier
         self.kernel_size = kernel_size
@@ -588,7 +588,7 @@ class GeluGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init GeluGrad"""
+        """Initialize GeluGrad"""
 
     def infer_shape(self, y_backprop_shape, x_shape, y_shape):
         return x_shape
@@ -726,12 +726,12 @@ class MaxPoolGradGrad(_PoolGrad):
               will be returned without padding. Extra pixels will be discarded.
 
     Inputs:
-        - **origin_input** (Tensor) - Tensor with data format "NCHW", data type should be float16.
+        - **origin_input** (Tensor) - Tensor with data format "NCHW", data type must be float16.
         - **origin_output** (Tensor) - Data type same as `origin_input`.
         - **grad** (Tensor) - Data type same as `origin_input`.
 
     Outputs:
-        Tensor, With data type same as `origin_input`.
+        Tensor, with data type same as `origin_input`.
 
     """
 
@@ -753,7 +753,7 @@ class MaximumGrad(Primitive):
 
     @prim_attr_register
     def __init__(self, grad_x=True, grad_y=True):
-        """Init MaximumGrad"""
+        """Initialize MaximumGrad"""
 
     def __call__(self, x, y, dout):
         raise NotImplementedError
@@ -799,12 +799,12 @@ class MaxPoolGradGradWithArgmax(_PoolGrad):
               will be returned without padding. Extra pixels will be discarded.
 
     Inputs:
-        - **x** (Tensor) - Tensor with data format "NCHW", data type should be float16.
+        - **x** (Tensor) - Tensor with data format "NCHW", data type must be float16.
         - **grad** (Tensor) - Data type same as `x`.
-        - **argmax** (Tensor) - Data type should be uint16 or int64.
+        - **argmax** (Tensor) - Data type must be uint16 or int64.
 
     Outputs:
-        Tensor, With data type same as `x`.
+        Tensor, with data type same as `x`.
 
     """
 
@@ -829,7 +829,7 @@ class MinimumGrad(Primitive):
 
     @prim_attr_register
     def __init__(self, grad_x=True, grad_y=True):
-        """Init MinimumGrad"""
+        """Initialize MinimumGrad"""
 
     def __call__(self, x, y, dout):
         raise NotImplementedError
@@ -844,8 +844,8 @@ class L2NormalizeGrad(PrimitiveWithInfer):
         epsilon (float): A small value added for numerical stability. Default: 1e-4.
 
     Inputs:
-        - **input_x** (Tensor) - Should be the input `weight` of forward operator L2Normalize.
-        - **out** (Tensor) - Should be the output of forward operator L2Normalize.
+        - **input_x** (Tensor) - Must be the input `weight` of forward operator L2Normalize.
+        - **out** (Tensor) - Must be the output of forward operator L2Normalize.
         - **dout** (Tensor) - The backprop of the next layer.
 
     Outputs:
@@ -897,7 +897,7 @@ class LogSoftmaxGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, axis=-1):
-        """init LogSoftmaxGrad"""
+        """Initialize LogSoftmaxGrad"""
         validator.check_value_type("axis", axis, [int], self.name)
 
     def infer_shape(self, dout, logits):
@@ -1106,8 +1106,8 @@ class PReLUGrad(PrimitiveWithInfer):
 
     Inputs:
         - **y_backprop** (Tensor) - Representing the backprop of the next layer.
-        - **input_x** (Tensor) - Should be the input `input_x` of forward operator PRelu.
-        - **weight** (Tensor) - Float Tensor, w > 0, should be the input `weight` of forward operator PRelu.
+        - **input_x** (Tensor) - Must be the input `input_x` of forward operator PRelu.
+        - **weight** (Tensor) - Float Tensor, w > 0, must be the input `weight` of forward operator PRelu.
 
     Outputs:
         Tensor, with the same type as `input_x`.
@@ -1135,7 +1135,7 @@ class ReluGrad(Primitive):
 
     @prim_attr_register
     def __init__(self):
-        """init ReluGrad"""
+        """Initialize ReluGrad"""
         self.init_prim_io_names(inputs=['y_backprop', 'x'], outputs=['output'])
 
     def __call__(self, y_backprop, x):
@@ -1185,7 +1185,7 @@ class EluGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """Init EluGrad"""
+        """Initialize EluGrad"""
 
     def infer_shape(self, y_grad_shape, x_shape):
         return x_shape
@@ -1224,7 +1224,7 @@ class ResizeNearestNeighborGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, align_corners=False):
-        """Init ResizeNearestNeighborGrad"""
+        """Initialize ResizeNearestNeighborGrad"""
         self.init_prim_io_names(inputs=['grads', 'size'], outputs=['y'])
 
     def __infer__(self, grads, size):
@@ -1247,7 +1247,7 @@ class ROIAlignGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, xdiff_shape, pooled_height, pooled_width, spatial_scale, sample_num=2):
-        """init ROIAlignGrad"""
+        """Initialize ROIAlignGrad"""
         validator.check_value_type("pooled_height", pooled_height, [int], self.name)
         validator.check_value_type("pooled_width", pooled_width, [int], self.name)
         validator.check_value_type("spatial_scale", spatial_scale, [float], self.name)
@@ -1319,7 +1319,7 @@ class SigmoidCrossEntropyWithLogitsGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """Init SigmoidCrossEntropyWithLogitsGrad"""
+        """Initialize SigmoidCrossEntropyWithLogitsGrad"""
         self.init_prim_io_names(inputs=['x', 'y', 'dout'], outputs=['x_grad'])
 
     def infer_shape(self, x_shape, y_shape, dout_shape):
@@ -1338,7 +1338,7 @@ class SliceGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init SliceGrad"""
+        """Initialize SliceGrad"""
         self.init_prim_io_names(inputs=['dy', 'x', 'begin', 'size'], outputs=['dx'])
 
     def __infer__(self, dy, x, begin, size):
@@ -1392,7 +1392,7 @@ class StridedSliceGrad(PrimitiveWithInfer):
                  ellipsis_mask=0,
                  new_axis_mask=0,
                  shrink_axis_mask=0):
-        """init StrideSliceGrad"""
+        """Initialize StrideSliceGrad"""
         validator.check_value_type('begin_mask', begin_mask, [int], self.name)
         validator.check_value_type('end_mask', end_mask, [int], self.name)
         validator.check_value_type('ellipsis_mask', ellipsis_mask, [int], self.name)
@@ -1440,7 +1440,7 @@ class StridedSliceGradAICPU(PrimitiveWithInfer):
                  ellipsis_mask=0,
                  new_axis_mask=0,
                  shrink_axis_mask=0):
-        """init StrideSliceGrad"""
+        """Initialize StrideSliceGrad"""
         validator.check_value_type('begin_mask', begin_mask, [int], self.name)
         validator.check_value_type('end_mask', end_mask, [int], self.name)
         validator.check_value_type('ellipsis_mask', ellipsis_mask, [int], self.name)
@@ -1504,7 +1504,7 @@ class MirrorPadGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, mode="REFLECT"):
-        """init MirrorPad"""
+        """Initialize MirrorPad"""
         validator.check_string('mode', mode, ['REFLECT', 'SYMMETRIC'], self.name)
         self.mode = mode
 
@@ -1528,7 +1528,7 @@ class MirrorPadGrad(PrimitiveWithInfer):
 
 class EmbeddingLookupCommGrad(PrimitiveWithInfer):
     """
-    Perform the gradient for the communication part of EmbeddingLookup operator.
+    Performs the gradient for the communication part of EmbeddingLookup operator.
 
     This works ONLY when 'reduce_scatter_flag' is True in 'EmbeddingLookup'. Roughly speaking,
     this primitive is implemented by StridedSlice --> _HostAllGather --> Concat. This primitive runs on host.
@@ -1542,7 +1542,7 @@ class EmbeddingLookupCommGrad(PrimitiveWithInfer):
     def __infer__(self, dy, split_num):
         """
         This primitive is implemented by three steps:
-            1) Split the 'dy' along dimension 0 into 'split_num' parts.
+            1) Splits the 'dy' along dimension 0 into 'split_num' parts.
             2) For each part, perform _HostAllGather((0, 1, 2, 3, 4, 5, 6, 7)) on the host.
             3) After _HostAllGather, there are still 'split_num' parts in each process. Then, perform Concat on them
               along dimension 0.
@@ -1600,7 +1600,7 @@ class AtanGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init AtanGrad"""
+        """Initialize AtanGrad"""
 
     def infer_shape(self, x, dout):
         validator.check("x shape", x, "dout shape", dout, Rel.EQ, self.name)

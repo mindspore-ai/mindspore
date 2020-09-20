@@ -36,7 +36,7 @@ class Geometric(Distribution):
         name (str): The name of the distribution. Default: 'Geometric'.
 
     Note:
-        `probs` should be a proper probability (0 < p < 1).
+        `probs` must be a proper probability (0 < p < 1).
         `dist_spec_args` is `probs`.
 
     Examples:

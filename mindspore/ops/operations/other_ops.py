@@ -23,7 +23,7 @@ from ..primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_
 
 class Assign(PrimitiveWithCheck):
     """
-    Assign `Parameter` with a value.
+    Assigns `Parameter` with a value.
 
     Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -67,7 +67,7 @@ class Assign(PrimitiveWithCheck):
 
 class BoundingBoxEncode(PrimitiveWithInfer):
     """
-    Encode bounding boxes locations.
+    Encodes bounding boxes locations.
 
     Args:
         means (tuple): Means for encoding bounding boxes calculation. Default: (0.0, 0.0, 0.0, 0.0).
@@ -118,7 +118,7 @@ class BoundingBoxEncode(PrimitiveWithInfer):
 
 class BoundingBoxDecode(PrimitiveWithInfer):
     """
-    Decode bounding boxes locations.
+    Decodes bounding boxes locations.
 
     Args:
         means (tuple): The means of deltas calculation. Default: (0.0, 0.0, 0.0, 0.0).
@@ -175,14 +175,14 @@ class BoundingBoxDecode(PrimitiveWithInfer):
 
 class CheckValid(PrimitiveWithInfer):
     """
-    Check bounding box.
+    Checks bounding box.
 
-    Check whether the bounding box cross data and data border are valid.
+    Checks whether the bounding box cross data and data border are valid.
 
     Inputs:
-        - **bboxes** (Tensor) - Bounding boxes tensor with shape (N, 4). Data type should be float16 or float32.
+        - **bboxes** (Tensor) - Bounding boxes tensor with shape (N, 4). Data type must be float16 or float32.
         - **img_metas** (Tensor) - Raw image size information with the format of (height, width, ratio).
-          Data type should be float16 or float32.
+          Data type must be float16 or float32.
 
     Outputs:
         Tensor, the valided tensor.
@@ -228,9 +228,9 @@ class CheckValid(PrimitiveWithInfer):
 
 class IOU(PrimitiveWithInfer):
     r"""
-    Calculate intersection over union for boxes.
+    Calculates intersection over union for boxes.
 
-    Compute the intersection over union (IOU) or the intersection over foreground (IOF) based on the ground-truth and
+    Computes the intersection over union (IOU) or the intersection over foreground (IOF) based on the ground-truth and
     predicted regions.
 
     .. math::
@@ -288,7 +288,7 @@ class IOU(PrimitiveWithInfer):
 
 class MakeRefKey(Primitive):
     """
-    Make a RefKey instance by string. RefKey stores the name of Parameter, can be passed through the functions,
+    Makes a RefKey instance by string. RefKey stores the name of Parameter, can be passed through the functions,
     and used for Assign target.
 
     Args:
@@ -328,7 +328,7 @@ class MakeRefKey(Primitive):
 
 class Partial(Primitive):
     """
-    Make a partial function instance, used for pynative mode.
+    Makes a partial function instance, used for pynative mode.
 
     Inputs:
         - **args** (Union[FunctionType, Tensor]) - The function and bind arguments.
@@ -390,7 +390,7 @@ class CheckBprop(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, prim_to_check=""):
-        """init CheckBprop"""
+        """Initialize CheckBprop"""
         self.prim_to_check = prim_to_check
 
     def infer_shape(self, xshapes, yshapes):
@@ -437,7 +437,7 @@ class CheckBprop(PrimitiveWithInfer):
 
 class ConfusionMatrix(PrimitiveWithInfer):
     r"""
-    Calculate the confusion matrix from labels and predictions.
+    Calculates the confusion matrix from labels and predictions.
 
     Args:
         num_classes (int): The num of classes.
@@ -484,10 +484,10 @@ class ConfusionMatrix(PrimitiveWithInfer):
 
 class PopulationCount(PrimitiveWithInfer):
     r"""
-    Calculate population count.
+    Calculates population count.
 
     Inputs:
-        - **input** (Tensor) -  The data type should be int16 or uint16.
+        - **input** (Tensor) -  The data type must be int16 or uint16.
 
     Outputs:
         Tensor, with the sam  shape as the input.
@@ -512,7 +512,7 @@ class PopulationCount(PrimitiveWithInfer):
 
 class Push(PrimitiveWithInfer):
     """
-    Pushing the inputs of the corresponding optimizer to parameter server.
+    Pushes the inputs of the corresponding optimizer to parameter server.
 
     Args:
         optim_type (string): The optimizer type. Default: 'ApplyMomentum'.
@@ -529,7 +529,7 @@ class Push(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, optim_type='ApplyMomentum', only_shape_indices=None):
-        """init Push"""
+        """Initialize Push"""
         self.add_prim_attr("primitive_target", "CPU")
         self.add_prim_attr("_side_effect", True)
         self.init_prim_io_names(inputs=['optim_inputs', 'optim_input_shapes'], outputs=['key'])
@@ -542,7 +542,7 @@ class Push(PrimitiveWithInfer):
 
 class Pull(PrimitiveWithInfer):
     """
-    Pulling weight from parameter server.
+    Pulls weight from parameter server.
 
     Inputs:
         - **key** (Tensor) - The key of the weight.
@@ -554,7 +554,7 @@ class Pull(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Pull"""
+        """Initialize Pull"""
         self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['key', 'weight'], outputs=['output'])
 
@@ -566,7 +566,7 @@ class Pull(PrimitiveWithInfer):
 
 class identity(Primitive):
     """
-    Make a identify primitive, used for pynative mode.
+    Makes a identify primitive, used for pynative mode.
 
     Inputs:
         - **x** (Any) - identity input value.

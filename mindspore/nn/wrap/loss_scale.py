@@ -64,7 +64,7 @@ class DynamicLossScaleUpdateCell(Cell):
     executed on host).
 
     Args:
-        loss_scale_value (float): Init loss scale.
+        loss_scale_value (float): Initializes loss scale.
         scale_factor (int): Coefficient of increase and decrease.
         scale_window (int): Maximum continuous training steps that do not have overflow.
 
@@ -139,7 +139,7 @@ class FixedLossScaleUpdateCell(Cell):
     For usage, refer to `DynamicLossScaleUpdateCell`.
 
     Args:
-        loss_scale_value (float): Init loss scale.
+        loss_scale_value (float): Initializes loss scale.
 
     Examples:
         >>> net_with_loss = Net()
@@ -173,8 +173,8 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
     Cell as args. The loss scale value can be updated in both host side or device side. The
     TrainOneStepWithLossScaleCell will be compiled to be graph which takes `*inputs` as input data.
     The Tensor type of `scale_sense` is acting as loss scaling value. If you want to update it on host side,
-    the value should be provided. If  the Tensor type of `scale_sense` is not given, the loss scale update logic
-    should be provied by Cell type of `scale_sense`.
+    the value must be provided. If  the Tensor type of `scale_sense` is not given, the loss scale update logic
+    must be provied by Cell type of `scale_sense`.
 
     Args:
         network (Cell): The training network. The network only supports single output.

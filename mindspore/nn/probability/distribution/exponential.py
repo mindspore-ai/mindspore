@@ -33,9 +33,9 @@ class Exponential(Distribution):
         name (str): The name of the distribution. Default: 'Exponential'.
 
     Note:
-        `rate` should be strictly greater than 0.
+        `rate` must be strictly greater than 0.
         `dist_spec_args` is `rate`.
-        `dtype` should be a float type because Exponential distributions are continuous.
+        `dtype` must be a float type because Exponential distributions are continuous.
 
     Examples:
         >>> # To initialize an Exponential distribution of the rate 0.5.
@@ -216,7 +216,7 @@ class Exponential(Distribution):
             rate (Tensor): The rate of the distribution. Default: self.rate.
 
         Note:
-            `value` should be greater or equal to zero.
+            `value` must be greater or equal to zero.
 
         .. math::
             log_pdf(x) = \log(rate) - rate * x if x >= 0 else 0
@@ -239,7 +239,7 @@ class Exponential(Distribution):
             rate (Tensor): The rate of the distribution. Default: self.rate.
 
         Note:
-            `value` should be greater or equal to zero.
+            `value` must be greater or equal to zero.
 
         .. math::
             cdf(x) = 1.0 - \exp(-1 * \lambda * x) if x >= 0 else 0
@@ -261,7 +261,7 @@ class Exponential(Distribution):
             rate (Tensor): The rate of the distribution. Default: self.rate.
 
         Note:
-            `value` should be greater or equal to zero.
+            `value` must be greater or equal to zero.
 
         .. math::
             log_survival_function(x) = -1 * \lambda * x if x >= 0 else 0

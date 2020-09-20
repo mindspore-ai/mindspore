@@ -70,7 +70,7 @@ class _BinaryOp(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init _BinaryOp"""
+        """Initialize _BinaryOp"""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_shape(self, x_shape, y_shape):
@@ -99,7 +99,7 @@ class _BitwiseBinaryOp(_MathBinaryOp):
 
     @prim_attr_register
     def __init__(self):
-        """init _BitwiseBinaryOp"""
+        """Initialize _BitwiseBinaryOp"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
 
     @staticmethod
@@ -166,7 +166,7 @@ class AssignAdd(PrimitiveWithInfer):
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
         - **value** (Union[numbers.Number, Tensor]) - The value to be added to the `variable`.
-          It should have the same shape as `variable` if it is a Tensor.
+          It must have the same shape as `variable` if it is a Tensor.
 
     Examples:
         >>> class Net(Cell):
@@ -190,7 +190,7 @@ class AssignAdd(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init AssignAdd"""
+        """Initialize AssignAdd"""
         self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
 
     def infer_shape(self, variable, value):
@@ -216,7 +216,7 @@ class AssignSub(PrimitiveWithInfer):
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
         - **value** (Union[numbers.Number, Tensor]) - The value to be subtracted from the `variable`.
-          It should have the same shape as `variable` if it is a Tensor.
+          It must have the same shape as `variable` if it is a Tensor.
 
     Examples:
         >>> class Net(Cell):
@@ -241,7 +241,7 @@ class AssignSub(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init AssignSub"""
+        """Initialize AssignSub"""
 
     def infer_shape(self, variable, value):
         return value
@@ -257,8 +257,8 @@ class _Reduce(PrimitiveWithInfer):
     Definition of base class of reduction class operators.
 
     Args:
-         keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                           If False, don't keep these dimensions.
+         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                           If false, don't keep these dimensions.
     """
 
     __mindspore_signature__ = (
@@ -268,7 +268,7 @@ class _Reduce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, keep_dims=False):
-        """init Reduce"""
+        """Initialize Reduce"""
         validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
         self.init_prim_io_names(inputs=['input_x', 'axis'], outputs=['y'])
         self.add_prim_attr("io_format", "ND")
@@ -320,8 +320,8 @@ class ReduceMean(_Reduce):
      The dtype of the tensor to be reduced is number.
 
     Args:
-        keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                          If False, don't keep these dimensions. Default: False.
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default: False.
 
     Inputs:
         - **input_x** (Tensor[Number]) - The input tensor.
@@ -352,8 +352,8 @@ class ReduceSum(_Reduce):
     The dtype of the tensor to be reduced is number.
 
     Args:
-        keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                          If False, don't keep these dimensions. Default: False.
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default: False.
 
     Inputs:
          - **input_x** (Tensor[Number]) - The input tensor.
@@ -378,7 +378,7 @@ class ReduceSum(_Reduce):
 
     @prim_attr_register
     def __init__(self, keep_dims=False):
-        """init ReduceSum"""
+        """Initialize ReduceSum"""
         super(ReduceSum, self).__init__(keep_dims)
         self.__setattr_flag__ = True
 
@@ -390,8 +390,8 @@ class ReduceAll(_Reduce):
     The dtype of the tensor to be reduced is bool.
 
     Args:
-       keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                         If False, don't keep these dimensions.
+       keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                         If false, don't keep these dimensions.
                          Default : False, don't keep these reduced dimensions.
 
     Inputs:
@@ -426,8 +426,8 @@ class ReduceAny(_Reduce):
     The dtype of the tensor to be reduced is bool.
 
     Args:
-       keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                         If False, don't keep these dimensions.
+       keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                         If false, don't keep these dimensions.
                          Default : False, don't keep these reduced dimensions.
 
     Inputs:
@@ -462,8 +462,8 @@ class ReduceMax(_Reduce):
     The dtype of the tensor to be reduced is number.
 
     Args:
-        keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                          If False, don't keep these dimensions.
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions.
                           Default : False, don't keep these reduced dimensions.
 
     Inputs:
@@ -501,8 +501,8 @@ class ReduceMin(_Reduce):
     The dtype of the tensor to be reduced is number.
 
     Args:
-        keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                          If False, don't keep these dimensions.
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions.
                           Default : False, don't keep these reduced dimensions.
 
     Inputs:
@@ -534,8 +534,8 @@ class ReduceProd(_Reduce):
     The dtype of the tensor to be reduced is number.
 
     Args:
-        keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-                          If False, don't keep these dimensions.
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions.
                           Default : False, don't keep these reduced dimensions.
 
     Inputs:
@@ -565,8 +565,8 @@ class CumProd(PrimitiveWithInfer):
     Compute the cumulative product of the tensor x along axis.
 
     Args:
-        exclusive (bool): If True, perform exclusive cumulative product. Default: False.
-        reverse (bool): If True, reverse the result along axis. Default: False
+        exclusive (bool): If true, perform exclusive cumulative product. Default: False.
+        reverse (bool): If true, reverse the result along axis. Default: False
 
     Inputs:
         - **input_x** (Tensor[Number]) - The input tensor.
@@ -616,14 +616,14 @@ class MatMul(PrimitiveWithInfer):
     The rank of input tensors must be `2`.
 
     Args:
-        transpose_a (bool): If True, `a` is transposed before multiplication. Default: False.
-        transpose_b (bool): If True, `b` is transposed before multiplication. Default: False.
+        transpose_a (bool): If true, `a` is transposed before multiplication. Default: False.
+        transpose_b (bool): If true, `b` is transposed before multiplication. Default: False.
 
     Inputs:
         - **input_x** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, C)`. If
-          `transpose_a` is True, its shape should be :math:`(N, C)` after transposing.
+          `transpose_a` is True, its shape must be :math:`(N, C)` after transposing.
         - **input_y** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(C, M)`. If
-          `transpose_b` is True, its shape should be :math:`(C, M)` after transpose.
+          `transpose_b` is True, its shape must be :math:`(C, M)` after transpose.
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N, M)`.
@@ -690,17 +690,17 @@ class BatchMatMul(MatMul):
     The two input tensors must have the same rank and the rank must be not less than `3`.
 
     Args:
-        transpose_a (bool): If True, the last two dimensions of `a` is transposed before multiplication.
+        transpose_a (bool): If true, the last two dimensions of `a` is transposed before multiplication.
             Default: False.
-        transpose_b (bool): If True, the last two dimensions of `b` is transposed before multiplication.
+        transpose_b (bool): If true, the last two dimensions of `b` is transposed before multiplication.
             Default: False.
 
     Inputs:
         - **input_x** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(*B, N, C)`,
           where :math:`*B` represents the batch size which can be multidimensional, :math:`N` and :math:`C` are the
-          size of the last two dimensions. If `transpose_a` is True, its shape should be :math:`(*B, C, N)`.
+          size of the last two dimensions. If `transpose_a` is True, its shape must be :math:`(*B, C, N)`.
         - **input_y** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`. If
-          `transpose_b` is True, its shape should be :math:`(*B, M, C)`.
+          `transpose_b` is True, its shape must be :math:`(*B, M, C)`.
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
@@ -735,8 +735,8 @@ class CumSum(PrimitiveWithInfer):
     Computes the cumulative sum of input tensor along axis.
 
     Args:
-        exclusive (bool): If True, perform exclusive mode. Default: False.
-        reverse (bool): If True, perform inverse cumulative sum. Default: False.
+        exclusive (bool): If true, perform exclusive mode. Default: False.
+        reverse (bool): If true, perform inverse cumulative sum. Default: False.
 
     Inputs:
         - **input** (Tensor) - The input tensor to accumulate.
@@ -758,7 +758,7 @@ class CumSum(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, exclusive=False, reverse=False):
-        """init cumsum"""
+        """Initialize cumsum"""
         cls_name = self.name
         validator.check_value_type('exclusive', exclusive, [bool], cls_name)
         validator.check_value_type('reverse', reverse, [bool], cls_name)
@@ -781,7 +781,7 @@ class AddN(PrimitiveWithInfer):
     """
     Computes addition of all input tensors element-wise.
 
-    All input tensors should have the same shape.
+    All input tensors must have the same shape.
 
     Inputs:
         - **input_x** (Union(tuple[Tensor], list[Tensor])) - The input tuple or list
@@ -932,7 +932,7 @@ class Neg(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Neg"""
+        """Initialize Neg"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_shape(self, input_x):
@@ -980,7 +980,7 @@ class InplaceAdd(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, indices):
-        """init InplaceAdd"""
+        """Initialize InplaceAdd"""
         self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
         self.indices = indices
         validator.check_value_type('indices', indices, [tuple, int], self.name)
@@ -1038,7 +1038,7 @@ class InplaceSub(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, indices):
-        """init InplaceSub"""
+        """Initialize InplaceSub"""
         self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
         self.indices = indices
         validator.check_value_type('indices', indices, [tuple, int], self.name)
@@ -1198,7 +1198,7 @@ class Square(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Square"""
+        """Initialize Square"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
@@ -1222,7 +1222,7 @@ class Rsqrt(PrimitiveWithInfer):
     Computes reciprocal of square root of input tensor element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input of Rsqrt. Each element should be a non-negative number.
+        - **input_x** (Tensor) - The input of Rsqrt. Each element must be a non-negative number.
 
     Outputs:
         Tensor, has the same type and shape as `input_x`.
@@ -1236,7 +1236,7 @@ class Rsqrt(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Rsqrt"""
+        """Initialize Rsqrt"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
@@ -1274,7 +1274,7 @@ class Sqrt(PrimitiveWithCheck):
 
     @prim_attr_register
     def __init__(self):
-        """init Sqrt"""
+        """Initialize Sqrt"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def check_dtype(self, x_type):
@@ -1308,7 +1308,7 @@ class Reciprocal(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Reciprocal"""
+        """Initialize Reciprocal"""
         if context.get_context("device_target") == "GPU":
             self.target = "GPU"
         else:
@@ -1395,7 +1395,7 @@ class Exp(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Exp"""
+        """Initialize Exp"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_shape(self, x_shape):
@@ -1433,7 +1433,7 @@ class Expm1(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Exp"""
+        """Initialize Exp"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_shape(self, x_shape):
@@ -1576,7 +1576,7 @@ class Erf(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Erf"""
+        """Initialize Erf"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_shape(self, x_shape):
@@ -1606,7 +1606,7 @@ class Erfc(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Erfc"""
+        """Initialize Erfc"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_shape(self, x_shape):
@@ -1750,7 +1750,7 @@ class Div(_MathBinaryOp):
           a bool or a tensor whose data type is number or bool.
         - **input_y** (Union[Tensor, Number, bool]) - When the first input is a tensor, The second input
           could be a number, a bool, or a tensor whose data type is number or bool. When the first input
-          is a number or a bool, the second input should be a tensor whose data type is number or bool.
+          is a number or a bool, the second input must be a tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -1923,7 +1923,7 @@ class Mod(_MathBinaryOp):
         - **input_x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
         - **input_y** (Union[Tensor, Number]) - When the first input is a tensor, The second input
           could be a number or a tensor whose data type is number. When the first input is a number,
-          the second input should be a tensor whose data type is number.
+          the second input must be a tensor whose data type is number.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -2121,7 +2121,7 @@ class Acosh(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Acosh"""
+        """Initialize Acosh"""
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -2150,7 +2150,7 @@ class Cosh(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Cosh"""
+        """Initialize Cosh"""
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -2179,7 +2179,7 @@ class Asinh(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Asinh"""
+        """Initialize Asinh"""
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -2208,7 +2208,7 @@ class Sinh(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Sinh"""
+        """Initialize Sinh"""
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -2297,7 +2297,7 @@ class ApproximateEqual(_LogicBinaryOp):
 
     @prim_attr_register
     def __init__(self, tolerance=1e-05):
-        """Init ApproximateEqual"""
+        """Initialize ApproximateEqual"""
         validator.check_value_type("tolerance", tolerance, [float], self.name)
 
     def infer_shape(self, x_shape, y_shape):
@@ -2315,7 +2315,7 @@ class EqualCount(PrimitiveWithInfer):
     """
     Computes the number of the same elements of two tensors.
 
-    The two input tensors should have the same data type and shape.
+    The two input tensors must have the same data type and shape.
 
     Inputs:
         - **input_x** (Tensor) - The first input tensor.
@@ -2334,7 +2334,7 @@ class EqualCount(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init EqualCount"""
+        """Initialize EqualCount"""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_shape(self, x_shape, y_shape):
@@ -2550,7 +2550,7 @@ class LogicalNot(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init LogicalNot"""
+        """Initialize LogicalNot"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
@@ -2568,9 +2568,9 @@ class LogicalAnd(_LogicBinaryOp):
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be bool.
+    and the data types of them must be bool.
     When the inputs are one tensor and one bool, the bool object could only be a constant,
-    and the data type of the tensor should be bool.
+    and the data type of the tensor must be bool.
 
     Inputs:
         - **input_x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.
@@ -2599,9 +2599,9 @@ class LogicalOr(_LogicBinaryOp):
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be bool.
+    and the data types of them must be bool.
     When the inputs are one tensor and one bool, the bool object could only be a constant,
-    and the data type of the tensor should be bool.
+    and the data type of the tensor must be bool.
 
     Inputs:
         - **input_x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.
@@ -2641,7 +2641,7 @@ class IsNan(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init IsNan"""
+        """Initialize IsNan"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
@@ -2669,7 +2669,7 @@ class IsInf(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init IsInf"""
+        """Initialize IsInf"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
@@ -2698,7 +2698,7 @@ class IsFinite(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init IsFinite"""
+        """Initialize IsFinite"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
@@ -2729,7 +2729,7 @@ class FloatStatus(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init FloatStatus"""
+        """Initialize FloatStatus"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
@@ -2760,7 +2760,7 @@ class NPUAllocFloatStatus(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init NPUAllocFloatStatus"""
+        """Initialize NPUAllocFloatStatus"""
         self.add_prim_attr("_side_effect_flag", True)
 
     def infer_shape(self):
@@ -2795,7 +2795,7 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init NPUGetFloatStatus"""
+        """Initialize NPUGetFloatStatus"""
         self.add_prim_attr("_side_effect_flag", True)
 
     def infer_shape(self, x_shape):
@@ -2838,7 +2838,7 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init NPUClearFloatStatus"""
+        """Initialize NPUClearFloatStatus"""
         self.add_prim_attr("_side_effect_flag", True)
 
     def infer_shape(self, x_shape):
@@ -2870,7 +2870,7 @@ class Cos(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Cos"""
+        """Initialize Cos"""
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -2898,7 +2898,7 @@ class ACos(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init ACos"""
+        """Initialize ACos"""
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -2926,7 +2926,7 @@ class Sin(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """Init Sin."""
+        """Initialize Sin."""
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -2955,7 +2955,7 @@ class Asin(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Asin"""
+        """Initialize Asin"""
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -3006,7 +3006,7 @@ class NMSWithMask(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, iou_threshold=0.5):
-        """Init NMSWithMask"""
+        """Initialize NMSWithMask"""
         validator.check_value_type("iou_threshold", iou_threshold, [float], self.name)
         self.init_prim_io_names(inputs=['bboxes'], outputs=['selected_boxes', 'selected_idx', 'selected_mask'])
         self.is_ge = context.get_context("enable_ge")
@@ -3043,7 +3043,7 @@ class Abs(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Abs"""
+        """Initialize Abs"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
@@ -3115,7 +3115,7 @@ class Round(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Round"""
+        """Initialize Round"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
@@ -3131,7 +3131,7 @@ class Tan(PrimitiveWithInfer):
     Computes tangent of `input_x` element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. Data type should be
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. Data type must be
           float16, float32 or int32.
 
     Outputs:
@@ -3145,7 +3145,7 @@ class Tan(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Tan"""
+        """Initialize Tan"""
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -3268,7 +3268,7 @@ class SquareSumAll(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init SquareSumAll"""
+        """Initialize SquareSumAll"""
 
     def infer_shape(self, x_shape, y_shape):
         validator.check("x1_shape", x_shape, "x2_shape", y_shape, Rel.EQ, self.name)
@@ -3366,7 +3366,7 @@ class BesselI0e(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
-        Tensor, has the same shape as `input_x`. Data type should be float16 or float32.
+        Tensor, has the same shape as `input_x`. Data type must be float16 or float32.
 
     Examples:
         >>> bessel_i0e = P.BesselI0e()
@@ -3377,7 +3377,7 @@ class BesselI0e(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init BesselI0e"""
+        """Initialize BesselI0e"""
 
     def infer_shape(self, x):
         return x
@@ -3395,7 +3395,7 @@ class BesselI1e(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
-        Tensor, has the same shape as `input_x`. Data type should be float16 or float32.
+        Tensor, has the same shape as `input_x`. Data type must be float16 or float32.
 
     Examples:
         >>> bessel_i1e = P.BesselI1e()
@@ -3406,7 +3406,7 @@ class BesselI1e(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init BesselI1e"""
+        """Initialize BesselI1e"""
 
     def infer_shape(self, x):
         return x
@@ -3494,7 +3494,7 @@ class Eps(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init Eps"""
+        """Initialize Eps"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['y'])
 
     def __infer__(self, input_x):

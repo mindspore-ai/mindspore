@@ -211,7 +211,7 @@ class ConvReparam(_ConvVariational):
 
             - pad: Implicit paddings on both sides of the input. The number
               of `padding` will be padded to the input Tensor borders.
-              `padding` should be greater than or equal to 0.
+              `padding` must be greater than or equal to 0.
 
         padding (Union[int, tuple[int]]): Implicit paddings on both sides of
             the input. Default: 0.
@@ -219,27 +219,27 @@ class ConvReparam(_ConvVariational):
             of 2 integers. This parameter specifies the dilation rate of the
             dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling
-            location. Its value should be greater or equal to 1 and bounded
+            location. Its value must be greater or equal to 1 and bounded
             by the height and width of the input. Default: 1.
-        group (int): Split filter into groups, `in_ channels` and
-            `out_channels` should be divisible by the number of groups.
+        group (int): Splits filter into groups, `in_ channels` and
+            `out_channels` must be divisible by the number of groups.
             Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector.
             Default: False.
         weight_prior_fn: The prior distribution for weight.
-            It should return a mindspore distribution instance.
+            It must return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
             normal distribution). The current version only supports normal distribution.
         weight_posterior_fn: The posterior distribution for sampling weight.
-            It should be a function handle which returns a mindspore
+            It must be a function handle which returns a mindspore
             distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
             The current version only supports normal distribution.
-        bias_prior_fn: The prior distribution for bias vector. It should return
+        bias_prior_fn: The prior distribution for bias vector. It must return
             a mindspore distribution. Default: NormalPrior(which creates an
             instance of standard normal distribution). The current version
             only supports normal distribution.
         bias_posterior_fn: The posterior distribution for sampling bias vector.
-            It should be a function handle which returns a mindspore
+            It must be a function handle which returns a mindspore
             distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
             The current version only supports normal distribution.
 

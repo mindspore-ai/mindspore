@@ -159,7 +159,7 @@ class AvgPool2d(_PoolNd):
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value.
-            The data type of kernel_size should be int and the value represents the height and width,
+            The data type of kernel_size must be int and the value represents the height and width,
             or a tuple of two int numbers that represent height and width respectively.
             Default: 1.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents

@@ -614,7 +614,7 @@ class Cell(Cell_):
         """
         Defines the computation to be performed.
 
-        This method should be overridden by all subclasses.
+        This method must be overridden by all subclasses.
 
         Note:
             The inputs of the top cell only allow Tensor.
@@ -748,7 +748,7 @@ class Cell(Cell_):
         Yields parameters of this cell. If `expand` is True, yield parameters of this cell and all subcells.
 
         Args:
-            expand (bool): If True, yields parameters of this cell and all subcells. Otherwise, only yield parameters
+            expand (bool): If true, yields parameters of this cell and all subcells. Otherwise, only yield parameters
                            that are direct members of this cell. Default: True.
 
         Examples:
@@ -775,7 +775,7 @@ class Cell(Cell_):
 
         Args:
             name_prefix (str): Namespace. Default: ''.
-            expand (bool): If True, yields parameters of this cell and all subcells. Otherwise, only yield parameters
+            expand (bool): If true, yields parameters of this cell and all subcells. Otherwise, only yield parameters
                            that are direct members of this cell. Default: True.
 
         Examples:
@@ -990,7 +990,7 @@ class Cell(Cell_):
         Set the cell backward hook function. Note that this function is only supported in Pynative Mode.
 
         Note:
-            fn should be defined as the following code. `cell_name` is the name of registered cell.
+            fn must be defined as the following code. `cell_name` is the name of registered cell.
             `grad_input` is gradient passed to the cell. `grad_output` is the gradient computed and passed to the
             next cell or primitve, which may be modified and returned.
             >>> hook_fn(cell_name, grad_input, grad_output) -> Tensor or None

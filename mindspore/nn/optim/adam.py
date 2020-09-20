@@ -166,10 +166,10 @@ class Adam(Optimizer):
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
-            the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
+            the element in `params` must be class `Parameter`. When the `params` is a list of `dict`, the "params",
             "lr", "weight_decay" and "order_params" are the keys can be parsed.
 
-            - params: Required. The value should be a list of `Parameter`.
+            - params: Required. The value must be a list of `Parameter`.
 
             - lr: Optional. If "lr" is in the keys, the value of the corresponding learning rate will be used.
               If not, the `learning_rate` in the API will be used.
@@ -177,16 +177,16 @@ class Adam(Optimizer):
             - weight_decay: Optional. If "weight_decay" is in the keys, the value of the corresponding weight decay
               will be used. If not, the `weight_decay` in the API will be used.
 
-            - order_params: Optional. If "order_params" is in the keys, the value should be the order of parameters and
+            - order_params: Optional. If "order_params" is in the keys, the value must be the order of parameters and
               the order will be followed in the optimizer. There are no other keys in the `dict` and the parameters
-              which in the 'order_params' should be in one of group parameters.
+              which in the 'order_params' must be in one of group parameters.
 
         learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning rate.
             When the learning_rate is an Iterable or a Tensor in a 1D dimension, use the dynamic learning rate, then
             the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
             use dynamic learning rate, the i-th learning rate will be calculated during the process of training
             according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor in a zero
-            dimension, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            dimension, use fixed learning rate. Other cases are not supported. The float learning rate must be
             equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
             Default: 1e-3.
         beta1 (float): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
@@ -201,7 +201,7 @@ class Adam(Optimizer):
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
             If true, update the gradients using NAG.
             If false, update the gradients without using NAG. Default: False.
-        weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
+        weight_decay (float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
         loss_scale (float): A floating point value for the loss scale. Should be greater than 0. Default: 1.0.
 
     Inputs:
@@ -290,10 +290,10 @@ class AdamWeightDecay(Optimizer):
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
-            the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
+            the element in `params` must be class `Parameter`. When the `params` is a list of `dict`, the "params",
             "lr", "weight_decay" and "order_params" are the keys can be parsed.
 
-            - params: Required. The value should be a list of `Parameter`.
+            - params: Required. The value must be a list of `Parameter`.
 
             - lr: Optional. If "lr" is in the keys, the value of the corresponding learning rate will be used.
               If not, the `learning_rate` in the API will be used.
@@ -301,16 +301,16 @@ class AdamWeightDecay(Optimizer):
             - weight_decay: Optional. If "weight_decay" is in the keys, the value of the corresponding weight decay
               will be used. If not, the `weight_decay` in the API will be used.
 
-            - order_params: Optional. If "order_params" is in the keys, the value should be the order of parameters and
+            - order_params: Optional. If "order_params" is in the keys, the value must be the order of parameters and
               the order will be followed in the optimizer. There are no other keys in the `dict` and the parameters
-              which in the 'order_params' should be in one of group parameters.
+              which in the 'order_params' must be in one of group parameters.
 
         learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning rate.
             When the learning_rate is an Iterable or a Tensor in a 1D dimension, use the dynamic learning rate, then
             the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
             use dynamic learning rate, the i-th learning rate will be calculated during the process of training
             according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor in a zero
-            dimension, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            dimension, use fixed learning rate. Other cases are not supported. The float learning rate must be
             equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
             Default: 1e-3.
         beta1 (float): The exponential decay rate for the 1st moment estimations. Default: 0.9.
@@ -319,7 +319,7 @@ class AdamWeightDecay(Optimizer):
             Should be in range (0.0, 1.0).
         eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
             Should be greater than 0.
-        weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
+        weight_decay (float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.

@@ -26,7 +26,7 @@ class CropAndResize(PrimitiveWithInfer):
     Extracts crops from the input image tensor and resizes them.
 
     Note:
-        In case that the output shape depends on crop_size, the crop_size should be constant.
+        In case that the output shape depends on crop_size, the crop_size must be constant.
 
     Args:
         method (str):  	An optional string that specifies the sampling method for resizing.
@@ -79,7 +79,7 @@ class CropAndResize(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, method="bilinear", extrapolation_value=0.0):
-        """init CropAndResize"""
+        """Initialize CropAndResize"""
         self.init_prim_io_names(inputs=['x', 'boxes', 'box_index', 'crop_size'], outputs=['y'])
         validator.check_value_type("method", method, [str], self.name)
         validator.check_string("method", method, ["bilinear", "nearest", "bilinear_v2"], self.name)

@@ -27,8 +27,8 @@ class ControlDepend(Primitive):
 
     In many cases, we need to control the execution order of operations. ControlDepend is designed for this.
     ControlDepend will instruct the execution engine to run the operations in a specific order. ControlDepend
-    tells the engine that the destination operations should depend on the source operation which means the source
-    operations should be executed before the destination.
+    tells the engine that the destination operations must depend on the source operation which means the source
+    operations must be executed before the destination.
 
     Note:
         This operation does not work in `PYNATIVE_MODE`.
@@ -86,7 +86,7 @@ class GeSwitch(PrimitiveWithInfer):
 
     Inputs:
         - **data** (Union[Tensor, Number]) - The data to be used for switch control.
-        - **pred** (Tensor) - It should be a scalar whose type is bool and shape is `()`, It is used as condition for
+        - **pred** (Tensor) - It must be a scalar whose type is bool and shape is `()`, It is used as condition for
           switch control.
     Outputs:
         tuple. Output is tuple(false_output, true_output). The Elements in the tuple has the same shape of input data.
@@ -142,10 +142,10 @@ class Merge(PrimitiveWithInfer):
     """
     Merges all input data to one.
 
-    One and only one of the inputs should be selected as the output
+    One and only one of the inputs must be selected as the output
 
     Inputs:
-        - **inputs** (Union(Tuple, List)) - The data to be merged. All tuple elements should have the same data type.
+        - **inputs** (Union(Tuple, List)) - The data to be merged. All tuple elements must have the same data type.
 
     Outputs:
         tuple. Output is tuple(`data`, `output_index`). The `data` has the same shape of `inputs` element.
