@@ -104,6 +104,7 @@ int GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, co
   }
   auto bias_add_weight = bias_node->input(kAddWEIGHTINDEX);
   if (CheckIfNodeIsParam(bias_add_weight) != lite::RET_OK) {
+      delete[] add_bias_data;
       return lite::RET_INVALID_OP_ATTR;
   }
   auto add_weight_param = bias_add_weight->cast<ParameterPtr>()->default_param();
