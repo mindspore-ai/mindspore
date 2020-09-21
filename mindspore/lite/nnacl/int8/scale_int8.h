@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_SCALE_H_
-#define MINDSPORE_LITE_NNACL_SCALE_H_
+#ifndef MINDSPORE_LITE_NNACL_SCALE_INT8_H_
+#define MINDSPORE_LITE_NNACL_SCALE_INT8_H_
 
-#include <mindspore/lite/nnacl/quantization/quantize.h>
 #include "nnacl/op_base.h"
-typedef struct ScaleParameter {
-  OpParameter op_parameter_;
-  int outer_size_;
-  int axis_size_;
-  int inner_size_;
-  int axis_;
-  bool const_scale_;
-  bool const_offset_;
-  QuantMulArg scale_mul_arg_;
-  QuantMulArg offset_mul_arg_;
-  int input_zp_;
-  int scale_zp_;
-  int offset_zp_;
-  int output_zp_;
-} ScaleParameter;
+#include "nnacl/scale.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+void DoScaleInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, int task_id,
+                 const ScaleParameter *scale_param);
+void DoScaleWithBiasInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, const int8_t *offset,
+                         int task_id, const ScaleParameter *scale_param);
+#ifdef __cplusplus
+}
+#endif
 
-#endif  // MINDSPORE_LITE_NNACL_SCALE_H_
+#endif  // MINDSPORE_LITE_NNACL_SCALE_INT8_H_
