@@ -269,7 +269,7 @@ class Tensor : public MetaTensor {
 
   std::string id() const { return id_; }
   TypePtr cast_dtype() { return cast_dtype_; }
-  void set_cast_dtype(TypePtr dtype) { cast_dtype_ = dtype; }
+  void set_cast_dtype(TypePtr dtype = nullptr) { cast_dtype_ = dtype; }
 
   void SetNeedWait(bool need_wait) {
     if (event_ != nullptr) {

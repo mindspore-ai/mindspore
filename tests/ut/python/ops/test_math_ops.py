@@ -464,7 +464,7 @@ raise_set = [
         'block': (lambda x: P.StridedSlice(new_axis_mask="1.1"), {'exception': TypeError}),
         'desc_inputs': [0]}),
     ('AssignAdd_Error', {
-        'block': (P.AssignAdd(), {'exception': IndexError}),
+        'block': (P.AssignAdd(), {'exception': ValueError}),
         'desc_inputs': [[1]]}),
 ]
 
