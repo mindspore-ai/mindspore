@@ -22,7 +22,7 @@ from mindspore.ops import composite as C
 from mindspore.common import set_seed
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-
+set_seed(20)
 
 class Net(nn.Cell):
     def __init__(self, shape, seed=0):
@@ -31,7 +31,6 @@ class Net(nn.Cell):
         self.seed = seed
 
     def construct(self, mean):
-        set_seed(20)
         return C.poisson(self.shape, mean, self.seed)
 
 
