@@ -103,7 +103,8 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
       desc.data_type = kNumberTypeFloat16;
       new_tensor->set_data_type(kNumberTypeFloat16);
     }
-    OpenCLToFormatParameter *parameter = new (std::nothrow) OpenCLToFormatParameter;
+    OpenCLToFormatParameter *parameter =
+      static_cast<OpenCLToFormatParameter *>(malloc(sizeof(OpenCLToFormatParameter)));
     MS_ASSERT(parameter);
     if (parameter == nullptr) {
       MS_LOG(ERROR) << "SubGraphOpenCLKernel new parameter failed!";
