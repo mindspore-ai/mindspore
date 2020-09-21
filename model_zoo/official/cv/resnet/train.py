@@ -188,4 +188,4 @@ if __name__ == '__main__':
     if args_opt.net == "se-resnet50":
         config.epoch_size = config.train_epoch_size
     model.train(config.epoch_size - config.pretrain_epoch_size, dataset, callbacks=cb,
-                dataset_sink_mode=(not args_opt.parameter_server))
+                sink_size=dataset.get_dataset_size(), dataset_sink_mode=(not args_opt.parameter_server))
