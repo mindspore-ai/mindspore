@@ -201,11 +201,6 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
                   metrics={'acc': DistAccuracy(batch_size=config.eval_batch_size, device_num=device_num)},
                   eval_network=dist_eval_network)
 
-    # model init
-    print("init_start", device_id)
-    model.init(dataset, eval_dataset)
-    print("init_stop", device_id)
-
     # callbacks
     loss_cb = LossGet(1, step_size)
 
