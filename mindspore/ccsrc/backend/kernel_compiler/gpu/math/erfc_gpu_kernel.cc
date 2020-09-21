@@ -20,5 +20,7 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(Erfc, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                       ErfcGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(Erfc, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+                      ErfcGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore

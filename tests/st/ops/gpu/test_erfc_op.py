@@ -37,10 +37,21 @@ class NetErfc(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_exp():
+def test_erfc_fp32():
     erfc = NetErfc()
-    x = np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32)
+    x = np.random.rand(3, 8).astype(np.float32)
     output = erfc(Tensor(x, dtype=dtype.float32))
     expect = special.erfc(x)
     tol = 1e-6
+    assert (np.abs(output.asnumpy() - expect) < tol).all()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_erfc_fp16():
+    erfc = NetErfc()
+    x = np.random.rand(3, 8).astype(np.float16)
+    output = erfc(Tensor(x, dtype=dtype.float16))
+    expect = special.erfc(x)
+    tol = 1e-3
     assert (np.abs(output.asnumpy() - expect) < tol).all()
