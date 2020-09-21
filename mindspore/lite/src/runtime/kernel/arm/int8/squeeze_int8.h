@@ -31,7 +31,9 @@ class SqueezeInt8CPUKernel : public SqueezeBaseCPUKernel {
   SqueezeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
-      : SqueezeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : SqueezeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
+    para_ = reinterpret_cast<SqueezeParameter *>(parameter);
+  }
   ~SqueezeInt8CPUKernel() override { delete quant_Squeeze_parm_; }
 
   int Init() override;

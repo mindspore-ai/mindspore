@@ -48,10 +48,20 @@ int ExpandDimsCPUKernel::DoExpandDims(int task_id) {
     return RET_OK;
   }
   int offset = task_id * thread_sz_stride_;
-  int ret = ExpandDims(in_ptr_ + offset, out_ptr_ + offset, size * sizeof(float));
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ExpandDimsRun error task_id[" << task_id << "] error_code[" << ret << "]";
-    return ret;
+  if (this->in_tensors_[0]->data_type() == kNumberTypeFloat32) {
+    int ret = ExpandDims(reinterpret_cast<float *>(in_ptr_) + offset,
+                         reinterpret_cast<float *>(out_ptr_) + offset, size * sizeof(float));
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ExpandDimsRun error task_id[" << task_id << "] error_code[" << ret << "]";
+      return ret;
+    }
+  } else if (this->in_tensors_[0]->data_type() == kNumberTypeInt8) {
+    int ret = ExpandDims(reinterpret_cast<int8_t *>(in_ptr_) + offset,
+                         reinterpret_cast<int8_t *>(out_ptr_) + offset, size * sizeof(int8_t));
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ExpandDimsRun error task_id[" << task_id << "] error_code[" << ret << "]";
+      return ret;
+    }
   }
   return RET_OK;
 }
@@ -72,8 +82,8 @@ int ExpandDimsCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  in_ptr_ = in_tensors_.at(0)->MutableData();
+  out_ptr_ = out_tensors_.at(0)->MutableData();
   auto ret = ParallelLaunch(this->context_->thread_pool_, ExpandDimsRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ExpandDimsRun error error_code[" << ret << "]";
@@ -105,4 +115,5 @@ kernel::LiteKernel *CpuExpandsDimsFp32KernelCreator(const std::vector<lite::Tens
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ExpandDims, CpuExpandsDimsFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ExpandDims, CpuExpandsDimsFp32KernelCreator)
 }  // namespace mindspore::kernel
