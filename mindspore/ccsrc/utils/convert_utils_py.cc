@@ -146,6 +146,9 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
     ret = py::none();
   } else if (value->isa<None>()) {
     ret = py::none();
+  } else if (value->isa<FuncGraph>()) {
+    // FuncGraph is not used in the backend, return None
+    ret = py::none();
   } else {
     MS_LOG(EXCEPTION) << "Unsupported convert value: " << value->ToString() << " to a PyData.";
   }
