@@ -62,10 +62,12 @@ class ExponentialDecayLR(LearningRateSchedule):
         decayed\_learning\_rate[i] = learning\_rate * decay\_rate^{p}
 
     Where :
+
     .. math::
         p = \frac{current\_step}{decay\_steps}
 
     If `is_stair` is True, the formula is :
+
     .. math::
         p = floor(\frac{current\_step}{decay\_steps})
 
@@ -116,10 +118,12 @@ class NaturalExpDecayLR(LearningRateSchedule):
         decayed\_learning\_rate[i] = learning\_rate * e^{-decay\_rate * p}
 
     Where :
+
     .. math::
         p = \frac{current\_step}{decay\_steps}
 
     If `is_stair` is True, the formula is :
+
     .. math::
         p = floor(\frac{current\_step}{decay\_steps})
 
@@ -171,10 +175,12 @@ class InverseDecayLR(LearningRateSchedule):
         decayed\_learning\_rate[i] = learning\_rate / (1 + decay\_rate * p)
 
     Where :
+
     .. math::
         p = \frac{current\_step}{decay\_steps}
 
     If `is_stair` is True, The formula is :
+
     .. math::
         p = floor(\frac{current\_step}{decay\_steps})
 
