@@ -17,7 +17,6 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _executor
 from ..ut_filter import non_graph_engine
 
 
@@ -53,15 +52,6 @@ def test_SoftmaxCrossEntropyWithLogits_reduce():
     labels = Tensor(np.random.randint(0, 9, [100, 10]).astype(np.float32))
     loss(logits, labels)
 
-
-def test_SoftmaxCrossEntropyExpand():
-    from mindspore import context
-    context.set_context(mode=context.GRAPH_MODE)
-    loss = nn.SoftmaxCrossEntropyExpand()
-
-    logits = Tensor(np.random.randint(0, 9, [100, 10]).astype(np.float32))
-    labels = Tensor(np.random.randint(0, 9, [10,]).astype(np.float32))
-    _executor.compile(loss, logits, labels)
 
 def test_cosine_embedding_loss():
     """ test CosineEmbeddingLoss """
