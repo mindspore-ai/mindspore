@@ -14,18 +14,19 @@
 # ============================================================================
 
 
+import math
 import os
 import random
-import math
-import cv2
-import pyclipper
-import numpy as np
-from PIL import Image
+
 import Polygon as plg
+import cv2
+import numpy as np
+import pyclipper
+from PIL import Image
+from src.config import config
+
 import mindspore.dataset.engine as de
 import mindspore.dataset.vision.py_transforms as py_transforms
-
-from src.config import config
 
 __all__ = ['train_dataset_creator', 'test_dataset_creator']
 
