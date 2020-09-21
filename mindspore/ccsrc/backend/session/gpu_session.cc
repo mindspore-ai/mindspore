@@ -344,6 +344,8 @@ void GPUSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   if (debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
     E2eDumpUtil::DumpData(kernel_graph.get(), debugger_.get());
+  } else {
+    DumpJsonParser::GetInstance().UpdateDumpIter();
   }
 }
 
@@ -365,6 +367,8 @@ void GPUSession::PostIterationDbg(const std::shared_ptr<KernelGraph> &kernel_gra
   // debug used for dump
   if (debugger_ && dump_enabled) {
     Dump(kernel_graph);
+  } else {
+    DumpJsonParser::GetInstance().UpdateDumpIter();
   }
   if (debugger_) {
     debugger_->PostExecute();

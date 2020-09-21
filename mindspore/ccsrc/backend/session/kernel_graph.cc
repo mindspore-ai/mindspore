@@ -731,7 +731,7 @@ void GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNodePtr> *r
   MS_EXCEPTION_IF_NULL(result);
   MS_EXCEPTION_IF_NULL(visited);
   if (visited->find(anf_node) != visited->end()) {
-    MS_LOG(WARNING) << "Node:" << anf_node->fullname_with_scope() << " has alreday been visited";
+    MS_LOG(INFO) << "Node:" << anf_node->fullname_with_scope() << " has alreday been visited";
     return;
   }
   visited->insert(anf_node);
