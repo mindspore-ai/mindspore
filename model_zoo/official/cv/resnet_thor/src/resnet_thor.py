@@ -273,7 +273,8 @@ class ResNet(nn.Cell):
                  damping,
                  loss_scale,
                  frequency,
-                 batch_size):
+                 batch_size,
+                 include_top=True):
         super(ResNet, self).__init__()
 
         if not len(layer_nums) == len(in_channels) == len(out_channels) == 4:
@@ -321,11 +322,12 @@ class ResNet(nn.Cell):
                                        loss_scale=loss_scale,
                                        frequency=frequency,
                                        batch_size=batch_size)
-
-        self.mean = P.ReduceMean(keep_dims=True)
-        self.flatten = nn.Flatten()
-        self.end_point = _fc(out_channels[3], num_classes, damping=damping, loss_scale=loss_scale,
-                             frequency=frequency, batch_size=batch_size)
+        self.include_top = include_top
+        if self.include_top:
+            self.mean = P.ReduceMean(keep_dims=True)
+            self.flatten = nn.Flatten()
+            self.end_point = _fc(out_channels[3], num_classes, damping=damping, loss_scale=loss_scale,
+                                 frequency=frequency, batch_size=batch_size)
 
     def _make_layer(self, block, layer_num, in_channel, out_channel, stride,
                     damping, loss_scale, frequency, batch_size):
@@ -371,6 +373,9 @@ class ResNet(nn.Cell):
         c4 = self.layer3(c3)
         c5 = self.layer4(c4)
 
+        if not self.include_top:
+            return x
+
         out = self.mean(c5, (2, 3))
         out = self.flatten(out)
         out = self.end_point(out)
@@ -378,7 +383,7 @@ class ResNet(nn.Cell):
         return out
 
 
-def resnet50(class_num=10, damping=0.03, loss_scale=1, frequency=278, batch_size=32):
+def resnet50(class_num=10, damping=0.03, loss_scale=1, frequency=278, batch_size=32, include_top=True):
     """
     Get ResNet50 neural network.
 
@@ -400,4 +405,5 @@ def resnet50(class_num=10, damping=0.03, loss_scale=1, frequency=278, batch_size
                   damping,
                   loss_scale,
                   frequency,
-                  batch_size)
+                  batch_size,
+                  include_top)
