@@ -118,7 +118,7 @@ std::pair<MSRStatus, json> ShardHeader::ValidateHeader(const std::string &path) 
 
   if (header_size > kMaxHeaderSize) {
     fin.close();
-    MS_LOG(ERROR) << "Invalid file. path: " << path;
+    MS_LOG(ERROR) << "Invalid file content. path: " << path;
     return {FAILED, json_header};
   }
 
