@@ -71,7 +71,7 @@ def check_int_positive(arg_name, arg_value, op_name):
 
 
 @constexpr
-def check_non_negative(arg_name, arg_value, op_name):
+def check_int_non_negative(arg_name, arg_value, op_name):
     """Int type judgment."""
     if isinstance(arg_value, int):
         if arg_value >= 0:
