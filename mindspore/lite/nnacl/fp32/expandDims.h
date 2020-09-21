@@ -27,7 +27,7 @@ typedef struct ExpandDimsParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ExpandDims(float *input_ptr, float *output_ptr, size_t data_size);
+int ExpandDims(void *input_ptr, void *output_ptr, size_t data_size);
 #ifdef __cplusplus
 }
 #endif

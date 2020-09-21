@@ -29,7 +29,7 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 namespace {
-constexpr int kInputNum = 1;
+constexpr int kMaxInputNum = 2;
 constexpr int kOutputNum = 1;
 constexpr int kRank = 4;
 }  // namespace
@@ -46,15 +46,35 @@ int ResizeBaseCPUKernel::CheckParameters() {
     MS_LOG(ERROR) << "Resize method should be bilinear or nearest_neighbor, but got " << method_;
     return RET_INVALID_OP_ATTR;
   }
-  new_height_ = parameter->new_height_;
-  if (new_height_ < 1) {
-    MS_LOG(ERROR) << "Resize new_height should >= 1, but got " << new_height_;
-    return RET_INVALID_OP_ATTR;
-  }
-  new_width_ = parameter->new_width_;
-  if (new_width_ < 1) {
-    MS_LOG(ERROR) << "Resize new_width should >= 1, but got " << new_width_;
-    return RET_INVALID_OP_ATTR;
+  if (this->in_tensors_.size() == lite::kSingleNum) {
+    new_height_ = parameter->new_height_;
+    if (new_height_ < 1) {
+      MS_LOG(ERROR) << "Resize new_height should >= 1, but got " << new_height_;
+      return RET_INVALID_OP_ATTR;
+    }
+    new_width_ = parameter->new_width_;
+    if (new_width_ < 1) {
+      MS_LOG(ERROR) << "Resize new_width should >= 1, but got " << new_width_;
+      return RET_INVALID_OP_ATTR;
+    }
+  } else if (this->in_tensors_.size() == lite::kDoubleNum) {
+    auto out_shape = this->in_tensors_[1]->MutableData();
+    if (out_shape == nullptr) {
+      MS_LOG(INFO) << "Out shape is not assigned";
+      const_shape_ = false;
+    } else {
+      new_height_ = reinterpret_cast<int32_t *>(out_shape)[0];
+      if (new_height_ < 1) {
+        MS_LOG(ERROR) << "Resize new_height should >= 1, but got " << new_height_;
+        return RET_INVALID_OP_ATTR;
+      }
+      new_width_ = reinterpret_cast<int32_t *>(out_shape)[1];
+      if (new_width_ < 1) {
+        MS_LOG(ERROR) << "Resize new_width should >= 1, but got " << new_width_;
+        return RET_INVALID_OP_ATTR;
+      }
+      const_shape_ = true;
+    }
   }
   align_corners_ = parameter->align_corners_;
   preserve_aspect_ratio = parameter->preserve_aspect_ratio_;
@@ -66,8 +86,15 @@ int ResizeBaseCPUKernel::CheckParameters() {
 }
 
 int ResizeBaseCPUKernel::CheckInputsOuputs() {
-  if (in_tensors_.size() != kInputNum) {
-    MS_LOG(ERROR) << "Resize input num should be " << kInputNum << ", but got " << in_tensors_.size();
+  if (in_tensors_.size() <= lite::kDoubleNum) {
+    for (size_t i = 0; i < in_tensors_.size(); i++) {
+      auto input = in_tensors_.at(i);
+      if (input == nullptr) {
+        return RET_NULL_PTR;
+      }
+    }
+  } else {
+    MS_LOG(ERROR) << "Resize input num should be no more than" << kMaxInputNum << ", but got " << in_tensors_.size();
     return RET_ERROR;
   }
   auto input = in_tensors_.at(0);
@@ -97,7 +124,7 @@ int ResizeBaseCPUKernel::Init() {
 
   auto input = in_tensors_.at(0);
   auto input_shape = input->shape();
-  if (input_shape.size() != kRank) {
+  if (!input_shape.empty() && input_shape.size() != kRank) {
     MS_LOG(ERROR) << "Resize op support input rank 4, got " << input_shape.size();
     return RET_ERROR;
   }
