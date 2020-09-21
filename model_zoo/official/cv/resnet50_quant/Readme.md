@@ -170,7 +170,7 @@ result: {'acc': 0.76576314102564111}
 | Parameters                 | Resnet50                                                   |
 | -------------------------- | ---------------------------------------------------------- |
 | Model Version              | V1                                                         |
-| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G               |
 | uploaded Date              | 06/06/2020                                                 |
 | MindSpore Version          | 0.3.0                                                      |
 | Dataset                    | ImageNet                                                   |

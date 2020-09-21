@@ -202,7 +202,7 @@ Note the precision and recall values are results of two-classification(person an
 | Parameters                 | Ascend                                                      | 
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | YOLOv3_Resnet18 V1                                          |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             | 
+| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             | 
 | uploaded Date              | 06/01/2020 (month/day/year)                                 | 
 | MindSpore Version          | 0.2.0-alpha                                                 | 
 | Dataset                    | COCO2017                                                    | 

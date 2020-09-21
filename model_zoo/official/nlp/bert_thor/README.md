@@ -192,7 +192,7 @@ step:  3000 Accuracy:  [0.71377236]
 | Parameters                 | Ascend 910                                                   |
 | -------------------------- | -------------------------------------- |
 | Model Version              | BERT-LARGE                                              |
-| Resource                   | Ascend 910，CPU 2.60GHz 56cores，Memory 314G  |
+| Resource                   | Ascend 910，CPU 2.60GHz 192cores，Memory 755G  |
 | uploaded Date              | 08/20/2020 (month/day/year)                         |
 | MindSpore Version          | 0.6.0-alpha                                                       |
 | Dataset                    | MLPerf v0.7 dataset                                                   | 

@@ -222,7 +222,7 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 | Parameters                 | Ascend                                    |      GPU                     |
 | -------------------------- | ---------------------------------------------- | ------------------------- |
 | Model Version              | InceptionV3                                    | InceptionV3                           |
-| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G   | NV SMI V100-16G(PCIE),cpu:2.10GHz 96cores, memory:250G           |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G   | NV SMI V100-16G(PCIE),cpu:2.10GHz 96cores, memory:250G           |
 | uploaded Date              | 08/21/2020                                     | 08/21/2020                |
 | MindSpore Version          | 0.6.0-beta                                     | 0.6.0-beta                |
 | Dataset                    | 1200k images                                   | 1200k images              |
@@ -244,7 +244,7 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 | Parameters          | Ascend                 |
 | ------------------- | --------------------------- |
 | Model Version       | InceptionV3 				|
-| Resource            | Ascend 910, cpu:2.60GHz 56cores, memory:314G                  |
+| Resource            | Ascend 910, cpu:2.60GHz 192cores, memory:755G                  |
 | Uploaded Date       | 08/22/2020                  |
 | MindSpore Version   | 0.6.0-beta                  |
 | Dataset             | 50k images                  |

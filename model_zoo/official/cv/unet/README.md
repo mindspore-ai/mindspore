@@ -216,7 +216,7 @@ step: 300, loss is 0.18949677, fps is 57.63118508760329
 | Parameters                 | Ascend                                                       |
 | -------------------------- | ------------------------------------------------------------ |
 | Model Version              | Unet                                                         |
-| Resource                   | Ascend 910 ;CPU 2.60GHz,56cores; Memory,314G                 |
+| Resource                   | Ascend 910 ;CPU 2.60GHz,192cores; Memory,755G                 |
 | uploaded Date              | 09/15/2020 (month/day/year)                                  |
 | MindSpore Version          | 1.0.0                                                        |
 | Dataset                    | ISBI                                                         |

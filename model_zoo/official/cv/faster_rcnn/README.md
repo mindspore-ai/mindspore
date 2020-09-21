@@ -207,7 +207,7 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 | Parameters                 | FasterRcnn                                                   |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             |
+| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
 | uploaded Date              | 08/31/2020 (month/day/year)                                 |
 | MindSpore Version          | 0.7.0-beta                                                       |
 | Dataset                    | COCO2017                                                   |

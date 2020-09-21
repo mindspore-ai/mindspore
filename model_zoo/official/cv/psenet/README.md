@@ -161,7 +161,7 @@ Calculated!{"precision": 0.814796668299853, "recall": 0.8006740491092923, "hmean
 | Parameters                 | PSENet                                                   |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | Inception V1                                                |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             |
+| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
 | uploaded Date              | 09/15/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0-alpha                                                   |
 | Dataset                    | ICDAR2015                                                   |

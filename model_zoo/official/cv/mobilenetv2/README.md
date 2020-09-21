@@ -181,7 +181,7 @@ result: {'acc': 0.71976314102564111} ckpt=/path/to/checkpoint/mobilenet-200_625.
 | Parameters                 | MobilenetV2                                                |                           |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Model Version              | V1                                                         | V1                        |
-| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G               | NV SMX2 V100-32G          |
 | uploaded Date              | 05/06/2020                                                 | 05/06/2020                |
 | MindSpore Version          | 0.3.0                                                      | 0.3.0                     |
 | Dataset                    | ImageNet                                                   | ImageNet                  |

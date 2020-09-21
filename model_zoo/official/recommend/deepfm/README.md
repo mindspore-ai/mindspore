@@ -247,7 +247,7 @@ Parameters for both training and evaluation can be set in config.py
 | Parameters                 | Ascend                                                      | GPU                    |
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | Model Version              | DeepFM                                                      | To do                  |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 314G              | To do                  |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G              | To do                  |
 | uploaded Date              | 05/17/2020 (month/day/year)                                 | To do                  |
 | MindSpore Version          | 0.3.0-alpha                                                 | To do                  |
 | Dataset                    | [1]                                                         | To do                  |

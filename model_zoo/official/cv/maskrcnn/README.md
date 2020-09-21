@@ -400,7 +400,7 @@ Accumulating evaluation results...
 | Parameters                 | MaskRCNN                                                  |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                          |
-| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory, 314G              |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G              |
 | uploaded Date              | 08/01/2020 (month/day/year)                                 |
 | MindSpore Version          | 0.6.0-alpha                                                 |
 | Dataset                    | COCO2017                                                    |
