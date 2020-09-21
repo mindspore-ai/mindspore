@@ -69,6 +69,7 @@ Dataset used: [imagenet](http://www.image-net.org/)
   │   ├──mobilenetV3.py      # MobileNetV3 architecture
   ├── train.py      # training script
   ├── eval.py       #  evaluation script
+  ├── mindspore_hub_conf.py       #  mindspore hub interface
 ```
 
 ## [Training process](#contents)

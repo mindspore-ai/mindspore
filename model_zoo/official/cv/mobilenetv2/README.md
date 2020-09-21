@@ -77,6 +77,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   │   ├──utils.py       # utils to load ckpt_file for fine tune or incremental learn
   ├── train.py      # training script
   ├── eval.py       # evaluation script
+  ├── mindspore_hub_conf.py       #  mindspore hub interface
 ```
 
 ## [Training process](#contents)

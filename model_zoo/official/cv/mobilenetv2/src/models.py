@@ -119,7 +119,7 @@ def load_ckpt(network, pretrain_ckpt_path, trainable=True):
         for param in network.get_parameters():
             param.requires_grad = False
 
-def define_net(config, is_training):
+def define_net(config, is_training=True):
     backbone_net = MobileNetV2Backbone()
     activation = config.activation if not is_training else "None"
     head_net = MobileNetV2Head(input_channel=backbone_net.out_channels,

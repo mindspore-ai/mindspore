@@ -96,7 +96,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     ├─warmup_cosine_annealing.py      # learning rate each step
     ├─warmup_step_lr.py               # warmup step learning rate
   ├─eval.py                           # eval net
-  └─train.py                          # train net
+  ├──train.py                         # train net
+  ├──mindspore_hub_conf.py            #  mindspore hub interface
   
 ```
 

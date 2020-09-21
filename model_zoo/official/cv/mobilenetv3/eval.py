@@ -42,7 +42,7 @@ if __name__ == '__main__':
         raise ValueError("Unsupported device_target.")
 
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    net = mobilenet_v3_large(num_classes=config.num_classes)
+    net = mobilenet_v3_large(num_classes=config.num_classes, activation="Softmax")
 
     dataset = create_dataset(dataset_path=args_opt.dataset_path,
                              do_train=False,

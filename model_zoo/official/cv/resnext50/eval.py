@@ -201,7 +201,7 @@ def test(cloud_args=None):
                                             max_epoch=1, rank=args.rank, group_size=args.group_size,
                                             mode='eval')
         eval_dataloader = de_dataset.create_tuple_iterator(output_numpy=True)
-        network = get_network(args.backbone, args.num_classes, platform=args.platform)
+        network = get_network(args.backbone, num_classes=args.num_classes, platform=args.platform)
         if network is None:
             raise NotImplementedError('not implement {}'.format(args.backbone))
 
