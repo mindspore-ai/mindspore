@@ -243,6 +243,10 @@ def get_bprop_embedding_lookup(self):
         return RowTensor(new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
     return bprop_sparse
 
+@constexpr
+def make_begin(shp):
+    begin = tuple([0 for _ in shp])
+    return begin
 
 @bprop_getters.register(P.Padding)
 def get_bprop_padding(self):
@@ -250,7 +254,7 @@ def get_bprop_padding(self):
 
     def bprop(x, out, dout):
         shp = shape_op(x)
-        begin = tuple([0 for _ in shp])
+        begin = make_begin(shp)
         dx = P.Slice()(dout, begin, shp)
         return (dx,)
 
