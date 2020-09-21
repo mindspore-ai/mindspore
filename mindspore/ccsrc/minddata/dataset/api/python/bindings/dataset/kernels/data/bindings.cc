@@ -28,6 +28,7 @@
 #include "minddata/dataset/kernels/data/slice_op.h"
 #include "minddata/dataset/kernels/data/to_float16_op.h"
 #include "minddata/dataset/kernels/data/type_cast_op.h"
+#include "minddata/dataset/kernels/data/unique_op.h"
 
 namespace mindspore {
 namespace dataset {
@@ -41,6 +42,10 @@ PYBIND_REGISTER(
   DuplicateOp, 1, ([](const py::module *m) {
     (void)py::class_<DuplicateOp, TensorOp, std::shared_ptr<DuplicateOp>>(*m, "DuplicateOp").def(py::init<>());
   }));
+
+PYBIND_REGISTER(UniqueOp, 1, ([](const py::module *m) {
+                  (void)py::class_<UniqueOp, TensorOp, std::shared_ptr<UniqueOp>>(*m, "UniqueOp").def(py::init<>());
+                }));
 
 PYBIND_REGISTER(
   FillOp, 1, ([](const py::module *m) {

@@ -11,4 +11,5 @@ add_library(kernels-data OBJECT
         mask_op.cc
         concatenate_op.cc
         duplicate_op.cc
+        unique_op.cc
         )

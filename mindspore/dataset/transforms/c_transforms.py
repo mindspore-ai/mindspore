@@ -296,6 +296,37 @@ class Duplicate(cde.DuplicateOp):
     """
 
 
+class Unique(cde.UniqueOp):
+    """
+    Return an output tensor containing all the unique elements of the input tensor in
+    the same order that they occur in the input tensor.
+
+    Also return an index tensor that contains the index of each element of the
+    input tensor in the Unique output tensor.
+
+    Finally, return a count tensor that constains the count of each element of
+    the output tensor in the input tensor.
+
+    Note:
+        Call batch op before calling this function.
+
+    Examples:
+    >>> import mindspore.dataset.transforms.c_transforms as c_transforms
+        >>>
+        >>> # Data before
+        >>> # |  x                 |
+        >>> # +--------------------+
+        >>> # | [[0,1,2], [1,2,3]] |
+        >>> # +--------------------+
+        >>> data1 = data1.map(operations=c_transforms.Unique(), input_columns=["x"],
+        >>>         output_columns=["x", "y", "z"], column_order=["x", "y", "z"])
+        >>> # Data after
+        >>> # |  x      |  y              |z        |
+        >>> # +---------+-----------------+---------+
+        >>> # | [0,1,2,3] | [0,1,2,1,2,3] | [1,2,2,1]
+        >>> # +---------+-----------------+---------+
+
+    """
 class Compose(cde.ComposeOp):
     """
     Compose a list of transforms into a single transform.
