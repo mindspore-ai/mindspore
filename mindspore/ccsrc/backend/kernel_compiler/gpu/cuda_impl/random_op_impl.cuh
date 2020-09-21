@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_RANDOMOPIMPL_H_
 
 #include <curand_kernel.h>
+#include <random>
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename T>

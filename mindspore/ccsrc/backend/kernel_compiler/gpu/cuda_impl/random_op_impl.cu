@@ -46,12 +46,13 @@ __global__ void UniformRealKernel(int seed, curandState *globalState, T *output,
 template <typename T>
 void StandardNormal(int seed, int seed2, curandState *globalState, T *output, size_t count, cudaStream_t cuda_stream) {
   int RNG_seed = 0;
+  std::random_device rd;
   if (seed2 != 0) {
     RNG_seed = seed2;
   } else if (seed != 0) {
     RNG_seed = seed;
   } else {
-    RNG_seed = time(NULL);
+    RNG_seed = static_cast<int>(rd());
   }
   NormalKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(RNG_seed, globalState, output, count);
   return;
@@ -61,12 +62,13 @@ template <typename T>
 void UniformInt(int seed, int seed2, curandState *globalState, T *input1, size_t input_size_1,
                 T *input2, size_t input_size_2, T *output, size_t count, cudaStream_t cuda_stream) {
   int RNG_seed = 0;
+  std::random_device rd;
   if (seed2 != 0) {
     RNG_seed = seed2;
   } else if (seed != 0) {
     RNG_seed = seed;
   } else {
-    RNG_seed = time(NULL);
+    RNG_seed = static_cast<int>(rd());
   }
   UniformIntKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>
                (RNG_seed, globalState, input1, input_size_1, input2, input_size_2, output, count);
@@ -76,12 +78,13 @@ void UniformInt(int seed, int seed2, curandState *globalState, T *input1, size_t
 template <typename T>
 void UniformReal(int seed, int seed2, curandState *globalState, T *output, size_t count, cudaStream_t cuda_stream) {
   int RNG_seed = 0;
+  std::random_device rd;
   if (seed2 != 0) {
     RNG_seed = seed2;
   } else if (seed != 0) {
     RNG_seed = seed;
   } else {
-    RNG_seed = time(NULL);
+    RNG_seed = static_cast<int>(rd());
   }
   UniformRealKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(RNG_seed, globalState, output, count);
   return;
