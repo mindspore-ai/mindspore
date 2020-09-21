@@ -23,7 +23,7 @@ from setuptools import setup, find_packages
 from setuptools.command.egg_info import egg_info
 from setuptools.command.build_py import build_py
 
-version = '0.7.0'
+version = '1.0.0'
 
 backend_policy = os.getenv('BACKEND_POLICY')
 device_target = os.getenv('BACKEND_TARGET')

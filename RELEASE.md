@@ -1,3 +1,107 @@
+# Release 1.0.0
+
+## Major Features and Improvements
+### MindSpore Training and Inference Framework
+#### Ascend 910
+* New models
+    * Mask-RCNN: a simple and flexible deep neural network for object instance segmentation on COCO 2014 dataset.
+    * DenseNet121: a dense convolutional neural network, which connects each layer to every other layer in a feed-forward fashion for object recognition on ImageNet dataset.
+    * PSENet: accurately detect arbitrary shape text instances and get better results on CTW1500, full text, ICDAR 2015, and ICDAR 2017 MLT datasets.
+    * UNet2D-Medical: Unet Medical model for 2D image segmentation, Convolutional Networks for Biomedical Image Segmentation on ISBI Challenge database.
+* Frontend and user interface
+    * Second-Order Optimization
+      * Enable second-order optimization for Bert on Ascend 910, which can achieve a masked lm accuracy of 71.3% in 1000 seconds using 8 Ascend 910 (Bert-Large @MLPerf v0.7 dataset).
+    * New GNN model BGCF
+      * Bayesian Graph Convolutional Filtering network which naturally incorporate the uncertainty in the user-item interaction graph shows excellent recommendation performance on Amazon-Beauty dataset.
+    * Add append interface for SequentialCell.
+    * Add a level `auto` for AMP.
+* Executor and performance optimization
+    * Support quantitative network (Resnet50 & YoloV3 & MobileNetV2).
+    * Project ease of use optimization: project compilation time optimization, CMakelist regularization, cudnn, cuda independent compilation and installation independent.
+* Data processing, augmentation, and save format
+    * Support GeneratorDataset return string type
+
+#### Other Hardware Support
+* GPU platform
+    * New model supported: TinyBert, ShuffleNet, YoloV3-DarkNet53, EfficientNet-B0, NASNet-Mobile and Transformer.
+    * Enable second-order optimization for resnet50 on GPU, which achieve 20% improvement on training time compared to SGD with Momentum (Resnet50 @ImageNet).
+* CPU platform
+    * ...
+#### User interfaces change log
+* Remove global object GradOperation in Autodiff([!5011](https://gitee.com/mindspore/mindspore/pulls/5011))
+* Remove useless attribute 'name' in Autodiff([!5172](https://gitee.com/mindspore/mindspore/pulls/5172))
+* Rectification distributed init([!5350](https://gitee.com/mindspore/mindspore/pulls/5350))
+* Move the setting of ParalleMode from train.parallel_utils to context([!5351](https://gitee.com/mindspore/mindspore/pulls/5351))
+* Modification of save_checkpoint([!5482](https://gitee.com/mindspore/mindspore/pulls/5482))
+* Wrap numpy random seed into an api([!5634](https://gitee.com/mindspore/mindspore/pulls/5634))
+* Delete enable_fused_layernorm in some modelzoo scripts([!5665](https://gitee.com/mindspore/mindspore/pulls/5665))
+* Move 'multi-subgraphs' interface to internal([!5696](https://gitee.com/mindspore/mindspore/pulls/5696))
+* Rename mirror_mean to gradient_mean([!5700](https://gitee.com/mindspore/mindspore/pulls/5700))
+* Remove default value of 'group' of DepthWiseConv2d([!5865](https://gitee.com/mindspore/mindspore/pulls/5865))
+* Modify interface for function and remove duplicated def([!5958](https://gitee.com/mindspore/mindspore/pulls/5958))
+* Unify Conv2d and DepthwiseConv2d([!5916](https://gitee.com/mindspore/mindspore/pulls/5916))
+* Modification of SoftmaxCrossEntropyWithLogits([!5502](https://gitee.com/mindspore/mindspore/pulls/5502))
+* Change API set_strategy() to shard()([!5991](https://gitee.com/mindspore/mindspore/pulls/5991))
+* Move batch_size from bert_cfg_cfg to cfg([!6233](https://gitee.com/mindspore/mindspore/pulls/6233))
+* Remove unused parameters from SummaryRecord __init__([!5548](https://gitee.com/mindspore/mindspore/pulls/5548))
+* remove sens parameter of TrainOneStepWithLossScaleCell([!5753](https://gitee.com/mindspore/mindspore/pulls/5753))
+* optimize the TrainOneStepCell for user's define([!6159](https://gitee.com/mindspore/mindspore/pulls/6159))
+* delete seed0 and seed1 of nn.Dropout([!5735](https://gitee.com/mindspore/mindspore/pulls/5735))
+* delete DataWrapper([!6101](https://gitee.com/mindspore/mindspore/pulls/6101))
+* LSTM API optimization([!6374](https://gitee.com/mindspore/mindspore/pulls/6374))
+* Merge P\C\F of ops([!5645](https://gitee.com/mindspore/mindspore/pulls/5645))
+* Log optimization([!5842](https://gitee.com/mindspore/mindspore/pulls/5842))
+* Remove useless API dataset.set_dataset_size（[!5806](https://gitee.com/mindspore/mindspore/pulls/5806))
+* Some of Dataset API add usage parameter（[!5605](https://gitee.com/mindspore/mindspore/pulls/5605))
+* Change the import path, such as from mindspore.dataset.transforms.vision to mindspore.dataset.vision.transforms（[!5384](https://gitee.com/mindspore/mindspore/pulls/5384))
+* Rename ImageFolderDatasetV2 to ImageFolderDataset（[!5384](https://gitee.com/mindspore/mindspore/pulls/5384))
+* Dataset.map parameter optimization（[!5384](https://gitee.com/mindspore/mindspore/pulls/5384))
+* Add new api dataset.get_col_names（[!5384](https://gitee.com/mindspore/mindspore/pulls/5384))
+* Add new api dataset.get_col_names（[!5384](https://gitee.com/mindspore/mindspore/pulls/5384))
+* Remove useless API MindRecord finish（[!5580](https://gitee.com/mindspore/mindspore/pulls/5580))
+
+### MindSpore Lite
+* Converter
+    * Add 6 TFLite op, 7 Caffe op, 1 ONNX op.
+    * Add support for Windows.
+    * Support parallel inference of multiple sessions to adapt to more scenarios
+    * Support 8bits only weight-quantization, most main-stream models has small accuracy loss (less than 0.5%) when compared to non-qunantized fp32 model.
+
+* CPU & GPU
+    * Add 20 CPU ops，include FP32, int8/uint8, FP16 and int32 ops.
+    * Add supporting FP16 for GPU, add 14 GPU ops include FP32/FP16.
+    * Add Buffer/Image2D transform op for GPU
+    * Performance optimization for CPU ops focus on ARM32.
+    * Performance optimization for GPU Convolution using winograd.
+
+* Tool & example
+    * Add object detection Android Demo.
+
+## Bugfixes
+* Models
+* Python API
+    * fix semi auto parallel parameter of reshape has another user([!5722](https://gitee.com/mindspore/mindspore/pulls/5722))
+    * raise ValueError when call hook function in graph mode([!5831](https://gitee.com/mindspore/mindspore/pulls/5831))
+* Executor
+    * Bugfix pynative mode to build temporary nn objects.（[!6189](https://gitee.com/mindspore/mindspore/pulls/6189))
+    * Bugfix the accuracy problem of multiple inputs of multi-card communication operator broadcast.([!6522](https://gitee.com/mindspore/mindspore/pulls/5622))
+    * Bugfix the problem that the sample distribution interface categorical does not support graph mode.([!5772](https://gitee.com/mindspore/mindspore/pulls/5772))
+    * Bugfix the random seed failure problem of the polynomial downsampling distribution operator.([!5948](https://gitee.com/mindspore/mindspore/pulls/5948))
+    * Bugfix unnecessary address binding issues in GPU heterogeneous scenarios.([!6232](https://gitee.com/mindspore/mindspore/pulls/6232))
+* GPU platform
+    * Bugfix for kernel resource leak([!5315](https://gitee.com/mindspore/mindspore/pulls/5315))
+    * Bugfix for insufficient memory for continuous unit test running([!5617](https://gitee.com/mindspore/mindspore/pulls/5617))
+    * Bugfix for the memory leak in the sparse slicer([!5578](https://gitee.com/mindspore/mindspore/pulls/5578))
+* Data processing and Pro
+    * ...
+
+## Contributors
+Thanks goes to these wonderful people:
+
+Adel, AGroupofProbiotocs, anthonyaje, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bingyaweng, BowenK, buxue, caifubi, CaoJian, caojian05, caozhou, Cathy, changzherui, chenfei, chengxianbin, chenhaozhe, chenjianping, chenzomi, chenzupeng, chujinjin, cj, cjh9368, Corleone, danish, Danish, dayschan, eric, Eric, fary86, fuzhiye, Gaoxiong, gengdongjie, gongdaguo, gukecai, guoqi, gzhcv, hangq, hanhuifeng2020, Harshvardhan, He, heleiwang, hexia, Hoai, HuangBingjian, huangdongrun, huanghui, huangxinjing, huzhifeng, hwjiaorui, Jesse, jianghui58, jiangzhiwen, Jiaqi, jin-xiulang, jinyaohui, jjfeing, John, Jonathan, jonyguo, jzg, kai00, kingfo, kingxian, kpy, kswang, laiyongqiang, leonwanghui, Li, liangchenghui, liangzelang, lichen_101010, lichenever, lihongkang, lilei, limingqi107, ling, linqingke, liubuyu, liuwenhao4, liuxiao78, liuxiao93, liuyang_655, liuzhongkai, Lixia, lixian, liyanliu, liyong, lizhenyu, luoyang, lvchangquan, lvliang, lz, mahdi, Mahdi, maning202007, Margaret_wangrui, mayang, mengyuanli, nhussain, ougongchang, panfengfeng, panyifeng, Payne, Peilin, peixu_ren, Pengyongrong, qianlong, r1chardf1d0, riemann_penn, root, Sheng, shenwei41, simson, Simson, Su, sunsuodong, tao_yunhao, tinazhang, VectorSL, , Wan, wandongdong, wangdongxu, wangmin, wangnan39@huawei.com, wangyue01, wangzhe, wanyiming, Wei, wenchunjiang, wilfChen, WilliamLian, wsc, wukesong, wuweikang, wuxuejian, Xiaoda, xiefangqi, xuanyue, xulei2020, Xun, xuyongfei, yanghaitao, yanghaitao1, yanghaoran, YangLuo, yangruoqi713, yankai, yanzhenxiang2020, yao_yf, yepei6, yeyunpeng, Yi, yoni, yoonlee666, yuchaojie, yujianfeng, yuximiao, zengzitao, Zhang, zhanghaibo5@huawei.com, zhanghuiyao, zhangyihui, zhangz0911gm, zhanke, zhanyuan, zhaodezan, zhaojichen, zhaoting, zhaozhenlong, zhengjun10, zhoufeng, zhousiyi, zhouyaqiang, Zichun, Zirui, Ziyan, zjun, ZPaC
+
+Contributions of any kind are welcome!
+
 # Release 0.7.0-beta
 
 ## Major Features and Improvements
