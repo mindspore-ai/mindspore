@@ -230,6 +230,7 @@ const void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kerne
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy error: " << ret;
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+    delete[] tmp_weight_data;
     return;
   }
 
@@ -247,6 +248,7 @@ const void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_nu
     if (EOK != memset_s(tmp_bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float))) {
       MS_LOG(ERROR) << "memset bias data failed";
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+      delete[] tmp_bias_data;
       return;
     }
     for (int i = 0; i < kernel_num; i++) {
