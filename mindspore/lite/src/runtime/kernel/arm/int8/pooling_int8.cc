@@ -68,7 +68,11 @@ int PoolingInt8CPUKernel::RunImpl(int task_id) {
       MaxPoolingOptInt8(input_data, output_data, pooling_param_, task_id);
     }
   } else {
-    AvgPoolingOptInt8(input_data, output_data, pooling_param_, task_id);
+    auto ret = AvgPoolingOptInt8(input_data, output_data, pooling_param_, task_id);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "AvgPooling run failed.";
+      return ret;
+    }
   }
   return RET_OK;
 }

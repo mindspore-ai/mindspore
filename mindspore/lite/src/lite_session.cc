@@ -91,6 +91,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
         auto dst_data = dstTensor->MutableData();
         if (dst_data == nullptr) {
           MS_LOG(ERROR) << "MutableData from " << i << "th tensor is nullptr";
+          free(dstTensor);
           return RET_ERROR;
         }
         memcpy(dst_data, srcTensor->data()->data(), dstTensor->Size());

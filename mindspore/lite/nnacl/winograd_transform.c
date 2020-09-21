@@ -351,11 +351,11 @@ void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, floa
 
 void Conv3x3Fp32FilterTransform(float *weight_data, float *trans_weight, int iC4, int output_channel, int kernel_plane,
                                 int oc_block) {
-  int oc_plane_block = UP_DIV(output_channel, oc_block);
-  int dst_step = iC4 * C4NUM * oc_block * oc_plane_block;
   if (oc_block == 0) {
     return;
   }
+  int oc_plane_block = UP_DIV(output_channel, oc_block);
+  int dst_step = iC4 * C4NUM * oc_block * oc_plane_block;
   for (int o = 0; o < output_channel; o++) {
     int oc_block_num = o / oc_block;
     int oc_block_rem = o % oc_block;

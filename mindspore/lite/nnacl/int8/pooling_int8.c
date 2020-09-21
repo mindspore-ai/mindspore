@@ -16,8 +16,9 @@
 
 #include "nnacl/int8/pooling_int8.h"
 #include "nnacl/common_func.h"
+#include "nnacl/errorcode.h"
 
-void AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
+int AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
@@ -64,6 +65,9 @@ void AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParamete
             }
           }  // win_w loop
         }    // win_h loop
+        if (real_count == 0) {
+          return NNACL_ERR;
+        }
         int16_t tmp_out = round((float)tmp_avg / (float)real_count);
         tmp_out = (int8_t)(round((tmp_out - input_zp) * real_multiplier) + output_zp);
         int8_t real_out = tmp_out < out_min ? out_min : tmp_out;
@@ -72,9 +76,10 @@ void AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParamete
       }  // in_channel loop
     }    // out_plane loop
   }      // out_batch loop
+  return NNACL_OK;
 }
 
-void AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
+int AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
@@ -118,6 +123,9 @@ void AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
         int kh_s = MSMAX(0, -in_h_index);
         int kh_e = MSMIN(win_h, in_h - in_h_index);
         int real_count = (kw_e - kw_s) * (kh_e - kh_s);
+        if (real_count == 0) {
+          return NNACL_ERR;
+        }
 
         // 16 channels
         for (int j = 0; j < c16; j++) {
@@ -272,6 +280,7 @@ void AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
       }    // out_plane loop
     }      // out_batch loop
   }
+  return NNACL_OK;
 }
 
 void MaxPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id) {

@@ -33,8 +33,8 @@ void Polynomial(float *interval, float *m, int degree) {
 void DiagonalPlusMatrix(float *matrix, float *diagonal_matrix, int degree) {
   int data_num = (degree + 1) * (degree + 1);
   memset(diagonal_matrix, 0, data_num * sizeof(float));
-  for (int i = 0; i < (degree + 1); ++i) {
-    for (int j = 0; j < (degree + 1); ++j) {
+  for (int i = 0; i < degree; ++i) {
+    for (int j = 0; j < degree; ++j) {
       if (j == i) diagonal_matrix[i * (degree + 1) + j] = matrix[i];
     }
   }
@@ -156,7 +156,7 @@ int CookToomFilter(float *matrix_a, float *matrix_at, float *matrix_b, float *ma
                    float *matrix_gt, float coefficient, int out_unit, int filter_size) {
   int in_unit = out_unit + filter_size - 1;
   int degree = in_unit - 1;
-  if (degree > MAX_LEN || (in_unit * in_unit) > MAX_LEN || degree > MAX_LEN || (in_unit * filter_size) > MAX_LEN) {
+  if (degree > MAX_LEN || (in_unit * in_unit) > MAX_LEN || (in_unit * filter_size) > MAX_LEN) {
     return NNACL_ERR;
   }
   float polynomial_m[MAX_LEN];             // degree

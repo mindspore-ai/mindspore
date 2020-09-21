@@ -34,6 +34,7 @@ bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model) {
     node->primitive_ = PrimitiveC::Create(const_cast<schema::Primitive *>(src_prim));
     if (node->primitive_ == nullptr) {
       MS_LOG(ERROR) << "unpack primitive == nullptr!";
+      free(node);
       return false;
     }
     node->primitive_->SetQuantType(c_node->quantType());
