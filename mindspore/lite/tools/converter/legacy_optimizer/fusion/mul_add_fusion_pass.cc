@@ -79,7 +79,7 @@ STATUS MulAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &patternN
   MS_ASSERT(graph->allTensors.size() > mulNodeInputIndex.at(MUL_OP_BIAS_INDEX));
   const auto &mulNodeBiasTensor = graph->allTensors.at(mulNodeInputIndex.at(MUL_OP_BIAS_INDEX));
   MS_ASSERT(mulNodeBiasTensor != nullptr);
-  if (mulNodeBiasTensor->refCount != schema::NodeType::NodeType_ValueNode) {
+  if (mulNodeBiasTensor->refCount != schema::NodeType::NodeType_ValueNode || mulNodeBiasTensor->dims.size() == 4) {
     // dont fusion, return
     return RET_OK;
   }

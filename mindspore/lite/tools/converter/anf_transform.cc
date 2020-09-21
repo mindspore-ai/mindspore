@@ -25,6 +25,8 @@
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include "tools/optimizer/fusion/constant_folding_fusion.h"
 #include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
+#include "tools/optimizer/graph/weight_format_hardcode_pass.h"
+#include "tools/optimizer/graph/weight_format_transform_pass.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
@@ -41,6 +43,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   // fusion const_fold
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
+  auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
 
   // for now - trainning is not supporting fuse operations
   if (config != nullptr && config->trainModel == false) {
@@ -61,11 +64,20 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
     pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(true, "conv_tuple_relu6",
                                                                 schema::PrimitiveType_Activation,
                                                                 schema::ActivationType_RELU6));
+    auto weight_format_hardcode_pass = std::make_shared<opt::WeightFormatHardCodePass>();
+    weight_format_hardcode_pass->SetFmkType(config->fmk);
+    weight_format_hardcode_pass->SetQuantType(config->quantType);
+    graph_pm->AddPass(weight_format_hardcode_pass);
+    auto weight_format_transform_pass = std::make_shared<opt::WeightFormatTransformPass>();
+    weight_format_transform_pass->SetFmkType(config->fmk);
+    weight_format_transform_pass->SetQuantType(config->quantType);
+    graph_pm->AddPass(weight_format_transform_pass);
   }
 
   pm->AddPass(std::make_shared<opt::ConstFoldPass>());
   optimizer->AddPassManager(pm);
-  FuncGraphPtr new_graph = optimizer->Optimize(old_graph);
+  optimizer->AddPassManager(graph_pm);
+  auto new_graph = optimizer->Optimize(old_graph);
   if (new_graph == nullptr) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NULL_PTR);
     return nullptr;

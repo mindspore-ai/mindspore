@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_COMMON_GLLO_UTILS_H_
 
 #include <memory>
+#include <vector>
 #include "src/ops//primitive_c.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -28,6 +29,9 @@
 #include "tools/converter/return_code.h"
 
 using PrimitiveCPtr = std::shared_ptr<mindspore::lite::PrimitiveC>;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
+using mindspore::lite::STATUS;
 namespace mindspore {
 namespace opt {
 bool IsRealCNodeKernel(const AnfNodePtr &node);
@@ -68,6 +72,47 @@ size_t GetOutputTensorNum(const AnfNodePtr &node);
 bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
 size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
+
+ParamValueLitePtr  GetLiteParamValue(const AnfNodePtr &node);
+
+enum kTransFilterType {
+  kKCHW2HWCK,  // 0
+  kKCHW2KHWC,
+  kCKHW2KHWC,
+  kCKHW2HWCK,
+  kKCHW2HWKC,
+  kCKHW2HWKC,
+  kHWCK2KCHW,
+  kHWCK2CKHW,
+  kHWKC2KCHW,
+  kHWKC2CKHW,
+  kNHWC2KCHW,  // 10
+  kNHWC2CKHW,
+  kNHWC2HWCK,
+  kKHWC2HWCK,
+  kCHWK2HWCK,
+  kKHWC2CHWK,
+  kCHWK2KHWC,
+  kKHWC2KCHW,
+  kCKHW2KCHW,
+  kCHWK2KCHW,
+  kKCHW2CKHW  // 20
+};
+
+STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, int32_t *filterK, int32_t *filterC,
+                    int32_t *filterH, int32_t *filterW);
+
+STATUS SetFilterDim(const ParamValueLitePtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
+                    int32_t filterH, int32_t filterW);
+
+template<typename T>
+static STATUS TransFilterData(const ParamValueLitePtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
+                              int32_t filterH, int32_t filterW);
+
+template<typename T>
+static lite::STATUS TransFilterFormat(const ParamValueLitePtr &tensor, kTransFilterType type);
+
+STATUS TransFilterFormat(const ParamValueLitePtr &tensor, schema::Format dst_format);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_PASS_COMMON_GLLO_UTILS_H_
