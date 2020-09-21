@@ -92,6 +92,7 @@ class DumpJsonParser {
   void ParseOpDebugMode(const nlohmann::json &content);
 
   void JudgeDumpEnabled();
+  void JsonConfigToString();
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DUMP_JSON_PARSER_H_
