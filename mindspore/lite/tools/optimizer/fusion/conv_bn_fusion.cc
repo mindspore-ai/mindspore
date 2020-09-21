@@ -49,7 +49,8 @@ void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node,
   auto bn_var_data = reinterpret_cast<float *>(bn_var_tensor->tensor_addr());
   // cal transScale, tf : scale/sqrt(variance + eps); caffe : 1/sqrt(variance + eps)
   if (memcpy_s(trans_scale, kernel_num * sizeof(float), bn_var_data, kernel_num * sizeof(float)) != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy_s transScale error";
+    MS_LOG(ERROR) << "memcpy_s transScale error";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
     return;
   }
   // 1/sqrt(variance + eps)
@@ -119,8 +120,9 @@ const void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kern
   if (GetCNodeType(bn_node) == schema::PrimitiveType_BatchNorm) {
     bn_mean_node = bn_node->input(kCaffeBNMeanIndex);
     bn_variance_node = bn_node->input(kCaffeBNVarIndex);
-    CheckIfNodeIsParam(bn_mean_node);
-    CheckIfNodeIsParam(bn_variance_node);
+    if (CheckIfNodeIsParam(bn_mean_node) != lite::RET_OK || CheckIfNodeIsParam(bn_variance_node) != lite::RET_OK) {
+      return;
+    }
     MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::BatchNorm>>(primitive_c));
     auto primc = utils::cast<std::shared_ptr<mindspore::lite::BatchNorm>>(primitive_c);
     MS_ASSERT(primc != nullptr);
@@ -135,10 +137,13 @@ const void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kern
     MS_ASSERT(primc != nullptr);
     eps = primc->GetEpsilon();
   } else {
-    MS_LOG(EXCEPTION) << "not caffe or tf batchnorm op.";
+    MS_LOG(ERROR) << "not caffe or tf batchnorm op.";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
+    return;
   }
-  CheckIfNodeIsParam(bn_mean_node);
-  CheckIfNodeIsParam(bn_variance_node);
+  if (CheckIfNodeIsParam(bn_mean_node) != lite::RET_OK || CheckIfNodeIsParam(bn_variance_node) != lite::RET_OK) {
+    return;
+  }
   if (eps < EPS) {
     eps = EPS;
   }

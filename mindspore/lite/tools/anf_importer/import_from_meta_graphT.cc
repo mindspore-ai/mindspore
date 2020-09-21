@@ -169,8 +169,10 @@ int AnfImporterFromMetaGraphT::ConverterCNode() {
 }
 
 int AnfImporterFromMetaGraphT::AddReturnCNode() {
-  MS_EXCEPTION_IF_NULL(meta_graph_);
-  MS_EXCEPTION_IF_NULL(func_graph_);
+  if (meta_graph_ == nullptr || func_graph_ == nullptr) {
+    MS_LOG(ERROR) << "meta_graph or func_graph is nullptr";
+    return RET_NULL_PTR;
+  }
   if (meta_graph_->outputIndex.size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs;
     auto make_tuple_prim_ptr = GetMakeTuplePrim();

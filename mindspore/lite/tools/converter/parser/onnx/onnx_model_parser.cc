@@ -340,7 +340,7 @@ STATUS OnnxModelParser::ParseOnnxNodeAttr(const onnx::GraphProto &onnx_graph, co
                                           const string &onnx_op_type, schema::CNodeT *dst_op) {
   auto node_parser = OnnxNodeParserRegistry::GetInstance()->GetNodeParser(onnx_op_type);
   if (node_parser == nullptr) {
-    MS_LOG(EXCEPTION) << "not find " << onnx_op_type << ", node parser is nullptr";
+    MS_LOG(ERROR) << "not find " << onnx_op_type << ", node parser is nullptr";
     return RET_NULL_PTR;
   }
   return node_parser->Parse(onnx_graph, onnx_node, dst_op);

@@ -27,9 +27,15 @@
 namespace mindspore {
 namespace opt {
 bool NodePass::Run(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
+  if (func_graph == nullptr) {
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return false;
+  }
   FuncGraphManagerPtr manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
+  if (manager == nullptr) {
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return false;
+  }
   manager->AddFuncGraph(func_graph);
 
   std::unordered_set<AnfNodePtr> seen_node;
@@ -52,14 +58,20 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
     }
     if (new_node && IsValueNode<FuncGraph>(new_node)) {
       auto const_func_graph = GetValueNode<FuncGraphPtr>(new_node);
-      MS_EXCEPTION_IF_NULL(const_func_graph);
+      if (const_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        return false;
+      }
       to_process.push_back(const_func_graph->output());
     } else if (new_node && new_node->isa<CNode>()) {
       if (IsGraphKernel(new_node)) {
         to_process.push_back(new_node);
       }
       auto cnode = new_node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
+      if (cnode == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        return false;
+      }
       auto inputs = cnode->inputs();
       (void) to_process.insert(to_process.end(), inputs.begin(), inputs.end());
     }

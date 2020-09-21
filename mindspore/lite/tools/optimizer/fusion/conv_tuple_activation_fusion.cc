@@ -45,12 +45,14 @@ const BaseRef ConvTupleActivationFusion::DefinePattern() const {
 const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                     const EquivPtr &) const {
   MS_LOG(DEBUG) << "conv tuple activation pass process:" << schema::EnumNamesPrimitiveType()[primitive_type];
-  CheckIfFuncGraphIsNull(func_graph);
-
-  CheckIfAnfNodeIsNull(node);
+  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+    return nullptr;
+  }
   auto act_node = node->cast<CNodePtr>();
-  CheckIfCNodeIsNull(act_node);
-  CheckInputSize(act_node, kActivationInputsLength);
+  if (CheckIfCNodeIsNull(act_node) != lite::RET_OK ||
+      CheckInputSize(act_node, kActivationInputsLength) != lite::RET_OK) {
+    return nullptr;
+  }
 
   auto primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(act_node->input(0));
   MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Activation>>(primitivec));
@@ -63,7 +65,9 @@ const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_gra
   MS_ASSERT(tuple_node != nullptr);
   auto tuple_cnode = tuple_node->cast<CNodePtr>();
   auto conv_node = tuple_cnode->input(1);
-  CheckIfAnfNodeIsNull(conv_node);
+  if (CheckIfAnfNodeIsNull(conv_node) != lite::RET_OK) {
+    return nullptr;
+  }
   if (conv_node != nullptr && conv_node->isa<CNode>()) {
     if (IsMultiOutputTensors(func_graph, conv_node)) {
       return nullptr;

@@ -49,7 +49,11 @@ class ModelParser {
 
  public:
   static FuncGraphPtr Fb2Anf(schema::MetaGraphT *meta_graph) {
-    MS_EXCEPTION_IF_NULL(meta_graph);
+    if (meta_graph == nullptr) {
+      MS_LOG(ERROR) << "meta_graph is null";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NULL_PTR);
+      return nullptr;
+    }
     auto func_graph = std::make_shared<FuncGraph>();
     AnfImporterFromMetaGraphT importer(meta_graph, func_graph);
     auto status = importer.Import();

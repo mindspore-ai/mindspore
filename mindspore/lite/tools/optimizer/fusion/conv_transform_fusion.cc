@@ -62,13 +62,15 @@ int Get_Kenrnel_nums(const CNodePtr &conv_node) {
 const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                               const EquivPtr &) const {
   MS_LOG(DEBUG) << "conv activation pass process";
-  CheckIfFuncGraphIsNull(func_graph);
-
-  CheckIfAnfNodeIsNull(node);
+  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+    return nullptr;
+  }
   // transform node means scale,bn
   auto transform_node = node->cast<CNodePtr>();
-  CheckIfCNodeIsNull(transform_node);
-  CheckLeastInputSize(transform_node, 2);
+  if (CheckIfCNodeIsNull(transform_node) != lite::RET_OK ||
+      CheckLeastInputSize(transform_node, 2) != lite::RET_OK) {
+    return nullptr;
+  }
 
   auto pre_node = transform_node->input(1);
   auto conv_node = pre_node->cast<CNodePtr>();
@@ -122,16 +124,24 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
 const void ConvTransformFusion::GenTransParam(const CNodePtr &transform_node, int kernel_nums, float *trans_scale,
                                               float *trans_bias) const {
   if (trans_scale == nullptr) {
-    MS_LOG(EXCEPTION) << "new transScale failed";
+    MS_LOG(ERROR) << "new transScale failed";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return;
   }
   if (trans_bias == nullptr) {
-    MS_LOG(EXCEPTION) << "new transBias failed";
+    MS_LOG(ERROR) << "new transBias failed";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return;
   }
   if (0 != memset_s(trans_scale, kernel_nums * sizeof(float), 0, kernel_nums * sizeof(float))) {
-    MS_LOG(EXCEPTION) << "memset transScale failed";
+    MS_LOG(ERROR) << "memset transScale failed";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+    return;
   }
   if (0 != memset_s(trans_bias, kernel_nums * sizeof(float), 0, kernel_nums * sizeof(float))) {
-    MS_LOG(EXCEPTION) << "memset transBias failed";
+    MS_LOG(ERROR) << "memset transBias failed";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+    return;
   }
 
   InitTransParam(transform_node, kernel_nums, trans_scale, trans_bias);
@@ -153,17 +163,22 @@ const void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph,
     return;
   }
   if (!conv_weight_node->isa<Parameter>()) {
-    MS_LOG(EXCEPTION) << "scale weight node not paramter node";
+    MS_LOG(ERROR) << "scale weight node not paramter node";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
+    return;
   }
   if (conv_bias_node != nullptr && !conv_bias_node->isa<Parameter>()) {
-    MS_LOG(EXCEPTION) << "scale bias node not paramter node";
+    MS_LOG(ERROR) << "scale bias node not paramter node";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
+    return;
   }
 
   auto conv_weight_param = conv_weight_node->cast<ParameterPtr>()->default_param();
   auto weight_tensor = std::dynamic_pointer_cast<ParamValueLite>(conv_weight_param);
   auto weight_data = reinterpret_cast<float *>(weight_tensor->tensor_addr());
   if (kernel_num <= 0) {
-    MS_LOG(EXCEPTION) << "kernel num less than 0";
+    MS_LOG(ERROR) << "kernel num less than 0";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
   }
   auto kernel_size = weight_tensor->tensor_shape_size() / kernel_num;
 
@@ -199,8 +214,9 @@ const void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kerne
   MS_ASSERT(new_weight_data != nullptr);
   auto data_size = kernel_num * kernel_size * sizeof(float);
   if (0 != memset_s(tmp_weight_data, data_size, 0, data_size)) {
-    MS_LOG(EXCEPTION) << "memset newWeightData failed";
+    MS_LOG(ERROR) << "memset newWeightData failed";
     delete[] tmp_weight_data;
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
     return;
   }
 
@@ -212,7 +228,9 @@ const void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kerne
 
   auto ret = memcpy_s(weight_data, data_size, tmp_weight_data, data_size);
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy error: " << ret;
+    MS_LOG(ERROR) << "memcpy error: " << ret;
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+    return;
   }
 
   delete[] tmp_weight_data;
@@ -227,24 +245,31 @@ const void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_nu
       return;
     }
     if (EOK != memset_s(tmp_bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float))) {
-      MS_LOG(EXCEPTION) << "memset bias data failed";
+      MS_LOG(ERROR) << "memset bias data failed";
+      lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+      return;
     }
     for (int i = 0; i < kernel_num; i++) {
       tmp_bias_data[i] = bias_data[i] * trans_scale[i] + trans_bias[i];
     }
 
     auto ret = memcpy_s(bias_data, kernel_num * sizeof(float), tmp_bias_data, kernel_num * sizeof(float));
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy error: " << ret;
-    }
     delete[] tmp_bias_data;
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy error: " << ret;
+      lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+      return;
+    }
   } else {
     if (EOK != memset_s(bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float))) {
-      MS_LOG(EXCEPTION) << "memset bias data failed";
+      MS_LOG(ERROR) << "memset bias data failed";
+      lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+      return;
     }
     auto ret = memcpy_s(bias_data, kernel_num * sizeof(float), trans_bias, kernel_num * sizeof(float));
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy error: " << ret;
+      MS_LOG(ERROR) << "memcpy error: " << ret;
+      lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
     }
   }
 }
