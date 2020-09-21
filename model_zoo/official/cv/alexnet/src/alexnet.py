@@ -36,7 +36,7 @@ class AlexNet(nn.Cell):
     """
     Alexnet
     """
-    def __init__(self, num_classes=10, channel=3):
+    def __init__(self, num_classes=10, channel=3, include_top=True):
         super(AlexNet, self).__init__()
         self.conv1 = conv(channel, 96, 11, stride=4)
         self.conv2 = conv(96, 256, 5, pad_mode="same")
@@ -45,10 +45,12 @@ class AlexNet(nn.Cell):
         self.conv5 = conv(384, 256, 3, pad_mode="same")
         self.relu = nn.ReLU()
         self.max_pool2d = P.MaxPool(ksize=3, strides=2)
-        self.flatten = nn.Flatten()
-        self.fc1 = fc_with_initialize(6*6*256, 4096)
-        self.fc2 = fc_with_initialize(4096, 4096)
-        self.fc3 = fc_with_initialize(4096, num_classes)
+        self.include_top = include_top
+        if self.include_top:
+            self.flatten = nn.Flatten()
+            self.fc1 = fc_with_initialize(6 * 6 * 256, 4096)
+            self.fc2 = fc_with_initialize(4096, 4096)
+            self.fc3 = fc_with_initialize(4096, num_classes)
 
     def construct(self, x):
         """define network"""
@@ -65,6 +67,8 @@ class AlexNet(nn.Cell):
         x = self.conv5(x)
         x = self.relu(x)
         x = self.max_pool2d(x)
+        if not self.include_top:
+            return x
         x = self.flatten(x)
         x = self.fc1(x)
         x = self.relu(x)
