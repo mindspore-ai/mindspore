@@ -16,9 +16,9 @@
 """process txt"""
 
 import re
-import json
+from src.tokenization import convert_tokens_to_ids
 
-def process_one_example_p(tokenizer, text, max_seq_len=128):
+def process_one_example_p(tokenizer, vocab, text, max_seq_len=128):
     """process one testline"""
     textlist = list(text)
     tokens = []
@@ -37,7 +37,7 @@ def process_one_example_p(tokenizer, text, max_seq_len=128):
         segment_ids.append(0)
     ntokens.append("[SEP]")
     segment_ids.append(0)
-    input_ids = tokenizer.convert_tokens_to_ids(ntokens)
+    input_ids = convert_tokens_to_ids(vocab, ntokens)
     input_mask = [1] * len(input_ids)
     while len(input_ids) < max_seq_len:
         input_ids.append(0)
@@ -52,12 +52,12 @@ def process_one_example_p(tokenizer, text, max_seq_len=128):
     feature = (input_ids, input_mask, segment_ids)
     return feature
 
-def label_generation(text="", probs=None, label2id_file=""):
+def label_generation(text="", probs=None, tag_to_index=None):
     """generate label"""
     data = [text]
     probs = [probs]
     result = []
-    label2id = json.loads(open(label2id_file).read())
+    label2id = tag_to_index
     id2label = [k for k, v in label2id.items()]
 
     for index, prob in enumerate(probs):

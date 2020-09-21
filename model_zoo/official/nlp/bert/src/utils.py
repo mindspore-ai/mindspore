@@ -19,6 +19,7 @@ Functional Cells used in Bert finetune and evaluation.
 
 import os
 import math
+import collections
 import numpy as np
 import mindspore.nn as nn
 from mindspore import log as logger
@@ -213,3 +214,19 @@ class BertLearningRate(LearningRateSchedule):
         else:
             lr = decay_lr
         return lr
+
+
+def convert_labels_to_index(label_list):
+    """
+    Convert label_list to indices for NER task.
+    """
+    label2id = collections.OrderedDict()
+    label2id["O"] = 0
+    prefix = ["S_", "B_", "M_", "E_"]
+    index = 0
+    for label in label_list:
+        for pre in prefix:
+            index += 1
+            sub_label = pre + label
+            label2id[sub_label] = index
+    return label2id
