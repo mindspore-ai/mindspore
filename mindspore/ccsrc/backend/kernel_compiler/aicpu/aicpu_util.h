@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <vector>
 #include <map>
+#include <set>
 #include <string>
 #include "backend/kernel_compiler/kernel.h"
 namespace mindspore {
@@ -41,6 +42,9 @@ constexpr auto kSeed1 = "Seed1";
 constexpr auto kSeed2 = "seed2";
 constexpr auto kTopK = "TopK";
 constexpr auto kTopKV2 = "TopKV2";
+constexpr auto kEditDistance = "EditDistance";
+constexpr auto kCustRunApi = "RunCpuKernel";
+const std::set<std::string> kCustAiCpuKernelOps{kTopK, kEditDistance};
 
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message

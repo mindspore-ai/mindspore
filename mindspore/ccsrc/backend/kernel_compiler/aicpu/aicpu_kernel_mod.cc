@@ -32,6 +32,7 @@ using AicpuTaskInfoPtr = std::shared_ptr<ge::model_runner::AicpuTaskInfo>;
 namespace mindspore {
 namespace kernel {
 constexpr auto AICPU_OPS_SO_NAME = "libaicpu_kernels.so";
+constexpr auto CUST_AICPU_OPS_SO_NAME = "libcpu_kernels.so";
 
 AicpuOpKernelMod::AicpuOpKernelMod() : anf_node_(nullptr) {}
 
@@ -66,8 +67,12 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
                                            const std::vector<AddressPtr> &outputs) {
   MS_LOG(INFO) << "CreateCpuKernelInfoOffline start";
 
-  node_so_ = AICPU_OPS_SO_NAME;
-
+  if (kCustAiCpuKernelOps.find(node_name_) != kCustAiCpuKernelOps.end()) {
+    node_so_ = CUST_AICPU_OPS_SO_NAME;
+    node_name_ = kCustRunApi;
+  } else {
+    node_so_ = AICPU_OPS_SO_NAME;
+  }
   // InputOutputAddr
   vector<void *> io_addrs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(io_addrs),
@@ -148,7 +153,12 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
   MS_LOG(INFO) << "AicpuOpKernelMod GenTask start";
 
   stream_id_ = stream_id;
-  node_so_ = AICPU_OPS_SO_NAME;
+  if (kCustAiCpuKernelOps.find(node_name_) != kCustAiCpuKernelOps.end()) {
+    node_so_ = CUST_AICPU_OPS_SO_NAME;
+    node_name_ = kCustRunApi;
+  } else {
+    node_so_ = AICPU_OPS_SO_NAME;
+  }
   std::vector<void *> input_data_addrs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
                        [](const AddressPtr &input) -> void * { return input->addr; });
