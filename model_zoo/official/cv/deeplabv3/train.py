@@ -24,10 +24,13 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
-from src.data import data_generator
+from mindspore.common import set_seed
+from src.data import dataset as data_generator
 from src.loss import loss
 from src.nets import net_factory
 from src.utils import learning_rates
+
+set_seed(1)
 context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True, save_graphs=False,
                     device_target="Ascend", device_id=int(os.getenv('DEVICE_ID')))
 
