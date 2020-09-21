@@ -39,7 +39,7 @@ void ConvDwInt8Post(int8_t *dst, int32_t *buffer, int output_w, int channel, int
     // support perchannel
     for (int w = 0; w < output_w; w++) {
       int channel4 = 0;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
       channel4 = channel / 4 * 4;
       ConvDwInt8PostAlign4PerChannel(dst, buffer, channel4, output_zp, out_multiplier, left_shift, right_shift, acc_min,
                                      acc_max);
