@@ -66,6 +66,9 @@ int Scheduler::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
     }
     std::vector<Tensor *> &inputs = kernels[i]->in_tensors();
     std::vector<Tensor *> &outputs = kernels[i]->out_tensors();
+    for (size_t j = 0; j < outputs.size(); j++) {
+      outputs[j]->FreeData();
+    }
     primitive->SetInferFlag(!infer_shape_interrupt);
     auto ret = primitive->InferShape(inputs, outputs);
     if (ret == RET_INFER_INVALID) {
