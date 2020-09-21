@@ -16,7 +16,7 @@
 """
 GCN training script.
 """
-
+import os
 import time
 import argparse
 import ast
@@ -27,6 +27,7 @@ from matplotlib import animation
 from sklearn import manifold
 from mindspore import context
 from mindspore.common import set_seed
+from mindspore.train.serialization import save_checkpoint, load_checkpoint
 
 from src.gcn import GCN
 from src.metrics import LossAccuracyWrapper, TrainNetWrapper
@@ -55,6 +56,8 @@ def train():
     parser.add_argument('--test_nodes_num', type=int, default=1000, help='Nodes numbers for test')
     parser.add_argument('--save_TSNE', type=ast.literal_eval, default=False, help='Whether to save t-SNE graph')
     args_opt = parser.parse_args()
+    if not os.path.exists("ckpts"):
+        os.mkdir("ckpts")
 
     set_seed(args_opt.seed)
     context.set_context(mode=context.GRAPH_MODE,
@@ -72,7 +75,6 @@ def train():
     gcn_net.add_flags_recursive(fp16=True)
 
     eval_net = LossAccuracyWrapper(gcn_net, label_onehot, eval_mask, config.weight_decay)
-    test_net = LossAccuracyWrapper(gcn_net, label_onehot, test_mask, config.weight_decay)
     train_net = TrainNetWrapper(gcn_net, label_onehot, train_mask, config)
 
     loss_list = []
@@ -112,7 +114,12 @@ def train():
         if epoch > config.early_stopping and loss_list[-1] > np.mean(loss_list[-(config.early_stopping+1):-1]):
             print("Early stopping...")
             break
+    save_checkpoint(gcn_net, "ckpts/gcn.ckpt")
+    gcn_net_test = GCN(config, adj, feature, class_num)
+    load_checkpoint("ckpts/gcn.ckpt", net=gcn_net_test)
+    gcn_net_test.add_flags_recursive(fp16=True)
 
+    test_net = LossAccuracyWrapper(gcn_net_test, label_onehot, test_mask, config.weight_decay)
     t_test = time.time()
     test_net.set_train(False)
     test_result = test_net()
