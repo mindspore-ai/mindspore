@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """ test dynamic shape """
-from mindspore import Tensor, context, nn, Parameter
-from mindspore.ops import operations as P
-from mindspore import dtype as mstype
-
 import numpy as np
+
+from mindspore import Tensor, context, nn, Parameter
+from mindspore import dtype as mstype
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
 
@@ -32,6 +32,7 @@ def test_sparse_apply_proximal_ada_grad():
             self.lr = 0.01
             self.l1 = 0.0
             self.l2 = 0.0
+
         def construct(self, grad, indices):
             out = self.sparse_apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1, self.l2, grad, indices)
             return out[0]

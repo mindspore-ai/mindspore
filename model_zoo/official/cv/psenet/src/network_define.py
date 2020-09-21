@@ -15,14 +15,16 @@
 
 
 import time
+
+import numpy as np
+
 import mindspore.nn as nn
-from mindspore.ops import functional as F
-from mindspore.ops import composite as C
 from mindspore import ParameterTuple
 from mindspore.common.tensor import Tensor
-from mindspore.train.callback import Callback
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
-import numpy as np
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.train.callback import Callback
 
 __all__ = ['LossCallBack', 'WithLossCell', 'TrainOneStepCell']
 
