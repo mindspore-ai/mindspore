@@ -26,8 +26,7 @@ MSNetWork::MSNetWork(void) : session_(nullptr) {}
 
 MSNetWork::~MSNetWork(void) {}
 
-void
-MSNetWork::CreateSessionMS(char *modelBuffer, size_t bufferLen, mindspore::lite::Context *ctx) {
+void MSNetWork::CreateSessionMS(char *modelBuffer, size_t bufferLen, mindspore::lite::Context *ctx) {
   session_ = mindspore::session::LiteSession::CreateSession(ctx);
   if (session_ == nullptr) {
     MS_PRINT("Create Session failed.");
@@ -52,4 +51,3 @@ int MSNetWork::ReleaseNets(void) {
   delete session_;
   return 0;
 }
-

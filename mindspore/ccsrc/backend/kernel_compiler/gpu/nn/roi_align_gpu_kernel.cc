@@ -27,6 +27,5 @@ MS_REG_GPU_KERNEL_ONE(
   ROIAlign,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   ROIAlignGpuFwdKernel, half)
-
 }  // namespace kernel
 }  // namespace mindspore

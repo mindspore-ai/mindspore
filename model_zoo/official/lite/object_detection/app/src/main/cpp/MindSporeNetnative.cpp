@@ -45,7 +45,7 @@ bool BitmapToLiteMat(JNIEnv *env, const jobject &srcBitmap, LiteMat *lite_mat) {
     return false;
   }
   AndroidBitmap_lockPixels(env, srcBitmap, &pixels);
-  if (info.stride == info.width*4) {
+  if (info.stride == info.width * 4) {
     ret = InitFromPixel(reinterpret_cast<const unsigned char *>(pixels),
                         LPixelType::RGBA2RGB, LDataType::UINT8,
                         info.width, info.height, lite_mat_bgr);
@@ -53,12 +53,12 @@ bool BitmapToLiteMat(JNIEnv *env, const jobject &srcBitmap, LiteMat *lite_mat) {
       MS_PRINT("Init From RGBA error");
     }
   } else {
-    unsigned char *pixels_ptr = new unsigned char[info.width*info.height*4];
+    unsigned char *pixels_ptr = new unsigned char[info.width * info.height * 4];
     unsigned char *ptr = pixels_ptr;
     unsigned char *data = reinterpret_cast<unsigned char *>(pixels);
     for (int i = 0; i < info.height; i++) {
-      memcpy(ptr, data, info.width*4);
-      ptr += info.width*4;
+      memcpy(ptr, data, info.width * 4);
+      ptr += info.width * 4;
       data += info.stride;
     }
     ret = InitFromPixel(reinterpret_cast<const unsigned char *>(pixels_ptr),
@@ -110,8 +110,7 @@ char *CreateLocalModelBuffer(JNIEnv *env, jobject modelBuffer) {
  * @param srcImageHeight The height of the original input image.
  * @return
  */
-std::string ProcessRunnetResult(std::unordered_map<std::string,
-        mindspore::tensor::MSTensor *> msOutputs,
+std::string ProcessRunnetResult(std::unordered_map<std::string, mindspore::tensor::MSTensor *> msOutputs,
                                 int srcImageWidth, int srcImageHeight) {
   std::unordered_map<std::string, mindspore::tensor::MSTensor *>::iterator iter;
   iter = msOutputs.begin();
@@ -124,8 +123,8 @@ std::string ProcessRunnetResult(std::unordered_map<std::string,
   MS_PRINT("%s %s", branch1_string.c_str(), branch2_string.c_str());
 
   // ----------- 接口测试 --------------------------
-  float *tmpscores2 = reinterpret_cast<float * >(branch1_tensor->MutableData());
-  float *tmpdata = reinterpret_cast<float * >(branch2_tensor->MutableData());
+  float *tmpscores2 = reinterpret_cast<float *>(branch1_tensor->MutableData());
+  float *tmpdata = reinterpret_cast<float *>(branch2_tensor->MutableData());
 
   // Using ssd model util to process model branch outputs.
   SSDModelUtil ssdUtil(srcImageWidth, srcImageHeight);

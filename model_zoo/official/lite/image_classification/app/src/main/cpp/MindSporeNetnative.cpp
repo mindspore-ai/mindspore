@@ -145,9 +145,8 @@ char *CreateLocalModelBuffer(JNIEnv *env, jobject modelBuffer) {
  * @param msOutputs
  * @return
  */
-std::string
-ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const labels_name_map[],
-                    std::unordered_map<std::string, mindspore::tensor::MSTensor *> msOutputs) {
+std::string ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const labels_name_map[],
+                                std::unordered_map<std::string, mindspore::tensor::MSTensor *> msOutputs) {
   // Get the branch of the model output.
   // Use iterators to get map elements.
   std::unordered_map<std::string, mindspore::tensor::MSTensor *>::iterator iter;
@@ -160,7 +159,7 @@ ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const labels_name_ma
   MS_PRINT("Number of tensor elements:%d", tensorNum);
 
   // Get a pointer to the first score.
-  float *temp_scores = static_cast<float * >(outputTensor->MutableData());
+  float *temp_scores = static_cast<float *>(outputTensor->MutableData());
 
   float scores[RET_CATEGORY_SUM];
   for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
@@ -202,12 +201,12 @@ bool BitmapToLiteMat(JNIEnv *env, const jobject &srcBitmap, LiteMat *lite_mat) {
       MS_PRINT("Init From RGBA error");
     }
   } else {
-    unsigned char *pixels_ptr = new unsigned char[info.width*info.height*4];
+    unsigned char *pixels_ptr = new unsigned char[info.width * info.height * 4];
     unsigned char *ptr = pixels_ptr;
     unsigned char *data = reinterpret_cast<unsigned char *>(pixels);
     for (int i = 0; i < info.height; i++) {
-      memcpy(ptr, data, info.width*4);
-      ptr += info.width*4;
+      memcpy(ptr, data, info.width * 4);
+      ptr += info.width * 4;
       data += info.stride;
     }
     ret = InitFromPixel(reinterpret_cast<const unsigned char *>(pixels_ptr),

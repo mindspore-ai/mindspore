@@ -177,7 +177,6 @@ void SSDModelUtil::getDefaultBoxes() {
             tempWHBox.boxw = h;
             tempWHBox.boxh = w;
             all_sizes.push_back(tempWHBox);
-
         } else {
             // len(all_sizes) = 6.
             tempWHBox.boxw = sk1;

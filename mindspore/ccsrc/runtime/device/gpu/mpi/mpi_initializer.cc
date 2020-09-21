@@ -25,7 +25,6 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-
 MPIInitializer &MPIInitializer::GetInstance() {
   static MPIInitializer instance;
   return instance;

@@ -57,7 +57,6 @@ constexpr const char *kOpTypeOpDebug = "Opdebug";
 namespace mindspore {
 namespace device {
 namespace ascend {
-
 DataDumper::~DataDumper() {
   ReleaseDevMem(&dev_load_mem_);
   ReleaseDevMem(&dev_unload_mem_);
