@@ -3372,7 +3372,7 @@ class _GeneratorWorkerMt(threading.Thread):
         """
         Get function for worker result queue. Block with timeout.
         """
-        return self.res_queue.get(timeout=10)
+        return self.res_queue.get(timeout=30)
 
 
 class _GeneratorWorkerMp(multiprocessing.Process):
@@ -3395,17 +3395,13 @@ class _GeneratorWorkerMp(multiprocessing.Process):
         """
         Get function for worker result queue. Block with timeout.
         """
-        while check_iterator_cleanup() is False:
-            try:
-                return self.res_queue.get(timeout=10)
-            except multiprocessing.TimeoutError:
-                continue
-
-        raise Exception("Generator worker process timeout")
-
+        return self.res_queue.get(timeout=30)
 
     def __del__(self):
-        self.terminate()
+        try:
+            self.terminate()
+        except AttributeError:
+            pass
 
 
 class GeneratorDataset(MappableDataset):
