@@ -28,7 +28,7 @@ from src.utils import switch_precision, set_context
 if __name__ == '__main__':
     args_opt = eval_parse_args()
     config = set_config(args_opt)
-    backbone_net, head_net, net = define_net(config)
+    backbone_net, head_net, net = define_net(config, args_opt.is_training)
 
     #load the trained checkpoint file to the net for evaluation
     if args_opt.head_ckpt:

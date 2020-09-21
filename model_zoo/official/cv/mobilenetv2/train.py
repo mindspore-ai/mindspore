@@ -51,7 +51,7 @@ if __name__ == '__main__':
     context_device_init(config)
 
     # define network
-    backbone_net, head_net, net = define_net(config)
+    backbone_net, head_net, net = define_net(config, args_opt.is_training)
 
     # load the ckpt file to the network for fine tune or incremental leaning
     if args_opt.pretrain_ckpt:
