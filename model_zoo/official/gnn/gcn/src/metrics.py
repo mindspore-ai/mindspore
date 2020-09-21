@@ -25,7 +25,7 @@ from mindspore.ops import functional as F
 class Loss(nn.Cell):
     """Softmax cross-entropy loss with masking."""
     def __init__(self, label, mask, weight_decay, param):
-        super(Loss, self).__init__()
+        super(Loss, self).__init__(auto_prefix=False)
         self.label = Tensor(label)
         self.mask = Tensor(mask)
         self.loss = P.SoftmaxCrossEntropyWithLogits()
@@ -55,7 +55,7 @@ class Loss(nn.Cell):
 class Accuracy(nn.Cell):
     """Accuracy with masking."""
     def __init__(self, label, mask):
-        super(Accuracy, self).__init__()
+        super(Accuracy, self).__init__(auto_prefix=False)
         self.label = Tensor(label)
         self.mask = Tensor(mask)
         self.equal = P.Equal()
@@ -86,7 +86,7 @@ class LossAccuracyWrapper(nn.Cell):
     """
 
     def __init__(self, network, label, mask, weight_decay):
-        super(LossAccuracyWrapper, self).__init__()
+        super(LossAccuracyWrapper, self).__init__(auto_prefix=False)
         self.network = network
         self.loss = Loss(label, mask, weight_decay, network.trainable_params()[0])
         self.accuracy = Accuracy(label, mask)
@@ -110,7 +110,7 @@ class LossWrapper(nn.Cell):
     """
 
     def __init__(self, network, label, mask, weight_decay):
-        super(LossWrapper, self).__init__()
+        super(LossWrapper, self).__init__(auto_prefix=False)
         self.network = network
         self.loss = Loss(label, mask, weight_decay, network.trainable_params()[0])
 
@@ -174,7 +174,7 @@ class TrainNetWrapper(nn.Cell):
     """
 
     def __init__(self, network, label, mask, config):
-        super(TrainNetWrapper, self).__init__(auto_prefix=True)
+        super(TrainNetWrapper, self).__init__(auto_prefix=False)
         self.network = network
         loss_net = LossWrapper(network, label, mask, config.weight_decay)
         optimizer = nn.Adam(loss_net.trainable_params(),
