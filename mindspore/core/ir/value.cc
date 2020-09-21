@@ -266,7 +266,7 @@ std::string KeywordArg::ToString() const {
   buffer << "KeywordArg[";
   buffer << "key : " << key_;
   MS_EXCEPTION_IF_NULL(value_);
-  buffer << "value : " << value_->ToString();
+  buffer << ", value : " << value_->ToString();
   buffer << "]";
   return buffer.str();
 }
