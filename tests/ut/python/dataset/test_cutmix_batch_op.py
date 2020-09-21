@@ -126,6 +126,8 @@ def test_cutmix_batch_success3(plot=False):
     ds_original = ds.ImageFolderDataset(dataset_dir=DATA_DIR2, shuffle=False)
     decode_op = vision.Decode()
     ds_original = ds_original.map(operations=[decode_op], input_columns=["image"])
+    resize_op = vision.Resize([224, 224])
+    ds_original = ds_original.map(operations=[resize_op], input_columns=["image"])
     ds_original = ds_original.batch(4, pad_info={}, drop_remainder=True)
 
     images_original = None
@@ -140,6 +142,9 @@ def test_cutmix_batch_success3(plot=False):
 
     decode_op = vision.Decode()
     data1 = data1.map(operations=[decode_op], input_columns=["image"])
+
+    resize_op = vision.Resize([224, 224])
+    data1 = data1.map(operations=[resize_op], input_columns=["image"])
 
     one_hot_op = data_trans.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
@@ -173,6 +178,8 @@ def test_cutmix_batch_success4(plot=False):
     ds_original = ds.CelebADataset(DATA_DIR3, shuffle=False)
     decode_op = vision.Decode()
     ds_original = ds_original.map(operations=[decode_op], input_columns=["image"])
+    resize_op = vision.Resize([224, 224])
+    ds_original = ds_original.map(operations=[resize_op], input_columns=["image"])
     ds_original = ds_original.batch(2, drop_remainder=True)
 
     images_original = None
@@ -187,6 +194,9 @@ def test_cutmix_batch_success4(plot=False):
 
     decode_op = vision.Decode()
     data1 = data1.map(operations=[decode_op], input_columns=["image"])
+
+    resize_op = vision.Resize([224, 224])
+    data1 = data1.map(operations=[resize_op], input_columns=["image"])
 
     one_hot_op = data_trans.OneHot(num_classes=100)
     data1 = data1.map(operations=one_hot_op, input_columns=["attr"])
