@@ -455,7 +455,7 @@ int LiteSession::ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &
       MS_LOG(ERROR) << "Input[" << i << "] tensor is not equal to the inputs have been saved!";
       return RET_PARAM_INVALID;
     }
-
+    inputs_[i]->FreeData();
     inputs_[i]->set_shape(dims[i]);
   }
   return RET_OK;
@@ -463,6 +463,7 @@ int LiteSession::ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &
 
 void LiteSession::ResetInputsShape(const std::vector<std::vector<int>> &dims) {
   for (size_t i = 0; i < inputs_.size(); ++i) {
+    inputs_[i]->FreeData();
     inputs_[i]->set_shape(dims[i]);
   }
 }
