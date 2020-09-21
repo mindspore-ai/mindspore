@@ -19,7 +19,7 @@
 #include "nnacl/errorcode.h"
 
 int AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id, float minf,
-                float maxf) {
+               float maxf) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
@@ -137,7 +137,7 @@ int AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pool
             real_count = window;
           }
           if (real_count == 0) {
-              return NNACL_ERR;
+            return NNACL_ERR;
           }
           tmp_avg = tmp_avg / (float)real_count;
           tmp_avg = fmax(tmp_avg, minf);
