@@ -125,7 +125,7 @@ class CreateCommGroupTask : public Task {
   void Run() override;
   std::string group_name_;
   std::vector<uint32_t> ranks_;
-  bool result_;
+  bool result_{false};
 };
 
 class DestroyCommGroupTask : public Task {
@@ -134,7 +134,7 @@ class DestroyCommGroupTask : public Task {
   ~DestroyCommGroupTask() override = default;
   void Run() override;
   std::string group_name_;
-  bool result_;
+  bool result_{false};
 };
 
 class ExitTask : public Task {
