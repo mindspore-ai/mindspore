@@ -16,9 +16,9 @@
 
 ulimit -u unlimited
 
-if [ $# != 1 ]
+if [ $# != 1 ] && [ $# != 2 ]
 then
-    echo "GPU: sh run_eval_gpu.sh [CHECKPOINT_PATH]"
+    echo "GPU: sh run_eval_gpu.sh [CHECKPOINT_PATH] [cifar10|imagenet]"
 exit 1
 fi
 
@@ -27,6 +27,17 @@ if [ ! -f $1 ]
 then
     echo "error: CHECKPOINT_PATH=$1 is not a file"    
 exit 1
+fi
+
+dataset_type='cifar10'
+if [ $# == 2 ]
+then
+    if [ $2 != "cifar10" ] && [ $2 != "imagenet" ]
+    then
+        echo "error: the selected dataset is neither cifar10 nor imagenet"
+    exit 1
+    fi
+    dataset_type=$2
 fi
 
 BASEPATH=$(cd "`dirname $0`" || exit; pwd)
@@ -40,4 +51,4 @@ fi
 mkdir ../eval
 cd ../eval || exit
 
-python3 ${BASEPATH}/../eval.py --checkpoint_path=$1 > ./eval.log 2>&1 &
+python3 ${BASEPATH}/../eval.py --checkpoint_path=$1 --dataset_name=$dataset_type > ./eval.log 2>&1 &

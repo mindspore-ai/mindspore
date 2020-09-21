@@ -20,4 +20,15 @@ BASEPATH=$(cd "`dirname $0`" || exit; pwd)
 export PYTHONPATH=${BASEPATH}:$PYTHONPATH
 export DEVICE_ID=0
 
-python ${BASEPATH}/../eval.py  > ./eval.log 2>&1 &
+dataset_type='cifar10'
+if [ $# == 1 ]
+then
+    if [ $1 != "cifar10" ] && [ $1 != "imagenet" ]
+    then
+        echo "error: the selected dataset is neither cifar10 nor imagenet"
+    exit 1
+    fi
+    dataset_type=$1
+fi
+
+python ${BASEPATH}/../eval.py --dataset_name=$dataset_type > ./eval.log 2>&1 &
