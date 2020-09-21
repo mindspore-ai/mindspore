@@ -205,11 +205,13 @@ class DenseNet121(nn.Cell):
     """
     the densenet121 architectur
     """
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, include_top=True):
         super(DenseNet121, self).__init__()
         self.backbone = _densenet121()
         out_channels = self.backbone.get_out_channels()
-        self.head = CommonHead(num_classes, out_channels)
+        self.include_top = include_top
+        if self.include_top:
+            self.head = CommonHead(num_classes, out_channels)
 
         default_recurisive_init(self)
         for _, cell in self.cells_and_names():
@@ -226,5 +228,7 @@ class DenseNet121(nn.Cell):
 
     def construct(self, x):
         x = self.backbone(x)
+        if not self.include_top:
+            return x
         x = self.head(x)
         return x
