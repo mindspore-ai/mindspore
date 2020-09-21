@@ -2474,7 +2474,7 @@ class ConcatDataset(DatasetOp):
             raise ValueError("The parameter num_shards of DistributedSampler must be positive int!")
 
         if sampler.get_num_samples() is not None:
-            raise ValueError("The parameter num_samples of DistributedSampler must be set!")
+            raise ValueError("The parameter num_samples of DistributedSampler is not support to be set!")
 
         self._sampler = _select_sampler(None, sampler, None, None, None)
         cumulative_samples_nums = 0
