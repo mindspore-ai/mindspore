@@ -455,7 +455,7 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                   >>> data.set_dtype(mindspore.int32)
                                   mindspore.int32
                               )mydelimiter")
-                           .def("set_cast_dtype", &Tensor::set_cast_dtype)
+                           .def("set_cast_dtype", &Tensor::set_cast_dtype, py::arg("dtype") = nullptr)
                            .def("__str__", &Tensor::ToString)
                            .def("__repr__", &Tensor::ToStringRepr)
                            .def(py::pickle(

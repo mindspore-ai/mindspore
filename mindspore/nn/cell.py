@@ -582,10 +582,13 @@ class Cell(Cell_):
             param (Parameter): The parameter to cast.
         """
         if hasattr(self, "_mindspore_flags"):
-            if self._mindspore_flags.get('fp16'):
-                param.set_cast_dtype(mstype.float16)
             if self._mindspore_flags.get('fp32'):
                 param.set_cast_dtype(mstype.float32)
+            elif self._mindspore_flags.get('fp16'):
+                param.set_cast_dtype(mstype.float16)
+            else:
+                # retest dtype
+                param.set_cast_dtype()
         return param
 
     def insert_child_to_cell(self, child_name, child):
