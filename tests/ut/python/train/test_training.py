@@ -221,25 +221,6 @@ def test_model_build_abnormal_string():
         assert err
 
 
-def test_model_init():
-    """ test_model_init_error """
-    train_dataset = get_dataset()
-    eval_dataset = get_dataset()
-
-    with pytest.raises(RuntimeError):
-        context.set_context(mode=context.PYNATIVE_MODE)
-        get_model().init(train_dataset)
-
-    context.set_context(mode=context.GRAPH_MODE)
-    get_model().init(train_dataset)
-    get_model(metrics={'acc'}).init(eval_dataset)
-
-    with pytest.raises(RuntimeError):
-        get_model().init(train_dataset, eval_dataset)
-    with pytest.raises(ValueError):
-        get_model().init()
-
-
 def test_init_model_error():
     """ test_init_model_error """
     net = nn.ReLU()
