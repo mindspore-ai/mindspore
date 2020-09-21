@@ -260,7 +260,7 @@ py::object DoAutoCast(const py::object &arg, const TypeId &type_id) {
 py::object DoParamMixPrecisionCast(bool *is_cast, const py::object obj) {
   auto tensor = py::cast<tensor::TensorPtr>(obj);
   auto cast_type = tensor->cast_dtype();
-  py::object cast_output;
+  py::object cast_output = obj;
   if (cast_type != nullptr) {
     auto source_element = tensor->Dtype();
     if (source_element != nullptr && IsSubType(source_element, kFloat) && *source_element != *cast_type) {
@@ -282,6 +282,8 @@ py::object DoParamMixPrecisionCastTuple(bool *is_cast, const py::tuple tuple) {
       result[i] = DoParamMixPrecisionCast(is_cast, tuple[i]);
     } else if (py::isinstance<py::tuple>(tuple[i])) {
       result[i] = DoParamMixPrecisionCastTuple(is_cast, tuple[i]);
+    } else {
+      result[i] = tuple[i];
     }
   }
   return result;
