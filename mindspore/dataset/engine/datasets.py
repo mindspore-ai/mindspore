@@ -3395,9 +3395,13 @@ class _GeneratorWorkerMp(multiprocessing.Process):
         """
         Get function for worker result queue. Block with timeout.
         """
+        # Relax 10s to 30s, since it sometimes will cause "Generator worker process timeout"
+        # when we run too many iterators with infinite epoch(num_epoch=-1)
         return self.res_queue.get(timeout=30)
 
     def __del__(self):
+        # Try to destruct here, sometimes the class itself will be destructed in advance,
+        # so "self" will be a NoneType
         try:
             self.terminate()
         except AttributeError:
