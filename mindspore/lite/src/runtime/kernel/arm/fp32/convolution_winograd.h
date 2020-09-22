@@ -45,15 +45,10 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   int InitWeightBias();
   int InitTmpBuffer();
   int ConfigInputOutput();
-  int PostProcess();
   int WinogradFilterTransform(const float *weight_data, float *matrix_g, float *matrix_gt, int oc_block);
 
  private:
   void FreeTmpBuffer() {
-    if (nhwc4_input_ != nullptr) {
-      ctx_->allocator->Free(nhwc4_input_);
-      nhwc4_input_ = nullptr;
-    }
     if (trans_input_ != nullptr) {
       ctx_->allocator->Free(trans_input_);
       trans_input_ = nullptr;

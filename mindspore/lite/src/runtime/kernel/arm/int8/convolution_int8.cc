@@ -137,22 +137,12 @@ int ConvolutionInt8CPUKernel::InitTmpBuffer() {
   MS_ASSERT(ctx_->allocator != nullptr);
 
   int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
-  int output_count = conv_param_->output_h_ * conv_param_->output_w_;
-  int output_tile_count = UP_DIV(output_count, tile_num_);
   int kernel_plane = conv_param_->kernel_h_ * conv_param_->kernel_w_;
   int plane_c4 = UP_DIV(kernel_plane, C4NUM);
   int unit_size = plane_c4 * C4NUM * ic4 * C4NUM;
-  int packed_input_size = output_tile_count * tile_num_ * unit_size;
-  packed_input_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(conv_param_->input_batch_ * packed_input_size));
+  packed_input_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(unit_size * thread_count_ * tile_num_));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_input_ failed.";
-    return RET_ERROR;
-  }
-
-  size_t nhwc4_input_size = ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_;
-  nhwc4_input_ = ctx_->allocator->Malloc(nhwc4_input_size);
-  if (nhwc4_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc nhwc4 input failed.";
     return RET_ERROR;
   }
 
@@ -322,15 +312,15 @@ int ConvolutionInt8CPUKernel::ReSize() {
 }
 
 int ConvolutionInt8CPUKernel::RunImpl(int task_id) {
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto ori_input_data = reinterpret_cast<int8_t *>(input_tensor->MutableData());
   auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->MutableData());
   if (support_optimize_) {
-    ConvInt8Opt(reinterpret_cast<int8_t *>(nhwc4_input_), packed_input_, packed_weight_,
-                reinterpret_cast<int32_t *>(bias_data_), tmp_dst_, tmp_out_, output_addr, input_sum_, task_id,
-                conv_param_, gemm_func_);
+    ConvInt8Opt(ori_input_data, packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), tmp_dst_,
+                tmp_out_, output_addr, input_sum_, task_id, conv_param_, gemm_func_);
   } else {
-    ConvInt8(reinterpret_cast<int8_t *>(nhwc4_input_), packed_input_, packed_weight_,
-             reinterpret_cast<int32_t *>(bias_data_), tmp_dst_, tmp_out_, output_addr, input_sum_, task_id,
-             conv_param_);
+    ConvInt8(ori_input_data, packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), tmp_dst_, tmp_out_,
+             output_addr, input_sum_, task_id, conv_param_);
   }
   return RET_OK;
 }
@@ -357,11 +347,6 @@ int ConvolutionInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
     return RET_ERROR;
   }
-
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ori_input_data = input_tensor->MutableData();
-  PackNHWCToNHWC4Int8(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
-                      conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
   int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionInt8Impl, this, thread_count_);
   if (error_code != RET_OK) {

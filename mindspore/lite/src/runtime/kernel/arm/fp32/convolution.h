@@ -51,10 +51,6 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
       ctx_->allocator->Free(tmp_output_block_);
       tmp_output_block_ = nullptr;
     }
-    if (nhwc4_input_ != nullptr) {
-      ctx_->allocator->Free(nhwc4_input_);
-      nhwc4_input_ = nullptr;
-    }
     if (packed_input_ != nullptr) {
       ctx_->allocator->Free(packed_input_);
       packed_input_ = nullptr;

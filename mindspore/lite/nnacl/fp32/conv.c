@@ -221,7 +221,6 @@ void ConvFp32(float *input_data, float *packed_input, float *packed_weight, cons
   int ic4 = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
   int unit_size = kernel_plane * ic4 * C4NUM;
-  int packed_input_size = output_tile_count * TILE_NUM * unit_size;
   bool relu = conv_param->act_type_ == ActType_Relu;
   bool relu6 = conv_param->act_type_ == ActType_Relu6;
 
@@ -232,13 +231,14 @@ void ConvFp32(float *input_data, float *packed_input, float *packed_weight, cons
   size_t output_offset = out_channel * sizeof(float);
 
   for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * ic4 * C4NUM * in_h * in_w;
+    int in_batch_offset = b * in_channel * in_h * in_w;
     int out_batch_offset = b * out_channel * out_h * out_w;
-    int gemm_in_batch_offset = b * packed_input_size;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * TILE_NUM;
       int real_cal_num = (output_count - start_index) < TILE_NUM ? (output_count - start_index) : TILE_NUM;
-      float *gemm_input = packed_input + thread_id * unit_size * TILE_NUM + gemm_in_batch_offset;
+      float *gemm_input = packed_input + task_id * unit_size * TILE_NUM;
+      size_t packed_input_size = unit_size * TILE_NUM * sizeof(float);
+      memset(gemm_input, 0, packed_input_size);
       Im2ColPackUnitFp32(input_data + in_batch_offset, conv_param, gemm_input, real_cal_num, start_index);
 
       int out_offset = thread_id * TILE_NUM * out_channel + out_batch_offset;
@@ -291,7 +291,7 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
   // step 1 : filter transform (pre-processed offline)
   // step 2 : input transform (online)
   for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * ic4 * C4NUM * conv_param->input_h_ * conv_param->input_w_;
+    int in_batch_offset = b * in_channel * conv_param->input_h_ * conv_param->input_w_;
     int out_batch_offset = b * out_channel * conv_param->output_w_ * conv_param->output_h_;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_num) {
       int out_tile_index = thread_id * tile_num;
@@ -322,144 +322,9 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
   }
 }
 
-void UnPackWinogradOutput(const float *src, float *dst, int batch, int height, int width, int channel,
-                          int output_unit) {
-  int out_h_block_num = UP_DIV(height, output_unit);
-  int out_w_block_num = UP_DIV(width, output_unit);
-  int c4 = UP_DIV(channel, C4NUM);
-  int c4_block = C4NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
-  for (int b = 0; b < batch; b++) {
-    int src_batch_offset = b * c4 * c4_block;
-    int dst_batch_offset = b * height * width * channel;
-    for (int h = 0; h < height; h++) {
-      int src_h_offset = src_batch_offset + C4NUM * (h * out_w_block_num * output_unit);
-      int dst_h_offset = dst_batch_offset + h * width * channel;
-      for (int w = 0; w < width; w++) {
-        int src_w_offset = src_h_offset + w * C4NUM;
-        int dst_w_offset = dst_h_offset + w * channel;
-        for (int c = 0; c < c4 - 1; c++) {
-          int src_c4_offset = src_w_offset + c * c4_block;
-          int dst_c4_offset = dst_w_offset + c * C4NUM;
-#ifdef ENABLE_NEON
-          vst1q_f32(dst + dst_c4_offset, vld1q_f32(src + src_c4_offset));
-#else
-          for (int i = 0; i < C4NUM; ++i) {
-            dst[dst_c4_offset + i] = src[src_c4_offset + i];
-          }
-#endif
-        }
-        int c_res = channel - (c4 - 1) * C4NUM;
-        int src_c_res_offset = (c4 - 1) * c4_block;
-        int dst_c_res_offset = (c4 - 1) * C4NUM;
-        for (int c = 0; c < c_res; c++) {
-          int src_c4_res_offset = src_w_offset + src_c_res_offset + c;
-          int dst_c4_res_offset = dst_w_offset + dst_c_res_offset + c;
-          dst[dst_c4_res_offset] = src[src_c4_res_offset];
-        }
-      }
-    }
-  }
-}
-
-void UnPackWinogradReluOutput(const float *src, float *dst, int batch, int height, int width, int channel,
-                              int output_unit) {
-  int out_h_block_num = UP_DIV(height, output_unit);
-  int out_w_block_num = UP_DIV(width, output_unit);
-  int c4 = UP_DIV(channel, C4NUM);
-  int c4_block = C4NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
-  for (int b = 0; b < batch; b++) {
-    int src_batch_offset = b * c4 * c4_block;
-    int dst_batch_offset = b * height * width * channel;
-    for (int h = 0; h < height; h++) {
-      int src_h_offset = src_batch_offset + C4NUM * (h * out_w_block_num * output_unit);
-      int dst_h_offset = dst_batch_offset + h * width * channel;
-      for (int w = 0; w < width; w++) {
-        int src_w_offset = src_h_offset + w * C4NUM;
-        int dst_w_offset = dst_h_offset + w * channel;
-        for (int c = 0; c < c4 - 1; c++) {
-          int src_c4_offset = src_w_offset + c * c4_block;
-          int dst_c4_offset = dst_w_offset + c * C4NUM;
-#ifdef ENABLE_NEON
-          float32x4_t input_ptr = vld1q_f32(src + src_c4_offset);
-          float32x4_t zero = vdupq_n_f32(0);
-          input_ptr = vmaxq_f32(zero, input_ptr);
-          vst1q_f32(dst + dst_c4_offset, input_ptr);
-#else
-          for (int i = 0; i < C4NUM; ++i) {
-            float input_data = src[src_c4_offset + i];
-            input_data = input_data < 0 ? 0 : input_data;
-            dst[dst_c4_offset + i] = input_data;
-          }
-#endif
-        }
-        int c_res = channel - (c4 - 1) * C4NUM;
-        int src_c_res_offset = (c4 - 1) * c4_block;
-        int dst_c_res_offset = (c4 - 1) * C4NUM;
-        for (int c = 0; c < c_res; c++) {
-          int src_c4_res_offset = src_w_offset + src_c_res_offset + c;
-          int dst_c4_res_offset = dst_w_offset + dst_c_res_offset + c;
-          float input_data = src[src_c4_res_offset];
-          input_data = input_data < 0 ? 0 : input_data;
-          dst[dst_c4_res_offset] = input_data;
-        }
-      }
-    }
-  }
-}
-
-void UnPackWinogradRelu6Output(const float *src, float *dst, int batch, int height, int width, int channel,
-                               int output_unit) {
-  int out_h_block_num = UP_DIV(height, output_unit);
-  int out_w_block_num = UP_DIV(width, output_unit);
-  int c4 = UP_DIV(channel, C4NUM);
-  int c4_block = C4NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
-  for (int b = 0; b < batch; b++) {
-    int src_batch_offset = b * c4 * c4_block;
-    int dst_batch_offset = b * height * width * channel;
-    for (int h = 0; h < height; h++) {
-      int src_h_offset = src_batch_offset + C4NUM * (h * out_w_block_num * output_unit);
-      int dst_h_offset = dst_batch_offset + h * width * channel;
-      for (int w = 0; w < width; w++) {
-        int src_w_offset = src_h_offset + w * C4NUM;
-        int dst_w_offset = dst_h_offset + w * channel;
-        for (int c = 0; c < c4 - 1; c++) {
-          int src_c4_offset = src_w_offset + c * c4_block;
-          int dst_c4_offset = dst_w_offset + c * C4NUM;
-#ifdef ENABLE_NEON
-          float32x4_t input_ptr = vld1q_f32(src + src_c4_offset);
-          float32x4_t zero = vdupq_n_f32(0);
-          float32x4_t six = vdupq_n_f32(6);
-          input_ptr = vmaxq_f32(zero, input_ptr);
-          input_ptr = vminq_f32(six, input_ptr);
-          vst1q_f32(dst + dst_c4_offset, input_ptr);
-#else
-          for (int i = 0; i < C4NUM; ++i) {
-            float input_data = src[src_c4_offset + i];
-            input_data = input_data < 0 ? 0 : input_data;
-            input_data = input_data > 6 ? 6 : input_data;
-            dst[dst_c4_offset + i] = input_data;
-          }
-#endif
-        }
-        int c_res = channel - (c4 - 1) * C4NUM;
-        int src_c_res_offset = (c4 - 1) * c4_block;
-        int dst_c_res_offset = (c4 - 1) * C4NUM;
-        for (int c = 0; c < c_res; c++) {
-          int src_c4_res_offset = src_w_offset + src_c_res_offset + c;
-          int dst_c4_res_offset = dst_w_offset + dst_c_res_offset + c;
-          float input_data = src[src_c4_res_offset];
-          input_data = input_data < 0 ? 0 : input_data;
-          input_data = input_data > 6 ? 6 : input_data;
-          dst[dst_c4_res_offset] = input_data;
-        }
-      }
-    }
-  }
-}
-
 // fp32 conv3x3
 void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_data, TmpBufferAddress *buffer_list,
-                 int task_id, ConvParameter *conv_param, GEMM_FUNC_FP32 gemm_func) {
+                 int task_id, ConvParameter *conv_param) {
   int thread_count = conv_param->thread_num_;
   int ic4 = UP_DIV(conv_param->input_channel_, C4NUM);
   int output_channel = conv_param->output_channel_;
@@ -488,7 +353,7 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
 
   int input_batch = conv_param->input_batch_;
   for (int batch = 0; batch < input_batch; batch++) {
-    int in_batch_offset = batch * ic4 * C4NUM * conv_param->input_h_ * conv_param->input_w_;
+    int in_batch_offset = batch * conv_param->input_channel_ * conv_param->input_h_ * conv_param->input_w_;
     int nc4hw4_buffer_offset = batch * oc4 * C4NUM * conv_param->output_h_ * conv_param->output_w_;
 
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
