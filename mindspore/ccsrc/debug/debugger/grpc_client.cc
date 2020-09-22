@@ -79,9 +79,9 @@ std::vector<std::string> ChunkString(std::string str, int graph_size) {
     }
     std::string buffer;
     buffer.resize(chunk_size);
-    errno_t err = memcpy_s(reinterpret_cast<char *>(buffer.data()), chunk_size, str.data() + size_iter, chunk_size);
+    auto err = memcpy_s(reinterpret_cast<char *>(buffer.data()), chunk_size, str.data() + size_iter, chunk_size);
     if (err != 0) {
-      MS_LOG(ERROR) << "memcpy_s failed. err code is: " << err;
+      MS_LOG(EXCEPTION) << "memcpy_s failed. errorno is: " << err;
     }
     buf.push_back(buffer);
     size_iter += CHUNK_SIZE;
