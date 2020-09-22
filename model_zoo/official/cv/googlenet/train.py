@@ -197,12 +197,8 @@ if __name__ == '__main__':
         else:
             loss_scale_manager = FixedLossScaleManager(cfg.loss_scale, drop_overflow_update=False)
 
-    if device_target == "Ascend":
-        model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
-                      amp_level="O2", keep_batchnorm_fp32=False, loss_scale_manager=loss_scale_manager)
-    else:  # GPU
-        model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
-                      amp_level="O2", keep_batchnorm_fp32=True, loss_scale_manager=loss_scale_manager)
+    model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
+                  amp_level="O2", keep_batchnorm_fp32=False, loss_scale_manager=loss_scale_manager)
 
     config_ck = CheckpointConfig(save_checkpoint_steps=batch_num * 5, keep_checkpoint_max=cfg.keep_checkpoint_max)
     time_cb = TimeMonitor(data_size=batch_num)

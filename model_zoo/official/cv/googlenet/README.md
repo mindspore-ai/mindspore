@@ -447,7 +447,7 @@ If you need to use the trained model to perform inference on multiple hardware p
                  Tensor(lr), cfg.momentum, weight_decay=cfg.weight_decay)
   loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)
   model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
-                amp_level="O2", keep_batchnorm_fp32=True, loss_scale_manager=None)
+                amp_level="O2", keep_batchnorm_fp32=False, loss_scale_manager=None)
   
   # Set callbacks 
   config_ck = CheckpointConfig(save_checkpoint_steps=batch_num * 5, 

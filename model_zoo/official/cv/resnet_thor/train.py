@@ -124,12 +124,8 @@ if __name__ == '__main__':
                filter(lambda x: 'G_inv_max' in x.name, net.get_parameters()),
                config.weight_decay, config.loss_scale)
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-    if target == "Ascend":
-        model = Model(net, loss_fn=loss, optimizer=opt, amp_level='O2', loss_scale_manager=loss_scale,
-                      keep_batchnorm_fp32=False, metrics={'acc'}, frequency=config.frequency)
-    else:
-        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
-                      amp_level="O2", keep_batchnorm_fp32=True, frequency=config.frequency)
+    model = Model(net, loss_fn=loss, optimizer=opt, amp_level='O2', loss_scale_manager=loss_scale,
+                  keep_batchnorm_fp32=False, metrics={'acc'}, frequency=config.frequency)
 
     # define callbacks
     time_cb = TimeMonitor(data_size=step_size)
