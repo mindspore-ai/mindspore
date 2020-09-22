@@ -396,8 +396,8 @@ class Parameter(MetaTensor):
         if self.inited_param is not None:
             return self.inited_param
         if layout is not None:
-            if not isinstance(layout, list):
-                raise TypeError("The layout should be list! layout is {}.".format(layout))
+            if not isinstance(layout, tuple):
+                raise TypeError("The layout should be tuple! layout is {}.".format(layout))
             if len(layout) < 3:
                 raise ValueError("The length of layout must be larger than 3! layout is {}.".format(layout))
             slice_index = int(_get_slice_index(layout[0], layout[1]))

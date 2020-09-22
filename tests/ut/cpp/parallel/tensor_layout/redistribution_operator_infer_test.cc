@@ -49,7 +49,7 @@ class TestRedistributionOperatorInfer : public UT::Common {
 };
 
 // check if in_tensor_map could be changed to out_tensor_map with operator_list
-void InferOperatorCheck(Shape in_tensor_map, const Shape& out_tensor_map, const OperatorList& operator_list) {
+void InferOperatorCheck(Shape in_tensor_map, const Shape &out_tensor_map, const OperatorList &operator_list) {
   for (auto op_cost : operator_list) {
     OperatorR op = op_cost.first;
     Args args = op.second;

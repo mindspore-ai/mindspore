@@ -160,6 +160,9 @@ RefKeyPair CNodeWithRefKeys(const AnfNodePtr &cnode);
 std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node);
 
 ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &));
+
+void ApplyParallelOptOnParam(TensorLayout *tensor_layout, const OperatorInfoPtr &distribute_operator,
+                             const CNodePtr &cnode, const AnfNodePtr &parameter, size_t index);
 }  // namespace parallel
 }  // namespace mindspore
 

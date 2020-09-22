@@ -14,6 +14,7 @@
 # ============================================================================
 """api definition"""
 import threading
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
 
 class Hccl():
@@ -62,7 +63,9 @@ def get_rank_id(group=None):
 def get_rank_size(group=None):
     hccl = Hccl()
     if group is None or "nccl_world_group" in group:
-        return hccl.rank_size
+        if auto_parallel_context().get_device_num_is_set() is False:
+            return 1
+        return auto_parallel_context().get_device_num()
     if isinstance(group, str):
         return int(group.split("-")[0])
     raise ValueError

@@ -334,7 +334,7 @@ def _context():
                  all_reduce_fusion_config=list, pipeline_stages=int)
 def set_auto_parallel_context(**kwargs):
     r"""
-    Set auto parallel context.
+    Set auto parallel context, which is valid only for Ascend and GPU target.
 
     Auto parallel context should be configured before the initialization of your network.
 
@@ -348,17 +348,17 @@ def set_auto_parallel_context(**kwargs):
 
     Some configurations are parallel mode specific, see the below table for details:
 
-    ===========================  ===========================  =================
-    Common                       AUTO_PARALLEL                DATA_PARALLEL
-    ===========================  ===========================  =================
-    device_num                   gradient_fp32_sync           enable_parallel_optimizer
+    ===========================  ===========================
+    Common                       AUTO_PARALLEL
+    ===========================  ===========================
+    device_num                   gradient_fp32_sync
     global_rank                  loss_repeated_mean
     gradients_mean               auto_parallel_search_mode
     parallel_mode                strategy_ckpt_load_file
     all_reduce_fusion_config     strategy_ckpt_save_file
-                \                full_batch
-                \                pipeline_stages
-    ===========================  ===========================  =================
+    enable_parallel_optimizer    full_batch
+               \                 pipeline_stages
+    ===========================  ===========================
 
     Args:
         device_num (int): Available device number, the value must be in [1, 4096]. Default: 1.
@@ -387,7 +387,7 @@ def set_auto_parallel_context(**kwargs):
                      - recursive_programming: Recursive programming search mode.
 
                      - dynamic_programming: Dynamic programming search mode.
-        parameter_broadcast (bool): Whether to broadcast parameters before training.
+        parameter_broadcast (bool): A developing feature. Whether to broadcast parameters before training.
                        "stand_alone", "semi_auto_parallel" and "auto_parallel" do not support parameter
                        broadcast. Default: False.
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
@@ -395,9 +395,9 @@ def set_auto_parallel_context(**kwargs):
         full_batch (bool): If you load whole batch datasets in auto_parallel mode, this parameter
                        should be set with True. Default: False.
         enable_parallel_optimizer (bool): This is a developing feature, which shards the weight update computation for
-                       data parallel training in the benefit of time and memory saving. For now,
-                       `Lamb` and `AdamWeightDecay` are supported in data parallel mode. No Default, if it is not set,
-                       the fusion is closed.
+                       data parallel training in the benefit of time and memory saving. For now, auto parallel mode
+                       supports all optimizers. Data parallel mode only supports `Lamb` and `AdamWeightDecay`.
+                       Default: False.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how

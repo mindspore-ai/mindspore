@@ -121,6 +121,7 @@ void InsertNode(const Operator &op, const CNodePtr &node, size_t index, const An
   new_node->set_scope(scope);
   node_input[0]->set_scope(scope);
   manager->SetEdge(node, SizeToInt(index), new_node);
+  MS_LOG(INFO) << "Insert " << instance_name << " success";
 }
 
 std::string CreateInstanceName(const CNodePtr &node, size_t index) {
@@ -924,7 +925,7 @@ void BackwardCommunication(const OperatorInfoPtr &distribute_operator, const CNo
   MirrorOps mirror_ops = distribute_operator->mirror_ops();
   VirtualDivOp virtual_div_op = distribute_operator->virtual_div_op();
   // insert mirror op
-  if (!mirror_ops.empty()) {
+  if (!mirror_ops.empty() && !distribute_operator->opt_shard_flag()) {
     MS_LOG(INFO) << "insert mirror op for " << distribute_operator->name();
     InsertMirrorOps(mirror_ops, node);
   }
@@ -1263,6 +1264,37 @@ std::pair<AnfNodePtr, int> FindSubGraph(const FuncGraphPtr &graph, const AnfNode
   return std::make_pair(nullptr, 0);
 }
 
+void ApplyParallelOptOnParam(TensorLayout *tensor_layout, const OperatorInfoPtr &distribute_operator,
+                             const CNodePtr &cnode, const AnfNodePtr &parameter, size_t index) {
+  MS_EXCEPTION_IF_NULL(distribute_operator);
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(parameter);
+  std::vector<Group> dev_group;
+  // create communication group for allgather operator
+  if (distribute_operator->CreateGroupByTensorMap(tensor_layout->origin_tensor_map().array(), &dev_group) ==
+        Status::SUCCESS &&
+      !dev_group.empty()) {
+    // set optimizer shard split flag to avoid inserting mirror_ops
+    distribute_operator->set_opt_shard_flag(true);
+    // insert allgather operator between shard parameter and cnode
+    Operator op = CreateAllGatherOp(dev_group[0].name());
+    auto graph = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(graph);
+    InsertNode(op, cnode, index, parameter, graph, PARALLEL_OPTIMIZER_ALLGATHER);
+    // set communication group in tensor layout for checkpoint saving
+    tensor_layout->set_opt_shard_group(dev_group[0].name());
+    // add fusion flag
+    auto allgather = cnode->input(index)->cast<CNodePtr>();
+    auto prim = GetValueNode<PrimitivePtr>(allgather->input(0));
+    auto attrs = prim->attrs();
+    attrs["fusion"] = MakeValue(1);
+    prim->SetAttrs(attrs);
+    MS_LOG(INFO) << "Parallel optimizer is applied on " << parameter->ToString();
+  } else {
+    MS_LOG(ERROR) << "Parallel optimizer applied on " << parameter->ToString() << "failed!";
+  }
+}
+
 void SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int> &res) {
   MS_EXCEPTION_IF_NULL(parameter);
   AbstractBasePtr abstract = parameter->abstract();
@@ -1280,7 +1312,22 @@ void SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, i
                       << distribute_operator->inputs_tensor_info().size();
   }
   TensorInfo tensorinfo_in = distribute_operator->inputs_tensor_info()[IntToSize(res.second - 1)];
-  Shape slice_shape = tensorinfo_in.slice_shape();
+  TensorLayout tensor_layout = tensorinfo_in.tensor_layout();
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  bool enable_parallel_optimizer = ParallelContext::GetInstance()->enable_parallel_optimizer();
+  Shape slice_shape = tensor_layout.slice_shape().array();
+  if (enable_parallel_optimizer) {
+    if (!ParameterRequireGrad(parameter)) {
+      // only trainable parameters need parallel optimizer
+      MS_LOG(INFO) << "Parallel optimizer is no need for " << parameter->ToString();
+    } else if (tensor_layout.GenerateOptShardSliceShape() == Status::SUCCESS) {
+      // get a totally shard tensor slice shape if the weight is repeated on devices
+      // and the shape of the first dimension could be divided
+      // apply parallel optimizer on parameters
+      ApplyParallelOptOnParam(&tensor_layout, distribute_operator, cnode, parameter, IntToSize(res.second));
+      slice_shape = tensor_layout.opt_shard_slice_shape();
+    }
+  }
   MS_LOG(INFO) << "SetParallelShape slice_shape  " << parameter->ToString() << "  shape "
                << MakeValue(slice_shape)->ToString() << ", op name is " << distribute_operator->name();
   std::shared_ptr<abstract::BaseShape> parallel_shape = std::make_shared<abstract::Shape>(slice_shape);
@@ -1290,7 +1337,6 @@ void SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, i
   MS_EXCEPTION_IF_NULL(cloned_abstract);
   cloned_abstract->set_shape(parallel_shape);
   parameter->set_abstract(cloned_abstract);
-  TensorLayout tensor_layout = tensorinfo_in.tensor_layout();
   ParameterPtr parameter_ptr = parameter->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(parameter_ptr);
   parameter_ptr->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_layout));

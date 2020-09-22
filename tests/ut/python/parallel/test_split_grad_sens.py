@@ -121,10 +121,10 @@ def test_grad_sens_parameter_type():
     sens = Tensor(np.ones([128, 64]), dtype=ms.float32)
     net.set_auto_parallel()
     _executor.compile(net, x, y, b, sens, phase='train', auto_parallel_mode=True)
-    x_layout = [[8, 8], [1, -1], [16, 32], [0], [1]]
-    y_layout = [[8, 8], [-1, 0], [32, 8], [0], [1]]
-    b_layout = [[8, 8], [0, -1], [8, 64], [0], [1]]
-    sens_layout = [[8, 8], [1, -1], [16, 64], [0], [1]]
+    x_layout = ([8, 8], [1, -1], [16, 32], 0, True, '')
+    y_layout = ([8, 8], [-1, 0], [32, 8], 0, True, '')
+    b_layout = ([8, 8], [0, -1], [8, 64], 0, True, '')
+    sens_layout = ([8, 8], [1, -1], [16, 64], 0, True, '')
     expect_dict = {'x': x_layout, 'y': y_layout, 'b': b_layout, 'sens': sens_layout}
     assert net.parameter_layout_dict == expect_dict
 

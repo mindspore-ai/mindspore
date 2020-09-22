@@ -21,7 +21,9 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
+#include <functional>
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/tensor_layout/arrangement.h"
@@ -86,6 +88,14 @@ class TensorLayout {
 
   TensorLayout SqueezeShape() const;
 
+  Status GenerateOptShardSliceShape();
+
+  Shape opt_shard_slice_shape() { return opt_shard_slice_shape_; }
+
+  void set_opt_shard_group(std::string name) { opt_shard_group_ = std::move(name); }
+
+  std::string opt_shard_group() { return opt_shard_group_; }
+
   // Key for user data.
   constexpr static char key[] = "TLayout";
 
@@ -109,6 +119,8 @@ class TensorLayout {
   bool skip_redistribution_ = false;
   int32_t field_size_ = 0;
   bool uniform_split_ = true;
+  Shape opt_shard_slice_shape_;
+  std::string opt_shard_group_ = "";
 };
 }  // namespace parallel
 }  // namespace mindspore

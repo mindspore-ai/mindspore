@@ -164,6 +164,10 @@ class OperatorInfo {
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
   void set_stage_id(int32_t stage_id) { stage_id_ = stage_id; }
   int32_t stage_id() const { return stage_id_; }
+  void set_opt_shard_flag(bool flag) { opt_shard_flag_ = flag; }
+  bool opt_shard_flag() { return opt_shard_flag_; }
+  Status CreateGroupByTensorMap(const Shape &tensor_map, std::vector<Group> *group);
+
   // Key for user data.
   constexpr static char key[] = "OpInfo";
 
@@ -180,7 +184,6 @@ class OperatorInfo {
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
   void SetDeviceListByStrategy();
   void SetRepeatedCalcDevMatrix();
-  Status CreateGroupByTensorMap(const Shape &tensor_map, std::vector<Group> *group);
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
   Status InferAttrs();
   void ResetQueueMember();
@@ -263,6 +266,7 @@ class OperatorInfo {
  private:
   OperatorCostPtr operator_cost_;
   std::vector<TypePtr> outputs_type_;
+  bool opt_shard_flag_ = false;
 };
 
 Shape GetSliceShape(const Shape &tensor_shape, const Dimensions &strategy);
@@ -270,6 +274,7 @@ Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shap
 Operator CreateVirtualDivOp(int32_t div_num);
 Operator CreateAllReduceOp(const std::string &reduce_op, const std::string &group);
 Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &group);
+Operator CreateAllGatherOp(const std::string &group);
 Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout);
 OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num);
 int32_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const Shape &tensor_map);

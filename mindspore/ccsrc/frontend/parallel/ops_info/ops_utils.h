@@ -98,6 +98,7 @@ constexpr char BEGIN[] = "begin";
 constexpr char END[] = "end";
 constexpr char STRIDES[] = "strides";
 constexpr char GROUP[] = "group";
+constexpr char FUSION[] = "fusion";
 constexpr char AXIS[] = "axis";
 constexpr char OUTPUT_NUM[] = "output_num";
 constexpr char SPLIT_COUNT[] = "split_count";
@@ -140,6 +141,7 @@ constexpr char FORWARD_REDUCE_SCATTER[] = "forward_reduce_scatter";
 constexpr char FIELD_SIZE[] = "field_size";
 constexpr char OPTIMIZER_SUB_STRING[] = "optimizer";
 constexpr char DEVICE[] = "Device";
+constexpr char PARALLEL_OPTIMIZER_ALLGATHER[] = "parallel_optimizer_allgather";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";
