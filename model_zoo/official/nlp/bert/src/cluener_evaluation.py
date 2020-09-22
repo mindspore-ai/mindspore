@@ -23,9 +23,9 @@ from src import tokenization
 from src.sample_process import label_generation, process_one_example_p
 from src.CRF import postprocess
 from src.finetune_eval_config import bert_net_cfg
+from src.score import get_result
 
-
-def process(model=None, text="", tokenizer_=None, use_crf="", label2id_file=""):
+def process(model=None, text="", tokenizer_=None, use_crf="", tag_to_index=None, vocab=""):
     """
     process text.
     """
@@ -34,7 +34,7 @@ def process(model=None, text="", tokenizer_=None, use_crf="", label2id_file=""):
     res = []
     ids = []
     for i in data:
-        feature = process_one_example_p(tokenizer_, i, max_seq_len=bert_net_cfg.seq_length)
+        feature = process_one_example_p(tokenizer_, vocab, i, max_seq_len=bert_net_cfg.seq_length)
         features.append(feature)
         input_ids, input_mask, token_type_id = feature
         input_ids = Tensor(np.array(input_ids), mstype.int32)
@@ -52,10 +52,10 @@ def process(model=None, text="", tokenizer_=None, use_crf="", label2id_file=""):
             ids = logits.asnumpy()
             ids = np.argmax(ids, axis=-1)
             ids = list(ids)
-    res = label_generation(text=text, probs=ids, label2id_file=label2id_file)
+    res = label_generation(text=text, probs=ids, tag_to_index=tag_to_index)
     return res
 
-def submit(model=None, path="", vocab_file="", use_crf="", label2id_file=""):
+def submit(model=None, path="", vocab_file="", use_crf="", label_file="", tag_to_index=None):
     """
     submit task
     """
@@ -66,8 +66,11 @@ def submit(model=None, path="", vocab_file="", use_crf="", label2id_file=""):
             continue
         oneline = json.loads(line.strip())
         res = process(model=model, text=oneline["text"], tokenizer_=tokenizer_,
-                      use_crf=use_crf, label2id_file=label2id_file)
-        print("text", oneline["text"])
-        print("res:", res)
+                      use_crf=use_crf, tag_to_index=tag_to_index, vocab=vocab_file)
         data.append(json.dumps({"label": res}, ensure_ascii=False))
     open("ner_predict.json", "w").write("\n".join(data))
+    labels = []
+    with open(label_file) as f:
+        for label in f:
+            labels.append(label.strip())
+    get_result(labels, "ner_predict.json", path)
