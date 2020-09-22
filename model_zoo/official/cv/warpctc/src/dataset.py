@@ -41,7 +41,7 @@ class _CaptchaDataset:
         self.img_names = [i for i in os.listdir(img_root_dir) if i.endswith('.png')]
         self.max_captcha_digits = max_captcha_digits
         self.target = device_target
-        self.blank = 10 if self.target == 'Ascend' else 0
+        self.blank = 10
         self.label_length = [len(os.path.splitext(n)[0].split('-')[-1]) for n in self.img_names]
 
     def __len__(self):
@@ -55,14 +55,8 @@ class _CaptchaDataset:
         image = np.array(im)
         label_str = os.path.splitext(img_name)[0]
         label_str = label_str[label_str.find('-') + 1:]
-        if self.target == 'Ascend':
-            label = [int(i) for i in label_str]
-            label.extend([int(self.blank)] * (self.max_captcha_digits - len(label)))
-        else:
-            label = [int(i) + 1 for i in label_str]
-            length = len(label)
-            label.extend([int(self.blank)] * (self.max_captcha_digits - len(label)))
-            label.append(length)
+        label = [int(i) for i in label_str]
+        label.extend([int(self.blank)] * (self.max_captcha_digits - len(label)))
         label = np.array(label)
         return image, label
 
