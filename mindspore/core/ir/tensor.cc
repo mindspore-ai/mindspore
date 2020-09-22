@@ -28,7 +28,6 @@
 #include <algorithm>
 #include <type_traits>
 #include <typeinfo>
-#include <regex>
 
 #include "abstract/abstract_value.h"
 
@@ -373,25 +372,17 @@ class TensorDataImpl : public TensorData {
                   std::is_same<T, double>::value) {
       return str;
     }
-    // Use regular expressions to replace placeholders.
-    std::regex pattern("#+");
-    std::smatch result;
-    int bias = 0;
-    std::string::const_iterator start = str.begin();
-    std::string::const_iterator end = str.end();
-    while (std::regex_search(start, end, result, pattern)) {
-      const int len = result.str(0).length();
-      const int pos = result.position();
-      bias += pos;
-      if (bias > static_cast<int32_t>(str.length())) {
-        return "";
+    // Replace # with placeholder.
+    size_t index = str.find('#');
+    while (index != str.npos) {
+      size_t pos = index;
+      while (str[pos] == '#') {
+        pos++;
       }
-      // Replace # with placeholder.
+      int len = pos - index;
       std::string space(max_width - len, ' ');
-      str = str.replace(bias, len, space);
-      // Update the starting position of the search.
-      start = str.begin() + bias;
-      end = str.end();
+      str = str.replace(index, len, space);
+      index = str.find('#', index);
     }
     return str;
   }
