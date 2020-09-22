@@ -21,7 +21,7 @@ from mindspore.common import set_seed
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
-from src.loss import CTCLoss, CTCLossV2
+from src.loss import CTCLoss
 from src.config import config as cf
 from src.dataset import create_dataset
 from src.warpctc import StackedRNN, StackedRNNForGPU
@@ -49,13 +49,12 @@ if __name__ == '__main__':
                              batch_size=cf.batch_size,
                              device_target=args_opt.platform)
     step_size = dataset.get_dataset_size()
+    loss = CTCLoss(max_sequence_length=cf.captcha_width,
+                   max_label_length=max_captcha_digits,
+                   batch_size=cf.batch_size)
     if args_opt.platform == 'Ascend':
-        loss = CTCLoss(max_sequence_length=cf.captcha_width,
-                       max_label_length=max_captcha_digits,
-                       batch_size=cf.batch_size)
         net = StackedRNN(input_size=input_size, batch_size=cf.batch_size, hidden_size=cf.hidden_size)
     else:
-        loss = CTCLossV2(max_sequence_length=cf.captcha_width, batch_size=cf.batch_size)
         net = StackedRNNForGPU(input_size=input_size, batch_size=cf.batch_size, hidden_size=cf.hidden_size)
 
     # load checkpoint

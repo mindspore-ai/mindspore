@@ -25,7 +25,7 @@ from mindspore.nn.wrap import WithLossCell
 from mindspore.train.callback import TimeMonitor, LossMonitor, CheckpointConfig, ModelCheckpoint
 from mindspore.communication.management import init, get_group_size, get_rank
 
-from src.loss import CTCLoss, CTCLossV2
+from src.loss import CTCLoss
 from src.config import config as cf
 from src.dataset import create_dataset
 from src.warpctc import StackedRNN, StackedRNNForGPU
@@ -58,7 +58,7 @@ if __name__ == '__main__':
             rank = int(os.environ.get("RANK_ID"))
         else:
             init()
-            lr_scale = 0.5
+            lr_scale = 1
             device_num = get_group_size()
             rank = get_rank()
         context.reset_auto_parallel_context()
@@ -78,16 +78,14 @@ if __name__ == '__main__':
     # define lr
     lr_init = cf.learning_rate if not args_opt.run_distribute else cf.learning_rate * device_num * lr_scale
     lr = get_lr(cf.epoch_size, step_size, lr_init)
+    loss = CTCLoss(max_sequence_length=cf.captcha_width,
+                   max_label_length=max_captcha_digits,
+                   batch_size=cf.batch_size)
     if args_opt.platform == 'Ascend':
-        loss = CTCLoss(max_sequence_length=cf.captcha_width,
-                       max_label_length=max_captcha_digits,
-                       batch_size=cf.batch_size)
         net = StackedRNN(input_size=input_size, batch_size=cf.batch_size, hidden_size=cf.hidden_size)
-        opt = nn.SGD(params=net.trainable_params(), learning_rate=lr, momentum=cf.momentum)
     else:
-        loss = CTCLossV2(max_sequence_length=cf.captcha_width, batch_size=cf.batch_size)
         net = StackedRNNForGPU(input_size=input_size, batch_size=cf.batch_size, hidden_size=cf.hidden_size)
-        opt = nn.Momentum(params=net.trainable_params(), learning_rate=lr, momentum=cf.momentum)
+    opt = nn.SGD(params=net.trainable_params(), learning_rate=lr, momentum=cf.momentum)
 
     net = WithLossCell(net, loss)
     net = TrainOneStepCellWithGradClip(net, opt).set_train()

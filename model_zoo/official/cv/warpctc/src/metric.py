@@ -27,7 +27,7 @@ class WarpCTCAccuracy(nn.Metric):
         self._total_num = 0
         self._count = 0
         self.device_target = device_target
-        self.blank = 10 if device_target == 'Ascend' else 0
+        self.blank = 10
 
     def clear(self):
         self._correct_num = 0
