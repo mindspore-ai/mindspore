@@ -49,8 +49,7 @@ def context_device_init(config):
         if config.run_distribute:
             context.set_auto_parallel_context(device_num=config.rank_size,
                                               parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True,
-                                              all_reduce_fusion_config=[140])
+                                              gradients_mean=True)
             init()
     else:
         raise ValueError("Only support CPU, GPU and Ascend.")
@@ -82,6 +81,6 @@ def config_ckpoint(config, lr, step_size):
                 rank = get_rank()
 
             ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(rank) + "/"
-            ckpt_cb = ModelCheckpoint(prefix="mobilenetV2", directory=ckpt_save_dir, config=config_ck)
+            ckpt_cb = ModelCheckpoint(prefix="mobilenetv2", directory=ckpt_save_dir, config=config_ck)
             cb += [ckpt_cb]
     return cb
