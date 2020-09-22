@@ -91,6 +91,9 @@ if __name__ == "__main__":
     else:
         raise ValueError("Unsupport dataset.")
 
+    if ds_train.get_dataset_size() == 0:
+        raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
+
     network = AlexNet(cfg.num_classes)
 
     loss_scale_manager = None
