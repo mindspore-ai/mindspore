@@ -76,7 +76,6 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
       size_t dst_step = tile_num * ic4 * C4NUM;
       float *trans_input_ptr = trans_input + dst_ic4_offset;
       func(tmp_data, trans_input_ptr, C4NUM, dst_step);
-      //      GeneralInputTransformUnit(tmp_data, trans_input_ptr, matrix_b, matrix_bt, C4NUM, dst_step, input_unit);
     }
     out_tile_index++;
   }  // cal_tile_num loop
@@ -120,8 +119,6 @@ void WinogradOutputTransform(const float *gemm_out, float *out_data, const float
       const float *bias_ptr = bias_data + j * C4NUM;
       float *dst_ptr = out_data + dst_oc4_offset;
       func(src_ptr, dst_ptr, bias_ptr, C8NUM, output_w, output_channel, r_w, r_h, r_c);
-      //      GeneralOutputTransformUnit(src_ptr, dst_ptr, bias_ptr, matrix_a, matrix_at, C8NUM,
-      //                                 output_w_unit_block * output_unit, input_unit, output_unit);
     }
     out_tile_index++;
   }

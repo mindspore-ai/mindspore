@@ -64,11 +64,8 @@ def binop_grad_common(x, y, dx, dy):
 
 def _sum_grad(x, axis, dout):
     """Grad definition for `Sum` operation."""
-    # input_shape = [2, 3] axis = [1]
     input_shape = shape_op(x)
-    # output_shape_kept_dims = [2, 1]
     output_shape_kept_dims = reduced_shape(input_shape, axis)
-    # tile_scaling = [1, 3]
     tile_scaling = tuple_div(input_shape, output_shape_kept_dims)
     grad = reshape(dout, output_shape_kept_dims)
     return tile(grad, tile_scaling)
@@ -76,9 +73,7 @@ def _sum_grad(x, axis, dout):
 
 def _min_or_max_grad(x, axis, out, dout):
     """Grad definition for `Min` and `Max` operations."""
-    # input_shape = [2, 3] axis = [1]
     input_shape = shape_op(x)
-    # output_shape_kept_dims = [2, 1]
     output_shape_kept_dims = reduced_shape(input_shape, axis)
     y = reshape(out, output_shape_kept_dims)
     grad = reshape(dout, output_shape_kept_dims)

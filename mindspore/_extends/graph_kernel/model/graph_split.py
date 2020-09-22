@@ -111,7 +111,6 @@ class GraphSplitByPattern:
         """Split graph"""
         def _buddy(op, dom, path_ops):
             """Fuse buddy together"""
-            # pylint: disable=unused-argument
             group = self.op_group[op]
             for p in group:
                 # p is buddy
@@ -125,7 +124,6 @@ class GraphSplitByPattern:
 
         def _injective(pattern, limit):
             def _checker(op, dom, path_ops):
-                # pylint: disable=unused-argument
                 for p in op.output.to_ops:
                     if p not in self.op_group[dom]:
                         return False

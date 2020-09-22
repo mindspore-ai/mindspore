@@ -380,7 +380,6 @@ class PSNR(Cell):
         img2 = _convert_img_dtype_to_float32(img2, self.max_val)
 
         mse = P.ReduceMean()(F.square(img1 - img2), (-3, -2, -1))
-        # 10*log_10(max_val^2/MSE)
         psnr = 10 * P.Log()(F.square(max_val) / mse) / F.scalar_log(10.0)
 
         return psnr

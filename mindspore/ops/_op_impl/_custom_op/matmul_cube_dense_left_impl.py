@@ -44,7 +44,6 @@ matmul_cube_dense_left_op_info = TBERegOp("CusMatMulCubeDenseLeft") \
     .get_op_info()
 
 
-# pylint: disable=locally-disabled,too-many-arguments,too-many-branches, too-many-statements, too-many-locals,
 def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
     """
     Check the given input if legal
@@ -244,8 +243,6 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
 
     return True
 
-# pylint: disable=locally-disabled,too-many-arguments, too-many-locals, too-many-statements,
-# pylint: disable=inconsistent-return-statements
 # @util.check_input_type(dict, dict, (dict, NoneType), dict, bool, bool, str)
 @op_info_register(matmul_cube_dense_left_op_info)
 def CusMatMulCubeDenseLeft(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False,
@@ -467,3 +464,4 @@ def CusMatMulCubeDenseLeft(input_x1, input_x2, bias=None, output_y={}, trans_a=F
               "tensor_list": tensor_list}
 
     te.lang.cce.cce_build_code(schedule, config)
+    return None

@@ -40,7 +40,6 @@ matmul_cube_dense_right_op_info = TBERegOp("CusMatMulCubeDenseRight") \
     .get_op_info()
 
 
-# pylint: disable=inconsistent-return-statements
 @op_info_register(matmul_cube_dense_right_op_info)
 def CusMatMulCubeDenseRight(input_x1, input_x2, input_x3, bias=None, output_y={}, trans_a=False, trans_b=False,
                             kernel_name="matmulcube"):
@@ -171,3 +170,4 @@ def CusMatMulCubeDenseRight(input_x1, input_x2, input_x3, bias=None, output_y={}
 
         tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x1, input_x2, input_x3], outputs=[resMatmul])
         return tik_instance
+    return None

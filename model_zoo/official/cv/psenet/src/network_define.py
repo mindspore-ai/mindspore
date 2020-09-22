@@ -129,7 +129,6 @@ class TrainOneStepCell(nn.Cell):
     def __init__(self, network, optimizer, sens=1.0, reduce_flag=False, mean=True, degree=None):
         super(TrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
-        # self.backbone = network._backbone
         self.weights = ParameterTuple(network.trainable_params())
         self.optimizer = optimizer
         self.grad = C.GradOperation(get_by_list=True,

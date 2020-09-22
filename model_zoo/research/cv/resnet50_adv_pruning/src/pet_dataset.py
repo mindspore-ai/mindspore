@@ -78,14 +78,12 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
     center_crop_p = P.CenterCrop(224)
     totensor = P.ToTensor()
     normalize_p = P.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-    #change_op_p = P.HWC2CHW()
     composeop = P.ComposeOp(
         [decode_p, resize_p, center_crop_p, totensor, normalize_p])
     if do_train:
         trans = [resize_crop_op, horizontal_flip_op, color_op,
                  rescale_op, normalize_op, change_swap_op]
     else:
-        #trans = [decode_op, resize_op, center_crop, rescale_op, normalize_op, change_swap_op]
         trans = composeop()
     type_cast_op = C2.TypeCast(mstype.int32)
 

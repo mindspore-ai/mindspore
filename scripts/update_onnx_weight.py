@@ -36,7 +36,6 @@ def update_onnx_initializer(onnx_file, ckpt_file, output_file):
 
     for i, _ in enumerate(initializer):
         item = initializer[i]
-        #print(item.name, item.data_type, item.dims, len(item.raw_data))
         if not item.name in param_dict:
             print(f"Warning: Can not find '{item.name}' in checkpoint parameters dictionary")
             continue

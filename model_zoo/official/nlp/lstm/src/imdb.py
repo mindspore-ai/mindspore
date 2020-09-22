@@ -103,7 +103,6 @@ class ImdbParser():
         vocab = set(chain(*tokenized_features))
         self.__vacab[seg] = vocab
 
-        # word_to_idx looks like {'hello': 1, 'world':111, ... '<unk>': 0}
         word_to_idx = {word: i + 1 for i, word in enumerate(vocab)}
         word_to_idx['<unk>'] = 0
         self.__word2idx[seg] = word_to_idx

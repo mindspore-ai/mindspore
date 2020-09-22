@@ -32,7 +32,6 @@ GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 5.0
 
 
-# pylint: disable=consider-using-in
 class ClipGradients(nn.Cell):
     """
     Clip gradients.
@@ -56,7 +55,7 @@ class ClipGradients(nn.Cell):
                   clip_type,
                   clip_value):
         """Defines the gradients clip."""
-        if clip_type != 0 and clip_type != 1:
+        if clip_type not in (0, 1):
             return grads
 
         new_grads = ()

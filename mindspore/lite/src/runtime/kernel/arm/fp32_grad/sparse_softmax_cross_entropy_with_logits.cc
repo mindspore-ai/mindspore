@@ -110,10 +110,6 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
-  // if (context_ && context_->infer_shape_interrupt_ && !context_->running_) {
-  // set_need_reinit();
-  //  return RET_OK;
-  // }
   auto dims = in_tensors_[0]->shape();
   param->n_dim_ = 2;
   param->number_of_classes_ = dims[1];

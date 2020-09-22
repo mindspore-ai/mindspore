@@ -53,4 +53,3 @@ class StepLossTimeMonitor(Callback):
         if self._per_print_times != 0 and cb_params.cur_step_num % self._per_print_times == 0:
             # TEST
             print("step: %s, loss is %s, fps is %s" % (cur_step_in_epoch, loss, step_fps), flush=True)
-            # print("step: %s, loss is %s, fps is %s" % ( cur_step_in_epoch, loss, step_fps))

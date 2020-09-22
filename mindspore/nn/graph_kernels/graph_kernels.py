@@ -136,7 +136,6 @@ class MinimumGrad(GraphKernel):
     def construct(self, x, y, dout):
         cmp_result = self.less_equal(x, y)
         dx = self.select(cmp_result, dout, self.zeros_like(dout))
-        # dy = self.select(cmp_result, self.zeros_like(dout), dout)
         dy = dout - dx
 
         return dx, dy
