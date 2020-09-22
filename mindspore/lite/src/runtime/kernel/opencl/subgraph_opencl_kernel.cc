@@ -321,6 +321,10 @@ int SubGraphOpenCLKernel::ReSize() { return RET_OK; }
 
 int SubGraphOpenCLKernel::Run() {
   for (auto &tensor : in_tensors_) {
+    if (tensor->data_c() == nullptr) {
+      MS_LOG(ERROR) << "OpenCL subgraph input tensor data is null";
+      return RET_ERROR;
+    }
     allocator_->UnmapBuffer(tensor->data_c());
   }
 
