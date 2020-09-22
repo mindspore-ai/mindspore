@@ -23,9 +23,9 @@ nasnet_a_mobile_config_gpu = edict({
     'rank': 0,
     'group_size': 1,
     'work_nums': 8,
-    'epoch_size': 312,
+    'epoch_size': 500,
     'keep_checkpoint_max': 100,
-    'ckpt_path': './',
+    'ckpt_path': './checkpoint/',
     'is_save_on_master': 0,
 
     ### Dataset Config
