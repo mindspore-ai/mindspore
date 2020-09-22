@@ -213,7 +213,7 @@ def train(cloud_args=None):
     # network
     args.logger.important_info('start create network')
     # get network and init
-    network = get_network(args.backbone, args.num_classes, platform=args.platform)
+    network = get_network(args.backbone, num_classes=args.num_classes, platform=args.platform)
     if network is None:
         raise NotImplementedError('not implement {}'.format(args.backbone))
 

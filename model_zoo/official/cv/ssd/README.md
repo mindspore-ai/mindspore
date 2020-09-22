@@ -114,7 +114,8 @@ sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
       ├─ lr_schedule.py           ## learning ratio generator
       └─ ssd.py                   ## ssd architecture
     ├─ eval.py                    ## eval scripts
-    └─ train.py                   ## train scripts
+    ├─ train.py                   ## train scripts
+    ├── mindspore_hub_conf.py       #  mindspore hub interface
 ```
 
 ## [Script Parameters](#contents)

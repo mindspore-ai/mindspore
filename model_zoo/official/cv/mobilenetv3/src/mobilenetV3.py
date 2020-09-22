@@ -246,7 +246,8 @@ class MobileNetV3(nn.Cell):
         >>> MobileNetV3(num_classes=1000)
     """
 
-    def __init__(self, model_cfgs, num_classes=1000, multiplier=1., final_drop=0., round_nearest=8):
+    def __init__(self, model_cfgs, num_classes=1000, multiplier=1., final_drop=0.,
+                 round_nearest=8, include_top=True, activation="None"):
         super(MobileNetV3, self).__init__()
         self.cfgs = model_cfgs['cfg']
         self.inplanes = 16
@@ -285,18 +286,33 @@ class MobileNetV3(nn.Cell):
 
         # make it nn.CellList
         self.features = nn.SequentialCell(self.features)
-        self.output = nn.Conv2d(in_channels=model_cfgs['cls_ch_expand'],
-                                out_channels=num_classes,
-                                kernel_size=1, has_bias=True, pad_mode='pad')
-        self.squeeze = P.Squeeze(axis=(2, 3))
+        self.include_top = include_top
+        self.need_activation = False
+        if self.include_top:
+            self.output = nn.Conv2d(in_channels=model_cfgs['cls_ch_expand'],
+                                    out_channels=num_classes,
+                                    kernel_size=1, has_bias=True, pad_mode='pad')
+            self.squeeze = P.Squeeze(axis=(2, 3))
+            if activation != "None":
+                self.need_activation = True
+                if activation == "Sigmoid":
+                    self.activation = P.Sigmoid()
+                elif activation == "Softmax":
+                    self.activation = P.Softmax()
+                else:
+                    raise NotImplementedError(f"The activation {activation} not in [Sigmoid, Softmax].")
 
         self._initialize_weights()
 
     def construct(self, x):
         x = self.features(x)
-        x = self.output(x)
-        x = self.squeeze(x)
+        if self.include_top:
+            x = self.output(x)
+            x = self.squeeze(x)
+            if self.need_activation:
+                x = self.activation(x)
         return x
+
 
     def _make_layer(self, kernel_size, exp_ch, out_channel, use_se, act_func, stride=1):
         mid_planes = exp_ch
