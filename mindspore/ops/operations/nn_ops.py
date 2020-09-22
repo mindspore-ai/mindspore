@@ -609,6 +609,13 @@ class FusedBatchNorm(Primitive):
         >>> op = P.FusedBatchNorm()
         >>> output = op(input_x, scale, bias, mean, variance)
     """
+    __mindspore_signature__ = (
+        sig.make_sig('input_x', dtype=sig.sig_dtype.T2),
+        sig.make_sig('scale', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('bias', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('mean', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('variance', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+    )
 
     @prim_attr_register
     def __init__(self, mode=0, epsilon=1e-5, momentum=0.1):

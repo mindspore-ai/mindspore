@@ -1394,11 +1394,6 @@ test_case_nn_ops = [
         'desc_inputs': [[2, 16], [2, 16], [2, 16], [2, 16], [16]],
         'desc_bprop': [[2, 16], [16], [16]],
         'skip': ['backward']}),
-    ('FusedBatchNorm', {
-        'block': P.FusedBatchNorm(),
-        'desc_inputs': [[128, 64, 32, 64], [64], [64], [64], [64]],
-        'desc_bprop': [[128, 64, 32, 64], [64], [64], [64], [64]],
-        'skip': []}),
     ('FusedBatchNormGrad', {
         'block': G.FusedBatchNormGrad(),
         'desc_inputs': [[128, 64, 32, 64], [128, 64, 32, 64], [64], [64], [64]],
