@@ -87,7 +87,6 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   TmpBufferAddress tmp_buffer_address_list_[5];
   InputTransFunc in_func_;
   OutputTransFunc out_func_;
-  GEMM_FUNC_FP32 gemm_func_ = nullptr;
 };
 
 }  // namespace mindspore::kernel

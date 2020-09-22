@@ -136,8 +136,12 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
   float matrix_at[64];
   float matrix_b[64];
   float matrix_bt[64];
+  float coef = 1.0f;
+  if (input_unit_ == 8) {
+    coef = 0.5f;
+  }
   auto ret =
-    CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, 1.0f, output_unit_, kernel_unit_);
+    CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, coef, output_unit_, kernel_unit_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "get matrix g from CookToomFilter failed.";
     return ret;
@@ -243,17 +247,11 @@ int ConvolutionWinogradCPUKernel::ConfigInputOutput() {
     MS_LOG(ERROR) << "in_func_ is null.";
     return RET_ERROR;
   }
-  out_func_ = GetOutputTransFunc(input_unit_, output_unit_);
+  out_func_ = GetOutputTransFunc(input_unit_, output_unit_, conv_param_->act_type_);
   if (out_func_ == nullptr) {
     MS_LOG(ERROR) << "out_func_ is null.";
     return RET_ERROR;
   }
-
-  // #ifdef ENABLE_ARM32
-  //   gemm_func_ = IndirectGemmFp32_8x4;
-  // #else
-  gemm_func_ = IndirectGemmFp32_8x8;
-  // #endif
   return RET_OK;
 }
 
@@ -300,12 +298,9 @@ int ConvolutionWinogradCPUKernel::ReSize() {
 }
 
 int ConvolutionWinogradCPUKernel::RunImpl(int task_id) {
-  if (gemm_func_ == nullptr) {
-    MS_LOG(ERROR) << "gemm_func is nullptr.";
-    return RET_ERROR;
-  }
+  auto output_data = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   ConvWinogardFp32(reinterpret_cast<float *>(nhwc4_input_), trans_weight_, reinterpret_cast<const float *>(bias_data_),
-                   tmp_buffer_address_list_, task_id, conv_param_, in_func_, out_func_, gemm_func_);
+                   output_data, tmp_buffer_address_list_, task_id, conv_param_, in_func_, out_func_);
   return RET_OK;
 }
 
@@ -368,12 +363,6 @@ int ConvolutionWinogradCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  ret = PostProcess();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Post process failed.";
-    FreeTmpBuffer();
-    return ret;
-  }
   FreeTmpBuffer();
   return RET_OK;
 }
