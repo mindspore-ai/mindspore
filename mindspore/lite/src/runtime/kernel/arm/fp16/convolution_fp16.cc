@@ -218,6 +218,18 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
+
+  auto *weight_tensor = inputs.at(kWeightIndex);
+  auto *restore_data = weight_tensor->MutableData();
+  if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
+    if (dequant_weight == nullptr) {
+      MS_LOG(ERROR) << "dequant data is nullptr.";
+      return nullptr;
+    }
+    weight_tensor->SetData(dequant_weight);
+  }
+
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
@@ -249,6 +261,10 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &
   }
   if (kernel == nullptr) {
     MS_LOG(DEBUG) << "Create conv fp16 kernel failed.";
+    if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+      weight_tensor->FreeData();
+      weight_tensor->SetData(restore_data);
+    }
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -256,7 +272,15 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &
     delete kernel;
     MS_LOG(INFO) << "Init fp16 kernel failed, name: " << opParameter->name_
                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+      weight_tensor->FreeData();
+      weight_tensor->SetData(restore_data);
+    }
     return nullptr;
+  }
+  if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    weight_tensor->FreeData();
+    weight_tensor->SetData(restore_data);
   }
   return kernel;
 }
