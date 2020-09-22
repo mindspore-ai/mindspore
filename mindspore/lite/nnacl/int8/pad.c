@@ -32,3 +32,40 @@ int PadConstant4D(const int8_t *in_data, int8_t *out_data, const int32_t *in_dim
   }
   return NNACL_OK;
 }
+
+int TransOut2InputDimIndexInt8(int out_dim_index, int left_pad, int in_dim, int offset) {
+  if (out_dim_index < left_pad) {
+    // left pad
+    const int index_sum = left_pad + offset - 1;
+    return MSMAX(index_sum - out_dim_index, offset);
+  }
+  out_dim_index -= left_pad;
+  if (out_dim_index < in_dim) {
+    return out_dim_index;
+  }
+  // right pad
+  out_dim_index -= in_dim;
+  const int index_sum = in_dim - 1 - offset;
+  return MSMAX(index_sum - out_dim_index, 0);
+}
+
+int GetInputFlattenIndexInt8(int out_flatten_index, const int *input_shape, const PadParameter *pad_param) {
+  int in_flatten_index = 0;
+  int i;
+  for (i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
+    int left_pad = pad_param->paddings_[i * 2];
+    int out_dim_index = out_flatten_index / pad_param->out_strides[i];
+    out_flatten_index %= pad_param->out_strides[i];
+    int in_dim_index = TransOut2InputDimIndexInt8(out_dim_index, left_pad, input_shape[i], pad_param->mirror_offset_);
+    in_flatten_index += in_dim_index * pad_param->in_strides[i];
+  }
+  return in_flatten_index;
+}
+
+void MirrorPadInt8(const int8_t *input_data, int8_t *output_data, const int *input_shape, const PadParameter *pad_param,
+                   int begin, int end) {
+  int i = 0;
+  for (i = begin; i < end; ++i) {
+    output_data[i] = input_data[GetInputFlattenIndexInt8(i, input_shape, pad_param)];
+  }
+}

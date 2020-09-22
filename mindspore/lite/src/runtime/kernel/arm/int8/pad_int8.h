@@ -39,6 +39,7 @@ class PadInt8CPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);
+  int RunMirrorPadImpl(int task_id);
 
  private:
   int SetQuantParam();
@@ -46,6 +47,12 @@ class PadInt8CPUKernel : public LiteKernel {
   void FreeQuantParam();
 
  private:
+  int HandleMirrorPad();
+  int CheckPaddings(int *paddings, int length, int *input_shape, int mode);
+  int CopyPaddingFromInput();
+  void CalculateStrides();
+  int ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length);
+
   PadParameter *pad_param_ = nullptr;
   int8_t *in_data_ = nullptr;
   int8_t *out_data_ = nullptr;
