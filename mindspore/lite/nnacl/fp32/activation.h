@@ -24,6 +24,8 @@ typedef struct ActivationParameter {
   OpParameter op_parameter_;
   int type_;
   float alpha_;
+  float min_val_;
+  float max_val_;
 } ActivationParameter;
 
 #ifdef __cplusplus
@@ -35,6 +37,7 @@ int LRelu(const float *src, int length, float *dst, float alpha);
 int Sigmoid(const float *src, int length, float *dst);
 int Tanh(const float *src, int length, float *dst);
 int HSwish(const float *src, int length, float *dst);
+int HardTanh(const float *src, int length, float *dst, float min_val, float max_val);
 #ifdef __cplusplus
 }
 #endif

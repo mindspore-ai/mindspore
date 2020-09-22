@@ -33,6 +33,8 @@ class Activation : public PrimitiveC {
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetType(int type);
   void SetAlpha(float alpha);
+  void SetMinVal(float minVal);
+  void SetMaxVal(float maxVal);
 #else
   Activation() = default;
 
@@ -40,6 +42,8 @@ class Activation : public PrimitiveC {
 #endif
   int GetType() const;
   float GetAlpha() const;
+  float GetMinVal() const;
+  float GetMaxVal() const;
 };
 }  // namespace lite
 }  // namespace mindspore

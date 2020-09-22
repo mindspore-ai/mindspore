@@ -116,3 +116,21 @@ int HSwish(const float *src, int length, float *dst) {
   }
   return NNACL_OK;
 }
+
+int HardTanh(const float *src, int length, float *dst, float min_val, float max_val) {
+  if (max_val <= min_val) {
+    return NNACL_ERR;
+  }
+  int i = 0;
+  for (i = 0; i < length; ++i) {
+    float in = src[i];
+    if (in < min_val) {
+      dst[i] = min_val;
+    } else if (in > max_val) {
+      dst[i] = max_val;
+    } else {
+      dst[i] = in;
+    }
+  }
+  return NNACL_OK;
+}

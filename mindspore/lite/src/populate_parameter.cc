@@ -636,6 +636,8 @@ OpParameter *PopulateActivationParameter(const mindspore::lite::PrimitiveC *prim
     reinterpret_cast<mindspore::lite::Activation *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   act_param->type_ = static_cast<int>(activation->GetType());
   act_param->alpha_ = activation->GetAlpha();
+  act_param->min_val_ = activation->GetMinVal();
+  act_param->max_val_ = activation->GetMaxVal();
   return reinterpret_cast<OpParameter *>(act_param);
 }
 

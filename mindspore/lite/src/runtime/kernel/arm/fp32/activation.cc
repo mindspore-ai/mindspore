@@ -57,6 +57,8 @@ int ActivationCPUKernel::DoActivation(int task_id) {
     error_code = Tanh(input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (type_ == schema::ActivationType_HSWISH) {
     error_code = HSwish(input_addr + stride * task_id, count, output_addr + stride * task_id);
+  } else if (type_ == schema::ActivationType_HARD_TANH) {
+    error_code = HardTanh(input_addr + stride * task_id, count, output_addr + stride * task_id, min_val_, max_val_);
   } else {
     MS_LOG(ERROR) << "Activation type error";
     return RET_ERROR;
