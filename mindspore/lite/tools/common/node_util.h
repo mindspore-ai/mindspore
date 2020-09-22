@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_map>
 #include "schema/inner/model_generated.h"
 #include "src/common/common.h"
 #include "utils/log_adapter.h"
@@ -29,6 +30,8 @@ namespace mindspore {
 namespace lite {
 using STATUS = int;
 STATUS BroadCastQuantParam(schema::MetaGraphT *graphT, const std::unique_ptr<schema::CNodeT> &node);
+
+std::unordered_map<int, int> GetNc2NhAxisMap();
 
 std::vector<schema::PrimitiveType> GetInsertOpList();
 
