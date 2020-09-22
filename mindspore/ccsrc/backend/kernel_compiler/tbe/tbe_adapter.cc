@@ -87,6 +87,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"apply_centered_rms_prop", "apply_centered_rms_prop_d"},
   {"transpose", "transpose_d"},
   {"fill", "fill_d"},
+  {"i_fmr", "ifmr"},
   {"unsorted_segment_sum", "unsorted_segment_sum_d"},
   {"unsorted_segment_prod", "unsorted_segment_prod_d"},
   {"concat", "concat_d"},
