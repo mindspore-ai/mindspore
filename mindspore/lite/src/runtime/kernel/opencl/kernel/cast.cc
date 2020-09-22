@@ -16,7 +16,7 @@
 #include <cstring>
 #include <algorithm>
 #include <set>
-#include<string>
+#include <string>
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/cast.h"
 #include "src/runtime/kernel/opencl/utils.h"
@@ -49,14 +49,16 @@ int CastOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   return RET_OK;
 }
 
-void CastOpenCLKernel::GetKernelName(std::string *kernel_name, CastParameter *param) {
+int CastOpenCLKernel::GetKernelName(std::string *kernel_name, CastParameter *param) {
   if (param->src_type_ == kNumberTypeFloat32 && param->dst_type_ == kNumberTypeFloat16) {
     kernel_name[0] += "_Fp32ToFp16";
   } else if (param->src_type_ == kNumberTypeFloat16 && param->dst_type_ == kNumberTypeFloat32) {
     kernel_name[0] += "_Fp16ToFp32";
   } else {
     MS_LOG(ERROR) << "unsupported convert format from : " << param->src_type_ << "to  " << param->dst_type_;
+    return RET_ERROR;
   }
+  return RET_OK;
 }
 
 int CastOpenCLKernel::Init() {

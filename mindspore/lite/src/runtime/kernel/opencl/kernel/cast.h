@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CAST_H_
 
 #include <vector>
-#include<string>
+#include <string>
 #include "ir/anf.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/fp32/cast.h"
@@ -39,7 +39,7 @@ class CastOpenCLKernel : public OpenCLKernel {
 
   int Run() override;
 
-  void GetKernelName(std::string *kernel_name, CastParameter *param);
+  int GetKernelName(std::string *kernel_name, CastParameter *param);
 
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 

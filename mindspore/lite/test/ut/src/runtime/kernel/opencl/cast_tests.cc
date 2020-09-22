@@ -48,7 +48,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   std::string correctOutputPath = "./test_data/out_castfp16.bin";
 
   MS_LOG(INFO) << " initialize param ";
-  auto param = new (std::nothrow) CastParameter();
+  auto param = reinterpret_cast<CastParameter *>(malloc(sizeof(CastParameter)));
   if (param == nullptr) {
     MS_LOG(INFO) << " new CastParameter failed ";
     return;
@@ -113,14 +113,16 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
+  lite::opencl::OpenCLRuntime::DeleteInstance();
   for (auto tensor : inputs) {
+    tensor->SetData(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
+    tensor->SetData(nullptr);
     delete tensor;
   }
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
@@ -135,7 +137,7 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   std::string correctOutputPath = "./test_data/out_castfp32.bin";
 
   MS_LOG(INFO) << " initialize param ";
-  auto param = new (std::nothrow) CastParameter();
+  auto param = reinterpret_cast<CastParameter *>(malloc(sizeof(CastParameter)));
   if (param == nullptr) {
     MS_LOG(INFO) << " new CastParameter failed ";
     return;
@@ -199,14 +201,15 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
-
+  lite::opencl::OpenCLRuntime::DeleteInstance();
   for (auto tensor : inputs) {
+    tensor->SetData(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
+    tensor->SetData(nullptr);
     delete tensor;
   }
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

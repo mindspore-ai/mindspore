@@ -28,9 +28,14 @@ class TestArithmeticSelfOpenCLfp16 : public mindspore::CommonTest {
   TestArithmeticSelfOpenCLfp16() {}
 };
 
+class TestArithmeticSelfOpenCLCI : public mindspore::CommonTest {
+ public:
+  TestArithmeticSelfOpenCLCI() {}
+};
+
 template <typename T>
 void CompareOutputData1(T *input_data1, T *output_data, T *correct_data, int size, float err_bound) {
-  for (size_t i = 0; i < 100; i++) {
+  for (size_t i = 0; i < size; i++) {
     T abs = fabs(output_data[i] - correct_data[i]);
     ASSERT_LE(abs, err_bound);
   }
@@ -53,7 +58,7 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
 
   MS_LOG(INFO) << " init tensors ";
 
-  std::vector<int> shape = {1, 19, 19, 96};
+  std::vector<int> shape = {1, 2, 2, 144};
   auto data_type = kNumberTypeFloat16;
   auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
@@ -66,7 +71,7 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
   std::vector<lite::Tensor *> outputs{output_tensor};
 
   MS_LOG(INFO) << " initialize param ";
-  auto param = new (std::nothrow) ArithmeticSelfParameter();
+  auto param = reinterpret_cast<ArithmeticSelfParameter *>(malloc(sizeof(ArithmeticSelfParameter)));
   if (param == nullptr) {
     MS_LOG(INFO) << " new ConcatParameter failed ";
     for (auto tensor : inputs) {
@@ -77,7 +82,7 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
     }
     return;
   }
-  param->op_parameter_.type_ = schema::PrimitiveType_Neg;
+  param->op_parameter_.type_ = schema::PrimitiveType_Round;
   auto *arithmeticself_kernel =
     new (std::nothrow) kernel::ArithmeticSelfOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   if (arithmeticself_kernel == nullptr) {
@@ -120,13 +125,106 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData1(input_data1, output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
+  lite::opencl::OpenCLRuntime::DeleteInstance();
   for (auto tensor : inputs) {
+    tensor->SetData(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
+    tensor->SetData(nullptr);
     delete tensor;
   }
-  delete param;
+  delete sub_graph;
+}
+
+TEST_F(TestArithmeticSelfOpenCLCI, ArithmeticSelfRound) {
+  MS_LOG(INFO) << " begin test ";
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  ocl_runtime->Init();
+  auto allocator = ocl_runtime->GetAllocator();
+  float input_data1[] = {0.75f, 0.06f, 0.74f, 0.30f, 0.9f, 0.59f, 0.03f, 0.37f,
+                         0.75f, 0.06f, 0.74f, 0.30f, 0.9f, 0.59f, 0.03f, 0.37f};
+  float correctOutput[] = {1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+                           1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f};
+
+  MS_LOG(INFO) << " init tensors ";
+  std::vector<int> shape = {1, 1, 4, 4};
+  auto data_type = kNumberTypeFloat32;
+  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
+  if (input_tensor == nullptr || output_tensor == nullptr) {
+    MS_LOG(INFO) << " new input_tensor or output_tensor failed ";
+    return;
+  }
+  std::vector<lite::Tensor *> inputs{input_tensor};
+  std::vector<lite::Tensor *> outputs{output_tensor};
+
+  MS_LOG(INFO) << " initialize param ";
+  auto param = reinterpret_cast<ArithmeticSelfParameter *>(malloc(sizeof(ArithmeticSelfParameter)));
+  if (param == nullptr) {
+    MS_LOG(INFO) << " new ConcatParameter failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    return;
+  }
+  param->op_parameter_.type_ = schema::PrimitiveType_Round;
+  auto *arithmeticself_kernel =
+    new (std::nothrow) kernel::ArithmeticSelfOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (arithmeticself_kernel == nullptr) {
+    MS_LOG(INFO) << " new kernel::ArithmeticSelfOpenCLKernel failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    return;
+  }
+  arithmeticself_kernel->SetFormatType(schema::Format_NC4HW4);
+  arithmeticself_kernel->Init();
+  // to do allocate memory for inputs and outputs
+  for (auto &input_tensor : inputs) {
+    input_tensor->MallocData(allocator);
+  }
+  MS_LOG(INFO) << " initialize sub_graph ";
+  std::vector<kernel::LiteKernel *> kernels{arithmeticself_kernel};
+  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (sub_graph == nullptr) {
+    MS_LOG(INFO) << " new kernel::SubGraphOpenCLKernel failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    delete arithmeticself_kernel;
+    return;
+  }
+  sub_graph->Init();
+  MS_LOG(INFO) << " initialize input data ";
+  std::cout << sizeof(input_data1) / sizeof(float) << std::endl;
+  memcpy(inputs[0]->data_c(), input_data1, sizeof(input_data1));
+
+  std::cout << "==================output data================" << std::endl;
+  sub_graph->Run();
+  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
+  CompareOutputData1(input_data1, output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
+  lite::opencl::OpenCLRuntime::DeleteInstance();
+  for (auto tensor : inputs) {
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  for (auto tensor : outputs) {
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
   delete sub_graph;
 }
 }  // namespace mindspore

@@ -519,17 +519,16 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
   delete param;
   delete input_tensor;
   delete output_tensor;
-  delete sub_graph;
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
-  std::string in_file = "/data/local/tmp/test_data/in_tanh.bin";
-  std::string out_file = "/data/local/tmp/test_data/out_tanh.bin";
+  std::string in_file = "/data/local/tmp/test_data/in_tanhfp16.bin";
+  std::string out_file = "/data/local/tmp/test_data/out_tanhfp16.bin";
   MS_LOG(INFO) << "Tanh Begin test!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  auto data_type = kNumberTypeFloat32;
+  auto data_type = kNumberTypeFloat16;
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   bool enable_fp16 = ocl_runtime->GetFp16Enable();
 
@@ -561,7 +560,7 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
     printf_tensor<float>("Tanh:FP32--input data--", inputs[0]);
   }
 
-  auto *param = new (std::nothrow) ActivationParameter();
+  auto param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "New ActivationParameter fail.";
     delete input_tensor;
@@ -628,10 +627,11 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
     printf_tensor<float>("Tanh:FP32--output data---", outputs[0]);
     CompareRes<float>(output_tensor, out_file);
   }
-  delete param;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
+  input_tensor->SetData(nullptr);
   delete input_tensor;
+  output_tensor->SetData(nullptr);
   delete output_tensor;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore
