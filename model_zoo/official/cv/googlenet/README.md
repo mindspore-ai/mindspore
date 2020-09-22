@@ -50,6 +50,13 @@ Dataset used: [CIFAR-10](<http://www.cs.toronto.edu/~kriz/cifar.html>)
 - Data format：binary files
   - Note：Data will be processed in src/dataset.py
 
+Dataset used can refer to paper.
+
+- Dataset size: 125G, 1250k colorful images in 1000 classes
+	- Train: 120G, 1200k images
+	- Test: 5G, 50k images
+- Data format: RGB images.
+	- Note: Data will be processed in src/dataset.py 
 
 # [Features](#contents)
 
@@ -116,6 +123,7 @@ After installing MindSpore via the official website, you can start training and 
   ```
 
 
+We use CIFAR-10 dataset by default. Your can also pass `$dataset_type` to the scripts so that select different datasets. For more details, please refer the specify script.
 
 
 # [Script Description](#contents)
@@ -167,6 +175,7 @@ Parameters for both training and evaluation can be set in config.py
   'geir_filename': 'googlenet.geir' # file name of the geir model used in export.py
   ```
 
+For more configuration details, please refer the script `config.py`.
 
 ## [Training Process](#contents)
 
@@ -297,6 +306,7 @@ Parameters for both training and evaluation can be set in config.py
 
 ### Evaluation Performance 
 
+#### GoogleNet on CIFAR-10
 | Parameters                 | Ascend                                                      | GPU                    |
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | Model Version              | Inception V1                                                | Inception V1           |
@@ -305,7 +315,7 @@ Parameters for both training and evaluation can be set in config.py
 | MindSpore Version          | 0.7.0-alpha                                                 | 0.6.0-alpha            |
 | Dataset                    | CIFAR-10                                                    | CIFAR-10               |
 | Training Parameters        | epoch=125, steps=390, batch_size = 128, lr=0.1              | epoch=125, steps=390, batch_size=128, lr=0.1    |
-| Optimizer                  | SGD                                                         | SGD                    |
+| Optimizer                  | Momentum                                                    | Momentum               |
 | Loss Function              | Softmax Cross Entropy                                       | Softmax Cross Entropy  |
 | outputs                    | probability                                                 | probobility            |
 | Loss                       | 0.0016                                                      | 0.0016                 |
@@ -316,9 +326,29 @@ Parameters for both training and evaluation can be set in config.py
 | Model for inference        | 21.50M (.onnx file),  21.60M(.air file)                     |      | 
 | Scripts                    | [googlenet script](https://gitee.com/mindspore/mindspore/tree/r0.7/model_zoo/official/cv/googlenet) | [googlenet script](https://gitee.com/mindspore/mindspore/tree/r0.6/model_zoo/official/cv/googlenet) |
 
+#### GoogleNet on 1200k images
+| Parameters                 | Ascend                                                      |
+| -------------------------- | ----------------------------------------------------------- |
+| Model Version              | Inception V1                                                |
+| Resource                   | Ascend 910, CPU 2.60GHz, 56cores, Memory 314G               |
+| uploaded Date              | 09/20/2020 (month/day/year)                                 |
+| MindSpore Version          | 0.7.0-alpha                                                 |
+| Dataset                    | 1200k images                                                |
+| Training Parameters        | epoch=300, steps=5000, batch_size=256, lr=0.1               |
+| Optimizer                  | Momentum                                                    |
+| Loss Function              | Softmax Cross Entropy                                       |
+| outputs                    | probability                                                 |
+| Loss                       | 2.0                                                         |
+| Speed                      | 1pc: 152 ms/step;  8pcs: 171 ms/step                        |
+| Total time                 | 8pcs: 8.8 hours                                             |
+| Parameters (M)             | 13.0                                                        |
+| Checkpoint for Fine tuning | 52M (.ckpt file)                                            |
+| Scripts                    | [googlenet script](https://gitee.com/mindspore/mindspore/tree/r0.7/model_zoo/official/cv/googlenet) | 
+
 
 ### Inference Performance
 
+#### GoogleNet on CIFAR-10
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | Inception V1                | Inception V1                |
@@ -330,6 +360,18 @@ Parameters for both training and evaluation can be set in config.py
 | outputs             | probability                 | probability                 |
 | Accuracy            | 1pc: 93.4%;  8pcs: 92.17%   | 1pc: 93%, 8pcs: 92.89%      |
 | Model for inference | 21.50M (.onnx file)         |  |
+
+#### GoogleNet on 1200k images
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | Inception V1                |
+| Resource            | Ascend 910                  |
+| Uploaded Date       | 09/20/2020 (month/day/year) |
+| MindSpore Version   | 0.7.0-alpha                 |
+| Dataset             | 1200k images                |
+| batch_size          | 256                         |
+| outputs             | probability                 |
+| Accuracy            | 8pcs: 71.81%                |
 
 ## [How to use](#contents)
 ### Inference
