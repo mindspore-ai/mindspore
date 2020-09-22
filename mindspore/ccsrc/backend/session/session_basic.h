@@ -32,7 +32,7 @@
 #include "utils/contract.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
-#ifdef ENABLE_DEBUGGER
+#if !defined(_WIN32) && !defined(_WIN64)
 #include "debug/debugger/debugger.h"
 #endif
 
@@ -57,7 +57,7 @@ class Executor;
 class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
  public:
   SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {
-#ifdef ENABLE_DEBUGGER
+#if !defined(_WIN32) && !defined(_WIN64)
     debugger_ = nullptr;
 #endif
   }
@@ -179,7 +179,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   static GraphId graph_sum_;
   uint32_t device_id_;
   std::shared_ptr<Executor> executor_;
-#ifdef ENABLE_DEBUGGER
+#if !defined(_WIN32) && !defined(_WIN64)
   std::shared_ptr<Debugger> debugger_;
 #endif
 };
