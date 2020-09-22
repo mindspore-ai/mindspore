@@ -255,7 +255,7 @@ class PynativeEliminater : public OptimizerCaller {
     MS_LOG(DEBUG) << "Start FillZero";
     ValuePtr out = nullptr;
     if (value->isa<Int32Imm>()) {
-      return value;
+      return MakeValue(value->cast<Int32ImmPtr>()->value());
     }
 
     if (value->isa<tensor::Tensor>()) {
@@ -298,9 +298,10 @@ class PynativeEliminater : public OptimizerCaller {
       if (rep != nullptr) {
         if (rep->isa<ValueNode>()) {
           auto value_node = rep->cast<ValueNodePtr>();
-          value_node->set_value(FillZero(value_node->value()));
+          auto new_value_node = NewValueNode(FillZero(value_node->value()));
+          new_value_node->set_has_new_value(value_node->has_new_value());
           MS_LOG(DEBUG) << "Zeros_like replace ok " << rep->DebugString(4);
-          return rep;
+          return new_value_node;
         }
       }
     }
@@ -315,9 +316,10 @@ class PynativeEliminater : public OptimizerCaller {
       if (rep != nullptr) {
         if (rep->isa<ValueNode>()) {
           auto value_node = rep->cast<ValueNodePtr>();
-          value_node->set_value(FillZero(value_node->value()));
+          auto new_value_node = NewValueNode(FillZero(value_node->value()));
+          new_value_node->set_has_new_value(value_node->has_new_value());
           MS_LOG(DEBUG) << "Zeros_like replace ok 2 " << rep->DebugString(4);
-          return rep;
+          return new_value_node;
         }
       }
     }
