@@ -215,7 +215,7 @@ def train():
         loss_scale_value = 1.0
         loss_scale = FixedLossScaleManager(loss_scale_value, drop_overflow_update=False)
         network = amp.build_train_network(network, optimizer=opt, loss_scale_manager=loss_scale,
-                                          level="O2", keep_batchnorm_fp32=True)
+                                          level="O2", keep_batchnorm_fp32=False)
         keep_loss_fp32(network)
     else:
         network = TrainingWrapper(network, opt)

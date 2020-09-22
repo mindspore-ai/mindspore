@@ -168,7 +168,7 @@ if __name__ == '__main__':
             loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
             # Mixed precision
             model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
-                          amp_level="O2", keep_batchnorm_fp32=True)
+                          amp_level="O2", keep_batchnorm_fp32=False)
         else:
             ## fp32 training
             opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay)
