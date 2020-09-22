@@ -118,6 +118,7 @@ The dataset is self-generated using a third-party library called [captcha](https
     ├── metric.py                       # accuracy metric for warpctc network
     ├── warpctc.py                      # warpctc network definition
     └── warpctc_for_train.py            # warpctc network with grad, loss and gradient clip
+  ├── mindspore_hub_conf.py             # mindspore hub interface
   ├── eval.py                           # eval net
   ├── process_data.py                   # dataset generation script
   └── train.py                          # train net

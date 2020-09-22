@@ -140,6 +140,7 @@ pip install mmcv=0.2.14
     ├─lr_schedule.py                      # leanring rate geneatore
     ├─network_define.py                   # network define for maskrcnn   
     └─util.py                             # routine operation
+  ├─mindspore_hub_conf.py                 # mindspore hub interface
   ├─eval.py                               # evaluation scripts
   └─train.py                              # training scripts
 ```
