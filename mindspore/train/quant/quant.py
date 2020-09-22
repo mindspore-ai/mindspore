@@ -487,9 +487,9 @@ def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='
         network (Cell): MindSpore network produced by `convert_quant_network`.
         inputs (Tensor): Inputs of the `quantization aware training network`.
         file_name (str): File name of model to export.
-        mean (int): Input data mean. Default: 127.5.
+        mean (int, float): Input data mean. Default: 127.5.
         std_dev (int, float): Input data variance. Default: 127.5.
-        file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported
+        file_format (str): MindSpore currently supports 'AIR' and 'MINDIR' format for exported
             quantization aware model. Default: 'AIR'.
 
             - AIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
