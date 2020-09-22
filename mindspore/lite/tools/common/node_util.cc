@@ -54,8 +54,7 @@ static const std::vector<schema::PrimitiveType> nhwcOpDualInputList = {
 
 static const std::vector<schema::PrimitiveType> nhwcOpAllInputList = {
 #ifdef SUPPORT_TRAIN
-  schema::PrimitiveType_PoolingGrad,
-  schema::PrimitiveType_ActivationGrad
+  schema::PrimitiveType_PoolingGrad, schema::PrimitiveType_ActivationGrad
 #endif
 };
 
@@ -66,20 +65,21 @@ static const std::vector<schema::PrimitiveType> fp32FullOpList = {
 static const std::vector<schema::PrimitiveType> int8NeedNhwcOpList = {};
 
 static const std::vector<schema::PrimitiveType> int8OpList = {
-  schema::PrimitiveType_Nchw2Nhwc, schema::PrimitiveType_Nhwc2Nchw,
-  schema::PrimitiveType_Conv2D,    schema::PrimitiveType_DepthwiseConv2D,
-  schema::PrimitiveType_Add,       schema::PrimitiveType_Pooling,
-  schema::PrimitiveType_Concat,    schema::PrimitiveType_SoftMax,
-  schema::PrimitiveType_Reshape,   schema::PrimitiveType_Activation,
-  schema::PrimitiveType_Resize,    schema::PrimitiveType_FullConnection,
-  schema::PrimitiveType_ArgMax,    schema::PrimitiveType_ArgMin,
-  schema::PrimitiveType_BatchNorm, schema::PrimitiveType_FusedBatchNorm,
-  schema::PrimitiveType_BiasAdd,   schema::PrimitiveType_Div,
-  schema::PrimitiveType_Mul,       schema::PrimitiveType_Slice,
-  schema::PrimitiveType_SoftMax,   schema::PrimitiveType_Split,
-  schema::PrimitiveType_Squeeze,   schema::PrimitiveType_Sub,
-  schema::PrimitiveType_TopK,      schema::PrimitiveType_Unsqueeze,
-  schema::PrimitiveType_MatMul,    schema::PrimitiveType_Pad};
+  schema::PrimitiveType_Nchw2Nhwc,    schema::PrimitiveType_Nhwc2Nchw,
+  schema::PrimitiveType_Conv2D,       schema::PrimitiveType_DepthwiseConv2D,
+  schema::PrimitiveType_Add,          schema::PrimitiveType_Pooling,
+  schema::PrimitiveType_Concat,       schema::PrimitiveType_SoftMax,
+  schema::PrimitiveType_Reshape,      schema::PrimitiveType_Activation,
+  schema::PrimitiveType_Resize,       schema::PrimitiveType_FullConnection,
+  schema::PrimitiveType_ArgMax,       schema::PrimitiveType_ArgMin,
+  schema::PrimitiveType_BatchNorm,    schema::PrimitiveType_FusedBatchNorm,
+  schema::PrimitiveType_BiasAdd,      schema::PrimitiveType_Div,
+  schema::PrimitiveType_Mul,          schema::PrimitiveType_Slice,
+  schema::PrimitiveType_SoftMax,      schema::PrimitiveType_Split,
+  schema::PrimitiveType_Squeeze,      schema::PrimitiveType_Sub,
+  schema::PrimitiveType_StridedSlice, schema::PrimitiveType_TopK,
+  schema::PrimitiveType_Unsqueeze,    schema::PrimitiveType_MatMul,
+  schema::PrimitiveType_Pad};
 
 static const std::vector<schema::PrimitiveType> needInsertOpList = {
   schema::PrimitiveType_Eltwise, schema::PrimitiveType_Activation, schema::PrimitiveType_Concat,

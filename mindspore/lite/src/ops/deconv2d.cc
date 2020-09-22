@@ -130,7 +130,7 @@ int DeConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &i
   if (GetQuantType() == schema::QuantType_AwareTraining) {
     std::vector<std::vector<schema::QuantParamT>> vecInputQuantParam;
     std::vector<std::vector<schema::QuantParamT>> vecOutputQuantParam;
-    PopulaterQuantParam(prim, &vecInputQuantParam, &vecOutputQuantParam);
+    PopulaterQuantParam(prim, &vecInputQuantParam, &vecOutputQuantParam, inputs);
     SetInputQuantParam(vecInputQuantParam);
     SetOutputQuantParam(vecOutputQuantParam);
   }

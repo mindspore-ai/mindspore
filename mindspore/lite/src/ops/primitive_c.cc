@@ -158,7 +158,8 @@ void PrimitiveC::CalQuantParam(const double &mean, const double &stdDev, float *
 
 void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
                                      std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
-                                     std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam) {
+                                     std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam,
+                                     const std::vector<AnfNodePtr> &inputs) {
   auto narrow_range = prim.GetAttr("narrow_range");
   bool narrowRangeQuantParam = GetValue<bool>(narrow_range);
   auto num_bits = prim.GetAttr("num_bits");
@@ -179,12 +180,14 @@ void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
   } else {
     auto inputMin = prim.GetAttr("input_minq");
     auto inputMax = prim.GetAttr("input_maxq");
-    auto inputMinPtr = inputMin->cast<TensorPtr>();
-    auto inputMaxPtr = inputMax->cast<TensorPtr>();
-    float *minBuf = static_cast<float *>(inputMinPtr->data_c());
-    float *maxBuf = static_cast<float *>(inputMaxPtr->data_c());
-    quantParam.min = *minBuf;
-    quantParam.max = *maxBuf;
+    if (inputMin != nullptr && inputMax != nullptr) {
+      auto inputMinPtr = inputMin->cast<TensorPtr>();
+      auto inputMaxPtr = inputMax->cast<TensorPtr>();
+      float *minBuf = static_cast<float *>(inputMinPtr->data_c());
+      float *maxBuf = static_cast<float *>(inputMaxPtr->data_c());
+      quantParam.min = *minBuf;
+      quantParam.max = *maxBuf;
+    }
   }
   quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
                                numbitsRangeQuantParam);
@@ -212,13 +215,15 @@ void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
     vecInputQuantParam->emplace_back(quants);
   }
 
-  quants.clear();
-  quantParam.min = 0.0;
-  quantParam.max = 0.0;
-  quantParam.zeroPoint = 0;
-  quantParam.scale = vecInputQuantParam->at(0).at(0).scale * vecInputQuantParam->at(1).at(0).scale;
-  quants.emplace_back(quantParam);
-  vecInputQuantParam->emplace_back(quants);
+  if (vecInputQuantParam->size() == kDoubleNum) {
+    quants.clear();
+    quantParam.min = 0.0;
+    quantParam.max = 0.0;
+    quantParam.zeroPoint = 0;
+    quantParam.scale = vecInputQuantParam->at(0).at(0).scale * vecInputQuantParam->at(1).at(0).scale;
+    quants.emplace_back(quantParam);
+    vecInputQuantParam->emplace_back(quants);
+  }
 
   quants.clear();
   auto outputMin = prim.GetAttr("output_minq");
