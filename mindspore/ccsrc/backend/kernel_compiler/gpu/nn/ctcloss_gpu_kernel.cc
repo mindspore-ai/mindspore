@@ -18,10 +18,10 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(CTCLossV2,
+MS_REG_GPU_KERNEL_ONE(CTCLoss,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32)
