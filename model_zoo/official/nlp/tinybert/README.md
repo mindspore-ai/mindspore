@@ -207,6 +207,7 @@ options:
 `gd_config.py` and `td_config.py` contain parameters of BERT model and options for optimizer and lossscale.
 ### Options:
 ```
+batch_size                          batch size of input dataset: N, default is 16
 Parameters for lossscale:
     loss_scale_value                initial value of loss scale: N, default is 2^8
     scale_factor                    factor used to update loss scale: N, default is 2
@@ -223,7 +224,6 @@ Parameters for optimizer:
 ### Parameters:
 ```
 Parameters for bert network:
-    batch_size                      batch size of input dataset: N, default is 16
     seq_length                      length of input sequence: N, default is 128
     vocab_size                      size of each embedding vector: N, must be consistant with the dataset you use. Default is 30522
     hidden_size                     size of bert encoder layers: N
@@ -239,8 +239,6 @@ Parameters for bert network:
     type_vocab_size                 size of token type vocab: N, default is 2
     initializer_range               initialization value of TruncatedNormal: Q, default is 0.02
     use_relative_positions          use relative positions or not: True | False, default is False
-    input_mask_from_dataset         use the input mask loaded form dataset or not: True | False, default is True
-    token_type_ids_from_dataset     use the token type ids loaded from dataset or not: True | False, default is True
     dtype                           data type of input: mstype.float16 | mstype.float32, default is mstype.float32
     compute_type                    compute type in BertTransformer: mstype.float16 | mstype.float32, default is mstype.float16
 ```
