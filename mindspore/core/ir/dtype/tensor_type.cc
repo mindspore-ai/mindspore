@@ -64,7 +64,9 @@ bool UndeterminedType::operator==(const Type &other) const {
 }
 
 TypePtr TensorType::DeepCopy() const {
-  MS_EXCEPTION_IF_NULL(element_type_);
+  if (element_type_ == nullptr) {
+    return std::make_shared<TensorType>();
+  }
   if (IsGeneric()) {
     return std::make_shared<TensorType>();
   }
