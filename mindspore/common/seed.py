@@ -97,14 +97,13 @@ def _get_op_seed(op_seed, kernel_name):
         seed (int): The op-seed to be updated.
         kernel_name (string): The random op kernel.
     """
-    if ((kernel_name, op_seed) not in _KERNEL_SEED) or (_KERNEL_SEED[(kernel_name, op_seed)] == -1):
+    if (kernel_name, op_seed) not in _KERNEL_SEED:
         _KERNEL_SEED[(kernel_name, op_seed)] = op_seed
-    _KERNEL_SEED[(kernel_name, op_seed)] = 0
     return _KERNEL_SEED[(kernel_name, op_seed)]
 
 def _reset_op_seed():
     """
     Reset op seeds in the kernel's dictionary.
     """
-    for key in _KERNEL_SEED:
-        _KERNEL_SEED[key] = -1
+    for (kernel_name, op_seed) in _KERNEL_SEED:
+        _KERNEL_SEED[(kernel_name, op_seed)] = op_seed
