@@ -28,8 +28,6 @@
 #include "tools/converter/legacy_optimizer/graph/trans_format_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/infershape_pass.h"
 #include "tools/converter/legacy_optimizer/graph/batchnorm_convert_scale_pass.h"
-#include "tools/converter/legacy_optimizer/graph/weight_format_hardcode_pass.h"
-#include "tools/converter/legacy_optimizer/graph/weight_format_transform_pass.h"
 #include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
 #include "tools/converter/legacy_optimizer/graph/trans_format_insert_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
@@ -62,23 +60,6 @@ void GraphDefTransform::CreateQuantizer(const converter::Flags *flags) {
 
 int GraphDefTransform::Transform(const converter::Flags &ctx) {
   STATUS status;
-  {
-    Optimizer weightFormatOptimizer;
-    auto weightHardCodePass = new WeightFormatHardCodePass();
-    auto weightFormatPass = new WeightFormatTransformPass();
-    weightHardCodePass->SetQuantType(ctx.quantType);
-    weightHardCodePass->SetFmkType(ctx.fmk);
-    weightFormatPass->SetQuantType(ctx.quantType);
-    weightFormatPass->SetFmkType(ctx.fmk);
-    weightFormatOptimizer.AddPass(weightHardCodePass);
-    weightFormatOptimizer.AddPass(weightFormatPass);
-    status = weightFormatOptimizer.Run(graphDefT);
-    if (status != RET_OK && status != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Run weightFormatOptimizer graphPasses Failed";
-      return status;
-    }
-  }
-
   {
     Optimizer unusedOpRemoveOptimizer;
     unusedOpRemoveOptimizer.AddPass(new UnusedNodeRemovePass());
@@ -149,6 +130,8 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     formatTransOptimizer.AddPass(formatTransPass);
     formatTransOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
     formatTransOptimizer.AddPass(new (std::nothrow) InferShapePass());
+    formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
+    formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     formatTransOptimizer.AddPass(new (std::nothrow) TransOpRemovePass());
     formatTransOptimizer.AddPass(new (std::nothrow) TransOpInsertPass());
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());

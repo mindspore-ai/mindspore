@@ -120,6 +120,8 @@ void ConvertConvWeight(const ParameterPtr &param_node) {
     utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[1] = filter_k;
     utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[2] = filter_h;
     utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[3] = filter_w;
+    weight->set_tensor_shape({static_cast<int>(filter_c), static_cast<int>(filter_k), static_cast<int>(filter_h),
+                              static_cast<int>(filter_w)});
   }
   return;
 }
@@ -250,7 +252,12 @@ int Conv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
     MS_LOG(ERROR) << "primitive_ type is error:" << this->primitive_->value.type;
     return RET_ERROR;
   }
-  int group = GetValue<int>(prim.GetAttr("group"));
+  auto groupAttr = prim.GetAttr("group");
+  if (groupAttr == nullptr) {
+    MS_LOG(ERROR) << "conv2d op has no group attr,please check pb model";
+    return RET_NULL_PTR;
+  }
+  int group = GetValue<int>(groupAttr);
   if (group > 1) {
     PopulaterConv2DMultiGroup(prim, this->primitive_, group, inputs);
   } else {
