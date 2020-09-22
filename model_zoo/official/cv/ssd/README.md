@@ -227,7 +227,7 @@ mAP: 0.23808886505483504
 | Parameters                 | Ascend                                                       |
 | -------------------------- | -------------------------------------------------------------|
 | Model Version              | SSD V1                                                       |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G              |
+| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G              |
 | uploaded Date              | 06/01/2020 (month/day/year)                                  |
 | MindSpore Version          | 0.3.0-alpha                                                  |
 | Dataset                    | COCO2017                                                     |

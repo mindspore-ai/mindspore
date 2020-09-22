@@ -310,7 +310,7 @@ For more configuration details, please refer the script `config.py`.
 | Parameters                 | Ascend                                                      | GPU                    |
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | Model Version              | Inception V1                                                | Inception V1           |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             | NV SMX2 V100-32G       |
+| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             | NV SMX2 V100-32G       |
 | uploaded Date              | 08/31/2020 (month/day/year)                                 | 08/20/2020 (month/day/year) |
 | MindSpore Version          | 0.7.0-alpha                                                 | 0.6.0-alpha            |
 | Dataset                    | CIFAR-10                                                    | CIFAR-10               |

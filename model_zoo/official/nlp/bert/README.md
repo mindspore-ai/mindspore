@@ -445,7 +445,7 @@ The result will be as follows:
 | Parameters                 | Ascend                                                     | GPU                       |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Model Version              | BERT_base                                                  | BERT_base                 |
-| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G               | NV SMX2 V100-32G          |
 | uploaded Date              | 08/22/2020                                                 | 05/06/2020                |
 | MindSpore Version          | 0.6.0                                                      | 0.3.0                     |
 | Dataset                    | cn-wiki-128(4000w)                                         | ImageNet                  |
@@ -465,7 +465,7 @@ The result will be as follows:
 | Parameters                 | Ascend                                                     | GPU                       |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Model Version              | BERT_NEZHA                                                 | BERT_NEZHA                |
-| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G               | NV SMX2 V100-32G          |
 | uploaded Date              | 08/20/2020                                                 | 05/06/2020                |
 | MindSpore Version          | 0.6.0                                                      | 0.3.0                     |
 | Dataset                    | cn-wiki-128(4000w)                                         | ImageNet                  |

@@ -339,7 +339,7 @@ after allreduce eval: top5_correct=45582, tot=50000, acc=91.16%
 | Parameters                 | VGG16(Ascend)                                  | VGG16(GPU)                                      |
 | -------------------------- | ---------------------------------------------- |------------------------------------|
 | Model Version              | VGG16                                          | VGG16                                           |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G  |NV SMX2 V100-32G                                 |
+| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G  |NV SMX2 V100-32G                                 |
 | uploaded Date              | 08/20/2020                                      |08/20/2020                                       |
 | MindSpore Version          | 0.5.0-alpha                                     |0.5.0-alpha                                             |
 | Dataset                    | CIFAR-10                                        |ImageNet2012                                     |

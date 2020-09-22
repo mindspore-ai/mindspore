@@ -588,7 +588,7 @@ The comparisons between MASS and other baseline methods in terms of PPL on Corne
 | Parameters                 | Masked Sequence to Sequence Pre-training for Language Generation          |
 |:---------------------------|:--------------------------------------------------------------------------|
 | Model Version              | v1                                                                        |
-| Resource                   | Ascend 910, cpu 2.60GHz, 56cores；memory, 314G                            |
+| Resource                   | Ascend 910, cpu 2.60GHz, 192cores；memory, 755G                            |
 | uploaded Date              | 05/24/2020                                                                |
 | MindSpore Version          | 0.2.0                                                                     |
 | Dataset                    | News Crawl 2007-2017 English monolingual corpus, Gigaword corpus, Cornell Movie Dialog corpus |
