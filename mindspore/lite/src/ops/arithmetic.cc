@@ -46,9 +46,14 @@ int Arithmetic::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  in_shape0_.resize(5);
-  in_shape1_.resize(5);
-  out_shape_.resize(5);
+  if (input_shape0.size() > 10 || input_shape1.size() > 10) {
+    int wrong_dim = input_shape0.size() > input_shape1.size() ? input_shape0.size() : input_shape1.size();
+    MS_LOG(ERROR) << "Not support input dim: " << wrong_dim << ", The input dim must be less than 10";
+    return RET_ERROR;
+  }
+  in_shape0_.resize(10);
+  in_shape1_.resize(10);
+  out_shape_.resize(10);
 
   ndim_ = input_shape0.size();
   if (input_shape0.size() < input_shape1.size()) {

@@ -24,7 +24,7 @@ typedef struct SoftmaxParameter {
   int32_t axis_;
   int element_size_;
   int n_dim_;
-  int input_shape_[4];
+  int input_shape_[5];
 } SoftmaxParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_SOFTMAX_PARAMETER_H_
