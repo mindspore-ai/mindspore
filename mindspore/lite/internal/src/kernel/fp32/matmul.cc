@@ -71,14 +71,7 @@ void FreeMatMulKernelData(MatMulCPUKernelData *kernel_data, mindspore::lite::All
   free(kernel_data);
 }
 
-static void SwapDims(Int32Vector *dims, int index1, int index2) {
-  int tmp = dims->at(index1);
-  dims->at(index1) = dims->at(index2);
-  dims->at(index2) = tmp;
-}
-
 int DoMatMulInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param) {
-  MS_ASSERT(this->primitive_ != nullptr);
   TensorPtr input0 = in_tensors.at(0);
   MS_ASSERT(input0 != nullptr);
   TensorPtr input1 = in_tensors.at(1);
@@ -86,31 +79,20 @@ int DoMatMulInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector 
   TensorPtr output = out_tensors.at(0);
   MS_ASSERT(output != nullptr);
 
-  output->data_type_ = input0->data_type_;
-  output->format_ = input0->format_;
-
-  Int32Vector a_shape = input0->shape_;
-  Int32Vector b_shape = input1->shape_;
-  if (a_shape.size() < 2 || b_shape.size() < 2) {
-    LITE_ERROR_LOG("inputs shape is invalid");
-    return RET_INPUT_TENSOR_ERROR;
+  int in_datatype[2] = {input0->data_type_, input1->data_type_};
+  int in_format[2] = {static_cast<int>(input0->format_), static_cast<int>(input1->format_)};
+  size_t dim_size[2] = {input0->shape_.size(), input1->shape_.size()};
+  int *in_shape[2] = {input0->shape_.data(), input1->shape_.data()};
+  int out_format;
+  int out_datatype;
+  int ret = MatMulInferShape(in_shape, 2, dim_size, output->shape_.data(), in_format, &out_format, in_datatype,
+                             &out_datatype, param);
+  if (ret != NNACL_OK) {
+    LITE_ERROR_LOG("matmul infershape fail!ret: %d", ret);
+    return RET_ERROR;
   }
-  for (size_t i = 0; i < a_shape.size() - 2; ++i) {
-    if (a_shape[i] != b_shape[i]) {
-      LITE_ERROR_LOG("Op MatMul's dimensions must be equal");
-      return RET_INPUT_TENSOR_ERROR;
-    }
-  }
-
-  MatMulParameter *matmul_param = (MatMulParameter *)param;
-  if (matmul_param->a_transpose_) {
-    SwapDims(&a_shape, a_shape.size() - 1, a_shape.size() - 2);
-  }
-  if (matmul_param->b_transpose_) {
-    SwapDims(&b_shape, b_shape.size() - 1, b_shape.size() - 2);
-  }
-  output->shape_ = a_shape;
-  output->shape_.at(a_shape.size() - 1) = b_shape.at(b_shape.size() - 1);
+  output->format_ = static_cast<Format>(out_format);
+  output->data_type_ = static_cast<TypeId>(out_datatype);
   return RET_OK;
 }
 
@@ -149,7 +131,7 @@ int DoMatMul(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tenso
 
   MatMulCPUKernelData *kernel_data = (MatMulCPUKernelData *)malloc(sizeof(MatMulCPUKernelData));
   if (kernel_data == NULL) {
-    LITE_ERROR_LOG("Malloc MatMulCPUKernelData failed");
+    LITE_LOG_ERROR("Malloc MatMulCPUKernelData failed");
     return RET_MEMORY_FAILED;
   }
   kernel_data->a_c12_ptr_

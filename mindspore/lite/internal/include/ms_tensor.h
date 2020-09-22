@@ -107,7 +107,7 @@ typedef struct MSTensor {
   TypeId data_type_;
   Format format_ = Format_NHWC;
   Category category_ = VAR;
-  ShapeVector shape_ = {};
+  ShapeVector shape_;
   size_t refCount = 0;
 
   int32_t Batch() const;

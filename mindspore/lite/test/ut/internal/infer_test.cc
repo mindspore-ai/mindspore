@@ -42,13 +42,17 @@ TEST_F(InferTest, TestSession) {
   node.primitive_ = &prim;
   node.input_indices_.push_back(0);
   node.output_indices_.push_back(1);
-  ShapeVector shape = {1, 1, 1, 10};
+  ShapeVector shape(4);
+  shape[0] = 1;
+  shape[1] = 1;
+  shape[2] = 1;
+  shape[3] = 10;
   MSTensor *in = CreateTensor(kNumberTypeFloat32, shape);
   model.all_tensors_.push_back(in);
   model.input_indices_.push_back(0);
 
   MSTensor *out = CreateTensor(kNumberTypeFloat32, shape);
-  model.all_tensors_.emplace_back(out);
+  model.all_tensors_.push_back(out);
   model.output_indices_.push_back(1);
 
   LiteSession session;

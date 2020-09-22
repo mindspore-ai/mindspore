@@ -16,26 +16,30 @@
 #include "internal/include/lite_session.h"
 #include "internal/include/model.h"
 #include "internal/include/ms_tensor.h"
-#include "src/runtime/allocator.h"
+#include "internal/src/allocator.h"
 #include "internal/include/errorcode.h"
 #include "internal/src/lite_log.h"
 #include "internal/src/kernel/fp32/activation.h"
 #include "internal/src/kernel/fp32/arithmetic_self.h"
 #include "internal/src/kernel/fp32/matmul.h"
+#include "internal/src/kernel/fp32/arithmetic.h"
+#include "internal/src/kernel/fp32/bias_add.h"
+#ifdef SUPPORT_TRAIN
 #include "internal/src/kernel/fp32_grad/arithmetic_self_grad.h"
 #include "internal/src/kernel/fp32_grad/activation_grad.h"
+#endif
 
 static Context *g_ctx;
 static Model *g_model;
 static LiteSession g_session;
-static mindspore::lite::DefaultAllocator g_allocator;
+static mindspore::lite::Allocator g_allocator;
 static bool g_infershape_interrupt = false;
 static bool g_first_load = true;
 typedef int (*InferShape)(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param);
 typedef int (*RunKernel)(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
                          mindspore::lite::Allocator *allocator);
-static InferShape g_infershape_funcs[KernelType::END];
-static RunKernel g_runkernel_funcs[KernelType::END];
+static InferShape g_infershape_funcs[KernelType::KernelType_END];
+static RunKernel g_runkernel_funcs[KernelType::KernelType_END];
 
 static int ModelInferShape() {
   NodePtrVector nodes = g_model->nodes_;
@@ -43,7 +47,7 @@ static int ModelInferShape() {
   for (size_t i = 0; i < nodes_size; ++i) {
     auto node = nodes[i];
     if (node->primitive_ == NULL) {
-      LITE_ERROR_LOG("node's primitive is NULL!");
+      LITE_LOG_ERROR("node's primitive is NULL!");
       return RET_ERROR;
     }
     TensorPtrVector in_tensors;
@@ -75,22 +79,27 @@ static int ModelInferShape() {
 
 static void InitFuncs() {
   if (g_first_load) {
-    g_infershape_funcs[KernelType::MatMul] = DoMatMulInferShape;
-    g_infershape_funcs[KernelType::Activation] = DoActivationInferShape;
-    g_infershape_funcs[KernelType::Log] = DoArithmeticSelfInferShape;
-    g_infershape_funcs[KernelType::Neg] = DoArithmeticSelfInferShape;
+    g_infershape_funcs[KernelType::KernelType_MatMul] = DoMatMulInferShape;
+    g_infershape_funcs[KernelType::KernelType_Activation] = DoActivationInferShape;
+    g_infershape_funcs[KernelType::KernelType_Log] = DoArithmeticSelfInferShape;
+    g_infershape_funcs[KernelType::KernelType_Neg] = DoArithmeticSelfInferShape;
+    g_infershape_funcs[KernelType::KernelType_Mul] = DoArithmeticInferShape;
+    g_infershape_funcs[KernelType::KernelType_BiasAdd] = DoBiasAddInferShape;
 
-    g_runkernel_funcs[KernelType::MatMul] = DoMatMul;
-    g_runkernel_funcs[KernelType::Activation] = DoActivation;
-    g_runkernel_funcs[KernelType::Log] = DoArithmeticSelf;
-    g_runkernel_funcs[KernelType::Neg] = DoArithmeticSelf;
-
+    g_runkernel_funcs[KernelType::KernelType_MatMul] = DoMatMul;
+    g_runkernel_funcs[KernelType::KernelType_Activation] = DoActivation;
+    g_runkernel_funcs[KernelType::KernelType_Log] = DoArithmeticSelf;
+    g_runkernel_funcs[KernelType::KernelType_Neg] = DoArithmeticSelf;
+    g_runkernel_funcs[KernelType::KernelType_Mul] = DoArithmetic;
+    g_runkernel_funcs[KernelType::KernelType_BiasAdd] = DoBiasAdd;
 #ifdef SUPPORT_TRAIN
-    g_infershape_funcs[KernelType::ActivationGrad] = DoActivationGradInferShape;
+    g_infershape_funcs[KernelType::KernelType_ActivationGrad] = DoActivationGradInferShape;
+    g_infershape_funcs[KernelType::KernelType_NegGrad] = DoArithmeticSelfGradInferShape;
+    g_infershape_funcs[KernelType::KernelType_LogGrad] = DoArithmeticSelfGradInferShape;
 
-    g_runkernel_funcs[KernelType::NegGrad] = DoArithmeticSelfGrad;
-    g_runkernel_funcs[KernelType::ActivationGrad] = DoActivationGrad;
-    g_runkernel_funcs[KernelType::LogGrad] = DoArithmeticSelfGrad;
+    g_runkernel_funcs[KernelType::KernelType_NegGrad] = DoArithmeticSelfGrad;
+    g_runkernel_funcs[KernelType::KernelType_ActivationGrad] = DoActivationGrad;
+    g_runkernel_funcs[KernelType::KernelType_LogGrad] = DoArithmeticSelfGrad;
 #endif
     g_first_load = false;
   }
@@ -155,7 +164,7 @@ int LiteSession::RunGraph() {
   for (size_t i = 0; i < nodes_size; ++i) {
     auto node = nodes[i];
     if (node->primitive_ == nullptr) {
-      LITE_ERROR_LOG("node's primitive is NULL!");
+      LITE_LOG_ERROR("node's primitive is NULL!");
       return RET_ERROR;
     }
     TensorPtrVector in_tensors;
@@ -182,7 +191,7 @@ int LiteSession::RunGraph() {
     for (size_t j = 0; j < out_tensors.size(); ++j) {
       out_tensors[j]->data_ = g_allocator.Malloc(out_tensors[j]->Size());
       if (out_tensors[j]->data_ == NULL) {
-        LITE_ERROR_LOG("Malloc data for out tensor fail!");
+        LITE_LOG_ERROR("Malloc data for out tensor fail!");
         return RET_NULL_PTR;
       }
     }
@@ -194,7 +203,7 @@ int LiteSession::RunGraph() {
 
     int ret = (*run_kernel)(in_tensors, out_tensors, node, &g_allocator);
     if (ret != RET_OK) {
-      LITE_ERROR_LOG("run kernel fail!ret: ", ret);
+      LITE_ERROR_LOG("run kernel fail!ret: %d", ret);
       return ret;
     }
   }

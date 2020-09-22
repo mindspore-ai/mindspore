@@ -19,7 +19,6 @@
 #include "internal/include/model.h"
 #include "internal/include/ms_tensor.h"
 #include "internal/include/lite_utils.h"
-#include "src/runtime/allocator.h"
 #include "nnacl/arithmetic_common.h"
 #include "nnacl/fp32/arithmetic.h"
 
@@ -47,14 +46,14 @@ int BroadcastRun(float *input0, float *input1, float *output, int dim, int out_c
 
 int CalBroadCasting(const TensorPtrVector &in_tensors, int *outside, int *break_pos, ArithmeticParameter *params) {
   params->broadcasting_ = false;
-  for (int i = 0; i < params->ndim_; i++) {
+  for (size_t i = 0; i < params->ndim_; ++i) {
     if (params->in_shape0_[i] != params->in_shape1_[i]) {
       if (params->in_shape0_[i] == 1) {
         params->out_shape_[i] = params->in_shape1_[i];
       } else if (params->in_shape1_[i] == 1) {
         params->out_shape_[i] = params->in_shape0_[i];
       } else {
-        LITE_ERROR_LOG("shapes of input tensors can not be broadCasted");
+        LITE_LOG_ERROR("shapes of input tensors can not be broadCasted");
         return RET_INPUT_TENSOR_ERROR;
       }
       params->broadcasting_ = true;
@@ -100,11 +99,11 @@ int RunArithmetic(const TensorPtrVector &in_tensors, const TensorPtrVector &out_
 
 int DoArithmeticInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param) {
   if (in_tensors.size() != 2 || in_tensors[0]->data_ == NULL || in_tensors[1]->data_ == NULL) {
-    LITE_ERROR_LOG("input tensors num not correct or input data is NULL!")
+    LITE_LOG_ERROR("input tensors num not correct or input data is NULL!");
     return RET_INPUT_TENSOR_ERROR;
   }
   if (out_tensors.size() != 1) {
-    LITE_ERROR_LOG("output tensors num not correct!")
+    LITE_LOG_ERROR("output tensors num not correct!");
     return RET_ERROR;
   }
   ShapeVector in_shape0 = in_tensors[0]->shape_;
@@ -116,7 +115,7 @@ int DoArithmeticInferShape(const TensorPtrVector &in_tensors, const TensorPtrVec
     arithmeticParameter->ndim_ = ndim1;
     int fill_dim_num = ndim1 - ndim0;
     int j = 0;
-    for (size_t i = 0; i < ndim1; i++) {
+    for (int i = 0; i < ndim1; ++i) {
       if (i < fill_dim_num) {
         arithmeticParameter->in_shape0_[i] = 1;
       } else {
@@ -128,7 +127,7 @@ int DoArithmeticInferShape(const TensorPtrVector &in_tensors, const TensorPtrVec
     arithmeticParameter->ndim_ = ndim0;
     int fill_dim_num = ndim0 - ndim1;
     int j = 0;
-    for (size_t i = 0; i < ndim0; i++) {
+    for (int i = 0; i < ndim0; ++i) {
       if (i < fill_dim_num) {
         arithmeticParameter->in_shape1_[i] = 1;
       } else {
@@ -138,20 +137,20 @@ int DoArithmeticInferShape(const TensorPtrVector &in_tensors, const TensorPtrVec
     }
   } else {
     arithmeticParameter->ndim_ = ndim0;
-    for (size_t i = 0; i < ndim0; i++) {
+    for (int i = 0; i < ndim0; ++i) {
       arithmeticParameter->in_shape0_[i] = in_shape0[i];
       arithmeticParameter->in_shape1_[i] = in_shape1[i];
     }
   }
   ShapeVector out_shape;
-  for (int i = 0; i < arithmeticParameter->ndim_; i++) {
+  for (size_t i = 0; i < arithmeticParameter->ndim_; ++i) {
     if (arithmeticParameter->in_shape0_[i] != arithmeticParameter->in_shape1_[i]) {
       if (arithmeticParameter->in_shape0_[i] == 1) {
         out_shape.push_back(arithmeticParameter->in_shape1_[i]);
       } else if (arithmeticParameter->in_shape1_[i] == 1) {
         out_shape.push_back(arithmeticParameter->in_shape0_[i]);
       } else {
-        LITE_ERROR_LOG("shapes of input tensors can not be broadcasted!")
+        LITE_LOG_ERROR("shapes of input tensors can not be broadcasted!");
         return RET_INPUT_TENSOR_ERROR;
       }
     } else {
@@ -165,7 +164,7 @@ int DoArithmeticInferShape(const TensorPtrVector &in_tensors, const TensorPtrVec
 }
 
 int ChooseKernel(const int kernel_type, ArithmeticRun *arithmetic_run, ArithmeticParameter *params) {
-  if (kernel_type == KernelType::Mul) {
+  if (kernel_type == KernelType::KernelType_Mul) {
     if (params->activation_type_ == ActivationType::RELU) {
       *arithmetic_run = ElementMulRelu;
     } else if (params->activation_type_ == ActivationType::RELU6) {
@@ -174,14 +173,14 @@ int ChooseKernel(const int kernel_type, ArithmeticRun *arithmetic_run, Arithmeti
       *arithmetic_run = ElementMul;
     }
   } else {
-    LITE_ERROR_LOG("unsupported operator type");
+    LITE_LOG_INFO("unsupported operator type");
     return RET_ERROR;
   }
   return RET_OK;
 }
 
 int ChooseOptKernel(const int kernel_type, ArithmeticOptRun *arithmetic_opt_run, ArithmeticParameter *params) {
-  if (kernel_type == KernelType::Mul) {
+  if (kernel_type == KernelType::KernelType_Mul) {
     if (params->activation_type_ == ActivationType::RELU) {
       *arithmetic_opt_run = ElementOptMulRelu;
     } else if (params->activation_type_ == ActivationType::RELU6) {
@@ -190,7 +189,7 @@ int ChooseOptKernel(const int kernel_type, ArithmeticOptRun *arithmetic_opt_run,
       *arithmetic_opt_run = ElementOptMul;
     }
   } else {
-    LITE_INFO_LOG("kernel not have opt version");
+    LITE_LOG_INFO("kernel not have opt version");
   }
   return RET_OK;
 }
@@ -198,15 +197,15 @@ int ChooseOptKernel(const int kernel_type, ArithmeticOptRun *arithmetic_opt_run,
 int DoArithmetic(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
                  mindspore::lite::Allocator *allocator) {
   if (in_tensors.size() != 2 || in_tensors[0]->data_ == NULL || in_tensors[1]->data_ == NULL) {
-    LITE_ERROR_LOG("input tensors num not correct or input data is NULL!")
+    LITE_LOG_ERROR("input tensors num not correct or input data is NULL!");
     return RET_INPUT_TENSOR_ERROR;
   }
   if (out_tensors.size() != 1 || out_tensors[0]->data_ == NULL) {
-    LITE_ERROR_LOG("output tensors num not correct or output data is NULL!")
+    LITE_LOG_ERROR("output tensors num not correct or output data is NULL!");
     return RET_ERROR;
   }
   if (allocator == NULL) {
-    LITE_ERROR_LOG("allocator is NULL!")
+    LITE_LOG_ERROR("allocator is NULL!");
     return RET_ERROR;
   }
   ArithmeticParameter *params = reinterpret_cast<ArithmeticParameter *>(node->primitive_);

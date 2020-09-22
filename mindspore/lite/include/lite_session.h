@@ -114,7 +114,7 @@ class MS_API LiteSession {
   /// \brief Resize inputs shape.
   ///
   /// \param[in] inputs Define the inputs of the model.
-  /// \param[in] inputs Define the inputs new shape.
+  /// \param[in] dims Define the inputs new shape.
   ///
   /// \return STATUS as an error code of resize inputs, STATUS is defined in errorcode.h.
   virtual int Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>>& dims) = 0;

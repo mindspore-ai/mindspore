@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_INTERNAL_SRC_KERNEL_FP32_ARITHMETIC_SELF_H_
 
 #include "internal/include/model.h"
-#include "src/runtime/allocator.h"
+#include "internal/src/allocator.h"
 
 int DoArithmeticSelfInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors,
                                OpParameter *param);

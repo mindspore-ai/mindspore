@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef INTERNAL_SRC_STRING_H_
-#define INTERNAL_SRC_STRING_H_
+#ifndef MINDSPORE_LITE_INTERNAL_SRC_STRING_H_
+#define MINDSPORE_LITE_INTERNAL_SRC_STRING_H_
 #include <string.h>
 #include <stdint.h>
 
@@ -34,8 +34,8 @@ typedef struct String {
 
   char &at(size_t pos);
   const char &at(size_t pos) const;
-  char &operator[](size_t pos);
-  const char &operator[](size_t pos) const;
+  inline char &operator[](size_t pos);
+  inline const char &operator[](size_t pos) const;
   char *data() noexcept;
   const char *data() const noexcept;
   const char *c_str() const noexcept;
@@ -97,4 +97,4 @@ String to_String(float value);
 String to_String(double value);
 String to_String(long double value);
 
-#endif  // INTERNAL_SRC_STRING_H_
+#endif  // MINDSPORE_LITE_INTERNAL_SRC_STRING_H_

@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_INTERNAL_SRC_KERNEL_FP32_GRAD_ARITHMETIC_SELF_GRAD_H_
 
 #include "internal/include/model.h"
-#include "src/runtime/allocator.h"
+#include "internal/src/allocator.h"
 
 int DoArithmeticSelfGradInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors,
                                    OpParameter *param);

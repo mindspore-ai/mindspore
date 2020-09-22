@@ -35,9 +35,9 @@ int DoArithmeticSelfGrad(const TensorPtrVector &in_tensors, const TensorPtrVecto
   float *x_data = reinterpret_cast<float *>(in_tensors[1]->data_);
   float *dx_data = reinterpret_cast<float *>(out_tensors[0]->data_);
   int ret;
-  if (param->type_ == KernelType::LogGrad) {
+  if (param->type_ == KernelType::KernelType_LogGrad) {
     ret = ElementDiv(dy_data, x_data, dx_data, data_size);
-  } else if (param->type_ == KernelType::NegGrad) {
+  } else if (param->type_ == KernelType::KernelType_NegGrad) {
     ret = ElementNegative(dy_data, dx_data, data_size);
   } else {
     LITE_ERROR_LOG("Unsupport kernel type: %d", param->type_);

@@ -483,3 +483,38 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
   MatMul12x8(a, b, c, bias, act_type, deep, row, col, stride, out_type);
 #endif
 }
+
+#ifdef ENABLE_NNACL_INFER_SHAPE
+static void SwapDims(int *dims, int index1, int index2) {
+  int tmp = dims[index1];
+  dims[index1] = dims[index2];
+  dims[index2] = tmp;
+}
+
+int MatMulInferShape(int **in_shape, int in_num, size_t *dim_size, int *out_shape, int *in_format,
+                     int *out_format, int *in_datatype, int *out_datatype, OpParameter *param) {
+  *out_datatype = in_datatype[0];
+  *out_format = in_format[0];
+  if (dim_size[0] < 2 || dim_size[1] < 2) {
+    return NNACL_PARAM_INVALID;
+  }
+
+  for (int i = 0; i < dim_size[0] - 2; ++i) {
+    if (in_shape[0][i] != in_shape[1][i]) {
+      return NNACL_PARAM_INVALID;
+    }
+  }
+  MatMulParameter *matmul_param = (MatMulParameter *)param;
+  if (matmul_param->a_transpose_) {
+    SwapDims(in_shape[0], dim_size[0] - 1, dim_size[0] - 2);
+  }
+  if (matmul_param->b_transpose_) {
+    SwapDims(in_shape[1], dim_size[1] - 1, dim_size[1] - 2);
+  }
+  for (int i = 0; i < dim_size[0] - 1; ++i) {
+    out_shape[i] = in_shape[0][i];
+  }
+  out_shape[dim_size[0] - 1] = in_shape[1][dim_size[1] - 1];
+  return NNACL_OK;
+}
+#endif

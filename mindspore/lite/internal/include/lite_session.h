@@ -82,6 +82,7 @@ typedef struct LiteSession {
   /// \brief Resize inputs shape.
   ///
   /// \param[in] inputs Define the new inputs shape.
+  /// \param[in] dims Define the inputs new shape.
   ///
   /// \return STATUS as an error code of resize inputs, STATUS is defined in errorcode.h.
   int Resize(const TensorPtrVector &inputs, const Int32VectorVector &dims);

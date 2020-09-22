@@ -18,7 +18,7 @@
 
 #include "internal/include/model.h"
 #include "internal/include/lite_utils.h"
-#include "src/runtime/allocator.h"
+#include "internal/src/allocator.h"
 
 int DoBiasAddInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param);
 

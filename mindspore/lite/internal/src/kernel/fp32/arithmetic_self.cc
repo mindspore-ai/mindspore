@@ -31,9 +31,9 @@ int DoArithmeticSelf(const TensorPtrVector &in_tensors, const TensorPtrVector &o
   size_t data_size = in_tensors[0]->ElementsNum();
   OpParameter *param = node->primitive_;
   int ret;
-  if (param->type_ == KernelType::Log) {
+  if (param->type_ == KernelType::KernelType_Log) {
     ret = ElementLog((float *)in_tensors[0]->data_, (float *)out_tensors[0]->data_, data_size);
-  } else if (param->type_ == KernelType::Neg) {
+  } else if (param->type_ == KernelType::KernelType_Neg) {
     ret = ElementNegative((float *)in_tensors[0]->data_, (float *)out_tensors[0]->data_, data_size);
   } else {
     LITE_ERROR_LOG("Unsupport kernel type: %d", param->type_);
