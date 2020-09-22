@@ -58,7 +58,23 @@ int AnfConverter::ValidateFileStr(const std::string &modelFile, std::string file
 
 bool AnfConverter::ReadOnnxFromBinary(const std::string &modelFile, google::protobuf::Message *onnx_model) {
   std::unique_ptr<char> onnx_file(new (std::nothrow) char[PATH_MAX]{0});
-  int fd = open(modelFile.c_str(), O_RDONLY);
+  if (modelFile.size() > PATH_MAX) {
+    MS_LOG(DEBUG) << "file path " << modelFile << " is too long.";
+    return false;
+  }
+  char real_path[PATH_MAX + 1] = {0};
+#if defined(_WIN32) || defined(_WIN64)
+  if (nullptr == _fullpath(real_path, modelFile.c_str(), PATH_MAX)) {
+    MS_LOG(DEBUG) << modelFile << " does not exit.";
+    return false;
+  }
+#else
+  if (nullptr == realpath(modelFile.c_str(), real_path)) {
+    MS_LOG(DEBUG) << modelFile << " does not exit.";
+    return false;
+  }
+#endif
+  int fd = open(real_path, O_RDONLY);
   if (fd < 0) {
     MS_LOG(EXCEPTION) << "failed to open file";
   }
