@@ -19,64 +19,111 @@
 
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <limits>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "runtime/device/gpu/gpu_memory_allocator.h"
-
+#include "backend/kernel_compiler/gpu/cuda_impl/ctcloss_impl.cuh"
 namespace mindspore {
 namespace kernel {
 template <typename T>
 class CtcLossGpuKernel : public GpuKernel {
  public:
   CtcLossGpuKernel()
-      : cudnn_handle_(nullptr),
-        probs_desc_(nullptr),
-        ctcloss_desc_(nullptr),
+      : label_indice_size_(0),
         label_size_(0),
-        input_lengths_size_(0),
-        label_lengths_size_(0) {}
-  ~CtcLossGpuKernel() override { DestroyResource(); }
+        squence_lengths_size_(0),
+        preprocess_collapse_repeated_(false),
+        ctc_merge_repeated_(true),
+        ignore_longer_outputs_than_inputs_(false) {}
+  ~CtcLossGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    float *probs = GetDeviceAddress<float>(inputs, 0);
-    float *costs = GetDeviceAddress<float>(outputs, 0);
-    float *grads = GetDeviceAddress<float>(outputs, 1);
-
-    // Copy labels/input_lengths/label_length to host as cudnn7.x.x requires
-    int *labels_host = nullptr;
-    int *no_blank_labels_host = nullptr;
-    void *input_lengths_host = nullptr;
-    void *label_lengths_host = nullptr;
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-    AllocHostMem(&labels_host, &no_blank_labels_host, &input_lengths_host, &label_lengths_host, inputs);
-    CopyToHostSync(labels_host, no_blank_labels_host, input_lengths_host, label_lengths_host, inputs, stream);
+    const T *probs = GetDeviceAddress<T>(inputs, 0);
+    const int64_t *label_indices = GetDeviceAddress<int64_t>(inputs, 1);
+    const int *label_values = GetDeviceAddress<int>(inputs, 2);
+    const int *sequence_length = GetDeviceAddress<int>(inputs, 3);
+    T *costs = GetDeviceAddress<T>(outputs, 0);
+    T *grads = GetDeviceAddress<T>(outputs, 1);
+    T *softmax_probs = GetDeviceAddress<T>(workspace, 0);
+    int *cum_labels_length = GetDeviceAddress<int>(workspace, 1);
+    int *label_squence_length = GetDeviceAddress<int>(workspace, 2);
+    int *label_value_sp = GetDeviceAddress<int>(workspace, 3);
+    int *label_value_pcr = GetDeviceAddress<int>(workspace, 4);
+    T *prob_num = GetDeviceAddress<T>(workspace, 5);
+    int *precum_labels_length = GetDeviceAddress<int>(workspace, 6);
+    int *max_labels_length = GetDeviceAddress<int>(workspace, 7);
+    int numclass = SizeToInt(probs_dims_[2]);
+    int batch = SizeToInt(probs_dims_[1]);
+    int max_time = SizeToInt(probs_dims_[0]);
+    int max_sequence = 0;
+    CalculateMaxSequence(sequence_length, max_labels_length, batch, stream);
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      cudaMemcpyAsync(&max_sequence, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
+      "cudaMemcpyAsync failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    if (max_time < max_sequence) {
+      MS_LOG(EXCEPTION) << "max_time should be greater than sequence length.";
+    }
+    InnerSoftMax(probs, softmax_probs, sequence_length, max_time, batch, numclass, stream);
+    MemsetForWS(label_value_pcr, cum_labels_length, label_squence_length, costs, grads, stream);
+    int max_labels_length_host = 0;
+    int batch_label = 0;
+    int *label_value_with_blank = nullptr;
+    T *log_alpha_b = nullptr;
+    T *log_beta_b = nullptr;
+    CalculatePreLength(label_squence_length, precum_labels_length, cum_labels_length, max_labels_length, label_indices,
+                       batch, label_size_ / sizeof(int), stream);
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      cudaMemcpyAsync(&batch_label, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
+      "cudaMemcpyAsync failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    if (batch != batch_label + 1) {
+      MS_LOG(EXCEPTION) << "label batch should be equal to input batch.";
+    }
+    GenLabelValue(label_value_sp, label_indices, label_values, label_squence_length, cum_labels_length,
+                  max_labels_length, label_size_ / sizeof(int), numclass - 1, batch, stream);
+    if (preprocess_collapse_repeated_) {
+      GenLabelValuePCR(label_value_sp, label_value_pcr, label_squence_length, cum_labels_length, max_labels_length,
+                       batch, stream);
+    }
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      cudaMemcpyAsync(&max_labels_length_host, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
+      "cudaMemcpyAsync failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    int SOffSet = 2 * max_labels_length_host + 1;
+    int log_prob_size = batch * SOffSet * max_time;
+    if (!ignore_longer_outputs_than_inputs_ && max_labels_length_host > max_time) {
+      MS_LOG(EXCEPTION) << "output size is greater than input size.";
+    }
+    MemManageForCus(&log_alpha_b, &log_beta_b, &label_value_with_blank, cum_labels_length, log_prob_size, batch,
+                    stream);
 
-    size_t workspace_size = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnGetCTCLossWorkspaceSize(
-        cudnn_handle_, probs_desc_, probs_desc_, reinterpret_cast<int *>(no_blank_labels_host),
-        reinterpret_cast<int *>(label_lengths_host), reinterpret_cast<int *>(input_lengths_host),
-        CUDNN_CTC_LOSS_ALGO_DETERMINISTIC, ctcloss_desc_, &workspace_size),
-      "cudnnGetCTCLossWorkspaceSize failed.");
-    void *workspace = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(workspace_size);
-    if (workspace == nullptr) {
-      MS_LOG(EXCEPTION) << "Failed to alloc workspace, size: " << workspace_size;
+    if (preprocess_collapse_repeated_) {
+      GenLabelWithBlank(label_value_pcr, label_value_with_blank, label_squence_length, precum_labels_length,
+                        cum_labels_length, batch, numclass - 1, stream);
+    } else {
+      GenLabelWithBlank(label_value_sp, label_value_with_blank, label_squence_length, precum_labels_length,
+                        cum_labels_length, batch, numclass - 1, stream);
     }
 
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnCTCLoss(cudnn_handle_, probs_desc_, probs, reinterpret_cast<int *>(no_blank_labels_host),
-                   reinterpret_cast<int *>(label_lengths_host), reinterpret_cast<int *>(input_lengths_host), costs,
-                   probs_desc_, grads, CUDNN_CTC_LOSS_ALGO_DETERMINISTIC, ctcloss_desc_, workspace, workspace_size),
-      "cudnnCtcLoss failed.");
+    CalculateFwdVar(log_alpha_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated_, batch,
+                    SOffSet, max_time, numclass - 1, label_squence_length, cum_labels_length,
+                    ignore_longer_outputs_than_inputs_, stream);
+    CalculateBwdVar(log_beta_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated_, batch,
+                    SOffSet, max_time, numclass - 1, label_squence_length, cum_labels_length,
+                    ignore_longer_outputs_than_inputs_, stream);
+    CTCLoss(log_alpha_b, log_beta_b, softmax_probs, label_value_with_blank, batch, SOffSet, max_time, numclass,
+            sequence_length, label_squence_length, cum_labels_length, costs, grads, prob_num,
+            ignore_longer_outputs_than_inputs_, stream);
     CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
-
-    device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(workspace);
-    FreeHostMem(labels_host, no_blank_labels_host, input_lengths_host, label_lengths_host);
+    FreeMem(label_value_with_blank, log_alpha_b, log_beta_b);
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
@@ -88,104 +135,98 @@ class CtcLossGpuKernel : public GpuKernel {
     probs_dims_[0] = probs_shape[0];
     probs_dims_[1] = probs_shape[1];
     probs_dims_[2] = probs_shape[2];
-
-    auto labels_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    if (labels_dims.size() != 1 && labels_dims.size() != 2) {
+    auto indice_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto labels_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    if (labels_dims.size() != 1) {
       MS_LOG(EXCEPTION) << "labels dims: " << labels_dims.size() << " not support.";
+    }
+    if (indice_dims.size() != 2) {
+      MS_LOG(EXCEPTION) << "labels indice dims: " << indice_dims.size() << " not support.";
     }
     label_size_ = sizeof(int);
     for (auto i : labels_dims) {
       label_size_ *= i;
     }
-
-    auto input_length_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    input_lengths_size_ = input_length_dims[0] * sizeof(int);
-    auto label_length_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    label_lengths_size_ = label_length_dims[0] * sizeof(int);
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensorNdDescriptorEx(probs_desc_, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 3, probs_dims_),
-      "cudnnSetTensorNdDescriptorEx failed.");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetCTCLossDescriptorEx(ctcloss_desc_, CUDNN_DATA_FLOAT,
-                                                            CUDNN_LOSS_NORMALIZATION_SOFTMAX, CUDNN_PROPAGATE_NAN),
-                                "cudnnSetCTCLossDescriptorEx failed.");
+    label_indice_size_ = sizeof(int64_t);
+    for (auto i : indice_dims) {
+      label_indice_size_ *= i;
+    }
+    auto squence_length_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    squence_lengths_size_ = squence_length_dims[0] * sizeof(int);
+    preprocess_collapse_repeated_ = GetAttr<bool>(kernel_node, "preprocess_collapse_repeated");
+    ctc_merge_repeated_ = GetAttr<bool>(kernel_node, "ctc_merge_repeated");
+    ignore_longer_outputs_than_inputs_ = GetAttr<bool>(kernel_node, "ignore_longer_outputs_than_inputs");
     InitSizeLists();
     return true;
   }
 
  protected:
-  void InitResource() override {
-    cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&probs_desc_), "cudnnCreateTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateCTCLossDescriptor(&ctcloss_desc_), "cudnnCreateCTCLossDescriptor failed.");
-  }
-
   void InitSizeLists() override {
-    input_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(float));
+    input_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
+    input_size_list_.push_back(label_indice_size_);
     input_size_list_.push_back(label_size_);
-    input_size_list_.push_back(input_lengths_size_);
-    input_size_list_.push_back(label_lengths_size_);
-
-    output_size_list_.push_back(probs_dims_[1] * sizeof(float));
-    output_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(float));
+    input_size_list_.push_back(squence_lengths_size_);
+    workspace_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
+    workspace_size_list_.push_back(squence_lengths_size_);
+    workspace_size_list_.push_back(squence_lengths_size_);
+    workspace_size_list_.push_back(label_size_);
+    workspace_size_list_.push_back(label_size_);
+    workspace_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
+    workspace_size_list_.push_back(squence_lengths_size_);
+    workspace_size_list_.push_back(sizeof(int));
+    output_size_list_.push_back(probs_dims_[1] * sizeof(T));
+    output_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
   }
-
- private:
-  void DestroyResource() noexcept {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyCTCLossDescriptor(ctcloss_desc_), "cudnnDestroyCTCLossDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(probs_desc_), "cudnnDestroyTensorDescriptor failed.");
+  void MemsetForWS(int *label_value_pcr, int *cum_labels_length, int *label_squence_length, T *costs, T *grads,
+                   cudaStream_t stream) {
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemsetAsync(label_value_pcr, static_cast<int>(0), label_size_, stream),
+                               "cudaMemSet failed in CtcLossGpuKernel::Launch.");
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemsetAsync(cum_labels_length, static_cast<int>(0), squence_lengths_size_, stream),
+                               "cudaMemSet failed in CtcLossGpuKernel::Launch.");
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      cudaMemsetAsync(label_squence_length, static_cast<int>(0), squence_lengths_size_, stream),
+      "cudaMemSet failed in CtcLossGpuKernel::Launch.");
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemsetAsync(costs, static_cast<T>(0), probs_dims_[1] * sizeof(T), stream),
+                               "cudaMemSet failed in CtcLossGpuKernel::Launch.");
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      cudaMemsetAsync(grads, static_cast<T>(0), probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T), stream),
+      "cudaMemSet failed in CtcLossGpuKernel::Launch.");
   }
-
-  void AllocHostMem(int **labels_host, int **no_blank_labels_host, void **input_lengths_host, void **label_lengths_host,
-                    const std::vector<AddressPtr> &inputs) {
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMallocHost(labels_host, inputs[1]->size), "cudaMallocHost failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMallocHost(no_blank_labels_host, inputs[1]->size), "cudaMallocHost failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMallocHost(input_lengths_host, inputs[2]->size), "cudaMallocHost failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMallocHost(label_lengths_host, inputs[3]->size), "cudaMallocHost failed.");
-  }
-
-  void FreeHostMem(int *labels_host, int *no_blank_labels_host, void *input_lengths_host, void *label_lengths_host) {
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaFreeHost(label_lengths_host), "cudaFreeHost failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaFreeHost(input_lengths_host), "cudaFreeHost failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaFreeHost(labels_host), "cudaFreeHost failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaFreeHost(no_blank_labels_host), "cudaFreeHost failed.");
-  }
-
-  void CopyToHostSync(int *labels_host, int *no_blank_labels_host, void *input_lengths_host, void *label_lengths_host,
-                      const std::vector<AddressPtr> &inputs, cudaStream_t stream) {
+  void MemManageForCus(T **log_alpha_b, T **log_beta_b, int **label_value_with_blank, int *cum_labels_length,
+                       int log_prob_size, int batch, cudaStream_t stream) {
+    int total_labels_size_host = 0;
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMalloc(reinterpret_cast<void **>(log_alpha_b), sizeof(T) * log_prob_size),
+                               "cudaMalloc failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMalloc(reinterpret_cast<void **>(log_beta_b), sizeof(T) * log_prob_size),
+                               "cudaMalloc failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(&total_labels_size_host, cum_labels_length + batch - 1, sizeof(int),
+                                               cudaMemcpyDeviceToHost, stream),
+                               "cudaMemcpyAsync failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(
-      cudaMemcpyAsync(labels_host, inputs[1]->addr, inputs[1]->size, cudaMemcpyDeviceToHost, stream),
-      "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      cudaMemcpyAsync(input_lengths_host, inputs[2]->addr, inputs[2]->size, cudaMemcpyDeviceToHost, stream),
-      "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      cudaMemcpyAsync(label_lengths_host, inputs[3]->addr, inputs[3]->size, cudaMemcpyDeviceToHost, stream),
-      "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+      cudaMalloc(reinterpret_cast<void **>(label_value_with_blank), sizeof(int) * (2 * total_labels_size_host + batch)),
+      "cudaMalloc failed.");
+  }
 
-    // remove blank element
-    size_t j = 0;
-    for (size_t i = 0; i < inputs[1]->size / sizeof(int); i++) {
-      if (labels_host[i] != 0) {
-        no_blank_labels_host[j] = labels_host[i];
-        j++;
-      }
-    }
+  void FreeMem(int *label_value_with_blank, T *log_alpha_b, T *log_beta_b) {
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaFree(label_value_with_blank), "cudaFree failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaFree(log_alpha_b), "cudaFree failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaFree(log_beta_b), "cudaFree failed.");
   }
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 
-  cudnnHandle_t cudnn_handle_;
-  cudnnTensorDescriptor_t probs_desc_;
-  cudnnCTCLossDescriptor_t ctcloss_desc_;
-  int probs_dims_[3] = {0};
+  size_t probs_dims_[3] = {0};
+  int label_indice_size_;
   int label_size_;
-  int input_lengths_size_;
-  int label_lengths_size_;
-};
+  int squence_lengths_size_;
+  bool preprocess_collapse_repeated_;
+  bool ctc_merge_repeated_;
+  bool ignore_longer_outputs_than_inputs_;
+  T kLogZero_ = -std::numeric_limits<T>::infinity();
+};  // namespace kernel
 }  // namespace kernel
 }  // namespace mindspore
 
