@@ -35,6 +35,7 @@ class ReduceCPUKernel : public CPUKernel {
   void Transpose(const int size, const float *input, const std::vector<size_t> &input_shape,
                  const std::vector<size_t> &input_axis, const int shape_size, float *output);
   void ConvertDataToOutput(const float *input, float *output);
+  void CheckAxis(const CNodePtr &kernel_node);
   size_t reduce_type_ = 0;
   std::vector<size_t> axis_;
   std::vector<size_t> shape_;

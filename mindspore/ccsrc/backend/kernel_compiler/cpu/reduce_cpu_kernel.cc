@@ -38,37 +38,7 @@ void ReduceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Array reduce kernel type " << kernel_name << " is not supported.";
   }
   shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto axis_addr = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(AXIS);
-
-  if (axis_addr->isa<ValueTuple>()) {
-    auto attr_axis = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, AXIS);
-    if (attr_axis.size() > shape_.size()) {
-      MS_LOG(EXCEPTION) << "invalid axis size: " << axis_.size();
-    } else if (attr_axis.empty()) {
-      axis_.push_back(shape_.size() - 1);
-    } else {
-      for (auto axis : attr_axis) {
-        while (axis < 0) {
-          axis += SizeToInt(shape_.size());
-        }
-        if (IntToSize(axis) >= (shape_.size())) {
-          MS_LOG(EXCEPTION) << "axis value is oversize.";
-        }
-        axis_.push_back(IntToSize(axis));
-      }
-    }
-  } else if (axis_addr->isa<Int32Imm>()) {
-    int axis = AnfAlgo::GetNodeAttr<int>(kernel_node, AXIS);
-    while (axis < 0) {
-      axis += SizeToInt(shape_.size());
-    }
-    if (IntToSize(axis) >= shape_.size()) {
-      MS_LOG(EXCEPTION) << "axis value is oversize.";
-    }
-    axis_.push_back(IntToSize(axis));
-  } else {
-    MS_LOG(EXCEPTION) << "Attribute axis type is invalid.";
-  }
+  CheckAxis(kernel_node);
   for (size_t i = 0; i < shape_.size(); ++i) {
     if (shape_[i] <= 0) {
       MS_LOG(EXCEPTION) << "shape value is invalid.";
@@ -112,6 +82,41 @@ bool ReduceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   Transpose(size, input, shape_, transpose_axis, SizeToInt(shape_.size()), &new_input[0]);
   ConvertDataToOutput(&new_input[0], output);
   return true;
+}
+
+void ReduceCPUKernel::CheckAxis(const CNodePtr &kernel_node) {
+  auto axis_addr = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(AXIS);
+  if (axis_addr->isa<ValueTuple>()) {
+    auto attr_axis = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, AXIS);
+    if (attr_axis.size() > shape_.size()) {
+      MS_LOG(EXCEPTION) << "invalid axis size: " << axis_.size();
+    } else if (attr_axis.empty()) {
+      for (size_t i = 0; i < shape_.size(); ++i) {
+        axis_.push_back(i);
+      }
+    } else {
+      for (auto axis : attr_axis) {
+        while (axis < 0) {
+          axis += SizeToInt(shape_.size());
+        }
+        if (IntToSize(axis) >= (shape_.size())) {
+          MS_LOG(EXCEPTION) << "axis value is oversize.";
+        }
+        axis_.push_back(IntToSize(axis));
+      }
+    }
+  } else if (axis_addr->isa<Int32Imm>()) {
+    int axis = AnfAlgo::GetNodeAttr<int>(kernel_node, AXIS);
+    while (axis < 0) {
+      axis += SizeToInt(shape_.size());
+    }
+    if (IntToSize(axis) >= shape_.size()) {
+      MS_LOG(EXCEPTION) << "axis value is oversize.";
+    }
+    axis_.push_back(IntToSize(axis));
+  } else {
+    MS_LOG(EXCEPTION) << "Attribute axis type is invalid.";
+  }
 }
 
 void ReduceCPUKernel::ConvertDataToOutput(const float *new_input, float *output) {

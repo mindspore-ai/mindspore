@@ -32,6 +32,8 @@ class NetReduce(nn.Cell):
         self.axis2 = -1
         self.axis3 = (0, 1)
         self.axis4 = (0, 1, 2)
+        self.axis5 = (-1,)
+        self.axis6 = ()
         self.reduce_mean = P.ReduceMean(False)
         self.reduce_sum = P.ReduceSum(False)
         self.reduce_max = P.ReduceMax(False)
@@ -46,7 +48,10 @@ class NetReduce(nn.Cell):
                 self.reduce_sum(indice, self.axis0),
                 self.reduce_sum(indice, self.axis2),
                 self.reduce_max(indice, self.axis0),
-                self.reduce_max(indice, self.axis2))
+                self.reduce_max(indice, self.axis2),
+                self.reduce_max(indice, self.axis5),
+                self.reduce_max(indice, self.axis6))
+
 
 
 @pytest.mark.level0
@@ -69,6 +74,8 @@ def test_reduce():
     print(output[6])
     print(output[7])
     print(output[8])
+    print(output[9])
+    print(output[10])
     expect_0 = np.array([[2., 1., 2., 3., 0., 1], [2., 2., 1., 2., 3., 2.]]).astype(np.float32)
     expect_1 = np.array([[1.5, 1.5, 1.5, 3., 2., 1.], [1.5, 0., 0.5, 4.5, 2., 2.], [3., 3., 2.5, 0., 0.5, 1.5]]).astype(
         np.float32)
@@ -88,6 +95,7 @@ def test_reduce():
     assert (output[6].asnumpy() == expect_6).all()
     assert (output[7].asnumpy() == expect_7).all()
     assert (output[8].asnumpy() == expect_8).all()
-
+    assert (output[9].asnumpy() == expect_8).all()
+    assert (output[10].asnumpy() == 5.0).all()
 
 test_reduce()
