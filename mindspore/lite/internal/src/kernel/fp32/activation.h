@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_INTERNAL_SRC_KERNEL_FP32_ACTIVATION_H_
 
 #include "internal/include/model.h"
-#include "src/runtime/allocator.h"
+#include "internal/src/allocator.h"
 
 int DoActivationInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param);
 int DoActivation(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,

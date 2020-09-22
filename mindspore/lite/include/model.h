@@ -48,7 +48,7 @@ struct Model {
   /// \brief Free meta graph temporary buffer
   virtual void Free();
 
-  /// \brief Free all temporay buffer
+  /// \brief Free all temporay buffer.EG: nodes in the model.
   void Destroy();
 
   /// \brief Model destruct, free all memory

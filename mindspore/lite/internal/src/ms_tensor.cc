@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <iostream>
 #include "internal/include/string.h"
 #include "internal/include/vector.h"
 #include "internal/include/ms_tensor.h"
@@ -85,7 +84,7 @@ size_t MSTensor::Size() const {
       size = sizeof(bool);
       break;
     default:
-      std::cout << "Not support the type: " << this->data_type_;
+      LITE_ERROR_LOG("Not support the type: %d", this->data_type_);
       return 0;
   }
   size *= (format_ == Format::Format_NC4HW4 || format_ == Format::Format_NHWC4) ? ElementsC4Num() : ElementsNum();
@@ -94,7 +93,7 @@ size_t MSTensor::Size() const {
 }
 int32_t MSTensor::Batch() const {
   if (this->shape_.size() != 4 && this->shape_.size() != 2) {
-    std::cout << "Unsupported tensor shape: " << this->shape_.size();
+    LITE_ERROR_LOG("Unsupported tensor shape: %zu", this->shape_.size());
     return -1;
   }
   switch (this->format_) {
@@ -115,14 +114,14 @@ int32_t MSTensor::Batch() const {
     case Format::Format_CKHW:
       return this->shape_[1];
     default:
-      // std::cout << "Unsupported format: " << EnumNameFormat(this->format_);
+      LITE_ERROR_LOG("Unsupported format: %d", this->format_);
       return -1;
   }
 }
 
 int32_t MSTensor::Channel() const {
   if (this->shape_.size() != 4 && this->shape_.size() != 2) {
-    std::cout << "Unsupported tensor shape: " << this->shape_.size();
+    LITE_ERROR_LOG("Unsupported tensor shape: %zu", this->shape_.size());
     return -1;
   }
   switch (this->format_) {
@@ -149,7 +148,7 @@ int32_t MSTensor::Channel() const {
 
 int32_t MSTensor::Height() const {
   if (this->shape_.size() != 4 && this->shape_.size() != 2) {
-    std::cout << "Unsupported tensor shape: " << this->shape_.size();
+    LITE_ERROR_LOG("Unsupported tensor shape: %zu", this->shape_.size());
     return -1;
   }
   switch (this->format_) {
@@ -169,14 +168,14 @@ int32_t MSTensor::Height() const {
     case Format::Format_HW4:
       return this->shape_[0];
     default:
-      // std::cout << "Unsupported format: " << EnumNameFormat(this->format_);
+      LITE_ERROR_LOG("Unsupported format: %d", this->format_);
       return -1;
   }
 }
 
 int32_t MSTensor::Width() const {
   if (this->shape_.size() != 4 && this->shape_.size() != 2) {
-    std::cout << "Unsupported tensor shape: " << this->shape_.size();
+    LITE_ERROR_LOG("Unsupported tensor shape: %zu", this->shape_.size());
     return -1;
   }
   switch (this->format_) {

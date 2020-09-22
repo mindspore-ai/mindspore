@@ -37,10 +37,12 @@ endif()
 
 ### runtime framework
 set(TEST_LITE_SRC
+        ${LITE_DIR}/internal/src/common/string.cc
         ${LITE_DIR}/internal/src/lite_session.cc
-        ${LITE_DIR}/src/runtime/allocator.cc
+        ${LITE_DIR}/internal/src/allocator.cc
         ${LITE_DIR}/internal/src/ms_tensor.cc
         ${LITE_DIR}/internal/src/common/string.cc
+        ${LITE_DIR}/internal/src/common/vector.cc
         ${TOP_DIR}/mindspore/core/utils/log_adapter.cc
         ${TOP_DIR}/mindspore/core/gvar/logging_level.cc
         )
@@ -65,10 +67,3 @@ set(TEST_SRC
 add_executable(lite-test-internal ${TEST_SRC})
 
 target_link_libraries(lite-test-internal dl ${GTEST_LIBRARY})
-if (PLATFORM_ARM64)
-    target_link_libraries(lite-test-internal mslite_internal)
-endif()
-
-if (PLATFORM_ARM32 OR PLATFORM_ARM64)
-       target_link_libraries(lite-test-internal log)
-endif()

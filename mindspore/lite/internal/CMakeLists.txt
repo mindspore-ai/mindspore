@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
 project (Lite_Internal)
 set(TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../)
-
+set(CMAKE_CXX_COMPILER ${CMAKE_C_COMPILER})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
 include_directories(${TOP_DIR})
+add_compile_definitions(ENABLE_NNACL_INFER_SHAPE)
 
 file(GLOB KERNEL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/arithmetic_common.c
@@ -26,13 +28,11 @@ endif ()
 list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/opt_op_handler.c)
 
 set(CCSRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/lite_session.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/ms_tensor.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/common/string.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/common/vector.cc
-        ${TOP_DIR}/src/common/log_adapter.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../core/gvar/logging_level.cc
-        ${TOP_DIR}/src/runtime/allocator.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/common/string.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/lite_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/allocator.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/ms_tensor.cc
         )
 
 if (PLATFORM_ARM64)
@@ -43,6 +43,4 @@ if (PLATFORM_ARM64)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
     add_library(mslite_internal SHARED ${CCSRC} ${KERNEL_SRC} ${TRAIN_KERNEL_SRC})
-    target_link_libraries(mslite_internal log)
 endif()
-

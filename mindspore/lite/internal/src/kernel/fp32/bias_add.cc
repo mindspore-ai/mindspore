@@ -17,7 +17,6 @@
 #include "internal/include/model.h"
 #include "internal/include/ms_tensor.h"
 #include "internal/include/lite_utils.h"
-#include "src/runtime/allocator.h"
 #include "internal/src/lite_log.h"
 #include "internal/include/errorcode.h"
 #include "nnacl/arithmetic_common.h"
@@ -25,11 +24,11 @@
 
 int DoBiasAddInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param) {
   if (in_tensors.size() != 2 || in_tensors[0]->data_ == NULL || in_tensors[1]->data_ == NULL) {
-    LITE_ERROR_LOG("input tensors num not correct or input data is NULL!")
+    LITE_LOG_ERROR("input tensors num not correct or input data is NULL!");
     return RET_INPUT_TENSOR_ERROR;
   }
   if (out_tensors.size() != 1) {
-    LITE_ERROR_LOG("output tensors num not correct!")
+    LITE_LOG_ERROR("output tensors num not correct!");
     return RET_ERROR;
   }
   out_tensors[0]->shape_ = in_tensors[0]->shape_;
@@ -41,15 +40,15 @@ int DoBiasAddInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector
 int DoBiasAdd(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,
               mindspore::lite::Allocator *allocator) {
   if (in_tensors.size() != 2 || in_tensors[0]->data_ == NULL || in_tensors[1]->data_ == NULL) {
-    LITE_ERROR_LOG("input tensors num not correct or input data is NULL!")
+    LITE_LOG_ERROR("input tensors num not correct or input data is NULL!");
     return RET_INPUT_TENSOR_ERROR;
   }
   if (out_tensors.size() != 1 || out_tensors[0]->data_ == NULL) {
-    LITE_ERROR_LOG("output tensors num not correct or output data is NULL!")
+    LITE_LOG_ERROR("output tensors num not correct or output data is NULL!");
     return RET_ERROR;
   }
   if (allocator == NULL) {
-    LITE_ERROR_LOG("allocator is NULL!")
+    LITE_LOG_ERROR("allocator is NULL!");
     return RET_ERROR;
   }
   ArithmeticParameter *params = reinterpret_cast<ArithmeticParameter *>(node->primitive_);
@@ -70,7 +69,7 @@ int DoBiasAdd(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tens
   float *tile_in = reinterpret_cast<float *>(allocator->Malloc(data_size * sizeof(float)));
   float *tile_bias = reinterpret_cast<float *>(allocator->Malloc(data_size * sizeof(float)));
   if (tile_in == NULL || tile_bias == NULL) {
-    LITE_ERROR_LOG("Memory allocation failed!")
+    LITE_LOG_ERROR("Memory allocation failed!");
     allocator->Free(tile_in);
     allocator->Free(tile_bias);
     return RET_ERROR;

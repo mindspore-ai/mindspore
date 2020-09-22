@@ -17,6 +17,7 @@
 #define MINDSPORE_LITE_INTERNAL_INCLUDE_VECTOR_H
 
 #include <stdint.h>
+#include <initializer_list>
 #include "internal/include/string.h"
 #define DEFAULT_CAPACITY 1
 
@@ -43,6 +44,8 @@ class Vector {
   void clear();
 
   void push_back(const T &elem);
+
+  void push_back(T &&);
 
   void pop_back();
 
@@ -87,6 +90,8 @@ class Vector {
   void resize(size_t size);
 
   void reserve(size_t capacity);
+
+  Vector<T> &operator=(const Vector<T> &v);
 };
 
 template <typename T>

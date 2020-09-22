@@ -53,8 +53,24 @@ Vector<T>::Vector(const Vector<T> &vec) {
 }
 
 template<typename T>
+Vector<T> &Vector<T>::operator=(const Vector<T> &vec) {
+  if (this == &vec) {
+    return *this;
+  }
+  size_ = vec.size_;
+  elem_size_ = sizeof(T);
+  capacity_ = vec.capacity_;
+  data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
+  if (data_ == nullptr) {
+    MS_C_EXCEPTION("malloc data failed");
+  }
+  memcpy(data_, vec.data_, size_ * elem_size_);
+  return *this;
+}
+
+template<typename T>
 Vector<T>::~Vector() {
-  if (data_) {
+  if (data_ != nullptr) {
     free(data_);
   }
 }
@@ -62,7 +78,7 @@ Vector<T>::~Vector() {
 template<typename T>
 void Vector<T>::clear() {
   size_ = 0;
-  if (data_) {
+  if (data_ != nullptr) {
     free(data_);
     data_ = nullptr;
   }
@@ -70,6 +86,21 @@ void Vector<T>::clear() {
 
 template<typename T>
 void Vector<T>::push_back(const T &elem) {
+  if (data_ == nullptr) {
+    data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
+    if (data_ == nullptr) {
+      MS_C_EXCEPTION("malloc data failed");
+    }
+  } else if (size_ == capacity_) {
+    resize(size_ + 1);
+    --size_;
+  }
+  memcpy(data_ + size_, &elem, elem_size_);
+  ++size_;
+}
+
+template<typename T>
+void Vector<T>::push_back(T &&elem) {
   if (data_ == nullptr) {
     data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
     if (data_ == nullptr) {
