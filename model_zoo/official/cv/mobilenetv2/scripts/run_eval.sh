@@ -43,7 +43,6 @@ run_ascend()
             --platform=$1 \
             --dataset_path=$2 \
             --pretrain_ckpt=$3 \
-            --head_ckpt=$4 \
             &> ../eval.log &  # dataset val folder path
 }
 
@@ -69,7 +68,6 @@ run_gpu()
         --platform=$1 \
         --dataset_path=$2 \
         --pretrain_ckpt=$3 \
-        --head_ckpt=$4 \
         &> ../eval.log &  # dataset train folder
 }
 
@@ -95,7 +93,6 @@ run_cpu()
         --platform=$1 \
         --dataset_path=$2 \
         --pretrain_ckpt=$3 \
-        --head_ckpt=$4 \
         &> ../eval.log &  # dataset train folder
 }
 
@@ -105,7 +102,7 @@ then
     echo "Usage:
           Ascend: sh run_eval.sh [PLATFORM] [DATASET_PATH] [PRETRAIN_CKPT]
           GPU: sh run_eval.sh [PLATFORM] [DATASET_PATH] [PRETRAIN_CKPT]
-          CPU: sh run_eval.sh [PLATFORM] [DATASET_PATH] [BACKBONE_CKPT] [HEAD_CKPT]"
+          CPU: sh run_eval.sh [PLATFORM] [DATASET_PATH] [PRETRAIN_CKPT]"
 exit 1
 fi
 
@@ -123,5 +120,5 @@ elif [ $1 = "GPU" ] ; then
 elif [ $1 = "Ascend" ] ; then
     run_ascend "$@"
 else
-    echo "Unsupported device_target."
+    echo "Unsupported platform."
 fi;

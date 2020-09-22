@@ -122,5 +122,5 @@ def extract_features(net, dataset_path, config):
             features = model.predict(Tensor(image))
             np.save(features_path, features.asnumpy())
             np.save(label_path, label)
-        print(f"Complete the batch {i}/{step_size}")
+        print(f"Complete the batch {i+1}/{step_size}")
     return step_size
