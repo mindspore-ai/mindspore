@@ -170,6 +170,7 @@ class GPUProfiler {
   cudaEvent_t op_event_stop_;
   uint64_t op_host_time_start_;
   uint64_t op_host_time_stop_;
+  uint64_t op_cupti_time_start_;
   std::string profile_data_path_;
 };
 }  // namespace gpu
