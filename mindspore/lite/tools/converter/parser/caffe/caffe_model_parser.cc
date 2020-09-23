@@ -84,6 +84,9 @@ schema::MetaGraphT *CaffeModelParser::ParseToFb(const std::string &modelFile, co
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseLayer failed " << status;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+    for (auto &tensor : tensorCache.GetCachedTensor()) {
+      delete tensor;
+    }
     return nullptr;
   }
 
@@ -179,6 +182,8 @@ STATUS CaffeModelParser::SetGraphTensorIndex(const caffe::NetParameter &proto, T
 STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caffe::NetParameter &weight,
                                     TensorCache *tensorCache, schema::MetaGraphT *subGraphDef,
                                     const QuantType &quantType) {
+  static bool interrupt = false;
+  int status = RET_OK;
   for (int i = 0; i < proto.layer_size(); i++) {
     auto layer = proto.layer(i);
 
@@ -222,38 +227,46 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
         }
         continue;
       }
-      auto status = SetOpInputIdx(layer, op.get(), tensorCache);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "Set Op " << layer.name() << " Input Index Failed!";
-        return status;
-      }
 
       auto nodeParser = CaffeNodeParserRegistry::GetInstance()->GetNodeParser(layer.type().c_str());
-      if (nodeParser == nullptr) {
-        MS_LOG(ERROR) << "Don't support type " << layer.type() << ". for caffe op " << layer.name();
-        return RET_NULL_PTR;
+      if (nodeParser == nullptr || interrupt) {
+        interrupt = true;
+        if (nodeParser == nullptr) {
+          NoSupportOp::GetInstance()->InsertOp(layer.type());
+          status = (status == RET_OK ? RET_NOT_FIND_OP : status);
+        }
+        continue;
       }
 
       std::vector<schema::TensorT *> weightVec;
-      status = nodeParser->Parse(layer, layerP, op.get(), &weightVec);
-      if (status != RET_OK) {
+      auto status_node = nodeParser->Parse(layer, layerP, op.get(), &weightVec);
+      if (status_node != RET_OK) {
+        interrupt = true;
         MS_LOG(ERROR) << "Parse weight for " << layer.name() << " Failed!";
-        return status;
+        status = (status == RET_OK ? RET_NOT_FIND_OP : status);
+        continue;
       }
 
+      status_node = SetOpInputIdx(layer, op.get(), tensorCache);
+      if (status_node != RET_OK) {
+        MS_LOG(ERROR) << "Set Op " << layer.name() << " Input Index Failed!";
+        status = (status == RET_OK ? status_node : status);
+      }
       SetWeightTensor(weightVec, op.get(), tensorCache);
 
-      status = SetOpOutputIdx(layer, op.get(), tensorCache);
-      if (status != RET_OK) {
+      status_node = SetOpOutputIdx(layer, op.get(), tensorCache);
+      if (status_node != RET_OK) {
+        interrupt = true;
         MS_LOG(ERROR) << "Set Op " << layer.name() << " Output Index Failed!";
-        return status;
+        status = (status == RET_OK ? RET_NOT_FIND_OP : status);
+        continue;
       }
 
       // op->fmkType = FmkType_CAFFE;
       subGraphDef->nodes.emplace_back(move(op));
     }
   }
-  return RET_OK;
+  return status;
 }
 
 STATUS CaffeModelParser::GetModelInput(const caffe::NetParameter &proto, TensorCache *tensorCache) {

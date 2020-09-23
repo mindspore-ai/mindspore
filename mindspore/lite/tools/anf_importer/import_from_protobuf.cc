@@ -202,7 +202,7 @@ PARSE_ONNXATTR_IN_SCALAR_FORM(int64, int64)
 PARSE_ONNXATTR_IN_SCALAR_FORM(uint64, uint64)
 
 int AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &node,
-                                                         const onnx::ValueInfoProto &value_proto) {
+                                                        const onnx::ValueInfoProto &value_proto) {
   if (node == nullptr) {
     return RET_NULL_PTR;
   }
@@ -273,7 +273,7 @@ int AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &node
 }
 
 int AnfImporterFromProtobuf::ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph,
-                                                       const onnx::GraphProto &importProto) {
+                                                      const onnx::GraphProto &importProto) {
   if (outputFuncGraph == nullptr) {
     return RET_NULL_PTR;
   }
@@ -557,6 +557,7 @@ std::unordered_map<std::string, abstract::AbstractTensorPtr> AnfImporterFromProt
 CNodePtr AnfImporterFromProtobuf::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph,
                                                          const onnx::NodeProto &node_proto,
                                                          const schema::QuantType &quantType) {
+  static bool interrupt = false;
   if (outputFuncGraph == nullptr) {
     MS_LOG(ERROR) << "output funcgraph is nullptr";
     return nullptr;
@@ -600,13 +601,17 @@ CNodePtr AnfImporterFromProtobuf::BuildCNodeForFuncGraph(const FuncGraphPtr &out
     inputs.push_back(anfnode_build_map_[input_name]);
   }
   auto primitivec_ptr = PrimitiveC::Create(*prim, inputs, quantType);
-  if (primitivec_ptr == nullptr) {
-    MS_LOG(ERROR) << "Create PrimitiveC return nullptr, " << prim->name();
+  if (primitivec_ptr == nullptr || interrupt) {
+    interrupt = true;
+    if (primitivec_ptr == nullptr) {
+      NoSupportOp::GetInstance()->InsertOp(prim->name());
+    }
     return nullptr;
   }
   inputs.insert(inputs.begin(), NewValueNode(primitivec_ptr));
   CNodePtr cnode_ptr = outputFuncGraph->NewCNode(inputs);
   if (cnode_ptr == nullptr) {
+    interrupt = true;
     MS_LOG(ERROR) << "funcgraph new cnode failed";
     return nullptr;
   }
@@ -700,40 +705,43 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
 }
 
 int AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
-                                                  const onnx::GraphProto &importProto,
-                                                  const schema::QuantType &quantType) {
+                                                 const onnx::GraphProto &importProto,
+                                                 const schema::QuantType &quantType) {
   if (outputFuncGraph == nullptr) {
     MS_LOG(ERROR) << "funcgraph is nullptr";
     return RET_NULL_PTR;
   }
   MS_LOG(INFO) << "The CNdoe size : " << importProto.node_size();
   CNodePtr cnode_ptr = nullptr;
+  int status = RET_OK;
   for (int i = 0; i < importProto.node_size(); ++i) {
     const onnx::NodeProto &node_proto = importProto.node(i);
     const std::string &node_type = node_proto.op_type();
     if (node_type == kConstantValueNode) {
-      if (!BuildValueNodeForFuncGraph(node_proto)) {
+      if (status == RET_OK && !BuildValueNodeForFuncGraph(node_proto)) {
         MS_LOG(ERROR) << "Build ValueNode for funcgraph fail at index: : " << i;
-        return RET_ERROR;
+        status = RET_ERROR;
       }
       continue;
     }
     cnode_ptr = BuildCNodeForFuncGraph(outputFuncGraph, node_proto, quantType);
     if (cnode_ptr == nullptr) {
       MS_LOG(ERROR) << "Build CNode for funcgraph fail at index: : " << i;
-      return RET_NULL_PTR;
+      status = (status == RET_OK ? RET_NULL_PTR : status);
     }
   }
-
+  if (status != RET_OK) {
+    return status;
+  }
   if (!BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr)) {
     MS_LOG(ERROR) << "Build ReturnNode for funcgraph failed";
-    return RET_ERROR;
+    status = RET_ERROR;
   }
-  return RET_OK;
+  return status;
 }
 
 int AnfImporterFromProtobuf::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
-                                             const schema::QuantType &quantType) {
+                                            const schema::QuantType &quantType) {
   if (outputFuncGraph == nullptr) {
     MS_LOG(ERROR) << "fundgraph is nullptr";
     return RET_NULL_PTR;

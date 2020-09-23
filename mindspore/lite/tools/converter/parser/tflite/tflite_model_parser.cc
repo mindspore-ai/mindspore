@@ -98,6 +98,7 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
                                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                     const QuantType &quant_type, schema::MetaGraphT *sub_graph) {
   int idx = 0;
+  int status = RET_OK;
   for (const auto &tflite_op : tflite_subgraph->operators) {
     auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
     auto op_type = GetMSOpType(tflite_op_type);
@@ -114,21 +115,24 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
 
     auto node_parser = TfliteNodeParserRegistry::GetInstance()->GetNodeParser(op_type);
     if (node_parser == nullptr) {
-      MS_LOG(ERROR) << "cannot find node parser, opType: " << op_type.c_str();
-      return RET_NOT_FIND_OP;
+      NoSupportOp::GetInstance()->InsertOp(op_type);
+      status = (status == RET_OK ? RET_NOT_FIND_OP : status);
+      continue;
     }
-    int status = node_parser->Parse(tflite_op, tflite_subgraph->tensors, tflite_model->buffers, op.get(), &tensorsId,
-                           &tensorsFormat, &tensorsIdMap);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "node " << op_type.c_str() << " parser failed";
-      return status;
-    }
+    if (status == RET_OK) {
+      status = node_parser->Parse(tflite_op, tflite_subgraph->tensors, tflite_model->buffers, op.get(), &tensorsId,
+                                  &tensorsFormat, &tensorsIdMap);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "node " << op_type.c_str() << " parser failed";
+        continue;
+      }
 
-    sub_graph->nodes.emplace_back(op.release());
-    opMap[sub_graph->nodes.back()->name] = sub_graph->nodes.back().get();
-    tfliteOpMap[tflite_op.get()] = sub_graph->nodes.back().get();
+      sub_graph->nodes.emplace_back(op.release());
+      opMap[sub_graph->nodes.back()->name] = sub_graph->nodes.back().get();
+      tfliteOpMap[tflite_op.get()] = sub_graph->nodes.back().get();
+    }
   }
-  return RET_OK;
+  return status;
 }
 
 STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
@@ -162,8 +166,8 @@ STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT>
     if (isConst) {
       int status = CopyConstTensorData(tflite_model_buffer, tflite_tensor.get(), tensor.get());
       if (status != RET_OK) {
-          MS_LOG(ERROR) << "obtain const tensor failed";
-          return status;
+        MS_LOG(ERROR) << "obtain const tensor failed";
+        return status;
       }
     }
     // set tensor attr

@@ -152,6 +152,7 @@ int RunConverter(int argc, const char **argv) {
       return RET_INPUT_PARAM_INVALID;
     }
   }
+  NoSupportOp::GetInstance()->PrintOps();
   status = ReturnCode::GetSingleReturnCode()->GetReturnCode();
   if (fb_graph == nullptr) {
     MS_LOG(ERROR) << "Convert model return nullptr";
