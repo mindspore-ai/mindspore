@@ -95,10 +95,11 @@ def _get_ps_context(attr_key):
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
     """
-    if key not in _get_ps_context_func_map:
-        raise ValueError("Get PS context keyword %s is not recognized!" % key)
+    if attr_key not in _get_ps_context_func_map:
+        raise ValueError("Get PS context keyword %s is not recognized!" % attr_key)
     get_func = _get_ps_context_func_map[attr_key]
-    get_func(attr_key)
+    value = get_func()
+    return value
 
 def _reset_ps_context():
     """
