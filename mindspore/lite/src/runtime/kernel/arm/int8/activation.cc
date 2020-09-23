@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/activation.h"
 #include "src/runtime/kernel/arm/int8/relux_int8.h"
 #include "src/runtime/kernel/arm/int8/hswish_int8.h"
 #include "src/runtime/kernel/arm/int8/sigmoid_int8.h"
+#include "src/runtime/kernel/arm/int8/leaky_relu_int8.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
@@ -53,6 +53,9 @@ kernel::LiteKernel *CpuActivationInt8KernelCreator(const std::vector<lite::Tenso
       break;
     case schema::ActivationType_SIGMOID:
       kernel = new (std::nothrow) SigmoidInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
+      break;
+    case schema::ActivationType_LEAKY_RELU:
+      kernel = new (std::nothrow) LeakyReluInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
       break;
     default:
       break;

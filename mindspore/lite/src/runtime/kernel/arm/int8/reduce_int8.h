@@ -82,6 +82,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   std::vector<int32_t *> data_buffers_;
   const int32_t *src_data_ = nullptr;
   int32_t *dst_data_ = nullptr;
+  bool valid_shape_ = false;
 
   Reducer reducer_ = nullptr;
   LastReducer last_reducer_ = nullptr;

@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/int8/leaky_relu_int8.h"
 #include <limits>
+#include "nnacl/fp32/activation.h"
 #include "nnacl/int8/leaky_relu_int8.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
@@ -43,15 +44,9 @@ int LeakyReluInt8Run(void *cdata, int task_id) {
 
 int LeakyReluInt8CPUKernel::Init() {
   LeakyReluBaseCPUKernel::Init();
-  LeakyReluParameter *param = reinterpret_cast<LeakyReluParameter *>(op_parameter_);
-  quant_prelu_parm_.slope_ = reinterpret_cast<float *>(malloc(param->slope_num_ * sizeof(float)));
-  if (quant_prelu_parm_.slope_ == nullptr) {
-    MS_LOG(ERROR) << "malloc data fail!";
-    return RET_ERROR;
-  }
-  for (size_t i = 0; i < param->slope_num_; ++i) {
-    quant_prelu_parm_.slope_[i] = param->slope_[i];
-  }
+  quant_prelu_parm_.op_parameter_ = *op_parameter_;
+  quant_prelu_parm_.slope_ = reinterpret_cast<ActivationParameter *>(op_parameter_)->alpha_;
+
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
   quant_prelu_parm_.quant_arg.in_args_.scale_ = in_quant_args.front().scale;
@@ -82,14 +77,6 @@ int LeakyReluInt8CPUKernel::Init() {
 }
 
 LeakyReluInt8CPUKernel::~LeakyReluInt8CPUKernel() {
-  if (quant_prelu_parm_.slope_ != nullptr) {
-    free(quant_prelu_parm_.slope_);
-    quant_prelu_parm_.slope_ = nullptr;
-  }
-  if (input_quant_ != nullptr) {
-    free(input_quant_);
-    input_quant_ = nullptr;
-  }
   if (quant_prelu_parm_.in_shape_ != nullptr) {
     free(const_cast<int *>(quant_prelu_parm_.in_shape_));
     quant_prelu_parm_.in_shape_ = nullptr;
@@ -105,10 +92,6 @@ int LeakyReluInt8CPUKernel::ReSize() {
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto input_dim = input_tensor->shape().size();
   MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
-  if (input_quant_ != nullptr) {
-    free(input_quant_);
-    input_quant_ = nullptr;
-  }
   quant_prelu_parm_.input_dim_ = input_dim;
   quant_prelu_parm_.element_num = in_tensors_[0]->Size();
   auto input_shape = input_tensor->shape();
@@ -127,11 +110,6 @@ int LeakyReluInt8CPUKernel::ReSize() {
   } else {
     memcpy(reinterpret_cast<void *>(const_cast<int *>(quant_prelu_parm_.out_shape_)), output_shape.data(),
            sizeof(int) * output_dim);
-  }
-  input_quant_ = static_cast<QuantArg *>(malloc(sizeof(QuantArg) * input_dim));
-  if (input_quant_ == nullptr) {
-    MS_LOG(ERROR) << "malloc memory failed";
-    return RET_MEMORY_FAILED;
   }
   return RET_OK;
 }
@@ -154,7 +132,7 @@ int LeakyReluInt8CPUKernel::DoExecute(int task_id) {
   auto out_tensor = out_tensors_.at(kOutputIndex);
   int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->MutableData());
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->MutableData());
-  auto ret = DoLeakReluInt8(input_data, output_data, &quant_prelu_parm_, input_quant_, task_id);
+  auto ret = DoLeakReluInt8(input_data, output_data, &quant_prelu_parm_, task_id);
   if (ret != NNACL_OK) {
     MS_LOG(ERROR) << "DoLeakReluInt8 failed";
     return RET_ERROR;

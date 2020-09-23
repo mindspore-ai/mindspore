@@ -66,8 +66,7 @@ TEST_F(TestPreluInt8, prelu_1) {
 
   LeakyReluQuantArg op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_LeakyReLU;
-  op_param.slope_ = reinterpret_cast<float *>(malloc(sizeof(float)));
-  op_param.slope_[0] = 0.25;
+  op_param.slope_ = 0.25;
 
   lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
