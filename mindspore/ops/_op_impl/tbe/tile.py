@@ -26,8 +26,9 @@ tile_op_info = TBERegOp("Tile") \
     .attr("multiples", "optional", "listInt", "all")\
     .input(0, "x1", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
-    .dtype_format(DataType.None_None, DataType.None_None) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I16_Default, DataType.I16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()
 
 
