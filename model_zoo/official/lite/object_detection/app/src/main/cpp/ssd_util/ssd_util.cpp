@@ -106,7 +106,6 @@ std::string SSDModelUtil::getDecodeResult(float *branchScores, float *branchBoxD
         std::string tmpid_str = std::to_string(outBuff[i][0]);
         result += tmpid_str;
         result += "_";
-        // tmpid_str = std::to_string(outBuff[i][1]);
         MS_PRINT("label_classes i %d, outBuff %d", i, (int) outBuff[i][1]);
         tmpid_str = label_classes[static_cast<int>(outBuff[i][1])];
         // label id

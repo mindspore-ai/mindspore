@@ -33,7 +33,6 @@ trope_ns = CellNamespace('mindspore._extends.parse.trope')
 NO_IMPLEMENT = None         # not implemented
 SYMBOL_UNDEFINE = 0xFF      # Undefined var and function
 
-# ops map: {op.type:(Namespace, symbol)}
 # Some space set aside for readability of code
 parse_object_map = {
     # ast grammar
@@ -75,7 +74,6 @@ parse_object_map = {
     SYMBOL_UNDEFINE: (None, 'undefine'),
 }
 
-# convert map: {obj:(Namespace, symbol)}
 # Escape an object to another object, eg: system function(len,xxx)
 # Some space set aside for readability of code
 convert_object_map = {

@@ -89,9 +89,6 @@ public class ObjectRectView extends View {
         super.onDraw(canvas);
 
         if (mRecognitions == null || mRecognitions.size() == 0) {
-//            mPaint.setColor(Color.TRANSPARENT);
-//            mObjRectF = new RectF(0, 0, 5, 5);
-//            canvas.drawRoundRect(mObjRectF, 0, 0, mPaint);
             return;
         }
         for (int i = 0;i<mRecognitions.size();i++){

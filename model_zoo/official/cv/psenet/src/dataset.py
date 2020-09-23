@@ -200,10 +200,8 @@ class TrainDataset:
         img_path = self.all_img_paths[index]
         gt_path = self.all_gt_paths[index]
 
-        # start0 = time.time()
         img = get_img(img_path)
         bboxes, tags = get_bboxes(img, gt_path)
-        # end0 = time.time()
 
         # multi-scale training
         if self.is_transform:

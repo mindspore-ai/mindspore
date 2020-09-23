@@ -48,7 +48,6 @@ def cal_quantization_params(input_min,
     if (input_min > input_max).all():
         raise ValueError("input_min min should less than input max.")
     if (input_max == input_min).all():
-        # scale = 1.0, zp = 0.0
         return np.ones(input_min.shape), np.zeros(input_min.shape)
 
     if data_type == np.int8:

@@ -39,13 +39,11 @@ class OpInfer:
     @staticmethod
     def default_infer_dtype_func(inputs, attrs):
         """Infer dtype"""
-        # pylint: disable=unused-argument
         return inputs[0].dtype
 
     @staticmethod
     def default_infer_format_func(inputs, attrs):
         """Infer format"""
-        # pylint: disable=unused-argument
         return inputs[0].data_format
 
     infer_shape_func = {

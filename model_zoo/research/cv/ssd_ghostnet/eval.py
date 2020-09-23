@@ -23,7 +23,6 @@ from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.ssd_ghostnet import SSD300, ssd_ghostnet
 from src.dataset import create_ssd_dataset, data_to_mindrecord_byte_image, voc_data_to_mindrecord
-# from src.config_ghostnet import config
 from src.config_ghostnet_13x import config
 from src.coco_eval import metrics
 

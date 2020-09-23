@@ -149,24 +149,6 @@ std::shared_ptr<abstract::AbstractTuple> ParserAttrShape(
   return result;
 }
 
-#if 0
-#define PARSE_ONNXATTR_IN_SCALAR_FORM(type, valuetype)                                                \
-  void ParseAttrInScalar_##type##_##valuetype(const PrimitivePtr &prim, const std::string &attr_name, \
-                                              const onnx::TensorProto &attr_tensor) {                 \
-    MS_EXCEPTION_IF_NULL(prim);                                                                       \
-    std::vector<ValuePtr> attr_value_vec;                                                             \
-    for (int i = 0; i < attr_tensor.type##_data_size(); ++i) {                                        \
-      auto value = static_cast<valuetype>(attr_tensor.type##_data(i));                                \
-      attr_value_vec.push_back(MakeValue<valuetype>(value));                                          \
-    }                                                                                                 \
-    if (attr_value_vec.size() == 1) {                                                                 \
-      prim->AddAttr(attr_name, attr_value_vec[0]);                                                    \
-    } else {                                                                                          \
-      ParserScalarAttrValue(prim, attr_name, attr_value_vec);                                         \
-    }                                                                                                 \
-  }
-#endif
-
 #define PARSE_ONNXATTR_IN_SCALAR_FORM(type, valuetype)                                    \
   ValuePtr ParseAttrInScalar_##type##_##valuetype(const onnx::TensorProto &attr_tensor) { \
     auto value = static_cast<valuetype>(attr_tensor.type##_data(0));                      \
@@ -212,7 +194,6 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node, cons
   tensor::TensorPtr tensor_info =
     std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[tensor_typeproto.elem_type()], shape);
   MS_EXCEPTION_IF_NULL(tensor_info);
-  // tensor_info->MallocData();
   auto tensor_abstract = tensor_info->ToAbstract();
   MS_EXCEPTION_IF_NULL(tensor_abstract);
   node->set_abstract(tensor_abstract);
@@ -367,7 +348,6 @@ bool MSANFModelParser::ObtainValueNodeInTensorForm(const std::string &value_node
     shape.push_back(attr_tensor.dims(i));
   }
   tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
-  // tensor_info->MallocData();
   const std::string &tensor_buf = attr_tensor.raw_data();
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());

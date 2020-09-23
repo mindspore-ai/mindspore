@@ -161,7 +161,6 @@ def create_voc_label(is_training):
     voc_dir = config.voc_dir
     cls_map = {name: i for i, name in enumerate(config.coco_classes)}
     sub_dir = 'train' if is_training else 'eval'
-    #sub_dir = 'train'
     voc_dir = os.path.join(voc_dir, sub_dir)
     if not os.path.isdir(voc_dir):
         raise ValueError(f'Cannot find {sub_dir} dataset path.')

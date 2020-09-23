@@ -41,7 +41,6 @@ matmul_cube_fracz_left_cast_op_info = TBERegOp("CusMatMulCubeFraczLeftCast") \
     .get_op_info()
 
 
-# pylint: disable=locally-disabled,too-many-arguments,too-many-branches, too-many-statements, too-many-locals,
 def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
     """
     Check the given input if legal
@@ -239,7 +238,6 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
     return True
 
 
-# pylint: disable=locally-disabled,too-many-arguments, too-many-locals, too-many-statements
 @op_info_register(matmul_cube_fracz_left_cast_op_info)
 def CusMatMulCubeFraczLeftCast(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False,
                                kernel_name="CusMatMulCubeFraczLeftCast"):

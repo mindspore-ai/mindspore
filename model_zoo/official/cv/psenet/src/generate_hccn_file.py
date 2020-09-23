@@ -39,7 +39,6 @@ def main():
 
     hccn_table = {}
     hccn_table['board_id'] = '0x002f'  # A+K
-    # hccn_table['board_id'] = '0x0000' # A+X
 
     hccn_table['chip_info'] = '910'
     hccn_table['deploy_mode'] = 'lab'

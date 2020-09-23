@@ -317,8 +317,6 @@ class ExportToQuantInferNetwork:
 
     def __init__(self, network, mean, std_dev, *inputs, is_mindir=False):
         network = validator.check_isinstance('network', network, (nn.Cell,))
-        # quantize for inputs: q = f / scale + zero_point
-        # dequantize for outputs: f = (q - zero_point) * scale
         self.input_scale = 1 / std_dev
         self.input_zero_point = round(mean)
         self.data_type = mstype.int8

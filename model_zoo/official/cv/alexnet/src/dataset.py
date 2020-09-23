@@ -139,8 +139,6 @@ def _get_rank_info():
         rank_size = get_group_size()
         rank_id = get_rank()
     else:
-        # rank_size = rank_id = None
-
         rank_size = 1
         rank_id = 0
 

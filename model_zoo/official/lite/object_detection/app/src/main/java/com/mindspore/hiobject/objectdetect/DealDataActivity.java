@@ -55,7 +55,6 @@ public class DealDataActivity extends AppCompatActivity {
             super.handleMessage(msg);
             if (1 == msg.what) {
                 dealData();
-              //  dealSingleData();
             }
         }
     };
@@ -121,14 +120,12 @@ public class DealDataActivity extends AppCompatActivity {
     private void dealSingleData() {
         String fileFullName = IMGPATH + "/error.jpg";
         Bitmap bitmap =  BitmapFactory.decodeResource(getResources(),R.drawable.error).copy(Bitmap.Config.ARGB_8888, true);
-//        Bitmap bitmap = BitmapFactory.decodeFile(fileFullName).copy(Bitmap.Config.ARGB_8888, true);
         if (bitmap != null) {
 
             String result = mTrackingMobile.MindSpore_runnet(bitmap);
             Log.d(TAG,  ">>result" + result);
             StringBuilder sb = new StringBuilder();
             sb.append("error.jpg").append("_").append(result);
-//            writeStringIntoSDcard(IMG_RESULT_SINGLE_PATH, sb.toString());
         }
     }
 

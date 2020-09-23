@@ -266,7 +266,6 @@ ValuePtr GenNewTensorInner(const ValuePtr &value) {
   std::vector<ValuePtr> value_list;
   if (value->isa<tensor::Tensor>()) {
     auto tensor = value->cast<tensor::TensorPtr>();
-    // return std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape());
     auto new_tensor = std::make_shared<tensor::Tensor>(*tensor);
     new_tensor->set_device_address(nullptr);
     return new_tensor;
