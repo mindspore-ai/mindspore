@@ -120,31 +120,6 @@ def weight2int(data, scale, zero_point):
 
     return np.round((data / scale) + zero_point)
 
-
-def scale_zp_from_fake_quant_cell(cell, data_type):
-    r"""
-    Get calculate quantization params for scale and zero point From `FakeQuantWithMinMax`.
-
-    Args:
-        cell (Cell): `mindspore.nn.layer.FakeQuantWithMinMax`
-        data_type (numpy type): Can ben `numpy.int8` or `numpy.uint8`.
-
-    Returns:
-        scale (numpy.ndarray): quantization param.
-        zero point (numpy.ndarray): quantization param.
-    """
-    minq = cell.minq.data.asnumpy()
-    maxq = cell.maxq.data.asnumpy()
-    op = cell.fake_quant_infer
-
-    scale, zp = cal_quantization_params(
-        minq, maxq, data_type,
-        num_bits=op.num_bits,
-        symmetric=op.symmetric,
-        narrow_range=op.narrow_range)
-    return scale, zp
-
-
 def scale_zp_max_min_from_fake_quant_cell(cell, data_type):
     """Get calculate quantization params for scale, zero point, max and min from `FakeQuantWithMinMax`."""
     minq = cell.minq.data.asnumpy()
