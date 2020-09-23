@@ -17,7 +17,8 @@
 #include <float.h>
 #include "nnacl/errorcode.h"
 
-int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
+int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id,
+                   float16_t min, float16_t max) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
@@ -40,6 +41,12 @@ int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPar
   int thread_num = pooling_param->thread_num_;
   // input channel is equal to output channel
 
+#ifdef ENABLE_NEON
+  float16x8_t min_value = vdupq_n_f16(min);
+  float16x8_t max_value = vdupq_n_f16(max);
+  float16x4_t min_value2 = vdup_n_f16(min);
+  float16x4_t max_value2 = vdup_n_f16(max);
+#endif
   for (int batch = 0; batch < output_batch; batch++) {
     int in_batch_offset = batch * in_h * in_w * channel;
     int out_batch_offset = batch * output_h * output_w * channel;
@@ -88,10 +95,16 @@ int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPar
             return NNACL_ERR;
           }
 #ifdef ENABLE_NEON
-          vst1q_f16(output_ptr + out_channel_offset, tmp_avg / vdupq_n_f16(real_count));
+          tmp_avg = vdivq_f16(tmp_avg, vdupq_n_f16(real_count));
+          tmp_avg = vmaxq_f16(tmp_avg, min_value);
+          tmp_avg = vminq_f16(tmp_avg, max_value);
+          vst1q_f16(output_ptr + out_channel_offset, tmp_avg);
 #else
           for (int t = 0; t < C8NUM; ++t) {
-            *(output_ptr + out_channel_offset + t) = tmp_avg[t] / (float16_t)real_count;
+            float16_t tmp_value = tmp_avg[t] / (float16_t)real_count;
+            tmp_value = fmax(tmp_value, min);
+            tmp_value = fmin(tmp_value, max);
+            output_ptr[out_channel_offset + t] = tmp_value;
           }
 #endif
         }  // c8 loop
@@ -126,10 +139,16 @@ int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPar
             return NNACL_ERR;
           }
 #ifdef ENABLE_NEON
-          vst1_f16(output_ptr + out_channel_offset, tmp_avg / vdup_n_f16(real_count));
+          tmp_avg = vdiv_f16(tmp_avg, vdup_n_f16(real_count));
+          tmp_avg = vmax_f16(tmp_avg, min_value2);
+          tmp_avg = vmin_f16(tmp_avg, max_value2);
+          vst1_f16(output_ptr + out_channel_offset, tmp_avg);
 #else
           for (int t = 0; t < C4NUM; ++t) {
-            *(output_ptr + out_channel_offset + t) = tmp_avg[t] / (float16_t)real_count;
+            float16_t tmp_value = tmp_avg[t] / (float16_t)real_count;
+            tmp_value = fmax(tmp_value, min);
+            tmp_value = fmin(tmp_value, max);
+            output_ptr[out_channel_offset + t] = tmp_value;
           }
 #endif
         }  // c4 loop
@@ -150,7 +169,10 @@ int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPar
           if (real_count == 0) {
             return NNACL_ERR;
           }
-          *(output_ptr + out_channel_offset) = tmp_avg / (float16_t)real_count;
+          float16_t tmp_value = tmp_avg / (float16_t)real_count;
+          tmp_value = fmax(tmp_value, min);
+          tmp_value = fmin(tmp_value, max);
+          output_ptr[out_channel_offset] = tmp_value;
         }  // channel_res loop
       }    // real_cal_num loop
     }      // out_plane loop
@@ -158,7 +180,8 @@ int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPar
   return NNACL_OK;
 }
 
-void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
+void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id,
+                    float16_t min, float16_t max) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
@@ -177,6 +200,12 @@ void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
   int c8 = channel / C8NUM;
   int c8_res = channel % C8NUM;
   int c4 = c8_res / C4NUM;
+#ifdef ENABLE_NEON
+  float16x8_t min_value = vdupq_n_f16(min);
+  float16x8_t max_value = vdupq_n_f16(max);
+  float16x4_t min_value2 = vdup_n_f16(min);
+  float16x4_t max_value2 = vdup_n_f16(max);
+#endif
   // input channel is equal to output channel
 
   for (int batch = 0; batch < output_batch; batch++) {
@@ -219,9 +248,13 @@ void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
             }  // win_w loop
           }    // win_h loop
 #ifdef ENABLE_NEON
+          tmp_max = vmaxq_f16(tmp_max, min_value);
+          tmp_max = vminq_f16(tmp_max, max_value);
           vst1q_f16(output_ptr + out_channel_offset, tmp_max);
 #else
           for (int l = 0; l < C8NUM; ++l) {
+            tmp_max[l] = fmax(tmp_max[l], min);
+            tmp_max[l] = fmin(tmp_max[l], max);
             *(output_ptr + out_channel_offset + l) = tmp_max[l];
           }
 #endif
@@ -249,10 +282,14 @@ void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
             }  // win_w loop
           }    // win_h loop
 #ifdef ENABLE_NEON
+          tmp_max = vmax_f16(tmp_max, min_value2);
+          tmp_max = vmin_f16(tmp_max, max_value2);
           vst1_f16(output_ptr + out_channel_offset, tmp_max);
 #else
           for (int l = 0; l < C4NUM; ++l) {
-            *(output_ptr + out_channel_offset + l) = tmp_max[l];
+            tmp_max[l] = fmax(tmp_max[l], min);
+            tmp_max[l] = fmin(tmp_max[l], max);
+            output_ptr[out_channel_offset + l] = tmp_max[l];
           }
 #endif
         }  // c4 loop
@@ -268,7 +305,9 @@ void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
               tmp_max = fmax(tmp_max, *(input_ptr + in_offset));
             }  // win_w loop
           }    // win_h loop
-          *(output_ptr + out_channel_offset) = tmp_max;
+          tmp_max = fmax(tmp_max, min);
+          tmp_max = fmin(tmp_max, max);
+          output_ptr[out_channel_offset] = tmp_max;
         }  // channel_res loop
       }    // real_cal_num loop
     }      // out_plane loop
