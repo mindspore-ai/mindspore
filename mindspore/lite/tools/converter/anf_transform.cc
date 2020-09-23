@@ -58,12 +58,10 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
                                                             schema::ActivationType_RELU));
     pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu6", schema::PrimitiveType_Activation,
                                                             schema::ActivationType_RELU6));
-    pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(true, "conv_tuple_relu",
-                                                                schema::PrimitiveType_Activation,
-                                                                schema::ActivationType_RELU));
-    pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(true, "conv_tuple_relu6",
-                                                                schema::PrimitiveType_Activation,
-                                                                schema::ActivationType_RELU6));
+    pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(
+      true, "conv_tuple_relu", schema::PrimitiveType_Activation, schema::ActivationType_RELU));
+    pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(
+      true, "conv_tuple_relu6", schema::PrimitiveType_Activation, schema::ActivationType_RELU6));
     auto weight_format_hardcode_pass = std::make_shared<opt::WeightFormatHardCodePass>();
     weight_format_hardcode_pass->SetFmkType(config->fmk);
     weight_format_hardcode_pass->SetQuantType(config->quantType);
@@ -113,16 +111,6 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
       MS_LOG(ERROR) << "Quant failed " << status;
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       return nullptr;
-    }
-    if (config->quantType == schema::QuantType_PostTraining) {
-      quant::QuantCast quant_cast;
-      quant_cast.SetInputDataDType(kNumberTypeFloat32);
-      status = quant_cast.Run(new_graph);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "add QuantCast error";
-        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-        return nullptr;
-      }
     }
   }
 

@@ -49,6 +49,7 @@ struct ConfigParam {
   uint32_t batch_count{100};
   std::string method_x{kMethodKL};
   uint32_t thread_num{1};
+  bool bias_correction{false};
 };
 
 class PostTrainingQuantizer : public Quantizer {
@@ -56,7 +57,7 @@ class PostTrainingQuantizer : public Quantizer {
   PostTrainingQuantizer(FuncGraphPtr graph, std::string path, int bit_num, TypeId target_type = kNumberTypeInt8,
                         bool per_channel = true);
 
-  STATUS DoQuantize(FuncGraphPtr funcGraph) override;
+  STATUS DoQuantize(FuncGraphPtr func_graph) override;
 
   size_t bit_num;
   int quant_max{INT8_MAX};
@@ -69,12 +70,24 @@ class PostTrainingQuantizer : public Quantizer {
 
   std::unique_ptr<Calibrator> calibrator_;
 
-  mindspore::lite::LiteSession *session_;
+  mindspore::lite::LiteSession *fp32_session_;
+  mindspore::lite::LiteSession *int8_session_;
+
+  std::string fp32_op_input_name;
+  std::string fp32_op_output_name;
+  std::vector<float> fp32_op_input;
+  std::vector<float> fp32_op_output_ch_mean;
+  std::map<std::string, std::vector<float>> op_bias_diff_map;
+  std::atomic<bool> fp32_op_input_ready{false};
+  std::atomic<bool> fp32_op_output_ch_mean_ready{false};
+
+  const std::string kTypeConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2D);
+  const std::string kTypeDepthwiseConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_DepthwiseConv2D);
 
   STATUS PreProcess();
 
-  STATUS CheckTensorVec(const std::string &node_name,
-                        const std::vector<mindspore::tensor::MSTensor *> &tensor_vec) const;
+  STATUS CheckFp32TensorVec(const std::string &node_name,
+                            const std::vector<mindspore::tensor::MSTensor *> &tensor_vec) const;
 
   STATUS DoInference();
 
@@ -92,6 +105,8 @@ class PostTrainingQuantizer : public Quantizer {
   STATUS DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitive_c, bool perchannel);
 
   STATUS DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveC> primitive_c);
+  STATUS Int8Inference();
+  STATUS BiasCorrection(FuncGraphPtr func_graph);
 };
 
 struct DivergInfo {
@@ -152,6 +167,8 @@ class Calibrator {
   uint32_t GetThreadNum() const { return config_param_.thread_num; }
 
   std::string GetMethodX() const { return config_param_.method_x; }
+
+  bool GetBiasCorrection() const { return config_param_.bias_correction; }
 
   STATUS AddQuantizedOp(CNodePtr node);
 
