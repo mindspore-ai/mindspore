@@ -97,7 +97,7 @@ run_cpu()
 }
 
 
-if [ $# -gt 4 ] || [ $# -lt 3 ]
+if [ $# -ne 3 ]
 then
     echo "Usage:
           Ascend: sh run_eval.sh [PLATFORM] [DATASET_PATH] [PRETRAIN_CKPT]
