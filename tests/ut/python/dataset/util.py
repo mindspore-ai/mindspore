@@ -21,6 +21,7 @@ from enum import Enum
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import PIL
 # import jsbeautifier
 import mindspore.dataset as ds
 from mindspore import log as logger
@@ -60,13 +61,18 @@ def _compare_to_golden(golden_ref_dir, result_dict):
     np.testing.assert_array_equal(test_array, golden_array)
 
 
-def _compare_to_golden_dict(golden_ref_dir, result_dict):
+def _compare_to_golden_dict(golden_ref_dir, result_dict, check_pillow_version=False):
     """
     Compare as dictionaries the test result to the golden result
     """
     golden_array = np.load(golden_ref_dir, allow_pickle=True)['arr_0']
-    np.testing.assert_equal(result_dict, dict(golden_array))
-
+    # Note: The version of PILLOW that is used in Jenkins CI is compared with below
+    if (not check_pillow_version or PIL.__version__ == '7.1.2'):
+        np.testing.assert_equal(result_dict, dict(golden_array))
+    else:
+        # Beware: If error, PILLOW version of golden results may be incompatible with current PILLOW version
+        np.testing.assert_equal(result_dict, dict(golden_array),
+                                'Items are not equal and problem may be due to PILLOW version incompatibility')
 
 def _save_json(filename, parameters, result_dict):
     """
@@ -103,7 +109,7 @@ def save_and_check_dict(data, filename, generate_golden=False):
         # Save as the golden result
         _save_golden_dict(cur_dir, golden_ref_dir, result_dict)
 
-    _compare_to_golden_dict(golden_ref_dir, result_dict)
+    _compare_to_golden_dict(golden_ref_dir, result_dict, False)
 
     if SAVE_JSON:
         # Save result to a json file for inspection
@@ -135,7 +141,7 @@ def save_and_check_md5(data, filename, generate_golden=False):
         # Save as the golden result
         _save_golden_dict(cur_dir, golden_ref_dir, result_dict)
 
-    _compare_to_golden_dict(golden_ref_dir, result_dict)
+    _compare_to_golden_dict(golden_ref_dir, result_dict, True)
 
 
 def save_and_check_tuple(data, parameters, filename, generate_golden=False):
