@@ -29,6 +29,10 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   for (auto dim : input_shape) {
     input_dims_ *= dim;
   }
+  if (input_dims_ * sizeof(float) > INT_MAX) {
+    MS_LOG(EXCEPTION) << "PS mode embedding lookup max embedding table size is " << INT_MAX << ", current shape "
+                      << input_shape << " is too large.";
+  }
 
   if (mindspore::ps::Util::IsRoleOfWorker()) {
     key_ = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
