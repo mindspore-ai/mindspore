@@ -276,7 +276,7 @@ class ModelCheckpoint(Callback):
             return
 
         save_ckpt = self._check_save_ckpt(cb_params, force_to_save)
-        step_num_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
+        step_num_in_epoch = int((cb_params.cur_step_num - 1) % cb_params.batch_num + 1)
 
         if save_ckpt:
             cur_ckpoint_file = self._prefix + "-" + str(cb_params.cur_epoch_num) + "_" \
