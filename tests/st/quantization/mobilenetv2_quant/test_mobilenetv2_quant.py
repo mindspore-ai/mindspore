@@ -60,7 +60,7 @@ dataset_path = "/dataset/workspace/mindspore_dataset/cifar-10-batches-bin/"
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def train_on_ascend():
+def test_mobilenetv2_quant():
     set_seed(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     config = config_ascend_quant
@@ -120,4 +120,4 @@ def train_on_ascend():
 
 
 if __name__ == '__main__':
-    train_on_ascend()
+    test_mobilenetv2_quant()
