@@ -82,6 +82,6 @@ def config_ckpoint(config, lr, step_size):
                 rank = get_rank()
 
             ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(rank) + "/"
-            ckpt_cb = ModelCheckpoint(prefix="mobilenetV2", directory=ckpt_save_dir, config=config_ck)
+            ckpt_cb = ModelCheckpoint(prefix="mobilenetv2", directory=ckpt_save_dir, config=config_ck)
             cb += [ckpt_cb]
     return cb
