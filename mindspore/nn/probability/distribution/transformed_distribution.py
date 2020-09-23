@@ -81,6 +81,8 @@ class TransformedDistribution(Distribution):
         self._bijector = bijector
         self._distribution = distribution
         self._is_linear_transformation = bijector.is_constant_jacobian
+        self.default_parameters = distribution.default_parameters
+        self.parameter_names = distribution.parameter_names
         self.exp = exp_generic
         self.log = log_generic
 

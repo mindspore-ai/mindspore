@@ -17,8 +17,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import cast_to_tensor, check_greater, check_type, check_distribution_name,\
-    set_param_type
+from ._utils.utils import check_greater, check_type, check_distribution_name
 from ._utils.custom_ops import exp_generic, log_generic
 
 
@@ -124,23 +123,16 @@ class Uniform(Distribution):
         Constructor of Uniform distribution.
         """
         param = dict(locals())
+        param['param_dict'] = {'low': low, 'high': high}
         valid_dtype = mstype.float_type
         check_type(dtype, valid_dtype, type(self).__name__)
         super(Uniform, self).__init__(seed, dtype, name, param)
-        self.parameter_type = set_param_type(
-            {'low': low, 'high': high}, self.dtype)
-        if low is not None and high is not None:
-            self._low = cast_to_tensor(low, self.parameter_type)
-            self._high = cast_to_tensor(high, self.parameter_type)
-            check_greater(self.low, self.high, "low value", "high value")
-        else:
-            self._low = low if low is None else cast_to_tensor(
-                low, self.parameter_type)
-            self._high = high if high is None else cast_to_tensor(
-                high, self.parameter_type)
 
-        self.default_parameters = [self.low, self.high]
-        self.parameter_names = ['low', 'high']
+        self._low = self._add_parameter(low, 'low')
+        self._high = self._add_parameter(high, 'high')
+        if self.low is not None and self.high is not None:
+            check_greater(self.low, self.high, 'low', 'high')
+
 
         # ops needed for the class
         self.exp = exp_generic
@@ -156,11 +148,8 @@ class Uniform(Distribution):
         self.select = P.Select()
         self.shape = P.Shape()
         self.sq = P.Square()
-        self.sqrt = P.Sqrt()
         self.zeroslike = P.ZerosLike()
         self.uniform = C.uniform
-
-        self.sametypeshape = P.SameTypeShape()
 
     def extend_repr(self):
         if self.is_scalar_batch:

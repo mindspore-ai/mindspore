@@ -18,8 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import cast_to_tensor, check_greater_zero, check_type, check_distribution_name,\
-    set_param_type
+from ._utils.utils import check_greater_zero, check_type, check_distribution_name
 from ._utils.custom_ops import exp_generic, expm1_generic, log_generic
 
 
@@ -125,23 +124,15 @@ class Normal(Distribution):
         Constructor of Normal.
         """
         param = dict(locals())
+        param['param_dict'] = {'mean': mean, 'sd': sd}
         valid_dtype = mstype.float_type
         check_type(dtype, valid_dtype, type(self).__name__)
         super(Normal, self).__init__(seed, dtype, name, param)
-        self.parameter_type = set_param_type(
-            {'mean': mean, 'sd': sd}, self.dtype)
-        if mean is not None and sd is not None:
-            self._mean_value = cast_to_tensor(mean, self.parameter_type)
-            self._sd_value = cast_to_tensor(sd, self.parameter_type)
-            check_greater_zero(self._sd_value, "Standard deviation")
-        else:
-            self._mean_value = mean if mean is None else cast_to_tensor(
-                mean, self.parameter_type)
-            self._sd_value = sd if sd is None else cast_to_tensor(
-                sd, self.parameter_type)
 
-        self.default_parameters = [self._mean_value, self._sd_value]
-        self.parameter_names = ['mean', 'sd']
+        self._mean_value = self._add_parameter(mean, 'mean')
+        self._sd_value = self._add_parameter(sd, 'sd')
+        if self._sd_value is not None:
+            check_greater_zero(self._sd_value, "Standard deviation")
 
         # ops needed for the class
         self.exp = exp_generic
@@ -151,13 +142,9 @@ class Normal(Distribution):
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
         self.const = P.ScalarToArray()
-        self.fill = P.Fill()
         self.shape = P.Shape()
         self.sq = P.Square()
         self.sqrt = P.Sqrt()
-        self.zeroslike = P.ZerosLike()
-        self.dtypeop = P.DType()
-        self.sametypeshape = P.SameTypeShape()
 
     def extend_repr(self):
         if self.is_scalar_batch:

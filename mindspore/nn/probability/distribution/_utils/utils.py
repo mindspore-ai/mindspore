@@ -19,13 +19,10 @@ from mindspore._checkparam import Validator as validator
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common import dtype as mstype
-from mindspore.ops import _utils as utils
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr, PrimitiveWithInfer, prim_attr_register
 import mindspore.nn as nn
-import mindspore.nn.probability as msp
-
 
 def cast_to_tensor(t, hint_type=mstype.float32):
     """
@@ -46,41 +43,13 @@ def cast_to_tensor(t, hint_type=mstype.float32):
         raise ValueError(f'Input cannot be None in cast_to_tensor')
     if isinstance(t, Parameter):
         return t
-    t_type = hint_type
-    if isinstance(t, Tensor):
-        # convert the type of tensor to dtype
-        return Tensor(t.asnumpy(), dtype=t_type)
-    if isinstance(t, (list, np.ndarray)):
-        return Tensor(t, dtype=t_type)
     if isinstance(t, bool):
         raise TypeError(f'Input cannot be Type Bool')
-    if isinstance(t, (int, float)):
-        return Tensor(t, dtype=t_type)
+    if isinstance(t, (Tensor, np.ndarray, list, int, float)):
+        return Tensor(t, dtype=hint_type)
     invalid_type = type(t)
     raise TypeError(
-        f"Unable to convert input of type {invalid_type} to a Tensor of type {t_type}")
-
-
-def convert_to_batch(t, batch_shape, required_type):
-    """
-    Convert a Tensor to a given batch shape.
-
-    Args:
-        t (int, float, list, numpy.ndarray, Tensor, Parameter): Tensor to be converted.
-        batch_shape (tuple): desired batch shape.
-        dtype (mindspore.dtype): desired dtype.
-
-    Raises:
-        RuntimeError: if the converison cannot be done.
-
-    Returns:
-        Tensor, with shape of batch_shape.
-    """
-    if isinstance(t, Parameter):
-        return t
-    t = cast_to_tensor(t, required_type)
-    return Tensor(np.broadcast_to(t.asnumpy(), batch_shape), dtype=required_type)
-
+        f"Unable to convert input of type {invalid_type} to a Tensor of type {hint_type}")
 
 def cast_type_for_device(dtype):
     """
@@ -98,54 +67,6 @@ def cast_type_for_device(dtype):
         if dtype == mstype.float64:
             return mstype.float32
     return dtype
-
-
-def check_scalar_from_param(params):
-    """
-    Check if params are all scalars.
-
-    Args:
-        params (dict): parameters used to initialize distribution.
-
-    Notes: String parameters are excluded.
-    """
-    for value in params.values():
-        if value is None:
-            continue
-        if isinstance(value, (msp.bijector.Bijector, msp.distribution.Distribution)):
-            return params['distribution'].is_scalar_batch
-        if isinstance(value, Parameter):
-            return False
-        if not isinstance(value, (int, float, str, type(params['dtype']))):
-            return False
-    return True
-
-
-def calc_broadcast_shape_from_param(params):
-    """
-    Calculate the broadcast shape from params.
-
-    Args:
-        params (dict): parameters used to initialize distribution.
-
-    Returns:
-        tuple.
-    """
-    broadcast_shape = []
-    for value in params.values():
-        if isinstance(value, (msp.bijector.Bijector, msp.distribution.Distribution)):
-            return params['distribution'].broadcast_shape
-        if isinstance(value, (str, type(params['dtype']))):
-            continue
-        if value is None:
-            return None
-        if isinstance(value, Parameter):
-            value_t = value.data
-        else:
-            value_t = cast_to_tensor(value, mstype.float32)
-        broadcast_shape = utils.get_broadcast_shape(
-            broadcast_shape, list(value_t.shape), params['name'])
-    return tuple(broadcast_shape)
 
 
 def check_greater_equal_zero(value, name):
@@ -371,6 +292,9 @@ def set_param_type(args, hint_type):
     Raises:
         TypeError: if tensors in args are not the same dtype.
     """
+    int_type = mstype.int_type + mstype.uint_type
+    if hint_type in int_type:
+        hint_type = mstype.float32
     common_dtype = None
     for name, arg in args.items():
         if hasattr(arg, 'dtype'):
@@ -382,7 +306,6 @@ def set_param_type(args, hint_type):
                 common_dtype = cur_dtype
             elif cur_dtype != common_dtype:
                 raise TypeError(f"{name} should have the same dtype as other arguments.")
-    int_type = mstype.int_type + mstype.uint_type
     if common_dtype in int_type or common_dtype == mstype.float64:
         return mstype.float32
     return hint_type if common_dtype is None else common_dtype

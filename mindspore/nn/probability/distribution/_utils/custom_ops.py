@@ -72,3 +72,12 @@ def log1p_generic(x):
     Log1p ops on GPU device or when device_target == GPU.
     """
     return log_generic(x + 1.0)
+
+def broadcast_to(x, target):
+    """
+    Broadcast x to the shape of target.
+    """
+    shape = P.Shape()
+    if shape(x) == shape(target):
+        return x
+    return P.BroadcastTo(shape(target))(x)

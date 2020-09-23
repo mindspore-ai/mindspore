@@ -19,17 +19,18 @@ from .utils import *
 from .custom_ops import *
 
 __all__ = [
-    'convert_to_batch',
     'cast_to_tensor',
     'check_greater',
     'check_greater_equal_zero',
     'check_greater_zero',
-    'calc_broadcast_shape_from_param',
-    'check_scalar_from_param',
     'check_prob',
     'check_type',
     'exp_generic',
     'expm1_generic',
     'log_generic',
     'log1p_generic',
+    'broadcast_to',
+    'set_param_type',
+    'CheckTensor',
+    'CheckTuple',
 ]

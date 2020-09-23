@@ -17,7 +17,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from .distribution import Distribution
-from ._utils.utils import cast_to_tensor, check_prob, check_type, check_distribution_name, set_param_type
+from ._utils.utils import check_prob, check_type, check_distribution_name
 from ._utils.custom_ops import exp_generic, log_generic
 
 
@@ -116,18 +116,14 @@ class Bernoulli(Distribution):
         Constructor of Bernoulli.
         """
         param = dict(locals())
+        param['param_dict'] = {'probs': probs}
         valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
         check_type(dtype, valid_dtype, type(self).__name__)
         super(Bernoulli, self).__init__(seed, dtype, name, param)
-        self.parameter_type = set_param_type({'probs1': probs}, mstype.float32)
-        if probs is not None:
-            self._probs = cast_to_tensor(probs, self.parameter_type)
-            check_prob(self.probs)
-        else:
-            self._probs = probs
 
-        self.default_parameters = [self.probs]
-        self.parameter_names = ['probs1']
+        self._probs = self._add_parameter(probs, 'probs')
+        if self._probs is not None:
+            check_prob(self.probs)
 
         # ops needed for the class
         self.exp = exp_generic
@@ -135,14 +131,11 @@ class Bernoulli(Distribution):
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
         self.const = P.ScalarToArray()
-        self.dtypeop = P.DType()
         self.floor = P.Floor()
         self.fill = P.Fill()
         self.less = P.Less()
         self.shape = P.Shape()
         self.select = P.Select()
-        self.sq = P.Square()
-        self.sqrt = P.Sqrt()
         self.uniform = C.uniform
 
     def extend_repr(self):
@@ -173,9 +166,8 @@ class Bernoulli(Distribution):
             MODE(B) = 1 if probs1 > 0.5 else = 0
         """
         probs1 = self._check_param_type(probs1)
-        prob_type = self.dtypeop(probs1)
-        zeros = self.fill(prob_type, self.shape(probs1), 0.0)
-        ones = self.fill(prob_type, self.shape(probs1), 1.0)
+        zeros = self.fill(self.dtype, self.shape(probs1), 0.0)
+        ones = self.fill(self.dtype, self.shape(probs1), 1.0)
         comp = self.less(0.5, probs1)
         return self.select(comp, ones, zeros)
 
@@ -244,13 +236,13 @@ class Bernoulli(Distribution):
         value = self.cast(value, self.parameter_type)
         value = self.floor(value)
         probs1 = self._check_param_type(probs1)
-        prob_type = self.dtypeop(probs1)
-        value = value * self.fill(prob_type, self.shape(probs1), 1.0)
-        probs0 = 1.0 - probs1 * self.fill(prob_type, self.shape(value), 1.0)
+        broadcast_shape_tensor = value * probs1
+        value = self.broadcast(value, broadcast_shape_tensor)
+        probs0 = self.broadcast((1.0 - probs1), broadcast_shape_tensor)
         comp_zero = self.less(value, 0.0)
         comp_one = self.less(value, 1.0)
-        zeros = self.fill(prob_type, self.shape(value), 0.0)
-        ones = self.fill(prob_type, self.shape(value), 1.0)
+        zeros = self.fill(self.parameter_type, self.shape(broadcast_shape_tensor), 0.0)
+        ones = self.fill(self.parameter_type, self.shape(broadcast_shape_tensor), 1.0)
         less_than_zero = self.select(comp_zero, zeros, probs0)
         return self.select(comp_one, less_than_zero, ones)
 
