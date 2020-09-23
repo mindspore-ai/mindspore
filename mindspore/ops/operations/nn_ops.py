@@ -2701,13 +2701,12 @@ class PReLU(PrimitiveWithInfer):
         >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
         >>> net = Net()
         >>> result = net(input_x, weight)
-        [[[-0.1      1.        ]
-          [ 0.       2.        ]
-          [0.        0.        ]]
-
-         [[-0.2     -0.1      ]
-          [2.       -1.8000001]
-          [0.6       0.6       ]]]
+        [[[-0.1, 1.0],
+          [0.0, 2.0],
+          [0.0, 0.0]],
+         [[-0.2, -0.1],
+          [2.0, -1.8000001],
+          [0.6, 0.6]]]
     """
 
     @prim_attr_register
