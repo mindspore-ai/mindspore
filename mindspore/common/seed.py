@@ -30,12 +30,14 @@ def set_seed(seed):
 
     Note:
         The global seed is used by numpy.random, mindspore.common.Initializer, mindspore.ops.composite.random_ops and
-          mindspore.nn.probability.distribution.
+        mindspore.nn.probability.distribution.
+
         If global seed is not set, these packages will use their own default seed independently, numpy.random and
-          mindspore.common.Initializer will choose a random seed, mindspore.ops.composite.random_ops and
-          mindspore.nn.probability.distribution will use zero.
+        mindspore.common.Initializer will choose a random seed, mindspore.ops.composite.random_ops and
+        mindspore.nn.probability.distribution will use zero.
+
         Seed set by numpy.random.seed() only used by numpy.random, while seed set by this API will also used by
-          numpy.random, so just set all seed by this API is recommended.
+        numpy.random, so just set all seed by this API is recommended.
 
     Args:
         seed (int): The seed to be set.
