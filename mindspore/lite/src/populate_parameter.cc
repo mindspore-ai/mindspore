@@ -170,7 +170,6 @@
 #include "nnacl/fp32/lstm.h"
 #include "nnacl/fp32/embedding_lookup.h"
 #include "nnacl/fp32/elu.h"
-#include "nnacl/leaky_relu_parameter.h"
 #include "mindspore/lite/nnacl/fp32/sparse_to_dense.h"
 #include "nnacl/l2_norm_parameter.h"
 #include "nnacl/detection_post_process_parameter.h"
@@ -251,26 +250,6 @@ OpParameter *PopulatePReLUParameter(const mindspore::lite::PrimitiveC *primitive
   prelu_param->op_parameter_.type_ = primitive->Type();
   prelu_param->channelShared = param->GetChannelShared();
   return reinterpret_cast<OpParameter *>(prelu_param);
-}
-
-OpParameter *PopulateLeakyReluParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = dynamic_cast<const mindspore::lite::LeakyReLU *>(primitive);
-  LeakyReluParameter *leaky_relu_param = reinterpret_cast<LeakyReluParameter *>(malloc(sizeof(LeakyReluParameter)));
-  if (leaky_relu_param == nullptr) {
-    MS_LOG(ERROR) << "malloc LeakyReluParameter failed.";
-    return nullptr;
-  }
-  memset(leaky_relu_param, 0, sizeof(LeakyReluParameter));
-  leaky_relu_param->op_parameter_.type_ = primitive->Type();
-  leaky_relu_param->slope_ = reinterpret_cast<float *>(malloc(sizeof(float)));
-  if (leaky_relu_param->slope_ == nullptr) {
-    MS_LOG(ERROR) << "malloc relu slope fail!";
-    free(leaky_relu_param);
-    return nullptr;
-  }
-  leaky_relu_param->slope_[0] = param->GetNegativeSlope();
-  leaky_relu_param->slope_num_ = 1;
-  return reinterpret_cast<OpParameter *>(leaky_relu_param);
 }
 
 OpParameter *PopulatePoolingParameter(const mindspore::lite::PrimitiveC *primitive) {
@@ -1701,7 +1680,6 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Squeeze] = PopulateSqueezeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Split] = PopulateSplitParameter;
   populate_parameter_funcs_[schema::PrimitiveType_PReLU] = PopulatePReLUParameter;
-  populate_parameter_funcs_[schema::PrimitiveType_LeakyReLU] = PopulateLeakyReluParameter;
   populate_parameter_funcs_[schema::PrimitiveType_PriorBox] = PopulatePriorBoxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_QuantDTypeCast] = PopulateQuantDTypeCastParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Lstm] = PopulateLstmParameter;
