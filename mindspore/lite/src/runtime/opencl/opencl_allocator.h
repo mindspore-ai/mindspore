@@ -63,7 +63,7 @@ class OpenCLAllocator : public Allocator {
   int GetImageSize(void *host_ptr, std::vector<size_t> *img_size);
   void *Prepare(void *ptr) override {
     if (ptr != nullptr) {
-      ptr = MapBuffer(ptr, CL_MAP_WRITE, nullptr, true);
+      ptr = MapBuffer(ptr, CL_MAP_READ | CL_MAP_WRITE, nullptr, true);
     }
     return ptr;
   }
