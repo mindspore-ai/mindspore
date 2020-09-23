@@ -524,6 +524,30 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
       MS_ASSERT(postNode != nullptr);
       auto &postTensor = graphT->allTensors.at(postTensorIdx);
       MS_ASSERT(postTensor != nullptr);
+      // for multioutput,when one outpout as other node input,need add one more node
+      if (IsContain(graphT->outputIndex, postTensorIdx)) {
+        auto toAddTensor = CopyTensorDefT(postTensor);
+        if (toAddTensor == nullptr) {
+          MS_LOG(ERROR) << "Copy TensorT failed";
+          *errorCode = RET_NULL_PTR;
+          return graphT->nodes.end();
+        }
+        graphT->allTensors.emplace_back(std::move(toAddTensor));
+        size_t toAddTensorIdx = graphT->allTensors.size() - 1;
+        auto toAddNode = opDefCopyer(toAddNodeIn.get());
+        toAddNode->name = toAddNodeIn->name + "_" + std::to_string(i++);
+        toAddNode->inputIndex.clear();
+        toAddNode->inputIndex.push_back(postTensorIdx);
+        toAddNode->outputIndex.clear();
+        toAddNode->outputIndex.push_back(toAddTensorIdx);
+        for (auto iter = graphT->outputIndex.begin(); iter != graphT->outputIndex.end(); iter++) {
+          if (*iter == postTensorIdx) {
+            *iter = toAddTensorIdx;
+            break;
+          }
+        }
+        toAddNodes.emplace_back(std::move(toAddNode));
+      }
       auto toAddTensor = CopyTensorDefT(postTensor);
       if (toAddTensor == nullptr) {
         MS_LOG(ERROR) << "Copy TensorT failed";
