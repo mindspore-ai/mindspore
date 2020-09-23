@@ -29,7 +29,7 @@ from mindspore import log as logger
 from src.dataset import create_tinybert_dataset, DataType
 from src.utils import LossCallBack, ModelSaveCkpt, EvalCallBack, BertLearningRate
 from src.assessment_method import Accuracy
-from src.td_config import phase1_cfg, phase2_cfg, td_teacher_net_cfg, td_student_net_cfg
+from src.td_config import phase1_cfg, phase2_cfg, eval_cfg, td_teacher_net_cfg, td_student_net_cfg
 from src.tinybert_for_gd_td import BertEvaluationWithLossScaleCell, BertNetworkWithLoss_td, BertEvaluationCell
 from src.tinybert_model import BertModelCLS
 
@@ -130,7 +130,7 @@ def run_predistill():
         dataset_type = DataType.MINDRECORD
     else:
         raise Exception("dataset format is not supported yet")
-    dataset = create_tinybert_dataset('td', td_teacher_net_cfg.batch_size,
+    dataset = create_tinybert_dataset('td', cfg.batch_size,
                                       device_num, rank, args_opt.do_shuffle,
                                       args_opt.train_data_dir, args_opt.schema_dir,
                                       data_type=dataset_type)
@@ -194,7 +194,7 @@ def run_task_distill(ckpt_file):
 
     rank = 0
     device_num = 1
-    train_dataset = create_tinybert_dataset('td', td_teacher_net_cfg.batch_size,
+    train_dataset = create_tinybert_dataset('td', cfg.batch_size,
                                             device_num, rank, args_opt.do_shuffle,
                                             args_opt.train_data_dir, args_opt.schema_dir)
 
@@ -224,7 +224,7 @@ def run_task_distill(ckpt_file):
 
     optimizer = AdamWeightDecay(group_params, learning_rate=lr_schedule, eps=optimizer_cfg.AdamWeightDecay.eps)
 
-    eval_dataset = create_tinybert_dataset('td', td_teacher_net_cfg.batch_size,
+    eval_dataset = create_tinybert_dataset('td', eval_cfg.batch_size,
                                            device_num, rank, args_opt.do_shuffle,
                                            args_opt.eval_data_dir, args_opt.schema_dir)
     print('td2 eval dataset size: ', eval_dataset.get_dataset_size())
@@ -269,7 +269,7 @@ def do_eval_standalone():
     load_param_into_net(eval_model, new_param_dict)
     eval_model.set_train(False)
 
-    eval_dataset = create_tinybert_dataset('td', batch_size=td_student_net_cfg.batch_size,
+    eval_dataset = create_tinybert_dataset('td', batch_size=eval_cfg.batch_size,
                                            device_num=1, rank=0, do_shuffle="false",
                                            data_dir=args_opt.eval_data_dir,
                                            schema_dir=args_opt.schema_dir)

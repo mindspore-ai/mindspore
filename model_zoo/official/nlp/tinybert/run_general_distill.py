@@ -110,7 +110,7 @@ def run_general_distill():
         dataset_type = DataType.MINDRECORD
     else:
         raise Exception("dataset format is not supported yet")
-    dataset = create_tinybert_dataset('gd', bert_teacher_net_cfg.batch_size, device_num, rank,
+    dataset = create_tinybert_dataset('gd', common_cfg.batch_size, device_num, rank,
                                       args_opt.do_shuffle, args_opt.data_dir, args_opt.schema_dir,
                                       data_type=dataset_type)
     dataset_size = dataset.get_dataset_size()
