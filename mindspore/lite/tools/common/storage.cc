@@ -15,6 +15,8 @@
  */
 
 #include "tools/common/storage.h"
+#include <sys/stat.h>
+#include <unistd.h>
 #include "flatbuffers/flatbuffers.h"
 #include "utils/log_adapter.h"
 #include "src/common/file_utils.h"
@@ -31,7 +33,10 @@ int Storage::Save(const schema::MetaGraphT &graph, const std::string &outputPath
     MS_LOG(ERROR) << "GetBufferPointer nullptr";
     return RET_ERROR;
   }
-
+  if (access((outputPath + ".ms").c_str(), F_OK) == 0) {
+    MS_LOG(WARNING) << "this file " << outputPath << ".ms has been existed";
+    chmod((outputPath + ".ms").c_str(), S_IWUSR);
+  }
   std::ofstream output(outputPath + ".ms", std::ofstream::binary);
   if (!output.is_open()) {
     MS_LOG(ERROR) << "Can not open output file: " << outputPath << ".ms";
@@ -40,6 +45,7 @@ int Storage::Save(const schema::MetaGraphT &graph, const std::string &outputPath
 
   output.write((const char *)content, size);
   output.close();
+  chmod((outputPath + ".ms").c_str(), S_IRUSR);
   return RET_OK;
 }
 

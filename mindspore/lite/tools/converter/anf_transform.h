@@ -23,7 +23,7 @@
 #include "tools/converter/converter_flags.h"
 #include "ir/anf.h"
 #include "tools/converter/quantizer/quantizer.h"
-#include "tools/converter/return_code.h"
+#include "tools/converter/converter_context.h"
 
 namespace mindspore {
 namespace lite {

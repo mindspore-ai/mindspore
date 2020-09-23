@@ -26,7 +26,7 @@
 #include "backend/optimizer/common/pattern_engine.h"
 #include "schema/inner/model_generated.h"
 #include "src/param_value_lite.h"
-#include "tools/converter/return_code.h"
+#include "tools/converter/converter_context.h"
 
 using PrimitiveCPtr = std::shared_ptr<mindspore::lite::PrimitiveC>;
 using mindspore::lite::RET_ERROR;
@@ -73,7 +73,7 @@ bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
 size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
 
-ParamValueLitePtr  GetLiteParamValue(const AnfNodePtr &node);
+ParamValueLitePtr GetLiteParamValue(const AnfNodePtr &node);
 
 enum kTransFilterType {
   kKCHW2HWCK,  // 0
@@ -105,11 +105,11 @@ STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, 
 STATUS SetFilterDim(const ParamValueLitePtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
                     int32_t filterH, int32_t filterW);
 
-template<typename T>
+template <typename T>
 static STATUS TransFilterData(const ParamValueLitePtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
                               int32_t filterH, int32_t filterW);
 
-template<typename T>
+template <typename T>
 static lite::STATUS TransFilterFormat(const ParamValueLitePtr &tensor, kTransFilterType type);
 
 STATUS TransFilterFormat(const ParamValueLitePtr &tensor, schema::Format dst_format);

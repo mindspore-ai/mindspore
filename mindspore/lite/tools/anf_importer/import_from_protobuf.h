@@ -24,6 +24,7 @@
 
 #include "include/errorcode.h"
 #include "tools/converter/parser/onnx/onnx.pb.h"
+#include "tools/converter/converter_context.h"
 #include "tools/anf_importer/anf_importer.h"
 #include "abstract/abstract_value.h"
 
@@ -47,10 +48,10 @@ class AnfImporterFromProtobuf : public AnfImporter {
   int AddReturnCNode() override { return RET_ERROR; };
   int ParseModelConfigureInfo(const onnx::ModelProto &model_proto);
   int BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
-                      const schema::QuantType &quantType);
+                     const schema::QuantType &quantType);
   int ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto);
   int ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
-                           const schema::QuantType &quantType);
+                          const schema::QuantType &quantType);
   int BuildParameterForFuncGraph(const ParameterPtr &node, const onnx::ValueInfoProto &value_proto);
   CNodePtr BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::NodeProto &node_proto,
                                   const schema::QuantType &quantType);

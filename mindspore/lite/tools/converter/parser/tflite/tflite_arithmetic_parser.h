@@ -157,6 +157,11 @@ class TfliteFloorParser : public TfliteSingleInputOpParser {
   TfliteFloorParser() : TfliteSingleInputOpParser() {}
 };
 
+class TfliteNegParser : public TfliteSingleInputOpParser {
+ public:
+  TfliteNegParser() : TfliteSingleInputOpParser() {}
+};
+
 class TfliteCompareOpParser : public TfliteNodeParser {
  public:
   TfliteCompareOpParser() : TfliteNodeParser("node_name") {}
