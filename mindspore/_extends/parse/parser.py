@@ -339,7 +339,9 @@ def get_object_description(obj, fname, fline):
         _, cls_fline = inspect.getsourcelines(obj_cls)
         class_loc = f'{cls_fname}:{cls_fline}'
         return f"bound method '{obj.__name__}' at {fname}:{fline} of <{class_name} at {class_loc} object>"
-    if isinstance(obj, (types.FunctionType, ast.FunctionDef)):
+    if isinstance(obj, types.FunctionType):
+        return f"function '{obj.__name__}' at {fname}:{fline}"
+    if isinstance(obj, ast.FunctionDef):
         return f"function '{obj.name}' at {fname}:{fline}"
     return str(obj)
 
