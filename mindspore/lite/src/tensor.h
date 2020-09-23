@@ -184,6 +184,7 @@ class Tensor : public mindspore::tensor::MSTensor {
         MS_LOG(WARNING) << "Malloc data failed";
       }
     }
+    Prepare();
     return this->data_;
   }
 

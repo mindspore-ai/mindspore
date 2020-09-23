@@ -129,7 +129,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
       MS_LOG(ERROR) << "SubGraphOpenCLKernel create op failed!";
       delete new_tensor;
       new_tensor = nullptr;
-      delete parameter;
+      free(parameter);
       parameter = nullptr;
       return RET_ERROR;
     }
