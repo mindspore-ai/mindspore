@@ -39,7 +39,7 @@ IF "%1%" == "lite" (
         call :run_cmake
         IF errorlevel 1 (
             echo "cmake fail."
-            call :run_fail
+            goto run_fail
         )
     ) ELSE (
         call :gene_protobuf
@@ -54,7 +54,7 @@ IF "%1%" == "lite" (
     )
     IF errorlevel 1 (
         echo "build fail."
-        call :run_fail
+        goto run_fail
     ) ELSE (
         cd %BASEPATH%/output
         rd /s /q _CPack_Packages
@@ -64,7 +64,7 @@ IF "%1%" == "lite" (
     -G "CodeBlocks - MinGW Makefiles" ../..
     IF NOT %errorlevel% == 0 (
         echo "cmake fail."
-        call :run_fail
+        goto run_fail
     )
 
     IF "%1%" == "" (
@@ -74,7 +74,7 @@ IF "%1%" == "lite" (
     )
     IF NOT %errorlevel% == 0 (
         echo "build fail."
-        call :run_fail
+        goto run_fail
     )
 )
 
@@ -83,10 +83,9 @@ cd %BASEPATH%
 goto run_eof
 
 :run_cmake
-    cd %BASEPATH%
-    for /F %%i in ('find "const int ms_version_major =" mindspore\lite\include\version.h ^| tr -dc "[0-9]"') do ( set VERSION_MAJOR=%%i)
-    for /F %%i in ('find "const int ms_version_minor =" mindspore\lite\include\version.h ^| tr -dc "[0-9]"') do ( set VERSION_MINOR=%%i)
-    for /F %%i in ('find "const int ms_version_revision =" mindspore\lite\include\version.h ^| tr -dc "[0-9]"') do ( set VERSION_REVISION=%%i)
+    set VERSION_MAJOR=1
+    set VERSION_MINOR=0
+    set VERSION_REVISION=0
     echo "======Start building MindSpore Lite %VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%======"
     cd %BUILD_PATH%/mindspore
     cmake -DBUILD_DEVICE=on -DBUILD_CONVERTER=on -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=off ^
@@ -129,6 +128,5 @@ GOTO:EOF
 :run_fail
     cd %BASEPATH%
     set errorlevel=1
-    EXIT
 
 :run_eof
