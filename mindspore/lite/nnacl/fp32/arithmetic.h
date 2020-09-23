@@ -117,6 +117,11 @@ int BroadcastGreater(float *input0, float *input1, float *tile_input0, float *ti
 int ElementGreaterEqual(float *input0, float *input1, float *output, int element_size);
 int BroadcastGreaterEqual(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                           int element_size, ArithmeticParameter *param);
+
+#ifdef ENABLE_NNACL_INFER_SHAPE
+int ArithmeticInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_format, int *out_format,
+                         int *in_datatype, int *out_datatype, OpParameter *param);
+#endif
 #ifdef __cplusplus
 }
 #endif

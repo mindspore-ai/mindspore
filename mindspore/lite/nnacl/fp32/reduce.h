@@ -36,6 +36,11 @@ int IntReduceProd(const int outer_size, const int inner_size, const int axis_siz
                   const int tid, const int thread_num);
 int ReduceSumSquare(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
                     float *dst_data, const int tid, const int thread_num);
+
+#ifdef ENABLE_NNACL_INFER_SHAPE
+int ReduceInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_format, int *out_format,
+                     int *in_datatype, int *out_datatype, OpParameter *param);
+#endif
 #ifdef __cplusplus
 }
 #endif

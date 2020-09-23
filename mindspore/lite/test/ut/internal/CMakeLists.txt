@@ -4,6 +4,7 @@ set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 
 include_directories(${TOP_DIR})
 include_directories(${TEST_DIR})
+add_compile_definitions(ENABLE_NNACL_INFER_SHAPE)
 
 string(REPLACE " -Werror " " " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")

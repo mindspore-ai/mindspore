@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "internal/src/kernel/fp32/bias_add.h"
+#include "internal/src/kernel/common/common_infershape.h"
 #include "internal/include/model.h"
 #include "internal/include/ms_tensor.h"
 #include "internal/include/lite_utils.h"
@@ -23,18 +24,7 @@
 #include "nnacl/fp32/arithmetic.h"
 
 int DoBiasAddInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param) {
-  if (in_tensors.size() != 2 || in_tensors[0]->data_ == NULL || in_tensors[1]->data_ == NULL) {
-    LITE_LOG_ERROR("input tensors num not correct or input data is NULL!");
-    return RET_INPUT_TENSOR_ERROR;
-  }
-  if (out_tensors.size() != 1) {
-    LITE_LOG_ERROR("output tensors num not correct!");
-    return RET_ERROR;
-  }
-  out_tensors[0]->shape_ = in_tensors[0]->shape_;
-  out_tensors[0]->data_type_ = in_tensors[0]->data_type_;
-  out_tensors[0]->format_ = in_tensors[0]->format_;
-  return RET_OK;
+  return DoCommonInferShape(in_tensors, out_tensors);
 }
 
 int DoBiasAdd(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, Node *node,

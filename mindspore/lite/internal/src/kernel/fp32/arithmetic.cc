@@ -106,60 +106,21 @@ int DoArithmeticInferShape(const TensorPtrVector &in_tensors, const TensorPtrVec
     LITE_LOG_ERROR("output tensors num not correct!");
     return RET_ERROR;
   }
-  ShapeVector in_shape0 = in_tensors[0]->shape_;
-  ShapeVector in_shape1 = in_tensors[1]->shape_;
-  int ndim0 = in_shape0.size();
-  int ndim1 = in_shape1.size();
-  ArithmeticParameter *arithmeticParameter = (ArithmeticParameter *)param;
-  if (ndim0 < ndim1) {
-    arithmeticParameter->ndim_ = ndim1;
-    int fill_dim_num = ndim1 - ndim0;
-    int j = 0;
-    for (int i = 0; i < ndim1; ++i) {
-      if (i < fill_dim_num) {
-        arithmeticParameter->in_shape0_[i] = 1;
-      } else {
-        arithmeticParameter->in_shape0_[i] = in_shape0[j++];
-      }
-      arithmeticParameter->in_shape1_[i] = in_shape1[i];
-    }
-  } else if (ndim0 > ndim1) {
-    arithmeticParameter->ndim_ = ndim0;
-    int fill_dim_num = ndim0 - ndim1;
-    int j = 0;
-    for (int i = 0; i < ndim0; ++i) {
-      if (i < fill_dim_num) {
-        arithmeticParameter->in_shape1_[i] = 1;
-      } else {
-        arithmeticParameter->in_shape1_[i] = in_shape1[j++];
-      }
-      arithmeticParameter->in_shape0_[i] = in_shape0[i];
-    }
-  } else {
-    arithmeticParameter->ndim_ = ndim0;
-    for (int i = 0; i < ndim0; ++i) {
-      arithmeticParameter->in_shape0_[i] = in_shape0[i];
-      arithmeticParameter->in_shape1_[i] = in_shape1[i];
-    }
+
+  int in_datatype[2] = {in_tensors[0]->data_type_, in_tensors[1]->data_type_};
+  int in_format[2] = {static_cast<int>(in_tensors[0]->format_), static_cast<int>(in_tensors[1]->format_)};
+  size_t dim_size[2] = {in_tensors[0]->shape_.size(), in_tensors[1]->shape_.size()};
+  int *in_shape[2] = {in_tensors[0]->shape_.data(), in_tensors[1]->shape_.data()};
+  int out_format;
+  int out_datatype;
+  int ret = ArithmeticInferShape(in_shape, dim_size, out_tensors[0]->shape_.data(), in_format, &out_format, in_datatype,
+                                 &out_datatype, param);
+  if (ret != NNACL_OK) {
+    LITE_ERROR_LOG("arithmetic infershape failed! ret: %d", ret);
+    return RET_ERROR;
   }
-  ShapeVector out_shape;
-  for (size_t i = 0; i < arithmeticParameter->ndim_; ++i) {
-    if (arithmeticParameter->in_shape0_[i] != arithmeticParameter->in_shape1_[i]) {
-      if (arithmeticParameter->in_shape0_[i] == 1) {
-        out_shape.push_back(arithmeticParameter->in_shape1_[i]);
-      } else if (arithmeticParameter->in_shape1_[i] == 1) {
-        out_shape.push_back(arithmeticParameter->in_shape0_[i]);
-      } else {
-        LITE_LOG_ERROR("shapes of input tensors can not be broadcasted!");
-        return RET_INPUT_TENSOR_ERROR;
-      }
-    } else {
-      out_shape.push_back(arithmeticParameter->in_shape0_[i]);
-    }
-  }
-  out_tensors[0]->shape_ = out_shape;
-  out_tensors[0]->data_type_ = in_tensors[0]->data_type_;
-  out_tensors[0]->format_ = in_tensors[0]->format_;
+  out_tensors[0]->format_ = static_cast<Format>(out_format);
+  out_tensors[0]->data_type_ = static_cast<TypeId>(out_datatype);
   return RET_OK;
 }
 
