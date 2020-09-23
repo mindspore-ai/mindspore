@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/leaky_relu_parameter.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 using mindspore::lite::InnerContext;

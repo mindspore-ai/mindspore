@@ -252,7 +252,7 @@ typedef struct PowerQuantArg {
 typedef struct LeakyReluQuantArg {
   OpParameter op_parameter_;
   PreluQuantArg quant_arg;
-  float *slope_;
+  float slope_;
   int64_t axis_;
   const int *in_shape_;
   const int *out_shape_;
