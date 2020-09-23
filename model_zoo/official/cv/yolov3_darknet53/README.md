@@ -69,7 +69,7 @@ After installing MindSpore via the official website, you can start training and 
 
 ```
 # The darknet53_backbone.ckpt in the follow script is got from darknet53 training like paper. 
-# The parameter of pretrained_backbone is not necessary.
+# pretrained_backbone can use src/convert_weight.py, convert darknet53.conv.74 to mindspore ckpt, darknet53.conv.74 can get from `https://pjreddie.com/media/files/darknet53.conv.74` .
 # The parameter of training_shape define image shape for network, default is "".
 # It means use 10 kinds of shape as input shape, or it can be set some kind of shape.
 # run training example(1p) by python command.
