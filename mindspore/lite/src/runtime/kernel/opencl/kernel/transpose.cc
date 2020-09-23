@@ -35,20 +35,27 @@ int TransposeOpenCLKernel::Init() {
   std::string kernel_name = "transpose";
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   auto param = reinterpret_cast<TransposeParameter *>(op_parameter_);
+  if (in_tensors_[0]->shape().size() != 4 || in_tensors_[0]->shape()[0] > 1) {
+    MS_LOG(ERROR) << "Transpose only support 4d tensor and n = 1 yet.";
+    return RET_ERROR;
+  }
   if (param->num_axes_ == 4 && param->perm_[0] == 0 && param->perm_[1] == 3 && param->perm_[2] == 1 &&
       param->perm_[3] == 2) {
-    type = TransposeType::NHWC2NCHW;
+    kernel_name += "_0312";
+    type = TransposeType::AXIS0312;
+  } else if (param->num_axes_ == 4 && param->perm_[0] == 0 && param->perm_[1] == 2 && param->perm_[2] == 3 &&
+             param->perm_[3] == 1) {
+    kernel_name += "_0231";
+    type = TransposeType::AXIS0231;
   } else {
     MS_LOG(ERROR) << "unsupported transpose axes.";
     return RET_ERROR;
   }
-  out_mem_type_ = OpenCLMemType::BUF;
-  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
-  if (out_mem_type_ == OpenCLMemType::BUF) {
-    kernel_name += "_BUF";
-  } else {
-    kernel_name += "_IMG";
+  if (in_tensors_[0]->shape()[2] * UP_DIV(in_tensors_[0]->shape()[3], C4NUM) > MAX_IMAGE2D_SIZE) {
+    // just for input
+    kernel_name += "_oversize";
   }
+  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
@@ -58,18 +65,10 @@ int TransposeOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  if ((in_tensors_[0]->shape()[1] * in_tensors_[0]->shape()[2]) % 4 != 0) {
-    MS_LOG(ERROR) << "input H * W % 4 != 0 not support!";
-    return RET_ERROR;
-  }
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
   in_tensors_[0]->SetFormat(op_format_);
   out_tensors_[0]->SetFormat(op_format_);
-  if (out_mem_type_ == OpenCLMemType::BUF) {
-    out_ori_format_ = schema::Format::Format_NCHW;
-    out_tensors_[0]->SetFormat(schema::Format::Format_NCHW);
-  }
 
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
@@ -78,20 +77,14 @@ int TransposeOpenCLKernel::Init() {
 int TransposeOpenCLKernel::ReSize() { return RET_OK; }
 
 int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t im_dst_x, im_dst_y;
-  int n = out_tensors_[0]->shape()[0];
-  int h = out_tensors_[0]->shape()[1];
-  int w = out_tensors_[0]->shape()[2];
-  int c = out_tensors_[0]->shape()[3];
-  if (op_format_ == schema::Format::Format_NHWC4) {
-    im_dst_x = w * UP_DIV(c, C4NUM);
-    im_dst_y = n * h;
-  } else if (op_format_ == schema::Format::Format_NC4HW4) {
-    im_dst_x = w;
-    im_dst_y = n * UP_DIV(c, C4NUM) * h;
-  } else {
-    MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
-    return RET_ERROR;
+  size_t im_dst_x = 1, im_dst_y = 1;
+  auto out_shape = out_tensors_[0]->shape();
+  if (op_format_ == schema::Format_NHWC4) {
+    im_dst_x = out_shape[2] * UP_DIV(out_shape[3], C4NUM);  // W * C4
+    im_dst_y = out_shape[0] * out_shape[1];                 // N * H
+  } else if (op_format_ == schema::Format_NC4HW4) {
+    im_dst_x = out_shape[2];                                               // W
+    im_dst_y = out_shape[0] * UP_DIV(out_shape[3], C4NUM) * out_shape[1];  // N * C4 * H
   }
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
@@ -104,30 +97,26 @@ int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_siz
 }
 
 int TransposeOpenCLKernel::Run() {
-  // notice: input image2d size = {c/4, h * w}
   MS_LOG(DEBUG) << this->name() << " Running!";
-  std::vector<int> shapex = in_tensors_[0]->shape();
-  int h = shapex[1];
-  int w = shapex[2];
-  int c = shapex[3];
-  int c4 = UP_DIV(c, 4);
-  int hw4 = UP_DIV(h * w, 4);
-  std::vector<size_t> local = {16, 16};
-  std::vector<size_t> global = {UP_ROUND(hw4, local[0]), UP_ROUND(c4, local[1])};
+  std::vector<int> shapex = out_tensors_[0]->shape();
+  size_t n = shapex[0];  // n=1
+  size_t h = shapex[1];
+  size_t w = shapex[2];
+  size_t c = shapex[3];
+  size_t c4 = UP_DIV(c, 4);
+  std::vector<size_t> local = {};
+  std::vector<size_t> global;
+  if (type == TransposeType::AXIS0312) {
+    global = {UP_DIV(h, C4NUM), w, c4};
+  } else if (type == TransposeType::AXIS0231) {
+    global = {h, UP_DIV(w, C4NUM), c4};
+  }
 
-  cl_int2 HW = {h * w, hw4};
-  cl_int2 C = {c, c4};
+  cl_int4 shape = {static_cast<int>(n), static_cast<int>(h), static_cast<int>(w), static_cast<int>(c)};
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  if (out_mem_type_ == OpenCLMemType::BUF) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
-  } else {
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  }
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, HW);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, C);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, w);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, h);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, shape);
   ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }

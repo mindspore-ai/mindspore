@@ -55,11 +55,8 @@ void InitAvgPoolingParam(PoolingParameter *param) {
 void RunTestCaseAvgPooling(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  size_t dtype_size = sizeof(float);
-  if (enable_fp16) {
-    ocl_runtime->SetFp16Enable(true);
-    dtype_size = sizeof(float16_t);
-  }
+  size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
+  ocl_runtime->SetFp16Enable(enable_fp16);
   auto allocator = ocl_runtime->GetAllocator();
   int n = shape[0];
   int h = shape[1];
@@ -67,8 +64,7 @@ void RunTestCaseAvgPooling(const std::vector<int> &shape, void *input_data, void
   int c = shape[3];
   int oh = shape[4];
   int ow = shape[5];
-  auto param_ptr = std::make_unique<PoolingParameter>();
-  auto param = param_ptr.get();
+  auto param = static_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "param create error.";
     return;
@@ -94,7 +90,7 @@ void RunTestCaseAvgPooling(const std::vector<int> &shape, void *input_data, void
   std::vector<lite::Tensor *> outputs{tensor_out};
   auto arith_kernel_ptr =
     std::make_unique<kernel::PoolingOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  auto arith_kernel = arith_kernel_ptr.get();
+  auto arith_kernel = arith_kernel_ptr.release();
   if (arith_kernel == nullptr) {
     MS_LOG(ERROR) << "arith_kernel create error.";
     return;
@@ -115,13 +111,17 @@ void RunTestCaseAvgPooling(const std::vector<int> &shape, void *input_data, void
   pGraph->Run();
 
   if (enable_fp16) {
-    CompareOutput(outputs[0]->data_c(), output_data, outputs[0]->ElementsNum(), static_cast<float16_t>(1e-3),
-                  2e-2);
+    CompareOutput(outputs[0]->data_c(), output_data, outputs[0]->ElementsNum(), static_cast<float16_t>(1e-3), 2e-2);
   } else {
     CompareOutput(outputs[0]->data_c(), output_data, outputs[0]->ElementsNum(), static_cast<float>(1e-5));
   }
-  inputs[0]->SetData(nullptr);
-  outputs[0]->SetData(nullptr);
+
+  for (auto t : inputs) {
+    t->SetData(nullptr);
+  }
+  for (auto t : outputs) {
+    t->SetData(nullptr);
+  }
 
   MS_LOG(INFO) << "Test AvgPool2d passed";
   lite::opencl::OpenCLRuntime::DeleteInstance();

@@ -33,11 +33,8 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
                        bool enable_fp16, int dims) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  size_t dtype_size = sizeof(float);
-  if (enable_fp16) {
-    ocl_runtime->SetFp16Enable(true);
-    dtype_size = sizeof(int16_t);
-  }
+  size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
+  ocl_runtime->SetFp16Enable(enable_fp16);
   auto allocator = ocl_runtime->GetAllocator();
   std::vector<int> input_shape, output_shape, weight_shape;
   if (dims == 2) {
@@ -56,8 +53,7 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
     output_shape = {a, b, m, co};
     weight_shape = {a, b, co, ci};
   }
-  auto param_ptr = std::make_unique<MatMulParameter>();
-  auto param = param_ptr.get();
+  auto param = static_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "param_ptr create error.";
     return;
@@ -93,7 +89,7 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
   std::vector<lite::Tensor *> outputs{tensor_out};
   auto op_kernel_ptr =
     std::make_unique<kernel::MatMulOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs, false);
-  auto op_kernel = op_kernel_ptr.get();
+  auto op_kernel = op_kernel_ptr.release();
   if (op_kernel == nullptr) {
     MS_LOG(ERROR) << "op_kernel create error.";
     return;
@@ -114,64 +110,22 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
   memcpy(inputs[0]->data_c(), input_data, tensor_x->ElementsNum() * dtype_size);
   pGraph->Run();
   if (enable_fp16) {
-    CompareOutput(outputs[0]->data_c(), output_data, tensor_out->ElementsNum(), static_cast<float16_t>(1e-3),
-                  2e-2);
+    CompareOutput(outputs[0]->data_c(), output_data, tensor_out->ElementsNum(), static_cast<float16_t>(1e-3), 2e-2);
   } else {
     CompareOutput(outputs[0]->data_c(), output_data, tensor_out->ElementsNum(), static_cast<float>(1e-5));
   }
 
-  tensor_x->SetData(nullptr);
-  tensor_out->SetData(nullptr);
-  MS_LOG(INFO) << "TestMatMulFp32 passed";
+  for (auto t : inputs) {
+    t->SetData(nullptr);
+  }
+  for (auto t : outputs) {
+    t->SetData(nullptr);
+  }
+  MS_LOG(INFO) << "TestMatMul passed";
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
-void RunTestCaseMatMul(const std::vector<int> shape, const std::vector<std::string> file_path, bool enable_fp16) {
-  size_t input_size;
-  std::string input_path = file_path[0];
-  auto input_data = mindspore::lite::ReadFile(input_path.c_str(), &input_size);
-  if (input_data == nullptr) {
-    MS_LOG(ERROR) << "input_data load error.";
-    return;
-  }
-  size_t weight_size;
-  std::string weight_path = file_path[1];
-  auto weight_data = mindspore::lite::ReadFile(weight_path.c_str(), &weight_size);
-  if (weight_data == nullptr) {
-    MS_LOG(ERROR) << "weight_data load error.";
-    return;
-  }
-  size_t output_size;
-  std::string output_path = file_path[2];
-  auto output_data = mindspore::lite::ReadFile(output_path.c_str(), &output_size);
-  if (output_data == nullptr) {
-    MS_LOG(ERROR) << "output_data load error.";
-    return;
-  }
-  RunTestCaseMatMul(shape, input_data, weight_data, output_data, enable_fp16, 2);
-}
-
-TEST_F(TestMatMulOpenCL, MatMulFp32) {
-  int ci = 1280;
-  int co = 1001;
-  std::vector<int> shape = {ci, co};
-  std::vector<std::string> file_path = {"./test_data/matmul/matmul_fp32_input.bin",
-                                        "./test_data/matmul/matmul_fp32_weight.bin",
-                                        "./test_data/matmul/matmul_fp32_output.bin"};
-  RunTestCaseMatMul(shape, file_path, false);
-}
-
-TEST_F(TestMatMulOpenCL, MatMulFp16) {
-  int ci = 1280;
-  int co = 1001;
-  std::vector<int> shape = {ci, co};
-  std::vector<std::string> file_path = {"./test_data/matmul/matmul_fp16_input.bin",
-                                        "./test_data/matmul/matmul_fp16_weight.bin",
-                                        "./test_data/matmul/matmul_fp16_output.bin"};
-  RunTestCaseMatMul(shape, file_path, true);
-}
-
-TEST_F(TestMatMulOpenCL, MatMulFp32_2) {
+TEST_F(TestMatMulOpenCL, MatMul2DFp32) {
   int ci = 5;
   int co = 3;
   std::vector<int> shape = {ci, co};
@@ -182,7 +136,7 @@ TEST_F(TestMatMulOpenCL, MatMulFp32_2) {
   RunTestCaseMatMul(shape, input_data.data(), weight_data.data(), output_data.data(), false, 2);
 }
 
-TEST_F(TestMatMulOpenCL, MatMulFp16_2) {
+TEST_F(TestMatMulOpenCL, MatMul2DFp16) {
   int ci = 5;
   int co = 3;
   std::vector<int> shape = {ci, co};
@@ -193,7 +147,7 @@ TEST_F(TestMatMulOpenCL, MatMulFp16_2) {
   RunTestCaseMatMul(shape, input_data.data(), weight_data.data(), output_data.data(), true, 2);
 }
 
-TEST_F(TestMatMulOpenCL, MatMulFp32_4D) {
+TEST_F(TestMatMulOpenCL, MatMul4DFp32) {
   int a = 1;
   int b = 2;
   int c = 2;
@@ -210,7 +164,7 @@ TEST_F(TestMatMulOpenCL, MatMulFp32_4D) {
   RunTestCaseMatMul(shape, input_data.data(), weight_data.data(), output_data.data(), false, 4);
 }
 
-TEST_F(TestMatMulOpenCL, MatMulFp16_4D) {
+TEST_F(TestMatMulOpenCL, MatMul4DFp16) {
   int a = 1;
   int b = 2;
   int c = 2;
