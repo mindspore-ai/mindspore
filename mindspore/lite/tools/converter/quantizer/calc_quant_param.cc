@@ -167,7 +167,11 @@ int LinearCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
       auto &outTensor = graph->allTensors.at(node.outputIndex.at(i));
       MS_ASSERT(outTensor != nullptr);
       auto outQuantParam = GetTensorQuantParam(outTensor);
-      if (outQuantParam == nullptr || outQuantParam->inited) {
+      if (outQuantParam == nullptr) {
+        outTensor->quantParams.emplace_back(std::move(inQuantParam));
+        continue;
+      }
+      if (outQuantParam->inited) {
         continue;
       }
       outTensor->quantParams.front() = std::move(inQuantParam);
@@ -232,7 +236,7 @@ class CalcConcat : public QuantParamCalcer {
         MS_LOG(WARNING) << "in aware quantization run CalQuantizationParams failed!";
         return RET_ERROR;
       }
-      outTensor->quantParams.front() = std::move(outQuantParam);
+      outTensor->quantParams.emplace_back(std::move(outQuantParam));
       outputParamDone++;
     }
 
@@ -417,7 +421,7 @@ class CalcToSet : public QuantParamCalcer {
       MS_ASSERT(graph->allTensors.size() > node.outputIndex.front());
       auto &outTensor = graph->allTensors.at(node.outputIndex.front());
       MS_ASSERT(outTensor != nullptr);
-      outTensor->quantParams.front() = std::move(quantParam);
+      outTensor->quantParams.emplace_back(std::move(quantParam));
       outputParamDone++;
     }
     return RET_OK;
@@ -475,6 +479,7 @@ QuantParamCalcRegister::QuantParamCalcRegister() {
     _registerMap[schema::PrimitiveType_Pooling] = linearCalcer;
     _registerMap[schema::PrimitiveType_Resize] = linearCalcer;
     _registerMap[schema::PrimitiveType_Reshape] = linearCalcer;
+    _registerMap[schema::PrimitiveType_StridedSlice] = linearCalcer;
     _registerMap[schema::PrimitiveType_Shape] = linearCalcer;
     _registerMap[schema::PrimitiveType_SoftMax] = std::make_shared<CalcToSet>(0, 1);
     _registerMap[schema::PrimitiveType_Squeeze] = linearCalcer;

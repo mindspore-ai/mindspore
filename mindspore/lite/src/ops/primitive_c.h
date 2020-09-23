@@ -39,8 +39,8 @@ constexpr uint32_t kDoubleNum = 2;
 constexpr uint32_t kMultiNum = 3;
 constexpr uint32_t kDimension_4d = 4;
 
-const std::set<int> kSupportDataType = {kNumberTypeUInt8, kNumberTypeInt8, kNumberTypeInt32,
-                                        kNumberTypeFloat32, kNumberTypeFloat16};
+const std::set<int> kSupportDataType = {kNumberTypeUInt8, kNumberTypeInt8, kNumberTypeInt32, kNumberTypeFloat32,
+                                        kNumberTypeFloat16};
 
 #ifdef PRIMITIVE_WRITEABLE
 using TensorPtr = std::shared_ptr<mindspore::tensor::Tensor>;
@@ -119,7 +119,8 @@ class PrimitiveC : public mindspore::Primitive {
   static std::shared_ptr<PrimitiveC> Create(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
                                             const schema::QuantType &quantType);
   void PopulaterQuantParam(const Primitive &prim, std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
-                           std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam);
+                           std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam,
+                           const std::vector<AnfNodePtr> &inputs);
   void CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax);
 
  protected:

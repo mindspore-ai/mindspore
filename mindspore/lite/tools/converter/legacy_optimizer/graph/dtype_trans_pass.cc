@@ -16,6 +16,7 @@
 
 #include "tools/converter/legacy_optimizer/graph/dtype_trans_pass.h"
 #include <string>
+#include <set>
 #include "tools/common/converter_op_utils.h"
 #include "tools/common/node_util.h"
 #include "src/common/common.h"
@@ -25,6 +26,9 @@ namespace mindspore {
 namespace lite {
 #define kMinInputNum 1
 #define kOutputNum 1
+
+static const std::set<schema::PrimitiveType> NoNeedDtypeTransList = {
+  PrimitiveType_QuantDTypeCast, PrimitiveType_Nchw2Nhwc, PrimitiveType_Nhwc2Nchw};
 
 STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
@@ -134,7 +138,8 @@ STATUS DTypeTransPass::DoNodeInoutDTypeTrans(schema::MetaGraphT *graph) {
     if (IsContain(GetInt8OpList(), GetCNodeTType(**iter)) && (*iter)->quantType == QuantType_AwareTraining) {
       continue;
     }
-    if (GetCNodeTType(**iter) == PrimitiveType_QuantDTypeCast) {
+    auto iterType = GetCNodeTType(**iter);
+    if (NoNeedDtypeTransList.find(iterType) != NoNeedDtypeTransList.end()) {
       continue;
     }
     bool needInsertPost = true;
