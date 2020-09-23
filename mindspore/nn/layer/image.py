@@ -349,7 +349,7 @@ class PSNR(Cell):
 
     Args:
         max_val (Union[int, float]): The dynamic range of the pixel values (255 for 8-bit grayscale images).
-          Default: 1.0.
+          The value must be greater than 0. Default: 1.0.
 
     Inputs:
         - **img1** (Tensor) - The first image batch with format 'NCHW'. It must be the same shape and dtype as img2.

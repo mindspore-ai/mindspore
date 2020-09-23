@@ -2488,7 +2488,7 @@ class ResizeBilinear(PrimitiveWithInfer):
 
     Inputs:
         - **input** (Tensor) - Image to be resized. Input images must be a 4-D tensor with shape
-         [batch, channels, height, width], with data type of float32 or float16.
+          :math:`(batch, channels, height, width)`, with data type of float32 or float16.
 
     Outputs:
         Tensor, resized image. 4-D with shape [batch, channels, new_height, new_width] in `float32`.
