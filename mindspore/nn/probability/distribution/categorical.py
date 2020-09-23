@@ -29,7 +29,7 @@ class Categorical(Distribution):
         probs (Tensor, list, numpy.ndarray, Parameter): Event probabilities.
         logits (Tensor, list, numpy.ndarray, Parameter, float): Event log-odds.
         seed (int): The global seed is used in sampling. Global seed is used if it is None. Default: None.
-        dtype (mstype.int32): The type of the distribution. Default: mstype.int32.
+        dtype (mindspore.dtype): The type of the distribution. Default: mstype.int32.
         name (str): The name of the distribution. Default: Categorical.
 
     Note:
