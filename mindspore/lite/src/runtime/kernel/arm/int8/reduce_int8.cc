@@ -39,11 +39,15 @@ int ReduceInt8CPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  ret = CalculateQuantArgs();
-  if (ret != RET_OK) {
-    return ret;
+  if (!this->in_tensors_[0]->shape().empty()) {
+    this->valid_shape_ = true;
+    ret = CalculateQuantArgs();
+    if (ret != RET_OK) {
+      return ret;
+    }
+  } else {
+    this->valid_shape_ = false;
   }
-
   switch (mode_) {
     case static_cast<int>(ReduceMode_ReduceMean): {
       reducer_ = ReduceMeanInt8;
@@ -247,6 +251,12 @@ int ReduceInt8CPUKernel::Run() {
   if (prepare_ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
+  }
+  if (!this->valid_shape_) {
+    auto ret = CalculateQuantArgs();
+    if (ret != RET_OK) {
+      return ret;
+    }
   }
   auto ret = MallocTmpBuffer();
   if (ret != RET_OK) {
