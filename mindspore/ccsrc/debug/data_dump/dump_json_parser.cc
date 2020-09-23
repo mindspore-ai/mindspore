@@ -331,7 +331,7 @@ void DumpJsonParser::JudgeDumpEnabled() {
     e2e_dump_enabled_ = false;
     MS_LOG(WARNING) << "Dump not enabled. device_id:" << device_id << " not support";
   }
-  context->set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, !e2e_dump_enabled_);
+
   JsonConfigToString();
 }
 

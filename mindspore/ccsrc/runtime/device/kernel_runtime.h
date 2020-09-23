@@ -82,6 +82,8 @@ class KernelRuntime {
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                TypeId type_id) = 0;
   virtual bool NodeOutputDeviceAddressExist(const AnfNodePtr &node, size_t index);
+  virtual bool KernelMemNotReuse(const AnfNodePtr &node);
+
   void AssignStaticMemory(session::KernelGraph *graph);
   void AssignDynamicMemory(session::KernelGraph *graph);
   void ReuseAssignDynamicMemory(session::KernelGraph *graph);

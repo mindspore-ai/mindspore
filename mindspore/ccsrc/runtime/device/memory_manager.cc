@@ -42,6 +42,8 @@ void MemoryManager::MallocReusedDynamicMem(const session::KernelGraph *graph) {
   MS_LOG(INFO) << "TotalReuseDynamicSize [" << total_allocated_size << "]";
   mem_reuse_util_ptr_ = mem_reuse_util_ptr;
   auto base_ptr = MallocDynamicMem(total_allocated_size, false);
+  MS_LOG(INFO) << "Reuse Memory from [" << reinterpret_cast<void *>(base_ptr) << "] to ["
+               << reinterpret_cast<void *>(base_ptr + total_allocated_size) << "]";
   mem_reuse_util_ptr_->set_mem_base(base_ptr);
 }
 
