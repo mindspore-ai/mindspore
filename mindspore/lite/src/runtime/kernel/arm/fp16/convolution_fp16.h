@@ -46,14 +46,9 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int RunImpl(int task_id);
   int InitWeightBias();
   int InitTmpBuffer();
-  void ConfigInputOutput();
 
  private:
   void FreeTmpBuffer() {
-    if (nhwc4_input_ != nullptr) {
-      ctx_->allocator->Free(nhwc4_input_);
-      nhwc4_input_ = nullptr;
-    }
     if (packed_input_ != nullptr) {
       ctx_->allocator->Free(packed_input_);
       packed_input_ = nullptr;

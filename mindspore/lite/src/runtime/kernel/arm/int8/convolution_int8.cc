@@ -89,7 +89,13 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "malloc weight_sum failed.";
     return RET_ERROR;
   }
-  for (int i = 0; i < output_channel; i++) weight_sum[i] = 0;
+  for (int i = 0; i < output_channel; i++) {
+    if (conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL) {
+      weight_sum[i] = ic4 * C4NUM * kernel_plane * filter_arg[i].zp_;
+    } else {
+      weight_sum[i] = ic4 * C4NUM * kernel_plane * filter_arg[0].zp_;
+    }
+  }
   PackWeightInt8(origin_weight, conv_param_, packed_weight_, weight_sum);
 
   // init bias
@@ -190,7 +196,13 @@ int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
     MS_LOG(ERROR) << "malloc weight_sum failed.";
     return RET_ERROR;
   }
-  for (int i = 0; i < output_channel; i++) weight_sum[i] = 0;
+  for (int i = 0; i < output_channel; i++) {
+    if (conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL) {
+      weight_sum[i] = ic4 * C4NUM * kernel_plane * filter_arg[i].zp_;
+    } else {
+      weight_sum[i] = ic4 * C4NUM * kernel_plane * filter_arg[0].zp_;
+    }
+  }
   PackWeightInt8Opt(origin_weight, conv_param_, packed_weight_, weight_sum);
 
   // init bias
@@ -261,14 +273,7 @@ int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
   return RET_OK;
 }
 
-void ConvolutionInt8CPUKernel::ConfigInputOutput() {
-  auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_tensor->SetFormat(schema::Format::Format_NHWC);
-}
-
 int ConvolutionInt8CPUKernel::Init() {
-  // config input output
-  ConfigInputOutput();
   CheckSupportOptimize();
   auto ret = SetQuantParam();
   if (ret != RET_OK) {

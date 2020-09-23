@@ -55,23 +55,24 @@ void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float1
   int in_w = conv_param->input_w_;
   int out_w = conv_param->output_w_;
   int ic4 = UP_DIV(in_channel, 4);
+  int ic4_minus = in_channel / 4;
   memset(packed_input, 0, kernel_w * kernel_h * ic4 * C4NUM * 16 * sizeof(float16_t));
 
   for (int i = 0; i < real_cal_num; i++) {
     int block_start = block_index + i;
     int input_h = block_start / out_w * stride_h - pad_h;
     int input_w = block_start % out_w * stride_w - pad_w;
-    int input_stride = input_h * in_w * ic4 * C4NUM + input_w * ic4 * C4NUM;
+    int input_stride = (input_h * in_w + input_w) * in_channel;
     int kh_s = MSMAX(0, UP_DIV(-input_h, dilation_h));
     int kh_e = MSMIN(kernel_h, UP_DIV(in_h - input_h, dilation_h));
     int kw_s = MSMAX(0, UP_DIV(-input_w, dilation_w));
     int kw_e = MSMIN(kernel_w, UP_DIV(in_w - input_w, dilation_w));
     for (int j = kh_s; j < kh_e; j++) {
-      int input_y_stride = j * dilation_h * in_w * ic4 * C4NUM + input_stride;
+      int input_y_stride = j * dilation_h * in_w * in_channel + input_stride;
       for (int n = kw_s; n < kw_e; n++) {
-        int input_x_stride = input_y_stride + n * dilation_w * ic4 * C4NUM;
+        int input_x_stride = input_y_stride + n * dilation_w * in_channel;
         int input_plane_offset = (j * kernel_w + n) * 16 * C4NUM * ic4 + i * C4NUM;
-        for (int m = 0; m < ic4; m++) {
+        for (int m = 0; m < ic4_minus; m++) {
           int channel_block_stride = input_x_stride + m * C4NUM;
           int channel_block_offset = input_plane_offset + m * 16 * C4NUM;
 #ifdef ENABLE_ARM64
@@ -82,9 +83,15 @@ void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float1
           }
 #endif
         }  // channel_block loop
-      }    // kernel_w loop
-    }      // kernel_h loop
-  }        // tile num loop
+        int ic_res = in_channel - ic4_minus * C4NUM;
+        for (int l = 0; l < ic_res; ++l) {
+          int channel_block_stride = input_x_stride + ic4_minus * C4NUM + l;
+          int channel_block_offset = input_plane_offset + ic4_minus * 16 * C4NUM + l;
+          packed_input[channel_block_offset] = input_data[channel_block_stride];
+        }
+      }  // kernel_w loop
+    }    // kernel_h loop
+  }      // tile num loop
 }
 
 void PackWeightFp16(float16_t *weight_data, ConvParameter *conv_param, float16_t *packed_weight) {
@@ -334,7 +341,8 @@ void PackNHWCToNCHWFp16(const void *src, void *dst, int batches, int plane, int 
           "st1 {v27.8h}, [x11], %[dstStride]\n"
           "st1 {v31.8h}, [x10], %[dstStride]\n"
           :
-          : [ dst_ptr ] "r"(dst_ptr), [ src_ptr ] "r"(src_ptr), [ srcStride ] "r"(srcStride), [ dstStride ] "r"(dstStride)
+          :
+          [ dst_ptr ] "r"(dst_ptr), [ src_ptr ] "r"(src_ptr), [ srcStride ] "r"(srcStride), [ dstStride ] "r"(dstStride)
           : "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14",
             "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29",
             "v30", "v31");

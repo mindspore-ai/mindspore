@@ -344,7 +344,6 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
   int channel_block = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
   int unit_size = kernel_plane * channel_block * C4NUM;
-  int packed_input_size = output_tile_count * tile_n * unit_size;
 
   // we accumulate 4 channels per time for input blocks
   int ic4 = UP_DIV(in_channel, C4NUM);
@@ -355,11 +354,10 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
   for (int b = 0; b < in_batch; b++) {
     int in_batch_offset = b * ic4 * C4NUM * in_h * in_w;
     int out_batch_offset = b * out_channel * out_h * out_w;
-    int gemm_in_batch_offset = b * packed_input_size;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * tile_n;
       int real_cal_num = (output_count - start_index) < tile_n ? (output_count - start_index) : tile_n;
-      float16_t *gemm_input = (float16_t *)(packed_input + thread_id * unit_size * tile_n + gemm_in_batch_offset);
+      float16_t *gemm_input = (float16_t *)(packed_input + task_id * unit_size * tile_n);
       Im2ColPackUnitFp16(input_data + in_batch_offset, conv_param, gemm_input, real_cal_num, start_index);
 
       int out_offset = thread_id * tile_n * out_channel + out_batch_offset;
