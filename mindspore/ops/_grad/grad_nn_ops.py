@@ -21,6 +21,7 @@ from mindspore.common.tensor import Tensor
 from .grad_base import bprop_getters
 from .. import functional as F
 from .. import operations as P
+from ...common import dtype as mstype
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
@@ -75,11 +76,43 @@ def get_bprop_extract_image_patches(self):
     fill = P.Fill()
     slice_op = P.Slice()
     transpose = P.Transpose()
+    cast = P.Cast()
     matmul = P.MatMul()
 
     _, ksizes_row, ksizes_col, _ = self.ksizes
 
     def bprop(x, out, dout):
+        x_shape = get_shape(x)
+        x_batch, x_depth, x_row, x_col = x_shape
+        x_indices_num = x_row * x_col + 1
+        x_idx = cast(F.tuple_to_array(range(1, x_indices_num)), mstype.float32)
+        x_idx = reshape(x_idx, (1, 1, x_row, x_col))
+        x_idx_patch = cast(extract_image_patches(x_idx), mstype.int32)
+        x_idx_patch = transpose(x_idx_patch, (0, 2, 3, 1))
+
+        out_shape = get_shape(out)
+        _, _, out_row, out_col = out_shape
+        out_indices_num = out_row * out_col * ksizes_row * ksizes_col
+        out_idx = F.tuple_to_array(range(out_indices_num))
+        out_idx = reshape(out_idx, (1, out_row, out_col, ksizes_row * ksizes_col))
+
+        idx_tensor = concat((expand_dims(x_idx_patch, -1), expand_dims(out_idx, -1)))
+        idx_tensor = reshape(idx_tensor, (-1, 2))
+        sp_shape = (x_indices_num, out_indices_num)
+        sp_tensor = scatter_nd(idx_tensor, fill(dtype(dout), (out_indices_num,), 1), sp_shape)
+        sp_tensor = slice_op(sp_tensor, (1, 0), (x_indices_num - 1, out_indices_num))
+
+        grad = transpose(dout, (0, 2, 3, 1))
+        grad = reshape(grad, (x_batch, out_row, out_col, ksizes_row, ksizes_col, x_depth))
+        grad = transpose(grad, (1, 2, 3, 4, 0, 5))
+        grad = reshape(grad, (-1, x_batch * x_depth))
+
+        jac = matmul(sp_tensor, grad)
+        dx = reshape(jac, (x_row, x_col, x_batch, x_depth))
+        dx = transpose(dx, (2, 3, 0, 1))
+        return (dx,)
+
+    def bprop_ge(x, out, dout):
         x_shape = get_shape(x)
         x_batch, x_row, x_col, x_depth = x_shape
         x_indices_num = x_row * x_col + 1
@@ -108,6 +141,9 @@ def get_bprop_extract_image_patches(self):
         dx = transpose(dx, (2, 0, 1, 3))
 
         return (dx,)
+
+    if context.get_context("enable_ge"):
+        return bprop_ge
 
     return bprop
 

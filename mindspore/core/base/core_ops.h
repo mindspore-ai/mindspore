@@ -104,6 +104,7 @@ inline const PrimitivePtr kPrimPad = std::make_shared<Primitive>("Pad");
 inline const PrimitivePtr kPrimArgMaxWithValue = std::make_shared<Primitive>("ArgMaxWithValue");
 inline const PrimitivePtr kPrimUnique = std::make_shared<Primitive>("Unique");
 inline const PrimitivePtr kPrimUniqueGrad = std::make_shared<Primitive>("UniqueGrad");
+inline const PrimitivePtr kPrimExtractImagePatches = std::make_shared<Primitive>("ExtractImagePatches");
 
 // NN
 inline const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");
