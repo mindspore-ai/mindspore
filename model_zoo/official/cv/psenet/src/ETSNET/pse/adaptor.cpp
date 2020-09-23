@@ -49,7 +49,7 @@ namespace pse_adaptor {
         Mat label_mat;
         int label_num = connectedComponents(kernals[kernals.size() - 1], label_mat, 4);
         vector<int> area(label_num + 1, 0)
-        memset(area, 0, sizeof(area));
+        memset_s(area, 0, sizeof(area));
         for (int x = 0; x < label_mat.rows; ++x) {
             for (int y = 0; y < label_mat.cols; ++y) {
                 int label = label_mat.at<int>(x, y);
