@@ -67,7 +67,7 @@ void UnPackWinogradRelu6Output(const float *src, float *dst, int batch, int heig
 
 // fp32 conv3x3
 void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_data, TmpBufferAddress *buffer_list,
-                 int task_id, ConvParameter *conv_param, GEMM_FUNC_FP32 gemm_func);
+                 int task_id, ConvParameter *conv_param);
 #ifdef __cplusplus
 }
 #endif

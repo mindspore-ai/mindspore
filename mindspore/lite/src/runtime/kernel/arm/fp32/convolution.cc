@@ -84,21 +84,8 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
   MS_ASSERT(ctx_->allocator != nullptr);
 
   int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
-  size_t nhwc4_input_size =
-    ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);
-  MS_ASSERT(nullptr != ctx_->allocator);
-  nhwc4_input_ = ctx_->allocator->Malloc(nhwc4_input_size);
-  if (nhwc4_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc nhwc4 input failed.";
-    return RET_ERROR;
-  }
-
-  int output_count = conv_param_->output_h_ * conv_param_->output_w_;
-  int output_tile_count = UP_DIV(output_count, TILE_NUM);
-  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * ic4 * C4NUM;
-  int packed_input_size = output_tile_count * TILE_NUM * unit_size;
-  packed_input_ =
-    reinterpret_cast<float *>(ctx_->allocator->Malloc(conv_param_->input_batch_ * packed_input_size * sizeof(float)));
+  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * ic4 * C4NUM * TILE_NUM * thread_count_;
+  packed_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(unit_size * sizeof(float)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed input failed.";
     return RET_ERROR;
@@ -158,9 +145,11 @@ int ConvolutionCPUKernel::RunImpl(int task_id) {
     MS_LOG(ERROR) << "gemm_func is nullptr.";
     return RET_ERROR;
   }
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto ori_input_data = reinterpret_cast<float *>(input_tensor->MutableData());
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
-  ConvFp32(reinterpret_cast<float *>(nhwc4_input_), packed_input_, packed_weight_,
-           reinterpret_cast<float *>(bias_data_), tmp_output_block_, output_addr, task_id, conv_param_, gemm_func_);
+  ConvFp32(ori_input_data, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), tmp_output_block_,
+           output_addr, task_id, conv_param_, gemm_func_);
   return RET_OK;
 }
 
@@ -186,11 +175,6 @@ int ConvolutionCPUKernel::Run() {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
     return RET_ERROR;
   }
-
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ori_input_data = input_tensor->MutableData();
-  PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
-                      conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
   int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionImpl, this, thread_count_);
   if (error_code != RET_OK) {

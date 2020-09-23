@@ -55,10 +55,6 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
 
  private:
   void FreeTmpBuffer() {
-    if (nhwc4_input_ != nullptr) {
-      ctx_->allocator->Free(nhwc4_input_);
-      nhwc4_input_ = nullptr;
-    }
     if (packed_input_ != nullptr) {
       ctx_->allocator->Free(packed_input_);
       packed_input_ = nullptr;

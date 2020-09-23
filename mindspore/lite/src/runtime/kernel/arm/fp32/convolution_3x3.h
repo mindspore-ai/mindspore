@@ -40,15 +40,10 @@ class Convolution3x3CPUKernel : public ConvolutionBaseCPUKernel {
   int RunImpl(int task_id);
   int InitWeightBias();
   int InitTmpBuffer();
-  void ConfigInputOutput();
   int PostProcess();
 
  private:
   void FreeTmpBuffer() {
-    if (nhwc4_input_ != nullptr) {
-      ctx_->allocator->Free(nhwc4_input_);
-      nhwc4_input_ = nullptr;
-    }
     if (tile_buffer_ != nullptr) {
       ctx_->allocator->Free(tile_buffer_);
       tile_buffer_ = nullptr;
@@ -78,7 +73,6 @@ class Convolution3x3CPUKernel : public ConvolutionBaseCPUKernel {
   float *col_buffer_ = nullptr;
   float *nc4hw4_out_ = nullptr;
   TmpBufferAddress tmp_buffer_address_list_[5];
-  GEMM_FUNC_FP32 gemm_func_ = nullptr;
 };
 void ProcessFilter(float *origin_weight, float *dst_weight, ConvParameter *conv_param, int oc_block, int oc_block_num);
 }  // namespace mindspore::kernel

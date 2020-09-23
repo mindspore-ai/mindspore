@@ -41,30 +41,48 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
     int interval_x_e = src_x_e < input_w ? input_unit : (input_w - src_x_s);
     int interval_y_e = src_y_e < input_h ? input_unit : (input_h - src_y_s);
 
-    int src_plane_offset = ic4 * C4NUM * (src_y_s * input_w + src_x_s);
+    int src_plane_offset = in_channel * (src_y_s * input_w + src_x_s);
     int dst_plane_offset = c * C4NUM * ic4;
     for (int ic = 0; ic < ic4; ic++) {
       // clear tmp buffer
       memset(tmp_data, 0, input_unit * input_unit * C4NUM * sizeof(float));
 
-      // get real input block with padding
+      int real_c = in_channel - ic * C4NUM;
+      real_c = real_c > C4NUM ? C4NUM : real_c;
       int src_ic4_offset = src_plane_offset + ic * C4NUM;
-      for (int interval = interval_y_s; interval < interval_y_e; interval++) {
-        int src_y_offset = src_ic4_offset + (interval * input_w + interval_x_s) * ic4 * C4NUM;
-        int dst_y_offset = interval * input_unit * C4NUM + interval_x_s * C4NUM;
-        for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
-          int src_x_offset = src_y_offset + j * ic4 * C4NUM;
-          int dst_x_offset = dst_y_offset + j * C4NUM;
-          float *src_addr = (float *)(input_data) + src_x_offset;
-          float *dst_addr = tmp_data + dst_x_offset;
+      // get real input block with padding
+      if (real_c == C4NUM) {
+        for (int interval = interval_y_s; interval < interval_y_e; interval++) {
+          int src_y_offset = src_ic4_offset + (interval * input_w + interval_x_s) * in_channel;
+          int dst_y_offset = interval * input_unit * C4NUM + interval_x_s * C4NUM;
+          for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
+            int src_x_offset = src_y_offset + j * in_channel;
+            int dst_x_offset = dst_y_offset + j * C4NUM;
+            float *src_addr = (float *)(input_data) + src_x_offset;
+            float *dst_addr = tmp_data + dst_x_offset;
 #ifdef ENABLE_NEON
-          vst1q_f32(dst_addr, vld1q_f32(src_addr));
+            vst1q_f32(dst_addr, vld1q_f32(src_addr));
 #else
-          for (int k = 0; k < C4NUM; k++) {
-            dst_addr[k] = src_addr[k];
-          }
+            for (int k = 0; k < C4NUM; k++) {
+              dst_addr[k] = src_addr[k];
+            }
 #endif
-        }
+          }  // interval x loop
+        }    // interval y loop
+      } else {
+        for (int interval = interval_y_s; interval < interval_y_e; interval++) {
+          int src_y_offset = src_ic4_offset + (interval * input_w + interval_x_s) * in_channel;
+          int dst_y_offset = interval * input_unit * C4NUM + interval_x_s * C4NUM;
+          for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
+            int src_x_offset = src_y_offset + j * in_channel;
+            int dst_x_offset = dst_y_offset + j * C4NUM;
+            float *src_addr = (float *)(input_data) + src_x_offset;
+            float *dst_addr = tmp_data + dst_x_offset;
+            for (int k = 0; k < real_c; k++) {
+              dst_addr[k] = src_addr[k];
+            }
+          }  // interval x loop
+        }    // interval y loop
       }
       // input transform
 #ifdef ENABLE_ARM32
@@ -314,29 +332,47 @@ void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, floa
     int real_y_start = origin_y > 0 ? 0 : -origin_y;
     int real_y_end = (origin_y + input_unit) < input_height ? input_unit : (input_height - origin_y);
 
-    int src_plane_offset = ic4 * C4NUM * (origin_y * input_width + origin_x);
+    int src_plane_offset = input_channel * (origin_y * input_width + origin_x);
     int dst_plane_offset = cal_id * C4NUM * ic4;
     for (int ic = 0; ic < ic4; ic++) {
       // clear tmp buffer
       memset(tmp_data, 0, input_unit * input_unit * C4NUM * sizeof(float));
+      int real_c = input_channel - ic * C4NUM;
+      real_c = real_c > C4NUM ? C4NUM : real_c;
 
       // get real input block with padding
       int src_ic4_offset = src_plane_offset + ic * C4NUM;
-      for (int interval = real_y_start; interval < real_y_end; interval++) {
-        int src_y_offset = src_ic4_offset + (interval * input_width + real_x_start) * ic4 * C4NUM;
-        int dst_y_offset = interval * input_unit * C4NUM + real_x_start * C4NUM;
-        for (int j = 0; j < (real_x_end - real_x_start); j++) {
-          int src_x_offset = src_y_offset + j * ic4 * C4NUM;
-          int dst_x_offset = dst_y_offset + j * C4NUM;
-          float *src_addr = (float *)(input_data) + src_x_offset;
-          float *dst_addr = tmp_data + dst_x_offset;
+      if (real_c == C4NUM) {
+        for (int interval = real_y_start; interval < real_y_end; interval++) {
+          int src_y_offset = src_ic4_offset + (interval * input_width + real_x_start) * input_channel;
+          int dst_y_offset = interval * input_unit * C4NUM + real_x_start * C4NUM;
+          for (int j = 0; j < (real_x_end - real_x_start); j++) {
+            int src_x_offset = src_y_offset + j * input_channel;
+            int dst_x_offset = dst_y_offset + j * C4NUM;
+            float *src_addr = (float *)(input_data) + src_x_offset;
+            float *dst_addr = tmp_data + dst_x_offset;
 #ifdef ENABLE_NEON
-          vst1q_f32(dst_addr, vld1q_f32(src_addr));
+            vst1q_f32(dst_addr, vld1q_f32(src_addr));
 #else
-          for (int k = 0; k < C4NUM; k++) {
-            (dst_addr + k)[0] = (src_addr + k)[0];
-          }
+            for (int k = 0; k < C4NUM; k++) {
+              dst_addr[k] = src_addr[k];
+            }
 #endif
+          }
+        }
+      } else {
+        for (int interval = real_y_start; interval < real_y_end; interval++) {
+          int src_y_offset = src_ic4_offset + (interval * input_width + real_x_start) * input_channel;
+          int dst_y_offset = interval * input_unit * C4NUM + real_x_start * C4NUM;
+          for (int j = 0; j < (real_x_end - real_x_start); j++) {
+            int src_x_offset = src_y_offset + j * input_channel;
+            int dst_x_offset = dst_y_offset + j * C4NUM;
+            float *src_addr = (float *)(input_data) + src_x_offset;
+            float *dst_addr = tmp_data + dst_x_offset;
+            for (int k = 0; k < real_c; k++) {
+              dst_addr[k] = src_addr[k];
+            }
+          }
         }
       }
 

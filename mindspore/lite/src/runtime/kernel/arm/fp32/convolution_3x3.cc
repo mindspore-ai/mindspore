@@ -100,13 +100,6 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
 #else
   const int tile_num = 12;
 #endif
-  size_t nhwc4_input_size =
-    ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);
-  nhwc4_input_ = ctx_->allocator->Malloc(nhwc4_input_size);
-  if (nhwc4_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
-    return RET_ERROR;
-  }
 
   size_t tile_buffer_size = thread_count_ * tile_num * C16NUM * ic4 * C4NUM * sizeof(float);
   tile_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tile_buffer_size));
@@ -152,16 +145,6 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
   return RET_OK;
 }
 
-void Convolution3x3CPUKernel::ConfigInputOutput() {
-  auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_tensor->SetFormat(schema::Format::Format_NHWC);
-  // #ifdef ENABLE_ARM32
-  //   gemm_func_ = IndirectGemmFp32_8x4;
-  // #else
-  gemm_func_ = IndirectGemmFp32_8x8;
-  // #endif
-}
-
 int Convolution3x3CPUKernel::Init() {
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
@@ -171,7 +154,6 @@ int Convolution3x3CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
-  ConfigInputOutput();
   return ReSize();
 }
 
@@ -191,12 +173,10 @@ int Convolution3x3CPUKernel::ReSize() {
 }
 
 int Convolution3x3CPUKernel::RunImpl(int task_id) {
-  if (gemm_func_ == nullptr) {
-    MS_LOG(ERROR) << "gemm_func is nullptr.";
-    return RET_ERROR;
-  }
-  Conv3x3Fp32(reinterpret_cast<float *>(nhwc4_input_), transformed_filter_addr_, reinterpret_cast<float *>(bias_data_),
-              tmp_buffer_address_list_, task_id, conv_param_, gemm_func_);
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  auto ori_input_data = reinterpret_cast<float *>(input_tensor->MutableData());
+  Conv3x3Fp32(ori_input_data, transformed_filter_addr_, reinterpret_cast<float *>(bias_data_), tmp_buffer_address_list_,
+              task_id, conv_param_);
   return RET_OK;
 }
 
@@ -245,10 +225,6 @@ int Convolution3x3CPUKernel::Run() {
     MS_LOG(ERROR) << "Init tmp buffer failed.ret: " << ret;
     return RET_ERROR;
   }
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ori_input_data = input_tensor->MutableData();
-  PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
-                      conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
   int error_code = ParallelLaunch(this->context_->thread_pool_, Convolution3x3Impl, this, thread_count_);
   if (error_code != RET_OK) {
@@ -260,6 +236,7 @@ int Convolution3x3CPUKernel::Run() {
   ret = PostProcess();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Post process failed.";
+    FreeTmpBuffer();
     return ret;
   }
   FreeTmpBuffer();
