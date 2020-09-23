@@ -18,9 +18,7 @@ Operators can be used in the construct function of Cell.
 
 Examples:
 
-    >>> from mindspore.ops import operations as P
-    >>> from mindspore.ops import composite as C
-    >>> from mindspore.ops import functional as F
+    >>> import mindspore.ops as ops
 
 Note:
     - The Primitive operators in operations need to be used after instantiation.
