@@ -253,9 +253,23 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
+  auto *weight_tensor = inputs.at(kWeightIndex);
+  auto *restore_data = weight_tensor->data_c();
+  if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
+    auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
+    if (dequant_weight == nullptr) {
+      MS_LOG(ERROR) << "dequant data is nullptr.";
+      return nullptr;
+    }
+    weight_tensor->SetData(dequant_weight);
+  }
   auto *kernel = new (std::nothrow) MatmulFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
+    if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
+      weight_tensor->FreeData();
+      weight_tensor->SetData(restore_data);
+    }
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -263,7 +277,15 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;
+    if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
+      weight_tensor->FreeData();
+      weight_tensor->SetData(restore_data);
+    }
     return nullptr;
+  }
+  if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
+    weight_tensor->FreeData();
+    weight_tensor->SetData(restore_data);
   }
   return kernel;
 }
