@@ -78,6 +78,7 @@ void PackWeightInt8(int8_t *weight_data, ConvParameter *conv_param, int8_t *pack
   int plane_c4 = UP_DIV(kernel_plane, C4NUM);
   int pack_weight_size = oc4 * C4NUM * ic4 * C4NUM * plane_c4 * C4NUM;
   int block_size = pack_weight_size / oc4;
+  QuantArg *filter_args = conv_param->conv_quant_arg_.filter_quant_args_;
 
   for (int m = 0; m < kernel_plane; m++) {
     int kernel_plane_stride = m * in_channel;
@@ -101,7 +102,13 @@ void PackWeightInt8(int8_t *weight_data, ConvParameter *conv_param, int8_t *pack
             int8_t *origin_data_ptr = weight_data + kernel_block_stride + k * kernel_plane * in_channel;
             int8_t *packed_data_ptr = packed_weight + packed_kernel_block_size + k * C4NUM * C4NUM;
             *packed_data_ptr = origin_data_ptr[0];
-            weight_sum[j * C4NUM + k] += (int32_t)packed_data_ptr[0];
+            int32_t f_zp;
+            if (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL) {
+              f_zp = filter_args[j * C4NUM + k].zp_;
+            } else {
+              f_zp = filter_args[0].zp_;
+            }
+            weight_sum[j * C4NUM + k] += (int32_t)(packed_data_ptr[0] - f_zp);
           }
         }  // kernel block loop
       }    // inchannel block loop
@@ -121,6 +128,7 @@ void PackWeightInt8Opt(int8_t *weight_data, ConvParameter *conv_param, int8_t *p
   int pack_weight_size = oc4 * ic4 * C4NUM * C4NUM * kernel_plane;
   int unit_size = C4NUM * C4NUM;
   int block_size = pack_weight_size / oc4;
+  QuantArg *filter_args = conv_param->conv_quant_arg_.filter_quant_args_;
 
   for (int m = 0; m < kernel_plane; m++) {
     int kernel_plane_stride = m * in_channel;
@@ -142,7 +150,13 @@ void PackWeightInt8Opt(int8_t *weight_data, ConvParameter *conv_param, int8_t *p
             int8_t *origin_data_ptr = weight_data + kernel_block_stride + k * kernel_plane * in_channel;
             int8_t *packed_data_ptr = packed_weight + packed_kernel_block_size + k * C4NUM;
             *packed_data_ptr = origin_data_ptr[0];
-            weight_sum[j * C4NUM + k] += (int32_t)(packed_data_ptr[0]);
+            int32_t f_zp;
+            if (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL) {
+              f_zp = filter_args[j * C4NUM + k].zp_;
+            } else {
+              f_zp = filter_args[0].zp_;
+            }
+            weight_sum[j * C4NUM + k] += (int32_t)(packed_data_ptr[0] - f_zp);
           }
         }  // kernel block loop
       }    // inchannel block loop
@@ -399,6 +413,9 @@ void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real
           int channel_block_offset = input_plane_offset + ic4_minus * tile_num * C4NUM + l;
           packed_input[channel_block_offset] = input_data[channel_block_stride];
           input_accumulator += (packed_input + channel_block_offset)[0];
+        }
+        for (int l = 0; l < (C4NUM - ic_res); l++) {
+          input_accumulator += conv_param->conv_quant_arg_.input_quant_args_[0].zp_;
         }
       }  // kernel_w loop
     }    // kernel_h loop

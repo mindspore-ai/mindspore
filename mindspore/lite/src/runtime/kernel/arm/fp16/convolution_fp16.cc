@@ -84,29 +84,17 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
 }
 
 int ConvolutionFP16CPUKernel::InitTmpBuffer() {
-  int in_batch = conv_param_->input_batch_;
   int in_channel = conv_param_->input_channel_;
   int out_channel = conv_param_->output_channel_;
   int channel_block = UP_DIV(in_channel, C4NUM);
   int cal_num = 16;
-  int output_count = conv_param_->output_h_ * conv_param_->output_w_;
-  int output_tile_count = UP_DIV(output_count, cal_num);
   int kernel_plane = conv_param_->kernel_h_ * conv_param_->kernel_w_;
   int unit_size = kernel_plane * channel_block * C4NUM;
-  int packed_input_size = output_tile_count * cal_num * unit_size;
+  int packed_input_size = thread_count_ * cal_num * unit_size;
 
-  packed_input_ =
-    reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(in_batch * packed_input_size * sizeof(float16_t)));
+  packed_input_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(packed_input_size * sizeof(float16_t)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_input_ failed.";
-    return RET_ERROR;
-  }
-
-  size_t nhwc4_input_size =
-    channel_block * C4NUM * in_batch * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
-  nhwc4_input_ = ctx_->allocator->Malloc(nhwc4_input_size);
-  if (nhwc4_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
     return RET_ERROR;
   }
 
@@ -116,19 +104,7 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
     MS_LOG(ERROR) << "malloc tmp_output_block_ failed.";
     return RET_ERROR;
   }
-
   return RET_OK;
-}
-
-void ConvolutionFP16CPUKernel::ConfigInputOutput() {
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto input_format = input_tensor->GetFormat();
-  schema::Format execute_format = schema::Format::Format_NHWC4;
-  convert_func_ = LayoutTransformFp16(input_format, execute_format);
-  if (convert_func_ == nullptr) {
-    MS_LOG(ERROR) << "layout convert func is nullptr.";
-    return;
-  }
 }
 
 int ConvolutionFP16CPUKernel::Init() {
@@ -140,7 +116,6 @@ int ConvolutionFP16CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
-  ConfigInputOutput();
   return ReSize();
 }
 
@@ -160,8 +135,8 @@ int ConvolutionFP16CPUKernel::ReSize() {
 }
 
 int ConvolutionFP16CPUKernel::RunImpl(int task_id) {
-  ConvFp16(reinterpret_cast<float16_t *>(nhwc4_input_), packed_input_, packed_weight_,
-           reinterpret_cast<float16_t *>(bias_data_), tmp_output_block_, execute_output_, task_id, conv_param_);
+  ConvFp16(execute_input_, packed_input_, packed_weight_, reinterpret_cast<float16_t *>(bias_data_), tmp_output_block_,
+           execute_output_, task_id, conv_param_);
   return RET_OK;
 }
 
@@ -193,12 +168,6 @@ int ConvolutionFP16CPUKernel::Run() {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
     return RET_ERROR;
   }
-
-  int in_batch = conv_param_->input_batch_;
-  int in_h = conv_param_->input_h_;
-  int in_w = conv_param_->input_w_;
-  int in_channel = conv_param_->input_channel_;
-  convert_func_(reinterpret_cast<void *>(execute_input_), nhwc4_input_, in_batch, in_h * in_w, in_channel);
 
   int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionFp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
