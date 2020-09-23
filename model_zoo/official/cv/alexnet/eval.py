@@ -77,5 +77,8 @@ if __name__ == "__main__":
     else:
         raise ValueError("Unsupport dataset.")
 
+    if ds_eval.get_dataset_size() == 0:
+        raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
+
     result = model.eval(ds_eval, dataset_sink_mode=args.dataset_sink_mode)
     print("result : {}".format(result))

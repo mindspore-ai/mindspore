@@ -57,5 +57,8 @@ if __name__ == "__main__":
     ds_eval = create_dataset(os.path.join(args.data_path, "test"),
                              cfg.batch_size,
                              1)
+    if ds_eval.get_dataset_size() == 0:
+        raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
+
     acc = model.eval(ds_eval, dataset_sink_mode=args.dataset_sink_mode)
     print("============== {} ==============".format(acc))
