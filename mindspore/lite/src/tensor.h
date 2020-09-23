@@ -33,6 +33,8 @@ namespace lite {
 struct QuantArg {
   double scale;
   int32_t zeroPoint;
+  double var_corr{1};
+  double mean_corr{0};
 };
 
 class Tensor : public mindspore::tensor::MSTensor {
