@@ -27,6 +27,7 @@ from mindspore.ops import operations as P
 def test_nobroadcast():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
+    np.random.seed(42)
     x1_np = np.random.rand(10, 20).astype(np.float32)
     x2_np = np.random.rand(10, 20).astype(np.float32)
     x1_np_int32 = np.random.randint(0, 100, (10, 20)).astype(np.int32)
@@ -77,6 +78,7 @@ def test_nobroadcast():
 def test_nobroadcast_fp16():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
+    np.random.seed(42)
     x1_np = np.random.rand(10, 20).astype(np.float16)
     x2_np = np.random.rand(10, 20).astype(np.float16)
 
@@ -119,6 +121,7 @@ def test_nobroadcast_fp16():
 def test_broadcast():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
+    np.random.seed(42)
     x1_np = np.random.rand(3, 1, 5, 1).astype(np.float32)
     x2_np = np.random.rand(1, 4, 1, 6).astype(np.float32)
     x1_np_int32 = np.random.randint(0, 100, (3, 1, 5, 1)).astype(np.int32)
@@ -169,6 +172,7 @@ def test_broadcast():
 def test_broadcast_diff_dims():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
+    np.random.seed(42)
     x1_np = np.random.rand(2).astype(np.float32)
     x2_np = np.random.rand(2, 1).astype(np.float32)
     x1_np_int32 = np.random.randint(0, 100, (2)).astype(np.int32)
@@ -219,6 +223,7 @@ def test_broadcast_diff_dims():
 def test_broadcast_fp16():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
+    np.random.seed(42)
     x1_np = np.random.rand(3, 1, 5, 1).astype(np.float16)
     x2_np = np.random.rand(1, 4, 1, 6).astype(np.float16)
 
