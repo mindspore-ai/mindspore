@@ -526,6 +526,7 @@ def get_bprop_pow(self):
 
     def bprop(x, power, out, dout):
         bc_dx = power * pow_op(x, power - 1.0) * dout
+        x[x < 0] = 1
         bc_dpower = out * ln(x) * dout
         return binop_grad_common(x, power, bc_dx, bc_dpower)
 
