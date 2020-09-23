@@ -133,11 +133,10 @@ int ActivationOpenClKernel::GetImageSize(size_t idx, std::vector<size_t> *img_si
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenClActivationFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                      const std::vector<lite::Tensor *> &outputs,
-                                                      OpParameter *opParameter, const lite::InnerContext *ctx,
-                                                      const kernel::KernelKey &desc,
-                                                      const mindspore::lite::PrimitiveC *primitive) {
+kernel::LiteKernel *OpenClActivationKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
+                                                  const mindspore::lite::PrimitiveC *primitive) {
   if (inputs.empty()) {
     MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << inputs.size();
     return nullptr;
@@ -160,5 +159,6 @@ kernel::LiteKernel *OpenClActivationFp32KernelCreator(const std::vector<lite::Te
   }
   return kernel;
 }
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Activation, OpenClActivationFp32KernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Activation, OpenClActivationKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Activation, OpenClActivationKernelCreator)
 }  // namespace mindspore::kernel
