@@ -43,23 +43,21 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   int RunImpl(int task_id);
   int InitWeightBias();
   int InitTmpBuffer();
-  void ConfigInputOutput();
 
  private:
   void FreeTmpBuffer() {
-    if (tmp_output_block_ != nullptr) {
-      ctx_->allocator->Free(tmp_output_block_);
-      tmp_output_block_ = nullptr;
-    }
     if (packed_input_ != nullptr) {
       ctx_->allocator->Free(packed_input_);
       packed_input_ = nullptr;
     }
+    if (col_major_input_ != nullptr) {
+      ctx_->allocator->Free(col_major_input_);
+      col_major_input_ = nullptr;
+    }
   }
   float *packed_input_ = nullptr;
   float *packed_weight_ = nullptr;
-  float *tmp_output_block_ = nullptr;
-  GEMM_FUNC_FP32 gemm_func_ = nullptr;
+  float *col_major_input_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
