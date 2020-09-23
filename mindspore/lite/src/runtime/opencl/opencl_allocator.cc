@@ -111,8 +111,8 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) 
     ocl_runtime_->UnmapBuffer(*mem, host_ptr);
     if (!img_size.empty()) {
       cl::ImageFormat image_format(CL_RGBA, img_size[2]);
-      image = new (std::nothrow) cl::Image2D(*ocl_runtime_->Context(), image_format, *buffer, img_size[0],
-                                                          img_size[1], img_pitch * dtype_size, &ret);
+      image = new (std::nothrow) cl::Image2D(*ocl_runtime_->Context(), image_format, *buffer, img_size[0], img_size[1],
+                                             img_pitch * dtype_size, &ret);
       if (image == nullptr || ret != CL_SUCCESS) {
         delete buffer;
         UnLock();
@@ -265,6 +265,9 @@ void OpenCLAllocator::Clear() {
   Lock();
   auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
   for (auto it = allocated_list_.begin(); it != allocated_list_.end(); it++) {
+    if (it->second->map_flags) {
+      UnmapBuffer(it->second->host_ptr_);
+    }
     if (svm_capabilities) {
       clSVMFree((*ocl_runtime_->Context())(), it->second->host_ptr_);
       MS_LOG(DEBUG) << "OpenCL free svm buffer : " << it->second->host_ptr_;
