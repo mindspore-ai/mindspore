@@ -347,7 +347,8 @@ class IsInstance(PrimitiveWithInfer):
         sub_type_t = inst['dtype']
         type_v = type_['value']
 
-        validator.check_const_input("inst", inst['value'], self.name)
+        if not isinstance(inst, type(mstype.tensor)):
+            validator.check_const_input("inst", inst['value'], self.name)
         validator.check_value_type("type_", type_v, [mstype.Type], self.name)
 
         if type_v == mstype.list_:
