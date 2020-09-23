@@ -179,6 +179,17 @@ int ResizeCPUKernel::RunImpl(int task_id) {
       break;
     }
     case static_cast<int>(schema::ResizeMethod_NEAREST_NEIGHBOR): {
+      if (in_tensors_.size() == lite::kDoubleNum && !const_shape_) {
+        auto out_shape = in_tensors_.at(1);
+        auto data = reinterpret_cast<int32_t *>(out_shape->MutableData());
+        if (data == nullptr) {
+          MS_LOG(ERROR) << "The out shape data is nullptr.";
+          return RET_NULL_PTR;
+        } else {
+          out_tensors_[0]->shape()[1] = static_cast<int64_t>(data[0]);
+          out_tensors_[0]->shape()[2] = static_cast<int64_t>(data[1]);
+        }
+      }
       ret = ResizeNearestNeighbor(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
                                   align_corners_, task_id, context_->thread_num_);
       break;

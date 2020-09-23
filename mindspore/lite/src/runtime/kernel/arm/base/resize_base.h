@@ -42,6 +42,7 @@ class ResizeBaseCPUKernel : public LiteKernel {
   int64_t new_width_;
   bool align_corners_;
   bool preserve_aspect_ratio;
+  bool const_shape_;
 
  private:
   int CheckParameters();
