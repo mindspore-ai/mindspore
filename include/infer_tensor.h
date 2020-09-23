@@ -76,7 +76,8 @@ class InferTensorBase {
     }
     auto ret = memcpy_s(mutable_data(), data_size(), data, data_len);
     if (ret != 0) {
-      MS_LOG(EXCEPTION) << "Set data memcpy_s failed";
+      MSI_LOG_ERROR << "Set data memcpy_s failed";
+      return false;
     }
     return true;
   }
