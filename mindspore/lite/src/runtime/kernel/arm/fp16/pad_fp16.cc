@@ -28,10 +28,7 @@ using mindspore::schema::PrimitiveType_Pad;
 
 namespace mindspore::kernel {
 int PadFp16CPUKernel::RunImpl(int task_id) {
-  auto input_data = reinterpret_cast<float16_t *>(in_tensors_.at(0)->MutableData());
-  auto output_data = reinterpret_cast<float16_t *>(out_tensors_.at(0)->MutableData());
-
-  PadFp16(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
+  PadFp16(input_, output_, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
   return RET_OK;
 }
 
@@ -54,7 +51,13 @@ int PadFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  memset(output_, 0, output_tensor->ElementsNum() * sizeof(float16_t));
+  if (pad_param_->constant_value_ - 0.0f < 1e-5) {
+    memset(output_, 0, output_tensor->ElementsNum() * sizeof(float16_t));
+  } else {
+    for (int i = 0; i < output_tensor->ElementsNum(); ++i) {
+      output_[i] = pad_param_->constant_value_;
+    }
+  }
   ret = ParallelLaunch(this->context_->thread_pool_, PadImpl, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";

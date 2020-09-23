@@ -53,10 +53,18 @@ int PoolingFp16CPUKernel::ReSize() {
 }
 
 int PoolingFp16CPUKernel::RunImpl(int task_id) {
+  float16_t minf = -FLT_MAX;
+  float16_t maxf = FLT_MAX;
+  if (pooling_param_->act_type_ == ActType_Relu) {
+    minf = 0.f;
+  } else if (pooling_param_->act_type_ == ActType_Relu6) {
+    minf = 0.f;
+    maxf = 6.f;
+  }
   if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
-    MaxPoolingFp16(fp16_input_, fp16_output_, pooling_param_, task_id);
+    MaxPoolingFp16(fp16_input_, fp16_output_, pooling_param_, task_id, minf, maxf);
   } else {
-    auto ret = AvgPoolingFp16(fp16_input_, fp16_output_, pooling_param_, task_id);
+    auto ret = AvgPoolingFp16(fp16_input_, fp16_output_, pooling_param_, task_id, minf, maxf);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "AvgPooling run failed.";
       return ret;
