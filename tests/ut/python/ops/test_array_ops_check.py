@@ -114,11 +114,6 @@ raise_set = [
         'desc_inputs': [mstype.number, None],
         'skip': ['backward']}),
 
-    # inst is var
-    ('IsInstance0', {
-        'block': (P.IsInstance(), {'exception': ValueError, 'error_keywords': ['IsInstance']}),
-        'desc_inputs': [5.0, mstype.number],
-        'skip': ['backward']}),
     # t is not mstype.Type
     ('IsInstance1', {
         'block': (IsInstanceNet(5.0), {'exception': TypeError, 'error_keywords': ['IsInstance']}),
