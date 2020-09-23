@@ -17,6 +17,7 @@ Testing cache operator with mappable datasets
 """
 import os
 import pytest
+import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as c_vision
 from mindspore import log as logger
@@ -26,7 +27,13 @@ DATA_DIR = "../data/dataset/testImageNetData/train/"
 COCO_DATA_DIR = "../data/dataset/testCOCO/train/"
 COCO_ANNOTATION_FILE = "../data/dataset/testCOCO/annotations/train.json"
 NO_IMAGE_DIR = "../data/dataset/testRandomData/"
-
+MNIST_DATA_DIR = "../data/dataset/testMnistData/"
+CELEBA_DATA_DIR = "../data/dataset/testCelebAData/"
+VOC_DATA_DIR = "../data/dataset/testVOC2012/"
+MANIFEST_DATA_FILE = "../data/dataset/testManifestData/test.manifest"
+CIFAR10_DATA_DIR = "../data/dataset/testCifar10Data/"
+CIFAR100_DATA_DIR = "../data/dataset/testCifar100Data/"
+MIND_RECORD_DATA_DIR = "../data/mindrecord/testTwoImageData/twobytes.mindrecord"
 GENERATE_GOLDEN = False
 
 
@@ -443,7 +450,7 @@ def test_cache_map_failure5():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_map_failure6():
     """
-    Test no-cache-supporting leaf ops with Map under cache (failure)
+    Test no-cache-supporting MindRecord leaf with Map under cache (failure)
 
                repeat
                   |
@@ -451,7 +458,7 @@ def test_cache_map_failure6():
                   |
              Map(resize)
                   |
-                Coco
+             MindRecord
 
     """
     logger.info("Test cache failure 6")
@@ -461,20 +468,64 @@ def test_cache_map_failure6():
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
     some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
-    data = ds.CocoDataset(COCO_DATA_DIR, annotation_file=COCO_ANNOTATION_FILE, task="Detection", decode=True)
+
+    columns_list = ["id", "file_name", "label_name", "img_data", "label_data"]
+    num_readers = 1
+    # The dataset has 5 records
+    data = ds.MindDataset(MIND_RECORD_DATA_DIR, columns_list, num_readers)
     resize_op = c_vision.Resize((224, 224))
 
-    data = data.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+    data = data.map(input_columns=["img_data"], operations=resize_op, cache=some_cache)
     data = data.repeat(4)
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
         for _ in data.create_dict_iterator():
             num_iter += 1
-    assert "There is currently no support for CocoOp under cache" in str(e.value)
+    assert "There is currently no support for MindRecordOp under cache" in str(e.value)
 
     assert num_iter == 0
     logger.info('test_cache_failure6 Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_failure7():
+    """
+    Test no-cache-supporting Generator leaf with Map under cache (failure)
+
+               repeat
+                  |
+                Cache
+                  |
+            Map(lambda x: x)
+                  |
+              Generator
+
+    """
+    def generator_1d():
+        for i in range(64):
+            yield (np.array(i),)
+
+    logger.info("Test cache failure 7")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    data = ds.GeneratorDataset(generator_1d, ["data"])
+    data = data.map((lambda x: x), ["data"], cache=some_cache)
+    data = data.repeat(4)
+
+    with pytest.raises(RuntimeError) as e:
+        num_iter = 0
+        for _ in data.create_dict_iterator():
+            num_iter += 1
+    assert "There is currently no support for GeneratorOp under cache" in str(e.value)
+
+    assert num_iter == 0
+    logger.info('test_cache_failure7 Ended.\n')
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
@@ -1234,6 +1285,421 @@ def test_cache_map_epoch_ctrl3():
     # reply on garbage collector to destroy iter1
 
     logger.info("test_cache_map_epoch_ctrl3 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_coco1():
+    """
+    Test mappable coco leaf with cache op right over the leaf
+
+       cache
+         |
+       Coco
+    """
+
+    logger.info("Test cache map coco1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This dataset has 6 records
+    ds1 = ds.CocoDataset(COCO_DATA_DIR, annotation_file=COCO_ANNOTATION_FILE, task="Detection", decode=True,
+                         cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 6
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_coco1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_coco2():
+    """
+    Test mappable coco leaf with the cache op later in the tree above the map(resize)
+
+       cache
+         |
+     Map(resize)
+         |
+       Coco
+    """
+
+    logger.info("Test cache map coco2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This dataset has 6 records
+    ds1 = ds.CocoDataset(COCO_DATA_DIR, annotation_file=COCO_ANNOTATION_FILE, task="Detection", decode=True)
+    resize_op = c_vision.Resize((224, 224))
+    ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 6
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_coco2 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_mnist1():
+    """
+    Test mappable mnist leaf with cache op right over the leaf
+
+       cache
+         |
+       Mnist
+    """
+
+    logger.info("Test cache map mnist1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    ds1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=10, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 10
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_mnist1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_mnist2():
+    """
+    Test mappable mnist leaf with the cache op later in the tree above the map(resize)
+
+       cache
+         |
+     Map(resize)
+         |
+       Mnist
+    """
+
+    logger.info("Test cache map mnist2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    ds1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=10)
+
+    resize_op = c_vision.Resize((224, 224))
+    ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 10
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_mnist2 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_celeba1():
+    """
+    Test mappable celeba leaf with cache op right over the leaf
+
+       cache
+         |
+       CelebA
+    """
+
+    logger.info("Test cache map celeba1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This dataset has 4 records
+    ds1 = ds.CelebADataset(CELEBA_DATA_DIR, shuffle=False, decode=True, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 4
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_celeba1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_celeba2():
+    """
+    Test mappable celeba leaf with the cache op later in the tree above the map(resize)
+
+       cache
+         |
+     Map(resize)
+         |
+       CelebA
+    """
+
+    logger.info("Test cache map celeba2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This dataset has 4 records
+    ds1 = ds.CelebADataset(CELEBA_DATA_DIR, shuffle=False, decode=True)
+    resize_op = c_vision.Resize((224, 224))
+    ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 4
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_celeba2 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_manifest1():
+    """
+    Test mappable manifest leaf with cache op right over the leaf
+
+       cache
+         |
+      Manifest
+    """
+
+    logger.info("Test cache map manifest1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This dataset has 4 records
+    ds1 = ds.ManifestDataset(MANIFEST_DATA_FILE, decode=True, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 4
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_manifest1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_manifest2():
+    """
+    Test mappable manifest leaf with the cache op later in the tree above the map(resize)
+
+       cache
+         |
+     Map(resize)
+         |
+      Manifest
+    """
+
+    logger.info("Test cache map manifest2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This dataset has 4 records
+    ds1 = ds.ManifestDataset(MANIFEST_DATA_FILE, decode=True)
+    resize_op = c_vision.Resize((224, 224))
+    ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 4
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_manifest2 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_cifar1():
+    """
+    Test mappable cifar10 leaf with cache op right over the leaf
+
+       cache
+         |
+      Cifar10
+    """
+
+    logger.info("Test cache map cifar1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    ds1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=10, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 10
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_cifar1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_cifar2():
+    """
+    Test mappable cifar100 leaf with the cache op later in the tree above the map(resize)
+
+       cache
+         |
+     Map(resize)
+         |
+      Cifar100
+    """
+
+    logger.info("Test cache map cifar2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    ds1 = ds.Cifar100Dataset(CIFAR100_DATA_DIR, num_samples=10)
+    resize_op = c_vision.Resize((224, 224))
+    ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 10
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_cifar2 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_voc1():
+    """
+    Test mappable voc leaf with cache op right over the leaf
+
+       cache
+         |
+       VOC
+    """
+
+    logger.info("Test cache map voc1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This dataset has 9 records
+    ds1 = ds.VOCDataset(VOC_DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 9
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_voc1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_voc2():
+    """
+    Test mappable voc leaf with the cache op later in the tree above the map(resize)
+
+       cache
+         |
+     Map(resize)
+         |
+       VOC
+    """
+
+    logger.info("Test cache map voc2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This dataset has 9 records
+    ds1 = ds.VOCDataset(VOC_DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    resize_op = c_vision.Resize((224, 224))
+    ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 9
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_voc2 Ended.\n")
 
 
 if __name__ == '__main__':

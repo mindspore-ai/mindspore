@@ -29,6 +29,7 @@
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/execution_tree.h"
+#include "minddata/dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {
@@ -498,6 +499,22 @@ Status TextFileOp::ComputeColMap() {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
   return Status::OK();
+}
+
+// Brief If a cache has been added into the ascendant tree over this text file op, then the cache will be executing
+// a sampler for fetching the data.  As such, any options in the text file op need to be reset to its defaults so
+// that this text file op will produce the full set of data into the cache.
+void TextFileOp::MakeSimpleProducer() {
+  device_id_ = 0;
+  num_devices_ = 1;
+  shuffle_files_ = false;
+  total_rows_ = 0;
+}
+
+// Visitor accept method for NodePass
+Status TextFileOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(shared_from_base<TextFileOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

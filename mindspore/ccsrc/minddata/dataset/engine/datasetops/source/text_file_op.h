@@ -188,6 +188,17 @@ class TextFileOp : public ParallelOp {
   // @return Vector of the input file names
   std::vector<std::string> FileNames() { return text_files_list_; }
 
+  /// \Brief If a cache has been added into the ascendant tree over this text file op, then the cache will be executing
+  ///     a sampler for fetching the data.  As such, any options in the text file op need to be reset to its defaults so
+  ///     that this text file op will produce the full set of data into the cache.
+  void MakeSimpleProducer();
+
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   // The entry point for when workers are launched.
   // @param worker_id - the id of the worker that is executing this function.

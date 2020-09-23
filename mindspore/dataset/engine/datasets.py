@@ -55,6 +55,7 @@ try:
 except ModuleNotFoundError:
     context = None
 
+
 class Shuffle(str, Enum):
     GLOBAL: str = "global"
     FILES: str = "file"
@@ -2947,6 +2948,8 @@ class MnistDataset(MappableDataset):
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -2966,7 +2969,7 @@ class MnistDataset(MappableDataset):
 
     @check_mnist_cifar_dataset
     def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None,
-                 shuffle=None, sampler=None, num_shards=None, shard_id=None):
+                 shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers)
 
         self.dataset_dir = dataset_dir
@@ -2976,6 +2979,7 @@ class MnistDataset(MappableDataset):
         self.shuffle_level = shuffle
         self.num_shards = num_shards
         self.shard_id = shard_id
+        self.cache = cache
 
     def get_args(self):
         args = super().get_args()
@@ -2986,6 +2990,7 @@ class MnistDataset(MappableDataset):
         args["sampler"] = self.sampler
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
     def get_dataset_size(self):
@@ -3827,6 +3832,8 @@ class ManifestDataset(MappableDataset):
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -3852,7 +3859,8 @@ class ManifestDataset(MappableDataset):
 
     @check_manifestdataset
     def __init__(self, dataset_file, usage="train", num_samples=None, num_parallel_workers=None,
-                 shuffle=None, sampler=None, class_indexing=None, decode=False, num_shards=None, shard_id=None):
+                 shuffle=None, sampler=None, class_indexing=None, decode=False, num_shards=None, shard_id=None,
+                 cache=None):
         super().__init__(num_parallel_workers)
 
         self.dataset_file = dataset_file
@@ -3868,6 +3876,7 @@ class ManifestDataset(MappableDataset):
         self.shuffle_level = shuffle
         self.num_shards = num_shards
         self.shard_id = shard_id
+        self.cache = cache
 
     def get_args(self):
         args = super().get_args()
@@ -3880,6 +3889,7 @@ class ManifestDataset(MappableDataset):
         args["decode"] = self.decode
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
     def get_dataset_size(self):
@@ -4010,6 +4020,8 @@ class Cifar10Dataset(MappableDataset):
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4037,7 +4049,7 @@ class Cifar10Dataset(MappableDataset):
 
     @check_mnist_cifar_dataset
     def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None,
-                 shuffle=None, sampler=None, num_shards=None, shard_id=None):
+                 shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers)
 
         self.dataset_dir = dataset_dir
@@ -4047,6 +4059,7 @@ class Cifar10Dataset(MappableDataset):
         self.num_shards = num_shards
         self.shard_id = shard_id
         self.shuffle_level = shuffle
+        self.cache = cache
 
     def get_args(self):
         args = super().get_args()
@@ -4057,6 +4070,7 @@ class Cifar10Dataset(MappableDataset):
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
         args["shuffle"] = self.shuffle_level
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
     def get_dataset_size(self):
@@ -4157,6 +4171,8 @@ class Cifar100Dataset(MappableDataset):
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4181,7 +4197,7 @@ class Cifar100Dataset(MappableDataset):
 
     @check_mnist_cifar_dataset
     def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None,
-                 shuffle=None, sampler=None, num_shards=None, shard_id=None):
+                 shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers)
 
         self.dataset_dir = dataset_dir
@@ -4191,6 +4207,7 @@ class Cifar100Dataset(MappableDataset):
         self.num_shards = num_shards
         self.shard_id = shard_id
         self.shuffle_level = shuffle
+        self.cache = cache
 
     def get_args(self):
         args = super().get_args()
@@ -4201,6 +4218,7 @@ class Cifar100Dataset(MappableDataset):
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
         args["shuffle"] = self.shuffle_level
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
     def get_dataset_size(self):
@@ -4585,6 +4603,8 @@ class VOCDataset(MappableDataset):
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If xml of Annotations is an invalid format.
@@ -4622,7 +4642,8 @@ class VOCDataset(MappableDataset):
 
     @check_vocdataset
     def __init__(self, dataset_dir, task="Segmentation", usage="train", class_indexing=None, num_samples=None,
-                 num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None):
+                 num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None,
+                 cache=None):
         super().__init__(num_parallel_workers)
         self.dataset_dir = dataset_dir
         self.task = task
@@ -4634,6 +4655,7 @@ class VOCDataset(MappableDataset):
         self.shuffle_level = shuffle
         self.num_shards = num_shards
         self.shard_id = shard_id
+        self.cache = cache
 
     def get_args(self):
         args = super().get_args()
@@ -4647,6 +4669,7 @@ class VOCDataset(MappableDataset):
         args["shuffle"] = self.shuffle_level
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
     def get_dataset_size(self):
@@ -4793,6 +4816,8 @@ class CocoDataset(MappableDataset):
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4828,7 +4853,7 @@ class CocoDataset(MappableDataset):
 
     @check_cocodataset
     def __init__(self, dataset_dir, annotation_file, task="Detection", num_samples=None, num_parallel_workers=None,
-                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None):
+                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers)
         self.dataset_dir = dataset_dir
         self.annotation_file = annotation_file
@@ -4839,6 +4864,7 @@ class CocoDataset(MappableDataset):
         self.shuffle_level = shuffle
         self.num_shards = num_shards
         self.shard_id = shard_id
+        self.cache = cache
 
     def get_args(self):
         args = super().get_args()
@@ -4851,6 +4877,7 @@ class CocoDataset(MappableDataset):
         args["shuffle"] = self.shuffle_level
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
     def get_dataset_size(self):
@@ -4948,6 +4975,8 @@ class CelebADataset(MappableDataset):
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -4958,7 +4987,7 @@ class CelebADataset(MappableDataset):
 
     @check_celebadataset
     def __init__(self, dataset_dir, num_parallel_workers=None, shuffle=None, usage='all', sampler=None, decode=False,
-                 extensions=None, num_samples=None, num_shards=None, shard_id=None):
+                 extensions=None, num_samples=None, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers)
         self.dataset_dir = dataset_dir
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
@@ -4970,6 +4999,7 @@ class CelebADataset(MappableDataset):
         self.num_shards = num_shards
         self.shard_id = shard_id
         self.shuffle_level = shuffle
+        self.cache = cache
 
         if usage != "all":
             dir = os.path.realpath(self.dataset_dir)
@@ -4988,6 +5018,7 @@ class CelebADataset(MappableDataset):
         args["usage"] = self.usage
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
     def get_dataset_size(self):
@@ -5097,6 +5128,8 @@ class CLUEDataset(SourceDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -5107,7 +5140,7 @@ class CLUEDataset(SourceDataset):
 
     @check_cluedataset
     def __init__(self, dataset_files, task='AFQMC', usage='train', num_samples=None,
-                 num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None):
+                 num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers)
         self.dataset_files = self._find_files(dataset_files)
         self.dataset_files.sort()
@@ -5248,6 +5281,15 @@ class CLUEDataset(SourceDataset):
         self.num_shards = num_shards
         self.shard_id = shard_id
 
+        # The clue dataset does not directly support a sampler.  It has provided sampling arguments
+        # (shuffle, num_samples, num_shards, shard_id) and it DOES support sampling if somewhere above it in
+        # the pipeline contains a cache.  If there is no cache above it, then this sampler is not used.
+        sampler_shuffle = self.shuffle_files
+        sampler = None
+        self.sampler = _select_sampler(self.num_samples, sampler, sampler_shuffle, num_shards, shard_id,
+                                       non_mappable=True)
+        self.cache = cache
+
     def get_args(self):
         args = super().get_args()
         args["dataset_files"] = self.dataset_files
@@ -5259,6 +5301,8 @@ class CLUEDataset(SourceDataset):
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
         args["cols_to_keyword"] = self.cols_to_keyword
+        args["sampler"] = self.sampler
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
     def get_dataset_size(self):
@@ -5314,6 +5358,9 @@ class CSVDataset(SourceDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
+
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -5324,7 +5371,7 @@ class CSVDataset(SourceDataset):
 
     @check_csvdataset
     def __init__(self, dataset_files, field_delim=',', column_defaults=None, column_names=None, num_samples=None,
-                 num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None):
+                 num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers)
         self.dataset_files = self._find_files(dataset_files)
         self.dataset_files.sort()
@@ -5349,6 +5396,15 @@ class CSVDataset(SourceDataset):
         self.num_shards = num_shards
         self.shard_id = shard_id
 
+        self.cache = cache
+        # The CSV dataset does not directly support a sampler.  It has provided sampling arguments
+        # (shuffle, num_samples, num_shards, shard_id) and it DOES support sampling if somewhere above it in
+        # the pipeline contains a cache.  If there is no cache above it, then this sampler is not used.
+        sampler_shuffle = self.shuffle_files
+        sampler = None
+        self.sampler = _select_sampler(self.num_samples, sampler, sampler_shuffle, num_shards, shard_id,
+                                       non_mappable=True)
+
     def get_args(self):
         args = super().get_args()
         args["dataset_files"] = self.dataset_files
@@ -5362,6 +5418,8 @@ class CSVDataset(SourceDataset):
         args["shuffle"] = self.shuffle_level
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
+        args["sampler"] = self.sampler
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
     def get_dataset_size(self):
@@ -5412,6 +5470,9 @@ class TextFileDataset(SourceDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
+            The cache feature is under development and is not recommended.
+
     Examples:
         >>> import mindspore.dataset as ds
         >>>
@@ -5421,7 +5482,7 @@ class TextFileDataset(SourceDataset):
 
     @check_textfiledataset
     def __init__(self, dataset_files, num_samples=None, num_parallel_workers=None,
-                 shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None):
+                 shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers)
         self.dataset_files = self._find_files(dataset_files)
         self.dataset_files.sort()
@@ -5443,6 +5504,15 @@ class TextFileDataset(SourceDataset):
         self.num_shards = num_shards
         self.shard_id = shard_id
 
+        self.cache = cache
+        # The text file dataset does not directly support a sampler.  It has provided sampling arguments
+        # (shuffle, num_samples, num_shards, shard_id) and it DOES support sampling if somewhere above it in
+        # the pipeline contains a cache.  If there is no cache above it, then this sampler is not used.
+        sampler_shuffle = self.shuffle_files
+        sampler = None
+        self.sampler = _select_sampler(self.num_samples, sampler, sampler_shuffle, num_shards, shard_id,
+                                       non_mappable=True)
+
     def get_args(self):
         args = super().get_args()
         args["dataset_files"] = self.dataset_files
@@ -5453,6 +5523,8 @@ class TextFileDataset(SourceDataset):
         args["shuffle"] = self.shuffle_level
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
+        args["sampler"] = self.sampler
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
     def get_dataset_size(self):

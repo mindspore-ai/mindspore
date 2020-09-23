@@ -206,6 +206,10 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
   /// \return Status of the node visit
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "CocoOp"; }
+
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return
@@ -324,7 +328,6 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
   std::string annotation_path_;
   TaskType task_type_;
   int32_t rows_per_buffer_;
-  std::shared_ptr<Sampler> sampler_;
   std::unique_ptr<DataSchema> data_schema_;
 
   WaitPost wp_;

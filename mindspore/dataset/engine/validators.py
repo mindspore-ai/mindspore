@@ -83,6 +83,9 @@ def check_mnist_cifar_dataset(method):
 
         check_sampler_shuffle_shard_options(param_dict)
 
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
+
         return method(self, *args, **kwargs)
 
     return new_method
@@ -109,6 +112,9 @@ def check_manifestdataset(method):
         validate_dataset_param_value(nreq_param_dict, param_dict, dict)
 
         check_sampler_shuffle_shard_options(param_dict)
+
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
 
         return method(self, *args, **kwargs)
 
@@ -180,6 +186,9 @@ def check_vocdataset(method):
         validate_dataset_param_value(nreq_param_dict, param_dict, dict)
         check_sampler_shuffle_shard_options(param_dict)
 
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
+
         return method(self, *args, **kwargs)
 
     return new_method
@@ -216,6 +225,9 @@ def check_cocodataset(method):
             raise ValueError("CocoDataset doesn't support PKSampler")
         check_sampler_shuffle_shard_options(param_dict)
 
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
+
         return method(self, *args, **kwargs)
 
     return new_method
@@ -251,6 +263,9 @@ def check_celebadataset(method):
         sampler = param_dict.get('sampler')
         if sampler is not None and isinstance(sampler, samplers.PKSampler):
             raise ValueError("CelebADataset does not support PKSampler.")
+
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
 
         return method(self, *args, **kwargs)
 
@@ -842,6 +857,9 @@ def check_cluedataset(method):
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         check_sampler_shuffle_shard_options(param_dict)
 
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
+
         return method(self, *args, **kwargs)
 
     return new_method
@@ -885,6 +903,9 @@ def check_csvdataset(method):
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         check_sampler_shuffle_shard_options(param_dict)
 
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
+
         return method(self, *args, **kwargs)
 
     return new_method
@@ -903,6 +924,9 @@ def check_textfiledataset(method):
         type_check(dataset_files, (str, list), "dataset files")
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         check_sampler_shuffle_shard_options(param_dict)
+
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
 
         return method(self, *args, **kwargs)
 

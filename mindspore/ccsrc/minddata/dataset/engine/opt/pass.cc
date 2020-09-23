@@ -45,6 +45,9 @@
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
+#include "minddata/dataset/engine/datasetops/source/clue_op.h"
+#include "minddata/dataset/engine/datasetops/source/csv_op.h"
+#include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #endif
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
 #ifdef ENABLE_PYTHON
@@ -256,6 +259,21 @@ Status NodePass::RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified) {
 }
 
 Status NodePass::RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<ClueOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<CsvOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<TextFileOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }

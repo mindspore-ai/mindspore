@@ -1075,7 +1075,7 @@ std::vector<std::shared_ptr<DatasetOp>> CLUEDataset::Build() {
 
   std::shared_ptr<ClueOp> clue_op =
     std::make_shared<ClueOp>(num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, ck_map,
-                             sorted_dataset_files, connector_que_size_, shuffle_files, num_shards_, shard_id_);
+                             sorted_dataset_files, connector_que_size_, shuffle_files, num_shards_, shard_id_, nullptr);
   RETURN_EMPTY_IF_ERROR(clue_op->Init());
   if (shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
@@ -1256,7 +1256,7 @@ std::vector<std::shared_ptr<DatasetOp>> CSVDataset::Build() {
 
   std::shared_ptr<CsvOp> csv_op = std::make_shared<CsvOp>(
     sorted_dataset_files, field_delim_, column_default_list, column_names_, num_workers_, rows_per_buffer_,
-    num_samples_, worker_connector_size_, connector_que_size_, shuffle_files, num_shards_, shard_id_);
+    num_samples_, worker_connector_size_, connector_que_size_, shuffle_files, num_shards_, shard_id_, nullptr);
   RETURN_EMPTY_IF_ERROR(csv_op->Init());
   if (shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
@@ -1502,7 +1502,7 @@ std::vector<std::shared_ptr<DatasetOp>> TextFileDataset::Build() {
   // Create and initalize TextFileOp
   std::shared_ptr<TextFileOp> text_file_op = std::make_shared<TextFileOp>(
     num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, std::move(schema), sorted_dataset_files,
-    connector_que_size_, shuffle_files, num_shards_, shard_id_, std::move(nullptr));
+    connector_que_size_, shuffle_files, num_shards_, shard_id_, nullptr);
   RETURN_EMPTY_IF_ERROR(text_file_op->Init());
 
   if (shuffle_ == ShuffleMode::kGlobal) {

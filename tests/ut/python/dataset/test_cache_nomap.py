@@ -20,22 +20,26 @@ import itertools
 import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
+import mindspore.dataset.text as text
 import mindspore.dataset.vision.c_transforms as c_vision
 from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
-DATA_DIR2 = ["../data/dataset/testTextTFRecord/text.tfrecord"]
+TEXT_TF_DATA_DIR = ["../data/dataset/testTextTFRecord/text.tfrecord"]
 SCHEMA_DIR2 = "../data/dataset/testTextTFRecord/datasetSchema.json"
 
-DATA_DIR3 = ["../data/dataset/test_tf_file_3_images2/train-0000-of-0001.data",
-             "../data/dataset/test_tf_file_3_images2/train-0000-of-0002.data",
-             "../data/dataset/test_tf_file_3_images2/train-0000-of-0003.data",
-             "../data/dataset/test_tf_file_3_images2/train-0000-of-0004.data"]
-SCHEMA_DIR3 = "../data/dataset/test_tf_file_3_images2/datasetSchema.json"
+TRAIN_DATA_DIR = ["../data/dataset/test_tf_file_3_images2/train-0000-of-0001.data",
+                  "../data/dataset/test_tf_file_3_images2/train-0000-of-0002.data",
+                  "../data/dataset/test_tf_file_3_images2/train-0000-of-0003.data",
+                  "../data/dataset/test_tf_file_3_images2/train-0000-of-0004.data"]
+TRAIN_SCHEMA_DIR = "../data/dataset/test_tf_file_3_images2/datasetSchema.json"
 
-DATA_DIR4 = "../data/dataset/testImageNetData/train/"
+IMAGE_FOLDER_DATA_DIR = "../data/dataset/testImageNetData/train/"
+CLUE_DATA_DIR = '../data/dataset/testCLUE/afqmc/train.json'
+CSV_DATA_DIR = '../data/dataset/testCSV/1.csv'
+TEXT_FILE_DATA_DIR = "../data/dataset/testTextFileDataset/1.txt"
 
 GENERATE_GOLDEN = False
 
@@ -1310,7 +1314,7 @@ def test_cache_nomap_multiple_cache1():
     eval_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
 
     # This dataset has 12 records in it
-    train_dataset = ds.TFRecordDataset(DATA_DIR3, SCHEMA_DIR3)
+    train_dataset = ds.TFRecordDataset(TRAIN_DATA_DIR, TRAIN_SCHEMA_DIR)
     decode_op = c_vision.Decode()
     train_dataset = train_dataset.map(input_columns=["image"], operations=decode_op, cache=train_cache)
 
@@ -1359,7 +1363,7 @@ def test_cache_nomap_multiple_cache2():
     image_dataset = image_dataset.map(input_columns=["image"], operations=decode_op, cache=image_cache)
 
     # This dataset has 3 records in it only
-    text_dataset = ds.TFRecordDataset(DATA_DIR2, SCHEMA_DIR2, cache=text_cache)
+    text_dataset = ds.TFRecordDataset(TEXT_TF_DATA_DIR, SCHEMA_DIR2, cache=text_cache)
 
     num_epoch = 5
     image_iter = image_dataset.create_dict_iterator(num_epochs=num_epoch)
@@ -1404,7 +1408,7 @@ def test_cache_nomap_multiple_cache3():
     tf_dataset = tf_dataset.map(input_columns=["image"], operations=decode_op, cache=tf_cache)
 
     # This DATA_DIR only has 2 images in it
-    image_dataset = ds.ImageFolderDataset(dataset_dir=DATA_DIR4)
+    image_dataset = ds.ImageFolderDataset(dataset_dir=IMAGE_FOLDER_DATA_DIR)
     image_dataset = image_dataset.map(input_columns=["image"], operations=decode_op, cache=image_cache)
 
     num_epoch = 5
@@ -1443,7 +1447,7 @@ def test_cache_nomap_multiple_cache_train():
     train_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
 
     # This dataset has 12 records in it
-    train_dataset = ds.TFRecordDataset(DATA_DIR3, SCHEMA_DIR3)
+    train_dataset = ds.TFRecordDataset(TRAIN_DATA_DIR, TRAIN_SCHEMA_DIR)
     decode_op = c_vision.Decode()
     train_dataset = train_dataset.map(input_columns=["image"], operations=decode_op, cache=train_cache)
 
@@ -1495,6 +1499,239 @@ def test_cache_nomap_multiple_cache_eval():
     assert epoch_count == num_epoch
 
     logger.info("test_cache_nomap_multiple_cache_eval Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_clue1():
+    """
+    A clue dataset (a non mappable dataset) with a cache over it just after the leaf
+    In this one, the clue dataset will be given sharding configuration, however since a cache is
+    used, the tree prepare should undo the sharding configuration and instead, a distributed
+    sampler will be chosen with the same shard config.
+
+       Cache
+         |
+       CLUE
+    """
+
+    logger.info("Test cache nomap clue 1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # With only 3 records shard into 3, we expect only 1 record returned for this shard
+    # However, the sharding will be done by the sampler, not by the clue leaf node
+    # In this case, it is a row-based sharding, not the file-based sharding that would happen if
+    # there was not any cache.
+    ds1 = ds.CLUEDataset(CLUE_DATA_DIR, task='AFQMC', usage='train', num_shards=3, shard_id=1, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 1
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_nomap_clue1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_clue2():
+    """
+    A clue dataset (a non mappable dataset) with a cache over it after map
+    In this one, a num_samples argument is given
+
+       Cache
+         |
+    map(lambda x: x)
+         |
+       CLUE
+    """
+
+    logger.info("Test cache nomap clue 2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    ds1 = ds.CLUEDataset(CLUE_DATA_DIR, task='AFQMC', usage='train', num_samples=2)
+    ds1 = ds1.map((lambda x: x), ["label"], cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 2
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_nomap_clue2 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_csv1():
+    """
+    A csv dataset (a non mappable dataset) with a cache over it just after the leaf
+    In this one, the csv dataset will be given sharding configuration, however since a cache is
+    used, the tree prepare should undo the sharding configuration and instead, a distributed
+    sampler will be chosen with the same shard config.
+
+       Cache
+         |
+       CSV
+    """
+
+    logger.info("Test cache nomap csv 1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # With only 3 records shard into 3, we expect only 1 record returned for this shard
+    # However, the sharding will be done by the sampler, not by the clue leaf node
+    # In this case, it is a row-based sharding, not the file-based sharding that would happen if
+    # there was not any cache.
+    ds1 = ds.CSVDataset(CSV_DATA_DIR, column_defaults=["1", "2", "3", "4"],
+                        column_names=['col1', 'col2', 'col3', 'col4'], num_shards=3, shard_id=1, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 1
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_nomap_csv1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_csv2():
+    """
+    A csv dataset (a non mappable dataset) with a cache over it after map
+    In this one, a num_samples argument is given
+
+       Cache
+         |
+    map(lambda x: x)
+         |
+       CSV
+    """
+
+    logger.info("Test cache nomap csv 2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    ds1 = ds.CSVDataset(CSV_DATA_DIR, column_defaults=["1", "2", "3", "4"],
+                        column_names=['col1', 'col2', 'col3', 'col4'], num_samples=2)
+    ds1 = ds1.map((lambda x: x), ["col1"], cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 2
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_nomap_csv2 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_textfile1():
+    """
+    A text file dataset (a non mappable dataset) with a cache over it just after the leaf
+    In this one, the text file dataset will be given sharding configuration, however since a cache is
+    used, the tree prepare should undo the sharding configuration and instead, a distributed
+    sampler will be chosen with the same shard config.
+
+       Cache
+         |
+     TextFile
+    """
+
+    logger.info("Test cache nomap textfile 1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # With only 3 records shard into 3, we expect only 1 record returned for this shard
+    # However, the sharding will be done by the sampler, not by the clue leaf node
+    # In this case, it is a row-based sharding, not the file-based sharding that would happen if
+    # there was not any cache.
+    ds1 = ds.CSVDataset(TEXT_FILE_DATA_DIR, num_shards=3, shard_id=1, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 1
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_nomap_textfile1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_textfile2():
+    """
+    A text file dataset (a non mappable dataset) with a cache over it after map
+    In this one, a num_samples argument is given
+
+       Cache
+         |
+    Map(tokenizer)
+         |
+     TextFile
+    """
+    def my_tokenizer(line):
+        words = line.split()
+        if not words:
+            return [""]
+        return words
+
+    logger.info("Test cache nomap textfile 2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    ds1 = ds.TextFileDataset(TEXT_FILE_DATA_DIR, num_samples=2)
+    tokenizer = text.PythonTokenizer(my_tokenizer)
+    ds1 = ds1.map(operations=tokenizer, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 2
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_nomap_textfile2 Ended.\n")
 
 
 if __name__ == '__main__':

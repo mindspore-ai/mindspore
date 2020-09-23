@@ -20,6 +20,7 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <utility>
 #include <vector>
 #include <nlohmann/json.hpp>
 
@@ -122,6 +123,14 @@ class ClueOp : public ParallelOp {
     // @return - the a string vector
     std::vector<std::string> split(const std::string &s, char delim);
 
+    // Setter method
+    // @param std::shared_ptr<Sampler> sampler
+    // @return Builder setter method returns reference to the builder.
+    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+      builder_sampler_ = std::move(sampler);
+      return *this;
+    }
+
    private:
     int32_t builder_device_id_;
     int32_t builder_num_devices_;
@@ -133,12 +142,13 @@ class ClueOp : public ParallelOp {
     std::vector<std::string> builder_clue_files_list_;
     bool builder_shuffle_files_;
     std::map<std::string, std::string> builder_cols_to_keyword_;
+    std::shared_ptr<Sampler> builder_sampler_;
   };
 
   // Constructor of ClueOp
   ClueOp(int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples, int32_t worker_connector_size,
          ColKeyMap cols_to_keyword, std::vector<std::string> clue_files_list, int32_t op_connector_size,
-         bool shuffle_files, int32_t num_devices, int32_t device_id);
+         bool shuffle_files, int32_t num_devices, int32_t device_id, std::shared_ptr<Sampler> sampler);
 
   // Default destructor
   ~ClueOp() = default;
@@ -172,6 +182,17 @@ class ClueOp : public ParallelOp {
   // File names getter
   // @return Vector of the input file names
   std::vector<std::string> FileNames() { return clue_files_list_; }
+
+  /// \Brief If a cache has been added into the ascendant tree over this clue op, then the cache will be executing
+  ///     a sampler for fetching the data.  As such, any options in the clue op need to be reset to its defaults so
+  ///     that this clue op will produce the full set of data into the cache.
+  void MakeSimpleProducer();
+
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
 
  private:
   // The entry point for when workers are launched.
