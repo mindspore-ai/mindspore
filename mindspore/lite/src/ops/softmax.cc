@@ -82,6 +82,10 @@ int SoftMax::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   if (!GetInferFlag()) {
     return RET_OK;
   }
+  if (input->shape().size() > 5) {
+    MS_LOG(ERROR) << "Softmax input dim must be less than 5, get " << input->shape().size();
+    return RET_ERROR;
+  }
   output->set_shape(input->shape());
   return RET_OK;
 }

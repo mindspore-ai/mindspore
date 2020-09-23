@@ -28,20 +28,20 @@ typedef struct ArithmeticParameter {
   bool broadcasting_;
   size_t ndim_;
   int activation_type_;
-  int in_shape0_[5];
+  int in_shape0_[10];
   int in_elements_num0_;
-  int in_shape1_[5];
+  int in_shape1_[10];
   int in_elements_num1_;
 
-  int out_shape_[5];
+  int out_shape_[10];
   int out_elements_num_;
 
-  int in_strides0_[5];
-  int in_strides1_[5];
-  int out_strides_[5];
+  int in_strides0_[10];
+  int in_strides1_[10];
+  int out_strides_[10];
 
-  int multiples0_[5];
-  int multiples1_[5];
+  int multiples0_[10];
+  int multiples1_[10];
 } ArithmeticParameter;
 
 #ifdef __cplusplus
