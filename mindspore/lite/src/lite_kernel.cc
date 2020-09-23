@@ -174,9 +174,9 @@ float *LiteKernelUtil::DequantWeight(lite::Tensor *input_tensor) {
     MS_LOG(ERROR) << "no quant param";
     return nullptr;
   }
-  const auto *quant_data = static_cast<const int8_t *>(input_tensor->MutableData());
-  auto *dequant_data = static_cast<float *>(malloc(input_tensor->ElementsNum() * sizeof(float)));
-  if (dequant_data == nullptr) {
+  const auto *quant_datas = static_cast<const int8_t *>(input_tensor->MutableData());
+  auto *dequant_datas = static_cast<float *>(malloc(input_tensor->ElementsNum() * sizeof(float)));
+  if (dequant_datas == nullptr) {
     MS_LOG(ERROR) << "malloc faile";
     return nullptr;
   }
@@ -185,7 +185,7 @@ float *LiteKernelUtil::DequantWeight(lite::Tensor *input_tensor) {
     size_t channels = static_cast<size_t>(input_tensor->Batch());
     if (input_tensor->GetQuantParams().size() != channels) {
       MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->GetQuantParams().size() << channels;
-      free(dequant_data);
+      free(dequant_datas);
       return nullptr;
     }
     size_t per_channel_size = input_tensor->ElementsNum() / channels;
@@ -194,9 +194,15 @@ float *LiteKernelUtil::DequantWeight(lite::Tensor *input_tensor) {
       auto param = quant_param.at(i);
       auto scale = param.scale;
       auto zero_point = param.zeroPoint;
+      auto var_corr = param.var_corr;
+      auto mean_corr = param.mean_corr;
+      if (var_corr < 0 || var_corr > 10) {
+        MS_LOG(WARNING) << "unexpeted var_corr: " << var_corr;
+        var_corr = 1;
+      }
       for (size_t j = 0; j < per_channel_size; j++) {
-        dequant_data[per_channel_size * i + j] =
-          static_cast<float>((quant_data[per_channel_size * i + j] - zero_point) * scale);
+        auto dequant_data = (quant_datas[per_channel_size * i + j] - zero_point) * scale;
+        dequant_datas[per_channel_size * i + j] = static_cast<float>(dequant_data * var_corr + mean_corr);
       }
     }
   } else {
@@ -205,9 +211,9 @@ float *LiteKernelUtil::DequantWeight(lite::Tensor *input_tensor) {
     auto scale = param.scale;
     auto zero_point = param.zeroPoint;
     for (int64_t j = 0; j < input_tensor->ElementsNum(); j++) {
-      dequant_data[j] = static_cast<float>((quant_data[j] - zero_point) * scale);
+      dequant_datas[j] = static_cast<float>((quant_datas[j] - zero_point) * scale);
     }
   }
-  return dequant_data;
+  return dequant_datas;
 }
 }  // namespace mindspore::kernel

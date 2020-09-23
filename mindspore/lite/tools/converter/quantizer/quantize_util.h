@@ -143,7 +143,7 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
     return RET_ERROR;
   }
   std::vector<T> quant_datas(elem_count);
-
+  std::vector<float> dequant_datas(elem_count);
   if (per_channel) {
     // notice: assume Con2D\DepthwiseConv2D's weight format are same: KHWC
     // channel at first
@@ -173,8 +173,9 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
         MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
         return status;
       }
-      quant_params.emplace_back(quant_param);
       // do quantization
+      double average_dequant = 0;
+      double average_raw = 0;
       for (uint32_t j = 0; j < one_filter_size; j++) {
         auto index = j + i * one_filter_size;
         if (index >= elem_count) {
@@ -184,7 +185,44 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
         float raw_data = raw_datas[index];
         auto quant_data = QuantizeData<T>(raw_data, quant_param, quant_max, quant_min);
         quant_datas[index] = quant_data;
+
+        if (quantType == QuantType_WeightQuant) {
+          float dequant_data = quant_param.scale * (quant_data - quant_param.zeroPoint);
+          dequant_datas[index] = dequant_data;
+          average_dequant += dequant_data;
+          average_raw += raw_data;
+        }
       }
+      if (quantType == QuantType_WeightQuant) {
+        // mean
+        average_dequant = average_dequant / one_filter_size;
+        average_raw = average_raw / one_filter_size;
+        // std
+        double variance_dequant = 0;
+        double variance_raw = 0;
+        for (uint32_t j = 0; j < one_filter_size; j++) {
+          auto index = j + i * one_filter_size;
+          if (index >= elem_count) {
+            MS_LOG(ERROR) << "over flow!";
+            return RET_ERROR;
+          }
+          variance_dequant += std::pow(dequant_datas[index] - average_dequant, 2);
+          variance_raw += std::pow(raw_datas[index] - average_raw, 2);
+        }
+        variance_dequant = std::sqrt(variance_dequant / one_filter_size);
+        variance_raw = std::sqrt(variance_raw / one_filter_size);
+        quant_param.var_corr = 1;
+        if (variance_raw != 0 && variance_dequant != 0) {
+          auto temp_var_corr = variance_raw / variance_dequant;
+          if (temp_var_corr > 0 && temp_var_corr < 10) {
+            quant_param.var_corr = temp_var_corr;
+          } else {
+            MS_LOG(WARNING) << "unexpected var_corr: " << temp_var_corr;
+          }
+        }
+        quant_param.mean_corr = average_raw - average_dequant * quant_param.var_corr;
+      }
+      quant_params.emplace_back(quant_param);
     }
     auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(int8_t));
     if (ret != EOK) {

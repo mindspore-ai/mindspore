@@ -106,6 +106,8 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
         QuantArg quant_arg{};
         quant_arg.scale = quant_params->Get(j)->scale();
         quant_arg.zeroPoint = quant_params->Get(j)->zeroPoint();
+        quant_arg.var_corr = quant_params->Get(j)->var_corr();
+        quant_arg.mean_corr = quant_params->Get(j)->mean_corr();
         dstTensor->AddQuantParam(quant_arg);
       }
     }
@@ -351,7 +353,7 @@ int LiteSession::Init(Context *context) {
     }
   }
 #endif
-  executor = new(std::nothrow) Executor();
+  executor = new (std::nothrow) Executor();
   if (nullptr == executor) {
     MS_LOG(ERROR) << "New Executor failed";
     is_running_.store(false);
