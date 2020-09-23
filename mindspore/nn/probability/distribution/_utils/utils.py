@@ -158,6 +158,18 @@ def check_prob(p):
     if not comp.all():
         raise ValueError('Probabilities should be less than one')
 
+def check_sum_equal_one(probs):
+    prob_sum = np.sum(probs.asnumpy(), axis=-1)
+    comp = np.equal(np.ones(prob_sum.shape), prob_sum)
+    if not comp.all():
+        raise ValueError('Probabilities for each category should sum to one for Categorical distribution.')
+
+def check_rank(probs):
+    """
+    Used in categorical distribution. check Rank >=1.
+    """
+    if probs.asnumpy().ndim == 0:
+        raise ValueError('probs for Categorical distribution must have rank >= 1.')
 
 def logits_to_probs(logits, is_binary=False):
     """
