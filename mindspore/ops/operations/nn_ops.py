@@ -2488,7 +2488,7 @@ class ResizeBilinear(PrimitiveWithInfer):
 
     Inputs:
         - **input** (Tensor) - Image to be resized. Input images must be a 4-D tensor with shape
-         [batch, channels, height, width], with data type of float32 or float16.
+          :math:`(batch, channels, height, width)`, with data type of float32 or float16.
 
     Outputs:
         Tensor, resized image. 4-D with shape [batch, channels, new_height, new_width] in `float32`.
@@ -2701,13 +2701,12 @@ class PReLU(PrimitiveWithInfer):
         >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
         >>> net = Net()
         >>> result = net(input_x, weight)
-        [[[-0.1      1.        ]
-          [ 0.       2.        ]
-          [0.        0.        ]]
-
-         [[-0.2     -0.1      ]
-          [2.       -1.8000001]
-          [0.6       0.6       ]]]
+        [[[-0.1, 1.0],
+          [0.0, 2.0],
+          [0.0, 0.0]],
+         [[-0.2, -0.1],
+          [2.0, -1.8000001],
+          [0.6, 0.6]]]
     """
 
     @prim_attr_register
