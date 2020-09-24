@@ -7,7 +7,7 @@
 #endif
 
 // void MatmulFloatNeon32Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth
-//                        int row, int col, size_t stride, size_t writeNhwc, size_t WriteWino)
+//                        int row, int col, size_t stride, size_t writeMode)
 // r0: a
 // r1: b
 // r2: c
@@ -25,14 +25,20 @@ MatmulFloatNeon32Opt:
     add sp, sp, #48
 
     ldr r5, [sp, #4]
+    ldr r6, [sp, #8]
     ldr r7, [sp, #12]
     ldr r8, [sp, #16]
 
-    mov lr, #32 // sizeof(float) * 8
-    mul r12, r5, lr // block stride of lhs/rhs: sizeof(float) * 8 * depth
-    ldr lr, [sp, #24]
+    mov lr, #16 // sizeof(float) * 4
+    mul r12, r5, lr // block stride of lhs/rhs: sizeof(float) * 4 * depth
+    ldr lr, [sp, #20]
     cmp lr, #0
-    beq NoWinoSteps
+    bne NoC8Steps
+    mov lr, #32
+    mul r10, r6, lr
+NoC8Steps:
+    cmp lr, #2
+    bne NoWinoSteps
     mov lr, #4
     mul r11, r7, r8 // stride * col * sizeof(float)
     mul r11, r11, lr
@@ -42,22 +48,32 @@ NoWinoSteps:
     mov lr, #4
     mul r8, r8, lr // stride * sizeof(float)
 
-LoopCol:
-    ldr r6, [sp, #8] // reload lhs row
-    ldr r0, [sp, #-48] // reload lhs ptr
-    ldr r2, [sp, #-40] // reload dst ptr
+LoopRow:
+    ldr r1, [sp, #-44] // reload rhs ptr
+    ldr r7, [sp, #12] // reload rhs col
+    ldr r3, [sp, #-36] // reload bias ptr
 
-    LoopRow:
-        ldr r1, [sp, #-44] // reload rhs ptr
+    LoopCol:
+        ldr lr, [sp, #20]
+        cmp lr, #0
+        beq NoReloadDst
+        ldr r2, [sp, #-40] // reload dst ptr
+    NoReloadDst:
+        ldr r0, [sp, #-48] // reload lhs ptr
         ldr r5, [sp, #4] // reload depth
-        veor q8, q8, q8
-        veor q9, q9, q9
-        veor q10, q10, q10
-        veor q11, q11, q11
-        veor q12, q12, q12
-        veor q13, q13, q13
-        veor q14, q14, q14
-        veor q15, q15, q15
+        vld1.32 {q0}, [r0]!
+        vld1.32 {q1, q2}, [r1]!
+        vmul.f32 q8, q1, d0[0]
+        vmul.f32 q9, q2, d0[0]
+        vmul.f32 q10, q1, d0[1]
+        vmul.f32 q11, q2, d0[1]
+        vmul.f32 q12, q1, d1[0]
+        vmul.f32 q13, q2, d1[0]
+        vmul.f32 q14, q1, d1[1]
+        vmul.f32 q15, q2, d1[1]
+
+        subs r5, r5, #1
+        beq Bias
 
         LoopDepth:
             vld1.32 {q0}, [r0]!
@@ -78,8 +94,7 @@ LoopCol:
             cmp r3, #0
             beq Activation
             vld1.32 {q0}, [r3]!
-            vld1.32 {q1}, [r3]
-            sub r3, r3, #16
+            vld1.32 {q1}, [r3]!
             vadd.f32 q8, q8, q0
             vadd.f32 q9, q9, q1
             vadd.f32 q10, q10, q0
@@ -121,10 +136,9 @@ LoopCol:
             vmax.f32 q15, q15, q3
 
         Write:
-            ldr lr, [sp, #24]
-            cmp lr, #0
-            bne WriteWino
             ldr lr, [sp, #20]
+            cmp lr, #2
+            beq WriteWino
             cmp lr, #0
             beq WriteC8
             cmp r7, #1
@@ -144,6 +158,8 @@ LoopCol:
             b Write8
 
         Write1:
+            add lr, r2, #4
+            str lr, [sp, #-40]
             vst1.32 d16[0], [r2]
             cmp r6, #1
             beq WriteEnd
@@ -158,8 +174,11 @@ LoopCol:
             add r2, r2, r8
             vst1.32 d28[0], [r2]
             add r2, r2, r8
+            add r2, r2, #4
             b WriteEnd
         Write2:
+            add lr, r2, #8
+            str lr, [sp, #-40]
             vst1.32 d16, [r2]
             cmp r6, #1
             beq WriteEnd
@@ -174,8 +193,11 @@ LoopCol:
             add r2, r2, r8
             vst1.32 d28, [r2]
             add r2, r2, r8
+            add r2, r2, #8
             b WriteEnd
         Write3:
+            add lr, r2, #12
+            str lr, [sp, #-40]
             add r4, r2, #8
             vst1.32 d16, [r2]
             vst1.32 d17[0], [r4]
@@ -198,8 +220,11 @@ LoopCol:
             vst1.32 d28, [r2]
             vst1.32 d29[0], [r4]
             add r2, r2, r8
+            add r2, r2, #12
             b WriteEnd
         Write4:
+            add lr, r2, #16
+            str lr, [sp, #-40]
             vst1.32 q8, [r2]
             cmp r6, #1
             beq WriteEnd
@@ -214,8 +239,11 @@ LoopCol:
             add r2, r2, r8
             vst1.32 q14, [r2]
             add r2, r2, r8
+            add r2, r2, #16
             b WriteEnd
         Write5:
+            add lr, r2, #20
+            str lr, [sp, #-40]
             add r4, r2, #16
             vst1.32 q8, [r2]
             vst1.32 d18[0], [r4]
@@ -238,8 +266,11 @@ LoopCol:
             vst1.32 q14, [r2]
             vst1.32 d30[0], [r4]
             add r2, r2, r8
+            add r2, r2, #20
             b WriteEnd
         Write6:
+            add lr, r2, #24
+            str lr, [sp, #-40]
             add r4, r2, #16
             vst1.32 q8, [r2]
             vst1.32 d18, [r4]
@@ -262,8 +293,11 @@ LoopCol:
             vst1.32 q14, [r2]
             vst1.32 d30, [r4]
             add r2, r2, r8
+            add r2, r2, #24
             b WriteEnd
         Write7:
+            add lr, r2, #28
+            str lr, [sp, #-40]
             add lr, r2, #24
             add r4, r2, #16
             vst1.32 q8, [r2]
@@ -294,15 +328,18 @@ LoopCol:
             vst1.32 d30, [r4]
             vst1.32 d31[0], [lr]
             add r2, r2, r8
+            add r2, r2, #28
             b WriteEnd
         WriteC8:
-            vst1.32 {q8, q9}, [r2]!
-            vst1.32 {q10, q11}, [r2]!
-            vst1.32 {q12, q13}, [r2]!
-            vst1.32 {q14, q15}, [r2]!
-            str r2, [sp, #-40]
+            mov lr, r2
+            vst1.32 {q8, q9}, [lr]!
+            vst1.32 {q10, q11}, [lr]!
+            vst1.32 {q12, q13}, [lr]!
+            vst1.32 {q14, q15}, [lr]!
+            add r2, r2, r10
             b WriteEnd
         WriteWino:
+            add lr, r2, r10
             vst1.32 {q8, q9}, [r2]
             add r2, r2, r11
             vst1.32 {q10, q11}, [r2]
@@ -310,9 +347,11 @@ LoopCol:
             vst1.32 {q12, q13}, [r2]
             add r2, r2, r11
             vst1.32 {q14, q15}, [r2]
-            add r2, r2, r11
+            str lr, [sp, #-40]
             b WriteEnd
         Write8:
+            add lr, r2, #32
+            str lr, [sp, #-40]
             vst1.32 {q8, q9}, [r2]
             cmp r6, #1
             beq WriteEnd
@@ -327,42 +366,38 @@ LoopCol:
             add r2, r2, r8
             vst1.32 {q14, q15}, [r2]
             add r2, r2, r8
+            add r2, r2, #32
 
         WriteEnd:
-            cmp r6, #4
-            ble LoopRowEnd
-            sub r6, r6, #4 // lhs row - 4
-            b LoopRow
+            cmp r7, #8
+            ble LoopColEnd
+            sub r7, r7, #8 // rhs col - 8
+            b LoopCol
 
-    LoopRowEnd:
-        ldr r1, [sp, #-44]
-        add r1, r1, r12 // rhs ptr + stride
-        str r1, [sp, #-44]
-        cmp r3, #0
-        beq NoBiasStep
-        add r3, r3, #32 // bias ptr + stride
-    NoBiasStep:
-        ldr lr, [sp, #24]
-        cmp lr, #0
-        bne WinoDstStep
+    LoopColEnd:
+        ldr r0, [sp, #-48]
+        add r0, r0, r12 // rhs ptr + stride
+        str r0, [sp, #-48]
         ldr lr, [sp, #20]
         cmp lr, #0
-        beq NoDstStep
-        ldr r2, [sp, #-40]
-        add r2, r2, #32 // dst ptr + stride
+        beq C8DstStep
+        mov lr, #4
+        ldr r7, [sp, #12] // reload rhs col
+        mul lr, lr, r7
+        sub r2, r2, lr
         str r2, [sp, #-40]
         b NoDstStep
-    WinoDstStep:
-        ldr r2, [sp, #-40]
-        add r2, r2, r10
+    C8DstStep:
+        ldr lr, [sp, #-40]
+        add r2, lr, #128
         str r2, [sp, #-40]
     NoDstStep:
-        cmp r7, #8
-        ble LoopColEnd
-        sub r7, r7, #8 // rhs col - 8
-        b LoopCol
+        cmp r6, #4
+        ble LoopRowEnd
+        sub r6, r6, #4 // lhs row - 4
+        b LoopRow
 
-LoopColEnd:
+LoopRowEnd:
     sub sp, sp, #48
     pop {r0-r8, r10, r11, pc}
 #endif

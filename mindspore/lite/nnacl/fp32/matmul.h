@@ -42,12 +42,12 @@ void MatmulFloatNeon64Opt(const float *a, const float *b, float *c, const float 
 void MatmulFloatNeon64OptRemain(const float *a, const float *b, float *c, int depth, int row, int col, size_t stride);
 #elif ENABLE_ARM32
 void MatmulFloatNeon32Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
-                          int col, size_t stride, size_t write_nhwc, size_t write_c4);
+                          int col, int stride, int write_mode);
 #endif
 
 #ifdef ENABLE_NNACL_INFER_SHAPE
-int MatMulInferShape(int **in_shape, int in_num, size_t *dim_size, int *out_shape, int *in_format,
-                     int *out_format, int *in_datatype, int *out_datatype, OpParameter *param);
+int MatMulInferShape(int **in_shape, int in_num, size_t *dim_size, int *out_shape, int *in_format, int *out_format,
+                     int *in_datatype, int *out_datatype, OpParameter *param);
 #endif
 #ifdef __cplusplus
 }
