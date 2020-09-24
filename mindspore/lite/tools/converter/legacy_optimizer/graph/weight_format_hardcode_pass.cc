@@ -16,7 +16,7 @@
 
 #include "tools/converter/legacy_optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/common/converter_op_utils.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 #include "tools/common/node_util.h"
 

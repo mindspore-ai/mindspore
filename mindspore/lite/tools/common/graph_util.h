@@ -26,7 +26,6 @@
 
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
-#include "utils/log_adapter.h"
 #include "src/common/graph_util.h"
 
 namespace mindspore {

@@ -29,7 +29,7 @@
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/quantizer/calc_quant_param.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 using std::string;
 using std::vector;

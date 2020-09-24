@@ -24,8 +24,8 @@
 #include <functional>
 #include "include/ms_tensor.h"
 #include "src/runtime/allocator.h"
-#include "ir/dtype/type_id.h"
-#include "utils/log_adapter.h"
+
+#include "src/common/log_adapter.h"
 #include "schema/model_generated.h"
 
 namespace mindspore {

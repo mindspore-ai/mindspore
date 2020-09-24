@@ -22,7 +22,7 @@
 #include <map>
 #include <memory>
 #include <utility>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "schema/inner/model_generated.h"
 #include "tools/converter/parser/tflite/schema_generated.h"
 #include "tools/common/tensor_util.h"

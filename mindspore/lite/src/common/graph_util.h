@@ -23,7 +23,7 @@
 #include <vector>
 #include <memory>
 #include "schema/model_generated.h"
-#include "utils//log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "include/model.h"
 

@@ -16,7 +16,7 @@
 
 #include "tools/converter/legacy_optimizer/graph/trans_format_remove_pass.h"
 #include <vector>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "tools/common/graph_util.h"
 #include "src/tensor.h"

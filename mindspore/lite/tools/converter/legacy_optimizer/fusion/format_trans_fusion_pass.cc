@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <memory>
 #include "tools/converter/legacy_optimizer/fusion/format_trans_fusion_pass.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "mindspore/lite/schema/inner/model_generated.h"

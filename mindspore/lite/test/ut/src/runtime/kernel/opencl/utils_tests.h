@@ -17,7 +17,7 @@
 #include <string>
 #include <iostream>
 #include "tests/ut/cpp/common/common_test.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"

@@ -16,7 +16,7 @@
 
 #include "src/ops/gather.h"
 #include "include/errorcode.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "src/tensor.h"
 
 namespace mindspore {

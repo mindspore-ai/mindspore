@@ -24,7 +24,7 @@
 #include <memory>
 
 #include "tools/converter/legacy_optimizer/fusion/fusion_pass.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "tools/common/converter_op_utils.h"
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"

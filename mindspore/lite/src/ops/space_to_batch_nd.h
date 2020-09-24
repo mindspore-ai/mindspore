@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <memory>
-#include "ir/dtype/type_id.h"
+
 #include "src/ops/primitive_c.h"
 
 namespace mindspore {

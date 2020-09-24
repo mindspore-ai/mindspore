@@ -15,5 +15,12 @@
  */
 
 #include "tools/converter/converter.h"
-
-int main(int argc, const char **argv) { return mindspore::lite::RunConverter(argc, argv); }
+namespace mindspore {
+extern "C" {
+extern void common_log_init();
+}
+}  // namespace mindspore
+int main(int argc, const char **argv) {
+  mindspore::common_log_init();
+  return mindspore::lite::RunConverter(argc, argv);
+}

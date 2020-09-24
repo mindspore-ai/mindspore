@@ -1,10 +1,5 @@
 add_definitions(-DPRIMITIVE_WRITEABLE)
-
-file (GLOB_RECURSE CORE_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/*.cc
-        )
-list(REMOVE_ITEM CORE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/log_adapter.cc)
-list(REMOVE_ITEM CORE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/graph_utils_extends.cc)
+add_definitions(-DUSE_GLOG)
 
 set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
@@ -12,7 +7,7 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
 )
 
-
+include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 if (WIN32)
     set(LITE_SRC
             #src
@@ -74,11 +69,10 @@ add_subdirectory(parser/tflite)
 add_subdirectory(parser/onnx)
 add_subdirectory(legacy_optimizer)
 add_subdirectory(quantizer)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../../core mindspore_core)
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 set(LITE_SRC
-        ${SRC_DIR}/common/graph_utils_extends.cc
-        ${SRC_DIR}/common/log_adapter.cc
         ${SRC_DIR}/common/graph_util.cc
         ${SRC_DIR}/runtime/allocator.cc
         ${SRC_DIR}/runtime/runtime_api.cc
@@ -95,7 +89,7 @@ set(LITE_SRC
         ${SRC_DIR}/model.cc
         )
 if (SUPPORT_TRAIN)
-set(LITE_SRC 
+set(LITE_SRC
         ${LITE_SRC}
  )
 
@@ -125,19 +119,21 @@ else()
     set(PROTO_LIBRARY protobuf)
 endif()
 
+set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
+set_property(SOURCE ${CCSRC_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
+set_property(SOURCE ${OPS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
+set_property(SOURCE ${KERNEL_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
+set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_executable(converter_lite
         main.cc
-        ${CORE_SRC}
         ${CCSRC_SRC}
         ${CONVERTER_SRC}
         ${OPS_SRC}
         ${KERNEL_SRC}
         ${LITE_SRC}
         )
-
 if (WIN32)
     add_library(converter_mid OBJECT
-            ${CORE_SRC}
             ${CCSRC_SRC}
             ${CONVERTER_SRC}
             ${OPS_SRC}
@@ -166,15 +162,20 @@ target_link_libraries(converter_lite PRIVATE
         graph_pass_mid
         fusion_mid
         quantizer_mid
-        quantizer_mid
         pthread
         ${PROTO_LIBRARY}
         ${SECUREC_LIBRARY}
         mindspore::json
         mindspore::eigen
+        mindspore_core
+        mindspore::glog
         )
 
 if (NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
     install(TARGETS converter_lite
             RUNTIME DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
+    install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/gvar/libmindspore_gvar.so
+            DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/lib COMPONENT ${COMPONENT_NAME})
+    install(FILES ${glog_LIBPATH}/libglog.so.0.4.0
+            DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/lib RENAME libglog.so.0 COMPONENT ${COMPONENT_NAME})
 endif ()

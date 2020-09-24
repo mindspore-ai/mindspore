@@ -16,7 +16,7 @@
 
 #include "tools/converter/legacy_optimizer/graph/infershape_pass.h"
 #include <vector>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/tensor.h"
 #include "src/ops/primitive_c.h"
@@ -100,7 +100,7 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
       FreeTensors(input_tensors, output_tensors);
       return RET_INFER_ERR;
     }
-    std::unique_ptr<PrimitiveT> primitiveT(new(std::nothrow) PrimitiveT(*node->primitive));
+    std::unique_ptr<PrimitiveT> primitiveT(new (std::nothrow) PrimitiveT(*node->primitive));
     if (primitiveT == nullptr) {
       MS_LOG(ERROR) << "copy primitiveT error";
       FreeTensors(input_tensors, output_tensors);

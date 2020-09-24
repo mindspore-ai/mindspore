@@ -33,8 +33,7 @@ TEST_F(StackTestFp32, StackTest1) {
   std::vector<int> shape = {2, 3};
   int axis = 2;
   constexpr int kOutSize = 18;
-  float expect_out[kOutSize] = {1, 4, 7, 2, 5, 8, 3, 6, 9,
-                                10, 40, 70, 20, 50, 80, 30, 60, 90};
+  float expect_out[kOutSize] = {1, 4, 7, 2, 5, 8, 3, 6, 9, 10, 40, 70, 20, 50, 80, 30, 60, 90};
   float output[kOutSize];
   DoStack(input, 3, shape.data(), shape.size(), axis, output);
   for (int i = 0; i < kOutSize; ++i) {
@@ -43,6 +42,5 @@ TEST_F(StackTestFp32, StackTest1) {
   std::cout << "\n";
   CompareOutputData(output, expect_out, kOutSize, 0.000001);
 }
-
 
 }  // namespace mindspore

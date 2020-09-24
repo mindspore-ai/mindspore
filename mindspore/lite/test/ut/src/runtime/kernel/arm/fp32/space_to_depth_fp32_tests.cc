@@ -16,7 +16,7 @@
 #include <vector>
 #include <iostream>
 #include <memory>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/nnacl/fp32/space_to_depth.h"
 #include "mindspore/lite/src/kernel_registry.h"

@@ -35,7 +35,7 @@
 #include "src/tensor.h"
 #include "src/param_value_lite.h"
 #include "tools/converter/parser/onnx/onnx.pb.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "tools/common/protobuf_utils.h"
 
 using string = std::string;

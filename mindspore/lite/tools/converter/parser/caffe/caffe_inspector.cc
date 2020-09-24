@@ -15,7 +15,7 @@
  */
 
 #include "tools/converter/parser/caffe/caffe_inspector.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 namespace lite {

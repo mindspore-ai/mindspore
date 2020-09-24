@@ -20,7 +20,7 @@
 #include "frontend/operator/ops.h"
 #include "src/param_value_lite.h"
 #include "tools/anf_importer/import_from_meta_graphT.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 
 namespace mindspore::lite {

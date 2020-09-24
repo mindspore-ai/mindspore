@@ -19,7 +19,6 @@
 
 #include <vector>
 #include <string>
-#include "ir/anf.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/arithmetic_self_parameter.h"
 

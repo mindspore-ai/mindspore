@@ -16,7 +16,7 @@
 
 #include <vector>
 #include "tools/converter/legacy_optimizer/graph/model_input_format_preprocess_pass.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "tools/common/converter_op_utils.h"
 #include "tools/common/node_util.h"
 #include "include/errorcode.h"

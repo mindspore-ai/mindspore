@@ -16,7 +16,7 @@
 
 #include <iostream>
 #include <memory>
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/nnacl/pack.h"

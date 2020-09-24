@@ -30,7 +30,7 @@
 
 #include "src/tensor.h"
 #include "include/errorcode.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 namespace lite {

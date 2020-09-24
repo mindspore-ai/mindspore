@@ -24,7 +24,7 @@
 #include <asm/hwcap.h>
 #include "nnacl/nnacl_utils.h"
 #endif
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 #define OPTIMIZE_SHARED_LIBRARY_PATH "libmindspore-lite-optimize.so"
 #define FLOAT16_SHARED_LIBRARY_PATH "libmindspore-lite-fp16.so"

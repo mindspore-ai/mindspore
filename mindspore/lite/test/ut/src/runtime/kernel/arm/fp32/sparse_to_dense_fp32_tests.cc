@@ -16,7 +16,7 @@
 
 #include <iostream>
 #include "schema/inner/model_generated.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/nnacl/fp32/sparse_to_dense.h"
 #include "mindspore/lite/src/kernel_registry.h"
@@ -94,12 +94,9 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test1) {
   ASSERT_EQ(output_tensor_shape, output_shape);
   kernel->Run();
 
-  std::vector<float> except_result = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                      0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-                                      0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
-                                      0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
-                                      0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
-                                      0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+  std::vector<float> except_result = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+                                      0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                                      0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
   CompareOutputData(output, except_result.data(), output_size, 0.000001);
@@ -181,12 +178,9 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test2) {
   ASSERT_EQ(output_tensor_shape, output_shape);
   kernel->Run();
 
-  std::vector<float> except_result = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                      0, 0, 2, 0, 0, 0, 0, 0, 0, 0,
-                                      0, 0, 0, 3, 0, 0, 0, 0, 0, 0,
-                                      0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
-                                      0, 0, 0, 0, 0, 0, 0, 5, 0, 0,
-                                      0, 0, 0, 0, 0, 0, 0, 0, 0, 6};
+  std::vector<float> except_result = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0,
+                                      0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
+                                      0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
   CompareOutputData(output, except_result.data(), output_size, 0.000001);
@@ -432,12 +426,9 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test5) {
   ASSERT_EQ(output_tensor_shape, output_shape);
   kernel->Run();
 
-  std::vector<float> except_result = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                      0, 0, 2, 0, 0, 0, 0, 0, 0, 0,
-                                      0, 0, 0, 3, 0, 0, 0, 0, 0, 0,
-                                      0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
-                                      0, 0, 0, 0, 0, 0, 0, 5, 0, 0,
-                                      0, 0, 0, 0, 0, 0, 0, 0, 0, 6};
+  std::vector<float> except_result = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0,
+                                      0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
+                                      0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
   CompareOutputData(output, except_result.data(), output_size, 0.000001);

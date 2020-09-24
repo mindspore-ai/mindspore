@@ -15,7 +15,7 @@
  */
 #include <iostream>
 #include <memory>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "nnacl/pack.h"
@@ -161,7 +161,7 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
     std::cout << std::endl;
     // compare
     CommonTest::CompareOutputData<T2>(packed_output, packed_correct_data, packed_output_size, err_max);
-    delete [] packed_correct_data;
+    delete[] packed_correct_data;
   }
 
   inputs[1]->SetData(nullptr);

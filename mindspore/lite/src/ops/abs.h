@@ -17,7 +17,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
-#include "ir/dtype/type_id.h"
+
 #include "src/ops/arithmetic_self.h"
 
 #ifndef LITE_MINDSPORE_LITE_C_OPS_ABS_H_

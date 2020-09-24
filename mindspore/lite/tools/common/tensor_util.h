@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 #include "schema/inner/model_generated.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "ir/dtype/type_id.h"
 
 namespace mindspore {

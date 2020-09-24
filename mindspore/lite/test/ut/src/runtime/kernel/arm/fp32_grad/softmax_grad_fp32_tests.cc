@@ -22,7 +22,7 @@
 // #include "mindspore/lite/src/lite_kernel.h"
 
 #include "mindspore/lite/include/context.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "src/common/utils.h"

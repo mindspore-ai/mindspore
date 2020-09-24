@@ -15,7 +15,7 @@
  */
 #include <iostream>
 #include <memory>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
@@ -77,7 +77,7 @@ void test_main_gather(void *input_data, void *correct_data, const std::vector<in
 
   std::cout << "==================output data================" << std::endl;
   auto *output_data = reinterpret_cast<T *>(outputs[0]->data_c());
-  CommonTest::CompareOutputData<T>(output_data, static_cast<T*>(correct_data), outputs[0]->ElementsNum(), 0.0001);
+  CommonTest::CompareOutputData<T>(output_data, static_cast<T *>(correct_data), outputs[0]->ElementsNum(), 0.0001);
   delete sub_graph;
 }
 TEST_F(TestGatherOpenCL, Axis1Fp32) {

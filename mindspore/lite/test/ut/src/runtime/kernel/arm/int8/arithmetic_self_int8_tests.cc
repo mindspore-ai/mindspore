@@ -16,7 +16,6 @@
 
 #include <iostream>
 #include "schema/inner/model_generated.h"
-#include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/nnacl/arithmetic_self_parameter.h"
 #include "mindspore/lite/src/kernel_registry.h"

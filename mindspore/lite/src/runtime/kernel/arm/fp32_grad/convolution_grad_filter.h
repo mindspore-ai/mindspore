@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "ir/anf.h"
 
 namespace mindspore::kernel {
 class ConvolutionGradFilterCPUKernel : public LiteKernel {
@@ -28,9 +27,8 @@ class ConvolutionGradFilterCPUKernel : public LiteKernel {
                                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                           const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), workspace(nullptr) {}
-  ~ConvolutionGradFilterCPUKernel() override  {
-    if (workspace)
-      delete[] workspace;
+  ~ConvolutionGradFilterCPUKernel() override {
+    if (workspace) delete[] workspace;
   }
 
   int Init() override;

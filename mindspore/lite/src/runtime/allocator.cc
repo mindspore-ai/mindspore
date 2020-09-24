@@ -16,7 +16,7 @@
 
 #include "src/runtime/allocator.h"
 #include <utility>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore::lite {
 std::shared_ptr<Allocator> Allocator::Create() {

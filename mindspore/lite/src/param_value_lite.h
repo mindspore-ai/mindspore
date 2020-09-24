@@ -22,7 +22,6 @@
 #include <vector>
 #include <utility>
 #include "src/tensor.h"
-#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 class ParamValueLite : public Value {

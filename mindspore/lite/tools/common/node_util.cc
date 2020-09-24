@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 #include "src/common/common.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
 

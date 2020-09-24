@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <memory>
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "securec/include/securec.h"
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"

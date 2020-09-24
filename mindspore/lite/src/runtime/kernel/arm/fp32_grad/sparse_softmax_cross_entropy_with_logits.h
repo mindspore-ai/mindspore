@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/train/loss_kernel.h"
-#include "ir/anf.h"
 #include "nnacl/fp32_grad/softmax_grad.h"
 #include "nnacl/fp32/arithmetic.h"
 #include "nnacl/softmax_parameter.h"
@@ -33,14 +32,12 @@ class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
                                                         const std::vector<lite::Tensor *> &outputs,
                                                         const lite::InnerContext *ctx,
                                                         const mindspore::lite::PrimitiveC *primitive)
-      : LossKernel(parameter, inputs, outputs, ctx, primitive), losses_(nullptr), sum_data_(nullptr)  {
+      : LossKernel(parameter, inputs, outputs, ctx, primitive), losses_(nullptr), sum_data_(nullptr) {
     param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(parameter);
   }
   ~SparseSoftmaxCrossEntropyWithLogitsCPUKernel() override {
-    if (losses_)
-      delete[] losses_;
-    if (sum_data_)
-      delete[] sum_data_;
+    if (losses_) delete[] losses_;
+    if (sum_data_) delete[] sum_data_;
   }
 
   int ForwardPostExecute(const int *labels, const float *losses, float *output) const;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <iostream>
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/nnacl/fp32/activation.h"
 #include "mindspore/lite/src/kernel_registry.h"

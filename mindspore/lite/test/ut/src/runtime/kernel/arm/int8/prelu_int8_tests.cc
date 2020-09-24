@@ -16,7 +16,7 @@
 
 #include <iostream>
 #include "schema/inner/model_generated.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/nnacl/quantization/quantize.h"
 #include "mindspore/lite/src/kernel_registry.h"
@@ -71,7 +71,7 @@ TEST_F(TestPreluInt8, prelu_1) {
   lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  op_param.axis_ = 0.25;
+  op_param.axis_ = 0;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_LeakyReLU};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

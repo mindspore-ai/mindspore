@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 
 namespace mindspore::lite::opencl {

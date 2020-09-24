@@ -22,7 +22,7 @@
 #include "nnacl/reduce_parameter.h"
 #include "nnacl/int8/reduce_int8.h"
 #include "nnacl/quantization/quantize.h"
-#include "ir/anf.h"
+
 #include "src/runtime/kernel/arm/base/reduce_base.h"
 
 using mindspore::schema::ReduceMode;

@@ -15,7 +15,7 @@
  */
 #include <iostream>
 #include <memory>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "src/runtime/kernel/arm/fp32_grad/sparse_softmax_cross_entropy_with_logits.h"
@@ -83,11 +83,11 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   std::string grad_path = "./test_data/operators/sce_fp32_1_dy_6_4.bin";
   lite::CompareOutput(grad, grad_path);
 
-  delete [] ll_labels;
-  delete [] labels;
-  delete [] input_data;
-  delete [] loss;
-  delete [] grad;
+  delete[] ll_labels;
+  delete[] labels;
+  delete[] input_data;
+  delete[] loss;
+  delete[] grad;
   l_tensor.SetData(nullptr);
   y_tensor.SetData(nullptr);
   loss_tensor.SetData(nullptr);

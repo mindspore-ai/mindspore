@@ -29,7 +29,6 @@ using mindspore::lite::RET_OK;
 // using mindspore::lite::REG_OP;
 using mindspore::schema::PrimitiveType_BNGrad;
 
-
 namespace mindspore::kernel {
 int BNGradCPUKernel::Init() {
   auto *input_x = in_tensors_.at(1);

@@ -19,7 +19,7 @@
 #include "nnacl/fp32/embedding_lookup.h"
 #include "src/common/file_utils.h"
 #include "common/common_test.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 using mindspore::lite::Tensor;

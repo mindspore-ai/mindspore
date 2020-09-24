@@ -19,7 +19,7 @@
 #include <utility>
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "src/scheduler.h"
 #include "src/runtime/allocator.h"
 #include "src/executor.h"

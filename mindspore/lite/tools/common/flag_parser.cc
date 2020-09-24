@@ -15,7 +15,7 @@
  */
 
 #include "tools/common/flag_parser.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 namespace lite {

@@ -19,7 +19,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
-#include "ir/dtype/type_id.h"
+
 #include "src/ops/arithmetic_self.h"
 
 namespace mindspore {

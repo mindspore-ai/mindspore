@@ -21,7 +21,7 @@
 #include <arm_neon.h>
 #endif
 #include "nnacl/pack.h"
-#include "ir/dtype/type_id.h"
+
 #include "schema/ops_generated.h"
 #include "src/tensor.h"
 

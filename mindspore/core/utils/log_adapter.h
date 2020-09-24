@@ -25,12 +25,10 @@
 #include <functional>
 #include "utils/overload.h"
 #include "./securec.h"
-#ifndef USE_ANDROID_LOG
 #ifdef USE_GLOG
 #include "glog/logging.h"
 #else
 #include "toolchain/slog.h"
-#endif
 #endif
 // NOTICE: when relative path of 'log_adapter.h' changed, macro 'LOG_HDR_FILE_REL_PATH' must be changed
 #define LOG_HDR_FILE_REL_PATH "mindspore/core/utils/log_adapter.h"
@@ -126,6 +124,7 @@ enum SubModuleId : int {
   SM_VM,           // VM
   SM_PROFILER,     // profiler
   SM_PS,           // Parameter Server
+  SM_LITE,         // LITE
   NUM_SUBMODUES    // number of submodules
 };
 

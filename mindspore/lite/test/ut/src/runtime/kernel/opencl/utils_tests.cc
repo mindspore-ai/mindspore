@@ -15,7 +15,7 @@
  */
 
 #include <string>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
