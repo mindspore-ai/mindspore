@@ -274,6 +274,9 @@ class _AutoParallelContext:
             TypeError: If group is not a python str.
         """
         self.check_context_handle()
+        if not indices:
+            raise ValueError('indices can not be empty')
+
         if isinstance(indices, (list)):
             for index in indices:
                 if not isinstance(index, int):
