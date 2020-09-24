@@ -137,6 +137,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"histogram_fixed_width", "histogram_fixed_width_d"},
   {"broadcast_to", "broadcast_to_d"},
   {"inplace_update", "inplace_update_d"},
+  {"i_fmr", "ifmr"},
   {"matrix_diag", "matrix_diag_d"},
   {"matrix_diag_part", "matrix_diag_part_d"},
   {"matrix_set_diag", "matrix_set_diag_d"}};

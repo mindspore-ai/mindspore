@@ -310,3 +310,4 @@ from .population_count import _population_count_tbe
 from .parallel_concat import _parallel_concat_tbe
 from .adam_apply_one_assign import _adam_apply_one_assign_tbe
 from .adam_apply_one_with_decay_assign import _adam_apply_one_with_decay_assign_tbe
+from .ifmr import _ifmr_tbe

@@ -3514,3 +3514,64 @@ class Eps(PrimitiveWithInfer):
             'dtype': input_x['dtype'],
         }
         return out
+
+
+class IFMR(PrimitiveWithInfer):
+    """
+    The TFMR(Input Feature Map Reconstruction).
+
+    Args:
+        min_percentile (float): Min init percentile.
+        max_percentile (float): Max init percentile.
+        search_range Union[list(float), tuple(float)]: Range of searching.
+        search_step (float): Step size of searching.
+        with_offset (bool): Whether using offset.
+
+    Inputs:
+        - **data** (Tensor) - A Tensor of feature map. With float16 or float32 data type.
+        - **data_min** (Tensor) - A Tensor of min value of feature map, the shape is :math:`(1)`.
+          With float16 or float32 data type.
+        - **data_max** (Tensor) - A Tensor of max value of feature map, the shape is :math:`(1)`.
+          With float16 or float32 data type.
+        - **cumsum** (Tensor) - A `1-D` Tensor of cumsum bin of data. With int32 data type.
+
+    Outputs:
+        - **scale** (Tensor) - A tensor of optimal scale, the shape is :math:`(1)`. Data dtype is float32.
+        - **offset** (Tensor) - A tensor of optimal offset, the shape is :math:`(1)`. Data dtype is float32.
+
+    Examples:
+        >>> data = Tensor(np.random.rand(1, 3, 6, 4).astype(np.float32))
+        >>> data_min = Tensor([0.1], mstype.float32)
+        >>> data_max = Tensor([0.5], mstype.float32)
+        >>> cumsum = Tensor(np.random.rand(4).astype(np.int32))
+        >>> ifmr = P.IFMR(min_percentile=0.2, max_percentile=0.9, search_range=(1.0, 2.0),
+                          search_step=1.0, with_offset=False)
+        >>> output = ifmr(data, data_min, data_max, cumsum)
+    """
+
+    @prim_attr_register
+    def __init__(self, min_percentile, max_percentile, search_range, search_step, with_offset):
+        validator.check_value_type("min_percentile", min_percentile, [float], self.name)
+        validator.check_value_type("max_percentile", max_percentile, [float], self.name)
+        validator.check_value_type("search_range", search_range, [list, tuple], self.name)
+        for item in search_range:
+            validator.check_float_positive("item of search_range", item, self.name)
+        validator.check('search_range[1]', search_range[1], 'search_range[0]', search_range[0], Rel.GE, self.name)
+        validator.check_value_type("search_step", search_step, [float], self.name)
+        validator.check_value_type("offset_flag", with_offset, [bool], self.name)
+
+    def infer_shape(self, data_shape, data_min_shape, data_max_shape, cumsum_shape):
+        validator.check_integer("dims of data_min", len(data_min_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("data_min[0]", data_min_shape[0], 1, Rel.EQ, self.name)
+        validator.check_integer("dims of data_max", len(data_max_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("data_max[0]", data_max_shape[0], 1, Rel.EQ, self.name)
+        validator.check_integer("dims of cumsum", len(cumsum_shape), 1, Rel.EQ, self.name)
+        return (1,), (1,)
+
+    def infer_dtype(self, data_dtype, data_min_dtype, data_max_dtype, cumsum_dtype):
+        valid_types = [mstype.float32, mstype.float16]
+        validator.check_tensor_type_same({"input_value": data_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same({"input_min": data_min_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same({"input_max": data_max_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same({"input_bins": cumsum_dtype}, [mstype.int32], self.name)
+        return mstype.tensor_type(mstype.float32), mstype.tensor_type(mstype.float32)
