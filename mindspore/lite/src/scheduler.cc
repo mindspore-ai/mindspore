@@ -267,7 +267,8 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<Tensor *> &in_tens
     kernel::KernelKey key{desc.arch, kNumberTypeFloat16, desc.type};
     kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, key);
     if (kernel != nullptr) {
-      MS_LOG(DEBUG) << "Get fp16 op success.";
+      MS_LOG(INFO) << "Get fp16 op success. type:"
+                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()));
       desc.data_type = kNumberTypeFloat16;
       kernel->set_desc(desc);
       return kernel;
