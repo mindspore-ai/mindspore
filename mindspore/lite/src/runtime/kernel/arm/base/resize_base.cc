@@ -97,10 +97,6 @@ int ResizeBaseCPUKernel::CheckInputsOuputs() {
     MS_LOG(ERROR) << "Resize input num should be no more than" << kMaxInputNum << ", but got " << in_tensors_.size();
     return RET_ERROR;
   }
-  auto input = in_tensors_.at(0);
-  if (input == nullptr) {
-    return RET_NULL_PTR;
-  }
   if (out_tensors_.size() != kOutputNum) {
     MS_LOG(ERROR) << "Resize output num should be " << kOutputNum << ", but got " << out_tensors_.size();
     return RET_ERROR;

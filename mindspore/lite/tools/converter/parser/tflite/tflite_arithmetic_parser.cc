@@ -300,6 +300,15 @@ STATUS TfliteSingleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
     }
     op->primitive->value.type = schema::PrimitiveType_Floor;
     op->primitive->value.value = attr.release();
+  } else if (std::strcmp(node_name, "NEG") == 0) {
+    MS_LOG(DEBUG) << "parse TfliteNegParser";
+    auto attr = std::make_unique<schema::NegT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return RET_NULL_PTR;
+    }
+    op->primitive->value.type = schema::PrimitiveType_Neg;
+    op->primitive->value.value = attr.release();
   }
 
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
@@ -415,6 +424,7 @@ TfliteNodeRegister g_TfliteLogParser("Log", new TfliteLogParser());
 TfliteNodeRegister g_tfliteRoundParser("Round", new TfliteRoundParser());
 TfliteNodeRegister g_TfliteCeilParser("Ceil", new TfliteCeilParser());
 TfliteNodeRegister g_tfliteFloorParser("flOOR", new TfliteFloorParser());
+TfliteNodeRegister g_tfliteNegParser("NEG", new TfliteNegParser());
 
 TfliteNodeRegister g_tfliteEqualParser("Equal", new TfliteEqualParser());
 TfliteNodeRegister g_tfliteNotEqualParser("NotEqual", new TfliteNotEqualParser());
