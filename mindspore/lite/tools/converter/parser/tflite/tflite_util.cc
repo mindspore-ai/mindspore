@@ -118,6 +118,7 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_UNPACK, "Unstack"},
   {tflite::BuiltinOperator_CUSTOM, "Custom"},
   {tflite::BuiltinOperator_MIRROR_PAD, "MirrorPad"},
+  {tflite::BuiltinOperator_NEG, "Neg"},
 };
 
 std::map<tflite::ActivationFunctionType, schema::ActivationType> tfMsActivationFunctionMap{

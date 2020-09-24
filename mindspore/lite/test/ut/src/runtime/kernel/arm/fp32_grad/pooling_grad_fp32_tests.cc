@@ -96,7 +96,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolingGradFp32) {
   }
   std::cout << std::endl;
   std::string output_path = "./test_data/pooling/avgpoolgradfp32_1_dx_1_28_28_3.bin";
-  auto res = lite::CompareOutput(output_data, output_path);
+  auto res = lite::CompareOutput(output_data, output_data_size, output_path);
   EXPECT_EQ(res, 0);
 
   delete[] input_data;
@@ -152,7 +152,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
   }
   std::cout << std::endl;
   std::string output_path = "./test_data/pooling/avgpoolgradfp32_1_dx_1_28_28_3.bin";
-  auto res = lite::CompareOutput(output_data, output_path);
+  auto res = lite::CompareOutput(output_data, output_data_size, output_path);
   EXPECT_EQ(res, 0);
 
   delete[] input_data;
@@ -213,7 +213,8 @@ TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
   }
   std::cout << std::endl;
   std::string output_path = "./test_data/pooling/avgpoolgradfp32_1_dx_3_28_28_3.bin";
-  auto res = lite::CompareOutput(output_data, output_path);
+  size_t output_data_size = dx_tensor.ElementsNum();
+  auto res = lite::CompareOutput(output_data, output_data_size, output_path);
   EXPECT_EQ(res, 0);
 
   delete[] input_data;
@@ -388,7 +389,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolingGradFp32) {
   }
   std::cout << std::endl;
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_1_xgrad_1_28_28_3.bin";
-  auto res = lite::CompareOutput(output_data, output_path);
+  auto res = lite::CompareOutput(output_data, output_data_size, output_path);
   EXPECT_EQ(res, 0);
 
   free(pooling_param);

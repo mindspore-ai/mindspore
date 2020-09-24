@@ -67,6 +67,11 @@ STATUS CaffeReduceParser::Parse(const caffe::LayerParameter &proto,
   } else {
     attr->axes = std::vector(1, 0);
   }
+  if (reduce_param.has_coeff()) {
+    attr->coeff = reduce_param.coeff();
+  } else {
+    attr->coeff = 1.0;
+  }
   attr->reduceToEnd = true;
   attr->keepDims = false;
   op->name = proto.name();

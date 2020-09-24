@@ -17,13 +17,16 @@
 #ifndef LITE_RETURN_CODE_H
 #define LITE_RETURN_CODE_H
 
+#include <string>
+#include <set>
 #include "include/errorcode.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace lite {
 class ReturnCode {
  public:
-  ~ReturnCode() {}
+  ~ReturnCode() = default;
   static ReturnCode *GetSingleReturnCode() {
     static ReturnCode returnCode;
     return &returnCode;
@@ -33,15 +36,31 @@ class ReturnCode {
       statusCode = status;
     }
   }
-  STATUS GetReturnCode() const {
-    return statusCode;
-  }
+  STATUS GetReturnCode() const { return statusCode; }
+
  private:
   ReturnCode() { statusCode = RET_OK; }
   int statusCode;
 };
+
+class NoSupportOp {
+ public:
+  ~NoSupportOp() = default;
+  static NoSupportOp *GetInstance() {
+    static NoSupportOp noSupportOp;
+    return &noSupportOp;
+  }
+  void InsertOp(const std::string &op_name) { noSupportOps.insert(op_name); }
+  void PrintOps() const {
+    for (auto &op_name : noSupportOps) {
+      MS_LOG(ERROR) << "The op " << op_name << " hasn't been supported";
+    }
+  }
+
+ private:
+  NoSupportOp() { noSupportOps.clear(); }
+  std::set<std::string> noSupportOps;
+};
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // LITE_RETURN_CODE_H
-

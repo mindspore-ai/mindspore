@@ -212,7 +212,7 @@ TEST_F(TestActGradFp32, SigmoidGradFp32) {
   int res = lite::CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
-  // lite::CompareOutput(output_data, output_path);
+  // lite::CompareOutput(output_data, output_data_size, output_path);
 
   delete[] input_data;
   delete[] output_data;

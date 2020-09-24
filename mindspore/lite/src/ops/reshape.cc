@@ -144,6 +144,8 @@ void CalShape(const T *data, const std::vector<Tensor *> &inputs, std::vector<in
   for (int i = 0; i < shape_size; i++) {
     if (static_cast<int>(data[i]) == -1) {
       index = i;
+    } else if (static_cast<int>(data[i]) == 0) {
+      size *= inputs[0]->shape()[i];
     } else {
       size *= data[i];
     }

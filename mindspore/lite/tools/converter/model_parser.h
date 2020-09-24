@@ -22,7 +22,7 @@
 #include "schema/inner/model_generated.h"
 #include "tools/anf_importer/import_from_meta_graphT.h"
 #include "ir/anf.h"
-#include "tools/converter/return_code.h"
+#include "tools/converter/converter_context.h"
 
 namespace mindspore::lite {
 using namespace schema;
@@ -40,7 +40,7 @@ class ModelParser {
       return nullptr;
     }
     auto func_graph = this->Fb2Anf(meta_graph);
-    delete(meta_graph);
+    delete (meta_graph);
     return func_graph;
   }
 

@@ -169,6 +169,7 @@ class PrimitiveC {
     auto ret = primc->UnPackSchemaPrimitive(primitive);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "UnPackSchemaPrimitive failed";
+      delete primc;
       return nullptr;
     }
     return primc;

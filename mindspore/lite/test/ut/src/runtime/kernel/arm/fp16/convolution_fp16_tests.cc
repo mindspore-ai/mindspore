@@ -203,7 +203,7 @@ TEST_F(TestConvolutionFp16, ConvTest1) {
   std::cout << std::endl;
 
   std::string output_path = "./test_data/conv/convfp32_out_1_28_28_32.bin";
-  lite::CompareOutput(fp32_output_data, output_path);
+  lite::CompareOutput(fp32_output_data, output_data_size, output_path);
 
   free(nhwc4_input_data);
   free(packed_input);
@@ -309,7 +309,7 @@ TEST_F(TestConvolutionFp16, ConvTest2) {
   std::cout << std::endl;
 
   std::string output_path = "./test_data/conv/convfp32_out_1_128_128_32.bin";
-  lite::CompareOutput(fp32_output_data, output_path);
+  lite::CompareOutput(fp32_output_data, output_data_size, output_path);
 
   free(packed_input);
   free(bias_data);
@@ -452,7 +452,7 @@ TEST_F(TestConvolutionFp16, Conv3x3Test1) {
   std::cout << std::endl;
 
   std::string output_path = "./test_data/conv/convfp32_out_1_28_28_32.bin";
-  lite::CompareOutput(fp32_output_data, output_path);
+  lite::CompareOutput(fp32_output_data, output_data_size, output_path);
 
   free(bias_data);
   free(tile_buffer);
@@ -570,7 +570,7 @@ TEST_F(TestConvolutionFp16, Conv3x3Test2) {
   std::cout << std::endl;
 
   std::string output_path = "./test_data/conv/convfp32_out_1_128_128_32.bin";
-  lite::CompareOutput(fp32_output_data, output_path);
+  lite::CompareOutput(fp32_output_data, output_data_size, output_path);
 
   free(bias_data);
   free(tile_buffer);

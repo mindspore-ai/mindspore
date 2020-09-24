@@ -25,7 +25,7 @@
 #include "backend/optimizer/common/pattern_engine.h"
 #include "schema/inner/model_generated.h"
 #include "src/param_value_lite.h"
-#include "tools/converter/return_code.h"
+#include "tools/converter/converter_context.h"
 
 using PrimitiveCPtr = std::shared_ptr<mindspore::lite::PrimitiveC>;
 namespace mindspore {
