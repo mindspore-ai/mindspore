@@ -86,45 +86,45 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-- Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [TRAIN_METHOD] [CKPT_PATH]
-- GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [TRAIN_METHOD] [CKPT_PATH]
-- CPU: sh run_trian.sh CPU [DATASET_PATH] [TRAIN_METHOD] [CKPT_PATH]
+- Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
+- GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
+- CPU: sh run_trian.sh CPU [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
 
 ### Launch
 
 ```shell
 # training example
   python:
-      Ascend: python train.py --platform Ascend --dataset_path [TRAIN_DATASET_PATH] --train_method train
-      GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH] --train_method train
-      CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --train_method train
+      Ascend: python train.py --platform Ascend --dataset_path [TRAIN_DATASET_PATH]
+      GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH]
+      CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH]
 
   shell:
-      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  train
-      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] train
-      CPU: sh run_train.sh CPU [TRAIN_DATASET_PATH] train
+      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]
+      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH]
+      CPU: sh run_train.sh CPU [TRAIN_DATASET_PATH]
 
-# fine tune example
+# fine tune whole network example
   python:
-      Ascend: python train.py --platform Ascend --dataset_path [TRAIN_DATASET_PATH] --train_method fine_tune ./pretrain_checkpoint/mobilenetv2.ckpt
-      GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH] --train_method fine_tune ./pretrain_checkpoint/mobilenetv2.ckpt
-      CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --train_method fine_tune ./pretrain_checkpoint/mobilenetv2.ckpt
+      Ascend: python train.py --platform Ascend --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none
+      GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none
+      CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none
 
   shell:
-      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  fine_tune ./pretrain_checkpoint/mobilenetv2.ckpt
-      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] fine_tune ./pretrain_checkpoint/mobilenetv2.ckpt
-      CPU: sh run_train.sh CPU [TRAIN_DATASET_PATH] fine_tune ./pretrain_checkpoint/mobilenetv2.ckpt
+      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  [CKPT_PATH] none
+      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] [CKPT_PATH] none
+      CPU: sh run_train.sh CPU [TRAIN_DATASET_PATH] [CKPT_PATH] none
 
-# incremental learn example
+# fine tune full connected layers example
   python:
-      Ascend: python --platform Ascend train.py --dataset_path [TRAIN_DATASET_PATH] --train_method incremental_learn ./pretrain_checkpoint/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
-      GPU: python --platform GPU train.py --dataset_path [TRAIN_DATASET_PATH] --train_method incremental_learn ./pretrain_checkpoint/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
-      CPU: python --platform CPU train.py --dataset_path [TRAIN_DATASET_PATH] --train_method incremental_learn ./pretrain_checkpoint/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
+      Ascend: python --platform Ascend train.py --dataset_path [TRAIN_DATASET_PATH]--pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
+      GPU: python --platform GPU train.py --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
+      CPU: python --platform CPU train.py --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer backbone
 
   shell:
-      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  incremental_learn ./pretrain_checkpoint/mobilenetv2.ckpt  ./checkpoint/mobilenetv2_head_15.ckpt
-      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] incremental_learn ./pretrain_checkpoint/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
-      CPU: sh run_train.sh CPU [TRAIN_DATASET_PATH] incremental_learn ./pretrain_checkpoint/mobilenetv2_199.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
+      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
+      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
+      CPU: sh run_train.sh CPU [TRAIN_DATASET_PATH] [CKPT_PATH] backbone
 ```
 
 ### Result
@@ -144,23 +144,23 @@ epoch time: 138331.250, per step time: 221.330, avg loss: 3.917
 
 You can start training using python or shell scripts.If the train method is train or fine tune, should not input the `[CHECKPOINT_PATH]` The usage of shell scripts as follows:
 
-- Ascend: sh run_eval.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH] [HEAD_CKPT_PATH]
-- GPU: sh run_eval.sh GPU [DATASET_PATH] [CHECKPOINT_PATH] [HEAD_CKPT_PATH]
-- CPU: sh run_eval.sh CPU [DATASET_PATH] [BACKBONE_CKPT_PATH] [HEAD_CKPT_PATH]
+- Ascend: sh run_eval.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+- GPU: sh run_eval.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
+- CPU: sh run_eval.sh CPU [DATASET_PATH] [BACKBONE_CKPT_PATH]
 
 ### Launch
 
 ```shell
 # eval example
   python:
-      Ascend: python eval.py --platform Ascend --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt ./pretrain_ckpt/mobilenetv2.ckpt --head_ckpt ./checkpoint/mobilenetv2_head_15.ckpt
-      GPU: python eval.py --platform GPU --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt ./pretrain_ckpt/mobilenetv2.ckpt --head_ckpt ./checkpoint/mobilenetv2_head_15.ckpt
-      CPU: python eval.py --platform CPU --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt ./pretrain_ckpt/mobilenetv2.ckpt --head_ckpt ./checkpoint/mobilenetv2_head_15.ckpt
+      Ascend: python eval.py --platform Ascend --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt ./ckpt_0/mobilenetv2_15.ckpt
+      GPU: python eval.py --platform GPU --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt ./ckpt_0/mobilenetv2_15.ckpt
+      CPU: python eval.py --platform CPU --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt ./ckpt_0/mobilenetv2_15.ckpt
 
   shell:
-      Ascend: sh run_eval.sh Ascend [VAL_DATASET_PATH] ./pretrain_ckpt/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
-      GPU: sh run_eval.sh GPU [VAL_DATASET_PATH] ./pretrain_ckpt/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
-      CPU: sh run_eval.sh CPU [VAL_DATASET_PATH] ./pretrain_ckpt/mobilenetv2.ckpt ./checkpoint/mobilenetv2_head_15.ckpt
+      Ascend: sh run_eval.sh Ascend [VAL_DATASET_PATH] ./checkpoint/mobilenetv2_head_15.ckpt
+      GPU: sh run_eval.sh GPU [VAL_DATASET_PATH] ./checkpoint/mobilenetv2_head_15.ckpt
+      CPU: sh run_eval.sh CPU [VAL_DATASET_PATH] ./checkpoint/mobilenetv2_head_15.ckpt
 ```
 
 > checkpoint can be produced in training process.
@@ -170,7 +170,7 @@ You can start training using python or shell scripts.If the train method is trai
 Inference result will be stored in the example path, you can find result like the followings in `eval.log`.
 
 ```shell
-result: {'acc': 0.71976314102564111} ckpt=/path/to/checkpoint/mobilenet-200_625.ckpt
+result: {'acc': 0.71976314102564111} ckpt=./ckpt_0/mobilenet-200_625.ckpt
 ```
 
 # [Model description](#contents)
