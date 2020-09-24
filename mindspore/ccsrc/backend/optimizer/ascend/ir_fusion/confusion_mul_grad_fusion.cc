@@ -97,11 +97,11 @@ bool QuitFusion(const FuncGraphPtr &graph, const AnfNodePtr &mul0_anf, const Anf
   auto mul0 = mul0_anf->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(mul0);
 
-  if (IsDepend(graph, mul0->input(1), reduce_sum)) {
+  if (IsDepend(*graph, mul0->input(1), {reduce_sum})) {
     MS_LOG(INFO) << "mul0->input(1) depends on reduce_sum, quit fusion";
     return true;
   }
-  if (IsDepend(graph, mul1->input(1), mul0)) {
+  if (IsDepend(*graph, mul1->input(1), {mul0})) {
     MS_LOG(INFO) << "mul1->input(1) depends on mul0, quit fusion";
     return true;
   }

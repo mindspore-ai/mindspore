@@ -39,11 +39,9 @@ std::vector<int> Convert2Int(const std::vector<size_t> &v) {
   return result;
 }
 
-bool IsDepend(const FuncGraphPtr &graph, const AnfNodePtr &node1, const AnfNodePtr &node2) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node1);
-  MS_EXCEPTION_IF_NULL(node2);
-  std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
+bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::vector<AnfNodePtr> node_list = TopoSort(graph.get_return());
   std::map<AnfNodePtr, std::set<AnfNodePtr>> control_depend_map;
   for (auto &nd : node_list) {
     MS_EXCEPTION_IF_NULL(nd);
@@ -60,29 +58,29 @@ bool IsDepend(const FuncGraphPtr &graph, const AnfNodePtr &node1, const AnfNodeP
     }
   }
 
-  FuncGraphManagerPtr manager = graph->manager();
+  FuncGraphManagerPtr manager = graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
 
   std::unordered_set<AnfNodePtr> seen_node;
-  std::deque<AnfNodePtr> todo{node1};
+  std::deque<AnfNodePtr> todo{node};
   while (!todo.empty()) {
-    AnfNodePtr node = todo.front();
+    AnfNodePtr nd = todo.front();
     todo.pop_front();
-    if (seen_node.count(node) > 0 || !manager->all_nodes().contains(node)) {
+    if (seen_node.count(nd) > 0 || !manager->all_nodes().contains(nd)) {
       continue;
     }
-    (void)seen_node.insert(node);
+    (void)seen_node.insert(nd);
 
-    if (node == node2) {
+    if (std::any_of(nodes.begin(), nodes.end(), [&nd](const AnfNodePtr &item) { return nd == item; })) {
       return true;
     }
-    if (node->isa<CNode>()) {
-      auto cnode = node->cast<CNodePtr>();
+    if (nd->isa<CNode>()) {
+      auto cnode = nd->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       auto inputs = cnode->inputs();
       (void)todo.insert(todo.end(), inputs.begin(), inputs.end());
     }
-    auto it = control_depend_map.find(node);
+    auto it = control_depend_map.find(nd);
     if (it != control_depend_map.end()) {
       (void)todo.insert(todo.end(), it->second.begin(), it->second.end());
     }
