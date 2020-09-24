@@ -151,6 +151,7 @@ kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *>
       MS_LOG(ERROR) << "dequant data is nullptr.";
       return nullptr;
     }
+    weight_tensor->set_data_type(kNumberTypeFloat32);
     weight_tensor->SetData(dequant_weight);
   }
 
@@ -166,6 +167,7 @@ kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *>
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
       weight_tensor->FreeData();
+      weight_tensor->set_data_type(kNumberTypeInt8);
       weight_tensor->SetData(restore_data);
     }
     return nullptr;
@@ -177,12 +179,14 @@ kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *>
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
       weight_tensor->FreeData();
+      weight_tensor->set_data_type(kNumberTypeInt8);
       weight_tensor->SetData(restore_data);
     }
     return nullptr;
   }
   if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
     weight_tensor->FreeData();
+    weight_tensor->set_data_type(kNumberTypeInt8);
     weight_tensor->SetData(restore_data);
   }
   return kernel;

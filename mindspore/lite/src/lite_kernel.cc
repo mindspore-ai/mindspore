@@ -214,6 +214,7 @@ float *LiteKernelUtil::DequantWeight(lite::Tensor *input_tensor) {
       dequant_datas[j] = static_cast<float>((quant_datas[j] - zero_point) * scale);
     }
   }
+
   return dequant_datas;
 }
 }  // namespace mindspore::kernel
