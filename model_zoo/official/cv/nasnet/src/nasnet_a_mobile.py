@@ -23,7 +23,7 @@ import mindspore.ops.functional as F
 import mindspore.ops.composite as C
 import mindspore.common.dtype as mstype
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 
 
