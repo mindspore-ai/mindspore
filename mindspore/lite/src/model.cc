@@ -78,7 +78,7 @@ Model *Model::Import(const char *model_buf, size_t size) {
     MS_LOG(ERROR) << "The buffer is invalid and fail to create graph.";
     return nullptr;
   }
-  Model *model = new (std::nothrow) Model();
+  auto *model = new (std::nothrow) Model();
   if (model == nullptr) {
     MS_LOG(ERROR) << "new model fail!";
     return nullptr;

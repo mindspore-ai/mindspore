@@ -28,6 +28,7 @@
 #include <vector>
 #include <memory>
 #include <cfloat>
+#include <utility>
 #include "include/model.h"
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
@@ -63,6 +64,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::numThreads, "numThreads", "Run threads number", 2);
     AddFlag(&BenchmarkFlags::fp16Priority, "fp16Priority", "Priority float16", false);
     AddFlag(&BenchmarkFlags::warmUpLoopCount, "warmUpLoopCount", "Run warm up loop", 3);
+    AddFlag(&BenchmarkFlags::runTimeProfiler, "runTimeProfiler", "Run time profiler", false);
     // MarkAccuracy
     AddFlag(&BenchmarkFlags::calibDataPath, "calibDataPath", "Calibration data file path", "");
     AddFlag(&BenchmarkFlags::calibDataType, "calibDataType", "Calibration data type. FLOAT | INT32 | INT8 | UINT8",
@@ -89,6 +91,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   int numThreads;
   bool fp16Priority;
   int warmUpLoopCount;
+  bool runTimeProfiler;
   // MarkAccuracy
   std::string calibDataPath;
   std::string calibDataType;
@@ -107,7 +110,7 @@ class MS_API Benchmark {
   virtual ~Benchmark();
 
   int Init();
-  int RunBenchmark(const std::string &deviceType = "NPU");
+  int RunBenchmark();
 
  private:
   // call GenerateInputData or ReadInputFile to init inputTensors
@@ -123,6 +126,10 @@ class MS_API Benchmark {
   int ReadCalibData();
 
   int CompareOutput();
+
+  int InitCallbackParameter();
+
+  int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
 
   template <typename T>
   void PrintInputData(tensor::MSTensor *input) {
@@ -227,6 +234,16 @@ class MS_API Benchmark {
                                                       {"INT32", TypeId::kNumberTypeInt32},
                                                       {"UINT8", TypeId::kNumberTypeUInt8}};
   TypeId msCalibDataType = TypeId::kNumberTypeFloat;
+
+  // callback parameters
+  uint64_t op_begin_ = 0;
+  int op_call_times_total_ = 0;
+  float op_cost_total_ = 0.0f;
+  std::map<std::string, std::pair<int, float>> op_times_by_type_;
+  std::map<std::string, std::pair<int, float>> op_times_by_name_;
+
+  session::KernelCallBack before_call_back_;
+  session::KernelCallBack after_call_back_;
 };
 
 int MS_API RunBenchmark(int argc, const char **argv);
