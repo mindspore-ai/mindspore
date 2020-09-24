@@ -177,5 +177,5 @@ if (NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
     install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/gvar/libmindspore_gvar.so
             DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/lib COMPONENT ${COMPONENT_NAME})
     install(FILES ${glog_LIBPATH}/libglog.so.0.4.0
-            DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/lib RENAME libglog.so.0 COMPONENT ${COMPONENT_NAME})
+            DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/third_party/glog/lib RENAME libglog.so.0 COMPONENT ${COMPONENT_NAME})
 endif ()
