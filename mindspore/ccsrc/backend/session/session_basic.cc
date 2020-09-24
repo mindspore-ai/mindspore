@@ -1274,13 +1274,6 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
   // create output
   auto g_output = graph->NewCNode(make_tuple_inputs);
   graph->set_output(g_output);
-  // set graph manager,which now is only used to get valuenodes and hardware optimizing
-  MS_EXCEPTION_IF_NULL(context_);
-  FuncGraphManagerPtr manager = context_->manager();
-  if (manager != nullptr) {
-    manager->AddFuncGraph(graph);
-    graph->set_manager(manager);
-  }
   MS_LOG(INFO) << "Finish!";
 }
 
