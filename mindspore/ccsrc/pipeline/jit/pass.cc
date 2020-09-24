@@ -113,6 +113,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.arithmetic_simplify_,
     irpass.addn_zero_filter_,
     irpass.adjust_all_reduce_mul_add_,
+    irpass.accumulaten_eliminater_,
 
     // Safe inlining
     irpass.inline_,

@@ -28,6 +28,7 @@
 #include "frontend/optimizer/irpass/item_tuple_eliminate.h"
 #include "frontend/optimizer/irpass/mark_interface_fusion.h"
 #include "frontend/optimizer/irpass/merge_addn.h"
+#include "frontend/optimizer/irpass/accumulaten_eliminate.h"
 #include "frontend/optimizer/irpass/minmax_grad.h"
 #include "frontend/optimizer/irpass/param_replace.h"
 #include "frontend/optimizer/irpass/partial_eliminate.h"
@@ -128,6 +129,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Addn
   merge_addn_ = MakeSubstitution(std::make_shared<MergeAddN>(), "merge_addn", prim::kPrimAddN);
   addn_zero_filter_ = MakeSubstitution(std::make_shared<AddNZeroFilter>(), "addn_zero_filter", prim::kPrimAddN);
+
+  // AccumulateNV2
+  accumulaten_eliminater_ =
+    MakeSubstitution(std::make_shared<AccumulateNV2Eliminater>(), "accumulaten_eliminater", prim::kPrimAccumulateNV2);
 
   // inline
   inline_ = MakeSubstitution(std::make_shared<Inliner>(), "inline", IsCNodeGraph);
