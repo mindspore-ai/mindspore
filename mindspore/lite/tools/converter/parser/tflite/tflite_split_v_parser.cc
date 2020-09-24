@@ -21,11 +21,8 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                 schema::CNodeT *op, std::vector<int32_t> *tensors_id,
-                                 std::vector<schema::Format> *tensors_format, std::map<int, int> *tensors_id_map) {
+STATUS TfliteSplitVParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                 const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteSplitVParser";
 
   if (op == nullptr) {
@@ -51,23 +48,24 @@ STATUS TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   }
   attr->numberSplit = tflite_attr->num_splits;
 
-  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->sizeSplits)) {
+  if (GetTfliteData(tflite_op->inputs[1], tflite_model->subgraphs[0]->tensors, tflite_model->buffers,
+                    attr->sizeSplits)) {
     MS_LOG(ERROR) << "get spliteV -> sizeSplits failed";
     return RET_ERROR;
   }
 
-  const auto &tensor = tflite_tensors[tflite_op->inputs[0]];
+  const auto &tensor = tflite_model->subgraphs[0]->tensors[tflite_op->inputs[0]];
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "tensor_shape is null";
     return RET_NULL_PTR;
   }
   auto tensor_shape = tensor->shape;
-  const auto &axis_tensor = tflite_tensors[tflite_op->inputs[2]];
+  const auto &axis_tensor = tflite_model->subgraphs[0]->tensors[tflite_op->inputs[2]];
   if (axis_tensor == nullptr) {
     MS_LOG(ERROR) << "axis_tensor is null";
     return RET_NULL_PTR;
   }
-  auto axis = *(reinterpret_cast<int32_t *>(tflite_model_buffer[axis_tensor->buffer]->data.data()));
+  auto axis = *(reinterpret_cast<int32_t *>(tflite_model->buffers[axis_tensor->buffer]->data.data()));
   if (axis < 0) {
     axis += tensor_shape.size();
   }
@@ -80,11 +78,11 @@ STATUS TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   op->primitive->value.type = schema::PrimitiveType_Split;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
-             tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors.size(),
+             schema::Format::Format_NHWC);
   for (size_t i = 0; i < tflite_op->outputs.size(); i++) {
-    AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[i], tensors_id->size(),
-                tflite_tensors.size(), schema::Format::Format_NHWC);
+    AddOpOutput(op, tensors_info, tflite_op->outputs[i], tflite_model->subgraphs[0]->tensors.size(),
+                schema::Format::Format_NHWC);
   }
   return RET_OK;
 }

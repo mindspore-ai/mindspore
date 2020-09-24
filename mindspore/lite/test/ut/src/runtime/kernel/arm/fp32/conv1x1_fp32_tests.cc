@@ -54,7 +54,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack1) {
 
   float out[20] = {0};
   Conv1x1InputPack(in, out, conv_param, sizeof(float));
-  EXPECT_EQ(0, lite::CompareOutputData(out, correct, 20));
+  EXPECT_EQ(0, lite::CompareOutputData(out, 20, correct, 20));
   delete conv_param;
 }
 
@@ -114,7 +114,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack3) {
                      -5.052577, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
   Conv1x1InputPack(in, out, conv_param, sizeof(float));
-  EXPECT_EQ(0, lite::CompareOutputData(out, correct, 18));
+  EXPECT_EQ(0, lite::CompareOutputData(out, 18, correct, 18));
   delete conv_param;
 }
 
@@ -136,7 +136,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack4) {
                      0.0,    0.0,    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0};
   float out[54] = {0};
   Conv1x1InputPack(in, out, conv_param, sizeof(float));
-  EXPECT_EQ(0, lite::CompareOutputData(out, correct, 54));
+  EXPECT_EQ(0, lite::CompareOutputData(out, 54, correct, 54));
   delete conv_param;
 }
 
@@ -166,7 +166,7 @@ TEST_F(TestConv1x1Fp32, Conv1x1WeightTest1) {
   conv_param->output_channel_ = 7;
   float out[96] = {0};
   Pack1x1WeightFp32(in, out, conv_param);
-  EXPECT_EQ(0, lite::CompareOutputData(out, co, 96));
+  EXPECT_EQ(0, lite::CompareOutputData(out, 96, co, 96));
   delete conv_param;
 }
 

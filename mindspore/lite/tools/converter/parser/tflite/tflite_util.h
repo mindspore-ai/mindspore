@@ -44,6 +44,12 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, schema::P
                        int strideW, int windowH, int windowW, std::vector<int> *params);
 
 void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);
+
+struct TfliteTensorsInfo {
+  std::vector<int32_t> tensorsId;
+  std::vector<schema::Format> tensorsFormat;
+  std::map<int, int> tensorsIdMap;
+};
 }  // namespace lite
 }  // namespace mindspore
 

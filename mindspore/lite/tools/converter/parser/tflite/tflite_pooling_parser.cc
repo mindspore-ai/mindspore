@@ -22,11 +22,8 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                  schema::CNodeT *op, std::vector<int32_t> *tensors_id,
-                                  std::vector<schema::Format> *tensors_format, std::map<int, int> *tensors_id_map) {
+STATUS TflitePoolingParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                  const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -72,7 +69,7 @@ STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
 
   // calculate pad params
   auto data_index = tflite_op->inputs[0];
-  const auto &data_tensor = tflite_tensors[data_index];
+  const auto &data_tensor = tflite_model->subgraphs[0]->tensors[data_index];
   std::vector<int> params;
   if (getPaddingParam(data_tensor, attr->padMode, attr->strideH, attr->strideW, attr->windowH, attr->windowW,
                       &params) != RET_OK) {
@@ -88,10 +85,10 @@ STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   op->primitive->value.type = schema::PrimitiveType_Pooling;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
-             tflite_tensors.size(), schema::Format::Format_NHWC);
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
-              tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors.size(),
+             schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
+              schema::Format::Format_NHWC);
   return RET_OK;
 }
 

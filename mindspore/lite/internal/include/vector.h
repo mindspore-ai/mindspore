@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
-#include <initializer_list>
 #define DEFAULT_CAPACITY 4
 
 struct MSTensor;

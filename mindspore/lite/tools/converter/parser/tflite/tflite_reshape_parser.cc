@@ -21,11 +21,8 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                  const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                                  const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                  schema::CNodeT *op, std::vector<int32_t> *tensors_id,
-                                  std::vector<schema::Format> *tensors_format, std::map<int, int> *tensors_id_map) {
+STATUS TfliteReshapeParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                  const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteReshapeParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -50,18 +47,19 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
       return RET_ERROR;
     }
     auto shape_tensor_index = tflite_op->inputs[1];
-    const auto &shape_tensor = tflite_tensors[shape_tensor_index];
+    const auto &shape_tensor = tflite_model->subgraphs[0]->tensors[shape_tensor_index];
     if (shape_tensor == nullptr) {
       MS_LOG(ERROR) << "shape_tensor is null";
       return RET_NULL_PTR;
     }
-    auto &buf_data = tflite_model_buffer[shape_tensor->buffer];
+    auto &buf_data = tflite_model->buffers[shape_tensor->buffer];
     if (buf_data == nullptr) {
       MS_LOG(ERROR) << "buf_data is null";
       return RET_NULL_PTR;
     }
     if (!buf_data->data.empty()) {
-      if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->shape)) {
+      if (GetTfliteData(tflite_op->inputs[1], tflite_model->subgraphs[0]->tensors, tflite_model->buffers,
+                        attr->shape)) {
         MS_LOG(ERROR) << "get reshape -> shape failed";
         return RET_ERROR;
       }
@@ -78,11 +76,11 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   op->primitive->value.value = attr.release();
 
   for (size_t i = 0; i < tflite_op->inputs.size(); i++) {
-    AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[i], tensors_id->size(),
-               tflite_tensors.size(), schema::Format::Format_NHWC);
+    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_model->subgraphs[0]->tensors.size(),
+               schema::Format::Format_NHWC);
   }
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
-              tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
+              schema::Format::Format_NHWC);
   return RET_OK;
 }
 
