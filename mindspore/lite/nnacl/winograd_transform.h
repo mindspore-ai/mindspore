@@ -38,21 +38,6 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
 void WinogradOutputTransform(const float *gemm_out, float *out_data, const float *bias_data, int cal_num,
                              int out_tile_index, int output_unit_num, ConvParameter *conv_param, OutputTransFunc func);
 
-// for fp32 convolution 3x3 filter/input/output transform
-void Conv3x3Fp32InputUnit(const float *tmp_data, float *trans_input_data, size_t step);
-
-void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, float *tmp_data, int start_index,
-                               int real_cal_num, int out_w_block, ConvParameter *conv_param);
-
-void Conv3x3Fp32FilterTransform(float *weight_data, float *trans_weight, int iC4, int output_channel, int kernel_plane,
-                                int oc_block);
-
-void Conv3x3Fp32OutputUnit(const float *gemm_out, const float *bias_data, float *output_data, bool h_not_bound,
-                           bool w_not_bound, int output_w);
-
-void Conv3x3Fp32OutputTransform(const float *gemm_out, float *out_data, const float *bias_data, int start_index,
-                                int real_cal_num, int out_w_block, ConvParameter *conv_param);
-
 // for int8 convolution 3x3 filter/input/output transform
 void Conv3x3Int8InputUnit(int16_t *tmp_data, int16_t *trans_input_data, size_t step, int input_zp);
 

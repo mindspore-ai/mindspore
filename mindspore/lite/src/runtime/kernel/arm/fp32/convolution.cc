@@ -15,9 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution.h"
-#include "src/runtime/kernel/arm/fp32/convolution_slidewindow.h"
 #include "src/runtime/kernel/arm/fp32/convolution_1x1.h"
-#include "src/runtime/kernel/arm/fp32/convolution_3x3.h"
 #include "src/runtime/kernel/arm/fp32/convolution_winograd.h"
 #include "nnacl/fp32/conv.h"
 #include "nnacl/common_func.h"
@@ -42,17 +40,10 @@ int ConvolutionCPUKernel::InitWeightBias() {
   int out_channel = filter_tensor->Batch();
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
-  int ic4 = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
-  int oc_block, oc_block_num;
-#ifdef ENABLE_ARM32
-  oc_block = C4NUM;
-  oc_block_num = UP_DIV(out_channel, C4NUM);
-#else
-  oc_block = C8NUM;
-  oc_block_num = UP_DIV(out_channel, C8NUM);
-#endif
-  int pack_weight_size = oc_block_num * oc_block * ic4 * C4NUM * kernel_plane;
+  const int oc_block = C8NUM;
+  int oc_block_num = UP_DIV(out_channel, C8NUM);
+  int pack_weight_size = oc_block_num * oc_block * in_channel * kernel_plane;
 
   auto origin_weight = reinterpret_cast<float *>(filter_tensor->MutableData());
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
@@ -61,7 +52,7 @@ int ConvolutionCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
-  PackWeightFp32(origin_weight, conv_param_, packed_weight_, oc_block, oc_block_num);
+  RowMajor2Col8Major(origin_weight, packed_weight_, out_channel, in_channel * kernel_plane);
 
   bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_block * sizeof(float)));
   if (bias_data_ == nullptr) {
@@ -80,36 +71,26 @@ int ConvolutionCPUKernel::InitWeightBias() {
 }
 
 int ConvolutionCPUKernel::InitTmpBuffer() {
-  int out_channel = conv_param_->output_channel_;
+  int in_channel = conv_param_->input_channel_;
   MS_ASSERT(ctx_->allocator != nullptr);
 
-  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
-  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * ic4 * C4NUM * TILE_NUM * thread_count_;
+#ifdef ENABLE_ARM32
+  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * in_channel * C4NUM * thread_count_;
+#else
+  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * in_channel * C12NUM * thread_count_;
+#endif
   packed_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(unit_size * sizeof(float)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed input failed.";
     return RET_ERROR;
   }
 
-  tmp_output_block_ =
-    reinterpret_cast<float *>(ctx_->allocator->Malloc(thread_count_ * TILE_NUM * out_channel * sizeof(float)));
-  if (tmp_output_block_ == nullptr) {
-    MS_LOG(ERROR) << "malloc tmp output block failed.";
+  col_major_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(unit_size * sizeof(float)));
+  if (col_major_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc col_major_input_ failed.";
     return RET_ERROR;
   }
   return RET_OK;
-}
-
-void ConvolutionCPUKernel::ConfigInputOutput() {
-  // set output format
-  auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_tensor->SetFormat(schema::Format::Format_NHWC);
-
-#ifdef ENABLE_ARM32
-  gemm_func_ = IndirectGemmFp32_8x4;
-#else
-  gemm_func_ = IndirectGemmFp32_8x8;
-#endif
 }
 
 int ConvolutionCPUKernel::Init() {
@@ -121,7 +102,6 @@ int ConvolutionCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
-  ConfigInputOutput();
   return ReSize();
 }
 
@@ -141,15 +121,11 @@ int ConvolutionCPUKernel::ReSize() {
 }
 
 int ConvolutionCPUKernel::RunImpl(int task_id) {
-  if (gemm_func_ == nullptr) {
-    MS_LOG(ERROR) << "gemm_func is nullptr.";
-    return RET_ERROR;
-  }
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->MutableData());
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
-  ConvFp32(ori_input_data, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), tmp_output_block_,
-           output_addr, task_id, conv_param_, gemm_func_);
+  ConvFp32(ori_input_data, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), col_major_input_,
+           output_addr, task_id, conv_param_);
   return RET_OK;
 }
 
@@ -184,19 +160,6 @@ int ConvolutionCPUKernel::Run() {
   }
   FreeTmpBuffer();
   return RET_OK;
-}
-
-bool CheckIfUseSlideWindow(ConvParameter *conv_param) {
-  int in_channel = conv_param->input_channel_;
-  int out_h = conv_param->output_h_;
-  int out_w = conv_param->output_w_;
-  int out_channel = conv_param->output_channel_;
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int oc4 = UP_DIV(out_channel, C4NUM);
-  if (out_h * out_w <= 32 || ic4 < 4 || oc4 < 4) {
-    return true;
-  }
-  return false;
 }
 
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,

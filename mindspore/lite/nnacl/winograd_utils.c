@@ -25,6 +25,7 @@ static InputTransFunc InputTransFuncList[] = {
   NULL, NULL, NULL, NULL, InputTransform4x4Unit, NULL, InputTransform6x6Unit, NULL, InputTransform8x8Unit};
 
 static OutputTransFunc OutputTransFuncList4[] = {NULL, NULL, OutputTransform4x2Unit, OutputTransform4x3Unit};
+
 static OutputTransFunc OutputTransFuncReluList4[] = {NULL, NULL, OutputTransform4x2ReluUnit,
                                                      OutputTransform4x3ReluUnit};
 static OutputTransFunc OutputTransFuncRelu6List4[] = {NULL, NULL, OutputTransform4x2Relu6Unit,
@@ -32,12 +33,14 @@ static OutputTransFunc OutputTransFuncRelu6List4[] = {NULL, NULL, OutputTransfor
 
 static OutputTransFunc OutputTransFuncList6[] = {
   NULL, NULL, OutputTransform6x2Unit, OutputTransform6x3Unit, OutputTransform6x4Unit, OutputTransform6x5Unit};
+
 static OutputTransFunc OutputTransFuncReluList6[] = {NULL,
                                                      NULL,
                                                      OutputTransform6x2ReluUnit,
                                                      OutputTransform6x3ReluUnit,
                                                      OutputTransform6x4ReluUnit,
                                                      OutputTransform6x5ReluUnit};
+
 static OutputTransFunc OutputTransFuncRelu6List6[] = {NULL,
                                                       NULL,
                                                       OutputTransform6x2Relu6Unit,
@@ -53,6 +56,7 @@ static OutputTransFunc OutputTransFuncList8[] = {NULL,
                                                  OutputTransform8x5Unit,
                                                  OutputTransform8x6Unit,
                                                  OutputTransform8x7Unit};
+
 static OutputTransFunc OutputTransFuncReluList8[] = {NULL,
                                                      NULL,
                                                      OutputTransform8x2ReluUnit,
@@ -61,6 +65,7 @@ static OutputTransFunc OutputTransFuncReluList8[] = {NULL,
                                                      OutputTransform8x5ReluUnit,
                                                      OutputTransform8x6ReluUnit,
                                                      OutputTransform8x7ReluUnit};
+
 static OutputTransFunc OutputTransFuncRelu6List8[] = {NULL,
                                                       NULL,
                                                       OutputTransform8x2Relu6Unit,

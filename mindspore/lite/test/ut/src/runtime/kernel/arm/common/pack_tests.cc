@@ -107,35 +107,6 @@ TEST_F(TestPack, PackInputFp32) {
   MS_LOG(INFO) << "TestPackInputFp32 passed";
 }
 
-TEST_F(TestPack, PackWeightFp32) {
-  auto conv_param = new ConvParameter;
-  InitConvParamPack(conv_param);
-
-  int k_h = conv_param->kernel_h_;
-  int k_w = conv_param->kernel_w_;
-  int in_channel = conv_param->input_channel_;
-  int out_channel = conv_param->output_channel_;
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int oc8 = UP_DIV(out_channel, C8NUM);
-
-  size_t weight_size;
-  std::string weight_path = "./test_data/conv/convfp32_weight_32_3_3_3.bin";
-  auto weight_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &weight_size));
-  auto packed_weight = reinterpret_cast<float *>(malloc(k_h * k_w * ic4 * C4NUM * oc8 * C8NUM * sizeof(float)));
-  PackWeightFp32(weight_data, conv_param, packed_weight, C8NUM, oc8);
-
-  printf("==================output data=================\n");
-  for (int i = 0; i < 20; i++) {
-    std::cout << packed_weight[i] << " ,";
-  }
-  std::cout << std::endl;
-
-  free(packed_weight);
-  delete conv_param;
-
-  MS_LOG(INFO) << "TestPackWeightFp32 passed";
-}
-
 #ifdef ENABLE_FP16
 TEST_F(TestPack, PackInputFp16) {
   size_t input_size;
