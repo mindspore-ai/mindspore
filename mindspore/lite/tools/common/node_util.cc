@@ -84,7 +84,7 @@ static const std::vector<schema::PrimitiveType> int8OpList = {
 static const std::vector<schema::PrimitiveType> needInsertOpList = {
   schema::PrimitiveType_Eltwise, schema::PrimitiveType_Activation,   schema::PrimitiveType_Concat,
   schema::PrimitiveType_Power,   schema::PrimitiveType_StridedSlice, schema::PrimitiveType_Add,
-  schema::PrimitiveType_Split};
+  schema::PrimitiveType_Split,   schema::PrimitiveType_Slice,        schema::PrimitiveType_Crop};
 
 static const std::unordered_map<int, int> nc2NhAxisMap = {{0, 0}, {1, -1}, {2, 1}, {3, 2}};
 
