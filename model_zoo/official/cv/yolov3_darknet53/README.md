@@ -112,6 +112,7 @@ sh run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
 .
 └─yolov3_darknet53      
   ├─README.md
+  ├─mindspore_hub_conf.md             # config for mindspore hub
   ├─scripts      
     ├─run_standalone_train.sh         # launch standalone training(1p) in ascend
     ├─run_distribute_train.sh         # launch distributed training(8p) in ascend
@@ -302,12 +303,12 @@ The above python command will run in the background. You can view the results th
 
 ### Evaluation Performance 
 
-| Parameters                 | YOLO                                                        |YOLO                                                        |
-| -------------------------- | ----------------------------------------------------------- |----------------------------------------------------------- |
-| Model Version              | YOLOv3                                                      |YOLOv3                                                      |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             | NV SMX2 V100-16G; CPU 2.10GHz, 96cores; Memory, 251G             |
+| Parameters                 | YOLO                                                        |YOLO                                                         |
+| -------------------------- | ----------------------------------------------------------- |------------------------------------------------------------ |
+| Model Version              | YOLOv3                                                      |YOLOv3                                                       |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             | NV SMX2 V100-16G; CPU 2.10GHz, 96cores; Memory, 251G        |
 | uploaded Date              | 06/31/2020 (month/day/year)                                 | 09/02/2020 (month/day/year)                                 |
-| MindSpore Version          | 0.5.0-alpha                                                 | 0.7.0                                                 |
+| MindSpore Version          | 0.5.0-alpha                                                 | 0.7.0                                                       |
 | Dataset                    | COCO2014                                                    | COCO2014                                                    |
 | Training Parameters        | epoch=320, batch_size=32, lr=0.001, momentum=0.9            | epoch=320, batch_size=32, lr=0.001, momentum=0.9            |
 | Optimizer                  | Momentum                                                    | Momentum                                                    |
@@ -315,7 +316,7 @@ The above python command will run in the background. You can view the results th
 | outputs                    | boxes and label                                             | boxes and label                                             |
 | Loss                       | 34                                                          | 34                                                          |
 | Speed                      | 1pc: 350 ms/step;                                           | 1pc: 600 ms/step;                                           |
-| Total time                 | 8pc: 25 hours                                               | 8pc: 18 hours(shape=416)                                               |
+| Total time                 | 8pc: 18.5 hours                                             | 8pc: 18 hours(shape=416)                                    |
 | Parameters (M)             | 62.1                                                        | 62.1                                                        |
 | Checkpoint for Fine tuning | 474M (.ckpt file)                                           | 474M (.ckpt file)                                           |
 | Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53 | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53 |
@@ -331,15 +332,15 @@ The above python command will run in the background. You can view the results th
 | MindSpore Version   | 0.5.0-alpha                 | 0.7.0                        |
 | Dataset             | COCO2014, 40,504  images    | COCO2014, 40,504  images     |
 | batch_size          | 1                           | 1                            |
-| outputs             | mAP                         | mAP                          | 
+| outputs             | mAP                         | mAP                          |
 | Accuracy            | 8pcs: 31.1%                 | 8pcs: 29.7%~30.3% (shape=416)|
 | Model for inference | 474M (.ckpt file)           | 474M (.ckpt file)            |
 
 
 # [Description of Random Situation](#contents)
 
-There are random seeds in distributed_sampler.py, transforms.py, yolo_dataset.py files. 
+There are random seeds in distributed_sampler.py, transforms.py, yolo_dataset.py files.
 
 
-# [ModelZoo Homepage](#contents)  
- Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).  
+# [ModelZoo Homepage](#contents)
+ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).

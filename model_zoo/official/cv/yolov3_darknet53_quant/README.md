@@ -111,6 +111,7 @@ sh run_eval.sh dataset/coco2014/ checkpoint/yolov3_quant.ckpt 0
 .
 └─yolov3_darknet53_quant      
   ├─README.md
+  ├─mindspore_hub_conf.md             # config for mindspore hub
   ├─scripts      
     ├─run_standalone_train.sh         # launch standalone training(1p) in ascend
     ├─run_distribute_train.sh         # launch distributed training(8p) in ascend
@@ -284,7 +285,7 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
 | outputs                    | boxes and label                                                                                |
 | Loss                       | 34                                                                                             |
 | Speed                      | 1pc: 135 ms/step;                                                                              |
-| Total time                 | 8pc: 24.5 hours                                                                                |
+| Total time                 | 8pc: 23.5 hours                                                                                |
 | Parameters (M)             | 62.1                                                                                           |
 | Checkpoint for Fine tuning | 474M (.ckpt file)                                                                              |
 | Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53_quant |

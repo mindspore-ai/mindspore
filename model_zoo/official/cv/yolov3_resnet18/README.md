@@ -98,6 +98,7 @@ After installing MindSpore via the official website, you can start training and 
 ```
 └── cv
     ├── README.md                           // descriptions about all the models
+    ├── mindspore_hub_conf.md               // config for mindspore hub
     └── yolov3_resnet18        
         ├── README.md                       // descriptions about yolov3_resnet18
         ├── scripts 

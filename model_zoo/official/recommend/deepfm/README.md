@@ -117,6 +117,7 @@ After installing MindSpore via the official website, you can start training and 
 .
 └─deepfm      
   ├─README.md
+  ├─mindspore_hub_conf.md             # config for mindspore hub
   ├─scripts      
     ├─run_standalone_train.sh         # launch standalone training(1p) in Ascend or GPU
     ├─run_distribute_train.sh         # launch distributed training(8p) in Ascend
