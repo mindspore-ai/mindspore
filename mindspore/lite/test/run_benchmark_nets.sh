@@ -617,17 +617,9 @@ basepath=$(pwd)
 echo ${basepath}
 #set -e
 
-# Example:sh run_benchmark_nets.sh -a /home/temp_test -c /home/temp_test -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408"
-while getopts "a:c:r:m:d:" opt; do
+# Example:sh run_benchmark_nets.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408"
+while getopts "r:m:d:" opt; do
     case ${opt} in
-        a)
-	    arm_path=${OPTARG}
-            echo "arm_path is ${OPTARG}"
-            ;;
-        c)
-	    converter_path=${OPTARG}
-            echo "converter_path is ${OPTARG}"
-            ;;
         r)
 	    release_path=${OPTARG}
             echo "release_path is ${OPTARG}"
@@ -645,9 +637,6 @@ while getopts "a:c:r:m:d:" opt; do
         exit 1;;
     esac
 done
-
-echo ${arm_path}
-echo ${converter_path}
 
 mkdir train
 arm64_path=${release_path}/android_aarch64
