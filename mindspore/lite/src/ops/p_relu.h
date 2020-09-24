@@ -21,7 +21,7 @@
 #include <set>
 #include <cmath>
 #include <memory>
-#include "ir/dtype/type_id.h"
+
 #include "src/ops/activation.h"
 
 namespace mindspore {

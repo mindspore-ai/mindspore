@@ -21,7 +21,6 @@
 #include <set>
 #include <cmath>
 #include "src/ops/primitive_c.h"
-#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace lite {

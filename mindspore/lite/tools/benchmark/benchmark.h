@@ -33,7 +33,6 @@
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
 #include "include/lite_session.h"
-#include "include/inference.h"
 
 namespace mindspore::lite {
 enum MS_API InDataType { kImage = 0, kBinary = 1 };

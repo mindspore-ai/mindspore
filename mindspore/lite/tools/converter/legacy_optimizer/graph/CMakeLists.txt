@@ -1,4 +1,4 @@
-add_library(graph_pass_mid OBJECT
+file(GLOB GRAPH_PASS
         ${CMAKE_CURRENT_SOURCE_DIR}/format_trans_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/trans_format_insert_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/dtype_trans_pass.cc
@@ -10,3 +10,5 @@ add_library(graph_pass_mid OBJECT
         ${CMAKE_CURRENT_SOURCE_DIR}/trans_format_remove_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infershape_pass.cc
         )
+set_property(SOURCE ${GRAPH_PASS} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
+add_library(graph_pass_mid OBJECT ${GRAPH_PASS})

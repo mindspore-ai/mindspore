@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_GATHER_H_
 
 #include <vector>
-#include "ir/anf.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/gather_parameter.h"
 

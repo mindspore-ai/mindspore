@@ -22,7 +22,7 @@
 #include "schema/inner/model_generated.h"
 #include "tools/common/tensor_util.h"
 #include "tools/common/node_util.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 
 namespace mindspore {

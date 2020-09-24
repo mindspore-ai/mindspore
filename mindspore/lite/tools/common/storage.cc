@@ -18,7 +18,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "flatbuffers/flatbuffers.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
 
 namespace mindspore {

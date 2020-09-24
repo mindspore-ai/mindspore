@@ -17,7 +17,7 @@
 #include <iostream>
 #include <memory>
 #include "mindspore/lite/include/context.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "src/common/utils.h"
@@ -59,7 +59,7 @@ void InitPoolingParamFP32(PoolingParameter *pooling_param) {
 
 TEST_F(TestPoolingGradFp32, AvgPoolingGradFp32) {
   // prepare stage
-  auto pooling_param = static_cast<PoolingParameter*>(malloc(sizeof(PoolingParameter)));
+  auto pooling_param = static_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
   InitPoolingParamFP32(pooling_param);
   pooling_param->output_channel_ = 3;
   pooling_param->pool_mode_ = PoolMode_AvgPool;
@@ -267,7 +267,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
   auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
   auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %ld ms\n", time_end - time_start);
+  printf("single thread running time : %llu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/avgpoolgradfp32_s2_dx_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);
@@ -327,7 +327,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
   auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
   auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %ld ms\n", time_end - time_start);
+  printf("single thread running time : %llu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/avgpoolgradfp32_s3_dx_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);
@@ -444,7 +444,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
   auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
   auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %ld ms\n", time_end - time_start);
+  printf("single thread running time : %llu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_1_xgrad_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);
@@ -514,7 +514,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
   auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
   auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %ld ms\n", time_end - time_start);
+  printf("single thread running time : %llu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_s2_xgrad_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);
@@ -584,7 +584,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
   auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
   auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %ld ms\n", time_end - time_start);
+  printf("single thread running time : %llu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_s3_xgrad_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);

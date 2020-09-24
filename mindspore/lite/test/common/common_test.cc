@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 #ifdef __cplusplus
 #if __cplusplus

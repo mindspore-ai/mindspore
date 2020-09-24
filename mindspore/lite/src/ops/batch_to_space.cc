@@ -17,7 +17,7 @@
 #include "src/ops/batch_to_space.h"
 #include "src/common/common.h"
 #include "include/errorcode.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "src/tensor.h"
 
 namespace mindspore {

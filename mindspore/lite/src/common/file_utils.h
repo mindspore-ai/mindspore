@@ -25,7 +25,7 @@
 #include <memory>
 #include <fstream>
 #include "src/common/utils.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 namespace lite {

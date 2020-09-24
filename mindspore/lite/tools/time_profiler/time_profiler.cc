@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <utility>
 #include "include/ms_tensor.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "include/context.h"
 
 namespace mindspore {

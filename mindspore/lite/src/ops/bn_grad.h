@@ -20,7 +20,6 @@
 #include <vector>
 #include <set>
 #include <cmath>
-#include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
 namespace mindspore {
@@ -38,8 +37,7 @@ class BNGrad : public PrimitiveC {
   BNGrad() = default;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
-  int InferShape(std::vector<lite::Tensor *> inputs_,
-                               std::vector<lite::Tensor *> outputs_) override;
+  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   float GetEps() const;
   float GetMomentum() const;
 };

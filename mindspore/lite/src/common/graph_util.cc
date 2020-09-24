@@ -19,7 +19,7 @@
 #include <utility>
 #include "src/common/graph_util.h"
 #include "src/common/utils.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 
 namespace mindspore {

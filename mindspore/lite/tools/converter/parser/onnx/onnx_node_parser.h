@@ -22,7 +22,7 @@
 #include "google/protobuf/message.h"
 #include "tools/converter/parser/onnx/onnx.pb.h"
 #include "include/errorcode.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "schema/inner/model_generated.h"
 
 namespace mindspore {

@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "ir/anf.h"
+
 #include "nnacl/reduce_parameter.h"
 
 namespace mindspore::kernel {

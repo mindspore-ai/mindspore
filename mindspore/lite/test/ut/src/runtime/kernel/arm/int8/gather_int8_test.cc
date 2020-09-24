@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <iostream>
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/nnacl/gather_parameter.h"
 #include "mindspore/lite/nnacl/int8/gather_int8.h"

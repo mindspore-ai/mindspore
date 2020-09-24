@@ -24,7 +24,7 @@ j* you may not use this file except in compliance with the License.
 #include <set>
 #include <string>
 #include <type_traits>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "src/runtime/opencl/opencl_wrapper.h"
 #include "src/runtime/opencl/opencl_allocator.h"
 

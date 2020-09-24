@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_BACKEND_ARM_BASE_STRIDED_SLICE_H_
 
 #include <vector>
-#include "ir/anf.h"
+
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {

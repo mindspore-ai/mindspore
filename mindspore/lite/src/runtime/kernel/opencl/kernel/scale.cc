@@ -117,10 +117,8 @@ int ScaleOpenCLKernel::InitBuffer() {
     if (in_tensors_[1]->shape().size() == 1 && axis_ == 3) {
       img_size[0] = 1;
       img_size[1] = UP_DIV(in_tensors_[1]->shape()[0], C4NUM);
-      scale_ptr_ =
-        allocator->CreateImageFromHost(in_tensors_[1]->data_c(), in_tensors_[1]->ElementsNum(), img_size);
-      offset_ptr_ =
-        allocator->CreateImageFromHost(in_tensors_[2]->data_c(), in_tensors_[2]->ElementsNum(), img_size);
+      scale_ptr_ = allocator->CreateImageFromHost(in_tensors_[1]->data_c(), in_tensors_[1]->ElementsNum(), img_size);
+      offset_ptr_ = allocator->CreateImageFromHost(in_tensors_[2]->data_c(), in_tensors_[2]->ElementsNum(), img_size);
       return RET_OK;
     }
     int pack_weight_size = in_tensors_[1]->ElementsC4Num();
@@ -129,10 +127,8 @@ int ScaleOpenCLKernel::InitBuffer() {
     int batch = in_tensors_[1]->Batch();
     if (in_tensors_[0]->GetFormat() == in_tensors_[1]->GetFormat()) {
       if (in_tensors_[0]->data_type() == in_tensors_[1]->data_type()) {
-        scale_ptr_ =
-          allocator->CreateImageFromHost(in_tensors_[1]->data_c(), in_tensors_[1]->ElementsNum(), img_size);
-        offset_ptr_ =
-          allocator->CreateImageFromHost(in_tensors_[2]->data_c(), in_tensors_[2]->ElementsNum(), img_size);
+        scale_ptr_ = allocator->CreateImageFromHost(in_tensors_[1]->data_c(), in_tensors_[1]->ElementsNum(), img_size);
+        offset_ptr_ = allocator->CreateImageFromHost(in_tensors_[2]->data_c(), in_tensors_[2]->ElementsNum(), img_size);
       } else {
         MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
                       << in_tensors_[0]->data_type();

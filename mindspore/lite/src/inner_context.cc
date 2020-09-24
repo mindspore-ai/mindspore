@@ -16,7 +16,7 @@
 
 #include "src/inner_context.h"
 #include "include/errorcode.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore::lite {
 int InnerContext::Init() {

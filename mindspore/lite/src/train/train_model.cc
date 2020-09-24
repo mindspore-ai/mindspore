@@ -15,7 +15,7 @@
  */
 #include "src/ops/primitive_c.h"
 #include "include/train_model.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
 
@@ -79,11 +79,13 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   return model;
 }
 
-void TrainModel::Free() {
-}
+void TrainModel::Free() {}
 
-char* TrainModel::ExportBuf(char* buffer, size_t* len) const {
-  MS_EXCEPTION_IF_NULL(len);
+char *TrainModel::ExportBuf(char *buffer, size_t *len) const {
+  if (len == nullptr) {
+    MS_LOG(ERROR) << "len is nullptr";
+    return nullptr;
+  }
   if (buf_size_ == 0 || buf == nullptr) {
     MS_LOG(ERROR) << "Model::Export is only available for Train Session";
     return nullptr;
@@ -93,8 +95,9 @@ char* TrainModel::ExportBuf(char* buffer, size_t* len) const {
     MS_LOG(ERROR) << "Buffer is too small, Export Failed";
     return nullptr;
   }
-  if (buffer == nullptr)
+  if (buffer == nullptr) {
     buffer = reinterpret_cast<char *>(malloc(buf_size_));
+  }
   if (buffer == nullptr) {
     MS_LOG(ERROR) << "allocated model buf fail!";
     return nullptr;
@@ -105,7 +108,5 @@ char* TrainModel::ExportBuf(char* buffer, size_t* len) const {
   return buffer;
 }
 
-TrainModel::~TrainModel() {
-  Model::Free();
-}
+TrainModel::~TrainModel() { Model::Free(); }
 }  // namespace mindspore::lite

@@ -87,7 +87,7 @@ int Conv2DGradFilter::UnPackAttr(const Primitive &prim, const std::vector<AnfNod
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
-    attr->group =  GetValue<int>(prim.GetAttr("group"));
+    attr->group = GetValue<int>(prim.GetAttr("group"));
     auto format = GetValue<std::string>(prim.GetAttr("data_format"));
     if (format == "NCHW") {
       attr->format = schema::Format_NCHW;

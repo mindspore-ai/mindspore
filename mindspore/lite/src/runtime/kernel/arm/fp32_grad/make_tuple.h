@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "ir/anf.h"
 
 #include "src/runtime/kernel/arm/nnacl/fp32/arithmetic.h"
 

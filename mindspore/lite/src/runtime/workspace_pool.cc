@@ -21,7 +21,7 @@
 #include <malloc.h>
 #endif
 #include <algorithm>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 namespace predict {

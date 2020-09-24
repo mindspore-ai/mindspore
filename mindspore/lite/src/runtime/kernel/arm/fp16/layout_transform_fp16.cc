@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/arm/fp16/layout_transform_fp16.h"
 #include "nnacl/fp16/pack_fp16.h"
 #include "schema/ops_generated.h"
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore::kernel {
 LayoutConvertor LayoutTransformFp16(schema::Format src_format, schema::Format dst_format) {

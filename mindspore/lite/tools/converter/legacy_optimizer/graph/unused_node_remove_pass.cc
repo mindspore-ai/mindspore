@@ -19,7 +19,7 @@
 #include <cassert>
 
 #include "mindspore/lite/tools/converter/legacy_optimizer/graph/unused_node_remove_pass.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "tools/common/converter_op_utils.h"
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"

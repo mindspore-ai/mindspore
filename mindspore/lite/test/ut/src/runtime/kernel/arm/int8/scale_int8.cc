@@ -15,7 +15,7 @@
  */
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/tensor.h"
 #include "mindspore/lite/src/kernel_registry.h"

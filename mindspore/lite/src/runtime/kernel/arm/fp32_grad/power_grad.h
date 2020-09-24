@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "ir/anf.h"
 #include "nnacl/power.h"
 
 namespace mindspore::kernel {

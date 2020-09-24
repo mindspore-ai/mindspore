@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include "CL/cl2.hpp"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
 #include "src/lite_kernel.h"
 #include "src/common/utils.h"

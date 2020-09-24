@@ -16,7 +16,7 @@
 
 #include "include/train_session.h"
 #include <algorithm>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "include/context.h"
 #include "include/train_model.h"
 #include "include/errorcode.h"
@@ -53,7 +53,7 @@ void TrainSession::ReplaceOps() {
 }
 
 int TrainSession::CompileGraph(lite::Model *model) {
-  model_ = dynamic_cast<lite::TrainModel *>(model);
+  model_ = reinterpret_cast<lite::TrainModel *>(model);
   if (model_ == nullptr) {
     MS_LOG(ERROR) << "TrainSession can only compile TrainModels";
     return lite::RET_ERROR;
@@ -73,14 +73,14 @@ void *TrainSession::ExportToBuf(char *buf, size_t *len) const { return model_->E
 int TrainSession::RunGraph(const session::KernelCallBack &before, const session::KernelCallBack &after) {
   this->outputs_.clear();
   for (auto ms_tensors : output_node_map_)
-    for (auto ms_tensor : ms_tensors.second) this->outputs_.push_back((dynamic_cast<lite::Tensor *>(ms_tensor)));
+    for (auto ms_tensor : ms_tensors.second) this->outputs_.push_back((reinterpret_cast<lite::Tensor *>(ms_tensor)));
   if (train_mode_) return LiteSession::RunGraph(before, after);
 
   // object is expected to run only inference part of graph
   // prepare a list of kernels till the loss function -- temporary solution
   std::vector<kernel::LiteKernel *> inference_kernels;
   for (auto kernel : this->kernels_) {
-    if (dynamic_cast<const kernel::LossKernel *>(kernel) != nullptr) break;
+    if (reinterpret_cast<const kernel::LossKernel *>(kernel) != nullptr) break;
     inference_kernels.push_back(kernel);
   }
 
@@ -106,7 +106,7 @@ void TrainSession::Train() {
   output_tensor_map_.clear();
   train_mode_ = true;
   for (auto kernel : this->kernels_) {
-    if (dynamic_cast<const kernel::LossKernel *>(kernel) != nullptr) {
+    if (reinterpret_cast<const kernel::LossKernel *>(kernel) != nullptr) {
       auto *ms_tensor = kernel->out_tensors().at(0);
       if (ms_tensor != nullptr) {
         output_node_map_[kernel->name()].emplace_back(ms_tensor);
@@ -130,7 +130,7 @@ void TrainSession::Eval() {
 
   train_mode_ = false;
   for (auto kernel : this->kernels_) {
-    if ((dynamic_cast<const kernel::LossKernel *>(kernel) != nullptr) && (last_kernel != nullptr)) {
+    if ((reinterpret_cast<const kernel::LossKernel *>(kernel) != nullptr) && (last_kernel != nullptr)) {
       if (output_node_map_.find(last_kernel->name()) == output_node_map_.end()) {
         auto *ms_tensor = last_kernel->out_tensors().at(0);
         if (ms_tensor != nullptr) {

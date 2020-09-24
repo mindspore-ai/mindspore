@@ -31,7 +31,7 @@ namespace mindspore::kernel {
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() { return RET_OK; }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *labels, const float *losses,
-                                                                      float *output) const {
+                                                                     float *output) const {
   float total_loss = 0;
   for (int i = 0; i < param->batch_size_; ++i) {
     if (labels[i] < 0) {
@@ -51,7 +51,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *labels, const float *losses, float *grads,
-                                                                   float *output) const {
+                                                                  float *output) const {
   size_t row_start = 0;
   float total_loss = 0;
   for (int i = 0; i < param->batch_size_; ++i) {

@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include "schema/inner/model_generated.h"
 #include "src/common/common.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "securec/include/securec.h"
 

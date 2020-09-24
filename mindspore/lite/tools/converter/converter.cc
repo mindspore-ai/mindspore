@@ -23,7 +23,7 @@
 #include "src/common/file_utils.h"
 #include "ir/func_graph.h"
 
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "tools/common/storage.h"
 #include "parser/caffe/caffe_converter.h"
 #include "parser/tflite/tflite_converter.h"

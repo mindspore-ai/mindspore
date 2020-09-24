@@ -15,14 +15,17 @@
  */
 #include <iostream>
 #include "gtest/gtest.h"
-#include "mindspore/core/utils/log_adapter.h"
 
+#ifndef USE_ANDROID_LOG
 namespace mindspore {
 extern void InitSubModulesLogLevel();
 }
+#endif
 
 GTEST_API_ int main(int argc, char **argv) {
+#ifndef USE_ANDROID_LOG
   mindspore::InitSubModulesLogLevel();
+#endif
   testing::InitGoogleTest(&argc, argv);
   int ret = RUN_ALL_TESTS();
   return ret;

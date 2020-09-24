@@ -53,8 +53,8 @@ OpParameter *PopulateSoftmaxCrossEntropyParameter(const mindspore::lite::Primiti
     MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
     return nullptr;
   }
-  SoftmaxCrossEntropyParameter *sce_param = reinterpret_cast<SoftmaxCrossEntropyParameter *>
-  (malloc(sizeof(SoftmaxCrossEntropyParameter)));
+  SoftmaxCrossEntropyParameter *sce_param =
+    reinterpret_cast<SoftmaxCrossEntropyParameter *>(malloc(sizeof(SoftmaxCrossEntropyParameter)));
   if (sce_param == nullptr) {
     MS_LOG(ERROR) << "new SoftmaxCrossEntropyParameter failed.";
     return nullptr;
@@ -241,7 +241,7 @@ OpParameter *PopulateBiasGradParameter(const mindspore::lite::PrimitiveC *primit
     return nullptr;
   }
 
-  ArithmeticParameter *arithmetic_param =  reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
+  ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (arithmetic_param == nullptr) {
     MS_LOG(ERROR) << "new ArithmeticParameter failed.";
     return nullptr;

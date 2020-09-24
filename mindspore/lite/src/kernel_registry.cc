@@ -15,12 +15,12 @@
  */
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "ir/dtype/type_id.h"
+
 #include "src/populate_parameter.h"
 #ifdef ENABLE_ARM64
 #include <asm/hwcap.h>
 #include "common/utils.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "nnacl/optimized_kernel.h"
 #endif
 

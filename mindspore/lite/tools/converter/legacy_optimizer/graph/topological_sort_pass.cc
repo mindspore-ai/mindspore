@@ -20,7 +20,7 @@
 #include <vector>
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
 #include "tools/common/converter_op_utils.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 
 namespace mindspore {

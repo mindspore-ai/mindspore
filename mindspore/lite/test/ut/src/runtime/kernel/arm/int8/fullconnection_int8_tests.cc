@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "schema/inner/model_generated.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/int8/fullconnection_int8.h"
 #include "mindspore/lite/nnacl/common_func.h"

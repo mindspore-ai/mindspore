@@ -15,7 +15,7 @@
  */
 #include "src/ops/primitive_c.h"
 #include "include/model.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
 #include "include/version.h"
@@ -86,14 +86,14 @@ Model *Model::Import(const char *model_buf, size_t size) {
   model->buf = reinterpret_cast<char *>(malloc(size));
   if (model->buf == nullptr) {
     MS_LOG(ERROR) << "new inner model buf fail!";
-    delete(model);
+    delete (model);
     return nullptr;
   }
   memcpy(model->buf, model_buf, size);
   auto meta_graph = schema::GetMetaGraph(model->buf);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "meta_graph is nullptr!";
-    delete(model);
+    delete (model);
     return nullptr;
   }
 

@@ -20,7 +20,7 @@
 #include <utility>
 #include <memory>
 #include "tools/converter/legacy_optimizer/fusion/mul_add_fusion_pass.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "securec/include/securec.h"
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/nnacl/batch_to_space.h"
 #include "mindspore/lite/nnacl/arithmetic_common.h"

@@ -16,7 +16,7 @@
 
 #include "src/populate_parameter.h"
 #include "src/ops/primitive_c.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "schema/ops_generated.h"
 #include "src/ops/constant_of_shape.h"
 #include "src/ops/space_to_batch.h"
@@ -240,7 +240,7 @@ OpParameter *PopulateExpandDimsParameter(const mindspore::lite::PrimitiveC *prim
 }
 
 OpParameter *PopulatePReLUParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = dynamic_cast<const mindspore::lite::PReLU *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::PReLU *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   PReluParameter *prelu_param = reinterpret_cast<PReluParameter *>(malloc(sizeof(PReluParameter)));
   if (prelu_param == nullptr) {
     MS_LOG(ERROR) << "malloc PReluParameter failed.";

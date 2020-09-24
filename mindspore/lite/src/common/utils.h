@@ -24,7 +24,7 @@
 #include <set>
 #include <string>
 #include <utility>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "tools/common/option.h"
 #include "include/errorcode.h"
 

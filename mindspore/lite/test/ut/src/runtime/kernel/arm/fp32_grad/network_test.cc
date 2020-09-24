@@ -29,7 +29,7 @@
 // #include "include/lite_session.h"
 #include "include/context.h"
 #include "include/errorcode.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
 #include "src/common/file_utils_ext.h"
 

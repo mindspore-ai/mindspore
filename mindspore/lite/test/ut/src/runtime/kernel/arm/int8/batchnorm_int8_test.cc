@@ -15,7 +15,7 @@
  */
 #include <iostream>
 #include "schema/inner/model_generated.h"
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/nnacl/batchnorm_parameter.h"
 #include "mindspore/lite/nnacl/int8/batchnorm_int8.h"

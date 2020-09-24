@@ -20,7 +20,6 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "schema/model_generated.h"
-#include "ir/anf.h"
 
 namespace mindspore::kernel {
 

@@ -17,7 +17,7 @@
 #include <sys/time.h>
 #include <iostream>
 #include <memory>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "src/runtime/kernel/arm/fp32/fullconnection.h"

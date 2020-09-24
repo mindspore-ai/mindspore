@@ -35,7 +35,7 @@ void CheckArrValue(Vector<int> arr) {
 TEST_F(VectorTest, VectorTest1) {
   constexpr int kLen1 = 10;
   Vector<int> arr1(kLen1);
-  for (int i = 0 ; i < kLen1; ++i) {
+  for (int i = 0; i < kLen1; ++i) {
     arr1[i] = i;
   }
   Vector<int> arr2 = arr1;

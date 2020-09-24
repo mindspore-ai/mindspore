@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <memory>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/nnacl/fp32/reduce.h"
 #include "schema/inner/model_generated.h"
@@ -25,12 +25,12 @@
 using mindspore::lite::Allocator;
 using mindspore::lite::Tensor;
 using mindspore::schema::ReduceMode;
+using mindspore::schema::ReduceMode_ReduceASum;
 using mindspore::schema::ReduceMode_ReduceMax;
 using mindspore::schema::ReduceMode_ReduceMean;
 using mindspore::schema::ReduceMode_ReduceMin;
 using mindspore::schema::ReduceMode_ReduceProd;
 using mindspore::schema::ReduceMode_ReduceSum;
-using mindspore::schema::ReduceMode_ReduceASum;
 using mindspore::schema::ReduceMode_ReduceSumSquare;
 
 namespace mindspore {

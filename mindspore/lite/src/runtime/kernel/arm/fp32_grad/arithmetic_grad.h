@@ -21,7 +21,6 @@
 #include "src/lite_kernel.h"
 #include "nnacl/fp32/arithmetic.h"
 #include "schema/model_generated.h"
-#include "ir/anf.h"
 
 using mindspore::schema::PrimitiveType_AddGrad;
 using mindspore::schema::PrimitiveType_DivGrad;
@@ -64,7 +63,6 @@ class ArithmeticGradCPUKernel : public LiteKernel {
     if (tile_data1) delete[] tile_data1;
     if (tile_data2) delete[] tile_data2;
   }
-  void InitKernel(const CNodePtr &kernel_node);
 
   int Init() override;
   int InferShape();

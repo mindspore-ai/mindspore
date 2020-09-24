@@ -19,7 +19,7 @@
 #include <vector>
 #include <cmath>
 #include <memory>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 
 namespace mindspore {

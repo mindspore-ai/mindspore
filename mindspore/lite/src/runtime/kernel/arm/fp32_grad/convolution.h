@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "ir/anf.h"
 
 namespace mindspore::kernel {
 class ConvolutionTrainCPUKernel : public LiteKernel {
@@ -29,8 +28,7 @@ class ConvolutionTrainCPUKernel : public LiteKernel {
                                      const lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), workspace(nullptr) {}
   ~ConvolutionTrainCPUKernel() override {
-    if (workspace)
-      delete[] workspace;
+    if (workspace) delete[] workspace;
   }
 
   int Init() override;

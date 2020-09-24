@@ -19,8 +19,6 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "ir/anf.h"
-
 #include "nnacl/fp32/arithmetic.h"
 
 namespace mindspore::kernel {

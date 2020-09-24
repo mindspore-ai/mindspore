@@ -1,35 +1,5 @@
-add_library(caffe_parser_mid OBJECT
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe.pb.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_argmax_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_batchnorm_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_concat_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_conv_base_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_converter.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_convolution_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_crop_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_deconvolution_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_eltwise_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_flatten_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_innerproduct_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_inspector.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_model_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_node_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_node_parser_registry.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_pooling_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_power_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_prelu_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_relu_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_relu6_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_reshape_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_scale_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_sigmoid_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_softmax_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_inspector.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_interp_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_permute_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_tile_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_tanh_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_exp_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_slice_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_reduce_parser.cc
-    )
+file(GLOB_RECURSE CAFFE_SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
+
+set_property(SOURCE ${CAFFE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
+
+add_library(caffe_parser_mid OBJECT ${CAFFE_SRC_LIST})

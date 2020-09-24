@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 #include "schema/model_generated.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/legacy_optimizer/graph/dtype_trans_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/format_trans_fusion_pass.h"

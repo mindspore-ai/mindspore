@@ -30,7 +30,7 @@
 #include "src/tensor.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/quantize_util.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
 #include "src/common/file_utils.h"
@@ -533,8 +533,8 @@ STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<P
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_ERROR;
   }
-  auto status = QuantFilter<int8_t>(paramValue, primitive_c, QuantType_PostTraining, quant_max, quant_min, bit_num,
-                                    perchanel);
+  auto status =
+    QuantFilter<int8_t>(paramValue, primitive_c, QuantType_PostTraining, quant_max, quant_min, bit_num, perchanel);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -637,8 +637,8 @@ STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<Primi
         quant_params[i].scale = bias_scale_tmp;
         MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
       } else {
-        MS_LOG(WARNING) << "unexpected input_scales size: " << input_scales.size() << " weight_scales size: "
-                        << active_weight_quant_params[1].size();
+        MS_LOG(WARNING) << "unexpected input_scales size: " << input_scales.size()
+                        << " weight_scales size: " << active_weight_quant_params[1].size();
       }
     }
     auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);

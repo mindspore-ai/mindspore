@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 #include <map>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "schema/inner/model_generated.h"
 
 namespace mindspore {

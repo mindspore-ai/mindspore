@@ -16,7 +16,7 @@
 
 #include <iostream>
 #include <memory>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32/transpose.h"
 #include "mindspore/lite/nnacl/transpose.h"

@@ -20,7 +20,7 @@
 #include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
 #include "tools/common/converter_op_utils.h"
 #include "tools/common/node_util.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "src/common/common.h"
 #include "src/common/utils.h"
 
@@ -159,8 +159,7 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
       }
     } else {
       int idx = 0;
-      if (GetCNodeTType(**iter) == schema::PrimitiveType_ApplyMomentum)
-        idx = 3;
+      if (GetCNodeTType(**iter) == schema::PrimitiveType_ApplyMomentum) idx = 3;
       iter = InsertFormatTransNode(graph, iter, kBefore, idx, beforeNodeType, &status);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "InsertNhwc2NchwNode after " << nodeName << "failed";

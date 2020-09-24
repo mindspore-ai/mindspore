@@ -18,7 +18,7 @@
 #include <mutex>
 #include <string>
 #include "src/runtime/workspace_pool.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 
 static std::mutex gWorkspaceMutex;
 #ifdef __cplusplus

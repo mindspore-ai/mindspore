@@ -18,7 +18,7 @@
 #include <utility>
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 
 namespace mindspore::lite::opencl {

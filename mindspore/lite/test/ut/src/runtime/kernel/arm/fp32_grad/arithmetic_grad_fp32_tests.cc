@@ -16,7 +16,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "src/common/file_utils_ext.h"

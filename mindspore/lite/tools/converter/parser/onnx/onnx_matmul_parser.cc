@@ -43,7 +43,7 @@ STATUS OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "broadcast") {
-        attr->broadcast = static_cast<bool>(onnx_node_attr.i());
+      attr->broadcast = static_cast<bool>(onnx_node_attr.i());
     }
     if (attribute_name == "transA") {
       attr->transposeA = static_cast<bool>(onnx_node_attr.i());

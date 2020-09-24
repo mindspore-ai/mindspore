@@ -19,7 +19,7 @@
 
 #include <memory>
 #include <vector>
-#include "src/ops//primitive_c.h"
+#include "src/ops/primitive_c.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "src/common/utils.h"

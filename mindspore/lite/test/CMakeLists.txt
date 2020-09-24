@@ -11,11 +11,7 @@ string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-
 if(BUILD_CONVERTER)
-file (GLOB_RECURSE CORE_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../core/*.cc
-        )
 set(CCSRC_SRC
         ## ccsrc
         ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
@@ -23,29 +19,8 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
         )
 else(BUILD_CONVERTER)
-    set(CORE_SRC
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/dshape.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/abstract_value.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/abstract/abstract_function.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/primitive.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/named.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/value.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/value_extends.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype_extends.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/container.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/type.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/empty.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/tensor_type.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/type_extends.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/number.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/gvar/logging_level.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/gvar/typeid_manager.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/base/base.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/base/base_ref.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/log_adapter.cc
-            )
+    set(TEST_LITE_SRC ${LITE_DIR}/src/common/log_adapter.cc)
+    add_compile_definitions(USE_ANDROID_LOG)
 endif()
 
 ### cpu kernel
@@ -127,7 +102,7 @@ endif()
 ### runtime framework
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
 set(TEST_LITE_SRC
-        ${CORE_SRC}
+        ${TEST_LITE_SRC}
         ${CCSRC_SRC}
         ${OPS_SRC}
         ${KERNEL_OP_SRC}
@@ -175,6 +150,7 @@ endif()
 ### converter
 if(BUILD_CONVERTER)
     add_definitions(-DPRIMITIVE_WRITEABLE)
+    add_definitions(-DUSE_GLOG)
     file(GLOB_RECURSE TEST_CASE_TFLITE_PARSERS_SRC
             ${TEST_DIR}/ut/tools/converter/parser/tflite/*.cc
             )
@@ -296,7 +272,7 @@ if (BUILD_MINDDATA STREQUAL "lite")
 elseif(BUILD_MINDDATA STREQUAL "full")
     if (PLATFORM_ARM32 OR PLATFORM_ARM64)
            target_link_libraries(lite-test log)
-    endif()     
+    endif()
 endif()
 if (BUILD_CONVERTER)
     target_link_libraries(lite-test
@@ -312,6 +288,9 @@ if (BUILD_CONVERTER)
             protobuf
             mindspore::eigen
             mindspore::json
-            ${SECUREC_LIBRARY}
+            mindspore_core
+            mindspore::glog
             )
+else(BUILD_CONVERTER)
+    target_link_libraries(lite-test log)
 endif()

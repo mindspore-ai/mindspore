@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "ir/anf.h"
+
 #include "include/context.h"
 #include "nnacl/flatten.h"
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32/detection_post_process.h"
 #include "src/kernel_registry.h"

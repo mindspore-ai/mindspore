@@ -18,7 +18,6 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "ir/anf.h"
 
 namespace mindspore::kernel {
 class SpaceToDepthCPUKernel : public LiteKernel {

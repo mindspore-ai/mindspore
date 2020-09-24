@@ -21,7 +21,7 @@
 #include <string>
 
 #include "include/errorcode.h"
-#include "utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #ifdef PRIMITIVE_WRITEABLE
 #include <float.h>
 
@@ -120,8 +120,8 @@ void ConvertConvWeight(const ParameterPtr &param_node) {
     utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[1] = filter_k;
     utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[2] = filter_h;
     utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[3] = filter_w;
-    weight->set_tensor_shape({static_cast<int>(filter_c), static_cast<int>(filter_k), static_cast<int>(filter_h),
-                              static_cast<int>(filter_w)});
+    weight->set_tensor_shape(
+      {static_cast<int>(filter_c), static_cast<int>(filter_k), static_cast<int>(filter_h), static_cast<int>(filter_w)});
   }
   return;
 }

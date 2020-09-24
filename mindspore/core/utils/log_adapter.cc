@@ -22,7 +22,6 @@
 
 // namespace to support utils module definition
 namespace mindspore {
-#ifndef USE_ANDROID_LOG
 #ifdef USE_GLOG
 static std::string GetTime() {
 #define BUFLEN 80
@@ -126,7 +125,6 @@ static int GetSlogLevel(MsLogLevel level) {
   }
 }
 #endif
-#endif
 
 static std::string ExceptionTypeToString(ExceptionType type) {
 #define _TO_STRING(x) #x
@@ -182,30 +180,13 @@ static const char *GetSubModuleName(SubModuleId module_id) {
     "UTILS",      // SM_UTILS
     "VM",         // SM_VM
     "PROFILER",   // SM_PROFILER
-    "PS"          // SM_PS
+    "PS",         // SM_PS
+    "LITE"        // SM_LITE
   };
 
   return sub_module_names[module_id % NUM_SUBMODUES];
 }
-
-const char *EnumStrForMsLogLevel(MsLogLevel level) {
-  if (level == DEBUG) {
-    return "DEBUG";
-  } else if (level == INFO) {
-    return "INFO";
-  } else if (level == WARNING) {
-    return "WARNING";
-  } else if (level == ERROR) {
-    return "ERROR";
-  } else if (level == EXCEPTION) {
-    return "EXCEPTION";
-  } else {
-    return "NO_LEVEL";
-  }
-}
-
 void LogWriter::OutputLog(const std::ostringstream &msg) const {
-#ifndef USE_ANDROID_LOG
 #ifdef USE_GLOG
   auto submodule_name = GetSubModuleName(submodule_);
   google::LogMessage("", 0, GetGlogLevel(log_level_)).stream()
@@ -217,10 +198,6 @@ void LogWriter::OutputLog(const std::ostringstream &msg) const {
   auto slog_module_id = (submodule_ == SM_MD ? MD : ME);
   Dlog(static_cast<int>(slog_module_id), GetSlogLevel(log_level_), "[%s:%d] %s] %s", location_.file_, location_.line_,
        location_.func_, str_msg.c_str());
-#endif
-#else
-  printf("%s [%s:%d] %s] %s\n:", EnumStrForMsLogLevel(log_level_), location_.file_, location_.line_, location_.func_,
-         msg.str().c_str());
 #endif
 }
 

@@ -22,7 +22,7 @@
 #include "include/lite_session.h"
 #include "include/context.h"
 #include "include/errorcode.h"
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "mindspore/lite/src/lite_kernel.h"
 
 namespace mindspore {
