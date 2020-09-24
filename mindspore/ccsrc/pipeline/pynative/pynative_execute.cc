@@ -1181,10 +1181,6 @@ py::tuple RunOp(const py::args &args) {
   try {
     return PynativeExecutor::GetInstance()->RunOpInner(args);
   } catch (const py::error_already_set &ex) {
-    // print function call stack info before release
-    std::ostringstream oss;
-    trace::TraceGraphEval();
-    trace::GetEvalStackInfo(oss);
     PynativeExecutor::GetInstance()->Clean();
     // re-throw this exception to Python interpreter to handle it
     throw(py::error_already_set(ex));
