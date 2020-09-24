@@ -33,10 +33,10 @@ namespace mindspore {
 namespace lite {
 namespace quant {
 const std::vector<schema::PrimitiveType> QuantStrategy::conv_types = {
-  schema::PrimitiveType_DeConv2D, schema::PrimitiveType_DeDepthwiseConv2D,
-  schema::PrimitiveType_Conv2D,    schema::PrimitiveType_DepthwiseConv2D};
-const std::vector<schema::PrimitiveType> QuantStrategy::mul_types = {
-  schema::PrimitiveType_Mul, schema::PrimitiveType_MatMul, schema::PrimitiveType_FullConnection};
+  schema::PrimitiveType_DeConv2D, schema::PrimitiveType_DeDepthwiseConv2D, schema::PrimitiveType_Conv2D,
+  schema::PrimitiveType_DepthwiseConv2D};
+const std::vector<schema::PrimitiveType> QuantStrategy::mul_types = {schema::PrimitiveType_MatMul,
+                                                                     schema::PrimitiveType_FullConnection};
 QuantStrategy::QuantStrategy(size_t weightSize, size_t convWeightQuantChannelThreshold)
     : mWeightSize(weightSize), mConvWeightQuantChannelThreshold(convWeightQuantChannelThreshold) {}
 
