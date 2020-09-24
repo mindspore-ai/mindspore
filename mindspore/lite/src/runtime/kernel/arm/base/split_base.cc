@@ -58,6 +58,14 @@ int SplitBaseCPUKernel::ReSize() {
     }
   }
 
+  if (param->split_sizes_[param->num_split_ - 1] == -1) {
+    int split_shape_end = input_shape[param->split_dim_];
+    for (int i = 0; i < param->num_split_ - 1; i++) {
+      split_shape_end -= param->split_sizes_[i];
+    }
+    param->split_sizes_[param->num_split_ - 1] = split_shape_end;
+  }
+
   num_unit_ = param->split_count_ * param->num_split_;
   thread_n_num_ = MSMIN(thread_count_, num_unit_);
   thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
