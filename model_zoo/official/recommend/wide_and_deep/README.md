@@ -112,6 +112,7 @@ python eval.py  --data_path=./data/mindrecord --data_type=mindrecord
     ├── train_and_eval_parameter_server.py
     ├── train_and_eval.py
     └── train.py
+    └── export.py
 ```
 
 ## [Script Parameters](#contents)
