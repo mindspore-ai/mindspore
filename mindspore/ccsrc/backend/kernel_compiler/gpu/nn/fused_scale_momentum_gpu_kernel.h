@@ -52,7 +52,7 @@ class FusedScaleMomentumGpuKernel : public GpuKernel {
       return false;
     }
 
-    auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     for (size_t i = 0; i < variable_shape.size(); i++) {
       element_num_ *= variable_shape[i];
     }

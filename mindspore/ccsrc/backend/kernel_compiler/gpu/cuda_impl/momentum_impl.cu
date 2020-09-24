@@ -99,7 +99,7 @@ template <typename T, typename S>
 __global__ void FusedMomentumScaleMomentum(const size_t element_num, T *scale, T *variable, T *accumulation,
                                            const T *learning_rate, const S *gradient, const T *momentum) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (element_num); i += blockDim.x * gridDim.x) {
-    accumulation[i] = momentum[0] * accumulation[i] + static_cast<T>(gradient[i]);
+    accumulation[i] = momentum[0] * accumulation[i] + static_cast<T>(gradient[i]) * scale[0];
     variable[i] -= learning_rate[0] * accumulation[i];
   }
 }
@@ -113,6 +113,56 @@ void FusedScaleMomentum(const size_t element_num, T *scale, T *variable, T *accu
     element_num, scale, variable, accumulation, learning_rate, gradient, momentum);
 }
 
+// CombineFusedScaleMomentum
+template <typename T, typename S>
+__global__ void CombineFusedMomentumScaleMomentum(const size_t num, const size_t *element_num,
+                                                  T **scale, T **variable, T **accumulation,
+                                                  T **learning_rate, S **gradient, T **momentum) {
+  for (size_t idx = 0; idx < num; idx++) {
+    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (element_num[idx]); i += blockDim.x * gridDim.x) {
+      accumulation[idx][i] = momentum[idx][0] * accumulation[idx][i] + static_cast<T>(gradient[idx][i]) * scale[idx][0];
+      variable[idx][i] -= learning_rate[idx][0] * accumulation[idx][i];
+    }
+  }
+}
+
+template <typename T, typename S>
+void CombineFusedScaleMomentum(const size_t max, const size_t num, const size_t *elements, T **scale,
+                               T **variable, T **accumulation, T **learning_rate, S **gradient,
+                               T **momentum, cudaStream_t cuda_stream) {
+  size_t thread_per_block = 256;
+  size_t block_per_grid = (max + thread_per_block - 1) / thread_per_block;
+  CombineFusedMomentumScaleMomentum<<<block_per_grid, thread_per_block, 0, cuda_stream>>>(
+    num, elements, scale, variable, accumulation, learning_rate, gradient, momentum);
+}
+// end CombineFusedScaleMomentum
+
+// CombineFusedWeightDecayScaleMomentum
+template <typename T, typename S>
+__global__ void CombineFusedMomentumWeightDecayScaleMomentum(const size_t num, const size_t *element_num,
+                                                             T **weight_decay, T **scale, T **variable,
+                                                             T **accumulation, T **learning_rate, S **gradient,
+                                                             T **momentum) {
+  for (size_t idx = 0; idx < num; idx++) {
+    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (element_num[idx]); i += blockDim.x * gridDim.x) {
+      T grad = (variable[idx][i] * weight_decay[idx][0] + static_cast<T>(gradient[idx][i])) * scale[idx][0];
+      accumulation[idx][i] = momentum[idx][0] * accumulation[idx][i] + grad;
+      variable[idx][i] -= learning_rate[idx][0] * accumulation[idx][i];
+    }
+  }
+}
+
+template <typename T, typename S>
+void CombineFusedWeightDecayScaleMomentum(const size_t max, const size_t num, const size_t *element_num,
+                                          T **weight_decay, T **scale, T **variable, T **accumulation,
+                                          T **learning_rate, S **gradient, T **momentum,
+                                          cudaStream_t cuda_stream) {
+  size_t thread_per_block = 256;
+  size_t block_per_grid = (max + thread_per_block - 1) / thread_per_block;
+  CombineFusedMomentumWeightDecayScaleMomentum<<<block_per_grid, thread_per_block, 0, cuda_stream>>>(
+    num, element_num, weight_decay, scale, variable, accumulation, learning_rate, gradient, momentum);
+}
+// end CombineFusedWeightDecayScaleMomentum
 template void MomentumUpdateVariable<float, float, float>(const size_t size, float *variable, float *accumulation,
                                                           const float *learning_rate, const float *gradient,
                                                           const float *momentum, bool use_nesterov,
@@ -142,3 +192,17 @@ template void FusedScaleMomentum(const size_t element_num, float *scale, float *
 template void FusedScaleMomentum(const size_t element_num, float *scale, float *variable, float *accumulation,
                                  const float *learning_rate, const half *gradient, const float *momentum,
                                  cudaStream_t cuda_stream);
+template void CombineFusedWeightDecayScaleMomentum(const size_t max, const size_t num, const size_t *elements,
+                                            float **weight_decay, float **scale, float **variable,
+                                            float **accumulation, float **learning_rate, float **gradient,
+                                            float **momentum, cudaStream_t cuda_stream);
+template void CombineFusedWeightDecayScaleMomentum(const size_t max, const size_t num, const size_t *elements,
+                                            float **weight_decay, float **scale, float **variable,
+                                            float **accumulation, float **learning_rate, half **gradient,
+                                            float **momentum, cudaStream_t cuda_stream);
+template void CombineFusedScaleMomentum(const size_t max, const size_t num, const size_t *elements, float **scale,
+                                        float **variable, float **accumulation, float **learning_rate,
+                                        float **gradient, float **momentum, cudaStream_t cuda_stream);
+template void CombineFusedScaleMomentum(const size_t max, const size_t num, const size_t *elements, float **scale,
+                                        float **variable, float **accumulation, float **learning_rate,
+                                        half **gradient, float **momentum, cudaStream_t cuda_stream);
