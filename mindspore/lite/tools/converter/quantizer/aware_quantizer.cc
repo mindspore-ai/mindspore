@@ -149,6 +149,7 @@ STATUS AwareQuantizer::DoQuantize() {
     STATUS status;
     if (GetCNodeTType(*node) == schema::PrimitiveType_Conv2D ||
         GetCNodeTType(*node) == schema::PrimitiveType_DepthwiseConv2D ||
+        GetCNodeTType(*node) == schema::PrimitiveType_DeConv2D ||
         GetCNodeTType(*node) == schema::PrimitiveType_FullConnection ||
         GetCNodeTType(*node) == schema::PrimitiveType_MatMul) {
       auto inputIndexes = node->inputIndex;
