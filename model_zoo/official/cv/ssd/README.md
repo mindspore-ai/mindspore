@@ -82,7 +82,8 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 
 # [Quick Start](#contents)
 
-After installing MindSpore via the official website, you can start training and evaluation on Ascend as follows: 
+After installing MindSpore via the official website, you can start training and evaluation as follows: 
+- runing on Ascend
 
 ```
 # distributed training on Ascend
@@ -90,6 +91,14 @@ sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_
 
 # run eval on Ascend
 sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+```
+- runing on GPU
+```
+# distributed training on GPU
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET]
+
+# run eval on GPU
+sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
 
 # [Script Description](#contents)
@@ -100,22 +109,24 @@ sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 .
 └─ cv
   └─ ssd      
-    ├─ README.md                  ## descriptions about SSD
+    ├─ README.md                      ## descriptions about SSD
     ├─ scripts
-      └─ run_distribute_train.sh  ## shell script for distributed on ascend
-      └─ run_eval.sh              ## shell script for eval on ascend
+      ├─ run_distribute_train.sh      ## shell script for distributed on ascend
+      ├─ run_distribute_train_gpu.sh  ## shell script for distributed on gpu
+      ├─ run_eval.sh                  ## shell script for eval on ascend
+      └─ run_eval_gpu.sh              ## shell script for eval on gpu
     ├─ src
-      ├─ __init__.py              ## init file
-      ├─ box_util.py              ## bbox utils
-      ├─ coco_eval.py             ## coco metrics utils
-      ├─ config.py                ## total config
-      ├─ dataset.py               ## create dataset and process dataset
-      ├─ init_params.py           ## parameters utils
-      ├─ lr_schedule.py           ## learning ratio generator
-      └─ ssd.py                   ## ssd architecture
-    ├─ eval.py                    ## eval scripts
-    ├─ train.py                   ## train scripts
-    ├── mindspore_hub_conf.py       #  mindspore hub interface
+      ├─ __init__.py                  ## init file
+      ├─ box_util.py                  ## bbox utils
+      ├─ coco_eval.py                 ## coco metrics utils
+      ├─ config.py                    ## total config
+      ├─ dataset.py                   ## create dataset and process dataset
+      ├─ init_params.py               ## parameters utils
+      ├─ lr_schedule.py               ## learning ratio generator
+      └─ ssd.py                       ## ssd architecture
+    ├─ eval.py                        ## eval scripts
+    ├─ train.py                       ## train scripts
+    └─ mindspore_hub_conf.py          ## mindspore hub interface
 ```
 
 ## [Script Parameters](#contents)
@@ -146,10 +157,9 @@ sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 
 ## [Training Process](#contents)
 
-### Training on Ascend
-
 To train the model, run `train.py`. If the `mindrecord_dir` is empty, it will generate [mindrecord](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/convert_dataset.html) files by `coco_root`(coco dataset) or `iamge_dir` and `anno_path`(own dataset). **Note if mindrecord_dir isn't empty, it will use mindrecord_dir instead of raw images.**
 
+### Training on Ascend
 
 - Distribute mode
 
@@ -182,6 +192,34 @@ epoch: 499 step: 458, loss is 0.7974688
 epoch time: 38787.413120269775, per step time: 84.68867493508685
 epoch: 500 step: 458, loss is 0.5548882
 epoch time: 39064.8467540741, per step time: 85.29442522723602
+```
+
+### Training on GPU
+
+- Distribute mode
+
+```
+    sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+```
+We need five or seven parameters for this scripts.
+- `DEVICE_NUM`: the device number for distributed train.
+- `EPOCH_NUM`: epoch num for distributed train.
+- `LR`: learning rate init value for distributed train.
+- `DATASET`：the dataset mode for distributed train.
+- `PRE_TRAINED :` the path of pretrained checkpoint file, it is better to use absolute path.
+- `PRE_TRAINED_EPOCH_SIZE :` the epoch num of pretrained.
+
+    Training result will be stored in the current path, whose folder name is "LOG".  Under this, you can find checkpoint files together with result like the followings in log
+
+```
+epoch: 1 step: 1, loss is 420.11783
+epoch: 1 step: 2, loss is 434.11032
+epoch: 1 step: 3, loss is 476.802
+...
+epoch: 1 step: 458, loss is 3.1283689
+epoch time: 150753.701, per step time: 329.157
+...
+
 ```
 
 ## [Evaluation Process](#contents)
@@ -219,41 +257,73 @@ Average Recall (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.697
 mAP: 0.23808886505483504
 ```
 
+### Evaluation on GPU
+
+```
+sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+```
+We need two parameters for this scripts.
+- `DATASET`：the dataset mode of evaluation dataset.
+- `CHECKPOINT_PATH`: the absolute path for checkpoint file.
+- `DEVICE_ID`: the device id for eval.
+
+> checkpoint can be produced in training process.
+
+Inference result will be stored in the example path, whose folder name begins with "eval". Under this, you can find result like the followings in log.
+
+```
+Average Precision (AP) @[ IoU=0.50:0.95 | area= all | maxDets=100 ] = 0.224
+Average Precision (AP) @[ IoU=0.50 | area= all | maxDets=100 ] = 0.375
+Average Precision (AP) @[ IoU=0.75 | area= all | maxDets=100 ] = 0.228
+Average Precision (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.034
+Average Precision (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.189
+Average Precision (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.407
+Average Recall (AR) @[ IoU=0.50:0.95 | area= all | maxDets= 1 ] = 0.243
+Average Recall (AR) @[ IoU=0.50:0.95 | area= all | maxDets= 10 ] = 0.382
+Average Recall (AR) @[ IoU=0.50:0.95 | area= all | maxDets=100 ] = 0.417
+Average Recall (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.120
+Average Recall (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.425
+Average Recall (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.686
+
+========================================
+
+mAP: 0.2244936111705981
+```
 
 # [Model Description](#contents)
 ## [Performance](#contents)
 
 ### Evaluation Performance
 
-| Parameters                 | Ascend                                                       |
-| -------------------------- | -------------------------------------------------------------|
-| Model Version              | SSD V1                                                       |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G              |
-| uploaded Date              | 06/01/2020 (month/day/year)                                  |
-| MindSpore Version          | 0.3.0-alpha                                                  |
-| Dataset                    | COCO2017                                                     |
-| Training Parameters        | epoch = 500,  batch_size = 32                                |
-| Optimizer                  | Momentum                                                     |
-| Loss Function              | Sigmoid Cross Entropy,SmoothL1Loss                           |
-| Speed                      | 8pcs: 90ms/step                                              |
-| Total time                 | 8pcs: 4.81hours                                              |
-| Parameters (M)             | 34                                                           |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd |
+| Parameters                 | Ascend                                                       | GPU                                                          |
+| -------------------------- | -------------------------------------------------------------| -------------------------------------------------------------|
+| Model Version              | SSD V1                                                       | SSD V1                                                       |
+| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             | NV SMX2 V100-16G                                             |
+| uploaded Date              | 06/01/2020 (month/day/year)                                  | 09/24/2020 (month/day/year)                                  |
+| MindSpore Version          | 0.3.0-alpha                                                  | 1.0.0                                                        |
+| Dataset                    | COCO2017                                                     | COCO2017                                                     |
+| Training Parameters        | epoch = 500,  batch_size = 32                                | epoch = 800,  batch_size = 32                                |
+| Optimizer                  | Momentum                                                     | Momentum                                                     |
+| Loss Function              | Sigmoid Cross Entropy,SmoothL1Loss                           | Sigmoid Cross Entropy,SmoothL1Loss                           |
+| Speed                      | 8pcs: 90ms/step                                              | 8pcs: 121ms/step                                             |
+| Total time                 | 8pcs: 4.81hours                                              | 8pcs: 12.31hours                                              |
+| Parameters (M)             | 34                                                           | 34                                                           |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd |
 
 
 ### Inference Performance
 
-| Parameters          | Ascend                      |
-| ------------------- | ----------------------------|
-| Model Version       | SSD V1                      |
-| Resource            | Ascend 910                  |
-| Uploaded Date       | 06/01/2020 (month/day/year) |
-| MindSpore Version   | 0.3.0-alpha                 |
-| Dataset             | COCO2017                    |
-| batch_size          | 1                           |
-| outputs             | mAP                         |
-| Accuracy            | IoU=0.50: 23.8%             |
-| Model for inference | 34M(.ckpt file)             |
+| Parameters          | Ascend                      | GPU                         |
+| ------------------- | ----------------------------| ----------------------------|
+| Model Version       | SSD V1                      | SSD V1                      |
+| Resource            | Ascend 910                  | GPU                         |
+| Uploaded Date       | 06/01/2020 (month/day/year) | 09/24/2020 (month/day/year) |
+| MindSpore Version   | 0.3.0-alpha                 | 1.0.0                       |
+| Dataset             | COCO2017                    | COCO2017                    |
+| batch_size          | 1                           | 1                           |
+| outputs             | mAP                         | mAP                         |
+| Accuracy            | IoU=0.50: 23.8%             | IoU=0.50: 22.4%             |
+| Model for inference | 34M(.ckpt file)             | 34M(.ckpt file)             |
 
 # [Description of Random Situation](#contents)
 

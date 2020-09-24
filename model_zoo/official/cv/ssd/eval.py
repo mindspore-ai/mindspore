@@ -71,9 +71,11 @@ if __name__ == '__main__':
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--dataset", type=str, default="coco", help="Dataset, default is coco.")
     parser.add_argument("--checkpoint_path", type=str, required=True, help="Checkpoint file path.")
+    parser.add_argument("--run_platform", type=str, default="Ascend", choices=("Ascend", "GPU"),
+                        help="run platform, only support Ascend and GPU.")
     args_opt = parser.parse_args()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.run_platform, device_id=args_opt.device_id)
 
     prefix = "ssd_eval.mindrecord"
     mindrecord_dir = config.mindrecord_dir

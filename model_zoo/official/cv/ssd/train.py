@@ -20,12 +20,12 @@ import argparse
 import ast
 import mindspore.nn as nn
 from mindspore import context, Tensor
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, LossMonitor, TimeMonitor
 from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.common import set_seed
+from mindspore.common import set_seed, dtype
 from src.ssd import SSD300, SSDWithLossCell, TrainingWrapper, ssd_mobilenet_v2
 from src.config import config
 from src.dataset import create_ssd_dataset, data_to_mindrecord_byte_image, voc_data_to_mindrecord
@@ -53,20 +53,36 @@ def main():
     parser.add_argument("--loss_scale", type=int, default=1024, help="Loss scale, default is 1024.")
     parser.add_argument("--filter_weight", type=ast.literal_eval, default=False,
                         help="Filter weight parameters, default is False.")
+    parser.add_argument("--run_platform", type=str, default="Ascend", choices=("Ascend", "GPU"),
+                        help="run platform, only support Ascend and GPU.")
     args_opt = parser.parse_args()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
-
-    if args_opt.distribute:
-        device_num = args_opt.device_num
-        context.reset_auto_parallel_context()
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
-                                          device_num=device_num)
+    if args_opt.run_platform == "Ascend":
+        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
+        if args_opt.distribute:
+            device_num = args_opt.device_num
+            context.reset_auto_parallel_context()
+            context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
+                                              device_num=device_num)
+            init()
+            rank = args_opt.device_id % device_num
+        else:
+            rank = 0
+            device_num = 1
+    elif args_opt.run_platform == "GPU":
+        context.set_context(mode=context.GRAPH_MODE, device_target="GPU", device_id=args_opt.device_id)
         init()
-        rank = args_opt.device_id % device_num
+        if args_opt.distribute:
+            device_num = args_opt.device_num
+            context.reset_auto_parallel_context()
+            context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
+                                              device_num=device_num)
+            rank = get_rank()
+        else:
+            rank = 0
+            device_num = 1
     else:
-        rank = 0
-        device_num = 1
+        raise ValueError("Unsupported platform.")
 
     print("Start create dataset!")
 
@@ -113,6 +129,8 @@ def main():
 
         backbone = ssd_mobilenet_v2()
         ssd = SSD300(backbone=backbone, config=config)
+        if args_opt.run_platform == "GPU":
+            ssd.to_float(dtype.float16)
         net = SSDWithLossCell(ssd, config)
         init_net_param(net)
 
