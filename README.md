@@ -31,7 +31,7 @@ enrichment of the AI software/hardware application ecosystem.
 
 <img src="docs/MindSpore-architecture.png" alt="MindSpore Architecture" width="600"/>
 
-For more details please check out our [Architecture Guide](https://www.mindspore.cn/doc/note/en/master/design/mindspore/architecture.html) (visit [Architecture Guide](https://www.mindspore.cn/docs/en/master/architecture.html) before Sep. 24).
+For more details please check out our [Architecture Guide](https://www.mindspore.cn/doc/note/en/master/design/mindspore/architecture.html).
 
 ### Automatic Differentiation
 
@@ -208,7 +208,7 @@ please check out [docker](docker/README.md) repo for the details.
 
 ## Quickstart
 
-See the [Quick Start](https://www.mindspore.cn/tutorial/training/en/master/quick_start/quick_start.html) (visit [Quick Start](https://www.mindspore.cn/tutorial/en/master/quick_start/quick_start.html) before Sep. 24)
+See the [Quick Start](https://www.mindspore.cn/tutorial/training/en/master/quick_start/quick_start.html) 
 to implement the image classification.
 
 ## Docs
