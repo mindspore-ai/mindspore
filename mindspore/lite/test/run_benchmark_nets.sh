@@ -9,7 +9,7 @@ function Run_Converter() {
     tar -zxf mindspore-lite-${version}-converter-ubuntu.tar.gz || exit 1
     cd ${x86_path}/mindspore-lite-${version}-converter-ubuntu || exit 1
     cp converter/converter_lite ./ || exit 1
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib/:./third_party/protobuf/lib:./third_party/flatbuffers/lib
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib/:./third_party/protobuf/lib:./third_party/flatbuffers/lib:./third_party/glog/lib
 
     # Convert the models
     cd ${x86_path}/mindspore-lite-${version}-converter-ubuntu || exit 1
