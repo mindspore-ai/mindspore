@@ -261,6 +261,7 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
       MS_LOG(ERROR) << "dequant data is nullptr.";
       return nullptr;
     }
+    weight_tensor->set_data_type(kNumberTypeFloat32);
     weight_tensor->SetData(dequant_weight);
   }
   auto *kernel = new (std::nothrow) MatmulFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
@@ -268,6 +269,7 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
       weight_tensor->FreeData();
+      weight_tensor->set_data_type(kNumberTypeInt8);
       weight_tensor->SetData(restore_data);
     }
     return nullptr;
@@ -279,12 +281,14 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
     delete kernel;
     if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
       weight_tensor->FreeData();
+      weight_tensor->set_data_type(kNumberTypeInt8);
       weight_tensor->SetData(restore_data);
     }
     return nullptr;
   }
   if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
     weight_tensor->FreeData();
+    weight_tensor->set_data_type(kNumberTypeInt8);
     weight_tensor->SetData(restore_data);
   }
   return kernel;

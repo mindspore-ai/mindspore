@@ -198,6 +198,7 @@ kernel::LiteKernel *CpuFullConnectionFp16KernelCreator(const std::vector<lite::T
       MS_LOG(ERROR) << "dequant data is nullptr.";
       return nullptr;
     }
+    weight_tensor->set_data_type(kNumberTypeFloat32);
     weight_tensor->SetData(dequant_weight);
   }
   auto *kernel = new (std::nothrow) FullconnectionFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
@@ -205,6 +206,7 @@ kernel::LiteKernel *CpuFullConnectionFp16KernelCreator(const std::vector<lite::T
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (!weight_tensor->GetQuantParams().empty()) {
       weight_tensor->FreeData();
+      weight_tensor->set_data_type(kNumberTypeInt8);
       weight_tensor->SetData(restore_data);
     }
     return nullptr;
@@ -216,12 +218,14 @@ kernel::LiteKernel *CpuFullConnectionFp16KernelCreator(const std::vector<lite::T
     delete kernel;
     if (!weight_tensor->GetQuantParams().empty()) {
       weight_tensor->FreeData();
+      weight_tensor->set_data_type(kNumberTypeInt8);
       weight_tensor->SetData(restore_data);
     }
     return nullptr;
   }
   if (!weight_tensor->GetQuantParams().empty()) {
     weight_tensor->FreeData();
+    weight_tensor->set_data_type(kNumberTypeInt8);
     weight_tensor->SetData(restore_data);
   }
   return kernel;
