@@ -166,6 +166,7 @@ class OpenCLRuntime {
   cl_device_svm_capabilities svm_capabilities_{0};
   cl_uint image_pitch_align_{0};
   std::vector<size_t> max_work_item_sizes_;
+  void *handle_{nullptr};
 };
 
 }  // namespace mindspore::lite::opencl

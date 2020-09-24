@@ -38,11 +38,10 @@ constexpr size_t CI_TILE = C4NUM;
 constexpr size_t CO_TILE = C4NUM;
 
 int ConvolutionOpenCLKernel::Init() {
-  static int init_count = 0;
+  unsigned int init_count = 0;
   auto allocator = ocl_runtime_->GetAllocator();
   auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
   std::set<std::string> build_options;
-  init_count++;
   use_fp16_ = ocl_runtime_->GetFp16Enable();
 
   if (op_format_ != Format_NHWC4 && op_format_ != Format_NC4HW4) {
@@ -70,23 +69,48 @@ int ConvolutionOpenCLKernel::Init() {
   TILES_XY_ = TILES_X_ * TILES_Y_;
   use_winograd_ = UseWinograd4x4To6x6();
 
+  std::vector<int> vpara{IH_, IW_, OH_, OW_, KH_, KW_, CI_SLICES_, CO_SLICES_,
+                         param->stride_h_,
+                         param->stride_w_,
+                         param->pad_u_,
+                         param->pad_l_,
+                         param->pad_d_,
+                         param->pad_r_};
+  std::string code_id;
+  for (auto &iv : vpara) {
+    code_id += "_" + std::to_string(iv);
+  }
+
+  // gen code id: bit(OW_ * CO_SLICES_ <= MAX_IMAGE2D_SIZE, format(nhwc4, hc4hw4) , act_type(relu6, relu),
+  // padTop||padBottom, check_ow, fp16)
+  init_count |= ((unsigned int)use_fp16_);
+  init_count |= ((unsigned int)(OW_ % 2 == 1)) << 1;
+  init_count |= ((unsigned int)(param->pad_u_ || param->pad_d_)) << 2;
+  init_count |= ((unsigned int)(param->act_type_ == ActType_Relu)) << 3;
+  init_count |= ((unsigned int)(param->act_type_ == ActType_Relu6)) << 4;
+  init_count |= ((unsigned int)(op_format_ == schema::Format_NHWC4)) << 5;
+  init_count |= ((unsigned int)(op_format_ == schema::Format_NC4HW4)) << 6;
+  init_count |= ((unsigned int)(OW_ * CO_SLICES_ <= MAX_IMAGE2D_SIZE)) << 7;
+
+  code_id += "_" + std::to_string(init_count);
+
   // build kernel
   if (use_winograd_) {
     MS_LOG(DEBUG) << "use winograd";
     std::string program_name;
-    program_name = "Winograd4x4To36" + std::to_string(init_count);
+    program_name = "Winograd4x4To36" + code_id;
     ocl_runtime_->LoadSource(program_name, CodeGenWinograd4x4To36());
     ocl_runtime_->BuildKernel(kernel_4x4to36_, program_name, "Winograd4x4To36", build_options);
 
-    program_name = "WinogradConvolution" + std::to_string(init_count);
+    program_name = "WinogradConvolution" + code_id;
     ocl_runtime_->LoadSource(program_name, CodeGenWinogradConvolution());
     ocl_runtime_->BuildKernel(kernel_conv_, program_name, "WinogradConvolution", build_options);
 
-    program_name = "Winograd36To4x4" + std::to_string(init_count);
+    program_name = "Winograd36To4x4" + code_id;
     ocl_runtime_->LoadSource(program_name, CodeGenWinograd36To4x4());
     ocl_runtime_->BuildKernel(kernel_36to4x4_, program_name, "Winograd36To4x4", build_options);
   } else {
-    std::string program_name = "convolution" + std::to_string(init_count);
+    std::string program_name = "convolution" + code_id;
     std::string source = op_format_ == Format_NHWC4 ? CodeGenConvolutionNHWC4() : CodeGenConvolutionNC4HW4();
     ocl_runtime_->LoadSource(program_name, source);
     ocl_runtime_->BuildKernel(kernel_conv_, program_name, "Convolution", build_options);
