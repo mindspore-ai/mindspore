@@ -325,6 +325,9 @@ void Worker<T>::InitPSParamAndOptim(const std::string &param_name, const tensor:
   MS_EXCEPTION_IF_NULL(tensor);
   void *param_data = tensor->data_c();
   size_t param_size = LongToSize(tensor->data().nbytes());
+  if (param_size > INT_MAX) {
+    MS_LOG(EXCEPTION) << "PS mode max weight size is " << INT_MAX << ", " << param_name << " size is " << param_size;
+  }
   ShapeVector param_shape = tensor->shape_c();
 
   size_t param_key = GetParamKey(param_name);
