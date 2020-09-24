@@ -650,7 +650,7 @@ echo ${arm_path}
 echo ${converter_path}
 
 mkdir train
-arm64_path=${release_path}/andriod_aarch64
+arm64_path=${release_path}/android_aarch64
 mv ${arm64_path}/*runtime-*train* ./train
 file_name=$(ls ${arm64_path}/*runtime-arm64*.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
@@ -658,7 +658,7 @@ version=${file_name_array[2]}
 IFS="." read -r -a suffix <<< "${file_name_array[-1]}"
 process_unit_arm64=${suffix[0]}
 
-arm32_path=${release_path}/andriod_aarch32
+arm32_path=${release_path}/android_aarch32
 mv ${arm32_path}/*runtime-*train* ./train
 file_name=$(ls ${arm32_path}/*runtime-arm32*.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
