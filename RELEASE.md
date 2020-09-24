@@ -4,13 +4,11 @@
 ### MindSpore Training and Inference Framework
 #### Ascend 910
 * New models
-    * Mask-RCNN: a simple and flexible deep neural network for object instance segmentation on COCO 2014 dataset.
     * DenseNet121: a dense convolutional neural network, which connects each layer to every other layer in a feed-forward fashion for object recognition on ImageNet dataset.
-    * PSENet: accurately detect arbitrary shape text instances and get better results on CTW1500, full text, ICDAR 2015, and ICDAR 2017 MLT datasets.
     * UNet2D-Medical: Unet Medical model for 2D image segmentation, Convolutional Networks for Biomedical Image Segmentation on ISBI Challenge database.
 * Frontend and user interface
     * Second-Order Optimization
-      * Enable second-order optimization for Bert on Ascend 910, which can achieve a masked lm accuracy of 71.3% in 1000 seconds using 8 Ascend 910 (Bert-Large @MLPerf v0.7 dataset).
+      * Enable second-order optimization for Bert on Ascend 910, which can achieve a masked lm accuracy of 71.3% in 800 seconds using 8 Ascend 910 (Bert-Large @MLPerf v0.7 dataset).
     * New GNN model BGCF
       * Bayesian Graph Convolutional Filtering network which naturally incorporate the uncertainty in the user-item interaction graph shows excellent recommendation performance on Amazon-Beauty dataset.
     * Add append interface for SequentialCell.
@@ -23,10 +21,7 @@
 
 #### Other Hardware Support
 * GPU platform
-    * New model supported: TinyBert, ShuffleNet, YoloV3-DarkNet53, EfficientNet-B0, NASNet-Mobile and Transformer.
-    * Enable second-order optimization for resnet50 on GPU, which achieve 20% improvement on training time compared to SGD with Momentum (Resnet50 @ImageNet).
-* CPU platform
-    * ...
+    * Enable second-order optimization for resnet50 on GPU, which achieve 30% improvement on training time compared to SGD with Momentum (Resnet50 @ImageNet).
 #### User interfaces change log
 * Remove global object GradOperation in Autodiff([!5011](https://gitee.com/mindspore/mindspore/pulls/5011))
 * Remove useless attribute 'name' in Autodiff([!5172](https://gitee.com/mindspore/mindspore/pulls/5172))
@@ -50,6 +45,9 @@
 * delete DataWrapper([!6101](https://gitee.com/mindspore/mindspore/pulls/6101))
 * LSTM API optimization([!6374](https://gitee.com/mindspore/mindspore/pulls/6374))
 * Merge P\C\F of ops([!5645](https://gitee.com/mindspore/mindspore/pulls/5645))
+* delete SoftmaxCrossEntropyExpand interface([!6607](https://gitee.com/mindspore/mindspore/pulls/6607))
+* Adjust GroupNorm interface([!6329](https://gitee.com/mindspore/mindspore/pulls/6329))
+* Modify init interface to internal interface([!6651](https://gitee.com/mindspore/mindspore/pulls/6651))
 * Log optimization([!5842](https://gitee.com/mindspore/mindspore/pulls/5842))
 * Remove useless API dataset.set_dataset_size（[!5806](https://gitee.com/mindspore/mindspore/pulls/5806))
 * Some of Dataset API add usage parameter（[!5605](https://gitee.com/mindspore/mindspore/pulls/5605))
@@ -79,21 +77,26 @@
 
 ## Bugfixes
 * Models
+    * fix the constant folding problem in multiply.([!6092](https://gitee.com/mindspore/mindspore/pulls/6092))
+    * move batch_size from bert_net_cfg to cfg in bert scripts.([!6233](https://gitee.com/mindspore/mindspore/pulls/6233))
+    * modify the checkpoint file path.([!6137](https://gitee.com/mindspore/mindspore/pulls/6137))
 * Python API
     * fix semi auto parallel parameter of reshape has another user([!5722](https://gitee.com/mindspore/mindspore/pulls/5722))
     * raise ValueError when call hook function in graph mode([!5831](https://gitee.com/mindspore/mindspore/pulls/5831))
 * Executor
-    * Bugfix pynative mode to build temporary nn objects.（[!6189](https://gitee.com/mindspore/mindspore/pulls/6189))
-    * Bugfix the accuracy problem of multiple inputs of multi-card communication operator broadcast.([!6522](https://gitee.com/mindspore/mindspore/pulls/5622))
-    * Bugfix the problem that the sample distribution interface categorical does not support graph mode.([!5772](https://gitee.com/mindspore/mindspore/pulls/5772))
-    * Bugfix the random seed failure problem of the polynomial downsampling distribution operator.([!5948](https://gitee.com/mindspore/mindspore/pulls/5948))
-    * Bugfix unnecessary address binding issues in GPU heterogeneous scenarios.([!6232](https://gitee.com/mindspore/mindspore/pulls/6232))
+    * fix pynative mode to build temporary nn objects.（[!6189](https://gitee.com/mindspore/mindspore/pulls/6189))
+    * fix the accuracy problem of multiple inputs of multi-card communication operator broadcast.([!6522](https://gitee.com/mindspore/mindspore/pulls/5622))
+    * fix the problem that the sample distribution interface categorical does not support graph mode.([!5772](https://gitee.com/mindspore/mindspore/pulls/5772))
+    * fix the random seed failure problem of the polynomial downsampling distribution operator.([!5948](https://gitee.com/mindspore/mindspore/pulls/5948))
+    * fix unnecessary address binding issues in GPU heterogeneous scenarios.([!6232](https://gitee.com/mindspore/mindspore/pulls/6232))
 * GPU platform
-    * Bugfix for kernel resource leak([!5315](https://gitee.com/mindspore/mindspore/pulls/5315))
-    * Bugfix for insufficient memory for continuous unit test running([!5617](https://gitee.com/mindspore/mindspore/pulls/5617))
-    * Bugfix for the memory leak in the sparse slicer([!5578](https://gitee.com/mindspore/mindspore/pulls/5578))
-* Data processing and Pro
-    * ...
+    * fix for kernel resource leak([!5315](https://gitee.com/mindspore/mindspore/pulls/5315))
+    * fix for insufficient memory for continuous unit test running([!5617](https://gitee.com/mindspore/mindspore/pulls/5617))
+    * fix for the memory leak in the sparse slicer([!5578](https://gitee.com/mindspore/mindspore/pulls/5578))
+* Data processing
+    * fix hang when use pyfunc([!6346](https://gitee.com/mindspore/mindspore/pulls/6346))
+    * fix GPU device queue does not release GIL during resource clean up([!5964](https://gitee.com/mindspore/mindspore/pulls/5964))
+    * fix hang if scripte exit unnormally([!6441](https://gitee.com/mindspore/mindspore/pulls/6441))
 
 ## Contributors
 Thanks goes to these wonderful people:
