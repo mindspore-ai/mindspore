@@ -268,13 +268,18 @@ void MatMulInt8_8x8_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
   return;
 }
 
-void RowMajor2Col16x4Major(int8_t *src, int row, int col, int8_t *dst, int row_16) {
+void RowMajor2Col16x4MajorInt8(int8_t *src, int row, int col, int8_t *dst) {
+  int row_16 = UP_ROUND(row, C16NUM);
   int stride = sizeof(int8_t) * 16 * 4;
-  for (int r = 0; r < row; ++r) {
+  for (int r = 0; r < row_16; ++r) {
     for (int c = 0; c < col; ++c) {
-      int stride_n = c / 4 * (row_16 / 16) + r / 16;
-      int src_idx = r * col + c;
-      dst[stride * stride_n + c % 4 * 16 + r % 16] = src[src_idx];
+      int stride_idx = c / 4 * (row_16 / 16) + r / 16;
+      if (r >= row) {
+        dst[stride * stride_idx + c % 4 * 16 + r % 16] = 0;
+      } else {
+        int src_idx = r * col + c;
+        dst[stride * stride_idx + c % 4 * 16 + r % 16] = src[src_idx];
+      }
     }
   }
 }
