@@ -20,6 +20,7 @@ from easydict import EasyDict as edict
 from .tinybert_model import BertConfig
 
 common_cfg = edict({
+    'batch_size': 32,
     'loss_scale_value': 2 ** 16,
     'scale_factor': 2,
     'scale_window': 1000,
@@ -38,7 +39,6 @@ teacher network: The BERT-base network.
 student network: The network which is inherited from teacher network.
 '''
 bert_teacher_net_cfg = BertConfig(
-    batch_size=32,
     seq_length=128,
     vocab_size=30522,
     hidden_size=768,
@@ -52,13 +52,10 @@ bert_teacher_net_cfg = BertConfig(
     type_vocab_size=2,
     initializer_range=0.02,
     use_relative_positions=False,
-    input_mask_from_dataset=True,
-    token_type_ids_from_dataset=True,
     dtype=mstype.float32,
     compute_type=mstype.float16
 )
 bert_student_net_cfg = BertConfig(
-    batch_size=32,
     seq_length=128,
     vocab_size=30522,
     hidden_size=384,
@@ -72,8 +69,6 @@ bert_student_net_cfg = BertConfig(
     type_vocab_size=2,
     initializer_range=0.02,
     use_relative_positions=False,
-    input_mask_from_dataset=True,
-    token_type_ids_from_dataset=True,
     dtype=mstype.float32,
     compute_type=mstype.float16
 )
