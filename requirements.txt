@@ -16,3 +16,4 @@ pandas >= 1.0.2             # for ut test
 bs4
 astunparse
 packaging >= 20.0
+pycocotools >= 2.0.0        # for st test
