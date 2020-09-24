@@ -17,25 +17,23 @@
 #define MINDSPORE_LITE_INTERNAL_INCLUDE_VECTOR_H
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stddef.h>
 #include <initializer_list>
-#include "internal/include/string.h"
-#define DEFAULT_CAPACITY 1
+#define DEFAULT_CAPACITY 4
 
 struct MSTensor;
 struct Node;
 
 template <typename T>
 class Vector {
- private:
-  size_t size_;
-  size_t elem_size_;
-  size_t capacity_;
-  T *data_;
-
  public:
   Vector();
 
   explicit Vector(size_t size);
+
+  Vector(size_t size, const T &value);
 
   Vector(const Vector<T> &vector);
 
@@ -92,23 +90,29 @@ class Vector {
   void reserve(size_t capacity);
 
   Vector<T> &operator=(const Vector<T> &v);
+
+ private:
+  size_t size_;
+  size_t elem_size_;
+  size_t capacity_;
+  T *data_;
 };
 
 template <typename T>
 bool operator==(const Vector<T> &lhs, const Vector<T> &rhs) {
-    if (lhs.size() != rhs.size()) {
-        return false;
+  if (lhs.size() != rhs.size()) {
+    return false;
+  }
+  for (int i = 0; i < lhs.size(); ++i) {
+    if (lhs[i] != rhs[i]) {
+      return false;
     }
-    for (int i = 0; i < lhs.size(); ++i) {
-        if (lhs[i] != rhs[i]) {
-            return false;
-        }
-    }
-    return true;
+  }
+  return true;
 }
 
 template <typename T>
 bool operator!=(const Vector<T> &lhs, const Vector<T> &rhs) {
-    return !(lhs == rhs);
+  return !(lhs == rhs);
 }
 #endif  // MINDSPORE_LITE_INTERNAL_INCLUDE_VECTOR_H

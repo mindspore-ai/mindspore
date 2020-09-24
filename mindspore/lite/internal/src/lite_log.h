@@ -23,13 +23,12 @@
 #include <assert.h>
 #endif
 
-#ifndef Release
+#ifdef Debug
 #define LITE_DEBUG_LOG(format, ...) \
   printf("[DEBUG] [%s %s] [%s] [%d] " format "\n", __DATE__, __TIME__, __FILE__, __LINE__, __VA_ARGS__)
 #define LITE_INFO_LOG(format, ...) \
   printf("[INFO] [%s %s] [%s] [%d] " format "\n", __DATE__, __TIME__, __FILE__, __LINE__, __VA_ARGS__)
-#define LITE_LOG_INFO(...) \
-  printf("[INFO] [%s %s] [%s] [%d] %s\n", __DATE__, __TIME__, __FILE__, __LINE__, __VA_ARGS__)
+#define LITE_LOG_INFO(...) printf("[INFO] [%s %s] [%s] [%d] %s\n", __DATE__, __TIME__, __FILE__, __LINE__, __VA_ARGS__)
 #define LITE_WARNING_LOG(format, ...) \
   printf("[WARNING] [%s %s] [%s] [%d] " format "\n", __DATE__, __TIME__, __FILE__, __LINE__, __VA_ARGS__)
 #define LITE_ERROR_LOG(format, ...) \

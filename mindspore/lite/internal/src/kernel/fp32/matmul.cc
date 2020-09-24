@@ -85,6 +85,7 @@ int DoMatMulInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector 
   int *in_shape[2] = {input0->shape_.data(), input1->shape_.data()};
   int out_format;
   int out_datatype;
+  output->shape_.resize(input0->shape_.size());
   int ret = MatMulInferShape(in_shape, 2, dim_size, output->shape_.data(), in_format, &out_format, in_datatype,
                              &out_datatype, param);
   if (ret != NNACL_OK) {
@@ -134,16 +135,16 @@ int DoMatMul(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tenso
     LITE_LOG_ERROR("Malloc MatMulCPUKernelData failed");
     return RET_MEMORY_FAILED;
   }
-  kernel_data->a_c12_ptr_
-    = reinterpret_cast<float *>(allocator->Malloc(params->batch * params->row_12_ * params->deep_ * sizeof(float)));
+  kernel_data->a_c12_ptr_ =
+    reinterpret_cast<float *>(allocator->Malloc(params->batch * params->row_12_ * params->deep_ * sizeof(float)));
   if (kernel_data->a_c12_ptr_ == NULL) {
     FreeMatMulKernelData(kernel_data, allocator);
     return RET_MEMORY_FAILED;
   }
   memset(kernel_data->a_c12_ptr_, 0, params->row_12_ * params->deep_ * sizeof(float));
 
-  kernel_data->b_r8_ptr_
-    = reinterpret_cast<float *>(allocator->Malloc(params->batch * params->col_8_ * params->deep_ * sizeof(float)));
+  kernel_data->b_r8_ptr_ =
+    reinterpret_cast<float *>(allocator->Malloc(params->batch * params->col_8_ * params->deep_ * sizeof(float)));
   if (kernel_data->b_r8_ptr_ == NULL) {
     FreeMatMulKernelData(kernel_data, allocator);
     return RET_MEMORY_FAILED;
@@ -173,4 +174,3 @@ int DoMatMul(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tenso
 
   return RET_OK;
 }
-

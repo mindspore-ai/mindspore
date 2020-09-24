@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 #include "internal/include/vector.h"
-#include <stdlib.h>
-#include <string.h>
+#include "internal/include/string.h"
 #include "internal/src/lite_log.h"
 
-#define min(x, y) ((x < y) ? (x) : (y))
+#define MIN(x, y) ((x < y) ? (x) : (y))
 
-template<typename T>
+template <typename T>
 Vector<T>::Vector() {
   size_ = 0;
   capacity_ = DEFAULT_CAPACITY;
@@ -28,7 +27,7 @@ Vector<T>::Vector() {
   data_ = nullptr;
 }
 
-template<typename T>
+template <typename T>
 Vector<T>::Vector(size_t size) {
   size_ = size;
   elem_size_ = sizeof(T);
@@ -40,7 +39,21 @@ Vector<T>::Vector(size_t size) {
   memset(data_, 0, capacity_ * elem_size_);
 }
 
-template<typename T>
+template <typename T>
+Vector<T>::Vector(size_t size, const T &value) {
+  size_ = size;
+  elem_size_ = sizeof(T);
+  capacity_ = size;
+  data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
+  if (data_ == nullptr) {
+    MS_C_EXCEPTION("malloc data failed");
+  }
+  for (int i = 0; i < size; ++i) {
+    data_[i] = value;
+  }
+}
+
+template <typename T>
 Vector<T>::Vector(const Vector<T> &vec) {
   size_ = vec.size_;
   elem_size_ = sizeof(T);
@@ -52,7 +65,7 @@ Vector<T>::Vector(const Vector<T> &vec) {
   memcpy(data_, vec.data_, size_ * elem_size_);
 }
 
-template<typename T>
+template <typename T>
 Vector<T> &Vector<T>::operator=(const Vector<T> &vec) {
   if (this == &vec) {
     return *this;
@@ -68,14 +81,14 @@ Vector<T> &Vector<T>::operator=(const Vector<T> &vec) {
   return *this;
 }
 
-template<typename T>
+template <typename T>
 Vector<T>::~Vector() {
   if (data_ != nullptr) {
     free(data_);
   }
 }
 
-template<typename T>
+template <typename T>
 void Vector<T>::clear() {
   size_ = 0;
   if (data_ != nullptr) {
@@ -84,7 +97,7 @@ void Vector<T>::clear() {
   }
 }
 
-template<typename T>
+template <typename T>
 void Vector<T>::push_back(const T &elem) {
   if (data_ == nullptr) {
     data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
@@ -95,14 +108,14 @@ void Vector<T>::push_back(const T &elem) {
     resize(size_ + 1);
     --size_;
   }
-  memcpy(data_ + size_, &elem, elem_size_);
+  data_[size_] = elem;
   ++size_;
 }
 
-template<typename T>
+template <typename T>
 void Vector<T>::push_back(T &&elem) {
   if (data_ == nullptr) {
-    data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
+    data_ = reinterpret_cast<T *>(malloc(elem_size_));
     if (data_ == nullptr) {
       MS_C_EXCEPTION("malloc data failed");
     }
@@ -110,11 +123,11 @@ void Vector<T>::push_back(T &&elem) {
     resize(size_ + 1);
     --size_;
   }
-  memcpy(data_ + size_, &elem, elem_size_);
+  data_[size_] = elem;
   ++size_;
 }
 
-template<typename T>
+template <typename T>
 void Vector<T>::pop_back() {
   if (size_ > 0) {
     --size_;
@@ -123,7 +136,7 @@ void Vector<T>::pop_back() {
   }
 }
 
-template<typename T>
+template <typename T>
 void Vector<T>::insert(const T &elem, size_t index) {
   if (index <= size_) {
     ++size_;
@@ -134,121 +147,121 @@ void Vector<T>::insert(const T &elem, size_t index) {
       push_back(elem);
     } else {
       memmove(data_ + index + 1, data_ + index, (size_ - index - 1) * elem_size_);
-      memcpy(data_ + index, &elem, elem_size_);
+      data_[index] = elem;
     }
   } else {
     MS_C_EXCEPTION("Input index is out of range!");
   }
 }
 
-template<typename T>
+template <typename T>
 T *Vector<T>::begin() {
   return data_;
 }
 
-template<typename T>
+template <typename T>
 const T *Vector<T>::begin() const {
   return data_;
 }
 
-template<typename T>
+template <typename T>
 T *Vector<T>::end() {
   return data_ + size_;
 }
 
-template<typename T>
+template <typename T>
 const T *Vector<T>::end() const {
   return data_ + size_;
 }
 
-template<typename T>
+template <typename T>
 T &Vector<T>::front() {
   if (size_ > 0) {
-    return *data_;
+    return data_[0];
   }
   MS_C_EXCEPTION("Index is out of range!");
 }
 
-template<typename T>
+template <typename T>
 const T &Vector<T>::front() const {
   if (size_ > 0) {
-    return *data_;
+    return data_[0];
   }
   MS_C_EXCEPTION("Index is out of range!");
 }
-template<typename T>
+template <typename T>
 T &Vector<T>::back() {
   if (size_ > 0) {
-    return *(data_ + size_ - 1);
+    return data_[size_ - 1];
   }
   MS_C_EXCEPTION("Index is out of range!");
 }
-template<typename T>
+template <typename T>
 const T &Vector<T>::back() const {
   if (size_ > 0) {
-    return *(data_ + size_ - 1);
+    return data_[size_ - 1];
   }
   MS_C_EXCEPTION("Index is out of range!");
 }
 
-template<typename T>
+template <typename T>
 T &Vector<T>::at(size_t index) {
   if (index < size_) {
-    return *(data_ + index);
+    return data_[index];
   }
   MS_C_EXCEPTION("Input index is out of range!");
 }
 
-template<typename T>
+template <typename T>
 const T &Vector<T>::at(size_t index) const {
   if (index < size_) {
-    return *(data_ + index);
+    return data_[index];
   }
   MS_C_EXCEPTION("Input index is out of range!");
 }
 
-template<typename T>
+template <typename T>
 T &Vector<T>::operator[](size_t index) {
   if (index < size_) {
-    return *(data_ + index);
+    return data_[index];
   }
   MS_C_EXCEPTION("Input index is out of range!");
 }
 
-template<typename T>
+template <typename T>
 const T &Vector<T>::operator[](size_t index) const {
   if (index < size_) {
-    return *(data_ + index);
+    return data_[index];
   }
   MS_C_EXCEPTION("Input index is out of range!");
 }
 
-template<typename T>
+template <typename T>
 T *Vector<T>::data() {
   return data_;
 }
 
-template<typename T>
+template <typename T>
 const T *Vector<T>::data() const {
   return data_;
 }
 
-template<typename T>
+template <typename T>
 size_t Vector<T>::size() const {
   return size_;
 }
 
-template<typename T>
+template <typename T>
 size_t Vector<T>::capacity() const {
   return capacity_;
 }
 
-template<typename T>
+template <typename T>
 bool Vector<T>::empty() const {
   return size_ == 0;
 }
 
-template<typename T>
+template <typename T>
 void Vector<T>::erase(size_t index) {
   if (index == size_ - 1) {
     --size_;
@@ -260,9 +273,9 @@ void Vector<T>::erase(size_t index) {
   }
 }
 
-template<typename T>
+template <typename T>
 void Vector<T>::resize(size_t size) {
-  if (size > capacity_) {
+  while (size > capacity_) {
     capacity_ *= 2;
   }
   T *tmp = data_;
@@ -270,12 +283,12 @@ void Vector<T>::resize(size_t size) {
   if (data_ == nullptr) {
     MS_C_EXCEPTION("malloc data failed");
   }
-  memcpy(data_, tmp, min(size, size_) * elem_size_);
+  memcpy(data_, tmp, MIN(size, size_) * elem_size_);
   size_ = size;
   free(tmp);
 }
 
-template<typename T>
+template <typename T>
 void Vector<T>::reserve(size_t capacity) {
   if (capacity > capacity_) {
     capacity_ = capacity;
