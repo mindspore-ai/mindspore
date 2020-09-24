@@ -247,12 +247,11 @@ def multinomial(inputs, num_sample, replacement=True, seed=0):
 
     Args:
         inputs (Tensor): The input tensor containing probabilities, must be 1 or 2 dimensions, with
-        float32 data type.
+          float32 data type.
         num_sample (int): Number of samples to draw.
         replacement (bool, optional): Whether to draw with replacement or not, default True.
         seed (int, optional): Seed is used as entropy source for the random number engines to generate
-        pseudo-random numbers,
-          must be non-negative. Default: 0.
+          pseudo-random numbers, must be non-negative. Default: 0.
 
     Outputs:
         Tensor, has the same rows with input. The number of sampled indices of each row is `num_samples`.
