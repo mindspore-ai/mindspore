@@ -49,17 +49,18 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
 
  public:
   int DoConv1x1(int task_id);
+  int DoConv1x1Hw(int task_id);
 
  private:
   int InitConv1x1Param();
   int InitConv1x1BiasWeight();
   void InitConv1x1MatmulParam();
-  void Pre1x1Trans(float *src_input, float *src_output);
   void FreeTmpBuffer();
 
  private:
   MatMulParameter *matmul_param_ = nullptr;
   bool pre_trans_input_ = false;
+  bool multi_thread_by_hw_ = false;
   int thread_count_ = 0;
   int thread_stride_ = 0;
   float *weight_ptr_ = nullptr;
