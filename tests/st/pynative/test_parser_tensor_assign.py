@@ -16,10 +16,14 @@
 import pytest
 import numpy as np
 import mindspore as ms
+from mindspore import context
 from mindspore.nn import ReLU
 from mindspore.nn import Cell
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
+
+def setup_module():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training

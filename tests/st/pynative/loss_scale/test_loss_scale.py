@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 import mindspore.nn as nn
+from mindspore import context
 from mindspore import Tensor, Parameter
 from mindspore.nn.wrap.cell_wrapper import WithLossCell
 from mindspore.nn.wrap.loss_scale import TrainOneStepWithLossScaleCell
@@ -26,6 +27,9 @@ from mindspore.common import dtype as mstype
 from mindspore.train import Model
 from mindspore.nn.optim import Lamb
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
+
+def setup_module():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
 class MindData:
     """ Stub for MindData """
