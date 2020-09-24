@@ -368,7 +368,8 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
 #endif
   vector<std::shared_ptr<TaskInfo>> task_info_list;
   auto anf_node_list = graph->execution_order();
-  TaskGenerator::GenTasks(anf_node_list, &task_info_list, graph->graph_id());
+  auto task_generator = TaskGenerator();
+  task_generator.GenTasks(anf_node_list, &task_info_list, graph->graph_id());
   // Store the task_info_list
   auto insert_ret = task_map_.insert(std::make_pair(graph->graph_id(), task_info_list));
   if (!insert_ret.second) {

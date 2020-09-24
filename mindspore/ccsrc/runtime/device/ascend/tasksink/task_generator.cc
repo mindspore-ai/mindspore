@@ -36,6 +36,14 @@ bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::ve
     return false;
   }
   MS_LOG(INFO) << "GenTasks end...";
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
+  if (save_graphs) {
+    std::string file_path = save_graphs_path + "/" + "task_info" + "_graph_" + std::to_string(graph_id) + ".ir";
+    DumpTaskInfo(file_path);
+  }
   return true;
 }
 
@@ -162,6 +170,15 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   std::vector<TaskInfoPtr> task_info_ptrs =
     ascend_kernel_mod->GenTask(kernel_inputs, kernel_workspaces, kernel_outputs, stream_id);
   task_info_list->insert(task_info_list->end(), task_info_ptrs.begin(), task_info_ptrs.end());
+  auto debug_info = std::make_shared<TaskDebugInfo>();
+  debug_info->op_name_ = anf_node_ptr->fullname_with_scope();
+  debug_info->task_num_ = task_info_ptrs.size();
+  debug_info->stream_id_ = task_info_ptrs[0]->stream_id();
+  debug_info->dump_flag_ = task_info_ptrs[0]->dump_flag();
+  debug_info->input_addrs_ = kernel_inputs;
+  debug_info->output_addrs_ = kernel_outputs;
+  debug_info->workspace_addrs_ = kernel_workspaces;
+  task_debug_info_list_.push_back(debug_info);
   return true;
 }
 
@@ -191,8 +208,87 @@ bool TaskGenerator::LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list,
   if (ProfilingManager::GetInstance().IsProfiling()) {
     ProfilingUtils::SetGraphProfilingCNode(graph_id, profiling_cnode_list);
   }
+
   return true;
 }
+
+#ifdef ENABLE_DUMP_IR
+void TaskGenerator::DumpTaskInfo(const std::string &real_filename) {
+  if (real_filename.size() > PATH_MAX) {
+    MS_LOG(ERROR) << "File path " << real_filename << " is too long.";
+    return;
+  }
+  char real_path[PATH_MAX] = {0};
+#if defined(_WIN32) || defined(_WIN64)
+  if (_fullpath(real_path, filename.c_str(), PATH_MAX) == nullptr) {
+    MS_LOG(DEBUG) << "dir " << filename << " does not exit.";
+  }
+#else
+  if (nullptr == realpath(real_filename.c_str(), real_path)) {
+    MS_LOG(DEBUG) << "Dir " << real_filename << " does not exit.";
+  }
+#endif
+
+  OrderedMap<AnfNodePtr, int32_t> para_map;
+  std::string path_string = real_path;
+  ChangeFileMode(path_string, S_IRWXU);
+  std::ofstream fout(real_path);
+
+  if (!fout.is_open()) {
+    MS_LOG(ERROR) << "Open dump file '" << real_path << "' failed!";
+    return;
+  }
+
+  size_t index = 0;
+  for (auto &task_debug_info : task_debug_info_list_) {
+    fout << "op_name:" << task_debug_info->op_name_ << "\n"
+         << "task_index:" << index << "\t"
+         << "task_num:" << task_debug_info->task_num_ << "\t"
+         << "task0_stream_id:" << task_debug_info->stream_id_ << "\t"
+         << "task0_type:" << task_debug_info->type_ << "\t"
+         << "task0_dump_flag:" << task_debug_info->dump_flag_ << "\n";
+    index++;
+    if (task_debug_info->input_addrs_.size()) {
+      fout << "input address:";
+      for (auto &input : task_debug_info->input_addrs_) {
+        fout << input->addr << "(" << input->size << ")\t";
+      }
+      fout << "\n";
+    }
+
+    if (task_debug_info->output_addrs_.size()) {
+      fout << "output address:";
+      for (auto &output : task_debug_info->output_addrs_) {
+        fout << output->addr << "(" << output->size << ")\t";
+      }
+      fout << "\n";
+    }
+
+    if (task_debug_info->workspace_addrs_.size()) {
+      fout << "workspace address:";
+      for (auto &workspace : task_debug_info->workspace_addrs_) {
+        fout << workspace->addr << "(" << workspace->size << ")\t";
+      }
+      fout << "\n";
+    }
+    fout << "\n";
+  }
+
+  fout.close();
+  // set file mode to read only by user
+  ChangeFileMode(path_string, S_IRUSR);
+}
+#else
+void TaskGenerator::DumpTaskInfo(const std::string &real_filename) {
+  static bool already_printed = false;
+  if (already_printed) {
+    return;
+  }
+  already_printed = true;
+  MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, "
+                  << "please recompile source to enable it. See help of building script.";
+}
+#endif
 }  // namespace tasksink
 }  // namespace ascend
 }  // namespace device
