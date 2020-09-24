@@ -298,8 +298,6 @@ class MobileNetV2(nn.Cell):
         has_dropout (bool): Is dropout used. Default is false
         inverted_residual_setting (list): Inverted residual settings. Default is None
         round_nearest (list): Channel round to . Default is 8
-        backbone(nn.Cell): Backbone of MobileNetV2.
-        head(nn.Cell): Classification head of MobileNetV2.
     Returns:
         Tensor, output tensor.
 

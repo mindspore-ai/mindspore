@@ -43,8 +43,8 @@ run_ascend()
             --visible_devices=$3 \
             --training_script=${BASEPATH}/../train.py \
             --dataset_path=$5 \
-            --train_method=$6 \
-            --pretrain_ckpt=$7 \
+            --pretrain_ckpt=$6 \
+            --freeze_layer=$7 \
             &> ../train.log &  # dataset train folder
 }
 
@@ -76,8 +76,8 @@ run_gpu()
     python ${BASEPATH}/../train.py \
         --platform=$1 \
         --dataset_path=$4 \
-        --train_method=$5 \
-        --pretrain_ckpt=$6 \
+        --pretrain_ckpt=$5 \
+        --freeze_layer=$6 \
         &> ../train.log &  # dataset train folder
 }
 
@@ -102,17 +102,17 @@ run_cpu()
     python ${BASEPATH}/../train.py \
         --platform=$1 \
         --dataset_path=$2 \
-        --train_method=$3 \
-        --pretrain_ckpt=$4 \
+        --pretrain_ckpt=$3 \
+        --freeze_layer=$4 \
         &> ../train.log &  # dataset train folder
 }
 
 if [ $# -gt 7 ] || [ $# -lt 4 ]
 then
     echo "Usage:
-          Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [TRAIN_METHOD] [CKPT_PATH]
-          GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [TRAIN_METHOD] [CKPT_PATH]
-          CPU: sh run_train.sh CPU [DATASET_PATH] [TRAIN_METHOD] [CKPT_PATH]"
+          Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
+          GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
+          CPU: sh run_train.sh CPU [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]"
 exit 1
 fi
 
@@ -123,5 +123,5 @@ elif [ $1 = "GPU" ] ; then
 elif [ $1 = "CPU" ] ; then
     run_cpu "$@"
 else
-    echo "Unsupported device_target."
+    echo "Unsupported platform."
 fi;
