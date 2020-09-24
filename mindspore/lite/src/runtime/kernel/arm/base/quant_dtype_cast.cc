@@ -95,8 +95,8 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
     MS_LOG(ERROR) << "QuantDTypeCast need quantization parameters which is not found.";
     return RET_ERROR;
   }
-  auto quant_arg = !in_tensors_.front()->GetQuantParams().empty() ? in_tensors_.front()->GetQuantParams().front()
-                                                                  : out_tensors_.front()->GetQuantParams().front();
+  auto quant_arg = !out_tensors_.front()->GetQuantParams().empty() ? out_tensors_.front()->GetQuantParams().front()
+                                                                   : in_tensors_.front()->GetQuantParams().front();
   int ret;
   if (uint8_ptr_ == nullptr) {
     if (inverse_) {

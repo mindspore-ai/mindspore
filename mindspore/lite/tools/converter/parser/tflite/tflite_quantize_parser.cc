@@ -46,8 +46,9 @@ STATUS TfliteQuantizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfl
     MS_LOG(ERROR) << "output tensor is null";
     return RET_NULL_PTR;
   }
-  if (GetTfliteDataType(out_tensor->type) == kNumberTypeInt8 ||
-      GetTfliteDataType(out_tensor->type) == kNumberTypeUInt8) {
+  if (GetTfliteDataType(in_tensor->type) != GetTfliteDataType(out_tensor->type) &&
+      (GetTfliteDataType(out_tensor->type) == kNumberTypeInt8 ||
+       GetTfliteDataType(out_tensor->type) == kNumberTypeUInt8)) {
     std::unique_ptr<schema::QuantDTypeCastT> attr = std::make_unique<schema::QuantDTypeCastT>();
     if (attr == nullptr) {
       MS_LOG(ERROR) << "new op failed";
