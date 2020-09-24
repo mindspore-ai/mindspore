@@ -45,6 +45,9 @@ class ArithmeticCPUKernel : public LiteKernel {
   typedef int (*ArithmeticRun)(float *input0, float *input1, float *output, int element_size);
   typedef int (*ArithmeticOptRun)(float *input0, float *input1, float *output, int element_size,
                                   ArithmeticParameter *param);
+  typedef int (*ArithmeticIntRun)(int *input0, int *input1, int *output, int element_size);
+  typedef int (*ArithmeticOptIntRun)(int *input0, int *input1, int *output, int element_size,
+                                     ArithmeticParameter *param);
 
  public:
   ArithmeticCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -57,12 +60,15 @@ class ArithmeticCPUKernel : public LiteKernel {
         switch (arithmeticParameter_->activation_type_) {
           case schema::ActivationType_RELU:
             arithmetic_run_ = ElementMulRelu;
+            arithmetic_run_int_ = ElementMulReluInt;
             break;
           case schema::ActivationType_RELU6:
             arithmetic_run_ = ElementMulRelu6;
+            arithmetic_run_int_ = ElementMulRelu6Int;
             break;
           default:
             arithmetic_run_ = ElementMul;
+            arithmetic_run_int_ = ElementMulInt;
             break;
         }
         break;
@@ -158,15 +164,16 @@ class ArithmeticCPUKernel : public LiteKernel {
   int DoArithmetic(int task_id);
 
  private:
-  int BroadcastRun(float *input0, float *input1, float *output, int dim, int out_count, int out_thread_stride);
+  int BroadcastRun(void *input0, void *input1, void *output, int dim, int out_count, int out_thread_stride);
   int break_pos_;
   int outside_;
-  int out_thread_stride_;
-  int out_count_;
   int thread_count_;
   ArithmeticParameter *arithmeticParameter_;
   ArithmeticRun arithmetic_run_ = nullptr;
   ArithmeticOptRun arithmetic_opt_run_ = nullptr;
+  ArithmeticIntRun arithmetic_run_int_ = nullptr;
+  ArithmeticOptIntRun arithmetic_opt_run_int_ = nullptr;
+  LiteDataType data_type_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_H_
