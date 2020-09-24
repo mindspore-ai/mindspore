@@ -99,13 +99,12 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1):
 
 
 def extract_features(net, dataset_path, config):
-    features_folder = dataset_path + '_features'
+    features_folder = os.path.abspath(dataset_path) + '_features'
     if not os.path.exists(features_folder):
         os.makedirs(features_folder)
     dataset = create_dataset(dataset_path=dataset_path,
                              do_train=False,
-                             config=config,
-                             repeat_num=1)
+                             config=config)
     step_size = dataset.get_dataset_size()
     if step_size == 0:
         raise ValueError("The step_size of dataset is zero. Check if the images count of train dataset is more \

@@ -117,7 +117,7 @@ if __name__ == '__main__':
             rank = get_rank()
         save_ckpt_path = os.path.join(config.save_checkpoint_path, 'ckpt_' + str(rank) + '/')
         if not os.path.isdir(save_ckpt_path):
-            os.mkdir(save_checkpoint)
+            os.mkdir(save_ckpt_path)
 
         for epoch in range(epoch_size):
             random.shuffle(idx_list)
