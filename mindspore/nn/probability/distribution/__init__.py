@@ -24,6 +24,7 @@ from .exponential import Exponential
 from .uniform import Uniform
 from .geometric import Geometric
 from .categorical import Categorical
+from .log_normal import LogNormal
 
 __all__ = ['Distribution',
            'TransformedDistribution',
@@ -32,4 +33,6 @@ __all__ = ['Distribution',
            'Exponential',
            'Uniform',
            'Categorical',
-           'Geometric',]
+           'Geometric',
+           'LogNormal',
+           ]
