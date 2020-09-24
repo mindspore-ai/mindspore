@@ -83,16 +83,16 @@ int OpenCLRuntime::Init() {
   MS_LOG(INFO) << "CL_HPP_MINIMUM_OPENCL_VERSION " << CL_HPP_MINIMUM_OPENCL_VERSION;
 
 #ifdef USE_OPENCL_WRAPPER
-  if (OpenCLWrapper::GetInstance()->LoadOpenCLLibrary() == false) {
+  if (lite::opencl::LoadOpenCLLibrary(handle_) == false) {
     MS_LOG(ERROR) << "Load OpenCL symbols failed!";
     return RET_ERROR;
   }
 #endif  // USE_OPENCL_WRAPPER
 
   std::vector<cl::Platform> platforms;
-  cl::Platform::get(&platforms);
+  cl_int ret = cl::Platform::get(&platforms);
   if (platforms.size() == 0) {
-    MS_LOG(ERROR) << "OpenCL Platform not found!";
+    MS_LOG(ERROR) << "OpenCL Platform not found!" << CLErrorCode(ret);
     return RET_ERROR;
   }
 
@@ -137,7 +137,7 @@ int OpenCLRuntime::Init() {
                << max_work_item_sizes_[2];
 
   gpu_info_ = ParseGpuInfo(device_name, device_version);
-  cl_int ret;
+//  cl_int ret;
 #if defined(SHARING_MEM_WITH_OPENGL) && (CL_HPP_TARGET_OPENCL_VERSION >= 120)
   // create context from glcontext
   MS_LOG(INFO) << "Create special opencl context to share with OpenGL";
@@ -235,7 +235,8 @@ int OpenCLRuntime::Uninit() {
   context_ = nullptr;
   device_ = nullptr;
 #ifdef USE_OPENCL_WRAPPER
-  OpenCLWrapper::GetInstance()->UnLoadOpenCLLibrary();
+  lite::opencl::UnLoadOpenCLLibrary(handle_);
+  handle_ = nullptr;
 #endif
   init_done_ = false;
   return RET_OK;
