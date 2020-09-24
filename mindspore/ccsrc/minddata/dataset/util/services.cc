@@ -30,6 +30,8 @@ namespace mindspore {
 namespace dataset {
 std::unique_ptr<Services> Services::instance_ = nullptr;
 std::once_flag Services::init_instance_flag_;
+std::set<std::string> Services::unique_id_list_ = {};
+std::mutex Services::unique_id_mutex_;
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
 std::string Services::GetUserName() {
@@ -52,8 +54,23 @@ std::string Services::GetUniqueID() {
   std::mt19937 gen = GetRandomDevice();
   std::uniform_int_distribution<uint32_t> dist(0, kStr.size() - 1);
   char buffer[UNIQUEID_LEN];
-  for (int i = 0; i < UNIQUEID_LEN; i++) {
-    buffer[i] = kStr[dist(gen)];
+  {
+    std::unique_lock<std::mutex> lock(unique_id_mutex_);
+    while (true) {
+      auto ret = memset_s(buffer, UNIQUEID_LEN, 0, UNIQUEID_LEN);
+      if (ret != 0) {
+        MS_LOG(ERROR) << "memset_s error, errorno(" << ret << ")";
+        return std::string("");
+      }
+      for (int i = 0; i < UNIQUEID_LEN; i++) {
+        buffer[i] = kStr[dist(gen)];
+      }
+      if (unique_id_list_.find(std::string(buffer, UNIQUEID_LEN)) != unique_id_list_.end()) {
+        continue;
+      }
+      unique_id_list_.insert(std::string(buffer, UNIQUEID_LEN));
+      break;
+    }
   }
   return std::string(buffer, UNIQUEID_LEN);
 }

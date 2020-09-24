@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
 #include <vector>
 #include "minddata/dataset/util/memory_pool.h"
@@ -97,6 +98,8 @@ class Services {
  private:
   static std::once_flag init_instance_flag_;
   static std::unique_ptr<Services> instance_;
+  static std::set<std::string> unique_id_list_;
+  static std::mutex unique_id_mutex_;
   // A small pool used for small objects that last until the
   // Services Manager shuts down. Used by all sub-services.
   std::shared_ptr<MemoryPool> pool_;
