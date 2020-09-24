@@ -58,6 +58,7 @@ try:
 except ModuleNotFoundError:
     context = None
 
+
 class Shuffle(str, Enum):
     GLOBAL: str = "global"
     FILES: str = "file"
@@ -274,14 +275,14 @@ class Dataset:
                 of Tensors on a given column. The number of lists should match with number of entries in input_columns.
                 The last parameter of the callable should always be a BatchInfo object.
             input_columns (list[str], optional): List of names of the input columns. The size of the list should
-                match with signature of the per_batch_map callable.
-            output_columns (list[str], optional): [Not currently implemented] List of names assigned to the columns
+                match with signature of per_batch_map callable.
+            output_columns (list[str], optional): List of names assigned to the columns
                 outputted by the last operation. This parameter is mandatory if len(input_columns) !=
                 len(output_columns). The size of this list must match the number of output
                 columns of the last operation. (default=None, output columns will have the same
                 name as the input columns, i.e., the columns will be replaced).
-            column_order (list[str], optional): [Not currently implemented] List of all the desired columns to
-                propagate to the child node. This list must be a subset of all the columns in the dataset after
+            column_order (list[str], optional): List of all the desired columns to propagate to
+                the child node. This list must be a subset of all the columns in the dataset after
                 all operations are applied. The order of the columns in each row propagated to the
                 child node follow the order they appear in this list. The parameter is mandatory
                 if the len(input_columns) != len(output_columns). (default=None, all columns
@@ -1703,9 +1704,9 @@ class BatchDataset(DatasetOp):
         self.batch_size = batch_size
         self.drop_remainder = drop_remainder
         self.per_batch_map = per_batch_map
-        self.input_columns = input_columns
-        self.output_columns = output_columns
-        self.column_order = column_order
+        self.input_columns = input_columns if not isinstance(input_columns, str) else [input_columns]
+        self.output_columns = output_columns if not isinstance(output_columns, str) else [output_columns]
+        self.column_order = column_order if not isinstance(column_order, str) else [column_order]
         self.pad_info = pad_info
         self.children.append(input_dataset)
         input_dataset.parent.append(self)
@@ -1717,6 +1718,8 @@ class BatchDataset(DatasetOp):
         args["drop_remainder"] = self.drop_remainder
         args["per_batch_map"] = self.per_batch_map
         args["input_columns"] = self.input_columns
+        args["output_columns"] = self.output_columns
+        args["column_order"] = self.column_order
         args["pad_info"] = self.pad_info
         return args
 

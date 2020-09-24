@@ -36,8 +36,6 @@ namespace mindspore {
 namespace dataset {
 class DataBuffer;
 
-using TensorBatch = TensorRow;
-using TensorBatchTable = std::vector<TensorBatch>;
 using PadInfo = std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>>;
 
 class BatchOp : public ParallelOp {
@@ -81,11 +79,17 @@ class BatchOp : public ParallelOp {
       return *this;
     }
 
-    // set columns to perform map on
-    // @param const std::vector<std::string> & cols_to_map - name of columns to perform map on
-    // @return Builder & reference to builder class object
-    Builder &SetColumnsToMap(const std::vector<std::string> &cols_to_map) {
-      builder_cols_to_map_ = cols_to_map;
+    /// \param in_col_name
+    /// \return Builder & reference to builder class object
+    Builder &SetInColNames(const std::vector<std::string> &in_col_name) {
+      builder_in_names_ = in_col_name;
+      return *this;
+    }
+
+    /// \param out_col_name
+    /// \return Builder & reference to builder class object
+    Builder &SetOutColNames(const std::vector<std::string> &out_col_name) {
+      builder_out_names_ = out_col_name;
       return *this;
     }
 
@@ -121,7 +125,8 @@ class BatchOp : public ParallelOp {
     int32_t builder_batch_size_;
     int32_t builder_num_workers_;
     int32_t builder_op_connector_size_;
-    std::vector<std::string> builder_cols_to_map_;
+    std::vector<std::string> builder_in_names_;
+    std::vector<std::string> builder_out_names_;
     PadInfo builder_pad_map_;
 #ifdef ENABLE_PYTHON
     py::function builder_batch_size_func_;
@@ -149,14 +154,10 @@ class BatchOp : public ParallelOp {
   };
 
 #ifdef ENABLE_PYTHON
-  // BatchOp constructor
-  // @param int32_t batch_size
-  // @param bool drop
-  // @param int32_t op_queue_size
-  // @param int32_t rows_per_buf
-  // @param int32_t num_workers
+
   BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
-          const std::vector<std::string> &, py::function batch_size_func, py::function batch_map_func, PadInfo pad_map);
+          const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
+          py::function batch_size_func, py::function batch_map_func, PadInfo pad_map);
 #else
   BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
           const std::vector<std::string> &, PadInfo pad_map);
@@ -218,6 +219,9 @@ class BatchOp : public ParallelOp {
   static Status PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
                            const std::unordered_map<std::string, int32_t> &column_name_id_map);
 
+ protected:
+  Status ComputeColMap() override;
+
  private:
   // Worker thread for doing the memcpy of batch
   // @param int32_t param workerId
@@ -270,11 +274,13 @@ class BatchOp : public ParallelOp {
 #endif
 
   int32_t start_batch_size_;
-  bool drop_;                                      // bool for whether to drop remainder or not
-  bool pad_;                                       // bool for whether to perform padding on tensor
-  std::vector<std::string> pyfunc_column_names_;   // Name of the columns to perform map op on
-  PadInfo pad_info_;                               // column names to perform padding on
-  std::unique_ptr<ChildIterator> child_iterator_;  // child iterator for fetching TensorRows 1 by 1
+  const bool drop_;                                     // bool for whether to drop remainder or not
+  const bool pad_;                                      // bool for whether to perform padding on tensor
+  const std::vector<std::string> in_col_names_;         // input column name for per_batch_map
+  std::vector<std::string> out_col_names_;              // output column name for per_batch_map
+  PadInfo pad_info_;                                    // column names to perform padding on
+  std::unique_ptr<ChildIterator> child_iterator_;       // child iterator for fetching TensorRows 1 by 1
+  std::unordered_map<std::string, int32_t> child_map_;  // col_name_id_map of the child node
   QueueList<std::pair<std::unique_ptr<TensorQTable>, CBatchInfo>> worker_queues_;  // internal queue for syncing worker
 #ifdef ENABLE_PYTHON
   py::function batch_size_func_;  // Function pointer of batch size function

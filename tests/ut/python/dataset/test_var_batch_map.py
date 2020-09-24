@@ -289,11 +289,11 @@ def test_exception():
 
     def bad_batch_size(batchInfo):
         raise StopIteration
-        #return batchInfo.get_batch_num()
+        # return batchInfo.get_batch_num()
 
     def bad_map_func(col, batchInfo):
         raise StopIteration
-        #return (col,)
+        # return (col,)
 
     data1 = ds.GeneratorDataset((lambda: gen(100)), ["num"]).batch(bad_batch_size)
     try:
@@ -310,6 +310,68 @@ def test_exception():
         assert False
     except RuntimeError:
         pass
+
+
+def test_multi_col_map():
+    def gen_2_cols(num):
+        for i in range(1, 1 + num):
+            yield (np.array([i]), np.array([i ** 2]))
+
+    def split_col(col, batchInfo):
+        return ([np.copy(arr) for arr in col], [np.copy(-arr) for arr in col])
+
+    def merge_col(col1, col2, batchInfo):
+        merged = []
+        for k, v in enumerate(col1):
+            merged.append(np.array(v + col2[k]))
+        return (merged,)
+
+    def swap_col(col1, col2, batchInfo):
+        return ([np.copy(a) for a in col2], [np.copy(b) for b in col1])
+
+    def batch_map_config(num, s, f, in_nms, out_nms, col_order=None):
+        try:
+            dst = ds.GeneratorDataset((lambda: gen_2_cols(num)), ["col1", "col2"])
+            dst = dst.batch(batch_size=s, input_columns=in_nms, output_columns=out_nms, per_batch_map=f,
+                            column_order=col_order)
+            res = []
+            for row in dst.create_dict_iterator(num_epochs=1, output_numpy=True):
+                res.append(row)
+            return res
+        except (ValueError, RuntimeError, TypeError) as e:
+            return str(e)
+
+    # split 1 col into 2 cols
+    res = batch_map_config(2, 2, split_col, ["col2"], ["col_x", "col_y"])[0]
+    assert np.array_equal(res["col1"], [[1], [2]])
+    assert np.array_equal(res["col_x"], [[1], [4]]) and np.array_equal(res["col_y"], [[-1], [-4]])
+
+    # merge 2 cols into 1 col
+    res = batch_map_config(4, 4, merge_col, ["col1", "col2"], ["merged"])[0]
+    assert np.array_equal(res["merged"], [[2], [6], [12], [20]])
+
+    # swap once
+    res = batch_map_config(3, 3, swap_col, ["col1", "col2"], ["col1", "col2"])[0]
+    assert np.array_equal(res["col1"], [[1], [4], [9]]) and np.array_equal(res["col2"], [[1], [2], [3]])
+
+    # swap twice
+    res = batch_map_config(3, 3, swap_col, ["col1", "col2"], ["col2", "col1"])[0]
+    assert np.array_equal(res["col2"], [[1], [4], [9]]) and np.array_equal(res["col1"], [[1], [2], [3]])
+
+    # test project after map
+    res = batch_map_config(2, 2, split_col, ["col2"], ["col_x", "col_y"], ["col_x", "col_y", "col1"])[0]
+    assert list(res.keys()) == ["col_x", "col_y", "col1"]
+
+    # test the insertion order is maintained
+    res = batch_map_config(2, 2, split_col, ["col2"], ["col_x", "col_y"], ["col1", "col_x", "col_y"])[0]
+    assert list(res.keys()) == ["col1", "col_x", "col_y"]
+
+    # test exceptions
+    assert "output_columns with value 233 is not of type" in batch_map_config(2, 2, split_col, ["col2"], 233)
+    assert "column_order with value 233 is not of type" in batch_map_config(2, 2, split_col, ["col2"], ["col1"], 233)
+    assert "output_columns is NOT set correctly" in batch_map_config(2, 2, split_col, ["col2"], ["col1"])
+    assert "Incorrect number of columns" in batch_map_config(2, 2, split_col, ["col2"], ["col3", "col4", "col5"])
+    assert "col-1 doesn't exist" in batch_map_config(2, 2, split_col, ["col-1"], ["col_x", "col_y"])
 
 
 if __name__ == '__main__':
@@ -333,3 +395,6 @@ if __name__ == '__main__':
 
     logger.info("Running test_var_batch_map.py test_exception() function")
     test_exception()
+
+    logger.info("Running test_var_batch_map.py test_multi_col_map() function")
+    test_multi_col_map()

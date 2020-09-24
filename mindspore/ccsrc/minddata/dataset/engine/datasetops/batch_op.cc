@@ -40,8 +40,8 @@ Status BatchOp::Builder::Build(std::shared_ptr<BatchOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
 #ifdef ENABLE_PYTHON
   *ptr = std::make_shared<BatchOp>(builder_batch_size_, builder_drop_, builder_pad_, builder_op_connector_size_,
-                                   builder_num_workers_, builder_cols_to_map_, builder_batch_size_func_,
-                                   builder_batch_map_func_, builder_pad_map_);
+                                   builder_num_workers_, builder_in_names_, builder_out_names_,
+                                   builder_batch_size_func_, builder_batch_map_func_, builder_pad_map_);
 #else
   *ptr = std::make_shared<BatchOp>(builder_batch_size_, builder_drop_, builder_pad_, builder_op_connector_size_,
                                    builder_num_workers_, builder_cols_to_map_, builder_pad_map_);
@@ -65,18 +65,20 @@ Status BatchOp::Builder::SanityCheck() {
 
 #ifdef ENABLE_PYTHON
 BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
-                 const std::vector<std::string> &cols_to_map, py::function batch_size_func, py::function batch_map_func,
-                 PadInfo pad_map)
+                 const std::vector<std::string> &in_col, const std::vector<std::string> &out_col,
+                 py::function batch_size_func, py::function batch_map_func, PadInfo pad_map)
     : ParallelOp(num_workers, op_queue_size),
       start_batch_size_(batch_size),
       drop_(drop),
       pad_(pad),
-      pyfunc_column_names_(cols_to_map),
+      in_col_names_(in_col),
+      out_col_names_(out_col),
       batch_size_func_(batch_size_func),
       batch_map_func_(batch_map_func),
       pad_info_(pad_map) {
   worker_queues_.Init(num_workers, op_queue_size);
 }
+// if PYTHON is disabled. per_batch_map can't be used
 #else
 BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
                  const std::vector<std::string> &cols_to_map, PadInfo pad_map)
@@ -236,7 +238,7 @@ Status BatchOp::MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatc
                                   std::unique_ptr<DataBuffer> *db) {
   RETURN_UNEXPECTED_IF_NULL(table_pair.first);
 #ifdef ENABLE_PYTHON
-  if (!pyfunc_column_names_.empty()) RETURN_IF_NOT_OK(MapColumns(&table_pair));  // pass it through pyfunc
+  if (!in_col_names_.empty()) RETURN_IF_NOT_OK(MapColumns(&table_pair));  // pass it through pyfunc
 #endif
   if (pad_) RETURN_IF_NOT_OK(PadColumns(&table_pair.first, pad_info_, column_name_id_map_));  // do padding if needed
   (*db) = std::make_unique<DataBuffer>(table_pair.second.batch_num_, DataBuffer::kDeBFlagNone);
@@ -264,33 +266,40 @@ Status BatchOp::EoeReceived(int32_t) {
 
 #ifdef ENABLE_PYTHON
 Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> *table_pair) {
-  TensorBatchTable input_table;
-  input_table.reserve(pyfunc_column_names_.size());
-  for (std::string col_name : pyfunc_column_names_) {
-    if (column_name_id_map_.find(col_name) == column_name_id_map_.end()) {
-      RETURN_STATUS_UNEXPECTED("Invalid parameter, column name: '" + col_name + "' does not exist.\n");
+  std::unique_ptr<TensorQTable> in_q_table = std::move(table_pair->first);
+  size_t num_rows = in_q_table->size();
+  auto out_q_table = std::make_unique<TensorQTable>(num_rows, TensorRow(column_name_id_map_.size(), nullptr));
+  TensorTable in_cols(in_col_names_.size(), TensorRow(num_rows, nullptr)), out_cols;
+
+  std::unordered_map<std::string, size_t> in_col_name_id;  // name of columns that need to be fed to per-batch_map
+  for (size_t i = 0; i < in_col_names_.size(); i++) in_col_name_id.insert({in_col_names_[i], i});
+
+  for (const auto &itr : child_map_) {
+    auto col_itr = in_col_name_id.find(itr.first);
+    if (col_itr != in_col_name_id.end()) {  // col needs to be prepared for per_batch_map
+      for (size_t i = 0; i < num_rows; i++) {
+        in_cols[col_itr->second][i] = std::move((*in_q_table)[i][itr.second]);
+      }
+    } else {  // col needs to be placed into the out table
+      size_t col_id = column_name_id_map_[itr.first];
+      for (size_t i = 0; i < num_rows; i++) {
+        (*out_q_table)[i][col_id] = std::move((*in_q_table)[i][itr.second]);
+      }
     }
-    TensorBatch tensor_batch;
-    tensor_batch.reserve(table_pair->first->size());
-    size_t col_idx = static_cast<size_t>(column_name_id_map_[col_name]);
-    for (size_t row_idx = 0; row_idx < table_pair->first->size(); row_idx++) {
-      tensor_batch.push_back(std::move(table_pair->first->at(row_idx)[col_idx]));
-    }
-    input_table.push_back(std::move(tensor_batch));
   }
 
-  // Perform batch map
-  TensorBatchTable output_table;
-  RETURN_IF_NOT_OK(InvokeBatchMapFunc(&input_table, &output_table, table_pair->second));
+  in_q_table.reset();  // release the input table
+  RETURN_IF_NOT_OK(InvokeBatchMapFunc(&in_cols, &out_cols, table_pair->second));
 
-  // Write back to TensorQTable
-  for (size_t input_idx = 0; input_idx < pyfunc_column_names_.size(); input_idx++) {
-    size_t col_idx = static_cast<size_t>(column_name_id_map_[pyfunc_column_names_[input_idx]]);
+  for (size_t i = 0; i < out_cols.size(); i++) {
+    size_t col_id = column_name_id_map_[out_col_names_[i]];
     size_t row_id = 0;
-    for (TensorRow &row : *(table_pair->first)) {
-      row[col_idx] = std::move(output_table[input_idx][row_id++]);
+    for (auto &t_row : *out_q_table) {
+      t_row[col_id] = out_cols[i][row_id++];
     }
   }
+
+  table_pair->first = std::move(out_q_table);
   return Status::OK();
 }
 #endif
@@ -333,7 +342,7 @@ Status BatchOp::InvokeBatchSizeFunc(int32_t *batch_size, CBatchInfo info) {
   return Status(StatusCode::kOK, "Batch size func call succeed");
 }
 
-Status BatchOp::InvokeBatchMapFunc(TensorBatchTable *input, TensorBatchTable *output, CBatchInfo info) {
+Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info) {
   {
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
@@ -357,11 +366,10 @@ Status BatchOp::InvokeBatchMapFunc(TensorBatchTable *input, TensorBatchTable *ou
       py::object ret_py_obj = batch_map_func_(*input_args);
       // Parse batch map return value
       py::tuple ret_tuple = py::cast<py::tuple>(ret_py_obj);
-      if (ret_tuple.size() != pyfunc_column_names_.size() || !py::isinstance<py::tuple>(ret_tuple)) {
-        return Status(StatusCode::kPyFuncException, "Invalid parameter, batch map function should return a tuple.");
-      }
+      CHECK_FAIL_RETURN_UNEXPECTED(py::isinstance<py::tuple>(ret_tuple), "Batch map function should return a tuple");
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_tuple.size() == out_col_names_.size(), "Incorrect number of columns returned.");
       for (size_t i = 0; i < ret_tuple.size(); i++) {
-        TensorBatch output_batch;
+        TensorRow output_batch;
         py::list output_list = py::cast<py::list>(ret_tuple[i]);
         for (size_t j = 0; j < output_list.size(); j++) {
           std::shared_ptr<Tensor> out;
@@ -377,7 +385,7 @@ Status BatchOp::InvokeBatchMapFunc(TensorBatchTable *input, TensorBatchTable *ou
                     "Invalid parameter, batch map function should return a tuple of list of numpy array.");
     }
   }
-  return Status(StatusCode::kOK);
+  return Status::OK();
 }
 #endif
 
@@ -386,7 +394,7 @@ Status BatchOp::PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &
   RETURN_UNEXPECTED_IF_NULL(table);  // placeholder for now, might need this in the future
   CHECK_FAIL_RETURN_UNEXPECTED(
     (*table)->front().size() == column_name_id_map.size(),
-    "Invaid parameter, size of column_name_id_map must be equal to num of data columns. map size: " +
+    "Invalid parameter, size of column_name_id_map must be equal to num of data columns. map size: " +
       std::to_string(column_name_id_map.size()) + ", column nums: " + std::to_string((*table)->front().size()));
   std::vector<std::shared_ptr<Tensor>> pad_vals(column_name_id_map.size(),
                                                 0);  // value to pad each column's tensor with, default 0
@@ -466,6 +474,58 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
 Status BatchOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<BatchOp>(), modified);
+}
+
+Status BatchOp::ComputeColMap() {
+  CHECK_FAIL_RETURN_UNEXPECTED(child_.size() == 1,
+                               "Batch has " + std::to_string(child_.size()) + " child/children, expects only 1 child.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!(child_[0]->column_name_id_map().empty()), "BatchOp child map is empty.");
+
+  if (in_col_names_.empty()) {  // if per_batch_map is not set, do not need to deal with out_col_names
+    column_name_id_map_ = child_[0]->column_name_id_map();
+    return Status::OK();
+  }
+
+  // from this point onward, per_batch_map is needed, therefore, child_map_ must be set
+  child_map_ = child_[0]->column_name_id_map();
+
+  // following logic deals with per_batch_map
+  bool col_name_flag = (out_col_names_.empty() || out_col_names_ == in_col_names_);  // true if col name is unchanged
+
+  // column names are unchanged
+  if (col_name_flag) {
+    if (out_col_names_.empty()) out_col_names_ = in_col_names_;
+    column_name_id_map_ = child_map_;
+    return Status::OK();
+  }
+
+  // column names are changed from this point onward, this map is the child_map without input cols for per_batch_map
+  auto child_map_no_in_col = child_map_;
+  for (const auto &col : in_col_names_) {
+    const auto itr = child_map_no_in_col.find(col);
+    CHECK_FAIL_RETURN_UNEXPECTED(itr != child_map_no_in_col.end(), "col:" + col + " doesn't exist.");
+    child_map_no_in_col.erase(itr);
+  }
+
+  // col names are changed
+  if (out_col_names_.size() == in_col_names_.size()) {  // column names changed, but same number of columns
+    // the following code rename the input keys to output keys. ["a","b"] -> ["b", "a"] is allowed
+    column_name_id_map_ = child_map_no_in_col;
+    for (auto i = 0; i < in_col_names_.size(); i++) {
+      column_name_id_map_[out_col_names_[i]] = child_map_[in_col_names_[i]];
+    }
+  } else {  // number of columns are different, put the output column names first, then the original ones
+    for (const std::string &col : out_col_names_) {
+      column_name_id_map_.insert({col, column_name_id_map_.size()});
+    }
+    for (const auto &itr : child_map_no_in_col) {
+      column_name_id_map_.insert({itr.first, column_name_id_map_.size()});
+    }
+  }
+
+  CHECK_FAIL_RETURN_UNEXPECTED(column_name_id_map_.size() == (child_map_no_in_col.size() + out_col_names_.size()),
+                               "Key error in column_name_id_map_. output_columns is NOT set correctly!");
+  return Status::OK();
 }
 
 }  // namespace dataset

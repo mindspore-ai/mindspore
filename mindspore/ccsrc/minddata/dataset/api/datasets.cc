@@ -1548,7 +1548,7 @@ std::vector<std::shared_ptr<DatasetOp>> TFRecordDataset::Build() {
 
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
-  // Create and initalize TFReaderOp
+  // Create and initialize TFReaderOp
   std::shared_ptr<TFReaderOp> tf_reader_op = std::make_shared<TFReaderOp>(
     num_workers_, worker_connector_size_, rows_per_buffer_, num_samples_, sorted_dir_files, std::move(data_schema),
     connector_que_size_, columns_list_, shuffle_files, num_shards_, shard_id_, shard_equal_rows_, nullptr);
@@ -1672,11 +1672,14 @@ std::vector<std::shared_ptr<DatasetOp>> BatchDataset::Build() {
 #ifdef ENABLE_PYTHON
   py::function noop;
   node_ops.push_back(std::make_shared<BatchOp>(batch_size_, drop_remainder_, pad_, connector_que_size_, num_workers_,
-                                               cols_to_map_, noop, noop, pad_map_));
+                                               cols_to_map_, cols_to_map_, noop, noop, pad_map_));
 #else
   node_ops.push_back(std::make_shared<BatchOp>(batch_size_, drop_remainder_, pad_, connector_que_size_, num_workers_,
                                                cols_to_map_, pad_map_));
 #endif
+
+  // Until py::function is implemented for C++ API, there is no need for a project op to be inserted after batch
+  // because project is only needed when batch op performs per_batch_map. This per_batch_map is a pyfunc
   return node_ops;
 }
 
@@ -1685,7 +1688,10 @@ bool BatchDataset::ValidateParams() {
     MS_LOG(ERROR) << "Batch: batch_size should be positive integer, but got: " << batch_size_;
     return false;
   }
-
+  if (!cols_to_map_.empty()) {
+    MS_LOG(ERROR) << "cols_to_map functionality is not implemented in C++; this should be left empty.";
+    return false;
+  }
   return true;
 }
 

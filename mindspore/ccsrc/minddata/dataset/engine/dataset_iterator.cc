@@ -95,7 +95,7 @@ Status IteratorBase::GetNextAsOrderedPair(std::vector<std::pair<std::string, std
   if (column_order_.empty()) {
     const int32_t invalid_col_id = -1;
     column_order_.resize(num_cols, {std::string(), invalid_col_id});
-    for (const auto itr : col_name_id_map_) {
+    for (const auto &itr : col_name_id_map_) {
       int32_t ind = itr.second;
       CHECK_FAIL_RETURN_UNEXPECTED(ind < num_cols && ind >= 0, "column id out of bounds.");
       column_order_[ind] = std::make_pair(itr.first, ind);
