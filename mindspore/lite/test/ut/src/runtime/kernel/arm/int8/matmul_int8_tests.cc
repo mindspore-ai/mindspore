@@ -114,7 +114,7 @@ TEST_F(TestMatmulInt8, simple) {
   int8_t *b_c16x4 = new int8_t[COL4 * DEPTH16];
   memset(b_c16x4, 0, COL4 * DEPTH16);
   RowMajor2Row16x4MajorInt8(a, a_r4x16, ROW, DEPTH);
-  RowMajor2Col16x4Major(b, DEPTH, COL, b_c16x4, DEPTH16);
+  RowMajor2Col16x4MajorInt8(b, DEPTH, COL, b_c16x4);
   int a_sums[ROW4] = {0};
   int bias[COL4] = {0};
   int multiplier, ls, rs;

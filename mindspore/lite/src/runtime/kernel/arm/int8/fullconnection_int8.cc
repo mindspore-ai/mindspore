@@ -58,13 +58,11 @@ int FullconnectionInt8CPUKernel::ReSize() {
   weight_bias_sums_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(c4_ * sizeof(int)));
   if (!weight_bias_sums_) return RET_MEMORY_FAILED;
   memset(weight_bias_sums_, 0, c4_ * sizeof(int));
-  auto weight_data = reinterpret_cast<int8_t *>(in_tensors_[1]->MutableData());
-  RowMajor2Row16x4MajorInt8(weight_data, b_c16x4_ptr_, fc_param_->col_, fc_param_->deep_);
   if (in_tensors_.size() == 3) {
     auto bias_len = fc_param_->col_8_ * sizeof(int);
     bias_ptr_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(bias_len));
     if (!bias_ptr_) return RET_MEMORY_FAILED;
-    memcpy(bias_ptr_, in_tensors_[2]->MutableData(), bias_len);
+    memcpy(bias_ptr_, in_tensors_[2]->data_c(), bias_len);
   } else {
     bias_ptr_ = NULL;
   }
@@ -91,8 +89,13 @@ int FullconnectionInt8CPUKernel::ReSize() {
   CalculateActivationRangeQuantized(fc_param_->act_type_ == ActType_Relu, fc_param_->act_type_ == ActType_Relu6,
                                     quant_params_.output.zp_, quant_params_.output.scale_, &quant_params_.out_act_min,
                                     &quant_params_.out_act_max);
-  CalcWeightBiasSums(weight_data, fc_param_->deep_, fc_param_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
-                     bias_ptr_, weight_bias_sums_, ColMajor);
+  fc_param_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
+  if (fc_param_->b_const_) {
+    auto weight_data = reinterpret_cast<int8_t *>(in_tensors_[1]->data_c());
+    RowMajor2Row16x4MajorInt8(weight_data, b_c16x4_ptr_, fc_param_->col_, fc_param_->deep_);
+    CalcWeightBiasSums(weight_data, fc_param_->deep_, fc_param_->col_, quant_params_.input.zp_,
+                       quant_params_.weight.zp_, bias_ptr_, weight_bias_sums_, ColMajor);
+  }
   return RET_OK;
 }
 
@@ -106,7 +109,7 @@ int FullconnectionInt8CPUKernel::RunImpl(int task_id) {
   auto &p = fc_param_;
   auto cur_b = b_c16x4_ptr_ + task_id * thread_stride_ * C4NUM * d16_;
   auto cur_bias = weight_bias_sums_ + task_id * thread_stride_ * C4NUM;
-  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
+  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
   auto cur_c = output_ptr + task_id * thread_stride_ * C4NUM;
 #ifdef ENABLE_ARM64
   MatmulInt8Neon64(a_r4x16_ptr_, cur_b, cur_c, r4_, cur_oc * C4NUM, d16_, input_sums_, cur_bias, q.out_act_min,
@@ -136,9 +139,15 @@ int FullconnectionInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
+  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
   RowMajor2Row16x4MajorInt8(input_ptr, a_r4x16_ptr_, fc_param_->row_, fc_param_->deep_);
   CalcInputSums(input_ptr, fc_param_->row_, fc_param_->deep_, quant_params_.weight.zp_, input_sums_, RowMajor);
+  if (!fc_param_->b_const_) {
+    auto weight_data = reinterpret_cast<int8_t *>(in_tensors_[1]->data_c());
+    RowMajor2Row16x4MajorInt8(weight_data, b_c16x4_ptr_, fc_param_->col_, fc_param_->deep_);
+    CalcWeightBiasSums(weight_data, fc_param_->deep_, fc_param_->col_, quant_params_.input.zp_,
+                       quant_params_.weight.zp_, bias_ptr_, weight_bias_sums_, ColMajor);
+  }
   ParallelLaunch(this->context_->thread_pool_, FcInt8Run, this, thread_count_);
   return RET_OK;
 }

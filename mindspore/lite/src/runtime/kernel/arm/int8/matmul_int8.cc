@@ -55,6 +55,14 @@ int MatmulInt8CPUKernel::ReSize() {
   input_sums_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(params_->row_4_ * sizeof(int)));
   if (!input_sums_) return RET_MEMORY_FAILED;
   memset(input_sums_, 0, params_->row_4_ * sizeof(int));
+  b_c16x4_batch_ = reinterpret_cast<int8_t *>(
+    ctx_->allocator->Malloc(params_->batch * params_->col_4_ * params_->deep_16_ * sizeof(int8_t)));
+  if (!b_c16x4_batch_) return RET_MEMORY_FAILED;
+  memset(b_c16x4_batch_, 0, params_->batch * params_->col_4_ * params_->deep_16_ * sizeof(int8_t));
+  weight_bias_sums_batch_ =
+    reinterpret_cast<int *>(ctx_->allocator->Malloc(params_->batch * params_->col_4_ * sizeof(int)));
+  if (!weight_bias_sums_batch_) return RET_MEMORY_FAILED;
+  memset(weight_bias_sums_batch_, 0, params_->batch * params_->col_4_ * sizeof(int));
   if (in_tensors_.size() == 3) {
     auto bias_size = params_->col_4_ * sizeof(int);
     bias_ptr_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(bias_size));
@@ -62,32 +70,6 @@ int MatmulInt8CPUKernel::ReSize() {
     memcpy(bias_ptr_, in_tensors_[2]->data_c(), bias_size);
   } else {
     bias_ptr_ = NULL;
-  }
-
-  params_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
-  if (params_->b_const_) {
-    b_c16x4_batch_ = reinterpret_cast<int8_t *>(
-      ctx_->allocator->Malloc(params_->batch * params_->col_4_ * params_->deep_16_ * sizeof(int8_t)));
-    if (!b_c16x4_batch_) return RET_MEMORY_FAILED;
-    weight_bias_sums_batch_ =
-      reinterpret_cast<int *>(ctx_->allocator->Malloc(params_->batch * params_->col_4_ * sizeof(int)));
-    if (!weight_bias_sums_batch_) return RET_MEMORY_FAILED;
-    auto b_ptr = reinterpret_cast<int8_t *>(in_tensors_[1]->data_c());
-
-    for (int i = 0; i < params_->batch; ++i) {
-      auto cur_b = b_ptr + i * params_->deep_ * params_->col_;
-      auto cur_b_pack = b_c16x4_batch_ + i * params_->col_4_ * params_->deep_16_;
-      auto cur_sums = weight_bias_sums_batch_ + i * params_->col_4_;
-      if (params_->b_transpose_) {
-        RowMajor2Row16x4MajorInt8(cur_b, cur_b_pack, params_->col_, params_->deep_);
-        CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
-                           bias_ptr_, cur_sums, ColMajor);
-      } else {
-        RowMajor2Col16x4Major(cur_b, params_->deep_, params_->col_, cur_b_pack, params_->deep_16_);
-        CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
-                           bias_ptr_, cur_sums, RowMajor);
-      }
-    }
   }
   thread_count_ = MSMIN(thread_count_, UP_DIV(params_->col_4_, 4));
   thread_stride_ = UP_DIV(UP_DIV(params_->col_4_, 4), thread_count_);
@@ -108,6 +90,24 @@ int MatmulInt8CPUKernel::ReSize() {
   quant_params_.output.zp_ = params.front().zeroPoint;
   quant_params_.output.scale_ = params.front().scale;
 
+  params_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
+  if (params_->b_const_) {
+    auto b_ptr = reinterpret_cast<int8_t *>(in_tensors_[1]->data_c());
+    for (int i = 0; i < params_->batch; ++i) {
+      auto cur_b = b_ptr + i * params_->deep_ * params_->col_;
+      auto cur_b_pack = b_c16x4_batch_ + i * params_->col_4_ * params_->deep_16_;
+      auto cur_sums = weight_bias_sums_batch_ + i * params_->col_4_;
+      if (params_->b_transpose_) {
+        RowMajor2Row16x4MajorInt8(cur_b, cur_b_pack, params_->col_, params_->deep_);
+        CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
+                           bias_ptr_, cur_sums, ColMajor);
+      } else {
+        RowMajor2Col16x4MajorInt8(cur_b, params_->deep_, params_->col_, cur_b_pack);
+        CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
+                           bias_ptr_, cur_sums, RowMajor);
+      }
+    }
+  }
   double real_multiplier = quant_params_.input.scale_ * quant_params_.weight.scale_ / quant_params_.output.scale_;
   QuantizeRoundParameter(real_multiplier, &quant_params_.quant_multiplier, &quant_params_.left_shift,
                          &quant_params_.right_shift);
@@ -161,12 +161,6 @@ int MatmulInt8CPUKernel::Run() {
   auto c_stride = params_->row_ * params_->col_;
 
   if (!params_->b_const_) {
-    b_c16x4_batch_ = reinterpret_cast<int8_t *>(
-      ctx_->allocator->Malloc(params_->batch * params_->col_4_ * params_->deep_16_ * sizeof(int8_t)));
-    if (!b_c16x4_batch_) return RET_MEMORY_FAILED;
-    weight_bias_sums_batch_ =
-      reinterpret_cast<int *>(ctx_->allocator->Malloc(params_->batch * params_->col_4_ * sizeof(int)));
-    if (!weight_bias_sums_batch_) return RET_MEMORY_FAILED;
     auto b_ptr = reinterpret_cast<int8_t *>(in_tensors_[1]->data_c());
     for (int i = 0; i < params_->batch; ++i) {
       auto cur_b = b_ptr + i * b_stride;
@@ -177,7 +171,7 @@ int MatmulInt8CPUKernel::Run() {
         CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
                            bias_ptr_, cur_sums, ColMajor);
       } else {
-        RowMajor2Col16x4Major(cur_b, params_->deep_, params_->col_, cur_b_pack, params_->deep_16_);
+        RowMajor2Col16x4MajorInt8(cur_b, params_->deep_, params_->col_, cur_b_pack);
         CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
                            bias_ptr_, cur_sums, RowMajor);
       }
@@ -187,7 +181,7 @@ int MatmulInt8CPUKernel::Run() {
   for (int i = 0; i < params_->batch; ++i) {
     auto cur_a_ptr = a_ptr + i * a_stride;
     if (params_->a_transpose_) {
-      RowMajor2Col16x4Major(cur_a_ptr, params_->deep_, params_->row_, a_r4x16_ptr_, params_->deep_16_);
+      RowMajor2Col16x4MajorInt8(cur_a_ptr, params_->deep_, params_->row_, a_r4x16_ptr_);
       CalcInputSums(cur_a_ptr, params_->row_, params_->deep_, quant_params_.weight.zp_, input_sums_, ColMajor);
     } else {
       RowMajor2Row16x4MajorInt8(cur_a_ptr, a_r4x16_ptr_, params_->row_, params_->deep_);
