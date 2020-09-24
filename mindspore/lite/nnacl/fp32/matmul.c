@@ -477,8 +477,7 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
                          (int)(out_type == OutType_TileC8));
   }
 #elif ENABLE_ARM32
-  MatmulFloatNeon32Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type == OutType_Nhwc),
-                       (int)(out_type == OutType_TileC8));
+  MatmulFloatNeon32Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
 #else
   MatMul12x8(a, b, c, bias, act_type, deep, row, col, stride, out_type);
 #endif
@@ -491,8 +490,8 @@ static void SwapDims(int *dims, int index1, int index2) {
   dims[index2] = tmp;
 }
 
-int MatMulInferShape(int **in_shape, int in_num, size_t *dim_size, int *out_shape, int *in_format,
-                     int *out_format, int *in_datatype, int *out_datatype, OpParameter *param) {
+int MatMulInferShape(int **in_shape, int in_num, size_t *dim_size, int *out_shape, int *in_format, int *out_format,
+                     int *in_datatype, int *out_datatype, OpParameter *param) {
   *out_datatype = in_datatype[0];
   *out_format = in_format[0];
   if (dim_size[0] < 2 || dim_size[1] < 2) {
