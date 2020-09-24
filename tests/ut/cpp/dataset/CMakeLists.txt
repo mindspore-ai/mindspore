@@ -71,6 +71,7 @@ SET(DE_UT_SRCS
         status_test.cc
         task_manager_test.cc
         tensor_test.cc
+        tensor_row_test.cc
         tensor_string_test.cc
         tensorshape_test.cc
         tfReader_op_test.cc
