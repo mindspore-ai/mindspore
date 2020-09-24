@@ -35,6 +35,7 @@ class RandomHorizontalFlipWithBBoxOp : public TensorOp {
 
   explicit RandomHorizontalFlipWithBBoxOp(float probability = kDefProbability) : distribution_(probability) {
     rnd_.seed(GetSeed());
+    is_deterministic_ = false;
   }
 
   ~RandomHorizontalFlipWithBBoxOp() override = default;

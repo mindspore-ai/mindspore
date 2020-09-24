@@ -18,6 +18,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <utility>
 
 #include "mindspore/core/utils/log_adapter.h"
 #include "minddata/dataset/util/system_pool.h"
@@ -33,7 +34,9 @@ ConfigManager::ConfigManager()
       monitor_sampling_interval_(kCfgMonitorSamplingInterval),
       callback_timout_(kCfgCallbackTimeout),
       cache_host_(kCfgDefaultCacheHost),
-      cache_port_(kCfgDefaultCachePort) {
+      cache_port_(kCfgDefaultCachePort),
+      num_connections_(kDftNumConnections),
+      prefetch_size_(kDftPrefetchSize) {
   auto env_cache_host = std::getenv("MS_CACHE_HOST");
   auto env_cache_port = std::getenv("MS_CACHE_PORT");
   if (env_cache_host != nullptr) {
@@ -71,6 +74,8 @@ Status ConfigManager::FromJson(const nlohmann::json &j) {
   set_monitor_sampling_interval(j.value("monitorSamplingInterval", monitor_sampling_interval_));
   set_cache_host(j.value("cacheHost", cache_host_));
   set_cache_port(j.value("cachePort", cache_port_));
+  set_num_connections(j.value("numConnections", num_connections_));
+  set_prefetch_size(j.value("prefetchSize", prefetch_size_));
   return Status::OK();
 }
 
@@ -120,8 +125,12 @@ void ConfigManager::set_monitor_sampling_interval(uint32_t interval) { monitor_s
 
 void ConfigManager::set_callback_timeout(uint32_t timeout) { callback_timout_ = timeout; }
 
-void ConfigManager::set_cache_host(std::string cache_host) { cache_host_ = cache_host; }
+void ConfigManager::set_cache_host(std::string cache_host) { cache_host_ = std::move(cache_host); }
 
 void ConfigManager::set_cache_port(int32_t cache_port) { cache_port_ = cache_port; }
+
+void ConfigManager::set_num_connections(int32_t num_connections) { num_connections_ = num_connections; }
+
+void ConfigManager::set_prefetch_size(int32_t prefetch_size) { prefetch_size_ = prefetch_size; }
 }  // namespace dataset
 }  // namespace mindspore

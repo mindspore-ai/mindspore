@@ -46,6 +46,13 @@ struct CacheServiceStat {
   int8_t cache_service_state;
 };
 
+/// \brief Info structure ListSessionsRequest
+struct SessionCacheInfo {
+  session_id_type session_id;
+  connection_id_type connection_id;
+  CacheServiceStat stats;
+};
+
 /// \brief CacheClient communicates with CacheServer using Requests.
 class BaseRequest {
  public:
@@ -54,7 +61,7 @@ class BaseRequest {
     kCacheRow = 0,
     kBatchFetchRows = 1,
     kCreateCache = 2,
-    kPurgeCache = 3,
+    kGetCacheMissKeys = 3,
     kDestroyCache = 4,
     kGetStat = 5,
     kCacheSchema = 6,
@@ -65,6 +72,9 @@ class BaseRequest {
     kAllocateSharedBlock = 11,
     kFreeSharedBlock = 12,
     kStopService = 13,
+    kHeartBeat = 14,
+    kToggleWriteMode = 15,
+    kListSessions = 16,
     // Add new request before it.
     kRequestUnknown = 32767
   };
@@ -73,6 +83,7 @@ class BaseRequest {
   friend class CacheServerRequest;
   friend class CacheClientGreeter;
   friend class CacheClientRequestTag;
+  friend class CacheClient;
 
   /// \brief Base class of a cache server request
   /// \param type Type of the request
@@ -119,7 +130,7 @@ class FreeSharedBlockRequest : public BaseRequest {
     rq_.set_connection_id(connection_id);
     rq_.add_buf_data(std::to_string(addr));
   }
-  ~FreeSharedBlockRequest() = default;
+  ~FreeSharedBlockRequest() override = default;
 };
 
 /// \brief Request to cache a single TensorRow
@@ -136,7 +147,7 @@ class CacheRowRequest : public BaseRequest {
     rq_.set_connection_id(connection_id);
     rq_.add_buf_data(cookie);
   }
-  ~CacheRowRequest() = default;
+  ~CacheRowRequest() override = default;
 
   /// \brief Serialize a TensorRow for streaming to the cache server
   /// \param row TensorRow
@@ -183,7 +194,7 @@ class BatchFetchRequest : public BaseRequest {
   friend class CacheServer;
   friend class CacheService;
   BatchFetchRequest(connection_id_type connection_id, const std::vector<row_id_type> &row_id, bool local_bypass);
-  ~BatchFetchRequest() = default;
+  ~BatchFetchRequest() override = default;
   Status RestoreRows(TensorTable *out, const void *baseAddr, int64_t *out_addr);
 
  private:
@@ -203,7 +214,7 @@ class CreateCacheRequest : public BaseRequest {
   /// \param flag Attributes of the cache.
   explicit CreateCacheRequest(const CacheClientInfo &cinfo, uint64_t cache_mem_sz,
                               CreateCacheFlag flag = CreateCacheFlag::kNone);
-  ~CreateCacheRequest() = default;
+  ~CreateCacheRequest() override = default;
   void ParseResult(connection_id_type *id, std::string *out) {
     auto p = flatbuffers::GetRoot<CreateCacheReplyMsg>(reply_.result().data());
     *id = p->connection_id();
@@ -218,14 +229,15 @@ class CreateCacheRequest : public BaseRequest {
   CreateCacheFlag flag_;
 };
 
-/// \brief Request to purge a cache.
-class PurgeCacheRequest : public BaseRequest {
+/// \brief Request to get all the keys not present at the server.
+/// \note Only applicable to mappable case
+class GetCacheMissKeysRequest : public BaseRequest {
  public:
   friend class CacheServer;
-  explicit PurgeCacheRequest(connection_id_type connection_id) : BaseRequest(RequestType::kPurgeCache) {
+  explicit GetCacheMissKeysRequest(connection_id_type connection_id) : BaseRequest(RequestType::kGetCacheMissKeys) {
     rq_.set_connection_id(connection_id);
   }
-  ~PurgeCacheRequest() = default;
+  ~GetCacheMissKeysRequest() override = default;
 };
 
 /// \brief Request to destroy a cache
@@ -235,7 +247,7 @@ class DestroyCacheRequest : public BaseRequest {
   explicit DestroyCacheRequest(connection_id_type connection_id) : BaseRequest(RequestType::kDestroyCache) {
     rq_.set_connection_id(connection_id);
   }
-  ~DestroyCacheRequest() = default;
+  ~DestroyCacheRequest() override = default;
 };
 
 /// \brief Obtain the statistics of the current connection
@@ -247,7 +259,7 @@ class GetStatRequest : public BaseRequest {
     rq_.set_connection_id(connection_id);
   }
 
-  ~GetStatRequest() = default;
+  ~GetStatRequest() override = default;
 
   /// \brief Override base function to process the result.
   Status PostReply() override;
@@ -269,7 +281,7 @@ class CacheSchemaRequest : public BaseRequest {
   explicit CacheSchemaRequest(connection_id_type connection_id) : BaseRequest(RequestType::kCacheSchema) {
     rq_.set_connection_id(connection_id);
   }
-  ~CacheSchemaRequest() = default;
+  ~CacheSchemaRequest() override = default;
 
   Status SerializeCacheSchemaRequest(const std::unordered_map<std::string, int32_t> &map);
 };
@@ -281,7 +293,7 @@ class FetchSchemaRequest : public BaseRequest {
   explicit FetchSchemaRequest(connection_id_type connection_id) : BaseRequest(RequestType::kFetchSchema) {
     rq_.set_connection_id(connection_id);
   }
-  ~FetchSchemaRequest() = default;
+  ~FetchSchemaRequest() override = default;
 
   Status PostReply() override;
 
@@ -300,7 +312,7 @@ class BuildPhaseDoneRequest : public BaseRequest {
     rq_.set_connection_id(connection_id);
     rq_.add_buf_data(cookie_);
   }
-  ~BuildPhaseDoneRequest() = default;
+  ~BuildPhaseDoneRequest() override = default;
 
  private:
   std::string cookie_;
@@ -313,7 +325,7 @@ class DropSessionRequest : public BaseRequest {
   explicit DropSessionRequest(const CacheClientInfo &cinfo) : BaseRequest(RequestType::kDropSession) {
     rq_.mutable_connection_info()->operator=(cinfo);
   }
-  ~DropSessionRequest() = default;
+  ~DropSessionRequest() override = default;
 };
 
 class GenerateSessionIdRequest : public BaseRequest {
@@ -325,9 +337,34 @@ class GenerateSessionIdRequest : public BaseRequest {
     rq_.set_connection_id(0);
   }
 
-  ~GenerateSessionIdRequest() = default;
+  ~GenerateSessionIdRequest() override = default;
 
   session_id_type GetSessionId() { return atoi(reply_.result().data()); }
+};
+
+class ListSessionsRequest : public BaseRequest {
+ public:
+  friend class CacheServer;
+  ListSessionsRequest() : BaseRequest(RequestType::kListSessions) {
+    // This request is not specific to any cache or session
+    rq_.set_connection_id(0);
+  }
+
+  ~ListSessionsRequest() override = default;
+
+  /// \brief Override base function to process the result.
+  Status PostReply() override;
+
+  void GetSessionCacheInfo(std::vector<SessionCacheInfo> *info) {
+    if (info != nullptr) {
+      (*info) = session_info_list_;
+    }
+  }
+
+  std::vector<SessionCacheInfo> GetSessionCacheInfo() { return session_info_list_; }
+
+ private:
+  std::vector<SessionCacheInfo> session_info_list_;
 };
 
 class AllocateSharedBlockRequest : public BaseRequest {
@@ -338,7 +375,7 @@ class AllocateSharedBlockRequest : public BaseRequest {
     rq_.set_connection_id(connection_id);
     rq_.add_buf_data(std::to_string(requestedSz));
   }
-  ~AllocateSharedBlockRequest() = default;
+  ~AllocateSharedBlockRequest() override = default;
 
   /// \brief On return from the server, we get the (relative) address where
   /// the free block is located.
@@ -349,11 +386,15 @@ class AllocateSharedBlockRequest : public BaseRequest {
   }
 };
 
-class ShutdownRequest : public BaseRequest {
+class ToggleWriteModeRequest : public BaseRequest {
  public:
   friend class CacheServer;
-  ShutdownRequest() : BaseRequest(RequestType::kStopService) {}
-  ~ShutdownRequest() = default;
+  explicit ToggleWriteModeRequest(connection_id_type connection_id, bool on_off)
+      : BaseRequest(RequestType::kToggleWriteMode) {
+    rq_.set_connection_id(connection_id);
+    rq_.add_buf_data(on_off ? "on" : "off");
+  }
+  ~ToggleWriteModeRequest() override = default;
 };
 }  // namespace dataset
 }  // namespace mindspore

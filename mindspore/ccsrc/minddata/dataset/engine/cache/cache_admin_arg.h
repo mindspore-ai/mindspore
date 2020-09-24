@@ -32,6 +32,7 @@ class CacheAdminArgHandler {
   static constexpr int32_t kDefaultNumWorkers = 32;
   static constexpr int32_t kDefaultSharedMemorySizeInGB = 4;
   static constexpr int32_t kDefaultLogLevel = 1;
+  static constexpr float kMemoryCapRatio = 0.8;
   static const char kServerBinary[];
   static const char kDefaultSpillDir[];
 
@@ -42,12 +43,13 @@ class CacheAdminArgHandler {
     kCmdStop = 2,
     kCmdGenerateSession = 3,
     kCmdDestroySession = 4,
+    kCmdListSessions = 5,
     kCmdUnknown = 32767
   };
 
   CacheAdminArgHandler();
 
-  ~CacheAdminArgHandler() = default;
+  virtual ~CacheAdminArgHandler();
 
   Status ParseArgStream(std::stringstream *arg_stream);
 
@@ -70,17 +72,20 @@ class CacheAdminArgHandler {
     kArgNumWorkers = 9,
     kArgSharedMemorySize = 10,
     kArgLogLevel = 11,
-    kArgNumArgs = 12  // Must be the last position to provide a count
+    kArgMemoryCapRatio = 12,
+    kArgListSessions = 13,
+    kArgNumArgs = 14  // Must be the last position to provide a count
   };
 
-  Status StartServer();
-
-  Status StopServer();
+  Status StartStopServer(CommandId);
 
   Status AssignArg(std::string option, int32_t *out_arg, std::stringstream *arg_stream,
                    CommandId command_id = CommandId::kCmdUnknown);
 
   Status AssignArg(std::string option, std::string *out_arg, std::stringstream *arg_stream,
+                   CommandId command_id = CommandId::kCmdUnknown);
+
+  Status AssignArg(std::string option, float *out_arg, std::stringstream *arg_stream,
                    CommandId command_id = CommandId::kCmdUnknown);
 
   Status Validate();
@@ -90,6 +95,7 @@ class CacheAdminArgHandler {
   int32_t num_workers_;
   int32_t shm_mem_sz_;
   int32_t log_level_;
+  float memory_cap_ratio_;
   session_id_type session_id_;
   std::string hostname_;
   std::string spill_dir_;

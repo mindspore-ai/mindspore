@@ -12,7 +12,9 @@ add_library(engine-cache-client OBJECT
 
 if (ENABLE_CACHE)
   ms_grpc_generate(CACHE_GRPC_SRCS CACHE_GRPC_HDRS cache_grpc.proto)
-  target_sources(engine-cache-client PUBLIC ${CACHE_GRPC_SRCS} cache_grpc_client.cc)
+  target_sources(engine-cache-client PUBLIC ${CACHE_GRPC_SRCS}
+      cache_grpc_client.cc
+      cache_ipc.cc)
 
   add_library(engine-cache-server OBJECT
       ${CACHE_GRPC_SRCS}

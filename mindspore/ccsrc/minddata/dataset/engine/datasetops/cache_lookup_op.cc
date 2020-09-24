@@ -87,10 +87,10 @@ Status CacheLookupOp::InitSampler() { return Sampler::InitSampler(); }
 void CacheLookupOp::Print(std::ostream &out, bool show_all) const { CacheBase::Print(out, show_all); }
 Status CacheLookupOp::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   std::vector<row_id_type> cache_miss;
-  RETURN_IF_NOT_OK(keys_miss_.Pop(0, &cache_miss));
+  RETURN_IF_NOT_OK(keys_miss_->Pop(0, &cache_miss));
   // Ignore the case we have no cache miss, we can't return empty samples.
   while (cache_miss.empty()) {
-    RETURN_IF_NOT_OK(keys_miss_.Pop(0, &cache_miss));
+    RETURN_IF_NOT_OK(keys_miss_->Pop(0, &cache_miss));
   }
   // Special code for eoe
   if (cache_miss.at(0) == eoe_row_id) {

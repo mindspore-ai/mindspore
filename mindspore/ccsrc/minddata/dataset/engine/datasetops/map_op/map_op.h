@@ -177,10 +177,16 @@ class MapOp : public ParallelOp {
   // @return the number of threads consuming data from previous op's output Connector.
   int32_t num_consumers() const override;
 
-  // Base-class override for NodePass visitor acceptor.
-  // @param p - Pointer to the NodePass to be accepted.
-  // @param modified - Whether this node visit modified the pipeline.
-  // @return - Status of the node visit.
+  /// \brief Base-class override for NodePass pre-visit acceptor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status PreAccept(NodePass *p, bool *modified) override;
+
+  /// \brief Base-class override for NodePass visitor acceptor.
+  /// \param[in] p Pointer to the NodePass to be accepted.
+  /// \param[out] modified Whether this node visit modified the pipeline.
+  /// \return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
   // Op name getter

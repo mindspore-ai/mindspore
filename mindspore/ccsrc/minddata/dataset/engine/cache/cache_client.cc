@@ -24,26 +24,26 @@
 namespace mindspore {
 namespace dataset {
 CacheClient::Builder::Builder()
-    : session_id_(0), cache_mem_sz_(0), spill_(false), hostname_(""), port_(0), num_workers_(0), prefetch_size_(0) {
+    : session_id_(0), cache_mem_sz_(0), spill_(false), hostname_(""), port_(0), num_connections_(0), prefetch_size_(0) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   hostname_ = cfg->cache_host();
   port_ = cfg->cache_port();
-  num_workers_ = cfg->num_parallel_workers();
-  prefetch_size_ = 20;  // rows_per_buf is too small (1 by default).
+  num_connections_ = cfg->num_connections();  // number of async tcp/ip connections
+  prefetch_size_ = cfg->prefetch_size();      // prefetch size
 }
 
 Status CacheClient::Builder::Build(std::shared_ptr<CacheClient> *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   RETURN_IF_NOT_OK(SanityCheck());
-  *out =
-    std::make_shared<CacheClient>(session_id_, cache_mem_sz_, spill_, hostname_, port_, num_workers_, prefetch_size_);
+  *out = std::make_shared<CacheClient>(session_id_, cache_mem_sz_, spill_, hostname_, port_, num_connections_,
+                                       prefetch_size_);
   return Status::OK();
 }
 
 Status CacheClient::Builder::SanityCheck() {
   CHECK_FAIL_RETURN_UNEXPECTED(session_id_ > 0, "session id must be positive");
   CHECK_FAIL_RETURN_UNEXPECTED(cache_mem_sz_ >= 0, "cache memory size must not be negative. (0 implies unlimited");
-  CHECK_FAIL_RETURN_UNEXPECTED(num_workers_ > 0, "rpc workers must be positive");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_connections_ > 0, "rpc connections must be positive");
   CHECK_FAIL_RETURN_UNEXPECTED(prefetch_size_ > 0, "prefetch size must be positive");
   CHECK_FAIL_RETURN_UNEXPECTED(!hostname_.empty(), "hostname must not be empty");
   CHECK_FAIL_RETURN_UNEXPECTED(port_ > 0, "port must be positive");
@@ -55,26 +55,32 @@ Status CacheClient::Builder::SanityCheck() {
 
 // Constructor
 CacheClient::CacheClient(session_id_type session_id, uint64_t cache_mem_sz, bool spill, std::string hostname,
-                         int32_t port, int32_t num_workers, int32_t prefetch_size)
+                         int32_t port, int32_t num_connections, int32_t prefetch_size)
     : server_connection_id_(0),
       cache_mem_sz_(cache_mem_sz),
       spill_(spill),
       local_bypass_(false),
       hostname_(std::move(hostname)),
       port_(port),
-      num_workers_(num_workers),
-      prefetch_size_(prefetch_size) {
+      num_connections_(num_connections),
+      prefetch_size_(prefetch_size),
+      fetch_all_keys_(true) {
   cinfo_.set_session_id(session_id);
-  comm_ = std::make_shared<CacheClientGreeter>(hostname_, port_, num_workers_);
+  comm_ = std::make_shared<CacheClientGreeter>(hostname_, port_, num_connections_);
+}
+
+CacheClient::~CacheClient() {
+  cache_miss_keys_wp_.Set();
+  (void)comm_->ServiceStop();
 }
 
 // print method for display cache details
 void CacheClient::Print(std::ostream &out) const {
   out << "  Session id: " << session_id() << "\n  Cache crc: " << cinfo_.crc()
-      << "\n  Server cache id: " << server_connection_id_ << "\n  Cache mem size: " << getCacheMemSz()
-      << "\n  Spilling: " << std::boolalpha << isSpill() << "\n  Hostname: " << getHostname()
-      << "\n  Port: " << getPort() << "\n  Number of rpc workers: " << getNumWorkers()
-      << "\n  Prefetch size: " << getPrefetchSize() << "\n  Local client support: " << std::boolalpha
+      << "\n  Server cache id: " << server_connection_id_ << "\n  Cache mem size: " << GetCacheMemSz()
+      << "\n  Spilling: " << std::boolalpha << isSpill() << "\n  Hostname: " << GetHostname()
+      << "\n  Port: " << GetPort() << "\n  Number of rpc workers: " << GetNumConnections()
+      << "\n  Prefetch size: " << GetPrefetchSize() << "\n  Local client support: " << std::boolalpha
       << SupportLocalClient();
 }
 
@@ -199,14 +205,6 @@ Status CacheClient::CreateCache(uint32_t tree_crc, bool generate_id) {
   return Status::OK();
 }
 
-Status CacheClient::PurgeCache() {
-  UniqueLock lck(&mux_);
-  auto rq = std::make_shared<PurgeCacheRequest>(server_connection_id_);
-  RETURN_IF_NOT_OK(PushRequest(rq));
-  RETURN_IF_NOT_OK(rq->Wait());
-  return Status::OK();
-}
-
 Status CacheClient::DestroyCache() {
   UniqueLock lck(&mux_);
   auto rq = std::make_shared<DestroyCacheRequest>(server_connection_id_);
@@ -253,5 +251,71 @@ Status CacheClient::BuildPhaseDone() const {
 }
 
 Status CacheClient::PushRequest(std::shared_ptr<BaseRequest> rq) const { return comm_->HandleRequest(std::move(rq)); }
+
+void CacheClient::ServerRunningOutOfResources() {
+  bool expected = true;
+  if (fetch_all_keys_.compare_exchange_strong(expected, false)) {
+    Status rc;
+    // Server runs out of memory or disk space to cache any more rows.
+    // First of all, we will turn off the locking.
+    auto toggle_write_mode_rq = std::make_shared<ToggleWriteModeRequest>(server_connection_id_, false);
+    rc = PushRequest(toggle_write_mode_rq);
+    if (rc.IsError()) {
+      return;
+    }
+    // Wait until we can toggle the state of the server to non-locking
+    rc = toggle_write_mode_rq->Wait();
+    if (rc.IsError()) {
+      return;
+    }
+    // Now we get a list of all the keys not cached at the server so
+    // we can filter out at the prefetch level.
+    auto cache_miss_rq = std::make_shared<GetCacheMissKeysRequest>(server_connection_id_);
+    rc = PushRequest(cache_miss_rq);
+    if (rc.IsError()) {
+      return;
+    }
+    rc = cache_miss_rq->Wait();
+    if (rc.IsError()) {
+      return;
+    }
+    // We will get back a vector of row id between [min,max] that are absent in the server.
+    auto &row_id_buf = cache_miss_rq->reply_.result();
+    auto p = flatbuffers::GetRoot<TensorRowIds>(row_id_buf.data());
+    std::vector<row_id_type> row_ids;
+    auto sz = p->row_id()->size();
+    row_ids.reserve(sz);
+    for (auto i = 0; i < sz; ++i) {
+      row_ids.push_back(p->row_id()->Get(i));
+    }
+    cache_miss_keys_ = std::make_unique<CacheMissKeys>(row_ids);
+    // We are all set.
+    cache_miss_keys_wp_.Set();
+  }
+}
+
+CacheClient::CacheMissKeys::CacheMissKeys(const std::vector<row_id_type> &v) {
+  auto it = v.begin();
+  min_ = *it;
+  ++it;
+  max_ = *it;
+  ++it;
+  while (it != v.end()) {
+    gap_.insert(*it);
+    ++it;
+  }
+  MS_LOG(WARNING) << "# of cache miss keys between min(" << min_ << ") and max(" << max_ << ") is " << gap_.size();
+}
+
+bool CacheClient::CacheMissKeys::KeyIsCacheMiss(row_id_type key) {
+  if (key > max_ || key < min_) {
+    return true;
+  } else if (key == min_ || key == max_) {
+    return false;
+  } else {
+    auto it = gap_.find(key);
+    return it != gap_.end();
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

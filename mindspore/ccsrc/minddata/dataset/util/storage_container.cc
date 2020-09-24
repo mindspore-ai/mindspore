@@ -99,7 +99,11 @@ Status StorageContainer::Write(const ReadableSlice &dest, off64_t offset) const 
 #endif
   if (r_sz != sz) {
     errno_t err = (r_sz == 0) ? EOF : errno;
-    RETURN_STATUS_UNEXPECTED(strerror(err));
+    if (errno == ENOSPC) {
+      return Status(StatusCode::kNoSpace, __LINE__, __FILE__);
+    } else {
+      RETURN_STATUS_UNEXPECTED(strerror(err));
+    }
   }
   return Status::OK();
 }

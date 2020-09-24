@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "minddata/dataset/engine/connector.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/engine/cache/cache_service.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
@@ -90,8 +91,7 @@ class CacheBase : public ParallelOp {
   std::shared_ptr<CacheClient> cache_client_;
   WaitPost epoch_sync_;
   int32_t rows_per_buffer_;
-  Connector<std::vector<row_id_type>> keys_miss_;
-  QueueMap<row_id_type, TensorRow> prefetch_;
+  std::unique_ptr<Connector<std::vector<row_id_type>>> keys_miss_;
 
   /// \brief Common function to register resources for interrupt
   /// \note Derived should override this function for extra resources to be registered
@@ -111,13 +111,16 @@ class CacheBase : public ParallelOp {
   constexpr static int32_t connector_capacity_ = 1024;
   int32_t prefetch_size_;
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
+  int32_t num_prefetchers_;
   QueueList<std::unique_ptr<IOBlock>> prefetch_queues_;
-  std::unique_ptr<Queue<std::shared_ptr<Tensor>>> sampler_queue_;
+  QueueMap<row_id_type, TensorRow> prefetch_;
 
-  Status Dispatcher();
   /// \brief Prefetcher. It prefetch the rows from cache server
   /// \return Status object.
   Status Prefetcher(int32_t worker_id);
+  /// \brief Functions used by prefetcher and WorkerEntry
+  Status PrefetchRows(const std::vector<row_id_type> &keys, std::vector<row_id_type> *cache_miss);
+  Status GetPrefetchRow(row_id_type row_id, TensorRow *out);
 };
 }  // namespace dataset
 }  // namespace mindspore

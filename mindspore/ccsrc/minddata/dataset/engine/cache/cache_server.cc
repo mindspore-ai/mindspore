@@ -18,6 +18,7 @@
 #include <functional>
 #include <limits>
 #include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/engine/cache/cache_ipc.h"
 #include "minddata/dataset/engine/cache/cache_service.h"
 #include "minddata/dataset/engine/cache/cache_request.h"
 #include "minddata/dataset/util/bit.h"
@@ -107,6 +108,8 @@ Status CacheServer::DoServiceStop() {
   // First stop all the threads.
   RETURN_IF_NOT_OK(vg_.ServiceStop());
   // Clean up all the caches if any.
+  // Dump a message how much memory we have consumed in total.
+  MS_LOG(INFO) << "Memory usage for the current server: " << GetMemoryUsage() << " bytes.";
   UniqueLock lck(&rwLock_);
   auto it = all_caches_.begin();
   while (it != all_caches_.end()) {
@@ -121,7 +124,6 @@ Status CacheServer::DoServiceStop() {
 }
 
 CacheService *CacheServer::GetService(connection_id_type id) const {
-  SharedLock lck(&rwLock_);
   auto it = all_caches_.find(id);
   if (it != all_caches_.end()) {
     return it->second.get();
@@ -134,6 +136,16 @@ Status CacheServer::CreateService(CacheRequest *rq, CacheReply *reply) {
   std::string cookie;
   auto session_id = rq->connection_info().session_id();
   auto crc = rq->connection_info().crc();
+
+  // Before allowing the creation, make sure the session had already been created by the user
+  // Our intention is to add this cache to the active sessions list so leave the list locked during
+  // this entire function.
+  UniqueLock lock(&sessions_lock_);
+  auto session_it = active_sessions_.find(session_id);
+  if (session_it == active_sessions_.end()) {
+    RETURN_STATUS_UNEXPECTED("A cache creation has been requested but the session was not found!");
+  }
+
   // We concat both numbers to form the internal connection id.
   auto connection_id = GetConnectionID(session_id, crc);
   CHECK_FAIL_RETURN_UNEXPECTED(!rq->buf_data().empty(), "Missing info to create cache");
@@ -172,10 +184,15 @@ Status CacheServer::CreateService(CacheRequest *rq, CacheReply *reply) {
     } catch (const std::bad_alloc &e) {
       return Status(StatusCode::kOutOfMemory);
     }
+    // Add the cache into the active session tracking.
+    // We have already validated that the session exists and that this is a new cache created.
+    session_it->second.insert(connection_id);
+
   } else {
     duplicate = true;
     MS_LOG(INFO) << "Duplicate request for " + std::to_string(connection_id) + " to create cache service";
   }
+
   off_cookie = fbb.CreateString(cookie);
   CreateCacheReplyMsgBuilder bld(fbb);
   bld.add_connection_id(connection_id);
@@ -183,19 +200,18 @@ Status CacheServer::CreateService(CacheRequest *rq, CacheReply *reply) {
   auto off = bld.Finish();
   fbb.Finish(off);
   reply->set_result(fbb.GetBufferPointer(), fbb.GetSize());
-  // Track the history of all the sessions that we have created so far.
-  history_sessions_.insert(session_id);
   // We can return OK but we will return a duplicate key so user can act accordingly to either ignore it
   // treat it as OK.
   return duplicate ? Status(StatusCode::kDuplicateKey) : Status::OK();
 }
 
-Status CacheServer::DestroyCache(CacheService *cs, CacheRequest *rq) {
+Status CacheServer::DestroyCache(CacheRequest *rq) {
   // We need a strong lock to protect the map.
   UniqueLock lck(&rwLock_);
+  auto id = rq->connection_id();
+  CacheService *cs = GetService(id);
   // it is already destroyed. Ignore it.
   if (cs != nullptr) {
-    auto id = rq->connection_id();
     MS_LOG(WARNING) << "Dropping cache with connection id " << std::to_string(id);
     // std::map will invoke the destructor of CacheService. So we don't need to do anything here.
     auto n = all_caches_.erase(id);
@@ -204,11 +220,34 @@ Status CacheServer::DestroyCache(CacheService *cs, CacheRequest *rq) {
       MS_LOG(INFO) << "Duplicate request for " + std::to_string(id) + " to create cache service";
     }
   }
+
+  // Now that this cache is removed, we need to also remove it's connection id from active session tracking
+  auto session_id = GetSessionID(id);
+  UniqueLock sess_lck(&sessions_lock_);
+
+  auto it = active_sessions_.find(session_id);
+  if (it == active_sessions_.end()) {
+    // The session was not found in the active sessions
+    RETURN_STATUS_UNEXPECTED("A destroy cache request has been completed but it had a stale session id!");
+  }
+
+  auto connection_it = it->second.find(id);
+  if (connection_it == it->second.end()) {
+    RETURN_STATUS_UNEXPECTED("A destroy cache request could not find the connection in the activate sessions!");
+  }
+
+  // remove that connection id from the set
+  it->second.erase(connection_it);
+  MS_LOG(INFO) << "Destroyed cache " << id << " and removed from active session " << session_id;
+
   return Status::OK();
 }
 
-inline Status CacheRow(CacheService *cs, CacheRequest *rq, CacheReply *reply) {
+Status CacheServer::CacheRow(CacheRequest *rq, CacheReply *reply) {
   auto connection_id = rq->connection_id();
+  // Hold the shared lock to prevent the cache from being dropped.
+  SharedLock lck(&rwLock_);
+  CacheService *cs = GetService(connection_id);
   if (cs == nullptr) {
     std::string errMsg = "Cache id " + std::to_string(connection_id) + " not found";
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
@@ -236,8 +275,11 @@ inline Status CacheRow(CacheService *cs, CacheRequest *rq, CacheReply *reply) {
   return Status::OK();
 }
 
-Status CacheServer::FastCacheRow(CacheService *cs, CacheRequest *rq, CacheReply *reply) {
+Status CacheServer::FastCacheRow(CacheRequest *rq, CacheReply *reply) {
   auto connection_id = rq->connection_id();
+  // Hold the shared lock to prevent the cache from being dropped.
+  SharedLock lck(&rwLock_);
+  CacheService *cs = GetService(connection_id);
   auto shared_pool = comm_layer_->GetSharedMemoryPool();
   auto *base = shared_pool->SharedMemoryBaseAddr();
   // Ensure we got 3 pieces of data coming in
@@ -270,8 +312,11 @@ Status CacheServer::FastCacheRow(CacheService *cs, CacheRequest *rq, CacheReply 
   return rc;
 }
 
-Status CacheServer::BatchFetchRows(CacheService *cs, CacheRequest *rq, CacheReply *reply) {
+Status CacheServer::BatchFetchRows(CacheRequest *rq, CacheReply *reply) {
   auto connection_id = rq->connection_id();
+  // Hold the shared lock to prevent the cache from being dropped.
+  SharedLock lck(&rwLock_);
+  CacheService *cs = GetService(connection_id);
   if (cs == nullptr) {
     std::string errMsg = "Cache id " + std::to_string(connection_id) + " not found";
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
@@ -325,8 +370,11 @@ Status CacheServer::BatchFetchRows(CacheService *cs, CacheRequest *rq, CacheRepl
   return Status::OK();
 }
 
-inline Status GetStat(CacheService *cs, CacheRequest *rq, CacheReply *reply) {
+Status CacheServer::GetStat(CacheRequest *rq, CacheReply *reply) {
   auto connection_id = rq->connection_id();
+  // Hold the shared lock to prevent the cache from being dropped.
+  SharedLock lck(&rwLock_);
+  CacheService *cs = GetService(connection_id);
   if (cs == nullptr) {
     std::string errMsg = "Connection " + std::to_string(connection_id) + " not found";
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
@@ -338,8 +386,8 @@ inline Status GetStat(CacheService *cs, CacheRequest *rq, CacheReply *reply) {
     bld.add_num_disk_cached(svc_stat.stat_.num_disk_cached);
     bld.add_num_mem_cached(svc_stat.stat_.num_mem_cached);
     bld.add_avg_cache_sz(svc_stat.stat_.average_cache_sz);
-    bld.add_max_row_id(svc_stat.max_);
-    bld.add_min_row_id(svc_stat.min_);
+    bld.add_max_row_id(svc_stat.stat_.max_key);
+    bld.add_min_row_id(svc_stat.stat_.min_key);
     bld.add_state(svc_stat.state_);
     auto offset = bld.Finish();
     fbb.Finish(offset);
@@ -348,8 +396,11 @@ inline Status GetStat(CacheService *cs, CacheRequest *rq, CacheReply *reply) {
   return Status::OK();
 }
 
-inline Status CacheSchema(CacheService *cs, CacheRequest *rq) {
+Status CacheServer::CacheSchema(CacheRequest *rq) {
   auto connection_id = rq->connection_id();
+  // Hold the shared lock to prevent the cache from being dropped.
+  SharedLock lck(&rwLock_);
+  CacheService *cs = GetService(connection_id);
   if (cs == nullptr) {
     std::string errMsg = "Connection " + std::to_string(connection_id) + " not found";
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
@@ -361,8 +412,11 @@ inline Status CacheSchema(CacheService *cs, CacheRequest *rq) {
   return Status::OK();
 }
 
-inline Status FetchSchema(CacheService *cs, CacheRequest *rq, CacheReply *reply) {
+Status CacheServer::FetchSchema(CacheRequest *rq, CacheReply *reply) {
   auto connection_id = rq->connection_id();
+  // Hold the shared lock to prevent the cache from being dropped.
+  SharedLock lck(&rwLock_);
+  CacheService *cs = GetService(connection_id);
   if (cs == nullptr) {
     std::string errMsg = "Connection " + std::to_string(connection_id) + " not found";
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
@@ -377,8 +431,11 @@ inline Status FetchSchema(CacheService *cs, CacheRequest *rq, CacheReply *reply)
   return Status::OK();
 }
 
-inline Status BuildPhaseDone(CacheService *cs, CacheRequest *rq) {
+Status CacheServer::BuildPhaseDone(CacheRequest *rq) {
   auto connection_id = rq->connection_id();
+  // Hold the shared lock to prevent the cache from being dropped.
+  SharedLock lck(&rwLock_);
+  CacheService *cs = GetService(connection_id);
   if (cs == nullptr) {
     std::string errMsg = "Connection " + std::to_string(connection_id) + " not found";
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
@@ -396,21 +453,96 @@ inline Status BuildPhaseDone(CacheService *cs, CacheRequest *rq) {
   return Status::OK();
 }
 
-Status CacheServer::PurgeCache(CacheService *cs) {
+Status CacheServer::GetCacheMissKeys(CacheRequest *rq, CacheReply *reply) {
+  auto connection_id = rq->connection_id();
+  // Hold the shared lock to prevent the cache from being dropped.
   SharedLock lck(&rwLock_);
-  // If shutdown in progress, ignore the command.
-  if (global_shutdown_) {
-    return Status::OK();
-  }
-  // it is already purged. Ignore it.
-  if (cs != nullptr) {
-    RETURN_IF_NOT_OK(cs->Purge());
+  CacheService *cs = GetService(connection_id);
+  if (cs == nullptr) {
+    std::string errMsg = "Connection " + std::to_string(connection_id) + " not found";
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
+  } else {
+    std::vector<row_id_type> gap;
+    RETURN_IF_NOT_OK(cs->FindKeysMiss(&gap));
+    flatbuffers::FlatBufferBuilder fbb;
+    auto off_t = fbb.CreateVector(gap);
+    TensorRowIdsBuilder bld(fbb);
+    bld.add_row_id(off_t);
+    auto off = bld.Finish();
+    fbb.Finish(off);
+    reply->set_result(fbb.GetBufferPointer(), fbb.GetSize());
   }
   return Status::OK();
 }
 
 inline Status GenerateClientSessionID(session_id_type session_id, CacheReply *reply) {
   reply->set_result(std::to_string(session_id));
+  return Status::OK();
+}
+
+Status CacheServer::ToggleWriteMode(CacheRequest *rq) {
+  auto connection_id = rq->connection_id();
+  // Hold the shared lock to prevent the cache from being dropped.
+  SharedLock lck(&rwLock_);
+  CacheService *cs = GetService(connection_id);
+  if (cs == nullptr) {
+    std::string errMsg = "Connection " + std::to_string(connection_id) + " not found";
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
+  } else {
+    // First piece of data is the on/off flag
+    CHECK_FAIL_RETURN_UNEXPECTED(!rq->buf_data().empty(), "Missing action flag");
+    const auto &action = rq->buf_data(0);
+    bool on_off = false;
+    if (strcmp(action.data(), "on") == 0) {
+      on_off = true;
+    } else if (strcmp(action.data(), "off") == 0) {
+      on_off = false;
+    } else {
+      RETURN_STATUS_UNEXPECTED("Unknown request: " + action);
+    }
+    RETURN_IF_NOT_OK(cs->ToggleWriteMode(on_off));
+  }
+  return Status::OK();
+}
+
+Status CacheServer::ListSessions(CacheReply *reply) {
+  SharedLock lck(&sessions_lock_);
+
+  flatbuffers::FlatBufferBuilder fbb;
+  std::vector<flatbuffers::Offset<ListSessionMsg>> session_msgs_vector;
+  for (auto it = active_sessions_.begin(); it != active_sessions_.end(); it++) {
+    session_id_type current_session_id = it->first;
+    // Loop over each cache inside this session
+    if (!it->second.empty()) {
+      for (auto current_conn_id : it->second) {
+        CacheService *cs = GetService(current_conn_id);
+        if (cs == nullptr) {
+          std::string errMsg = "Connection " + std::to_string(current_conn_id) + " not found during list sessions.";
+          return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
+        } else {
+          CacheService::ServiceStat svc_stat;
+          RETURN_IF_NOT_OK(cs->GetStat(&svc_stat));
+          auto current_stats = CreateServiceStatMsg(fbb, svc_stat.stat_.num_mem_cached, svc_stat.stat_.num_disk_cached,
+                                                    svc_stat.stat_.average_cache_sz, svc_stat.stat_.min_key,
+                                                    svc_stat.stat_.max_key, svc_stat.state_);
+          auto current_session_info = CreateListSessionMsg(fbb, current_session_id, current_conn_id, current_stats);
+          session_msgs_vector.push_back(current_session_info);
+        }
+      }
+    } else {
+      // If there is no cache created yet, assign a connection id of 0 along with empty stats
+      auto current_stats = CreateServiceStatMsg(fbb, 0, 0, 0, 0, 0, 0);
+      auto current_session_info = CreateListSessionMsg(fbb, current_session_id, 0, current_stats);
+      session_msgs_vector.push_back(current_session_info);
+    }
+  }
+  auto session_msgs = fbb.CreateVector(session_msgs_vector);
+  ListSessionsMsgBuilder s_builder(fbb);
+  s_builder.add_sessions(session_msgs);
+  auto offset = s_builder.Finish();
+  fbb.Finish(offset);
+  reply->set_result(fbb.GetBufferPointer(), fbb.GetSize());
+
   return Status::OK();
 }
 
@@ -426,12 +558,6 @@ Status CacheServer::ServerRequest(int32_t worker_id) {
     RETURN_IF_NOT_OK(my_que->PopFront(&cache_req));
     auto &rq = cache_req->rq_;
     auto &reply = cache_req->reply_;
-    CacheService *cs = nullptr;
-    // Request comes in roughly two sets. One set is at the cache level with a connection id.
-    // The other set is working at a high level and without a connection id
-    if (!rq.has_connection_info()) {
-      cs = GetService(rq.connection_id());
-    }
     // Except for creating a new session, we expect cs is not null.
     switch (cache_req->type_) {
       case BaseRequest::RequestType::kCacheRow: {
@@ -439,42 +565,42 @@ Status CacheServer::ServerRequest(int32_t worker_id) {
         // call the appropriate method.
         auto flag = rq.flag();
         if (BitTest(flag, kDataIsInSharedMemory)) {
-          cache_req->rc_ = FastCacheRow(cs, &rq, &reply);
+          cache_req->rc_ = FastCacheRow(&rq, &reply);
         } else {
-          cache_req->rc_ = CacheRow(cs, &rq, &reply);
+          cache_req->rc_ = CacheRow(&rq, &reply);
         }
         break;
       }
       case BaseRequest::RequestType::kBatchFetchRows: {
-        cache_req->rc_ = BatchFetchRows(cs, &rq, &reply);
+        cache_req->rc_ = BatchFetchRows(&rq, &reply);
         break;
       }
       case BaseRequest::RequestType::kCreateCache: {
         cache_req->rc_ = CreateService(&rq, &reply);
         break;
       }
-      case BaseRequest::RequestType::kPurgeCache: {
-        cache_req->rc_ = PurgeCache(cs);
+      case BaseRequest::RequestType::kGetCacheMissKeys: {
+        cache_req->rc_ = GetCacheMissKeys(&rq, &reply);
         break;
       }
       case BaseRequest::RequestType::kDestroyCache: {
-        cache_req->rc_ = DestroyCache(cs, &rq);
+        cache_req->rc_ = DestroyCache(&rq);
         break;
       }
       case BaseRequest::RequestType::kGetStat: {
-        cache_req->rc_ = GetStat(cs, &rq, &reply);
+        cache_req->rc_ = GetStat(&rq, &reply);
         break;
       }
       case BaseRequest::RequestType::kCacheSchema: {
-        cache_req->rc_ = CacheSchema(cs, &rq);
+        cache_req->rc_ = CacheSchema(&rq);
         break;
       }
       case BaseRequest::RequestType::kFetchSchema: {
-        cache_req->rc_ = FetchSchema(cs, &rq, &reply);
+        cache_req->rc_ = FetchSchema(&rq, &reply);
         break;
       }
       case BaseRequest::RequestType::kBuildPhaseDone: {
-        cache_req->rc_ = BuildPhaseDone(cs, &rq);
+        cache_req->rc_ = BuildPhaseDone(&rq);
         break;
       }
       case BaseRequest::RequestType::kDropSession: {
@@ -496,6 +622,18 @@ Status CacheServer::ServerRequest(int32_t worker_id) {
       case BaseRequest::RequestType::kStopService: {
         // This command shutdowns everything.
         cache_req->rc_ = GlobalShutdown();
+        break;
+      }
+      case BaseRequest::RequestType::kHeartBeat: {
+        cache_req->rc_ = Status::OK();
+        break;
+      }
+      case BaseRequest::RequestType::kToggleWriteMode: {
+        cache_req->rc_ = ToggleWriteMode(&rq);
+        break;
+      }
+      case BaseRequest::RequestType::kListSessions: {
+        cache_req->rc_ = ListSessions(&reply);
         break;
       }
       default:
@@ -526,18 +664,32 @@ session_id_type CacheServer::GetSessionID(connection_id_type connection_id) cons
 }
 
 CacheServer::CacheServer(const std::string &spill_path, int32_t num_workers, int32_t port,
-                         int32_t shared_meory_sz_in_gb)
+                         int32_t shared_meory_sz_in_gb, float memory_cap_ratio)
     : top_(spill_path),
       num_workers_(num_workers),
       port_(port),
       shared_memory_sz_in_gb_(shared_meory_sz_in_gb),
-      global_shutdown_(false) {}
+      global_shutdown_(false),
+      memory_cap_ratio_(memory_cap_ratio),
+      cur_mem_usage_(0) {
+  memory_cap_ = CacheServer::GetTotalSystemMemory() * memory_cap_ratio_;
+}
 
-Status CacheServer::Run() {
-  RETURN_IF_NOT_OK(ServiceStart());
+Status CacheServer::Run(int msg_qid) {
+  Status rc = ServiceStart();
+  // If there is a message que, return the status now before we call join_all which will never return
+  if (msg_qid != -1) {
+    SharedMessage msg(msg_qid);
+    RETURN_IF_NOT_OK(msg.SendStatus(rc));
+  }
+  if (rc.IsError()) {
+    return rc;
+  }
   // This is called by the main function and we shouldn't exit. Otherwise the main thread
   // will just shutdown. So we will call some function that never return unless error.
   // One good case will be simply to wait for all threads to return.
+  // note that after we have sent the initial status using the msg_qid, parent process will exit and
+  // remove it. So we can't use it again.
   RETURN_IF_NOT_OK(vg_.join_all(Task::WaitFlag::kBlocking));
   return Status::OK();
 }
@@ -567,32 +719,51 @@ Status CacheServer::ReturnRequestTag(CacheServerRequest *p) {
 Status CacheServer::DestroySession(CacheRequest *rq) {
   CHECK_FAIL_RETURN_UNEXPECTED(rq->has_connection_info(), "Missing session id");
   auto drop_session_id = rq->connection_info().session_id();
-  UniqueLock lck(&rwLock_);
-  for (auto &cs : all_caches_) {
-    auto connection_id = cs.first;
-    auto session_id = GetSessionID(connection_id);
-    // We can just call DestroyCache() but we are holding a lock already. Doing so will cause deadlock.
-    // So we will just manually do it.
-    if (session_id == drop_session_id) {
-      // std::map will invoke the destructor of CacheService. So we don't need to do anything here.
-      auto n = all_caches_.erase(connection_id);
-      MS_LOG(INFO) << "Destroy " << n << " copies of cache with id " << connection_id;
+
+  UniqueLock lck(&sessions_lock_);
+
+  // First validate that this session exists
+  auto it = active_sessions_.find(drop_session_id);
+  if (it == active_sessions_.end()) {
+    RETURN_STATUS_UNEXPECTED("A destroy session command has been requested but the session was not found!");
+  }
+
+  // Iterate over the set of connection id's for this session that we're dropping and erase each one.
+  {
+    UniqueLock rwlck(&rwLock_);
+    for (auto drop_connection_id : it->second) {
+      auto cache_drop_it = all_caches_.find(drop_connection_id);
+      if (cache_drop_it == all_caches_.end()) {
+        RETURN_STATUS_UNEXPECTED("active session tracking had stale or incorrect cache entry.");
+      }
+      all_caches_.erase(cache_drop_it);
+      MS_LOG(INFO) << "Session destroy: Destroy cache with id " << drop_connection_id;
+      // **Do not bother to remove the cache connection id from the active session because we will soon remove the
+      // entire session.
     }
   }
+
+  // Finally remove the session itself
+  active_sessions_.erase(it);
+  MS_LOG(INFO) << "Session destroyed with id " << drop_session_id;
+
   return Status::OK();
 }
 
-session_id_type CacheServer::GenerateSessionID() const {
-  SharedLock lock(&rwLock_);
+session_id_type CacheServer::GenerateSessionID() {
+  UniqueLock lock(&sessions_lock_);
   auto mt = GetRandomDevice();
   std::uniform_int_distribution<session_id_type> distribution(0, std::numeric_limits<session_id_type>::max());
   session_id_type session_id;
   bool duplicate = false;
   do {
     session_id = distribution(mt);
-    auto it = history_sessions_.find(session_id);
-    duplicate = (it != history_sessions_.end());
+    auto it = active_sessions_.find(session_id);
+    duplicate = (it != active_sessions_.end());
   } while (duplicate);
+
+  // Add this session to our tracking of active sessions with initialized empty set of connections.
+  active_sessions_[session_id] = std::set<connection_id_type>();
   return session_id;
 }
 
@@ -637,15 +808,55 @@ Status CacheServer::GlobalShutdown() {
     vg_.interrupt_all();
     // The next thing to do drop all the caches.
     UniqueLock lck(&rwLock_);
-    for (auto &it : all_caches_) {
-      auto id = it.first;
+    for (auto it = all_caches_.begin(); it != all_caches_.end();) {
+      auto id = it->first;
       MS_LOG(WARNING) << "Dropping cache with connection id " << std::to_string(id);
       // Wait for all outstanding work to be finished.
-      auto &cs = it.second;
+      auto &cs = it->second;
       UniqueLock cs_lock(&cs->rw_lock_);
-      // std::map will invoke the destructor of CacheService. So we don't need to do anything here.
-      (void)all_caches_.erase(id);
+      it = all_caches_.erase(it);
     }
+  }
+  return Status::OK();
+}
+
+int64_t CacheServer::GetTotalSystemMemory() {
+  auto pages = sysconf(_SC_PHYS_PAGES);
+  auto page_size = sysconf(_SC_PAGE_SIZE);
+  auto total = static_cast<int64_t>(pages) * static_cast<int64_t>(page_size);
+  MS_LOG(INFO) << "Total physical RAM in bytes: " << total;
+  return total;
+}
+
+Status CacheServer::Builder::IpcResourceCleanup() {
+  Status rc;
+  SharedMemory::shm_key_t shm_key;
+  auto unix_socket = PortToUnixSocketPath(port_);
+  rc = PortToFtok(port_, &shm_key);
+  // We are expecting the unix path doesn't exist.
+  if (rc.IsError()) {
+    return Status::OK();
+  }
+  // Attach to the shared memory which we expect don't exist
+  SharedMemory mem(shm_key);
+  rc = mem.Attach();
+  if (rc.IsError()) {
+    return Status::OK();
+  }
+  int32_t num_attached;
+  RETURN_IF_NOT_OK(mem.GetNumAttached(&num_attached));
+  if (num_attached == 0) {
+    // Stale shared memory from last time.
+    // Remove both the memory and the socket path
+    RETURN_IF_NOT_OK(mem.Destroy());
+    Path p(unix_socket);
+    (void)p.Remove();
+  } else {
+    // Server is already up.
+    std::string errMsg = "Cache server is already up and running";
+    // We return a duplicate error. The main() will intercept
+    // and output a proper message
+    return Status(StatusCode::kDuplicateKey, errMsg);
   }
   return Status::OK();
 }
@@ -673,6 +884,12 @@ Status CacheServer::Builder::SanityCheck() {
       RETURN_STATUS_UNEXPECTED("Spilling directory is not writable\n" + rc.ToString());
     }
   }
+  if (memory_cap_ratio_ <= 0 || memory_cap_ratio_ > 1) {
+    RETURN_STATUS_UNEXPECTED("Memory cap ratio should be positive and no greater than 1");
+  }
+
+  // Check if the shared memory.
+  RETURN_IF_NOT_OK(IpcResourceCleanup());
   return Status::OK();
 }
 }  // namespace dataset

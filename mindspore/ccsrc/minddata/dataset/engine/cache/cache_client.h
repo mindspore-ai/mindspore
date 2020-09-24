@@ -16,8 +16,13 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_CLIENT_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_CLIENT_H_
 
+#include <atomic>
 #include <iostream>
+#include <limits>
 #include <memory>
+#include <map>
+#include <mutex>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -31,6 +36,8 @@
 #endif
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/util/lock.h"
+#include "minddata/dataset/util/cond_var.h"
+#include "minddata/dataset/util/queue_map.h"
 
 namespace mindspore {
 namespace dataset {
@@ -89,10 +96,10 @@ class CacheClient {
     }
 
     /// Setter function to set number of async rpc workers
-    /// \param num_workers
+    /// \param num_connections
     /// \return Builder object itself
-    Builder &SetNumWorkers(int32_t num_workers) {
-      num_workers_ = num_workers;
+    Builder &SetNumConnections(int32_t num_connections) {
+      num_connections_ = num_connections;
       return *this;
     }
 
@@ -105,13 +112,13 @@ class CacheClient {
     }
 
     /// Getter functions
-    session_id_type getSessionId() const { return session_id_; }
-    uint64_t getCacheMemSz() const { return cache_mem_sz_; }
+    session_id_type GetSessionId() const { return session_id_; }
+    uint64_t GetCacheMemSz() const { return cache_mem_sz_; }
     bool isSpill() const { return spill_; }
     const std::string &getHostname() const { return hostname_; }
-    int32_t getPort() const { return port_; }
-    int32_t getNumWorkers() const { return num_workers_; }
-    int32_t getPrefetchSize() const { return prefetch_size_; }
+    int32_t GetPort() const { return port_; }
+    int32_t GetNumConnections() const { return num_connections_; }
+    int32_t GetPrefetchSize() const { return prefetch_size_; }
 
     Status SanityCheck();
 
@@ -123,7 +130,7 @@ class CacheClient {
     bool spill_;
     std::string hostname_;
     int32_t port_;
-    int32_t num_workers_;
+    int32_t num_connections_;
     int32_t prefetch_size_;
   };
 
@@ -132,10 +139,10 @@ class CacheClient {
   /// \param cache_mem_sz Size of the memory set aside for the row caching. 0 for unlimited
   /// \param spill Spill to disk if out of memory
   CacheClient(session_id_type session_id, uint64_t cache_mem_sz, bool spill, std::string hostname, int32_t port,
-              int32_t num_workers, int32_t prefetch_size);
+              int32_t num_connections, int32_t prefetch_size);
 
   /// \brief Destructor
-  ~CacheClient() { (void)comm_->ServiceStop(); }
+  ~CacheClient();
 
   /// \brief Send a TensorRow to the cache server
   /// \param[in] row
@@ -160,10 +167,6 @@ class CacheClient {
   /// \param generate_id Let the cache service generate row id
   /// \return Status object
   Status CreateCache(uint32_t tree_crc, bool generate_id);
-
-  /// \brief Purge a cache. Cache can be reused after reset.
-  /// \return Status object
-  Status PurgeCache();
 
   /// \brief Destroy a cache. Like Purge but the cache is deleted and can't be reused.
   /// \return Status object
@@ -218,12 +221,31 @@ class CacheClient {
 
   /// Getter functions
   session_id_type session_id() const { return cinfo_.session_id(); }
-  uint64_t getCacheMemSz() const { return cache_mem_sz_; }
+  uint64_t GetCacheMemSz() const { return cache_mem_sz_; }
   bool isSpill() const { return spill_; }
-  const std::string &getHostname() const { return hostname_; }
-  int32_t getPort() const { return port_; }
-  int32_t getNumWorkers() const { return num_workers_; }
-  int32_t getPrefetchSize() const { return prefetch_size_; }
+  const std::string &GetHostname() const { return hostname_; }
+  int32_t GetPort() const { return port_; }
+  int32_t GetNumConnections() const { return num_connections_; }
+  int32_t GetPrefetchSize() const { return prefetch_size_; }
+
+  /// MergeOp will notify us when the server can't cache any more rows.
+  /// We will stop any attempt to fetch any rows that are most likely
+  /// not present at the server.
+  void ServerRunningOutOfResources();
+
+  /// \brief Check if a row is 100% cache miss at the server by checking the local information
+  /// \param key row id to be test
+  /// \return true if not at the server
+  bool KeyIsCacheMiss(row_id_type key) {
+    if (cache_miss_keys_) {
+      // Make sure it is fully built even though the pointer is not null
+      Status rc = cache_miss_keys_wp_.Wait();
+      if (rc.IsOk()) {
+        return cache_miss_keys_->KeyIsCacheMiss(key);
+      }
+    }
+    return false;
+  }
 
  private:
   mutable RWLock mux_;
@@ -240,9 +262,27 @@ class CacheClient {
   bool local_bypass_;
   std::string hostname_;
   int32_t port_;
-  int32_t num_workers_;
+  int32_t num_connections_;
   int32_t prefetch_size_;
   mutable std::shared_ptr<CacheClientGreeter> comm_;
+  std::atomic<bool> fetch_all_keys_;
+  WaitPost cache_miss_keys_wp_;
+  /// A structure shared by all the prefetchers to know what keys are missing at the server.
+  class CacheMissKeys {
+   public:
+    explicit CacheMissKeys(const std::vector<row_id_type> &v);
+    ~CacheMissKeys() = default;
+    /// This checks if a key is missing.
+    /// \param key
+    /// \return true if definitely a key miss
+    bool KeyIsCacheMiss(row_id_type key);
+
+   private:
+    row_id_type min_;
+    row_id_type max_;
+    std::set<row_id_type> gap_;
+  };
+  std::unique_ptr<CacheMissKeys> cache_miss_keys_;
 };
 }  // namespace dataset
 }  // namespace mindspore

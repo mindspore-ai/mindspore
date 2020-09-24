@@ -40,13 +40,6 @@ Status EpochInjectionPass::InjectionFinder::PreRunOnNode(std::shared_ptr<BuildSe
   injection_point_ = nullptr;
   return Status::OK();
 }
-
-// Temporary code to prevent the injection of epoch control when cache op is present
-// Remove this code in cache op phase 2
-Status EpochInjectionPass::InjectionFinder::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
-  injection_point_ = nullptr;
-  return Status::OK();
-}
 #endif
 
 Status EpochInjectionPass::InjectionFinder::RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) {

@@ -17,27 +17,19 @@
 #include "minddata/dataset/util/path.h"
 namespace mindspore {
 namespace dataset {
-CachedSharedMemoryArena::CachedSharedMemoryArena(int32_t port, size_t val_in_GB)
-    : ptr_(nullptr), val_in_GB_(val_in_GB), port_(port), shmid_(-1) {}
+CachedSharedMemoryArena::CachedSharedMemoryArena(int32_t port, size_t val_in_GB) : val_in_GB_(val_in_GB), port_(port) {
+  // We create the shared memory and we will destroy it. All other client just detach only.
+  shm_.RemoveResourcesOnExit();
+}
 CachedSharedMemoryArena::~CachedSharedMemoryArena() {
-#if CACHE_LOCAL_CLIENT
-  if (this->ptr_ != nullptr && this->ptr_ != reinterpret_cast<void *>(-1)) {
-    shmdt(this->ptr_);
-  }
-  this->ptr_ = nullptr;
-  if (shmid_ != -1) {
-    shmctl(shmid_, IPC_RMID, nullptr);
-    // Also remove the path we use to generate ftok.
-    Path p(PortToUnixSocketPath(port_));
-    (void)p.Remove();
-  }
-#endif
+  // Also remove the path we use to generate ftok.
+  Path p(PortToUnixSocketPath(port_));
+  (void)p.Remove();
 }
 
 Status CachedSharedMemoryArena::CreateArena(std::unique_ptr<CachedSharedMemoryArena> *out, int32_t port,
                                             size_t val_in_GB) {
   RETURN_UNEXPECTED_IF_NULL(out);
-#if CACHE_LOCAL_CLIENT
   auto ba = new (std::nothrow) CachedSharedMemoryArena(port, val_in_GB);
   if (ba == nullptr) {
     return Status(StatusCode::kOutOfMemory);
@@ -46,26 +38,13 @@ Status CachedSharedMemoryArena::CreateArena(std::unique_ptr<CachedSharedMemoryAr
   // the destructor of *out to deal.
   (*out).reset(ba);
   // Generate the ftok using a combination of port.
-  int err;
-  auto shm_key = PortToFtok(port, &err);
-  if (shm_key == (key_t)-1) {
-    std::string errMsg = "Ftok failed with errno " + std::to_string(err);
-    RETURN_STATUS_UNEXPECTED(errMsg);
-  }
-  auto access_mode = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP;
+  SharedMemory::shm_key_t shm_key;
+  RETURN_IF_NOT_OK(PortToFtok(port, &shm_key));
+  ba->shm_.SetPublicKey(shm_key);
   // Value is in GB. Convert into bytes.
   int64_t sz = val_in_GB * 1073741824L;
-  ba->shmid_ = shmget(shm_key, sz, IPC_CREAT | IPC_EXCL | access_mode);
-  if (ba->shmid_) {
-    ba->ptr_ = shmat(ba->shmid_, nullptr, 0);
-    if (ba->ptr_ == reinterpret_cast<void *>(-1)) {
-      RETURN_STATUS_UNEXPECTED("Shared memory attach failed. Errno " + std::to_string(errno));
-    }
-    ba->impl_ = std::make_unique<ArenaImpl>(ba->ptr_, sz);
-  } else {
-    RETURN_STATUS_UNEXPECTED("Shared memory creation failed. Errno " + std::to_string(errno));
-  }
-#endif
+  RETURN_IF_NOT_OK(ba->shm_.Create(sz));
+  ba->impl_ = std::make_unique<ArenaImpl>(ba->shm_.SharedMemoryBaseAddr(), sz);
   return Status::OK();
 }
 }  // namespace dataset

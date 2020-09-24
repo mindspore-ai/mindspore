@@ -37,12 +37,17 @@ int main(int argc, char **argv) {
   warningMsg += "WARNING:\n";
   warningMsg += "cache_admin and the cache server that it controls are currently only used for experimental research";
   warningMsg += " purposes at this time.\n";
-  warningMsg += "This command is currently disabled.  Quitting.\n";
+  auto env_enable_cache = std::getenv("MS_ENABLE_CACHE");
+  if (env_enable_cache == nullptr || strcmp(env_enable_cache, "TRUE") != 0) {
+    // temporary disable cache feature in the current release
+    warningMsg += "This command is currently disabled.  Quitting.\n";
+    std::cerr << warningMsg << std::endl;
+    return 0;
+  }
+  warningMsg += "It is not intended for general availability yet as it may not be stable.  Use it at your own risk.\n";
 
   // A warning message until the code is mature enough.
   std::cerr << warningMsg << std::endl;
-  // temporary disable cache feature in the current release
-  return 0;
 
   if (argc == 1) {
     args.Help();

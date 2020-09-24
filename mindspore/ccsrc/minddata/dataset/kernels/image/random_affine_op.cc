@@ -44,6 +44,7 @@ RandomAffineOp::RandomAffineOp(std::vector<float_t> degrees, std::vector<float_t
   interpolation_ = interpolation;
   fill_value_ = fill_value;
   rnd_.seed(GetSeed());
+  is_deterministic_ = false;
 }
 
 Status RandomAffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {

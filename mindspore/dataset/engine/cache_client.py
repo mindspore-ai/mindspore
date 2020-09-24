@@ -15,6 +15,7 @@
 """Cache client
 """
 
+import os
 import copy
 
 from ..core.validator_helpers import type_check, check_uint32, check_uint64
@@ -25,11 +26,11 @@ class DatasetCache:
     A client to interface with tensor caching service
     """
 
-    def __init__(self, session_id=None, size=0, spilling=False, hostname=None, port=None, prefetch_size=20):
+    def __init__(self, session_id=None, size=0, spilling=False, hostname=None, port=None, num_connections=None,
+                 prefetch_size=None):
         check_uint32(session_id, "session_id")
         check_uint64(size, "size")
         type_check(spilling, (bool,), "spilling")
-        check_uint32(prefetch_size, "prefetch size")
 
         self.session_id = session_id
         self.size = size
@@ -37,8 +38,13 @@ class DatasetCache:
         self.hostname = hostname
         self.port = port
         self.prefetch_size = prefetch_size
-        # temporary disable cache feature in the current release
-        self.cache_client = None
+        self.num_connections = num_connections
+        if os.getenv('MS_ENABLE_CACHE') != 'TRUE':
+            # temporary disable cache feature in the current release
+            self.cache_client = None
+        else:
+            from mindspore._c_dataengine import CacheClient
+            self.cache_client = CacheClient(session_id, size, spilling, hostname, port, num_connections, prefetch_size)
 
     def GetStat(self):
         return self.cache_client.GetStat()
@@ -55,5 +61,6 @@ class DatasetCache:
         new_cache.hostname = copy.deepcopy(self.hostname, memodict)
         new_cache.port = copy.deepcopy(self.port, memodict)
         new_cache.prefetch_size = copy.deepcopy(self.prefetch_size, memodict)
+        new_cache.num_connections = copy.deepcopy(self.num_connections, memodict)
         new_cache.cache_client = self.cache_client
         return new_cache

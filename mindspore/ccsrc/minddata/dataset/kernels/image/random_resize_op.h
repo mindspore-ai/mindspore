@@ -35,6 +35,7 @@ class RandomResizeOp : public ResizeOp {
 
   explicit RandomResizeOp(int32_t size_1, int32_t size_2 = kDefTargetWidth) : ResizeOp(size_1, size_2) {
     random_generator_.seed(GetSeed());
+    is_deterministic_ = false;
   }
 
   ~RandomResizeOp() = default;

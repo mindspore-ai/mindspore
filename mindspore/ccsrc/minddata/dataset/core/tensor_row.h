@@ -79,6 +79,14 @@ class TensorRow {
 
   const vector_type &getRow() const { return row_; }
 
+  int64_t SizeInBytes() const {
+    size_t sz = 0;
+    for (auto &it : row_) {
+      sz += it->SizeInBytes();
+    }
+    return sz;
+  }
+
   // Wrapper functions to support vector operations
   void emplace_back(value_type t) { row_.emplace_back(t); }
 

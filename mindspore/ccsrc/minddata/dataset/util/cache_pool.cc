@@ -20,8 +20,13 @@
 
 namespace mindspore {
 namespace dataset {
-CachePool::CachePool(const value_allocator &alloc, const std::string &root)
-    : alloc_(alloc), root_(root), subfolder_(Services::GetUniqueID()), sm_(nullptr), tree_(nullptr) {}
+CachePool::CachePool(const value_allocator &alloc, bool ourOwnArena, const std::string &root)
+    : alloc_(alloc),
+      root_(root),
+      subfolder_(Services::GetUniqueID()),
+      sm_(nullptr),
+      tree_(nullptr),
+      custom_arena_(ourOwnArena) {}
 
 Status CachePool::DoServiceStart() {
   tree_ = std::make_shared<data_index>();
@@ -45,9 +50,12 @@ Status CachePool::DoServiceStop() {
     }
   }
   sm_.reset();
-  for (auto &bl : *tree_) {
-    if (bl.ptr != nullptr) {
-      alloc_.deallocate(bl.ptr, bl.sz);
+  // If it is our own arena, skip freeing individual pieces.
+  if (!custom_arena_) {
+    for (auto &bl : *tree_) {
+      if (bl.ptr != nullptr) {
+        alloc_.deallocate(bl.ptr, bl.sz);
+      }
     }
   }
   tree_.reset();
@@ -68,7 +76,7 @@ Status CachePool::DoServiceStop() {
   return rc2;
 }
 CachePool::~CachePool() noexcept { (void)ServiceStop(); }
-Status CachePool::Insert(const std::vector<ReadableSlice> &buf, CachePool::key_type *key) {
+Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlice> &buf, bool writeToDiskDirectly) {
   DataLocator bl;
   Status rc;
   size_t sz = 0;
@@ -78,22 +86,31 @@ Status CachePool::Insert(const std::vector<ReadableSlice> &buf, CachePool::key_t
   }
   bl.sz = sz;
   try {
-    bl.ptr = alloc_.allocate(sz);
-    // We will do a piecewise copy.
-    WritableSlice dest(bl.ptr, bl.sz);
-    size_t pos = 0;
-    for (auto &v : buf) {
-      WritableSlice out(dest, pos);
-      rc = WritableSlice::Copy(&out, v);
-      if (rc.IsError()) {
-        break;
+    if (!writeToDiskDirectly) {
+      bl.ptr = alloc_.allocate(sz);
+      // We will do a piecewise copy.
+      WritableSlice dest(bl.ptr, bl.sz);
+      size_t pos = 0;
+      for (auto &v : buf) {
+        WritableSlice out(dest, pos);
+        rc = WritableSlice::Copy(&out, v);
+        if (rc.IsError()) {
+          break;
+        }
+        pos += v.GetSize();
       }
-      pos += v.GetSize();
-    }
-    if (rc.IsError()) {
-      alloc_.deallocate(bl.ptr, sz);
-      bl.ptr = nullptr;
-      return rc;
+      if (rc.IsError()) {
+        alloc_.deallocate(bl.ptr, sz);
+        bl.ptr = nullptr;
+        return rc;
+      }
+    } else if (sm_ != nullptr) {
+      MS_LOG(DEBUG) << "Spill to disk directly ... " << bl.sz << " bytes.";
+      RETURN_IF_NOT_OK(sm_->Write(&bl.storage_key, buf));
+    } else {
+      // If asked to spill to disk instead but there is no storage set up, simply return no memory
+      // instead.
+      return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
     }
   } catch (std::bad_alloc &e) {
     if (sm_ != nullptr) {
@@ -102,7 +119,13 @@ Status CachePool::Insert(const std::vector<ReadableSlice> &buf, CachePool::key_t
       return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
     }
   }
-  rc = tree_->insert(bl, key);
+  // Insert into the B+ tree. We may still get out of memory error. So need to catch it.
+  try {
+    rc = tree_->DoInsert(key, bl);
+  } catch (const std::bad_alloc &e) {
+    rc = Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
+  }
+  // Duplicate key is treated as error and we will also free the memory.
   if (rc.IsError() && bl.ptr != nullptr) {
     alloc_.deallocate(bl.ptr, sz);
   }
@@ -138,15 +161,26 @@ Path CachePool::GetSpillPath() const {
   auto spill = Path(root_) / subfolder_;
   return spill;
 }
-CachePool::CacheStat CachePool::GetStat() const {
-  CacheStat cs{0};
+CachePool::CacheStat CachePool::GetStat(bool GetMissingKeys) const {
+  CacheStat cs{-1, -1, 0, 0, 0};
   int64_t total_sz = 0;
-  for (auto &it : *tree_) {
-    total_sz += it.sz;
-    if (it.ptr != nullptr) {
-      ++cs.num_mem_cached;
-    } else {
-      ++cs.num_disk_cached;
+  if (tree_->begin() != tree_->end()) {
+    cs.min_key = tree_->begin().key();
+    cs.max_key = cs.min_key;  // will adjust later.
+    for (auto it = tree_->begin(); it != tree_->end(); ++it) {
+      total_sz += it.value().sz;
+      if (it.value().ptr != nullptr) {
+        ++cs.num_mem_cached;
+      } else {
+        ++cs.num_disk_cached;
+      }
+      auto cur_key = it.key();
+      if (GetMissingKeys) {
+        for (auto i = cs.max_key + 1; i < cur_key; ++i) {
+          cs.gap.push_back((i));
+        }
+      }
+      cs.max_key = cur_key;
     }
   }
   if (total_sz > 0) {

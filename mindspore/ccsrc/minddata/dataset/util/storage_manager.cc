@@ -71,10 +71,11 @@ Status StorageManager::Write(key_type *key, const std::vector<ReadableSlice> &bu
   key_type out_key;
   value_type out_value;
   bool create_new_container = false;
+  size_t last_num_container = -1;
   do {
     SharedLock lock_s(&rw_lock_);
     size_t num_containers = containers_.size();
-    if (create_new_container) {
+    if (create_new_container && (num_containers == last_num_container)) {
       // Upgrade to exclusvie lock.
       lock_s.Upgrade();
       create_new_container = false;
@@ -95,8 +96,11 @@ Status StorageManager::Write(key_type *key, const std::vector<ReadableSlice> &bu
     cont = containers_.at(num_containers - 1);
     off64_t offset;
     Status rc = cont->Insert(buf, &offset);
-    if (rc.IsNoSpace()) {
+    if (rc.get_code() == StatusCode::kBuddySpaceFull) {
       create_new_container = true;
+      // Remember how many containers we saw. In the next iteration we will do a comparision to see
+      // if someone has already created it.
+      last_num_container = num_containers;
     } else if (rc.IsOk()) {
       out_value = std::make_pair(num_containers - 1, std::make_pair(offset, sz));
       RETURN_IF_NOT_OK(index_.insert(out_value, &out_key));

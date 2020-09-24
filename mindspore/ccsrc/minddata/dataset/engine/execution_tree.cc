@@ -26,6 +26,7 @@
 #include "minddata/dataset/engine/opt/pre/cache_transform_pass.h"
 #include "minddata/dataset/engine/opt/post/repeat_pass.h"
 #endif
+#include "minddata/dataset/engine/opt/pre/cache_error_pass.h"
 #include "minddata/dataset/engine/opt/pre/epoch_injection_pass.h"
 #include "mindspore/ccsrc/minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 #include "minddata/dataset/engine/perf/profiling.h"
@@ -235,6 +236,7 @@ Status ExecutionTree::PrepareTreePreAction() {
   std::vector<std::unique_ptr<Pass>> pre_actions;
   // Construct pre actions
   MS_LOG(INFO) << "Running pre pass loops.";
+  pre_actions.push_back(std::make_unique<CacheErrorPass>());
   pre_actions.push_back(std::make_unique<EpochInjectionPass>());
   pre_actions.push_back(std::make_unique<RemovalPass>());
 #ifndef ENABLE_ANDROID

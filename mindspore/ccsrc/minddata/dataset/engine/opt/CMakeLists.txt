@@ -3,6 +3,7 @@ set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE
 add_library(engine-opt OBJECT
           pass.cc
           post/repeat_pass.cc
+          pre/cache_error_pass.cc
           pre/cache_transform_pass.cc
           pre/epoch_injection_pass.cc
           pre/removal_pass.cc

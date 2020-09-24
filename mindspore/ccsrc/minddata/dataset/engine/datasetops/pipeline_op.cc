@@ -27,14 +27,14 @@ PipelineOp::PipelineOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampl
 void PipelineOp::Print(std::ostream &out, bool show_all) const {
   // Summary 1-liner print
   if (!show_all) {
+    // Call super class printer
+    DatasetOp::Print(out, show_all);
     out << " [workers: ";
     if (this->inlined()) {
       out << "0 (inlined)]";
     } else {
       out << "1]";  // Pipeline ops only have 1 worker
     }
-    // Call super class printer
-    DatasetOp::Print(out, show_all);
   } else {
     // Detailed print
     DatasetOp::Print(out, show_all);

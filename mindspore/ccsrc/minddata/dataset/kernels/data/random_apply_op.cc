@@ -62,6 +62,7 @@ Status RandomApplyOp::Compute(const TensorRow &input, TensorRow *output) {
 RandomApplyOp::RandomApplyOp(double prob, const std::vector<std::shared_ptr<TensorOp>> &ops)
     : prob_(prob), gen_(GetSeed()), rand_double_(0, 1) {
   compose_ = std::make_unique<ComposeOp>(ops);
+  is_deterministic_ = false;
 }
 
 }  // namespace dataset

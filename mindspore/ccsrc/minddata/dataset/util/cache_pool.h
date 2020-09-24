@@ -25,13 +25,13 @@
 #include "minddata/dataset/util/slice.h"
 #include "minddata/dataset/util/storage_manager.h"
 #include "minddata/dataset/util/auto_index.h"
+#include "minddata/dataset/util/btree.h"
 
 namespace mindspore {
 namespace dataset {
 /// \brief A CachePool provides service for backup/restore a buffer. A buffer can be represented in a form of vector of
 /// ReadableSlice where all memory blocks will be copied to one contiguous block which can be in memory or spilled to
-/// disk (if a disk directory is provided). Every buffer insert will return a generated key which can be used to
-/// restore the buffer.
+/// disk (if a disk directory is provided). User must provide a key to insert the buffer.
 /// \see ReadableSlice
 class CachePool : public Service {
  public:
@@ -73,22 +73,25 @@ class CachePool : public Service {
     StorageManager::key_type storage_key;
   };
 
-  using data_index = AutoIndexObj<DataLocator>;
+  using data_index = BPlusTree<int64_t, DataLocator>;
   using key_type = data_index::key_type;
   using bl_alloc_type = typename value_allocator::template rebind<DataLocator>::other;
 
   /// \brief Simple statistics returned from CachePool like how many elements are cached in memory and
   /// how many elements are spilled to disk.
   struct CacheStat {
+    key_type min_key;
+    key_type max_key;
     int64_t num_mem_cached;
     int64_t num_disk_cached;
     int64_t average_cache_sz;
+    std::vector<key_type> gap;
   };
 
   /// \brief Constructor
   /// \param alloc Allocator to allocate memory from
   /// \param root Optional disk folder to spill
-  explicit CachePool(const value_allocator &alloc, const std::string &root = "");
+  explicit CachePool(const value_allocator &alloc, bool customArena, const std::string &root = "");
 
   CachePool(const CachePool &) = delete;
   CachePool(CachePool &&) = delete;
@@ -103,10 +106,11 @@ class CachePool : public Service {
 
   /// \brief Insert a sequence of ReadableSlice objects into the pool.
   /// All memory blocks will be consolidated into one contiguous block and be cached in either memory or on disk.
+  /// \param[in] key User supplied key
   /// \param[in] buf A sequence of ReadableSlice objects.
-  /// \param[out] key Generated key
+  /// \param[in] writeToDiskDirectly If true, no spill to disk if spill is enabled, or return no memory
   /// \return Error code
-  Status Insert(const std::vector<ReadableSlice> &buf, key_type *key);
+  Status Insert(key_type key, const std::vector<ReadableSlice> &buf, bool writeToDiskDirectly);
   /// \brief Restore a cached buffer (from memory or disk)
   /// \param[in] key A previous key returned from Insert
   /// \param[out] dest The cached buffer will be copied to this destination represented by a WritableSlice
@@ -122,11 +126,15 @@ class CachePool : public Service {
 
   /// \brief Get statistics.
   /// \return CacheStat object
-  CacheStat GetStat() const;
+  CacheStat GetStat(bool GetMissingKeys = false) const;
 
   const value_allocator &get_allocator() const;
 
   std::string MyName() const { return subfolder_; }
+
+  /// \brief Toggle locking
+  /// \note Once locking is off. It is user's responsibility to ensure concurrency
+  void SetLocking(bool on_off) { tree_->SetLocking(on_off); }
 
  private:
   value_allocator alloc_;
@@ -134,6 +142,7 @@ class CachePool : public Service {
   const std::string subfolder_;
   std::shared_ptr<StorageManager> sm_;
   std::shared_ptr<data_index> tree_;
+  bool custom_arena_;
 };
 }  // namespace dataset
 }  // namespace mindspore

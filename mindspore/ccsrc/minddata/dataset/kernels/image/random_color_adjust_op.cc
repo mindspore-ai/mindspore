@@ -36,6 +36,7 @@ RandomColorAdjustOp::RandomColorAdjustOp(float s_bright_factor, float e_bright_f
       hue_factor_start_(s_hue_factor),
       hue_factor_end_(e_hue_factor) {
   rnd_.seed(GetSeed());
+  is_deterministic_ = false;
 }
 
 Status RandomColorAdjustOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {

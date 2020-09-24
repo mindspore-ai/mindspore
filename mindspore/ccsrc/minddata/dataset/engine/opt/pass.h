@@ -37,18 +37,6 @@ class SkipOp;
 
 class ShuffleOp;
 
-#ifndef ENABLE_ANDROID
-class MindRecordOp;
-
-class TFReaderOp;
-#endif
-
-#ifdef ENABLE_PYTHON
-class FilterOp;
-
-class GeneratorOp;
-#endif
-
 class AlbumOp;
 
 class RandomDataOp;
@@ -63,10 +51,6 @@ class DeviceQueueOp;
 
 class ImageFolderOp;
 
-#ifndef ENABLE_ANDROID
-class CacheOp;
-#endif
-
 class MnistOp;
 
 class ManifestOp;
@@ -79,18 +63,30 @@ class CocoOp;
 
 class CelebAOp;
 
-#ifndef ENABLE_ANDROID
-class CacheMergeOp;
-
-class CacheLookupOp;
-#endif
-
 class EpochCtrlOp;
 
 class BuildVocabOp;
 
+class ConcatOp;
+
 #ifndef ENABLE_ANDROID
+class MindRecordOp;
+
+class TFReaderOp;
+
+class CacheOp;
+
+class CacheMergeOp;
+
+class CacheLookupOp;
+
 class BuildSentencePieceVocabOp;
+#endif
+
+#ifdef ENABLE_PYTHON
+class FilterOp;
+
+class GeneratorOp;
 #endif
 
 // The base class Pass is the basic unit of tree transformation.
@@ -168,22 +164,6 @@ class NodePass : public Pass {
 
   virtual Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified);
 
-#ifndef ENABLE_ANDROID
-  virtual Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified);
-
-  virtual Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified);
-#endif
-
-#ifdef ENABLE_PYTHON
-  virtual Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified);
-
-  virtual Status RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified);
-
-  virtual Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified);
-
-  virtual Status RunOnNode(std::shared_ptr<VOCOp> node, bool *modified);
-#endif
-
   virtual Status RunOnNode(std::shared_ptr<RandomDataOp> node, bool *modified);
 
   virtual Status RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified);
@@ -193,10 +173,6 @@ class NodePass : public Pass {
   virtual Status RunOnNode(std::shared_ptr<ZipOp> node, bool *modified);
 
   virtual Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified);
-
-#ifndef ENABLE_ANDROID
-  virtual Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
-#endif
 
   virtual Status RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified);
 
@@ -210,30 +186,48 @@ class NodePass : public Pass {
 
   virtual Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified);
 
-#ifndef ENABLE_ANDROID
-  virtual Status RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified);
-
-  virtual Status RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified);
-#endif
-
   virtual Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified);
 
-#ifndef ENABLE_ANDROID
-  virtual Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
-#endif
-
   virtual Status PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *modified);
-
-#ifndef ENABLE_ANDROID
-  virtual Status PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified);
-#endif
 
   virtual Status PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified);
 
   virtual Status PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *modified);
 
+  virtual Status PreRunOnNode(std::shared_ptr<ZipOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<MapOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modified);
+
 #ifndef ENABLE_ANDROID
+  virtual Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified);
+
   virtual Status PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node, bool *modified);
+#endif
+
+#ifdef ENABLE_PYTHON
+  virtual Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<VOCOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<FilterOp> node, bool *modified);
 #endif
 
  private:

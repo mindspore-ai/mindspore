@@ -36,6 +36,7 @@ include(CPack)
 set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE PATH "Installation directory for libraries")
 set(INSTALL_PY_DIR ".")
 set(INSTALL_BASE_DIR ".")
+set(INSTALL_BIN_DIR "bin")
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(INSTALL_LIB_DIR ".")
@@ -78,7 +79,14 @@ if (ENABLE_MINDDATA)
         DESTINATION ${INSTALL_BASE_DIR}
         COMPONENT mindspore
     )
-
+    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+        install(
+            TARGETS cache_admin cache_server
+            OPTIONAL
+            DESTINATION ${INSTALL_BIN_DIR}
+            COMPONENT mindspore
+        )
+    endif()
     file(GLOB_RECURSE OPENCV_LIB_LIST
             ${opencv_LIBPATH}/libopencv_core*
             ${opencv_LIBPATH}/libopencv_imgcodecs*

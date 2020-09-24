@@ -29,10 +29,7 @@ void Semaphore::V() {
   ++value_;
   wait_cond_.NotifyOne();
 }
-int Semaphore::Peek() {
-  std::unique_lock<std::mutex> lck(mutex_);
-  return value_;
-}
+int Semaphore::Peek() const { return value_; }
 Status Semaphore::Register(TaskGroup *vg) { return wait_cond_.Register(vg->GetIntrpService()); }
 Status Semaphore::Deregister() { return (wait_cond_.Deregister()); }
 void Semaphore::ResetIntrpState() { wait_cond_.ResetIntrpState(); }

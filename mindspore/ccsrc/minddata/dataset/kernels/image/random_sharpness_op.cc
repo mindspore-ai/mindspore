@@ -31,6 +31,7 @@ const float RandomSharpnessOp::kDefEndDegree = 1.9;
 RandomSharpnessOp::RandomSharpnessOp(float start_degree, float end_degree)
     : start_degree_(start_degree), end_degree_(end_degree) {
   rnd_.seed(GetSeed());
+  is_deterministic_ = false;
 }
 
 /// main function call for random sharpness : Generate the random degrees

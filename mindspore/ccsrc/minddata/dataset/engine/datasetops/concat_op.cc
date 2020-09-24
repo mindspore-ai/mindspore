@@ -20,6 +20,7 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/datasetops/concat_op.h"
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
 
@@ -187,6 +188,12 @@ Status ConcatOp::ComputeColMap() {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
   return Status::OK();
+}
+
+// Visitor pre-accept method for NodePass
+Status ConcatOp::PreAccept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->PreRunOnNode(shared_from_base<ConcatOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

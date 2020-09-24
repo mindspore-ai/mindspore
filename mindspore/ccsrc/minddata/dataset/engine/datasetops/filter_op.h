@@ -121,6 +121,12 @@ class FilterOp : public ParallelOp {
   // @param show_all A bool to control if you want to show all info or just a summary.
   void Print(std::ostream &out, bool show_all) const override;
 
+  /// \brief Base-class override for NodePass pre-visit acceptor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status PreAccept(NodePass *p, bool *modified) override;
+
   // Base-class override for NodePass visitor acceptor.
   // @param p - Pointer to the NodePass to be accepted.
   // @param modified - Whether this node visit modified the pipeline.

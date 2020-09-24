@@ -25,6 +25,7 @@
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/execution_tree.h"
+#include "minddata/dataset/util/system_pool.h"
 #include "minddata/dataset/util/task_manager.h"
 
 namespace mindspore {
@@ -48,7 +49,8 @@ CacheMergeOp::CacheMergeOp(int32_t numWorkers, int32_t opConnectorSize, int32_t 
                            std::shared_ptr<CacheClient> cache_client, const std::shared_ptr<Sampler> &sampler)
     : ParallelOp(numWorkers, opConnectorSize, sampler),
       num_cleaners_(numCleaners),
-      cache_client_(std::move(cache_client)) {}
+      cache_client_(std::move(cache_client)),
+      cache_missing_rows_(true) {}
 
 Status CacheMergeOp::operator()() {
   // A queue of row id to let cleaner send cache miss rows to the cache server
@@ -129,17 +131,19 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
           std::string errMsg = "Expect positive row id: " + std::to_string(row_id);
           RETURN_STATUS_UNEXPECTED(errMsg);
         }
-        // Technically number of this row shows up in the cache miss stream is equal to the number
-        // of P() call. However the cleaner wants it too. So we need an extra copy.
-        TensorRowCacheRequest *rq;
-        RETURN_IF_NOT_OK(GetRq(row_id, &rq));
-        if (rq->GetState() == TensorRowCacheRequest::State::kEmpty) {
-          // We will send the request async. But any error we most
-          // likely ignore and continue.
-          Status rc;
-          rc = rq->AsyncSendCacheRequest(cache_client_, row);
-          if (rc.IsOk()) {
-            RETURN_IF_NOT_OK(io_que_->EmplaceBack(row_id));
+        if (cache_missing_rows_) {
+          // Technically number of this row shows up in the cache miss stream is equal to the number
+          // of P() call. However the cleaner wants it too. So we need an extra copy.
+          TensorRowCacheRequest *rq;
+          RETURN_IF_NOT_OK(GetRq(row_id, &rq));
+          if (rq->GetState() == TensorRowCacheRequest::State::kEmpty) {
+            // We will send the request async. But any error we most
+            // likely ignore and continue.
+            Status rc;
+            rc = rq->AsyncSendCacheRequest(cache_client_, row);
+            if (rc.IsOk()) {
+              RETURN_IF_NOT_OK(io_que_->EmplaceBack(row_id));
+            }
           }
         }
         RETURN_IF_NOT_OK(cache_miss_.Add(row_id, std::move(row)));
@@ -168,13 +172,18 @@ Status CacheMergeOp::Cleaner() {
     Status rc = rq->CheckCacheResult();
     if (rc.IsError()) {
       // If interrupt, time to quit.
-      if (rc.get_code() == StatusCode::kInterrupted) {
+      if (rc.IsInterrupted()) {
         return Status::OK();
+      } else if (rc.IsOutofMemory() || rc.IsNoSpace()) {
+        // The server is hitting some limit and we will turn off caching from now on.
+        cache_missing_rows_ = false;
+        cache_client_->ServerRunningOutOfResources();
+      } else {
+        MS_LOG(INFO) << "Cache row not successful: " << rc.ToString();
+        // Bad rc should not bring down the pipeline. We will simply continue and
+        // change the state back to empty. We don't need a CAS from CLEAN back to EMPTY.
+        rq->SetState(TensorRowCacheRequest::State::kEmpty);
       }
-      MS_LOG(INFO) << "Cache row not successful: " << rc.ToString();
-      // Bad rc should not bring down the pipeline. We will simply continue and
-      // change the state back to empty. We don't need a CAS from CLEAN back to EMPTY.
-      rq->SetState(TensorRowCacheRequest::State::kEmpty);
     }
   }
   return Status::OK();
@@ -253,7 +262,7 @@ Status CacheMergeOp::Accept(NodePass *p, bool *modified) {
 Status CacheMergeOp::EoeReceived(int32_t worker_id) {
   // If we are in a repeat path, send the eoe up.
   // Otherwise ignore it.
-  if (op_total_repeats_ > 1) {
+  if (op_total_repeats_ != 1) {
     return DatasetOp::EoeReceived(worker_id);
   }
   return Status::OK();
@@ -281,7 +290,7 @@ Status CacheMergeOp::GetRq(row_id_type row_id, CacheMergeOp::TensorRowCacheReque
     *out = it->second.GetMutablePointer();
   } else {
     // We will create a new one.
-    auto alloc = Services::GetAllocator<TensorRowCacheRequest>();
+    auto alloc = SystemPool::GetAllocator<TensorRowCacheRequest>();
     auto r = io_request_.emplace(row_id, MemGuard<TensorRowCacheRequest, Allocator<TensorRowCacheRequest>>(alloc));
     if (r.second) {
       auto &mem = r.first->second;

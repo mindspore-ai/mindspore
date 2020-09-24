@@ -37,7 +37,8 @@ struct MemHdr {
 ArenaImpl::ArenaImpl(void *ptr, size_t sz) : size_in_bytes_(sz), ptr_(ptr) {
   // Divide the memory into blocks. Ignore the last partial block.
   uint64_t num_blks = size_in_bytes_ / ARENA_BLK_SZ;
-  MS_LOG(DEBUG) << "Size of memory pool is " << num_blks << ", number of blocks of size is " << ARENA_BLK_SZ << ".";
+  MS_LOG(DEBUG) << "Arena memory pool is created. Number of blocks : " << num_blks << ". Block size : " << ARENA_BLK_SZ
+                << ".";
   tr_.Insert(0, num_blks);
 }
 
@@ -233,9 +234,9 @@ std::ostream &operator<<(std::ostream &os, const ArenaImpl &s) {
 
 Status Arena::Init() {
   try {
-    auto sz = size_in_MB_ * 1048576L;
-    mem_ = std::make_unique<uint8_t[]>(sz);
-    impl_ = std::make_unique<ArenaImpl>(mem_.get(), sz);
+    int64_t sz = size_in_MB_ * 1048576L;
+    RETURN_IF_NOT_OK(mem_.allocate(sz));
+    impl_ = std::make_unique<ArenaImpl>(mem_.GetMutablePointer(), sz);
   } catch (std::bad_alloc &e) {
     return Status(StatusCode::kOutOfMemory);
   }

@@ -16,10 +16,14 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_GRPC_CLIENT_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_GRPC_CLIENT_H_
 
+#include <atomic>
+#include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 #include "minddata/dataset/engine/cache/cache_common.h"
+#include "minddata/dataset/engine/cache/cache_ipc.h"
 #include "minddata/dataset/util/service.h"
 #include "minddata/dataset/util/task_manager.h"
 namespace mindspore {
@@ -34,15 +38,9 @@ namespace dataset {
 class CacheClientRequestTag {
  public:
   friend class CacheClientGreeter;
-  explicit CacheClientRequestTag(std::shared_ptr<BaseRequest> rq) : base_rq_(std::move(rq)) {}
+  explicit CacheClientRequestTag(std::shared_ptr<BaseRequest> rq, int64_t seqNo)
+      : base_rq_(std::move(rq)), seqNo_(seqNo) {}
   ~CacheClientRequestTag() = default;
-
-  /// \brief Make a RPC call
-  /// \param stub from CacheClientGreeter
-  /// \param cq from CacheClientGreeter
-  /// \return Status object
-  static Status MakeCall(CacheServerGreeter::Stub *stub, grpc::CompletionQueue *cq,
-                         std::unique_ptr<CacheClientRequestTag> &&tag);
 
   /// \brief Notify the client that a result has come back from the server
   void Notify() { base_rq_->wp_.Set(); }
@@ -52,6 +50,7 @@ class CacheClientRequestTag {
   grpc::Status rc_;
   grpc::ClientContext ctx_;
   std::unique_ptr<grpc::ClientAsyncResponseReader<CacheReply>> rpc_;
+  int64_t seqNo_;
 };
 
 /// \brief A GRPC layer to convert BaseRequest into protobuf and send to the cache server using gRPC
@@ -60,7 +59,7 @@ class CacheClientGreeter : public Service {
   friend class CacheClient;
 
  public:
-  explicit CacheClientGreeter(const std::string &hostname, int32_t port, int32_t num_workers);
+  explicit CacheClientGreeter(const std::string &hostname, int32_t port, int32_t num_connections);
   ~CacheClientGreeter();
 
   /// Override base Service class
@@ -85,17 +84,18 @@ class CacheClientGreeter : public Service {
 
   /// \brief This returns where we attach to the shared memory.
   /// \return Base address of the shared memory.
-  const void *SharedMemoryBaseAddr() const { return shmat_addr_; }
+  const void *SharedMemoryBaseAddr() const { return mem_.SharedMemoryBaseAddr(); }
 
  private:
   std::shared_ptr<grpc::Channel> channel_;
   std::unique_ptr<CacheServerGreeter::Stub> stub_;
   grpc::CompletionQueue cq_;
   TaskGroup vg_;
-  int32_t num_workers_;
-  key_t shm_key_;
-  int32_t shm_id_;
-  void *shmat_addr_;
+  int32_t num_connections_;
+  std::atomic<int64_t> request_cnt_;
+  mutable std::mutex mux_;
+  std::map<int64_t, std::unique_ptr<CacheClientRequestTag>> req_;
+  SharedMemory mem_;
 };
 }  // namespace dataset
 }  // namespace mindspore

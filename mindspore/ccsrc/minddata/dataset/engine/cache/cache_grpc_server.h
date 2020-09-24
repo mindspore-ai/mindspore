@@ -41,7 +41,7 @@ class CacheServerRequest : public BaseRequest {
         st_(STATE::CREATE),
         responder_(&ctx_) {}
 
-  ~CacheServerRequest() = default;
+  ~CacheServerRequest() override = default;
 
   /// \brief Functor. Used mainly by CacheServerGreeterImpl class to tag each incoming request and this
   /// functor will translate each protobuf into some form understood by by CacheService class.
@@ -86,8 +86,6 @@ class CacheServerGreeterImpl final {
   CachedSharedMemoryArena *GetSharedMemoryPool() { return shm_pool_.get(); }
 
   void Shutdown();
-
-  Status IpcResourceCleanup();
 
  private:
   int32_t port_;

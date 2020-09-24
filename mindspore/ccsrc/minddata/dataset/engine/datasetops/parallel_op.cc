@@ -52,9 +52,9 @@ Status ParallelOp::CreateWorkerConnector(int32_t worker_connector_size) {
 void ParallelOp::Print(std::ostream &out, bool show_all) const {
   // Summary 1-liner print
   if (!show_all) {
-    out << " [workers: " << num_workers_ << "]";
     // Call super class printer
     DatasetOp::Print(out, show_all);
+    out << " [workers: " << num_workers_ << "]";
   } else {
     // Detailed print
     DatasetOp::Print(out, show_all);
