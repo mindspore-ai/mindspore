@@ -19,6 +19,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/mul_parameter.h"
+#include "nnacl/arithmetic_common.h"
 #include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {
@@ -27,7 +28,9 @@ class MulInt8CPUKernel : public LiteKernel {
   explicit MulInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                             const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx_->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx_->thread_num_) {
+    tile_para = reinterpret_cast<ArithmeticParameter *>(parameter);
+  }
   ~MulInt8CPUKernel() override{};
 
   int Init() override;
@@ -37,6 +40,7 @@ class MulInt8CPUKernel : public LiteKernel {
 
  private:
   const lite::InnerContext *ctx_;
+  ArithmeticParameter *tile_para;
   MulParameter para_;
   int thread_count_;
   int64_t elements_num_;
