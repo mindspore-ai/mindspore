@@ -250,6 +250,32 @@ def test_case_9():
         i = i + 4
 
 
+def test_pyfunc_implicit_compose():
+    """
+    Test Implicit Compose with pyfunc
+    """
+    logger.info("Test n-m PyFunc : lambda x, y : (x , x + 1, x + y)")
+
+    col = ["col0", "col1"]
+
+    # apply dataset operations
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
+
+    data1 = data1.map(operations=[(lambda x, y: (x, x + y, x + y + 1)), (lambda x, y, z: (x, y, z))], input_columns=col,
+                      output_columns=["out0", "out1", "out2"], column_order=["out0", "out1", "out2"])
+
+    i = 0
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+        # In this test, the dataset is 2x2 sequential tensors
+        golden = np.array([[i, i + 1], [i + 2, i + 3]])
+        np.testing.assert_array_equal(item["out0"], golden)
+        golden = np.array([[i * 2, (i + 1) * 2], [(i + 2) * 2, (i + 3) * 2]])
+        np.testing.assert_array_equal(item["out1"], golden)
+        golden = np.array([[i * 2 + 1, (i + 1) * 2 + 1], [(i + 2) * 2 + 1, (i + 3) * 2 + 1]])
+        np.testing.assert_array_equal(item["out2"], golden)
+        i = i + 4
+
+
 def test_pyfunc_execption():
     logger.info("Test PyFunc Execption Throw: lambda x : raise Execption()")
 
@@ -293,5 +319,6 @@ if __name__ == "__main__":
     test_case_7()
     test_case_8()
     test_case_9()
+    test_pyfunc_implicit_compose()
     test_pyfunc_execption()
     skip_test_pyfunc_execption_multiprocess()

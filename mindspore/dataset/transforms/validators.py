@@ -213,6 +213,9 @@ def check_compose_list(method):
         type_check(transforms, (list,), transforms)
         if not transforms:
             raise ValueError("transforms list is empty.")
+        for i, transfrom in enumerate(transforms):
+            if not callable(transfrom):
+                raise ValueError("transforms[{}] is not callable.".format(i))
         return method(self, *args, **kwargs)
 
     return new_method
@@ -225,11 +228,10 @@ def check_compose_call(method):
     def new_method(self, *args, **kwargs):
         sig = inspect.signature(method)
         ba = sig.bind_partial(method, *args, **kwargs)
-        img = ba.arguments.get("img")
+        img = ba.arguments.get("args")
         if img is None:
             raise TypeError(
                 "Compose was called without an image. Fix invocation (avoid it being invoked as Compose([...])()).")
-
         return method(self, *args, **kwargs)
 
     return new_method
@@ -242,6 +244,10 @@ def check_random_apply(method):
     def new_method(self, *args, **kwargs):
         [transforms, prob], _ = parse_user_args(method, *args, **kwargs)
         type_check(transforms, (list,), "transforms")
+
+        for i, transfrom in enumerate(transforms):
+            if not callable(transfrom):
+                raise ValueError("transforms[{}] is not callable.".format(i))
 
         if prob is not None:
             type_check(prob, (float, int,), "prob")
@@ -260,7 +266,9 @@ def check_transforms_list(method):
         [transforms], _ = parse_user_args(method, *args, **kwargs)
 
         type_check(transforms, (list,), "transforms")
-
+        for i, transfrom in enumerate(transforms):
+            if not callable(transfrom):
+                raise ValueError("transforms[{}] is not callable.".format(i))
         return method(self, *args, **kwargs)
 
     return new_method

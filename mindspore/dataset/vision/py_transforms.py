@@ -622,9 +622,9 @@ class FiveCrop:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
         >>> Compose([py_vision.Decode(),
-        >>>          py_vision.FiveCrop(size),
+        >>>          py_vision.FiveCrop(size=200),
         >>>          # 4D stack of 5 images
-        >>>          lambda images: numpy.stack([py_vision.ToTensor()(image) for image in images])])
+        >>>          lambda *images: numpy.stack([py_vision.ToTensor()(image) for image in images])])
     """
 
     @check_crop
@@ -662,9 +662,9 @@ class TenCrop:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
         >>> Compose([py_vision.Decode(),
-        >>>          py_vision.TenCrop(size),
+        >>>          py_vision.TenCrop(size=200),
         >>>          # 4D stack of 10 images
-        >>>          lambda images: numpy.stack([py_vision.ToTensor()(image) for image in images])])
+        >>>          lambda *images: numpy.stack([py_vision.ToTensor()(image) for image in images])])
     """
 
     @check_ten_crop

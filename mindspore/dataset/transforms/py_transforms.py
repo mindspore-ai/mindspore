@@ -86,6 +86,38 @@ class Compose:
         >>>                                   py_vision.RandomErasing()])
         >>> # apply the transform to the dataset through dataset.map()
         >>> dataset = dataset.map(operations=transform, input_columns="image")
+        >>>
+        >>> # Compose is also be invoked implicitly, by just passing in a list of ops
+        >>> # the above example then becomes:
+        >>> transform_list = [py_vision.Decode(),
+        >>>                   py_vision.RandomHorizontalFlip(0.5),
+        >>>                   py_vision.ToTensor(),
+        >>>                   py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
+        >>>                   py_vision.RandomErasing()]
+        >>>
+        >>> # apply the transform to the dataset through dataset.map()
+        >>> dataset = dataset.map(operations=transform, input_columns="image")
+        >>>
+        >>> # Certain C++ and Python ops can be combined, but not all of them
+        >>> # An example of combined operations
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
+        >>> import mindspore.dataset.vision.c_transforms as c_vision
+        >>>
+        >>> data = ds.NumpySlicesDataset(arr, column_names=["cols"], shuffle=False)
+        >>> transformed_list = [py_transforms.OneHotOp(2), c_transforms.Mask(c_transforms.Relational.EQ, 1)]
+        >>> data = data.map(operations=op_list, input_columns=["cols"])
+        >>>
+        >>> # Here is an example of mixing vision ops
+        >>> data_dir = "/path/to/imagefolder_directory"
+        >>> data1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+        >>> input_columns = ["column_names"]
+        >>> data1 = data1.map(operations=op_list, input_columns=input_columns)
+        >>> op_list=[c_vision.Decode(),
+        >>>          c_vision.Resize((224, 244)),
+        >>>          py_vision.ToPIL(),
+        >>>          np.array, # need to convert PIL image to a NumPy array to pass it to C++ operation
+        >>>          c_vision.Resize((24, 24))]
     """
 
     @check_compose_list
@@ -93,14 +125,14 @@ class Compose:
         self.transforms = transforms
 
     @check_compose_call
-    def __call__(self, img):
+    def __call__(self, *args):
         """
         Call method.
 
         Returns:
-            lambda function, Lambda function that takes in an img to apply transformations on.
+            lambda function, Lambda function that takes in an args to apply transformations on.
         """
-        return util.compose(img, self.transforms)
+        return util.compose(self.transforms, *args)
 
 
 class RandomApply:

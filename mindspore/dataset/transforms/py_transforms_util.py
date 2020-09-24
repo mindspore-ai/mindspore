@@ -21,7 +21,17 @@ import numpy as np
 from ..core.py_util_helpers import is_numpy
 
 
-def compose(img, transforms):
+def all_numpy(args):
+    """ for multi-input lambdas"""
+    if isinstance(args, tuple):
+        for value in args:
+            if not is_numpy(value):
+                return False
+        return True
+    return is_numpy(args)
+
+
+def compose(transforms, *args):
     """
     Compose a list of transforms and apply on the image.
 
@@ -32,13 +42,15 @@ def compose(img, transforms):
     Returns:
         img (numpy.ndarray), An augmented image in Numpy ndarray.
     """
-    if is_numpy(img):
+    if all_numpy(args):
         for transform in transforms:
-            img = transform(img)
-        if is_numpy(img):
-            return img
-        raise TypeError('img should be Numpy ndarray. Got {}. Append ToTensor() to transforms'.format(type(img)))
-    raise TypeError('img should be Numpy ndarray. Got {}.'.format(type(img)))
+            args = transform(*args)
+            args = (args,) if not isinstance(args, tuple) else args
+
+        if all_numpy(args):
+            return args
+        raise TypeError('args should be Numpy ndarray. Got {}. Append ToTensor() to transforms'.format(type(args)))
+    raise TypeError('args should be Numpy ndarray. Got {}.'.format(type(args)))
 
 
 def one_hot_encoding(label, num_classes, epsilon):
