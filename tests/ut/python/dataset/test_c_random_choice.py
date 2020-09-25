@@ -44,7 +44,7 @@ def test_random_choice():
     res2 = test_config([[0, 1, 2]], [ops.Compose([ops.Duplicate(), ops.Concatenate()]),
                                      ops.Compose([ops.Slice([0, 1]), ops.OneHot(2)])])
     assert res2 in [[[[1, 0], [0, 1]]], [[0, 1, 2, 0, 1, 2]]]
-    # Test RandomChoice where there is only 1 operation
+    # Test RandomChoice when there is only 1 operation
     assert test_config([[4, 3], [2, 1]], [ops.Slice([0])]) == [[4], [2]]
 
 

@@ -23,47 +23,20 @@
 #include <vector>
 
 #include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/core/tensor_helpers.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 
 namespace mindspore {
 namespace dataset {
-class Slice {
- public:
-  Slice() : start_(0), stop_(0), step_(0) {}
-  Slice(dsize_t start, dsize_t stop, dsize_t step) : start_(start), stop_(stop), step_(step) {}
-  Slice(dsize_t start, dsize_t stop) : start_(start), stop_(stop), step_(1) {}
-  explicit Slice(dsize_t stop) : start_(0), stop_(stop), step_(1) {}
-
-  ~Slice() = default;
-
-  std::vector<dsize_t> Indices(dsize_t length) {
-    std::vector<dsize_t> indices;
-    dsize_t index = std::min(Tensor::HandleNeg(start_, length), length);
-    dsize_t end_index = std::min(Tensor::HandleNeg(stop_, length), length);
-    if (step_ > 0) {
-      for (; index < end_index; index += step_) {
-        indices.push_back(index);
-      }
-    } else {
-      for (; index > end_index; index += step_) {
-        indices.push_back(index);
-      }
-    }
-    return indices;
-  }
-
-  bool valid() { return !(start_ == 0 && stop_ == 0 && step_ == 0); }
-
-  dsize_t start_;
-  dsize_t stop_;
-  dsize_t step_;
-};
 
 class SliceOp : public TensorOp {
  public:
-  explicit SliceOp(std::vector<dsize_t> indices) : indices_(std::move(indices)) {}
-  explicit SliceOp(Slice slice) : slice_(slice) {}
-  explicit SliceOp(bool all) : all_(all) {}
+  explicit SliceOp(std::vector<SliceOption> slice_options) : slice_options_(slice_options) {}
+  explicit SliceOp(SliceOption slice_option) { slice_options_.push_back(slice_option); }
+  // short hand notation for slicing along fist dimension
+  explicit SliceOp(Slice slice) { slice_options_.push_back(SliceOption(slice)); }
+  explicit SliceOp(bool all) { slice_options_.push_back(SliceOption(all)); }
+  explicit SliceOp(std::vector<dsize_t> indices) { slice_options_.push_back(SliceOption(indices)); }
 
   ~SliceOp() override = default;
 
@@ -72,13 +45,7 @@ class SliceOp : public TensorOp {
   std::string Name() const override { return kSliceOp; }
 
  private:
-  // only on of the following will be valid
-  // given indices to slice the Tensor. Empty vector if invalid.
-  std::vector<dsize_t> indices_;
-  // Slice object. All start, stop and step are 0 if invalid.
-  Slice slice_;
-  // Flag to read all indcies in the dim.
-  bool all_ = false;
+  std::vector<SliceOption> slice_options_ = {};
 };
 }  // namespace dataset
 }  // namespace mindspore

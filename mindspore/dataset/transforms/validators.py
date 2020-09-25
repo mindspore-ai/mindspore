@@ -19,8 +19,9 @@ import inspect
 import numpy as np
 
 from mindspore._c_expression import typing
+
 from ..core.validator_helpers import parse_user_args, type_check, check_pos_int64, check_value, check_positive, \
-    check_tensor_op
+    check_tensor_op, type_check_list
 
 # POS_INT_MIN is used to limit values from starting from 0
 POS_INT_MIN = 1
@@ -100,17 +101,40 @@ def check_de_type(method):
     return new_method
 
 
+def check_slice_option(method):
+    """Wrapper method to check the parameters of SliceOption."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [slice_option], _ = parse_user_args(method, *args, **kwargs)
+        from .c_transforms import _SliceOption
+        if slice_option is not None:
+            type_check(slice_option, (int, list, slice, bool, type(Ellipsis), _SliceOption), "slice_option")
+
+            if isinstance(slice_option, list):
+                type_check_list(slice_option, (int,), "slice_option")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_slice_op(method):
     """Wrapper method to check the parameters of slice."""
 
     @wraps(method)
-    def new_method(self, *args):
-        for _, arg in enumerate(args):
-            type_check(arg, (int, slice, list, type(None), type(Ellipsis)), "arg")
-            if isinstance(arg, list):
-                for a in arg:
-                    type_check(a, (int,), "a")
-        return method(self, *args)
+    def new_method(self, *args, **kwargs):
+        [slice_op], _ = parse_user_args(method, *args, **kwargs)
+
+        for s in slice_op:
+            from .c_transforms import _SliceOption
+            if s is not None:
+                type_check(s, (int, list, slice, bool, type(Ellipsis), _SliceOption), "slice")
+                if isinstance(s, list) and s:
+                    if isinstance(s[0], int):
+                        type_check_list(s, (int,), "slice")
+
+        return method(self, *args, **kwargs)
 
     return new_method
 

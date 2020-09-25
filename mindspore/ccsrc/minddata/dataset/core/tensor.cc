@@ -28,6 +28,7 @@
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/global_context.h"
+
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/core/pybind_support.h"
 namespace py = pybind11;
@@ -92,11 +93,11 @@ Status Tensor::CreateEmpty(const TensorShape &shape, const DataType &type, Tenso
   CHECK_FAIL_RETURN_UNEXPECTED(type.IsNumeric(), "Number of elements is not 0. The type should be numeric.");
 
   int64_t byte_size = (*out)->SizeInBytes();
+
   // Don't allocate if we have a tensor with no elements.
   if (byte_size != 0) {
     RETURN_IF_NOT_OK((*out)->AllocateBuffer(byte_size));
   }
-
   return Status::OK();
 }
 Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, const uchar *src, TensorPtr *out) {
@@ -862,63 +863,164 @@ Status Tensor::CopyLastDimAt(const std::shared_ptr<Tensor> &src, const std::vect
   CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(dst_addr, len, src_addr, len) == 0, "memcpy error");
   return Status::OK();
 }
-Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices) {
-  CHECK_FAIL_RETURN_UNEXPECTED(shape_.Rank() == 1, "Currently Slice work with rank 1 tensors only.");
-  if (indices.empty()) {
-    return CreateEmpty(TensorShape({0}), type_, out);
+
+Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption> slice_options_) {
+  std::vector<SliceOption> converted_slice_objects;
+
+  for (int i = 0; i < slice_options_.size(); i++) {
+    SliceOption slice_option = slice_options_[i];
+
+    if (slice_option.all_) {
+      mindspore::dataset::Slice slice = mindspore::dataset::Slice(shape_[i]);
+      converted_slice_objects.push_back(SliceOption(slice));
+      continue;
+    }
+
+    if (slice_option.indices_.empty() && !slice_option.slice_.valid()) {
+      RETURN_STATUS_UNEXPECTED("Both indices and slices can not be empty.");
+    }
+
+    if (!slice_option.indices_.empty() && slice_option.slice_.valid()) {
+      RETURN_STATUS_UNEXPECTED("Both indices and slices can not be given.");
+    }
+
+    // if slice object was provided, indices should be empty. Generate indices from the slice object.
+    if (slice_option.indices_.empty()) {
+      // check if slice is valid
+      mindspore::dataset::Slice slice_copy = slice_option.slice_;
+      slice_copy.start_ = HandleNeg(slice_option.slice_.start_, shape_[i]);
+      slice_copy.stop_ = HandleNeg(slice_option.slice_.stop_, shape_[i]);
+      slice_copy.start_ = slice_copy.start_ < 0 ? 0 : slice_copy.start_;
+      slice_copy.stop_ = slice_copy.stop_ < 0 ? 0 : slice_copy.stop_;
+      dsize_t max_idx = shape_[i];
+      slice_copy.start_ = slice_copy.start_ > max_idx ? max_idx : slice_copy.start_;
+      slice_copy.stop_ = slice_copy.stop_ > max_idx ? max_idx : slice_copy.stop_;
+      converted_slice_objects.emplace_back(SliceOption(slice_copy));
+    } else {
+      // indices validation
+      std::vector<dsize_t> indices_copy;
+      for (int j = 0; j < slice_option.indices_.size(); j++) {
+        dsize_t index = HandleNeg(slice_option.indices_[j], shape_[i]);
+        CHECK_FAIL_RETURN_UNEXPECTED(index < shape_[i] && index >= 0,
+                                     "Index " + std::to_string(index) + " is out of bounds.");
+        indices_copy.emplace_back(index);
+      }
+      converted_slice_objects.emplace_back(SliceOption(indices_copy));
+    }
+  }
+
+  // if a string with partial slices, pass in the rest
+  if (slice_options_.size() != Rank() && type() == DataType::DE_STRING) {
+    for (int i = slice_options_.size(); i < Rank(); i++) {
+      mindspore::dataset::Slice slice = mindspore::dataset::Slice(0, shape_[i]);
+      converted_slice_objects.emplace_back(SliceOption(slice));
+    }
+  }
+
+  // determine final shape:
+  TensorShape t = TensorShape({});
+  dsize_t slice_len = slice_options_.size();
+  dsize_t slice_len_ind;
+  for (int i = 0; i < shape_.Rank(); i++) {
+    if (i < slice_len) {
+      // if it's a slice
+      if (converted_slice_objects[i].indices_.size() == 0) {
+        slice_len_ind = (converted_slice_objects[i].slice_.stop_ - converted_slice_objects[i].slice_.start_) /
+                        converted_slice_objects[i].slice_.step_;
+        if ((converted_slice_objects[i].slice_.stop_ - converted_slice_objects[i].slice_.start_) %
+              converted_slice_objects[i].slice_.step_ !=
+            0) {
+          slice_len_ind++;
+        }
+        // account for slices that would return no data
+        slice_len_ind = slice_len_ind < 0 ? 0 : slice_len_ind;
+        t = t.AppendDim(slice_len_ind);
+      } else {
+        // if its a vector of indices
+        // need to introduce a way of handling indices and slices
+        if (converted_slice_objects[i].indices_.size() >= 1) {
+          t = t.AppendDim(converted_slice_objects[i].indices_.size());
+        }
+      }
+    } else {
+      // add in the rest of the dimensions
+      slice_len_ind = shape_[i];
+      t = t.AppendDim(slice_len_ind);
+    }
+  }
+
+  std::vector<std::vector<dsize_t>> indices_vector = IndexGenerator(converted_slice_objects);
+
+  if (indices_vector.empty()) {
+    return CreateEmpty(t, type_, out);
   }
   if (type_.IsNumeric()) {
-    return SliceNumeric(out, indices);
+    return SliceNumeric(out, indices_vector, t);
   } else {
-    return SliceString(out, indices);
+    return SliceString(out, indices_vector, t);
   }
 }
-Status Tensor::SliceNumeric(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices) {
-  RETURN_IF_NOT_OK(CreateEmpty(TensorShape({static_cast<dsize_t>(indices.size())}), type_, out));
+
+Status Tensor::SliceNumeric(std::shared_ptr<Tensor> *out, const std::vector<std::vector<dsize_t>> &indices,
+                            const TensorShape &shape) {
+  RETURN_IF_NOT_OK(CreateEmpty(shape, type_, out));
+
   (*out)->GetMutableBuffer();
   dsize_t out_index = 0;
-  dsize_t dim_length = shape_[0];
+  std::vector<dsize_t> dim_length = shape_.AsVector();
   dsize_t type_size = type_.SizeInBytes();
-  dsize_t src_start = HandleNeg(indices[0], dim_length);
+  std::vector<dsize_t> src_start = HandleNegIndices(indices[0], dim_length);
+  dsize_t src_start_index;
+  RETURN_IF_NOT_OK(shape_.ToFlatIndex(src_start, &src_start_index));
+
   uchar *dst_addr = (*out)->data_;
   dsize_t count = 1;
 
+  // to handle partial slices
+  dsize_t current_stride = shape_.Strides()[indices[0].size() - 1];
+
   for (dsize_t i = 0; i < indices.size(); i++) {
-    dsize_t cur_index = HandleNeg(indices[i], dim_length);
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      cur_index >= 0 && cur_index < dim_length,
-      "Index " + std::to_string(indices[i]) + " is out of bounds [0," + std::to_string(dim_length) + ")");
+    std::vector<dsize_t> cur_index = HandleNegIndices(indices[i], dim_length);
     if (i < indices.size() - 1) {
-      dsize_t next_index = HandleNeg(indices[i + 1], dim_length);
-      if (next_index == cur_index + 1) {
+      std::vector<dsize_t> next_index = HandleNegIndices(indices[i + 1], dim_length);
+      dsize_t flat_idx_curr;
+      dsize_t flat_idx_next;
+
+      RETURN_IF_NOT_OK(shape_.ToFlatIndex(cur_index, &flat_idx_curr));
+      RETURN_IF_NOT_OK(shape_.ToFlatIndex(next_index, &flat_idx_next));
+
+      if (flat_idx_next == flat_idx_curr + current_stride) {
         count++;
         continue;
       }
     }
-    int return_code = memcpy_s(dst_addr + out_index * type_size, (*out)->SizeInBytes(), data_ + src_start * type_size,
-                               count * type_size);
+
+    int return_code = memcpy_s(dst_addr + out_index * type_size, (*out)->SizeInBytes(),
+                               data_ + src_start_index * type_size, count * type_size * current_stride);
     CHECK_FAIL_RETURN_UNEXPECTED(return_code == 0, "memcpy_s failed in SliceNumeric");
-    out_index += count;
+    out_index += count * current_stride;
     if (i < indices.size() - 1) {
-      src_start = HandleNeg(indices[i + 1], dim_length);  // next index
+      src_start = HandleNegIndices(indices[i + 1], dim_length);  // next index
+      RETURN_IF_NOT_OK(shape_.ToFlatIndex(src_start, &src_start_index));
     }
     count = 1;
   }
   return Status::OK();
 }
-Status Tensor::SliceString(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices) {
-  dsize_t dim_length = shape_[0];
+Status Tensor::SliceString(std::shared_ptr<Tensor> *out, const std::vector<std::vector<dsize_t>> &indices,
+                           const TensorShape &shape) {
+  std::vector<dsize_t> dim_length = shape_.AsVector();
   std::vector<std::string> strings;
-  for (dsize_t index : indices) {
-    dsize_t cur_index = HandleNeg(index, dim_length);
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      cur_index >= 0 && cur_index < dim_length,
-      "Index " + std::to_string(index) + " is out of bounds [0," + std::to_string(dim_length) + ")");
+
+  for (std::vector<dsize_t> index : indices) {
+    std::vector<dsize_t> cur_index = HandleNegIndices(index, dim_length);
+    dsize_t cur_flat_index;
+    shape_.ToFlatIndex(cur_index, &cur_flat_index);
     std::string_view sv;
-    GetItemAt(&sv, {cur_index});
+    RETURN_IF_NOT_OK(GetItemAt(&sv, {cur_index}));
     strings.emplace_back(sv);
   }
-  return CreateFromVector(strings, TensorShape({static_cast<dsize_t>(strings.size())}), out);
+  return CreateFromVector(strings, shape, out);
 }
 
 }  // namespace dataset

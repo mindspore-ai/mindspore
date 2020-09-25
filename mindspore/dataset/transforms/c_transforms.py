@@ -21,8 +21,8 @@ import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore._c_dataengine as cde
 
-from .validators import check_num_classes, check_de_type, check_fill_value, check_slice_op, check_mask_op, \
-    check_pad_end, check_concat_type, check_random_transform_ops
+from .validators import check_num_classes, check_de_type, check_fill_value, check_slice_option, check_slice_op, \
+    check_mask_op, check_pad_end, check_concat_type, check_random_transform_ops
 from ..core.datatypes import mstype_to_detype
 
 
@@ -94,6 +94,32 @@ class TypeCast(cde.TypeCastOp):
         super().__init__(data_type)
 
 
+class _SliceOption(cde.SliceOption):
+    """
+    Internal class SliceOption to be used with SliceOperation
+
+    Args:
+        _SliceOption(Union[int, list(int), slice, None, Ellipses, bool, _SliceOption]):
+
+            1.  :py:obj:`int`: Slice this index only along the dimension. Negative index is supported.
+            2.  :py:obj:`list(int)`: Slice these indices along the dimension. Negative indices are supported.
+            3.  :py:obj:`slice`: Slice the generated indices from the slice object along the dimension.
+            4.  :py:obj:`None`: Slice the whole dimension. Similar to `:` in Python indexing.
+            5.  :py:obj:`Ellipses`: Slice the whole dimension. Similar to `:` in Python indexing.
+            6.  :py:obj:`boolean`: Slice the whole dimension. Similar to `:` in Python indexing.
+    """
+
+    @check_slice_option
+    def __init__(self, slice_option):
+        if isinstance(slice_option, int) and not isinstance(slice_option, bool):
+            slice_option = [slice_option]
+        elif slice_option is Ellipsis:
+            slice_option = True
+        elif slice_option is None:
+            slice_option = True
+        super().__init__(slice_option)
+
+
 class Slice(cde.SliceOp):
     """
     Slice operation to extract a tensor out using the given n slices.
@@ -102,15 +128,16 @@ class Slice(cde.SliceOp):
     (Currently only rank-1 tensors are supported).
 
     Args:
-        slices(Union[int, list(int), slice, None, Ellipses]):
+        *slices(Union[int, list(int), slice, None, Ellipses]):
             Maximum `n` number of arguments to slice a tensor of rank `n`.
             One object in slices can be one of:
 
-            1.  :py:obj:`int`: Slice this index only. Negative index is supported.
-            2.  :py:obj:`list(int)`: Slice these indices ion the list only. Negative indices are supported.
-            3.  :py:obj:`slice`: Slice the generated indices from the slice object. Similar to `start:stop:step`.
+            1.  :py:obj:`int`: Slice this index only along the first dimension. Negative index is supported.
+            2.  :py:obj:`list(int)`: Slice these indices along the first dimension. Negative indices are supported.
+            3.  :py:obj:`slice`: Slice the generated indices from the slice object along the first dimension.
+                 Similar to `start:stop:step`.
             4.  :py:obj:`None`: Slice the whole dimension. Similar to `:` in Python indexing.
-            5.  :py:obj:`Ellipses`: Slice all dimensions between the two slices. Similar to `...` in Python indexing.
+            5.  :py:obj:`Ellipses`: Slice the whole dimension. Similar to `:` in Python indexing.
 
     Examples:
         >>> import mindspore.dataset.transforms.c_transforms as c_transforms
@@ -130,16 +157,9 @@ class Slice(cde.SliceOp):
 
     @check_slice_op
     def __init__(self, *slices):
-        dim0 = slices[0]
-        if isinstance(dim0, int):
-            dim0 = [dim0]
-        elif dim0 is None:
-            dim0 = True
-        elif isinstance(dim0, slice):
-            dim0 = (dim0.start, dim0.stop, dim0.step)
-        elif dim0 is Ellipsis:
-            dim0 = True
-        super().__init__(dim0)
+        slice_input_ = list(slices)
+        slice_input_ = [_SliceOption(slice_dim) for slice_dim in slice_input_]
+        super().__init__(slice_input_)
 
 
 class Relational(IntEnum):

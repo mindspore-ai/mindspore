@@ -7,6 +7,7 @@ set(DATASET_CORE_SRC_FILES
   data_type.cc
   global_context.cc
   tensor.cc
+  tensor_helpers.cc
   tensor_row.cc
   tensor_shape.cc
 )
