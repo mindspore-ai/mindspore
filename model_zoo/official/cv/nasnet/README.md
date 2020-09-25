@@ -40,7 +40,7 @@ Parameters for both training and evaluating can be set in config.py
 'rank': 0,                       # local rank of distributed
 'group_size': 1,                 # world size of distributed
 'work_nums': 8,                  # number of workers to read the data
-'epoch_size': 250,               # total epoch numbers
+'epoch_size': 500,               # total epoch numbers
 'keep_checkpoint_max': 100,      # max numbers to keep checkpoints
 'ckpt_path': './checkpoint/',    # save checkpoint path
 'is_save_on_master': 1           # save checkpoint on rank0, distributed parameters

@@ -23,7 +23,7 @@ import mindspore.ops.functional as F
 import mindspore.ops.composite as C
 import mindspore.common.dtype as mstype
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 
 
@@ -33,7 +33,6 @@ GRADIENT_CLIP_VALUE = 10.0
 clip_grad = C.MultitypeFuncGraph("clip_grad")
 
 
-# pylint: disable=consider-using-in
 @clip_grad.register("Number", "Number", "Tensor")
 def _clip_grad(clip_type, clip_value, grad):
     """
@@ -47,7 +46,7 @@ def _clip_grad(clip_type, clip_value, grad):
     Outputs:
         tuple[Tensor]: clipped gradients.
     """
-    if clip_type != 0 and clip_type != 1:
+    if clip_type not in (0, 1):
         return grad
     dt = F.dtype(grad)
     if clip_type == 0:
