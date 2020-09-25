@@ -2528,7 +2528,7 @@ ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node, bool (*IsCareN
   for (auto &candidate : candidate_set) {
     auto candidate_node = candidate.first;
     auto c = candidate_node->cast<CNodePtr>();
-    if (c == nullptr || !IsValueNode<Primitive>(c->input(0)) || !IsCareNode(c)) {
+    if (c == nullptr || !c->has_user_data<OperatorInfo>()) {
       continue;
     }
     (void)parameter_user_info.second.second.insert(candidate);
@@ -2688,7 +2688,6 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
     // mark the forward cnodes, parallel only care these nodes
     MarkForwardCNode(root);
-    HandleRootReshape(all_nodes);
 
     if (FindCommunicationOp(all_nodes)) {
       MS_LOG(EXCEPTION) << "The graph contain communication op";
@@ -2698,6 +2697,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
     ExtractInformation(all_nodes);
     ReshapeInit(all_nodes);
   }
+
+  HandleRootReshape(all_nodes);
 
   HandleForwardMakeTupleAndMakeList(all_nodes);
 
