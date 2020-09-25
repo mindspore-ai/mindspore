@@ -22,6 +22,7 @@ from mindspore.common.tensor import Tensor
 from mindspore._extends import cell_attr_register
 from mindspore.ops import _selected_ops
 from ..cell import Cell
+from ..._checkparam import Validator as validator
 
 
 __all__ = ['Softmax',
@@ -228,7 +229,7 @@ class LeakyReLU(Cell):
     See https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf
 
     Args:
-        alpha (float): Slope of the activation function at x < 0. Default: 0.2.
+        alpha (Union[int, float]): Slope of the activation function at x < 0. Default: 0.2.
 
     Inputs:
         - **input_x** (Tensor) - The input of LeakyReLU.
@@ -246,6 +247,7 @@ class LeakyReLU(Cell):
 
     def __init__(self, alpha=0.2):
         super(LeakyReLU, self).__init__()
+        validator.check_value_type('alpha', alpha, [float, int], self.cls_name)
         self.greater_equal = P.GreaterEqual()
         self.mul = P.Mul()
         self.alpha = alpha
