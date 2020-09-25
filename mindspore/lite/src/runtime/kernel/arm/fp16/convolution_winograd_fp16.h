@@ -42,7 +42,6 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
       free(trans_weight_);
       trans_weight_ = nullptr;
     }
-    FreeTransformMatrices();
   }
 
   int Init() override;
@@ -50,19 +49,12 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int Run() override;
   int RunImpl(int task_id);
   int InitWeightBias();
-  int MallocTransformMatrices();
-  void FreeTransformMatrices();
   int InitTmpBuffer();
   int ConfigInputOutput();
-  int PostProcess();
   int WinogradFilterTransformFp16(const float16_t *weight_data, float *matrix_g, float *matrix_gt, int oc_block);
 
  private:
   void FreeTmpBuffer() {
-    if (nhwc4_input_ != nullptr) {
-      ctx_->allocator->Free(nhwc4_input_);
-      nhwc4_input_ = nullptr;
-    }
     if (trans_input_ != nullptr) {
       ctx_->allocator->Free(trans_input_);
       trans_input_ = nullptr;
@@ -75,10 +67,6 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
       ctx_->allocator->Free(gemm_out_);
       gemm_out_ = nullptr;
     }
-    if (tmp_out_data_ != nullptr) {
-      ctx_->allocator->Free(tmp_out_data_);
-      tmp_out_data_ = nullptr;
-    }
   }
   int kernel_unit_;
   int input_unit_;
@@ -86,14 +74,10 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   float16_t *tmp_data_ = nullptr;
   float16_t *trans_input_ = nullptr;
   float16_t *gemm_out_ = nullptr;
-  float16_t *tmp_out_data_ = nullptr;
-  float16_t *matrix_a_ = nullptr;
-  float16_t *matrix_at_ = nullptr;
-  float16_t *matrix_b_ = nullptr;
-  float16_t *matrix_bt_ = nullptr;
   float16_t *trans_weight_ = nullptr;
-  TmpBufferAddressFp16 tmp_buffer_address_list_[4];
-  MatricesFp16 matrices_[4];
+  TmpBufferAddressFp16 tmp_buffer_address_list_[3];
+  InputTransFp16Func in_func_;
+  OutputTransFp16Func out_func_;
 };
 }  // namespace mindspore::kernel
 

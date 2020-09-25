@@ -40,17 +40,6 @@ void IndirectGemmFp16_16x8_c8(float16_t *output, float16_t *input, float16_t *we
 #ifdef __cplusplus
 extern "C" {
 #endif
-void SWBorderFp16(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias, int top,
-                  int bottom, int left, int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding);
-
-void SWCenterFp16(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias, int height,
-                  int width, int kernel_h, int kernel_w, int out_h_step, int block_channel, int ic, int in_sh_step,
-                  int in_sw_step, int in_kh_step, int in_kw_step, bool is_relu, bool is_relu6);
-
-// fp16 sliding window
-void ConvSWFp16(const float16_t *input_data, const float16_t *packed_weight, const float16_t *bias_data,
-                float16_t *tmp_out_block, float16_t *output_data, int task_id, ConvParameter *conv_param,
-                SlidingWindowParam *slidingWindow_param);
 
 // fp16 convolution common (im2col+gemm)
 void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_weight, float16_t *bias_data,
@@ -69,17 +58,9 @@ void UnPack3x3Relu6OutputFp16(const float16_t *src, float16_t *dst, int batch, i
 
 // fp16 convolution winograd
 void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const float16_t *bias_data,
-                      TmpBufferAddressFp16 *buffer_list, int task_id, ConvParameter *conv_param,
-                      MatricesFp16 *matrices);
+                      float16_t *output_data, TmpBufferAddressFp16 *buffer_list, int task_id, ConvParameter *conv_param,
+                      InputTransFp16Func in_func, OutputTransFp16Func out_func);
 
-void UnPackWinogradOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
-                              int output_unit);
-
-void UnPackWinogradReluOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
-                                  int output_unit);
-
-void UnPackWinogradRelu6OutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
-                                   int output_unit);
 #ifdef __cplusplus
 }
 #endif
