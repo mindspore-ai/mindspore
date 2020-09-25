@@ -35,9 +35,7 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::Tensor *> &in
 
   auto *weight_tensor = inputs.at(kWeightIndex);
   auto *restore_data = weight_tensor->data_c();
-  auto is_const_quant_weight =
-    (restore_data != nullptr) &&
-    (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant);
+  auto is_const_quant_weight = (restore_data != nullptr) && (weight_tensor->data_type() == kNumberTypeInt8);
   if (is_const_quant_weight) {
     auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
