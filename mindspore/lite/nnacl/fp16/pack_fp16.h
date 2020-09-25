@@ -29,8 +29,6 @@ extern "C" {
 void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float16_t *packed_input, int real_cal_num,
                         int block_index);
 
-void PackWeightFp16(float16_t *weight_data, ConvParameter *conv_param, float16_t *packed_weight);
-
 void PackWeightToC8Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data, ConvParameter *conv_param);
 
 void PackWeightToC4Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data, ConvParameter *conv_param);
