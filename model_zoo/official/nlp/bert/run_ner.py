@@ -18,12 +18,11 @@ Bert finetune and evaluation script.
 '''
 
 import os
-import json
 import argparse
 from src.bert_for_finetune import BertFinetuneCell, BertNER
 from src.finetune_eval_config import optimizer_cfg, bert_net_cfg
 from src.dataset import create_ner_dataset
-from src.utils import make_directory, LossCallBack, LoadNewestCkpt, BertLearningRate
+from src.utils import make_directory, LossCallBack, LoadNewestCkpt, BertLearningRate, convert_labels_to_index
 from src.assessment_method import Accuracy, F1, MCC, Spearman_Correlation
 import mindspore.common.dtype as mstype
 from mindspore import context
@@ -99,7 +98,7 @@ def eval_result_print(assessment_method="accuracy", callback=None):
         raise ValueError("Assessment method not supported, support: [accuracy, f1, mcc, spearman_correlation]")
 
 def do_eval(dataset=None, network=None, use_crf="", num_class=2, assessment_method="accuracy", data_file="",
-            load_checkpoint_path="", vocab_file="", label2id_file="", tag_to_index=None):
+            load_checkpoint_path="", vocab_file="", label_file="", tag_to_index=None):
     """ do eval """
     if load_checkpoint_path == "":
         raise ValueError("Finetune model missed, evaluation task must load finetune model!")
@@ -114,7 +113,8 @@ def do_eval(dataset=None, network=None, use_crf="", num_class=2, assessment_meth
 
     if assessment_method == "clue_benchmark":
         from src.cluener_evaluation import submit
-        submit(model=model, path=data_file, vocab_file=vocab_file, use_crf=use_crf, label2id_file=label2id_file)
+        submit(model=model, path=data_file, vocab_file=vocab_file, use_crf=use_crf,
+               label_file=label_file, tag_to_index=tag_to_index)
     else:
         if assessment_method == "accuracy":
             callback = Accuracy()
@@ -161,7 +161,7 @@ def parse_args():
     parser.add_argument("--eval_data_shuffle", type=str, default="false", choices=["true", "false"],
                         help="Enable eval data shuffle, default is false")
     parser.add_argument("--vocab_file_path", type=str, default="", help="Vocab file path, used in clue benchmark")
-    parser.add_argument("--label2id_file_path", type=str, default="", help="label2id file path, used in clue benchmark")
+    parser.add_argument("--label_file_path", type=str, default="", help="label file path, used in clue benchmark")
     parser.add_argument("--save_finetune_checkpoint_path", type=str, default="", help="Save checkpoint path")
     parser.add_argument("--load_pretrain_checkpoint_path", type=str, default="", help="Load checkpoint file path")
     parser.add_argument("--load_finetune_checkpoint_path", type=str, default="", help="Load checkpoint file path")
@@ -180,10 +180,10 @@ def parse_args():
         raise ValueError("'eval_data_file_path' must be set when do evaluation task")
     if args_opt.assessment_method.lower() == "clue_benchmark" and args_opt.vocab_file_path == "":
         raise ValueError("'vocab_file_path' must be set to do clue benchmark")
-    if args_opt.use_crf.lower() == "true" and args_opt.label2id_file_path == "":
-        raise ValueError("'label2id_file_path' must be set to use crf")
-    if args_opt.assessment_method.lower() == "clue_benchmark" and args_opt.label2id_file_path == "":
-        raise ValueError("'label2id_file_path' must be set to do clue benchmark")
+    if args_opt.use_crf.lower() == "true" and args_opt.label_file_path == "":
+        raise ValueError("'label_file_path' must be set to use crf")
+    if args_opt.assessment_method.lower() == "clue_benchmark" and args_opt.label_file_path == "":
+        raise ValueError("'label_file_path' must be set to do clue benchmark")
     return args_opt
 
 
@@ -205,11 +205,12 @@ def run_ner():
             bert_net_cfg.compute_type = mstype.float32
     else:
         raise Exception("Target error, GPU or Ascend is supported.")
-
-    tag_to_index = None
+    label_list = []
+    with open(args_opt.label_file_path) as f:
+        for label in f:
+            label_list.append(label.strip())
+    tag_to_index = convert_labels_to_index(label_list)
     if args_opt.use_crf.lower() == "true":
-        with open(args_opt.label2id_file_path) as json_file:
-            tag_to_index = json.load(json_file)
         max_val = max(tag_to_index.values())
         tag_to_index["<START>"] = max_val + 1
         tag_to_index["<STOP>"] = max_val + 2
@@ -240,7 +241,7 @@ def run_ner():
                                 schema_file_path=args_opt.schema_file_path,
                                 do_shuffle=(args_opt.eval_data_shuffle.lower() == "true"))
         do_eval(ds, BertNER, args_opt.use_crf, number_labels, assessment_method, args_opt.eval_data_file_path,
-                load_finetune_checkpoint_path, args_opt.vocab_file_path, args_opt.label2id_file_path, tag_to_index)
+                load_finetune_checkpoint_path, args_opt.vocab_file_path, args_opt.label_file_path, tag_to_index)
 
 if __name__ == "__main__":
     run_ner()

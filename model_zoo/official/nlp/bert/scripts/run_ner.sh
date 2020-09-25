@@ -38,7 +38,7 @@ python ${PROJECT_DIR}/../run_ner.py  \
     --train_data_shuffle="true" \
     --eval_data_shuffle="false" \
     --vocab_file_path="" \
-    --label2id_file_path="" \
+    --label_file_path="" \
     --save_finetune_checkpoint_path="" \
     --load_pretrain_checkpoint_path="" \
     --load_finetune_checkpoint_path="" \
