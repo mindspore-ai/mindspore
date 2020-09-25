@@ -85,9 +85,22 @@ app
 
 ### 配置MindSpore Lite依赖项
 
-Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通过MindSpore Lite[源码编译](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/build.html)生成"mindspore-lite-X.X.X-mindata-armXX-cpu"库文件包（包含`libmindspore-lite.so`库文件和相关头文件，可包含多个兼容架构）。
+Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通过MindSpore Lite[源码编译](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/build.html)生成`mindspore-lite-{version}-minddata-{os}-{device}.tar.gz`库文件包并解压缩（包含`libmindspore-lite.so`库文件和相关头文件），在本例中需使用生成带图像预处理模块的编译命令。
 
-在Android Studio中将编译完成的mindspore-lite-X.X.X-mindata-armXX-cpu压缩包，解压之后放置在APP工程的`app/src/main/cpp`目录下，并在app的`build.gradle`文件中配置CMake编译支持，以及`arm64-v8a`和`armeabi-v7a`的编译支持，如下所示：
+> version：输出件版本号，与所编译的分支代码对应的版本一致。
+>
+> device：当前分为cpu（内置CPU算子）和gpu（内置CPU和GPU算子）。
+>
+> os：输出件应部署的操作系统。
+
+本示例中，build过程由download.gradle文件自动下载MindSpore Lite 版本文件，并放置在`app/src/main/cpp/`目录下。
+
+* 注：若自动下载失败，请手动下载相关库文件，解压并放在对应位置：
+
+  mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz [下载链接](https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.0/lite/android_aarch64/mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz)
+
+在app的`build.gradle`文件中配置CMake编译支持，以及`arm64-v8a`的编译支持，如下所示：
+
 ```
 android{
     defaultConfig{
@@ -126,16 +139,9 @@ target_link_libraries(
 )
 ```
 
-本示例中，app build过程由download.gradle文件自动从华为服务器下载mindspore所编译的库及相关头文件，并放置在`src/main/cpp`工程目录下。
-
-
-* 注：若自动下载失败，请手动下载相关库文件并将其放在对应位置：
-* mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz [下载链接](https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%201.0/mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz)
-
-
 ### 下载及部署模型文件
 
-从MindSpore Model Hub中下载模型文件，本示例程序中使用的目标检测模型文件为`ssd.ms`，同样通过download.gradle脚本在APP构建时自动下载，并放置在`app/src/main/assets`工程目录下。
+从MindSpore Model Hub中下载模型文件，本示例程序中使用的目标检测模型文件为`ssd.ms`，同样通过`download.gradle`脚本在APP构建时自动下载，并放置在`app/src/main/assets`工程目录下。
 
 * 注：若下载失败请手动下载模型文件，ssd.ms [下载链接](https://download.mindspore.cn/model_zoo/official/lite/ssd_mobilenetv2_lite/ssd.ms)。
 

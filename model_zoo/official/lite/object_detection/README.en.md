@@ -43,7 +43,14 @@ This object detection sample program on the Android device includes a Java layer
 
 ### Configuring MindSpore Lite Dependencies
 
-In Android studio, the compiled mindpool-lite-x.x.x-mindata-armxx-cpu package (including ` libmindspot- lite.so `The library file and related header files, which can contain multiple compatible architectures), are unzipped and placed in the 'app / SRC / main / CPP' directory of the app project, and the` build.gradle `Cmake and 'arm64-v8a' and 'armeabi-v7a' are configured in the file as follows It is shown as follows:
+When MindSpore C++ APIs are called at the Android JNI layer, related library files are required. You can use MindSpore Lite [source code compilation](https://www.mindspore.cn/tutorial/lite/en/master/use/build.html) to generate the MindSpore Lite version. In this case, you need to use the compile command of generate with image preprocessing module.
+
+In this example, the build process automatically downloads the `mindspore-lite-1.0.0-minddata-arm64-cpu` by the `app/download.gradle` file and saves in the `app/src/main/cpp` directory.
+
+Note: if the automatic download fails, please manually download the relevant library files and put them in the corresponding location.
+
+mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz [Download link](https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.0/lite/android_aarch64/mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz)
+
 ```
 android{
     defaultConfig{
@@ -54,7 +61,7 @@ android{
         }
 
         ndk{ 
-            abiFilters'armeabi-v7a', 'arm64-v8a'  
+            abiFilters 'arm64-v8a'
         }
     }
 }
@@ -81,16 +88,6 @@ target_link_libraries(
     ...
 )
 ```
-
-
-
-In this example, the  download.gradle File configuration auto download library file,  placed in the 'app / libs / arm64-v8a' directory.
-
-Note: if the automatic download fails, please manually download the relevant library files and put them in the corresponding location.
-
-mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz [Download link](https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%201.0/mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz)
-
-
 
 ### Downloading and Deploying a Model File
 
