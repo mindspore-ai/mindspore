@@ -254,3 +254,88 @@ void MatrixMultiplyVec(const float32x4_t *matrix_a, const float32x4_t *matrix_b,
   }
 }
 #endif
+
+int WinogradWeightTransform(const float *weight_data, float *winograd_data, float *matrix_g, float *matrix_gt,
+                            int oc_block, int input_unit, int kernel_unit, int channel, int batch, bool pack) {
+  // original weight format : ohwi
+  int oc_block_num = UP_DIV(batch, oc_block);
+  int block_stride = channel * oc_block;
+  int block_num_stride = block_stride * oc_block_num;
+
+  // trans_filter = G*g*GT (g represents weight_data)
+  // separate into two steps ===> tmp = (g * GT)T ===> trans = (tmp * GT)T   use same function:MatrixMultiplyWinograd
+  float *tmp_data = (float *)(malloc(channel * input_unit * kernel_unit * sizeof(float)));
+  if (tmp_data == NULL) {
+    return NNACL_ERR;
+  }
+  float *trans_out_data = (float *)(malloc(channel * input_unit * input_unit * sizeof(float)));
+  if (trans_out_data == NULL) {
+    free(tmp_data);
+    return NNACL_ERR;
+  }
+
+#ifndef ENABLE_ARM
+  float *tmp_data1 = (float *)(malloc(channel * input_unit * kernel_unit * sizeof(float)));
+  if (tmp_data1 == NULL) {
+    free(tmp_data);
+    free(trans_out_data);
+    return NNACL_ERR;
+  }
+  float *trans_out_data1 = (float *)(malloc(channel * input_unit * input_unit * sizeof(float)));
+  if (trans_out_data1 == NULL) {
+    free(tmp_data);
+    free(tmp_data1);
+    free(trans_out_data);
+    return NNACL_ERR;
+  }
+#endif
+
+  int input_oz_offset = kernel_unit * kernel_unit * channel;
+  for (int i = 0; i < batch; i++) {
+    int out_c_block = i / oc_block;
+    int out_c_res = i % oc_block;
+    int output_oz_offset = out_c_block * block_stride + out_c_res;
+
+#ifndef ENABLE_ARM
+    // tmp_data = g * GT
+    MatrixMultiplyWinograd(weight_data + i * input_oz_offset, matrix_gt, tmp_data, kernel_unit, kernel_unit, input_unit,
+                           channel, channel * 4);
+    // tmp_data1 = (tmp_data)T
+    PackHWCToWHC(tmp_data, tmp_data1, kernel_unit, input_unit, channel);
+    // trans_out_data1 = tmp * GT
+    MatrixMultiplyWinograd(tmp_data1, matrix_gt, trans_out_data1, input_unit, kernel_unit, input_unit, channel,
+                           channel * 4);
+    // trans_out_data = (trans_out_data1)T
+    PackHWCToWHC(trans_out_data1, trans_out_data, input_unit, input_unit, channel);
+#else
+    // tmp = (g * GT)T
+    MatrixMultiplyWinograd(weight_data + i * input_oz_offset, matrix_gt, tmp_data, kernel_unit, kernel_unit, input_unit,
+                           channel, channel * 4);
+    // trans = (tmp * GT)T
+    MatrixMultiplyWinograd(tmp_data, matrix_gt, trans_out_data, input_unit, kernel_unit, input_unit, channel,
+                           channel * 4);
+#endif
+    if (pack) {
+      int in_offset = 0;
+      for (int j = 0; j < input_unit; ++j) {
+        for (int k = 0; k < input_unit; ++k) {
+          for (int c = 0; c < channel; ++c) {
+            *(winograd_data + output_oz_offset + c * oc_block) = trans_out_data[in_offset + c];
+          }
+          in_offset += channel;
+          output_oz_offset += block_num_stride;
+        }
+      }
+    } else {
+      memcpy(winograd_data + i * channel * input_unit * input_unit, trans_out_data,
+             channel * input_unit * input_unit * sizeof(float));
+    }
+  }
+#ifndef ENABLE_ARM
+  free(tmp_data1);
+  free(trans_out_data1);
+#endif
+  free(tmp_data);
+  free(trans_out_data);
+  return NNACL_OK;
+}

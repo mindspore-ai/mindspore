@@ -33,9 +33,10 @@ void PackDeConvWeightFp32(const float *weight, float *dst, int input_channel, in
   return;
 }
 
-int DeConvPostFp32C12x8(const float *src, float *tmp, const float *bias, float *dst, int output_channel,
-                        ConvParameter *conv_param) {
-  /* row12x8-major(ih*iw x oc*kh*kw)  ->  row8-major(oh*ow x oc) */
+void DeConvPostFp32C8(const float *src, float *tmp, const float *bias, float *dst, int output_channel,
+                      ConvParameter *conv_param) {
+  /* arm64 row12x8-major(ih*iw x oc*kh*kw)  ->  row8-major(oh*ow x oc) */
+  /* arm32 row4x8-major(ih*iw x oc*kh*kw)   ->  row8-major(oh*ow x oc) */
   size_t input_plane = conv_param->input_w_ * conv_param->input_h_;
   size_t kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
   size_t output_plane = conv_param->output_w_ * conv_param->output_h_;
@@ -45,11 +46,11 @@ int DeConvPostFp32C12x8(const float *src, float *tmp, const float *bias, float *
 #else
   const int tile_num = 12;
 #endif
-  int in_plane12 = UP_ROUND(input_plane, tile_num);
+  int in_plane_round = UP_ROUND(input_plane, tile_num);
   int src_iw_stride = C8NUM;
   int src_ih_stride = conv_param->input_w_ * C8NUM;
-  int src_kw_stride = in_plane12 * C8NUM;
-  int src_kh_stride = in_plane12 * conv_param->kernel_w_ * C8NUM;
+  int src_kw_stride = in_plane_round * C8NUM;
+  int src_kh_stride = in_plane_round * conv_param->kernel_w_ * C8NUM;
   int dst_oh_stride = conv_param->output_w_ * C8NUM;
   int dst_ow_stride = C8NUM;
   int dst_kh_stride = conv_param->dilation_h_ * conv_param->output_w_ * C8NUM;
@@ -57,7 +58,7 @@ int DeConvPostFp32C12x8(const float *src, float *tmp, const float *bias, float *
 
   for (int c = 0; c < oc8; c += 8) {
     float *dst_ptr = tmp + c * output_plane;
-    const float *src_ptr = src + c * in_plane12 * kernel_plane;
+    const float *src_ptr = src + c * in_plane_round * kernel_plane;
     memset(dst_ptr, 0, output_plane * C8NUM * sizeof(float));
 
     for (int ih = 0; ih < conv_param->input_h_; ih++) {
@@ -104,5 +105,5 @@ int DeConvPostFp32C12x8(const float *src, float *tmp, const float *bias, float *
 
   PostConvFuncFp32C8(tmp, dst, bias, output_channel, output_plane, conv_param->output_channel_,
                      conv_param->act_type_ == ActType_Relu, conv_param->act_type_ == ActType_Relu6);
-  return NNACL_OK;
+  return;
 }
