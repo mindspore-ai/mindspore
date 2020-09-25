@@ -186,9 +186,9 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
     }
   }
 
-  if ((max_type_matched_num == SizeToInt(input_types.size()) &&
-       max_format_matched_num == SizeToInt(input_types.size())) ||
-      input_types.size() == input_not_cnode_indexes.size()) {
+  if (selected_kernel_attr.GetInputSize() > 0 && ((max_type_matched_num == SizeToInt(input_types.size()) &&
+                                                   max_format_matched_num == SizeToInt(input_types.size())) ||
+                                                  input_types.size() == input_not_cnode_indexes.size())) {
     MS_LOG(INFO) << "Input format and dtype is matched, max_type_matched_num: " << max_type_matched_num
                  << ", max_format_matched_num: " << max_format_matched_num;
     GetOutputFormatsAndDtypes(kernel_node, selected_kernel_attr, &output_formats, &output_types);
