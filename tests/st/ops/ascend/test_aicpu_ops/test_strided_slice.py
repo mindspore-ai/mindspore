@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -25,7 +25,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 class Net(nn.Cell):
     def __init__(self, begin, end, strides):
         super(Net, self).__init__()
-        self.strided_slice = inner.StridedSliceAICPU()
+        self.strided_slice = P.StridedSlice()
         self.begin = begin
         self.end = end
         self.strides = strides
