@@ -133,7 +133,7 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
 
   auto *weight_tensor = inputs.at(kWeightIndex);
   auto *restore_data = weight_tensor->MutableData();
-  if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+  if (weight_tensor->data_type() == kNumberTypeInt8) {
     auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
       MS_LOG(ERROR) << "dequant data is nullptr.";
@@ -151,7 +151,7 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
-    if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    if (weight_tensor->data_type() == kNumberTypeInt8) {
       weight_tensor->FreeData();
       weight_tensor->SetData(restore_data);
     }
@@ -162,14 +162,14 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
     delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    if (weight_tensor->data_type() == kNumberTypeInt8) {
       weight_tensor->FreeData();
       weight_tensor->SetData(restore_data);
     }
     return nullptr;
   }
 
-  if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+  if (weight_tensor->data_type() == kNumberTypeInt8) {
     weight_tensor->FreeData();
     weight_tensor->SetData(restore_data);
   }
