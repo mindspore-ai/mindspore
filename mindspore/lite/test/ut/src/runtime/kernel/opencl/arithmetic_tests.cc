@@ -67,6 +67,7 @@ static void LogData(void *data, const int size, const std::string prefix) {
 
 template <class T>
 static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) {
+  bool is_log_data = false;
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto allocator = ocl_runtime->GetAllocator();
 
@@ -126,7 +127,7 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   }
   std::vector<lite::Tensor *> outputs = {tensor_c};
 
-  ArithmeticParameter *param = new (std::nothrow) ArithmeticParameter();
+  ArithmeticParameter *param = static_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   param->broadcasting_ = is_bias_add;
   if (param == nullptr) {
     MS_LOG(ERROR) << "Create parameter failed!";
@@ -156,7 +157,7 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
     delete[] data_b;
     delete[] data_c_cpu;
     delete[] data_c_ocl;
-    delete param;
+    free(param);
     return;
   }
   arith_kernel->Init();
@@ -188,10 +189,12 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
 
   memcpy(data_c_ocl, outputs[0]->data_c(), sizeof(T) * element_num);
 
-  LogData<T>(data_a, 10, "Data A : ");
-  LogData<T>(data_b, tensor_b->shape().empty() ? 1 : 10, "Data B : ");
-  LogData<T>(data_c_cpu, 10, "Expect compute : ");
-  LogData<T>(outputs[0]->data_c(), 10, "OpenCL compute : ");
+  if (is_log_data) {
+    LogData<T>(data_a, 10, "Data A : ");
+    LogData<T>(data_b, tensor_b->shape().empty() ? 1 : 10, "Data B : ");
+    LogData<T>(data_c_cpu, 10, "Expect compute : ");
+    LogData<T>(outputs[0]->data_c(), 10, "OpenCL compute : ");
+  }
   bool cmp = DataCompare(data_c_cpu, data_c_ocl, element_num);
   MS_LOG(INFO) << "Compare " << (cmp ? "success!" : "failed!");
   EXPECT_EQ(true, cmp);
@@ -203,7 +206,6 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   delete[] data_c_ocl;
 
   delete kernel;
-  delete param;
   for (auto tensor : inputs) {
     delete tensor;
   }

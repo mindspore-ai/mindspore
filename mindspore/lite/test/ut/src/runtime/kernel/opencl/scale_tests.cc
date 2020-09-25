@@ -67,6 +67,7 @@ static void LogData(void *data, const int size, const std::string prefix) {
 
 template <class T>
 static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) {
+  bool is_log_data = false;
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto allocator = ocl_runtime->GetAllocator();
 
@@ -137,7 +138,7 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   }
   std::vector<lite::Tensor *> outputs = {tensor_out};
 
-  ScaleParameter *param = new (std::nothrow) ScaleParameter();
+  ScaleParameter *param = static_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "Create parameter failed!";
     delete tensor_in;
@@ -170,7 +171,7 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
     delete[] data_offset;
     delete[] data_out_cpu;
     delete[] data_out_ocl;
-    delete param;
+    free(param);
     return;
   }
   scale_kernel->Init();
@@ -206,11 +207,13 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
 
   memcpy(data_out_ocl, outputs[0]->data_c(), sizeof(T) * element_num);
 
-  LogData<T>(data_in, 10, "Data input : ");
-  LogData<T>(data_scale, tensor_scale->shape().empty() ? 1 : 10, "Data scale : ");
-  LogData<T>(data_offset, tensor_offset->shape().empty() ? 1 : 10, "Data offset : ");
-  LogData<T>(data_out_cpu, 10, "Expect compute : ");
-  LogData<T>(outputs[0]->data_c(), 10, "OpenCL compute : ");
+  if (is_log_data) {
+    LogData<T>(data_in, 10, "Data input : ");
+    LogData<T>(data_scale, tensor_scale->shape().empty() ? 1 : 10, "Data scale : ");
+    LogData<T>(data_offset, tensor_offset->shape().empty() ? 1 : 10, "Data offset : ");
+    LogData<T>(data_out_cpu, 10, "Expect compute : ");
+    LogData<T>(outputs[0]->data_c(), 10, "OpenCL compute : ");
+  }
   bool cmp = DataCompare(data_out_cpu, data_out_ocl, element_num);
   MS_LOG(INFO) << "Compare " << (cmp ? "success!" : "failed!");
   EXPECT_EQ(true, cmp);
@@ -223,7 +226,6 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   delete[] data_out_ocl;
 
   delete kernel;
-  delete param;
   for (auto tensor : inputs) {
     delete tensor;
   }
