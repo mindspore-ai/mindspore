@@ -25,7 +25,7 @@
 #include "tools/anf_importer/anf_importer.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/anf_transform.h"
-#include "tools/converter/return_code.h"
+#include "tools/converter/converter_context.h"
 
 namespace mindspore {
 namespace lite {

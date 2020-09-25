@@ -70,7 +70,7 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   printf("==================Testing Grad===============\n");
 
   std::string output_path = "./test_data/operators/sce_fp32_1_loss_1.bin";
-  lite::CompareOutput(loss, output_path);
+  lite::CompareOutput(loss, 1, output_path);
 
   ((mindspore::kernel::SparseSoftmaxCrossEntropyWithLogitsCPUKernel *)kernel_obj)->train();
   kernel_obj->Run();
@@ -81,7 +81,7 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   }
   std::cout << std::endl;
   std::string grad_path = "./test_data/operators/sce_fp32_1_dy_6_4.bin";
-  lite::CompareOutput(grad, grad_path);
+  lite::CompareOutput(grad, 24, grad_path);
 
   delete [] ll_labels;
   delete [] labels;

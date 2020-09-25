@@ -210,13 +210,13 @@ STATUS TfliteSingleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
   } else if (std::strcmp(node_name, "Exp") == 0) {
     MS_LOG(DEBUG) << "parse TfliteExpParser";
     auto attr = std::make_unique<schema::ExpT>();
-    attr->base = -1;  // -1 represent base = e
-    attr->scale = 1;
-    attr->shift = 0;
     if (attr == nullptr) {
       MS_LOG(ERROR) << "new op failed";
       return RET_NULL_PTR;
     }
+    attr->base = -1;  // -1 represent base = e
+    attr->scale = 1;
+    attr->shift = 0;
     op->primitive->value.type = schema::PrimitiveType_Exp;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Sqrt") == 0) {
@@ -300,7 +300,7 @@ STATUS TfliteSingleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
     }
     op->primitive->value.type = schema::PrimitiveType_Floor;
     op->primitive->value.value = attr.release();
-  } else if (std::strcmp(node_name, "NEG") == 0) {
+  } else if (std::strcmp(node_name, "Neg") == 0) {
     MS_LOG(DEBUG) << "parse TfliteNegParser";
     auto attr = std::make_unique<schema::NegT>();
     if (attr == nullptr) {
@@ -424,7 +424,7 @@ TfliteNodeRegister g_TfliteLogParser("Log", new TfliteLogParser());
 TfliteNodeRegister g_tfliteRoundParser("Round", new TfliteRoundParser());
 TfliteNodeRegister g_TfliteCeilParser("Ceil", new TfliteCeilParser());
 TfliteNodeRegister g_tfliteFloorParser("flOOR", new TfliteFloorParser());
-TfliteNodeRegister g_tfliteNegParser("NEG", new TfliteNegParser());
+TfliteNodeRegister g_tfliteNegParser("Neg", new TfliteNegParser());
 
 TfliteNodeRegister g_tfliteEqualParser("Equal", new TfliteEqualParser());
 TfliteNodeRegister g_tfliteNotEqualParser("NotEqual", new TfliteNotEqualParser());

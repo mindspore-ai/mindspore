@@ -102,9 +102,13 @@ int WriteToBin(const std::string &file_path, void *data, size_t size) {
   return 0;
 }
 
-int CompareOutputData(float *output_data, float *correct_data, int data_size) {
+int CompareOutputData(float *output_data, size_t output_size, float *correct_data, size_t data_size) {
+  if (output_size != data_size) {
+    printf("compare failed, output_size %zu isn't equal to data_size %zu.\n", output_size, data_size);
+    return 0;
+  }
   float error = 0;
-  for (int i = 0; i < data_size; i++) {
+  for (size_t i = 0; i < data_size; i++) {
     float abs = fabs(output_data[i] - correct_data[i]);
     if (abs > 0.00001) {
       error += abs;
@@ -120,12 +124,12 @@ int CompareOutputData(float *output_data, float *correct_data, int data_size) {
   return 0;
 }
 
-int CompareOutput(float *output_data, std::string file_path) {
-  size_t output_size;
-  auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
-  size_t output_num = output_size / sizeof(float);
-  printf("output num : %zu\n", output_num);
-  int res = CompareOutputData(output_data, ground_truth, output_num);
+int CompareOutput(float *output_data, size_t output_num, std::string file_path) {
+  size_t ground_truth_size;
+  auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &ground_truth_size));
+  size_t ground_truth_num = ground_truth_size / sizeof(float);
+  printf("ground truth num : %zu\n", ground_truth_num);
+  int res = CompareOutputData(output_data, output_num, ground_truth, ground_truth_num);
   delete[] ground_truth;
   return res;
 }

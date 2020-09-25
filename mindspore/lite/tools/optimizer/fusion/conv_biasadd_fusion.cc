@@ -124,6 +124,7 @@ int GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, co
   }
   if (conv_bias_node != nullptr) {
     if (CheckIfNodeIsParam(conv_bias_node) != lite::RET_OK) {
+      delete[] add_bias_data;
       return lite::RET_INVALID_OP_ATTR;
     }
     auto conv_bias_param = conv_bias_node->cast<ParameterPtr>()->default_param();

@@ -249,6 +249,7 @@ STATUS OnnxModelParser::ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph,
                                              schema::CNodeT *dst_op, schema::TensorT *dst_tensor,
                                              TensorCache *tensor_cache, const QuantType &quantType) {
   // change op_type() to name(), that is unique
+  static bool interrupt = false;
   dst_op->name = onnx_node.op_type() + "_" + onnx_node.output(0);
   dst_op->quantType = quantType;
   // dst_op->fmkType = FmkType_ONNX;
@@ -256,15 +257,25 @@ STATUS OnnxModelParser::ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph,
                 << onnx_node.input_size();
   // get the real op type
   SetOpQuantParams(onnx_graph, onnx_node, dst_op, dst_tensor, tensor_cache);
-  auto status = ParseOnnxNodeAttr(onnx_graph, onnx_node, onnx_node.op_type(), dst_op);
+  auto node_parser = OnnxNodeParserRegistry::GetInstance()->GetNodeParser(onnx_node.op_type());
+  if (node_parser == nullptr || interrupt) {
+    interrupt = true;
+    if (node_parser == nullptr) {
+      NoSupportOp::GetInstance()->InsertOp(onnx_node.op_type());
+    }
+    return RET_NOT_FIND_OP;
+  }
+  auto status = node_parser->Parse(onnx_graph, onnx_node, dst_op);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "parser onnx node attr failed";
+    interrupt = true;
+    MS_LOG(ERROR) << "parser onnx node " << onnx_node.op_type() << " attr failed";
     return status;
   }
   // set op input index
   std::vector<string> node_inputs;
   (void)node_inputs.insert(node_inputs.begin(), onnx_node.input().begin(), onnx_node.input().end());
   if (SetOpInputIndex(node_inputs, dst_op, onnx_node, tensor_cache)) {
+    interrupt = true;
     MS_LOG(ERROR) << "SetOpInputIndex failed";
     return RET_ERROR;
   }
@@ -273,6 +284,7 @@ STATUS OnnxModelParser::ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph,
   (void)node_outputs.insert(node_outputs.begin(), onnx_node.output().begin(), onnx_node.output().end());
 
   if (SetOpOutputIndex(node_outputs, dst_op, tensor_cache) != RET_OK) {
+    interrupt = true;
     MS_LOG(ERROR) << "SetOpOutputIndex failed";
     return RET_ERROR;
   }
@@ -340,8 +352,7 @@ STATUS OnnxModelParser::ParseOnnxNodeAttr(const onnx::GraphProto &onnx_graph, co
                                           const string &onnx_op_type, schema::CNodeT *dst_op) {
   auto node_parser = OnnxNodeParserRegistry::GetInstance()->GetNodeParser(onnx_op_type);
   if (node_parser == nullptr) {
-    MS_LOG(ERROR) << "not find " << onnx_op_type << ", node parser is nullptr";
-    return RET_NULL_PTR;
+    return RET_NOT_FIND_OP;
   }
   return node_parser->Parse(onnx_graph, onnx_node, dst_op);
 }
@@ -503,31 +514,41 @@ schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, con
   }
   // init op node input/output tensor, and dst_op attr
   for (const auto &onnx_node : onnx_graph.node()) {
+    int status_node = RET_OK;
     if (onnx_node.op_type() == "Constant") {
       continue;
     }
     if (onnx_node.op_type() == "Gemm") {
-      ParseOnnxGemmNode(onnx_graph, onnx_node, dst_graph.get(), &tensor_cache);
+      if (status == RET_OK) {
+        ParseOnnxGemmNode(onnx_graph, onnx_node, dst_graph.get(), &tensor_cache);
+      }
       continue;
     } else if (onnx_node.op_type() == "Int8GivenIntTensorFill" || onnx_node.op_type() == "Int8GivenTensorFill") {
-      status = ParseOnnxGivenFillNode(onnx_node, &tensor_cache);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "ParseOnnxGivenFillNode failed: " << status;
-        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-        return nullptr;
+      if (status == RET_OK) {
+        status_node = ParseOnnxGivenFillNode(onnx_node, &tensor_cache);
+        if (status_node != RET_OK) {
+          MS_LOG(ERROR) << "ParseOnnxGivenFillNode failed: " << status_node;
+          status = (status == RET_OK ? status_node : status);
+        }
       }
       continue;
     }
 
     std::unique_ptr<schema::CNodeT> dst_op = std::make_unique<schema::CNodeT>();
     std::unique_ptr<schema::TensorT> dst_tensor = std::make_unique<schema::TensorT>();
-    status = ParseOnnxNodeToDstOp(onnx_graph, onnx_node, dst_op.get(), dst_tensor.get(), &tensor_cache, quantType);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "parse node " << onnx_node.op_type() << " failed";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      return nullptr;
+    status_node = ParseOnnxNodeToDstOp(onnx_graph, onnx_node, dst_op.get(), dst_tensor.get(), &tensor_cache, quantType);
+    if (status_node != RET_OK) {
+      status = (status == RET_OK ? status_node : status);
+      continue;
     }
     dst_graph->nodes.emplace_back(std::move(dst_op));
+  }
+  if (status != RET_OK) {
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+    for (auto &tensor : tensor_cache.GetCachedTensor()) {
+      delete tensor;
+    }
+    return nullptr;
   }
   SetAllTensors(tensor_cache, dst_graph.get());
   dst_graph->name = GetModelName(modelFile);
