@@ -148,13 +148,13 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   std::vector<size_t> input_not_cnode_indexes;
   std::vector<std::string> output_formats;
   std::vector<TypeId> output_types;
-
   MS_LOG(INFO) << "SetKernelInfo, CNode Name: " << AnfAlgo::GetCNodeName(kernel_node);
   GetInputFormatsAndDtypes(kernel_node, &input_formats, &input_types, &input_not_cnode_indexes);
-
   auto kernel_attrs =
     kernel::CPUKernelFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
-
+  if (kernel_attrs.empty()) {
+    MS_LOG(EXCEPTION) << "Operator[" << AnfAlgo::GetCNodeName(kernel_node) << "] is not support.";
+  }
   int max_type_matched_num = -1;
   int max_format_matched_num = -1;
   KernelAttr selected_kernel_attr;
