@@ -41,14 +41,6 @@ void PostConvFuncCommInt8(const int32_t *in, int8_t *out, const int32_t *bias, s
   return;
 }
 
-void PostFuncInt8C8(const int32_t *in, const int32_t *bias, int8_t *out, size_t oc, size_t plane, int32_t multiplier,
-                    int32_t left_shift, int32_t right_shift, int32_t zp, int32_t mini, int32_t maxi) {
-  /*  ((int32_t)row8x8-major + bias) * multiplier + output_zp  =>  (int8)relu  =>  (int8_t)row-major  */
-  PostConvFuncCommInt8(in, out, bias, oc, plane, oc, UP_ROUND(plane, C8NUM) * C8NUM, multiplier, mini, maxi, left_shift,
-                       right_shift, zp, C8NUM);
-  return;
-}
-
 void PostFuncInt8C4(const int32_t *in, const int32_t *bias, int8_t *out, size_t oc, size_t plane, size_t stride,
                     int32_t multiplier, int32_t left_shift, int32_t right_shift, int32_t zp, int32_t mini,
                     int32_t maxi) {

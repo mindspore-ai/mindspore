@@ -17,52 +17,6 @@
 #include "nnacl/int8/deconv_int8.h"
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/int8/common_func_int8.h"
-int DeConvPostInt8C8(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t *out, int output_channel,
-                     ConvParameter *conv_param) {
-  /* row8x8-major(ih*iw x oc*kh*kw)  ->  row8-major(oh*ow x oc) */
-  size_t input_plane = conv_param->input_w_ * conv_param->input_h_;
-  size_t kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
-  size_t output_plane = conv_param->output_w_ * conv_param->output_h_;
-  int oc8 = UP_DIV(output_channel, C8NUM);
-  int in_plane8 = UP_ROUND(input_plane, 8);
-
-  for (int c = 0; c < oc8; c++) {
-    int32_t *dst_ptr = tmp + c * output_plane * C8NUM;
-    const int32_t *src_ptr = src + c * in_plane8 * kernel_plane * C8NUM;
-    memset(dst_ptr, 0, output_plane * C8NUM * sizeof(int32_t));
-
-    for (int ih = 0; ih < conv_param->input_h_; ih++) {
-      for (int iw = 0; iw < conv_param->input_w_; iw++) {
-        int oh = ih * conv_param->stride_h_ - conv_param->pad_u_;
-        int ow = iw * conv_param->stride_w_ - conv_param->pad_l_;
-
-        int kh_start = MSMAX(0, UP_DIV(-oh, conv_param->dilation_h_));
-        int kh_end = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->output_h_ - oh, conv_param->dilation_h_));
-        int kw_start = MSMAX(0, UP_DIV(-ow, conv_param->dilation_w_));
-        int kw_end = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->output_w_ - ow, conv_param->dilation_w_));
-        for (int kh = kh_start; kh < kh_end; kh++) {
-          for (int kw = kw_start; kw < kw_end; kw++) {
-            int src_index = ih * conv_param->input_w_ * C8NUM + iw * C8NUM +
-                            kh * input_plane * conv_param->kernel_w_ * C8NUM + kw * input_plane * C8NUM;
-            int dst_index = oh * conv_param->output_w_ * C8NUM + ow * C8NUM +
-                            kh * conv_param->dilation_h_ * conv_param->output_w_ * C8NUM +
-                            kw * conv_param->dilation_w_ * C8NUM;
-            for (int i = 0; i < C8NUM; i++) {
-              dst_ptr[dst_index + i] += src_ptr[src_index + i];
-            }
-          } /*kw*/
-        }   /*kh*/
-      }     /*iw*/
-    }       /*ih*/
-  }         /*oc8*/
-
-  PostFuncInt8C8(tmp, bias, out, output_channel, output_plane, conv_param->conv_quant_arg_.quant_multiplier_[0],
-                 conv_param->conv_quant_arg_.left_shift_[0], conv_param->conv_quant_arg_.right_shift_[0],
-                 conv_param->conv_quant_arg_.output_quant_args_[0].zp_, conv_param->conv_quant_arg_.out_act_min_[0],
-                 conv_param->conv_quant_arg_.out_act_max_[0]);
-  return NNACL_OK;
-}
-
 int DeConvPostInt8C4(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t *out, int output_channel,
                      ConvParameter *conv_param) {
   /* row4x4-major(ih*iw x oc*kh*kw)  ->  row4-major(oh*ow x oc) */
@@ -74,8 +28,8 @@ int DeConvPostInt8C4(const int32_t *src, const int32_t *bias, int32_t *tmp, int8
 
   int src_iw_stride = C4NUM;
   int src_ih_stride = conv_param->input_w_ * C4NUM;
-  int src_kw_stride = input_plane * C4NUM;
-  int src_kh_stride = input_plane * conv_param->kernel_w_ * C4NUM;
+  int src_kw_stride = in_plane4 * C4NUM;
+  int src_kh_stride = in_plane4 * conv_param->kernel_w_ * C4NUM;
   int dst_oh_stride = conv_param->output_w_ * C4NUM;
   int dst_ow_stride = C4NUM;
   int dst_kh_stride = conv_param->dilation_h_ * conv_param->output_w_ * C4NUM;
@@ -153,18 +107,18 @@ void DeConvWeightTransInt8(int8_t *src, int8_t *dst, int input_channel, int outp
   return;
 }
 
-void DeConvPackWeightSum(int8_t *weight, int32_t *weight_sum, int32_t input_zp, int32_t filter_zp, int deep16, int col4,
+void DeConvPackWeightSum(int8_t *weight, int32_t *weight_sum, int32_t input_zp, int32_t filter_zp, int deep, int col4,
                          bool suppport_opt) {
-  /* optimize normal -> same layout */
+  int deep16 = UP_ROUND(deep, C16NUM);
   for (int c = 0; c < col4; c++) {
     int c4div = c / C4NUM, c4mod = c % C4NUM;
     int32_t value = 0;
-    for (int r = 0; r < deep16; r++) {
+    for (int r = 0; r < deep; r++) {
       int r16div = r / C16NUM, r16mod = r % C16NUM;
       int src_index = c4div * deep16 * C4NUM + r16div * C4NUM * C16NUM + c4mod * C16NUM + r16mod;
       value += weight[src_index];
     }
-    weight_sum[c] = filter_zp * input_zp * deep16 - value * input_zp;
+    weight_sum[c] = filter_zp * input_zp * deep - value * input_zp;
   }
   return;
 }

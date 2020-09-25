@@ -110,10 +110,10 @@ void DeConvWgMergeFp16(const float16_t *src, float16_t *dst, size_t src_stride, 
   return;
 }
 
-void _deConvWinogradFp16(float16_t *tile_in, float16_t *tile_out, float16_t *weight_buf, float16_t *tmp_buf,
-                         float16_t *at_buf, float16_t *a_mid_buf, float16_t *trans_a_buf, bool *transfered,
-                         float16_t *bt_buf, float16_t *b_tmp_buf, int unit_size, int w_start, int h_start,
-                         ConvParameter *conv_param, DeConvParam *deconv_param) {
+void DeConvWgCalWgFp16(float16_t *tile_in, float16_t *tile_out, float16_t *weight_buf, float16_t *tmp_buf,
+                       float16_t *at_buf, float16_t *a_mid_buf, float16_t *trans_a_buf, bool *transfered,
+                       float16_t *bt_buf, float16_t *b_tmp_buf, int unit_size, int w_start, int h_start,
+                       ConvParameter *conv_param, DeConvParam *deconv_param) {
   int winograd_plane = unit_size * unit_size;
   if (!transfered[unit_size]) {
     WinogradTransLeftFp16(tile_in, at_buf, a_mid_buf, DECONV_WINOGRAD_DEFAULT_UNIT, unit_size,
@@ -151,8 +151,8 @@ void _deConvWinogradFp16(float16_t *tile_in, float16_t *tile_out, float16_t *wei
   return;
 }
 
-void _deConvCommonFp16(float16_t *tile_in, float16_t *tile_out, float16_t *weight, float16_t *tmp_buf, int h_start,
-                       int w_start, int h_size, int w_size, ConvParameter *conv_param, DeConvParam *deconv_param) {
+void DeConvWgCalCommFp16(float16_t *tile_in, float16_t *tile_out, float16_t *weight, float16_t *tmp_buf, int h_start,
+                         int w_start, int h_size, int w_size, ConvParameter *conv_param, DeConvParam *deconv_param) {
   int count = deconv_param->oc_div4_ * w_size * h_size;
   int in_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
   int out_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up4_;
@@ -218,6 +218,7 @@ int PackDeConvWgDataFp16(float16_t *nhwc_weight, DeConvComputeUnit *unit, ConvPa
     unit->winograd_.AT_ = malloc(unit->winograd_.i_ * unit->winograd_.o_ * sizeof(float16_t));
     if (unit->winograd_.AT_ == NULL) {
       free(current_unit_weight);
+      current_unit_weight = NULL;
       return NNACL_NULL_PTR;
     }
     Float32ToFloat16(matrix_at, unit->winograd_.AT_, unit->winograd_.i_ * unit->winograd_.o_);
@@ -227,6 +228,8 @@ int PackDeConvWgDataFp16(float16_t *nhwc_weight, DeConvComputeUnit *unit, ConvPa
     if (unit->winograd_.BT_ == NULL) {
       free(current_unit_weight);
       free(unit->winograd_.AT_);
+      current_unit_weight = NULL;
+      unit->winograd_.AT_ = NULL;
       return NNACL_NULL_PTR;
     }
     Float32ToFloat16(matrix_bt, unit->winograd_.BT_, unit->winograd_.o_ * unit->winograd_.o_);
@@ -238,6 +241,9 @@ int PackDeConvWgDataFp16(float16_t *nhwc_weight, DeConvComputeUnit *unit, ConvPa
       free(current_unit_weight);
       free(unit->winograd_.AT_);
       free(unit->winograd_.BT_);
+      current_unit_weight = NULL;
+      unit->winograd_.AT_ = NULL;
+      unit->winograd_.BT_ = NULL;
       return NNACL_NULL_PTR;
     }
 
@@ -268,6 +274,7 @@ int PackDeConvWgDataFp16(float16_t *nhwc_weight, DeConvComputeUnit *unit, ConvPa
   }
 
   free(current_unit_weight);
+  current_unit_weight = NULL;
   return NNACL_OK;
 }
 
@@ -320,14 +327,14 @@ void DeconvWgFp16(float16_t *nhwc_input_, float16_t *tile_in, float16_t *tile_ou
       float16_t *tmp_b = (float16_t *)unit->winograd_.b_buffer_ + task_id * unit->winograd_.kh_ * unit->winograd_.kw_ *
                                                                     DECONV_WINOGRAD_DEFAULT_TILE *
                                                                     deconv_param->oc_up4_;
-      _deConvWinogradFp16(tile_in, tile_out, (float16_t *)unit->weight_, tmp_buf, unit->winograd_.AT_, mid_a, dst_a,
-                          transfered, unit->winograd_.BT_, tmp_b, unit->winograd_.kh_, unit->w_start_, unit->h_start_,
-                          conv_param, deconv_param);
+      DeConvWgCalWgFp16(tile_in, tile_out, (float16_t *)unit->weight_, tmp_buf, unit->winograd_.AT_, mid_a, dst_a,
+                        transfered, unit->winograd_.BT_, tmp_b, unit->winograd_.kh_, unit->w_start_, unit->h_start_,
+                        conv_param, deconv_param);
     } else {
       float16_t *tmp_buf = (float16_t *)unit->tmp_buffer_ + task_id * deconv_param->oc_div4_ * unit->w_size_ *
                                                               unit->h_size_ * DECONV_WINOGRAD_DEFAULT_TILE * C4NUM;
-      _deConvCommonFp16(tile_in, tile_out, (float16_t *)unit->weight_, tmp_buf, unit->h_start_, unit->w_start_,
-                        unit->h_size_, unit->w_size_, conv_param, deconv_param);
+      DeConvWgCalCommFp16(tile_in, tile_out, (float16_t *)unit->weight_, tmp_buf, unit->h_start_, unit->w_start_,
+                          unit->h_size_, unit->w_size_, conv_param, deconv_param);
     }
   }
   return;

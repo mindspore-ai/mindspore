@@ -340,9 +340,9 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
   return;
 }
 
-void _deConvWinograd(const float *tile_in, float *tile_out, float *weight_buf, float *tmp_buf, const float *at_buf,
-                     float *a_mid_buf, float *trans_a_buf, bool *transfered, const float *bt_buf, float *b_tmp_buf,
-                     int unit_size, int w_start, int h_start, ConvParameter *conv_param, DeConvParam *deconv_param) {
+void DeConvWgCalWgFp32(const float *tile_in, float *tile_out, float *weight_buf, float *tmp_buf, float *at_buf,
+                       float *a_mid_buf, float *trans_a_buf, bool *transfered, const float *bt_buf, float *b_tmp_buf,
+                       int unit_size, int w_start, int h_start, ConvParameter *conv_param, DeConvParam *deconv_param) {
   int winograd_plane = unit_size * unit_size;
   if (!transfered[unit_size]) {
     WinogradTransLeft(tile_in, at_buf, a_mid_buf, DECONV_WINOGRAD_DEFAULT_UNIT, unit_size, DECONV_WINOGRAD_DEFAULT_UNIT,
@@ -380,8 +380,8 @@ void _deConvWinograd(const float *tile_in, float *tile_out, float *weight_buf, f
   return;
 }
 
-void _deConvCommon(float *tile_in, float *tile_out, const float *weight, float *tmp_buf, int h_start, int w_start,
-                   int h_size, int w_size, ConvParameter *conv_param, DeConvParam *deconv_param) {
+void DeConvWgCalCommFp32(float *tile_in, float *tile_out, const float *weight, float *tmp_buf, int h_start, int w_start,
+                         int h_size, int w_size, ConvParameter *conv_param, DeConvParam *deconv_param) {
   int count = deconv_param->oc_div4_ * w_size * h_size;
   int in_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
   int out_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up4_;
@@ -461,14 +461,14 @@ void DeconvWg(float *nhwc_input_, float *tile_in, float *tile_out, int start_ind
                                                               DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
       float *tmp_b_buf = (float *)unit->winograd_.b_buffer_ + task_id * unit->winograd_.kh_ * unit->winograd_.kw_ *
                                                                 deconv_param->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
-      _deConvWinograd(tile_in, tile_out, (float *)unit->weight_, tmp_buf, unit->winograd_.AT_, wg_mid_a_buf,
-                      wg_dst_a_buf, transfered, unit->winograd_.BT_, tmp_b_buf, unit->winograd_.kh_, unit->w_start_,
-                      unit->h_start_, conv_param, deconv_param);
+      DeConvWgCalWgFp32(tile_in, tile_out, (float *)unit->weight_, tmp_buf, unit->winograd_.AT_, wg_mid_a_buf,
+                        wg_dst_a_buf, transfered, unit->winograd_.BT_, tmp_b_buf, unit->winograd_.kh_, unit->w_start_,
+                        unit->h_start_, conv_param, deconv_param);
     } else {
       float *tmp_buf = (float *)unit->tmp_buffer_ + task_id * deconv_param->oc_div4_ * unit->w_size_ * unit->h_size_ *
                                                       DECONV_WINOGRAD_DEFAULT_TILE * C4NUM;
-      _deConvCommon(tile_in, tile_out, (float *)unit->weight_, tmp_buf, unit->h_start_, unit->w_start_, unit->h_size_,
-                    unit->w_size_, conv_param, deconv_param);
+      DeConvWgCalCommFp32(tile_in, tile_out, (float *)unit->weight_, tmp_buf, unit->h_start_, unit->w_start_,
+                          unit->h_size_, unit->w_size_, conv_param, deconv_param);
     }
   }
   return;
