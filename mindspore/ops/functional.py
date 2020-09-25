@@ -186,3 +186,4 @@ tensor_operator_registry.register('shape', shape)
 tensor_operator_registry.register('cast', cast)
 
 __all__ = [name for name in dir() if name[0] != "_"]
+__all__.remove('Primitive')
