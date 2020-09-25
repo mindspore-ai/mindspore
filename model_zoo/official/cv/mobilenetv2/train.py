@@ -35,7 +35,7 @@ from src.config import set_config
 
 from src.args import train_parse_args
 from src.utils import context_device_init, switch_precision, config_ckpoint, set_seed
-from src.models import CrossEntropyWithLabelSmooth, define_net
+from src.models import CrossEntropyWithLabelSmooth, define_net, load_ckpt
 
 set_seed(1)
 
@@ -50,7 +50,18 @@ if __name__ == '__main__':
     context_device_init(config)
 
     # define network
-    backbone_net, head_net, net = define_net(args_opt, config)
+    backbone_net, head_net, net = define_net(config)
+
+    # load the ckpt file to the network for fine tune or incremental leaning
+    if args_opt.pretrain_ckpt:
+        if args_opt.train_method == "fine_tune":
+            load_ckpt(net, args_opt.pretrain_ckpt)
+        elif args_opt.train_method == "incremental_learn":
+            load_ckpt(backbone_net, args_opt.pretrain_ckpt, trainable=False)
+        elif args_opt.train_method == "train":
+            pass
+        else:
+            raise ValueError("must input the usage of pretrain_ckpt when the pretrain_ckpt isn't None")
 
     # CPU only support "incremental_learn"
     if args_opt.train_method == "incremental_learn":

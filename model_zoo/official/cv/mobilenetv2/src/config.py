@@ -37,7 +37,8 @@ def set_config(args):
         "save_checkpoint_epochs": 1,
         "keep_checkpoint_max": 20,
         "save_checkpoint_path": "./checkpoint",
-        "platform": args.platform
+        "platform": args.platform,
+        "run_distribute": False
     })
     config_gpu = ed({
         "num_classes": 1000,

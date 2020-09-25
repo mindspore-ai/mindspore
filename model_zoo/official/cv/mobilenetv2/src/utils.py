@@ -23,6 +23,7 @@ from mindspore.common import dtype as mstype
 from mindspore.train.model import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.communication.management import get_rank, init, get_group_size
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
 from src.models import Monitor
 
@@ -58,8 +59,8 @@ def context_device_init(config):
         if config.run_distribute:
             context.set_auto_parallel_context(device_num=config.rank_size,
                                               parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              parameter_broadcast=True, gradients_mean=True,
-                                              all_reduce_fusion_config=[140])
+                                              parameter_broadcast=True, mirror_mean=True)
+            auto_parallel_context().set_all_reduce_fusion_split_indices([140])
             init()
     else:
         raise ValueError("Only support CPU, GPU and Ascend.")

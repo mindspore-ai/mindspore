@@ -119,20 +119,9 @@ def load_ckpt(network, pretrain_ckpt_path, trainable=True):
         for param in network.get_parameters():
             param.requires_grad = False
 
-def define_net(args, config):
-    backbone_net = MobileNetV2Backbone(platform=args.platform)
+def define_net(config):
+    backbone_net = MobileNetV2Backbone(platform=config.platform)
     head_net = MobileNetV2Head(input_channel=backbone_net.out_channels, num_classes=config.num_classes)
     net = mobilenet_v2(backbone_net, head_net)
-
-    # load the ckpt file to the network for fine tune or incremental leaning
-    if args.pretrain_ckpt:
-        if args.train_method == "fine_tune":
-            load_ckpt(net, args.pretrain_ckpt)
-        elif args.train_method == "incremental_learn":
-            load_ckpt(backbone_net, args.pretrain_ckpt, trainable=False)
-        elif args.train_method == "train":
-            pass
-        else:
-            raise ValueError("must input the usage of pretrain_ckpt when the pretrain_ckpt isn't None")
 
     return backbone_net, head_net, net
