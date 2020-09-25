@@ -113,7 +113,7 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
 
 class DatasetLenet(MindData):
     def __init__(self, predict, label, length=3):
-        super(DatasetLenet, self).__init__(size=length)
+        super(DatasetLenet, self).__init__()
         self.predict = predict
         self.label = label
         self.index = 0
