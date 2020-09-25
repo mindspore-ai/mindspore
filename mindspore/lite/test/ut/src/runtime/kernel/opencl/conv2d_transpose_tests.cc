@@ -120,12 +120,12 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
   }
 
   pGraph->Init();
-  memcpy(inputs[0]->data_c(), input_data, n * h * w * ci * dtype_size);
+  memcpy(inputs[0]->MutableData(), input_data, n * h * w * ci * dtype_size);
   pGraph->Run();
   if (enable_fp16) {
-    CompareOutput(outputs[0]->data_c(), output_data, n * oh * ow * co, static_cast<float16_t>(1e-3), 2e-2);
+    CompareOutput(outputs[0]->MutableData(), output_data, n * oh * ow * co, static_cast<float16_t>(1e-3), 2e-2);
   } else {
-    CompareOutput(outputs[0]->data_c(), output_data, n * oh * ow * co, static_cast<float>(1e-5));
+    CompareOutput(outputs[0]->MutableData(), output_data, n * oh * ow * co, static_cast<float>(1e-5));
   }
 
   for (auto t : inputs) {
