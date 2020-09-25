@@ -59,6 +59,13 @@ namespace dataset {
     }                                                                           \
   } while (false)
 
+#define RETURN_OK_IF_TRUE(_condition) \
+  do {                                \
+    if (_condition) {                 \
+      return Status::OK();            \
+    }                                 \
+  } while (false)
+
 enum class StatusCode : char {
   kOK = 0,
   kOutOfMemory = 1,
@@ -74,6 +81,9 @@ enum class StatusCode : char {
   kBoundingBoxOutOfBounds = 11,
   kBoundingBoxInvalidShape = 12,
   kSyntaxError = 13,
+  kTimeOut = 14,
+  kBuddySpaceFull = 15,
+  kNetWorkError = 16,
   // Make this error code the last one. Add new error code above it.
   kUnexpectedError = 127
 };
@@ -128,6 +138,8 @@ class Status {
   bool IsShapeIncorrect() const { return (get_code() == StatusCode::kShapeMisMatch); }
 
   bool IsNoSpace() const { return (get_code() == StatusCode::kNoSpace); }
+
+  bool IsNetWorkError() const { return (get_code() == StatusCode::kNetWorkError); }
 
  private:
   StatusCode code_;
