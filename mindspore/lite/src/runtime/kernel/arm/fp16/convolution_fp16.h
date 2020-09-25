@@ -53,14 +53,14 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
       ctx_->allocator->Free(packed_input_);
       packed_input_ = nullptr;
     }
-    if (tmp_output_block_ != nullptr) {
-      ctx_->allocator->Free(tmp_output_block_);
-      tmp_output_block_ = nullptr;
+    if (col_major_input_ != nullptr) {
+      ctx_->allocator->Free(col_major_input_);
+      col_major_input_ = nullptr;
     }
   }
   float16_t *packed_input_ = nullptr;
   float16_t *packed_weight_ = nullptr;
-  float16_t *tmp_output_block_ = nullptr;
+  float16_t *col_major_input_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

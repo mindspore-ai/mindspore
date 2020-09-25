@@ -43,18 +43,7 @@ extern "C" {
 
 // fp16 convolution common (im2col+gemm)
 void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_weight, float16_t *bias_data,
-              float16_t *tmp_out_block, float16_t *output_data, int task_id, ConvParameter *conv_param);
-
-// fp16 conv3x3
-void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16_t *bias_data, float16_t *output_data,
-                 float16_t *tile_buffer, float16_t *block_unit_buffer, float16_t *tmp_dst_buffer, float16_t *tmp_out,
-                 int task_id, ConvParameter *conv_param);
-
-void UnPack3x3OutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel);
-
-void UnPack3x3ReluOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel);
-
-void UnPack3x3Relu6OutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel);
+              float16_t *col_major_input, float16_t *output_data, int task_id, ConvParameter *conv_param);
 
 // fp16 convolution winograd
 void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const float16_t *bias_data,

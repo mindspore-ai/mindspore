@@ -17,6 +17,7 @@
 #include <string.h>
 #include "nnacl/fp16/pack_fp16.h"
 #include "nnacl/fp16/winograd_transform_fp16.h"
+#include "nnacl/fp16/matmul_fp16.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -122,7 +123,8 @@ void IndirectGemmFp16_16x8_c8(float16_t *output, float16_t *input, float16_t *we
 
 // fp16 convolution common (im2col+gemm)
 void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_weight, float16_t *bias_data,
-              float16_t *tmp_out_block, float16_t *output_data, int task_id, ConvParameter *conv_param) {
+              float16_t *col_major_input, float16_t *output_data, int task_id, ConvParameter *conv_param) {
+  const int tile_n = 16;
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int in_batch = conv_param->input_batch_;
@@ -132,203 +134,29 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
   int out_channel = conv_param->output_channel_;
-  bool relu = conv_param->act_type_ == ActType_Relu;
-  bool relu6 = conv_param->act_type_ == ActType_Relu6;
   int thread_count = conv_param->thread_num_;
-  const int tile_n = 16;
   int output_count = out_h * out_w;
   int output_tile_count = UP_DIV(output_count, tile_n);
-
-  int channel_block = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
-  int unit_size = kernel_plane * channel_block * C4NUM;
-
-  // we accumulate 4 channels per time for input blocks
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int conv_depth = kernel_h * kernel_w;
-  // bytes from one output's i-th channel to the next output's i-th channel
-  // we write 32 bytes per st1 instruction, after which the pointer in register will step 32B forward
+  int deep = kernel_plane * in_channel;
 
   for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * ic4 * C4NUM * in_h * in_w;
+    int in_batch_offset = b * in_channel * in_h * in_w;
     int out_batch_offset = b * out_channel * out_h * out_w;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * tile_n;
       int real_cal_num = (output_count - start_index) < tile_n ? (output_count - start_index) : tile_n;
-      float16_t *gemm_input = (float16_t *)(packed_input + task_id * unit_size * tile_n);
+      float16_t *gemm_input = packed_input + task_id * deep * tile_n;
+      float16_t *col_major_gemm_input = col_major_input + task_id * deep * tile_n;
+      size_t packed_input_size = deep * tile_n * sizeof(float16_t);
+      memset(gemm_input, 0, packed_input_size);
+      memset(col_major_gemm_input, 0, packed_input_size);
       Im2ColPackUnitFp16(input_data + in_batch_offset, conv_param, gemm_input, real_cal_num, start_index);
 
       int out_offset = thread_id * tile_n * out_channel + out_batch_offset;
-      if (real_cal_num == tile_n) {
-        float16_t *gemm_output = output_data + out_offset;
-        IndirectGemmFp16_16x8(gemm_output, gemm_input, packed_weight, bias_data, conv_depth, ic4, out_channel,
-                              out_channel * sizeof(float16_t), 0, 0, relu, relu6);
-      } else {
-        // res part
-        float16_t *tmp_out_ptr = tmp_out_block + task_id * tile_n * out_channel;
-        IndirectGemmFp16_16x8(tmp_out_ptr, gemm_input, packed_weight, bias_data, conv_depth, ic4, out_channel,
-                              out_channel * sizeof(float16_t), 0, 0, relu, relu6);
-        memcpy(output_data + out_offset, tmp_out_ptr, real_cal_num * out_channel * sizeof(float16_t));
-      }
-    }
-  }
-}
-
-// fp16 conv3x3
-void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16_t *bias_data, float16_t *output_data,
-                 float16_t *tile_buffer, float16_t *block_unit_buffer, float16_t *tmp_dst_buffer, float16_t *tmp_out,
-                 int task_id, ConvParameter *conv_param) {
-  int thread_count = conv_param->thread_num_;
-  const int tile_num = 16;
-  const int output_unit = 4;
-  const int k_plane = 36;
-  int ic8 = UP_DIV(conv_param->input_channel_, C8NUM);
-  int ic4 = ic8 * 2;
-  int oc8 = UP_DIV(conv_param->output_channel_, C8NUM);
-
-  int out_w_block = UP_DIV(conv_param->output_w_, C4NUM);
-  int out_h_block = UP_DIV(conv_param->output_h_, C4NUM);
-  int output_count = out_w_block * out_h_block;
-  int output_tile_count = UP_DIV(output_count, tile_num);
-  int tile_buffer_offset = tile_num * k_plane * ic4 * C4NUM;
-  int block_unit_buffer_offset = k_plane * C8NUM;
-  int tmp_dst_buffer_offset = tile_num * k_plane * oc8 * C8NUM;
-
-  int input_batch = conv_param->input_batch_;
-  for (int batch = 0; batch < input_batch; batch++) {
-    int tmp_out_batch_offset = batch * oc8 * C8NUM * out_w_block * out_h_block * output_unit * output_unit;
-    for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
-      int start_index = thread_id * tile_num;
-      int real_cal_num = (output_count - start_index) < tile_num ? (output_count - start_index) : tile_num;
-
-      Conv3x3Fp16InputTransform(input_data, tile_buffer + task_id * tile_buffer_offset,
-                                block_unit_buffer + task_id * block_unit_buffer_offset, start_index, real_cal_num,
-                                out_w_block, conv_param);
-
-      IndirectGemmFp16_16x8(tmp_dst_buffer + task_id * tmp_dst_buffer_offset,
-                            tile_buffer + task_id * tile_buffer_offset, transed_weight, NULL, 36, ic4, oc8 * C8NUM,
-                            oc8 * C8NUM * 36 * sizeof(float16_t), 1, 1, 0, 0);
-
-      Conv3x3Fp16OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tmp_out + tmp_out_batch_offset,
-                                 bias_data, start_index, real_cal_num, out_w_block, conv_param);
-    }
-  }
-}
-
-void UnPack3x3OutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel) {
-  int out_w_block = UP_DIV(width, C4NUM);
-  int out_h_block = UP_DIV(height, C4NUM);
-  int oc8 = UP_DIV(channel, C8NUM);
-
-  for (int b = 0; b < batch; b++) {
-    int tmp_out_batch_offset = b * oc8 * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
-    int ro_batch_size = b * channel * height * width;
-    const float16_t *batch_tmp_out = src + tmp_out_batch_offset;
-    float16_t *batch_out = dst + ro_batch_size;
-    for (int h = 0; h < height; h++) {
-      int src_h_offset = h * out_w_block * C4NUM * C8NUM;
-      const int dst_h_offset = h * width * channel;
-      for (int w = 0; w < width; w++) {
-        int src_w_offset = src_h_offset + w * C8NUM;
-        int dst_w_offset = dst_h_offset + w * channel;
-        for (int c = 0; c < oc8 - 1; ++c) {
-          int src_offset = c * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM + src_w_offset;
-          int dst_offset = dst_w_offset + c * C8NUM;
-          vst1q_f16(batch_out + dst_offset, vld1q_f16(batch_tmp_out + src_offset));
-        }
-
-        int c_res = channel - (oc8 - 1) * C8NUM;
-        int src_c_res_offset = src_w_offset + (oc8 - 1) * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
-        int dst_c_res_offset = dst_w_offset + (oc8 - 1) * C8NUM;
-        for (int c = 0; c < c_res; c++) {
-          int src_offset = src_c_res_offset + c;
-          int dst_offset = dst_c_res_offset + c;
-          (batch_out + dst_offset)[0] = (batch_tmp_out + src_offset)[0];
-        }
-      }
-    }
-  }
-}
-
-void UnPack3x3ReluOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel) {
-  int out_w_block = UP_DIV(width, C4NUM);
-  int out_h_block = UP_DIV(height, C4NUM);
-  int oc8 = UP_DIV(channel, C8NUM);
-
-  for (int b = 0; b < batch; b++) {
-    int tmp_out_batch_offset = b * oc8 * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
-    int ro_batch_size = b * channel * height * width;
-    const float16_t *batch_tmp_out = src + tmp_out_batch_offset;
-    float16_t *batch_out = dst + ro_batch_size;
-    for (int h = 0; h < height; h++) {
-      int src_h_offset = h * out_w_block * C4NUM * C8NUM;
-      const int dst_h_offset = h * width * channel;
-      for (int w = 0; w < width; w++) {
-        int src_w_offset = src_h_offset + w * C8NUM;
-        int dst_w_offset = dst_h_offset + w * channel;
-        for (int c = 0; c < oc8 - 1; ++c) {
-          int src_offset = c * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM + src_w_offset;
-          int dst_offset = dst_w_offset + c * C8NUM;
-          float16x8_t input_ptr = vld1q_f16(batch_tmp_out + src_offset);
-          float16x8_t zero = vdupq_n_f16(0);
-          input_ptr = vmaxq_f16(zero, input_ptr);
-          vst1q_f16(batch_out + dst_offset, input_ptr);
-        }
-
-        int c_res = channel - (oc8 - 1) * C8NUM;
-        int src_c_res_offset = src_w_offset + (oc8 - 1) * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
-        int dst_c_res_offset = dst_w_offset + (oc8 - 1) * C8NUM;
-        for (int c = 0; c < c_res; c++) {
-          int src_offset = src_c_res_offset + c;
-          int dst_offset = dst_c_res_offset + c;
-          float16_t input_data = (batch_tmp_out + src_offset)[0];
-          input_data = input_data < 0 ? 0 : input_data;
-          (batch_out + dst_offset)[0] = input_data;
-        }
-      }
-    }
-  }
-}
-
-void UnPack3x3Relu6OutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel) {
-  int out_w_block = UP_DIV(width, C4NUM);
-  int out_h_block = UP_DIV(height, C4NUM);
-  int oc8 = UP_DIV(channel, C8NUM);
-
-  for (int b = 0; b < batch; b++) {
-    int tmp_out_batch_offset = b * oc8 * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
-    int ro_batch_size = b * channel * height * width;
-    const float16_t *batch_tmp_out = src + tmp_out_batch_offset;
-    float16_t *batch_out = dst + ro_batch_size;
-    for (int h = 0; h < height; h++) {
-      int src_h_offset = h * out_w_block * C4NUM * C8NUM;
-      const int dst_h_offset = h * width * channel;
-      for (int w = 0; w < width; w++) {
-        int src_w_offset = src_h_offset + w * C8NUM;
-        int dst_w_offset = dst_h_offset + w * channel;
-        for (int c = 0; c < oc8 - 1; ++c) {
-          int src_offset = c * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM + src_w_offset;
-          int dst_offset = dst_w_offset + c * C8NUM;
-          float16x8_t input_ptr = vld1q_f16(batch_tmp_out + src_offset);
-          float16x8_t zero = vdupq_n_f16(0);
-          float16x8_t six = vdupq_n_f16(6);
-          input_ptr = vmaxq_f16(zero, input_ptr);
-          input_ptr = vminq_f16(six, input_ptr);
-          vst1q_f16(batch_out + dst_offset, input_ptr);
-        }
-
-        int c_res = channel - (oc8 - 1) * C8NUM;
-        int src_c_res_offset = src_w_offset + (oc8 - 1) * C8NUM * out_w_block * out_h_block * C4NUM * C4NUM;
-        int dst_c_res_offset = dst_w_offset + (oc8 - 1) * C8NUM;
-        for (int c = 0; c < c_res; c++) {
-          int src_offset = src_c_res_offset + c;
-          int dst_offset = dst_c_res_offset + c;
-          float16_t input_data = (batch_tmp_out + src_offset)[0];
-          input_data = input_data < 0 ? 0 : input_data;
-          input_data = input_data > 6 ? 6 : input_data;
-          (batch_out + dst_offset)[0] = input_data;
-        }
-      }
+      RowMajor2Col16MajorFp16Opt(gemm_input, col_major_gemm_input, tile_n, deep);
+      MatMulFp16(col_major_gemm_input, packed_weight, output_data + out_offset, bias_data, conv_param->act_type_, deep,
+                 real_cal_num, out_channel, out_channel, OutType_Nhwc);
     }
   }
 }
