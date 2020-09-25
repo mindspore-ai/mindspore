@@ -654,11 +654,11 @@ class FusedBatchNormEx(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The input of FusedBatchNormEx, Tensor of shape :math:`(N, C)`,
-                                 data type: float16 or float32.
+          data type: float16 or float32.
         - **scale** (Tensor) - Parameter scale, same with gamma above-mentioned, Tensor of shape :math:`(C,)`,
-                               data type: float32.
+          data type: float32.
         - **bias** (Tensor) - Parameter bias, same with beta above-mentioned, Tensor of shape :math:`(C,)`,
-                              data type: float32.
+          data type: float32.
         - **mean** (Tensor) - mean value, Tensor of shape :math:`(C,)`, data type: float32.
         - **variance** (Tensor) - variance value, Tensor of shape :math:`(C,)`, data type: float32.
 
@@ -670,7 +670,7 @@ class FusedBatchNormEx(PrimitiveWithInfer):
         - **updated_bias** (Tensor) - Updated parameter bias, Tensor of shape :math:`(C,)`, data type: float32.
         - **updated_moving_mean** (Tensor) - Updated mean value, Tensor of shape :math:`(C,)`, data type: float32.
         - **updated_moving_variance** (Tensor) - Updated variance value, Tensor of shape :math:`(C,)`,
-                                                 data type: float32.
+          data type: float32.
         - **reserve** (Tensor) - reserve space, Tensor of shape :math:`(C,)`, data type: float32.
 
     Examples:
