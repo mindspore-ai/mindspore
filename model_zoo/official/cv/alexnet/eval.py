@@ -41,6 +41,7 @@ if __name__ == "__main__":
                             path where the trained ckpt file')
     parser.add_argument('--dataset_sink_mode', type=ast.literal_eval,
                         default=True, help='dataset_sink_mode is False or True')
+    parser.add_argument('--device_id', type=int, default=0, help='device id of GPU or Ascend. (Default: 0)')
     args = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
