@@ -250,6 +250,8 @@ class SSD300(nn.Cell):
         pred_loc, pred_label = self.multi_box(multi_feature)
         if not self.is_training:
             pred_label = self.activation(pred_label)
+        pred_loc = F.cast(pred_loc, mstype.float32)
+        pred_label = F.cast(pred_label, mstype.float32)
         return pred_loc, pred_label
 
 
