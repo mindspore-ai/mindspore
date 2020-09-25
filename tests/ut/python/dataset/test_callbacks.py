@@ -217,13 +217,6 @@ def test_callbacks_all_2cbs():
     build_test_case_2cbs(4, 4)
 
 
-def skip_test_callbacks_2maps():
-    logger.info("test_callbacks_2maps")
-    # This test case is skipped because in rare cases (25 out 1000) it might fail
-    build_test_case_2maps(5, 10)
-    build_test_case_2maps(6, 9)
-
-
 class MyWaitedCallback(WaitedDSCallback):
     def __init__(self, events, step_size=1):
         super().__init__(step_size)
@@ -462,7 +455,6 @@ def test_callbacks_one_cb():
 
 
 if __name__ == '__main__':
-    skip_test_callbacks_2maps()
     test_callbacks_all_2cbs()
     test_callbacks_all_methods()
     test_callbacks_exceptions()
