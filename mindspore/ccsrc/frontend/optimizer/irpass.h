@@ -77,6 +77,9 @@ class OptimizeIRPassLib {
   SubstitutionPtr merge_addn_;
   SubstitutionPtr addn_zero_filter_;
 
+  // AccumulateNV2
+  SubstitutionPtr accumulaten_eliminater_;
+
   // Gradient irpasses
   SubstitutionPtr expand_jprim_;
   SubstitutionPtr minmaximum_grad_;

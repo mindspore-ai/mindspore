@@ -98,6 +98,7 @@ inline const PrimitivePtr kPrimConcatOffset = std::make_shared<Primitive>("Conca
 inline const PrimitivePtr kPrimReshape = std::make_shared<Primitive>("Reshape");
 inline const PrimitivePtr kPrimTile = std::make_shared<Primitive>("Tile");
 inline const PrimitivePtr kPrimAddN = std::make_shared<Primitive>("AddN");
+inline const PrimitivePtr kPrimAccumulateNV2 = std::make_shared<Primitive>("AccumulateNV2");
 inline const PrimitivePtr KPrimTransData = std::make_shared<Primitive>("TransData");
 inline const PrimitivePtr kPrimNMSWithMask = std::make_shared<Primitive>("NMSWithMask");
 inline const PrimitivePtr kPrimPad = std::make_shared<Primitive>("Pad");
