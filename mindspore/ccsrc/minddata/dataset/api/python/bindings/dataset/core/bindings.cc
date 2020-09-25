@@ -69,7 +69,7 @@ PYBIND_REGISTER(Tensor, 0, ([](const py::module *m) {
                       auto &tensor = py::cast<Tensor &>(t);
                       if (tensor.type() == DataType::DE_STRING) {
                         py::array res;
-                        tensor.GetDataAsNumpyStrings(&res);
+                        THROW_IF_ERROR(tensor.GetDataAsNumpyStrings(&res));
                         return res;
                       }
                       py::buffer_info info;
