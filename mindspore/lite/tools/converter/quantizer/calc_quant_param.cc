@@ -475,6 +475,7 @@ QuantParamCalcRegister::QuantParamCalcRegister() {
     _registerMap[schema::PrimitiveType_Add] = std::make_shared<CalcAdd>();
     _registerMap[schema::PrimitiveType_Mul] = commonCalcer;
     _registerMap[schema::PrimitiveType_Conv2D] = commonCalcer;
+    _registerMap[schema::PrimitiveType_DeConv2D] = commonCalcer;
     _registerMap[schema::PrimitiveType_DepthwiseConv2D] = commonCalcer;
     _registerMap[schema::PrimitiveType_Pooling] = linearCalcer;
     _registerMap[schema::PrimitiveType_Resize] = linearCalcer;
