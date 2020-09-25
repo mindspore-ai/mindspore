@@ -156,7 +156,8 @@ int ArithmeticFP16CPUKernel::BroadcastRun(float16_t *input0, float16_t *input1, 
 int ArithmeticFP16CPUKernel::DoArithmetic(int task_id) {
   int stride_per_thread = UP_DIV(param_->broadcasting_ ? outside_ : param_->out_elements_num_, context_->thread_num_);
   int cur_offset = stride_per_thread * task_id;
-  int cur_count = MSMIN(stride_per_thread, param_->out_elements_num_ - cur_offset);
+  int cur_count = param_->broadcasting_ ? MSMIN(stride_per_thread, outside_ - cur_offset)
+                                        : MSMIN(stride_per_thread, param_->out_elements_num_ - cur_offset);
 
   int ret = RET_OK;
   if (param_->broadcasting_) {
