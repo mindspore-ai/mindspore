@@ -44,8 +44,7 @@ class GPUDeviceAddress : public DeviceAddress {
 
 #ifdef ENABLE_DEBUGGER
   bool LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
-                     const ShapeVector &host_shape, TypeId host_type, size_t slot, Debugger *debugger,
-                     bool keep_prev) const;
+                     const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev) const override;
 #endif
  private:
   DeviceAddressStatus status_{DeviceAddressStatus::kInDevice};

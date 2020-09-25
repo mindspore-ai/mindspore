@@ -70,6 +70,12 @@ class DeviceAddress : public mindspore::DeviceSync {
                              const ShapeVector &host_shape, TypeId host_type) const {
     return true;
   }
+#ifdef ENABLE_DEBUGGER
+  virtual bool LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
+                             const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev) const {
+    return true;
+  }
+#endif
 
  protected:
   const void *ptr() const { return ptr_; }

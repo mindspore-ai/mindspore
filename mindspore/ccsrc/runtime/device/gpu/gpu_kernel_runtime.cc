@@ -111,7 +111,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     auto shape = AnfAlgo::GetOutputDeviceShape(input_kernel, PARAMETER_OUTPUT_INDEX);
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
                          [](size_t inner_item) { return SizeToInt(inner_item); });
-    auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, debugger, true);
+    auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, true);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
                     << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
@@ -130,7 +130,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     auto shape = AnfAlgo::GetOutputDeviceShape(kernel, j);
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
                          [](size_t inner_item) { return SizeToInt(inner_item); });
-    auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, debugger, false);
+    auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
                     << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
@@ -145,36 +145,6 @@ void UpdateStepNum(Debugger *debugger, bool dump_enabled) {
     auto cur_step_num = debugger->step_num();
     cur_step_num = cur_step_num + 1;
     debugger->SetStepNum(cur_step_num);
-  }
-}
-
-void LoadParameters(const session::KernelGraph *graph, Debugger *debugger, bool dump_enabled) {
-  MS_EXCEPTION_IF_NULL(graph);
-  if (!(debugger && dump_enabled)) {
-    return;
-  }
-  const auto &parameters = graph->inputs();
-  // for parameters, set its execution order to be 0;
-  int exec_order = 0;
-  for (auto &item : parameters) {
-    if (!item->isa<Parameter>()) {
-      continue;
-    }
-    std::string parameter_name = item->fullname_with_scope();
-    auto addr = AnfAlgo::GetOutputAddr(item, PARAMETER_OUTPUT_INDEX);
-    auto type = AnfAlgo::GetOutputInferDataType(item, PARAMETER_OUTPUT_INDEX);
-    auto format = kOpFormat_DEFAULT;
-    string tensor_name = parameter_name + ':' + "0";
-    auto gpu_addr = dynamic_cast<const mindspore::device::gpu::GPUDeviceAddress *>(addr);
-    ShapeVector int_shapes;
-    auto shape = AnfAlgo::GetOutputDeviceShape(item, PARAMETER_OUTPUT_INDEX);
-    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                         [](size_t inner_item) { return SizeToInt(inner_item); });
-    auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, 0, debugger, true);
-    if (!ret) {
-      MS_LOG(ERROR) << "LoadMemToHost:"
-                    << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
-    }
   }
 }
 
@@ -601,7 +571,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
   }
   if (!mock) {
     // collect weights and bias for dump mode
-    LoadParameters(graph, debugger, dump_enabled);
+    if (debugger) debugger->LoadParameters();
     CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
   }
   ClearSwapInfo(mock);

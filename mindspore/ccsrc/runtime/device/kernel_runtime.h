@@ -53,8 +53,8 @@ class KernelRuntime {
   void RunOpAssignMemory(const ValuePtr &pre_output_value, const std::vector<tensor::TensorPtr> &input_tensors,
                          session::KernelGraph *graph);
   void RunOpClearMemory(const session::KernelGraph *graph);
-  bool DumpDataEnabled();
-  bool DumpDataEnabledIteration();
+  static bool DumpDataEnabled();
+  static bool DumpDataEnabledIteration();
   virtual bool LoadData(session::KernelGraph *graph, Debugger *debugger);
   virtual bool Load(session::KernelGraph *graph, bool is_task_sink);
   virtual bool Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger = nullptr) = 0;

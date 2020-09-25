@@ -171,7 +171,7 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   device::KernelAdjust::GetInstance().Profiling(NOT_NULL(root_graph.get()));
   // build kernel
   BuildKernel(root_graph);
-  if (debugger_) {
+  if (debugger_ && debugger_->partial_memory()) {
     debugger_->PreExecute(root_graph);
   }
   SetSummaryNodes(root_graph.get());
@@ -248,7 +248,7 @@ void AscendSession::BuildGraph(GraphId graph_id) {
   BuildKernel(graph);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (debugger_) {
+  if (debugger_ && debugger_->partial_memory()) {
     debugger_->PreExecute(graph);
   }
   if (ms_context->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
@@ -312,6 +312,9 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
   }
   // load input data from user input
   LoadInputData(kernel_graph, inputs);
+  if (debugger_) {
+    debugger_->PreExecute(kernel_graph);
+  }
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   // Initialize parameter server
   InitPSParamAndOptim(kernel_graph, inputs);
