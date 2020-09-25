@@ -17,6 +17,7 @@
 
 from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
+from ... import context
 from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, prim_attr_register
 from ..operations.math_ops import _infer_shape_reduce
@@ -200,10 +201,13 @@ class ExtractImagePatches(PrimitiveWithInfer):
         self.padding = validator.check_string('padding', padding.upper(), ['VALID', 'SAME'], self.name)
         self.add_prim_attr("padding", self.padding)
         self.add_prim_attr("io_format", "NHWC")
+        self.is_ge = context.get_context("enable_ge")
 
     def infer_shape(self, input_x):
         """infer shape"""
-        in_batch, in_row, in_col, in_depth = input_x
+        in_batch, in_depth, in_row, in_col = input_x
+        if self.is_ge:
+            in_batch, in_row, in_col, in_depth = input_x
         _, ksize_row, ksize_col, _ = self.ksizes
         _, stride_row, stride_col, _ = self.strides
         _, rate_row, rate_col, _ = self.rates
@@ -223,7 +227,9 @@ class ExtractImagePatches(PrimitiveWithInfer):
             out_row = (in_row - 1) // stride_row + 1
             out_col = (in_col - 1) // stride_col + 1
 
-        out_shape = [out_batch, out_row, out_col, out_depth]
+        out_shape = [out_batch, out_depth, out_row, out_col]
+        if self.is_ge:
+            out_shape = [out_batch, out_row, out_col, out_depth]
         return out_shape
 
     def infer_dtype(self, input_x):
