@@ -200,8 +200,8 @@ class PrimitiveWithCheck(Primitive):
 
     There are three methods can be overide to define the check logic of the primitive: __check__(), check_shape(),
     check_dtype(). If __check__() is defined in primitive, the __check__() has highest priority to be called.
-    If __check__() is not defined, infer_shape() and infer_dtype() can be defined to describe the check logic of
-    the shape and type.
+    If __check__() is not defined, check_shape() and check_dtype() can be defined to describe the check logic of
+    the shape and type. Method infer_value() can also be defined (such as PrimitiveWithInfer) for constant propagation.
 
     Args:
         name (str): Name of the current Primitive.
