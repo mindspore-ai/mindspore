@@ -48,6 +48,8 @@ class DeConv2D : public PrimitiveC {
   void SetHasBias(bool has_bias);
   void SetActivationType(int activation_type);
   void PopulaterDeConv2DSingleGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group);
+  void PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group,
+                                 const std::vector<AnfNodePtr> &inputs);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 
 #else

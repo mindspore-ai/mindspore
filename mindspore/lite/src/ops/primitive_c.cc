@@ -423,6 +423,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<StridedSlice>(prim, inputs, quantType);
   } else if (op_type == "Cast") {
     return NewPrimitiveC<Cast>(prim, inputs, quantType);
+  } else if (op_type == "Maximum") {
+    return NewPrimitiveC<Maximum>(prim, inputs, quantType);
   } else if (op_type == "Split") {
     return NewPrimitiveC<Split>(prim, inputs, quantType);
 

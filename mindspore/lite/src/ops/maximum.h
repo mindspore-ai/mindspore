@@ -22,6 +22,7 @@
 #include <cmath>
 
 #include "src/ops/arithmetic.h"
+#include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
@@ -31,6 +32,7 @@ class Maximum : public Arithmetic {
   MS_DECLARE_PARENT(Arithmetic, Arithmetic);
   Maximum() = default;
   explicit Maximum(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   Maximum() = default;
 
