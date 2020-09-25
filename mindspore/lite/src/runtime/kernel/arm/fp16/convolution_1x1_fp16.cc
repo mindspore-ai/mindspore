@@ -59,8 +59,15 @@ int Convolution1x1FP16CPUKernel::InitConv1x1Param() {
   pre_trans_input_ = (conv_param_->pad_u_ != 0 || conv_param_->pad_l_ != 0 || conv_param_->stride_h_ != 1 ||
                       conv_param_->stride_w_ != 1);
 
-  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, C8NUM));
-  thread_stride_ = UP_DIV(UP_DIV(matmul_param_->col_, C8NUM), thread_count_) * C8NUM;
+  if ((matmul_param_->row_ > (C16NUM * op_parameter_->thread_num_)) && (matmul_param_->row_ > matmul_param_->col_)) {
+    multi_thread_by_hw_ = true;
+    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->row_, C16NUM));
+    thread_stride_ = UP_DIV(UP_DIV(matmul_param_->row_, C16NUM), thread_count_) * C16NUM;
+  } else {
+    multi_thread_by_hw_ = false;
+    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, C8NUM));
+    thread_stride_ = UP_DIV(UP_DIV(matmul_param_->col_, C8NUM), thread_count_) * C8NUM;
+  }
 
   if (pre_trans_input_) {
     input_ptr_ = reinterpret_cast<float16_t *>(malloc(matmul_param_->row_ * matmul_param_->deep_ * sizeof(float16_t)));
@@ -153,19 +160,7 @@ int Convolution1x1FP16CPUKernel::ReSize() {
   return RET_OK;
 }
 
-void Convolution1x1FP16CPUKernel::Pre1x1Trans(float16_t *src_input, float16_t *src_output) {
-  output_ptr_ = src_output;
-  if (pre_trans_input_) {
-    Conv1x1InputPackFp16(src_input, input_ptr_, conv_param_);
-  } else {
-    input_ptr_ = src_input;
-  }
-
-  RowMajor2Col16MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
-  return;
-}
-
-int Convolution1x1FP16CPUKernel::RunImpl(int task_id) {
+int Convolution1x1FP16CPUKernel::RunOc(int task_id) {
   int cur_stride = matmul_param_->col_ - task_id * thread_stride_;
   int cur_oc = MSMIN(thread_stride_, cur_stride);
   if (cur_oc <= 0) {
@@ -181,11 +176,39 @@ int Convolution1x1FP16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-static int Convolution1x1Fp16Impl(void *cdata, int task_id) {
+int Convolution1x1FP16CPUKernel::RunHw(int task_id) {
+  int res_stride = matmul_param_->row_ - task_id * thread_stride_;
+  int cur_hw_ = MSMIN(thread_stride_, res_stride);
+  if (cur_hw_ <= 0) {
+    return RET_OK;
+  }
+
+  float16_t *thread_input_ptr = input_ptr_ + task_id * thread_stride_ * matmul_param_->deep_;
+  float16_t *thread_pack_input = pack_input_ + task_id * thread_stride_ * matmul_param_->deep_;
+  RowMajor2Col16MajorFp16Opt(thread_input_ptr, thread_pack_input, cur_hw_, matmul_param_->deep_);
+
+  float16_t *thread_output_ptr = output_ptr_ + task_id * thread_stride_ * matmul_param_->col_;
+  MatMulFp16(thread_pack_input, weight_ptr_, thread_output_ptr, reinterpret_cast<float16_t *>(bias_data_),
+             matmul_param_->act_type_, matmul_param_->deep_, cur_hw_, matmul_param_->col_, matmul_param_->col_, true);
+
+  return RET_OK;
+}
+
+static int Convolution1x1Fp16RunOc(void *cdata, int task_id) {
   auto conv = reinterpret_cast<Convolution1x1FP16CPUKernel *>(cdata);
-  auto error_code = conv->RunImpl(task_id);
+  auto error_code = conv->RunOc(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Convolution1x1 Fp16 Run error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+static int Convolution1x1Fp16RunHw(void *cdata, int task_id) {
+  auto conv = reinterpret_cast<Convolution1x1FP16CPUKernel *>(cdata);
+  auto error_code = conv->RunHw(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Convolution1x1 Fp16 Run hw error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
   }
   return RET_OK;
@@ -212,14 +235,20 @@ int Convolution1x1FP16CPUKernel::Run() {
   }
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
-    Pre1x1Trans(
-      execute_input_ + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_,
-      execute_output_ + batch_index * matmul_param_->row_ * matmul_param_->col_);
+    output_ptr_ = execute_output_ + batch_index * matmul_param_->row_ * matmul_param_->col_;
+    float16_t *batch_in =
+      execute_input_ + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_;
+    if (pre_trans_input_) {
+      Conv1x1InputPack(batch_in, input_ptr_, conv_param_, sizeof(float16_t));
+    } else {
+      input_ptr_ = batch_in;
+    }
 
-    int error_code = ParallelLaunch(this->context_->thread_pool_, Convolution1x1Fp16Impl, this, thread_count_);
-    if (error_code != RET_OK) {
-      MS_LOG(ERROR) << "conv1x1 fp16 error error_code[" << error_code << "]";
-      return RET_ERROR;
+    if (multi_thread_by_hw_) {
+      ParallelLaunch(this->context_->thread_pool_, Convolution1x1Fp16RunHw, this, thread_count_);
+    } else {
+      RowMajor2Col16MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+      ParallelLaunch(this->context_->thread_pool_, Convolution1x1Fp16RunOc, this, thread_count_);
     }
   }
 

@@ -37,17 +37,20 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int RunImpl(int task_id);
+
+ public:
+  int RunOc(int task_id);
+  int RunHw(int task_id);
 
  private:
   void FreeTmpBuffer();
   int InitConv1x1Param();
   int InitMatmulParam();
   int InitWeightBias();
-  void Pre1x1Trans(float16_t *src_input, float16_t *src_output);
 
  private:
   bool pre_trans_input_ = false;
+  bool multi_thread_by_hw_ = false;
   int thread_count_ = 1;
   int thread_stride_ = 0;
   float16_t *weight_ptr_ = nullptr;
