@@ -191,10 +191,11 @@ class LSTMCell(Cell):
     `Long Short-Term Memory Recurrent Neural Network Architectures for Large Scale Acoustic Modeling
     <https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/43905.pdf>`_.
 
+    LSTMCell is a single-layer RNN, you can achieve multi-layer RNN by stacking LSTMCell.
+
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
-        layer_index (int): index of current layer of stacked LSTM . Default: 0.
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
         batch_first (bool): Specifies whether the first dimension of input is batch_size. Default: False.
         dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
@@ -205,40 +206,43 @@ class LSTMCell(Cell):
     Inputs:
         - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`).
         - **h** - data type mindspore.float32 or
-          mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+          mindspore.float16 and shape (num_directions, batch_size, `hidden_size`).
         - **c** - data type mindspore.float32 or
-          mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+          mindspore.float16 and shape (num_directions, batch_size, `hidden_size`).
           Data type of `h' and 'c' must be the same of `input`.
+        - **w** - data type mindspore.float32 or
+          mindspore.float16 and shape (`weight_size`, 1, 1).
+          The value of `weight_size` depends on `input_size`, `hidden_size` and `bidirectional`
 
     Outputs:
         `output`, `h_n`, `c_n`, 'reserve', 'state'.
 
         - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`).
-        - **h** - A Tensor with shape (num_directions * `num_layers`, batch_size, `hidden_size`).
-        - **c** - A Tensor with shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **h** - A Tensor with shape (num_directions, batch_size, `hidden_size`).
+        - **c** - A Tensor with shape (num_directions, batch_size, `hidden_size`).
         - **reserve** - reserved
         - **state** - reserved
 
     Examples:
         >>> class LstmNet(nn.Cell):
-        >>>     def __init__(self, input_size, hidden_size, layer_index, has_bias, batch_first, bidirectional):
+        >>>     def __init__(self, input_size, hidden_size, has_bias, batch_first, bidirectional):
         >>>         super(LstmNet, self).__init__()
         >>>         self.lstm = nn.LSTMCell(input_size=input_size,
         >>>                             hidden_size=hidden_size,
-        >>>                             layer_index=layer_index,
         >>>                             has_bias=has_bias,
         >>>                             batch_first=batch_first,
         >>>                             bidirectional=bidirectional,
         >>>                             dropout=0.0)
         >>>
-        >>>     def construct(self, inp, h0, c0):
-        >>>         return self.lstm(inp, (h0, c0))
+        >>>     def construct(self, inp, h, c, w):
+        >>>         return self.lstm(inp, h, c, w)
         >>>
-        >>> net = LstmNet(10, 12, 2, has_bias=True, batch_first=True, bidirectional=False)
+        >>> net = LstmNet(10, 12, has_bias=True, batch_first=True, bidirectional=False)
         >>> input = Tensor(np.ones([3, 5, 10]).astype(np.float32))
-        >>> h0 = Tensor(np.ones([1 * 2, 3, 12]).astype(np.float32))
-        >>> c0 = Tensor(np.ones([1 * 2, 3, 12]).astype(np.float32))
-        >>> output, hn, cn, _, _ = net(input, h0, c0)
+        >>> h = Tensor(np.ones([1, 3, 12]).astype(np.float32))
+        >>> c = Tensor(np.ones([1, 3, 12]).astype(np.float32))
+        >>> w = Tensor(np.ones([1152, 1, 1]).astype(np.float32))
+        >>> output, h, c, _, _ = net(input, h, c, w)
     """
 
     def __init__(self,
