@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/arm/fp16/convolution_fp16.h"
 #include <vector>
-#include "src/runtime/kernel/arm/fp16/convolution_sw_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_winograd_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_3x3_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_1x1_fp16.h"
@@ -203,19 +202,13 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
-  int stride_h = conv_param->stride_h_;
-  int stride_w = conv_param->stride_w_;
-  int dilation_h = conv_param->dilation_h_;
-  int dilation_w = conv_param->dilation_w_;
   conv_param->input_h_ = inputs.front()->Height();
   conv_param->input_w_ = inputs.front()->Width();
   conv_param->output_h_ = outputs.front()->Height();
   conv_param->output_w_ = outputs.front()->Width();
 
   kernel::LiteKernel *kernel = nullptr;
-  if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
-    kernel = new (std::nothrow) kernel::ConvolutionFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  } else if (kernel_h == 1 && kernel_w == 1) {
+  if (kernel_h == 1 && kernel_w == 1) {
     kernel = new (std::nothrow) kernel::Convolution1x1FP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else {
     bool use_winograd = false;

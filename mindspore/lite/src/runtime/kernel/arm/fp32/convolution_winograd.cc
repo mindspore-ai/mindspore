@@ -117,9 +117,8 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
   conv_param_->output_channel_ = out_channel;
 
   int oc4 = UP_DIV(out_channel, C4NUM);
-  int oc_block, oc_block_num;
-  oc_block = C8NUM;
-  oc_block_num = UP_DIV(out_channel, C8NUM);
+  const int oc_block = C8NUM;
+  int oc_block_num = UP_DIV(out_channel, C8NUM);
 
   // set data
   auto trans_matrix_data_size = input_unit_ * input_unit_ * ic4 * C4NUM * oc_block_num * oc_block * sizeof(float);
@@ -172,9 +171,6 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
 
 int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   int channel_out = conv_param_->output_channel_;
-  int output_h = conv_param_->output_h_;
-  int output_w = conv_param_->output_w_;
-  int oc4 = UP_DIV(channel_out, C4NUM);
   int oc8 = UP_DIV(channel_out, C8NUM);
   int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
 #ifdef ENABLE_ARM32
@@ -198,16 +194,6 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  int out_w_block = UP_DIV(output_w, output_unit_);
-  int out_h_block = UP_DIV(output_h, output_unit_);
-  tmp_out_data_ =
-    reinterpret_cast<float *>(ctx_->allocator->Malloc(conv_param_->output_batch_ * out_w_block * out_h_block *
-                                                      output_unit_ * output_unit_ * oc4 * C4NUM * sizeof(float)));
-  if (tmp_out_data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc tmp_out_data_ failed.";
-    return RET_MEMORY_FAILED;
-  }
-
   tmp_data_ = reinterpret_cast<float *>(
     ctx_->allocator->Malloc(thread_count_ * C4NUM * input_unit_ * input_unit_ * sizeof(float)));
   if (tmp_data_ == nullptr) {
@@ -224,16 +210,12 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
 
   tmp_buffer_address_list_[0] = trans_input_;
   tmp_buffer_address_list_[1] = gemm_out_;
-  tmp_buffer_address_list_[2] = tmp_out_data_;
-  tmp_buffer_address_list_[3] = tmp_data_;
-  tmp_buffer_address_list_[4] = col_buffer_;
+  tmp_buffer_address_list_[2] = tmp_data_;
+  tmp_buffer_address_list_[3] = col_buffer_;
   return RET_OK;
 }
 
 int ConvolutionWinogradCPUKernel::ConfigInputOutput() {
-  auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_tensor->SetFormat(schema::Format::Format_NHWC);
-
   in_func_ = GetInputTransFunc(input_unit_);
   if (in_func_ == nullptr) {
     MS_LOG(ERROR) << "in_func_ is null.";

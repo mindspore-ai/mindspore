@@ -61,10 +61,6 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
       ctx_->allocator->Free(gemm_out_);
       gemm_out_ = nullptr;
     }
-    if (tmp_out_data_ != nullptr) {
-      ctx_->allocator->Free(tmp_out_data_);
-      tmp_out_data_ = nullptr;
-    }
     if (col_buffer_ != nullptr) {
       ctx_->allocator->Free(col_buffer_);
       col_buffer_ = nullptr;
@@ -76,10 +72,9 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   float *tmp_data_ = nullptr;
   float *trans_input_ = nullptr;
   float *gemm_out_ = nullptr;
-  float *tmp_out_data_ = nullptr;
   float *col_buffer_ = nullptr;
   float *trans_weight_ = nullptr;
-  TmpBufferAddress tmp_buffer_address_list_[5];
+  TmpBufferAddress tmp_buffer_address_list_[4];
   InputTransFunc in_func_;
   OutputTransFunc out_func_;
 };

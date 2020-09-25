@@ -41,8 +41,7 @@ void ConvFp32(float *input_data, float *packed_input, float *packed_weight, cons
 #endif
   int output_tile_count = UP_DIV(output_count, cal_num);
   int kernel_plane = kernel_h * kernel_w;
-  int unit_size = kernel_plane * in_channel;
-  int deep = in_channel * kernel_plane;
+  int deep = kernel_plane * in_channel;
 
   for (int b = 0; b < in_batch; b++) {
     int in_batch_offset = b * in_channel * in_h * in_w;
@@ -50,9 +49,9 @@ void ConvFp32(float *input_data, float *packed_input, float *packed_weight, cons
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * cal_num;
       int real_cal_num = (output_count - start_index) < cal_num ? (output_count - start_index) : cal_num;
-      float *gemm_input = packed_input + task_id * unit_size * cal_num;
-      float *col_major_gemm_input = col_major_input + task_id * unit_size * cal_num;
-      size_t packed_input_size = unit_size * cal_num * sizeof(float);
+      float *gemm_input = packed_input + task_id * deep * cal_num;
+      float *col_major_gemm_input = col_major_input + task_id * deep * cal_num;
+      size_t packed_input_size = deep * cal_num * sizeof(float);
       memset(gemm_input, 0, packed_input_size);
       memset(col_major_gemm_input, 0, packed_input_size);
       Im2ColPackUnitFp32(input_data + in_batch_offset, conv_param, gemm_input, real_cal_num, start_index);
@@ -95,8 +94,8 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
 
   float *trans_input = buffer_list[0];
   float *gemm_out = buffer_list[1];
-  float *tmp_data = buffer_list[3];
-  float *col_buffer = buffer_list[4];
+  float *tmp_data = buffer_list[2];
+  float *col_buffer = buffer_list[3];
   int trans_input_offset = tile_num * input_unit_square * ic4 * C4NUM;
   int gemm_out_offset = tile_num * input_unit_square * oc8 * C8NUM;
   int tmp_data_offset = input_unit_square * C4NUM;

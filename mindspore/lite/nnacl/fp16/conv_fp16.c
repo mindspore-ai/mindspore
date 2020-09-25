@@ -120,208 +120,6 @@ void IndirectGemmFp16_16x8_c8(float16_t *output, float16_t *input, float16_t *we
 }
 #endif
 
-void SWBorderPixel(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias, int height,
-                   int width, int in_kh_step, int in_kw_step, int kernel_h, int kernel_w, int ic, bool is_relu,
-                   bool is_relu6) {
-  int ic8 = ic / C8NUM;
-  int ic8_res = ic8 % C8NUM;
-  int ic4 = ic8_res / C4NUM;
-  for (int c = 0; c < C4NUM; c++) {
-    dst[c] = 0;
-  }
-  const float16_t *weight_oc = weight;
-  for (int oc = 0; oc < C4NUM; ++oc) {
-    const float16_t *weight_kh = weight_oc;
-    const float16_t *src_kh = src;
-    for (int kh = 0; kh < height; kh++) {
-      const float16_t *src_kw = src_kh;
-      const float16_t *weight_kw = weight_kh;
-      for (int kw = 0; kw < width; kw++) {
-        const float16_t *src_ic8 = src_kw;
-        const float16_t *weight_ic8 = weight_kw;
-
-        for (int rc = 0; rc < ic8; ++rc) {
-          for (int c = 0; c < C8NUM; c++) {
-            dst[oc] += src_ic8[c] * weight_ic8[c];
-          }
-          src_ic8 += C8NUM;
-          weight_ic8 += C8NUM;
-        }  // ic8 loop
-
-        const float16_t *src_ic4 = src_ic8;
-        const float16_t *weight_ic4 = weight_ic8;
-        for (int rc = 0; rc < ic4; ++rc) {
-          for (int c = 0; c < C4NUM; c++) {
-            dst[oc] += src_ic4[c] * weight_ic4[c];
-          }
-          src_ic4 += C4NUM;
-          weight_ic4 += C4NUM;
-        }  // ic4 loop
-
-        src_kw += in_kw_step;
-        weight_kw += ic4 * C4NUM;
-      }  // kernel_w loop
-      src_kh += in_kh_step;
-      weight_kh += kernel_w * ic4 * C4NUM;
-    }  // kernel_h loop
-    dst[oc] += bias[oc];
-    dst[oc] = (is_relu) ? (MSMAX(0, dst[oc])) : (dst[oc]);
-    dst[oc] = (is_relu6) ? (MSMIN(6, MSMAX(0, dst[oc]))) : (dst[oc]);
-    weight_oc += kernel_h * kernel_w * ic4 * C4NUM;
-  }  // oc loop
-}
-
-void SWBorderFp16(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias, int top,
-                  int bottom, int left, int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
-  bool relu = conv_param->act_type_ == ActType_Relu;
-  bool relu6 = conv_param->act_type_ == ActType_Relu6;
-  float16_t *dst_h = dst + top * sliding->out_h_step_;
-  for (int oh = top; oh < bottom; oh++) {
-    int ih = oh * conv_param->stride_h_ - conv_param->pad_u_;
-    int start_kh = MSMAX(0, UP_DIV(-ih, conv_param->dilation_h_));
-    int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih, conv_param->dilation_h_));
-    const float16_t *src_h = src + ih * sliding->in_h_step_;
-
-    float16_t *dst_kernel = dst_h + left * sliding->block_channel_;
-    for (int ow = left; ow < right; ow++) {
-      int iw = ow * conv_param->stride_w_ - conv_param->pad_l_;
-      int start_kw = MSMAX(0, UP_DIV(-iw, conv_param->dilation_w_));
-      int end_kw = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->input_w_ - iw, conv_param->dilation_w_));
-      const float16_t *src_w = src_h + iw * sliding->ic4_channel_;
-
-      const float16_t *src_kernel = src_w + start_kh * sliding->in_kh_step_ + start_kw * sliding->in_kw_step_;
-      const float16_t *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * sliding->ic4_channel_;
-
-      SWBorderPixel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
-                    sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_h_, conv_param->kernel_w_,
-                    sliding->ic4_channel_, relu, relu6);
-
-      dst_kernel += sliding->block_channel_;
-    }  // width loop
-    dst_h += sliding->out_h_step_;
-  }  // height loop
-}
-
-void SWCenterFp16(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias, int height,
-                  int width, int kernel_h, int kernel_w, int out_h_step, int block_channel, int ic, int in_sh_step,
-                  int in_sw_step, int in_kh_step, int in_kw_step, bool is_relu, bool is_relu6) {
-  int ic8 = ic / C8NUM;
-  int ic8_res = ic % C8NUM;
-  int ic4 = ic8_res / C4NUM;
-  float16_t *dst_h = dst;
-  const float16_t *src_h = src;
-  for (int oh = 0; oh < height; oh++) {
-    float16_t *dst_w = dst_h;
-    const float16_t *src_w = src_h;
-    for (int ow = 0; ow < width; ow++) {
-      const float16_t *weight_oc = weight;
-      for (int c = 0; c < C4NUM; c++) {
-        dst_w[c] = 0;
-      }
-
-      for (int oc = 0; oc < C4NUM; oc++) {
-        const float16_t *weight_kh = weight_oc;
-        const float16_t *src_kh = src_w;
-        for (int kh = 0; kh < kernel_h; kh++) {
-          const float16_t *src_kw = src_kh;
-          const float16_t *weight_kw = weight_kh;
-          for (int kw = 0; kw < kernel_w; kw++) {
-            const float16_t *src_ic8 = src_kw;
-            const float16_t *weight_ic8 = weight_kw;
-
-            for (int rc = 0; rc < ic8; ++rc) {
-              for (int c = 0; c < C8NUM; c++) {
-                dst_w[oc] += src_ic8[c] * weight_ic8[c];
-              }
-
-              src_ic8 += C8NUM;
-              weight_ic8 += C8NUM;
-            }  // ic8 loop
-
-            const float16_t *src_ic4 = src_ic8;
-            const float16_t *weight_ic4 = weight_ic8;
-            for (int rc = 0; rc < ic4; ++rc) {
-              for (int c = 0; c < C4NUM; c++) {
-                dst_w[oc] += src_ic4[c] * weight_ic4[c];
-              }
-
-              src_ic4 += C4NUM;
-              weight_ic4 += C4NUM;
-            }  // ic4 loop
-
-            src_kw += in_kw_step;
-            weight_kw += ic4 * C4NUM;
-          }  // kernel_w loop
-          src_kh += in_kh_step;
-          weight_kh += kernel_w * ic4 * C4NUM;
-        }  // kernel_h loop
-        // add biad relu
-
-        dst_w[oc] += bias[oc];
-        dst_w[oc] = (is_relu) ? (MSMAX(0, dst_w[oc])) : (dst_w[oc]);
-        dst_w[oc] = (is_relu6) ? (MSMIN(6, MSMAX(0, dst_w[oc]))) : (dst_w[oc]);
-        weight_oc += kernel_h * kernel_w * ic4 * C4NUM;
-      }  // oc block
-
-      dst_w += block_channel;
-      src_w += in_sw_step;
-    }  // dst_width loop
-    dst_h += out_h_step;
-    src_h += in_sh_step;
-  }  // dst_height loop
-}
-
-// fp16 conv sliding window
-void ConvSWFp16(const float16_t *input_data, const float16_t *packed_weight, const float16_t *bias_data,
-                float16_t *tmp_out_block, float16_t *output_data, int task_id, ConvParameter *conv_param,
-                SlidingWindowParam *slidingWindow_param) {
-  bool relu = conv_param->act_type_ == ActType_Relu;
-  bool relu6 = conv_param->act_type_ == ActType_Relu6;
-  int oc4_res = conv_param->output_channel_ % C4NUM;
-  const float16_t *src = input_data;
-  float16_t *dst = NULL;
-  if (oc4_res == 0) {
-    dst = output_data;
-  } else {
-    dst = tmp_out_block;
-  }
-
-  for (int b = 0; b < conv_param->output_batch_; b++) {
-    for (int oc = task_id; oc < slidingWindow_param->c_block_; oc += conv_param->thread_num_) {
-      const float16_t *src_data = src;
-      float16_t *dst_data = dst + oc * C4NUM;
-      const float16_t *weight = packed_weight + oc * slidingWindow_param->kernel_step_;
-      const float16_t *bias = bias_data + oc * C4NUM;
-      SWBorderFp16(dst_data, src_data, weight, bias, 0, slidingWindow_param->top_, 0, conv_param->output_w_, conv_param,
-                   slidingWindow_param);
-      SWBorderFp16(dst_data, src_data, weight, bias, slidingWindow_param->bottom_, conv_param->output_h_, 0,
-                   conv_param->output_w_, conv_param, slidingWindow_param);
-      SWBorderFp16(dst_data, src_data, weight, bias, slidingWindow_param->top_, slidingWindow_param->bottom_, 0,
-                   slidingWindow_param->left_, conv_param, slidingWindow_param);
-      SWBorderFp16(dst_data, src_data, weight, bias, slidingWindow_param->top_, slidingWindow_param->bottom_,
-                   slidingWindow_param->right_, conv_param->output_w_, conv_param, slidingWindow_param);
-
-      if (slidingWindow_param->right_ > slidingWindow_param->left_ &&
-          slidingWindow_param->bottom_ > slidingWindow_param->top_) {
-        int in_h_start = slidingWindow_param->top_ * conv_param->stride_h_ - conv_param->pad_u_;
-        int in_w_start = slidingWindow_param->left_ * conv_param->stride_w_ - conv_param->pad_l_;
-        const float16_t *in_t =
-          src_data + in_h_start * slidingWindow_param->in_h_step_ + in_w_start * slidingWindow_param->ic4_channel_;
-        float16_t *out_t = dst_data + slidingWindow_param->top_ * slidingWindow_param->out_h_step_ +
-                           slidingWindow_param->left_ * slidingWindow_param->block_channel_;
-        SWCenterFp16(out_t, in_t, weight, bias, slidingWindow_param->bottom_ - slidingWindow_param->top_,
-                     slidingWindow_param->right_ - slidingWindow_param->left_, conv_param->kernel_h_,
-                     conv_param->kernel_w_, slidingWindow_param->out_h_step_, slidingWindow_param->block_channel_,
-                     slidingWindow_param->ic4_channel_, slidingWindow_param->in_sh_step_,
-                     slidingWindow_param->in_sw_step_, slidingWindow_param->in_kh_step_,
-                     slidingWindow_param->in_kw_step_, relu, relu6);
-      }
-    }  // output C4 loop
-    src += slidingWindow_param->in_step_;
-    dst += slidingWindow_param->out_step_;
-  }  // batch loop
-}
-
 // fp16 convolution common (im2col+gemm)
 void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_weight, float16_t *bias_data,
               float16_t *tmp_out_block, float16_t *output_data, int task_id, ConvParameter *conv_param) {
@@ -537,8 +335,9 @@ void UnPack3x3Relu6OutputFp16(const float16_t *src, float16_t *dst, int batch, i
 
 // fp16 convolution winograd
 void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const float16_t *bias_data,
-                      TmpBufferAddressFp16 *buffer_list, int task_id, ConvParameter *conv_param,
-                      MatricesFp16 *matrices) {
+                      float16_t *output_data, TmpBufferAddressFp16 *buffer_list, int task_id, ConvParameter *conv_param,
+                      InputTransFp16Func in_func, OutputTransFp16Func out_func) {
+  const int tile_num = 16;
   int thread_num = conv_param->thread_num_;
   int input_unit = conv_param->input_unit_;
   int in_batch = conv_param->input_batch_;
@@ -547,7 +346,6 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
   int out_unit = conv_param->output_unit_;
   int out_w_block = UP_DIV(conv_param->output_w_, out_unit);
   int out_h_block = UP_DIV(conv_param->output_h_, out_unit);
-  const int tile_num = 16;
   int output_count = out_w_block * out_h_block;
   int output_tile_count = UP_DIV(output_count, tile_num);
   int out_channel = conv_param->output_channel_;
@@ -557,8 +355,7 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
 
   float16_t *trans_input = buffer_list[0];
   float16_t *gemm_out = buffer_list[1];
-  float16_t *tmp_out_data = buffer_list[2];
-  float16_t *tmp_data = buffer_list[3];
+  float16_t *tmp_data = buffer_list[2];
   int trans_input_offset = tile_num * input_unit_square * ic8 * C8NUM;
   int gemm_out_offset = tile_num * input_unit_square * oc8 * C8NUM;
   int tmp_data_offset = input_unit_square * C8NUM;
@@ -566,156 +363,21 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
   // step 2 : input transform (online)
   for (int b = 0; b < in_batch; b++) {
     int in_batch_offset = b * ic8 * C8NUM * conv_param->input_h_ * conv_param->input_w_;
-    int tmp_out_batch_offset = b * out_w_block * out_h_block * out_unit * out_unit * oc8 * C8NUM;
+    int out_batch_offset = b * out_channel * conv_param->output_h_ * conv_param->output_w_;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_num) {
       int out_tile_index = thread_id * tile_num;
       int cal_num = output_count - thread_id * tile_num;
       cal_num = cal_num > tile_num ? tile_num : cal_num;
       WinogradInputTransformFp16(input_data + in_batch_offset, trans_input + task_id * trans_input_offset,
                                  tmp_data + task_id * tmp_data_offset, cal_num, out_tile_index, out_w_block, conv_param,
-                                 matrices[2], matrices[3]);
+                                 in_func);
       // step 3 : gemm
       IndirectGemmFp16_16x8(gemm_out + task_id * gemm_out_offset, trans_input + task_id * trans_input_offset,
                             trans_weight, NULL, input_unit_square, ic8 * 2, oc8 * C8NUM, output_offset, 1, 1, 0, 0);
 
       // step 4 : output transform
-      WinogradOutputTransformFp16(gemm_out + task_id * gemm_out_offset, tmp_out_data + tmp_out_batch_offset, bias_data,
-                                  cal_num, out_tile_index, out_w_block, conv_param, matrices[0], matrices[1]);
-    }
-  }
-}
-
-void UnPackWinogradOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
-                              int output_unit) {
-  int out_h_block_num = UP_DIV(height, output_unit);
-  int out_w_block_num = UP_DIV(width, output_unit);
-  int c8 = UP_DIV(channel, C8NUM);
-  int c8_block = C8NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
-  for (int b = 0; b < batch; b++) {
-    int src_batch_offset = b * c8 * c8_block;
-    int dst_batch_offset = b * height * width * channel;
-    for (int h = 0; h < height; h++) {
-      int src_h_offset = src_batch_offset + C8NUM * (h * out_w_block_num * output_unit);
-      const int dst_h_offset = dst_batch_offset + h * width * channel;
-      for (int w = 0; w < width; w++) {
-        int src_w_offset = src_h_offset + w * C8NUM;
-        int dst_w_offset = dst_h_offset + w * channel;
-        for (int c = 0; c < c8 - 1; c++) {
-          int src_c8_offset = src_w_offset + c * c8_block;
-          int dst_c8_offset = dst_w_offset + c * C8NUM;
-#ifdef ENABLE_NEON
-          vst1q_f16(dst + dst_c8_offset, vld1q_f16(src + src_c8_offset));
-#else
-          for (int i = 0; i < C8NUM; ++i) {
-            dst[dst_c8_offset + i] = src[src_c8_offset + i];
-          }
-#endif
-        }
-        int c_res = channel - (c8 - 1) * C8NUM;
-        int src_c_res_offset = (c8 - 1) * c8_block;
-        int dst_c_res_offset = (c8 - 1) * C8NUM;
-        for (int c = 0; c < c_res; c++) {
-          int src_c8_res_offset = src_w_offset + src_c_res_offset + c;
-          int dst_c8_res_offset = dst_w_offset + dst_c_res_offset + c;
-          dst[dst_c8_res_offset] = src[src_c8_res_offset];
-        }
-      }
-    }
-  }
-}
-
-void UnPackWinogradReluOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
-                                  int output_unit) {
-  int out_h_block_num = UP_DIV(height, output_unit);
-  int out_w_block_num = UP_DIV(width, output_unit);
-  int c8 = UP_DIV(channel, C8NUM);
-  int c8_block = C8NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
-  for (int b = 0; b < batch; b++) {
-    int src_batch_offset = b * c8 * c8_block;
-    int dst_batch_offset = b * height * width * channel;
-    for (int h = 0; h < height; h++) {
-      int src_h_offset = src_batch_offset + C8NUM * (h * out_w_block_num * output_unit);
-      const int dst_h_offset = dst_batch_offset + h * width * channel;
-      for (int w = 0; w < width; w++) {
-        int src_w_offset = src_h_offset + w * C8NUM;
-        int dst_w_offset = dst_h_offset + w * channel;
-        for (int c = 0; c < c8 - 1; c++) {
-          int src_c8_offset = src_w_offset + c * c8_block;
-          int dst_c8_offset = dst_w_offset + c * C8NUM;
-#ifdef ENABLE_NEON
-          float16x8_t input_ptr = vld1q_f16(src + src_c8_offset);
-          float16x8_t zero = vdupq_n_f16(0);
-          input_ptr = vmaxq_f16(zero, input_ptr);
-          vst1q_f16(dst + dst_c8_offset, input_ptr);
-#else
-          for (int i = 0; i < C8NUM; ++i) {
-            float16_t input_data = src[src_c8_offset + i];
-            input_data = input_data < 0 ? 0 : input_data;
-            dst[dst_c8_offset + i] = input_data;
-          }
-#endif
-        }
-        int c_res = channel - (c8 - 1) * C8NUM;
-        int src_c_res_offset = (c8 - 1) * c8_block;
-        int dst_c_res_offset = (c8 - 1) * C8NUM;
-        for (int c = 0; c < c_res; c++) {
-          int src_c8_res_offset = src_w_offset + src_c_res_offset + c;
-          int dst_c8_res_offset = dst_w_offset + dst_c_res_offset + c;
-          float16_t input_data = src[src_c8_res_offset];
-          input_data = input_data < 0 ? 0 : input_data;
-          dst[dst_c8_res_offset] = input_data;
-        }
-      }
-    }
-  }
-}
-
-void UnPackWinogradRelu6OutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
-                                   int output_unit) {
-  int out_h_block_num = UP_DIV(height, output_unit);
-  int out_w_block_num = UP_DIV(width, output_unit);
-  int c8 = UP_DIV(channel, C8NUM);
-  int c8_block = C8NUM * out_h_block_num * output_unit * out_w_block_num * output_unit;
-  for (int b = 0; b < batch; b++) {
-    int src_batch_offset = b * c8 * c8_block;
-    int dst_batch_offset = b * height * width * channel;
-    for (int h = 0; h < height; h++) {
-      int src_h_offset = src_batch_offset + C8NUM * (h * out_w_block_num * output_unit);
-      const int dst_h_offset = dst_batch_offset + h * width * channel;
-      for (int w = 0; w < width; w++) {
-        int src_w_offset = src_h_offset + w * C8NUM;
-        int dst_w_offset = dst_h_offset + w * channel;
-        for (int c = 0; c < c8 - 1; c++) {
-          int src_c8_offset = src_w_offset + c * c8_block;
-          int dst_c8_offset = dst_w_offset + c * C8NUM;
-#ifdef ENABLE_NEON
-          float16x8_t input_ptr = vld1q_f16(src + src_c8_offset);
-          float16x8_t zero = vdupq_n_f16(0);
-          float16x8_t six = vdupq_n_f16(6);
-          input_ptr = vmaxq_f16(zero, input_ptr);
-          input_ptr = vminq_f16(six, input_ptr);
-          vst1q_f16(dst + dst_c8_offset, input_ptr);
-#else
-          for (int i = 0; i < C8NUM; ++i) {
-            float16_t input_data = src[src_c8_offset + i];
-            input_data = input_data < 0 ? 0 : input_data;
-            input_data = input_data > 6 ? 6 : input_data;
-            dst[dst_c8_offset + i] = input_data;
-          }
-#endif
-        }
-        int c_res = channel - (c8 - 1) * C8NUM;
-        int src_c_res_offset = (c8 - 1) * c8_block;
-        int dst_c_res_offset = (c8 - 1) * C8NUM;
-        for (int c = 0; c < c_res; c++) {
-          int src_c8_res_offset = src_w_offset + src_c_res_offset + c;
-          int dst_c8_res_offset = dst_w_offset + dst_c_res_offset + c;
-          float16_t input_data = src[src_c8_res_offset];
-          input_data = input_data < 0 ? 0 : input_data;
-          input_data = input_data > 6 ? 6 : input_data;
-          dst[dst_c8_res_offset] = input_data;
-        }
-      }
+      WinogradOutputTransformFp16(gemm_out + task_id * gemm_out_offset, output_data + out_batch_offset, bias_data,
+                                  cal_num, out_tile_index, out_w_block, conv_param, out_func);
     }
   }
 }
