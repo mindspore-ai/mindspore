@@ -56,10 +56,50 @@ int MulInt8CPUKernel::Init() {
   para_.mul_quant_arg_.shift_left_ = right_shift < 0 ? -right_shift : 0;
   para_.mul_quant_arg_.shift_right_ = right_shift > 0 ? right_shift : 0;
 
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
-int MulInt8CPUKernel::ReSize() { return RET_OK; }
+int MulInt8CPUKernel::ReSize() {
+  size_t input0_size = in_tensors_.at(0)->shape().size();
+  size_t input1_size = in_tensors_.at(1)->shape().size();
+  size_t output_size = out_tensors_.at(0)->shape().size();
+  tile_para->ndim_ = output_size;
+  if (input0_size == input1_size) {
+    for (size_t i = 0; i < output_size; i++) {
+      tile_para->in_shape0_[i] = in_tensors_.at(0)->DimensionSize(i);
+      tile_para->in_shape1_[i] = in_tensors_.at(1)->DimensionSize(i);
+      tile_para->out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
+    }
+  } else if (input0_size < input1_size) {
+    auto fill_dim_num = input1_size - input0_size;
+    int j = 0;
+    for (size_t i = 0; i < output_size; i++) {
+      if (i < fill_dim_num) {
+        tile_para->in_shape0_[i] = 1;
+      } else {
+        tile_para->in_shape0_[i] = in_tensors_.at(0)->DimensionSize(j++);
+      }
+      tile_para->in_shape1_[i] = in_tensors_.at(1)->DimensionSize(i);
+      tile_para->out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
+    }
+  } else {
+    auto fill_dim_num = input0_size - input1_size;
+    int j = 0;
+    for (size_t i = 0; i < output_size; i++) {
+      tile_para->in_shape0_[i] = in_tensors_.at(0)->DimensionSize(i);
+      if (i < fill_dim_num) {
+        tile_para->in_shape1_[i] = 1;
+      } else {
+        tile_para->in_shape1_[i] = in_tensors_.at(1)->DimensionSize(j++);
+      }
+      tile_para->out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
+    }
+  }
+  return RET_OK;
+}
 
 int MulInt8CPUKernel::Run() {
   auto ret = Prepare();
@@ -80,15 +120,8 @@ int MulInt8CPUKernel::Run() {
       MS_LOG(ERROR) << "malloc input0_data_ || input1_data_ failed.";
       return RET_ERROR;
     }
-    ArithmeticParameter tile_para;
-    tile_para.ndim_ = out_tensors_.at(0)->shape().size();
-    for (size_t i = 0; i < tile_para.ndim_; i++) {
-      tile_para.in_shape0_[i] = in_tensors_.at(0)->DimensionSize(i);
-      tile_para.in_shape1_[i] = in_tensors_.at(1)->DimensionSize(i);
-      tile_para.out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
-    }
     TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->MutableData()),
-                       static_cast<int8_t *>(in_tensors_.at(1)->MutableData()), input0_data_, input1_data_, &tile_para);
+                       static_cast<int8_t *>(in_tensors_.at(1)->MutableData()), input0_data_, input1_data_, tile_para);
     ret = ParallelLaunch(this->context_->thread_pool_, MulInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
