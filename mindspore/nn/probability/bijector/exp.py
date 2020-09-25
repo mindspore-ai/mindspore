@@ -49,5 +49,4 @@ class Exp(PowerTransform):
 
     def __init__(self,
                  name='Exp'):
-        param = dict(locals())
-        super(Exp, self).__init__(name=name, param=param)
+        super(Exp, self).__init__(name=name)

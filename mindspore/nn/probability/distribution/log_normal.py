@@ -135,7 +135,7 @@ class LogNormal(msd.TransformedDistribution):
         """
         super(LogNormal, self).__init__(distribution=msd.Normal(loc, scale, dtype=dtype),
                                         bijector=msb.Exp(),
-                                        dtype=dtype, seed=seed, name=name)
+                                        seed=seed, name=name)
 
         self.log_2pi = np.log(2 * np.pi)
 
