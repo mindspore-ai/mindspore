@@ -72,6 +72,51 @@ def test_slice2():
     assert (output.asnumpy() == expect).all()
 
 
+class Slice3(nn.Cell):
+    def __init__(self):
+        super(Slice3, self).__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        return (x[..., -1], x[..., 2:1:-1], x[1:3:1, 0, ...], x[-1, 0, ...])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_slice3():
+    inputx = np.random.rand(4, 4, 4, 4).astype(np.float32)
+    x = Tensor(inputx)
+    slice_op = Slice3()
+    output = slice_op(x)
+    assert (output[0].asnumpy() == inputx[..., -1]).all()
+    assert (output[1].asnumpy() == inputx[..., 2:1:-1]).all()
+    assert (output[2].asnumpy() == inputx[1:3:1, 0, ...]).all()
+    assert (output[3].asnumpy() == inputx[-1, 0, ...]).all()
+
+
+class Slice4(nn.Cell):
+    def __init__(self):
+        super(Slice4, self).__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        return x[:10:1, :, 2:3:1]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_slice4():
+    inputx = np.random.rand(4, 4, 4).astype(np.float32)
+    x = Tensor(inputx)
+    slice_op = Slice4()
+    output = slice_op(x)
+    assert (output.asnumpy() == inputx[:10:1, :, 2:3:1]).all()
+
+
 if __name__ == '__main__':
     test_slice()
     test_slice2()
+    test_slice3()
+    test_slice4()
