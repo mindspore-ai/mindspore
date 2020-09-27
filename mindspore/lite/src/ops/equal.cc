@@ -35,7 +35,7 @@ int Equal::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   output->set_shape(input->shape());
-  output->set_data_type(TypeId::kNumberTypeUInt8);
+  output->set_data_type(TypeId::kNumberTypeBool);
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
