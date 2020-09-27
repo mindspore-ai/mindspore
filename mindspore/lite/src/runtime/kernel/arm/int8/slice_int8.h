@@ -18,20 +18,19 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SLICE_INT8_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/base/slice_base.h"
+#include "src/runtime/kernel/arm/fp32/slice.h"
 #include "nnacl/quantization/quantize.h"
 
 namespace mindspore::kernel {
-class SliceInt8CPUKernel : public SliceBaseCPUKernel {
+class SliceInt8CPUKernel : public SliceCPUKernel {
  public:
   SliceInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
-      : SliceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : SliceCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~SliceInt8CPUKernel() {}
 
   int Init() override;
-  int ReSize() override;
   int Run() override;
   int DoSlice(int task_id);
 };

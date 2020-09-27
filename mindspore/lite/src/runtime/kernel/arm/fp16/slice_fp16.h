@@ -13,32 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SLICE_BASE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SLICE_BASE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_SLICE_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_SLICE_FP16_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
-#include "nnacl/slice_parameter.h"
+#include "src/runtime/kernel/arm/fp32/slice.h"
 
 namespace mindspore::kernel {
-class SliceBaseCPUKernel : public LiteKernel {
+class SliceFp16CPUKernel : public SliceCPUKernel {
  public:
-  SliceBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+  SliceFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    param_ = reinterpret_cast<SliceParameter *>(op_parameter_);
-  }
-  ~SliceBaseCPUKernel() = default;
+      : SliceCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~SliceFp16CPUKernel() = default;
 
-  int Init() override;
-  int ReSize() override;
-  int Run() override { return 0; }
+  int Run() override;
+  int SliceParallelRun(int thread_id) override;
 
  protected:
-  SliceParameter *param_;
+  void FreeInputAndOutput();
+  float16_t *input_fp16_ = nullptr;
+  float16_t *output_fp16_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SLICE_BASE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_SLICE_FP16_H_
