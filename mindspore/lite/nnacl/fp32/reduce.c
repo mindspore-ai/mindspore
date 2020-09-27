@@ -19,6 +19,10 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/common_func.h"
 
+#ifdef ENABLE_NNACL_INFER_SHAPE
+#include "nnacl/reduce_parameter.h"
+#endif
+
 int ReduceMean(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
                const int tid, const int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
@@ -186,3 +190,78 @@ int ReduceSumSquare(const int outer_size, const int inner_size, const int axis_s
   }
   return NNACL_OK;
 }
+
+#ifdef ENABLE_NNACL_INFER_SHAPE
+int ReduceInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_format, int *out_format,
+                     int *in_datatype, int *out_datatype, OpParameter *param) {
+  *out_format = in_format[0];
+  *out_datatype = in_datatype[0];
+  ReduceParameter *reduce_parameter = (ReduceParameter *)param;
+  bool keep_dims = reduce_parameter->keep_dims_;
+  int num_axes = reduce_parameter->num_axes_;
+  int *in_shape0 = in_shape[0];
+  int rank = dim_size[0];
+  if (rank <= 0 || rank > REDUCE_MAX_AXES_NUM) {
+    return NNACL_PARAM_INVALID;
+  }
+  int axes[REDUCE_MAX_AXES_NUM];
+  int actual_axes_num = num_axes;
+  for (int i = 0; i < num_axes; ++i) {
+    if (reduce_parameter->axes_[i] < -rank || reduce_parameter->axes_[i] >= rank) {
+      return NNACL_PARAM_INVALID;
+    }
+    if (reduce_parameter->axes_[i] < 0) {
+      axes[i] = reduce_parameter->axes_[i] + rank;
+    } else {
+      axes[i] = reduce_parameter->axes_[i];
+    }
+  }
+  if (reduce_parameter->reduce_to_end_) {
+    if (num_axes != 1) {
+      return NNACL_PARAM_INVALID;
+    }
+    int begin_axis = axes[0];
+    num_axes = rank - begin_axis;
+    for (int i = begin_axis + 1; i < rank; ++i) {
+      axes[actual_axes_num++] = i;
+    }
+  }
+  if (num_axes == 0) {
+    int j = 0;
+    for (int i = 0; i < rank; ++i) {
+      axes[i] = i;
+      if (keep_dims) {
+        out_shape[j++] = 1;
+      }
+    }
+    reduce_parameter->num_axes_ = rank;
+    for (int i = 0; i < rank; ++i) {
+      reduce_parameter->axes_[i] = axes[i];
+    }
+    return NNACL_OK;
+  }
+  // reduce on selected axes
+  int j = 0;
+  for (int i = 0; i < rank; ++i) {
+    bool reduce_axis = false;
+    for (int idx = 0; idx < num_axes; ++idx) {
+      if (axes[idx] == i) {
+        reduce_axis = true;
+        break;
+      }
+    }
+    if (reduce_axis) {
+      if (keep_dims) {
+        out_shape[j++] = 1;
+      }
+    } else {
+      out_shape[j++] = in_shape0[i];
+    }
+  }
+  reduce_parameter->num_axes_ = num_axes;
+  for (int i = 0; i < num_axes; ++i) {
+    reduce_parameter->axes_[i] = axes[i];
+  }
+  return NNACL_OK;
+}
+#endif

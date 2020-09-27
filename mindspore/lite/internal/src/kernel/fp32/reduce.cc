@@ -21,6 +21,7 @@
 #include "internal/include/errorcode.h"
 #include "nnacl/reduce_parameter.h"
 #include "nnacl/fp32/reduce.h"
+#include "nnacl/errorcode.h"
 
 typedef int (*Reducer)(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
                        float *dst_data, const int tid, const int thread_num);
@@ -101,76 +102,18 @@ int DoReduceInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector 
     return RET_ERROR;
   }
 
-  ReduceParameter *reduceParameter = reinterpret_cast<ReduceParameter *>(param);
-  bool keep_dims = reduceParameter->keep_dims_;
-  int num_axes = reduceParameter->num_axes_;
-  ShapeVector in_shape = in_tensors[0]->shape_;
-  int rank = in_shape.size();
-  Int32Vector out_shape;
-  Int32Vector axes;
-  int actual_axes_num = num_axes;
-  for (int i = 0; i < num_axes; ++i) {
-    if (reduceParameter->axes_[i] < -rank || reduceParameter->axes_[i] >= rank) {
-      LITE_LOG_ERROR("reduce_sum got invalid axis!");
-      return RET_ERROR;
-    }
-    if (reduceParameter->axes_[i] < 0) {
-      axes.push_back(reduceParameter->axes_[i] + rank);
-    } else {
-      axes.push_back(reduceParameter->axes_[i]);
-    }
+  int in_datatype[1] = {in_tensors[0]->data_type_};
+  int in_format[1] = {static_cast<int>(in_tensors[0]->format_)};
+  size_t dim_size[1] = {in_tensors[0]->shape_.size()};
+  int *in_shape[1] = {in_tensors[0]->shape_.data()};
+  int out_format;
+  int out_datatype;
+  int ret = ReduceInferShape(in_shape, dim_size, out_tensors[0]->shape_.data(), in_format, &out_format, in_datatype,
+                             &out_datatype, param);
+  if (ret != NNACL_OK) {
+    LITE_ERROR_LOG("arithmetic infershape failed! ret: %d", ret);
+    return RET_ERROR;
   }
-  if (reduceParameter->reduce_to_end_) {
-    if (num_axes != 1) {
-      LITE_LOG_ERROR("Reduce when reduce_to_end, num of axis should be 1!");
-      return RET_ERROR;
-    }
-    int begin_axis = axes[0];
-    num_axes = rank - begin_axis;
-    for (auto i = begin_axis + 1; i < rank; ++i) {
-      axes[actual_axes_num++] = i;
-    }
-  }
-
-  if (num_axes == 0) {
-    axes.resize(rank);
-    for (auto i = 0; i < rank; ++i) {
-      axes[i] = i;
-      if (keep_dims) {
-        out_shape.push_back(1);
-      }
-    }
-    reduceParameter->num_axes_ = axes.size();
-    for (size_t i = 0; i < axes.size(); ++i) {
-      reduceParameter->axes_[i] = axes[i];
-    }
-    out_tensors[0]->shape_ = out_shape;
-    out_tensors[0]->data_type_ = in_tensors[0]->data_type_;
-    out_tensors[0]->format_ = in_tensors[0]->format_;
-    return RET_OK;
-  }
-  // reduce on selected axes
-  for (auto i = 0; i < rank; ++i) {
-    bool reduce_axis = false;
-    for (auto idx = 0; idx < num_axes; ++idx) {
-      if (axes[idx] == i) {
-        reduce_axis = true;
-        break;
-      }
-    }
-    if (reduce_axis) {
-      if (keep_dims) {
-        out_shape.push_back(1);
-      }
-    } else {
-      out_shape.push_back(in_shape[i]);
-    }
-  }
-  reduceParameter->num_axes_ = axes.size();
-  for (size_t i = 0; i < axes.size(); ++i) {
-    reduceParameter->axes_[i] = axes[i];
-  }
-  out_tensors[0]->shape_ = out_shape;
   out_tensors[0]->data_type_ = in_tensors[0]->data_type_;
   out_tensors[0]->format_ = in_tensors[0]->format_;
   return RET_OK;

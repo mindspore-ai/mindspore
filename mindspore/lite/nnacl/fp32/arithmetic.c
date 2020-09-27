@@ -1495,3 +1495,62 @@ int BroadcastGreaterEqual(float *input0, float *input1, float *tile_input0, floa
 }
 
 #undef ACCURACY_DATA
+
+#ifdef ENABLE_NNACL_INFER_SHAPE
+int ArithmeticInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_format, int *out_format,
+                         int *in_datatype, int *out_datatype, OpParameter *param) {
+  *out_format = in_format[0];
+  *out_datatype = in_datatype[0];
+  ArithmeticParameter *arithmetic_parameter = (ArithmeticParameter *)param;
+  int ndim0 = dim_size[0];
+  int ndim1 = dim_size[1];
+  int *in_shape0 = in_shape[0];
+  int *in_shape1 = in_shape[1];
+  if (ndim0 < ndim1) {
+    arithmetic_parameter->ndim_ = ndim1;
+    int fill_dim_num = ndim1 - ndim0;
+    int j = 0;
+    for (int i = 0; i < ndim1; ++i) {
+      if (i < fill_dim_num) {
+        arithmetic_parameter->in_shape0_[i] = 1;
+      } else {
+        arithmetic_parameter->in_shape0_[i] = in_shape0[j++];
+      }
+      arithmetic_parameter->in_shape1_[i] = in_shape1[i];
+    }
+  } else if (ndim0 > ndim1) {
+    arithmetic_parameter->ndim_ = ndim0;
+    int fill_dim_num = ndim0 - ndim1;
+    int j = 0;
+    for (int i = 0; i < ndim0; ++i) {
+      if (i < fill_dim_num) {
+        arithmetic_parameter->in_shape1_[i] = 1;
+      } else {
+        arithmetic_parameter->in_shape1_[i] = in_shape1[j++];
+      }
+      arithmetic_parameter->in_shape0_[i] = in_shape0[i];
+    }
+  } else {
+    arithmetic_parameter->ndim_ = ndim0;
+    for (int i = 0; i < ndim0; ++i) {
+      arithmetic_parameter->in_shape0_[i] = in_shape0[i];
+      arithmetic_parameter->in_shape1_[i] = in_shape1[i];
+    }
+  }
+  int j = 0;
+  for (size_t i = 0; i < arithmetic_parameter->ndim_; ++i) {
+    if (arithmetic_parameter->in_shape0_[i] != arithmetic_parameter->in_shape1_[i]) {
+      if (arithmetic_parameter->in_shape0_[i] == 1) {
+        out_shape[j++] = arithmetic_parameter->in_shape1_[i];
+      } else if (arithmetic_parameter->in_shape1_[i] == 1) {
+        out_shape[j++] = arithmetic_parameter->in_shape0_[i];
+      } else {
+        return NNACL_PARAM_INVALID;
+      }
+    } else {
+      out_shape[j++] = arithmetic_parameter->in_shape0_[i];
+    }
+  }
+  return NNACL_OK;
+}
+#endif

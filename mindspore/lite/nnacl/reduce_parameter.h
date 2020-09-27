@@ -19,7 +19,7 @@
 #include "nnacl/op_base.h"
 #define REDUCE_MAX_AXES_NUM 8
 
-struct ReduceParameter {
+typedef struct ReduceParameter {
   OpParameter op_parameter_;
   bool keep_dims_;
   bool reduce_to_end_;
@@ -27,6 +27,6 @@ struct ReduceParameter {
   int axes_[REDUCE_MAX_AXES_NUM];
   int num_axes_;
   int mode_;
-};
+} ReduceParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_REDUCE_PARAMETER_H_
