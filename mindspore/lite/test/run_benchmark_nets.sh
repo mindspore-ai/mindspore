@@ -666,6 +666,7 @@ IFS="." read -r -a suffix <<< "${file_name_array[-1]}"
 process_unit_arm32=${suffix[0]}
 
 x86_path=${release_path}/ubuntu_x86
+mv ${x86_path}/*runtime-*train* ./train
 file_name=$(ls ${x86_path}/*runtime-x86*.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 IFS="." read -r -a suffix <<< "${file_name_array[-1]}"
