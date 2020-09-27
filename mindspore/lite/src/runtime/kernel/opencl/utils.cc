@@ -15,9 +15,11 @@
  */
 
 #include "src/runtime/kernel/opencl/utils.h"
+#include <fstream>
 #include <algorithm>
 #include <vector>
 #include "src/kernel_registry.h"
+#include "src/runtime/opencl/opencl_runtime.h"
 
 using mindspore::lite::KernelRegistrar;
 
@@ -220,5 +222,65 @@ std::string CLErrorCode(cl_int error_code) {
     default:
       return "Unknown OpenCL error code";
   }
+}
+
+void Write2File(void *mem, const std::string &file_name, int size) {
+  std::fstream os;
+  os.open(file_name, std::ios::out | std::ios::binary);
+  os.write(static_cast<char *>(mem), size);
+  os.close();
+}
+
+void PrintTensor(lite::Tensor *tensor, int num, const std::string &out_file) {
+  if (tensor->data_c() == nullptr) {
+    return;
+  }
+  auto runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
+  runtime->SyncCommandQueue();
+
+  auto allocator = runtime->GetAllocator();
+  auto origin_data = tensor->data_c();
+  allocator->MapBuffer(origin_data, CL_MAP_READ, nullptr, true);
+  tensor->SetData(origin_data);
+
+  auto Height = tensor->shape().size() == 4 ? tensor->Height() : 1;
+  auto Width = tensor->shape().size() == 4 ? tensor->Width() : 1;
+  auto SLICES = UP_DIV(tensor->Channel(), C4NUM);
+  auto alignment = runtime->GetImagePitchAlignment();
+  auto dtype_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half4) : sizeof(cl_float4);
+  auto row_pitch = (Width * SLICES + alignment - 1) / alignment * alignment * dtype_size;
+  auto row_size = Width * SLICES * dtype_size;
+  std::cout << "tensor->GetFormat() =" << tensor->GetFormat() << "\n";
+  std::cout << "Height              =" << Height << "\n";
+  std::cout << "Width               =" << Width << "\n";
+  std::cout << "SLICES              =" << SLICES << "\n";
+  std::cout << "image_alignment     =" << alignment << "\n";
+  std::cout << "dtype_size          =" << dtype_size << "\n";
+  std::cout << "row_pitch           =" << row_pitch << "\n";
+  std::cout << "row_size            =" << row_size << "\n";
+  std::cout << "tensor->Size()      =" << tensor->Size() << "\n";
+  std::vector<char> data(tensor->Size());
+  for (int i = 0; i < Height; ++i) {
+    memcpy(static_cast<char *>(data.data()) + i * row_size, static_cast<char *>(origin_data) + i * row_pitch, row_size);
+  }
+
+  std::cout << "shape=(";
+  for (auto x : tensor->shape()) {
+    printf("%3d,", x);
+  }
+  printf("): ");
+
+  for (size_t i = 0; i < num && i < tensor->ElementsNum(); ++i) {
+    if (tensor->data_type() == kNumberTypeFloat16)
+      printf("%zu %6.3f | ", i, (reinterpret_cast<float16_t *>(data.data()))[i]);
+    else
+      printf("%zu %6.3f | ", i, (reinterpret_cast<float *>(data.data()))[i]);
+  }
+  printf("\n");
+
+  if (!out_file.empty()) {
+    Write2File(data.data(), out_file, tensor->Size());
+  }
+  allocator->UnmapBuffer(origin_data);
 }
 }  // namespace mindspore::kernel

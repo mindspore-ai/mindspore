@@ -157,7 +157,7 @@ void TEST_MAIN(const std::string &attr, Format input_format, Format output_forma
          &param->dilation_h_, &param->dilation_w_);
 
   MS_LOG(DEBUG) << "initialize OpenCLRuntime and OpenCLAllocator";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   auto allocator = ocl_runtime->GetAllocator();
@@ -201,7 +201,6 @@ void TEST_MAIN(const std::string &attr, Format input_format, Format output_forma
   input.SetData(nullptr);
   output.SetData(nullptr);
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 void TEST_MAIN(const std::string &attr, Format input_format, Format output_format, const TypeId data_type,

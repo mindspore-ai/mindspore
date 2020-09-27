@@ -43,7 +43,7 @@ void CompareOutputData1(T *input_data1, T *output_data, T *correct_data, int siz
 
 TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
   MS_LOG(INFO) << " begin test ";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->SetFp16Enable(true);
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
@@ -125,7 +125,6 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData1(input_data1, output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
     delete tensor;
@@ -139,7 +138,7 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
 
 TEST_F(TestArithmeticSelfOpenCLCI, ArithmeticSelfRound) {
   MS_LOG(INFO) << " begin test ";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
   float input_data1[] = {0.75f, 0.06f, 0.74f, 0.30f, 0.9f, 0.59f, 0.03f, 0.37f,
@@ -216,7 +215,6 @@ TEST_F(TestArithmeticSelfOpenCLCI, ArithmeticSelfRound) {
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData1(input_data1, output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
     delete tensor;

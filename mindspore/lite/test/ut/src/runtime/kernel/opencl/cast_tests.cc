@@ -38,7 +38,7 @@ void CompareOutputData1(T *output_data, T *correct_data, int size, float err_bou
 
 TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   MS_LOG(INFO) << " begin test ";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
@@ -113,7 +113,6 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
     delete tensor;
@@ -127,7 +126,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
 
 TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   MS_LOG(INFO) << " begin test ";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
@@ -201,7 +200,6 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
     delete tensor;

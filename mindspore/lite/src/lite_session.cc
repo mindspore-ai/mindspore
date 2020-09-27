@@ -26,9 +26,6 @@
 #include "src/common/utils.h"
 #include "src/common/graph_util.h"
 #include "src/kernel_registry.h"
-#if SUPPORT_GPU
-#include "src/runtime/opencl/opencl_runtime.h"
-#endif
 
 namespace mindspore {
 namespace lite {
@@ -343,7 +340,7 @@ int LiteSession::Init(Context *context) {
   }
 #if SUPPORT_GPU
   if (context_->device_type_ == DT_GPU) {
-    auto opencl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+    auto opencl_runtime = ocl_runtime_wrap_.GetInstance();
     opencl_runtime->SetFp16Enable(context_->float16_priority);
     if (opencl_runtime->Init() != RET_OK) {
       context_->device_type_ = DT_CPU;
@@ -394,11 +391,6 @@ LiteSession::~LiteSession() {
   for (auto *kernel : kernels_) {
     delete kernel;
   }
-#if SUPPORT_GPU
-  if (context_->device_type_ == DT_GPU) {
-    lite::opencl::OpenCLRuntime::DeleteInstance();
-  }
-#endif
   delete this->context_;
   delete this->executor;
   this->executor = nullptr;

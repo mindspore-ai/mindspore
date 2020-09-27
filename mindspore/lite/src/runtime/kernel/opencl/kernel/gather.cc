@@ -54,7 +54,7 @@ int GatherOpenCLKernel::Init() {
   auto indices_tensor = in_tensors_.at(1);
   int indices_num = indices_tensor->ElementsNum();
   bool isIndicesInt32 = indices_tensor->data_type() == kNumberTypeInt32;
-  auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  auto allocator = ocl_runtime_->GetAllocator();
   if (!isIndicesInt32) {
     indices_data_ = reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num));
     if (indices_data_ == nullptr) {

@@ -77,7 +77,7 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   std::string weight_file = "/data/local/tmp/weight_data.bin";
   std::string standard_answer_file = "/data/local/tmp/caffe_prelu.bin";
   MS_LOG(INFO) << "-------------------->> Begin test PRelu!";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
@@ -194,6 +194,5 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   delete weight_tensor;
   delete param;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

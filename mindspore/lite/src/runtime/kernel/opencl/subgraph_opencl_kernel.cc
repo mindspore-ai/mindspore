@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include <set>
 #include "src/runtime/opencl/opencl_executor.h"
-#include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "include/errorcode.h"
 #include "src/common/utils.h"
@@ -161,7 +160,6 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
 }
 
 int SubGraphOpenCLKernel::Init() {
-  ocl_runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
   allocator_ = ocl_runtime_->GetAllocator();
   MS_LOG(DEBUG) << "input num=" << in_tensors_.size() << ", output num=" << out_tensors_.size();
   for (const auto tensor : in_tensors_) {
@@ -308,10 +306,6 @@ int SubGraphOpenCLKernel::UnInit() {
   nodes_.clear();
   in_convert_ops_.clear();
   out_convert_ops_.clear();
-  if (ocl_runtime_ != nullptr) {
-    lite::opencl::OpenCLRuntime::DeleteInstance();
-    ocl_runtime_ = nullptr;
-  }
   return RET_OK;
 }
 

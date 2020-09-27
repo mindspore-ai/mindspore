@@ -32,7 +32,7 @@ void test_main_gather(void *input_data, void *correct_data, const std::vector<in
                       const std::vector<int> &indices, GatherParameter *param, TypeId data_type,
                       schema::Format format) {
   MS_LOG(INFO) << " begin test ";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 

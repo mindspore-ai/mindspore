@@ -31,7 +31,7 @@ class TestReshapeOpenCL : public mindspore::CommonTest {
 
 void RunTestCaseReshape(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16,
                         bool is_output_2d) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
   ocl_runtime->SetFp16Enable(enable_fp16);
@@ -99,7 +99,6 @@ void RunTestCaseReshape(const std::vector<int> &shape, void *input_data, void *o
   }
 
   MS_LOG(INFO) << "Test Reshape passed";
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestReshapeOpenCL, ReshapeFp32) {

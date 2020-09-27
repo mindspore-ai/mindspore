@@ -31,7 +31,7 @@ class TestMatMulOpenCL : public mindspore::CommonTest {
 
 void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *weight_data, void *output_data,
                        bool enable_fp16, int dims) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
   ocl_runtime->SetFp16Enable(enable_fp16);
@@ -123,7 +123,6 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
     t->SetData(nullptr);
   }
   MS_LOG(INFO) << "TestMatMul passed";
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestMatMulOpenCL, MatMul2DFp32) {

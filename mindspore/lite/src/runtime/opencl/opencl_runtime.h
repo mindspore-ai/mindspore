@@ -37,11 +37,10 @@ struct GpuInfo {
   int model_num = 0;
   float opencl_version = 0;
 };
-
+class OpenCLRuntimeWrapper;
 class OpenCLRuntime {
  public:
-  static OpenCLRuntime *GetInstance();
-  static void DeleteInstance();
+  friend OpenCLRuntimeWrapper;
 
   ~OpenCLRuntime();
   OpenCLRuntime(const OpenCLRuntime &) = delete;
@@ -138,6 +137,8 @@ class OpenCLRuntime {
   int GetKernelMaxWorkGroupSize(cl_kernel kernel, cl_device_id device_id);
 
  private:
+  static OpenCLRuntime *GetInstance();
+  static void DeleteInstance();
   OpenCLRuntime();
   GpuInfo ParseGpuInfo(std::string device_name, std::string device_version);
 
@@ -169,5 +170,16 @@ class OpenCLRuntime {
   void *handle_{nullptr};
 };
 
+class OpenCLRuntimeWrapper {
+ public:
+  OpenCLRuntimeWrapper() { ocl_runtime_ = OpenCLRuntime::GetInstance(); }
+  ~OpenCLRuntimeWrapper() { OpenCLRuntime::DeleteInstance(); }
+  explicit OpenCLRuntimeWrapper(const OpenCLRuntime &) = delete;
+  OpenCLRuntimeWrapper &operator=(const OpenCLRuntime &) = delete;
+  OpenCLRuntime *GetInstance() { return ocl_runtime_; }
+
+ private:
+  OpenCLRuntime *ocl_runtime_{nullptr};
+};
 }  // namespace mindspore::lite::opencl
 #endif  // MINDSPORE_LITE_SRC_OPENCL_RUNTIME_H_

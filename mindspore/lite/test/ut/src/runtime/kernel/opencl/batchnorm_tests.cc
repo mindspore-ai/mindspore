@@ -38,7 +38,7 @@ class TestBatchnormOpenCLCI : public mindspore::CommonTest {
 
 TEST_F(TestBatchnormOpenCLCI, Batchnormfp32CI) {
   MS_LOG(INFO) << " begin test ";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
@@ -142,7 +142,6 @@ TEST_F(TestBatchnormOpenCLCI, Batchnormfp32CI) {
 
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
     delete tensor;
@@ -156,7 +155,7 @@ TEST_F(TestBatchnormOpenCLCI, Batchnormfp32CI) {
 
 TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   MS_LOG(INFO) << "begin test";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->SetFp16Enable(true);
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
@@ -262,7 +261,6 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
 
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.01);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
     delete tensor;
@@ -276,7 +274,7 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
 
 TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   MS_LOG(INFO) << " begin test ";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
@@ -381,7 +379,6 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
 
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
     delete tensor;

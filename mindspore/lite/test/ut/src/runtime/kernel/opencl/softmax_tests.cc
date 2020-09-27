@@ -30,7 +30,7 @@ class TestSoftmaxOpenCL : public mindspore::CommonTest {
 };
 
 void RunTestCaseSoftmax(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
   ocl_runtime->SetFp16Enable(enable_fp16);
@@ -103,7 +103,6 @@ void RunTestCaseSoftmax(const std::vector<int> &shape, void *input_data, void *o
   }
 
   MS_LOG(INFO) << "Test Softmax passed";
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestSoftmaxOpenCL, Softmax2DFp32) {
