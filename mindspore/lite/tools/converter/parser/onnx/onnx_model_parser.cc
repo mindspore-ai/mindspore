@@ -172,9 +172,11 @@ STATUS OnnxModelParser::SetGraphOutputTensor(const onnx::GraphProto &onnx_graph,
 }
 
 void OnnxModelParser::ParseOnnxGemmNode(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                                        schema::MetaGraphT *graph, TensorCache *tensor_cache) {
+                                        schema::MetaGraphT *graph, TensorCache *tensor_cache,
+                                        const QuantType &quant_type) {
   std::unique_ptr<schema::CNodeT> dst_op_1 = std::make_unique<schema::CNodeT>();
   dst_op_1->name = "Gemm_MatMul_" + onnx_node.output(0);
+  dst_op_1->quantType = quant_type;
   ParseOnnxNodeAttr(onnx_graph, onnx_node, "MatMul", dst_op_1.get());
   auto matmul_output_id = "Gemm_MatMul_" + onnx_node.output(0);
   std::vector<string> matmul_inputs{onnx_node.input(0), onnx_node.input(1)};
@@ -185,6 +187,7 @@ void OnnxModelParser::ParseOnnxGemmNode(const onnx::GraphProto &onnx_graph, cons
 
   std::unique_ptr<schema::CNodeT> dst_op_2 = std::make_unique<schema::CNodeT>();
   dst_op_2->name = "Gemm_BiasAdd_" + onnx_node.output(0);
+  dst_op_2->quantType = quant_type;
   ParseOnnxNodeAttr(onnx_graph, onnx_node, "BiasAdd", dst_op_2.get());
   std::vector<string> biasadd_inputs{matmul_output_id, onnx_node.input(2)};
   std::vector<string> biasadd_outputs{onnx_node.output(0)};
@@ -343,8 +346,6 @@ void OnnxModelParser::SetOpQuantParams(const onnx::GraphProto &onnx_graph, const
   }
   if (findQuantParams == needQuantParams) {
     dst_op->quantType = schema::QuantType_AwareTraining;
-  } else {
-    dst_op->quantType = schema::QuantType_QUANT_NONE;
   }
 }
 
@@ -520,7 +521,7 @@ schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, con
     }
     if (onnx_node.op_type() == "Gemm") {
       if (status == RET_OK) {
-        ParseOnnxGemmNode(onnx_graph, onnx_node, dst_graph.get(), &tensor_cache);
+        ParseOnnxGemmNode(onnx_graph, onnx_node, dst_graph.get(), &tensor_cache, quantType);
       }
       continue;
     } else if (onnx_node.op_type() == "Int8GivenIntTensorFill" || onnx_node.op_type() == "Int8GivenTensorFill") {

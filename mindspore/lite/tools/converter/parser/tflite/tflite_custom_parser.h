@@ -31,6 +31,24 @@ class TfliteCustomParser : public TfliteNodeParser {
 
   STATUS Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
                const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) override;
+
+  STATUS DetectPostProcess(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                           const std::unique_ptr<tflite::OperatorT> &tflite_op);
+
+  STATUS AudioSpectrogram(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                          const std::unique_ptr<tflite::OperatorT> &tflite_op);
+
+  STATUS Mfcc(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+              const std::unique_ptr<tflite::OperatorT> &tflite_op);
+
+  STATUS Predict(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                 const std::unique_ptr<tflite::OperatorT> &tflite_op);
+
+  STATUS Normalize(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                   const std::unique_ptr<tflite::OperatorT> &tflite_op);
+
+  STATUS ExtractFeatures(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                         const std::unique_ptr<tflite::OperatorT> &tflite_op);
 };
 }  // namespace lite
 }  // namespace mindspore
