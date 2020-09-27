@@ -28,7 +28,65 @@ namespace mindspore {
 class TestArithmeticTestFp32 : public mindspore::CommonTest {
  public:
   TestArithmeticTestFp32() {}
+  void PrepareInt(const std::vector<int> &input0_shape, const std::vector<int> &input1_shape, bool broadcast,
+                  const std::vector<int> &output_shape, int *input0_data, int *input1_data, int *output_data, int type,
+                  int act_type, const int thread_num);
+  void TearDown() override;
+
+ public:
+  float err_tol = 1e-5;
+  lite::Tensor in_tensor_0_;
+  lite::Tensor in_tensor_1_;
+  lite::Tensor out_tensor_;
+  std::vector<lite::Tensor *> inputs_{&in_tensor_0_, &in_tensor_1_};
+  std::vector<lite::Tensor *> outputs_{&out_tensor_};
+  ArithmeticParameter param_;
+  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt, schema::PrimitiveType_Eltwise};
+  lite::InnerContext ctx_ = lite::InnerContext();
+  kernel::KernelCreator creator_ = nullptr;
+  kernel::LiteKernel *kernel_ = nullptr;
 };
+
+void TestArithmeticTestFp32::PrepareInt(const std::vector<int> &input0_shape, const std::vector<int> &input1_shape,
+                                        bool broadcast, const std::vector<int> &output_shape, int *input0_data,
+                                        int *input1_data, int *output_data, int type, int act_type,
+                                        const int thread_num) {
+  param_.broadcasting_ = true;
+  param_.op_parameter_.type_ = type;
+  param_.ndim_ = input0_shape.size();
+  param_.activation_type_ = act_type;
+  param_.broadcasting_ = broadcast;
+  for (size_t i = 0; i < input0_shape.size(); ++i) {
+    param_.in_shape0_[i] = input0_shape[i];
+  }
+  for (size_t i = 0; i < input1_shape.size(); ++i) {
+    param_.in_shape1_[i] = input1_shape[i];
+  }
+  for (size_t i = 0; i < output_shape.size(); ++i) {
+    param_.out_shape_[i] = output_shape[i];
+  }
+
+  in_tensor_0_.set_data_type(kNumberTypeInt);
+  in_tensor_0_.SetData(input0_data);
+  in_tensor_0_.set_shape(input0_shape);
+  in_tensor_1_.SetData(input1_data);
+  in_tensor_1_.set_shape(input1_shape);
+  out_tensor_.SetData(output_data);
+  out_tensor_.set_shape(output_shape);
+
+  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc_);
+  ASSERT_NE(creator, nullptr);
+  ctx_.thread_num_ = thread_num;
+  ASSERT_EQ(lite::RET_OK, ctx_.Init());
+  kernel_ = creator(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_, nullptr);
+  ASSERT_NE(kernel_, nullptr);
+}
+
+void TestArithmeticTestFp32::TearDown() {
+  in_tensor_0_.SetData(nullptr);
+  in_tensor_1_.SetData(nullptr);
+  out_tensor_.SetData(nullptr);
+}
 
 TEST_F(TestArithmeticTestFp32, AddTest) {
   auto add_param = new ArithmeticParameter();
@@ -675,6 +733,258 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
   input0_tensor.SetData(nullptr);
   input1_tensor.SetData(nullptr);
   output0_tensor.SetData(nullptr);
+}
+
+TEST_F(TestArithmeticTestFp32, MulInt0) {
+  std::vector<int> input0_shape{1, 2, 2, 3};
+  std::vector<int> input1_shape{1, 1, 1, 3};
+  bool broadcast = true;
+  std::vector<int> output_shape{1, 2, 2, 3};
+  int in0_data[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  int in1_data[3] = {3, 2, 1};
+  int out_data[12] = {0};
+  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  int act_type = schema::ActivationType_NO_ACTIVATION;
+  int thread_num = 2;
+  desc_.type = type;
+  PrepareInt(input0_shape, input1_shape, broadcast, output_shape, in0_data, in1_data, out_data, type, act_type,
+             thread_num);
+  kernel_->Run();
+
+  int correct_data[12] = {0, 2, 2, 9, 8, 5, 18, 14, 8, 27, 20, 11};
+
+  CompareOutputData(out_data, correct_data, 12, err_tol);
+}
+
+TEST_F(TestArithmeticTestFp32, MulInt1) {
+  std::vector<int> input0_shape{1, 2, 2, 3};
+  std::vector<int> input1_shape{1};
+  bool broadcast = true;
+  std::vector<int> output_shape{1, 2, 2, 3};
+  int in0_data[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  int in1_data[1] = {2};
+  int out_data[12] = {0};
+  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  int act_type = schema::ActivationType_NO_ACTIVATION;
+  int thread_num = 2;
+  desc_.type = type;
+  PrepareInt(input0_shape, input1_shape, broadcast, output_shape, in0_data, in1_data, out_data, type, act_type,
+             thread_num);
+  kernel_->Run();
+
+  int correct_data[12] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22};
+
+  CompareOutputData(out_data, correct_data, 12, err_tol);
+}
+
+TEST_F(TestArithmeticTestFp32, MulInt2) {
+  std::vector<int> input0_shape{1};
+  std::vector<int> input1_shape{1, 2, 2, 3};
+  bool broadcast = true;
+  std::vector<int> output_shape{1, 2, 2, 3};
+  int in0_data[1] = {2};
+  int in1_data[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  int out_data[12] = {0};
+  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  int act_type = schema::ActivationType_NO_ACTIVATION;
+  int thread_num = 2;
+  desc_.type = type;
+  PrepareInt(input0_shape, input1_shape, broadcast, output_shape, in0_data, in1_data, out_data, type, act_type,
+             thread_num);
+  kernel_->Run();
+
+  int correct_data[12] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22};
+
+  CompareOutputData(out_data, correct_data, 12, err_tol);
+}
+
+TEST_F(TestArithmeticTestFp32, MulInt3) {
+  std::vector<int> input0_shape{1, 2, 2, 3};
+  std::vector<int> input1_shape{1, 2, 2, 3};
+  bool broadcast = false;
+  std::vector<int> output_shape{1, 2, 2, 3};
+  int in0_data[12] = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
+  int in1_data[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  int out_data[12] = {0};
+  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  int act_type = schema::ActivationType_NO_ACTIVATION;
+  int thread_num = 2;
+  desc_.type = type;
+  PrepareInt(input0_shape, input1_shape, broadcast, output_shape, in0_data, in1_data, out_data, type, act_type,
+             thread_num);
+  kernel_->Run();
+
+  int correct_data[12] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22};
+
+  CompareOutputData(out_data, correct_data, 12, err_tol);
+}
+
+TEST_F(TestArithmeticTestFp32, MulReluInt0) {
+  std::vector<int> input0_shape{1, 2, 2, 3};
+  std::vector<int> input1_shape{1, 1, 1, 3};
+  bool broadcast = true;
+  std::vector<int> output_shape{1, 2, 2, 3};
+  int in0_data[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  int in1_data[3] = {-1, 1, 1};
+  int out_data[12] = {0};
+  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  int act_type = schema::ActivationType_RELU;
+  int thread_num = 2;
+  desc_.type = type;
+  PrepareInt(input0_shape, input1_shape, broadcast, output_shape, in0_data, in1_data, out_data, type, act_type,
+             thread_num);
+  kernel_->Run();
+
+  int correct_data[12] = {0, 1, 2, 0, 4, 5, 0, 7, 8, 0, 10, 11};
+
+  CompareOutputData(out_data, correct_data, 12, err_tol);
+}
+
+TEST_F(TestArithmeticTestFp32, MulReluInt1) {
+  std::vector<int> input0_shape{1, 2, 2, 3};
+  std::vector<int> input1_shape{1};
+  bool broadcast = true;
+  std::vector<int> output_shape{1, 2, 2, 3};
+  int in0_data[12] = {0, -1, -2, -3, -4, -5, 6, 7, 8, 9, 10, 11};
+  int in1_data[1] = {1};
+  int out_data[12] = {0};
+  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  int act_type = schema::ActivationType_RELU;
+  int thread_num = 2;
+  desc_.type = type;
+  PrepareInt(input0_shape, input1_shape, broadcast, output_shape, in0_data, in1_data, out_data, type, act_type,
+             thread_num);
+  kernel_->Run();
+
+  int correct_data[12] = {0, 0, 0, 0, 0, 0, 6, 7, 8, 9, 10, 11};
+
+  CompareOutputData(out_data, correct_data, 12, err_tol);
+}
+
+TEST_F(TestArithmeticTestFp32, MulReluInt2) {
+  std::vector<int> input0_shape{1};
+  std::vector<int> input1_shape{1, 2, 2, 3};
+  bool broadcast = true;
+  std::vector<int> output_shape{1, 2, 2, 3};
+  int in0_data[1] = {1};
+  int in1_data[12] = {0, -1, -2, -3, -4, -5, 6, 7, 8, 9, 10, 11};
+  int out_data[12] = {0};
+  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  int act_type = schema::ActivationType_RELU;
+  int thread_num = 2;
+  desc_.type = type;
+  PrepareInt(input0_shape, input1_shape, broadcast, output_shape, in0_data, in1_data, out_data, type, act_type,
+             thread_num);
+  kernel_->Run();
+
+  int correct_data[12] = {0, 0, 0, 0, 0, 0, 6, 7, 8, 9, 10, 11};
+
+  CompareOutputData(out_data, correct_data, 12, err_tol);
+}
+
+TEST_F(TestArithmeticTestFp32, MulReluInt3) {
+  std::vector<int> input0_shape{1, 2, 2, 3};
+  std::vector<int> input1_shape{1, 2, 2, 3};
+  bool broadcast = false;
+  std::vector<int> output_shape{1, 2, 2, 3};
+  int in0_data[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  int in1_data[12] = {0, -1, -2, -3, -4, -5, 6, 7, 8, 9, 10, 11};
+  int out_data[12] = {0};
+  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  int act_type = schema::ActivationType_RELU;
+  int thread_num = 2;
+  desc_.type = type;
+  PrepareInt(input0_shape, input1_shape, broadcast, output_shape, in0_data, in1_data, out_data, type, act_type,
+             thread_num);
+  kernel_->Run();
+
+  int correct_data[12] = {0, 0, 0, 0, 0, 0, 6, 7, 8, 9, 10, 11};
+
+  CompareOutputData(out_data, correct_data, 12, err_tol);
+}
+
+TEST_F(TestArithmeticTestFp32, MulRelu6Int0) {
+  std::vector<int> input0_shape{1, 2, 2, 3};
+  std::vector<int> input1_shape{1, 1, 1, 3};
+  bool broadcast = true;
+  std::vector<int> output_shape{1, 2, 2, 3};
+  int in0_data[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  int in1_data[3] = {-1, 1, 1};
+  int out_data[12] = {0};
+  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  int act_type = schema::ActivationType_RELU6;
+  int thread_num = 2;
+  desc_.type = type;
+  PrepareInt(input0_shape, input1_shape, broadcast, output_shape, in0_data, in1_data, out_data, type, act_type,
+             thread_num);
+  kernel_->Run();
+
+  int correct_data[12] = {0, 1, 2, 0, 4, 5, 0, 6, 6, 0, 6, 6};
+
+  CompareOutputData(out_data, correct_data, 12, err_tol);
+}
+
+TEST_F(TestArithmeticTestFp32, MulRelu6Int1) {
+  std::vector<int> input0_shape{1, 2, 2, 3};
+  std::vector<int> input1_shape{1};
+  bool broadcast = true;
+  std::vector<int> output_shape{1, 2, 2, 3};
+  int in0_data[12] = {0, -1, -2, -3, -4, -5, 6, 7, 8, 9, 10, 11};
+  int in1_data[1] = {1};
+  int out_data[12] = {0};
+  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  int act_type = schema::ActivationType_RELU6;
+  int thread_num = 2;
+  desc_.type = type;
+  PrepareInt(input0_shape, input1_shape, broadcast, output_shape, in0_data, in1_data, out_data, type, act_type,
+             thread_num);
+  kernel_->Run();
+
+  int correct_data[12] = {0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 6, 6};
+
+  CompareOutputData(out_data, correct_data, 12, err_tol);
+}
+
+TEST_F(TestArithmeticTestFp32, MulRelu6Int2) {
+  std::vector<int> input0_shape{1};
+  std::vector<int> input1_shape{1, 2, 2, 3};
+  bool broadcast = true;
+  std::vector<int> output_shape{1, 2, 2, 3};
+  int in0_data[1] = {1};
+  int in1_data[12] = {0, -1, -2, -3, -4, -5, 6, 7, 8, 9, 10, 11};
+  int out_data[12] = {0};
+  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  int act_type = schema::ActivationType_RELU6;
+  int thread_num = 2;
+  desc_.type = type;
+  PrepareInt(input0_shape, input1_shape, broadcast, output_shape, in0_data, in1_data, out_data, type, act_type,
+             thread_num);
+  kernel_->Run();
+
+  int correct_data[12] = {0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 6, 6};
+
+  CompareOutputData(out_data, correct_data, 12, err_tol);
+}
+
+TEST_F(TestArithmeticTestFp32, MulRelu6Int3) {
+  std::vector<int> input0_shape{1, 2, 2, 3};
+  std::vector<int> input1_shape{1, 2, 2, 3};
+  bool broadcast = false;
+  std::vector<int> output_shape{1, 2, 2, 3};
+  int in0_data[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  int in1_data[12] = {0, -1, -2, -3, -4, -5, 6, 7, 8, 9, 10, 11};
+  int out_data[12] = {0};
+  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  int act_type = schema::ActivationType_RELU6;
+  int thread_num = 2;
+  desc_.type = type;
+  PrepareInt(input0_shape, input1_shape, broadcast, output_shape, in0_data, in1_data, out_data, type, act_type,
+             thread_num);
+  kernel_->Run();
+
+  int correct_data[12] = {0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 6, 6};
+
+  CompareOutputData(out_data, correct_data, 12, err_tol);
 }
 
 TEST_F(TestArithmeticTestFp32, AddReluFp32) {

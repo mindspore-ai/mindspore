@@ -35,12 +35,18 @@ int ElementOptSubRelu6(float *input0, float *input1, float *output, int element_
 int ElementOptMul(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
 int ElementOptMulRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
 int ElementOptMulRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
+int ElementOptMulInt(int *input0, int *input1, int *output, int element_size, ArithmeticParameter *param);
+int ElementOptMulReluInt(int *input0, int *input1, int *output, int element_size, ArithmeticParameter *param);
+int ElementOptMulRelu6Int(int *input0, int *input1, int *output, int element_size, ArithmeticParameter *param);
 int ElementOptDiv(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
 int ElementOptDivRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
 int ElementOptDivRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
 int ElementMul(float *input0, float *input1, float *output, int element_size);
 int ElementMulRelu(float *input0, float *input1, float *output, int element_size);
 int ElementMulRelu6(float *input0, float *input1, float *output, int element_size);
+int ElementMulInt(int *input0, int *input1, int *output, int element_size);
+int ElementMulReluInt(int *input0, int *input1, int *output, int element_size);
+int ElementMulRelu6Int(int *input0, int *input1, int *output, int element_size);
 int BroadcastMul(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
                  ArithmeticParameter *param);
 

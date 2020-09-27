@@ -36,6 +36,11 @@ int ArithmeticCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
+  if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
+    data_type_ = kDataTypeFloat;
+  } else {
+    data_type_ = kDataTypeInt;
+  }
   return ReSize();
 }
 
@@ -51,14 +56,17 @@ int ArithmeticCPUKernel::ReSize() {
           case schema::ActivationType_RELU:
             arithmeticParameter_->broadcasting_ = false;
             arithmetic_opt_run_ = ElementOptMulRelu;
+            arithmetic_opt_run_int_ = ElementOptMulReluInt;
             break;
           case schema::ActivationType_RELU6:
             arithmeticParameter_->broadcasting_ = false;
             arithmetic_opt_run_ = ElementOptMulRelu6;
+            arithmetic_opt_run_int_ = ElementOptMulRelu6Int;
             break;
           default:
             arithmeticParameter_->broadcasting_ = false;
             arithmetic_opt_run_ = ElementOptMul;
+            arithmetic_opt_run_int_ = ElementOptMulInt;
             break;
         }
         break;
@@ -113,23 +121,40 @@ int ArithmeticCPUKernel::ReSize() {
       default:
         break;
     }
+  } else {
+    arithmetic_opt_run_ = nullptr;
+    arithmetic_opt_run_int_ = nullptr;
   }
   return RET_OK;
 }
 
-int ArithmeticCPUKernel::BroadcastRun(float *input0, float *input1, float *output, int dim, int out_count,
+int ArithmeticCPUKernel::BroadcastRun(void *input0, void *input1, void *output, int dim, int out_count,
                                       int out_thread_stride) {
   if (dim > break_pos_) {
-    return arithmetic_run_(input0 + out_thread_stride, input1 + out_thread_stride, output + out_thread_stride,
-                           out_count);
+    if (data_type_ == kDataTypeInt) {
+      return arithmetic_run_int_(reinterpret_cast<int *>(input0) + out_thread_stride,
+                                 reinterpret_cast<int *>(input1) + out_thread_stride,
+                                 reinterpret_cast<int *>(output) + out_thread_stride, out_count);
+    }
+    return arithmetic_run_(reinterpret_cast<float *>(input0) + out_thread_stride,
+                           reinterpret_cast<float *>(input1) + out_thread_stride,
+                           reinterpret_cast<float *>(output) + out_thread_stride, out_count);
   }
   for (int i = 0; i < arithmeticParameter_->out_shape_[dim]; ++i) {
     int pos0_ = arithmeticParameter_->in_shape0_[dim] == 1 ? 0 : i;
     int pos1_ = arithmeticParameter_->in_shape1_[dim] == 1 ? 0 : i;
-    int error_code =
-      BroadcastRun(input0 + pos0_ * arithmeticParameter_->in_strides0_[dim],
-                   input1 + pos1_ * arithmeticParameter_->in_strides1_[dim],
-                   output + i * arithmeticParameter_->out_strides_[dim], dim + 1, out_count, out_thread_stride);
+    int error_code;
+    if (data_type_ == kDataTypeInt) {
+      error_code = BroadcastRun(reinterpret_cast<int *>(input0) + pos0_ * arithmeticParameter_->in_strides0_[dim],
+                                reinterpret_cast<int *>(input1) + pos1_ * arithmeticParameter_->in_strides1_[dim],
+                                reinterpret_cast<int *>(output) + i * arithmeticParameter_->out_strides_[dim], dim + 1,
+                                out_count, out_thread_stride);
+    } else {
+      error_code = BroadcastRun(reinterpret_cast<float *>(input0) + pos0_ * arithmeticParameter_->in_strides0_[dim],
+                                reinterpret_cast<float *>(input1) + pos1_ * arithmeticParameter_->in_strides1_[dim],
+                                reinterpret_cast<float *>(output) + i * arithmeticParameter_->out_strides_[dim],
+                                dim + 1, out_count, out_thread_stride);
+    }
     if (error_code != RET_OK) {
       return error_code;
     }
@@ -138,9 +163,6 @@ int ArithmeticCPUKernel::BroadcastRun(float *input0, float *input1, float *outpu
 }
 
 int ArithmeticCPUKernel::DoArithmetic(int task_id) {
-  auto input0_data = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
-  auto input1_data1 = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
-  auto output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   auto element_num = out_tensors_[0]->ElementsNum();
 
   MS_ASSERT(thread_count_ != 0);
@@ -152,26 +174,62 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
     return RET_ERROR;
   }
 
-  int error_code = RET_OK;
-  if (arithmeticParameter_->broadcasting_) {
+  int error_code;
+  if (arithmeticParameter_->broadcasting_) {  // need broadcast
     stride = UP_DIV(outside_, thread_count_);
-    out_count_ = MSMIN(stride, outside_ - stride * task_id);
-    out_thread_stride_ = stride * task_id;
-    error_code = BroadcastRun(input0_data, input1_data1, output_data, 0, out_count_, out_thread_stride_);
-  } else if (arithmetic_opt_run_ != nullptr) {
-    if (arithmeticParameter_->in_elements_num0_ == 1) {
-      error_code = arithmetic_opt_run_(input0_data, input1_data1 + stride * task_id, output_data + stride * task_id,
-                                       count, arithmeticParameter_);
-    } else if (arithmeticParameter_->in_elements_num1_ == 1) {
-      error_code = arithmetic_opt_run_(input0_data + stride * task_id, input1_data1, output_data + stride * task_id,
-                                       count, arithmeticParameter_);
+    int out_count = MSMIN(stride, outside_ - stride * task_id);
+    int out_thread_stride = stride * task_id;
+    if (data_type_ == kDataTypeFloat) {
+      error_code =
+        BroadcastRun(reinterpret_cast<float *>(in_tensors_[0]->MutableData()),
+                     reinterpret_cast<float *>(in_tensors_[1]->MutableData()),
+                     reinterpret_cast<float *>(out_tensors_[0]->MutableData()), 0, out_count, out_thread_stride);
     } else {
-      error_code = arithmetic_opt_run_(input0_data + stride * task_id, input1_data1 + stride * task_id,
-                                       output_data + stride * task_id, count, arithmeticParameter_);
+      error_code = BroadcastRun(
+        reinterpret_cast<int *>(in_tensors_[0]->MutableData()), reinterpret_cast<int *>(in_tensors_[1]->MutableData()),
+        reinterpret_cast<int *>(out_tensors_[0]->MutableData()), 0, out_count, out_thread_stride);
     }
-  } else {
-    error_code = arithmetic_run_(input0_data + stride * task_id, input1_data1 + stride * task_id,
-                                 output_data + stride * task_id, count);
+
+  } else if (arithmetic_opt_run_ != nullptr) {  // no broadcast, one of input is scalar
+    if (arithmeticParameter_->in_elements_num0_ == 1) {
+      if (data_type_ == kDataTypeFloat) {
+        error_code = arithmetic_opt_run_(reinterpret_cast<float *>(in_tensors_[0]->MutableData()),
+                                         reinterpret_cast<float *>(in_tensors_[1]->MutableData()) + stride * task_id,
+                                         reinterpret_cast<float *>(out_tensors_[0]->MutableData()) + stride * task_id,
+                                         count, arithmeticParameter_);
+      } else {
+        error_code = arithmetic_opt_run_int_(reinterpret_cast<int *>(in_tensors_[0]->MutableData()),
+                                             reinterpret_cast<int *>(in_tensors_[1]->MutableData()) + stride * task_id,
+                                             reinterpret_cast<int *>(out_tensors_[0]->MutableData()) + stride * task_id,
+                                             count, arithmeticParameter_);
+      }
+    } else if (arithmeticParameter_->in_elements_num1_ == 1) {
+      if (data_type_ == kDataTypeFloat) {
+        error_code = arithmetic_opt_run_(reinterpret_cast<float *>(in_tensors_[0]->MutableData()) + stride * task_id,
+                                         reinterpret_cast<float *>(in_tensors_[1]->MutableData()),
+                                         reinterpret_cast<float *>(out_tensors_[0]->MutableData()) + stride * task_id,
+                                         count, arithmeticParameter_);
+      } else {
+        error_code = arithmetic_opt_run_int_(reinterpret_cast<int *>(in_tensors_[0]->MutableData()) + stride * task_id,
+                                             reinterpret_cast<int *>(in_tensors_[1]->MutableData()),
+                                             reinterpret_cast<int *>(out_tensors_[0]->MutableData()) + stride * task_id,
+                                             count, arithmeticParameter_);
+      }
+    } else {
+      MS_LOG(ERROR) << "Arithmetic opt run: at least one of inputs is scalar";
+      return RET_ERROR;
+    }
+  } else {  // no broadcast, neither is scalar, two same shape
+    if (data_type_ == kDataTypeFloat) {
+      error_code = arithmetic_run_(reinterpret_cast<float *>(in_tensors_[0]->MutableData()) + stride * task_id,
+                                   reinterpret_cast<float *>(in_tensors_[1]->MutableData()) + stride * task_id,
+                                   reinterpret_cast<float *>(out_tensors_[0]->MutableData()) + stride * task_id, count);
+    } else {
+      error_code =
+        arithmetic_run_int_(reinterpret_cast<int *>(in_tensors_[0]->MutableData()) + stride * task_id,
+                            reinterpret_cast<int *>(in_tensors_[1]->MutableData()) + stride * task_id,
+                            reinterpret_cast<int *>(out_tensors_[0]->MutableData()) + stride * task_id, count);
+    }
   }
   if (error_code != RET_OK) {
     return RET_ERROR;
@@ -239,6 +297,7 @@ kernel::LiteKernel *CpuArithmeticFp32KernelCreator(const std::vector<lite::Tenso
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Mul, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt, PrimitiveType_Mul, CpuArithmeticFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Add, CpuArithmeticFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Sub, CpuArithmeticFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Div, CpuArithmeticFp32KernelCreator)
