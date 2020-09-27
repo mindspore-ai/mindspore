@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+import os
 import random
 import time
 from multiprocessing import Process
@@ -81,6 +82,11 @@ def test_graphdata_distributed():
     """
     Test distributed
     """
+    ASAN = os.environ.get('ASAN_OPTIONS')
+    if ASAN:
+        logger.info("skip the graphdata distributed when asan mode")
+        return
+
     logger.info('test distributed.\n')
 
     server_port = random.randint(10000, 60000)
