@@ -15,6 +15,7 @@
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
+- [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
 
@@ -141,7 +142,7 @@ run_eval_s8_multiscale_flip.sh
     ├── run_standalone_train.sh                   # launch ascend standalone training(1 pc)
   ├── src
     ├── data                          
-        ├── data_generator.py                     # mindrecord data generator
+        ├── dataset.py                            # mindrecord data generator
         ├── build_seg_data.py                     # data preprocessing
     ├── loss
        ├── loss.py                                # loss definition for deeplabv3        
@@ -412,10 +413,9 @@ Note: There OS is output stride, and MS is multiscale.
 | Checkpoint for Fine tuning | 443M (.ckpt file)                                         |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeplabv3) | 
 
+# [Description of Random Situation](#contents)
+In dataset.py, we set the seed inside "create_dataset" function. We also use random seed in train.py. 
+
 # [ModelZoo Homepage](#contents)
  Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
-
-
-
-
-
+ 
