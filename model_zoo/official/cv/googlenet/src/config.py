@@ -26,7 +26,6 @@ cifar_cfg = edict({
     'epoch_size': 125,
     'momentum': 0.9,
     'weight_decay': 5e-4,
-    'buffer_size': 10,
     'image_height': 224,
     'image_width': 224,
     'data_path': './cifar10',
@@ -47,7 +46,6 @@ imagenet_cfg = edict({
     'epoch_size': 300,
     'momentum': 0.9,
     'weight_decay': 1e-4,
-    'buffer_size': None,  # invalid parameter
     'image_height': 224,
     'image_width': 224,
     'data_path': './ImageNet_Original/train/',

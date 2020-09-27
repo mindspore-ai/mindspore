@@ -163,7 +163,6 @@ Parameters for both training and evaluation can be set in config.py
   'epoch_size': 125         # total training epochs
   'momentum': 0.9           # momentum
   'weight_decay': 5e-4      # weight decay value
-  'buffer_size': 10         # buffer size
   'image_height': 224       # image height used as input to the model
   'image_width': 224        # image width used as input to the model
   'data_path': './cifar10'  # absolute full path to the train and evaluation datasets
