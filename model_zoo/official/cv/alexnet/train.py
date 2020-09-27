@@ -44,6 +44,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='MindSpore AlexNet Example')
     parser.add_argument('--dataset_name', type=str, default='cifar10', choices=['imagenet', 'cifar10'],
                         help='dataset name.')
+    parser.add_argument('--sink_size', type=int, default=-1, help='control the amount of data in each sink')
     parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU'],
                         help='device where the code will be implemented (default: Ascend)')
     parser.add_argument('--data_path', type=str, default="./", help='path where the dataset is saved')
@@ -97,17 +98,16 @@ if __name__ == "__main__":
 
     loss_scale_manager = None
     metrics = None
+    step_per_epoch = ds_train.get_dataset_size() if args.sink_size == -1 else args.sink_size
     if args.dataset_name == 'cifar10':
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-        lr = Tensor(get_lr_cifar10(0, cfg.learning_rate, cfg.epoch_size, ds_train.get_dataset_size()))
+        lr = Tensor(get_lr_cifar10(0, cfg.learning_rate, cfg.epoch_size, step_per_epoch))
         opt = nn.Momentum(network.trainable_params(), lr, cfg.momentum)
         metrics = {"Accuracy": Accuracy()}
 
     elif args.dataset_name == 'imagenet':
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-
-        lr = Tensor(get_lr_imagenet(cfg, ds_train.get_dataset_size()))
-
+        lr = Tensor(get_lr_imagenet(cfg, step_per_epoch))
         opt = nn.Momentum(params=get_param_groups(network),
                           learning_rate=lr,
                           momentum=cfg.momentum,
@@ -136,11 +136,11 @@ if __name__ == "__main__":
     else:
         ckpt_save_dir = args.ckpt_path
 
-    time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
-    config_ck = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(),
+    time_cb = TimeMonitor(data_size=step_per_epoch)
+    config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
                                  keep_checkpoint_max=cfg.keep_checkpoint_max)
     ckpoint_cb = ModelCheckpoint(prefix="checkpoint_alexnet", directory=ckpt_save_dir, config=config_ck)
 
     print("============== Starting Training ==============")
     model.train(cfg.epoch_size, ds_train, callbacks=[time_cb, ckpoint_cb, LossMonitor()],
-                dataset_sink_mode=args.dataset_sink_mode)
+                dataset_sink_mode=args.dataset_sink_mode, sink_size=args.sink_size)
