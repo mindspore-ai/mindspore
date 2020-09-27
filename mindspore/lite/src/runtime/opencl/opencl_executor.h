@@ -27,11 +27,7 @@
 namespace mindspore::lite::opencl {
 class OpenCLExecutor : Executor {
  public:
-  OpenCLExecutor() : Executor() {
-    auto ocl_runtime = OpenCLRuntime::GetInstance();
-    allocator_ = ocl_runtime->GetAllocator();
-    OpenCLRuntime::DeleteInstance();
-  }
+  OpenCLExecutor() : Executor() { allocator_ = ocl_runtime.GetInstance()->GetAllocator(); }
 
   int Prepare(const std::vector<kernel::LiteKernel *> &kernels);
 
@@ -42,6 +38,7 @@ class OpenCLExecutor : Executor {
  protected:
   InnerContext *context = nullptr;
   OpenCLAllocator *allocator_;
+  OpenCLRuntimeWrapper ocl_runtime;
 };
 }  // namespace mindspore::lite::opencl
 #endif

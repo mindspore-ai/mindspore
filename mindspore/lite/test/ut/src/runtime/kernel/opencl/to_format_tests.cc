@@ -29,7 +29,7 @@ class TestToFormatOpenCL : public mindspore::CommonTest {
 };
 
 TEST_F(TestToFormatOpenCL, ToFormatNHWC2NCHW) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
   int h = 64;
@@ -102,6 +102,5 @@ TEST_F(TestToFormatOpenCL, ToFormatNHWC2NCHW) {
   // compare
   CompareOutputData(output_data, correct_data, h * w * c, 0.00001);
   MS_LOG(INFO) << "Test TransposeFp32 passed";
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

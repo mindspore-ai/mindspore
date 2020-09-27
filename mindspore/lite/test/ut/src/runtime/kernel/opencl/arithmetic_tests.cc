@@ -68,7 +68,7 @@ static void LogData(void *data, const int size, const std::string prefix) {
 template <class T>
 static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) {
   bool is_log_data = false;
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   auto allocator = ocl_runtime->GetAllocator();
 
   bool is_bias_add = shape_b.empty();
@@ -212,7 +212,6 @@ static void TestCase(const std::vector<int> &shape_a, const std::vector<int> &sh
   for (auto tensor : outputs) {
     delete tensor;
   }
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 class TestArithmeticOpenCL : public mindspore::CommonTest {

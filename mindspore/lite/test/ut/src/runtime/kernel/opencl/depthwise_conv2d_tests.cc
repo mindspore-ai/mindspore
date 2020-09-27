@@ -33,7 +33,7 @@ class TestConvolutionDwOpenCL : public mindspore::CommonTest {
 template <class T1, class T2>
 void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_data, T2 *gnd_data, schema::Format format,
                        TypeId dtype = kNumberTypeFloat32, bool is_compare = true, T2 err_max = 1e-5) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
   if (dtype == kNumberTypeFloat16) {
@@ -167,7 +167,6 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
   inputs[1]->SetData(nullptr);
   inputs[2]->SetData(nullptr);
   delete[] packed_input;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
   inputs[0]->SetData(nullptr);
   outputs[0]->SetData(nullptr);
   return;

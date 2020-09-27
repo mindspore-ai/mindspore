@@ -53,7 +53,7 @@ void InitMaxPoolingParam(PoolingParameter *param) {
 }
 
 void RunTestCaseMaxPooling(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
   ocl_runtime->SetFp16Enable(enable_fp16);
@@ -124,7 +124,6 @@ void RunTestCaseMaxPooling(const std::vector<int> &shape, void *input_data, void
   }
 
   MS_LOG(INFO) << "Test MaxPool2d passed";
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestMaxPoolingOpenCL, MaxPoolingFp32) {

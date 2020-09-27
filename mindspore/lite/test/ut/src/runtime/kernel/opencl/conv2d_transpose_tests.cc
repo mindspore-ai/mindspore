@@ -32,7 +32,7 @@ class TestConv2dTransposeOpenCL : public mindspore::CommonTest {
 
 void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data, void *weight_data, void *bias_data,
                                 void *output_data, bool enable_fp16) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
   ocl_runtime->SetFp16Enable(enable_fp16);
@@ -134,7 +134,6 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
   for (auto t : outputs) {
     t->SetData(nullptr);
   }
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {

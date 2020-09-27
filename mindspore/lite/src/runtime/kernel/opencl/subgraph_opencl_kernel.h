@@ -36,7 +36,9 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
                                 const std::vector<kernel::LiteKernel *> outKernels,
                                 const std::vector<kernel::LiteKernel *> nodes, const lite::InnerContext *ctx = nullptr,
                                 const mindspore::lite::PrimitiveC *primitive = nullptr)
-      : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx, primitive) {}
+      : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx, primitive) {
+    ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
+  }
   ~SubGraphOpenCLKernel() override;
 
   int Init() override;
@@ -64,6 +66,7 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
   std::vector<OpenCLToFormatParameter *> out_parameters_;
   std::vector<LiteKernel *> in_convert_ops_;
   std::vector<LiteKernel *> out_convert_ops_;
+  lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
   lite::opencl::OpenCLRuntime *ocl_runtime_{nullptr};
 };
 }  // namespace mindspore::kernel

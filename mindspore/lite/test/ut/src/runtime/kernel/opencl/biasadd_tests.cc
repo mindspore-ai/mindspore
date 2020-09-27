@@ -75,7 +75,7 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
   std::string weight_file = "/data/local/tmp/weight_data.bin";
   std::string standard_answer_file = "/data/local/tmp/biasadd.bin";
   MS_LOG(INFO) << "BiasAdd Begin test:";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto data_type = kNumberTypeFloat16;  // need modify
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
@@ -200,6 +200,5 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
   delete output_tensor;
   delete sub_graph;
   delete param;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

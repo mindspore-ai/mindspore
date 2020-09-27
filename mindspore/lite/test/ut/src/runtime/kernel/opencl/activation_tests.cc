@@ -82,7 +82,7 @@ TEST_F(TestActivationOpenCL, ReluFp_dim4) {
   std::string in_file = "/data/local/tmp/in_data.bin";
   std::string out_file = "/data/local/tmp/relu.bin";
   MS_LOG(INFO) << "Relu Begin test!";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
   auto data_type = kNumberTypeFloat16;
@@ -184,14 +184,13 @@ TEST_F(TestActivationOpenCL, ReluFp_dim4) {
   delete input_tensor;
   delete output_tensor;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestActivationOpenCL, Relu6Fp_dim4) {
   std::string in_file = "/data/local/tmp/in_data.bin";
   std::string out_file = "/data/local/tmp/relu6.bin";
   MS_LOG(INFO) << "Relu6 Begin test!";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   auto data_type = kNumberTypeFloat16;
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   bool enable_fp16 = ocl_runtime->GetFp16Enable();
@@ -296,14 +295,13 @@ TEST_F(TestActivationOpenCL, Relu6Fp_dim4) {
   delete input_tensor;
   delete output_tensor;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestActivationOpenCL, SigmoidFp_dim4) {
   std::string in_file = "/data/local/tmp/in_data.bin";
   std::string out_file = "/data/local/tmp/sigmoid.bin";
   MS_LOG(INFO) << "Sigmoid Begin test!";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto data_type = kNumberTypeFloat32;
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
@@ -408,14 +406,13 @@ TEST_F(TestActivationOpenCL, SigmoidFp_dim4) {
   delete input_tensor;
   delete output_tensor;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
   std::string in_file = "/data/local/tmp/in_data.bin";
   std::string out_file = "/data/local/tmp/leaky_relu.bin";
   MS_LOG(INFO) << "Leaky relu Begin test!";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto data_type = kNumberTypeFloat16;  // need modify
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
@@ -519,14 +516,13 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
   delete param;
   delete input_tensor;
   delete output_tensor;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
   std::string in_file = "/data/local/tmp/test_data/in_tanhfp16.bin";
   std::string out_file = "/data/local/tmp/test_data/out_tanhfp16.bin";
   MS_LOG(INFO) << "Tanh Begin test!";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   auto data_type = kNumberTypeFloat16;
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
@@ -627,7 +623,6 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
     printf_tensor<float>("Tanh:FP32--output data---", outputs[0]);
     CompareRes<float>(output_tensor, out_file);
   }
-  lite::opencl::OpenCLRuntime::DeleteInstance();
   input_tensor->SetData(nullptr);
   delete input_tensor;
   output_tensor->SetData(nullptr);

@@ -393,11 +393,16 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t>
   cl::Event event;
   cl_int ret = CL_SUCCESS;
   ret = command_queue->enqueueNDRangeKernel(kernel, cl::NullRange, global_range, local_range, nullptr, &event);
-
   if (ret != CL_SUCCESS) {
     MS_LOG(ERROR) << "Kernel execute failed:" << CLErrorCode(ret);
     return RET_ERROR;
   }
+  static int cnt = 0;
+  const int flush_period = 10;
+  if (cnt % flush_period == 0) {
+    command_queue->flush();
+  }
+  cnt++;
   MS_LOG(DEBUG) << "RunKernel success!";
 #if MS_OPENCL_PROFILE
   event.wait();
