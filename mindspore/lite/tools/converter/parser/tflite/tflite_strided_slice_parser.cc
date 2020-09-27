@@ -21,12 +21,9 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                       const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                                       const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                       schema::CNodeT *op, std::vector<int32_t> *tensors_id,
-                                       std::vector<schema::Format> *tensors_format,
-                                       std::map<int, int> *tensors_id_map) {
+STATUS TfliteStridedSliceParser::Parse(TfliteTensorsInfo *tensors_info,
+                                       const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                       const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteStridedSliceParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -55,28 +52,28 @@ STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
   attr->newAxisMask = tflite_attr->new_axis_mask;
   attr->shrinkAxisMask = tflite_attr->shrink_axis_mask;
 
-  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->begin)) {
+  if (GetTfliteData(tflite_op->inputs[1], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, attr->begin)) {
     MS_LOG(ERROR) << "stridedSlice -> begin get failed";
     return RET_ERROR;
   }
-  if (GetTfliteData(tflite_op->inputs[2], tflite_tensors, tflite_model_buffer, attr->end)) {
+  if (GetTfliteData(tflite_op->inputs[2], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, attr->end)) {
     MS_LOG(ERROR) << "stridedSlice -> end get failed";
     return RET_ERROR;
   }
-  if (GetTfliteData(tflite_op->inputs[3], tflite_tensors, tflite_model_buffer, attr->stride)) {
+  if (GetTfliteData(tflite_op->inputs[3], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, attr->stride)) {
     MS_LOG(ERROR) << "stridedSlice -> stride get failed";
     return RET_ERROR;
   }
-  attr->isScale.assign(tflite_tensors[tflite_op->inputs[0]]->shape.begin(),
-                       tflite_tensors[tflite_op->inputs[0]]->shape.end());
+  attr->isScale.assign(tflite_model->subgraphs[0]->tensors[tflite_op->inputs[0]]->shape.begin(),
+                       tflite_model->subgraphs[0]->tensors[tflite_op->inputs[0]]->shape.end());
 
   op->primitive->value.type = schema::PrimitiveType_StridedSlice;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
-             tflite_tensors.size(), schema::Format::Format_NHWC);
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
-              tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors.size(),
+             schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
+              schema::Format::Format_NHWC);
   return RET_OK;
 }
 

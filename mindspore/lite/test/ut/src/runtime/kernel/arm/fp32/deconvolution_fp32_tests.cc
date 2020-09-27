@@ -75,7 +75,7 @@ TEST_F(TestDeConvolutionFp32, DeConvWeightC4x4Pack1) {
     0.000,       0.000,       0.000,       0.00};
   float dst[256] = {0};
   PackDeConvWeightFp32(in, dst, 5, 6, 2 * 2);
-  EXPECT_EQ(0, lite::CompareOutputData(dst, co, 256));
+  EXPECT_EQ(0, lite::CompareOutputData(dst, 256, co, 256));
 }
 
 TEST_F(TestDeConvolutionFp32, DeConvWeightC4x4Pack2) {
@@ -90,7 +90,7 @@ TEST_F(TestDeConvolutionFp32, DeConvWeightC4x4Pack2) {
                 -0.293, 18.686, 0.0873, 0,      0,      0,      0,      0,      0,      0,      0,      0};
   float dst[64] = {0};
   PackDeConvWeightFp32(in, dst, 6, 3, 2 * 1);
-  EXPECT_EQ(0, lite::CompareOutputData(dst, co, 64));
+  EXPECT_EQ(0, lite::CompareOutputData(dst, 64, co, 64));
 }
 
 TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test1) {

@@ -104,8 +104,8 @@ int GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, co
   }
   auto bias_add_weight = bias_node->input(kAddWEIGHTINDEX);
   if (CheckIfNodeIsParam(bias_add_weight) != lite::RET_OK) {
-      delete[] add_bias_data;
-      return lite::RET_INVALID_OP_ATTR;
+    delete[] add_bias_data;
+    return lite::RET_INVALID_OP_ATTR;
   }
   auto add_weight_param = bias_add_weight->cast<ParameterPtr>()->default_param();
   auto add_weight_tensor = std::dynamic_pointer_cast<ParamValueLite>(add_weight_param);
@@ -124,6 +124,7 @@ int GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, co
   }
   if (conv_bias_node != nullptr) {
     if (CheckIfNodeIsParam(conv_bias_node) != lite::RET_OK) {
+      delete[] add_bias_data;
       return lite::RET_INVALID_OP_ATTR;
     }
     auto conv_bias_param = conv_bias_node->cast<ParameterPtr>()->default_param();

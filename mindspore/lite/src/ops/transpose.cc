@@ -43,6 +43,10 @@ int Transpose::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &
   }
   if (this->primitive_->value.value == nullptr) {
     auto attr = new (std::nothrow) schema::TransposeT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new TransposeT failed";
+      return RET_ERROR;
+    }
     MS_ASSERT(inputs.size() == kAnfPopulaterTwo);
     auto inputNode = inputs[kAnfPopulaterOne];
     if (inputNode->isa<ValueNode>()) {

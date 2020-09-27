@@ -64,6 +64,10 @@ int StridedSlice::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr
   }
   if (this->primitive_->value.value == nullptr) {
     auto attr = new (std::nothrow) schema::StridedSliceT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new StridedSlice failed";
+      return RET_ERROR;
+    }
     attr->beginMask = GetValue<int>(prim.GetAttr("begin_mask"));
     attr->endMask = GetValue<int>(prim.GetAttr("end_mask"));
     attr->ellipsisMask = GetValue<int>(prim.GetAttr("ellipsis_mask"));

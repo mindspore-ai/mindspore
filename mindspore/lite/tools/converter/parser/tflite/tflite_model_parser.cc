@@ -120,8 +120,7 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
       continue;
     }
     if (status == RET_OK) {
-      status = node_parser->Parse(tflite_op, tflite_subgraph->tensors, tflite_model->buffers, op.get(), &tensorsId,
-                                  &tensorsFormat, &tensorsIdMap);
+      status = node_parser->Parse(&tensorsInfo, tflite_op, tflite_model, op.get());
       if (status != RET_OK) {
         MS_LOG(ERROR) << "node " << op_type.c_str() << " parser failed";
         continue;
@@ -138,15 +137,15 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
 STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                                         schema::MetaGraphT *sub_graph) {
-  for (size_t i = 0; i < tensorsId.size(); i++) {
-    auto idx = tensorsId[i];
+  for (size_t i = 0; i < tensorsInfo.tensorsId.size(); i++) {
+    auto idx = tensorsInfo.tensorsId[i];
     if (idx < 0) {
       idx += tflite_subgraph->tensors.size();
     }
     const auto &tflite_tensor = tflite_subgraph->tensors[idx];
     std::unique_ptr<schema::TensorT> tensor = std::make_unique<schema::TensorT>();
 
-    tensor->format = tensorsFormat[i];
+    tensor->format = tensorsInfo.tensorsFormat[i];
     tensor->dataType = GetTfliteDataType(tflite_tensor->type);
     tensor->dims = tflite_tensor->shape;
 
@@ -207,8 +206,8 @@ STATUS TfliteModelParser::GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> 
     } else {
       id = idx;
     }
-    auto iter = tensorsIdMap.find(id);
-    if (iter != tensorsIdMap.end()) {
+    auto iter = tensorsInfo.tensorsIdMap.find(id);
+    if (iter != tensorsInfo.tensorsIdMap.end()) {
       graph_inputs.push_back(iter->second);
     } else {
       MS_LOG(ERROR) << "get graph input failed";
@@ -226,8 +225,8 @@ STATUS TfliteModelParser::GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> 
     } else {
       id = idx;
     }
-    auto iter = tensorsIdMap.find(id);
-    if (iter != tensorsIdMap.end()) {
+    auto iter = tensorsInfo.tensorsIdMap.find(id);
+    if (iter != tensorsInfo.tensorsIdMap.end()) {
       graph_outputs.push_back(iter->second);
     } else {
       MS_LOG(ERROR) << "get graph output failed";

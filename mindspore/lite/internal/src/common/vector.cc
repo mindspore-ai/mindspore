@@ -31,7 +31,7 @@ template <typename T>
 Vector<T>::Vector(size_t size) {
   size_ = size;
   elem_size_ = sizeof(T);
-  capacity_ = size;
+  capacity_ = (size == 0 ? DEFAULT_CAPACITY : size);
   data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
   if (data_ == nullptr) {
     MS_C_EXCEPTION("malloc data failed");
@@ -43,7 +43,7 @@ template <typename T>
 Vector<T>::Vector(size_t size, const T &value) {
   size_ = size;
   elem_size_ = sizeof(T);
-  capacity_ = size;
+  capacity_ = (size == 0 ? DEFAULT_CAPACITY : size);
   data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
   if (data_ == nullptr) {
     MS_C_EXCEPTION("malloc data failed");
@@ -115,7 +115,7 @@ void Vector<T>::push_back(const T &elem) {
 template <typename T>
 void Vector<T>::push_back(T &&elem) {
   if (data_ == nullptr) {
-    data_ = reinterpret_cast<T *>(malloc(elem_size_));
+    data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
     if (data_ == nullptr) {
       MS_C_EXCEPTION("malloc data failed");
     }

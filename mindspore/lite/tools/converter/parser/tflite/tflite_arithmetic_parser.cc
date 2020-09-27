@@ -22,12 +22,9 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteDoubleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                        const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                                        const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                        schema::CNodeT *op, std::vector<int32_t> *tensors_id,
-                                        std::vector<schema::Format> *tensors_format,
-                                        std::map<int, int> *tensors_id_map) {
+STATUS TfliteDoubleInputOpParser::Parse(TfliteTensorsInfo *tensors_info,
+                                        const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -171,20 +168,17 @@ STATUS TfliteDoubleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
 
   // set input
   for (size_t i = 0; i < tflite_op->inputs.size(); i++) {
-    AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[i], tensors_id->size(),
-               tflite_tensors.size(), schema::Format::Format_NHWC);
+    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_model->subgraphs[0]->tensors.size(),
+               schema::Format::Format_NHWC);
   }
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
-              tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
+              schema::Format::Format_NHWC);
   return RET_OK;
 }
 
-STATUS TfliteSingleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                        const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                                        const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                        schema::CNodeT *op, std::vector<int32_t> *tensors_id,
-                                        std::vector<schema::Format> *tensors_format,
-                                        std::map<int, int> *tensors_id_map) {
+STATUS TfliteSingleInputOpParser::Parse(TfliteTensorsInfo *tensors_info,
+                                        const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -210,13 +204,13 @@ STATUS TfliteSingleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
   } else if (std::strcmp(node_name, "Exp") == 0) {
     MS_LOG(DEBUG) << "parse TfliteExpParser";
     auto attr = std::make_unique<schema::ExpT>();
-    attr->base = -1;  // -1 represent base = e
-    attr->scale = 1;
-    attr->shift = 0;
     if (attr == nullptr) {
       MS_LOG(ERROR) << "new op failed";
       return RET_NULL_PTR;
     }
+    attr->base = -1;  // -1 represent base = e
+    attr->scale = 1;
+    attr->shift = 0;
     op->primitive->value.type = schema::PrimitiveType_Exp;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "Sqrt") == 0) {
@@ -300,7 +294,7 @@ STATUS TfliteSingleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
     }
     op->primitive->value.type = schema::PrimitiveType_Floor;
     op->primitive->value.value = attr.release();
-  } else if (std::strcmp(node_name, "NEG") == 0) {
+  } else if (std::strcmp(node_name, "Neg") == 0) {
     MS_LOG(DEBUG) << "parse TfliteNegParser";
     auto attr = std::make_unique<schema::NegT>();
     if (attr == nullptr) {
@@ -311,18 +305,16 @@ STATUS TfliteSingleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
     op->primitive->value.value = attr.release();
   }
 
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[0], tensors_id->size(),
-             tflite_tensors.size(), schema::Format::Format_NHWC);
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
-              tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors.size(),
+             schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
+              schema::Format::Format_NHWC);
   return RET_OK;
 }
 
-STATUS TfliteCompareOpParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                    const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                                    const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                    schema::CNodeT *op, std::vector<int32_t> *tensors_id,
-                                    std::vector<schema::Format> *tensors_format, std::map<int, int> *tensors_id_map) {
+STATUS TfliteCompareOpParser::Parse(TfliteTensorsInfo *tensors_info,
+                                    const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                    const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -393,11 +385,11 @@ STATUS TfliteCompareOpParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
   }
 
   for (size_t i = 0; i < tflite_op->inputs.size(); i++) {
-    AddOpInput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->inputs[i], tensors_id->size(),
-               tflite_tensors.size(), schema::Format::Format_NHWC);
+    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_model->subgraphs[0]->tensors.size(),
+               schema::Format::Format_NHWC);
   }
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map, tflite_op->outputs[0], tensors_id->size(),
-              tflite_tensors.size(), schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
+              schema::Format::Format_NHWC);
   return RET_OK;
 }
 
@@ -424,7 +416,7 @@ TfliteNodeRegister g_TfliteLogParser("Log", new TfliteLogParser());
 TfliteNodeRegister g_tfliteRoundParser("Round", new TfliteRoundParser());
 TfliteNodeRegister g_TfliteCeilParser("Ceil", new TfliteCeilParser());
 TfliteNodeRegister g_tfliteFloorParser("flOOR", new TfliteFloorParser());
-TfliteNodeRegister g_tfliteNegParser("NEG", new TfliteNegParser());
+TfliteNodeRegister g_tfliteNegParser("Neg", new TfliteNegParser());
 
 TfliteNodeRegister g_tfliteEqualParser("Equal", new TfliteEqualParser());
 TfliteNodeRegister g_tfliteNotEqualParser("NotEqual", new TfliteNotEqualParser());
