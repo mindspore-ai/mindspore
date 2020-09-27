@@ -119,6 +119,9 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_CUSTOM, "Custom"},
   {tflite::BuiltinOperator_MIRROR_PAD, "MirrorPad"},
   {tflite::BuiltinOperator_NEG, "Neg"},
+  {tflite::BuiltinOperator_HASHTABLE_LOOKUP, "HashtableLookup"},
+  {tflite::BuiltinOperator_LSH_PROJECTION, "LshProjection"},
+  {tflite::BuiltinOperator_SKIP_GRAM, "SKipGram"},
 };
 
 std::map<tflite::ActivationFunctionType, schema::ActivationType> tfMsActivationFunctionMap{

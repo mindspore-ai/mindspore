@@ -65,7 +65,7 @@ class OnnxModelParser : public ModelParser {
                               const QuantType &quantType);
 
   void ParseOnnxGemmNode(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                         schema::MetaGraphT *graph, TensorCache *tensor_cache);
+                         schema::MetaGraphT *graph, TensorCache *tensor_cache, const QuantType &quant_type);
 
   STATUS ParseOnnxGivenFillNode(const onnx::NodeProto &onnx_node, TensorCache *tensor_cache);
 
