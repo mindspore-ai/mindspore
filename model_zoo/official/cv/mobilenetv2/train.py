@@ -42,6 +42,7 @@ set_seed(1)
 
 if __name__ == '__main__':
     args_opt = train_parse_args()
+    args_opt.dataset_path = os.path.abspath(args_opt.dataset_path)
     config = set_config(args_opt)
     start = time.time()
 
@@ -53,7 +54,7 @@ if __name__ == '__main__':
     # define network
     backbone_net, head_net, net = define_net(config, args_opt.is_training)
 
-    if args_opt.pretrain_ckpt and args_opt.freeze_layer == "backbone":
+    if args_opt.pretrain_ckpt != "" and args_opt.freeze_layer == "backbone":
         load_ckpt(backbone_net, args_opt.pretrain_ckpt, trainable=False)
         step_size = extract_features(backbone_net, args_opt.dataset_path, config)
 
@@ -92,7 +93,7 @@ if __name__ == '__main__':
                        total_epochs=epoch_size,
                        steps_per_epoch=step_size))
 
-    if args_opt.pretrain_ckpt is None or args_opt.freeze_layer == "none":
+    if args_opt.pretrain_ckpt == "" or args_opt.freeze_layer == "none":
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, \
             config.weight_decay, config.loss_scale)

@@ -99,7 +99,7 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1):
 
 
 def extract_features(net, dataset_path, config):
-    features_folder = os.path.abspath(dataset_path) + '_features'
+    features_folder = dataset_path + '_features'
     if not os.path.exists(features_folder):
         os.makedirs(features_folder)
     dataset = create_dataset(dataset_path=dataset_path,
