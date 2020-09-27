@@ -112,16 +112,6 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       return nullptr;
     }
-    if (config->quantType == schema::QuantType_PostTraining) {
-      quant::QuantCast quant_cast;
-      quant_cast.SetInputDataDType(kNumberTypeFloat32);
-      status = quant_cast.Run(new_graph);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "add QuantCast error";
-        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-        return nullptr;
-      }
-    }
   }
 
   return new_graph;
