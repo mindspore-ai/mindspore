@@ -628,7 +628,7 @@ class GroupNorm(Cell):
         _channel_check(channel, self.num_channels)
         x = self.reshape(x, (batch, self.num_groups, -1))
         mean = self.reduce_mean(x, 2)
-        var = self.reduce_sum(self.square(x - mean), 2) / (channel * height * width / self.num_groups - 1)
+        var = self.reduce_sum(self.square(x - mean), 2) / (channel * height * width / self.num_groups)
         std = self.sqrt(var + self.eps)
         x = (x - mean) / std
         x = self.reshape(x, (batch, channel, height, width))

@@ -5355,20 +5355,21 @@ class CTCGreedyDecoder(PrimitiveWithInfer):
 
     Inputs:
         - **inputs** (Tensor) - The input Tensor must be a `3-D` tensor whose shape is
-          :math:`(max_time, batch_size, num_classes)`. `num_classes` must be `num_labels + 1` classes, `num_labels`
-          indicates the number of actual labels. Blank labels are reserved. Default blank label is `num_classes - 1`.
-          Data type must be float32 or float64.
-        - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch_size)`.
-          The type must be int32. Each value in the tensor must not greater than `max_time`.
+          :math:`(\text{max_time}, \text{batch_size}, \text{num_classes})`. `num_classes` must be
+          `num_labels + 1` classes, `num_labels` indicates the number of actual labels. Blank labels are reserved.
+          Default blank label is `num_classes - 1`. Data type must be float32 or float64.
+        - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of
+          :math:`(\text{batch_size})`. The type must be int32.
+          Each value in the tensor must not greater than `max_time`.
 
     Outputs:
-        - **decoded_indices** (Tensor) - A tensor with shape of :math:`(total_decoded_outputs, 2)`.
+        - **decoded_indices** (Tensor) - A tensor with shape of :math:`(\text{total_decoded_outputs}, 2)`.
           Data type is int64.
-        - **decoded_values** (Tensor) - A tensor with shape of :math:`(total_decoded_outputs)`,
+        - **decoded_values** (Tensor) - A tensor with shape of :math:`(\text{total_decoded_outputs})`,
           it stores the decoded classes. Data type is int64.
-        - **decoded_shape** (Tensor) - The value of tensor is :math:`[batch_size, max_decoded_legth]`.
+        - **decoded_shape** (Tensor) - The value of tensor is :math:`[\text{batch_size}, \text{max_decoded_legth}]`.
           Data type is int64.
-        - **log_probability** (Tensor) - A tensor with shape of :math:`(batch_size, 1)`,
+        - **log_probability** (Tensor) - A tensor with shape of :math:`(\text{batch_size}, 1)`,
           containing sequence log-probability, has the same type as `inputs`.
 
     Examples:
