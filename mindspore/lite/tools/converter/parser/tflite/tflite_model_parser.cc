@@ -47,14 +47,11 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *m
 
 STATUS TfliteModelParser::CopyConstTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                                               const tflite::TensorT *tflite_tensor, schema::TensorT *tensor) {
-  auto count = 1;
-  std::for_each(tflite_tensor->shape.begin(), tflite_tensor->shape.end(), [&](int32_t sha) { count *= sha; });
-  auto data_size = count * GetDataTypeSize(TypeId(tensor->dataType));
   auto buffer_idx = tflite_tensor->buffer;
   if (!tflite_model_buffer[buffer_idx]->data.empty()) {
+    auto data_size = tflite_model_buffer[buffer_idx]->data.size();
     tensor->data.resize(data_size);
-    if (memcpy_s(tensor->data.data(), tensor->data.size(), tflite_model_buffer[buffer_idx]->data.data(),
-                 tflite_model_buffer[buffer_idx]->data.size())) {
+    if (memcpy_s(tensor->data.data(), data_size, tflite_model_buffer[buffer_idx]->data.data(), data_size) != EOK) {
       MS_LOG(ERROR) << "memcpy tensor data failed";
       return RET_MEMORY_FAILED;
     }

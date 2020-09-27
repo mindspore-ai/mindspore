@@ -963,3 +963,27 @@ table SkipGram {
     maxSkipSize : int;
     ngramSize : int;
 }
+
+table CustomPredict {
+    outputNum : int;
+    weightThreshold : float;
+}
+
+table CustomNormalize {
+}
+
+table CustomExtractFeatures {
+}
+
+table AudioSpectrogram {
+    windowSize : int;
+    stride : int;
+    magSquare : bool;
+}
+
+table Mfcc {
+    freqUpperLimit : float;
+    freqLowerLimit : float;
+    filterBankChannelNum : int;
+    dctCoeffNum : int;
+}

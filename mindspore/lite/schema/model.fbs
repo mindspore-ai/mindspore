@@ -207,6 +207,11 @@ union PrimitiveType {
     LshProjection,
     HashtableLookup,
     SkipGram,
+    CustomPredict,
+    CustomNormalize,
+    CustomExtractFeatures,
+    AudioSpectrogram,
+    Mfcc,
 }
 
 enum QuantType: int {

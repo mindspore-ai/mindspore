@@ -120,6 +120,9 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_MIRROR_PAD, "MirrorPad"},
   {tflite::BuiltinOperator_NEG, "Neg"},
   {tflite::BuiltinOperator_PRELU, "PRELU"},
+  {tflite::BuiltinOperator_HASHTABLE_LOOKUP, "HashtableLookup"},
+  {tflite::BuiltinOperator_LSH_PROJECTION, "LshProjection"},
+  {tflite::BuiltinOperator_SKIP_GRAM, "SKipGram"},
 };
 
 std::map<tflite::ActivationFunctionType, schema::ActivationType> tfMsActivationFunctionMap{
@@ -134,7 +137,7 @@ std::map<int, TypeId> type_map = {
   {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16}, {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},
   {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},     {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
   {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},     {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
-  {tflite::TensorType_BOOL, TypeId::kNumberTypeBool},
+  {tflite::TensorType_BOOL, TypeId::kNumberTypeBool},       {tflite::TensorType_STRING, TypeId::kObjectTypeString},
 };
 
 schema::ActivationType GetActivationFunctionType(tflite::ActivationFunctionType tfliteAFType) {
