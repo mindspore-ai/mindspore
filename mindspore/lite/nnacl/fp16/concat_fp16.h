@@ -22,7 +22,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ConcatFp16(void **input, int input_num, int axis, int **inputs_output_shape, size_t shape_size, void *output);
+void ConcatFp16(void **input, int input_num, int axis, int **inputs_output_shape, size_t shape_size, void *output,
+                int dtype_len);
 #ifdef __cplusplus
 }
 #endif
