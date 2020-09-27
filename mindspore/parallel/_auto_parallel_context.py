@@ -95,6 +95,16 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_global_rank()
 
+    def set_pipeline_stages(self, stages):
+        """Set the stages of the pipeline"""
+        self.check_context_handle()
+        self._context_handle.set_pipeline_stage_split_num(stages)
+
+    def get_pipeline_stages(self):
+        """Get the stages of the pipeline"""
+        self.check_context_handle()
+        return self._context_handle.get_pipeline_stage_split_num()
+
     def set_gradients_mean(self, gradients_mean):
         """
         Set gradients_mean flag.
@@ -466,6 +476,7 @@ _set_auto_parallel_context_func_map = {
     "gradients_mean": auto_parallel_context().set_gradients_mean,
     "gradient_fp32_sync": auto_parallel_context().set_gradient_fp32_sync,
     "loss_repeated_mean": auto_parallel_context().set_loss_repeated_mean,
+    "pipeline_stages": auto_parallel_context().set_pipeline_stages,
     "parallel_mode": auto_parallel_context().set_parallel_mode,
     "auto_parallel_search_mode": auto_parallel_context().set_strategy_search_mode,
     "parameter_broadcast": auto_parallel_context().set_parameter_broadcast,
@@ -482,6 +493,7 @@ _get_auto_parallel_context_func_map = {
     "gradients_mean": auto_parallel_context().get_gradients_mean,
     "gradient_fp32_sync": auto_parallel_context().get_gradient_fp32_sync,
     "loss_repeated_mean": auto_parallel_context().get_loss_repeated_mean,
+    "pipeline_stages": auto_parallel_context().get_pipeline_stages,
     "parallel_mode": auto_parallel_context().get_parallel_mode,
     "auto_parallel_search_mode": auto_parallel_context().get_strategy_search_mode,
     "parameter_broadcast": auto_parallel_context().get_parameter_broadcast,
@@ -569,7 +581,6 @@ def _get_auto_parallel_context(attr_key):
     get_func = _get_auto_parallel_context_func_map[attr_key]
     return get_func()
 
-
 def _reset_auto_parallel_context():
     """
     Reset auto parallel context attributes to the default values:
@@ -584,5 +595,6 @@ def _reset_auto_parallel_context():
     - strategy_ckpt_save_file: ""
     - enable_parallel_optimizer: False
     - auto_parallel_search_mode: dynamic_programming
+    - pipeline_stages: 0
     """
     auto_parallel_context().reset()

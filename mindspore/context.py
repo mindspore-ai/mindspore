@@ -331,7 +331,7 @@ def _context():
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool, parallel_mode=str,
                  auto_parallel_search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
-                 all_reduce_fusion_config=list)
+                 all_reduce_fusion_config=list, pipeline_stages=int)
 def set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.
@@ -357,6 +357,7 @@ def set_auto_parallel_context(**kwargs):
     parallel_mode                strategy_ckpt_load_file
     all_reduce_fusion_config     strategy_ckpt_save_file
                                  full_batch
+                                 pipeline_stages
     ===========================  ===========================  =================
 
     Args:
@@ -399,6 +400,10 @@ def set_auto_parallel_context(**kwargs):
                        the fusion is closed.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
+        pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how
+                        the devices are distributed alone the pipeline. The total devices will be divided into
+                        'pipeline_stags' stages. This currently could only be used when
+                        parall mode semi_auto_parallel is enabled.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -416,9 +421,9 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(full_batch=True)
         >>> context.set_auto_parallel_context(enable_parallel_optimizer=False)
         >>> context.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
+        >>> context.set_auto_parallel_context(pipeline_stages=2)
     """
     _set_auto_parallel_context(**kwargs)
-
 
 def get_auto_parallel_context(attr_key):
     """

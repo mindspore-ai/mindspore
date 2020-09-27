@@ -43,7 +43,7 @@ Status DropoutInfo::CheckStrategy(const StrategyPtr &strategy) {
   // dropout don't support repeated calculation
   CheckGlobalDeviceManager();
   auto input_strategy = strategy->GetInputDim().at(0);
-  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
+  size_t dev_num = g_device_manager->GetDeviceListByStageId(stage_id_).size();
   auto product_p = std::accumulate(input_strategy.begin(), input_strategy.end(), 1, std::multiplies<int>());
   if (IntToSize(product_p) != dev_num) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy. Don't support repeated calc.";

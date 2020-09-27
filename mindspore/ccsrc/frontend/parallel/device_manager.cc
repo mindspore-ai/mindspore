@@ -36,7 +36,8 @@ Stage::Stage(const std::vector<mindspore::parallel::Device> &devices, int num, i
 // NOTE: '-1' indicates ERROR
 int Stage::global_rank(Group *g) const { return ((g == nullptr) ? rank_ : -1); }
 
-bool InitDevice(int32_t device_num, int32_t global_rank, const std::string &backend) {
+bool InitDevice(int32_t device_num, int32_t global_rank, const std::string &backend,
+                const std::vector<int32_t> &stage) {
   if (device_num <= 0) {
     MS_LOG(ERROR) << "'device_num' must be positive.";
     return false;
@@ -68,7 +69,30 @@ bool InitDevice(int32_t device_num, int32_t global_rank, const std::string &back
     devices.push_back(i);
   }
 
-  stage_map.push_back(device_num);
+  if (stage.size()) {
+    int32_t summed_value = 0;
+    for (auto begin = stage.begin(); begin != stage.end(); ++begin) {
+      if (*begin <= 0) {
+        MS_LOG(ERROR) << "The value in the pipeline stages should be positive value";
+        return false;
+      }
+      summed_value += *begin;
+      stage_map.push_back(*begin);
+    }
+
+    if (summed_value != device_num) {
+      MS_LOG(ERROR) << "The sum of the pipeline stage :" << summed_value << " is not equal to the device_num "
+                    << device_num;
+      return false;
+    }
+  } else {
+    stage_map.push_back(device_num);
+  }
+
+  for (auto &y : stage_map) {
+    MS_LOG(DEBUG) << "Obtained stage id :" << y;
+  }
+
   g_device_manager = std::make_shared<DeviceManager>();
   if (g_device_manager->Init(devices, global_rank, stage_map, backend) == SUCCESS) {
     MS_LOG(INFO) << "Device initialization succeeds.";

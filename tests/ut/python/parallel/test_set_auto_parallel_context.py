@@ -81,6 +81,11 @@ def test_set_auto_parallel_context():
     assert context.get_auto_parallel_context("enable_parallel_optimizer")
     assert not auto_parallel_context().get_all_reduce_fusion_split_indices()
 
+def test_pipeline_parallel_context():
+    context.set_auto_parallel_context(device_num=8, global_rank=4,
+                                      parallel_mode="semi_auto_parallel", pipeline_stages=2)
+    stage = auto_parallel_context().get_pipeline_stages()
+    assert stage == 2
 
 def test_reset_auto_parallel_context():
     context.reset_auto_parallel_context()
@@ -92,6 +97,8 @@ def test_reset_auto_parallel_context():
     parameter_broadcast = context.get_auto_parallel_context("parameter_broadcast")
     device_num_is_set = auto_parallel_context().get_device_num_is_set()
     parameter_broadcast_is_set = auto_parallel_context().get_parameter_broadcast_is_set()
+    stage = auto_parallel_context().get_pipeline_stages()
+
     assert device_num == 1
     assert global_rank == 0
     assert not gradients_mean
@@ -100,3 +107,4 @@ def test_reset_auto_parallel_context():
     assert not parameter_broadcast
     assert not device_num_is_set
     assert not parameter_broadcast_is_set
+    assert not stage

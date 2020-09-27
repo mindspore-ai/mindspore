@@ -196,7 +196,7 @@ Status GatherV2PInfo::CheckManualSplit(const Strategys &strategy) {
 
   // Don't support repeated calc
   CheckGlobalDeviceManager();
-  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
+  size_t dev_num = g_device_manager->GetDeviceListByStageId(stage_id_).size();
   auto product_p = std::accumulate(param_strategy.begin(), param_strategy.end(), 1, std::multiplies<int>());
   if (IntToSize(product_p) < dev_num) {
     MS_LOG(ERROR) << name_ << ": Manual split doesn't support repeated calc";
@@ -269,7 +269,7 @@ Status GatherV2PInfo::CheckStrategy(const StrategyPtr &strategy) {
 
   // param_strategy(axis) != 1, Don't support repeated calc
   CheckGlobalDeviceManager();
-  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
+  size_t dev_num = g_device_manager->GetDeviceListByStageId(stage_id_).size();
   auto product_p = std::accumulate(param_strategy.begin(), param_strategy.end(), 1, std::multiplies<int>());
   if (IntToSize(product_p) != dev_num && param_strategy.at(IntToSize(axis_)) != 1) {
     MS_LOG(DEBUG) << name_ << ": Invalid strategy. Don't support repeated calc.";
@@ -346,7 +346,7 @@ Status GatherV2PInfo::InferDevMatrixShape() {
     out_dev_matrix_shape_ = dev_matrix_shape_;
   }
   CheckGlobalDeviceManager();
-  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
+  size_t dev_num = g_device_manager->GetDeviceListByStageId(stage_id_).size();
   auto param_product = std::accumulate(param_strategy.begin(), param_strategy.end(), 1, std::multiplies<int>());
   auto index_product = std::accumulate(index_strategy.begin(), index_strategy.end(), 1, std::multiplies<int>());
   if (param_product * index_product < SizeToInt(dev_num)) {
@@ -516,10 +516,11 @@ Status GatherV2PInfo::InferGroup() {
   if (param_strategy.at(IntToSize(axis_)) != 1 && inputs_shape_.at(0).size() == 2) {
     dim = (axis_ + 1) % 2;
   }
+
   CheckGlobalDeviceManager();
   MS_EXCEPTION_IF_NULL(g_device_manager);
+  RankList dev_list = g_device_manager->GetDeviceListByStageId(stage_id_);
   int32_t rank = g_device_manager->global_rank();
-  RankList dev_list = g_device_manager->GetDeviceListByStageId(0);
   DeviceMatrix dev_matrix(rank, dev_list, dev_matrix_shape_);
   RankList group_devices;
   if (dev_matrix.GetDevicesAlongDim(SizeToUint(dim), &group_devices) != SUCCESS) {

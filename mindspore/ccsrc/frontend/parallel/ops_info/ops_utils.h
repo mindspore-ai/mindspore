@@ -55,6 +55,7 @@ constexpr char AUTO_PARALLEL_RUN_ONCE_ONLY[] = "auto_parallel_run_once_only";
 constexpr char SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY[] = "semi_auto_parallel_run_once_only";
 constexpr char CHECK_SET_STRATEGY_VALID_ONCE_ONLY[] = "check_set_strategy_valid_once_only";
 constexpr char STRATEGY[] = "strategy";
+constexpr char STAGE_ATTR[] = "stage";
 constexpr char GEN_STRATEGY[] = "gen_strategy";
 constexpr char REDUCE_OP_SUM[] = "sum";
 constexpr char REDUCE_OP_MAX[] = "max";

@@ -998,6 +998,17 @@ OperatorInfoPtr NewOperatorInstance(const PrimitivePtr &prim, const PrimitiveAtt
 StrategyPtr ExtractStrategy(std::unordered_map<std::string, ValuePtr> attrs) {
   ValueTuplePtr var = attrs[STRATEGY]->cast<ValueTuplePtr>();
   StrategyPtr strategyPtr;
+  std::vector<int32_t> stages = ParallelContext::GetInstance()->stage();
+  auto res = attrs.find(STAGE_ATTR);
+  int32_t stage_id = 0;
+  if (res != attrs.end()) {
+    stage_id = GetValue<int>(res->second);
+  }
+  if (stage_id && stages.empty()) {
+    MS_LOG(ERROR) << "Find stage id:" << stage_id << " but the pipeline_stages is 0.";
+    return nullptr;
+  }
+
   MS_LOG(INFO) << "Extract information: strategy " << attrs[STRATEGY]->ToString();
   if (var == nullptr) {
     MS_LOG(EXCEPTION) << "Strategy value is nullptr";
@@ -1016,13 +1027,13 @@ StrategyPtr ExtractStrategy(std::unordered_map<std::string, ValuePtr> attrs) {
           });
         strategy.push_back(dim);
       } else {
-        MS_LOG(EXCEPTION) << "Failure:Strategy's format is wrong! Need ValueSequeue";
+        MS_LOG(EXCEPTION) << "Failure:Strategy's format is wrong! Need ValueSequence";
       }
     }
     if (strategy.empty()) {
       MS_LOG(EXCEPTION) << "ExtractStrategy:failed to extract strategy";
     }
-    strategyPtr = NewStrategy(0, strategy);
+    strategyPtr = NewStrategy(stage_id, strategy);
   }
 
   return strategyPtr;
@@ -1420,6 +1431,30 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
     (void)prim->SetAttrs(attrs_temp);
   }
 }
+// This function aims to check the valid rank and stage in the operations
+// If the rank is not valid for the given stage, we chose not to init the strategy of the operation
+// For example stage is [4, 4], and the group_list [[0,1,2,3],[4,5,6,7]]
+// For stage 0, we require the rank_id is in [0,1,2,3]
+Status ValidRankCheck(int32_t global_rank, int32_t strategy_stage) {
+  RankList local_group_list = g_device_manager->GetDeviceListByStageId(strategy_stage);
+  int32_t target = global_rank;
+  if (std::any_of(local_group_list.begin(), local_group_list.end(), [target](int32_t a) { return a == target; })) {
+    return Status::SUCCESS;
+  }
+
+  return Status::FAILED;
+}
+
+Status ValidStageCheck(const std::vector<int32_t> &stages, int32_t strategy_stage) {
+  if (stages.size() > 0) {
+    if (strategy_stage >= 0 && strategy_stage < (int32_t)stages.size()) {
+      return Status::SUCCESS;
+    }
+    return Status::FAILED;
+  } else {
+    return Status::SUCCESS;
+  }
+}
 
 void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
   // load strategy map from checkpoint
@@ -1429,6 +1464,11 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
       MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
     }
   }
+
+  // Get global rank after the checkpoint?
+  int32_t global_rank = ParallelContext::GetInstance()->global_rank();
+  std::vector<int32_t> stages = ParallelContext::GetInstance()->stage();
+
   for (auto &node : all_nodes) {
     auto cnode = node->cast<CNodePtr>();
     if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
@@ -1501,7 +1541,18 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
         strategyPtr = ExtractStrategy(attrs);
       }
       if (strategyPtr != nullptr) {
-        if (operator_->Init(strategyPtr) == FAILED) {
+        (*operator_).set_stage_id(strategyPtr->GetInputStage());
+        MS_LOG(INFO) << "Extract stage id for op " << prim->name() << " is " << (*operator_).stage_id();
+        if (ValidStageCheck(stages, (*operator_).stage_id()) == FAILED) {
+          MS_LOG(ERROR) << "Find stage " << strategyPtr->GetInputStage() << " for operator " << prim->name()
+                        << " exceeds the global stage size " << stages.size() << '.';
+          return;
+        }
+        // If the strategy is not valid for the given global rank, then we skip the Init of the strategy
+        if (ValidRankCheck(global_rank, (*operator_).stage_id()) == FAILED) {
+          MS_LOG(INFO) << "Find global exceeds the range of the stage, skip the strategy init for operator "
+                       << prim->name();
+        } else if (operator_->Init(strategyPtr) == FAILED) {
           MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " init failed";
         }
         cnode->set_user_data<OperatorInfo>(operator_);
@@ -2416,6 +2467,9 @@ Status ParallelInit() {
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   int32_t device_num = ParallelContext::GetInstance()->device_num();
   int32_t global_rank = ParallelContext::GetInstance()->global_rank();
+  int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  std::vector<int32_t> stages = ParallelContext::GetInstance()->stage();
+  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -2430,6 +2484,26 @@ Status ParallelInit() {
   } else {
     MS_LOG(EXCEPTION) << "Invalid communication backend: " << backend;
   }
+
+  if (device_num <= 0) {
+    MS_LOG(ERROR) << "Invalid device num " << device_num << " , expected a positive device number";
+    return FAILED;
+  }
+  if (split_stage_num > 0) {
+    if (device_num % split_stage_num != 0) {
+      MS_LOG(ERROR) << "Device num " << device_num << "  can't be divided by stage num " << split_stage_num
+                    << " , as we support only extract devision now";
+      return FAILED;
+    }
+    for (int i = 0; i < split_stage_num; i++) {
+      stages.push_back(device_num / split_stage_num);
+    }
+  } else if (split_stage_num < 0) {
+    MS_LOG(ERROR) << "Invalid stage num " << split_stage_num << " , expected a positive stage number";
+    return FAILED;
+  }
+
+  ParallelContext::GetInstance()->set_stage(stages);
 
   uint32_t world_rank_size = 0;
   if (!ParallelContext::GetInstance()->device_num_is_set()) {
@@ -2449,7 +2523,12 @@ Status ParallelInit() {
     MS_LOG(INFO) << "Get global rank from communication model, the global rank is  " << global_rank;
   }
 
-  if (!InitDevice(device_num, global_rank, communication_backend)) {
+  if (!stages.empty() && parallel_mode != SEMI_AUTO_PARALLEL) {
+    MS_LOG(ERROR) << "To enable the pipeline parallel, please set the parallel mode to " << SEMI_AUTO_PARALLEL;
+    return FAILED;
+  }
+
+  if (!InitDevice(device_num, global_rank, communication_backend, stages)) {
     MS_LOG(ERROR) << "Init device failed";
     return FAILED;
   }
@@ -2457,6 +2536,7 @@ Status ParallelInit() {
   MS_LOG(INFO) << "The parallel context: dev num: " << device_num << ", global rank: " << global_rank
                << ", backend: " << backend << ", gradients_mean: " << ParallelContext::GetInstance()->gradients_mean()
                << ", gradient_fp32_sync: " << ParallelContext::GetInstance()->gradient_fp32_sync();
+
   return SUCCESS;
 }
 

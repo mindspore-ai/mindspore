@@ -162,7 +162,8 @@ class OperatorInfo {
   void set_type(const std::string &type) { type_ = type; }
   const std::string &type() const { return type_; }
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
-
+  void set_stage_id(int32_t stage_id) { stage_id_ = stage_id; }
+  int32_t stage_id() const { return stage_id_; }
   // Key for user data.
   constexpr static char key[] = "OpInfo";
 
@@ -205,6 +206,7 @@ class OperatorInfo {
   std::vector<ValuePtr> input_value_;
   TypePtr outputs_dtype_;
 
+  int32_t stage_id_ = 0;
   StrategyPtr strategy_;
   std::vector<TensorInfo> inputs_tensor_info_;
   std::vector<TensorInfo> outputs_tensor_info_;
