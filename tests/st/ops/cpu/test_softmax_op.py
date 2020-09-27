@@ -29,7 +29,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 class NetSoftmax(nn.Cell):
     def __init__(self):
         super(NetSoftmax, self).__init__()
-        self.softmax = P.Softmax()
+        self.softmax = P.Softmax(axis=-1)
         x = Tensor(np.array([[0.1, 0.3, 0.6],
                              [0.2, -0.6, 0.8],
                              [0.6, 1, 0.4]]).astype(np.float32))
@@ -47,6 +47,34 @@ def test_softmax():
     output = Softmax()
     output = output.asnumpy()
     outputSum = output.sum(axis=1)
+    expect = np.ones(3)
+    error = expect * 1.0e-6
+    diff = np.abs(outputSum - expect)
+    print(diff)
+    assert np.all(diff < error)
+
+
+class NetSoftmax1(nn.Cell):
+    def __init__(self):
+        super(NetSoftmax1, self).__init__()
+        self.softmax = P.Softmax(axis=-2)
+        x = Tensor(np.array([[0.1, 0.3, 0.6],
+                             [0.2, -0.6, 0.8],
+                             [0.6, 1, 0.4]]).astype(np.float32))
+        self.x = Parameter(initializer(x, x.shape), name='x')
+
+    def construct(self):
+        return self.softmax(self.x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_softmax1():
+    Softmax = NetSoftmax1()
+    output = Softmax()
+    output = output.asnumpy()
+    outputSum = output.sum(axis=0)
     expect = np.ones(3)
     error = expect * 1.0e-6
     diff = np.abs(outputSum - expect)

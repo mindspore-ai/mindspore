@@ -28,8 +28,11 @@ void SoftmaxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "cpu softmax only support input axis size 1";
   }
   int axis = axis_list[0];
-  if (axis == -1 || axis >= SizeToInt(src_shape.size())) {
+  if (axis >= SizeToInt(src_shape.size())) {
     axis = SizeToInt(src_shape.size()) - 1;
+  }
+  while (axis < 0) {
+    axis += SizeToInt(src_shape.size());
   }
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   dnnl::softmax_forward::desc desc = dnnl::softmax_forward::desc(dnnl::prop_kind::forward_training, src_desc, axis);
