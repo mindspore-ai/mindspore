@@ -41,9 +41,9 @@ def train_parse_args():
     train_parser.add_argument('--platform', type=str, default="Ascend", choices=("CPU", "GPU", "Ascend"), \
         help='run platform, only support CPU, GPU and Ascend')
     train_parser.add_argument('--dataset_path', type=str, required=True, help='Dataset path')
-    train_parser.add_argument('--pretrain_ckpt', type=str, default=None, help='Pretrained checkpoint path \
+    train_parser.add_argument('--pretrain_ckpt', type=str, default="", help='Pretrained checkpoint path \
         for fine tune or incremental learning')
-    train_parser.add_argument('--freeze_layer', type=str, default=None, choices=["none", "backbone"], \
+    train_parser.add_argument('--freeze_layer', type=str, default="", choices=["", "none", "backbone"], \
         help="freeze the weights of network from start to which layers")
     train_parser.add_argument('--run_distribute', type=ast.literal_eval, default=True, help='Run distribute')
     train_args = train_parser.parse_args()
