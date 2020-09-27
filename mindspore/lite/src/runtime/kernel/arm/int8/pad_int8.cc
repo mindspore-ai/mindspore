@@ -23,8 +23,8 @@
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
-using mindspore::lite::RET_OK;
 using mindspore::lite::RET_NULL_PTR;
+using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 
@@ -213,12 +213,10 @@ int PadInt8CPUKernel::CheckPaddings(int *paddings, int length, int *input_shape,
   for (auto i = 0; i < length; ++i) {
     int max_valid = input_shape[i] - offset;
     if (paddings[i * 2] > max_valid) {
-      MS_LOG(ERROR) << prefix << "paddings " << paddings[i * 2] << "should be less than " << max_valid + 1;
-      return RET_ERROR;
+      MS_LOG(WARNING) << prefix << "paddings " << paddings[i * 2] << "should be more than " << max_valid + 1;
     }
     if (paddings[i * 2 + 1] > max_valid) {
-      MS_LOG(ERROR) << prefix << "paddings " << paddings[i * 2 + 1] << "should be less than " << max_valid + 1;
-      return RET_ERROR;
+      MS_LOG(WARNING) << prefix << "paddings " << paddings[i * 2 + 1] << "should be less than " << max_valid + 1;
     }
   }
   return RET_OK;
@@ -277,7 +275,6 @@ int PadInt8CPUKernel::Run() {
       return RET_ERROR;
     }
   }
-
 
   return RET_OK;
 }

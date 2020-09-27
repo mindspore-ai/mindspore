@@ -92,9 +92,15 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
   attr->dilateH = dilation[0];
   attr->dilateW = dilation[1];
 
-  auto kernel_size = GetValue<std::vector<int>>(prim.GetAttr("kernel_size"));
-  attr->kernelH = kernel_size[0];
-  attr->kernelW = kernel_size[1];
+  if (utils::isa<ValueSequeue>(prim.GetAttr("kernel_size"))) {
+    auto kernel_size = GetValue<std::vector<int>>(prim.GetAttr("kernel_size"));
+    attr->kernelH = kernel_size[0];
+    attr->kernelW = kernel_size[1];
+  } else {
+    auto kernel_size = GetValue<int>(prim.GetAttr("kernel_size"));
+    attr->kernelH = kernel_size;
+    attr->kernelW = kernel_size;
+  }
 
   auto stride = GetValue<std::vector<int>>(prim.GetAttr("stride"));
   attr->strideH = stride[2];
