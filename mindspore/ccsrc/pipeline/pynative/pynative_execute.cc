@@ -1185,10 +1185,6 @@ py::tuple RunOp(const py::args &args) {
     std::ostringstream oss;
     trace::TraceGraphEval();
     trace::GetEvalStackInfo(oss);
-    // call py::print to output function call stack to STDOUT, in case of output the log to file, the user can see
-    // these info from screen, no need to open log file to find these info
-    py::print(oss.str());
-    MS_LOG(ERROR) << oss.str();
     PynativeExecutor::GetInstance()->Clean();
     // re-throw this exception to Python interpreter to handle it
     throw(py::error_already_set(ex));
