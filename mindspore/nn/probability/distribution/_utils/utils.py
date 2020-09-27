@@ -218,6 +218,11 @@ def raise_not_impl_error(name):
     raise ValueError(
         f"{name} function should be implemented for non-linear transformation")
 
+@constexpr
+def raise_not_implemented_util(func_name, obj, *args, **kwargs):
+    raise NotImplementedError(
+        f"{func_name} is not implemented for {obj} distribution.")
+
 
 @constexpr
 def check_distribution_name(name, expected_name):
