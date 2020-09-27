@@ -119,8 +119,8 @@ enum ConvBn1Output {
 
 std::vector<int> Convert2Int(const std::vector<size_t> &v);
 
-// check whether node1 depends on node2 or not
-bool IsDepend(const FuncGraphPtr &graph, const AnfNodePtr &node1, const AnfNodePtr &node2);
+// check whether node depends on either of nodes or not
+bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes);
 
 bool UnVisited(const BaseRef &n);
 
