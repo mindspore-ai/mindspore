@@ -17,6 +17,13 @@
 #include "src/ops/deconv2d.h"
 #include <memory>
 #include <string>
+#include "include/errorcode.h"
+#include "src/common/log_adapter.h"
+#ifdef PRIMITIVE_WRITEABLE
+#include <float.h>
+
+#include "tools/converter/quantizer/quantize_util.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -58,6 +65,121 @@ void DeConv2D::SetHasBias(bool has_bias) { this->primitive_->value.AsDeConv2D()-
 void DeConv2D::SetActivationType(int activation_type) {
   this->primitive_->value.AsDeConv2D()->activationType = (schema::ActivationType)activation_type;
 }
+template <typename T>
+void ConvertConvWeight(const ParameterPtr &param_node) {
+  MS_ASSERT(param_node != nullptr);
+  auto param = param_node->default_param();
+  auto weight = std::dynamic_pointer_cast<ParamValueLite>(param);
+  MS_ASSERT(weight != nullptr);
+
+  std::unique_ptr<T> buf(new (std::nothrow) T[weight->tensor_shape_size()]);
+  if (buf == nullptr) {
+    MS_LOG(ERROR) << "new buf failed";
+    return;
+  }
+
+  size_t filter_k = weight->tensor_shape()[0];
+  size_t filter_c = weight->tensor_shape()[1];
+  size_t filter_h = weight->tensor_shape()[2];
+  size_t filter_w = weight->tensor_shape()[3];
+  T *p1Buff = nullptr;
+  T *p2Buff = nullptr;
+  for (size_t k = 0; k < filter_k; ++k) {
+    for (size_t c = 0; c < filter_c; ++c) {
+      for (size_t h = 0; h < filter_h; ++h) {
+        for (size_t w = 0; w < filter_w; ++w) {
+          p1Buff = reinterpret_cast<float *>(weight->tensor_addr()) +
+                   ((k * filter_c * filter_h * filter_w) + (c * filter_h * filter_w) + (h * filter_w) + (w));
+          p2Buff =
+            buf.get() + ((c * filter_k * filter_h * filter_w) + (k * filter_h * filter_w) + (h * filter_w) + (w));
+          *p2Buff = *p1Buff;
+        }
+      }
+    }
+  }
+
+  auto ret = ::memcpy_s(weight->tensor_addr(), weight->tensor_shape_size() * sizeof(T), buf.get(),
+                        weight->tensor_shape_size() * sizeof(T));
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "memcpy_s failed: " << ret;
+    return;
+  }
+
+  auto abstract_base = param_node->abstract();
+  MS_ASSERT(abstract_base != nullptr);
+  if (utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+    auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+    utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[0] = filter_c;
+    utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[1] = filter_k;
+    utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[2] = filter_h;
+    utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[3] = filter_w;
+  }
+  return;
+}
+
+void DeConv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group,
+                                         const std::vector<AnfNodePtr> &inputs) {
+  auto attr = std::make_unique<schema::DeDepthwiseConv2DT>();
+  auto format = GetValue<std::string>(prim.GetAttr("data_format"));
+  if (format == "NCHW") {
+    attr->format = schema::Format::Format_NCHW;
+  } else if (format == "NHWC") {
+    attr->format = schema::Format::Format_NHWC;
+  } else {
+    attr->format = schema::Format::Format_NUM_OF_FORMAT;
+  }
+  auto pad_list = GetValue<std::vector<int>>(prim.GetAttr("pad_list"));
+  attr->padUp = pad_list[0];
+  attr->padDown = pad_list[1];
+  attr->padLeft = pad_list[2];
+  attr->padRight = pad_list[3];
+
+  auto dilation = GetValue<std::vector<int>>(prim.GetAttr("dilation"));
+  attr->dilateH = dilation[0];
+  attr->dilateW = dilation[1];
+
+  auto kernel_size = GetValue<std::vector<int>>(prim.GetAttr("kernel_size"));
+  attr->kernelH = kernel_size[0];
+  attr->kernelW = kernel_size[1];
+
+  auto stride = GetValue<std::vector<int>>(prim.GetAttr("stride"));
+  attr->strideH = stride[0];
+  attr->strideW = stride[1];
+
+  auto pad_mode = GetValue<std::string>(prim.GetAttr("pad_mode"));
+  if (pad_mode == "valid") {
+    attr->padMode = schema::PadMode_VALID;
+  } else if (pad_mode == "same") {
+    attr->padMode = schema::PadMode_SAME_UPPER;
+  } else {
+    attr->padMode = schema::PadMode_NOTSET;
+  }
+
+  if (prim.GetAttr("activation_name") != nullptr) {
+    std::string activate_name = GetValue<std::string>(prim.GetAttr("activation_name"));
+    attr->activationType = kActivationTypeMap[activate_name];
+  } else {
+    attr->activationType = schema::ActivationType_NO_ACTIVATION;
+  }
+
+  int channel_mutiplier = 1;
+  if (prim.GetAttr("channel_mutiplier") != nullptr) {
+    channel_mutiplier = GetValue<int>(prim.GetAttr("channel_multiplier"));
+  }
+  attr->channelMultiplier = channel_mutiplier;
+
+  MS_ASSERT(inputs.size() == kAnfPopulaterTwo);
+  auto input_node = inputs[kAnfPopulaterOne];
+  MS_ASSERT(input_node != nullptr);
+  if (input_node->isa<Parameter>()) {
+    auto param_node = input_node->cast<ParameterPtr>();
+    ConvertConvWeight<float>(param_node);
+  }
+
+  primitive->value.type = schema::PrimitiveType_DeDepthwiseConv2D;
+  primitive->value.value = attr.release();
+}
+
 void DeConv2D::PopulaterDeConv2DSingleGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group) {
   auto attr = std::make_unique<schema::DeConv2DT>();
   attr->group = group;
@@ -125,6 +247,8 @@ int DeConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &i
   int group = GetValue<int>(prim.GetAttr("group"));
   if (group == 1) {
     PopulaterDeConv2DSingleGroup(prim, this->primitive_, group);
+  } else if (group > 1) {
+    PopulaterConv2DMultiGroup(prim, this->primitive_, group, inputs);
   }
 
   if (GetQuantType() == schema::QuantType_AwareTraining) {
