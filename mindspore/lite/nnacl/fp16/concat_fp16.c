@@ -17,13 +17,14 @@
 #include "nnacl/fp16/concat_fp16.h"
 #include <string.h>
 
-void ConcatFp16(void **input, int input_num, int axis, int **inputs_output_shape, size_t shape_size, void *output) {
+void ConcatFp16(void **input, int input_num, int axis, int **inputs_output_shape, size_t shape_size, void *output,
+                int dtype_len) {
   int before_axis_size = 1;
   for (int i = 0; i < axis; ++i) {
     before_axis_size *= inputs_output_shape[0][i];
   }
-  // sizeof float16 / byte
-  int after_axis_size = 2;
+  // sizeof float16,int32
+  int after_axis_size = dtype_len;
   for (size_t i = axis + 1; i < shape_size; ++i) {
     after_axis_size *= inputs_output_shape[0][i];
   }
