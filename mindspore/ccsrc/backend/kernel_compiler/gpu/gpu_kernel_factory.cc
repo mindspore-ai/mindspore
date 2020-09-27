@@ -40,22 +40,12 @@ void GpuKernelFactory::CheckIOParam(const std::string &kernel_name, const Kernel
                                     std::vector<std::pair<KernelAttr, GpuKernelCreater>> *iter_second,
                                     size_t attr_index) {
   if (kernel_info->GetInputNum() != iter_second->at(attr_index).first.GetInputSize()) {
-    if (iter_second->at(attr_index).first.GetAllSame()) {
-      auto dtype = iter_second->at(attr_index).first.GetInputAttr(0).first;
-      for (size_t attr = 1; attr < kernel_info->GetInputNum(); ++attr) {
-        (void)iter_second->at(attr_index).first.AddInputAttr(dtype);
-      }
-    } else {
+    if (!iter_second->at(attr_index).first.GetAllSame()) {
       MS_LOG(EXCEPTION) << "op[" << kernel_name << "] Input size is mismatching!";
     }
   }
   if (kernel_info->GetOutputNum() != iter_second->at(attr_index).first.GetOutputSize()) {
-    if (iter_second->at(attr_index).first.GetAllSame()) {
-      auto dtype = iter_second->at(attr_index).first.GetOutputAttr(0).first;
-      for (size_t attr = 1; attr < kernel_info->GetOutputNum(); ++attr) {
-        (void)iter_second->at(attr_index).first.AddOutputAttr(dtype);
-      }
-    } else {
+    if (!iter_second->at(attr_index).first.GetAllSame()) {
       MS_LOG(EXCEPTION) << "op[" << kernel_name << "] Output size is mismatching!";
     }
   }
@@ -99,6 +89,7 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
   for (size_t attr_index = 0; attr_index < (iter->second).size(); ++attr_index) {
     CheckIOParam(kernel_name, kernel_info, &(iter->second), attr_index);
     bool flag = true;
+    auto attr_size = (&(iter->second))->at(attr_index).first.GetInputSize();
     // data type matching check of all input parameters of kernel
     for (size_t input_index = 0; input_index < kernel_info->GetInputNum(); input_index++) {
       if (marjor_sm < RECOMMEND_SM && kernel_info->GetInputDeviceType(input_index) == kNumberTypeFloat16) {
@@ -110,7 +101,7 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
                         << ", but the current device's computing capacity is " << marjor_sm;
       }
       if (kernel_info->GetInputDeviceType(input_index) !=
-          (iter->second)[attr_index].first.GetInputAttr(input_index).first) {
+          (iter->second)[attr_index].first.GetInputAttr(input_index % attr_size).first) {
         flag = false;
         break;
       }
@@ -118,10 +109,11 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
     if (!flag) {
       continue;
     }
+    attr_size = (&(iter->second))->at(attr_index).first.GetOutputSize();
     // data type matching check of all output parameters of kernel
     for (size_t output_index = 0; output_index < kernel_info->GetOutputNum(); output_index++) {
       if (kernel_info->GetOutputDeviceType(output_index) !=
-          (iter->second)[attr_index].first.GetOutputAttr(output_index).first) {
+          (iter->second)[attr_index].first.GetOutputAttr(output_index % attr_size).first) {
         flag = false;
         break;
       }
