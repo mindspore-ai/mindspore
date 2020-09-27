@@ -144,23 +144,26 @@ STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_pt
   // NHWC
   int shape_size = graph->allTensors.at(addBiasIndex)->dims.size();
   scaleParam->axis = 0 - shape_size;
-  mulNode->primitive->value.value = scaleParam.release();
   mulNode->inputIndex.push_back(addBiasIndex);
-  if (addNode->primitive->value.AsAdd()->activationType != ActivationType_NO_ACTIVATION) {
+  auto activationType = addNode->primitive->value.AsAdd()->activationType;
+  if (activationType == ActivationType_RELU || activationType == ActivationType_RELU6 ||
+      activationType == ActivationType_NO_ACTIVATION) {
+    // delete addnode
+    scaleParam->activationType = activationType;
+    auto status = IsolateOneWayNode(graph, addNode);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "IsolateOneWayNode failed";
+      return status;
+    }
+  } else {
     // repace addnode as activation
     std::unique_ptr<ActivationT> activationParam(new ActivationT());
     activationParam->type = addNode->primitive->value.AsAdd()->activationType;
     addNode->primitive->value.type = schema::PrimitiveType_Activation;
     addNode->primitive->value.value = activationParam.release();
     addNode->inputIndex.pop_back();
-    return RET_OK;
   }
-  // delete addnode
-  auto status = IsolateOneWayNode(graph, addNode);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "IsolateOneWayNode failed";
-    return status;
-  }
+  mulNode->primitive->value.value = scaleParam.release();
   return RET_OK;
 }
 }  // namespace lite

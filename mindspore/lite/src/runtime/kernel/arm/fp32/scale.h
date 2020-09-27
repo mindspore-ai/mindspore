@@ -36,7 +36,7 @@ class ScaleCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int InitParameter();
+  int CalculateParameter();
   int InitScaleOffset();
   int Scale(int task_id);
 

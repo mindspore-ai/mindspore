@@ -20,12 +20,16 @@ namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 int Scale::GetAxis() const { return this->primitive_->value.AsScale()->axis; }
-
 void Scale::SetAxis(int axis) { this->primitive_->value.AsScale()->axis = axis; }
+int Scale::GetActivationType() const { return this->primitive_->value.AsScale()->activationType; }
+void Scale::SetActivationType(int activation_type) {
+  this->primitive_->value.AsScale()->activationType = (schema::ActivationType)activation_type;
+}
 
 #else
 
 int Scale::GetAxis() const { return this->primitive_->value_as_Scale()->axis(); }
+int Scale::GetActivationType() const { return this->primitive_->value_as_Scale()->activationType(); }
 int Scale::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
@@ -34,7 +38,7 @@ int Scale::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
     MS_LOG(ERROR) << "value_as_Scale return nullptr";
     return RET_ERROR;
   }
-  auto val_offset = schema::CreateScale(*fbb, attr->axis());
+  auto val_offset = schema::CreateScale(*fbb, attr->axis(), attr->activationType());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Scale, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;

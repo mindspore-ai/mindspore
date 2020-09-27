@@ -32,6 +32,7 @@ class Scale : public PrimitiveC {
   Scale() = default;
   explicit Scale(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(int axis);
+  void SetActivationType(int activation_type);
 
 #else
   Scale() = default;
@@ -39,6 +40,7 @@ class Scale : public PrimitiveC {
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetAxis() const;
+  int GetActivationType() const;
 };
 }  // namespace lite
 }  // namespace mindspore
