@@ -17,27 +17,32 @@ Test No-op mode support with Dummy Iterator
 """
 import os
 import mindspore.dataset as ds
+from mindspore import context
 
 DATA_DIR = "../data/dataset/testVOC2012"
 
 def test_noop_pserver():
     os.environ['MS_ROLE'] = 'MS_PSERVER'
+    context.set_ps_context(enable_ps=True)
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True)
     num = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
         num += 1
     assert num == 0
     del os.environ['MS_ROLE']
+    context.set_ps_context(enable_ps=False)
 
 
 def test_noop_sched():
     os.environ['MS_ROLE'] = 'MS_SCHED'
+    context.set_ps_context(enable_ps=True)
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True)
     num = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
         num += 1
     assert num == 0
     del os.environ['MS_ROLE']
+    context.set_ps_context(enable_ps=False)
 
 
 if __name__ == '__main__':
