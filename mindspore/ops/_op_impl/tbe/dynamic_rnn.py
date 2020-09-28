@@ -29,7 +29,8 @@ dynamic_rnn_op_info = TBERegOp("DynamicRNN") \
     .attr("keep_prob", "optional", "float", "all", "1") \
     .attr("cell_clip", "optional", "float", "all", "-1") \
     .attr("num_proj", "optional", "int", "all", "0") \
-    .attr("time_major", "optional", "bool", "all", "false") \
+    .attr("time_major", "optional", "bool", "all", "true") \
+    .attr("activation", "optional", "str", "all", "tanh") \
     .attr("forget_bias", "optional", "float", "all", "0") \
     .attr("is_training", "optional", "bool", "all", "true") \
     .partial_flag(True) \
