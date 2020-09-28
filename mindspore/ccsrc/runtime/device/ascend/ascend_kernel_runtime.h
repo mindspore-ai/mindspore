@@ -54,6 +54,7 @@ class AscendKernelRuntime : public KernelRuntime {
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) override;
   bool NodeOutputDeviceAddressExist(const AnfNodePtr &node, size_t index) override;
+  bool KernelMemNotReuse(const AnfNodePtr &node) override;
 
  private:
   bool InitDevice();

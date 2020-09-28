@@ -434,7 +434,13 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
   if (type == kReuseDynamicMem) {
     // reuse communication op's all outputs' memory
     type = kReuseDynamicCommMem;
+    bool not_reuse = KernelMemNotReuse(node);
+    if (not_reuse) {
+      type = kDynamicMem;
+      MS_LOG(INFO) << "Disable Memory Reuse for " << node->fullname_with_scope() << "'s output.";
+    }
   }
+
   uint8_t *output_ptr = nullptr;
   for (size_t j = 0; j < align_size_list.size(); ++j) {
     std::string output_format = AnfAlgo::GetOutputFormat(node, j);
@@ -451,6 +457,7 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
     output_ptr += align_size_list[j];
   }
 }
+bool KernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) { return false; }
 
 DeviceAddressPtr KernelRuntime::PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -490,6 +497,15 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
   if (addr_size.empty()) {
     return;
   }
+
+  if (type == kReuseDynamicMem) {
+    bool not_reuse = KernelMemNotReuse(node);
+    if (not_reuse) {
+      type = kDynamicMem;
+      MS_LOG(INFO) << "Disable Memory Reuse for " << node->fullname_with_scope() << "'s input.";
+    }
+  }
+
   uint8_t *input_ptr = mem_manager_->MallocOutputMem(node, 0, type, total_size, addr_size[0].first);
   for (const auto &iter : addr_size) {
     MS_EXCEPTION_IF_NULL(iter.first);
@@ -513,6 +529,15 @@ void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, in
       type = kDynamicMem;
     }
   }
+
+  if (type == kReuseDynamicMem) {
+    bool not_reuse = KernelMemNotReuse(node);
+    if (not_reuse) {
+      type = kDynamicMem;
+      MS_LOG(INFO) << "Disable Memory Reuse for " << node->fullname_with_scope() << "'s output.";
+    }
+  }
+
   auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto output_sizes = kernel_mod->GetOutputSizeList();
@@ -627,9 +652,19 @@ void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool is_enable_mem_reuse = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_REUSE);
   auto mem_type = kDynamicMem;
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (dump_json_parser.e2e_dump_enabled() && dump_json_parser.dump_mode() == 0) {
+    context_ptr->set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, false);
+    is_enable_mem_reuse = false;
+    MS_LOG(INFO) << "Disable Memory Reuse when e2e dump is enable and dump mode is set to dump all kernels";
+  }
+
   if (is_enable_mem_reuse) {
+    MS_LOG(INFO) << "Memory Reuse is enable...";
     mem_manager_->MallocReusedDynamicMem(graph);
     mem_type = kReuseDynamicMem;
+  } else {
+    MS_LOG(INFO) << "Memory Reuse is disable...";
   }
   auto &execution_nodes = graph->execution_order();
   std::vector<CNodePtr> compute_nodes;
