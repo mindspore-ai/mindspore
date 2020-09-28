@@ -92,6 +92,7 @@ class TbeKernelJsonCreator {
   std::string json_name() { return json_name_; }
   bool GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<OpInfo> &op_info,
                       nlohmann::json *attrs_json);
+  static string GetSocVersion();
 
  private:
   bool GenTbeInputsJson(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<OpInfo> &op_info,

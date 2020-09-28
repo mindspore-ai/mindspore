@@ -18,9 +18,8 @@ import os
 import sys
 from te.platform.cce_conf import te_set_version
 from te.platform.fusion_util import fusion_op
-from common import check_kernel_info, get_args, get_build_in_impl_path, get_ddk_version
+from common import check_kernel_info, get_args, get_build_in_impl_path
 
-ddk_version = get_ddk_version()
 build_in_impl_path = get_build_in_impl_path()
 
 # op function list
@@ -30,7 +29,6 @@ fusion_pattern_end_flag = "fusion_pattern_end"
 
 def _initialize(impl_path):
     """Initialize"""
-    te_set_version(ddk_version)
     if impl_path == "":
         op_module_name = build_in_impl_path
     else:
@@ -53,7 +51,7 @@ def build_op(build_type, json_str):
     """
     kernel_info = json.loads(json_str)
     check_kernel_info(kernel_info)
-
+    te_set_version(kernel_info["op_info"]["socVersion"])
     op_name = kernel_info['op_info']['name']
 
     try:
@@ -111,7 +109,7 @@ def compile_fusion_op(json_str):
         Exception: If specific keyword is not found.
     """
     args = json.loads(json_str)
-    te_set_version(ddk_version)
+    te_set_version(args['fusion_op']["socVersion"])
     if 'fusion_op' not in args or not args['fusion_op']:
         raise ValueError("Json string Errors, key:fusion_op not found.")
     fusion_op_arg = args['fusion_op']

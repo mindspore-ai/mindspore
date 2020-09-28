@@ -53,6 +53,10 @@ rtError_t rtFunctionRegister(void *binHandle, const void *stubFunc, const char *
   return RT_ERROR_NONE;
 }
 
+RTS_API rtError_t rtSetSocVersion(const char *version) { return RT_ERROR_NONE; }
+
+rtError_t rtGetSocVersion(char *version, const uint32_t maxLen) { return RT_ERROR_NONE; }
+
 rtError_t rtKernelLaunch(const void *stubFunc, uint32_t blockDim, void *args, uint32_t argsSize, rtSmDesc_t *smDesc,
                          rtStream_t stream) {
   return RT_ERROR_NONE;
