@@ -42,7 +42,7 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
     int interval_y_e = src_y_e < input_h ? input_unit : (input_h - src_y_s);
 
     int src_plane_offset = in_channel * (src_y_s * input_w + src_x_s);
-    int dst_plane_offset = c * C4NUM * ic4;
+    int dst_plane_offset = c * in_channel;
     for (int ic = 0; ic < ic4; ic++) {
       // clear tmp buffer
       memset(tmp_data, 0, input_unit * input_unit * C4NUM * sizeof(float));
@@ -91,9 +91,9 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
       const int tile_num = 12;
 #endif
       int dst_ic4_offset = dst_plane_offset + ic * C4NUM;
-      size_t dst_step = tile_num * ic4 * C4NUM;
+      size_t dst_step = tile_num * in_channel;
       float *trans_input_ptr = trans_input + dst_ic4_offset;
-      func(tmp_data, trans_input_ptr, C4NUM, dst_step);
+      func(tmp_data, trans_input_ptr, C4NUM, dst_step, real_c);
     }
     out_tile_index++;
   }  // cal_tile_num loop

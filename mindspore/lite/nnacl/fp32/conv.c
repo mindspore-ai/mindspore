@@ -77,7 +77,6 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
   int input_unit = conv_param->input_unit_;
   int in_batch = conv_param->input_batch_;
   int in_channel = conv_param->input_channel_;
-  int ic4 = UP_DIV(in_channel, C4NUM);
   int out_unit = conv_param->output_unit_;
   int out_w_block = UP_DIV(conv_param->output_w_, out_unit);
   int out_h_block = UP_DIV(conv_param->output_h_, out_unit);
@@ -96,10 +95,10 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
   float *gemm_out = buffer_list[1];
   float *tmp_data = buffer_list[2];
   float *col_buffer = buffer_list[3];
-  int trans_input_offset = tile_num * input_unit_square * ic4 * C4NUM;
+  int trans_input_offset = tile_num * input_unit_square * in_channel;
   int gemm_out_offset = tile_num * input_unit_square * oc8 * C8NUM;
   int tmp_data_offset = input_unit_square * C4NUM;
-  int col_buffer_offset = tile_num * ic4 * C4NUM;
+  int col_buffer_offset = tile_num * in_channel;
   // step 1 : filter transform (pre-processed offline)
   // step 2 : input transform (online)
   for (int b = 0; b < in_batch; b++) {
@@ -107,7 +106,7 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
     int out_batch_offset = b * out_channel * conv_param->output_w_ * conv_param->output_h_;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_num) {
       int out_tile_index = thread_id * tile_num;
-      int cal_num = output_count - thread_id * tile_num;
+      int cal_num = output_count - out_tile_index;
       cal_num = cal_num > tile_num ? tile_num : cal_num;
       WinogradInputTransform(input_data + in_batch_offset, trans_input + task_id * trans_input_offset,
                              tmp_data + task_id * tmp_data_offset, cal_num, out_tile_index, out_w_block, conv_param,
@@ -118,11 +117,11 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
       float *tmp_col_ptr = col_buffer + task_id * col_buffer_offset;
       for (int i = 0; i < input_unit_square; ++i) {
 #ifdef ENABLE_ARM32
-        RowMajor2Col4Major(src_ptr + i * C4NUM * ic4 * C4NUM, tmp_col_ptr, C4NUM, ic4 * C4NUM);
+        RowMajor2Col4Major(src_ptr + i * C4NUM * in_channel, tmp_col_ptr, C4NUM, in_channel);
 #else
-        RowMajor2Col12Major(src_ptr + i * C12NUM * ic4 * C4NUM, tmp_col_ptr, C12NUM, ic4 * C4NUM);
+        RowMajor2Col12Major(src_ptr + i * C12NUM * in_channel, tmp_col_ptr, C12NUM, in_channel);
 #endif
-        MatMulOpt(tmp_col_ptr, trans_weight + i * ic4 * C4NUM * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0, ic4 * C4NUM,
+        MatMulOpt(tmp_col_ptr, trans_weight + i * in_channel * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0, in_channel,
                   cal_num, oc8 * C8NUM, input_unit_square, 2);
       }
 
