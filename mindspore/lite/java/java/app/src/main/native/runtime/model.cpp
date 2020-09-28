@@ -87,3 +87,13 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_lite_Model_free(JNIEnv *env
   auto *lite_model_ptr = static_cast<mindspore::lite::Model *>(pointer);
   delete (lite_model_ptr);
 }
+
+extern "C" JNIEXPORT void JNICALL Java_com_mindspore_lite_Model_freeBuffer(JNIEnv *env, jobject thiz, jlong model_ptr) {
+  auto *pointer = reinterpret_cast<void *>(model_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Model pointer from java is nullptr");
+    return;
+  }
+  auto *lite_model_ptr = static_cast<mindspore::lite::Model *>(pointer);
+  lite_model_ptr->Free();
+}

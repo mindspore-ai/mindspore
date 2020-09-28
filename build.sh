@@ -25,7 +25,8 @@ usage()
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
   echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I arm64|arm32|x86_64] [-K] \\"
-  echo "              [-B on|off] [-w on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off]"
+  echo "              [-B on|off] [-w on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off] \\"
+  echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] \\"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -51,14 +52,17 @@ usage()
   echo "    -n Compile minddata with mindspore lite, available: off, lite, full, default is lite"
   echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 10.1"
-  echo "    -I Enable compiling mindspore lite for arm64, arm32 or x86_64, default disable mindspore lite compiling"
+  echo "    -I Enable compiling mindspore lite for arm64, arm32 or x86_64, default disable mindspore lite compilation"
   echo "    -K Compile with AKG, default on"
   echo "    -s Enable serving module, default off"
   echo "    -w Enable acl module, default off"
   echo "    -B Enable debugger, default on"
   echo "    -E Enable IBVERBS for parameter server, default off"
   echo "    -l Compile with python dependency, default on"
+  echo "    -A Language used by mindspore lite, default cpp"
   echo "    -T Enable on-device training, default off"
+  echo "    -C Enable mindspore lite converter compilation, enabled when -I is specified, default on"
+  echo "    -o Enable mindspore lite tools compilation, enabled when -I is specified, default on"
 }
 
 # check value of input is 'on' or 'off'
@@ -106,9 +110,12 @@ checkopts()
   ENABLE_PYTHON="on"
   ENABLE_GPU="off"
   ENABLE_VERBOSE="off"
+  ENABLE_TOOLS="on"
+  ENABLE_CONVERTER="on"
+  LITE_LANGUAGE="cpp"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:swB:En:T:' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:swB:En:T:A:C:o:' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -288,6 +295,27 @@ checkopts()
         check_on_off $OPTARG T
         SUPPORT_TRAIN=$OPTARG
         echo "support train on device "
+        ;;
+      A)
+        COMPILE_LITE="on"
+        if [[ "$OPTARG" == "cpp" ]]; then
+          LITE_LANGUAGE="cpp"
+        elif [[ "$OPTARG" == "java" ]]; then
+          LITE_LANGUAGE="java"
+        elif [[ "$OPTARG" == "object-c" ]]; then
+          LITE_LANGUAGE="object-c"
+        else
+          echo "-A parameter must be cpp、java or object-c"
+          exit 1
+        fi
+        ;;
+      C)
+        check_on_off $OPTARG C
+        ENABLE_CONVERTER="$OPTARG"
+        ;;
+      o)
+        check_on_off $OPTARG o
+        ENABLE_TOOLS="$OPTARG"
         ;;
       *)
         echo "Unknown option ${opt}!"
@@ -617,12 +645,17 @@ build_minddata_lite_deps()
   build_jpeg_turbo
 }
 
+get_version() {
+    VERSION_MAJOR=`grep "const int ms_version_major =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]"`
+    VERSION_MINOR=`grep "const int ms_version_minor =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]"`
+    VERSION_REVISION=`grep "const int ms_version_revision =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]"`
+    VERSION_STR=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}
+}
+
 build_lite()
 {
-    VERSION_MAJOR=$(grep "const int ms_version_major =" mindspore/lite/include/version.h | tr -dc "[0-9]")
-    VERSION_MINOR=$(grep "const int ms_version_minor =" mindspore/lite/include/version.h | tr -dc "[0-9]")
-    VERSION_REVISION=$(grep "const int ms_version_revision =" mindspore/lite/include/version.h | tr -dc "[0-9]")
-    echo "============ Start building MindSpore Lite ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION} ============"
+    get_version
+    echo "============ Start building MindSpore Lite ${VERSION_STR} ============"
     if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ]; then
       echo "start build opencl"
       build_opencl
@@ -657,7 +690,7 @@ build_lite()
               -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
-              "${BASEPATH}/mindspore/lite"
+              -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} "${BASEPATH}/mindspore/lite"
     elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
         checkndk
         cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
@@ -667,13 +700,13 @@ build_lite()
               -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
-              "${BASEPATH}/mindspore/lite"
+              -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} "${BASEPATH}/mindspore/lite"
     else
         cmake -DBUILD_DEVICE=on -DPLATFORM_ARM64=off -DBUILD_CONVERTER=${ENABLE_CONVERTER} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}   \
         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${ENABLE_GPU} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
         -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp  \
         -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
-        -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite"
+        -DENABLE_VERBOSE=${ENABLE_VERBOSE} -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} "${BASEPATH}/mindspore/lite"
     fi
     make -j$THREAD_NUM && make install && make package
     COMPILE_RET=$?
@@ -685,12 +718,123 @@ build_lite()
         mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
         rm -rf ${BASEPATH}/output/tmp/
         echo "---------------- mindspore lite: build success ----------------"
-        exit 0
+        if [[ "X$LITE_LANGUAGE" = "Xcpp" ]]; then
+            exit 0
+        fi
     fi
 }
 
+build_lite_java_arm64() {
+    # build mindspore-lite arm64
+    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu.tar.gz" ]]; then
+      LITE_PLATFORM="arm64"
+      INC_BUILD_COPY=${INC_BUILD}
+      INC_BUILD="off"
+      build_lite
+      INC_BUILD=${INC_BUILD_COPY}
+    fi
+    # copy arm64 so
+    cd ${BASEPATH}/output/
+    rm -rf mindspore-lite-${VERSION_STR}-runtime-arm64-cpu
+    tar -zxvf mindspore-lite-${VERSION_STR}-runtime-arm64-cpu.tar.gz
+    mkdir -p ${JAVA_PATH}/java/app/libs/arm64-v8a/
+    [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/arm64-v8a/*
+    cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
+    cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite-fp16.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
+    cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite-optimize.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
+    echo mindspore-lite-${VERSION_STR}-runtime-arm64-cpu
+    [ -n "${VERSION_STR}" ] && rm -rf mindspore-lite-${VERSION_STR}-runtime-arm64-cpu
+}
+
+build_lite_java_arm32() {
+    # build mindspore-lite arm32
+    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm32-cpu.tar.gz" ]]; then
+      LITE_PLATFORM="arm32"
+      INC_BUILD_COPY=${INC_BUILD}
+      INC_BUILD="off"
+      build_lite
+      INC_BUILD=${INC_BUILD_COPY}
+    fi
+    # copy arm32 so
+    cd ${BASEPATH}/output/
+    rm -rf mindspore-lite-${VERSION_STR}runtime-arm32-cpu
+    tar -zxvf mindspore-lite-${VERSION_STR}-runtime-arm32-cpu.tar.gz
+    mkdir -p ${JAVA_PATH}/java/app/libs/armeabi-v7a/
+    [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/armeabi-v7a/*
+    cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm32-cpu/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
+    [ -n "${VERSION_STR}" ] && rm -rf mindspore-lite-${VERSION_STR}-runtime-arm32-cpu
+}
+
+build_jni_arm64() {
+    # build jni so
+    cd "${BASEPATH}/mindspore/lite/build"
+    rm -rf java
+    mkdir -pv java
+    cd java
+    cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
+          -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
+          -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
+          -DANDROID_STL="c++_static" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
+          -DPLATFORM_ARM64=on "${JAVA_PATH}/java/app/src/main/native"
+    make -j$THREAD_NUM
+    COMPILE_RET=$?
+    if [[ "${COMPILE_RET}" -ne 0 ]]; then
+        echo "---------------- mindspore lite: build jni arm64 failed----------------"
+        exit 1
+    fi
+    mkdir -p ${JAVA_PATH}/java/app/libs/arm64-v8a/
+    cp ${BASEPATH}/mindspore/lite/build/java/libmindspore-lite-jni.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
+}
+
+build_jni_arm32() {
+    # build jni so
+    cd "${BASEPATH}/mindspore/lite/build"
+    rm -rf java
+    mkdir -pv java
+    cd java
+    cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
+          -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
+          -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
+          -DANDROID_STL="c++_static" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
+          -DPLATFORM_ARM32=on "${JAVA_PATH}/java/app/src/main/native"
+    make -j$THREAD_NUM
+    COMPILE_RET=$?
+    if [[ "${COMPILE_RET}" -ne 0 ]]; then
+        echo "---------------- mindspore lite: build jni arm32 failed----------------"
+        exit 1
+    fi
+    mkdir -p ${JAVA_PATH}/java/app/libs/armeabi-v7a/
+    cp ${BASEPATH}/mindspore/lite/build/java/libmindspore-lite-jni.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
+}
+
+build_java() {
+  JAVA_PATH=${BASEPATH}/mindspore/lite/java
+  get_version
+  build_lite_java_arm64
+  build_lite_java_arm32
+  build_jni_arm64
+  build_jni_arm32
+
+  # build aar
+  ## check sdk gradle
+  cd ${JAVA_PATH}/java
+  rm -rf .gradle build gradle gradlew gradlew.bat build app/build
+
+  gradle init
+  gradle wrapper
+  ./gradlew build
+
+  # copy output
+  cp ${JAVA_PATH}/java/app/build/outputs/aar/mindspore-lite.aar ${BASEPATH}/output/mindspore-lite-${VERSION_STR}.aar
+  exit 0
+}
+
 if [[ "X$COMPILE_LITE" = "Xon" ]]; then
+  if [[ "X$LITE_LANGUAGE" = "Xjava" ]]; then
+    build_java
+  else
     build_lite
+  fi
 else
     build_mindspore
 fi

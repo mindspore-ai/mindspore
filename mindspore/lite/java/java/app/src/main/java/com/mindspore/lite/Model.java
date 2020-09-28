@@ -36,14 +36,6 @@ public class Model {
         this.modelPtr = 0;
     }
 
-    public long getModelPtr() {
-        return modelPtr;
-    }
-
-    public void setModelPtr(long modelPtr) {
-        this.modelPtr = modelPtr;
-    }
-
     public boolean loadModel(Context context, String modelName) {
         FileInputStream fis = null;
         AssetFileDescriptor fileDescriptor = null;
@@ -90,9 +82,19 @@ public class Model {
         this.modelPtr = 0;
     }
 
+    public void freeBuffer() {
+        this.freeBuffer(this.modelPtr);
+    }
+
+    protected long getModelPtr() {
+        return modelPtr;
+    }
+
     private native long loadModel(MappedByteBuffer buffer);
 
     private native long loadModelByPath(String modelPath);
 
     private native void free(long modelPtr);
+
+    private native void freeBuffer(long modelPtr);
 }

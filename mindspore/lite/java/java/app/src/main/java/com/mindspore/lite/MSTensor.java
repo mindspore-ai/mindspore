@@ -76,6 +76,10 @@ public class MSTensor {
         this.tensorPtr = 0;
     }
 
+    protected long getMSTensorPtr() {
+        return tensorPtr;
+    }
+
     private float[] decodeBytes(byte[] bytes) {
         if (bytes.length % 4 != 0) {
             Log.e("MS_LITE", "Length of bytes should be multi of 4 ");

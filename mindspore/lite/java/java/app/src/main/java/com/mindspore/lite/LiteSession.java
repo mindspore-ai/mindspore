@@ -112,6 +112,14 @@ public class LiteSession {
         this.sessionPtr = 0;
     }
 
+    public boolean resize(List<MSTensor> inputs, int[][] dims) {
+        long[] inputs_array = new long[inputs.size()];
+        for (int i = 0; i < inputs.size(); i++) {
+            inputs_array[i] = inputs.get(i).getMSTensorPtr();
+        }
+        return this.resize(this.sessionPtr, inputs_array, dims);
+    }
+
     private native long createSession(long msConfigPtr);
 
     private native boolean compileGraph(long sessionPtr, long modelPtr);
@@ -133,4 +141,6 @@ public class LiteSession {
     private native Long getOutputByTensorName(long sessionPtr, String tensorName);
 
     private native void free(long sessionPtr);
+
+    private native boolean resize(long sessionPtr, long[] inputs, int[][] dims);
 }
