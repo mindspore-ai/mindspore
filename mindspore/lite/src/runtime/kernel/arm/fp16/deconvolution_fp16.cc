@@ -30,6 +30,10 @@ DeConvolutionFp16CPUKernel::~DeConvolutionFp16CPUKernel() {
     delete matmul_param_;
     matmul_param_ = nullptr;
   }
+  if (execute_weight_ != nullptr) {
+    free(execute_weight_);
+    execute_weight_ = nullptr;
+  }
   return;
 }
 
