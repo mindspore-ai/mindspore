@@ -838,7 +838,7 @@ def get_bprop_lstm(self):
     return bprop
 
 
-@bprop_getters.register(inner.DynamicRNN)
+@bprop_getters.register(P.DynamicRNN)
 def get_bprop_dynamic_rnn(self):
     """Grad definition for `DynamicRNN` operation."""
     dynamic_rnn_grad = G.DynamicRNNGrad(forget_bias=self.forget_bias)
