@@ -511,7 +511,7 @@ Write4:
   st1 {v16.4h}, [x18], x17
   cmp w10, #1
   beq WriteEnd
-  st1 {v16.4h}, [x18], x17
+  st1 {v17.4h}, [x18], x17
   cmp w10, #2
   beq WriteEnd
   st1 {v18.4h}, [x18], x17
@@ -561,8 +561,8 @@ Write5:
   st1 {v16.h}[4], [x13], x17
   cmp w10, #1
   beq WriteEnd
-  st1 {v16.4h}, [x18], x17
-  st1 {v16.h}[4], [x13], x17
+  st1 {v17.4h}, [x18], x17
+  st1 {v17.h}[4], [x13], x17
   cmp w10, #2
   beq WriteEnd
   st1 {v18.4h}, [x18], x17
@@ -628,9 +628,9 @@ Write6:
   st1 {v16.h}[5], [x14], x17
   cmp w10, #1
   beq WriteEnd
-  st1 {v16.4h}, [x18], x17
-  st1 {v16.h}[4], [x13], x17
-  st1 {v16.h}[5], [x14], x17
+  st1 {v17.4h}, [x18], x17
+  st1 {v17.h}[4], [x13], x17
+  st1 {v17.h}[5], [x14], x17
   cmp w10, #2
   beq WriteEnd
   st1 {v18.4h}, [x18], x17
@@ -712,10 +712,10 @@ Write7:
   st1 {v16.h}[6], [x16], x17
   cmp w10, #1
   beq WriteEnd
-  st1 {v16.4h}, [x18], x17
-  st1 {v16.h}[4], [x13], x17
-  st1 {v16.h}[5], [x14], x17
-  st1 {v16.h}[6], [x16], x17
+  st1 {v17.4h}, [x18], x17
+  st1 {v17.h}[4], [x13], x17
+  st1 {v17.h}[5], [x14], x17
+  st1 {v17.h}[6], [x16], x17
   cmp w10, #2
   beq WriteEnd
   st1 {v18.4h}, [x18], x17
