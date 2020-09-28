@@ -39,8 +39,6 @@ void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bi
                        int col, size_t stride, size_t writeNhwc, size_t WriteWino);
 void MatmulFloatNeon64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                           int col, size_t stride, size_t write_mode);
-void MatmulFloatNeon64OptRemain(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
-                                int row, int col, size_t stride, size_t write_mode);
 #elif ENABLE_ARM32
 void MatmulFloatNeon32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                        int col, int stride, size_t writeNhwc, size_t WriteWino);

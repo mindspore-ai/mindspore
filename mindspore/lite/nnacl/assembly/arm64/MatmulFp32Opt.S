@@ -46,6 +46,12 @@ NoWinoSteps:
     mov x18, #4
     mul x8, x8, x18
 
+LoopRowStart:
+    cmp x6, #4
+    ble LoopRow4
+    cmp x6, #8
+    blt LoopRow8
+
 LoopRow:
     mov x14, x1 // reload rhs ptr
     mov x13, x7 // reload rhs col
@@ -309,6 +315,357 @@ LoopRow:
             fmax v26.4s, v26.4s, v3.4s
             fmax v28.4s, v28.4s, v3.4s
             fmax v30.4s, v30.4s, v3.4s
+            b Write
+
+
+LoopRow8:
+    mov x14, x1 // reload rhs ptr
+    mov x13, x7 // reload rhs col
+    mov x12, x3 // reload bias
+
+    LoopCol8:
+        cbz x9, NoReloadDst8
+        mov x11, x2
+    NoReloadDst8:
+        mov x10, x0 // reload lhs ptr
+        mov x19, x5 // reload depth
+
+        cmp x13, #4
+        ble LoopDepthStartHalf8
+
+    LoopDepthStart8:
+        ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
+        ld1 {v3.4s, v4.4s}, [x14], #32
+        fmul v8.4s, v3.4s, v0.s[0]
+        fmul v10.4s, v3.4s, v0.s[1]
+        fmul v12.4s, v3.4s, v0.s[2]
+        fmul v14.4s, v3.4s, v0.s[3]
+        fmul v9.4s, v4.4s, v0.s[0]
+        fmul v11.4s, v4.4s, v0.s[1]
+        fmul v13.4s, v4.4s, v0.s[2]
+        fmul v15.4s, v4.4s, v0.s[3]
+        fmul v16.4s, v3.4s, v1.s[0]
+        fmul v18.4s, v3.4s, v1.s[1]
+        fmul v20.4s, v3.4s, v1.s[2]
+        fmul v22.4s, v3.4s, v1.s[3]
+        fmul v17.4s, v4.4s, v1.s[0]
+        fmul v19.4s, v4.4s, v1.s[1]
+        fmul v21.4s, v4.4s, v1.s[2]
+        fmul v23.4s, v4.4s, v1.s[3]
+
+        subs x19, x19, #1
+        beq Bias8
+
+        LoopDepth8:
+            ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
+            ld1 {v3.4s, v4.4s}, [x14], #32
+            fmla v8.4s, v3.4s, v0.s[0]
+            fmla v10.4s, v3.4s, v0.s[1]
+            fmla v12.4s, v3.4s, v0.s[2]
+            fmla v14.4s, v3.4s, v0.s[3]
+            fmla v9.4s, v4.4s, v0.s[0]
+            fmla v11.4s, v4.4s, v0.s[1]
+            fmla v13.4s, v4.4s, v0.s[2]
+            fmla v15.4s, v4.4s, v0.s[3]
+            fmla v16.4s, v3.4s, v1.s[0]
+            fmla v18.4s, v3.4s, v1.s[1]
+            fmla v20.4s, v3.4s, v1.s[2]
+            fmla v22.4s, v3.4s, v1.s[3]
+            fmla v17.4s, v4.4s, v1.s[0]
+            fmla v19.4s, v4.4s, v1.s[1]
+            fmla v21.4s, v4.4s, v1.s[2]
+            fmla v23.4s, v4.4s, v1.s[3]
+
+            subs x19, x19, #1
+            bgt LoopDepth8
+
+        Bias8:
+            cbz x3, Activation8
+            ld1 {v0.4s}, [x12], #16
+            ld1 {v1.4s}, [x12], #16
+            fadd v8.4s, v8.4s, v0.4s
+            fadd v9.4s, v9.4s, v1.4s
+            fadd v10.4s, v10.4s, v0.4s
+            fadd v11.4s, v11.4s, v1.4s
+            fadd v12.4s, v12.4s, v0.4s
+            fadd v13.4s, v13.4s, v1.4s
+            fadd v14.4s, v14.4s, v0.4s
+            fadd v15.4s, v15.4s, v1.4s
+            fadd v16.4s, v16.4s, v0.4s
+            fadd v17.4s, v17.4s, v1.4s
+            fadd v18.4s, v18.4s, v0.4s
+            fadd v19.4s, v19.4s, v1.4s
+            fadd v20.4s, v20.4s, v0.4s
+            fadd v21.4s, v21.4s, v1.4s
+            fadd v22.4s, v22.4s, v0.4s
+            fadd v23.4s, v23.4s, v1.4s
+
+        Activation8:
+            cmp x4, #2
+            beq Relu68
+            cmp x4, #1
+            beq Relu8
+            b Write
+
+        Relu68:
+            mov w19, #6
+            dup v2.4s, w19
+            scvtf v2.4s, v2.4s
+            fmin v8.4s, v8.4s, v2.4s
+            fmin v9.4s, v9.4s, v2.4s
+            fmin v10.4s, v10.4s, v2.4s
+            fmin v11.4s, v11.4s, v2.4s
+            fmin v12.4s, v12.4s, v2.4s
+            fmin v13.4s, v13.4s, v2.4s
+            fmin v14.4s, v14.4s, v2.4s
+            fmin v15.4s, v15.4s, v2.4s
+            fmin v16.4s, v16.4s, v2.4s
+            fmin v17.4s, v17.4s, v2.4s
+            fmin v18.4s, v18.4s, v2.4s
+            fmin v19.4s, v19.4s, v2.4s
+            fmin v20.4s, v20.4s, v2.4s
+            fmin v21.4s, v21.4s, v2.4s
+            fmin v22.4s, v22.4s, v2.4s
+            fmin v23.4s, v23.4s, v2.4s
+        
+        Relu8:
+            dup v3.4s, wzr
+            fmax v8.4s, v8.4s, v3.4s
+            fmax v9.4s, v9.4s, v3.4s
+            fmax v10.4s, v10.4s, v3.4s
+            fmax v11.4s, v11.4s, v3.4s
+            fmax v12.4s, v12.4s, v3.4s
+            fmax v13.4s, v13.4s, v3.4s
+            fmax v14.4s, v14.4s, v3.4s
+            fmax v15.4s, v15.4s, v3.4s
+            fmax v16.4s, v16.4s, v3.4s
+            fmax v17.4s, v17.4s, v3.4s
+            fmax v18.4s, v18.4s, v3.4s
+            fmax v19.4s, v19.4s, v3.4s
+            fmax v20.4s, v20.4s, v3.4s
+            fmax v21.4s, v21.4s, v3.4s
+            fmax v22.4s, v22.4s, v3.4s
+            fmax v23.4s, v23.4s, v3.4s
+            b Write
+
+    LoopDepthStartHalf8:
+        ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
+        ld1 {v3.4s, v4.4s}, [x14], #32
+        fmul v8.4s, v3.4s, v0.s[0]
+        fmul v10.4s, v3.4s, v0.s[1]
+        fmul v12.4s, v3.4s, v0.s[2]
+        fmul v14.4s, v3.4s, v0.s[3]
+        fmul v16.4s, v3.4s, v1.s[0]
+        fmul v18.4s, v3.4s, v1.s[1]
+        fmul v20.4s, v3.4s, v1.s[2]
+        fmul v22.4s, v3.4s, v1.s[3]
+
+        subs x19, x19, #1
+        beq BiasHalf8
+
+        LoopDepthHalf8:
+            ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
+            ld1 {v3.4s, v4.4s}, [x14], #32
+            fmla v8.4s, v3.4s, v0.s[0]
+            fmla v10.4s, v3.4s, v0.s[1]
+            fmla v12.4s, v3.4s, v0.s[2]
+            fmla v14.4s, v3.4s, v0.s[3]
+            fmla v16.4s, v3.4s, v1.s[0]
+            fmla v18.4s, v3.4s, v1.s[1]
+            fmla v20.4s, v3.4s, v1.s[2]
+            fmla v22.4s, v3.4s, v1.s[3]
+
+            subs x19, x19, #1
+            bgt LoopDepthHalf8
+
+        BiasHalf8:
+            cbz x3, ActivationHalf8
+            ld1 {v0.4s}, [x12], #16
+            ld1 {v1.4s}, [x12], #16
+            fadd v8.4s, v8.4s, v0.4s
+            fadd v10.4s, v10.4s, v0.4s
+            fadd v12.4s, v12.4s, v0.4s
+            fadd v14.4s, v14.4s, v0.4s
+            fadd v16.4s, v16.4s, v0.4s
+            fadd v18.4s, v18.4s, v0.4s
+            fadd v20.4s, v20.4s, v0.4s
+            fadd v22.4s, v22.4s, v0.4s
+
+        ActivationHalf8:
+            cmp x4, #2
+            beq Relu6Half8
+            cmp x4, #1
+            beq ReluHalf8
+            b Write
+
+        Relu6Half8:
+            mov w19, #6
+            dup v2.4s, w19
+            scvtf v2.4s, v2.4s
+            fmin v8.4s, v8.4s, v2.4s
+            fmin v10.4s, v10.4s, v2.4s
+            fmin v12.4s, v12.4s, v2.4s
+            fmin v14.4s, v14.4s, v2.4s
+            fmin v16.4s, v16.4s, v2.4s
+            fmin v18.4s, v18.4s, v2.4s
+            fmin v20.4s, v20.4s, v2.4s
+            fmin v22.4s, v22.4s, v2.4s
+
+        ReluHalf8:
+            dup v3.4s, wzr
+            fmax v8.4s, v8.4s, v3.4s
+            fmax v10.4s, v10.4s, v3.4s
+            fmax v12.4s, v12.4s, v3.4s
+            fmax v14.4s, v14.4s, v3.4s
+            fmax v16.4s, v16.4s, v3.4s
+            fmax v18.4s, v18.4s, v3.4s
+            fmax v20.4s, v20.4s, v3.4s
+            fmax v22.4s, v22.4s, v3.4s
+            b Write
+
+LoopRow4:
+    mov x14, x1 // reload rhs ptr
+    mov x13, x7 // reload rhs col
+    mov x12, x3 // reload bias
+
+    LoopCol4:
+        cbz x9, NoReloadDst4
+        mov x11, x2
+    NoReloadDst4:
+        mov x10, x0 // reload lhs ptr
+        mov x19, x5 // reload depth
+
+        cmp x13, #4
+        ble LoopDepthStartHalf4
+
+    LoopDepthStart4:
+        ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
+        ld1 {v3.4s, v4.4s}, [x14], #32
+        fmul v8.4s, v3.4s, v0.s[0]
+        fmul v10.4s, v3.4s, v0.s[1]
+        fmul v12.4s, v3.4s, v0.s[2]
+        fmul v14.4s, v3.4s, v0.s[3]
+        fmul v9.4s, v4.4s, v0.s[0]
+        fmul v11.4s, v4.4s, v0.s[1]
+        fmul v13.4s, v4.4s, v0.s[2]
+        fmul v15.4s, v4.4s, v0.s[3]
+
+        subs x19, x19, #1
+        beq Bias4
+
+        LoopDepth4:
+            ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
+            ld1 {v3.4s, v4.4s}, [x14], #32
+            fmla v8.4s, v3.4s, v0.s[0]
+            fmla v10.4s, v3.4s, v0.s[1]
+            fmla v12.4s, v3.4s, v0.s[2]
+            fmla v14.4s, v3.4s, v0.s[3]
+            fmla v9.4s, v4.4s, v0.s[0]
+            fmla v11.4s, v4.4s, v0.s[1]
+            fmla v13.4s, v4.4s, v0.s[2]
+            fmla v15.4s, v4.4s, v0.s[3]
+
+            subs x19, x19, #1
+            bgt LoopDepth4
+
+        Bias4:
+            cbz x3, Activation4
+            ld1 {v0.4s}, [x12], #16
+            ld1 {v1.4s}, [x12], #16
+            fadd v8.4s, v8.4s, v0.4s
+            fadd v9.4s, v9.4s, v1.4s
+            fadd v10.4s, v10.4s, v0.4s
+            fadd v11.4s, v11.4s, v1.4s
+            fadd v12.4s, v12.4s, v0.4s
+            fadd v13.4s, v13.4s, v1.4s
+            fadd v14.4s, v14.4s, v0.4s
+            fadd v15.4s, v15.4s, v1.4s
+
+        Activation4:
+            cmp x4, #2
+            beq Relu64
+            cmp x4, #1
+            beq Relu4
+            b Write
+
+        Relu64:
+            mov w19, #6
+            dup v2.4s, w19
+            scvtf v2.4s, v2.4s
+            fmin v8.4s, v8.4s, v2.4s
+            fmin v9.4s, v9.4s, v2.4s
+            fmin v10.4s, v10.4s, v2.4s
+            fmin v11.4s, v11.4s, v2.4s
+            fmin v12.4s, v12.4s, v2.4s
+            fmin v13.4s, v13.4s, v2.4s
+            fmin v14.4s, v14.4s, v2.4s
+            fmin v15.4s, v15.4s, v2.4s
+        
+        Relu4:
+            dup v3.4s, wzr
+            fmax v8.4s, v8.4s, v3.4s
+            fmax v9.4s, v9.4s, v3.4s
+            fmax v10.4s, v10.4s, v3.4s
+            fmax v11.4s, v11.4s, v3.4s
+            fmax v12.4s, v12.4s, v3.4s
+            fmax v13.4s, v13.4s, v3.4s
+            fmax v14.4s, v14.4s, v3.4s
+            fmax v15.4s, v15.4s, v3.4s
+            b Write
+
+    LoopDepthStartHalf4:
+        ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
+        ld1 {v3.4s, v4.4s}, [x14], #32
+        fmul v8.4s, v3.4s, v0.s[0]
+        fmul v10.4s, v3.4s, v0.s[1]
+        fmul v12.4s, v3.4s, v0.s[2]
+        fmul v14.4s, v3.4s, v0.s[3]
+
+        subs x19, x19, #1
+        beq BiasHalf4
+
+        LoopDepthHalf4:
+            ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
+            ld1 {v3.4s, v4.4s}, [x14], #32
+            fmla v8.4s, v3.4s, v0.s[0]
+            fmla v10.4s, v3.4s, v0.s[1]
+            fmla v12.4s, v3.4s, v0.s[2]
+            fmla v14.4s, v3.4s, v0.s[3]
+
+            subs x19, x19, #1
+            bgt LoopDepthHalf4
+
+        BiasHalf4:
+            cbz x3, ActivationHalf4
+            ld1 {v0.4s}, [x12], #16
+            ld1 {v1.4s}, [x12], #16
+            fadd v8.4s, v8.4s, v0.4s
+            fadd v10.4s, v10.4s, v0.4s
+            fadd v12.4s, v12.4s, v0.4s
+            fadd v14.4s, v14.4s, v0.4s
+
+        ActivationHalf4:
+            cmp x4, #2
+            beq Relu6Half4
+            cmp x4, #1
+            beq ReluHalf4
+            b Write
+
+        Relu6Half4:
+            mov w19, #6
+            dup v2.4s, w19
+            scvtf v2.4s, v2.4s
+            fmin v8.4s, v8.4s, v2.4s
+            fmin v10.4s, v10.4s, v2.4s
+            fmin v12.4s, v12.4s, v2.4s
+            fmin v14.4s, v14.4s, v2.4s
+
+        ReluHalf4:
+            dup v3.4s, wzr
+            fmax v8.4s, v8.4s, v3.4s
+            fmax v10.4s, v10.4s, v3.4s
+            fmax v12.4s, v12.4s, v3.4s
+            fmax v14.4s, v14.4s, v3.4s
 
         Write:
             cmp x9, #2
@@ -796,8 +1153,14 @@ LoopRow:
 
         WriteEnd:
             subs x13, x13, #8 // rhs col - 8
-            bgt LoopCol
+            ble LoopColEnd
+            cmp x6, #4
+            ble LoopCol4
+            cmp x6, #8
+            ble LoopCol8
+            b LoopCol
 
+LoopColEnd:
         add x0, x0, x17
         cbz x9, C8DstStep
         mov x18, #4
@@ -810,7 +1173,7 @@ LoopRow:
         mov x11, x2
     NoDstStep:
         subs x6, x6, #12
-        bgt LoopRow
+        bgt LoopRowStart
 
   sub sp, sp, #144
   ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
