@@ -218,3 +218,41 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_lite_LiteSession_free(JNIEn
   auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(pointer);
   delete (lite_session_ptr);
 }
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_resize(JNIEnv *env, jobject thiz,
+                                                                                 jlong session_ptr, jlongArray inputs,
+                                                                                 jobjectArray dims) {
+  std::vector<std::vector<int>> c_dims;
+  auto *pointer = reinterpret_cast<void *>(session_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Session pointer from java is nullptr");
+    return false;
+  }
+  auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(pointer);
+
+  jsize input_size = static_cast<int>(env->GetArrayLength(inputs));
+  jlong *input_data = env->GetLongArrayElements(inputs, nullptr);
+  std::vector<mindspore::tensor::MSTensor *> c_inputs;
+  for (int i = 0; i < input_size; i++) {
+    auto *tensor_pointer = reinterpret_cast<void *>(input_data[i]);
+    if (tensor_pointer == nullptr) {
+      MS_LOGE("Tensor pointer from java is nullptr");
+      return false;
+    }
+    auto *ms_tensor_ptr = static_cast<mindspore::tensor::MSTensor *>(tensor_pointer);
+    c_inputs.push_back(ms_tensor_ptr);
+  }
+  jsize tensor_size = static_cast<int>(env->GetArrayLength(dims));
+  for (int i = 0; i < tensor_size; i++) {
+    jintArray array = static_cast<jintArray>(env->GetObjectArrayElement(dims, i));
+    jsize dim_size = static_cast<int>(env->GetArrayLength(array));
+    jint *dim_data = env->GetIntArrayElements(array, nullptr);
+    std::vector<int> tensor_dims;
+    for (int j = 0; j < dim_size; j++) {
+      tensor_dims.push_back(dim_data[j]);
+    }
+    c_dims.push_back(tensor_dims);
+  }
+  int ret = lite_session_ptr->Resize(c_inputs, c_dims);
+  return (jboolean)(ret == mindspore::lite::RET_OK);
+}
