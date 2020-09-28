@@ -121,6 +121,25 @@ int B(float *poly_array, float *matrix_b, int in_unit) {
   return NNACL_OK;
 }
 
+#ifndef ENABLE_ARM64
+void MatrixMultiplyWinograd(const float *matix_a, const float *matrix_b, float *matrix_c, int m, int k, int n,
+                            int in_channel, int c4_channel) {
+  int cnt = 0;
+  for (int i = 0; i < m; ++i) {
+    for (int j = 0; j < n; ++j) {
+      for (int y = 0; y < in_channel; ++y) {
+        float tmp = 0;
+        for (int z = 0; z < k; ++z) {
+          tmp += matix_a[z * in_channel + y + i * in_channel * k] * matrix_b[j + z * n];
+        }
+        matrix_c[cnt++] = tmp;
+      }
+      cnt += c4_channel / 4 - in_channel;
+    }
+  }
+}
+#endif
+
 void GenerateIntervalArray(float *array, float interval, int degree) {
   array[0] = 0;
   for (int i = 1; i < degree; ++i) {

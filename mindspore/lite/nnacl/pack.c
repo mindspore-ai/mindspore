@@ -22,6 +22,14 @@ void PackWeightKHWToHWKFp32(const void *src, void *dst, int plane, int channel) 
   return PackNCHWToNHWCFp32(src, dst, 1, plane, channel);
 }
 
+void PackHWCToWHC(const float *src, float *dst, int height, int width, int channel) {
+  for (int i = 0; i < height; ++i) {
+    for (int j = 0; j < width; ++j) {
+      memcpy(dst + (j * height + i) * channel, src + (i * width + j) * channel, channel * sizeof(float));
+    }
+  }
+}
+
 void PackWeightInt8(int8_t *weight_data, ConvParameter *conv_param, int8_t *packed_weight, int32_t *weight_sum) {
   // original weight format : ohwi
   int kernel_h = conv_param->kernel_h_;
