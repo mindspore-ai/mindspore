@@ -30,11 +30,11 @@ int ReduceMeanFp16(const int outer_size, const int inner_size, const int axis_si
     for (k = 0; k < inner_size; k++) {
       const float16_t *inner_src = outer_src + k;
       float16_t *inner_dst = outer_dst + k;
-      float16_t tmp = 0.0;
+      float tmp = 0.0;
       for (i = 0; i < axis_size; i++) {
         tmp += inner_src[i * inner_size];
       }
-      *inner_dst = tmp / (float16_t)axis_size;
+      *inner_dst = (float16_t)(tmp / axis_size);
     }
   }
   return NNACL_OK;
