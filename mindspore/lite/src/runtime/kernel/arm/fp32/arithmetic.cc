@@ -36,15 +36,15 @@ int ArithmeticCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int ArithmeticCPUKernel::ReSize() {
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32 || in_tensors_[0]->data_type() == kNumberTypeFloat16) {
     data_type_ = kDataTypeFloat;
   } else {
     data_type_ = kDataTypeInt;
   }
-  return ReSize();
-}
-
-int ArithmeticCPUKernel::ReSize() {
   arithmeticParameter_->in_elements_num0_ = in_tensors_[0]->ElementsNum();
   arithmeticParameter_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
   arithmeticParameter_->out_elements_num_ = out_tensors_[0]->ElementsNum();

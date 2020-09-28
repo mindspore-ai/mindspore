@@ -60,6 +60,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fusion/quant_dtype_cast_fusion.cc
         ../optimizer/graph/weight_format_transform_pass.cc
         ../optimizer/graph/weight_format_hardcode_pass.cc
+        ../optimizer/graph/unused_cast_node_remove_pass.cc
         )
 
 add_subdirectory(../anf_importer anf_importer)
