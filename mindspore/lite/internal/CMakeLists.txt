@@ -39,7 +39,8 @@ if (PLATFORM_ARM64)
     # assembly
     file(GLOB ASSEMBLY_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/assembly/arm64/MatmulFp32OptRemain.S
-            ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/assembly/arm64/MatmulFp32Opt.S)
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/assembly/arm64/MatmulFp32Opt.S
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/assembly/arm64/MatmulFp32.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
     add_library(mslite_internal SHARED ${CCSRC} ${KERNEL_SRC} ${TRAIN_KERNEL_SRC})

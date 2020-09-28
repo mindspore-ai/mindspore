@@ -36,11 +36,14 @@ void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, size_t row, size_t col);
 void RowMajor2Col12Major(float *src_ptr, float *dst_ptr, size_t row, size_t col);
 #ifdef ENABLE_ARM64
 void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
-                       int col, size_t stride, bool write_nhwc);
+                       int col, size_t stride, size_t writeNhwc, size_t WriteWino);
 void MatmulFloatNeon64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
-                          int col, size_t stride, size_t write_nhwc, size_t write_c4);
-void MatmulFloatNeon64OptRemain(const float *a, const float *b, float *c, int depth, int row, int col, size_t stride);
+                          int col, size_t stride, size_t write_mode);
+void MatmulFloatNeon64OptRemain(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
+                                int row, int col, size_t stride, size_t write_mode);
 #elif ENABLE_ARM32
+void MatmulFloatNeon32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
+                       int col, int stride, size_t writeNhwc, size_t WriteWino);
 void MatmulFloatNeon32Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                           int col, int stride, int write_mode);
 #endif
