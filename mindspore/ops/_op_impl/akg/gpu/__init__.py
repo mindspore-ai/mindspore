@@ -54,5 +54,6 @@ from .sub import _sub_akg
 from .tile import _tile_akg
 from .select import _select_akg
 from .greater import _greater_akg
+from .assign import _assign_akg
 
 # Please insert op register in lexicographical order of the filename.
