@@ -44,6 +44,8 @@ void MatrixMultiply(const float *matrix_a, const float *matrix_b, float *matrix_
 
 int CookToomFilter(float *matrix_a, float *matrix_at, float *matrix_b, float *matrix_bt, float *matrix_g,
                    float *matrix_gt, float coefficient, int out_unit, int filter_size);
+void MatrixMultiplyWinograd(const float *matix_a, const float *matrix_b, float *matrix_c, int m, int k, int n,
+                            int in_channel, int c4_channel);
 
 #ifdef ENABLE_ARM
 void MatrixMultiplyVec(const float32x4_t *matrix_a, const float32x4_t *matrix_b, float32x4_t *matrix_c,

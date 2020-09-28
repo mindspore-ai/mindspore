@@ -30,6 +30,8 @@ extern "C" {
 void Im2ColPackUnitFp32(const float *input_data, ConvParameter *conv_param, float *packed_input, int real_cal_num,
                         int block_index);
 
+void PackHWCToWHC(const float *src, float *dst, int height, int width, int channel);
+
 void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real_cal_num, int block_index,
                         int32_t *input_sum, ConvParameter *conv_param);
 
