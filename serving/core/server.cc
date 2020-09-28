@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <atomic>
 #include "include/infer_log.h"
 #include "serving/ms_service.grpc.pb.h"
 #include "core/util/option_parser.h"
@@ -43,10 +44,16 @@ namespace serving {
 namespace {
 static const uint32_t uint32max = 0x7FFFFFFF;
 std::promise<void> exit_requested;
+std::atomic_flag has_exited = ATOMIC_FLAG_INIT;
+
 static const char kServerHttpIp[] = "0.0.0.0";
 
 void ClearEnv() { Session::Instance().Clear(); }
-void HandleSignal(int sig) { exit_requested.set_value(); }
+void HandleSignal(int sig) {
+  if (!has_exited.test_and_set()) {
+    exit_requested.set_value();
+  }
+}
 
 grpc::Status CreatGRPCStatus(const Status &status) {
   switch (status.StatusCode()) {
