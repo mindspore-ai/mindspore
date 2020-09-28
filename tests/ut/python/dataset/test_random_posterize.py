@@ -138,8 +138,8 @@ def test_random_posterize_default_c_md5(plot=False, run_golden=True):
 
     image_posterize = []
     image_original = []
-    for item1, item2 in zip(data1.create_dict_iterator(output_numpy=True),
-                            data2.create_dict_iterator(output_numpy=True)):
+    for item1, item2 in zip(data1.create_dict_iterator(output_numpy=True, num_epochs=1),
+                            data2.create_dict_iterator(output_numpy=True, num_epochs=1)):
         image1 = item1["image"]
         image2 = item2["image"]
         image_posterize.append(image1)

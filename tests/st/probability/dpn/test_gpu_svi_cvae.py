@@ -122,7 +122,7 @@ def test_svi_cvae():
     sample_label = Tensor([i for i in range(0, 8)] * 8, dtype=mstype.int32)
     generated_sample = cvae.generate_sample(sample_label, 64, IMAGE_SHAPE)
     # test function: reconstruct_sample
-    for sample in ds_train.create_dict_iterator(output_numpy=True):
+    for sample in ds_train.create_dict_iterator(output_numpy=True, num_epochs=1):
         sample_x = Tensor(sample['image'], dtype=mstype.float32)
         sample_y = Tensor(sample['label'], dtype=mstype.int32)
         reconstructed_sample = cvae.reconstruct_sample(sample_x, sample_y)

@@ -110,7 +110,7 @@ def test_svi_vae():
     # test function: generate_sample
     generated_sample = vae.generate_sample(64, IMAGE_SHAPE)
     # test function: reconstruct_sample
-    for sample in ds_train.create_dict_iterator(output_numpy=True):
+    for sample in ds_train.create_dict_iterator(output_numpy=True, num_epochs=1):
         sample_x = Tensor(sample['image'], dtype=mstype.float32)
         reconstructed_sample = vae.reconstruct_sample(sample_x)
     print('The loss of the trained network is ', trained_loss)

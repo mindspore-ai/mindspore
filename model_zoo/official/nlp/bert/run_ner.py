@@ -128,7 +128,7 @@ def do_eval(dataset=None, network=None, use_crf="", num_class=2, assessment_meth
             raise ValueError("Assessment method not supported, support: [accuracy, f1, mcc, spearman_correlation]")
 
         columns_list = ["input_ids", "input_mask", "segment_ids", "label_ids"]
-        for data in dataset.create_dict_iterator():
+        for data in dataset.create_dict_iterator(num_epochs=1):
             input_data = []
             for i in columns_list:
                 input_data.append(data[i])

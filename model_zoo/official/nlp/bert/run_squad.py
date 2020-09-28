@@ -109,7 +109,7 @@ def do_eval(dataset=None, vocab_file="", eval_json="", load_checkpoint_path="", 
     output = []
     RawResult = collections.namedtuple("RawResult", ["unique_id", "start_logits", "end_logits"])
     columns_list = ["input_ids", "input_mask", "segment_ids", "unique_ids"]
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         input_data = []
         for i in columns_list:
             input_data.append(data[i])

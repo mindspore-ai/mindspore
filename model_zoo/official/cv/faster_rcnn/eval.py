@@ -57,7 +57,7 @@ def FasterRcnn_eval(dataset_path, ckpt_path, ann_file):
     print("total images num: ", total)
     print("Processing, please wait a moment.")
     max_num = 128
-    for data in ds.create_dict_iterator():
+    for data in ds.create_dict_iterator(num_epochs=1):
         eval_iter = eval_iter + 1
 
         img_data = data['image']

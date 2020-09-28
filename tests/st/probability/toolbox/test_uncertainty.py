@@ -129,7 +129,7 @@ if __name__ == '__main__':
                                        epi_uncer_model_path=None,
                                        ale_uncer_model_path=None,
                                        save_model=False)
-    for eval_data in ds_eval.create_dict_iterator(output_numpy=True):
+    for eval_data in ds_eval.create_dict_iterator(output_numpy=True, num_epochs=1):
         eval_data = Tensor(eval_data['image'], mstype.float32)
         epistemic_uncertainty = evaluation.eval_epistemic_uncertainty(eval_data)
         aleatoric_uncertainty = evaluation.eval_aleatoric_uncertainty(eval_data)

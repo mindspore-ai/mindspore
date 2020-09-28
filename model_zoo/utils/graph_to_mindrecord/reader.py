@@ -28,7 +28,7 @@ args = parser.parse_args()
 
 data_set = ds.MindDataset(args.path)
 num_iter = 0
-for item in data_set.create_dict_iterator(output_numpy=True):
+for item in data_set.create_dict_iterator(output_numpy=True, num_epochs=1):
     print(item)
     num_iter += 1
 print("Total items # is {}".format(num_iter))

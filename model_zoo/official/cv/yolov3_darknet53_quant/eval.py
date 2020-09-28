@@ -305,7 +305,7 @@ def test():
 
     input_shape = Tensor(tuple(config.test_img_shape), ms.float32)
     args.logger.info('Start inference....')
-    for i, data in enumerate(ds.create_dict_iterator()):
+    for i, data in enumerate(ds.create_dict_iterator(num_epochs=1)):
         image = data["image"]
 
         image_shape = data["image_shape"]
