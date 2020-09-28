@@ -54,6 +54,58 @@ kernel::LiteKernel *CpuCropInt8KernelCreator(const std::vector<lite::Tensor *> &
   return kernel;
 }
 
+int CropBaseCPUKernel::ReSize() {
+  auto *input_tensor = in_tensors_.at(kInputIndex);
+  auto input_shape = input_tensor->shape();
+  size_t input_dim = input_shape.size();
+
+  crop_para_->in_shape_ = reinterpret_cast<int *>(malloc(input_dim * sizeof(int)));
+  if (crop_para_->in_shape_ == nullptr) {
+    MS_LOG(ERROR) << "in_shape_ is nullptr";
+    return RET_ERROR;
+  } else {
+    memcpy(reinterpret_cast<void *>(const_cast<int *>(crop_para_->in_shape_)), input_shape.data(),
+           sizeof(int) * input_dim);
+  }
+
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
+  auto output_shape = out_tensor->shape();
+  size_t output_dim = output_shape.size();
+
+  crop_para_->out_shape_ = reinterpret_cast<int *>(malloc(output_dim * sizeof(int)));
+  if (crop_para_->out_shape_ == nullptr) {
+    MS_LOG(ERROR) << "out_shape_ is nullptr";
+    return RET_ERROR;
+  } else {
+    memcpy(reinterpret_cast<void *>(const_cast<int *>(crop_para_->out_shape_)), output_shape.data(),
+           sizeof(int) * output_dim);
+  }
+  MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
+  crop_para_->input_dim_ = input_dim;
+  PadOffset(input_dim, crop_para_);
+  return RET_OK;
+}
+
+void CropBaseCPUKernel::PadOffset(int input_dim, CropParameter *crop_para) {
+  auto axis = crop_para->axis_;
+  auto offsets_size = crop_para->offset_size_;
+  MS_ASSERT(axis <= input_dim);
+  if (offsets_size > 1) {
+    MS_ASSERT(axis + offsets_size == input_dim);
+  }
+  for (int i = 0; i < input_dim; i++) {
+    int crop_offset = 0;
+    if (i >= axis) {
+      if (offsets_size == 1) {
+        crop_offset = crop_para->offset_[0];
+      } else if (offsets_size > 1) {
+        crop_offset = crop_para->offset_[i - axis];
+      }
+    }
+    crop_para->in_offset_[i] = crop_offset;
+  }
+}
+
 kernel::LiteKernel *CpuCropInt32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                               const InnerContext *ctx, const kernel::KernelKey &desc,

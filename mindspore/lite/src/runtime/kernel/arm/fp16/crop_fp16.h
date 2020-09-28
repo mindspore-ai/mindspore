@@ -14,36 +14,39 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CROP_BASE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CROP_BASE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CROP_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CROP_H_
+
+#include <arm_neon.h>
 
 #include <vector>
-#include "src/lite_kernel.h"
-#include "nnacl/crop_parameter.h"
 
-using mindspore::lite::InnerContext;
+#include "src/lite_kernel.h"
+#include "src/runtime/kernel/arm/base/crop_base.h"
 
 namespace mindspore::kernel {
-class CropBaseCPUKernel : public LiteKernel {
+class CropFp16CPUKernel : public CropBaseCPUKernel {
  public:
-  CropBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
+  CropFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                     const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
+      : CropBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
     crop_para_ = reinterpret_cast<CropParameter *>(op_parameter_);
     crop_para_->thread_count_ = op_parameter_->thread_num_;
   }
-  ~CropBaseCPUKernel() = default;
+  ~CropFp16CPUKernel() override = default;
 
   int Init() override;
   int ReSize() override;
-  int Run() override { return 0; }
+  int Run() override;
+  int DoExecute(int task_id);
 
- protected:
+ private:
+  float16_t *input_ptr_ = nullptr;
+  float16_t *output_ptr_ = nullptr;
   CropParameter *crop_para_;
-  int thread_count_;
-  void PadOffset(int input_dim, CropParameter *crop_para);
+  void FreeInputAndOutput();
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CROP_BASE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CROP_H_
