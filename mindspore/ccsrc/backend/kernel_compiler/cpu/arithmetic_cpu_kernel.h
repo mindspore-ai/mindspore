@@ -36,7 +36,21 @@ class ArithmeticCPUKernel : public CPUKernel {
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
  private:
-  bool is_number_{false};
+  void GenIndex(size_t num, std::vector<size_t> *tmp);
+  template <typename T>
+  void Sub(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  template <typename T>
+  void Add(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  template <typename T>
+  void Mul(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  template <typename T>
+  void Div(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  std::vector<size_t> input_shape0_;
+  std::vector<size_t> input_shape1_;
+  std::vector<size_t> input_element_num0_;
+  std::vector<size_t> input_element_num1_;
+  std::vector<size_t> output_shape_;
+  std::vector<size_t> output_element_num_;
   OperateType operate_type_{ADD};
   TypeId dtype_{kTypeUnknown};
 };

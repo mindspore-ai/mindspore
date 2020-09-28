@@ -37,10 +37,10 @@ class SubNet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sub():
-    x = np.ones([2, 3, 4, 4]).astype(np.int32)
-    y = 1
+    x = np.random.rand(2, 3, 4, 4).astype(np.float32)
+    y = np.random.rand(4, 1).astype(np.float32)
     net = SubNet()
-    output = net(Tensor(x), Tensor(y, mindspore.int32))
-    expect_output = np.zeros([2, 3, 4, 4]).astype(np.int)
-    print(output)
+    output = net(Tensor(x), Tensor(y, mindspore.float32))
+    expect_output = x - y
     assert np.all(output.asnumpy() == expect_output)
+test_sub()
