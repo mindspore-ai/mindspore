@@ -72,6 +72,7 @@ class Categorical(Distribution):
                  dtype=mstype.int32,
                  name="Categorical"):
         param = dict(locals())
+        param['param_dict'] = {'probs': probs, 'logits': logits}
         valid_dtype = mstype.int_type
         check_type(dtype, valid_dtype, "Categorical")
         super(Categorical, self).__init__(seed, dtype, name, param)
