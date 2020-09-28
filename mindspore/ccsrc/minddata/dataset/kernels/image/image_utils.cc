@@ -161,7 +161,13 @@ static void JpegInitSource(j_decompress_ptr cinfo) {}
 
 static boolean JpegFillInputBuffer(j_decompress_ptr cinfo) {
   if (cinfo->src->bytes_in_buffer == 0) {
-    ERREXIT(cinfo, JERR_INPUT_EMPTY);
+    // Under ARM platform raise runtime_error may cause core problem,
+    // so we catch runtime_error and just return FALSE.
+    try {
+      ERREXIT(cinfo, JERR_INPUT_EMPTY);
+    } catch (std::runtime_error &e) {
+      return FALSE;
+    }
     return FALSE;
   }
   return TRUE;
