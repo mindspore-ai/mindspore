@@ -179,6 +179,12 @@ void AddSupportMixedPrecisionDataTypeIndex(TypeId data_type, std::vector<int> *s
     case kNumberTypeFloat:
       index = 1;
       break;
+    case kNumberTypeInt32:
+      index = 0;
+      break;
+    case kNumberTypeInt64:
+      index = 1;
+      break;
     default:
       break;
   }
