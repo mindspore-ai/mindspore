@@ -31,18 +31,6 @@ int8_t MinInt8(int8_t a, int8_t b);
 int8_t MaxInt8(int8_t a, int8_t b);
 void ReluFp32(float *data, float *dst, int ele_num);
 void Relu6Fp32(float *data, float *dst, int ele_num);
-void SimplePostFuncInt8(const int *in, int8_t *out, int oc, int plane, int plane8, int32_t multiplier,
-                        int32_t left_shift, int32_t right_shift, int32_t zp);
-void IndirectGemmFp32_8x8(float *output, const float *input, const float *weight, const float *bias, size_t step,
-                          size_t ic4, size_t output_channel, size_t offset, size_t mode, size_t writeC4, size_t relu,
-                          size_t relu6);
-void IndirectGemmFp32_8x4(float *output, const float *input, const float *weight, const float *bias, size_t step,
-                          size_t ic4, size_t output_channel, size_t offset, size_t mode, size_t writeC4, size_t relu,
-                          size_t relu6);
-void IndirectGemmFp32_Comm(float *output, const float *input, const float *weight, size_t ic4, size_t hw, size_t oc,
-                           size_t offset);
-void IndirectGemmFp32(float *output, const float *input, const float *weight, const float *bias, size_t step, int ic4,
-                      int output_channel, size_t offset, size_t relu, size_t relu6);
 int offset(const int *shape, const int dim0, const int dim1, const int dim2, const int dim3);
 int offsetComm(const int *shape, const int dim0, const int dim1, const int dim2);
 int offset4d(const int *shape, const int *dims);

@@ -470,14 +470,19 @@ void MatMul4x8(const float *a, const float *b, float *dst, const float *bias, Ac
 void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row,
                int col, size_t stride, int out_type) {
 #ifdef ENABLE_ARM64
-  if (out_type == 2 && row <= 8) {
-    MatmulFloatNeon64OptRemain(a, b, c, deep, row, col, stride);
+  if (out_type == OutType_C8) {
+    MatmulFloatNeon64(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
+  } else if (row <= 8) {
+    MatmulFloatNeon64OptRemain(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
   } else {
-    MatmulFloatNeon64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type == OutType_Nhwc),
-                         (int)(out_type == OutType_TileC8));
+    MatmulFloatNeon64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
   }
 #elif ENABLE_ARM32
-  MatmulFloatNeon32Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
+  if (out_type == OutType_C8) {
+    MatmulFloatNeon32(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
+  } else {
+    MatmulFloatNeon32Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
+  }
 #else
   MatMul12x8(a, b, c, bias, act_type, deep, row, col, stride, out_type);
 #endif
