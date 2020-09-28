@@ -235,15 +235,15 @@ std::ostream &operator<<(std::ostream &os, const ArenaImpl &s) {
 Status Arena::Init() {
   try {
     int64_t sz = size_in_MB_ * 1048576L;
-    RETURN_IF_NOT_OK(mem_.allocate(sz));
-    impl_ = std::make_unique<ArenaImpl>(mem_.GetMutablePointer(), sz);
+    RETURN_IF_NOT_OK(DeMalloc(sz, &ptr_, false));
+    impl_ = std::make_unique<ArenaImpl>(ptr_, sz);
   } catch (std::bad_alloc &e) {
     return Status(StatusCode::kOutOfMemory);
   }
   return Status::OK();
 }
 
-Arena::Arena(size_t val_in_MB) : size_in_MB_(val_in_MB) {}
+Arena::Arena(size_t val_in_MB) : ptr_(nullptr), size_in_MB_(val_in_MB) {}
 
 Status Arena::CreateArena(std::shared_ptr<Arena> *p_ba, size_t val_in_MB) {
   RETURN_UNEXPECTED_IF_NULL(p_ba);
