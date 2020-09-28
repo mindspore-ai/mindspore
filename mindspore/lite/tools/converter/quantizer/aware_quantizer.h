@@ -67,7 +67,7 @@ class AwareQuantizer : public FbQuantizer {
 
   STATUS GenerateDefaultQuantParam(const schema::MetaGraphT *subGraph);
 
-  STATUS QuantAddConstTensor(const schema::MetaGraphT *graph, schema::CNodeT *node);
+  STATUS QuantArithmeticConstTensor(const schema::MetaGraphT *graph, schema::CNodeT *node);
 
   STATUS QuantDetectionPostProcessConstTensor(const schema::MetaGraphT *subGraph, schema::CNodeT *node);
 
