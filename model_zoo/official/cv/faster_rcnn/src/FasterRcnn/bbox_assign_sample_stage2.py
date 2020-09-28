@@ -77,7 +77,7 @@ class BboxAssignSampleForRcnn(nn.Cell):
         self.random_choice_with_mask_neg = P.RandomChoiceWithMask(self.num_expected_neg)
         self.reshape = P.Reshape()
         self.equal = P.Equal()
-        self.bounding_box_encode = P.BoundingBoxEncode(means=(0.0, 0.0, 0.0, 0.0), stds=(10.0, 10.0, 5.0, 5.0))
+        self.bounding_box_encode = P.BoundingBoxEncode(means=(0.0, 0.0, 0.0, 0.0), stds=(0.1, 0.1, 0.2, 0.2))
         self.concat_axis1 = P.Concat(axis=1)
         self.logicalnot = P.LogicalNot()
         self.tile = P.Tile()
