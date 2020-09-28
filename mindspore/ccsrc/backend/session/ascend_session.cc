@@ -179,6 +179,7 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
     debugger_->PreExecute(root_graph);
   }
 #endif
+  SetSummaryNodes(root_graph.get());
   // alloc mem
   MemoryAlloc(root_graph.get());
   // generate and load task into device
