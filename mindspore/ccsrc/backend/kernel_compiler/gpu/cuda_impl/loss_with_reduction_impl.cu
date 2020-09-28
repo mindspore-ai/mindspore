@@ -62,13 +62,9 @@ __global__ void KLDivLossKernel(const int input_size, const int reduction, const
 }
 
 template <typename T>
-void KLDivLoss(const int &input_size, const int &reduction, const T *input_x, const T *input_y, T *loss,
+void KLDivLoss(const int &input_size, const int &reduction, const T *input_x, const T *input_y, T *loss, T *tmp_loss,
                cudaStream_t stream) {
   LossInitKernel<<<1, 1, 0, stream>>>(loss);
-  T *tmp_loss;
-  if (reduction != 0) {
-    cudaMalloc(reinterpret_cast<void **>(&tmp_loss), input_size * sizeof(T));
-  }
   KLDivLossKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(input_size, reduction, input_x, input_y, loss,
                                                                       tmp_loss);
   if (reduction != 0) {
@@ -83,7 +79,6 @@ void KLDivLoss(const int &input_size, const int &reduction, const T *input_x, co
     }
     Copy<<<1, 1, 0, stream>>>(loss, tmp_loss, reduction, input_size);
   }
-  cudaFree(tmp_loss);
 }
 
 template <typename T>
@@ -119,19 +114,17 @@ void KLDivLossGrad(const int &input_size, const int &reduction, const T *input_x
 template <typename T>
 __global__ void BinaryCrossEntropyLossKernel(const int input_size, const int reduction, const T *input_x,
                                              const T *input_y, const T *weight, T *loss, T *tmp_loss) {
-  T epsilon = 1e-6;
+  T epsilon = 1e-12;
   if (reduction == 0) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
-      T antilogarithm = max(input_x[i], epsilon);
-      T antilogarithm2 = min(1 - input_x[i], 1 - epsilon);
-      T value = -weight[i] * (input_y[i] * logf(antilogarithm) + (1 - input_y[i]) * logf(antilogarithm2));
+      T value =
+        -weight[i] * (input_y[i] * logf(input_x[i] + epsilon) + (1 - input_y[i]) * logf(1 - input_x[i] + epsilon));
       loss[i] = value;
     }
   } else {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
-      T antilogarithm = max(input_x[i], epsilon);
-      T antilogarithm2 = min(1 - input_x[i], 1 - epsilon);
-      T value = -weight[i] * (input_y[i] * logf(antilogarithm) + (1 - input_y[i]) * logf(antilogarithm2));
+      T value =
+        -weight[i] * (input_y[i] * logf(input_x[i] + epsilon) + (1 - input_y[i]) * logf(1 - input_x[i] + epsilon));
       tmp_loss[i] = value;
     }
   }
@@ -139,12 +132,8 @@ __global__ void BinaryCrossEntropyLossKernel(const int input_size, const int red
 
 template <typename T>
 void BinaryCrossEntropyLoss(const int &input_size, const int &reduction, const T *input_x, const T *input_y,
-                            const T *weight, T *loss, cudaStream_t stream) {
+                            const T *weight, T *loss, T *tmp_loss, cudaStream_t stream) {
   LossInitKernel<<<1, 1, 0, stream>>>(loss);
-  T *tmp_loss;
-  if (reduction != 0) {
-    cudaMalloc(reinterpret_cast<void **>(&tmp_loss), input_size * sizeof(T));
-  }
   BinaryCrossEntropyLossKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(input_size, reduction, input_x,
                                                                                    input_y, weight, loss, tmp_loss);
   if (reduction != 0) {
@@ -159,13 +148,12 @@ void BinaryCrossEntropyLoss(const int &input_size, const int &reduction, const T
     }
     Copy<<<1, 1, 0, stream>>>(loss, tmp_loss, reduction, input_size);
   }
-  cudaFree(tmp_loss);
 }
 
 template <typename T>
 __global__ void BinaryCrossEntropyLossGradKernel(const int input_size, const int reduction, const T *input_x,
                                                  const T *input_y, const T *weight, const T *dloss, T *dx) {
-  T epsilon = 1e-6;
+  T epsilon = 1e-12;
   if (reduction == 0) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
       T denominator = max(input_x[i] * (1 - input_x[i]), epsilon);
@@ -193,13 +181,14 @@ void BinaryCrossEntropyLossGrad(const int &input_size, const int &reduction, con
 }
 
 template void KLDivLoss(const int &input_size, const int &reduction, const float *input_x, const float *input_y,
-                        float *loss, cudaStream_t stream);
+                        float *loss, float *tmp_loss, cudaStream_t stream);
 
 template void KLDivLossGrad(const int &input_size, const int &reduction, const float *input_x, const float *input_y,
                             const float *dloss, float *dx, float *dy, cudaStream_t stream);
 
 template void BinaryCrossEntropyLoss(const int &input_size, const int &reduction, const float *input_x,
-                                     const float *input_y, const float *weight, float *loss, cudaStream_t stream);
+                                     const float *input_y, const float *weight, float *loss, float *tmp_loss,
+                                     cudaStream_t stream);
 
 template void BinaryCrossEntropyLossGrad(const int &input_size, const int &reduction, const float *input_x,
                                          const float *input_y, const float *weight, const float *dloss, float *dx,

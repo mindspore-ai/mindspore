@@ -35,13 +35,13 @@ class KLDivLossGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input_x = GetDeviceAddress<T>(inputs, 0);
     T *input_y = GetDeviceAddress<T>(inputs, 1);
     T *loss = GetDeviceAddress<T>(outputs, 0);
-
-    KLDivLoss(input_size_, reduction_, input_x, input_y, loss, reinterpret_cast<cudaStream_t>(stream_ptr));
+    T *tmp_loss = GetDeviceAddress<T>(workspace, 0);
+    KLDivLoss(input_size_, reduction_, input_x, input_y, loss, tmp_loss, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -50,12 +50,15 @@ class KLDivLossGpuKernel : public GpuKernel {
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];
     }
-
     string reduction = GetAttr<string>(kernel_node, "reduction");
     if (reduction == "none") {
       reduction_ = 0;
     } else if (reduction == "sum") {
       reduction_ = 2;
+    }
+    workspace_size_ = sizeof(T);
+    if (reduction_ == 0) {
+      workspace_size_ *= input_size_;
     }
     InitSizeLists();
     return true;
@@ -70,12 +73,13 @@ class KLDivLossGpuKernel : public GpuKernel {
     } else {
       output_size_list_.push_back(sizeof(T));
     }
+    workspace_size_list_.push_back(workspace_size_);
   }
 
  private:
   size_t input_size_;
   int reduction_;
-
+  size_t workspace_size_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

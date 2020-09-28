@@ -18,12 +18,12 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_LOSS_WITH_REDUCTION_IMPL_CUH
 template <typename T>
 void BinaryCrossEntropyLoss(const int &input_size, const int &reduction, const T *input_x, const T *input_y,
-                            const T *weight, T *loss, cudaStream_t stream);
+                            const T *weight, T *loss, T *tmp_loss, cudaStream_t stream);
 template <typename T>
 void BinaryCrossEntropyLossGrad(const int &input_size, const int &reduction, const T *input_x, const T *input_y,
                                 const T *weight, const T *dloss, T *dx, cudaStream_t stream);
 template <typename T>
-void KLDivLoss(const int &input_size, const int &reduction, const T *input_x, const T *input_y, T *loss,
+void KLDivLoss(const int &input_size, const int &reduction, const T *input_x, const T *input_y, T *loss, T *tmp_loss,
                cudaStream_t stream);
 template <typename T>
 void KLDivLossGrad(const int &input_size, const int &reduction, const T *input_x, const T *input_y, const T *dloss,
