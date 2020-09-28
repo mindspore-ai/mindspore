@@ -943,6 +943,7 @@ OpParameter *PopulateScaleParameter(const mindspore::lite::PrimitiveC *primitive
   scale_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::Scale *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   scale_param->axis_ = param->GetAxis();
+  scale_param->activation_type_ = param->GetActivationType();
   return reinterpret_cast<OpParameter *>(scale_param);
 }
 

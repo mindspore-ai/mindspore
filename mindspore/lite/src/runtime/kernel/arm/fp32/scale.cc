@@ -35,52 +35,56 @@ ScaleCPUKernel::~ScaleCPUKernel() {
       scale_ = nullptr;
     }
   }
-  if (offset_ != nullptr) {
-    free(offset_);
-    offset_ = nullptr;
+  if (scale_param_->const_offset_) {
+    if (offset_ != nullptr) {
+      free(offset_);
+      offset_ = nullptr;
+    }
   }
 }
 
 int ScaleCPUKernel::InitScaleOffset() {
   auto scale_tensor = in_tensors_.at(1);
-  float *scale_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
-  if (scale_ptr != nullptr) {
+  if (reinterpret_cast<float *>(scale_tensor->data_c()) != nullptr) {
     scale_param_->const_scale_ = true;
-    if (scale_ != nullptr) {
-      free(scale_);
-      scale_ = nullptr;
-    }
     scale_ = reinterpret_cast<float *>(malloc(scale_tensor->ElementsNum() * sizeof(float)));
     if (scale_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
     }
-    memcpy(scale_, scale_ptr, scale_tensor->ElementsNum() * sizeof(float));
+    memcpy(scale_, scale_tensor->data_c(), scale_tensor->ElementsNum() * sizeof(float));
   } else {
     scale_param_->const_scale_ = false;
     scale_ = nullptr;
   }
 
-  if (offset_ != nullptr) {
-    free(offset_);
+  if (in_tensors_.size() == 2) {
+    scale_param_->const_offset_ = true;
+    offset_ = reinterpret_cast<float *>(malloc(scale_tensor->ElementsNum() * sizeof(float)));
+    if (offset_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc data failed";
+      return RET_ERROR;
+    }
+    memset(offset_, 0, scale_tensor->ElementsNum() * sizeof(float));
+  } else if (in_tensors_.size() == 3 && reinterpret_cast<float *>(in_tensors_.at(2)->data_c()) != nullptr) {
+    scale_param_->const_offset_ = true;
+    auto offset_tensor = in_tensors_.at(2);
+    MS_ASSERT(scale_tensor->ElementsNum() == offset_tensor->ElementsNum());
+    offset_ = reinterpret_cast<float *>(malloc(offset_tensor->ElementsNum() * sizeof(float)));
+    if (offset_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc data failed";
+      return RET_ERROR;
+    }
+    memcpy(offset_, offset_tensor->data_c(), offset_tensor->ElementsNum() * sizeof(float));
+  } else {
+    scale_param_->const_offset_ = false;
     offset_ = nullptr;
   }
-  offset_ = reinterpret_cast<float *>(malloc(scale_param_->axis_size_ * sizeof(float)));
-  if (offset_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
-  }
-  memset(offset_, 0, scale_param_->axis_size_ * sizeof(float));
-  if (in_tensors_.size() == 3) {
-    auto offset_tensor = in_tensors_.at(2);
-    if (offset_tensor->data_c() != nullptr) {
-      memcpy(offset_, offset_tensor->data_c(), offset_tensor->ElementsNum() * sizeof(float));
-    }
-  }
+
   return RET_OK;
 }
 
-int ScaleCPUKernel::InitParameter() {
+int ScaleCPUKernel::CalculateParameter() {
   auto in_tensor = in_tensors_.at(0);
   auto in_shape = in_tensor->shape();
   auto scale_tensor = in_tensors_.at(1);
@@ -118,32 +122,44 @@ int ScaleCPUKernel::Init() {
     MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << in_tensors_.size() << " is given.";
     return RET_ERROR;
   }
+  auto ret = InitScaleOffset();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Scale fp32 InitScaleOffset failed.";
+    return RET_ERROR;
+  }
 
   if (!InferShapeDone()) {
     return RET_OK;
   }
-
   ReSize();
   return RET_OK;
 }
 
 int ScaleCPUKernel::ReSize() {
-  auto ret = InitParameter();
+  auto ret = CalculateParameter();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale fp32 InitParameter failed.";
     return RET_ERROR;
   }
 
-  ret = InitScaleOffset();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Scale fp32 InitScaleOffset failed.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
 int ScaleCPUKernel::Scale(int task_id) {
-  DoScale(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_);
+  switch (scale_param_->activation_type_) {
+    case schema::ActivationType_RELU6:
+      DoScaleRelu6(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_);
+      break;
+    case schema::ActivationType_RELU:
+      DoScaleRelu(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_);
+      break;
+    case schema::ActivationType_NO_ACTIVATION:
+      DoScale(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_);
+      break;
+    default:
+      MS_LOG(ERROR) << "Scale does not support activation type " << scale_param_->activation_type_;
+      return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -164,14 +180,15 @@ int ScaleCPUKernel::Run() {
     return ret;
   }
   auto in_tensor = in_tensors_.front();
-  input_ptr_ = reinterpret_cast<float *>(in_tensor->MutableData());
-  if (scale_ == nullptr) {
+  input_ptr_ = reinterpret_cast<float *>(in_tensor->data_c());
+  if (!scale_param_->const_scale_) {
     auto scale_tensor = in_tensors_[1];
-    scale_ = reinterpret_cast<float *>(scale_tensor->MutableData());
+    scale_ = reinterpret_cast<float *>(scale_tensor->data_c());
   }
-  if (offset_ == nullptr) {
+  if (!scale_param_->const_offset_) {
+    MS_ASSERT(in_tensors_.size() == 3);
     auto offset_tensor = in_tensors_.at(2);
-    memcpy(offset_, offset_tensor->data_c(), offset_tensor->ElementsNum() * sizeof(float));
+    offset_ = reinterpret_cast<float *>(offset_tensor->data_c());
   }
   auto out_tensor = out_tensors_.front();
   output_ptr_ = reinterpret_cast<float *>(out_tensor->MutableData());

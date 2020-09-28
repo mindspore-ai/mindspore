@@ -416,6 +416,7 @@ table BNGradInput {
 }
 table Scale {
     axis: int;
+    activationType: ActivationType = 0;
 }
 
 table Eltwise {
