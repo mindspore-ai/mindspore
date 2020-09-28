@@ -105,6 +105,8 @@ inline const PrimitivePtr kPrimArgMaxWithValue = std::make_shared<Primitive>("Ar
 inline const PrimitivePtr kPrimUnique = std::make_shared<Primitive>("Unique");
 inline const PrimitivePtr kPrimUniqueGrad = std::make_shared<Primitive>("UniqueGrad");
 inline const PrimitivePtr kPrimExtractImagePatches = std::make_shared<Primitive>("ExtractImagePatches");
+inline const PrimitivePtr kPrimDynamicRNN = std::make_shared<Primitive>("DynamicRNN");
+inline const PrimitivePtr kPrimDynamicRNNGrad = std::make_shared<Primitive>("DynamicRNNGrad");
 
 // NN
 inline const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");
@@ -214,6 +216,7 @@ inline const PrimitivePtr kPrimRound = std::make_shared<Primitive>("Round");
 inline const PrimitivePtr kPrimExp = std::make_shared<Primitive>("Exp");
 inline const PrimitivePtr kPrimLog = std::make_shared<Primitive>("Log");
 inline const PrimitivePtr kPrimRsqrt = std::make_shared<Primitive>("Rsqrt");
+inline const PrimitivePtr kPrimSplitV = std::make_shared<Primitive>("SplitV");
 
 // Statements
 inline const PrimitivePtr kPrimReturn = std::make_shared<Primitive>("return");
