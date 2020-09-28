@@ -152,6 +152,7 @@ class PrimLib:
         'ReduceMin': Prim(REDUCE),
         'make_tuple': Prim(CONTROL),
         'ControlDepend': Prim(CONTROL),
+        'Assign': Prim(ELEMWISE),
         '@ReduceInit': Prim(ELEMWISE),
     }
 

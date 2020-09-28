@@ -48,7 +48,7 @@ bool IsBasicOp(const AnfNodePtr &node, bool is_before_kernel_select) {
     prim::kPrimRealDiv, prim::kPrimMul,   prim::kPrimMinimum,    prim::kPrimMaximum,   prim::kPrimLog,
     prim::kPrimPow,     prim::kPrimSub,   prim::kPrimRsqrt,      prim::kPrimSqrt,      prim::kPrimCast,
     prim::kPrimAddN,    prim::kPrimEqual, prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,
-    prim::kPrimGreater};
+    prim::kPrimGreater, prim::kPrimAssign};
 #else
   std::vector<PrimitivePtr> fusable_basic_ops;
 #endif
