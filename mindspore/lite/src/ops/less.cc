@@ -30,5 +30,15 @@ int Less::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
   return RET_OK;
 }
 #endif
+int Less::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
+  auto input = inputs_.front();
+  MS_ASSERT(input != nullptr);
+  auto output = outputs_.front();
+  MS_ASSERT(output != nullptr);
+  output->set_shape(input->shape());
+  output->set_data_type(TypeId::kNumberTypeBool);
+  output->SetFormat(input->GetFormat());
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore
