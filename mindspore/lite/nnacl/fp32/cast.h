@@ -31,6 +31,7 @@ typedef struct CastParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
+void BoolToFloat32(const bool *input, float *output, int number);
 void Uint8ToFloat32(const uint8_t *input, float *output, int number);
 void Uint8ToInt8(const uint8_t *input, int8_t *output, int number);
 void Int8ToUint8(const int8_t *input, uint8_t *output, int number);
