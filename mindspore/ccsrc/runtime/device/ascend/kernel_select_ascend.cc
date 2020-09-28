@@ -52,8 +52,12 @@ const int kUnSupportMixedDataTypeIndex = -1;
 bool MatchInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfo &kernel_build_info) {
   MS_EXCEPTION_IF_NULL(cnode);
   // Check input data type
+  auto name = AnfAlgo::GetCNodeName(cnode);
   for (size_t input_index = 0; input_index < kernel_build_info.GetInputNum(); ++input_index) {
     TypeId input_origin_type = AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index);
+    if (name == kDynamicRNNOpName && input_origin_type == kMetaTypeNone) {
+      continue;
+    }
     if (kernel_build_info.GetInputDeviceType(input_index) != input_origin_type) {
       return false;
     }
@@ -476,6 +480,9 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
       std::vector<TypeId> output_type = {selected_kernel_info.GetInputDeviceType(input_index)};
       builder->SetOutputsDeviceType(output_type);
       AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), input_kernel_node.get());
+      continue;
+    }
+    if (selected_kernel_info.GetInputFormat(input_index) == kOpFormat_FRACTAL_ZN_LSTM) {
       continue;
     }
     // we set special device info of a input tensor.

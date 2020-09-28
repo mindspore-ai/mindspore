@@ -127,8 +127,12 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   auto kernel_mod = AnfAlgo::GetKernelMod(anf_node_ptr);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   kernel_mod->set_kernel_name(anf_node_ptr->fullname_with_scope());
+  auto op_name = AnfAlgo::GetCNodeName(anf_node_ptr);
   if (AnfAlgo::GetCNodeName(anf_node_ptr) != kAtomicAddrCleanOpName) {
     for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(anf_node_ptr); ++i) {
+      if (op_name == kDynamicRNNOpName && i == 3) {
+        continue;
+      }
       auto real_input_index = AnfAlgo::GetRealInputIndex(anf_node_ptr, i);
       auto device_address = AnfAlgo::GetPrevNodeOutputAddr(anf_node_ptr, real_input_index);
       AddressPtr input = std::make_shared<Address>();

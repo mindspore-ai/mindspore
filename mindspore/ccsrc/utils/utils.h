@@ -219,6 +219,8 @@ constexpr auto kFusedScaleApplyMomentum = "FusedScaleApplyMomentum";
 constexpr auto kBasicLSTMCellWeightGradOpName = "BasicLSTMCellWeightGrad";
 constexpr auto kBasicLSTMCellInputGradOpName = "BasicLSTMCellInputGrad";
 constexpr auto kBasicLSTMCellOpName = "BasicLSTMCell";
+constexpr auto kDynamicRNNOpName = "DynamicRNN";
+constexpr auto kLSTMInputGradOpName = "LSTMInputGrad";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";

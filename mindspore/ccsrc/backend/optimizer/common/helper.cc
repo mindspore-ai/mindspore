@@ -404,7 +404,11 @@ bool IsNopNode(const AnfNodePtr &node) {
   }
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (nop_nodes.find(AnfAlgo::GetCNodeName(cnode)) == nop_nodes.end()) {
+  bool is_nop_node = false;
+  if (AnfAlgo::HasNodeAttr("nop_op", cnode)) {
+    is_nop_node = AnfAlgo::GetNodeAttr<bool>(cnode, "nop_op");
+  }
+  if (nop_nodes.find(AnfAlgo::GetCNodeName(cnode)) == nop_nodes.end() && !is_nop_node) {
     return false;
   }
   return true;
