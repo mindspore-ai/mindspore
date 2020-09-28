@@ -22,28 +22,20 @@ void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-
   begin_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, BEGIN);
-  for (size_t i = 0; i < begin_.size(); i++) {
-    if (begin_[i] < 0) {
-      begin_[i] = begin_[i] + input_shape_[i];
-    }
-  }
   auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   auto strides = prim->GetAttr(STRIDES);
   if (strides != nullptr) {
     strides_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, STRIDES);
     end_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, END);
-    if (strides_.size() != end_.size() || strides_.size() != input_shape_.size()) {
-      MS_LOG(EXCEPTION) << "stride|end|input size must be equal";
-    }
-    for (size_t i = 0; i < strides_.size(); ++i) {
-      if (strides_[i] < 0) {
-        strides_[i] = (strides_[i] + input_shape_[i]) > 0 ? (strides_[i] + input_shape_[i]) : 0;
+    TransArg();
+    for (size_t i = 0; i < begin_.size(); i++) {
+      while (begin_[i] < 0) {
+        begin_[i] = begin_[i] + input_shape_[i];
       }
-      if (end_[i] < 0) {
-        end_[i] = (end_[i] + input_shape_[i]) > 0 ? (end_[i] + input_shape_[i]) : 0;
+      if (begin_[i] > SizeToInt(input_shape_[i])) {
+        begin_[i] = input_shape_[i];
       }
     }
   } else {
@@ -51,23 +43,34 @@ void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     if (sizes.size() != input_shape_.size() || begin_.size() != input_shape_.size()) {
       MS_LOG(EXCEPTION) << "begin|size|input size must be equal";
     }
+    for (size_t i = 0; i < begin_.size(); i++) {
+      while (begin_[i] < 0) {
+        begin_[i] = begin_[i] + input_shape_[i];
+      }
+      if (begin_[i] > SizeToInt(input_shape_[i])) {
+        begin_[i] = input_shape_[i];
+      }
+    }
     for (size_t i = 0; i < sizes.size(); ++i) {
-      if (sizes[i] < 0) {
-        sizes[i] = (sizes[i] + input_shape_[i]) > 0 ? (sizes[i] + input_shape_[i]) : 0;
+      while (sizes[i] < 0) {
+        sizes[i] = sizes[i] + input_shape_[i];
       }
       strides_.emplace_back(1);
       end_.emplace_back(begin_[i] + sizes[i]);
     }
   }
-
   ExpandAllMemberDims();
   CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
   CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
 }
 
 void SliceCPUKernel::ExpandAllMemberDims() {
-  CPUKernelUtils::ExpandDimsTo4(&output_shape_);
-
+  auto output_len = output_shape_.size();
+  if (output_len < 4) {
+    for (size_t i = 0; i < 4 - output_len; ++i) {
+      output_shape_.push_back(1);
+    }
+  }
   auto input_len = input_shape_.size();
   if (input_len < 4) {
     for (size_t i = 0; i < 4 - input_len; ++i) {
@@ -86,6 +89,7 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
 
   bool can_copy_memory[3] = {CanCopyMemoryOnAxis(0), CanCopyMemoryOnAxis(1), CanCopyMemoryOnAxis(2)};
+  int signstride[4] = {SignOfStride(0), SignOfStride(1), SignOfStride(2), SignOfStride(3)};
   size_t in_start_offset[3] = {begin_[0] * input_element_num_[0], begin_[1] * input_element_num_[1],
                                begin_[2] * input_element_num_[2]};
   size_t in_step_size[3] = {strides_[0] * input_element_num_[0], strides_[1] * input_element_num_[1],
@@ -93,31 +97,31 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
   auto in_n_offset = in_start_offset[0];
   auto out_n_offset = 0;
-  for (int i = begin_[0]; i < end_[0];
+  for (int i = begin_[0]; signstride[0] * i < signstride[0] * end_[0];
        i += strides_[0], in_n_offset += in_step_size[0], out_n_offset += output_element_num_[0]) {
     if (can_copy_memory[0]) {
-      CopyDataToOutput(inputs, in_n_offset, outputs, out_n_offset, input_element_num_[0]);
+      CopyDataToOutput(inputs, in_n_offset, outputs, out_n_offset, input_element_num_[0], 0);
       continue;
     }
     auto in_c_offset = in_start_offset[1];
     auto out_c_offset = 0;
-    for (int j = begin_[1]; j < end_[1];
+    for (int j = begin_[1]; signstride[1] * j < signstride[1] * end_[1];
          j += strides_[1], in_c_offset += in_step_size[1], out_c_offset += output_element_num_[1]) {
       if (can_copy_memory[1]) {
-        CopyDataToOutput(inputs, in_n_offset + in_c_offset, outputs, out_n_offset + out_c_offset,
-                         input_element_num_[1]);
+        CopyDataToOutput(inputs, in_n_offset + in_c_offset, outputs, out_n_offset + out_c_offset, input_element_num_[1],
+                         1);
         continue;
       }
       auto in_h_offset = in_start_offset[2];
       auto out_h_offset = 0;
-      for (int k = begin_[2]; k < end_[2];
+      for (int k = begin_[2]; signstride[2] * k < signstride[2] * end_[2];
            k += strides_[2], in_h_offset += in_step_size[2], out_h_offset += output_element_num_[2]) {
         if (can_copy_memory[2]) {
           CopyDataToOutput(inputs, in_n_offset + in_c_offset + in_h_offset, outputs,
-                           out_n_offset + out_c_offset + out_h_offset, input_element_num_[2]);
+                           out_n_offset + out_c_offset + out_h_offset, input_element_num_[2], 2);
           continue;
         }
-        for (int m = begin_[3]; m < end_[3]; m += strides_[3]) {
+        for (int m = begin_[3]; signstride[3] * m < signstride[3] * end_[3]; m += strides_[3]) {
           *output_addr++ = input_addr[in_n_offset + in_c_offset + in_h_offset + m];
         }
       }
@@ -136,9 +140,15 @@ bool SliceCPUKernel::CanCopyMemoryOnAxis(size_t dim) const {
   return true;
 }
 
+int SliceCPUKernel::SignOfStride(size_t axis) const {
+  if (strides_[axis] > 0) {
+    return 1;
+  }
+  return -1;
+}
 void SliceCPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
                                       const std::vector<kernel::AddressPtr> &outputs, size_t out_offset,
-                                      size_t copy_num) const {
+                                      size_t copy_num, int id) const {
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   auto in_buff_size = inputs[0]->size;
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
@@ -148,13 +158,33 @@ void SliceCPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> &inp
     MS_LOG(EXCEPTION) << "input memory out of bounds.";
   }
   if ((out_offset + copy_num) * sizeof(float) > out_buff_size) {
-    MS_LOG(EXCEPTION) << "output memory out of bounds.";
+    MS_LOG(EXCEPTION) << id << " output memory out of bounds.";
   }
 
   auto ret = memcpy_s(output_addr + out_offset, out_buff_size - out_offset * sizeof(float), input_addr + in_offset,
                       copy_num * sizeof(float));
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memcpy failed. ret:" << ret;
+  }
+}
+
+void SliceCPUKernel::TransArg() {
+  if (strides_.size() != end_.size() || strides_.size() != input_shape_.size()) {
+    MS_LOG(EXCEPTION) << "stride|end|input size must be equal";
+  }
+  for (size_t i = 0; i < strides_.size(); ++i) {
+    if (strides_[i] == 0) {
+      MS_LOG(EXCEPTION) << "slice stride cannot be zero";
+    }
+    if (end_[i] == 0 && begin_[i] < 0) {
+      end_[i] = end_[i] + input_shape_[i];
+    }
+    while (end_[i] < 0) {
+      end_[i] = end_[i] + input_shape_[i];
+    }
+    if (end_[i] > SizeToInt(input_shape_[i])) {
+      end_[i] = input_shape_[i];
+    }
   }
 }
 
