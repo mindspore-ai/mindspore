@@ -542,12 +542,16 @@ class Unfold(Cell):
         self.transpose = P.Transpose()
         self.format_NHWC = (0, 2, 3, 1)
         self.format_NCHW = (0, 3, 1, 2)
+        self.is_ge = context.get_context("enable_ge")
 
     def construct(self, input_x):
-        x_transpose = self.transpose(input_x, self.format_NHWC)
-        ret = self.extract_image_patches(x_transpose)
-        ret_transpose = self.transpose(ret, self.format_NCHW)
-        return ret_transpose
+        if self.is_ge:
+            x_transpose = self.transpose(input_x, self.format_NHWC)
+            ret = self.extract_image_patches(x_transpose)
+            result = self.transpose(ret, self.format_NCHW)
+        else:
+            result = self.extract_image_patches(input_x)
+        return result
 
 
 @constexpr
