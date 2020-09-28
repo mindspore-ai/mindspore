@@ -294,6 +294,9 @@ static bool ConvertRGBAToGRAY(const unsigned char *data, LDataType data_type, in
 }
 
 bool InitFromPixel(const unsigned char *data, LPixelType pixel_type, LDataType data_type, int w, int h, LiteMat &m) {
+  if (data == nullptr) {
+    return false;
+  }
   if (w <= 0 || h <= 0) {
     return false;
   }
@@ -515,6 +518,9 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
 bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r) {
   if (top <= 0 || bottom <= 0 || left <= 0 || right <= 0) {
+    return false;
+  }
+  if (src.IsEmpty()) {
     return false;
   }
   if (pad_type == PADD_BORDER_CONSTANT && src.data_type_ == LDataType::FLOAT32) {
