@@ -131,6 +131,7 @@ class AscendEnvChecker(EnvChecker):
             self.tbe_path = self.fwk_path + "/lib64"
             self.cce_path = self.fwk_path + "/ccec_compiler/bin"
             self.fwk_version = atlas_fwk_version
+            self.op_path = "/usr/local/Ascend/ascend-toolkit/latest/opp"
         elif os.path.exists(hisi_fwk_version):
             # hisi default path
             self.fwk_path = "/usr/local/Ascend/fwkacllib"
@@ -138,6 +139,7 @@ class AscendEnvChecker(EnvChecker):
             self.tbe_path = self.fwk_path + "/lib64"
             self.cce_path = self.fwk_path + "/ccec_compiler/bin"
             self.fwk_version = hisi_fwk_version
+            self.op_path = ""
         else:
             # custom or unknown environment
             self.fwk_path = ""
@@ -145,17 +147,20 @@ class AscendEnvChecker(EnvChecker):
             self.tbe_path = ""
             self.cce_path = ""
             self.fwk_version = ""
+            self.op_path = ""
 
         # env
         self.path = os.getenv("PATH")
         self.python_path = os.getenv("PYTHONPATH")
         self.ld_lib_path = os.getenv("LD_LIBRARY_PATH")
+        self.ascend_opp_path = os.getenv("ASCEND_OPP_PATH")
 
         # check content
         self.path_check = "/fwkacllib/ccec_compiler/bin/"
         self.python_path_check = "opp/op_impl/built_in/ai_core/tbe/"
         self.ld_lib_path_check_fwk = "/fwkacllib/lib64/"
         self.ld_lib_path_check_addons = "/add-ons/"
+        self.ascend_opp_path_check = "/op"
         self.v = ""
 
     def check_env(self, e):
@@ -205,6 +210,15 @@ class AscendEnvChecker(EnvChecker):
                 f"No such directory: {self.cce_path}, Please check if Ascend 910 AI software package is "
                 "installed correctly.")
 
+        if self.op_path is None:
+            pass
+        elif Path(self.op_path).is_dir():
+            os.environ['ASCEND_OPP_PATH'] = self.op_path
+        else:
+            raise EnvironmentError(
+                f"No such directory: {self.op_path}, Please check if Ascend 910 AI software package is "
+                "installed correctly.")
+
     def _check_env(self):
         """ascend dependence path check"""
         if self.path is None or self.path_check not in self.path:
@@ -222,6 +236,11 @@ class AscendEnvChecker(EnvChecker):
             logger.warning("Can not find driver so(need by mindspore-ascend), please check if you have set env "
                            "LD_LIBRARY_PATH, you can reference to the installation guidelines "
                            "https://www.mindspore.cn/install")
+
+        if self.ascend_opp_path is None or self.ascend_opp_path_check not in self.ascend_opp_path:
+            logger.warning(
+                "Can not find opp path (need by mindspore-ascend), please check if you have set env ASCEND_OPP_PATH, "
+                "you can reference to the installation guidelines https://www.mindspore.cn/install")
 
     def _read_version(self, file_path):
         """get ascend version info"""
