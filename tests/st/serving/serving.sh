@@ -4,15 +4,15 @@ export GLOG_v=1
 export DEVICE_ID=1
 
 MINDSPORE_INSTALL_PATH=$1
+ENV_DEVICE_ID=$DEVICE_ID
 CURRPATH=$(cd $(dirname $0); pwd)
 CURRUSER=$(whoami)
 PROJECT_PATH=${CURRPATH}/../../../
-ENV_DEVICE_ID=$DEVICE_ID
 echo "MINDSPORE_INSTALL_PATH:"  ${MINDSPORE_INSTALL_PATH}
+echo "ENV_DEVICE_ID:" ${ENV_DEVICE_ID}
 echo "CURRPATH:"  ${CURRPATH}
 echo "CURRUSER:"  ${CURRUSER}
 echo "PROJECT_PATH:"  ${PROJECT_PATH}
-echo "ENV_DEVICE_ID:" ${ENV_DEVICE_ID}
 
 MODEL_PATH=${CURRPATH}/model
 export LD_LIBRARY_PATH=${MINDSPORE_INSTALL_PATH}/lib:/usr/local/python/python375/lib/:${LD_LIBRARY_PATH}
@@ -55,20 +55,21 @@ prepare_model()
 
 start_service()
 {
+  echo "### start serving service ###"
   ${CURRPATH}/ms_serving --port=$1 --model_path=${MODEL_PATH} --model_name=$2 --device_id=$3 > $2_service.log 2>&1 &
   if [ $? -ne 0 ]
   then
     echo "$2 faile to start."
   fi
 
-  result=`grep -E -A5 'MS Serving grpc listening on 0.0.0.0:5500' $2_service.log |
+  result=`grep -E -A5 -B5 'MS Serving grpc listening on 0.0.0.0:5500' $2_service.log |
           grep -E 'MS Serving restful listening on 0.0.0.0:5501'|wc -l`
   count=0
   while [[ ${result} -ne 1 && ${count} -lt 150 ]]
   do
     sleep 1
     count=$(($count+1))
-    result=`grep -E -A5 'MS Serving grpc listening on 0.0.0.0:5500' $2_service.log |
+    result=`grep -E -A5 -B5 'MS Serving grpc listening on 0.0.0.0:5500' $2_service.log |
             grep -E 'MS Serving restful listening on 0.0.0.0:5501'|wc -l`
   done
 
