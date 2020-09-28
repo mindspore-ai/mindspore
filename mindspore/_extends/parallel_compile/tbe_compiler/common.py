@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """tbe common"""
-import json
 import os
 
 class TBEException(Exception):
@@ -25,23 +24,6 @@ class TBEException(Exception):
 
     def __str__(self):
         return self.__error_msg
-
-
-def get_ddk_version():
-    """get ddk version"""
-    ddk_version = os.environ.get("DDK_VERSION")
-    if ddk_version is None:
-        default_ddk_info_file = '/usr/local/HiAI/runtime/ddk_info'
-        backup_ddk_info_file = '/usr/local/Ascend/fwkacllib/ddk_info'
-        if os.path.exists(default_ddk_info_file):
-            with open(default_ddk_info_file, "r") as fp:
-                ddk_version = json.load(fp)["VERSION"]
-        elif os.path.exists(backup_ddk_info_file):
-            with open(backup_ddk_info_file, "r") as fp:
-                ddk_version = json.load(fp)["VERSION"]
-        else:
-            ddk_version = "Ascend910"
-    return ddk_version
 
 
 def get_build_in_impl_path():
