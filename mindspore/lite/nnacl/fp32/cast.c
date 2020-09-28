@@ -17,6 +17,12 @@
 #include "nnacl/fp32/cast.h"
 #include "nnacl/fp32/common_func.h"
 
+void BoolToFloat32(const bool *input, float *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float)input[i];
+  }
+}
+
 void Uint8ToFloat32(const uint8_t *input, float *output, int number) {
   for (int i = 0; i < number; ++i) {
     output[i] = (float)input[i];

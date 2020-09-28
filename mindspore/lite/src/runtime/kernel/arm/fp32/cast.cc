@@ -82,6 +82,9 @@ int CastCPUKernel::DoCast(int thread_id) {
     }
   } else {
     switch (input_data_type) {
+      case kNumberTypeBool:
+        BoolToFloat32(reinterpret_cast<bool *>(input->MutableData()) + offset,
+                      reinterpret_cast<float *>(output_data) + offset, data_num);
       case kNumberTypeUInt8:
         Uint8ToFloat32(reinterpret_cast<uint8_t *>(input->MutableData()) + offset,
                        reinterpret_cast<float *>(output_data) + offset, data_num);
