@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     if args.dataset_name == 'cifar10':
         cfg = alexnet_cifar10_cfg
-        network = AlexNet(cfg.num_classes)
+        network = AlexNet(cfg.num_classes, phase='test')
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         opt = nn.Momentum(network.trainable_params(), cfg.learning_rate, cfg.momentum)
         ds_eval = create_dataset_cifar10(args.data_path, cfg.batch_size, status="test", target=args.device_target)
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     elif args.dataset_name == 'imagenet':
         cfg = alexnet_imagenet_cfg
-        network = AlexNet(cfg.num_classes)
+        network = AlexNet(cfg.num_classes, phase='test')
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ds_eval = create_dataset_imagenet(args.data_path, cfg.batch_size, training=False)
 

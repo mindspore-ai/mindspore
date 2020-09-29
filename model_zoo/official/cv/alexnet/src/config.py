@@ -38,8 +38,8 @@ alexnet_imagenet_cfg = edict({
     'epoch_size': 150,
     'batch_size': 256,
     'buffer_size': None, # invalid parameter
-    'image_height': 227,
-    'image_width': 227,
+    'image_height': 224,
+    'image_width': 224,
     'save_checkpoint_steps': 625,
     'keep_checkpoint_max': 10,
 

@@ -91,7 +91,7 @@ if __name__ == "__main__":
     else:
         raise ValueError("Unsupport dataset.")
 
-    network = AlexNet(cfg.num_classes)
+    network = AlexNet(cfg.num_classes, phase='train')
 
     loss_scale_manager = None
     metrics = None
