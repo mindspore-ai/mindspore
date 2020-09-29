@@ -2418,8 +2418,8 @@ class DropoutDoMask(PrimitiveWithInfer):
         - **mask** (Tensor) - The mask to be applied on `input_x`, which is the output of `DropoutGenMask`. And the
           shape of `input_x` must be the same as the value of `DropoutGenMask`'s input `shape`. If input wrong `mask`,
           the output of `DropoutDoMask` are unpredictable.
-        - **keep_prob** (Tensor) - The keep rate, greater than 0 and less equal than 1, e.g. keep_prob = 0.9,
-          means dropping out 10% of input units. The value of `keep_prob` is the same as the input `keep_prob` of
+        - **keep_prob** (Union[Tensor, float]) - The keep rate, greater than 0 and less equal than 1, e.g. keep_prob =
+          0.9, means dropping out 10% of input units. The value of `keep_prob` is the same as the input `keep_prob` of
           `DropoutGenMask`.
 
     Outputs:
@@ -2463,7 +2463,11 @@ class DropoutDoMask(PrimitiveWithInfer):
 
         keep_prob_v = keep_prob['value']
         if keep_prob_v is not None:
-            validator.check_number_range('keep_prob', keep_prob_v.asnumpy(), 0, 1, Rel.INC_BOTH, self.name)
+            if isinstance(keep_prob['dtype'], type(mstype.tensor)):
+                validator.check_number_range('keep_prob', keep_prob_v.asnumpy(), 0, 1, Rel.INC_BOTH, self.name)
+            else:
+                validator.check_value_type("keep_prob", keep_prob_v, [float], self.name)
+                validator.check_number_range('keep_prob', keep_prob_v, 0, 1, Rel.INC_BOTH, self.name)
 
         out = {'shape': input_x_shape,
                'dtype': input_x['dtype'],

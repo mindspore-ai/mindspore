@@ -1765,9 +1765,6 @@ class Div(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
-    Raises:
-        ValueError: When `input_x` and `input_y` do not have the same dtype.
-
     Examples:
         >>> input_x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([3.0, 2.0, 3.0]), mindspore.float32)
@@ -1805,9 +1802,6 @@ class DivNoNan(_MathBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        ValueError: When `input_x` and `input_y` do not have the same dtype.
 
     Examples:
         >>> input_x = Tensor(np.array([-1.0, 0., 1.0, 5.0, 6.0]), mindspore.float32)
