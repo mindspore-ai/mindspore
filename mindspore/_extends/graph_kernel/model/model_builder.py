@@ -196,8 +196,7 @@ class CompositeGraph:
                     shape, dtype, data_format, name=name, para_type=Tensor.PARA_OUTPUT)
             cur_fusion = None
             for op in desc['op_desc']:
-                inputs = [self.tensors[d[0]['tensor_name']]
-                          for d in op['input_desc'] if 'value' not in d[0]]
+                inputs = [self.tensors[d['tensor_name']] for x in op['input_desc'] for d in x if 'value' not in d]
                 out_desc = op['output_desc']
                 name, shape, dtype, data_format = out_desc[0]['tensor_name'], out_desc[
                     0]['shape'], out_desc[0]['data_type'], out_desc[0]['format']
@@ -263,7 +262,7 @@ class CompositeGraph:
                                 self.tensors[y], True)
                             inplace_desc = copy.deepcopy(d)
                             inplace_desc['attr'] = {'name': 'fake_output', 'value': fake}
-                            z_desc, out_desc = inplace_desc['input_desc'][2][0].inplace_desc['output_desc'][0]
+                            z_desc, out_desc = inplace_desc['input_desc'][2][0], inplace_desc['output_desc'][0]
                             z_desc['shape'] = z.shape
                             z_desc['data_type'] = z.dtype
                             z_desc['tensor_name'] = z.name

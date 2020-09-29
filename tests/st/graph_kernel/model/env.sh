@@ -13,5 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-PYTHONPATH="$(pwd)/..:${PYTHONPATH}"
+PYTHONPATH="$(pwd)/../../../../mindspore/_extends/graph_kernel:${PYTHONPATH}"
 export PYTHONPATH

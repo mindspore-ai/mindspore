@@ -26,8 +26,8 @@
 #include "ir/func_graph_cloner.h"
 #include "ir/func_graph.h"
 #include "backend/optimizer/pass/const_input_to_attr_registry.h"
-#ifdef ENABLE_D
-#include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
+#if ENABLE_GPU
+#include "runtime/device/gpu/kernel_info_setter.h"
 #endif
 
 namespace mindspore {
@@ -612,36 +612,6 @@ FuncGraphPtr JsonDescToAnf(const std::string &json_desc, const std::vector<AnfNo
   return new_fg;
 }
 
-bool JsonDescToAnf(const std::string &json_desc, const std::map<std::string, AnfNodePtr> &address_node_map,
-                   std::vector<AnfNodePtrList> *res_graphs) {
-  MS_EXCEPTION_IF_NULL(res_graphs);
-  auto kernel_json = nlohmann::json::parse(json_desc);
-  if (kernel_json.find(kJsonKeyMultiGraph) == kernel_json.end() || kernel_json[kJsonKeyMultiGraph].is_null()) {
-    // not multi graphs.
-    MS_LOG(ERROR) << "Input json is not multi graph, " << json_desc;
-    return false;
-  }
-
-  kernel::AkgKernelJsonDecoder akg_kernel_json_decoder;
-  std::vector<nlohmann::json> graph_descs = kernel_json[kJsonKeyGraphDesc];
-  if (graph_descs.empty()) {
-    MS_LOG(ERROR) << "No sub graph found, " << json_desc;
-    return false;
-  }
-
-  for (size_t i = 0; i < graph_descs.size(); ++i) {
-    const auto &graph_desc = graph_descs[i];
-    AnfNodePtrList res_graph;
-    if (!akg_kernel_json_decoder.DecodeSplitNodes(graph_desc, address_node_map, &res_graph)) {
-      MS_LOG(ERROR) << "Failed decode sub graph, " << graph_desc;
-      return false;
-    }
-    res_graphs->push_back(res_graph);
-  }
-
-  return true;
-}
-
 std::unordered_set<PrimitivePtr> GetExpandOps() {
   std::unordered_set<PrimitivePtr> expand_ops = {
     prim::kPrimSquare,
@@ -663,6 +633,24 @@ std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &p
     name << postfix;
   }
   return name.str();
+}
+
+std::vector<PrimitivePtr> GetFusibleOpList() {
+  std::vector<PrimitivePtr> fusible_basic_ops = {
+    prim::kPrimAbs,     prim::kPrimRound,  prim::kPrimNeg,        prim::kPrimExp,       prim::kPrimTensorAdd,
+    prim::kPrimRealDiv, prim::kPrimMul,    prim::kPrimMinimum,    prim::kPrimMaximum,   prim::kPrimLog,
+    prim::kPrimPow,     prim::kPrimSub,    prim::kPrimRsqrt,      prim::kPrimSqrt,      prim::kPrimCast,
+    prim::kPrimAddN,    prim::kPrimEqual,  prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,
+    prim::kPrimGreater, prim::kPrimAssign, prim::kPrimReduceSum};
+  return fusible_basic_ops;
+}
+
+void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+#if ENABLE_GPU
+  device::gpu::SetKernelInfo(cnode, kernel_type);
+#endif
 }
 }  // namespace opt
 }  // namespace mindspore

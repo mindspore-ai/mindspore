@@ -37,22 +37,17 @@ namespace opt {
 namespace {
 bool IsBasicOp(const AnfNodePtr &node, bool is_before_kernel_select) {
 #if ENABLE_D
-  std::vector<PrimitivePtr> fusable_basic_ops = {prim::kPrimTensorAdd, prim::kPrimMul, prim::kPrimSub,
+  std::vector<PrimitivePtr> fusible_basic_ops = {prim::kPrimTensorAdd, prim::kPrimMul, prim::kPrimSub,
                                                  prim::kPrimExpandDims};
   if (!is_before_kernel_select) {
-    fusable_basic_ops.push_back(prim::kPrimCast);
+    fusible_basic_ops.push_back(prim::kPrimCast);
   }
 #elif ENABLE_GPU
-  std::vector<PrimitivePtr> fusable_basic_ops = {
-    prim::kPrimAbs,     prim::kPrimRound, prim::kPrimNeg,        prim::kPrimExp,       prim::kPrimTensorAdd,
-    prim::kPrimRealDiv, prim::kPrimMul,   prim::kPrimMinimum,    prim::kPrimMaximum,   prim::kPrimLog,
-    prim::kPrimPow,     prim::kPrimSub,   prim::kPrimRsqrt,      prim::kPrimSqrt,      prim::kPrimCast,
-    prim::kPrimAddN,    prim::kPrimEqual, prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,
-    prim::kPrimGreater, prim::kPrimAssign};
+  std::vector<PrimitivePtr> fusible_basic_ops = GetFusibleOpList();
 #else
-  std::vector<PrimitivePtr> fusable_basic_ops;
+  std::vector<PrimitivePtr> fusible_basic_ops;
 #endif
-  return std::any_of(fusable_basic_ops.begin(), fusable_basic_ops.end(),
+  return std::any_of(fusible_basic_ops.begin(), fusible_basic_ops.end(),
                      [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
 }
 
