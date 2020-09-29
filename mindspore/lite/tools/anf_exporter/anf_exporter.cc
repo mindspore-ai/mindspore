@@ -195,7 +195,7 @@ int AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_pt
   return RET_OK;
 }
 
-schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool keep_graph) {
+schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool keep_graph, bool copy_primitive) {
   auto cnodes = func_graph->GetOrderedCnodes();
   auto meta_graphT = std::make_unique<schema::MetaGraphT>();
   int ret = RET_OK;
@@ -236,7 +236,15 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
     }
     node->nodeType = schema::NodeType_CNode;
     node->name = cnode->fullname_with_scope();
-    node->primitive = std::unique_ptr<schema::PrimitiveT>(primT);
+    if (copy_primitive) {
+      auto primitive = new (std::nothrow) schema::PrimitiveT();
+      if (primitive != nullptr) {
+        *primitive = *primT;
+        node->primitive = std::unique_ptr<schema::PrimitiveT>(primitive);
+      }
+    } else {
+      node->primitive = std::unique_ptr<schema::PrimitiveT>(primT);
+    }
     ret = SetOpInputNode(cnode, meta_graphT, node.get());
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SetOpInputNode failed";
@@ -518,8 +526,8 @@ bool AnfExporter::IsPrimitiveCNode(const AnfNodePtr &node, schema::PrimitiveType
   return (schema::PrimitiveType)(prim->Type()) == type;
 }
 
-schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph) {
+schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph, bool copy_primitive) {
   AnfExporter anf_exporter;
-  return anf_exporter.Export(func_graph, keep_graph);
+  return anf_exporter.Export(func_graph, keep_graph, copy_primitive);
 }
 }  // namespace mindspore::lite

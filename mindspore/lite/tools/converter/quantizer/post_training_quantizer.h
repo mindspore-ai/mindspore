@@ -73,13 +73,19 @@ class PostTrainingQuantizer : public Quantizer {
   mindspore::lite::LiteSession *fp32_session_;
   mindspore::lite::LiteSession *int8_session_;
 
-  std::string fp32_op_input_name;
-  std::string fp32_op_output_name;
-  std::vector<float> fp32_op_input;
-  std::vector<float> fp32_op_output_ch_mean;
-  std::map<std::string, std::vector<float>> op_bias_diff_map;
-  std::atomic<bool> fp32_op_input_ready{false};
-  std::atomic<bool> fp32_op_output_ch_mean_ready{false};
+  std::map<std::string, std::vector<float>> fp32_op_input_map;           // concurency
+  std::map<std::string, std::vector<float>> fp32_op_output_ch_mean_map;  // concurency
+  std::map<std::string, std::vector<float>> op_bias_diff_map;            // only use by int8 model
+  std::mutex mutex_op_input;
+  std::mutex mutex_op_output;
+
+  enum OperationType {
+    STORE,
+    FETCH,
+  };
+
+  bool OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
+  bool OpOutputChMeanDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
 
   const std::string kTypeConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2D);
   const std::string kTypeDepthwiseConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_DepthwiseConv2D);

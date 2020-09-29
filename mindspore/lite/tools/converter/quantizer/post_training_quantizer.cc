@@ -919,13 +919,9 @@ STATUS PostTrainingQuantizer::Int8Inference() {
              const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
              const mindspore::session::CallBackParam &callParam) -> bool {
       if (callParam.type_callback_param == kTypeConv2D || callParam.type_callback_param == kTypeDepthwiseConv2D) {
-        while (!fp32_op_input_ready) {
+        vector<float> fp32_op_input;
+        while (!OpInputDataHandle(FETCH, callParam.name_callback_param, &fp32_op_input)) {
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-        if (callParam.name_callback_param != fp32_op_input_name) {
-          MS_LOG(ERROR) << "current int8 op name: " << callParam.name_callback_param
-                        << " ready fp32 op name: " << fp32_op_input_name;
-          return false;
         }
         auto tensor = beforeInputs[0];
         auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
@@ -962,7 +958,6 @@ STATUS PostTrainingQuantizer::Int8Inference() {
           MS_LOG(ERROR) << "memcpy error: " << ret;
           return false;
         }
-        fp32_op_input_ready = false;
       }
       return true;
     };
@@ -972,13 +967,9 @@ STATUS PostTrainingQuantizer::Int8Inference() {
                                                          const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
                                                          const mindspore::session::CallBackParam &callParam) -> bool {
       if (callParam.type_callback_param == kTypeConv2D || callParam.type_callback_param == kTypeDepthwiseConv2D) {
-        while (!fp32_op_output_ch_mean_ready) {
+        vector<float> fp32_op_output_ch_mean;
+        while (!OpOutputChMeanDataHandle(FETCH, callParam.name_callback_param, &fp32_op_output_ch_mean)) {
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-        if (callParam.name_callback_param != fp32_op_output_name) {
-          MS_LOG(ERROR) << "current int8 op name: " << callParam.name_callback_param
-                        << " ready fp32 op name: " << fp32_op_output_name;
-          return false;
         }
         auto tensor = afterOutputs[0];
         auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
@@ -1036,9 +1027,7 @@ STATUS PostTrainingQuantizer::Int8Inference() {
         } else {
           op_bias_diff_map[callParam.name_callback_param] = dequant_op_output_ch_mean;
         }
-        fp32_op_output_ch_mean_ready = false;
       }
-
       return true;
     };
     ret = int8_session_->RunGraph(beforeCallBack, afterCallBack);
@@ -1072,23 +1061,21 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
              const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
              const mindspore::session::CallBackParam &callParam) -> bool {
       if (callParam.type_callback_param == kTypeConv2D || callParam.type_callback_param == kTypeDepthwiseConv2D) {
-        while (fp32_op_input_ready) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
         if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.name_callback_param, beforeInputs) != RET_OK) {
           return false;
         }
         auto tensor = beforeInputs[0];
         size_t elem_count = tensor->ElementsNum();
-        fp32_op_input.resize(elem_count);
+        std::vector<float> fp32_op_input(elem_count);
         auto ret =
           memcpy_s(fp32_op_input.data(), fp32_op_input.size() * sizeof(float), tensor->MutableData(), tensor->Size());
         if (ret != EOK) {
           MS_LOG(ERROR) << "memcpy error: " << ret;
           return false;
         }
-        fp32_op_input_name = callParam.name_callback_param;
-        fp32_op_input_ready = true;
+        while (!OpInputDataHandle(STORE, callParam.name_callback_param, &fp32_op_input)) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
       }
       return true;
     };
@@ -1098,9 +1085,6 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
                                                          const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
                                                          const mindspore::session::CallBackParam &callParam) -> bool {
       if (callParam.type_callback_param == kTypeConv2D || callParam.type_callback_param == kTypeDepthwiseConv2D) {
-        while (fp32_op_output_ch_mean_ready) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
         if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.name_callback_param, afterOutputs) != RET_OK) {
           return false;
         }
@@ -1118,7 +1102,7 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
           MS_LOG(ERROR) << "unexpected channels: 0";
           return false;
         }
-        fp32_op_output_ch_mean.resize(channels);
+        std::vector<float> fp32_op_output_ch_mean(channels);
         auto one_filter_size = elem_count / channels;
         for (int i = 0; i < channels; i++) {
           float sum = 0;
@@ -1133,8 +1117,9 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
           sum = sum / one_filter_size;
           fp32_op_output_ch_mean[i] = sum;
         }
-        fp32_op_output_name = callParam.name_callback_param;
-        fp32_op_output_ch_mean_ready = true;
+        while (!OpOutputChMeanDataHandle(STORE, callParam.name_callback_param, &fp32_op_output_ch_mean)) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
       }
 
       return true;
@@ -1326,7 +1311,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     return status;
   }
   // anf -- fb
-  auto meta_graph = Export(func_graph, true);
+  auto meta_graph = Export(func_graph, true, true);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta_graph return nullptr";
     return RET_ERROR;
@@ -1409,7 +1394,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   if (calibrator_->GetBiasCorrection()) {
     // init in8 session
     // anf -- fb
-    auto int8_meta_graph = Export(func_graph, true);
+    auto int8_meta_graph = Export(func_graph, true, true);
     if (int8_meta_graph == nullptr) {
       MS_LOG(ERROR) << "Export to int8_meta_graph return nullptr";
       return RET_ERROR;
@@ -1461,6 +1446,54 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
 
   return RET_OK;
 }
+
+bool PostTrainingQuantizer::OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data) {
+  std::lock_guard<std::mutex> lg(mutex_op_input);
+  if (type == STORE) {
+    if (fp32_op_input_map.find(op_name) != fp32_op_input_map.end()) {
+      // the data has not been fetched by int8 model
+      return false;
+    }
+    fp32_op_input_map[op_name] = *data;
+    return true;
+  } else if (type == FETCH) {
+    if (fp32_op_input_map.find(op_name) == fp32_op_input_map.end()) {
+      // the data not generated by fp32 model yet
+      return false;
+    }
+    *data = fp32_op_input_map[op_name];
+    fp32_op_input_map.erase(op_name);
+    return true;
+  } else {
+    MS_LOG(ERROR) << "unexpected type: " << type;
+  }
+  return false;
+}
+
+bool PostTrainingQuantizer::OpOutputChMeanDataHandle(OperationType type, const string &op_name,
+                                                     std::vector<float> *data) {
+  std::lock_guard<std::mutex> lg(mutex_op_output);
+  if (type == STORE) {
+    if (fp32_op_output_ch_mean_map.find(op_name) != fp32_op_output_ch_mean_map.end()) {
+      // the data has not been fetched by int8 model
+      return false;
+    }
+    fp32_op_output_ch_mean_map[op_name] = *data;
+    return true;
+  } else if (type == FETCH) {
+    if (fp32_op_output_ch_mean_map.find(op_name) == fp32_op_output_ch_mean_map.end()) {
+      // the data not generated by fp32 model yet
+      return false;
+    }
+    *data = fp32_op_output_ch_mean_map[op_name];
+    fp32_op_output_ch_mean_map.erase(op_name);
+    return true;
+  } else {
+    MS_LOG(ERROR) << "unexpected type: " << type;
+  }
+  return false;
+}
+
 }  // namespace quant
 }  // namespace lite
 }  // namespace mindspore
