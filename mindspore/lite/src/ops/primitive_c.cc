@@ -125,6 +125,12 @@
 #include "src/ops/detection_post_process.h"
 #include "src/ops/dropout.h"
 #include "src/ops/real_div.h"
+#include "src/ops/lsh_projection.h"
+#include "src/ops/hashtable_lookup.h"
+#include "src/ops/skip_gram.h"
+#include "src/ops/custom_predict.h"
+#include "src/ops/custom_normalize.h"
+#include "src/ops/custom_extract_features.h"
 #ifdef PRIMITIVE_WRITEABLE
 #include "tools/converter/quantizer/quantize_util.h"
 #endif
@@ -674,6 +680,18 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new Dropout(primitive);
     case schema::PrimitiveType_Neg:
       return new Neg(primitive);
+    case schema::PrimitiveType_LshProjection:
+      return new LshProjection(primitive);
+    case schema::PrimitiveType_HashtableLookup:
+      return new HashtableLookup(primitive);
+    case schema::PrimitiveType_SkipGram:
+      return new SkipGram(primitive);
+    case schema::PrimitiveType_CustomPredict:
+      return new CustomPredict(primitive);
+    case schema::PrimitiveType_CustomNormalize:
+      return new CustomNormalize(primitive);
+    case schema::PrimitiveType_CustomExtractFeatures:
+      return new CustomExtractFeatures(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
@@ -930,6 +948,18 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
       return NewPrimitiveC<DetectionPostProcess>(primitive);
     case schema::PrimitiveType_Dropout:
       return NewPrimitiveC<Dropout>(primitive);
+    case schema::PrimitiveType_LshProjection:
+      return NewPrimitiveC<LshProjection>(primitive);
+    case schema::PrimitiveType_HashtableLookup:
+      return NewPrimitiveC<HashtableLookup>(primitive);
+    case schema::PrimitiveType_SkipGram:
+      return NewPrimitiveC<SkipGram>(primitive);
+    case schema::PrimitiveType_CustomPredict:
+      return NewPrimitiveC<CustomPredict>(primitive);
+    case schema::PrimitiveType_CustomNormalize:
+      return NewPrimitiveC<CustomNormalize>(primitive);
+    case schema::PrimitiveType_CustomExtractFeatures:
+      return NewPrimitiveC<CustomExtractFeatures>(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
