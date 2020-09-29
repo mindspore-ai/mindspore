@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_SELF_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_SELF_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/arithmetic_self.h"
-#include "nnacl/arithmetic_self_parameter.h"
-#include "schema/model_generated.h"
-#include "include/context.h"
 
-using mindspore::lite::InnerContext;
 using mindspore::schema::PrimitiveType_Abs;
 using mindspore::schema::PrimitiveType_Ceil;
 using mindspore::schema::PrimitiveType_Cos;
@@ -39,73 +33,27 @@ using mindspore::schema::PrimitiveType_Sqrt;
 using mindspore::schema::PrimitiveType_Square;
 
 namespace mindspore::kernel {
+typedef int (*ArithmeticSelfFunc)(float *input, float *output, int element_size);
 class ArithmeticSelfCPUKernel : public LiteKernel {
-  typedef int (*ArithmeticSelfRun)(float *input, float *output, int element_size);
-
  public:
   explicit ArithmeticSelfCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                    const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
-    switch (parameter->type_) {
-      case PrimitiveType_Abs:
-        arithmeticSelf_run_ = ElementAbs;
-        break;
-      case PrimitiveType_Cos:
-        arithmeticSelf_run_ = ElementCos;
-        break;
-      case PrimitiveType_Log:
-        arithmeticSelf_run_ = ElementLog;
-        break;
-      case PrimitiveType_Square:
-        arithmeticSelf_run_ = ElementSquare;
-        break;
-      case PrimitiveType_Sqrt:
-        arithmeticSelf_run_ = ElementSqrt;
-        break;
-      case PrimitiveType_Rsqrt:
-        arithmeticSelf_run_ = ElementRsqrt;
-        break;
-      case PrimitiveType_Sin:
-        arithmeticSelf_run_ = ElementSin;
-        break;
-      case PrimitiveType_LogicalNot:
-        arithmeticSelf_run_ = ElementLogicalNot;
-        break;
-      case PrimitiveType_Floor:
-        arithmeticSelf_run_ = ElementFloor;
-        break;
-      case PrimitiveType_Ceil:
-        arithmeticSelf_run_ = ElementCeil;
-        break;
-      case PrimitiveType_Round:
-        arithmeticSelf_run_ = ElementRound;
-        break;
-      case PrimitiveType_Neg:
-        arithmeticSelf_run_ = ElementNegative;
-        break;
-      default:
-        break;
-    }
-    arithmeticSelfParameter_ = reinterpret_cast<ArithmeticSelfParameter *>(parameter);
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    func_ = GetArithmeticSelfFun(parameter->type_);
   }
   ~ArithmeticSelfCPUKernel() override = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int DoArithmeticSelf(int task_id);
+  virtual int DoExecute(int task_id);
 
  private:
-  int thread_sz_count_;
-  int thread_sz_stride_;
-  size_t data_size_;
-  ArithmeticSelfParameter *arithmeticSelfParameter_;
-  ArithmeticSelfRun arithmeticSelf_run_;
-  int thread_count_;
-  float *in_ptr_;
-  float *out_ptr_;
+  ArithmeticSelfFunc GetArithmeticSelfFun(int primitive_type);
+  ArithmeticSelfFunc func_;
 };
+int ArithmeticSelfRun(void *cdata, int task_id);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_SELF_H_
