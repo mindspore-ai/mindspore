@@ -52,7 +52,7 @@ STATUS OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     op->primitive->value.value = attr.release();
   } else {
     MS_LOG(ERROR) << "only support convert clip(0,6) to relu6, other value is not supported";
-    return RET_ERROR;
+    return RET_NOT_SUPPORT;
   }
   return RET_OK;
 }

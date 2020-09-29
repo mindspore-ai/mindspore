@@ -50,16 +50,23 @@ class NoSupportOp {
     static NoSupportOp noSupportOp;
     return &noSupportOp;
   }
+  void SetFmkType(const std::string &fmk_type) { fmkType = fmk_type; }
   void InsertOp(const std::string &op_name) { noSupportOps.insert(op_name); }
   void PrintOps() const {
-    for (auto &op_name : noSupportOps) {
-      MS_LOG(ERROR) << "The op " << op_name << " hasn't been supported";
+    if (!noSupportOps.empty()) {
+      MS_LOG(ERROR) << "===========================================";
+      MS_LOG(ERROR) << "UNSUPPORT OP LIST:";
+      for (auto &op_name : noSupportOps) {
+        MS_LOG(ERROR) << "FMKTYPE: " << fmkType << ", OP TYPE: " << op_name;
+      }
+      MS_LOG(ERROR) << "===========================================";
     }
   }
 
  private:
   NoSupportOp() { noSupportOps.clear(); }
   std::set<std::string> noSupportOps;
+  std::string fmkType;
 };
 }  // namespace lite
 }  // namespace mindspore

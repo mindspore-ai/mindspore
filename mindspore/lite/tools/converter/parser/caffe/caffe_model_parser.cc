@@ -80,6 +80,7 @@ schema::MetaGraphT *CaffeModelParser::ParseToFb(const std::string &modelFile, co
     return nullptr;
   }
 
+  NoSupportOp::GetInstance()->SetFmkType("CAFFE");
   status = ParseLayer(proto, weight, &tensorCache, metaGraph.get(), quantType);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseLayer failed " << status;
@@ -242,7 +243,11 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
       auto status_node = nodeParser->Parse(layer, layerP, op.get(), &weightVec);
       if (status_node != RET_OK) {
         interrupt = true;
-        MS_LOG(ERROR) << "Parse weight for " << layer.name() << " Failed!";
+        if (status_node == RET_NOT_SUPPORT) {
+          NoSupportOp::GetInstance()->InsertOp(layer.type());
+        } else {
+          MS_LOG(ERROR) << "Parse weight for " << layer.name() << " Failed!";
+        }
         status = (status == RET_OK ? RET_NOT_FIND_OP : status);
         continue;
       }

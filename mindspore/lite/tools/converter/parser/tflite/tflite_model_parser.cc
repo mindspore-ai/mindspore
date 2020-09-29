@@ -96,6 +96,7 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
                                     const QuantType &quant_type, schema::MetaGraphT *sub_graph) {
   int idx = 0;
   int status = RET_OK;
+  NoSupportOp::GetInstance()->SetFmkType("TFLITE");
   for (const auto &tflite_op : tflite_subgraph->operators) {
     auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
     auto op_type = GetMSOpType(tflite_op_type);
@@ -120,7 +121,11 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
       status = node_parser->Parse(tflite_op, tflite_subgraph->tensors, tflite_model->buffers, op.get(), &tensorsId,
                                   &tensorsFormat, &tensorsIdMap);
       if (status != RET_OK) {
-        MS_LOG(ERROR) << "node " << op_type.c_str() << " parser failed";
+        if (status == RET_NOT_SUPPORT) {
+          NoSupportOp::GetInstance()->InsertOp(op_type);
+        } else {
+          MS_LOG(ERROR) << "node " << op_type.c_str() << " parser failed";
+        }
         continue;
       }
 
