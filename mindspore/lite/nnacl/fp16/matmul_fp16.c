@@ -41,8 +41,8 @@ void ColMajor2Row8MajorFp16(void *src_ptr, float16_t *dst_ptr, size_t row, size_
 
 void MatMul16x8(const float16_t *a, const float16_t *b, float16_t *dst, const float16_t *bias, ActType act_type,
                 int deep, int row, int col, int stride, bool write_nhwc) {
-  int row_16 = UP_ROUND(row, C16NUM);
-  int col_8 = UP_ROUND(col, C8NUM);
+  //  int row_16 = UP_ROUND(row, C16NUM);
+  //  int col_8 = UP_ROUND(col, C8NUM);
   if (write_nhwc) {
     /*  col16-major * row8-major => col-major  */
     for (int r = 0; r < row; r++) {
@@ -63,24 +63,42 @@ void MatMul16x8(const float16_t *a, const float16_t *b, float16_t *dst, const fl
       }
     }
   } else {
-    /*  col16-major * row8-major => row16x8-major  */
-    for (int r = 0; r < row_16; r++) {
-      for (int c = 0; c < col_8; c++) {
-        int r16div = r / C16NUM, r16mod = r % C16NUM;
-        int c8div = c / C8NUM, c8mod = c % C8NUM;
-        size_t ci = c8div * row_16 * C8NUM + r * C8NUM + c8mod;
-        float16_t value = 0;
-        for (int d = 0; d < deep; d++) {
-          size_t ai = r16div * deep * C16NUM + d * C16NUM + r16mod;
-          size_t bi = c8div * deep * C8NUM + d * C8NUM + c8mod;
+    for (int i = 0; i < row; ++i) {
+      int src_r_offset = i;
+      int dst_r_offset = i * col * stride;
+      for (int j = 0; j < col; ++j) {
+        int c8div = j / 8, c8mod = j % 8;
+        size_t ci = dst_r_offset + c8div * 8 * stride + c8mod;
+        float value = 0;
+        for (int d = 0; d < deep; ++d) {
+          size_t ai = src_r_offset + d * C16NUM;
+          size_t bi = c8div * deep * 8 + d * 8 + c8mod;
           value = value + a[ai] * b[bi];
         }
-        if (bias != NULL) value += bias[col];
+        if (bias != NULL) value += bias[j];
         if (act_type == ActType_Relu6) value = MSMIN(6.0f, value);
         if (act_type != ActType_No) value = MSMAX(0.0f, value);
         dst[ci] = value;
       }
     }
+    //    /*  col16-major * row8-major => row16x8-major  */
+    //    for (int r = 0; r < row_16; r++) {
+    //      for (int c = 0; c < col_8; c++) {
+    //        int r16div = r / C16NUM, r16mod = r % C16NUM;
+    //        int c8div = c / C8NUM, c8mod = c % C8NUM;
+    //        size_t ci = c8div * row_16 * C8NUM + r * C8NUM + c8mod;
+    //        float16_t value = 0;
+    //        for (int d = 0; d < deep; d++) {
+    //          size_t ai = r16div * deep * C16NUM + d * C16NUM + r16mod;
+    //          size_t bi = c8div * deep * C8NUM + d * C8NUM + c8mod;
+    //          value = value + a[ai] * b[bi];
+    //        }
+    //        if (bias != NULL) value += bias[col];
+    //        if (act_type == ActType_Relu6) value = MSMIN(6.0f, value);
+    //        if (act_type != ActType_No) value = MSMAX(0.0f, value);
+    //        dst[ci] = value;
+    //      }
+    //    }
   }
   return;
 }

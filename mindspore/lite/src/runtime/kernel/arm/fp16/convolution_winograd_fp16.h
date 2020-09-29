@@ -67,6 +67,10 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
       ctx_->allocator->Free(gemm_out_);
       gemm_out_ = nullptr;
     }
+    if (col_buffer_ != nullptr) {
+      ctx_->allocator->Free(col_buffer_);
+      col_buffer_ = nullptr;
+    }
   }
   int kernel_unit_;
   int input_unit_;
@@ -75,7 +79,8 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   float16_t *trans_input_ = nullptr;
   float16_t *gemm_out_ = nullptr;
   float16_t *trans_weight_ = nullptr;
-  TmpBufferAddressFp16 tmp_buffer_address_list_[3];
+  float16_t *col_buffer_ = nullptr;
+  TmpBufferAddressFp16 tmp_buffer_address_list_[4];
   InputTransFp16Func in_func_;
   OutputTransFp16Func out_func_;
 };

@@ -29,6 +29,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+void MatMul16x8(const float16_t *a, const float16_t *b, float16_t *dst, const float16_t *bias, ActType act_type,
+                int deep, int row, int col, int stride, bool write_nhwc);
+
 void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, ActType act_type,
                 int depth, int row, int col, int stride, bool write_nhwc);
 
