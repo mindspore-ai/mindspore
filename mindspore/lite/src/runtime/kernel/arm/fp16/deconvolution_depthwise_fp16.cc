@@ -176,6 +176,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   }
 
   if (!need_align_) {
+    memset(execute_output_, 0, out_tensors_.at(kOutputIndex)->ElementsNum() * sizeof(float16_t));
     packed_output_ = execute_output_;
   }
   ret = ParallelLaunch(this->context_->thread_pool_, DeconvDwFp16Run, this, conv_param_->thread_num_);
@@ -243,4 +244,6 @@ kernel::LiteKernel *CpuDeconvDwFp16KernelCreator(const std::vector<lite::Tensor 
   }
   return kernel;
 }
+
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_DeDepthwiseConv2D, CpuDeconvDwFp16KernelCreator)
 }  // namespace mindspore::kernel
