@@ -65,7 +65,6 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   FuncGraphPtr graph = nullptr;
   if (flag->fmk == converter::FmkType_MS) {
     MS_ASSERT(nullptr != modelImporter);
-    modelImporter->Import(flag->quantType);
     int status = modelImporter->Import(flag->quantType);
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     graph = modelImporter->GetResult();

@@ -595,10 +595,14 @@ CNodePtr AnfImporterFromProtobuf::BuildCNodeForFuncGraph(const FuncGraphPtr &out
   for (int i = 0; i < node_proto.input_size(); ++i) {
     const std::string &input_name = node_proto.input(i);
     if (anfnode_build_map_.find(input_name) == anfnode_build_map_.end()) {
-      MS_LOG(ERROR) << node_name << " input " << i << input_name << "can't find in nodes have parsed";
-      return nullptr;
+      if (!interrupt) {
+        MS_LOG(ERROR) << node_name << " input " << i << input_name << "can't find in nodes have parsed";
+        interrupt = true;
+      }
+      inputs.push_back(nullptr);
+    } else {
+      inputs.push_back(anfnode_build_map_[input_name]);
     }
-    inputs.push_back(anfnode_build_map_[input_name]);
   }
   auto primitivec_ptr = PrimitiveC::Create(*prim, inputs, quantType);
   if (primitivec_ptr == nullptr || interrupt) {
@@ -714,6 +718,7 @@ int AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFuncG
   MS_LOG(INFO) << "The CNdoe size : " << importProto.node_size();
   CNodePtr cnode_ptr = nullptr;
   int status = RET_OK;
+  NoSupportOp::GetInstance()->SetFmkType("MINDIR");
   for (int i = 0; i < importProto.node_size(); ++i) {
     const onnx::NodeProto &node_proto = importProto.node(i);
     const std::string &node_type = node_proto.op_type();
