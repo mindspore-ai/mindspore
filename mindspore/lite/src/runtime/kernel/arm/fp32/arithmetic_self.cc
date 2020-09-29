@@ -13,99 +13,107 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/runtime/kernel/arm/fp32/arithmetic_self.h"
-#include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
+#include "nnacl/fp32/arithmetic_self.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+namespace {
+typedef struct {
+  int primitive_type_;
+  ArithmeticSelfFunc func_;
+} TYPE_FUNC_INFO;
+}  // namespace
+
+ArithmeticSelfFunc ArithmeticSelfCPUKernel::GetArithmeticSelfFun(int primitive_type) {
+  TYPE_FUNC_INFO type_func_table[] = {{mindspore::schema::PrimitiveType_Abs, ElementAbs},
+                                      {mindspore::schema::PrimitiveType_Cos, ElementCos},
+                                      {mindspore::schema::PrimitiveType_Log, ElementLog},
+                                      {mindspore::schema::PrimitiveType_Square, ElementSquare},
+                                      {mindspore::schema::PrimitiveType_Sqrt, ElementSqrt},
+                                      {mindspore::schema::PrimitiveType_Rsqrt, ElementRsqrt},
+                                      {mindspore::schema::PrimitiveType_Sin, ElementSin},
+                                      {mindspore::schema::PrimitiveType_LogicalNot, ElementLogicalNot},
+                                      {mindspore::schema::PrimitiveType_Floor, ElementFloor},
+                                      {mindspore::schema::PrimitiveType_Ceil, ElementCeil},
+                                      {mindspore::schema::PrimitiveType_Round, ElementRound},
+                                      {mindspore::schema::PrimitiveType_Neg, ElementNegative}};
+  for (size_t i = 0; i < sizeof(type_func_table); i++) {
+    if (type_func_table[i].primitive_type_ == primitive_type) {
+      return type_func_table[i].func_;
+    }
+  }
+  return nullptr;
+}
+
 int ArithmeticSelfCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
-
   return ReSize();
 }
 
-int ArithmeticSelfCPUKernel::ReSize() {
-  data_size_ = in_tensors_[0]->ElementsNum();
-  thread_sz_count_ = MSMIN(thread_count_, static_cast<int>(data_size_));
-  thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
-  return RET_OK;
-}
+int ArithmeticSelfCPUKernel::ReSize() { return RET_OK; }
 
-int ArithmeticSelfRuns(void *cdata, int task_id) {
-  auto g_kernel = reinterpret_cast<ArithmeticSelfCPUKernel *>(cdata);
-  auto ret = g_kernel->DoArithmeticSelf(task_id);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ArithmeticSelfRuns error task_id[" << task_id << "] error_code[" << ret << "]";
-    return ret;
-  }
-  return RET_OK;
-}
-
-int ArithmeticSelfCPUKernel::DoArithmeticSelf(int task_id) {
-  int size = MSMIN(thread_sz_stride_, static_cast<int>(data_size_ - task_id * thread_sz_stride_));
-  if (size <= 0) {
+int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
+  int elements_num = in_tensors_.at(0)->ElementsNum();
+  int stride = UP_DIV(elements_num, op_parameter_->thread_num_);
+  int offset = task_id * stride;
+  int count = MSMIN(stride, elements_num - offset);
+  if (count <= 0) {
     return RET_OK;
   }
-  int offset = task_id * thread_sz_stride_;
-  if (arithmeticSelf_run_) {
-    auto ret = arithmeticSelf_run_(in_ptr_ + offset, out_ptr_ + offset, size);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Run failed, illegal input! ";
-      return ret;
-    }
-  } else {
+  if (func_ == nullptr) {
     MS_LOG(ERROR) << "Run function is null! ";
     return RET_ERROR;
   }
-  return RET_OK;
+  float *input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  float *output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  auto ret = func_(input_ptr + offset, output_ptr + offset, count);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run failed, illegal input! ";
+  }
+  return ret;
 }
+
+int ArithmeticSelfRun(void *cdata, int task_id) {
+  auto kernel = reinterpret_cast<ArithmeticSelfCPUKernel *>(cdata);
+  auto ret = kernel->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ArithmeticSelfRuns error task_id[" << task_id << "] error_code[" << ret << "]";
+  }
+  return ret;
+}
+
 int ArithmeticSelfCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    MS_LOG(ERROR) << "Prepare fail! ret: " << ret;
     return ret;
   }
-  auto input_tensor = in_tensors_.at(0);
-  auto out_tensor = out_tensors_.at(0);
-  in_ptr_ = reinterpret_cast<float *>(input_tensor->MutableData());
-  out_ptr_ = reinterpret_cast<float *>(out_tensor->MutableData());
-  ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticSelfRuns, this, thread_sz_count_);
+  ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
-    return ret;
   }
-  return RET_OK;
+  return ret;
 }
 
 kernel::LiteKernel *CpuArithmeticSelfFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                        const std::vector<lite::Tensor *> &outputs,
-                                                       OpParameter *opParameter, const lite::InnerContext *ctx,
+                                                       OpParameter *parameter, const lite::InnerContext *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Creator failed, opParameter is nullptr!";
-    return nullptr;
-  }
-  auto *kernel = new (std::nothrow) ArithmeticSelfCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) ArithmeticSelfCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ArithmeticSelfCPUKernel fail!";
     return nullptr;
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
+                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
     delete kernel;
     return nullptr;
   }
