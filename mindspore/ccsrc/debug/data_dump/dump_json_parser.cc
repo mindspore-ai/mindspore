@@ -169,7 +169,7 @@ void DumpJsonParser::ParseAsyncDumpSetting(const nlohmann::json &content) {
 }
 
 void DumpJsonParser::ParseE2eDumpSetting(const nlohmann::json &content) {
-  auto e2e_dump_setting = CheckJsonKeyExist(content, kE2eDumpSettings);
+  auto e2e_dump_setting = content.find(kE2eDumpSettings);
   if (e2e_dump_setting == content.end()) {
     MS_LOG(INFO) << "No e2e_dump_settings";
     return;

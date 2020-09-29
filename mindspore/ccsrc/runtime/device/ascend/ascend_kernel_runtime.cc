@@ -40,6 +40,7 @@
 #include "runtime/device/ascend/ascend_memory_manager.h"
 #include "debug/tensor_load.h"
 #include "debug/data_dump/dump_json_parser.h"
+#include "toolchain/adx_datadump_server.h"
 #include "utils/shape_utils.h"
 #ifdef MEM_REUSE_DEBUG
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
@@ -169,6 +170,14 @@ bool AscendKernelRuntime::NeedDestroyHccl() {
   return true;
 }
 
+void AsyncDataDumpUninit() {
+  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
+    if (AdxDataDumpServerUnInit() != 0) {
+      MS_LOG(ERROR) << "Adx data dump server uninit failed";
+    }
+  }
+}
+
 void AscendKernelRuntime::ReleaseDeviceRes() {
   MS_LOG(INFO) << "Ascend finalize start";
 #ifdef ENABLE_DEBUGGER
@@ -183,6 +192,8 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   SetContext();
   // release ge runtime
   ClearGraphModelMap();
+
+  AsyncDataDumpUninit();
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
