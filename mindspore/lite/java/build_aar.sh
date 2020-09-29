@@ -87,9 +87,16 @@ build_aar() {
     cd ${BASE_PATH}/java
     rm -rf .gradle build gradle gradlew gradlew.bat build app/build
 
-    gradle init
-    gradle wrapper
-    ./gradlew build
+    gradle init -PLITE_VERSION=${VERSION_STR}-SNAPSHOT
+    gradle wrapper -PLITE_VERSION=${VERSION_STR}-SNAPSHOT
+    ./gradlew build -PLITE_VERSION=${VERSION_STR}-SNAPSHOT
+
+    gradle publish -PLITE_VERSION=${VERSION_STR}-SNAPSHOT
+
+    cd ${BASE_PATH}/java/app/build
+    zip -r mindspore-lite-maven-${VERSION_STR}.zip mindspore
+
+    cp mindspore-lite-maven-${VERSION_STR}.zip ${TOP_PATH}/output/
 }
 
 copy_output() {

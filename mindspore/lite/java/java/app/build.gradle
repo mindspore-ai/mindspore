@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
 
 android {
     compileSdkVersion 30
@@ -46,4 +47,21 @@ android {
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     testImplementation 'junit:junit:4.12'
+}
+
+publishing {
+    repositories {
+        maven {
+            url uri("build")
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            groupId = 'mindspore'
+            artifactId = 'mindspore-lite'
+            version = LITE_VERSION
+            String path = project.buildDir.path + File.separator + "outputs" + File.separator + "aar" + File.separator + "mindspore-lite.aar";
+            artifact(path)
+        }
+    }
 }
