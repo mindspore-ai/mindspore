@@ -552,6 +552,10 @@ def _set_auto_parallel_context(**kwargs):
         full_batch (bool): Whether to load the whole batch on each device. Default: False.
         enable_parallel_optimizer (bool): Enable using optimizer segmentation or not. Default: False.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices.
+        pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how
+                        the devices are distributed alone the pipeline. The total devices will be divided into
+                        'pipeline_stags' stages. This currently could only be used when
+                        parall mode semi_auto_parallel is enabled. Default: 0
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.

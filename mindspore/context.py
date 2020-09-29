@@ -333,7 +333,7 @@ def _context():
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
                  all_reduce_fusion_config=list, pipeline_stages=int)
 def set_auto_parallel_context(**kwargs):
-    """
+    r"""
     Set auto parallel context.
 
     Auto parallel context should be configured before the initialization of your network.
@@ -349,15 +349,15 @@ def set_auto_parallel_context(**kwargs):
     Some configurations are parallel mode specific, see the below table for details:
 
     ===========================  ===========================  =================
-    Common                       AUTO_PARALLEL                DATA_PRALLEL
+    Common                       AUTO_PARALLEL                DATA_PARALLEL
     ===========================  ===========================  =================
     device_num                   gradient_fp32_sync           enable_parallel_optimizer
     global_rank                  loss_repeated_mean
     gradients_mean               auto_parallel_search_mode
     parallel_mode                strategy_ckpt_load_file
     all_reduce_fusion_config     strategy_ckpt_save_file
-                                 full_batch
-                                 pipeline_stages
+                \                full_batch
+                \                pipeline_stages
     ===========================  ===========================  =================
 
     Args:
