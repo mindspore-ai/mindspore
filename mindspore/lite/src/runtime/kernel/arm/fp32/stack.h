@@ -33,7 +33,7 @@ class StackCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
 
- private:
+ protected:
   int axis_;
 };
 }  // namespace mindspore::kernel

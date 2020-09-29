@@ -37,15 +37,17 @@ class ScaleCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int CalculateParameter();
-  int InitScaleOffset();
+  virtual int InitScaleOffset();
   int Scale(int task_id);
+
+ protected:
+  ScaleParameter *scale_param_;
 
  private:
   float *input_ptr_ = nullptr;
   float *scale_ = nullptr;
   float *offset_ = nullptr;
   float *output_ptr_ = nullptr;
-  ScaleParameter *scale_param_;
 };
 }  // namespace mindspore::kernel
 

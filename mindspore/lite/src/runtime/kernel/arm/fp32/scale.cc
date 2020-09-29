@@ -138,7 +138,7 @@ int ScaleCPUKernel::Init() {
 int ScaleCPUKernel::ReSize() {
   auto ret = CalculateParameter();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Scale fp32 InitParameter failed.";
+    MS_LOG(ERROR) << "Scale fp32 CalculateParameter failed.";
     return RET_ERROR;
   }
 

@@ -18,6 +18,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "nnacl/fp32/stack.h"
+#include "nnacl/stack_parameter.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;

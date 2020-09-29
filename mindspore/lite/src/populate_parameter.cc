@@ -125,7 +125,7 @@
 #include "nnacl/prelu_parameter.h"
 #include "nnacl/shape.h"
 #include "nnacl/fp32/constant_of_shape.h"
-#include "nnacl/fp32/stack.h"
+#include "nnacl/stack_parameter.h"
 #include "nnacl/unstack.h"
 #include "nnacl/depth_to_space.h"
 #include "nnacl/conv_parameter.h"
