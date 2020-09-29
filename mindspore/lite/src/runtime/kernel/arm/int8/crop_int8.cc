@@ -44,16 +44,6 @@ int CropInt8CPUKernel::Init() {
 
   crop_para_->quant_arg.output_activation_max_ = std::numeric_limits<int8_t>::max();
   crop_para_->quant_arg.output_activation_min_ = std::numeric_limits<int8_t>::min();
-  crop_para_->in_shape_ = reinterpret_cast<int *>(malloc(input_tensor->shape().size() * sizeof(int)));
-  if (crop_para_->in_shape_ == nullptr) {
-    MS_LOG(ERROR) << "malloc memory failed";
-    return RET_MEMORY_FAILED;
-  }
-  crop_para_->out_shape_ = reinterpret_cast<int *>(malloc(out_tensor->shape().size() * sizeof(int)));
-  if (crop_para_->out_shape_ == nullptr) {
-    MS_LOG(ERROR) << "malloc memory failed";
-    return RET_MEMORY_FAILED;
-  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -72,35 +62,7 @@ CropInt8CPUKernel::~CropInt8CPUKernel() {
   }
 }
 
-int CropInt8CPUKernel::ReSize() {
-  auto *input_tensor = in_tensors_.at(kInputIndex);
-  auto input_shape = input_tensor->shape();
-  size_t input_dim = input_shape.size();
-
-  if (crop_para_->in_shape_ == nullptr) {
-    MS_LOG(ERROR) << "in_shape_ is nullptr";
-    return RET_ERROR;
-  } else {
-    memcpy(reinterpret_cast<void *>(const_cast<int *>(crop_para_->in_shape_)), input_shape.data(),
-           sizeof(int) * input_dim);
-  }
-
-  auto *out_tensor = out_tensors_.at(kOutputIndex);
-  auto output_shape = out_tensor->shape();
-  size_t output_dim = output_shape.size();
-
-  if (crop_para_->out_shape_ == nullptr) {
-    MS_LOG(ERROR) << "out_shape_ is nullptr";
-    return RET_ERROR;
-  } else {
-    memcpy(reinterpret_cast<void *>(const_cast<int *>(crop_para_->out_shape_)), output_shape.data(),
-           sizeof(int) * output_dim);
-  }
-  MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
-  crop_para_->input_dim_ = input_dim;
-  PadOffset(input_dim, crop_para_);
-  return RET_OK;
-}
+int CropInt8CPUKernel::ReSize() { return CropBaseCPUKernel::ReSize(); }
 
 int CropInt8CPUKernel::Run() {
   auto ret = Prepare();
@@ -110,26 +72,6 @@ int CropInt8CPUKernel::Run() {
   }
   ret = ParallelLaunch(this->context_->thread_pool_, CropInt8Run, this, thread_count_);
   return ret;
-}
-
-void PadOffset(int input_dim, CropParameter *crop_para) {
-  auto axis = crop_para->axis_;
-  auto offsets_size = crop_para->offset_size_;
-  MS_ASSERT(axis <= input_dim);
-  if (offsets_size > 1) {
-    MS_ASSERT(axis + offsets_size == input_dim);
-  }
-  for (int i = 0; i < input_dim; i++) {
-    int crop_offset = 0;
-    if (i >= axis) {
-      if (offsets_size == 1) {
-        crop_offset = crop_para->offset_[0];
-      } else if (offsets_size > 1) {
-        crop_offset = crop_para->offset_[i - axis];
-      }
-    }
-    crop_para->in_offset_[i] = crop_offset;
-  }
 }
 
 int CropInt8Run(void *cdata, int task_id) {
