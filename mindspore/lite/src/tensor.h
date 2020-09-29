@@ -132,6 +132,9 @@ class Tensor : public mindspore::tensor::MSTensor {
       case kNumberTypeBool:
         size = sizeof(bool);
         break;
+      case kObjectTypeString:
+        size = sizeof(char);
+        break;
       default:
         MS_LOG(ERROR) << "Not support the type: " << this->data_type_;
         return 0;
