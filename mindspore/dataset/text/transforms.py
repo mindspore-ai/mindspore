@@ -28,16 +28,16 @@ Examples:
     >>> import mindspore.dataset.text as text
     >>>
     >>> dataset_file = "path/to/text_file_path"
-    >>> # sentences as line data saved in a file
-    >>> dataset = ds.TextFileDataset(dataset_file, shuffle=False)
-    >>> # tokenize sentence to unicode characters
+    >>> # Create a dataset for text sentences saved as line data in a file
+    >>> data1 = ds.TextFileDataset(dataset_file, shuffle=False)
+    >>> # Tokenize sentences to unicode characters
     >>> tokenizer = text.UnicodeCharTokenizer()
-    >>> # load vocabulary form list
+    >>> # Load vocabulary from list
     >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
-    >>> # lookup is an operation for mapping tokens to ids
+    >>> # Use Lookup operator to map tokens to ids
     >>> lookup = text.Lookup(vocab)
-    >>> dataset = dataset.map(operations=[tokenizer, lookup])
-    >>> for i in dataset.create_dict_iterator():
+    >>> data1 = data1.map(operations=[tokenizer, lookup])
+    >>> for i in data1.create_dict_iterator():
     >>>     print(i)
     >>> # if text line in dataset_file is:
     >>> # 深圳欢迎您
@@ -69,6 +69,15 @@ class Lookup(cde.LookupOp):
         unknown_token (str, optional): Word used for lookup if the word being looked up is out-of-vocabulary (OOV).
             If unknown_token is OOV, a runtime error will be thrown (default=None).
         data_type (mindspore.dtype, optional): mindspore.dtype that lookup maps string to (default=mstype.int32)
+
+    Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
+        >>> # Load vocabulary from list
+        >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
+        >>> # Use Lookup operator to map tokens to ids
+        >>> lookup = text.Lookup(vocab, "<unk>")
+        >>> data1 = data1.map(operations=[lookup])
     """
 
     @check_lookup
@@ -86,12 +95,14 @@ class SlidingWindow(cde.SlidingWindowOp):
         axis (int, optional): The axis along which the sliding window is computed (default=0).
 
     Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
         >>> # Data before
         >>> # |    col1     |
         >>> # +-------------+
         >>> # | [1,2,3,4,5] |
         >>> # +-------------+
-        >>> data = data.map(operations=SlidingWindow(3, 0))
+        >>> data1 = data1.map(operations=text.SlidingWindow(3, 0))
         >>> # Data after
         >>> # |     col1    |
         >>> # +-------------+
@@ -125,6 +136,11 @@ class Ngram(cde.NgramOp):
         separator (str, optional): symbol used to join strings together. For example. if 2-gram is
             ["mindspore", "amazing"] with separator="-", the result would be ["mindspore-amazing"]
             (default=None, which means whitespace is used).
+
+    Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
+        >>> data1 = data1.map(operations=text.Ngram(3, separator=" "))
     """
 
     @check_ngram
@@ -157,15 +173,17 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
         with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
     Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
-        >>> tokenizer_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=False)
-        >>> data = data.map(operations=tokenizer_op)
+        >>> tokenizer_op = text.JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=False)
+        >>> data1 = data1.map(operations=tokenizer_op)
         >>> # If with_offsets=False, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
         >>> #                                                   ["offsets_limit", dtype=uint32]}
-        >>> tokenizer_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=True)
-        >>> data = data.map(operations=tokenizer_op, input_columns=["text"],
-        >>>                 output_columns=["token", "offsets_start", "offsets_limit"],
-        >>>                 column_order=["token", "offsets_start", "offsets_limit"])
+        >>> tokenizer_op = text.JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=True)
+        >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
+        >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
+        >>>                   column_order=["token", "offsets_start", "offsets_limit"])
     """
 
     @check_jieba_init
@@ -191,6 +209,16 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
                 The added word will not be written into the built-in dictionary on disk.
             freq (int, optional): The frequency of the word to be added. The higher the frequency,
                 the better chance the word will be tokenized (default=None, use default frequency).
+
+        Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
+            >>> jieba_op = text.JiebaTokenizer(HMM_FILE, MP_FILE, mode=text.JiebaMode.MP)
+            >>> with open(VOCAB_FILE, 'r') as f:
+            >>>     for line in f:
+            >>>         word = line.split(',')[0]
+            >>>         jieba_op.add_word(word)
+            >>> data1 = data1.map(operations=jieba_op, input_columns=["text"])
         """
 
         if freq is None:
@@ -213,6 +241,14 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
                     word1 freq1
                     word2
                     word3 freq3
+
+        Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
+            >>> user_dict = {"男默女泪": 10}
+            >>> jieba_op = text.JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP)
+            >>> jieba_op.add_dict(user_dict)
+            >>> data1 = data1.map(operations=jieba_op, input_columns=["text"])
         """
 
         if isinstance(user_dict, str):
@@ -277,15 +313,17 @@ class UnicodeCharTokenizer(cde.UnicodeCharTokenizerOp):
         with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
     Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
         >>> tokenizer_op = text.UnicodeCharTokenizer()
-        >>> dataset = dataset.map(operations=tokenizer_op)
+        >>> data1 = data1.map(operations=tokenizer_op)
         >>> # If with_offsets=False, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
         >>> #                                                   ["offsets_limit", dtype=uint32]}
         >>> tokenizer_op = text.UnicodeCharTokenizer(True)
-        >>> data = data.map(operations=tokenizer_op, input_columns=["text"],
-        >>>                 output_columns=["token", "offsets_start", "offsets_limit"],
-        >>>                 column_order=["token", "offsets_start", "offsets_limit"])
+        >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
+        >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
+        >>>                   column_order=["token", "offsets_start", "offsets_limit"])
     """
 
     @check_with_offsets
@@ -307,17 +345,19 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
         with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
     Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
         >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token=['UNK'],
         >>>                                       max_bytes_per_token=100, with_offsets=False)
-        >>> dataset = dataset.map(operations=tokenizer_op)
+        >>> data1 = data1.map(operations=tokenizer_op)
         >>> # If with_offsets=False, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
         >>> #                                                   ["offsets_limit", dtype=uint32]}
         >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token=['UNK'],
         >>>                                       max_bytes_per_token=100, with_offsets=True)
-        >>> data = data.map(operations=tokenizer_op,
-        >>>                 input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
-        >>>                 column_order=["token", "offsets_start", "offsets_limit"])
+        >>> data2 = data2.map(operations=tokenizer_op,
+        >>>                   input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+        >>>                   column_order=["token", "offsets_start", "offsets_limit"])
     """
 
     @check_wordpiece_tokenizer
@@ -351,6 +391,13 @@ class SentencePieceTokenizer(cde.SentencePieceTokenizerOp):
         mode (Union[str, SentencePieceVocab]): If the input parameter is a file, then it is of type string.
             If the input parameter is a SentencePieceVocab object, then it is of type SentencePieceVocab.
         out_type (Union[str, int]): The type of output.
+
+    Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
+        >>> vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
+        >>> tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
+        >>> data1 = data1.map(operations=tokenizer)
     """
 
     def __init__(self, mode, out_type):
@@ -374,16 +421,18 @@ if platform.system().lower() != 'windows':
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
         Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.WhitespaceTokenizer()
-            >>> dataset = dataset.map(operations=tokenizer_op)
+            >>> data1 = data1.map(operations=tokenizer_op)
             >>> # If with_offsets=False, then output three columns {["token", dtype=str],
             >>> #                                                   ["offsets_start", dtype=uint32],
             >>> #                                                   ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.WhitespaceTokenizer(True)
-            >>> data = data.map(operations=tokenizer_op, input_columns=["text"],
-            >>>                 output_columns=["token", "offsets_start", "offsets_limit"],
-            >>>                 column_order=["token", "offsets_start", "offsets_limit"])
+            >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
+            >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                   column_order=["token", "offsets_start", "offsets_limit"])
         """
 
         @check_with_offsets
@@ -401,16 +450,18 @@ if platform.system().lower() != 'windows':
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
         Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.UnicodeScriptTokenizerOp(keep_whitespace=True, with_offsets=False)
-            >>> dataset = dataset.map(operations=tokenizer_op)
+            >>> data1 = data1.map(operations=tokenizer_op)
             >>> # If with_offsets=False, then output three columns {["token", dtype=str],
             >>> #                                                   ["offsets_start", dtype=uint32],
             >>> #                                                   ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.UnicodeScriptTokenizerOp(keep_whitespace=True, with_offsets=True)
-            >>> data = data.map(operations=tokenizer_op, input_columns=["text"],
-            >>>                 output_columns=["token", "offsets_start", "offsets_limit"],
-            >>>                 column_order=["token", "offsets_start", "offsets_limit"])
+            >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
+            >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                   column_order=["token", "offsets_start", "offsets_limit"])
         """
 
         @check_unicode_script_tokenizer
@@ -423,6 +474,12 @@ if platform.system().lower() != 'windows':
     class CaseFold(cde.CaseFoldOp):
         """
         Apply case fold operation on utf-8 string tensor.
+
+        Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
+            >>> case_op = text.CaseFold()
+            >>> data1 = data1.map(operations=case_op)
         """
 
 
@@ -433,7 +490,6 @@ if platform.system().lower() != 'windows':
         NormalizeForm.NFD: cde.NormalizeForm.DE_NORMALIZE_NFD,
         NormalizeForm.NFKD: cde.NormalizeForm.DE_NORMALIZE_NFKD
     }
-
 
     class NormalizeUTF8(cde.NormalizeUTF8Op):
         """
@@ -450,6 +506,12 @@ if platform.system().lower() != 'windows':
                 - NormalizeForm.NFKC, normalize with Normalization Form KC.
                 - NormalizeForm.NFD, normalize with Normalization Form D.
                 - NormalizeForm.NFKD, normalize with Normalization Form KD.
+
+        Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
+            >>> normalize_op = text.NormalizeUTF8(normalize_form=NormalizeForm.NFC)
+            >>> data1 = data1.map(operations=normalize_op)
         """
 
         def __init__(self, normalize_form=NormalizeForm.NFKC):
@@ -471,6 +533,14 @@ if platform.system().lower() != 'windows':
             replace (str): the string to replace matched element.
             replace_all (bool, optional): If False, only replace first matched element;
                 if True, replace all matched elements (default=True).
+
+        Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
+            >>> pattern = 'Canada'
+            >>> replace = 'China'
+            >>> replace_op = text.RegexReplace(pattern, replace)
+            >>> data1 = data1.map(operations=replace_op)
         """
 
         def __init__(self, pattern, replace, replace_all=True):
@@ -495,16 +565,18 @@ if platform.system().lower() != 'windows':
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
         Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.RegexTokenizer(delim_pattern, keep_delim_pattern, with_offsets=False)
-            >>> dataset = dataset.map(operations=tokenizer_op)
+            >>> data1 = data1.map(operations=tokenizer_op)
             >>> # If with_offsets=False, then output three columns {["token", dtype=str],
             >>> #                                                   ["offsets_start", dtype=uint32],
             >>> #                                                   ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.RegexTokenizer(delim_pattern, keep_delim_pattern, with_offsets=True)
-            >>> data = data.map(operations=tokenizer_op, input_columns=["text"],
-            >>>                 output_columns=["token", "offsets_start", "offsets_limit"],
-            >>>                 column_order=["token", "offsets_start", "offsets_limit"])
+            >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
+            >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                   column_order=["token", "offsets_start", "offsets_limit"])
         """
 
         @check_regex_tokenizer
@@ -531,13 +603,15 @@ if platform.system().lower() != 'windows':
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
         Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.BasicTokenizer(lower_case=False,
             >>>                                   keep_whitespace=False,
             >>>                                   normalization_form=NormalizeForm.NONE,
             >>>                                   preserve_unused_token=True,
             >>>                                   with_offsets=False)
-            >>> dataset = dataset.map(operations=tokenizer_op)
+            >>> data1 = data1.map(operations=tokenizer_op)
             >>> # If with_offsets=False, then output three columns {["token", dtype=str],
             >>> #                                                   ["offsets_start", dtype=uint32],
             >>> #                                                   ["offsets_limit", dtype=uint32]}
@@ -546,9 +620,9 @@ if platform.system().lower() != 'windows':
             >>>                                   normalization_form=NormalizeForm.NONE,
             >>>                                   preserve_unused_token=True,
             >>>                                   with_offsets=True)
-            >>> data = data.map(operations=tokenizer_op, input_columns=["text"],
-            >>>                 output_columns=["token", "offsets_start", "offsets_limit"],
-            >>>                 column_order=["token", "offsets_start", "offsets_limit"])
+            >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
+            >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                   column_order=["token", "offsets_start", "offsets_limit"])
         """
 
         @check_basic_tokenizer
@@ -587,12 +661,14 @@ if platform.system().lower() != 'windows':
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
         Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.BertTokenizer(vocab=vocab, suffix_indicator='##', max_bytes_per_token=100,
             >>>                                  unknown_token=100, lower_case=False, keep_whitespace=False,
             >>>                                  normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
             >>>                                  with_offsets=False)
-            >>> dataset = dataset.map(operations=tokenizer_op)
+            >>> data1 = data1.map(operations=tokenizer_op)
             >>> # If with_offsets=False, then output three columns {["token", dtype=str],
             >>> #                                                   ["offsets_start", dtype=uint32],
             >>> #                                                   ["offsets_limit", dtype=uint32]}
@@ -600,9 +676,9 @@ if platform.system().lower() != 'windows':
             >>>                                  unknown_token=100, lower_case=False, keep_whitespace=False,
             >>>                                  normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
             >>>                                  with_offsets=True)
-            >>> data = data.map(operations=tokenizer_op, input_columns=["text"],
-            >>>                 output_columns=["token", "offsets_start", "offsets_limit"],
-            >>>                 column_order=["token", "offsets_start", "offsets_limit"])
+            >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
+            >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                   column_order=["token", "offsets_start", "offsets_limit"])
         """
 
         @check_bert_tokenizer
@@ -636,12 +712,14 @@ class TruncateSequencePair(cde.TruncateSequencePairOp):
         max_length (int): Maximum length required.
 
     Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
         >>> # Data before
         >>> # |  col1   |  col2   |
         >>> # +---------+---------|
         >>> # | [1,2,3] | [4,5]   |
         >>> # +---------+---------+
-        >>> data = data.map(operations=TruncateSequencePair(4))
+        >>> data1 = data1.map(operations=text.TruncateSequencePair(4))
         >>> # Data after
         >>> # |  col1   |  col2   |
         >>> # +---------+---------+
@@ -670,6 +748,13 @@ class ToNumber(cde.ToNumberOp):
 
     Raises:
         RuntimeError: If strings are invalid to cast, or are out of range after being casted.
+
+    Examples:
+        >>> import mindspore.dataset.text as text
+        >>> import mindspore.common.dtype as mstype
+        >>>
+        >>> to_number_op = text.ToNumber(mstype.int8)
+        >>> data1 = data1.map(operations=to_number_op)
     """
 
     @check_to_number
@@ -687,9 +772,11 @@ class PythonTokenizer:
         tokenizer (Callable): Python function that takes a `str` and returns a list of `str` as tokens.
 
     Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
         >>> def my_tokenizer(line):
         >>>     return line.split()
-        >>> data = data.map(operations=PythonTokenizer(my_tokenizer))
+        >>> data1 = data1.map(operations=text.PythonTokenizer(my_tokenizer))
     """
 
     @check_python_tokenizer
