@@ -38,8 +38,7 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowBoolTest) {
   ASSERT_EQ(s, Status::OK());
   TensorRow expected_bool;
   std::shared_ptr<Tensor> expected_tensor;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_BOOL), &expected_tensor);
-  expected_tensor->SetItemAt<bool>({0}, bool_value);
+  Tensor::CreateScalar(bool_value, &expected_tensor);
   expected_bool.push_back(expected_tensor);
   ASSERT_EQ(*(bool_output.at(0)) == *(expected_bool.at(0)), true);
 }
@@ -52,8 +51,7 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowIntTest) {
   s = TensorRow::ConvertToTensorRow(int_value, &int_output);
   ASSERT_EQ(s, Status::OK());
   std::shared_ptr<Tensor> expected_tensor;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_INT32), &expected_tensor);
-  expected_tensor->SetItemAt({0}, int_value);
+  Tensor::CreateScalar(int_value, &expected_tensor);
   expected_int.push_back(expected_tensor);
   ASSERT_EQ(*(int_output.at(0)) == *(expected_int.at(0)), true);
 }
@@ -67,8 +65,7 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowFloatTest) {
   s = TensorRow::ConvertToTensorRow(float_value, &float_output);
   ASSERT_EQ(s, Status::OK());
   std::shared_ptr<Tensor> expected_tensor;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_FLOAT32), &expected_tensor);
-  expected_tensor->SetItemAt({0}, float_value);
+  Tensor::CreateScalar(float_value, &expected_tensor);
   expected_float.push_back(expected_tensor);
   ASSERT_EQ(*(float_output.at(0)) == *(expected_float.at(0)), true);
 }
@@ -80,15 +77,10 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowBoolVectorTest) {
   s = TensorRow::ConvertToTensorRow(bool_value, &bool_output);
   ASSERT_EQ(s, Status::OK());
   TensorRow expected_bool;
-  std::shared_ptr<Tensor> expected_tensor, expected_tensor2;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_BOOL), &expected_tensor);
-  expected_tensor->SetItemAt<bool>({0}, bool_value[0]);
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_BOOL), &expected_tensor2);
-  expected_tensor2->SetItemAt<bool>({0}, bool_value[1]);
+  std::shared_ptr<Tensor> expected_tensor;
+  Tensor::CreateFromVector<bool>(bool_value, &expected_tensor);
   expected_bool.push_back(expected_tensor);
-  expected_bool.push_back(expected_tensor2);
   ASSERT_EQ(*(bool_output.at(0)) == *(expected_bool.at(0)), true);
-  ASSERT_EQ(*(bool_output.at(1)) == *(expected_bool.at(1)), true);
 }
 
 TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowIntVectorTest) {
@@ -98,15 +90,10 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowIntVectorTest) {
   TensorRow expected_int;
   s = TensorRow::ConvertToTensorRow(int_value, &int_output);
   ASSERT_EQ(s, Status::OK());
-  std::shared_ptr<Tensor> expected_tensor, expected_tensor2;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_UINT64), &expected_tensor);
-  expected_tensor->SetItemAt({0}, int_value[0]);
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_UINT64), &expected_tensor2);
-  expected_tensor2->SetItemAt({0}, int_value[1]);
+  std::shared_ptr<Tensor> expected_tensor;
+  Tensor::CreateFromVector(int_value, &expected_tensor);
   expected_int.push_back(expected_tensor);
-  expected_int.push_back(expected_tensor2);
   ASSERT_EQ(*(int_output.at(0)) == *(expected_int.at(0)), true);
-  ASSERT_EQ(*(int_output.at(1)) == *(expected_int.at(1)), true);
 }
 
 TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowFloatVectorTest) {
@@ -116,15 +103,10 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowFloatVectorTest) {
   TensorRow expected_float;
   s = TensorRow::ConvertToTensorRow(float_value, &float_output);
   ASSERT_EQ(s, Status::OK());
-  std::shared_ptr<Tensor> expected_tensor, expected_tensor2;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_FLOAT64), &expected_tensor);
-  expected_tensor->SetItemAt({0}, float_value[0]);
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_FLOAT64), &expected_tensor2);
-  expected_tensor2->SetItemAt({0}, float_value[1]);
+  std::shared_ptr<Tensor> expected_tensor;
+  Tensor::CreateFromVector(float_value, &expected_tensor);
   expected_float.push_back(expected_tensor);
-  expected_float.push_back(expected_tensor2);
   ASSERT_EQ(*(float_output.at(0)) == *(expected_float.at(0)), true);
-  ASSERT_EQ(*(float_output.at(1)) == *(expected_float.at(1)), true);
 }
 
 TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowBoolTest) {
@@ -133,8 +115,7 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowBoolTest) {
   bool result;
   TensorRow input_tensor_row;
   std::shared_ptr<Tensor> input_tensor;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_BOOL), &input_tensor);
-  input_tensor->SetItemAt<bool>({0}, bool_value);
+  Tensor::CreateScalar(bool_value, &input_tensor);
   input_tensor_row.push_back(input_tensor);
   s = TensorRow::ConvertFromTensorRow(input_tensor_row, &result);
   ASSERT_EQ(s, Status::OK());
@@ -147,8 +128,7 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowIntTest) {
   int32_t result;
   TensorRow input_tensor_row;
   std::shared_ptr<Tensor> input_tensor;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_INT32), &input_tensor);
-  input_tensor->SetItemAt({0}, int_value);
+  Tensor::CreateScalar(int_value, &input_tensor);
   input_tensor_row.push_back(input_tensor);
   s = TensorRow::ConvertFromTensorRow(input_tensor_row, &result);
   ASSERT_EQ(s, Status::OK());
@@ -161,8 +141,7 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowFloatTest) {
   float result;
   TensorRow input_tensor_row;
   std::shared_ptr<Tensor> input_tensor;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_FLOAT32), &input_tensor);
-  input_tensor->SetItemAt({0}, float_value);
+  Tensor::CreateScalar(float_value, &input_tensor);
   input_tensor_row.push_back(input_tensor);
   s = TensorRow::ConvertFromTensorRow(input_tensor_row, &result);
   ASSERT_EQ(s, Status::OK());
@@ -174,13 +153,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowBoolVectorTest) {
   std::vector<bool> bool_value = {true, false};
   std::vector<bool> result;
   TensorRow input_tensor_row;
-  std::shared_ptr<Tensor> input_tensor1, input_tensor2;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_BOOL), &input_tensor1);
-  input_tensor1->SetItemAt<bool>({0}, bool_value[0]);
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_BOOL), &input_tensor2);
-  input_tensor2->SetItemAt<bool>({0}, bool_value[1]);
-  input_tensor_row.push_back(input_tensor1);
-  input_tensor_row.push_back(input_tensor2);
+  std::shared_ptr<Tensor> input_tensor;
+  Tensor::CreateFromVector<bool>(bool_value, &input_tensor);
+  input_tensor_row.push_back(input_tensor);
   s = TensorRow::ConvertFromTensorRow(input_tensor_row, &result);
   ASSERT_EQ(s, Status::OK());
   ASSERT_EQ(result, bool_value);
@@ -191,13 +166,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowIntVectorTest) {
   std::vector<uint64_t> int_value = {12, 16};
   std::vector<uint64_t> result;
   TensorRow input_tensor_row;
-  std::shared_ptr<Tensor> input_tensor1, input_tensor2;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_UINT64), &input_tensor1);
-  input_tensor1->SetItemAt({0}, int_value[0]);
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_UINT64), &input_tensor2);
-  input_tensor2->SetItemAt({0}, int_value[1]);
-  input_tensor_row.push_back(input_tensor1);
-  input_tensor_row.push_back(input_tensor2);
+  std::shared_ptr<Tensor> input_tensor;
+  Tensor::CreateFromVector(int_value, &input_tensor);
+  input_tensor_row.push_back(input_tensor);
   s = TensorRow::ConvertFromTensorRow(input_tensor_row, &result);
   ASSERT_EQ(s, Status::OK());
   ASSERT_EQ(result, int_value);
@@ -208,13 +179,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowFloatVectorTest) {
   std::vector<double> float_value = {12.57, 0.264};
   std::vector<double> result;
   TensorRow input_tensor_row;
-  std::shared_ptr<Tensor> input_tensor1, input_tensor2;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_FLOAT64), &input_tensor1);
-  input_tensor1->SetItemAt({0}, float_value[0]);
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_FLOAT64), &input_tensor2);
-  input_tensor2->SetItemAt({0}, float_value[1]);
-  input_tensor_row.push_back(input_tensor1);
-  input_tensor_row.push_back(input_tensor2);
+  std::shared_ptr<Tensor> input_tensor;
+  Tensor::CreateFromVector(float_value, &input_tensor);
+  input_tensor_row.push_back(input_tensor);
   s = TensorRow::ConvertFromTensorRow(input_tensor_row, &result);
   ASSERT_EQ(s, Status::OK());
   ASSERT_EQ(result, float_value);
@@ -231,8 +198,7 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowInvalidDataTest) {
 TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowTypeMismatchTest) {
   TensorRow input_tensor_row;
   std::shared_ptr<Tensor> input_tensor1;
-  Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_BOOL), &input_tensor1);
-  input_tensor1->SetItemAt({0}, false);
+  Tensor::CreateScalar(false, &input_tensor1);
   input_tensor_row.push_back(input_tensor1);
   double output;
   ASSERT_FALSE(TensorRow::ConvertFromTensorRow(input_tensor_row, &output).IsOk());
@@ -243,7 +209,7 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowTypeMismatchTest) {
 TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowInvalidShapeTest) {
   TensorRow input_tensor_row;
   std::shared_ptr<Tensor> input_tensor1;
-  Tensor::CreateEmpty(TensorShape({2}), DataType(DataType::DE_FLOAT64), &input_tensor1);
+  Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_FLOAT64), &input_tensor1);
   input_tensor_row.push_back(input_tensor1);
   std::vector<double> output;
   ASSERT_FALSE(TensorRow::ConvertFromTensorRow(input_tensor_row, &output).IsOk());

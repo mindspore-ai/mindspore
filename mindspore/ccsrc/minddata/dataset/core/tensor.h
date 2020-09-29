@@ -174,6 +174,18 @@ class Tensor {
     return CreateFromVector(items, TensorShape({static_cast<dsize_t>(items.size())}), out);
   }
 
+  /// Create a 1D boolean Tensor from a given list of boolean values.
+  /// \param[in] items elements of the tensor
+  /// \param[in] shape shape of the output tensor
+  /// \param[out] out output argument to hold the created Tensor
+  /// \return Status Code
+  static Status CreateFromVector(const std::vector<bool> &items, const TensorShape &shape, TensorPtr *out) {
+    std::vector<uint8_t> temp(items.begin(), items.end());
+    RETURN_IF_NOT_OK(CreateFromVector(temp, shape, out));
+    (*out)->type_ = DataType(DataType::DE_BOOL);
+    return Status::OK();
+  }
+
   /// Create a numeric scalar Tensor from the given value.
   /// \tparam T type of value
   /// \param[in] item value

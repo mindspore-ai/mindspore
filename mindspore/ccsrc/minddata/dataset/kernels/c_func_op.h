@@ -29,7 +29,7 @@ namespace mindspore {
 namespace dataset {
 class CFuncOp : public TensorOp {
  public:
-  explicit CFuncOp(TensorRow (*func)(TensorRow)) : c_func_ptr_(func) {}
+  explicit CFuncOp(std::function<TensorRow(TensorRow)> func) : c_func_ptr_(func) {}
 
   ~CFuncOp() override = default;
 
@@ -42,7 +42,7 @@ class CFuncOp : public TensorOp {
   std::string Name() const override { return kCFuncOp; }
 
  private:
-  TensorRow (*c_func_ptr_)(TensorRow);
+  std::function<TensorRow(TensorRow)> c_func_ptr_;
 };
 }  // namespace dataset
 }  // namespace mindspore
