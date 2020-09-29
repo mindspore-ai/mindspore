@@ -98,9 +98,8 @@ Status SubsetRandomSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffe
     auto id_ptr = outputIds->begin<int64_t>();
     while (sample_id_ < last_id) {
       if (indices_[sample_id_] >= num_rows_) {
-        std::string err_msg =
-          "Generated id is bigger than numRows (out of bound). indices_: " + std::to_string(indices_[sample_id_]) +
-          " num_rows_: " + std::to_string(num_rows_);
+        std::string err_msg = "Generated indice is out of bound, expect range [0, num_data-1], got indice: " +
+                              std::to_string(indices_[sample_id_]) + ", num_data: " + std::to_string(num_rows_ - 1);
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
 

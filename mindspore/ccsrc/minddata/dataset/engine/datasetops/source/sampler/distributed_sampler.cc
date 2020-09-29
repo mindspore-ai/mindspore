@@ -76,7 +76,10 @@ Status DistributedSampler::InitSampler() {
 
 Status DistributedSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (cnt_ > samples_per_buffer_) {
-    RETURN_STATUS_UNEXPECTED("Distributed Sampler Error");
+    RETURN_STATUS_UNEXPECTED(
+      "Number of samples(cnt) that have already been filled in to buffer should be less than or "
+      "equal to samples_per_buffer, but got cnt: " +
+      std::to_string(cnt_) + ", samples_per_buffer: " + std::to_string(samples_per_buffer_));
   } else if (cnt_ == samples_per_buffer_ && (non_empty_ || !even_dist_)) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
     if (!samples_per_buffer_) {

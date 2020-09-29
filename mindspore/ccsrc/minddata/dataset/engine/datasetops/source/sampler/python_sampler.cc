@@ -53,7 +53,8 @@ Status PythonSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
       } catch (const py::error_already_set &e) {
         return Status(StatusCode::kPyFuncException, e.what());
       } catch (const py::cast_error &e) {
-        return Status(StatusCode::kPyFuncException, "Python Sampler iterator should return integer index");
+        return Status(StatusCode::kPyFuncException,
+                      "Invalid data, python sampler iterator should return an integer index.");
       }
     }
     TensorRow row(1, sample_ids);
@@ -64,7 +65,8 @@ Status PythonSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
 }
 
 Status PythonSampler::InitSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "ERROR num_rows_ should be greater than 0");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    num_rows_ > 0, "Invalid parameter, num_rows must be greater than 0, but got " + std::to_string(num_rows_));
   // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
   // If the user asked to sample more rows than exists in the dataset, adjust the num_samples accordingly.
   if (num_samples_ == 0 || num_samples_ > num_rows_) {
