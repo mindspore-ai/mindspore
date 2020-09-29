@@ -87,7 +87,11 @@ void MatMul16x8(const float16_t *a, const float16_t *b, float16_t *dst, const fl
 
 void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, ActType act_type,
                 int depth, int row, int col, int stride, bool write_nhwc) {
-  MatmulFp16Neon64(a, b, c, bias, (int)act_type, depth, row, col, stride, write_nhwc);
+  if (!write_nhwc) {
+    MatmulFp16Neon64(a, b, c, bias, (int)act_type, depth, row, col, stride, write_nhwc);
+  } else {
+    MatmulFp16Neon64Opt(a, b, c, bias, (int)act_type, depth, row, col, stride, 1);
+  }
   return;
 }
 
