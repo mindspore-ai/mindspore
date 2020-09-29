@@ -271,7 +271,11 @@ STATUS OnnxModelParser::ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph,
   auto status = node_parser->Parse(onnx_graph, onnx_node, dst_op);
   if (status != RET_OK) {
     interrupt = true;
-    MS_LOG(ERROR) << "parser onnx node " << onnx_node.op_type() << " attr failed";
+    if (status == RET_NOT_SUPPORT) {
+      NoSupportOp::GetInstance()->InsertOp(onnx_node.op_type());
+    } else {
+      MS_LOG(ERROR) << "parser onnx node " << onnx_node.op_type() << " attr failed";
+    }
     return status;
   }
   // set op input index
@@ -514,6 +518,7 @@ schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, con
     return nullptr;
   }
   // init op node input/output tensor, and dst_op attr
+  NoSupportOp::GetInstance()->SetFmkType("ONNX");
   for (const auto &onnx_node : onnx_graph.node()) {
     int status_node = RET_OK;
     if (onnx_node.op_type() == "Constant") {

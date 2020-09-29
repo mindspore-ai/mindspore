@@ -34,7 +34,6 @@ int Storage::Save(const schema::MetaGraphT &graph, const std::string &outputPath
     return RET_ERROR;
   }
   if (access((outputPath + ".ms").c_str(), F_OK) == 0) {
-    MS_LOG(WARNING) << "this file " << outputPath << ".ms has been existed";
     chmod((outputPath + ".ms").c_str(), S_IWUSR);
   }
   std::ofstream output(outputPath + ".ms", std::ofstream::binary);

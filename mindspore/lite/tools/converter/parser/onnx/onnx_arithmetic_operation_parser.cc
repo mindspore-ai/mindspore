@@ -559,6 +559,29 @@ STATUS OnnxTanhParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
   return RET_OK;
 }
 
+STATUS OnnxSignParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+  MS_LOG(DEBUG) << "onnx TanhParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+  attr->type = schema::ActivationType_SIGN;
+  op->primitive->value.type = schema::PrimitiveType_Activation;
+  op->primitive->value.value = attr.release();
+  return RET_OK;
+}
+
 OnnxNodeRegistrar g_onnxAddParser("Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxInt8AddParser("Int8Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxSubParser("Sub", new OnnxSubParser());
@@ -584,5 +607,6 @@ OnnxNodeRegistrar g_onnxTanParser("Tan", new OnnxTanParser());
 OnnxNodeRegistrar g_onnxAtanParser("Atan", new OnnxAtanParser());
 OnnxNodeRegistrar g_onnxAsinParser("Asin", new OnnxAsinParser());
 OnnxNodeRegistrar g_onnxTanhParser("Tanh", new OnnxTanhParser());
+OnnxNodeRegistrar g_onnxSignParser("Sign", new OnnxTanhParser());
 }  // namespace lite
 }  // namespace mindspore
