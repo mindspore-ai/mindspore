@@ -41,9 +41,9 @@ fi
 
 python ${current_exec_path}/src/generate_hccn_file.py
 
-export DEVICE_NUM=4
-export RANK_SIZE=4
-export RANK_TABLE_FILE=${current_exec_path}/rank_table_4p.json
+export DEVICE_NUM=8
+export RANK_SIZE=8
+export RANK_TABLE_FILE=${current_exec_path}/rank_table_8p.json
 
 for((i=0; i<${DEVICE_NUM}; i++))
 do

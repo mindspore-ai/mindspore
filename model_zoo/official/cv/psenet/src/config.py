@@ -29,6 +29,12 @@ config = ed({
     # neck
     'NECK_OUT_CHANNEL': 256,
 
+    # lr
+    "BASE_LR": 2e-3,
+    "TRAIN_TOTAL_ITER": 58000,
+    "WARMUP_STEP": 620,
+    "WARMUP_RATIO": 1/3,
+
     # dataset for train
     "TRAIN_ROOT_DIR": 'psenet/ic15/',
     "TRAIN_IS_TRANSFORM": True,
@@ -37,9 +43,8 @@ config = ed({
     "TRAIN_MIN_SCALE": 0.4,
     "TRAIN_BUFFER_SIZE": 8,
     "TRAIN_BATCH_SIZE": 4,
-    "TRAIN_REPEAT_NUM": 608*4,
+    "TRAIN_REPEAT_NUM": 1800,
     "TRAIN_DROP_REMAINDER": True,
-    "TRAIN_TOTAL_ITER": 152000,
     "TRAIN_MODEL_SAVE_PATH": './checkpoints/',
 
     # dataset for test

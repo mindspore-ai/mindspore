@@ -14,7 +14,6 @@
 # ============================================================================
 
 
-import math
 import argparse
 import mindspore.nn as nn
 from mindspore import context
@@ -29,6 +28,7 @@ from src.config import config
 from src.ETSNET.etsnet import ETSNet
 from src.ETSNET.dice_loss import DiceLoss
 from src.network_define import WithLossCell, TrainOneStepCell, LossCallBack
+from src.lr_schedule import dynamic_lr
 
 parser = argparse.ArgumentParser(description='Hyperparams')
 parser.add_argument('--run_distribute', default=False, action='store_true',
@@ -40,10 +40,6 @@ args = parser.parse_args()
 
 set_seed(1)
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args.device_id)
-
-def lr_generator(start_lr, lr_scale, total_iters):
-    lrs = [start_lr * (lr_scale ** math.floor(cur_iter * 1.0 / (total_iters / 3))) for cur_iter in range(total_iters)]
-    return lrs
 
 def train():
     rank_id = 0
@@ -67,7 +63,7 @@ def train():
 
     criterion = DiceLoss(batch_size=config.TRAIN_BATCH_SIZE)
 
-    lrs = lr_generator(start_lr=1e-3, lr_scale=0.1, total_iters=config.TRAIN_TOTAL_ITER)
+    lrs = dynamic_lr(config.BASE_LR, config.TRAIN_TOTAL_ITER, config.WARMUP_STEP, config.WARMUP_RATIO)
     opt = nn.SGD(params=net.trainable_params(), learning_rate=lrs, momentum=0.99, weight_decay=5e-4)
 
     # warp model

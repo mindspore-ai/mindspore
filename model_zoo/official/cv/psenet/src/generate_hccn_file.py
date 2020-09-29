@@ -17,7 +17,7 @@
 import os
 import socket
 
-RANK_TABLE_SAVE_PATH = './rank_table_4p.json'
+RANK_TABLE_SAVE_PATH = './rank_table_8p.json'
 
 
 def main():
