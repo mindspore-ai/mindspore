@@ -271,6 +271,15 @@ TEST_F(MindDataImageProcess, TestApplyNms) {
   ASSERT_TRUE(keep[2] == 1);
 }
 
+TEST_F(MindDataImageProcess, TestAffineInput) {
+  LiteMat src(3, 3);
+  LiteMat dst;
+  double M[6] = {1};
+  EXPECT_FALSE(Affine(src, dst, M, {}, UINT8_C1(0)));
+  EXPECT_FALSE(Affine(src, dst, M, {3}, UINT8_C1(0)));
+  EXPECT_FALSE(Affine(src, dst, M, {0, 0}, UINT8_C1(0)));
+}
+
 TEST_F(MindDataImageProcess, TestAffine) {
   // The input matrix
   // 0 0 1 0 0
@@ -325,7 +334,7 @@ TEST_F(MindDataImageProcess, TestAffine) {
   }
   std::cout << std::endl;
   LiteMat dst;
-  Affine(src, dst, M, {rows, cols}, UINT8_C1(0));
+  EXPECT_TRUE(Affine(src, dst, M, {rows, cols}, UINT8_C1(0)));
 
   for (size_t i = 0; i < rows; i++) {
     for (size_t j = 0; j < cols; j++) {
