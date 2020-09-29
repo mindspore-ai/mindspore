@@ -51,6 +51,16 @@ MS_REG_CPU_KERNEL(
 
 MS_REG_CPU_KERNEL(
   EmbeddingLookup,
+  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  EmbeddingLookUpCPUKernel);
+
+MS_REG_CPU_KERNEL(
+  EmbeddingLookup,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  EmbeddingLookUpCPUKernel);
+
+MS_REG_CPU_KERNEL(
+  EmbeddingLookup,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
   EmbeddingLookUpCPUKernel);
 }  // namespace kernel
