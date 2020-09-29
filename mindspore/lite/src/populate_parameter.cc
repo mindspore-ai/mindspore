@@ -115,6 +115,7 @@
 #include "src/ops/l2_norm.h"
 #include "src/ops/neg.h"
 #include "src/ops/detection_post_process.h"
+#include "src/ops/skip_gram.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/arg_min_max.h"
 #include "nnacl/fp32/cast.h"
@@ -174,6 +175,7 @@
 #include "nnacl/l2_norm_parameter.h"
 #include "nnacl/detection_post_process_parameter.h"
 #include "nnacl/fp32/exp.h"
+#include "nnacl/fp32/skip_gram.h"
 
 namespace mindspore::kernel {
 
@@ -1586,6 +1588,21 @@ OpParameter *PopulateExpParameter(const mindspore::lite::PrimitiveC *primitive) 
   return reinterpret_cast<OpParameter *>(exp_parameter);
 }
 
+OpParameter *PopulateSkipGramParameter(const mindspore::lite::PrimitiveC *primitive) {
+  SkipGramParameter *skipGramParameter = reinterpret_cast<SkipGramParameter *>(malloc(sizeof(SkipGramParameter)));
+  if (skipGramParameter == nullptr) {
+    MS_LOG(ERROR) << "malloc SkipGramParameter failed.";
+    return nullptr;
+  }
+  memset(skipGramParameter, 0, sizeof(SkipGramParameter));
+  skipGramParameter->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::SkipGram *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  skipGramParameter->ngram_size = param->GetNgramSize();
+  skipGramParameter->max_skip_size = param->GetMaxSkipSize();
+  skipGramParameter->include_all_ngrams = param->GetIncludeAllNgrams();
+  return reinterpret_cast<OpParameter *>(skipGramParameter);
+}
+
 PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_SparseToDense] = PopulateSparseToDenseParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SoftMax] = PopulateSoftmaxParameter;
@@ -1688,6 +1705,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Elu] = PopulateEluParameter;
   populate_parameter_funcs_[schema::PrimitiveType_L2Norm] = PopulateL2NormParameter;
   populate_parameter_funcs_[schema::PrimitiveType_DetectionPostProcess] = PopulateDetectionPostProcessParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_SkipGram] = PopulateSkipGramParameter;
 }
 
 PopulateParameterRegistry *PopulateParameterRegistry::GetInstance() {

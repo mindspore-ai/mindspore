@@ -19,6 +19,7 @@ endif ()
 set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/log_adapter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_api.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/thread_pool.c

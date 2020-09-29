@@ -124,6 +124,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/common/file_utils.cc
         ${LITE_DIR}/src/common/file_utils_ext.cc
         ${LITE_DIR}/src/common/utils.cc
+        ${LITE_DIR}/src/common/string_util.cc
         ${LITE_DIR}/tools/common/graph_util.cc
         ${LITE_DIR}/tools/common/tensor_util.cc
         ${LITE_DIR}/tools/common/node_util.cc

@@ -17,6 +17,7 @@ if (WIN32)
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/inner_context.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/kernel_registry.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_util.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/string_util.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/runtime_api.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/thread_pool.c
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/workspace_pool.cc
@@ -42,6 +43,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/node_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/tensor_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/string_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/protobuf_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/storage.cc
@@ -75,6 +77,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../../core mindspore_core)
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 set(LITE_SRC
         ${SRC_DIR}/common/graph_util.cc
+        ${SRC_DIR}/common/string_util.cc
         ${SRC_DIR}/runtime/allocator.cc
         ${SRC_DIR}/runtime/runtime_api.cc
         ${SRC_DIR}/runtime/thread_pool.c
