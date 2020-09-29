@@ -262,9 +262,9 @@ Status Server::BuildAndStart() {
   ClearEnv();
   server->Shutdown();
   event_base_loopexit(eb, nullptr);
-  exit_http();
   grpc_thread.join();
   restful_thread.join();
+  exit_http();
   return SUCCESS;
 }
 }  // namespace serving
