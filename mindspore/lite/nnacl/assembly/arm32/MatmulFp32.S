@@ -91,7 +91,7 @@ LoopCol:
 
         Activation:
             ldr lr, [sp]
-            cmp lr, #2
+            cmp lr, #3
             beq Relu6
             cmp lr, #1
             beq Relu

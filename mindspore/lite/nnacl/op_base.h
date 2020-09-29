@@ -68,6 +68,6 @@ typedef struct OpParameter {
   int thread_num_;
 } OpParameter;
 
-typedef enum ActType { ActType_No, ActType_Relu, ActType_Relu6, ActType_Prelu } ActType;
+typedef enum ActType { ActType_No, ActType_Relu, ActType_Sigmod, ActType_Relu6, ActType_Prelu } ActType;
 
 #endif  // MINDSPORE_LITE_NNACL_OP_BASE_H_

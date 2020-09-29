@@ -159,7 +159,7 @@ LoopRow:
             fadd v31.4s, v31.4s, v1.4s
 
         Activation:
-            cmp x4, #2
+            cmp x4, #3
             beq Relu6
             cmp x4, #1
             beq Relu
@@ -278,7 +278,7 @@ LoopRow:
             fadd v30.4s, v30.4s, v0.4s
 
         ActivationHalf:
-            cmp x4, #2
+            cmp x4, #3
             beq Relu6Half
             cmp x4, #1
             beq ReluHalf
@@ -401,7 +401,7 @@ LoopRow8:
             fadd v23.4s, v23.4s, v1.4s
 
         Activation8:
-            cmp x4, #2
+            cmp x4, #3
             beq Relu68
             cmp x4, #1
             beq Relu8
@@ -492,7 +492,7 @@ LoopRow8:
             fadd v22.4s, v22.4s, v0.4s
 
         ActivationHalf8:
-            cmp x4, #2
+            cmp x4, #3
             beq Relu6Half8
             cmp x4, #1
             beq ReluHalf8
@@ -582,7 +582,7 @@ LoopRow4:
             fadd v15.4s, v15.4s, v1.4s
 
         Activation4:
-            cmp x4, #2
+            cmp x4, #3
             beq Relu64
             cmp x4, #1
             beq Relu4
@@ -645,7 +645,7 @@ LoopRow4:
             fadd v14.4s, v14.4s, v0.4s
 
         ActivationHalf4:
-            cmp x4, #2
+            cmp x4, #3
             beq Relu6Half4
             cmp x4, #1
             beq ReluHalf4
