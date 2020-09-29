@@ -19,6 +19,7 @@
 #include <memory>
 #include <mutex>
 #include <utility>
+#include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/memory_pool.h"
 #include "minddata/dataset/util/treap.h"
 
@@ -103,7 +104,12 @@ class Arena : public MemoryPool {
   // Disable copy and assignment constructor
   Arena(const Arena &) = delete;
   Arena &operator=(const Arena &) = delete;
-  ~Arena() override = default;
+  ~Arena() override {
+    if (ptr_ != nullptr) {
+      free(ptr_);
+    }
+    ptr_ = nullptr;
+  }
 
   /// As a derived class of MemoryPool, we have to implement the following.
   /// But we simply transfer the call to the implementation class
@@ -140,7 +146,7 @@ class Arena : public MemoryPool {
  protected:
   mutable std::mutex mux_;
   std::unique_ptr<ArenaImpl> impl_;
-  std::unique_ptr<uint8_t[]> mem_;
+  void *ptr_;
   size_t size_in_MB_;
 
   explicit Arena(size_t val_in_MB = 4096);
