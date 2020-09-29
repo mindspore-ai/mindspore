@@ -25,7 +25,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 class Net(nn.Cell):
     def __init__(self, shape_x, begin, end, strides):
         super(Net, self).__init__()
-        self.strided_slice_grad = G.StridedSliceGradAICPU()
+        self.strided_slice_grad = G.StridedSliceGrad()
         self.shape_x = shape_x
         self.begin = begin
         self.end = end
