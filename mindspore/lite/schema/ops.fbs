@@ -988,3 +988,13 @@ table Mfcc {
     filterBankChannelNum : int;
     dctCoeffNum : int;
 }
+
+table Rfft {
+    fftLength : int;
+}
+
+table FftReal {
+}
+
+table FftImag {
+}

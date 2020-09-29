@@ -110,7 +110,8 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphInputTensors(const std::vect
   for (const auto &kernel : input_kernels) {
     for (const auto &tensor : kernel->in_tensors()) {
       auto iter = std::find(all_output_tensors.begin(), all_output_tensors.end(), tensor);
-      if (iter == all_output_tensors.end() && tensor->data_c() == nullptr) {
+      if (iter == all_output_tensors.end() &&
+          !(tensor->category() == mindspore::lite::Tensor::CONST && tensor->data_c() != nullptr)) {
         input_tensors.emplace_back(tensor);
       }
     }

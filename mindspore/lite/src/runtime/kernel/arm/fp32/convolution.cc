@@ -171,16 +171,16 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
-  conv_param->input_h_ = inputs.front()->Height();
-  conv_param->input_w_ = inputs.front()->Width();
-  conv_param->input_channel_ = inputs.front()->Channel();
-  conv_param->output_h_ = outputs.front()->Height();
-  conv_param->output_w_ = outputs.front()->Width();
-  conv_param->output_channel_ = outputs.front()->Channel();
-  conv_param->op_parameter_.thread_num_ = ctx->thread_num_;
   bool use_winograd = false;
   int out_unit;
   if (primitive != nullptr && primitive->GetInferFlag()) {
+    conv_param->input_h_ = inputs.front()->Height();
+    conv_param->input_w_ = inputs.front()->Width();
+    conv_param->input_channel_ = inputs.front()->Channel();
+    conv_param->output_h_ = outputs.front()->Height();
+    conv_param->output_w_ = outputs.front()->Width();
+    conv_param->output_channel_ = outputs.front()->Channel();
+    conv_param->op_parameter_.thread_num_ = ctx->thread_num_;
     CheckIfUseWinograd(&use_winograd, &out_unit, conv_param);
   }
 
