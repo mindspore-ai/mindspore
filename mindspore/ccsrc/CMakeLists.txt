@@ -326,6 +326,11 @@ add_library(inference SHARED
 target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
         -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_gvar mindspore::protobuf)
 
+if (ENABLE_D)
+    target_link_libraries(_c_expression PRIVATE ${ASCEND_PATH}/fwkacllib/lib64/libadump_server.a)
+    target_link_libraries(inference PRIVATE ${ASCEND_PATH}/fwkacllib/lib64/libadump_server.a)
+endif()
+
 if (ENABLE_CPU)
     target_link_libraries(inference PRIVATE mindspore::dnnl mindspore::mkldnn)
 endif ()
@@ -339,4 +344,3 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
 elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set_target_properties(inference PROPERTIES MACOSX_RPATH ON)
 endif ()
-

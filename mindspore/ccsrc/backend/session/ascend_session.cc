@@ -44,6 +44,7 @@
 #include "debug/data_dump/e2e_dump_util.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
+#include "toolchain/adx_datadump_server.h"
 
 namespace mindspore {
 namespace session {
@@ -425,6 +426,16 @@ void AscendSession::SelectKernel(const KernelGraph &kernel_graph) const {
   MS_LOG(INFO) << "Finish!";
 }
 
+void DumpInit() {
+  auto &json_parser = DumpJsonParser::GetInstance();
+  json_parser.Parse();
+  if (json_parser.async_dump_enabled()) {
+    if (AdxDataDumpServerInit() != 0) {
+      MS_LOG(EXCEPTION) << "Adx data dump server init failed";
+    }
+  }
+}
+
 void AscendSession::InitRuntimeResource() {
   MS_LOG(INFO) << "Start!";
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
@@ -432,7 +443,7 @@ void AscendSession::InitRuntimeResource() {
   if (!runtime_instance->Init()) {
     MS_LOG(EXCEPTION) << "Kernel runtime init error.";
   }
-  DumpJsonParser::GetInstance().Parse();
+  DumpInit();
   MS_LOG(INFO) << "Finish!";
 }
 
