@@ -18,22 +18,28 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/base/slice_base.h"
+#include "nnacl/slice_parameter.h"
 
 namespace mindspore::kernel {
-class SliceCPUKernel : public SliceBaseCPUKernel {
+class SliceCPUKernel : public LiteKernel {
  public:
   SliceCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                  const mindspore::lite::PrimitiveC *primitive)
-      : SliceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    param_ = reinterpret_cast<SliceParameter *>(op_parameter_);
+  }
   ~SliceCPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int SliceParallelRun(int thread_id);
+  virtual int SliceParallelRun(int thread_id);
+
+ protected:
+  SliceParameter *param_;
 };
+int SliceLaunch(void *cdata, int task_id);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SLICE_H_

@@ -14,55 +14,41 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/fp32/slice.h"
-#include <vector>
-#include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "nnacl/fp32/slice.h"
-#include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 #include "src/ops/slice.h"
 
 using mindspore::lite::KernelRegistrar;
-using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_NULL_PTR;
-using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Slice;
 
 namespace mindspore::kernel {
-namespace {
 int SliceLaunch(void *cdata, int task_id) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "Input cdata is nullptr!";
-    return RET_NULL_PTR;
+    return RET_ERROR;
   }
   auto kernel = reinterpret_cast<SliceCPUKernel *>(cdata);
   return kernel->SliceParallelRun(task_id);
 }
-}  // namespace
 
 int SliceCPUKernel::ReSize() {
   auto primitive_slice = reinterpret_cast<const mindspore::lite::Slice *>(primitive_);
   auto begin = primitive_slice->GetPostProcessBegin();
   auto size = primitive_slice->GetPostProcessSize();
-  auto param = reinterpret_cast<SliceParameter *>(op_parameter_);
-  param->param_length_ = in_tensors_[0]->shape().size();
-  for (int i = 0; i < param->param_length_; ++i) {
-    param->begin_[i] = begin[i];
-    param->size_[i] = size[i];
-  }
-  auto input_shape = in_tensors_[0]->shape();
-  if (static_cast<int>(input_shape.size()) != param->param_length_) {
-    MS_LOG(ERROR) << "Input begin's lenth " << param->param_length_ << "is not equal to input shape size "
-                  << input_shape.size();
-    return RET_ERROR;
-  }
-  if (input_shape.size() > DIMENSION_4D) {
+
+  param_->param_length_ = in_tensors_.at(0)->shape().size();
+  if (param_->param_length_ > DIMENSION_4D) {
     MS_LOG(ERROR) << "input dimension num should <= " << DIMENSION_4D;
     return RET_ERROR;
   }
-
-  for (size_t i = 0; i < input_shape.size(); ++i) {
-    param->shape_[i] = input_shape[i];
+  for (int i = 0; i < param_->param_length_; ++i) {
+    param_->shape_[i] = in_tensors_.at(0)->DimensionSize(i);
+    param_->begin_[i] = begin[i];
+    param_->size_[i] = size[i] < 0 ? param_->shape_[i] - param_->begin_[i] : size[i];
+    param_->end_[i] = param_->begin_[i] + param_->size_[i];
+  }
+  if (param_->param_length_ < DIMENSION_4D) {
+    PadSliceParameterTo4D(param_);
   }
   return RET_OK;
 }
@@ -77,8 +63,7 @@ int SliceCPUKernel::Init() {
 int SliceCPUKernel::SliceParallelRun(int thread_id) {
   const float *input_data = reinterpret_cast<const float *>(in_tensors_[0]->MutableData());
   float *output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
-  SliceParameter *param = reinterpret_cast<SliceParameter *>(op_parameter_);
-  DoSlice(input_data, output_data, param, thread_id);
+  DoSlice(input_data, output_data, param_, thread_id);
   return RET_OK;
 }
 
@@ -88,29 +73,38 @@ int SliceCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  SliceParameter *param = reinterpret_cast<SliceParameter *>(op_parameter_);
-  for (int i = 0; i < param->param_length_; ++i) {
-    if (param->size_[i] < 0) {
-      param->size_[i] = param->shape_[i] - param->begin_[i];
-    }
-    param->end_[i] = param->begin_[i] + param->size_[i];
-  }
-
-  if (param->param_length_ < DIMENSION_4D) {
-    PadSliceParameterTo4D(param);
-  }
-
   const float *input_data = reinterpret_cast<const float *>(in_tensors_[0]->MutableData());
   float *output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
-  if (param->size_[1] < param->op_parameter_.thread_num_) {
-    DoSliceNoParallel(input_data, output_data, param);
+  if (param_->size_[1] < op_parameter_->thread_num_) {
+    DoSliceNoParallel(input_data, output_data, param_);
     return RET_OK;
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, SliceLaunch, this, param->op_parameter_.thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, SliceLaunch, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "slice launch fail!ret: " << ret;
     return RET_ERROR;
   }
   return RET_OK;
 }
+
+kernel::LiteKernel *CpuSliceFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                              const lite::InnerContext *ctx, const kernel::KernelKey &desc,
+                                              const mindspore::lite::PrimitiveC *primitive) {
+  auto *kernel = new (std::nothrow) SliceCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new SliceCPUKernel fail!";
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Slice, CpuSliceFp32KernelCreator)
 }  // namespace mindspore::kernel
