@@ -133,12 +133,12 @@ std::map<tflite::ActivationFunctionType, schema::ActivationType> tfMsActivationF
 };
 
 std::map<int, TypeId> type_map = {
-  {tflite::TensorType_FLOAT64, TypeId::kNumberTypeFloat64}, {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32},
-  {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16}, {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},
-  {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},     {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
-  {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},     {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
-  {tflite::TensorType_BOOL, TypeId::kNumberTypeBool},       {tflite::TensorType_STRING, TypeId::kObjectTypeString},
-};
+  {tflite::TensorType_FLOAT64, TypeId::kNumberTypeFloat64},    {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32},
+  {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16},    {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},
+  {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},        {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
+  {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},        {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
+  {tflite::TensorType_BOOL, TypeId::kNumberTypeBool},          {tflite::TensorType_STRING, TypeId::kObjectTypeString},
+  {tflite::TensorType_COMPLEX64, TypeId::kNumberTypeComplex64}};
 
 schema::ActivationType GetActivationFunctionType(tflite::ActivationFunctionType tfliteAFType) {
   return tfMsActivationFunctionMap.at(tfliteAFType);

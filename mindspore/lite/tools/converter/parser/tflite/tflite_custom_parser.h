@@ -49,6 +49,15 @@ class TfliteCustomParser : public TfliteNodeParser {
 
   STATUS ExtractFeatures(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
                          const std::unique_ptr<tflite::OperatorT> &tflite_op);
+
+  STATUS Rfft(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+              const std::unique_ptr<tflite::OperatorT> &tflite_op, const std::unique_ptr<tflite::ModelT> &tflite_model);
+
+  STATUS FftReal(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                 const std::unique_ptr<tflite::OperatorT> &tflite_op);
+
+  STATUS FftImag(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                 const std::unique_ptr<tflite::OperatorT> &tflite_op);
 };
 }  // namespace lite
 }  // namespace mindspore
