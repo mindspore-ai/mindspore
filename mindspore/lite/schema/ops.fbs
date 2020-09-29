@@ -58,7 +58,8 @@ enum ActivationType : byte {
     THRESHOLDRELU = 14,
     LINEAR = 15,
     HARD_TANH = 16,
-    UNKNOW = 17
+    SIGN = 17,
+    UNKNOW = 18
 }
 enum ActivationGradType : byte {
     NO_ACTIVATION = 0,
