@@ -49,7 +49,7 @@ def train():
     rank_id = 0
     if args.run_distribute:
         context.set_auto_parallel_context(device_num=args.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          gradients_mean=True, parameter_broadcast=True)
+                                          gradients_mean=True)
         init()
         rank_id = get_rank()
 

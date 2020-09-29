@@ -13,3 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef ADAPTOR_H
+#define ADAPTOR_H
+#endif
