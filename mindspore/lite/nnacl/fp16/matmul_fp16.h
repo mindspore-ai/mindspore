@@ -39,6 +39,9 @@ void RowMajor2Col16MajorFp16Opt(float16_t *src_ptr, float16_t *dst_ptr, size_t r
 void MatmulFp16Neon64(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
                       size_t depth, size_t row, size_t col, size_t stride, bool write_nhwc);
 
+void MatmulFp16Neon64Opt(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
+                         size_t depth, size_t row, size_t col, size_t stride, int write_nhwc);
+
 void RowMajor2Col16MajorFp16(void *src, float16_t *dst, int row, int col, bool is_fp32_src);
 
 void RowMajor2Row16MajorFp16(void *src, float16_t *dst, int row, int col, bool is_fp32_src);
