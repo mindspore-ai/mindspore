@@ -58,7 +58,7 @@ class GNNFeatureTransform(nn.Cell):
         Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
 
     Examples:
-        >>> net = nn.Dense(3, 4)
+        >>> net = nn.GNNFeatureTransform(3, 4)
         >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
         >>> net(input)
         [[ 2.5246444   2.2738023   0.5711005  -3.9399147 ]

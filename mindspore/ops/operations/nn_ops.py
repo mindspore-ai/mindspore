@@ -18,9 +18,7 @@
 import math
 import operator
 from functools import reduce
-
 import numpy as np
-
 from ... import context
 from .. import signature as sig
 from ..._checkparam import Validator as validator
