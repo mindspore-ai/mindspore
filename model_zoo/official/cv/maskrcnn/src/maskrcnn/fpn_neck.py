@@ -16,13 +16,11 @@
 
 import numpy as np
 import mindspore.nn as nn
-from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True)
 
 def bias_init_zeros(shape):
     """Bias init method."""
