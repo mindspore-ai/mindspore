@@ -630,26 +630,6 @@ void PackNHWC4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int c
   }
 }
 
-void PackNCHWToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int channel) {
-  int nhwc4_batch_offset = 0;
-  int c4 = UP_DIV(channel, C4NUM);
-  int nhwc4_batch_unit_offset = c4 * C4NUM * plane;
-
-  for (int b = 0; b < batch; b++) {
-    int batch_offset = b * channel * plane;
-    for (int c = 0; c < channel; c++) {
-      int src_c_offset = batch_offset + c * plane;
-      int dst_c_offset = nhwc4_batch_offset + c;
-      for (int i = 0; i < plane; i++) {
-        int src_plane_offset = src_c_offset + i;
-        int dst_plane_offset = dst_c_offset + i * c4 * C4NUM;
-        ((float *)dst)[dst_plane_offset] = ((float *)src)[src_plane_offset];
-      }
-    }
-    nhwc4_batch_offset += nhwc4_batch_unit_offset;
-  }
-}
-
 void PackNC4HW4ToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int channel) {
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {
@@ -695,105 +675,6 @@ void PackNC4HW4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int 
         int src_res_c_offset = src_kernel_offset + (c4 - 1) * C4NUM * plane + i;
         int dst_res_c_offset = dst_kernel_offset + (c4 - 1) * C4NUM + i;
         ((float *)dst + dst_res_c_offset)[0] = ((float *)src + src_res_c_offset)[0];
-      }
-    }
-  }
-}
-
-void PackNC4HW4ToNHWCReluFp32(const void *src, void *dst, int batch, int plane, int channel) {
-  int c4 = UP_DIV(channel, C4NUM);
-  for (int b = 0; b < batch; b++) {
-    int src_offset = b * plane * c4 * C4NUM;
-    int dst_offset = b * plane * channel;
-    for (int k = 0; k < plane; k++) {
-      int src_kernel_offset = src_offset + k * C4NUM;
-      int dst_kernel_offset = dst_offset + k * channel;
-      for (int c = 0; c < c4 - 1; c++) {
-        int src_c_offset = src_kernel_offset + c * plane * C4NUM;
-        int dst_c_offset = dst_kernel_offset + c * C4NUM;
-#ifdef ENABLE_NEON
-        float32x4_t input_ptr = vld1q_f32((float *)src + src_c_offset);
-        float32x4_t zero = vdupq_n_f32(0);
-        input_ptr = vmaxq_f32(zero, input_ptr);
-        vst1q_f32((float *)dst + dst_c_offset, input_ptr);
-#else
-        for (int i = 0; i < C4NUM; ++i) {
-          float input_data = ((float *)src + src_c_offset)[i];
-          input_data = input_data < 0 ? 0 : input_data;
-          ((float *)dst + dst_c_offset)[i] = input_data;
-        }
-#endif
-      }
-      // res part
-      int res_c = channel - (c4 - 1) * C4NUM;
-      for (int i = 0; i < res_c; i++) {
-        int src_res_c_offset = src_kernel_offset + (c4 - 1) * C4NUM * plane + i;
-        int dst_res_c_offset = dst_kernel_offset + (c4 - 1) * C4NUM + i;
-        float input_data = ((float *)src + src_res_c_offset)[0];
-        input_data = input_data < 0 ? 0 : input_data;
-        ((float *)dst + dst_res_c_offset)[0] = input_data;
-      }
-    }
-  }
-}
-
-void PackNC4HW4ToNHWCRelu6Fp32(const void *src, void *dst, int batch, int plane, int channel) {
-  int c4 = UP_DIV(channel, C4NUM);
-  for (int b = 0; b < batch; b++) {
-    int src_offset = b * plane * c4 * C4NUM;
-    int dst_offset = b * plane * channel;
-    for (int k = 0; k < plane; k++) {
-      int src_kernel_offset = src_offset + k * C4NUM;
-      int dst_kernel_offset = dst_offset + k * channel;
-      for (int c = 0; c < c4 - 1; c++) {
-        int src_c_offset = src_kernel_offset + c * plane * C4NUM;
-        int dst_c_offset = dst_kernel_offset + c * C4NUM;
-#ifdef ENABLE_NEON
-        float32x4_t input_ptr = vld1q_f32((float *)src + src_c_offset);
-        float32x4_t zero = vdupq_n_f32(0);
-        float32x4_t six = vdupq_n_f32(6);
-        input_ptr = vmaxq_f32(zero, input_ptr);
-        input_ptr = vminq_f32(six, input_ptr);
-        vst1q_f32((float *)dst + dst_c_offset, input_ptr);
-#else
-        for (int i = 0; i < C4NUM; ++i) {
-          float input_data = ((float *)src + src_c_offset)[i];
-          input_data = input_data < 0 ? 0 : input_data;
-          input_data = input_data > 6 ? 6 : input_data;
-          ((float *)dst + dst_c_offset)[i] = input_data;
-        }
-#endif
-      }
-      // res part
-      int res_c = channel - (c4 - 1) * C4NUM;
-      for (int i = 0; i < res_c; i++) {
-        int src_res_c_offset = src_kernel_offset + (c4 - 1) * C4NUM * plane + i;
-        int dst_res_c_offset = dst_kernel_offset + (c4 - 1) * C4NUM + i;
-        float input_data = ((float *)src + src_res_c_offset)[0];
-        input_data = input_data < 0 ? 0 : input_data;
-        input_data = input_data > 6 ? 6 : input_data;
-        ((float *)dst + dst_res_c_offset)[0] = input_data;
-      }
-    }
-  }
-}
-
-void PackNC4HW4ToNHWCPreluFp32(const void *src, void *dst, const void *slope, int batch, int plane, int channel) {}
-
-void PackNC4HW4ToNCHWFp32(const void *src, void *dst, int batch, int plane, int channel) {
-  int c4 = UP_DIV(channel, C4NUM);
-  for (int b = 0; b < batch; b++) {
-    int src_offset = b * plane * c4 * C4NUM;
-    int dst_offset = b * plane * channel;
-    for (int c = 0; c < channel; c++) {
-      int c4_block_num = c / C4NUM;
-      int c4_block_res = c % C4NUM;
-      int src_c_offset = src_offset + c4_block_num * plane * C4NUM + c4_block_res;
-      int dst_c_offset = dst_offset + c * plane;
-      for (int k = 0; k < plane; k++) {
-        int src_kernel_offset = src_c_offset + k * C4NUM;
-        int dst_kernel_offset = dst_c_offset + k;
-        ((float *)dst + dst_kernel_offset)[0] = ((float *)src + src_kernel_offset)[0];
       }
     }
   }
@@ -896,45 +777,6 @@ void PackNHWC8ToNHWCInt8(const void *src, void *dst, int batch, int plane, int c
   }
 }
 
-void PackNCHWToNHWC4Int8(const void *src, void *dst, int batch, int plane, int channel) {
-  int nhwc4_batch_offset = 0;
-  int c4 = UP_DIV(channel, C4NUM);
-  int nhwc4_batch_unit_offset = c4 * C4NUM * plane;
-
-  for (int b = 0; b < batch; b++) {
-    int batch_offset = b * channel * plane;
-    for (int c = 0; c < channel; c++) {
-      int src_c_offset = batch_offset + c * plane;
-      int dst_c_offset = nhwc4_batch_offset + c;
-      for (int i = 0; i < plane; i++) {
-        int src_plane_offset = src_c_offset + i;
-        int dst_plane_offset = dst_c_offset + i * c4 * C4NUM;
-        ((uint8_t *)dst)[dst_plane_offset] = ((uint8_t *)src)[src_plane_offset];
-      }
-    }
-    nhwc4_batch_offset += nhwc4_batch_unit_offset;
-  }
-}
-
-void PackNC4HW4ToNHWC4Int8(const void *src, void *dst, int batch, int plane, int channel) {
-  int c4 = UP_DIV(channel, C4NUM);
-  for (int b = 0; b < batch; b++) {
-    int src_offset = b * plane * c4 * C4NUM;
-    int dst_offset = b * plane * channel;
-    for (int c = 0; c < channel; c++) {
-      int c4_block_num = c / C4NUM;
-      int c4_block_res = c % C4NUM;
-      int src_c_offset = src_offset + c4_block_num * plane * C4NUM + c4_block_res;
-      int dst_c_offset = dst_offset + c4_block_num * C4NUM + c4_block_res;
-      for (int k = 0; k < plane; k++) {
-        int src_kernel_offset = src_c_offset + k * C4NUM;
-        int dst_kernel_offset = dst_c_offset + k * c4 * C4NUM;
-        ((uint8_t *)dst + dst_kernel_offset)[0] = ((uint8_t *)src + src_kernel_offset)[0];
-      }
-    }
-  }
-}
-
 void PackNC4HW4ToNHWCInt8(const void *src, void *dst, int batch, int plane, int channel) {
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {
@@ -962,25 +804,6 @@ void PackNC4HW4ToNHWCInt8(const void *src, void *dst, int batch, int plane, int 
   }
 }
 
-void PackNC4HW4ToNCHWInt8(const void *src, void *dst, int batch, int plane, int channel) {
-  int c4 = UP_DIV(channel, C4NUM);
-  for (int b = 0; b < batch; b++) {
-    int src_offset = b * plane * c4 * C4NUM;
-    int dst_offset = b * plane * channel;
-    for (int c = 0; c < channel; c++) {
-      int c4_block_num = c / C4NUM;
-      int c4_block_res = c % C4NUM;
-      int src_c_offset = src_offset + c4_block_num * plane * C4NUM + c4_block_res;
-      int dst_c_offset = dst_offset + c * plane;
-      for (int k = 0; k < plane; k++) {
-        int src_kernel_offset = src_c_offset + k * C4NUM;
-        int dst_kernel_offset = dst_c_offset + k;
-        ((uint8_t *)dst + dst_kernel_offset)[0] = ((uint8_t *)src + src_kernel_offset)[0];
-      }
-    }
-  }
-}
-
 void PackNHWCToC8HWN8Int8(const void *src, void *dst, int batch, int plane, int channel) {
   for (int n = 0; n < batch; n++) {
     for (int hw = 0; hw < plane; hw++) {
@@ -994,25 +817,6 @@ void PackNHWCToC8HWN8Int8(const void *src, void *dst, int batch, int plane, int 
     }
   }
   return;
-}
-
-void PackNHWCToNC8HW8Int8(const void *src, void *dst, int batch, int plane, int channel) {
-  int c8 = UP_DIV(channel, C8NUM);
-  for (int b = 0; b < batch; b++) {
-    int src_oc_offset = b * plane * channel;
-    int dst_oc_offset = b * plane * c8 * C8NUM;
-    for (int k = 0; k < plane; k++) {
-      int src_kernel_offset = src_oc_offset + k * channel;
-      int dst_kernel_offset = dst_oc_offset + k * C8NUM;
-      for (int i = 0; i < channel; i++) {
-        int c8_block_num = i / C8NUM;
-        int c8_block_rem = i % C8NUM;
-        int src_ic_offset = src_kernel_offset + i;
-        int dst_ic_offset = dst_kernel_offset + c8_block_num * plane * C8NUM + c8_block_rem;
-        ((int8_t *)dst + dst_ic_offset)[0] = ((int8_t *)src + src_ic_offset)[0];
-      }
-    }
-  }
 }
 
 void PackNCHWToNHWCInt8(const void *src, void *dst, int batch, int plane, int channel) {
@@ -1229,27 +1033,6 @@ void PackNHWCToNCHWInt8(const void *src, void *dst, int batch, int plane, int ch
 
 void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel) {
   return PackNHWCToNCHWFp32(src, dst, batch, channel, plane);
-}
-
-void MatrixPackUnit(const float *src, float *dst, size_t row, size_t col, size_t src_stride, size_t dst_stride) {
-  size_t copy_size = row * C4NUM * sizeof(float);
-  for (int c = 0; c < col; c++) {
-    memcpy(dst + c * dst_stride, src + c * src_stride, copy_size);
-  }
-}
-
-void MatrixPack(const float *src, float *dst, int row, int ic4, int stride) {
-  int row4mod = row % 4;
-  int row4div = row / 4;
-
-  for (int i = 0; i < row4div; i++) {
-    MatrixPackUnit(src + i * 4 * 4, dst + i * 4 * ic4 * 4, 4, ic4, stride, 16);
-  }
-
-  if (row4mod > 0) {
-    MatrixPackUnit(src + row4div * 4 * 4, dst + row4div * 4 * ic4 * 4, row4mod, ic4, stride, row4mod * 4);
-  }
-  return;
 }
 
 void PackDepthwiseInt8Input(const int8_t *src, int16_t *dst, const ConvParameter *conv_param) {

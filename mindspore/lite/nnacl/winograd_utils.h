@@ -28,7 +28,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef void (*InputTransFunc)(const float *src_data, float *dst_data, int src_step, int dst_step);
+typedef void (*InputTransFunc)(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
 
 typedef void (*OutputTransFunc)(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
@@ -163,11 +163,11 @@ void GeneralOutputTransformUnit(const float *src_data, float *dst_data, const fl
 
 InputTransFunc GetInputTransFunc(int input_unit);
 
-void InputTransform4x4Unit(const float *src_data, float *dst_data, int src_step, int dst_step);
+void InputTransform4x4Unit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
 
-void InputTransform6x6Unit(const float *src_data, float *dst_data, int src_step, int dst_step);
+void InputTransform6x6Unit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
 
-void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step, int dst_step);
+void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
 
 OutputTransFunc GetOutputTransFunc(int input_unit, int output_unit, ActType act_type);
 

@@ -46,11 +46,6 @@ void Pack1x1WeightFp32(const float *weight_data, float *packed_weight, ConvParam
 
 void PackInputSum16x4Int8(const int8_t *input, int32_t *input_sum, int32_t *filter_zp, ConvParameter *conv_param);
 
-void PackInputSum8x4Int8(const int8_t *input_value, int32_t *input_sum, size_t input_channel, size_t output_channel,
-                         size_t plane_size, ConvParameter *conv_param);
-
-void MatrixPack(const float *src, float *dst, int row, int ic4, int stride);
-
 void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, ConvParameter *conv_param);
 
 void PackWeightKHWToHWKFp32(const void *src, void *dst, int plane, int channel);
@@ -75,19 +70,9 @@ void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int ch
 
 void PackNHWC4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel);
 
-void PackNCHWToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int channel);
-
 void PackNC4HW4ToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int channel);
 
 void PackNC4HW4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNC4HW4ToNHWCReluFp32(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNC4HW4ToNHWCRelu6Fp32(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNC4HW4ToNHWCPreluFp32(const void *src, void *dst, const void *slope, int batch, int plane, int channel);
-
-void PackNC4HW4ToNCHWFp32(const void *src, void *dst, int batch, int plane, int channel);
 
 void PackNHWCToC8HWN8Fp32(const void *src, void *dst, int batch, int plane, int channel);
 
@@ -99,17 +84,9 @@ void PackNHWCToNHWC8Int8(const void *src, void *dst, int batch, int plane, int c
 
 void PackNHWC8ToNHWCInt8(const void *src, void *dst, int batch, int plane, int channel);
 
-void PackNCHWToNHWC4Int8(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNC4HW4ToNHWC4Int8(const void *src, void *dst, int batch, int plane, int channel);
-
 void PackNC4HW4ToNHWCInt8(const void *src, void *dst, int batch, int plane, int channel);
 
-void PackNC4HW4ToNCHWInt8(const void *src, void *dst, int batch, int plane, int channel);
-
 void PackNHWCToC8HWN8Int8(const void *src, void *dst, int batch, int plane, int channel);
-
-void PackNHWCToNC8HW8Int8(const void *src, void *dst, int batch, int plane, int channel);
 
 void PackNCHWToNHWCInt8(const void *src, void *dst, int batch, int plane, int channel);
 
