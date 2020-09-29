@@ -271,7 +271,7 @@ class MSSSIM(Cell):
         - **img2** (Tensor) - The second image batch with format 'NCHW'. It must be the same shape and dtype as img1.
 
     Outputs:
-        Tensor, has the same dtype as img1. It is a 1-D tensor with shape N, where N is the batch num of img1.
+        Tensor, the value is in range [0, 1]. It is a 1-D tensor with shape N, where N is the batch num of img1.
 
     Examples:
         >>> net = nn.MSSSIM(power_factors=(0.033, 0.033, 0.033))
