@@ -37,7 +37,7 @@ do
     cp -r ./src ./eval_$i
     cd ./eval_$i || exit
     export RANK_ID=$i
-    echo "start training for rank $i, device $DEVICE_ID"
+    echo "start infering for rank $i, device $DEVICE_ID"
     env > env.log
     python eval.py  \
     --data_dir=$DATASET  \
