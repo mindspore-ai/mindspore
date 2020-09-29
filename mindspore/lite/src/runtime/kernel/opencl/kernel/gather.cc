@@ -40,6 +40,9 @@ int GatherOpenCLKernel::Init() {
   out_ori_format_ = out_tensors_[0]->GetFormat();
   in_tensors_[0]->SetFormat(op_format_);
   out_tensors_[0]->SetFormat(op_format_);
+#ifdef PROGRAM_WITH_IL
+  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
+#else
   if (in_format == schema::Format_NC4HW4) {
     kernel_name += "_NC4HW4";
   } else {
@@ -50,6 +53,7 @@ int GatherOpenCLKernel::Init() {
   std::string program_name = "gather";
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+#endif
   // init indices_data_
   auto indices_tensor = in_tensors_.at(1);
   int indices_num = indices_tensor->ElementsNum();
