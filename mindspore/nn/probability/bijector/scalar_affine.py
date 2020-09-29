@@ -76,6 +76,8 @@ class ScalarAffine(Bijector):
 
         self.abs = P.Abs()
         self.oneslike = P.OnesLike()
+        self.dtypeop = P.DType()
+        self.cast = P.Cast()
         self.log = log_generic
 
     @property
@@ -99,7 +101,10 @@ class ScalarAffine(Bijector):
             f(x) = a * x + b
         """
         x = self._check_value(x, 'value')
-        return self.scale * x + self.shift * self.oneslike(x)
+        scale_local = self.cast_param_by_value(x, self.scale)
+        shift_local = self.cast_param_by_value(x, self.shift)
+        forward_v = scale_local * x + shift_local * self.oneslike(x)
+        return forward_v
 
     def _inverse(self, y):
         r"""
@@ -107,7 +112,10 @@ class ScalarAffine(Bijector):
             f(y) = \frac{y - b}{a}
         """
         y = self._check_value(y, 'value')
-        return (y - self.shift) / self.scale
+        scale_local = self.cast_param_by_value(y, self.scale)
+        shift_local = self.cast_param_by_value(y, self.shift)
+        inverse_v = (y - shift_local) / scale_local
+        return inverse_v
 
     def _forward_log_jacobian(self, x):
         r"""
@@ -117,7 +125,9 @@ class ScalarAffine(Bijector):
             \log(f'(x)) = \log(a)
         """
         x = self._check_value(x, 'value')
-        return self.log(self.abs(self.scale))
+        scale_local = self.cast_param_by_value(x, self.scale)
+        forward_log_j = self.log(self.abs(scale_local))
+        return forward_log_j
 
     def _inverse_log_jacobian(self, y):
         r"""
@@ -127,4 +137,6 @@ class ScalarAffine(Bijector):
             \log(f'(x)) = - \log(a)
         """
         y = self._check_value(y, 'value')
-        return -1. * self.log(self.abs(self.scale))
+        scale_local = self.cast_param_by_value(y, self.scale)
+        inverse_log_j = -1. * self.log(self.abs(scale_local))
+        return inverse_log_j

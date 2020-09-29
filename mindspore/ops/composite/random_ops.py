@@ -66,10 +66,10 @@ def normal(shape, mean, stddev, seed=None):
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
-        mean (Tensor): The mean μ distribution parameter, which specifies the location of the peak.
-          with float32 data type.
-        stddev (Tensor): The deviation σ distribution parameter. It should be greater than 0.
-          with float32 data type.
+        mean (Tensor): The mean μ distribution parameter, which specifies the location of the peak,
+          with data type in [int8, int16, int32, int64, float16, float32].
+        stddev (Tensor): The deviation σ distribution parameter. It should be greater than 0,
+          with data type in [int8, int16, int32, int64, float16, float32].
         seed (int): Seed is used as entropy source for the Random number engines to generate pseudo-random numbers.
           must be non-negative. Default: None, which will be treated as 0.
 
@@ -86,8 +86,8 @@ def normal(shape, mean, stddev, seed=None):
     """
     mean_dtype = F.dtype(mean)
     stddev_dtype = F.dtype(stddev)
-    const_utils.check_tensors_dtype_same(mean_dtype, mstype.float32, "normal")
-    const_utils.check_tensors_dtype_same(stddev_dtype, mstype.float32, "normal")
+    const_utils.check_valid_type(mean_dtype, mstype.int_type + (mstype.float16, mstype.float32), 'normal')
+    const_utils.check_valid_type(stddev_dtype, mstype.int_type + (mstype.float16, mstype.float32), 'normal')
     seed1, seed2 = get_seed(seed, "normal")
     stdnormal = P.StandardNormal(seed1, seed2)
     random_normal = stdnormal(shape)

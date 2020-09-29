@@ -71,6 +71,7 @@ class Softplus(Bijector):
         self.expm1 = expm1_generic
         self.abs = P.Abs()
         self.dtypeop = P.DType()
+        self.cast = P.Cast()
         self.fill = P.Fill()
         self.greater = P.Greater()
         self.less = P.Less()
@@ -125,8 +126,10 @@ class Softplus(Bijector):
 
     def _forward(self, x):
         x = self._check_value(x, 'value')
-        scaled_value = self.sharpness * x
-        return self.softplus(scaled_value) / self.sharpness
+        sharpness_local = self.cast_param_by_value(x, self.sharpness)
+        scaled_value = sharpness_local * x
+        forward_v = self.softplus(scaled_value) / sharpness_local
+        return forward_v
 
     def _inverse(self, y):
         r"""
@@ -135,8 +138,10 @@ class Softplus(Bijector):
             f^{-1}(y) = \frac{\log(e^{ky} - 1)}{k}
         """
         y = self._check_value(y, 'value')
-        scaled_value = self.sharpness * y
-        return self.inverse_softplus(scaled_value) / self.sharpness
+        sharpness_local = self.cast_param_by_value(y, self.sharpness)
+        scaled_value = sharpness_local * y
+        inverse_v = self.inverse_softplus(scaled_value) / sharpness_local
+        return inverse_v
 
     def _forward_log_jacobian(self, x):
         r"""
@@ -146,8 +151,10 @@ class Softplus(Bijector):
             \log(f'(x)) =  kx - \log(1 + e^{kx}) = kx - f(kx)
         """
         x = self._check_value(x, 'value')
-        scaled_value = self.sharpness * x
-        return self.log_sigmoid(scaled_value)
+        sharpness_local = self.cast_param_by_value(x, self.sharpness)
+        scaled_value = sharpness_local * x
+        forward_log_j = self.log_sigmoid(scaled_value)
+        return forward_log_j
 
     def _inverse_log_jacobian(self, y):
         r"""
@@ -157,5 +164,7 @@ class Softplus(Bijector):
             \log(f'(y)) = ky - \log(e^{ky} - 1) = ky - f(ky)
         """
         y = self._check_value(y, 'value')
-        scaled_value = self.sharpness * y
-        return scaled_value - self.inverse_softplus(scaled_value)
+        sharpness_local = self.cast_param_by_value(y, self.sharpness)
+        scaled_value = sharpness_local * y
+        inverse_log_j = scaled_value - self.inverse_softplus(scaled_value)
+        return inverse_log_j

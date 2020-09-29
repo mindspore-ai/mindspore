@@ -15,6 +15,7 @@
 """Bijector"""
 from mindspore import context
 from mindspore.nn.cell import Cell
+from mindspore.ops import operations as P
 from mindspore._checkparam import Validator as validator
 from ..distribution._utils.utils import CheckTensor
 from ..distribution import Distribution
@@ -62,6 +63,10 @@ class Bijector(Cell):
         self.context_mode = context.get_context('mode')
         self.checktensor = CheckTensor()
 
+        # ops needed for the base class
+        self.cast_base = P.Cast()
+        self.dtype_base = P.DType()
+
     @property
     def name(self):
         return self._name
@@ -90,6 +95,10 @@ class Bijector(Cell):
             self.checktensor(value, name)
             return value
         return self.checktensor(value, name)
+
+    def cast_param_by_value(self, value, para):
+        local = self.cast_base(para, self.dtype_base(value))
+        return local
 
     def forward(self, *args, **kwargs):
         """
