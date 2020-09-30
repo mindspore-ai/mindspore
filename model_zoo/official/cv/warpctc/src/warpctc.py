@@ -32,6 +32,7 @@ class StackedRNN(nn.Cell):
         batch_size(int): batch size of input data, default is 64
         hidden_size(int): the hidden size in LSTM layers, default is 512
      """
+
     def __init__(self, input_size, batch_size=64, hidden_size=512):
         super(StackedRNN, self).__init__()
         self.batch_size = batch_size
@@ -40,22 +41,25 @@ class StackedRNN(nn.Cell):
         self.reshape = P.Reshape()
         self.cast = P.Cast()
         k = (1 / hidden_size) ** 0.5
-        self.h1 = Tensor(np.zeros(shape=(batch_size, hidden_size)).astype(np.float16))
-        self.c1 = Tensor(np.zeros(shape=(batch_size, hidden_size)).astype(np.float16))
-        self.w1 = Parameter(np.random.uniform(-k, k, (4 * hidden_size, input_size + hidden_size, 1, 1))
-                            .astype(np.float16), name="w1")
-        self.w2 = Parameter(np.random.uniform(-k, k, (4 * hidden_size, hidden_size + hidden_size, 1, 1))
-                            .astype(np.float16), name="w2")
-        self.b1 = Parameter(np.random.uniform(-k, k, (4 * hidden_size, 1, 1, 1)).astype(np.float16), name="b1")
-        self.b2 = Parameter(np.random.uniform(-k, k, (4 * hidden_size, 1, 1, 1)).astype(np.float16), name="b2")
 
-        self.h2 = Tensor(np.zeros(shape=(batch_size, hidden_size)).astype(np.float16))
-        self.c2 = Tensor(np.zeros(shape=(batch_size, hidden_size)).astype(np.float16))
+        self.rnn1 = P.DynamicRNN(forget_bias=0.0)
+        self.rnn2 = P.DynamicRNN(forget_bias=0.0)
 
-        self.basic_lstm_cell = P.BasicLSTMCell(keep_prob=1.0, forget_bias=0.0, state_is_tuple=True, activation="tanh")
+        self.w1 = Parameter(np.random.uniform(-k, k, (input_size + hidden_size, 4 * hidden_size)).astype(np.float16),
+                            name="w1")
+        self.w2 = Parameter(np.random.uniform(-k, k, (hidden_size + hidden_size, 4 * hidden_size)).astype(np.float16),
+                            name="w2")
+        self.b1 = Parameter(np.random.uniform(-k, k, (4 * hidden_size)).astype(np.float16), name="b1")
+        self.b2 = Parameter(np.random.uniform(-k, k, (4 * hidden_size)).astype(np.float16), name="b2")
+
+        self.h1 = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float16))
+        self.h2 = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float16))
+
+        self.c1 = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float16))
+        self.c2 = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float16))
 
         self.fc_weight = np.random.random((self.num_classes, hidden_size)).astype(np.float32)
-        self.fc_bias = np.random.random((self.num_classes)).astype(np.float32)
+        self.fc_bias = np.random.random(self.num_classes).astype(np.float32)
 
         self.fc = nn.Dense(in_channels=hidden_size, out_channels=self.num_classes, weight_init=Tensor(self.fc_weight),
                            bias_init=Tensor(self.fc_bias))
@@ -64,29 +68,22 @@ class StackedRNN(nn.Cell):
         self.expand_dims = P.ExpandDims()
         self.concat = P.Concat()
         self.transpose = P.Transpose()
+        self.squeeze = P.Squeeze(axis=0)
 
     def construct(self, x):
         x = self.cast(x, mstype.float16)
         x = self.transpose(x, (3, 0, 2, 1))
         x = self.reshape(x, (-1, self.batch_size, self.input_size))
-        h1 = self.h1
-        c1 = self.c1
-        h2 = self.h2
-        c2 = self.c2
 
-        c1, h1, _, _, _, _, _ = self.basic_lstm_cell(x[0, :, :], h1, c1, self.w1, self.b1)
-        c2, h2, _, _, _, _, _ = self.basic_lstm_cell(h1, h2, c2, self.w2, self.b2)
+        y1, _, _, _, _, _, _, _ = self.rnn1(x, self.w1, self.b1, None, self.h1, self.c1)
+        y2, _, _, _, _, _, _, _ = self.rnn2(y1, self.w2, self.b2, None, self.h2, self.c2)
 
-        h2_after_fc = self.fc(h2)
-        output = self.expand_dims(h2_after_fc, 0)
-        for i in range(1, F.shape(x)[0]):
-            c1, h1, _, _, _, _, _ = self.basic_lstm_cell(x[i, :, :], h1, c1, self.w1, self.b1)
-            c2, h2, _, _, _, _, _ = self.basic_lstm_cell(h1, h2, c2, self.w2, self.b2)
-
-            h2_after_fc = self.fc(h2)
-            h2_after_fc = self.expand_dims(h2_after_fc, 0)
-            output = self.concat((output, h2_after_fc))
-
+        output = ()
+        for i in range(F.shape(x)[0]):
+            y2_after_fc = self.fc(self.squeeze(y2[i:i + 1:1]))
+            y2_after_fc = self.expand_dims(y2_after_fc, 0)
+            output += (y2_after_fc,)
+        output = self.concat(output)
         return output
 
 
@@ -101,6 +98,7 @@ class StackedRNNForGPU(nn.Cell):
         hidden_size(int): the hidden size in LSTM layers, default is 512
         num_layer(int): the number of layer of LSTM.
      """
+
     def __init__(self, input_size, batch_size=64, hidden_size=512, num_layer=2):
         super(StackedRNNForGPU, self).__init__()
         self.batch_size = batch_size
