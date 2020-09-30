@@ -30,7 +30,7 @@ using mindspore::schema::PrimitiveType_Cast;
 
 namespace mindspore::kernel {
 namespace {
-int CastRun(void *cdata, int task_id) {
+int CastFp16Run(void *cdata, int task_id) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "input cdata is nullptr!";
     return RET_ERROR;
@@ -91,7 +91,7 @@ int CastFp16CPUKernel::Run() {
   if (data_num_ == 0) {
     return RET_OK;
   }
-  return ParallelLaunch(this->context_->thread_pool_, CastRun, this, op_parameter_->thread_num_);
+  return ParallelLaunch(this->context_->thread_pool_, CastFp16Run, this, op_parameter_->thread_num_);
 }
 
 kernel::LiteKernel *CpuCastFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,

@@ -92,7 +92,7 @@ int ScaleFp16CPUKernel::Scale(int task_id) {
   return RET_OK;
 }
 
-int ScaleRun(void *cdata, int task_id) {
+int ScaleFp16Run(void *cdata, int task_id) {
   auto scale = reinterpret_cast<ScaleFp16CPUKernel *>(cdata);
   auto ret = scale->Scale(task_id);
   if (ret != RET_OK) {
@@ -121,7 +121,7 @@ int ScaleFp16CPUKernel::Run() {
     return ret;
   }
 
-  ret = ParallelLaunch(this->context_->thread_pool_, ScaleRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, ScaleFp16Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

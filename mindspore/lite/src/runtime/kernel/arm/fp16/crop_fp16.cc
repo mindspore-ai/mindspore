@@ -50,7 +50,7 @@ int CropFp16CPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-static int CropRun(void *cdata, int task_id) {
+static int CropFp16Run(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<CropFp16CPUKernel *>(cdata);
   auto ret = g_kernel->DoExecute(task_id);
   if (ret != RET_OK) {
@@ -79,7 +79,7 @@ int CropFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  ret = ParallelLaunch(this->context_->thread_pool_, CropRun, this, thread_count_);
+  ret = ParallelLaunch(this->context_->thread_pool_, CropFp16Run, this, thread_count_);
 
   if (out_tensors_.at(kOutputIndex)->data_type() == kNumberTypeFloat32) {
     Float16ToFloat32(output_ptr_, reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData()),
