@@ -14,12 +14,22 @@
 # limitations under the License.
 # ============================================================================
 echo "Please run the script as: "
-echo "sh scripts/run_standalone_train.sh DEVICE_ID DEVICE_TARGET DATASET_PATH"
+echo "sh scripts/run_standalone_train.sh DEVICE_ID/CUDA_VISIBLE_DEVICES DEVICE_TARGET DATASET_PATH"
 echo "for example: sh scripts/run_standalone_train.sh 0 GPU /dataset_path"
 echo "After running the script, the network runs in the background, The log will be generated in ms_log/output.log"
 
-export DEVICE_ID=$1
 DEVICE_TARGET=$2
+
+if [ "$DEVICE_TARGET" = "GPU" ]
+then
+  export CUDA_VISIBLE_DEVICES=$1
+fi
+
+if [ "$DEVICE_TARGET" = "Ascend" ];
+then
+  export DEVICE_ID=$1
+fi
+
 DATA_URL=$3
 
 mkdir -p ms_log
