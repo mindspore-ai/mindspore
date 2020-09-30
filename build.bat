@@ -18,6 +18,18 @@
 SET BASEPATH=%CD%
 SET BUILD_PATH=%BASEPATH%/build
 
+find "const int ms_version_major =" mindspore\lite\include\version.h > version.txt
+for /f "delims=\= tokens=2" %%a in ('findstr "const int ms_version_major = " version.txt') do (set x=%%a)
+set VERSION_MAJOR=%x:~1,1%
+find "const int ms_version_minor =" mindspore\lite\include\version.h > version.txt
+for /f "delims=\= tokens=2" %%b in ('findstr "const int ms_version_minor = " version.txt') do (set y=%%b)
+set VERSION_MINOR=%y:~1,1%
+find "const int ms_version_revision =" mindspore\lite\include\version.h > version.txt
+for /f "delims=\= tokens=2" %%c in ('findstr "const int ms_version_revision = " version.txt') do (set z=%%c)
+set VERSION_REVISION=%z:~1,1%
+del version.txt
+echo "======Start building MindSpore Lite %VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%======"
+
 IF NOT EXIST "%BUILD_PATH%" (
     md "build"
 )
@@ -39,7 +51,7 @@ IF "%1%" == "lite" (
         call :run_cmake
         IF errorlevel 1 (
             echo "cmake fail."
-            goto run_fail
+            call :run_fail
         )
     ) ELSE (
         call :gene_protobuf
@@ -54,7 +66,7 @@ IF "%1%" == "lite" (
     )
     IF errorlevel 1 (
         echo "build fail."
-        goto run_fail
+        call :run_fail
     ) ELSE (
         cd %BASEPATH%/output
         rd /s /q _CPack_Packages
@@ -64,7 +76,7 @@ IF "%1%" == "lite" (
     -G "CodeBlocks - MinGW Makefiles" ../..
     IF NOT %errorlevel% == 0 (
         echo "cmake fail."
-        goto run_fail
+        call :run_fail
     )
 
     IF "%1%" == "" (
@@ -74,7 +86,7 @@ IF "%1%" == "lite" (
     )
     IF NOT %errorlevel% == 0 (
         echo "build fail."
-        goto run_fail
+        call :run_fail
     )
 )
 
@@ -83,10 +95,6 @@ cd %BASEPATH%
 goto run_eof
 
 :run_cmake
-    set VERSION_MAJOR=1
-    set VERSION_MINOR=0
-    set VERSION_REVISION=0
-    echo "======Start building MindSpore Lite %VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%======"
     cd %BUILD_PATH%/mindspore
     cmake -DBUILD_DEVICE=on -DBUILD_CONVERTER=on -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=off ^
     -DCMAKE_BUILD_TYPE=Release -DSUPPORT_GPU=off -DBUILD_MINDDATA=off -DOFFLINE_COMPILE=off ^
@@ -128,5 +136,6 @@ GOTO:EOF
 :run_fail
     cd %BASEPATH%
     set errorlevel=1
+    exit /b %errorlevel%
 
 :run_eof
