@@ -14,16 +14,14 @@
 # ============================================================================
 """lstm"""
 import math
-
 import numpy as np
-
-from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel, Validator as validator
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.nn.cell import Cell
 from mindspore.ops import operations as P
-from ..._checkparam import Rel
+
 
 __all__ = ['LSTM', 'LSTMCell']
 
@@ -32,7 +30,7 @@ class LSTM(Cell):
     r"""
     LSTM (Long Short-Term Memory) layer.
 
-    Applies a LSTM to the input.
+    Apply LSTM layer to the input.
 
     There are two pipelines connecting two consecutive cells in a LSTM model; one is cell state pipeline
     and the other is hidden state pipeline. Denote two consecutive time nodes as :math:`t-1` and :math:`t`.
@@ -88,25 +86,11 @@ class LSTM(Cell):
           (num_directions * `num_layers`, batch_size, `hidden_size`).
 
     Examples:
-        >>> class LstmNet(nn.Cell):
-        >>>     def __init__(self, input_size, hidden_size, num_layers, has_bias, batch_first, bidirectional):
-        >>>         super(LstmNet, self).__init__()
-        >>>         self.lstm = nn.LSTM(input_size=input_size,
-        >>>                             hidden_size=hidden_size,
-        >>>                             num_layers=num_layers,
-        >>>                             has_bias=has_bias,
-        >>>                             batch_first=batch_first,
-        >>>                             bidirectional=bidirectional,
-        >>>                             dropout=0.0)
-        >>>
-        >>>     def construct(self, inp, h0, c0):
-        >>>         return self.lstm(inp, (h0, c0))
-        >>>
-        >>> net = LstmNet(10, 12, 2, has_bias=True, batch_first=True, bidirectional=False)
+        >>> net = nn.LSTM(10, 12, 2, has_bias=True, batch_first=True, bidirectional=False)
         >>> input = Tensor(np.ones([3, 5, 10]).astype(np.float32))
         >>> h0 = Tensor(np.ones([1 * 2, 3, 12]).astype(np.float32))
         >>> c0 = Tensor(np.ones([1 * 2, 3, 12]).astype(np.float32))
-        >>> output, (hn, cn) = net(input, h0, c0)
+        >>> output, (hn, cn) = net(input, (h0, c0))
     """
 
     def __init__(self,
@@ -159,7 +143,7 @@ class LSTMCell(Cell):
     r"""
     LSTM (Long Short-Term Memory) layer.
 
-    Applies a LSTM layer to the input.
+    Apply LSTM layer to the input.
 
     There are two pipelines connecting two consecutive cells in a LSTM model; one is cell state pipeline
     and the other is hidden state pipeline. Denote two consecutive time nodes as :math:`t-1` and :math:`t`.
@@ -224,20 +208,7 @@ class LSTMCell(Cell):
         - **state** - reserved
 
     Examples:
-        >>> class LstmNet(nn.Cell):
-        >>>     def __init__(self, input_size, hidden_size, has_bias, batch_first, bidirectional):
-        >>>         super(LstmNet, self).__init__()
-        >>>         self.lstm = nn.LSTMCell(input_size=input_size,
-        >>>                             hidden_size=hidden_size,
-        >>>                             has_bias=has_bias,
-        >>>                             batch_first=batch_first,
-        >>>                             bidirectional=bidirectional,
-        >>>                             dropout=0.0)
-        >>>
-        >>>     def construct(self, inp, h, c, w):
-        >>>         return self.lstm(inp, h, c, w)
-        >>>
-        >>> net = LstmNet(10, 12, has_bias=True, batch_first=True, bidirectional=False)
+        >>> net = nn.LSTMCell(10, 12, has_bias=True, batch_first=True, bidirectional=False)
         >>> input = Tensor(np.ones([3, 5, 10]).astype(np.float32))
         >>> h = Tensor(np.ones([1, 3, 12]).astype(np.float32))
         >>> c = Tensor(np.ones([1, 3, 12]).astype(np.float32))

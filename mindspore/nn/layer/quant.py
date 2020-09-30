@@ -16,7 +16,6 @@
 
 from functools import partial
 import numpy as np
-
 from mindspore import nn
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
@@ -24,15 +23,11 @@ from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import check_int_positive, check_bool, twice
-from mindspore._checkparam import Rel
+from mindspore._checkparam import Rel, check_int_positive, check_bool, twice, ParamValidator as validator
 import mindspore.context as context
-
 from .normalization import BatchNorm2d, BatchNorm1d
 from .activation import get_activation, ReLU, LeakyReLU
 from ..cell import Cell
-from . import conv, basic
-from ..._checkparam import ParamValidator as validator
 from ...ops.operations import _quant_ops as Q
 
 __all__ = [
@@ -127,17 +122,17 @@ class Conv2dBnAct(Cell):
                  after_fake=True):
         super(Conv2dBnAct, self).__init__()
 
-        self.conv = conv.Conv2d(in_channels,
-                                out_channels,
-                                kernel_size=kernel_size,
-                                stride=stride,
-                                pad_mode=pad_mode,
-                                padding=padding,
-                                dilation=dilation,
-                                group=group,
-                                has_bias=has_bias,
-                                weight_init=weight_init,
-                                bias_init=bias_init)
+        self.conv = nn.Conv2d(in_channels,
+                              out_channels,
+                              kernel_size=kernel_size,
+                              stride=stride,
+                              pad_mode=pad_mode,
+                              padding=padding,
+                              dilation=dilation,
+                              group=group,
+                              has_bias=has_bias,
+                              weight_init=weight_init,
+                              bias_init=bias_init)
         self.has_bn = validator.check_bool("has_bn", has_bn)
         self.has_act = activation is not None
         self.after_fake = after_fake
@@ -200,7 +195,7 @@ class DenseBnAct(Cell):
                  activation=None,
                  after_fake=True):
         super(DenseBnAct, self).__init__()
-        self.dense = basic.Dense(
+        self.dense = nn.Dense(
             in_channels,
             out_channels,
             weight_init,
@@ -1349,11 +1344,6 @@ class QuantBlock(Cell):
 
     Outputs:
         Tensor of shape :math:`(N, out\_channels)`.
-
-    Examples:
-        >>> net = nn.Dense(3, 4)
-        >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
-        >>> net(input)
     """
 
     def __init__(self,

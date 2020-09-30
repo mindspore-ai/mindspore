@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """conv"""
-
 import numpy as np
 from mindspore import log as logger
 from mindspore import context
@@ -23,8 +22,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import ParamValidator as validator, Rel
-from mindspore._checkparam import Validator
-from mindspore._checkparam import check_bool, twice, check_int_positive
+from mindspore._checkparam import check_bool, twice, check_int_positive, Validator
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 

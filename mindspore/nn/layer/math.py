@@ -21,8 +21,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import constexpr
 from ..cell import Cell
 from ...common import dtype as mstype
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
+from ..._checkparam import Rel, Validator as validator
 
 
 __all__ = ['ReduceLogSumExp', 'Range', 'LinSpace', 'LGamma', 'MatMul']

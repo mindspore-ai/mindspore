@@ -19,11 +19,10 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.ops.primitive import constexpr
 import mindspore.context as context
-from mindspore._checkparam import check_bool, check_typename
+from mindspore._checkparam import check_bool, check_typename, check_int_positive
 from mindspore._extends import cell_attr_register
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.communication import management
-from mindspore._checkparam import check_int_positive
 from mindspore.ops import _selected_ops
 from ..cell import Cell
 

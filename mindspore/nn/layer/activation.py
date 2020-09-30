@@ -16,13 +16,13 @@
 import numpy as np
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops import _selected_ops
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore._extends import cell_attr_register
-from mindspore.ops import _selected_ops
+from mindspore._checkparam import Validator as validator
 from ..cell import Cell
-from ..._checkparam import Validator as validator
 
 
 __all__ = ['Softmax',
