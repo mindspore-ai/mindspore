@@ -21,7 +21,7 @@ from mindspore import Tensor
 class MindData:
     """ Stub for MindData """
 
-    def __init__(self, size=None, batch_size=None, repeat_count=1,
+    def __init__(self, size=1, batch_size=None, repeat_count=1,
                  np_types=None, output_shapes=None, input_indexs=()):
         self._size = size
         self._batch_size = batch_size
