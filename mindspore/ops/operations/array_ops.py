@@ -3797,3 +3797,76 @@ class EmbeddingLookup(PrimitiveWithInfer):
                'dtype': params['dtype'],
                'value': None}
         return out
+
+
+class GatherD(PrimitiveWithInfer):
+    """
+    Gathers values along an axis specified by dim.
+
+    Inputs:
+        - **x** (Tensor) - The source tensor.
+        - **dim** (int) - The axis along which to index. It must be int32. Only constant value is allowed.
+        - **index** (Tensor) - The indices of elements to gather. It can be one of the following data types:
+        int32, int64.
+
+    Outputs:
+        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.int32)
+        >>> index = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
+        >>> dim = 1
+        >>> out = P.GatherD()(x, dim, index)
+        [[1, 1], [4, 3]]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize GatherD"""
+
+    def __infer__(self, x, dim, index):
+        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
+        validator.check_tensor_type_same({"index": index['dtype']}, [mstype.int32, mstype.int64], self.name)
+        validator.check_subclass("dim", dim['dtype'], mstype.int32, self.name)
+        x_shp = x['shape']
+        idx_shp = index['shape']
+        x_rank = len(x_shp)
+        idx_rank = len(idx_shp)
+        validator.check("x_rank, idx_rank", x_rank, "expected", idx_rank, Rel.EQ, self.name)
+        dim_v = dim['value']
+        validator.check("dim value", dim_v, "expected", 0, Rel.GE, self.name)
+        validator.check("dim value", dim_v, "expected", x_rank, Rel.LT, self.name)
+        for i in range(x_rank):
+            if i == dim_v:
+                continue
+            validator.check("x_shp[{0}], idx_shp[{0}]".format(i), x_shp[i], "expected", idx_shp[i], Rel.EQ, self.name)
+
+        out = {'shape': index['shape'],
+               'dtype': x['dtype'],
+               'value': None}
+        return out
+
+
+class Identity(PrimitiveWithInfer):
+    """
+    Returns a Tensor with the same shape and contents as input.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, the shape of tensor is the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
+        >>> y = P.Identity()(x)
+        [1, 2, 3, 4]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize identity"""
+
+    def __infer__(self, x):
+        out = {'shape': x['shape'],
+               'dtype': x['dtype'],
+               'value': None}
+        return out

@@ -43,8 +43,10 @@ constexpr auto kSeed2 = "seed2";
 constexpr auto kTopK = "TopK";
 constexpr auto kTopKV2 = "TopKV2";
 constexpr auto kEditDistance = "EditDistance";
+constexpr auto kGatherD = "GatherD";
+constexpr auto kIdentity = "Identity";
 constexpr auto kCustRunApi = "RunCpuKernel";
-const std::set<std::string> kCustAiCpuKernelOps{kTopK, kEditDistance};
+const std::set<std::string> kCustAiCpuKernelOps{kEditDistance, kGatherD, kIdentity};
 
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message

@@ -33,7 +33,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin, UnsortedSegmentProd,
                         UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
                         SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence, EmbeddingLookup,
-                        Unique)
+                        Unique, GatherD, Identity)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice,
@@ -153,6 +153,8 @@ __all__ = [
     'SparseGatherV2',
     'EmbeddingLookup',
     'Padding',
+    'GatherD',
+    'Identity',
     'Concat',
     'Pack',
     'Unpack',
