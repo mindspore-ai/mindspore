@@ -27,7 +27,7 @@ Status CFuncOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   Status ret = Status(StatusCode::kOK, "CFunc Call Succeed");
   try {
-    *output = (*c_func_ptr_)(input);
+    *output = c_func_ptr_(input);
   } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED("Unexpected error in CFuncOp");
   }

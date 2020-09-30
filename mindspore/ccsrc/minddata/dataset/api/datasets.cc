@@ -294,7 +294,7 @@ std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remai
 // Function to create a BucketBatchByLength dataset
 std::shared_ptr<BucketBatchByLengthDataset> Dataset::BucketBatchByLength(
   const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
-  const std::vector<int32_t> &bucket_batch_sizes, TensorRow (*element_length_function)(TensorRow),
+  const std::vector<int32_t> &bucket_batch_sizes, std::function<TensorRow(TensorRow)> element_length_function,
   const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info, bool pad_to_bucket_boundary,
   bool drop_remainder) {
   auto ds = std::make_shared<BucketBatchByLengthDataset>(column_names, bucket_boundaries, bucket_batch_sizes,
@@ -1698,7 +1698,7 @@ bool BatchDataset::ValidateParams() {
 #ifndef ENABLE_ANDROID
 BucketBatchByLengthDataset::BucketBatchByLengthDataset(
   const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
-  const std::vector<int32_t> &bucket_batch_sizes, TensorRow (*element_length_function)(TensorRow),
+  const std::vector<int32_t> &bucket_batch_sizes, std::function<TensorRow(TensorRow)> element_length_function,
   const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info, bool pad_to_bucket_boundary,
   bool drop_remainder)
     : column_names_(column_names),

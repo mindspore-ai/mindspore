@@ -72,7 +72,7 @@ class TensorRow {
   // Destructor
   ~TensorRow() = default;
 
-  /// Convert a vector of primitive types to a TensorRow consisting of n single data Tensors.
+  /// Convert a vector of primitive types to a TensorRow consisting of one 1-D Tensor with the shape n.
   /// \tparam `T`
   /// \param[in] o input vector
   /// \param[out] output TensorRow
@@ -85,14 +85,9 @@ class TensorRow {
     if (data_type == DataType::DE_STRING) {
       RETURN_STATUS_UNEXPECTED("ConvertToTensorRow: Data type string is not supported.");
     }
-
-    for (int i = 0; i < o.size(); i++) {
-      std::shared_ptr<Tensor> tensor;
-      Tensor::CreateEmpty(TensorShape({1}), data_type, &tensor);
-      std::string_view s;
-      tensor->SetItemAt({0}, o[i]);
-      output->push_back(tensor);
-    }
+    std::shared_ptr<Tensor> tensor;
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(o, &tensor));
+    output->push_back(tensor);
     return Status::OK();
   }
 
@@ -110,13 +105,12 @@ class TensorRow {
       RETURN_STATUS_UNEXPECTED("ConvertToTensorRow: Data type string is not supported.");
     }
     std::shared_ptr<Tensor> tensor;
-    Tensor::CreateEmpty(TensorShape({1}), data_type, &tensor);
-    tensor->SetItemAt({0}, o);
+    RETURN_IF_NOT_OK(Tensor::CreateScalar(o, &tensor));
     output->push_back(tensor);
     return Status::OK();
   }
 
-  /// Return the value in a TensorRow consiting of 1 single data Tensor
+  /// Return the value in a TensorRow consisting of 1 single data Tensor.
   /// \tparam `T`
   /// \param[in] input TensorRow
   /// \param[out] o the primitive variable
@@ -127,23 +121,23 @@ class TensorRow {
       RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: Data type was not recognized.");
     }
     if (data_type == DataType::DE_STRING) {
-      RETURN_STATUS_UNEXPECTED("ConvertToTensorRow: Data type string is not supported.");
+      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: Data type string is not supported.");
     }
     if (input.size() != 1) {
-      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input TensorRow is empty.");
+      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input TensorRow must have exactly one tensor.");
     }
     if (input.at(0)->type() != data_type) {
       RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The output type doesn't match the input tensor type.");
     }
-    if (input.at(0)->shape() != TensorShape({1})) {
-      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input tensors must have a shape of {1}.");
+    if (input.at(0)->shape() != TensorShape({})) {
+      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input tensors must be a scalar tensor.");
     }
     return input.at(0)->GetItemAt(o, {0});
   }
 
-  /// Convert a TensorRow consisting of n single data tensors to a vector of size n
+  /// Convert a TensorRow consisting of one 1-D tensor to a vector of size n.
   /// \tparam `T`
-  /// \param[in] o TensorRow consisting of n single data tensors
+  /// \param[in] o TensorRow consisting of one 1-D tensor
   /// \param[out] o vector of primitive variable
   template <typename T>
   static Status ConvertFromTensorRow(const TensorRow &input, std::vector<T> *o) {
@@ -152,15 +146,15 @@ class TensorRow {
       RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: Data type was not recognized.");
     }
     if (data_type == DataType::DE_STRING) {
-      RETURN_STATUS_UNEXPECTED("ConvertToTensorRow: Data type string is not supported.");
+      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: Data type string is not supported.");
     }
-    for (int i = 0; i < input.size(); i++) {
-      if (input.at(i)->shape() != TensorShape({1})) {
-        RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input tensor must have a shape of 1.");
-      }
-      T item;
-      RETURN_IF_NOT_OK(input.at(i)->GetItemAt(&item, {0}));
-      o->push_back(item);
+    if (input.size() != 1) {
+      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input TensorRow must have exactly one tensor.");
+    }
+    if (input.at(0)->Rank() != 1)
+      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input tensor must have a rank of 1.");
+    for (auto it = input.at(0)->begin<T>(); it != input.at(0)->end<T>(); it++) {
+      o->push_back(*it);
     }
     return Status::OK();
   }
