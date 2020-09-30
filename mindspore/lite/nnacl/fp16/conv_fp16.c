@@ -170,7 +170,6 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
   int input_unit = conv_param->input_unit_;
   int in_batch = conv_param->input_batch_;
   int in_channel = conv_param->input_channel_;
-  int ic8 = UP_DIV(in_channel, C8NUM);
   int out_unit = conv_param->output_unit_;
   int out_w_block = UP_DIV(conv_param->output_w_, out_unit);
   int out_h_block = UP_DIV(conv_param->output_h_, out_unit);
@@ -179,18 +178,19 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
   int out_channel = conv_param->output_channel_;
   int oc8 = UP_DIV(out_channel, C8NUM);
   int input_unit_square = input_unit * input_unit;
-  size_t output_offset = oc8 * C8NUM * input_unit_square * sizeof(float16_t);
 
   float16_t *trans_input = buffer_list[0];
   float16_t *gemm_out = buffer_list[1];
   float16_t *tmp_data = buffer_list[2];
-  int trans_input_offset = tile_num * input_unit_square * ic8 * C8NUM;
+  float16_t *col_buffer = buffer_list[3];
+  int trans_input_offset = tile_num * input_unit_square * in_channel;
   int gemm_out_offset = tile_num * input_unit_square * oc8 * C8NUM;
   int tmp_data_offset = input_unit_square * C8NUM;
+  int col_buffer_offset = tile_num * in_channel;
   // step 1 : filter transform (pre-processed offline)
   // step 2 : input transform (online)
   for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * ic8 * C8NUM * conv_param->input_h_ * conv_param->input_w_;
+    int in_batch_offset = b * in_channel * conv_param->input_h_ * conv_param->input_w_;
     int out_batch_offset = b * out_channel * conv_param->output_h_ * conv_param->output_w_;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_num) {
       int out_tile_index = thread_id * tile_num;
@@ -200,8 +200,14 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
                                  tmp_data + task_id * tmp_data_offset, cal_num, out_tile_index, out_w_block, conv_param,
                                  in_func);
       // step 3 : gemm
-      IndirectGemmFp16_16x8(gemm_out + task_id * gemm_out_offset, trans_input + task_id * trans_input_offset,
-                            trans_weight, NULL, input_unit_square, ic8 * 2, oc8 * C8NUM, output_offset, 1, 1, 0, 0);
+      float16_t *src_ptr = trans_input + task_id * trans_input_offset;
+      float16_t *dst_ptr = gemm_out + task_id * gemm_out_offset;
+      float16_t *tmp_col_ptr = col_buffer + task_id * col_buffer_offset;
+      for (int i = 0; i < input_unit_square; ++i) {
+        RowMajor2Col16MajorFp16Opt(src_ptr + i * tile_num * in_channel, tmp_col_ptr, tile_num, in_channel);
+        MatMul16x8(tmp_col_ptr, trans_weight + i * in_channel * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0, in_channel,
+                   cal_num, oc8 * C8NUM, input_unit_square, false);
+      }
 
       // step 4 : output transform
       WinogradOutputTransformFp16(gemm_out + task_id * gemm_out_offset, output_data + out_batch_offset, bias_data,

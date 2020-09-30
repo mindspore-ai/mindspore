@@ -197,25 +197,27 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
-  conv_param->input_h_ = inputs.front()->Height();
-  conv_param->input_w_ = inputs.front()->Width();
-  conv_param->output_h_ = outputs.front()->Height();
-  conv_param->output_w_ = outputs.front()->Width();
+  bool use_winograd = false;
+  int out_unit;
+  if (primitive != nullptr && primitive->GetInferFlag()) {
+    conv_param->input_h_ = inputs.front()->Height();
+    conv_param->input_w_ = inputs.front()->Width();
+    conv_param->input_channel_ = inputs.front()->Channel();
+    conv_param->output_h_ = outputs.front()->Height();
+    conv_param->output_w_ = outputs.front()->Width();
+    conv_param->output_channel_ = outputs.front()->Channel();
+    conv_param->op_parameter_.thread_num_ = ctx->thread_num_;
+    CheckIfUseWinograd(&use_winograd, &out_unit, conv_param);
+  }
 
   kernel::LiteKernel *kernel = nullptr;
   if (kernel_h == 1 && kernel_w == 1) {
     kernel = new (std::nothrow) kernel::Convolution1x1FP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  } else if (use_winograd) {
+    kernel = new (std::nothrow)
+      kernel::ConvolutionWinogradFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive, out_unit);
   } else {
-    bool use_winograd = false;
-    int out_unit;
-    CheckIfUseWinograd(&use_winograd, &out_unit, conv_param);
-    if (use_winograd) {
-      kernel = new (std::nothrow)
-        kernel::ConvolutionWinogradFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive, out_unit);
-    }
-    if (kernel_h != 1 && kernel_w != 1 && !use_winograd) {
-      kernel = new (std::nothrow) kernel::ConvolutionFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-    }
+    kernel = new (std::nothrow) kernel::ConvolutionFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   }
   if (kernel == nullptr) {
     MS_LOG(DEBUG) << "Create conv fp16 kernel failed.";

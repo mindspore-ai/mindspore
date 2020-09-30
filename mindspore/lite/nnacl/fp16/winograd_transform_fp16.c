@@ -594,7 +594,7 @@ void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_in
     int interval_y_e = src_y_e < input_h ? input_unit : (input_h - src_y_s);
 
     int src_plane_offset = in_channel * (src_y_s * input_w + src_x_s);
-    int dst_plane_offset = c * C4NUM;
+    int dst_plane_offset = c * in_channel;
     for (int ic = 0; ic < ic8; ic++) {
       // clear tmp buffer
       memset(tmp_data, 0, input_unit * input_unit * C8NUM * sizeof(float16_t));
@@ -622,6 +622,30 @@ void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_in
 #endif
           }
         }
+      } else if (real_c < 8 && real_c >= 4) {
+        for (int interval = interval_y_s; interval < interval_y_e; interval++) {
+          int src_y_offset = src_ic8_offset + (interval * input_w + interval_x_s) * in_channel;
+          int dst_y_offset = interval * input_unit * C8NUM + interval_x_s * C8NUM;
+          for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
+            int src_x_offset = src_y_offset + j * in_channel;
+            int dst_x_offset = dst_y_offset + j * C8NUM;
+            const float16_t *src_addr = input_data + src_x_offset;
+            float16_t *dst_addr = tmp_data + dst_x_offset;
+            int rc = real_c - 4;
+#ifdef ENABLE_NEON
+            vst1_f16(dst_addr, vld1_f16(src_addr));
+#else
+            for (int k = 0; k < C4NUM; k++) {
+              dst_addr[k] = src_addr[k];
+            }
+#endif
+            src_addr += 4;
+            dst_addr += 4;
+            for (int i = 0; i < rc; ++i) {
+              dst_addr[i] = src_addr[i];
+            }
+          }
+        }
       } else {
         for (int interval = interval_y_s; interval < interval_y_e; interval++) {
           int src_y_offset = src_ic8_offset + (interval * input_w + interval_x_s) * in_channel;
@@ -639,10 +663,10 @@ void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_in
       }
 
       // input transform
-      int dst_ic8_offset = dst_plane_offset + ic * tile_num * C8NUM;
-      size_t dst_step = ic8 * C8NUM * tile_num;
+      int dst_ic8_offset = dst_plane_offset + ic * C8NUM;
+      size_t dst_step = in_channel * tile_num;
       float16_t *trans_input_ptr = trans_input + dst_ic8_offset;
-      func(tmp_data, trans_input_ptr, C8NUM, dst_step);
+      func(tmp_data, trans_input_ptr, C8NUM, dst_step, real_c);
     }
     out_tile_index++;
   }  // cal_tile_num loop
