@@ -516,7 +516,7 @@ __kernel void Concat4input_NC4HW4(__read_only image2d_t input0, __read_only imag
     DOConcat##Inputnum##Axis##ToFormat;                                                                               \
   }
 
-// nc4hw4 ?
+// nc4hw4
 CONCAT6(6input, axis1, _NC4HW4)
 CONCAT6(6input, axis2, _NC4HW4)
 CONCAT6(6input, axis3, _NC4HW4)
@@ -530,7 +530,7 @@ CONCAT2(2input, axis1, _NC4HW4)
 CONCAT2(2input, axis2, _NC4HW4)
 CONCAT2(2input, axis3, _NC4HW4)
 
-// nhwc4?
+// nhwc4
 CONCAT6(6input, axis1, _NHWC4)
 CONCAT6(6input, axis2, _NHWC4)
 CONCAT6(6input, axis3, _NHWC4)
