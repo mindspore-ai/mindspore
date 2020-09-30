@@ -26,6 +26,7 @@
 #include "pipeline/jit/parse/python_adapter.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
+#include "backend/kernel_compiler/akg/akg_kernel_json_decoder.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "debug/anf_ir_dump.h"
 
@@ -203,7 +204,7 @@ class AreaGraph {
     }
 
     SortCNodes(main_cnodes);
-    cnode_group_id->swap(topo_order_);  // The topo_order is not used anymore.
+    *cnode_group_id = std::move(topo_order_);  // The topo_order is not used anymore.
     return;
   }
 
@@ -291,7 +292,7 @@ class AreaGraph {
     std::vector<CNodePtr> main_cnodes_sorted;
     std::transform(topo_order_.begin(), topo_order_.end(), std::back_inserter(main_cnodes_sorted),
                    [main_cnodes](int index) { return main_cnodes->at(index); });
-    main_cnodes->swap(main_cnodes_sorted);
+    *main_cnodes = std::move(main_cnodes_sorted);
   }
 
   // Areas in this subgraph
@@ -415,6 +416,9 @@ class Splitter {
             cnode->set_input(i, iter->second);
           }
         }
+        if (AnfAlgo::IsRealKernel(node)) {
+          ResetKernelInfo(node);
+        }
       }
     }
     return output;
@@ -445,7 +449,7 @@ class Splitter {
         tmp_subgraph_cnodes.push_back(new_subgraph_cnodes_[i]);
       }
     }
-    new_subgraph_cnodes_.swap(tmp_subgraph_cnodes);
+    new_subgraph_cnodes_ = std::move(tmp_subgraph_cnodes);
 
     TraverseFuncGraph(main_func_graph_, [&replace_map](const AnfNodePtr &node) {
       auto cnode = node->cast<CNodePtr>();
@@ -580,15 +584,38 @@ class CostModelSplitSchemer : public Splitter::SplitSchemer {
       return false;
     }
 
-    // recover json to anf-ir.
-    split_plan_.clear();
-    if (!JsonDescToAnf(split_graphs_str, address_node_map, &split_plan_)) {
-      MS_LOG(ERROR) << "Failed to decode split graphs.";
+    if (!DecodeJson(split_graphs_str, address_node_map)) {
+      MS_LOG(ERROR) << "Failed to decode split graphs. input json:\n" << split_graphs_str;
+      return false;
+    }
+    return true;
+  }
+
+  virtual bool DecodeJson(const std::string &json_desc, const std::map<std::string, AnfNodePtr> &address_node_map) {
+    auto kernel_json = nlohmann::json::parse(json_desc);
+    kernel::AkgKernelJsonDecoder akg_kernel_json_decoder;
+    std::vector<nlohmann::json> graph_descs = kernel_json[kJsonKeyGraphDesc];
+    std::vector<std::string> graph_modes = kernel_json[kJsonKeyGraphMode];
+    if (graph_modes.size() != graph_descs.size()) {
+      MS_LOG(ERROR) << "Size of graph_mode " << graph_modes.size() << " mismatch graph_desc " << graph_descs.size();
       return false;
     }
 
-    // The info should be returned from costmodel.
-    need_inline_.assign(split_plan_.size(), 0);
+    // recover json to anfnode.
+    split_plan_.clear();
+    for (const auto &graph_desc : graph_descs) {
+      AnfNodePtrList res_graph;
+      if (!akg_kernel_json_decoder.DecodeSplitNodes(graph_desc, address_node_map, &res_graph)) {
+        MS_LOG(ERROR) << "Failed decode sub graph, " << graph_desc;
+        return false;
+      }
+      split_plan_.push_back(std::move(res_graph));
+    }
+
+    // ops to be inlined.
+    need_inline_.clear();
+    std::transform(graph_modes.begin(), graph_modes.end(), std::back_inserter(need_inline_),
+                   [](const std::string &mode) { return mode == "basic" ? 1 : 0; });
     return true;
   }
 

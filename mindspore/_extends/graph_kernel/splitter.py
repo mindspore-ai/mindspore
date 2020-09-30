@@ -26,10 +26,12 @@ def split_with_json(json_str: str):
     try:
         graph_desc = json.loads(json_str)
         comp = model.load_composite(graph_desc)
-        graph_split = model.split(comp.graph)
+        graph_split, graph_mode = model.split(comp.graph)
         is_multi_graph = len(graph_split) > 1
         graph_list = list(map(comp.dump, graph_split))
-        result = {"multi_graph": is_multi_graph, "graph_desc": graph_list}
+        result = {"multi_graph": is_multi_graph,
+                  "graph_desc": graph_list,
+                  "graph_mode": graph_mode}
         return json.dumps(result)
     except jd.JSONDecodeError:
         logger.error(traceback.format_exc())

@@ -14,138 +14,221 @@
 # ===========================================================================
 """Cost model splitter"""
 
-from .model import PrimLib, Graph
+from .model import PrimLib, Graph, Tensor
 
 
 class GraphSplitByPattern:
-    """Graph split by pattern"""
+    """Graph splitter"""
+    class Area:
+        """Area"""
+        MODE_BASIC = 1
+        MODE_COMPOSITE = 2
+
+        def __init__(self, init_op):
+            self.pattern = PrimLib.iter_type(init_op)
+            self.ops = [init_op]
+            self.in_relations = dict()  # {area1: relation1, area2: relation2, ...}
+            self.out_relations = dict()  # {area1: relation1, area2: relation2, ...}
+            self.mode = self.MODE_BASIC
+
+        def __str__(self):
+            return '<' + '-'.join([op.output.name for op in self.ops]) + '>'
+
+        def __repr__(self):
+            return str(self)
+
+        def link_input(self, area_map):
+            """Link inputs"""
+            def get_relation(op, i):
+                relation = PrimLib.UNKNOWN
+                _, elem_relation = PrimLib.input_relation(op, i)
+                for r in elem_relation:
+                    if r is not None and r > relation:
+                        relation = r
+                return relation
+            for i, t in enumerate(self.ops[0].inputs):
+                if t.op is not None:
+                    area, relation = area_map[t.op], get_relation(self.ops[0], i)
+                    self.in_relations[area] = relation
+
+        def link_output(self):
+            """Link outputs"""
+            for input_area, r in self.in_relations.items():
+                input_area.out_relations[self] = r
+
+        def fuse(self, area):
+            """Fuse `area` to `self`"""
+            def _update_relation(relations, a, r):
+                relations[a] = max(r, relations[a]) if a in relations else r
+
+            def _update_pattern():
+                self.pattern = max(self.pattern, area.pattern, self.in_relations[area])
+
+            def _fuse_relation(self_relations, new_relations):
+                for a, r in new_relations.items():
+                    if a != self:
+                        _update_relation(self_relations, a, r)
+                if area in self_relations:
+                    self_relations.pop(area)
+
+            def _redirect_relation(rels):
+                """Replace `area` with `self` in relations"""
+                if area in rels:
+                    r = rels.pop(area)
+                    _update_relation(rels, self, r)
+
+            self.ops.extend(area.ops)
+            _update_pattern()
+            _fuse_relation(self.in_relations, area.in_relations)
+            _fuse_relation(self.out_relations, area.out_relations)
+            for a, _ in area.in_relations.items():
+                _redirect_relation(a.out_relations)
+            for a, _ in area.out_relations.items():
+                _redirect_relation(a.in_relations)
+            self.mode = self.MODE_COMPOSITE
+
+        def check_circle(self, to):
+            """Check circle. It returns false if circle exists"""
+            def _reached(area, to):
+                for out, _ in area.out_relations.items():
+                    if out == to or _reached(out, to):
+                        return True
+                return False
+            for out, _ in self.out_relations.items():
+                if out != to and _reached(out, to):
+                    return False
+            return True
+
+    BORADCAST_FUSE_DEPTH = 3
+    REDUCE_FUSE_DEPTH = 3
 
     def __init__(self, graph):
         self.graph = graph
-        self.groups = []
-        self.op_group = {}
-        for op in self.graph.ops:
-            g = [op]
-            self.groups.append(g)
-            self.op_group[op] = g
-        self.ids = {}
-        for i, op in enumerate(graph.ops):
-            self.ids[op] = i
-        self.doms = self.post_dom(graph.ops)
-        _, outputs = graph.deduce_parameters()
-        self.outputs = set(outputs)
+        self.areas = []
+        area_map = {}
+        for op in graph.ops:
+            a = self.Area(op)
+            self.areas.append(a)
+            area_map[op] = a
+        for a in self.areas:
+            a.link_input(area_map)
+        for a in self.areas:
+            a.link_output()
 
-    def post_dom(self, ops):
-        """Post dom"""
-        doms, i_doms = {}, {}
-        for i in range(len(ops) - 1, -1, -1):
-            op = ops[i]
-            doms[op] = {op}
-            i_dom = None
-            if op.output.to_ops:
-                suc_dom = set(doms[op.output.to_ops[0]])
-                for to in op.output.to_ops[1:]:
-                    suc_dom.intersection_update(doms[to])
-                doms[op].update(suc_dom)
-                for dom in suc_dom:
-                    if i_dom is None or self.ids[dom] < self.ids[i_dom]:
-                        i_dom = dom
-            i_doms[op] = i_dom
-        return i_doms
-
-    def get_pattern(self, op, i):
-        """Get pattern"""
-        pattern = PrimLib.UNKNOWN
-        _, elem_relation = PrimLib.input_relation(op, i)
-        for pat in elem_relation:
-            if pat and pat > pattern:
-                pattern = pat
-        return pattern
-
-    def fuse(self, check_fun):
-        """Fuse ops"""
-        def _get_path(op, dom):
-            path_ops, visited = [], set()
-
-            def _get_path_depth(p):
-                visited.add(p)
-                if self.op_group[p][0] == p:
-                    path_ops.append(p)
-                for to in p.output.to_ops:
-                    if to != dom and to not in visited:
-                        _get_path_depth(to)
-            _get_path_depth(op)
-            return path_ops
-        changed = True
-        while changed:
-            for group in self.groups:
-                op = group[0]
-                dom = self.doms[op]
-                if dom is None or op.output in self.outputs:
-                    continue
-                ops = _get_path(op, dom)
-                if check_fun(op, dom, ops):
-                    dom_group = self.op_group[dom]
-                    fused = []
-                    for fop in ops:
-                        f_group = self.op_group[fop]
-                        for p in f_group:
-                            self.op_group[p] = dom_group
-                        fused.append(f_group)
-                        dom_group += f_group
-                    for g in fused:
-                        self.groups.remove(g)
+    def fuse(self, selector):
+        """Fuse areas"""
+        changed = False
+        while True:
+            for dominant in self.areas:
+                fuse_areas = selector(dominant)
+                if fuse_areas:
+                    for area in fuse_areas:
+                        changed = True
+                        dominant.fuse(area)
+                        self.areas.remove(area)
                     break
             else:
-                changed = False
+                return changed
 
     def to_subgraphs(self):
         """Transform op groups to subgraphs"""
+        ids = {}
+        for i, op in enumerate(self.graph.ops):
+            ids[op] = i
         subgraphs = []
-        for i, group in enumerate(self.groups):
-            group.sort(key=lambda op: self.ids[op])
-            subgraphs.append(Graph('{}_{}'.format(self.graph.name, i), group))
-        return subgraphs
+        graphmodes = []
+        for i, area in enumerate(self.areas):
+            area.ops.sort(key=lambda op: ids[op])
+            subgraphs.append(Graph('{}_{}'.format(self.graph.name, i), area.ops))
+            graphmodes.append("basic" if area.mode == self.Area.MODE_BASIC else "composite")
+        return subgraphs, graphmodes
 
     def split(self):
-        """Split graph"""
-        def _buddy(op, dom, path_ops):
-            """Fuse buddy together"""
-            group = self.op_group[op]
-            for p in group:
-                # p is buddy
-                if p.output.buddy is not None and p.output.buddy.members[0].op not in group:
+        """Split graph by pattern"""
+        def _elemwise_depth(dom):
+            if dom.pattern > PrimLib.BROADCAST or len(dom.in_relations) != 1:
+                return None
+            a, r = list(dom.in_relations.items())[0]
+            if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 and r != PrimLib.ELEMWISE:
+                return None
+            return [a]
+
+        def _elemwise_width(dom):
+            if dom.pattern > PrimLib.BROADCAST:
+                return None
+            fused = []
+            for a, r in dom.in_relations.items():
+                if a.pattern <= PrimLib.BROADCAST and r == PrimLib.ELEMWISE and a.check_circle(dom):
+                    fused.append(a)
+            return fused
+
+        def _broadcast_depth(dom):
+            if dom.pattern > PrimLib.BROADCAST or len(dom.in_relations) != 1:
+                return None
+            a, r = list(dom.in_relations.items())[0]
+            if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 or \
+                    r != PrimLib.BROADCAST or len(a.ops) > self.BORADCAST_FUSE_DEPTH:
+                return None
+            return [a]
+
+        def _broadcast_width(dom):
+            if dom.pattern > PrimLib.BROADCAST:
+                return None
+            fused = []
+            for a, r in dom.in_relations.items():
+                if a.pattern <= PrimLib.BROADCAST and r == PrimLib.BROADCAST and \
+                        a.check_circle(dom) and len(a.ops) <= self.BORADCAST_FUSE_DEPTH:
+                    fused.append(a)
+            return fused
+
+        def _check_reduce_exclude(dom):
+            # exclude large all-reduce
+            if len(dom.ops[0].inputs[0].shape) == len(dom.ops[0].attrs["reduce_axis"]) and \
+                    dom.ops[0].inputs[0].get_size() > 10000:
+                return True
+
+            # exclude multi output
+            for a in dom.in_relations.keys():
+                if len(a.out_relations) > 1:
                     return True
-                # p's output is buddy
-                for to in p.output.to_ops:
-                    if to.output.buddy is not None and to not in group:
-                        return True
+                if any([op.output.para_type == Tensor.PARA_OUTPUT for op in a.ops]):
+                    return True
             return False
 
-        def _injective(pattern, limit):
-            def _checker(op, dom, path_ops):
-                for p in op.output.to_ops:
-                    if p not in self.op_group[dom]:
-                        return False
-                if PrimLib.iter_type(op) in (PrimLib.ELEMWISE, PrimLib.BROADCAST):
-                    for i, t in enumerate(dom.inputs):
-                        if t == op.output:
-                            return self.get_pattern(dom, i) == pattern and len(self.op_group[op]) < limit
-                return False
-            return _checker
+        def _reduce_depth(dom):
+            if dom.pattern != PrimLib.REDUCE or len(dom.in_relations) != 1:
+                return None
+            if _check_reduce_exclude(dom):
+                return None
+            a, r = list(dom.in_relations.items())[0]
+            if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 or \
+                    r > PrimLib.REDUCE or len(a.ops) > self.REDUCE_FUSE_DEPTH:
+                return None
+            return [a]
 
-        def _diamond(op, dom, path_ops):
-            if PrimLib.iter_type(op) not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or \
-                    PrimLib.iter_type(dom) in (PrimLib.UNKNOWN, PrimLib.TRANSFORM):
-                return False
-            return len(path_ops) == 1 and op.output not in dom.inputs
-        self.fuse(_buddy)
-        self.fuse(_injective(PrimLib.ELEMWISE, 100))
-        self.fuse(_injective(PrimLib.BROADCAST, 6))
-        self.fuse(_injective(PrimLib.REDUCE, 6))
-        self.fuse(_diamond)
-        return self.to_subgraphs()
+        def _reduce_width(dom):
+            if dom.pattern != PrimLib.REDUCE:
+                return None
+            if _check_reduce_exclude(dom):
+                return None
+            fused = []
+            for a, r in dom.in_relations.items():
+                if a.pattern <= PrimLib.BROADCAST and r <= PrimLib.REDUCE and \
+                        a.check_circle(dom) and len(a.ops) <= self.REDUCE_FUSE_DEPTH:
+                    fused.append(a)
+            return fused
+        changed = True
+        while changed:
+            changed = self.fuse(_elemwise_depth)
+            changed = self.fuse(_elemwise_width) or changed
+            changed = self.fuse(_broadcast_depth) or changed
+            changed = self.fuse(_broadcast_width) or changed
+            changed = self.fuse(_reduce_depth) or changed
+            changed = self.fuse(_reduce_width) or changed
+        subgraphs, graphmodes = self.to_subgraphs()
+        return subgraphs, graphmodes
 
 
 def split(graph):
+    """Split graph"""
     return GraphSplitByPattern(graph).split()

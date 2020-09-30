@@ -485,7 +485,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
   (*kernel_json)[kJsonKeyProcess] = GetProcessorStr(anf_nodes[0]);
   (*kernel_json)[kJsonKeyComposite] = true;
-  (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString();
+  (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString() + "." + fg->debug_info()->get_id();
 
   if (!GetIOSize(*kernel_json, &input_size_list_, &output_size_list_)) {
     MS_LOG(ERROR) << "Cal mem size failed.";
