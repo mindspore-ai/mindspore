@@ -54,22 +54,22 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
  public:
   BenchmarkFlags() {
     // common
-    AddFlag(&BenchmarkFlags::modelPath, "modelPath", "Input model path", "");
-    AddFlag(&BenchmarkFlags::inDataPath, "inDataPath", "Input data path, if not set, use random input", "");
-    AddFlag(&BenchmarkFlags::device, "device", "CPU | GPU", "CPU");
-    AddFlag(&BenchmarkFlags::cpuBindMode, "cpuBindMode",
-            "Input -1 for MID_CPU, 1 for HIGHER_CPU, 0 for NO_BIND, defalut value: 1", 1);
+    AddFlag(&BenchmarkFlags::model_file_, "modelFile", "Input model file", "");
+    AddFlag(&BenchmarkFlags::in_data_file_, "inDataFile", "Input data file, if not set, use random input", "");
+    AddFlag(&BenchmarkFlags::device_, "device", "CPU | GPU", "CPU");
+    AddFlag(&BenchmarkFlags::cpu_bind_mode_, "cpuBindMode",
+            "Input 0 for NO_BIND, 1 for HIGHER_CPU, 2 for MID_CPU, defalut value: 1", 1);
     // MarkPerformance
-    AddFlag(&BenchmarkFlags::loopCount, "loopCount", "Run loop count", 10);
-    AddFlag(&BenchmarkFlags::numThreads, "numThreads", "Run threads number", 2);
-    AddFlag(&BenchmarkFlags::fp16Priority, "fp16Priority", "Priority float16", false);
-    AddFlag(&BenchmarkFlags::warmUpLoopCount, "warmUpLoopCount", "Run warm up loop", 3);
-    AddFlag(&BenchmarkFlags::runTimeProfiler, "runTimeProfiler", "Run time profiler", false);
+    AddFlag(&BenchmarkFlags::loop_count_, "loopCount", "Run loop count", 10);
+    AddFlag(&BenchmarkFlags::num_threads_, "numThreads", "Run threads number", 2);
+    AddFlag(&BenchmarkFlags::enable_fp16_, "enableFp16", "Enable float16", false);
+    AddFlag(&BenchmarkFlags::warm_up_loop_count_, "warmUpLoopCount", "Run warm up loop", 3);
+    AddFlag(&BenchmarkFlags::time_profiling_, "timeProfiling", "Run time profiling", false);
     // MarkAccuracy
-    AddFlag(&BenchmarkFlags::calibDataPath, "calibDataPath", "Calibration data file path", "");
-    AddFlag(&BenchmarkFlags::calibDataType, "calibDataType", "Calibration data type. FLOAT | INT32 | INT8 | UINT8",
-            "FLOAT");
-    AddFlag(&BenchmarkFlags::accuracyThreshold, "accuracyThreshold", "Threshold of accuracy", 0.5);
+    AddFlag(&BenchmarkFlags::benchmark_data_file_, "benchmarkDataFile", "Benchmark data file path", "");
+    AddFlag(&BenchmarkFlags::benchmark_data_type_, "benchmarkDataType",
+            "Benchmark data type. FLOAT | INT32 | INT8 | UINT8", "FLOAT");
+    AddFlag(&BenchmarkFlags::accuracy_threshold_, "accuracyThreshold", "Threshold of accuracy", 0.5);
   }
 
   ~BenchmarkFlags() override = default;
@@ -80,32 +80,32 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
 
  public:
   // common
-  std::string modelPath;
-  std::string inDataPath;
-  std::vector<std::string> input_data_list;
-  InDataType inDataType;
-  std::string inDataTypeIn = "bin";
-  int cpuBindMode = 1;
+  std::string model_file_;
+  std::string in_data_file_;
+  std::vector<std::string> input_data_list_;
+  InDataType in_data_type_;
+  std::string in_data_type_in_ = "bin";
+  int cpu_bind_mode_ = 1;
   // MarkPerformance
-  int loopCount;
-  int numThreads;
-  bool fp16Priority;
-  int warmUpLoopCount;
-  bool runTimeProfiler;
+  int loop_count_;
+  int num_threads_;
+  bool enable_fp16_;
+  int warm_up_loop_count_;
+  bool time_profiling_;
   // MarkAccuracy
-  std::string calibDataPath;
-  std::string calibDataType;
-  float accuracyThreshold;
+  std::string benchmark_data_file_;
+  std::string benchmark_data_type_;
+  float accuracy_threshold_;
   // Resize
-  std::string resizeDimsIn = "";
-  std::vector<std::vector<int64_t>> resizeDims;
+  std::string resize_dims_in_ = "";
+  std::vector<std::vector<int64_t>> resize_dims_;
 
-  std::string device;
+  std::string device_;
 };
 
 class MS_API Benchmark {
  public:
-  explicit Benchmark(BenchmarkFlags *flags) : _flags(flags) {}
+  explicit Benchmark(BenchmarkFlags *flags) : flags_(flags) {}
 
   virtual ~Benchmark();
 
@@ -146,8 +146,8 @@ class MS_API Benchmark {
   // tensorData need to be converter first
   template <typename T>
   float CompareData(const std::string &nodeName, std::vector<int> msShape, T *msTensorData) {
-    auto iter = this->calibData.find(nodeName);
-    if (iter != this->calibData.end()) {
+    auto iter = this->benchmark_data_.find(nodeName);
+    if (iter != this->benchmark_data_.end()) {
       std::vector<size_t> castedMSShape;
       size_t shapeSize = 1;
       for (int64_t dim : msShape) {
@@ -224,15 +224,15 @@ class MS_API Benchmark {
   int MarkAccuracy();
 
  private:
-  BenchmarkFlags *_flags;
-  session::LiteSession *session;
-  std::vector<mindspore::tensor::MSTensor *> msInputs;
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> msOutputs;
-  std::unordered_map<std::string, CheckTensor *> calibData;
-  std::unordered_map<std::string, TypeId> dataTypeMap{{"FLOAT", TypeId::kNumberTypeFloat},
-                                                      {"INT8", TypeId::kNumberTypeInt8},
-                                                      {"INT32", TypeId::kNumberTypeInt32},
-                                                      {"UINT8", TypeId::kNumberTypeUInt8}};
+  BenchmarkFlags *flags_;
+  session::LiteSession *session_;
+  std::vector<mindspore::tensor::MSTensor *> ms_inputs_;
+  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> ms_outputs_;
+  std::unordered_map<std::string, CheckTensor *> benchmark_data_;
+  std::unordered_map<std::string, TypeId> data_type_map_{{"FLOAT", TypeId::kNumberTypeFloat},
+                                                         {"INT8", TypeId::kNumberTypeInt8},
+                                                         {"INT32", TypeId::kNumberTypeInt32},
+                                                         {"UINT8", TypeId::kNumberTypeUInt8}};
   TypeId msCalibDataType = TypeId::kNumberTypeFloat;
 
   // callback parameters

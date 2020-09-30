@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MS_MODEL_PARSER_H
-#define MS_MODEL_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MODEL_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MODEL_PARSER_H
 #include <google/protobuf/message.h>
 #include <string>
 #include <memory>

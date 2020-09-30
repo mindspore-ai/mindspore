@@ -137,9 +137,9 @@ int FullconnectionCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto a_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  auto b_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  c_r_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  auto a_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  auto b_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
+  c_r_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
 
   if (!fc_param_->a_const_) InitMatrixA(a_ptr, a_c12_ptr_);
   if (!fc_param_->b_const_) InitMatrixB(b_ptr, b_r8_ptr_);

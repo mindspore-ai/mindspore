@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MS_AWARE_QUANTIZER_H
-#define MS_AWARE_QUANTIZER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_AWARE_QUANTIZER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_AWARE_QUANTIZER_H
 
 #include <array>
 #include <string>
@@ -26,32 +26,11 @@
 #include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite::quant {
-struct InputArray {
-  std::unique_ptr<schema::QuantParamT> quantParam;
-  float mMin = 0.0f;
-  float mMax = 0.0f;
-  bool narrowRange = false;
-  int numBits = 8;
-  TypeId dataType = TypeId::kTypeUnknown;
-
-  InputArray(float mean, float stdDev, TypeId dataType = TypeId::kNumberTypeFloat) {
-    this->dataType = dataType;
-    constexpr float qmin = -128;
-    constexpr float qmax = 127;
-    mMin = (qmin - mean) / stdDev;
-    mMax = (qmax - mean) / stdDev;
-  }
-
-  STATUS InitQuantParam();
-  STATUS SetInputArrayQP(schema::MetaGraphT *graph, size_t inputTensorIdx);
-};
-
 class AwareQuantizer : public FbQuantizer {
  public:
-  AwareQuantizer(schema::MetaGraphT *graph, const TypeId &inferType, const std::string &stdValues,
-                 const std::string &meanValues);
+  AwareQuantizer(schema::MetaGraphT *graph, const TypeId &inferType);
 
-  ~AwareQuantizer() { delete (mInputArray); }
+  ~AwareQuantizer() override = default;
 
   STATUS RemoveFakeQuant() override;
 
@@ -76,8 +55,6 @@ class AwareQuantizer : public FbQuantizer {
   STATUS QuantConvWeight(const schema::MetaGraphT *subGraph, schema::CNodeT *node);
 
   float inputScale = 0.0f;
-
-  InputArray *mInputArray;
 
   static const std::array<schema::PrimitiveType, 7> propagatedOps;
 };

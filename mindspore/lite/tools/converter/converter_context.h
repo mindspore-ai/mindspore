@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_RETURN_CODE_H
-#define LITE_RETURN_CODE_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_RETURN_CODE_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_RETURN_CODE_H
 
 #include <string>
 #include <set>
@@ -70,4 +70,4 @@ class NoSupportOp {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // LITE_RETURN_CODE_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_RETURN_CODE_H

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CONVERTER_FLAGS_H
-#define CONVERTER_FLAGS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H
 
 #include <string>
 #include "tools/common/flag_parser.h"
@@ -40,9 +40,6 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   int Init(int argc, const char **argv);
 
- private:
-  bool ValidateString(std::string pattern, std::string input);
-
  public:
   std::string modelFile;
   std::string outputFile;
@@ -58,13 +55,11 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string inferenceTypeIn;
   // used for parse aware trainning
   TypeId inferenceType = TypeId::kNumberTypeFloat;
-  std::string stdDev;
-  std::string mean;
   // used for post-trainning-weight
-  std::string quantSize;
+  std::string quantWeightSize;
   std::string bitNum;
   std::string configFile;
-  std::string convWeightQuantChannelThreshold;
+  std::string quantWeightChannel;
   std::string trainModelIn;
   bool trainModel = false;
 };

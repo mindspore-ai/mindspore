@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MS_QUANTIZER_H
-#define MS_QUANTIZER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZER_H
 
 #include <unordered_map>
 #include <utility>
@@ -63,7 +63,7 @@ class FbQuantizer {
  public:
   explicit FbQuantizer(schema::MetaGraphT *graph) : graph(graph) {}
 
-  ~FbQuantizer() = default;
+  virtual ~FbQuantizer() = default;
 
   virtual STATUS RemoveFakeQuant();
 

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MS_OPTIMIZER_H
-#define MS_OPTIMIZER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_H
 #include <vector>
 #include "schema/inner/model_generated.h"
 #include "include/errorcode.h"

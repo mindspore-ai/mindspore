@@ -861,14 +861,14 @@ STATUS PostTrainingQuantizer::DoInference() {
       [&](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
           const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
           const mindspore::session::CallBackParam &callParam) -> bool {
-      if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.name_callback_param, beforeInputs) != RET_OK) {
+      if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
         return false;
       }
       auto tensor = beforeInputs[0];
       const float *tData = static_cast<const float *>(tensor->MutableData());
       size_t elem_count = tensor->ElementsNum();
       vector<float> data(tData, tData + elem_count);
-      this->calibrator_->RecordMaxValue(callParam.name_callback_param, data, this->calibrator_->GetInputDivergInfo());
+      this->calibrator_->RecordMaxValue(callParam.node_name, data, this->calibrator_->GetInputDivergInfo());
       return true;
     };
     // func
@@ -876,14 +876,14 @@ STATUS PostTrainingQuantizer::DoInference() {
                                                          const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
                                                          const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
                                                          const mindspore::session::CallBackParam &callParam) -> bool {
-      if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.name_callback_param, afterOutputs) != RET_OK) {
+      if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, afterOutputs) != RET_OK) {
         return false;
       }
       auto tensor = afterOutputs[0];
       const float *tensor_data = static_cast<const float *>(tensor->MutableData());
       size_t elem_count = tensor->ElementsNum();
       vector<float> data(tensor_data, tensor_data + elem_count);
-      this->calibrator_->RecordMaxValue(callParam.name_callback_param, data, this->calibrator_->GetOutputDivergInfo());
+      this->calibrator_->RecordMaxValue(callParam.node_name, data, this->calibrator_->GetOutputDivergInfo());
       return true;
     };
     status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);
@@ -918,9 +918,9 @@ STATUS PostTrainingQuantizer::Int8Inference() {
       [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
              const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
              const mindspore::session::CallBackParam &callParam) -> bool {
-      if (callParam.type_callback_param == kTypeConv2D || callParam.type_callback_param == kTypeDepthwiseConv2D) {
+      if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
         vector<float> fp32_op_input;
-        while (!OpInputDataHandle(FETCH, callParam.name_callback_param, &fp32_op_input)) {
+        while (!OpInputDataHandle(FETCH, callParam.node_name, &fp32_op_input)) {
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         auto tensor = beforeInputs[0];
@@ -966,9 +966,9 @@ STATUS PostTrainingQuantizer::Int8Inference() {
                                                          const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
                                                          const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
                                                          const mindspore::session::CallBackParam &callParam) -> bool {
-      if (callParam.type_callback_param == kTypeConv2D || callParam.type_callback_param == kTypeDepthwiseConv2D) {
+      if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
         vector<float> fp32_op_output_ch_mean;
-        while (!OpOutputChMeanDataHandle(FETCH, callParam.name_callback_param, &fp32_op_output_ch_mean)) {
+        while (!OpOutputChMeanDataHandle(FETCH, callParam.node_name, &fp32_op_output_ch_mean)) {
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         auto tensor = afterOutputs[0];
@@ -1020,12 +1020,12 @@ STATUS PostTrainingQuantizer::Int8Inference() {
         std::transform(fp32_op_output_ch_mean.begin(), fp32_op_output_ch_mean.end(), dequant_op_output_ch_mean.begin(),
                        dequant_op_output_ch_mean.begin(), std::minus<>());
 
-        if (op_bias_diff_map.find(callParam.name_callback_param) != op_bias_diff_map.end()) {
-          auto &bias_diff = op_bias_diff_map[callParam.name_callback_param];
+        if (op_bias_diff_map.find(callParam.node_name) != op_bias_diff_map.end()) {
+          auto &bias_diff = op_bias_diff_map[callParam.node_name];
           std::transform(bias_diff.begin(), bias_diff.end(), dequant_op_output_ch_mean.begin(), bias_diff.begin(),
                          std::plus<>());
         } else {
-          op_bias_diff_map[callParam.name_callback_param] = dequant_op_output_ch_mean;
+          op_bias_diff_map[callParam.node_name] = dequant_op_output_ch_mean;
         }
       }
       return true;
@@ -1060,8 +1060,8 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
       [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
              const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
              const mindspore::session::CallBackParam &callParam) -> bool {
-      if (callParam.type_callback_param == kTypeConv2D || callParam.type_callback_param == kTypeDepthwiseConv2D) {
-        if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.name_callback_param, beforeInputs) != RET_OK) {
+      if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
+        if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
           return false;
         }
         auto tensor = beforeInputs[0];
@@ -1073,7 +1073,7 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
           MS_LOG(ERROR) << "memcpy error: " << ret;
           return false;
         }
-        while (!OpInputDataHandle(STORE, callParam.name_callback_param, &fp32_op_input)) {
+        while (!OpInputDataHandle(STORE, callParam.node_name, &fp32_op_input)) {
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
       }
@@ -1084,8 +1084,8 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
                                                          const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
                                                          const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
                                                          const mindspore::session::CallBackParam &callParam) -> bool {
-      if (callParam.type_callback_param == kTypeConv2D || callParam.type_callback_param == kTypeDepthwiseConv2D) {
-        if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.name_callback_param, afterOutputs) != RET_OK) {
+      if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
+        if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, afterOutputs) != RET_OK) {
           return false;
         }
         auto tensor = afterOutputs[0];
@@ -1117,7 +1117,7 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
           sum = sum / one_filter_size;
           fp32_op_output_ch_mean[i] = sum;
         }
-        while (!OpOutputChMeanDataHandle(STORE, callParam.name_callback_param, &fp32_op_output_ch_mean)) {
+        while (!OpOutputChMeanDataHandle(STORE, callParam.node_name, &fp32_op_output_ch_mean)) {
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
       }
@@ -1264,15 +1264,14 @@ STATUS PostTrainingQuantizer::CollectDataFrequency() {
       [&](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
           const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
           const mindspore::session::CallBackParam &callParam) {
-        if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.name_callback_param, beforeInputs) != RET_OK) {
+        if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
           return false;
         }
         auto tensor = beforeInputs[0];
         const float *tensor_data = static_cast<const float *>(tensor->MutableData());
         size_t shape_size = tensor->ElementsNum();
         vector<float> data(tensor_data, tensor_data + shape_size);
-        this->calibrator_->UpdateDataFrequency(callParam.name_callback_param, data,
-                                               this->calibrator_->GetInputDivergInfo());
+        this->calibrator_->UpdateDataFrequency(callParam.node_name, data, this->calibrator_->GetInputDivergInfo());
         return true;
       };
 
@@ -1280,15 +1279,14 @@ STATUS PostTrainingQuantizer::CollectDataFrequency() {
       [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
           const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
           const mindspore::session::CallBackParam &call_param) {
-        if (PostTrainingQuantizer::CheckFp32TensorVec(call_param.name_callback_param, after_outputs) != RET_OK) {
+        if (PostTrainingQuantizer::CheckFp32TensorVec(call_param.node_name, after_outputs) != RET_OK) {
           return false;
         }
         auto tensor = after_outputs[0];
         const float *tenosr_data = static_cast<const float *>(tensor->MutableData());
         size_t shape_size = tensor->ElementsNum();
         vector<float> data(tenosr_data, tenosr_data + shape_size);
-        this->calibrator_->UpdateDataFrequency(call_param.name_callback_param, data,
-                                               this->calibrator_->GetOutputDivergInfo());
+        this->calibrator_->UpdateDataFrequency(call_param.node_name, data, this->calibrator_->GetOutputDivergInfo());
         return true;
       };
     status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);

@@ -40,49 +40,7 @@ const std::array<schema::PrimitiveType, 7> AwareQuantizer::propagatedOps = {
    schema::PrimitiveType_Squeeze, schema::PrimitiveType_RealDiv, schema::PrimitiveType_Activation,
    schema::PrimitiveType_DetectionPostProcess}};
 
-STATUS InputArray::InitQuantParam() {
-  this->quantParam = std::make_unique<schema::QuantParamT>();
-  auto status = CalQuantizationParams(quantParam.get(), mMin, mMax, narrowRange, numBits);
-  if (status != RET_OK) {
-    return status;
-  }
-  return RET_OK;
-}
-
-STATUS InputArray::SetInputArrayQP(schema::MetaGraphT *graph, size_t inputTensorIdx) {
-  MS_ASSERT(graph != nullptr);
-  auto &tensor = graph->allTensors.at(inputTensorIdx);
-  MS_ASSERT(tensor != nullptr);
-  if (!tensor->quantParams.empty()) {
-    auto param = GetTensorQuantParam(tensor);
-    if (param != nullptr && param->inited) {
-      MS_LOG(DEBUG) << "tensor " << inputTensorIdx << " already has quantParam";
-      return RET_OK;
-    }
-    tensor->quantParams.clear();
-  }
-  std::unique_ptr<schema::QuantParamT> tmpQuantParam(new QuantParamT());
-  tmpQuantParam->inited = this->quantParam->inited;
-  tmpQuantParam->scale = this->quantParam->scale;
-  tmpQuantParam->zeroPoint = this->quantParam->zeroPoint;
-  tmpQuantParam->min = this->quantParam->min;
-  tmpQuantParam->max = this->quantParam->max;
-  tensor->quantParams.push_back(std::move(tmpQuantParam));
-  return RET_OK;
-}
-
-AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph, const TypeId &inferType, const string &stdValues,
-                               const string &meanValues)
-    : FbQuantizer(graph) {
-  MS_ASSERT(graph != nullptr);
-  string::size_type sz;
-  const float stdValue = std::stof(stdValues, &sz);
-  sz = 0;
-  const float mean = std::stof(meanValues, &sz);
-  mInputArray = new (std::nothrow) InputArray(mean, stdValue);
-  mInputArray->dataType = inferType;
-  mInputArray->InitQuantParam();
-}
+AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph, const TypeId &inferType) : FbQuantizer(graph) {}
 
 STATUS AwareQuantizer::RemoveFakeQuant() { return RET_OK; }
 
@@ -101,15 +59,6 @@ STATUS AwareQuantizer::GenerateDefaultQuantParam(const schema::MetaGraphT *subGr
 STATUS AwareQuantizer::SetAttrToConvolution(const schema::MetaGraphT *subGraph, schema::CNodeT *node) { return RET_OK; }
 
 STATUS AwareQuantizer::GenerateQuantParam() {
-  MS_ASSERT(graph->inputIndex.size() == 1);
-  // set graphInputNode input
-  for (auto graphInputIndex : graph->inputIndex) {
-    auto status = mInputArray->SetInputArrayQP(graph, graphInputIndex);
-    if (status != RET_OK) {
-      MS_LOG(WARNING) << "SetInputArrayQP failed";
-      return status;
-    }
-  }
   auto *quantParamRegister = QuantParamCalcRegister::GetInstance();
 
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
@@ -379,6 +328,7 @@ STATUS AwareQuantizer::QuantConvWeight(const schema::MetaGraphT *subGraph, schem
     weightTensor->quantParams.emplace_back(weightQauntParam.release());
   }
 
+  weightTensor->data.resize(wShapeSize * sizeof(uint8_t));
   ::memcpy(weightTensor->data.data(), qDatas.data(), wShapeSize);
   weightTensor->dataType = TypeId::kNumberTypeInt8;
   return RET_OK;

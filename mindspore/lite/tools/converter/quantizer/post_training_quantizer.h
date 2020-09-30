@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef POSTRAINING_QUANTIZER_H
-#define POSTRAINING_QUANTIZER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_POSTRAINING_QUANTIZER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_POSTRAINING_QUANTIZER_H
 
 #include <string>
 #include <memory>
@@ -221,4 +221,4 @@ class Calibrator {
 }  // namespace quant
 }  // namespace lite
 }  // namespace mindspore
-#endif  // POSTRAINING_QUANTIZER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_POSTRAINING_QUANTIZER_H

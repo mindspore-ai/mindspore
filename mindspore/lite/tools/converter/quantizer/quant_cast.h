@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_QUANT_CAST_H
-#define LITE_QUANT_CAST_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER__QUANT_CAST_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER__QUANT_CAST_H
 
 #include "mindspore/core/ir/anf.h"
 #include "mindspore/lite/include/errorcode.h"
@@ -36,4 +36,4 @@ class QuantCast {
 
 }  // namespace mindspore::lite::quant
 
-#endif  // LITE_QUANT_CAST_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER__QUANT_CAST_H

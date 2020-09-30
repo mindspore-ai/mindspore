@@ -25,23 +25,20 @@ namespace converter {
 Flags::Flags() {
   AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TFLITE | CAFFE | MINDIR | ONNX", "");
   AddFlag(&Flags::modelFile, "modelFile",
-          "Input model file path. TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx", "");
+          "Input model file. TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx", "");
   AddFlag(&Flags::outputFile, "outputFile", "Output model file path. Will add .ms automatically", "");
-  AddFlag(&Flags::weightFile, "weightFile",
-          "Input model weight file path. Needed when fmk is CAFFE. CAFFE: *.caffemodel", "");
+  AddFlag(&Flags::weightFile, "weightFile", "Input model weight file. Needed when fmk is CAFFE. CAFFE: *.caffemodel",
+          "");
   AddFlag(&Flags::inferenceTypeIn, "inferenceType", "Data type of input and output tensors. FLOAT | INT8 | UINT8",
           "FLOAT");
   AddFlag(&Flags::quantTypeIn, "quantType", "Quantization Type. AwareTraining | PostTraining | WeightQuant", "");
-  AddFlag(&Flags::stdDev, "stdDev", "Standard deviation value for aware-quantization", "128");
-  AddFlag(&Flags::mean, "mean", "Mean value for aware-quantization", "-0.5");
   AddFlag(&Flags::bitNum, "bitNum", "Weight quantization bitNum", "8");
-  AddFlag(&Flags::quantSize, "quantSize", "Weight quantization size threshold", "0");
-  AddFlag(&Flags::convWeightQuantChannelThreshold, "convWeightQuantChannelThreshold", "convWeightQuantChannelThreshold",
-          "16");
-  AddFlag(&Flags::configFile, "config_file", "Configuration for post-training.", "");
+  AddFlag(&Flags::quantWeightSize, "quantWeightSize", "Weight quantization size threshold", "0");
+  AddFlag(&Flags::quantWeightChannel, "quantWeightChannel", "Channel threshold for weight quantization", "16");
+  AddFlag(&Flags::configFile, "configFile", "Configuration for post-training.", "");
   AddFlag(&Flags::trainModelIn, "trainModel",
           "whether the model is going to be trained on device."
-          " true | false",
+          "true | false",
           "false");
 }
 
@@ -64,11 +61,11 @@ int Flags::Init(int argc, const char **argv) {
   }
   if (this->modelFile.empty()) {
     std::cerr << "INPUT MISSING: model file path is necessary";
-    return RET_INPUT_PARAM_LACK;
+    return RET_INPUT_PARAM_INVALID;
   }
   if (this->outputFile.empty()) {
     std::cerr << "INPUT MISSING: output file path is necessary";
-    return RET_INPUT_PARAM_LACK;
+    return RET_INPUT_PARAM_INVALID;
   }
 
   if (this->outputFile.rfind('/') == this->outputFile.length() - 1) {
@@ -78,7 +75,7 @@ int Flags::Init(int argc, const char **argv) {
 
   if (this->fmkIn.empty()) {
     std::cerr << "INPUT MISSING: fmk is necessary";
-    return RET_INPUT_PARAM_LACK;
+    return RET_INPUT_PARAM_INVALID;
   }
 
   if (this->inferenceTypeIn == "FLOAT") {
