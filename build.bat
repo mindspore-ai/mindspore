@@ -83,11 +83,10 @@ cd %BASEPATH%
 goto run_eof
 
 :run_cmake
-    cd %BASEPATH%
-    for /F %%i in ('find "const int ms_version_major =" mindspore\lite\include\version.h ^| tr -dc "[0-9]"') do ( set VERSION_MAJOR=%%i)
-    for /F %%i in ('find "const int ms_version_minor =" mindspore\lite\include\version.h ^| tr -dc "[0-9]"') do ( set VERSION_MINOR=%%i)
-    for /F %%i in ('find "const int ms_version_revision =" mindspore\lite\include\version.h ^| tr -dc "[0-9]"') do ( set VERSION_REVISION=%%i)
-    echo "======Start building MindSpore Lite %VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%======"
+    set VERSION_MAJOR=1
+    set VERSION_MINOR=0
+    set VERSION_REVISION=0
+    echo "============ Start building MindSpore Lite %VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION% ============"
     cd %BUILD_PATH%/mindspore
     cmake -DBUILD_DEVICE=on -DBUILD_CONVERTER=on -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=off ^
     -DCMAKE_BUILD_TYPE=Release -DSUPPORT_GPU=off -DBUILD_MINDDATA=off -DOFFLINE_COMPILE=off ^
