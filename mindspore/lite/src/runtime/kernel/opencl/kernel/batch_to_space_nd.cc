@@ -19,18 +19,18 @@
 #include <set>
 #include <utility>
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/opencl/kernel/space_to_batch_nd.h"
-#include "src/runtime/kernel/opencl/cl/space_to_batch_nd.cl.inc"
+#include "src/runtime/kernel/opencl/kernel/batch_to_space_nd.h"
+#include "src/runtime/kernel/opencl/cl/batch_to_space_nd.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_SpaceToBatch;
-using mindspore::schema::PrimitiveType_SpaceToBatchND;
+using mindspore::schema::PrimitiveType_BatchToSpace;
+using mindspore::schema::PrimitiveType_BatchToSpaceND;
 
 namespace mindspore::kernel {
 
-int SpaceToBatchNDOpenCLKernel::Init() {
-  std::string kernel_name = "space_to_batch_nd";
+int BatchToSpaceNDOpenCLKernel::Init() {
+  std::string kernel_name = "batch_to_space_nd";
   auto in_format = op_format_;
   if (in_tensors_[0]->shape().size() != 4 && out_tensors_[0]->shape().size() != 4) {
     MS_LOG(ERROR) << "input/output shape size must be 4, actual: " << in_tensors_[0]->shape().size() << ", "
@@ -42,19 +42,14 @@ int SpaceToBatchNDOpenCLKernel::Init() {
                   << "format not support!";
     return RET_ERROR;
   }
-  auto *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
-  param->need_paddings_ = (param->paddings_[0] | param->paddings_[1] | param->paddings_[2] | param->paddings_[3]);
-  param->padded_in_shape_[kNHWC_N] = in_tensors_[0]->shape().at(kNHWC_N);
-  param->padded_in_shape_[kNHWC_H] = in_tensors_[0]->shape().at(kNHWC_H) + param->paddings_[0] + param->paddings_[1];
-  param->padded_in_shape_[kNHWC_W] = in_tensors_[0]->shape().at(kNHWC_W) + param->paddings_[2] + param->paddings_[3];
-  param->padded_in_shape_[kNHWC_C] = in_tensors_[0]->shape().at(kNHWC_C);
-  if (param->block_sizes_[0] < 1 || param->block_sizes_[1] < 1) {
-    MS_LOG(ERROR) << "block_sizes_ must > 1, actual " << param->block_sizes_[0] << ", " << param->block_sizes_[1];
+  auto *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
+  if (param->block_shape_[0] < 1 || param->block_shape_[1] < 1) {
+    MS_LOG(ERROR) << "block_sizes_ must > 1, actual " << param->block_shape_[0] << ", " << param->block_shape_[1];
     return RET_ERROR;
   }
-  if (param->padded_in_shape_[kNHWC_H] % param->block_sizes_[0] ||
-      param->padded_in_shape_[kNHWC_W] % param->block_sizes_[1]) {
-    MS_LOG(ERROR) << "padded shape must be multiple of block!";
+  if (in_tensors_[0]->shape()[kNHWC_H] * param->block_shape_[0] <= (param->crops_[0] + param->crops_[1]) ||
+      in_tensors_[0]->shape()[kNHWC_W] * param->block_shape_[1] <= (param->crops_[2] + param->crops_[3])) {
+    MS_LOG(ERROR) << "crop shape error!";
     return RET_ERROR;
   }
 
@@ -71,16 +66,16 @@ int SpaceToBatchNDOpenCLKernel::Init() {
     kernel_name += "_NHWC4";
   }
   std::set<std::string> build_options;
-  std::string source = space_to_batch_nd_source;
-  std::string program_name = "space_to_batch_nd";
+  std::string source = batch_to_space_nd_source;
+  std::string program_name = "batch_to_space_nd";
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   return RET_OK;
 }
-int SpaceToBatchNDOpenCLKernel::InitBuffer() { return RET_OK; }
-int SpaceToBatchNDOpenCLKernel::ReSize() { return RET_OK; }
-int SpaceToBatchNDOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
+int BatchToSpaceNDOpenCLKernel::InitBuffer() { return RET_OK; }
+int BatchToSpaceNDOpenCLKernel::ReSize() { return RET_OK; }
+int BatchToSpaceNDOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t im_dst_x, im_dst_y;
   if (in_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
@@ -100,16 +95,19 @@ int SpaceToBatchNDOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *im
   *img_size = std::move(vec);
   return RET_OK;
 }
-int SpaceToBatchNDOpenCLKernel::Run() {
+int BatchToSpaceNDOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  auto param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
+  auto param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
 
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t CI4 = UP_DIV(in_tensors_[0]->Channel(), C4NUM);
-  cl_int4 src_size = {(cl_int)CI4, in_tensors_[0]->Width(), in_tensors_[0]->Height(), in_tensors_[0]->Batch()};
-  cl_int4 dst_size = {(cl_int)CO4, out_tensors_[0]->Width(), out_tensors_[0]->Height(), out_tensors_[0]->Batch()};
-  cl_int2 block_size = {param->block_sizes_[0], param->block_sizes_[1]};
-  cl_int4 paddings = {param->paddings_[0], param->paddings_[1], param->paddings_[2], param->paddings_[3]};
+  cl_int4 src_size = {
+    (cl_int)CI4, in_tensors_[0]->Width(),
+    in_tensors_[0]->Height() * in_tensors_[0]->Batch() / param->block_shape_[0] / param->block_shape_[1], 1};
+  cl_int4 dst_size = {(cl_int)CO4, out_tensors_[0]->Width() / param->block_shape_[1],
+                      out_tensors_[0]->Height() / param->block_shape_[0] * out_tensors_[0]->Batch(), 1};
+  cl_int2 block_size = {param->block_shape_[0], param->block_shape_[1]};
+  cl_int4 paddings = {param->crops_[0], param->crops_[1], param->crops_[2], param->crops_[3]};
   std::vector<size_t> local = {1, 1, 1};
   std::vector<size_t> global = {(size_t)dst_size.s[0], (size_t)dst_size.s[1], (size_t)dst_size.s[2]};
   int arg_cn = 0;
@@ -124,12 +122,12 @@ int SpaceToBatchNDOpenCLKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLSpaceToBatchNDKernelCreator(const std::vector<lite::Tensor *> &inputs,
+kernel::LiteKernel *OpenCLBatchToSpaceNDKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,
                                                       OpParameter *opParameter, const lite::InnerContext *ctx,
                                                       const kernel::KernelKey &desc,
                                                       const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) SpaceToBatchNDOpenCLKernel(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) BatchToSpaceNDOpenCLKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Kernel " << opParameter->name_ << " new failed.";
     return nullptr;
@@ -143,9 +141,9 @@ kernel::LiteKernel *OpenCLSpaceToBatchNDKernelCreator(const std::vector<lite::Te
   return kernel;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SpaceToBatchND, OpenCLSpaceToBatchNDKernelCreator);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SpaceToBatchND, OpenCLSpaceToBatchNDKernelCreator);
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SpaceToBatch, OpenCLSpaceToBatchNDKernelCreator);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SpaceToBatch, OpenCLSpaceToBatchNDKernelCreator);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_BatchToSpaceND, OpenCLBatchToSpaceNDKernelCreator);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_BatchToSpaceND, OpenCLBatchToSpaceNDKernelCreator);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_BatchToSpace, OpenCLBatchToSpaceNDKernelCreator);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_BatchToSpace, OpenCLBatchToSpaceNDKernelCreator);
 
 }  // namespace mindspore::kernel

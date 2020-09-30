@@ -138,7 +138,7 @@ TEST_F(TestSpaceToBatchNDOpenCL, NHWC4H2W2Pad2222) {
   schema::Format format = schema::Format_NHWC;
   test_main_space_to_batch_nd<float>(input_data, correct_data, input_shape, param, data_type, format);
 }
-TEST_F(TestSpaceToBatchNDOpenCL, Nc4HW4H2W2Pad2222) {
+TEST_F(TestSpaceToBatchNDOpenCL, NC4HW4H2W2Pad2222) {
   std::vector<int> input_shape{1, 6, 6, 4};
   SpaceToBatchParameter *param = std::make_unique<SpaceToBatchParameter>().release();
   if (param == nullptr) {

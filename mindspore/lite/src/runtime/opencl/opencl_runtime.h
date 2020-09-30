@@ -174,8 +174,8 @@ class OpenCLRuntimeWrapper {
  public:
   OpenCLRuntimeWrapper() { ocl_runtime_ = OpenCLRuntime::GetInstance(); }
   ~OpenCLRuntimeWrapper() { OpenCLRuntime::DeleteInstance(); }
-  explicit OpenCLRuntimeWrapper(const OpenCLRuntime &) = delete;
-  OpenCLRuntimeWrapper &operator=(const OpenCLRuntime &) = delete;
+  OpenCLRuntimeWrapper(const OpenCLRuntimeWrapper &) = delete;
+  OpenCLRuntimeWrapper &operator=(const OpenCLRuntimeWrapper &) = delete;
   OpenCLRuntime *GetInstance() { return ocl_runtime_; }
 
  private:
