@@ -39,24 +39,6 @@ class AwareQuantizer : public FbQuantizer {
   STATUS DetermineNodeQuantType() override;
 
   STATUS DoQuantize() override;  // override;
-
- private:
-  // RemoveFakeQuant
-  STATUS SetAttrToConvolution(const schema::MetaGraphT *subGraph, schema::CNodeT *node);
-
-  STATUS GenerateDefaultQuantParam(const schema::MetaGraphT *subGraph);
-
-  STATUS QuantArithmeticConstTensor(const schema::MetaGraphT *graph, schema::CNodeT *node);
-
-  STATUS QuantDetectionPostProcessConstTensor(const schema::MetaGraphT *subGraph, schema::CNodeT *node);
-
-  STATUS QuantConvBias(const schema::MetaGraphT *graph, schema::CNodeT *node);
-
-  STATUS QuantConvWeight(const schema::MetaGraphT *subGraph, schema::CNodeT *node);
-
-  float inputScale = 0.0f;
-
-  static const std::array<schema::PrimitiveType, 7> propagatedOps;
 };
 }  // namespace mindspore::lite::quant
 #endif

@@ -208,9 +208,8 @@ kernel::LiteKernel *CpuMatmulInt8KernelCreator(const std::vector<lite::Tensor *>
 
   auto *weight_tensor = inputs.at(kWeightIndex);
   auto *restore_data = weight_tensor->data_c();
-  auto is_const_quant_weight =
-    (restore_data != nullptr) &&
-    ((weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16));
+  bool is_const_quant_weight = !weight_tensor->GetQuantParams().empty() &&
+                               weight_tensor->GetQuantParams().front().inited && restore_data != nullptr;
   if (is_const_quant_weight) {
     auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {

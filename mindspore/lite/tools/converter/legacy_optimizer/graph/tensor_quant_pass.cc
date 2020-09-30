@@ -14,60 +14,14 @@
  * limitations under the License.
  */
 
-#include "tools/converter/quantizer/aware_quantizer.h"
-
-#include <cmath>
-#include <memory>
-#include <string>
-#include <utility>
 #include <vector>
-
-#include "schema/inner/model_generated.h"
-#include "securec/include/securec.h"
-#include "src/common/utils.h"
-#include "tools/common/converter_op_utils.h"
-#include "tools/common/node_util.h"
+#include <cmath>
+#include "tools/converter/legacy_optimizer/graph/tensor_quant_pass.h"
+#include "tools/converter/quantizer/quantize_util.h"
 #include "tools/common/tensor_util.h"
-#include "tools/converter/quantizer/calc_quant_param.h"
-#include "src/common/log_adapter.h"
 
-using std::string;
-using std::vector;
-
-namespace mindspore::lite::quant {
-AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph, const TypeId &inferType) : FbQuantizer(graph) {}
-
-STATUS AwareQuantizer::RemoveFakeQuant() { return RET_OK; }
-
-STATUS AwareQuantizer::GenerateQuantParam() {
-  auto *quantParamRegister = QuantParamCalcRegister::GetInstance();
-
-  for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
-    auto &node = *iter;
-    MS_ASSERT(node != nullptr);
-    if (GetCNodeTType(*node) == schema::PrimitiveType_FakeQuantWithMinMax ||
-        GetCNodeTType(*node) == schema::PrimitiveType_FakeQuantWithMinMaxVars) {
-      MS_ASSERT(false);
-    }
-    auto quantParamCalcer = quantParamRegister->GetQuantParamCalcer(GetCNodeTType(*node));
-    if (quantParamCalcer == nullptr) {
-      MS_LOG(WARNING) << "Can not find QuantParamCalcer for " << node->name.c_str()
-                      << ", type: " << GetCNodeTTypeName(*node).c_str() << " set node to QuantNone and skip";
-      node->quantType = static_cast<schema::QuantType>(QuantType_QUANT_NONE);
-    } else {
-      auto status = quantParamCalcer->Calc(graph, *node);
-      if (status != RET_OK) {
-        MS_LOG(WARNING) << "quantParamCalcer failed: " << status << " node: " << node->name.c_str();
-        node->quantType = schema::QuantType_QUANT_NONE;
-      } else {
-        node->quantType = schema::QuantType_AwareTraining;
-      }
-    }
-  }
-  return RET_OK;
-}
-
-STATUS AwareQuantizer::DoQuantize() {
+namespace mindspore::lite {
+STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
   for (auto &tensor : graph->allTensors) {
     if (tensor->quantParams.empty() || !tensor->quantParams.front()->inited || tensor->data.empty()) {
       continue;
@@ -82,13 +36,13 @@ STATUS AwareQuantizer::DoQuantize() {
       size_t wShapeSize = GetShapeSize(*(tensor.get()));
       void *oriWeightData = tensor->data.data();
       if (quantParam->dstDtype == TypeId::kNumberTypeInt8) {
-        vector<int8_t> qDatas(wShapeSize);
+        std::vector<int8_t> qDatas(wShapeSize);
         auto weightQauntParam = GetTensorQuantParam(tensor);
         if (tensor->dataType == TypeId::kNumberTypeFloat ||
             tensor->dataType == TypeId::kNumberTypeFloat32) {  // normal awareing quant
           auto *weightData = static_cast<float *>(oriWeightData);
           for (size_t j = 0; j < wShapeSize; j++) {
-            qDatas[j] = QuantizeData<int8_t>(weightData[j], weightQauntParam.get());
+            qDatas[j] = quant::QuantizeData<int8_t>(weightData[j], weightQauntParam.get());
           }
         } else {  // tflite awareing quant
           auto *weightData = static_cast<uint8_t *>(oriWeightData);
@@ -99,7 +53,7 @@ STATUS AwareQuantizer::DoQuantize() {
           tensor->quantParams.clear();
           tensor->quantParams.emplace_back(weightQauntParam.release());
         }
-
+        tensor->dataType = TypeId::kNumberTypeInt8;
         ::memcpy(tensor->data.data(), qDatas.data(), wShapeSize);
       } else if (quantParam->dstDtype == TypeId::kNumberTypeInt32) {
         // quant bias data
@@ -129,28 +83,5 @@ STATUS AwareQuantizer::DoQuantize() {
   }
   return RET_OK;
 }
-STATUS AwareQuantizer::DetermineNodeQuantType() {
-  MS_ASSERT(graph != nullptr);
-  for (auto &node : graph->nodes) {
-    MS_ASSERT(node != nullptr);
-    bool canQuant = true;
-    for (auto &outTensorIdx : node->outputIndex) {
-      MS_ASSERT(graph->allTensors.size() > outTensorIdx);
-      auto &outTensor = graph->allTensors.at(outTensorIdx);
-      MS_ASSERT(outTensor != nullptr);
-      if (outTensor->quantParams.empty() || outTensor->quantParams.front() == nullptr ||
-          !outTensor->quantParams.front()->inited) {
-        canQuant = false;
-        break;
-      }
-    }
 
-    if (canQuant && IsContain(GetInt8OpList(), GetCNodeTType(*node))) {
-      node->quantType = schema::QuantType_AwareTraining;
-    } else {
-      node->quantType = schema::QuantType_QUANT_NONE;
-    }
-  }
-  return RET_OK;
-}
-}  // namespace mindspore::lite::quant
+}  // namespace mindspore::lite

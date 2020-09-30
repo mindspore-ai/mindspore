@@ -32,8 +32,9 @@ table QuantParam {
     narrowRange: bool = true;
     numBits: int = 8;
     inited: bool = false;
-    var_corr: double = 1;
-    mean_corr: double = 0;
+    varCorr: double = 1;
+    meanCorr: double = 0;
+    dstDtype: int = 32;
     clusters: [float];
 }
 

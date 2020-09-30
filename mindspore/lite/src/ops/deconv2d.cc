@@ -254,14 +254,7 @@ int DeConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &i
   } else if (group > 1) {
     PopulaterConv2DMultiGroup(prim, this->primitive_, group, inputs);
   }
-
-  if (GetQuantType() == schema::QuantType_AwareTraining) {
-    std::vector<std::vector<schema::QuantParamT>> vecInputQuantParam;
-    std::vector<std::vector<schema::QuantParamT>> vecOutputQuantParam;
-    PopulaterQuantParam(prim, &vecInputQuantParam, &vecOutputQuantParam, inputs);
-    SetInputQuantParam(vecInputQuantParam);
-    SetOutputQuantParam(vecOutputQuantParam);
-  }
+  PopulaterQuantParam(prim, inputs);
   return RET_OK;
 }
 #else

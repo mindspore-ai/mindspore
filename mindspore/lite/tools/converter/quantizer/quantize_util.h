@@ -39,6 +39,7 @@ namespace mindspore {
 namespace lite {
 namespace quant {
 static constexpr size_t UINT8_QUANTIZATION = 8;
+static constexpr size_t WEIGHT_INDEX = 1;
 
 /**
  * 1. when op's weight size > mWeightSize just skip
@@ -225,16 +226,16 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
         }
         variance_dequant = std::sqrt(variance_dequant / one_filter_size);
         variance_raw = std::sqrt(variance_raw / one_filter_size);
-        quant_param.var_corr = 1;
+        quant_param.varCorr = 1;
         if (variance_raw != 0 && variance_dequant != 0) {
           auto temp_var_corr = variance_raw / variance_dequant;
           if (temp_var_corr > 0 && temp_var_corr < 10) {
-            quant_param.var_corr = temp_var_corr;
+            quant_param.varCorr = temp_var_corr;
           } else {
             MS_LOG(WARNING) << "unexpected var_corr: " << temp_var_corr;
           }
         }
-        quant_param.mean_corr = average_raw - average_dequant * quant_param.var_corr;
+        quant_param.meanCorr = average_raw - average_dequant * quant_param.varCorr;
       }
       quant_params.emplace_back(quant_param);
     }
@@ -282,7 +283,7 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
     MS_LOG(ERROR) << "quant_params empty";
     return RET_ERROR;
   }
-  primitive_c->AddInputQuantParam(quant_params);
+  primitive_c->SetInputQuantParam(WEIGHT_INDEX, quant_params);
   return RET_OK;
 }
 

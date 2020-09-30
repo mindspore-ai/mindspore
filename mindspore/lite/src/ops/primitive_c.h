@@ -88,9 +88,17 @@ class PrimitiveC : public mindspore::Primitive {
     }
   }
 
-  void SetInputQuantParam(const std::vector<std::vector<schema::QuantParamT>> &input_quant_param);
+  void SetInputQuantParams(const std::vector<std::vector<schema::QuantParamT>> &input_quant_param);
 
-  void SetOutputQuantParam(const std::vector<std::vector<schema::QuantParamT>> &output_quant_param);
+  void SetInputQuantParam(const size_t &index, const std::vector<schema::QuantParamT> &input_quant_param);
+
+  void SetOutputQuantParams(const std::vector<std::vector<schema::QuantParamT>> &output_quant_param);
+
+  void SetOutputQuantParam(const size_t &index, const std::vector<schema::QuantParamT> &output_quant_param);
+
+  bool IsInputQuantParamsInited();
+
+  bool IsOutputQuantParamsInited();
 
   void ClearInputOutputQuantParam();
 
@@ -120,10 +128,8 @@ class PrimitiveC : public mindspore::Primitive {
 
   static std::shared_ptr<PrimitiveC> Create(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
                                             const schema::QuantType &quantType);
-  void PopulaterQuantParam(const Primitive &prim, std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
-                           std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam,
-                           const std::vector<AnfNodePtr> &inputs);
-  void CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax);
+  void PopulaterQuantParam(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  void CalFloatScopeByMeanAndStddev(const double &mean, const double &stdDev, float *mMin, float *mMax);
 
  protected:
   virtual int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) { return RET_ERROR; }

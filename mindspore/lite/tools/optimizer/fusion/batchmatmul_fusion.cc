@@ -155,8 +155,8 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   rmatmul_quant_params.pop_back();
   // no bias quantParams
   rmatmul_quant_params.emplace_back(jointed_quant_params);
-  matmul_cvalue->SetInputQuantParam(rmatmul_quant_params);
-  matmul_cvalue->SetOutputQuantParam(fc_prim->GetOutputQuantParams());
+  matmul_cvalue->SetInputQuantParams(rmatmul_quant_params);
+  matmul_cvalue->SetOutputQuantParams(fc_prim->GetOutputQuantParams());
   auto matmul_value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(matmul_cvalue));
   std::vector<AnfNodePtr> matmul_inputs = {matmul_value_node, left_matmul_input};
 

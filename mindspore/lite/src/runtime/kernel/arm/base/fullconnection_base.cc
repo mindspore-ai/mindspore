@@ -42,7 +42,9 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::T
   auto *weight_tensor = inputs.at(kWeightIndex);
   // data of second tensor of fc may be nullptr
   auto *restore_data = weight_tensor->data_c();
-  if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
+  bool dequant_flag = !weight_tensor->GetQuantParams().empty() && weight_tensor->GetQuantParams().front().inited &&
+                      restore_data != nullptr;
+  if (dequant_flag) {
     auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
       MS_LOG(ERROR) << "dequant data is nullptr.";
@@ -53,7 +55,7 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::T
   auto kernel = new (std::nothrow) FullconnectionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (!kernel) {
     MS_LOG(ERROR) << "kernel is nullptr.";
-    if (!weight_tensor->GetQuantParams().empty()) {
+    if (dequant_flag) {
       weight_tensor->FreeData();
       weight_tensor->SetData(restore_data);
     }
@@ -65,13 +67,13 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::T
     delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    if (!weight_tensor->GetQuantParams().empty()) {
+    if (dequant_flag) {
       weight_tensor->FreeData();
       weight_tensor->SetData(restore_data);
     }
     return nullptr;
   }
-  if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
+  if (dequant_flag) {
     weight_tensor->FreeData();
     weight_tensor->SetData(restore_data);
   }

@@ -49,12 +49,7 @@ int Add::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
       return RET_ERROR;
     }
   }
-  if (GetQuantType() == schema::QuantType_AwareTraining) {
-    std::vector<std::vector<schema::QuantParamT>> vecInputQuantParam;
-    std::vector<std::vector<schema::QuantParamT>> vecOutputQuantParam;
-    PopulaterQuantParam(prim, &vecInputQuantParam, &vecOutputQuantParam, inputs);
-    SetOutputQuantParam(vecOutputQuantParam);
-  }
+  PopulaterQuantParam(prim, inputs);
   return RET_OK;
 }
 
