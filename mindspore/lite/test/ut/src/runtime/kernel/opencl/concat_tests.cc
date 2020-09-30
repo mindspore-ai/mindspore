@@ -145,7 +145,7 @@ TEST_F(TestConcatOpenCLCI, ConcatFp32_2inputforCI) {
   delete sub_graph;
 }
 
-TEST_F(TestConcatOpenCLfp16, ConcatFp16_2input_dim4_axis1) {
+TEST_F(TestConcatOpenCLfp16, ConcatFp16_4input_dim4_axis1) {
   MS_LOG(INFO) << " begin test ";
   auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->SetFp16Enable(true);
@@ -274,7 +274,7 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_2input_dim4_axis1) {
   delete sub_graph;
 }
 
-TEST_F(TestConcatOpenCLfp32, ConcatFp32_2input_dim4_axis3) {
+TEST_F(TestConcatOpenCLfp32, ConcatFp32_3input_dim4_axis1) {
   MS_LOG(INFO) << " begin test ";
   auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
@@ -393,4 +393,146 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_2input_dim4_axis3) {
   }
   delete sub_graph;
 }
+
+TEST_F(TestConcatOpenCLfp16, ConcatFp16_6input_dim4_axis1) {
+  MS_LOG(INFO) << " begin test ";
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  ocl_runtime->SetFp16Enable(true);
+  ocl_runtime->Init();
+  auto allocator = ocl_runtime->GetAllocator();
+
+  // get the input from .bin
+  size_t input1_size, input2_size, input3_size, input4_size, input5_size, input6_size, output_size;
+  std::string input1Ppath = "./test_data/concatfp16_input1.bin";
+  std::string input2Ppath = "./test_data/concatfp16_input2.bin";
+  std::string input3Ppath = "./test_data/concatfp16_input3.bin";
+  std::string input4Ppath = "./test_data/concatfp16_input4.bin";
+  std::string input5Ppath = "./test_data/concatfp16_input5.bin";
+  std::string input6Ppath = "./test_data/concatfp16_input6.bin";
+  std::string correctOutputPath = "./test_data/concatfp16_output.bin";
+  auto input_data1 = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
+  auto input_data2 = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input2Ppath.c_str(), &input2_size));
+  auto input_data3 = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input3Ppath.c_str(), &input3_size));
+  auto input_data4 = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input4Ppath.c_str(), &input4_size));
+  auto input_data5 = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input5Ppath.c_str(), &input5_size));
+  auto input_data6 = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input6Ppath.c_str(), &input6_size));
+  auto correctOutput =
+    reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
+
+  MS_LOG(INFO) << " init tensors ";
+  constexpr int INPUT_NUM = 6;
+  std::array<std::vector<int>, INPUT_NUM> input_shapes = {
+    std::vector<int>{1, 1200, 3, 4}, std::vector<int>{1, 600, 3, 4}, std::vector<int>{1, 150, 3, 4},
+    std::vector<int>{1, 50, 3, 4},   std::vector<int>{1, 30, 3, 4},  std::vector<int>{1, 4, 3, 4}};
+  std::vector<int> output_shape = {1, 2034, 3, 4};
+  auto data_type = kNumberTypeFloat16;
+  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  std::vector<lite::Tensor *> inputs;
+  for (auto &shape : input_shapes) {
+    auto input_temp = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
+    inputs.push_back(input_temp);
+    if (input_temp == nullptr) {
+      MS_LOG(INFO) << " new input_tensor failed ";
+      return;
+    }
+  }
+  auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, output_shape, schema::Format_NHWC, tensor_type);
+  if (output_tensor == nullptr) {
+    MS_LOG(INFO) << " new output_tensor failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    return;
+  }
+  std::vector<lite::Tensor *> outputs{output_tensor};
+  MS_LOG(INFO) << " input_shapes size =: " << input_shapes.size();
+
+  MS_LOG(INFO) << " initialize tensors ";
+  auto param = reinterpret_cast<ConcatParameter *>(malloc(sizeof(ConcatParameter)));
+  if (param == nullptr) {
+    MS_LOG(INFO) << " new ConcatParameter failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    return;
+  }
+  param->axis_ = 1;
+  auto *concat_kernel =
+    new (std::nothrow) kernel::ConcatOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (concat_kernel == nullptr) {
+    MS_LOG(INFO) << " new kernel::ConcatOpenCLKernel failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    return;
+  }
+  concat_kernel->SetFormatType(schema::Format_NC4HW4);
+  concat_kernel->Init();
+  // to do allocate memory for inputs and outputs
+  for (auto &input_tensor : inputs) {
+    input_tensor->MallocData(allocator);
+  }
+  MS_LOG(INFO) << " initialize sub_graph ";
+  std::vector<kernel::LiteKernel *> kernels{concat_kernel};
+  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (sub_graph == nullptr) {
+    MS_LOG(INFO) << " new kernel::SubGraphOpenCLKernel failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    delete concat_kernel;
+    return;
+  }
+  sub_graph->Init();
+  MS_LOG(INFO) << " initialize input data ";
+  if (inputs.size() == 2) {
+    memcpy(inputs[0]->data_c(), input_data1, input1_size);
+    memcpy(inputs[1]->data_c(), input_data2, input2_size);
+  } else if (inputs.size() == 3) {
+    memcpy(inputs[0]->data_c(), input_data1, input1_size);
+    memcpy(inputs[1]->data_c(), input_data2, input2_size);
+    memcpy(inputs[2]->data_c(), input_data3, input3_size);
+  } else if (inputs.size() == 4) {
+    memcpy(inputs[0]->data_c(), input_data1, input1_size);
+    memcpy(inputs[1]->data_c(), input_data2, input2_size);
+    memcpy(inputs[2]->data_c(), input_data3, input3_size);
+    memcpy(inputs[3]->data_c(), input_data4, input4_size);
+  } else if (inputs.size() == 6) {
+    memcpy(inputs[0]->data_c(), input_data1, input1_size);
+    memcpy(inputs[1]->data_c(), input_data2, input2_size);
+    memcpy(inputs[2]->data_c(), input_data3, input3_size);
+    memcpy(inputs[3]->data_c(), input_data4, input4_size);
+    memcpy(inputs[4]->data_c(), input_data5, input5_size);
+    memcpy(inputs[5]->data_c(), input_data6, input6_size);
+  } else {
+    MS_LOG(ERROR) << " input size must be 2 or 3 or 4";
+  }
+
+  std::cout << "==================output data================" << std::endl;
+  sub_graph->Run();
+  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
+  CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
+  lite::opencl::OpenCLRuntime::DeleteInstance();
+  for (auto tensor : inputs) {
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  for (auto tensor : outputs) {
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  delete sub_graph;
+}
+
 }  // namespace mindspore

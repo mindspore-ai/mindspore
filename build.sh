@@ -510,9 +510,9 @@ gene_clhpp() {
     do
         file="$(basename ${file_path})"
         inc_file=$(echo ${CL_SRC_DIR}/${file} | sed 's/$/.inc/')
-        sed 's/^/\"/;s/$/    \\n\" \\/' ${CL_SRC_DIR}/${file} > ${inc_file}
+        sed 's/\\/\\\\/g;s/\"/\\\"/g;s/^/\"/;s/$/\\n\" \\/' ${CL_SRC_DIR}/${file} > ${inc_file}
         kernel_name=$(echo ${file} | sed s'/.\{3\}$//')
-  sed -i "1i\static const char *${kernel_name}_source =\"\\n\" \\" ${inc_file}
+        sed -i "1i\static const char *${kernel_name}_source =\"\\n\" \\" ${inc_file}
         sed -i '$a\;' ${inc_file}
     done
 }
