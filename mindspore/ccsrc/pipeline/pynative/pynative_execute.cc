@@ -1068,6 +1068,11 @@ py::tuple PynativeExecutor::RunOpInner(const OpExecInfoPtr &op_exec_info) {
 #if (!defined ENABLE_GE)
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  if (!context::IsTsdOpened(ms_context)) {
+    if (!context::OpenTsd(ms_context)) {
+      MS_LOG(EXCEPTION) << "Open tsd failed";
+    }
+  }
   if (ms_context->backend_policy() == "ms") {
     backend_policy = kMsBackendMsPrior;
   } else {
