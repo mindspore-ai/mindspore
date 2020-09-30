@@ -77,6 +77,7 @@ grpc::Status CreatGRPCStatus(const Status &status) {
 // Service Implement
 class MSServiceImpl final : public MSService::Service {
   grpc::Status Predict(grpc::ServerContext *context, const PredictRequest *request, PredictReply *reply) override {
+    std::lock_guard<std::mutex> lock(mutex_);
     MSI_TIME_STAMP_START(Predict)
     auto res = Session::Instance().Predict(*request, *reply);
     MSI_TIME_STAMP_END(Predict)
@@ -91,6 +92,7 @@ class MSServiceImpl final : public MSService::Service {
     MSI_LOG(INFO) << "TestService call";
     return grpc::Status::OK;
   }
+  std::mutex mutex_;
 };
 
 static std::pair<struct evhttp *, struct event_base *> NewHttpServer() {
