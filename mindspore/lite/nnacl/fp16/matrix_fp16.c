@@ -32,6 +32,24 @@ void MatrixMultiplyFp16(const float16_t *matrix_a, const float16_t *matrix_b, fl
   }
 }
 
+#ifndef ENABLE_ARM64
+void MatrixMultiplyWinogradFp16(const float16_t *matix_a, const float16_t *matrix_b, float16_t *matrix_c, int m, int k,
+                                int n, int in_channel) {
+  int cnt = 0;
+  for (int i = 0; i < m; ++i) {
+    for (int j = 0; j < n; ++j) {
+      for (int y = 0; y < in_channel; ++y) {
+        float16_t tmp = 0;
+        for (int z = 0; z < k; ++z) {
+          tmp += matix_a[z * in_channel + y + i * in_channel * k] * matrix_b[j + z * n];
+        }
+        matrix_c[cnt++] = tmp;
+      }
+    }
+  }
+}
+#endif
+
 void MatrixMultiplyVecFp16(const float16x8_t *matrix_a, const float16x8_t *matrix_b, float16x8_t *matrix_c,
                            const float16_t *bias, int m, int k, int n) {
   if (bias == NULL) {
