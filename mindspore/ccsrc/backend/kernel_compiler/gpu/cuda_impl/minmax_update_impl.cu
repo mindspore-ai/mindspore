@@ -26,9 +26,9 @@ __global__ void UpdateInputMinMaxPerLayerWithEMA(const float *input_min, const f
                                                  float *output_max, const float min, const float max,
                                                  const float decay) {
   output_min[0] = decay * (min) + (1 - decay) * (input_min[0]);
-  output_min[0] = input_min[0] > 0 ? 0 : input_min[0];
+  output_min[0] = output_min[0] > 0 ? 0 : output_min[0];
   output_max[0] = decay * (max) + (1 - decay) * (input_max[0]);
-  output_max[0] = input_max[0] < 0 ? 0 : input_max[0];
+  output_max[0] = output_max[0] < 0 ? 0 : output_max[0];
   return;
 }
 
@@ -51,8 +51,8 @@ __global__ void UpdateInputMinMaxPerChannel(float *input, float *input_min, floa
       output_min[i] = sum.first[0];
       output_max[i] = sum.second[0];
     }
-    output_min[i] = input_min[i] > 0 ? 0 : input_min[i];
-    output_max[i] = input_max[i] < 0 ? 0 : input_max[i];
+    output_min[i] = output_min[i] > 0 ? 0 : output_min[i];
+    output_max[i] = output_max[i] < 0 ? 0 : output_max[i];
   }
   return;
 }
