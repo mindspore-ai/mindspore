@@ -44,7 +44,7 @@ void PostConvFuncFp16C8(const float16_t *c8_out_ptr, float16_t *out_ptr, const f
   size_t oc8div = output_channel - oc8mod;
   size_t stride_size = stride * sizeof(float16_t);
   size_t relu_type = is_relu ? 1 : 0;
-  relu_type = is_relu6 ? 2 : relu_type;
+  relu_type = is_relu6 ? 3 : relu_type;
   PostFuncBiasReluC8Fp16(out_ptr, c8_out_ptr, bias_ptr, oc8div, oc8mod, plane_size, stride_size, relu_type);
   return;
 }

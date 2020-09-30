@@ -171,7 +171,7 @@ Bias:
   fadd v31.4s, v31.4s, v1.4s
 
 Activation:
-  cmp w4, #2
+  cmp w4, #3
   beq Relu6
   cmp w4, #1
   beq Relu

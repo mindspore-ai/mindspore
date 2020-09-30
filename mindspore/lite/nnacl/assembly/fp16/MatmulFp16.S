@@ -249,7 +249,7 @@ Bias:
   fadd v31.8h, v31.8h, v0.8h
 
 Activation:
-  cmp w4, #2
+  cmp w4, #3
   beq Relu6
   cmp w4, #1
   beq Relu

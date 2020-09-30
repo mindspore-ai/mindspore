@@ -67,7 +67,7 @@ Loop8x8:
   fadd v14.4s, v14.4s, v16.4s
   fadd v15.4s, v15.4s, v17.4s
 
-  cmp w7, #2
+  cmp w7, #3
   beq Relu6_8x8
   cmp w7, #1
   beq Relu_8x8
