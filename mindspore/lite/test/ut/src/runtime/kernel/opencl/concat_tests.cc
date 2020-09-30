@@ -396,7 +396,7 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_3input_dim4_axis1) {
 
 TEST_F(TestConcatOpenCLfp16, ConcatFp16_6input_dim4_axis1) {
   MS_LOG(INFO) << " begin test ";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->SetFp16Enable(true);
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
@@ -523,7 +523,6 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_6input_dim4_axis1) {
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
     delete tensor;
