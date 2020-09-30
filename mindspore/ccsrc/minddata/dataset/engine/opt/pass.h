@@ -81,6 +81,12 @@ class CacheMergeOp;
 class CacheLookupOp;
 
 class BuildSentencePieceVocabOp;
+
+class ClueOp;
+
+class CsvOp;
+
+class TextFileOp;
 #endif
 
 #ifdef ENABLE_PYTHON
@@ -210,6 +216,12 @@ class NodePass : public Pass {
   virtual Status RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified);
 
   virtual Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<ClueOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<CsvOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<TextFileOp> node, bool *modified);
 
   virtual Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
 

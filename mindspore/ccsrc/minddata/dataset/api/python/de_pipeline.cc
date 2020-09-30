@@ -1345,6 +1345,9 @@ Status DEPipeline::ParseManifestOp(const py::dict &args, std::shared_ptr<Dataset
     std::string err_msg = "Error: No dataset files specified for manifest";
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
+
+  int num_workers = 0;
+  std::shared_ptr<CacheClient> cache_client = nullptr;
   std::shared_ptr<ManifestOp::Builder> builder = std::make_shared<ManifestOp::Builder>();
   (void)builder->SetManifestFile(ToString(args["dataset_file"]));
 
@@ -1354,7 +1357,8 @@ Status DEPipeline::ParseManifestOp(const py::dict &args, std::shared_ptr<Dataset
     py::handle value = arg.second;
     if (!value.is_none()) {
       if (key == "num_parallel_workers") {
-        (void)builder->SetNumWorkers(ToInt(value));
+        num_workers = ToInt(value);
+        (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
         std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
@@ -1365,12 +1369,27 @@ Status DEPipeline::ParseManifestOp(const py::dict &args, std::shared_ptr<Dataset
         (void)builder->SetDecode(ToBool(value));
       } else if (key == "usage") {
         (void)builder->SetUsage(ToString(value));
+      } else if (key == "cache") {
+        cache_client = value.cast<std::shared_ptr<CacheClient>>();
       }
     }
   }
-  std::shared_ptr<ManifestOp> op;
-  RETURN_IF_NOT_OK(builder->Build(&op));
-  *top = op;
+  std::shared_ptr<ManifestOp> manifest_op;
+  RETURN_IF_NOT_OK(builder->Build(&manifest_op));
+  RETURN_IF_NOT_OK(tree_->AssociateNode(manifest_op));
+  *top = manifest_op;
+
+  // Additionally, add a cache if required.
+  // Note that this cache op is only acting as a place holder for the caching position
+  // within the tree.  Later, a pre-pass will execute a tree transform to set up the actual
+  // caching logic in the tree.
+  if (cache_client) {
+    std::shared_ptr<DatasetOp> cache_op = nullptr;
+    RETURN_IF_NOT_OK(AddCacheOp(cache_client, num_workers, manifest_op, &cache_op));
+    *top = cache_op;
+    *bottom = manifest_op;
+  }
+
   return Status::OK();
 }
 
@@ -1380,6 +1399,8 @@ Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *
   CHECK_FAIL_RETURN_UNEXPECTED(!args["task"].is_none(), "Error: No task specified.");
   CHECK_FAIL_RETURN_UNEXPECTED(!args["usage"].is_none(), "Error: No usage specified.");
 
+  int num_workers = 0;
+  std::shared_ptr<CacheClient> cache_client = nullptr;
   std::shared_ptr<VOCOp::Builder> builder = std::make_shared<VOCOp::Builder>();
   (void)builder->SetDir(ToString(args["dataset_dir"]));
   (void)builder->SetTask(ToString(args["task"]));
@@ -1389,7 +1410,8 @@ Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *
     py::handle value = arg.second;
     if (!value.is_none()) {
       if (key == "num_parallel_workers") {
-        (void)builder->SetNumWorkers(ToInt(value));
+        num_workers = ToInt(value);
+        (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
         std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
@@ -1398,12 +1420,26 @@ Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *
         (void)builder->SetDecode(ToBool(value));
       } else if (key == "class_indexing") {
         (void)builder->SetClassIndex(ToStringMap(value));
+      } else if (key == "cache") {
+        cache_client = value.cast<std::shared_ptr<CacheClient>>();
       }
     }
   }
-  std::shared_ptr<VOCOp> op;
-  RETURN_IF_NOT_OK(builder->Build(&op));
-  *top = op;
+  std::shared_ptr<VOCOp> voc_op;
+  RETURN_IF_NOT_OK(builder->Build(&voc_op));
+  RETURN_IF_NOT_OK(tree_->AssociateNode(voc_op));
+  *top = voc_op;
+
+  // Additionally, add a cache if required.
+  // Note that this cache op is only acting as a place holder for the caching position
+  // within the tree.  Later, a pre-pass will execute a tree transform to set up the actual
+  // caching logic in the tree.
+  if (cache_client) {
+    std::shared_ptr<DatasetOp> cache_op = nullptr;
+    RETURN_IF_NOT_OK(AddCacheOp(cache_client, num_workers, voc_op, &cache_op));
+    *top = cache_op;
+    *bottom = voc_op;
+  }
 
   return Status::OK();
 }
@@ -1425,6 +1461,8 @@ Status DEPipeline::ParseCocoOp(const py::dict &args, std::shared_ptr<DatasetOp> 
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
+  int num_workers = 0;
+  std::shared_ptr<CacheClient> cache_client = nullptr;
   std::shared_ptr<CocoOp::Builder> builder = std::make_shared<CocoOp::Builder>();
   (void)builder->SetDir(ToString(args["dataset_dir"]));
   (void)builder->SetFile(ToString(args["annotation_file"]));
@@ -1434,19 +1472,35 @@ Status DEPipeline::ParseCocoOp(const py::dict &args, std::shared_ptr<DatasetOp> 
     py::handle value = arg.second;
     if (!value.is_none()) {
       if (key == "num_parallel_workers") {
-        (void)builder->SetNumWorkers(ToInt(value));
+        num_workers = ToInt(value);
+        (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
         std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "decode") {
         (void)builder->SetDecode(ToBool(value));
+      } else if (key == "cache") {
+        cache_client = value.cast<std::shared_ptr<CacheClient>>();
       }
     }
   }
-  std::shared_ptr<CocoOp> op;
-  RETURN_IF_NOT_OK(builder->Build(&op));
-  *top = op;
+  std::shared_ptr<CocoOp> coco_op;
+  RETURN_IF_NOT_OK(builder->Build(&coco_op));
+  RETURN_IF_NOT_OK(tree_->AssociateNode(coco_op));
+  *top = coco_op;
+
+  // Additionally, add a cache if required.
+  // Note that this cache op is only acting as a place holder for the caching position
+  // within the tree.  Later, a pre-pass will execute a tree transform to set up the actual
+  // caching logic in the tree.
+  if (cache_client) {
+    std::shared_ptr<DatasetOp> cache_op = nullptr;
+    RETURN_IF_NOT_OK(AddCacheOp(cache_client, num_workers, coco_op, &cache_op));
+    *top = cache_op;
+    *bottom = coco_op;
+  }
+
   return Status::OK();
 }
 
@@ -1458,6 +1512,8 @@ Status DEPipeline::ParseCifar10Op(const py::dict &args, std::shared_ptr<DatasetO
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
+  int num_workers = 0;
+  std::shared_ptr<CacheClient> cache_client = nullptr;
   std::shared_ptr<CifarOp::Builder> builder = std::make_shared<CifarOp::Builder>();
   (void)builder->SetCifarDir(ToString(args["dataset_dir"]));
 
@@ -1467,22 +1523,38 @@ Status DEPipeline::ParseCifar10Op(const py::dict &args, std::shared_ptr<DatasetO
     py::handle value = arg.second;
     if (!value.is_none()) {
       if (key == "num_parallel_workers") {
-        (void)builder->SetNumWorkers(ToInt(value));
+        num_workers = ToInt(value);
+        (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
         std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "usage") {
         (void)builder->SetUsage(ToString(value));
+      } else if (key == "cache") {
+        cache_client = value.cast<std::shared_ptr<CacheClient>>();
       }
     }
   }
 
   (void)builder->SetCifarType(true);
 
-  std::shared_ptr<CifarOp> op;
-  RETURN_IF_NOT_OK(builder->Build(&op));
-  *top = op;
+  std::shared_ptr<CifarOp> cifar_op;
+  RETURN_IF_NOT_OK(builder->Build(&cifar_op));
+  RETURN_IF_NOT_OK(tree_->AssociateNode(cifar_op));
+  *top = cifar_op;
+
+  // Additionally, add a cache if required.
+  // Note that this cache op is only acting as a place holder for the caching position
+  // within the tree.  Later, a pre-pass will execute a tree transform to set up the actual
+  // caching logic in the tree.
+  if (cache_client) {
+    std::shared_ptr<DatasetOp> cache_op = nullptr;
+    RETURN_IF_NOT_OK(AddCacheOp(cache_client, num_workers, cifar_op, &cache_op));
+    *top = cache_op;
+    *bottom = cifar_op;
+  }
+
   return Status::OK();
 }
 
@@ -1494,6 +1566,8 @@ Status DEPipeline::ParseCifar100Op(const py::dict &args, std::shared_ptr<Dataset
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
+  int num_workers = 0;
+  std::shared_ptr<CacheClient> cache_client = nullptr;
   std::shared_ptr<CifarOp::Builder> builder = std::make_shared<CifarOp::Builder>();
   (void)builder->SetCifarDir(ToString(args["dataset_dir"]));
 
@@ -1503,22 +1577,37 @@ Status DEPipeline::ParseCifar100Op(const py::dict &args, std::shared_ptr<Dataset
     py::handle value = arg.second;
     if (!value.is_none()) {
       if (key == "num_parallel_workers") {
-        (void)builder->SetNumWorkers(ToInt(value));
+        num_workers = ToInt(value);
+        (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
         std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "usage") {
         (void)builder->SetUsage(ToString(value));
+      } else if (key == "cache") {
+        cache_client = value.cast<std::shared_ptr<CacheClient>>();
       }
     }
   }
 
   (void)builder->SetCifarType(false);
 
-  std::shared_ptr<CifarOp> op;
-  RETURN_IF_NOT_OK(builder->Build(&op));
-  *top = op;
+  std::shared_ptr<CifarOp> cifar_op;
+  RETURN_IF_NOT_OK(builder->Build(&cifar_op));
+  RETURN_IF_NOT_OK(tree_->AssociateNode(cifar_op));
+  *top = cifar_op;
+
+  // Additionally, add a cache if required.
+  // Note that this cache op is only acting as a place holder for the caching position
+  // within the tree.  Later, a pre-pass will execute a tree transform to set up the actual
+  // caching logic in the tree.
+  if (cache_client) {
+    std::shared_ptr<DatasetOp> cache_op = nullptr;
+    RETURN_IF_NOT_OK(AddCacheOp(cache_client, num_workers, cifar_op, &cache_op));
+    *top = cache_op;
+    *bottom = cifar_op;
+  }
   return Status::OK();
 }
 
@@ -1609,6 +1698,8 @@ Status DEPipeline::ParseMnistOp(const py::dict &args, std::shared_ptr<DatasetOp>
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
+  int num_workers = 0;
+  std::shared_ptr<CacheClient> cache_client = nullptr;
   std::shared_ptr<MnistOp::Builder> builder = std::make_shared<MnistOp::Builder>();
   (void)builder->SetDir(ToString(args["dataset_dir"]));
 
@@ -1618,19 +1709,35 @@ Status DEPipeline::ParseMnistOp(const py::dict &args, std::shared_ptr<DatasetOp>
     py::handle value = arg.second;
     if (!value.is_none()) {
       if (key == "num_parallel_workers") {
-        (void)builder->SetNumWorkers(ToInt(value));
+        num_workers = ToInt(value);
+        (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
         std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "usage") {
         (void)builder->SetUsage(ToString(value));
+      } else if (key == "cache") {
+        cache_client = value.cast<std::shared_ptr<CacheClient>>();
       }
     }
   }
-  std::shared_ptr<MnistOp> op;
-  RETURN_IF_NOT_OK(builder->Build(&op));
-  *top = op;
+  std::shared_ptr<MnistOp> mnist_op;
+  RETURN_IF_NOT_OK(builder->Build(&mnist_op));
+  RETURN_IF_NOT_OK(tree_->AssociateNode(mnist_op));
+  *top = mnist_op;
+
+  // Additionally, add a cache if required.
+  // Note that this cache op is only acting as a place holder for the caching position
+  // within the tree.  Later, a pre-pass will execute a tree transform to set up the actual
+  // caching logic in the tree.
+  if (cache_client) {
+    std::shared_ptr<DatasetOp> cache_op = nullptr;
+    RETURN_IF_NOT_OK(AddCacheOp(cache_client, num_workers, mnist_op, &cache_op));
+    *top = cache_op;
+    *bottom = mnist_op;
+  }
+
   return Status::OK();
 }
 
@@ -1642,6 +1749,8 @@ Status DEPipeline::ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
   }
 
+  int num_workers = 0;
+  std::shared_ptr<CacheClient> cache_client = nullptr;
   std::shared_ptr<CelebAOp::Builder> builder = std::make_shared<CelebAOp::Builder>();
   if (builder == nullptr) {
     std::string err_msg = "Create celebaop builder failed";
@@ -1653,7 +1762,8 @@ Status DEPipeline::ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp
     py::handle value = arg.second;
     if (!value.is_none()) {
       if (key == "num_parallel_workers") {
-        (void)builder->SetNumWorkers(ToInt(value));
+        num_workers = ToInt(value);
+        (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
         std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
@@ -1664,13 +1774,28 @@ Status DEPipeline::ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp
         (void)builder->SetExtensions(ToStringSet(value));
       } else if (key == "usage") {
         (void)builder->SetUsage(ToString(value));
+      } else if (key == "cache") {
+        cache_client = value.cast<std::shared_ptr<CacheClient>>();
       }
     }
   }
 
-  std::shared_ptr<CelebAOp> op;
-  RETURN_IF_NOT_OK(builder->Build(&op));
-  *top = op;
+  std::shared_ptr<CelebAOp> celeba_op;
+  RETURN_IF_NOT_OK(builder->Build(&celeba_op));
+  RETURN_IF_NOT_OK(tree_->AssociateNode(celeba_op));
+  *top = celeba_op;
+
+  // Additionally, add a cache if required.
+  // Note that this cache op is only acting as a place holder for the caching position
+  // within the tree.  Later, a pre-pass will execute a tree transform to set up the actual
+  // caching logic in the tree.
+  if (cache_client) {
+    std::shared_ptr<DatasetOp> cache_op = nullptr;
+    RETURN_IF_NOT_OK(AddCacheOp(cache_client, num_workers, celeba_op, &cache_op));
+    *top = cache_op;
+    *bottom = celeba_op;
+  }
+
   return Status::OK();
 }
 
@@ -1678,6 +1803,9 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
                                    std::shared_ptr<DatasetOp> *bottom) {
   // Required arguments
   std::vector<std::string> files_list;
+  std::shared_ptr<CacheClient> cache_client = nullptr;
+  std::shared_ptr<Sampler> sampler = nullptr;
+  int num_workers = 0;
   std::shared_ptr<TextFileOp::Builder> builder = std::make_shared<TextFileOp::Builder>();
   if (!args["dataset_files"].is_none()) {
     files_list = ToStringVector(args["dataset_files"]);
@@ -1693,7 +1821,8 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
     py::handle value = arg.second;
     if (!value.is_none()) {
       if (key == "num_parallel_workers") {
-        (void)builder->SetNumWorkers(ToInt(value));
+        num_workers = ToInt(value);
+        (void)builder->SetNumWorkers(num_workers);
       } else if (key == "shuffle_files") {
         (void)builder->SetShuffleFiles(ToBool(value));
       } else if (key == "shuffle_global") {
@@ -1705,8 +1834,27 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
         (void)builder->SetNumDevices(num_devices);
       } else if (key == "shard_id") {
         (void)builder->SetDeviceId(ToInt(value));
+      } else if (key == "cache") {
+        cache_client = value.cast<std::shared_ptr<CacheClient>>();
+      } else if (key == "sampler") {
+        auto create = py::reinterpret_borrow<py::object>(value).attr("create");
+        sampler = create().cast<std::shared_ptr<Sampler>>();
       }
     }
+  }
+
+  // If the user gave a sampler, but they did not ask for a cache, then by itself this is not allowed
+  // because TextFileOp is a non-mappable dataset that does not support sampling.
+  // However, if a cache operator is injected at some other place higher in the tree, that cache can
+  // inherit this sampler from the leaf, providing sampling support from the caching layer.
+  // That is why we save the sampler here in a leaf node that does not use sampling.
+  if (sampler) {
+    (void)builder->SetSampler(std::move(sampler));
+  } else if (cache_client) {
+    int64_t num_samples = 0;
+    int64_t start_index = 0;
+    sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+    (void)builder->SetSampler(std::move(sampler));
   }
 
   std::shared_ptr<TextFileOp> txt_op;
@@ -1714,7 +1862,7 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
   RETURN_IF_NOT_OK(tree_->AssociateNode(txt_op));
   *top = txt_op;
 
-  if (shuffle_required) {
+  if (!cache_client && shuffle_required) {
     std::shared_ptr<DatasetOp> shuffle_op = nullptr;
     int64_t shuffle_size = 0;
     int64_t num_rows = 0;
@@ -1726,6 +1874,15 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
     // Add the shuffle op over top of this op and return the subtree (top/bottom) to caller
     RETURN_IF_NOT_OK(AddShuffleOp(shuffle_size, txt_op, &shuffle_op));
     *top = shuffle_op;
+    *bottom = txt_op;
+  }
+
+  // Add a cache op over this op if required and update the output subtree (top/bottom)
+  if (cache_client) {
+    // Note, it is not allowed to have both shuffle and cache
+    std::shared_ptr<DatasetOp> cache_op = nullptr;
+    RETURN_IF_NOT_OK(AddCacheOp(cache_client, num_workers, txt_op, &cache_op));
+    *top = cache_op;
     *bottom = txt_op;
   }
 
@@ -1829,6 +1986,10 @@ Status DEPipeline::ParseBuildSentencePieceVocabOp(const py::dict &args, std::sha
 Status DEPipeline::ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
                                std::shared_ptr<DatasetOp> *bottom) {
   std::vector<std::string> files_list;
+  std::shared_ptr<CacheClient> cache_client = nullptr;
+  std::shared_ptr<Sampler> sampler = nullptr;
+  int num_workers = 0;
+
   std::shared_ptr<ClueOp::Builder> builder = std::make_shared<ClueOp::Builder>();
   if (!args["dataset_files"].is_none()) {
     files_list = ToStringVector(args["dataset_files"]);
@@ -1844,7 +2005,8 @@ Status DEPipeline::ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> 
     py::handle value = arg.second;
     if (!value.is_none()) {
       if (key == "num_parallel_workers") {
-        (void)builder->SetNumWorkers(ToInt(value));
+        num_workers = ToInt(value);
+        (void)builder->SetNumWorkers(num_workers);
       } else if (key == "shuffle_files") {
         (void)builder->SetShuffleFiles(ToBool(value));
       } else if (key == "shuffle_global") {
@@ -1866,8 +2028,27 @@ Status DEPipeline::ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> 
           }
         }
         (void)builder->SetColsKeyMap(map_dict);
+      } else if (key == "cache") {
+        cache_client = value.cast<std::shared_ptr<CacheClient>>();
+      } else if (key == "sampler") {
+        auto create = py::reinterpret_borrow<py::object>(value).attr("create");
+        sampler = create().cast<std::shared_ptr<Sampler>>();
       }
     }
+  }
+
+  // If the user gave a sampler, but they did not ask for a cache, then by itself this is not allowed
+  // because ClueOp is a non-mappable dataset that does not support sampling.
+  // However, if a cache operator is injected at some other place higher in the tree, that cache can
+  // inherit this sampler from the leaf, providing sampling support from the caching layer.
+  // That is why we save the sampler here in a leaf node that does not use sampling.
+  if (sampler) {
+    (void)builder->SetSampler(std::move(sampler));
+  } else if (cache_client) {
+    int64_t num_samples = 0;
+    int64_t start_index = 0;
+    sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+    (void)builder->SetSampler(std::move(sampler));
   }
 
   std::shared_ptr<ClueOp> clue_op;
@@ -1875,7 +2056,7 @@ Status DEPipeline::ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> 
   RETURN_IF_NOT_OK(tree_->AssociateNode(clue_op));
   *top = clue_op;
 
-  if (shuffle_required) {
+  if (!cache_client && shuffle_required) {
     std::shared_ptr<DatasetOp> shuffle_op = nullptr;
     int64_t shuffle_size = 0;
     int64_t num_rows = 0;
@@ -1887,6 +2068,15 @@ Status DEPipeline::ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> 
     // Add the shuffle op over top of this op and return the subtree (top/bottom) to caller
     RETURN_IF_NOT_OK(AddShuffleOp(shuffle_size, clue_op, &shuffle_op));
     *top = shuffle_op;
+    *bottom = clue_op;
+  }
+
+  // Add a cache op over this op if required and update the output subtree (top/bottom)
+  if (cache_client) {
+    // Note, it is not allowed to have both shuffle and cache
+    std::shared_ptr<DatasetOp> cache_op = nullptr;
+    RETURN_IF_NOT_OK(AddCacheOp(cache_client, num_workers, clue_op, &cache_op));
+    *top = cache_op;
     *bottom = clue_op;
   }
 
@@ -1921,6 +2111,9 @@ Status DEPipeline::AddCacheOp(std::shared_ptr<CacheClient> cache_client, int num
 Status DEPipeline::ParseCsvOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
                               std::shared_ptr<DatasetOp> *bottom) {
   std::vector<std::string> files_list;
+  std::shared_ptr<CacheClient> cache_client = nullptr;
+  std::shared_ptr<Sampler> sampler = nullptr;
+  int num_workers = 0;
   std::shared_ptr<CsvOp::Builder> builder = std::make_shared<CsvOp::Builder>();
   if (!args["dataset_files"].is_none()) {
     files_list = ToStringVector(args["dataset_files"]);
@@ -1938,7 +2131,8 @@ Status DEPipeline::ParseCsvOp(const py::dict &args, std::shared_ptr<DatasetOp> *
     py::handle value = arg.second;
     if (!value.is_none()) {
       if (key == "num_parallel_workers") {
-        (void)builder->SetNumWorkers(ToInt(value));
+        num_workers = ToInt(value);
+        (void)builder->SetNumWorkers(num_workers);
       } else if (key == "shuffle_files") {
         (void)builder->SetShuffleFiles(ToBool(value));
       } else if (key == "shuffle_global") {
@@ -1971,8 +2165,27 @@ Status DEPipeline::ParseCsvOp(const py::dict &args, std::shared_ptr<DatasetOp> *
       } else if (key == "column_names") {
         col_names = ToStringVector(value);
         (void)builder->SetColumName(col_names);
+      } else if (key == "cache") {
+        cache_client = value.cast<std::shared_ptr<CacheClient>>();
+      } else if (key == "sampler") {
+        auto create = py::reinterpret_borrow<py::object>(value).attr("create");
+        sampler = create().cast<std::shared_ptr<Sampler>>();
       }
     }
+  }
+
+  // If the user gave a sampler, but they did not ask for a cache, then by itself this is not allowed
+  // because CsvOp is a non-mappable dataset that does not support sampling.
+  // However, if a cache operator is injected at some other place higher in the tree, that cache can
+  // inherit this sampler from the leaf, providing sampling support from the caching layer.
+  // That is why we save the sampler here in a leaf node that does not use sampling.
+  if (sampler) {
+    (void)builder->SetSampler(std::move(sampler));
+  } else if (cache_client) {
+    int64_t num_samples = 0;
+    int64_t start_index = 0;
+    sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+    (void)builder->SetSampler(std::move(sampler));
   }
 
   std::shared_ptr<CsvOp> csv_op;
@@ -1980,7 +2193,7 @@ Status DEPipeline::ParseCsvOp(const py::dict &args, std::shared_ptr<DatasetOp> *
   RETURN_IF_NOT_OK(tree_->AssociateNode(csv_op));
   *top = csv_op;
 
-  if (shuffle_required) {
+  if (!cache_client && shuffle_required) {
     std::shared_ptr<DatasetOp> shuffle_op = nullptr;
     int64_t shuffle_size = 0;
     int64_t num_rows = 0;
@@ -1992,6 +2205,15 @@ Status DEPipeline::ParseCsvOp(const py::dict &args, std::shared_ptr<DatasetOp> *
     // Add the shuffle op over top of this op and return the subtree (top/bottom) to caller
     RETURN_IF_NOT_OK(AddShuffleOp(shuffle_size, csv_op, &shuffle_op));
     *top = shuffle_op;
+    *bottom = csv_op;
+  }
+
+  // Add a cache op over this op if required and update the output subtree (top/bottom)
+  if (cache_client) {
+    // Note, it is not allowed to have both shuffle and cache
+    std::shared_ptr<DatasetOp> cache_op = nullptr;
+    RETURN_IF_NOT_OK(AddCacheOp(cache_client, num_workers, csv_op, &cache_op));
+    *top = cache_op;
     *bottom = csv_op;
   }
 

@@ -240,6 +240,14 @@ class CsvOp : public ParallelOp {
       return *this;
     }
 
+    // Setter method
+    // @param std::shared_ptr<Sampler> sampler
+    // @return Builder setter method returns reference to the builder.
+    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+      builder_sampler_ = std::move(sampler);
+      return *this;
+    }
+
    private:
     int32_t builder_device_id_;
     int32_t builder_num_devices_;
@@ -253,6 +261,7 @@ class CsvOp : public ParallelOp {
     char builder_field_delim_;
     std::vector<std::shared_ptr<CsvOp::BaseRecord>> builder_column_default_list_;
     std::vector<std::string> builder_column_name_list_;
+    std::shared_ptr<Sampler> builder_sampler_;
   };
 
   // Constructor of CsvOp
@@ -261,7 +270,8 @@ class CsvOp : public ParallelOp {
   CsvOp(const std::vector<std::string> &csv_files_list, char field_delim,
         const std::vector<std::shared_ptr<BaseRecord>> &column_default, const std::vector<std::string> &column_name,
         int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples, int32_t worker_connector_size,
-        int32_t op_connector_size, bool shuffle_files, int32_t num_devices, int32_t device_id);
+        int32_t op_connector_size, bool shuffle_files, int32_t num_devices, int32_t device_id,
+        std::shared_ptr<Sampler> sampler);
 
   // Default destructor
   ~CsvOp() = default;
@@ -296,6 +306,17 @@ class CsvOp : public ParallelOp {
   // File names getter
   // @return Vector of the input file names
   std::vector<std::string> FileNames() { return csv_files_list_; }
+
+  /// \Brief If a cache has been added into the ascendant tree over this csv op, then the cache will be executing
+  ///     a sampler for fetching the data.  As such, any options in the csv op need to be reset to its defaults so
+  ///     that this csv op will produce the full set of data into the cache.
+  void MakeSimpleProducer();
+
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
 
  private:
   // The entry point for when workers are launched.

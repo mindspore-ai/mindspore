@@ -103,6 +103,24 @@ HandleRcExit $? 0 0
 PytestCmd "test_cache_map.py" "test_cache_map_epoch_ctrl" 1
 HandleRcExit $? 0 0
 
+PytestCmd "test_cache_map.py" "test_cache_map_coco" 1
+HandleRcExit $? 0 0
+
+PytestCmd "test_cache_map.py" "test_cache_map_mnist" 1
+HandleRcExit $? 0 0
+
+PytestCmd "test_cache_map.py" "test_cache_map_celeba" 1
+HandleRcExit $? 0 0
+
+PytestCmd "test_cache_map.py" "test_cache_map_manifest" 1
+HandleRcExit $? 0 0
+
+PytestCmd "test_cache_map.py" "test_cache_map_cifar" 1
+HandleRcExit $? 0 0
+
+PytestCmd "test_cache_map.py" "test_cache_map_voc" 1
+HandleRcExit $? 0 0
+
 # Run two parallel pipelines (sharing cache)
 for i in $(seq 1 2)
 do
@@ -280,6 +298,15 @@ PytestCmd "test_cache_nomap.py" "test_cache_nomap_to_device"
 HandleRcExit $? 0 0
 
 PytestCmd "test_cache_nomap.py" "test_cache_nomap_epoch_ctrl" 1
+HandleRcExit $? 0 0
+
+PytestCmd "test_cache_nomap.py" "test_cache_nomap_clue" 1
+HandleRcExit $? 0 0
+
+PytestCmd "test_cache_nomap.py" "test_cache_nomap_csv" 1
+HandleRcExit $? 0 0
+
+PytestCmd "test_cache_nomap.py" "test_cache_nomap_textfile" 1
 HandleRcExit $? 0 0
 
 for i in $(seq 1 3)

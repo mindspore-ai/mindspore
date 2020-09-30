@@ -40,8 +40,9 @@ def test_textline_dataset_all_file():
     assert count == 5
 
 
-def test_textline_dataset_num_samples_zero():
-    data = ds.TextFileDataset(DATA_FILE, num_samples=0)
+def test_textline_dataset_num_samples_none():
+    # Do not provide a num_samples argument, so it would be None by default
+    data = ds.TextFileDataset(DATA_FILE)
     count = 0
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info("{}".format(i["text"]))
@@ -208,7 +209,7 @@ def test_textline_dataset_exceptions():
 if __name__ == "__main__":
     test_textline_dataset_one_file()
     test_textline_dataset_all_file()
-    test_textline_dataset_num_samples_zero()
+    test_textline_dataset_num_samples_none()
     test_textline_dataset_shuffle_false4()
     test_textline_dataset_shuffle_false1()
     test_textline_dataset_shuffle_files4()

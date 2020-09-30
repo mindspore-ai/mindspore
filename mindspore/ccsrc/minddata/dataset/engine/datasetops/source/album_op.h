@@ -284,7 +284,6 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   std::set<std::string> extensions_;  // extensions allowed
   std::unordered_map<std::string, int32_t> col_name_map_;
   std::unique_ptr<DataSchema> data_schema_;
-  std::shared_ptr<Sampler> sampler_;
   int64_t row_cnt_;
   int64_t buf_cnt_;
   int64_t sampler_ind_;

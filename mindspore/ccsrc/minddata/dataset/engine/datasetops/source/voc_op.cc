@@ -212,6 +212,7 @@ Status VOCOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, Ten
       folder_path_ + std::string(kAnnotationsFolder) + image_id + std::string(kAnnotationExtension);
     RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
     RETURN_IF_NOT_OK(ReadAnnotationToTensor(kAnnotationFile, &annotation));
+    trow->setId(row_id);
     trow->push_back(std::move(image));
     trow->insert(trow->end(), annotation.begin(), annotation.end());
   }
