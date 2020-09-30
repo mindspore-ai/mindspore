@@ -57,7 +57,7 @@ int ConvolutionWinogradCPUKernel::WinogradFilterTransform(const float *weight_da
     return RET_MEMORY_FAILED;
   }
 
-#ifndef ENABLE_ARM64
+#ifndef ENABLE_ARM
   auto tmp_data1 = reinterpret_cast<float *>(malloc(channel_in * input_unit_ * kernel_unit_ * sizeof(float)));
   if (tmp_data1 == nullptr) {
     free(tmp_data);
@@ -81,7 +81,7 @@ int ConvolutionWinogradCPUKernel::WinogradFilterTransform(const float *weight_da
     int out_c_res = i % oc_block;
     int output_oz_offset = out_c_block * block_stride + out_c_res;
 
-#ifndef ENABLE_ARM64
+#ifndef ENABLE_ARM
     // tmp_data = g * GT
     MatrixMultiplyWinograd(weight_data + i * input_oz_offset, matrix_gt, tmp_data, kernel_unit_, kernel_unit_,
                            input_unit_, channel_in, channel_in * 4);
@@ -112,7 +112,7 @@ int ConvolutionWinogradCPUKernel::WinogradFilterTransform(const float *weight_da
       }
     }
   }
-#ifndef ENABLE_ARM64
+#ifndef ENABLE_ARM
   free(tmp_data1);
   free(trans_out_data1);
 #endif
