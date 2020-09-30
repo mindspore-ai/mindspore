@@ -262,6 +262,22 @@ int ArithmeticOpenCLKernel::Init() {
       return RET_ERROR;
   }
 
+  switch (arithmetic_parameter->activation_type_) {
+    case schema::ActivationType_NO_ACTIVATION:
+      break;
+    case schema::ActivationType_RELU:
+      if (op_parameter_->type_ == PrimitiveType_Add && element_flag_) {
+        kernel_name += "ReLU";
+      } else {
+        MS_LOG(ERROR) << "Only support ElementAdd + ReLU";
+        return RET_ERROR;
+      }
+      break;
+    default:
+      MS_LOG(ERROR) << "Error activation type " << arithmetic_parameter->activation_type_;
+      return RET_ERROR;
+  }
+
   lite::STATUS error_code = RET_OK;
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);

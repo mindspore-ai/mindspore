@@ -115,8 +115,8 @@ int ScaleOpenCLKernel::InitBuffer() {
     std::vector<size_t> img_size;
     GetImageSize(0, &img_size);
     if (in_tensors_[1]->shape().size() == 1 && axis_ == 3) {
-      img_size[0] = 1;
-      img_size[1] = UP_DIV(in_tensors_[1]->shape()[0], C4NUM);
+      img_size[1] = 1;
+      img_size[0] = UP_DIV(in_tensors_[1]->shape()[0], C4NUM);
       scale_ptr_ = allocator->CreateImageFromHost(in_tensors_[1]->data_c(), in_tensors_[1]->ElementsNum(), img_size);
       offset_ptr_ = allocator->CreateImageFromHost(in_tensors_[2]->data_c(), in_tensors_[2]->ElementsNum(), img_size);
       return RET_OK;
