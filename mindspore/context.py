@@ -465,7 +465,11 @@ def _check_target_specific_cfgs(device, arg_key):
     device_cfgs = {
         'enable_auto_mixed_precision': ['Ascend'],
         'enable_dump': ['Ascend'],
+        'save_dump_path': ['Ascend'],
+        'enable_graph_kernel': ['Ascend', 'GPU'],
+        'enable_reduce_precision': ['Ascend'],
         'enable_profiling': ['Ascend'],
+        'profiling_options': ['Ascend'],
         'print_file_path': ['Ascend'],
         'variable_memory_max_size': ['Ascend'],
         'max_device_memory': ['GPU']
@@ -512,18 +516,14 @@ def set_context(**kwargs):
     Common(CPU/GPU/Ascend)       Ascend                       GPU
     ===========================  ===========================  =================
     check_bprop                  enable_auto_mixed_precision  max_device_memory
-    device_id                    enable_dump
-    device_target                enable_profiling
-    enable_graph_kernel          variable_memory_max_size
-    enable_reduce_precision      print_file_path
-    enable_sparse
-    max_call_depth
-    mode
-    profiling_options
-    reserve_class_name_in_scope
-    save_dump_path
-    save_graphs
-    save_graphs_path
+    device_id                    enable_dump                  enable_graph_kernel
+    device_target                save_dump_path
+    enable_sparse                enable_graph_kernel
+    max_call_depth               enable_reduce_precision
+    mode                         enable_profiling
+    reserve_class_name_in_scope  profiling_options
+    save_graphs                  variable_memory_max_size
+    save_graphs_path             print_file_path
     ===========================  ===========================  =================
 
     Args:
