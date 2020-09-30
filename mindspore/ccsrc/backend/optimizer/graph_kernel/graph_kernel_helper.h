@@ -47,8 +47,9 @@ void ReplaceNewFuseCNode(const FuncGraphPtr &kernel_graph, const AnfNodePtr &new
 void FuseNodesToSubGraph(const std::vector<AnfNodePtr> &fuse_nodes,
                          const std::shared_ptr<session::KernelGraph> &kernel_graph, const std::string &postfix,
                          bool is_before_kernel_select);
+bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc);
 bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc,
-                   std::map<std::string, AnfNodePtr> *address_node_map = nullptr);
+                   std::map<std::string, AnfNodePtr> *address_node_map);
 bool AnfToJsonDesc(const std::vector<AnfNodePtrList> &graphs, const DumpOption &dump_option, nlohmann::json *op_desc);
 FuncGraphPtr JsonDescToAnf(const std::string &json_desc, const std::vector<AnfNodePtr> &inputs);
 std::unordered_set<PrimitivePtr> GetExpandOps();

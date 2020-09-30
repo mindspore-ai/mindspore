@@ -38,6 +38,7 @@
 #include "backend/optimizer/gpu/remove_format_transform_pair.h"
 #include "backend/optimizer/gpu/remove_redundant_format_transform.h"
 #include "backend/optimizer/gpu/cudnn_inplace_fusion.h"
+#include "backend/optimizer/graph_kernel/value_graph_binder.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
@@ -116,6 +117,7 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
   pm->AddPass(std::make_shared<opt::CompositeOpsFusion>());
   pm->AddPass(std::make_shared<opt::GraphKernelSplitter>());
+  pm->AddPass(std::make_shared<opt::BindValueToGraph>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
