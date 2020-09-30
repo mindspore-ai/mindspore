@@ -21,6 +21,7 @@
 #include "runtime/mem.h"
 #include "runtime/rt_model.h"
 #include "runtime/stream.h"
+#include "toolchain/adx_datadump_server.h"
 
 rtError_t rtEventSynchronize(rtEvent_t event) { return RT_ERROR_NONE; }
 
@@ -141,3 +142,7 @@ rtError_t rtSetTaskGenCallback(rtTaskGenCallback callback) { return RT_ERROR_NON
 RTS_API rtError_t rtProfilerStart(uint64_t profConfig, int32_t numsDev, uint32_t* deviceList) { return RT_ERROR_NONE; }
 
 RTS_API rtError_t rtProfilerStop(uint64_t profConfig, int32_t numsDev, uint32_t* deviceList) { return RT_ERROR_NONE; }
+
+int AdxDataDumpServerInit() { return 0; }
+
+int AdxDataDumpServerUnInit() { return 0; }
