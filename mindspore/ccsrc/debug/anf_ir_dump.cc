@@ -462,15 +462,15 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
 std::string AddGlobalId(const std::string &filename) {
   static size_t g_id = 0;
   std::ostringstream s;
-  auto i = filename.rfind('/');
+  auto i = filename.rfind(".ir");
   if (i >= filename.size()) {
-    s << std::setfill('0') << std::setw(4) << g_id << "_";
     s << filename;
+    s << "_" << std::setfill('0') << std::setw(4) << g_id;
   } else {
-    s << filename.substr(0, i + 1);
-    s << std::setfill('0') << std::setw(4) << g_id << "_";
+    s << filename.substr(0, i);
+    s << "_" << std::setfill('0') << std::setw(4) << g_id;
     if (i + 1 < filename.size()) {
-      s << filename.substr(i + 1);
+      s << filename.substr(i);
     }
   }
   ++g_id;
