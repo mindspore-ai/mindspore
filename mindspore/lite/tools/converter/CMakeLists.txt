@@ -8,27 +8,6 @@ set(CCSRC_SRC
 )
 
 include(${TOP_DIR}/cmake/external_libs/glog.cmake)
-if (WIN32)
-    set(LITE_SRC
-            #src
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/tensor.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/model.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/lite_session.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/inner_context.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/kernel_registry.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_util.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/string_util.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/runtime_api.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/thread_pool.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/workspace_pool.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/allocator.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/executor.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/scheduler.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/lite_kernel.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}../../nnacl/pack.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/populate_parameter.cc
-            )
-endif()
 
 file(GLOB_RECURSE OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/*.cc)
 
@@ -144,28 +123,6 @@ add_executable(converter_lite
 add_dependencies(converter_lite tflite_fbs_src)
 add_dependencies(converter_lite fbs_inner_src)
 
-if (WIN32)
-    add_library(converter_mid OBJECT
-            ${CCSRC_SRC}
-            ${CONVERTER_SRC}
-            ${OPS_SRC}
-            ${KERNEL_SRC}
-            ${LITE_SRC}
-            ${PROTO_SRCS}
-            )
-    add_library(converter_parser STATIC
-            $<TARGET_OBJECTS:tflite_parser_mid>
-            $<TARGET_OBJECTS:caffe_parser_mid>
-            $<TARGET_OBJECTS:onnx_parser_mid>
-            $<TARGET_OBJECTS:anf_importer_mid>
-            $<TARGET_OBJECTS:anf_exporter_mid>
-            $<TARGET_OBJECTS:graph_pass_mid>
-            $<TARGET_OBJECTS:fusion_mid>
-            $<TARGET_OBJECTS:quantizer_mid>
-            $<TARGET_OBJECTS:converter_mid>
-            )
-endif()
-
 target_link_libraries(converter_lite PRIVATE
         tflite_parser_mid
         caffe_parser_mid
@@ -189,8 +146,19 @@ target_link_libraries(converter_lite PRIVATE
 if (NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
     install(TARGETS converter_lite
             RUNTIME DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/gvar/libmindspore_gvar.so
-            DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/lib COMPONENT ${COMPONENT_NAME})
-    install(FILES ${glog_LIBPATH}/libglog.so.0.4.0
-            DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/third_party/glog/lib RENAME libglog.so.0 COMPONENT ${COMPONENT_NAME})
-endif ()
+    if (WIN32)
+        get_filename_component(CXX_DIR ${CMAKE_CXX_COMPILER} PATH)
+        file(GLOB LIB_LIST  ${CXX_DIR}/libstdc++-6.dll ${CXX_DIR}/libwinpthread-1.dll ${CXX_DIR}/libssp-0.dll ${CXX_DIR}/libgcc_s_seh-1.dll)
+        install(FILES ${LIB_LIST} DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/build/mindspore/tools/converter/mindspore_core/gvar/libmindspore_gvar.dll
+                DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
+        install(FILES ${glog_LIBPATH}/../bin/libglog.dll
+                DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
+    else()
+        install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/gvar/libmindspore_gvar.so
+                DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/lib COMPONENT ${COMPONENT_NAME})
+
+        install(FILES ${glog_LIBPATH}/libglog.so.0.4.0
+                DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/third_party/glog/lib RENAME libglog.so.0 COMPONENT ${COMPONENT_NAME})
+    endif ()
+endif()
