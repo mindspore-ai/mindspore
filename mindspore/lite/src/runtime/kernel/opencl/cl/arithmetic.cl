@@ -15,6 +15,19 @@ __kernel void ElementAdd_IMG(__read_only image2d_t input_a, __read_only image2d_
   WRITE_IMAGE(output, (int2)(X, Y), a + b);
 }
 
+__kernel void ElementAddReLU_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
+                             __write_only image2d_t output, const int2 output_shape) {
+  int X = get_global_id(0);
+  int Y = get_global_id(1);
+  if (X >= output_shape.x || Y >= output_shape.y) {
+    return;
+  }
+
+  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
+  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, Y));
+  WRITE_IMAGE(output, (int2)(X, Y), max(a + b, (FLT4)(0.f)));
+}
+
 __kernel void ElementSub_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
                              __write_only image2d_t output, const int2 output_shape) {
   int X = get_global_id(0);
