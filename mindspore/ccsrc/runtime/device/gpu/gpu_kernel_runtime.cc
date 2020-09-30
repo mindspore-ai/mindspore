@@ -15,6 +15,7 @@
  */
 #include "runtime/device/gpu/gpu_kernel_runtime.h"
 #include <algorithm>
+#include <map>
 #include "pybind11/pybind11.h"
 #include "runtime/device/gpu/gpu_device_address.h"
 #include "runtime/device/gpu/cuda_driver.h"
@@ -277,6 +278,51 @@ void GPUKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::v
   }
   // Clear the output address of graph.
   ClearOutputAddress(inputs, value_nodes, execution_order);
+}
+
+void GPUKernelRuntime::AllocInplaceNodeMemory(const session::KernelGraph *graph) {
+  std::map<uint32_t, std::vector<CNodePtr>> inplace_groups;
+  auto kernel_cnodes = graph->execution_order();
+  for (auto &kernel : kernel_cnodes) {
+    if (!AnfAlgo::IsInplaceNode(kernel, "inplace_algo")) {
+      continue;
+    }
+    auto primitive = AnfAlgo::GetCNodePrimitive(kernel);
+    auto group_attr = primitive->GetAttr("inplace_group");
+    MS_EXCEPTION_IF_NULL(group_attr);
+    auto group_id = GetValue<uint32_t>(group_attr);
+    inplace_groups[group_id].push_back(kernel);
+  }
+
+  for (auto &group : inplace_groups) {
+    auto &item = group.second;
+    // in-place compute when group size >= 2.
+    if (item.size() < 2) {
+      continue;
+    }
+
+    auto primitive = AnfAlgo::GetCNodePrimitive(item[0]);
+    auto output_index = GetValue<uint32_t>(primitive->GetAttr("inplace_output_index"));
+    auto device_address = AnfAlgo::GetMutableOutputAddr(item[0], output_index, false);
+    if (device_address->GetPtr() != nullptr) {
+      continue;
+    }
+
+    auto kernel_mod = AnfAlgo::GetKernelMod(item[0]);
+    auto output_size = kernel_mod->GetOutputSizeList();
+    auto ret = mem_manager_->MallocMemFromMemPool(device_address, output_size[output_index]);
+    if (!ret) {
+      MS_LOG(EXCEPTION) << "Cannot alloc address, tensor size is: " << output_size[output_index];
+    }
+
+    for (auto &node : item) {
+      auto prim = AnfAlgo::GetCNodePrimitive(node);
+      auto index = GetValue<uint32_t>(prim->GetAttr("inplace_output_index"));
+      AnfAlgo::SetOutputAddr(device_address, index, node.get());
+      MS_LOG(INFO) << "[inplace optimizer] group id: " << group.first << ", node: " << node->DebugString()
+                   << ", output_index: " << index;
+    }
+  }
 }
 
 void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
@@ -545,6 +591,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
   mem_reuse_util_->ResetDynamicUsedRefCount();
   // The inputs and outputs memory of communication kernel need be continuous, so separate processing.
   AllocCommunicationOpDynamicRes(graph);
+  AllocInplaceNodeMemory(graph);
 
 #ifdef ENABLE_DEBUGGER
   debugger_ = debugger;
@@ -562,6 +609,10 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
   for (const auto &kernel : kernels) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
+    if (AnfAlgo::IsInplaceNode(kernel, "skip")) {
+      MS_LOG(INFO) << "[inplace optimizer] skip node: " << kernel->DebugString();
+      continue;
+    }
     AddressPtrList kernel_inputs;
     AddressPtrList kernel_workspaces;
     AddressPtrList kernel_outputs;
@@ -808,6 +859,19 @@ bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &k
       // Graph may be "nop node + depend + node",  the input of node is the depend, so this case need skip nop node.
       device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, true);
     }
+
+    // Get in-place output_address
+    if (AnfAlgo::IsInplaceNode(kernel, "aggregate")) {
+      auto primitive = AnfAlgo::GetCNodePrimitive(kernel);
+      auto input_index = GetValue<uint32_t>(primitive->GetAttr("aggregate_input_index"));
+      if (i == input_index) {
+        auto skip_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(kernel), input_index);
+        device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(skip_node, 0, false);
+        MS_LOG(INFO) << "[inplace optimizer] aggregate: " << kernel->DebugString()
+                     << ", skip: " << skip_node->DebugString() << ", address: " << device_address->GetMutablePtr();
+      }
+    }
+
     MS_EXCEPTION_IF_NULL(device_address);
     UpdateHostSwapInQueue(device_address, mock);
     MS_EXCEPTION_IF_NULL(device_address->ptr_);
@@ -969,6 +1033,14 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
   }
   // Free the input of kernel by reference count.
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
+    if (AnfAlgo::IsInplaceNode(kernel, "aggregate")) {
+      auto primitive = AnfAlgo::GetCNodePrimitive(kernel);
+      auto index = GetValue<uint32_t>(primitive->GetAttr("aggregate_input_index"));
+      if (i == index) {
+        continue;
+      }
+    }
+
     auto kernel_ref_count_ptr = mem_reuse_util_->GetKernelInputRef(cnode, i);
     if (kernel_ref_count_ptr == nullptr) {
       continue;

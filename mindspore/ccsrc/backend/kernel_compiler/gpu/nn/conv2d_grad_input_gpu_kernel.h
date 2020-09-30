@@ -54,7 +54,8 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
         output_size_(0),
         padded_size_(0),
         workspace_size_(0),
-        use_pad_(true) {}
+        use_pad_(true),
+        beta_(0) {}
   ~ConvGradInputGpuBkwKernel() override { DestroyResource(); }
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -75,13 +76,12 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     }
 
     const float alpha = 1;
-    const float beta = 0;
     if ((pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) && use_pad_) {
       T *padded = GetDeviceAddress<T>(workspace, 1);
 
       CHECK_CUDNN_RET_WITH_EXCEPT(
         cudnnConvolutionBackwardData(cudnn_handle_, &alpha, w_desc_, w, dy_desc_, dy, conv_desc_, algo_, work_space,
-                                     workspace_size_, &beta, padded_descriptor_, padded),
+                                     workspace_size_, &beta_, padded_descriptor_, padded),
         "ConvolutionBackwardData failed");
       if (data_format_ == "NHWC") {
         CalPadGradNHWC(output_size_ / sizeof(T), padded, n_, old_height_, old_width_, c_, old_height_ + pad_height_,
@@ -93,7 +93,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT(
         cudnnConvolutionBackwardData(cudnn_handle_, &alpha, w_desc_, w, dy_desc_, dy, conv_desc_, algo_, work_space,
-                                     workspace_size_, &beta, dx_desc_, dx),
+                                     workspace_size_, &beta_, dx_desc_, dx),
         "ConvolutionBackwardData failed");
     }
     return true;
@@ -188,6 +188,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
                                   "cudnnSetConvolutionMathType failed.")
     }
     SelectAlgorithm(dx_desc_real);
+    beta_ = GetAttrWithDefault(kernel_node, "inplace_algo", std::string("cover")) == "cover" ? 0 : 1;
     InitSizeLists();
     return true;
   }
@@ -349,6 +350,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
   size_t padded_size_;
   size_t workspace_size_;
   bool use_pad_;
+  float beta_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -39,6 +39,7 @@
 #include "backend/optimizer/gpu/insert_format_transform_op.h"
 #include "backend/optimizer/gpu/remove_format_transform_pair.h"
 #include "backend/optimizer/gpu/remove_redundant_format_transform.h"
+#include "backend/optimizer/gpu/cudnn_inplace_fusion.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"

@@ -136,6 +136,8 @@ class MemSwapManager {
 
   bool IsCommunicationRelevantOp(const AnfNodePtr &kernel) const;
 
+  bool IsInplaceRelevantOp(const TensorInfo &tensor);
+
   std::vector<CNodePtr> execution_order_;
   std::vector<TensorInfo> ordered_tensors_;
   std::unordered_map<void *, KernelExecutionInfo> kernel_execution_info_;
