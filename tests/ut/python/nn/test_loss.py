@@ -53,6 +53,34 @@ def test_SoftmaxCrossEntropyWithLogits_reduce():
     loss(logits, labels)
 
 
+def test_BCELoss():
+    """ test_BCELoss """
+    loss = nn.BCELoss()
+
+    inputs_data = Tensor(np.array([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]]).astype(np.float32))
+    target_data = Tensor(np.array([[0, 1, 0], [0, 0, 1]]).astype(np.float32))
+    loss(inputs_data, target_data)
+
+
+def test_BCELoss_reduce():
+    """ test_BCELoss """
+    loss = nn.BCELoss(reduction='mean')
+
+    inputs_data = Tensor(np.array([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]]).astype(np.float32))
+    target_data = Tensor(np.array([[0, 1, 0], [0, 0, 1]]).astype(np.float32))
+    loss(inputs_data, target_data)
+
+
+def test_BCELoss_weight():
+    """ test_BCELoss """
+    weight = Tensor(np.array([[1.0, 2.0, 3.0], [2.2, 2.6, 3.9]]).astype(np.float32))
+    loss = nn.BCELoss(weight=weight)
+
+    inputs_data = Tensor(np.array([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]]).astype(np.float32))
+    target_data = Tensor(np.array([[0, 1, 0], [0, 0, 1]]).astype(np.float32))
+    loss(inputs_data, target_data)
+
+
 def test_cosine_embedding_loss():
     """ test CosineEmbeddingLoss """
     loss = nn.CosineEmbeddingLoss()
