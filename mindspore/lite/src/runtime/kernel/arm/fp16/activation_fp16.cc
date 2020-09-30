@@ -92,7 +92,7 @@ int ActivationFp16CPUKernel::DoActivation(int task_id) {
   return error_code;
 }
 
-int ActivationRun(void *cdata, int task_id) {
+int ActivationFp16Run(void *cdata, int task_id) {
   auto activation_kernel = reinterpret_cast<ActivationFp16CPUKernel *>(cdata);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {
@@ -115,7 +115,7 @@ int ActivationFp16CPUKernel::Run() {
     return ret;
   }
 
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ActivationRun, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ActivationFp16Run, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Activation function error error_code[" << error_code << "]";
     FreeTmpBuffer();
