@@ -42,7 +42,7 @@ parser.add_argument('--platform', type=str, default='Ascend', choices=['Ascend',
 parser.set_defaults(run_distribute=False)
 args_opt = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.platform, save_graphs=False)
+context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.platform)
 if args_opt.platform == 'Ascend':
     device_id = int(os.getenv('DEVICE_ID'))
     context.set_context(device_id=device_id)
