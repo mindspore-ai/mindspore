@@ -52,4 +52,7 @@ config = ed({
     "TEST_DATASET_SIZE": 500,
     "TEST_BUFFER_SIZE": 4,
     "TEST_DROP_REMAINDER": False,
+
+    # air config
+    'air_filename': 'psenet_bs_1.air',
 })
