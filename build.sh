@@ -304,6 +304,7 @@ checkopts()
           LITE_LANGUAGE="cpp"
         elif [[ "$OPTARG" == "java" ]]; then
           LITE_LANGUAGE="java"
+	  ENABLE_CONVERTER="off"
         elif [[ "$OPTARG" == "object-c" ]]; then
           LITE_LANGUAGE="object-c"
         else
