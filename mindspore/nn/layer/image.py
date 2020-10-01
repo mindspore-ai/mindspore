@@ -20,8 +20,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore._checkparam import Rel, Validator as validator
 from .conv import Conv2d
 from .container import CellList
 from .pooling import AvgPool2d

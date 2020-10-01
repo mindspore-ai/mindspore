@@ -20,7 +20,6 @@ import mindspore.common.dtype as mstype
 from mindspore.common.seed import get_seed
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer
-from mindspore._checkparam import check_int_positive, check_bool
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import identity
@@ -28,12 +27,12 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr
 from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
+from mindspore._checkparam import Rel, Validator as validator, check_int_positive, check_bool
 from mindspore.common.api import ms_function
 from mindspore import context
 from ..cell import Cell
 from .activation import get_activation
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
+
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold',
            'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag']

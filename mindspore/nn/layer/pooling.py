@@ -15,11 +15,10 @@
 """pooling"""
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel, Validator as validator
 from mindspore.ops.primitive import constexpr
-from ... import context
+import mindspore.context as context
 from ..cell import Cell
-from ..._checkparam import Rel
 
 __all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d']
 
