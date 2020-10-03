@@ -21,7 +21,7 @@ import mindspore.nn as nn
 import mindspore.nn.probability.bijector as msb
 import mindspore.nn.probability.distribution as msd
 from .transformed_distribution import TransformedDistribution
-from ._utils.utils import check_distribution_name, raise_not_implemented_util
+from ._utils.utils import check_distribution_name
 from ._utils.custom_ops import exp_generic, expm1_generic, log_generic
 
 class Gumbel(TransformedDistribution):
@@ -39,6 +39,7 @@ class Gumbel(TransformedDistribution):
         `scale` must be greater than zero.
         `dist_spec_args` are `loc` and `scale`.
         `dtype` must be a float type because Gumbel distributions are continuous.
+        `kl_loss` and `cross_entropy` are not supported on GPU backend.
 
     Examples:
         >>> # To initialize a Gumbel distribution of `loc` 3.0 and `scale` 4.0.
@@ -219,8 +220,6 @@ class Gumbel(TransformedDistribution):
             loc_b (Tensor): The loc of distribution b.
             scale_b (Tensor): The scale of distribution b.
         """
-        if self.device_target == 'GPU':
-            raise_not_implemented_util('On GPU backend, cross_entropy', self.name)
         check_distribution_name(dist, 'Gumbel')
         return self._entropy() + self._kl_loss(dist, loc_b, scale_b)
 
@@ -237,8 +236,6 @@ class Gumbel(TransformedDistribution):
             KL(a||b) = \log(scale_b / scale_a) + Euler-Mascheroni_constant * (scale_a / scale_b - 1.) +
                        \exp(\frac{(loc_b - loc_a)}{scale_b}) * \Gamma(scale_a / scale_b + 1.) - 1.
         """
-        if self.device_target == 'GPU':
-            raise_not_implemented_util('On GPU backend, kl_loss', self.name)
         check_distribution_name(dist, 'Gumbel')
         loc_b = self._check_value(loc_b, 'loc_b')
         scale_b = self._check_value(scale_b, 'scale_b')

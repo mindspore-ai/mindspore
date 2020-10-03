@@ -27,6 +27,7 @@ from .categorical import Categorical
 from .log_normal import LogNormal
 from .logistic import Logistic
 from .gumbel import Gumbel
+from .cauchy import Cauchy
 
 __all__ = ['Distribution',
            'TransformedDistribution',
@@ -39,4 +40,5 @@ __all__ = ['Distribution',
            'LogNormal',
            'Logistic',
            'Gumbel',
+           'Cauchy',
            ]
