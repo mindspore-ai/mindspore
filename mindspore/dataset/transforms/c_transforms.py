@@ -83,6 +83,7 @@ class TypeCast(cde.TypeCastOp):
 
     Examples:
         >>> import mindspore.dataset.transforms.c_transforms as c_transforms
+        >>> import mindspore.common.dtype as mstype
         >>>
         >>> type_cast_op = c_transforms.TypeCast(mstype.int32)
     """

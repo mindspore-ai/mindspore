@@ -77,7 +77,7 @@ class Compose:
         >>>
         >>> dataset_dir = "path/to/imagefolder_directory"
         >>> # create a dataset that reads all files in dataset_dir with 8 threads
-        >>> dataset = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8)
+        >>> data1 = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8)
         >>> # create a list of transformations to be applied to the image data
         >>> transform = py_transforms.Compose([py_vision.Decode(),
         >>>                                    py_vision.RandomHorizontalFlip(0.5),
@@ -85,7 +85,7 @@ class Compose:
         >>>                                    py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         >>>                                    py_vision.RandomErasing()])
         >>> # apply the transform to the dataset through dataset.map()
-        >>> dataset = dataset.map(operations=transform, input_columns="image")
+        >>> data1 = data1.map(operations=transform, input_columns="image")
         >>>
         >>> # Compose is also be invoked implicitly, by just passing in a list of ops
         >>> # the above example then becomes:
@@ -96,7 +96,7 @@ class Compose:
         >>>                   py_vision.RandomErasing()]
         >>>
         >>> # apply the transform to the dataset through dataset.map()
-        >>> dataset = dataset.map(operations=transform_list, input_columns="image")
+        >>> data2 = data2.map(operations=transform_list, input_columns="image")
         >>>
         >>> # Certain C++ and Python ops can be combined, but not all of them
         >>> # An example of combined operations
@@ -104,20 +104,20 @@ class Compose:
         >>> import mindspore.dataset.transforms.c_transforms as c_transforms
         >>> import mindspore.dataset.vision.c_transforms as c_vision
         >>>
-        >>> data = ds.NumpySlicesDataset(arr, column_names=["cols"], shuffle=False)
+        >>> data3 = ds.NumpySlicesDataset(arr, column_names=["cols"], shuffle=False)
         >>> transformed_list = [py_transforms.OneHotOp(2), c_transforms.Mask(c_transforms.Relational.EQ, 1)]
-        >>> data = data.map(operations=transformed_list, input_columns=["cols"])
+        >>> data3 = data3.map(operations=transformed_list, input_columns=["cols"])
         >>>
         >>> # Here is an example of mixing vision ops
         >>> data_dir = "/path/to/imagefolder_directory"
-        >>> data1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+        >>> data4 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
         >>> input_columns = ["column_names"]
         >>> op_list=[c_vision.Decode(),
         >>>          c_vision.Resize((224, 244)),
         >>>          py_vision.ToPIL(),
         >>>          np.array, # need to convert PIL image to a NumPy array to pass it to C++ operation
         >>>          c_vision.Resize((24, 24))]
-        >>> data1 = data1.map(operations=op_list, input_columns=input_columns)
+        >>> data4 = data4.map(operations=op_list, input_columns=input_columns)
     """
 
     @check_compose_list

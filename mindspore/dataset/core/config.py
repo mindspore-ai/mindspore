@@ -159,7 +159,7 @@ def get_monitor_sampling_interval():
     Get the default interval of performance monitor sampling.
 
     Returns:
-        Interval: interval (in milliseconds) for performance monitor sampling.
+        Int, interval (in milliseconds) for performance monitor sampling.
     """
     return _config.get_monitor_sampling_interval()
 
