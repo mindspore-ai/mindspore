@@ -21,6 +21,8 @@ from .power_transform import PowerTransform
 from .exp import Exp
 from .scalar_affine import ScalarAffine
 from .softplus import Softplus
+from .gumbel_cdf import GumbelCDF
+from .invert import Invert
 
 __all__ = [
     'Bijector',
@@ -28,4 +30,6 @@ __all__ = [
     'Exp',
     'ScalarAffine',
     'Softplus',
+    'GumbelCDF',
+    'Invert',
 ]
