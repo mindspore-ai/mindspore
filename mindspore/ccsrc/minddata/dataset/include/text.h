@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_API_TEXT_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_API_TEXT_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TEXT_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TEXT_H_
 
 #include <vector>
 #include <memory>
@@ -68,4 +68,4 @@ class LookupOperation : public TensorOperation {
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_API_TEXT_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TEXT_H_

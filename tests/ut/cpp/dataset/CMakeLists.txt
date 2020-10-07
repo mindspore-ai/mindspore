@@ -102,6 +102,7 @@ SET(DE_UT_SRCS
         build_vocab_test.cc
         c_api_samplers_test.cc
         c_api_transforms_test.cc
+        c_api_vision_test.cc
         c_api_dataset_ops_test.cc
         c_api_dataset_album_test.cc
         c_api_dataset_cifar_test.cc
@@ -124,8 +125,8 @@ SET(DE_UT_SRCS
         swap_red_blue_test.cc
         distributed_sampler_test.cc
         data_helper_test.cc
-				image_process_test.cc
-				slice_op_test.cc
+        image_process_test.cc
+        slice_op_test.cc
         )
 
 if (ENABLE_PYTHON)

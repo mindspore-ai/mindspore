@@ -15,7 +15,7 @@
  */
 #include "common/common.h"
 #include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/vision.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
 

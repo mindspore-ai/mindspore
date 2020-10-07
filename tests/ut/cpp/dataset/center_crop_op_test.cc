@@ -55,3 +55,17 @@ TEST_F(MindDataTestCenterCropOp, TestOp2) {
   EXPECT_TRUE(s.IsError());
   ASSERT_TRUE(s.get_code() == StatusCode::kUnexpectedError);
 }
+
+TEST_F(MindDataTestCenterCropOp, TestOp3) {
+  MS_LOG(INFO) << "Doing MindDataTestCenterCropOp::TestOp3. Test single integer input for square crop.";
+  std::shared_ptr<Tensor> output_tensor;
+  int side = 128;
+  std::unique_ptr<CenterCropOp> op(new CenterCropOp(side));
+  EXPECT_TRUE(op->OneToOne());
+  Status s = op->Compute(input_tensor_, &output_tensor);
+  EXPECT_TRUE(s.IsOk());
+  // Confirm both height and width are of size <side>.
+  EXPECT_EQ(side, output_tensor->shape()[0]);
+  EXPECT_EQ(side, output_tensor->shape()[1]);
+  std::shared_ptr<CVTensor> p = CVTensor::AsCVTensor(output_tensor);
+}

@@ -28,4 +28,5 @@ add_library(cpp-API OBJECT
         transforms.cc
         samplers.cc
         text.cc
+        vision.cc
         )
