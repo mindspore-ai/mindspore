@@ -165,10 +165,7 @@ class Distribution(Cell):
         for arg, name, default in zip(args, self.parameter_names, self.default_parameters):
             # check if the argument is a Tensor
             if arg is not None:
-                if self.context_mode == 0:
-                    self.checktensor(arg, name)
-                else:
-                    arg = self.checktensor(arg, name)
+                self.checktensor(arg, name)
             else:
                 arg = default if default is not None else raise_none_error(
                     name)
@@ -687,8 +684,8 @@ class Distribution(Cell):
 
         Note:
             Names of supported functions include:
-            'prob', 'log_prob', 'cdf', 'log_cdf', 'survival_function', 'log_survival'
-            'var', 'sd', 'entropy', 'kl_loss', 'cross_entropy', and 'sample'.
+            'prob', 'log_prob', 'cdf', 'log_cdf', 'survival_function', 'log_survival',
+            'var', 'sd', 'mode', 'mean', 'entropy', 'kl_loss', 'cross_entropy', and 'sample'.
 
         Args:
             name (str): The name of the function.

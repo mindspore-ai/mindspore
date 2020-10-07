@@ -91,10 +91,8 @@ class Bijector(Cell):
         """
         Check availability of `value` as a Tensor.
         """
-        if self.context_mode == 0:
-            self.checktensor(value, name)
-            return value
-        return self.checktensor(value, name)
+        self.checktensor(value, name)
+        return value
 
     def cast_param_by_value(self, value, para):
         local = self.cast_base(para, self.dtype_base(value))

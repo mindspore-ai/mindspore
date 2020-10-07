@@ -273,7 +273,7 @@ class Bernoulli(Distribution):
 
         Args:
             shape (tuple): The shape of the sample. Default: ().
-            probs1 (Tensor, Number): `probs1` of the samples. Default: self.probs.
+            probs1 (Tensor): `probs1` of the samples. Default: self.probs.
 
         Returns:
             Tensor, shape is shape + batch_shape.
