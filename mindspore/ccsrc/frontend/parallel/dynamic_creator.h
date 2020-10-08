@@ -176,6 +176,7 @@ REGISTER(SquareInfo);
 REGISTER(GatherV2PInfo);
 REGISTER(EmbeddingLookupInfo);
 REGISTER(TileInfo);
+REGISTER(BroadcastToInfo);
 REGISTER(StridedSliceInfo);
 REGISTER(DropoutInfo);
 REGISTER(PackInfo);

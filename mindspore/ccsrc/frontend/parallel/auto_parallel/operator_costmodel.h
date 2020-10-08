@@ -172,6 +172,8 @@ using TransposeCost = ActivationCost;
 using TransposeCostPtr = std::shared_ptr<TransposeCost>;
 using StridedSliceCost = ActivationCost;
 using StridedSliceCostPtr = std::shared_ptr<StridedSliceCost>;
+using SplitCost = ActivationCost;
+using SplitCostPtr = std::shared_ptr<SplitCost>;
 
 class SoftmaxCost : public OperatorCost {
  public:
@@ -203,8 +205,8 @@ using PackCost = TileCost;
 using PackCostPtr = std::shared_ptr<PackCost>;
 using ConcatCost = TileCost;
 using ConcatCostPtr = std::shared_ptr<ConcatCost>;
-using SplitCost = TileCost;
-using SplitCostPtr = std::shared_ptr<SplitCost>;
+using BroadcastToCost = SoftmaxCost;
+using BroadcastToCostPtr = std::shared_ptr<BroadcastToCost>;
 
 class TmpIdentityCost : public OperatorCost {
  public:

@@ -42,5 +42,6 @@
 #include "frontend/parallel/ops_info/concat_info.h"
 #include "frontend/parallel/ops_info/split_info.h"
 #include "frontend/parallel/ops_info/pack_info.h"
+#include "frontend/parallel/ops_info/broadcast_to_info.h"
 
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_HEAD_FILES_H_
