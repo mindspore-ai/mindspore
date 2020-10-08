@@ -20,7 +20,12 @@
 namespace mindspore {
 namespace dataset {
 namespace api {
+
+// Transform operations for text.
 namespace text {
+
+// FUNCTIONS TO CREATE TEXT OPERATIONS
+// (In alphabetical order)
 
 std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
                                         const DataType &data_type) {
@@ -31,6 +36,12 @@ std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, con
   }
   return op;
 }
+
+/* ####################################### Validator Functions ############################################ */
+
+/* ####################################### Derived TensorOperation classes ################################# */
+
+// (In alphabetical order)
 
 // LookupOperation
 LookupOperation::LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
