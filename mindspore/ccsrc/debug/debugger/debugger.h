@@ -103,6 +103,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void SendMetadata();
 
+  void LoadParameters();
+
  private:
   // private constructor for singleton
   Debugger();
@@ -117,6 +119,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   // check if debugger enabled
   bool CheckDebuggerEnabled();
+
+  bool CheckDebuggerPartialMemoryEnabled();
 
   // check and save graph pointer
   void CheckGraphPtr(const KernelGraphPtr &graph_ptr);

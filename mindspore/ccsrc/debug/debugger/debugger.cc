@@ -30,6 +30,7 @@
 #include "pipeline/jit/pipeline.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "runtime/device/kernel_runtime.h"
 
 using debugger::EventReply;
 using debugger::GraphProto;
@@ -47,6 +48,7 @@ namespace mindspore {
 
 DebuggerPtr Debugger::debugger_ = nullptr;
 std::mutex Debugger::instance_lock_;
+static const size_t PRAMATER_OUTPUT_INDEX = 0;
 
 Debugger::Debugger()
     : grpc_client_(nullptr),
@@ -62,7 +64,26 @@ Debugger::Debugger()
       is_dataset_graph_(false),
       partial_memory_(false),
       last_overflow_bin_(0),
-      overflow_bin_path_("") {}
+      overflow_bin_path_("") {
+  if (CheckDebuggerEnabled()) {
+    // configure partial memory reuse
+    partial_memory_ = CheckDebuggerPartialMemoryEnabled();
+
+    // switch memory reuse on or off
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    context_ptr->set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, partial_memory_);
+    // print some message about memory reuse to user
+    if (partial_memory_) {
+      MS_LOG(WARNING)
+        << "Partial Memory Reuse is enabled. Note: 1. Please only set watchpoints before running the first "
+           "step. 2. Tensor values are only available for nodes that are watched by any watchpoint.";
+    } else {
+      MS_LOG(INFO) << "Memory Reuse is disabled. Set environment variable MS_DEBUGGER_PARTIAL_MEM=1 to reduce memory "
+                      "usage for large models.";
+    }
+  }
+}
 
 void Debugger::Init(const uint32_t device_id, const std::string device_target) {
   // access lock for public method
@@ -133,27 +154,6 @@ void Debugger::EnableDebugger() {
     MS_LOG(INFO) << "Environment variable MS_DEBUGGER_PORT doesn't exist. Using default debugger port: 50051";
     port = "50051";
   }
-
-  // configure partial memory reuse
-  const char *env_partial_mem_str = std::getenv("MS_DEBUGGER_PARTIAL_MEM");
-  if (env_partial_mem_str != nullptr) {
-    MS_LOG(INFO) << "Getenv MS_DEBUGGER_PARTIAL_MEM: " << env_partial_mem_str;
-    if (std::strcmp(env_partial_mem_str, "1") == 0) {
-      partial_memory_ = true;
-    }
-  }
-  // switch memory reuse on or off
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  context_ptr->set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, partial_memory_);
-  // print some message about memory reuse to user
-  if (partial_memory_) {
-    MS_LOG(WARNING) << "Partial Memory Reuse is enabled. Note: 1. Please only set watchpoints before running the first "
-                       "step. 2. Tensor values are only available for nodes that are watched by any watchpoint.";
-  } else {
-    MS_LOG(INFO) << "Memory Reuse is disabled. Set environment variable MS_DEBUGGER_PARTIAL_MEM=1 to reduce memory "
-                    "usage for large models.";
-  }
 #ifdef ENABLE_D
   // set operation overflow info
   overflow_bin_path_ = DumpJsonParser::GetInstance().GetOpOverflowBinPath(graph_ptr_->graph_id(), device_id_);
@@ -195,9 +195,7 @@ void Debugger::EnableDebugger() {
 bool Debugger::CheckDebuggerDumpEnabled() {
   // see if dump is enabled
   if (device_target_ == kGPUDevice) {
-    auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
-    MS_EXCEPTION_IF_NULL(runtime_instance);
-    return runtime_instance->DumpDataEnabled();
+    return device::KernelRuntime::DumpDataEnabled();
   }
   return false;
 }
@@ -207,6 +205,17 @@ bool Debugger::CheckDebuggerEnabled() {
   const char *env_enable_str = std::getenv("ENABLE_MS_DEBUGGER");
   if (env_enable_str != nullptr) {
     if (std::strcmp(env_enable_str, "1") == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool Debugger::CheckDebuggerPartialMemoryEnabled() {
+  const char *env_partial_mem_str = std::getenv("MS_DEBUGGER_PARTIAL_MEM");
+  if (env_partial_mem_str != nullptr) {
+    MS_LOG(INFO) << "Getenv MS_DEBUGGER_PARTIAL_MEM: " << env_partial_mem_str;
+    if (std::strcmp(env_partial_mem_str, "1") == 0) {
       return true;
     }
   }
@@ -324,6 +333,7 @@ void Debugger::CheckGraphPtr(const KernelGraphPtr &graph_ptr) {
       // only try to enable debugger if it is not a dataset graph
       EnableDebugger();
       if (debugger_enabled_) {
+        LoadParameters();
         // get graph proto and send to mindinsight
         SendGraphAndSuspend(GetGraphProto());
       }
@@ -837,6 +847,36 @@ bool Debugger::CheckPort(const char *port) {
     p++;
   }
   return true;
+}
+
+void Debugger::LoadParameters() {
+  if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
+  if (!(num_step_ == 0 || device_target_ == kAscendDevice ||
+        (device_target_ == kGPUDevice && device::KernelRuntime::DumpDataEnabledIteration())))
+    return;
+  MS_EXCEPTION_IF_NULL(graph_ptr_);
+  const auto &parameters = graph_ptr_->inputs();
+  // for parameters, set its execution order to be 0;
+  int exec_order = 0;
+  for (auto &item : parameters) {
+    if (!item->isa<Parameter>()) {
+      continue;
+    }
+    std::string parameter_name = item->fullname_with_scope();
+    auto addr = AnfAlgo::GetOutputAddr(item, PRAMATER_OUTPUT_INDEX);
+    auto type = AnfAlgo::GetOutputInferDataType(item, PRAMATER_OUTPUT_INDEX);
+    auto format = kOpFormat_DEFAULT;
+    string tensor_name = parameter_name + ':' + "0";
+    ShapeVector int_shapes;
+    auto shape = AnfAlgo::GetOutputDeviceShape(item, PRAMATER_OUTPUT_INDEX);
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                         [](size_t inner_item) { return SizeToInt(inner_item); });
+    bool ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, 0, true);
+    if (!ret) {
+      MS_LOG(ERROR) << "LoadMemToHost:"
+                    << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
+    }
+  }
 }
 
 }  // namespace mindspore

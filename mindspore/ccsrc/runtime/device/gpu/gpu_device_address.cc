@@ -80,14 +80,14 @@ GPUDeviceAddress::~GPUDeviceAddress() {
 }
 #ifdef ENABLE_DEBUGGER
 bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
-                                     const ShapeVector &host_shape, TypeId host_type, size_t slot, Debugger *debugger,
+                                     const ShapeVector &host_shape, TypeId host_type, size_t slot,
                                      bool keep_prev) const {
   bool ret = false;
   if (size_ == 0) {
     return true;
   }
-  DebugServices *debug_services = debugger->debug_services();
-  TensorLoader *tensor_loader = debug_services->tensor_loader();
+
+  TensorLoader *tensor_loader = Debugger::GetInstance()->debug_services()->tensor_loader();
 
   mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(type_id_, host_shape);
   size_t host_size = out_tensor->data().nbytes();

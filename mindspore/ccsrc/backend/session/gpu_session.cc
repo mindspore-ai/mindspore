@@ -278,9 +278,9 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
 
 void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   auto &kernel_graph = graphs_[graph_id];
-  PreIterationDbg(kernel_graph);
   // Load input data from user input
   LoadInputData(kernel_graph, inputs);
+  PreIterationDbg(kernel_graph);
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   // Initialize parameter server
   InitPSParamAndOptim(kernel_graph, inputs);

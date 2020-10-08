@@ -254,15 +254,10 @@ void LoadOutput(mindspore::session::KernelGraph *graph, Debugger *debugger) {
       auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
       MS_EXCEPTION_IF_NULL(ascend_addr);
       ShapeVector int_shapes;
-      if (trans_flag) {
-        int_shapes = trans::GetRuntimePaddingShape(node, j);
-      } else {
-        auto shape = AnfAlgo::GetOutputDeviceShape(node, j);
-        (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                             [](size_t inner_item) { return SizeToInt(inner_item); });
-      }
-      auto ret =
-        ascend_addr->LoadMemToHost(trans_flag, tensor_name, exec_order, format, int_shapes, type, j, debugger, false);
+      auto shape = AnfAlgo::GetOutputDeviceShape(node, j);
+      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                           [](size_t inner_item) { return SizeToInt(inner_item); });
+      auto ret = ascend_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false);
       if (!ret) {
         MS_LOG(ERROR) << "LoadMemToHost: flag:" << trans_flag << ", tensor_name:" << tensor_name
                       << ", host_format:" << format << ".!";
@@ -272,40 +267,6 @@ void LoadOutput(mindspore::session::KernelGraph *graph, Debugger *debugger) {
   }
 }
 
-void LoadParameters(mindspore::session::KernelGraph *graph, Debugger *debugger) {
-  MS_EXCEPTION_IF_NULL(graph);
-  // trans_flag: "true" means tensor values will be transfered to host format, otherwise not.
-  bool trans_flag = false;
-  const auto &parameters = graph->inputs();
-  // for parameters, set its execution order to be 0;
-  int exec_order = 0;
-  for (auto &item : parameters) {
-    if (!item->isa<Parameter>()) {
-      continue;
-    }
-    std::string parameter_name = item->fullname_with_scope();
-    auto addr = AnfAlgo::GetOutputAddr(item, PRAMATER_OUTPUT_INDEX);
-    auto type = AnfAlgo::GetOutputInferDataType(item, PRAMATER_OUTPUT_INDEX);
-    auto format = kOpFormat_DEFAULT;
-    string tensor_name = parameter_name + ':' + "0";
-    auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
-    MS_EXCEPTION_IF_NULL(ascend_addr);
-    ShapeVector int_shapes;
-    if (trans_flag) {
-      int_shapes = trans::GetRuntimePaddingShape(item, PRAMATER_OUTPUT_INDEX);
-    } else {
-      auto shape = AnfAlgo::GetOutputDeviceShape(item, PRAMATER_OUTPUT_INDEX);
-      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                           [](size_t inner_item) { return SizeToInt(inner_item); });
-    }
-    auto ret =
-      ascend_addr->LoadMemToHost(trans_flag, tensor_name, exec_order, format, int_shapes, type, 0, debugger, true);
-    if (!ret) {
-      MS_LOG(ERROR) << "LoadMemToHost Failed: flag:" << trans_flag << ", path:" << tensor_name
-                    << ", host_format:" << format << ".!";
-    }
-  }
-}
 }  // namespace
 #endif
 
@@ -319,7 +280,7 @@ bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph, Debug
   // load output
   LoadOutput(graph, debugger);
   // load parameters
-  LoadParameters(graph, debugger);
+  if (debugger) debugger->LoadParameters();
 #endif
   return true;
 }

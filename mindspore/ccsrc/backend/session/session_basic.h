@@ -22,7 +22,6 @@
 #include <utility>
 #include <memory>
 #include <map>
-
 #include "backend/session/session_context.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
