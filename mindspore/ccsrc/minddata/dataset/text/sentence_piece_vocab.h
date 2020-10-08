@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_TEXT_SENTENCE_PIECE_VOCAB_H_
-#define DATASET_TEXT_SENTENCE_PIECE_VOCAB_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_SENTENCE_PIECE_VOCAB_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_SENTENCE_PIECE_VOCAB_H_
 
 #include <string>
 #include <memory>
@@ -46,4 +46,4 @@ class SentencePieceVocab {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_TEXT_SENTENCE_PIECE_VOCAB_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_SENTENCE_PIECE_VOCAB_H_

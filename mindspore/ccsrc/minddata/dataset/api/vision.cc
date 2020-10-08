@@ -148,6 +148,22 @@ std::shared_ptr<PadOperation> Pad(std::vector<int32_t> padding, std::vector<uint
   return op;
 }
 
+// Function to create RandomAffineOperation.
+std::shared_ptr<RandomAffineOperation> RandomAffine(const std::vector<float_t> &degrees,
+                                                    const std::vector<float_t> &translate_range,
+                                                    const std::vector<float_t> &scale_range,
+                                                    const std::vector<float_t> &shear_ranges,
+                                                    InterpolationMode interpolation,
+                                                    const std::vector<uint8_t> &fill_value) {
+  auto op = std::make_shared<RandomAffineOperation>(degrees, translate_range, scale_range, shear_ranges, interpolation,
+                                                    fill_value);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
 // Function to create RandomColorOperation.
 std::shared_ptr<RandomColorOperation> RandomColor(float t_lb, float t_ub) {
   auto op = std::make_shared<RandomColorOperation>(t_lb, t_ub);
@@ -168,22 +184,6 @@ std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float>
                                                               std::vector<float> contrast,
                                                               std::vector<float> saturation, std::vector<float> hue) {
   auto op = std::make_shared<RandomColorAdjustOperation>(brightness, contrast, saturation, hue);
-  // Input validation
-  if (!op->ValidateParams()) {
-    return nullptr;
-  }
-  return op;
-}
-
-// Function to create RandomAffineOperation.
-std::shared_ptr<RandomAffineOperation> RandomAffine(const std::vector<float_t> &degrees,
-                                                    const std::vector<float_t> &translate_range,
-                                                    const std::vector<float_t> &scale_range,
-                                                    const std::vector<float_t> &shear_ranges,
-                                                    InterpolationMode interpolation,
-                                                    const std::vector<uint8_t> &fill_value) {
-  auto op = std::make_shared<RandomAffineOperation>(degrees, translate_range, scale_range, shear_ranges, interpolation,
-                                                    fill_value);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -261,9 +261,9 @@ std::shared_ptr<RandomRotationOperation> RandomRotation(std::vector<float> degre
   return op;
 }
 
-// Function to create RandomSolarizeOperation.
-std::shared_ptr<RandomSolarizeOperation> RandomSolarize(std::vector<uint8_t> threshold) {
-  auto op = std::make_shared<RandomSolarizeOperation>(threshold);
+// Function to create RandomSharpnessOperation.
+std::shared_ptr<RandomSharpnessOperation> RandomSharpness(std::vector<float> degrees) {
+  auto op = std::make_shared<RandomSharpnessOperation>(degrees);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -271,9 +271,9 @@ std::shared_ptr<RandomSolarizeOperation> RandomSolarize(std::vector<uint8_t> thr
   return op;
 }
 
-// Function to create RandomSharpnessOperation.
-std::shared_ptr<RandomSharpnessOperation> RandomSharpness(std::vector<float> degrees) {
-  auto op = std::make_shared<RandomSharpnessOperation>(degrees);
+// Function to create RandomSolarizeOperation.
+std::shared_ptr<RandomSolarizeOperation> RandomSolarize(std::vector<uint8_t> threshold) {
+  auto op = std::make_shared<RandomSolarizeOperation>(threshold);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -598,72 +598,6 @@ std::shared_ptr<TensorOp> PadOperation::Build() {
   return tensor_op;
 }
 
-// RandomColorOperation.
-RandomColorOperation::RandomColorOperation(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) {}
-
-bool RandomColorOperation::ValidateParams() {
-  // Do some input validation.
-  if (t_lb_ > t_ub_) {
-    MS_LOG(ERROR) << "RandomColor: lower bound must be less or equal to upper bound";
-    return false;
-  }
-  return true;
-}
-
-// RandomColorAdjustOperation.
-RandomColorAdjustOperation::RandomColorAdjustOperation(std::vector<float> brightness, std::vector<float> contrast,
-                                                       std::vector<float> saturation, std::vector<float> hue)
-    : brightness_(brightness), contrast_(contrast), saturation_(saturation), hue_(hue) {}
-
-bool RandomColorAdjustOperation::ValidateParams() {
-  // Do some input validation.
-  if (brightness_.empty() || brightness_.size() > 2) {
-    MS_LOG(ERROR) << "RandomColorAdjust: brightness must be a vector of one or two values";
-    return false;
-  }
-  if (contrast_.empty() || contrast_.size() > 2) {
-    MS_LOG(ERROR) << "RandomColorAdjust: contrast must be a vector of one or two values";
-    return false;
-  }
-  if (saturation_.empty() || saturation_.size() > 2) {
-    MS_LOG(ERROR) << "RandomColorAdjust: saturation must be a vector of one or two values";
-    return false;
-  }
-  if (hue_.empty() || hue_.size() > 2) {
-    MS_LOG(ERROR) << "RandomColorAdjust: hue must be a vector of one or two values";
-    return false;
-  }
-  return true;
-}
-
-std::shared_ptr<TensorOp> RandomColorAdjustOperation::Build() {
-  float brightness_lb, brightness_ub, contrast_lb, contrast_ub, saturation_lb, saturation_ub, hue_lb, hue_ub;
-
-  brightness_lb = brightness_[0];
-  brightness_ub = brightness_[0];
-
-  if (brightness_.size() == 2) brightness_ub = brightness_[1];
-
-  contrast_lb = contrast_[0];
-  contrast_ub = contrast_[0];
-
-  if (contrast_.size() == 2) contrast_ub = contrast_[1];
-
-  saturation_lb = saturation_[0];
-  saturation_ub = saturation_[0];
-
-  if (saturation_.size() == 2) saturation_ub = saturation_[1];
-
-  hue_lb = hue_[0];
-  hue_ub = hue_[0];
-
-  if (hue_.size() == 2) hue_ub = hue_[1];
-
-  std::shared_ptr<RandomColorAdjustOp> tensor_op = std::make_shared<RandomColorAdjustOp>(
-    brightness_lb, brightness_ub, contrast_lb, contrast_ub, saturation_lb, saturation_ub, hue_lb, hue_ub);
-  return tensor_op;
-}
-
 // RandomAffineOperation
 RandomAffineOperation::RandomAffineOperation(const std::vector<float_t> &degrees,
                                              const std::vector<float_t> &translate_range,
@@ -770,6 +704,72 @@ std::shared_ptr<TensorOp> RandomAffineOperation::Build() {
   }
   auto tensor_op = std::make_shared<RandomAffineOp>(degrees_, translate_range_, scale_range_, shear_ranges_,
                                                     interpolation_, fill_value_);
+  return tensor_op;
+}
+
+// RandomColorOperation.
+RandomColorOperation::RandomColorOperation(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) {}
+
+bool RandomColorOperation::ValidateParams() {
+  // Do some input validation.
+  if (t_lb_ > t_ub_) {
+    MS_LOG(ERROR) << "RandomColor: lower bound must be less or equal to upper bound";
+    return false;
+  }
+  return true;
+}
+
+// RandomColorAdjustOperation.
+RandomColorAdjustOperation::RandomColorAdjustOperation(std::vector<float> brightness, std::vector<float> contrast,
+                                                       std::vector<float> saturation, std::vector<float> hue)
+    : brightness_(brightness), contrast_(contrast), saturation_(saturation), hue_(hue) {}
+
+bool RandomColorAdjustOperation::ValidateParams() {
+  // Do some input validation.
+  if (brightness_.empty() || brightness_.size() > 2) {
+    MS_LOG(ERROR) << "RandomColorAdjust: brightness must be a vector of one or two values";
+    return false;
+  }
+  if (contrast_.empty() || contrast_.size() > 2) {
+    MS_LOG(ERROR) << "RandomColorAdjust: contrast must be a vector of one or two values";
+    return false;
+  }
+  if (saturation_.empty() || saturation_.size() > 2) {
+    MS_LOG(ERROR) << "RandomColorAdjust: saturation must be a vector of one or two values";
+    return false;
+  }
+  if (hue_.empty() || hue_.size() > 2) {
+    MS_LOG(ERROR) << "RandomColorAdjust: hue must be a vector of one or two values";
+    return false;
+  }
+  return true;
+}
+
+std::shared_ptr<TensorOp> RandomColorAdjustOperation::Build() {
+  float brightness_lb, brightness_ub, contrast_lb, contrast_ub, saturation_lb, saturation_ub, hue_lb, hue_ub;
+
+  brightness_lb = brightness_[0];
+  brightness_ub = brightness_[0];
+
+  if (brightness_.size() == 2) brightness_ub = brightness_[1];
+
+  contrast_lb = contrast_[0];
+  contrast_ub = contrast_[0];
+
+  if (contrast_.size() == 2) contrast_ub = contrast_[1];
+
+  saturation_lb = saturation_[0];
+  saturation_ub = saturation_[0];
+
+  if (saturation_.size() == 2) saturation_ub = saturation_[1];
+
+  hue_lb = hue_[0];
+  hue_ub = hue_[0];
+
+  if (hue_.size() == 2) hue_ub = hue_[1];
+
+  std::shared_ptr<RandomColorAdjustOp> tensor_op = std::make_shared<RandomColorAdjustOp>(
+    brightness_lb, brightness_ub, contrast_lb, contrast_ub, saturation_lb, saturation_ub, hue_lb, hue_ub);
   return tensor_op;
 }
 
