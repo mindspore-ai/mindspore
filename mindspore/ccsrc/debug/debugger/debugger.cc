@@ -318,8 +318,8 @@ void Debugger::PostDebugOp() {
   }
 }
 
-std::map<std::pair<uint32_t, uint32_t>, std::string> Debugger::GetStreamTaskToOpnameMap() const {
-  return stream_task_to_opname_;
+void Debugger::SetStreamTaskToOpnameMap(const std::map<std::pair<uint32_t, uint32_t>, std::string> &mapping) {
+  stream_task_to_opname_ = mapping;
 }
 
 void Debugger::CheckGraphPtr(const KernelGraphPtr &graph_ptr) {
