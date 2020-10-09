@@ -365,13 +365,15 @@ STATUS OnnxModelParser::ParseOnnxNodeAttr(const onnx::GraphProto &onnx_graph, co
 STATUS OnnxModelParser::SetOpInputIndex(const std::vector<string> &node_inputs, schema::CNodeT *dst_op,
                                         const onnx::NodeProto &onnx_node, TensorCache *tensor_cache) {
   for (const auto &onnx_node_input : node_inputs) {
-    auto index = tensor_cache->FindTensor(onnx_node_input);
-    if (index < 0) {
-      MS_LOG(ERROR) << "input " << onnx_node_input << " of node " << onnx_node.name() << " can't be found";
-      return RET_ERROR;
+    if (onnx_node_input != "") {
+      auto index = tensor_cache->FindTensor(onnx_node_input);
+      if (index < 0) {
+        MS_LOG(ERROR) << "input " << onnx_node_input << " of node " << onnx_node.name() << " can't be found";
+        return RET_ERROR;
+      }
+      MS_LOG(DEBUG) << "node: " << onnx_node_input << ", input index: " << index;
+      dst_op->inputIndex.emplace_back(index);
     }
-    MS_LOG(DEBUG) << "node: " << onnx_node_input << ", input index: " << index;
-    dst_op->inputIndex.emplace_back(index);
   }
   return RET_OK;
 }
