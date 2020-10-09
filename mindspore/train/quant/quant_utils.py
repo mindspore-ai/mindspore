@@ -29,7 +29,7 @@ def cal_quantization_params(input_min,
     Args:
         input_min (numpy.ndarray): The dimension of channel or 1.
         input_max (numpy.ndarray): The dimension of channel or 1.
-        data_type (numpy type) : Can ben numpy int8, numpy uint8.
+        data_type (numpy type) : Can be numpy int8, numpy uint8.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
@@ -52,10 +52,12 @@ def cal_quantization_params(input_min,
 
     if data_type == np.int8:
         quant_min = 0 - 2 ** (num_bits - 1)
-        quant_max = 2 ** (num_bits - 1)
-    else:
+        quant_max = 2 ** (num_bits - 1) - 1
+    elif data_type == np.uint8:
         quant_min = 0
         quant_max = 2 ** num_bits - 1
+    else:
+        raise ValueError("Unsupported datatype({})".format(data_type))
     if narrow_range:
         quant_min = quant_min + 1
 
@@ -69,22 +71,13 @@ def cal_quantization_params(input_min,
     if symmetric:
         zp = np.zeros(input_min.shape)
     else:
-        zp_from_min = quant_min - input_min / scale
-        zp_from_max = quant_max - input_max / scale
-        zp_from_min_error = np.abs(quant_min) + np.abs(input_min / scale)
-        zp_from_max_error = np.abs(quant_max) + np.abs(input_max / scale)
-        zp_double = zp_from_min if zp_from_min_error < zp_from_max_error else zp_from_max
-        if zp_double < quant_min:
-            zp = quant_min
-        elif zp_double > quant_max:
-            zp = quant_max
-        else:
-            zp = np.floor(zp_double + 0.5)
+        zp_double = quant_min - input_min / scale
+        zp = np.floor(zp_double + 0.5)
 
     return scale, zp
 
 
-def weight2int(data, scale, zero_point):
+def weight2int(data, scale, zero_point, data_type, num_bits=8, narrow_range=False):
     r"""
     Calculate int8/uint8 weight from fp32. the formula is defined as:
 
@@ -95,6 +88,9 @@ def weight2int(data, scale, zero_point):
         data (numpy.ndarray): The dimension of channel or 1. Should be NCHW.
         scale (numpy.ndarray): The dimension of channel or 1.
         zero_point (numpy.ndarray): The dimension of channel or 1.
+        data_type (numpy type) : Can be numpy int8, numpy uint8.
+        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
 
     Returns:
         weight (numpy.ndarray): The dimension of channel or 1.
@@ -118,7 +114,21 @@ def weight2int(data, scale, zero_point):
         else:
             raise ValueError("Unsupported weight shape({})".format(data.shape))
 
-    return np.round((data / scale) + zero_point)
+    if data_type == np.int8:
+        quant_min = 0 - 2 ** (num_bits - 1)
+        quant_max = 2 ** (num_bits - 1) - 1
+    elif data_type == np.uint8:
+        quant_min = 0
+        quant_max = 2 ** num_bits - 1
+    else:
+        raise ValueError("Unsupported weight datatype({})".format(data_type))
+    if narrow_range:
+        quant_min = quant_min + 1
+
+    weight_int = np.round((data / scale) + zero_point)
+    weight_int[weight_int > quant_max] = quant_max
+    weight_int[weight_int < quant_min] = quant_min
+    return weight_int
 
 def scale_zp_max_min_from_fake_quant_cell(cell, data_type):
     """Get calculate quantization params for scale, zero point, max and min from `FakeQuantWithMinMax`."""
@@ -145,7 +155,7 @@ def scale_zp_from_data(op, minq, maxq, data_type):
             `mindspore.ops.operation.FakeQuantPerChannel`
         minq (Parameter): Parameter `minq` of `mindspore.nn.layer.FakeQuantWithMinMax`
         maxq (Parameter): Parameter `maxq` of `mindspore.nn.layer.FakeQuantWithMinMax`
-        data_type (numpy type): Can ben `numpy.int8` or `numpy.uint8`.
+        data_type (numpy type): Can be `numpy.int8` or `numpy.uint8`.
 
     Returns:
         scale (numpy.ndarray): quantization param.

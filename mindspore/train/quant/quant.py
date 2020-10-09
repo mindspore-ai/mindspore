@@ -360,12 +360,12 @@ class ExportToQuantInferNetwork:
 
         scale_w, zp_w, _, _ = \
             quant_utils.scale_zp_max_min_from_fake_quant_cell(cell_core.fake_quant_weight, np_type)
-        scale_a_out, _, param_dict["output_maxq"], param_dict["output_minq"] = \
+        _, _, param_dict["output_maxq"], param_dict["output_minq"] = \
             quant_utils.scale_zp_max_min_from_fake_quant_cell(fake_quant_a_out, np_type)
 
         info = self.quant_info_table.get(w_minq_name, None)
         if info:
-            fack_quant_a_in_op, minq_name = info
+            fake_quant_a_in_op, minq_name = info
             if minq_name == 'input':
                 scale_a_in, zp_a_in = self.input_scale, self.input_zero_point
             else:
@@ -373,17 +373,17 @@ class ExportToQuantInferNetwork:
                 minq = self.all_parameters[minq_name]
                 if self.is_mindir:
                     scale_a_in, zp_a_in, param_dict["input_maxq"], param_dict["input_minq"] = \
-                        quant_utils.scale_zp_max_min_from_data(fack_quant_a_in_op, minq, maxq, np_type)
+                        quant_utils.scale_zp_max_min_from_data(fake_quant_a_in_op, minq, maxq, np_type)
                 else:
-                    scale_a_in, zp_a_in = quant_utils.scale_zp_from_data(fack_quant_a_in_op, minq, maxq, np_type)
+                    scale_a_in, zp_a_in = quant_utils.scale_zp_from_data(fake_quant_a_in_op, minq, maxq, np_type)
         else:
-            logger.warning(f"Do not find `fake_quant` from input with `fake_quant.minq` {w_minq_name}")
+            logger.warning(f"Can not find `fake_quant` from input with `fake_quant.minq` {w_minq_name}")
             return None
 
         # Build the `Quant` `Dequant` op.
         # Quant only support perlayer version. Need check here.
         quant_op = inner.Quant(1 / float(scale_a_in), float(zp_a_in))
-        scale_deq = scale_a_out * scale_w
+        scale_deq = scale_a_in * scale_w
         dequant_op = inner.Dequant()
 
         if isinstance(activation, _AddFakeQuantAfterSubCell):
@@ -407,7 +407,9 @@ class ExportToQuantInferNetwork:
         weight_b = weight
         bias_b = bias
         # apply the quant
-        weight = quant_utils.weight2int(weight, scale_w, zp_w)
+        fake_quant_weight_op = cell_core.fake_quant_weight.fake_quant_infer
+        weight = quant_utils.weight2int(weight, scale_w, zp_w, np_type, fake_quant_weight_op.num_bits,
+                                        fake_quant_weight_op.narrow_range)
         if bias is not None:
             bias = Tensor(bias / scale_a_in / scale_w, mstype.int32)
 

@@ -1364,10 +1364,6 @@ class QuantBlock(Cell):
         self.has_bias = bias is not None
         self.activation = activation
         self.has_act = activation is not None
-        if isinstance(activation, ReLU):
-            self.activation = None
-            self.has_act = False
-            self.dequant.add_prim_attr("relu_flag", True)
         self.bias_add = P.BiasAdd()
 
     def construct(self, x):
@@ -1376,9 +1372,10 @@ class QuantBlock(Cell):
             x = self.core_op(x, self.weight, self.bias)
         else:
             x = self.core_op(x, self.weight)
+        x = self.dequant(x, self.dequant_scale)
+        x = F.cast(x, mstype.float32)
         if self.has_act:
             x = self.activation(x)
-        x = self.dequant(x, self.dequant_scale)
         return x
 
     def extend_repr(self):
