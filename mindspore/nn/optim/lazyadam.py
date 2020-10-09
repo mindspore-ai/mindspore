@@ -27,31 +27,57 @@ from .optimizer import Optimizer
 _lazy_adam_opt = C.MultitypeFuncGraph("lazy_adam_opt")
 
 
-@_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor",
-                         "Tensor", "Tensor", "RowTensor", "Tensor", "Tensor", "Tensor", "Bool")
-def _run_opt_with_sparse(opt, sparse_opt, push, pull, beta1_power, beta2_power, beta1, beta2, eps,
-                         lr, gradient, params, moment1, moment2, ps_parameter):
+@_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
+                         "Tensor", "Tensor", "Tensor", "Tensor", "RowTensor", "Tensor", "Tensor", "Tensor", "Bool")
+def _run_opt_with_sparse(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power, beta2_power,
+                         beta1, beta2, eps, lr, gradient, params, m, v, ps_parameter):
     """Apply sparse lazy adam optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices = gradient.indices
     values = gradient.values
     if ps_parameter:
         op_shape = P.Shape()
-        shapes = (op_shape(params), op_shape(moment1), op_shape(moment2),
+        shapes = (op_shape(params), op_shape(m), op_shape(v),
                   op_shape(beta1_power), op_shape(beta2_power), op_shape(lr), op_shape(beta1),
                   op_shape(beta2), op_shape(eps), op_shape(values), op_shape(indices))
         success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2,
                                                eps, values, indices), shapes), params))
-    else:
-        success = F.depend(success, sparse_opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
+        return success
+
+    if not target:
+        success = F.depend(success, sparse_opt(params, m, v, beta1_power, beta2_power, lr, beta1, beta2,
                                                eps, values, indices))
+    else:
+        op_gather = P.GatherV2()
+        op_sqrt = P.Sqrt()
+        scatter_add = P.ScatterAdd(use_locking)
+        scatter_update = P.ScatterUpdate(use_locking)
+
+        m_slice = op_gather(m, indices, 0)
+        v_slice = op_gather(v, indices, 0)
+
+        next_m = m_slice * beta1 + values * (1 - beta1)
+        next_v = v_slice * beta2 + values * values * (1 - beta2)
+
+        lr_t = lr * op_sqrt(1 - beta2_power) / (1 - beta1_power)
+
+        if use_nesterov:
+            m_temp = beta1 * next_m + values * (1 - beta1)
+            param_update = m_temp / (op_sqrt(next_v) + eps)
+        else:
+            param_update = next_m / (op_sqrt(next_v) + eps)
+
+        success = F.depend(success, scatter_add(params, indices, - lr_t * param_update))
+        success = F.depend(success, scatter_update(m, indices, next_m))
+        success = F.depend(success, scatter_update(v, indices, next_v))
+
     return success
 
 
-@_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor",
-                         "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
-def _run_opt_with_one_number(opt, sparse_opt, push, pull, beta1_power, beta2_power, beta1, beta2, eps,
-                             lr, gradient, params, moment1, moment2, ps_parameter):
+@_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
+                         "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
+def _run_opt_with_one_number(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power,
+                             beta2_power, beta1, beta2, eps, lr, gradient, params, moment1, moment2, ps_parameter):
     """Apply lazy adam optimizer to the weight parameter using Tensor."""
     success = True
     if ps_parameter:
@@ -108,7 +134,7 @@ class LazyAdam(Optimizer):
         The sparse strategy is applied while the SparseGatherV2 operator being used for forward network.
         The sparse behavior, to be notice, is not equivalent to the
         original Adam algorithm, as only the current indices parames will be updated. The sparse feature is under
-        continuous development. The sparse behavior is currently performed on the CPU.
+        continuous development. If the sparse strategy wants to be executed on the host, set the target to the CPU.
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
@@ -191,14 +217,14 @@ class LazyAdam(Optimizer):
         self.eps = Tensor(eps, mstype.float32)
         self.use_nesterov = use_nesterov
         self.use_locking = use_locking
-
+        self._is_device = True
         self.moment1 = self.parameters.clone(prefix="moment1", init='zeros')
         self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
 
         self.hyper_map = C.HyperMap()
         self.opt = P.Adam(use_locking, use_nesterov)
         self.sparse_opt = P.FusedSparseLazyAdam(use_locking, use_nesterov)
-
+        self.sparse_opt.add_prim_attr("primitive", "CPU")
         self._ps_pull = P.Pull()
         self._ps_push = P.Push("Adam", [0, 1, 2])
         self._ps_push.add_prim_attr("use_nesterov", use_nesterov)
@@ -206,6 +232,7 @@ class LazyAdam(Optimizer):
     def construct(self, gradients):
         gradients = self.decay_weight(gradients)
         gradients = self.scale_grad(gradients)
+        gradients = self._grad_sparse_indices_deduplicate(gradients)
         lr = self.get_lr()
 
         self.beta1_power = self.beta1_power * self.beta1
@@ -213,10 +240,22 @@ class LazyAdam(Optimizer):
 
         if self.is_group_lr:
             success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
+                                          self.use_locking, self.use_nesterov, self._is_device,
                                           self.beta1_power, self.beta2_power, self.beta1, self.beta2, self.eps),
                                 lr, gradients, self.parameters, self.moment1, self.moment2, self.ps_parameters)
         else:
             success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
+                                          self.use_locking, self.use_nesterov, self._is_device,
                                           self.beta1_power, self.beta2_power, self.beta1, self.beta2, self.eps, lr),
                                 gradients, self.parameters, self.moment1, self.moment2, self.ps_parameters)
         return success
+
+    @Optimizer.target.setter
+    def target(self, value):
+        """If the input value is set to "CPU", the parameters will be updated on the host using the Fused
+           optimizer operation."""
+        if value not in ('CPU', 'Ascend'):
+            raise ValueError("The value must be 'CPU' or 'Ascend', but got value {}".format(value))
+
+        self._is_device = (value != 'CPU')
+        self._target = value

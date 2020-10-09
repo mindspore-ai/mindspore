@@ -26,7 +26,6 @@ from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor, RowTensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_parallel_mode
 from mindspore.context import ParallelMode
@@ -105,6 +104,8 @@ class Optimizer(Cell):
 
         weight_decay = self._preprocess_weight_decay(weight_decay)
 
+        self._unique = True
+        self._target = 'Ascend'
         self.dynamic_lr = False
         self.assignadd = None
         self.global_step = None
@@ -173,6 +174,30 @@ class Optimizer(Cell):
         else:
             self.optim_filter = (True,) * self.param_length
 
+    @property
+    def unique(self):
+        """This method is to see whether to make unique，This method is read-only."""
+        return self._unique
+
+    @unique.setter
+    def unique(self, value):
+        """Set whether the input value is unique."""
+        if not isinstance(value, bool):
+            raise TypeError("The value type must be bool, but got value type is {}".format(type(value)))
+        self._unique = value
+
+    @property
+    def target(self):
+        """This method is used to determine the value of target and whether the parameter update is performed on
+            the host or device. This method is read-only."""
+        return self._target
+
+    @target.setter
+    def target(self, value):
+        """If the input value is set to "CPU", the parameters will be updated on the host using the Fused
+           optimizer operation."""
+        raise NotImplementedError
+
     def decay_weight(self, gradients):
         """
         Weight decay.
@@ -215,6 +240,12 @@ class Optimizer(Cell):
         if self.reciprocal_scale != 1.0:
             gradients = self.map_(F.partial(_grad_scale, self.reciprocal_scale), gradients)
 
+        return gradients
+
+    def _grad_sparse_indices_deduplicate(self, gradients):
+        """ In the case of using big operators, de duplicate the 'indexes' in gradients."""
+        if self._target != 'CPU' and self._unique:
+            gradients = self.map_(F.partial(_indices_deduplicate), gradients)
         return gradients
 
     def _preprocess_weight_decay(self, weight_decay):
@@ -514,7 +545,7 @@ def _tensor_apply_decay(weight_decay, if_apply, weight, gradient):
 
 
 _grad_scale = C.MultitypeFuncGraph("grad_scale")
-
+_indices_deduplicate = C.MultitypeFuncGraph("indices_deduplicate")
 
 @_grad_scale.register("Number", "Tensor")
 def tensor_grad_scale(scale, grad):
@@ -530,6 +561,24 @@ def tensor_grad_scale_with_sparse(scale, grad):
     if scale == 1.0:
         return grad
     return RowTensor(grad.indices, grad.values * scale, grad.dense_shape)
+
+
+@_indices_deduplicate.register("RowTensor")
+def rowtensor_deduplicate_indices_slices(grad):
+    """Unique the indices and sums the 'values' corresponding to the duplicate indices."""
+    indices = grad.indices
+    values = grad.values
+
+    unique_indices, index_position = P.Unique()(indices)
+    summed_values = P.UnsortedSegmentSum()(values, index_position, P.DynamicShape()(unique_indices)[0])
+
+    return RowTensor(unique_indices, summed_values, grad.dense_shape)
+
+
+@_indices_deduplicate.register("Tensor")
+def tensor_deduplicate_indice_slices(grad):
+    """Return the input gradient directly in the dense sences."""
+    return grad
 
 
 class _ConvertToCell(LearningRateSchedule):

@@ -89,7 +89,8 @@ class FTRL(Optimizer):
         To improve parameter groups performance, the customized order of parameters can be supported.
 
         The sparse strategy is applied while the SparseGatherV2 operator being used for forward network.
-        The sparse feature is under continuous development. The sparse behavior is currently performed on the CPU.
+        The sparse feature is under continuous development. If the sparse strategy wants to be executed on the host,
+        set the target to the CPU.
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
@@ -154,12 +155,14 @@ class FTRL(Optimizer):
         self.linear = self.parameters.clone(prefix="linear", init='zeros')
         self.l1 = l1
         self.l2 = l2
+        self.lr = learning_rate
         self.lr_power = lr_power
         if not self.is_group:
             self.decay_flags = tuple((lambda: True)() for x in self.parameters)
         self.hyper_map = C.HyperMap()
         self.opt = P.ApplyFtrl(use_locking=use_locking)
-        self.sparse_opt = P.FusedSparseFtrl(learning_rate, l1, l2, lr_power, use_locking=use_locking)
+        self.use_locking = use_locking
+        self.sparse_opt = P.SparseApplyFtrl(learning_rate, l1, l2, lr_power, use_locking=use_locking)
         self._ps_pull = P.Pull()
         self._ps_push = P.Push("Ftrl", [0, 1, 2])
         self._ps_push.add_prim_attr("init_accum", initial_accum)
@@ -174,9 +177,26 @@ class FTRL(Optimizer):
         linear = self.linear
         grads = self.decay_weight(grads)
         grads = self.scale_grad(grads)
+        grads = self._grad_sparse_indices_deduplicate(grads)
         lr = self.get_lr()
 
         success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
                                       self.l1, self.l2, self.lr_power, lr),
                             linear, grads, params, moments, self.ps_parameters)
         return success
+
+    @Optimizer.target.setter
+    def target(self, value):
+        """If the input value is set to "CPU", the parameters will be updated on the host using the Fused
+           optimizer operation."""
+
+        if value not in ('CPU', 'Ascend'):
+            raise ValueError("The value must be 'CPU' or 'Ascend', but got value {}".format(value))
+
+        if value == 'CPU':
+            self.sparse_opt = P.FusedSparseFtrl(self.lr, self.l1, self.l2, self.lr_power, self.use_locking)
+            self.sparse_opt.add_prim_attr("primitive", "CPU")
+        else:
+            self.sparse_opt = P.SparseApplyFtrl(self.lr, self.l1, self.l2, self.lr_power, self.use_locking)
+
+        self._target = value
