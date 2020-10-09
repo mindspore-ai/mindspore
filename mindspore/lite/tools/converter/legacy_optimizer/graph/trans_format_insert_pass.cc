@@ -93,11 +93,7 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
       return has_trans_count >= half_count;
     }
   }
-  if (total_node_count % 2 == 0) {
-    can_fusion = has_trans_count > half_count;
-  } else {
-    can_fusion = has_trans_count >= half_count;
-  }
+  can_fusion = has_trans_count > half_count;
   return can_fusion;
 }
 
