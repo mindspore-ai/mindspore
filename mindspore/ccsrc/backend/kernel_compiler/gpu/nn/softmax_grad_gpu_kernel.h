@@ -62,9 +62,9 @@ class SoftmaxGradGpuKernel : public GpuKernel {
     T *transpose_y_addr = GetDeviceAddress<T>(workspace, 0);
     T *transpose_dy_addr = GetDeviceAddress<T>(workspace, 1);
     T *transpose_dx_addr = GetDeviceAddress<T>(workspace, 2);
-    int *input_shape = GetDeviceAddress<int>(workspace, 3);
-    int *transpose_shape = GetDeviceAddress<int>(workspace, 4);
-    int *transpose_axis = GetDeviceAddress<int>(workspace, 5);
+    size_t *input_shape = GetDeviceAddress<size_t>(workspace, 3);
+    size_t *transpose_shape = GetDeviceAddress<size_t>(workspace, 4);
+    size_t *transpose_axis = GetDeviceAddress<size_t>(workspace, 5);
     const float alpha = 1;
     const float beta = 0;
 
@@ -82,7 +82,7 @@ class SoftmaxGradGpuKernel : public GpuKernel {
       CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(transpose_axis, &transpose_axis_[0], workspace_size_,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync input_axis failed");
-      int size = SizeToInt(input_size_ / sizeof(T));
+      size_t size = input_size_ / sizeof(T);
       CalTranspose(size, y_addr, input_shape, transpose_axis, shape_size_, transpose_y_addr,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
       CalTranspose(size, dy_addr, input_shape, transpose_axis, shape_size_, transpose_dy_addr,
@@ -116,7 +116,7 @@ class SoftmaxGradGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    shape_size_ = SizeToInt(input_shape.size());
+    shape_size_ = input_shape.size();
     if (shape_size_ != 2) {
       MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but softmax grad only supports 2-D inputs.";
     }
@@ -164,7 +164,7 @@ class SoftmaxGradGpuKernel : public GpuKernel {
   void InitSizeByAxis(const std::vector<size_t> input_shape, const int axis) {
     axis_ = axis;
     if (axis_ < 0) {
-      axis_ += shape_size_;
+      axis_ += SizeToInt(shape_size_);
     }
     if (axis_ == 1) {
       batch_size_ = input_shape[0];
@@ -186,7 +186,7 @@ class SoftmaxGradGpuKernel : public GpuKernel {
     width_ = 1;
     input_size_ = sizeof(T) * batch_size_ * channel_size_ * height_ * width_;
     output_size_ = input_size_;
-    workspace_size_ = IntToSize(shape_size_) * sizeof(int);
+    workspace_size_ = shape_size_ * sizeof(size_t);
   }
 
   cudnnHandle_t cudnn_handle_;
@@ -202,11 +202,11 @@ class SoftmaxGradGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 
-  std::vector<int> input_shape_;
-  std::vector<int> transpose_shape_;
-  std::vector<int> transpose_axis_;
+  std::vector<size_t> input_shape_;
+  std::vector<size_t> transpose_shape_;
+  std::vector<size_t> transpose_axis_;
   int axis_;
-  int shape_size_;
+  size_t shape_size_;
 
   size_t batch_size_;
   size_t channel_size_;

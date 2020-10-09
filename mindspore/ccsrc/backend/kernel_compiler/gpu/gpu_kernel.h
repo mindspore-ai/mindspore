@@ -78,14 +78,14 @@ class GpuKernel : public KernelMod {
     return GetValue<T>(attr);
   }
   // expand Nd Shape to 4d (N in [0,4])
-  void ShapeNdTo4d(const std::vector<size_t> &src, std::vector<int> *dst) {
+  void ShapeNdTo4d(const std::vector<size_t> &src, std::vector<size_t> *dst) {
     if (src.size() > 4) {
       MS_EXCEPTION(ValueError) << src.size() << "-D data is not supported!";
     }
-    dst->push_back(src.size() < 4 ? 1 : SizeToInt(src[src.size() - 4]));
-    dst->push_back(src.size() < 3 ? 1 : SizeToInt(src[src.size() - 3]));
-    dst->push_back(src.size() < 2 ? 1 : SizeToInt(src[src.size() - 2]));
-    dst->push_back(src.size() == 0 ? 1 : SizeToInt(src[src.size() - 1]));
+    dst->push_back(src.size() < 4 ? 1 : src[src.size() - 4]);
+    dst->push_back(src.size() < 3 ? 1 : src[src.size() - 3]);
+    dst->push_back(src.size() < 2 ? 1 : src[src.size() - 2]);
+    dst->push_back(src.size() == 0 ? 1 : src[src.size() - 1]);
   }
 
   int AxisTransform(const std::string &origin_data_format, const std::string &cal_format, int axis) {

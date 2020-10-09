@@ -68,9 +68,9 @@ class SoftmaxGpuKernel : public GpuKernel {
     } else {
       T *transpose_input_addr = GetDeviceAddress<T>(workspace, 0);
       T *transpose_output_addr = GetDeviceAddress<T>(workspace, 1);
-      int *input_shape = GetDeviceAddress<int>(workspace, 2);
-      int *transpose_shape = GetDeviceAddress<int>(workspace, 3);
-      int *transpose_axis = GetDeviceAddress<int>(workspace, 4);
+      size_t *input_shape = GetDeviceAddress<size_t>(workspace, 2);
+      size_t *transpose_shape = GetDeviceAddress<size_t>(workspace, 3);
+      size_t *transpose_axis = GetDeviceAddress<size_t>(workspace, 4);
       CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(input_shape, &input_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync input_shape failed");
@@ -80,7 +80,7 @@ class SoftmaxGpuKernel : public GpuKernel {
       CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(transpose_axis, &transpose_axis_[0], workspace_size_,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync input_axis failed");
-      int size = SizeToInt(input_size_ / sizeof(T));
+      size_t size = input_size_ / sizeof(T);
       CalTranspose(size, input_addr, input_shape, transpose_axis, shape_size_, transpose_input_addr,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDNN_RET_WITH_EXCEPT(
@@ -113,7 +113,7 @@ class SoftmaxGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    shape_size_ = SizeToInt(input_shape.size());
+    shape_size_ = input_shape.size();
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == "LogSoftmax") {
       algo_ = CUDNN_SOFTMAX_LOG;
@@ -171,7 +171,7 @@ class SoftmaxGpuKernel : public GpuKernel {
   void InitSizeByAxis2D(const std::vector<size_t> &input_shape, const int &axis) {
     axis_ = axis;
     if (axis_ < 0) {
-      axis_ += shape_size_;
+      axis_ += SizeToInt(shape_size_);
     }
     if (axis_ == 1) {
       batch_size_ = input_shape[0];
@@ -193,7 +193,7 @@ class SoftmaxGpuKernel : public GpuKernel {
     width_ = 1;
     input_size_ = sizeof(T) * batch_size_ * channel_size_ * height_ * width_;
     output_size_ = input_size_;
-    workspace_size_ = IntToSize(shape_size_) * sizeof(int);
+    workspace_size_ = shape_size_ * sizeof(size_t);
   }
 
   void InitSizeByAxisLastDim(const std::vector<size_t> &input_shape, const int &axis) {
@@ -235,11 +235,11 @@ class SoftmaxGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 
-  std::vector<int> input_shape_;
-  std::vector<int> transpose_shape_;
-  std::vector<int> transpose_axis_;
+  std::vector<size_t> input_shape_;
+  std::vector<size_t> transpose_shape_;
+  std::vector<size_t> transpose_axis_;
   int axis_;
-  int shape_size_;
+  size_t shape_size_;
 
   size_t batch_size_;
   size_t channel_size_;

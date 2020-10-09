@@ -20,19 +20,19 @@
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename T>
-__global__ void Transpose(const int size, const T* input, const int* input_shape, const int* input_axis,
-                          const int shape_size, T* output) {
-  int pos_size;
-  int temp_pos;
-  int newpos;
-  int newpos_size;
-  int pos_array[TRANSPOSE_MAX_DIMENSION];
+__global__ void Transpose(const size_t size, const T* input, const size_t* input_shape,
+                          const size_t* input_axis, const size_t shape_size, T* output) {
+  size_t pos_size;
+  size_t temp_pos;
+  size_t newpos;
+  size_t newpos_size;
+  size_t pos_array[TRANSPOSE_MAX_DIMENSION];
 
   // for example 4-D: pos = posArray[0] * input_shape[1] * input_shape[2] * input_shape[3] +
   //                        posArray[1] * input_shape[2] * input_shape[3] +
   //                        posArray[2] * input_shape[3] +
   //                        posArray[3]
-  for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     temp_pos = pos;
     pos_size = size / input_shape[0];
     pos_array[0] = temp_pos / pos_size;
@@ -54,16 +54,19 @@ __global__ void Transpose(const int size, const T* input, const int* input_shape
   return;
 }
 template <typename T>
-void CalTranspose(const int size, const T* input, const int* input_shape, const int* input_axis, const int shape_size,
-                  T* output, cudaStream_t cuda_stream) {
+void CalTranspose(const size_t size, const T* input, const size_t* input_shape, const size_t* input_axis,
+                  const size_t shape_size, T* output, cudaStream_t cuda_stream) {
   Transpose<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, input_shape, input_axis, shape_size,
                                                                output);
   return;
 }
 
-template void CalTranspose<float>(const int size, const float* input, const int* input_shape, const int* input_axis,
-                                  const int shape_size, float* output, cudaStream_t cuda_stream);
-template void CalTranspose<half>(const int size, const half* input, const int* input_shape, const int* input_axis,
-                                 const int shape_size, half* output, cudaStream_t cuda_stream);
-template void CalTranspose<int>(const int size, const int* input, const int* input_shape, const int* input_axis,
-                                 const int shape_size, int* output, cudaStream_t cuda_stream);
+template void CalTranspose<float>(const size_t size, const float* input, const size_t* input_shape,
+                                  const size_t* input_axis, const size_t shape_size, float* output,
+                                  cudaStream_t cuda_stream);
+template void CalTranspose<half>(const size_t size, const half* input, const size_t* input_shape,
+                                 const size_t* input_axis, const size_t shape_size, half* output,
+                                 cudaStream_t cuda_stream);
+template void CalTranspose<int>(const size_t size, const int* input, const size_t* input_shape,
+                                const size_t* input_axis, const size_t shape_size, int* output,
+                                cudaStream_t cuda_stream);

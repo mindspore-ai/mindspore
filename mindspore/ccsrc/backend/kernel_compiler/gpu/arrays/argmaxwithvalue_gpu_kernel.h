@@ -86,9 +86,9 @@ class ArgmaxWithValueGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-  int bound_;
-  int outerSize_;
-  int innerSize_;
+  size_t bound_;
+  size_t outerSize_;
+  size_t innerSize_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -89,7 +89,7 @@ class ActivationGradGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    std::vector<int> shape;
+    std::vector<size_t> shape;
     double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 5.999999 : 0.0;
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_PROPAGATE_NAN, coef),
                                 "SetActivationDescriptor failed");
@@ -98,13 +98,15 @@ class ActivationGradGpuKernel : public GpuKernel {
     if (input_shape.size() <= split_dim) {
       ShapeNdTo4d(input_shape, &shape);
       if (AnfAlgo::GetInputFormat(kernel_node, 0) == kOpFormat_NHWC) {
-        CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_,
-                                                               shape[0], shape[3], shape[1], shape[2]),
-                                    "cudnnSetTensor4dDescriptor failed");
+        CHECK_CUDNN_RET_WITH_EXCEPT(
+          cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_, SizeToInt(shape[0]),
+                                     SizeToInt(shape[3]), SizeToInt(shape[1]), SizeToInt(shape[2])),
+          "cudnnSetTensor4dDescriptor failed");
       } else {
-        CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
-                                                               shape[0], shape[1], shape[2], shape[3]),
-                                    "cudnnSetTensor4dDescriptor failed");
+        CHECK_CUDNN_RET_WITH_EXCEPT(
+          cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(shape[0]),
+                                     SizeToInt(shape[1]), SizeToInt(shape[2]), SizeToInt(shape[3])),
+          "cudnnSetTensor4dDescriptor failed");
       }
     } else {
       CudnnSetTensorNdDescriptor(input_shape, data_descriptor_, cudnn_data_type_);

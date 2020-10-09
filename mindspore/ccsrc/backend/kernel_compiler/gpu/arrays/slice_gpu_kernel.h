@@ -61,7 +61,7 @@ class SliceGpuFwdKernel : public GpuKernel {
       (void)size_.insert(size_.begin(), 1);
     }
 
-    input_size_ = IntToSize(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3]) * sizeof(T);
+    input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T);
     auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
 
     output_size_ = sizeof(T);
@@ -118,7 +118,7 @@ class SliceGpuFwdKernel : public GpuKernel {
   }
   std::vector<int> begin_;
   std::vector<int> size_;
-  std::vector<int> input_shape_;
+  std::vector<size_t> input_shape_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

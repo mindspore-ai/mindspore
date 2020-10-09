@@ -162,9 +162,9 @@ class BroadcastOpGpuKernel : public GpuKernel {
   int input1_num_;
   int input2_num_;
   int output_num_;
-  std::vector<int> lhs_shape_;
-  std::vector<int> rhs_shape_;
-  std::vector<int> output_shape_;
+  std::vector<size_t> lhs_shape_;
+  std::vector<size_t> rhs_shape_;
+  std::vector<size_t> output_shape_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

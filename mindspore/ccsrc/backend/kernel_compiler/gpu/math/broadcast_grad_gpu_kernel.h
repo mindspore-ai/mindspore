@@ -140,12 +140,12 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
 
   BroadcastGradOpType op_type_;
   bool need_broadcast_;
-  int input1_num_;
-  int input2_num_;
-  int output_num_;
-  int x1_shape_[4] = {1, 1, 1, 1};
-  int x2_shape_[4] = {1, 1, 1, 1};
-  int dy_shape_[4] = {1, 1, 1, 1};
+  size_t input1_num_;
+  size_t input2_num_;
+  size_t output_num_;
+  size_t x1_shape_[4] = {1, 1, 1, 1};
+  size_t x2_shape_[4] = {1, 1, 1, 1};
+  size_t dy_shape_[4] = {1, 1, 1, 1};
   bool grad_x_;
   bool grad_y_;
 

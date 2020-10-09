@@ -219,31 +219,33 @@ template void ElewiseArith(const int &nums, enum BroadcastOpType op, const int *
                            cudaStream_t stream);
 
 // Broadcast comparation
-__device__ __forceinline__ int Index(const int &index, const int &dim) { return dim == 1 ? 0 : index; }
+__device__ __forceinline__ size_t Index(const size_t &index, const size_t &dim) { return dim == 1 ? 0 : index; }
 
 template <typename T, typename Func>
-__global__ void BroadcastCmpKernel(const int l0, const int l1, const int l2, const int l3, const int l4, const int l5,
-                                   const int l6, const int r0, const int r1, const int r2, const int r3, const int r4,
-                                   const int r5, const int r6, const int d0, const int d1, const int d2, const int d3,
-                                   const int d4, const int d5, const int d6, const T *x0, const T *x1, bool *y) {
+__global__ void BroadcastCmpKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
+                                   const size_t l4, const size_t l5, const size_t l6, const size_t r0,
+                                   const size_t r1, const size_t r2, const size_t r3, const size_t r4,
+                                   const size_t r5, const size_t r6, const size_t d0, const size_t d1,
+                                   const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                                   const size_t d6, const T *x0, const T *x1, bool *y) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < d0 * d1 * d2 * d3 * d4 * d5 * d6;
        pos += blockDim.x * gridDim.x) {
-    int i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
-    int j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
-    int k = pos / (d3 * d4 * d5 * d6) % d2;
-    int l = pos / (d4 * d5 * d6) % d3;
-    int m = pos / (d5 * d6) % d4;
-    int n = pos / d6 % d5;
-    int o = pos % d6;
+    size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
+    size_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
+    size_t k = pos / (d3 * d4 * d5 * d6) % d2;
+    size_t l = pos / (d4 * d5 * d6) % d3;
+    size_t m = pos / (d5 * d6) % d4;
+    size_t n = pos / d6 % d5;
+    size_t o = pos % d6;
 
-    int l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
+    size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
     l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6;
     l_index += Index(k, l2) * l3 * l4 * l5 * l6;
     l_index += Index(l, l3) * l4 * l5 * l6;
     l_index += Index(m, l4) * l5 * l6;
     l_index += Index(n, l5) * l6;
     l_index += Index(o, l6);
-    int r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6;
+    size_t r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6;
     r_index += Index(j, r1) * r2 * r3 * r4 * r5 * r6;
     r_index += Index(k, r2) * r3 * r4 * r5 * r6;
     r_index += Index(l, r3) * r4 * r5 * r6;
@@ -255,9 +257,10 @@ __global__ void BroadcastCmpKernel(const int l0, const int l1, const int l2, con
 }
 
 template <typename T>
-void BroadcastCmp(const std::vector<int> &x0_dims, const std::vector<int> &x1_dims, const std::vector<int> &y_dims,
-                  enum BroadcastOpType op, const T *x0, const T *x1, bool *y, cudaStream_t stream) {
-  int size = 1;
+void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                  const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0,
+                  const T *x1, bool *y, cudaStream_t stream) {
+  size_t size = 1;
   for (auto d : y_dims) {
     size *= d;
   }
@@ -278,40 +281,42 @@ void BroadcastCmp(const std::vector<int> &x0_dims, const std::vector<int> &x1_di
   }
 }
 
-template void BroadcastCmp(const std::vector<int> &x0_dims, const std::vector<int> &x1_dims,
-                           const std::vector<int> &y_dims, enum BroadcastOpType op, const float *x0, const float *x1,
+template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const float *x0, const float *x1,
                            bool *y, cudaStream_t stream);
-template void BroadcastCmp(const std::vector<int> &x0_dims, const std::vector<int> &x1_dims,
-                           const std::vector<int> &y_dims, enum BroadcastOpType op, const half *x0, const half *x1,
+template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const half *x0, const half *x1,
                            bool *y, cudaStream_t stream);
-template void BroadcastCmp(const std::vector<int> &x0_dims, const std::vector<int> &x1_dims,
-                           const std::vector<int> &y_dims, enum BroadcastOpType op, const int *x0, const int *x1,
+template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const int *x0, const int *x1,
                            bool *y, cudaStream_t stream);
 
 // Broadcast Arithmetic
 template <typename T, typename Func>
-__global__ void BroadcastArithKernel(const int l0, const int l1, const int l2, const int l3, const int l4, const int l5,
-                                     const int l6, const int r0, const int r1, const int r2, const int r3, const int r4,
-                                     const int r5, const int r6, const int d0, const int d1, const int d2, const int d3,
-                                     const int d4, const int d5, const int d6, const T *x0, const T *x1, T *y) {
+__global__ void BroadcastArithKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
+                                     const size_t l4, const size_t l5, const size_t l6, const size_t r0,
+                                     const size_t r1, const size_t r2, const size_t r3, const size_t r4,
+                                     const size_t r5, const size_t r6, const size_t d0, const size_t d1,
+                                     const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                                     const size_t d6, const T *x0, const T *x1, T *y) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < d0 * d1 * d2 * d3 * d4 * d5 * d6;
        pos += blockDim.x * gridDim.x) {
-    int i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
-    int j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
-    int k = pos / (d3 * d4 * d5 * d6) % d2;
-    int l = pos / (d4 * d5 * d6) % d3;
-    int m = pos / (d5 * d6) % d4;
-    int n = pos / d6 % d5;
-    int o = pos % d6;
+    size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
+    size_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
+    size_t k = pos / (d3 * d4 * d5 * d6) % d2;
+    size_t l = pos / (d4 * d5 * d6) % d3;
+    size_t m = pos / (d5 * d6) % d4;
+    size_t n = pos / d6 % d5;
+    size_t o = pos % d6;
 
-    int l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
+    size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
     l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6;
     l_index += Index(k, l2) * l3 * l4 * l5 * l6;
     l_index += Index(l, l3) * l4 * l5 * l6;
     l_index += Index(m, l4) * l5 * l6;
     l_index += Index(n, l5) * l6;
     l_index += Index(o, l6);
-    int r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6;
+    size_t r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6;
     r_index += Index(j, r1) * r2 * r3 * r4 * r5 * r6;
     r_index += Index(k, r2) * r3 * r4 * r5 * r6;
     r_index += Index(l, r3) * r4 * r5 * r6;
@@ -323,9 +328,10 @@ __global__ void BroadcastArithKernel(const int l0, const int l1, const int l2, c
 }
 
 template <typename T>
-void BroadcastArith(const std::vector<int> &x0_dims, const std::vector<int> &x1_dims, const std::vector<int> &y_dims,
-                    enum BroadcastOpType op, const T *x0, const T *x1, T *y, cudaStream_t stream) {
-  int size = 1;
+void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                    const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0,
+                    const T *x1, T *y, cudaStream_t stream) {
+  size_t size = 1;
   for (auto d : y_dims) {
     size *= d;
   }
@@ -385,41 +391,44 @@ void BroadcastArith(const std::vector<int> &x0_dims, const std::vector<int> &x1_
   }
 }
 
-template void BroadcastArith(const std::vector<int> &x0_dims, const std::vector<int> &x1_dims,
-                             const std::vector<int> &y_dims, enum BroadcastOpType op, const float *x0, const float *x1,
-                             float *y, cudaStream_t stream);
-template void BroadcastArith(const std::vector<int> &x0_dims, const std::vector<int> &x1_dims,
-                             const std::vector<int> &y_dims, enum BroadcastOpType op, const half *x0, const half *x1,
+template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                             const std::vector<size_t> &y_dims, enum BroadcastOpType op, const float *x0,
+                             const float *x1, float *y, cudaStream_t stream);
+template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                             const std::vector<size_t> &y_dims, enum BroadcastOpType op, const half *x0, const half *x1,
                              half *y, cudaStream_t stream);
-template void BroadcastArith(const std::vector<int> &x0_dims, const std::vector<int> &x1_dims,
-                             const std::vector<int> &y_dims, enum BroadcastOpType op, const int *x0, const int *x1,
+template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                             const std::vector<size_t> &y_dims, enum BroadcastOpType op, const int *x0, const int *x1,
                              int *y, cudaStream_t stream);
 
 // BroadcastTo
 template <typename T>
-__global__ void BroadcastToKernel(const int i0, const int i1, const int i2, const int i3, const int o0, const int o1,
-                                  const int o2, const int o3, const T *input_addr, T *output_addr) {
+__global__ void BroadcastToKernel(const size_t i0, const size_t i1, const size_t i2, const size_t i3, const size_t o0,
+                                  const size_t o1, const size_t o2, const size_t o3, const T *input_addr,
+                                  T *output_addr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < o0 * o1 * o2 * o3; pos += blockDim.x * gridDim.x) {
-    int i = pos / (o1 * o2 * o3) % o0;
-    int j = pos / (o2 * o3) % o1;
-    int k = pos / o3 % o2;
-    int l = pos % o3;
+    size_t i = pos / (o1 * o2 * o3) % o0;
+    size_t j = pos / (o2 * o3) % o1;
+    size_t k = pos / o3 % o2;
+    size_t l = pos % o3;
 
-    int input_idx = Index(i, i0) * i1 * i2 * i3 + Index(j, i1) * i2 * i3 + Index(k, i2) * i3 + Index(l, i3);
+    size_t input_idx = Index(i, i0) * i1 * i2 * i3 + Index(j, i1) * i2 * i3 + Index(k, i2) * i3 + Index(l, i3);
     output_addr[pos] = input_addr[input_idx];
   }
 }
 
 template <typename T>
-void BroadcastTo(const int &i0, const int &i1, const int &i2, const int &i3, const int &o0, const int &o1,
-                 const int &o2, const int &o3, const T *input_addr, T *output_addr, cudaStream_t stream) {
-  int nums = o0 * o1 * o2 * o3;
+void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3, const size_t &o0,
+                 const size_t &o1, const size_t &o2, const size_t &o3, const T *input_addr,
+                 T *output_addr, cudaStream_t stream) {
+  size_t nums = o0 * o1 * o2 * o3;
   BroadcastToKernel<<<GET_BLOCKS(nums), GET_THREADS, 0, stream>>>(i0, i1, i2, i3, o0, o1, o2, o3, input_addr,
                                                                   output_addr);
 }
 
-template void BroadcastTo(const int &i0, const int &i1, const int &i2, const int &i3, const int &o0, const int &o1,
-                          const int &o2, const int &o3, const float *input_addr, float *output_addr,
-                          cudaStream_t stream);
-template void BroadcastTo(const int &i0, const int &i1, const int &i2, const int &i3, const int &o0, const int &o1,
-                          const int &o2, const int &o3, const half *input_addr, half *output_addr, cudaStream_t stream);
+template void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3, const size_t &o0,
+                          const size_t &o1, const size_t &o2, const size_t &o3, const float *input_addr,
+                          float *output_addr, cudaStream_t stream);
+template void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3, const size_t &o0,
+                          const size_t &o1, const size_t &o2, const size_t &o3, const half *input_addr,
+                          half *output_addr, cudaStream_t stream);

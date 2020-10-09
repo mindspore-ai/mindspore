@@ -50,7 +50,10 @@ class StridedSliceGradGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    input_shape_ = GetAttr<std::vector<int>>(kernel_node, "shapex");
+    auto shapex = GetAttr<std::vector<int>>(kernel_node, "shapex");
+    for (auto x : shapex) {
+      input_shape_.push_back(IntToSize(x));
+    }
     if (input_shape_.size() > MAX_DIMS) {
       MS_LOG(ERROR) << "StridedSliceGrad support support dims less than " << input_shape_.size();
       return false;
@@ -66,13 +69,13 @@ class StridedSliceGradGpuKernel : public GpuKernel {
 
  protected:
   void InitSizeLists() override {
-    int size = sizeof(T);
+    size_t size = sizeof(T);
     for (size_t i = 0; i < MAX_DIMS; i++) {
       size *= output_shape_[i];
     }
     input_size_list_.push_back(size);
 
-    int size1 = sizeof(T);
+    size_t size1 = sizeof(T);
     for (size_t i = 0; i < MAX_DIMS; i++) {
       size1 *= input_shape_[i];
     }
@@ -187,8 +190,8 @@ class StridedSliceGradGpuKernel : public GpuKernel {
   std::vector<int> begin_;
   std::vector<int> end_;
   std::vector<int> strides_;
-  std::vector<int> input_shape_;
-  std::vector<int> output_shape_;
+  std::vector<size_t> input_shape_;
+  std::vector<size_t> output_shape_;
   int null_output_;
 
   std::vector<size_t> input_size_list_;
