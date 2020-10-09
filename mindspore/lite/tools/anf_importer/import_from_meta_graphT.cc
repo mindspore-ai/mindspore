@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include "tools/anf_importer/import_from_meta_graphT.h"
 #include <vector>
 #include <algorithm>
 #include "schema/inner/model_generated.h"
 #include "frontend/operator/ops.h"
 #include "src/param_value_lite.h"
-#include "tools/anf_importer/import_from_meta_graphT.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "tools/common/tensor_util.h"

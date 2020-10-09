@@ -40,26 +40,17 @@ STATUS OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
       min = onnx_node_attr.f();
     }
   }
-  if (min == 0 && max == 6) {
-    std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
-      return RET_NULL_PTR;
-    }
-    attr->type = schema::ActivationType_RELU6;
-    op->primitive->value.type = schema::PrimitiveType_Activation;
-    op->primitive->value.value = attr.release();
-  } else {
-    std::unique_ptr<schema::ClipT> attr = std::make_unique<schema::ClipT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
-      return RET_NULL_PTR;
-    }
-    attr->max = max;
-    attr->min = min;
-    op->primitive->value.type = schema::PrimitiveType_Clip;
-    op->primitive->value.value = attr.release();
+
+  std::unique_ptr<schema::ClipT> attr = std::make_unique<schema::ClipT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
   }
+  attr->max = max;
+  attr->min = min;
+  op->primitive->value.type = schema::PrimitiveType_Clip;
+  op->primitive->value.value = attr.release();
+
   return RET_OK;
 }
 

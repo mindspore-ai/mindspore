@@ -32,6 +32,7 @@
 #include "tools/converter/legacy_optimizer/graph/trans_format_insert_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/unused_node_remove_pass.h"
+#include "tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
 #include "tools/converter/quantizer/aware_quantizer.h"
 
@@ -62,6 +63,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   {
     Optimizer unusedOpRemoveOptimizer;
     unusedOpRemoveOptimizer.AddPass(new UnusedNodeRemovePass());
+    unusedOpRemoveOptimizer.AddPass(new DropoutNodeRemovePass());
     unusedOpRemoveOptimizer.AddPass(new IsolatedNodeRemovePass());
     status = unusedOpRemoveOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {
