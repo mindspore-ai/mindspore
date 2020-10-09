@@ -224,6 +224,7 @@ constexpr char GATHERV2[] = "GatherV2";
 constexpr char SPARSE_GATHERV2[] = "SparseGatherV2";
 constexpr char STRIDEDSLICE[] = "StridedSlice";
 constexpr char BROADCAST[] = "Broadcast";
+constexpr char BROADCAST_TO[] = "BroadcastTo";
 constexpr char SQRT[] = "Sqrt";
 constexpr char ASSIGN[] = "Assign";
 constexpr char GET_NEXT[] = "GetNext";
