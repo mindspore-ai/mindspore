@@ -88,12 +88,16 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
   if (debugger) {
     debugger->SetCurNode(kernel_name);
     if (dump_enabled) {
-      read_data = true;
+      auto &dump_json_parser = DumpJsonParser::GetInstance();
+      auto dump_mode = dump_json_parser.dump_mode();
+      // dump the node if dump_mode is 0, which means all kernels, or if this kernel is in the kernels list
+      if ((dump_mode == 0) || ((dump_mode == 1) && dump_json_parser.NeedDump(kernel_name))) {
+        read_data = true;
+      }
     } else if (debugger->debugger_enabled()) {
       read_data = debugger->ReadNodeDataRequired();
     }
   }
-
   if (!read_data) {
     return;
   }
