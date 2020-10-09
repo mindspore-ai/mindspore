@@ -171,7 +171,7 @@ int Convolution1x1FP16CPUKernel::RunOc(int task_id) {
 
   MatMulFp16(pack_input_, weight_ptr_ + task_id * thread_stride_ * matmul_param_->deep_,
              output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
-             matmul_param_->row_, cur_oc, matmul_param_->col_, true);
+             matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
 
   return RET_OK;
 }
@@ -189,7 +189,8 @@ int Convolution1x1FP16CPUKernel::RunHw(int task_id) {
 
   float16_t *thread_output_ptr = output_ptr_ + task_id * thread_stride_ * matmul_param_->col_;
   MatMulFp16(thread_pack_input, weight_ptr_, thread_output_ptr, reinterpret_cast<float16_t *>(bias_data_),
-             matmul_param_->act_type_, matmul_param_->deep_, cur_hw_, matmul_param_->col_, matmul_param_->col_, true);
+             matmul_param_->act_type_, matmul_param_->deep_, cur_hw_, matmul_param_->col_, matmul_param_->col_,
+             OutType_Nhwc);
 
   return RET_OK;
 }

@@ -193,7 +193,7 @@ int MatmulFP16CPUKernel::RunImpl(int task_id) {
   auto b = current_b_ + task_id * thread_stride_ * params_->deep_;
   auto bias = (bias_ptr_ == nullptr) ? nullptr : bias_ptr_ + thread_stride_ * task_id;
   auto c = current_c_ + task_id * thread_stride_;
-  MatMulFp16(current_a_, b, c, bias, ActType_No, params_->deep_, params_->row_, cur_oc, params_->col_, true);
+  MatMulFp16(current_a_, b, c, bias, ActType_No, params_->deep_, params_->row_, cur_oc, params_->col_, OutType_Nhwc);
 
   return RET_OK;
 }

@@ -205,8 +205,8 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
       float16_t *tmp_col_ptr = col_buffer + task_id * col_buffer_offset;
       for (int i = 0; i < input_unit_square; ++i) {
         RowMajor2Col16MajorFp16Opt(src_ptr + i * tile_num * in_channel, tmp_col_ptr, tile_num, in_channel);
-        MatMul16x8(tmp_col_ptr, trans_weight + i * in_channel * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0, in_channel,
-                   cal_num, oc8 * C8NUM, input_unit_square, false);
+        MatMulFp16(tmp_col_ptr, trans_weight + i * in_channel * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0, in_channel,
+                   cal_num, oc8 * C8NUM, input_unit_square, OutType_TileC8);
       }
 
       // step 4 : output transform
