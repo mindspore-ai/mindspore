@@ -112,7 +112,7 @@ class NcclGpuKernel : public GpuKernel {
         for (int i = 0; i < SizeToInt(input_size_list_.size()); ++i) {
           input_addr = GetDeviceAddress<T>(inputs, i);
           output_addr = GetDeviceAddress<T>(outputs, i);
-          CHECK_NCCL_RET_WITH_EXCEPT((*broadcast_funcptr)(input_addr, output_addr, output_size_ / sizeof(T),
+          CHECK_NCCL_RET_WITH_EXCEPT((*broadcast_funcptr)(input_addr, output_addr, output_size_list_[i] / sizeof(T),
                                                           nccl_data_type_, root_, stream, group_name_),
                                      "ncclBroadcast failed");
         }
