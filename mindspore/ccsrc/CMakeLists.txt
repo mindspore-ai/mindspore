@@ -132,7 +132,7 @@ if (ENABLE_D)
     include_directories("${CMAKE_BINARY_DIR}/backend/kernel_compiler/aicpu")
     file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "backend/kernel_compiler/aicpu/proto/*.proto")
     ms_protobuf_generate(PROTOSRCS PROTOHDRS ${PROTO_IN})
-    
+
     file(GLOB_RECURSE PROTO_DUMP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "runtime/device/ascend/dump/proto/*.proto")
     ms_protobuf_generate(DUMP_PROTOSRCS PROTOHDRS ${PROTO_DUMP})
 
@@ -176,8 +176,6 @@ endforeach ()
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
 
-target_link_libraries(proto_input mindspore::protobuf)
-
 target_link_libraries(mindspore mindspore_core)
 
 if (ENABLE_DEBUGGER)
@@ -185,7 +183,6 @@ if (ENABLE_DEBUGGER)
     target_link_libraries(proto_input mindspore::grpc++)
 endif()
 
-target_link_libraries(mindspore proto_input)
 target_link_libraries(mindspore securec mindspore::flatbuffers)
 
 if (NOT WIN32)
@@ -230,13 +227,13 @@ if (ENABLE_D)
     find_library(RUNTIME_LIB runtime ${ASCEND_RUNTIME_PATH})
     find_library(TSDCLIENT tsdclient HINTS ${ASCEND_RUNTIME_PATH} ${ASCEND_DRIVER_BACK_PATH})
     find_library(DATATRANSFER datatransfer HINTS ${ASCEND_RUNTIME_PATH} ${ASCEND_DRIVER_BACK_PATH})
-    find_library(PROFILING msprof ${ASCEND_DRIVER_PATH})
-    target_link_libraries(mindspore ge_runtime ${CCE_LIB} ${RUNTIME_LIB} ${TSDCLIENT} ${PROFILING} ${HCCL} ${DATATRANSFER})
-endif()
-
-# link protobuf
-if (ENABLE_D)
-    target_link_libraries(mindspore mindspore::protobuf)
+    find_library(PROFILING msprofiler ${ASCEND_RUNTIME_PATH})
+    target_link_libraries(mindspore ge_runtime ${CCE_LIB} ${RUNTIME_LIB} ${TSDCLIENT}  ${HCCL} ${DATATRANSFER})
+    target_link_libraries(mindspore -Wl,--start-group proto_input ${PROFILING} mindspore::protobuf -Wl,--end-group)
+elseif (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf mindspore::sentencepiece -Wl,--end-group)
+else ()
+    target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
 endif()
 
 # set c_expression building
@@ -278,18 +275,13 @@ else ()
             target_link_libraries(mindspore ibverbs rdmacm)
         endif()
     endif()
-    target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive)
+    target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore proto_input -Wl,--no-whole-archive)
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
     target_link_libraries(_c_expression PRIVATE mindspore_gvar)
 endif ()
 
 if (USE_GLOG)
     target_link_libraries(_c_expression PRIVATE mindspore::glog)
-endif ()
-
-if (ENABLE_DUMP_PROTO)
-    message("add protobuf lib to c_expression")
-    target_link_libraries(_c_expression PRIVATE mindspore::protobuf)
 endif ()
 
 if (ENABLE_GPU)
@@ -324,7 +316,7 @@ add_library(inference SHARED
         ${LOAD_ONNX_SRC}
         )
 target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_gvar mindspore::protobuf)
+        -Wl,--whole-archive mindspore proto_input -Wl,--no-whole-archive mindspore_gvar)
 
 if (ENABLE_D)
     target_link_libraries(_c_expression PRIVATE ${ASCEND_PATH}/fwkacllib/lib64/libadump_server.a)
