@@ -22,7 +22,7 @@ import mindspore.context as context
 
 from ... import log as logger
 from ... import nn, ops
-from ..._checkparam import ParamValidator as validator
+from ..._checkparam import Validator
 from ..._checkparam import Rel
 from ...common import Tensor
 from ...common import dtype as mstype
@@ -89,19 +89,19 @@ class ConvertToQuantNetwork:
     __quant_op_name__ = ["TensorAdd", "Sub", "Mul", "RealDiv"]
 
     def __init__(self, **kwargs):
-        self.network = validator.check_isinstance('network', kwargs["network"], (nn.Cell,))
-        self.weight_qdelay = validator.check_integer("quant delay", kwargs["quant_delay"][0], 0, Rel.GE)
-        self.act_qdelay = validator.check_integer("quant delay", kwargs["quant_delay"][-1], 0, Rel.GE)
-        self.bn_fold = validator.check_bool("bn fold", kwargs["bn_fold"])
-        self.freeze_bn = validator.check_integer("freeze bn", kwargs["freeze_bn"], 0, Rel.GE)
-        self.weight_bits = validator.check_integer("weights bit", kwargs["num_bits"][0], 0, Rel.GE)
-        self.act_bits = validator.check_integer("activations bit", kwargs["num_bits"][-1], 0, Rel.GE)
-        self.weight_channel = validator.check_bool("per channel", kwargs["per_channel"][0])
-        self.act_channel = validator.check_bool("per channel", kwargs["per_channel"][-1])
-        self.weight_symmetric = validator.check_bool("symmetric", kwargs["symmetric"][0])
-        self.act_symmetric = validator.check_bool("symmetric", kwargs["symmetric"][-1])
-        self.weight_range = validator.check_bool("narrow range", kwargs["narrow_range"][0])
-        self.act_range = validator.check_bool("narrow range", kwargs["narrow_range"][-1])
+        self.network = Validator.check_isinstance('network', kwargs["network"], (nn.Cell,))
+        self.weight_qdelay = Validator.check_integer("quant delay", kwargs["quant_delay"][0], 0, Rel.GE)
+        self.act_qdelay = Validator.check_integer("quant delay", kwargs["quant_delay"][-1], 0, Rel.GE)
+        self.bn_fold = Validator.check_bool("bn fold", kwargs["bn_fold"])
+        self.freeze_bn = Validator.check_integer("freeze bn", kwargs["freeze_bn"], 0, Rel.GE)
+        self.weight_bits = Validator.check_integer("weights bit", kwargs["num_bits"][0], 0, Rel.GE)
+        self.act_bits = Validator.check_integer("activations bit", kwargs["num_bits"][-1], 0, Rel.GE)
+        self.weight_channel = Validator.check_bool("per channel", kwargs["per_channel"][0])
+        self.act_channel = Validator.check_bool("per channel", kwargs["per_channel"][-1])
+        self.weight_symmetric = Validator.check_bool("symmetric", kwargs["symmetric"][0])
+        self.act_symmetric = Validator.check_bool("symmetric", kwargs["symmetric"][-1])
+        self.weight_range = Validator.check_bool("narrow range", kwargs["narrow_range"][0])
+        self.act_range = Validator.check_bool("narrow range", kwargs["narrow_range"][-1])
         self._convert_method_map = {quant.Conv2dBnAct: self._convert_conv,
                                     quant.DenseBnAct: self._convert_dense}
 
@@ -316,7 +316,7 @@ class ExportToQuantInferNetwork:
     __quant_op_name__ = ["TensorAdd", "Sub", "Mul", "RealDiv"]
 
     def __init__(self, network, mean, std_dev, *inputs, is_mindir=False):
-        network = validator.check_isinstance('network', network, (nn.Cell,))
+        network = Validator.check_isinstance('network', network, (nn.Cell,))
         self.input_scale = 1 / std_dev
         self.input_zero_point = round(mean)
         self.data_type = mstype.int8
@@ -510,8 +510,8 @@ def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='
     supported_device = ["Ascend", "GPU"]
     supported_formats = ['AIR', 'MINDIR']
 
-    mean = validator.check_type("mean", mean, (int, float))
-    std_dev = validator.check_type("std_dev", std_dev, (int, float))
+    mean = Validator.check_type("mean", mean, (int, float))
+    std_dev = Validator.check_type("std_dev", std_dev, (int, float))
 
     if context.get_context('device_target') not in supported_device:
         raise KeyError("Unsupported {} device target.".format(context.get_context('device_target')))

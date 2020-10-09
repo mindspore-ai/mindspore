@@ -21,8 +21,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import ParamValidator as validator, Rel
-from mindspore._checkparam import check_bool, twice, check_int_positive, Validator
+from mindspore._checkparam import Validator, Rel, check_bool, twice, check_int_positive
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
@@ -240,8 +239,8 @@ class Conv2d(_Conv):
         """Initialize depthwise conv2d op"""
         if context.get_context("device_target") == "Ascend" and self.group > 1:
             self.dilation = self._dilation
-            validator.check_integer('group', self.group, self.in_channels, Rel.EQ)
-            validator.check_integer('group', self.group, self.out_channels, Rel.EQ)
+            Validator.check_integer('group', self.group, self.in_channels, Rel.EQ)
+            Validator.check_integer('group', self.group, self.out_channels, Rel.EQ)
             self.conv2d = P.DepthwiseConv2dNative(channel_multiplier=1,
                                                   kernel_size=self.kernel_size,
                                                   pad_mode=self.pad_mode,
