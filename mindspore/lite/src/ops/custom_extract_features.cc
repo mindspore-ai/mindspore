@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/custom_extract_features.h"
+#include "src/common/string_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -30,9 +31,30 @@ int CustomExtractFeatures::UnPackToFlatBuilder(const schema::Primitive *primitiv
   return RET_OK;
 }
 #endif
+
 int CustomExtractFeatures::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  PrimitiveC::InferShape(inputs_, outputs_);
-  return RET_INFER_INVALID;
+  auto input = inputs_.at(0);
+  MS_ASSERT(input != nullptr);
+  if (input->data_c() == nullptr) {
+    MS_LOG(INFO) << "Do infer shape in runtime.";
+    return RET_INFER_INVALID;
+  }
+  int string_num = lite::GetStringCount(input);
+  auto output0 = outputs_.at(0);
+  auto output1 = outputs_.at(1);
+  MS_ASSERT(output0 != nullptr);
+  MS_ASSERT(output1 != nullptr);
+
+  std::vector<int> shape;
+  shape.push_back(string_num == 0 ? 1 : string_num);
+
+  output0->set_shape(shape);
+  output0->set_data_type(input->data_type());
+  output0->SetFormat(input->GetFormat());
+  output1->set_shape(shape);
+  output1->set_data_type(input->data_type());
+  output1->SetFormat(input->GetFormat());
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

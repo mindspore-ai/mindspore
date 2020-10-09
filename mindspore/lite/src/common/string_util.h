@@ -32,12 +32,23 @@ typedef struct {
   const char *data;
 } StringPack;
 
+// example of string tensor:
+// 3, 0, 0, 0    # int32, num of strings
+// 20, 0, 0, 0   # int32, offset of 0-th string
+// 23, 0, 0, 0   # int32, offset of 0-th string
+// 26, 0, 0, 0   # int32, offset of 0-th string
+// 29, 0, 0, 0   # int32, total length of tensor data
+// 'h', 'o', 'w', 'a', 'r', 'e', 'y', 'o', 'u'  # char, how are you
 std::vector<StringPack> ParseTensorBuffer(Tensor *tensor);
 std::vector<StringPack> ParseStringBuffer(const void *data);
 
 int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_buffer);
 int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<StringPack>> &string_buffer);
 
+int GetStringCount(const void *data);
+int GetStringCount(Tensor *tensor);
+
+uint64_t StringHash64(const char *s, size_t len);
 }  // namespace lite
 }  // namespace mindspore
 

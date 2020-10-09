@@ -28,6 +28,7 @@ file(GLOB KERNEL_OP_SRC
         ${LITE_DIR}/src/runtime/kernel/arm/base/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/fp32/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/int8/*.cc
+        ${LITE_DIR}/src/runtime/kernel/arm/string/*.cc
         ${LITE_DIR}/nnacl/*.c
         ${LITE_DIR}/nnacl/fp32/*.c
         ${LITE_DIR}/nnacl/int8/*.c

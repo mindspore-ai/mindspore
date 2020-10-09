@@ -4,6 +4,7 @@ file(GLOB KERNEL_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/base/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/fp32/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/int8/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/string/*.cc
     )
 list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/int8/opt_op_handler.cc)
 
