@@ -23,7 +23,7 @@ from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Rel, check_int_positive, check_bool, twice, ParamValidator as validator
+from mindspore._checkparam import Rel, check_int_positive, check_bool, twice, Validator
 import mindspore.context as context
 from .normalization import BatchNorm2d, BatchNorm1d
 from .activation import get_activation, ReLU, LeakyReLU
@@ -133,7 +133,7 @@ class Conv2dBnAct(Cell):
                               has_bias=has_bias,
                               weight_init=weight_init,
                               bias_init=bias_init)
-        self.has_bn = validator.check_bool("has_bn", has_bn)
+        self.has_bn = Validator.check_bool("has_bn", has_bn)
         self.has_act = activation is not None
         self.after_fake = after_fake
         if has_bn:
@@ -201,7 +201,7 @@ class DenseBnAct(Cell):
             weight_init,
             bias_init,
             has_bias)
-        self.has_bn = validator.check_bool("has_bn", has_bn)
+        self.has_bn = Validator.check_bool("has_bn", has_bn)
         self.has_act = activation is not None
         self.after_fake = after_fake
         if has_bn:
@@ -320,10 +320,10 @@ class FakeQuantWithMinMax(Cell):
                  quant_delay=0):
         """Initialize FakeQuantWithMinMax layer"""
         super(FakeQuantWithMinMax, self).__init__()
-        validator.check_type("min_init", min_init, [int, float])
-        validator.check_type("max_init", max_init, [int, float])
-        validator.check("min_init", min_init, "max_init", max_init, rel=Rel.LT)
-        validator.check_integer('quant_delay', quant_delay, 0, Rel.GE)
+        Validator.check_type("min_init", min_init, [int, float])
+        Validator.check_type("max_init", max_init, [int, float])
+        Validator.check("min_init", min_init, "max_init", max_init, rel=Rel.LT)
+        Validator.check_integer('quant_delay', quant_delay, 0, Rel.GE)
         self.min_init = min_init
         self.max_init = max_init
         self.num_bits = num_bits
@@ -489,8 +489,8 @@ class Conv2dBnFoldQuant(Cell):
 
         # initialize convolution op and Parameter
         if context.get_context('device_target') == "Ascend" and group > 1:
-            validator.check_integer('group', group, in_channels, Rel.EQ)
-            validator.check_integer('group', group, out_channels, Rel.EQ)
+            Validator.check_integer('group', group, in_channels, Rel.EQ)
+            Validator.check_integer('group', group, out_channels, Rel.EQ)
             self.conv = P.DepthwiseConv2dNative(channel_multiplier=1,
                                                 kernel_size=self.kernel_size,
                                                 pad_mode=pad_mode,
@@ -674,8 +674,8 @@ class Conv2dBnWithoutFoldQuant(Cell):
             self.bias = None
         # initialize convolution op and Parameter
         if context.get_context('device_target') == "Ascend" and group > 1:
-            validator.check_integer('group', group, in_channels, Rel.EQ)
-            validator.check_integer('group', group, out_channels, Rel.EQ)
+            Validator.check_integer('group', group, in_channels, Rel.EQ)
+            Validator.check_integer('group', group, out_channels, Rel.EQ)
             self.conv = P.DepthwiseConv2dNative(channel_multiplier=1,
                                                 kernel_size=self.kernel_size,
                                                 pad_mode=pad_mode,
