@@ -61,7 +61,7 @@ void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   kernel_graph->SetExecOrderByDefault();
 }
 
-GraphId CPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
+GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
   MS_EXCEPTION_IF_NULL(graph);
@@ -85,14 +85,16 @@ void CPUSession::CreateOutputTensors(const GraphId &graph_id, const std::vector<
                                      std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_LOG(INFO) << "Bind input output address";
-  runtime_.BindInputOutput(kernel_graph.get(), input_tensors, outputs);
-  return;
+  runtime_.CreateOutputTensors(kernel_graph.get(), input_tensors, outputs);
 }
 
-void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
+void CPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                              VectorRef *outputs) {
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "Bind input output address";
+  runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs);
+
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   InitPSParamAndOptim(kernel_graph, inputs);
 #endif

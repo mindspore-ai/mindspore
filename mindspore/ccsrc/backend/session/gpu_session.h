@@ -31,16 +31,15 @@ class GPUSession : public SessionBasic {
  public:
   GPUSession() = default;
   ~GPUSession() override = default;
-
   void Init(uint32_t device_id) override { InitDevice(kGPUDevice, device_id); }
 
-  GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
-
-  void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
-  void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-               const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) override;
-  void RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-             const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) override;
+ protected:
+  GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
+  void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
+  void BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                   const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) override;
+  void RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                 const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) override;
 
  private:
   void SelectKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;

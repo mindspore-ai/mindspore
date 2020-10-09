@@ -55,6 +55,7 @@ class Task {
   virtual ~Task() = default;
   SessionPtr session_{nullptr};
   TaskType type_{kUnKnown};
+  bool sync_run_{false};
   virtual void Run() {}
 };
 
@@ -91,6 +92,8 @@ class RunGraphTask : public Task {
   ~RunGraphTask() override = default;
   void Run() override;
   std::vector<tensor::TensorPtr> input_tensors_;
+  std::vector<tensor::TensorPtr> input_need_wait_tensors_;
+  std::vector<tensor::TensorPtr> input_need_lock_tensors_;
   VectorRef outputs_;
   GraphId graph_id_{0};
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node_;
@@ -149,15 +152,17 @@ class Executor {
   ~Executor();
   void WorkerLoop();
   void WorkerJoin();
-  GraphId CompileGraphAsync(const SessionPtr &session, const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
-  GraphId CompileGraphAsync(const SessionPtr &session, NotNull<FuncGraphPtr> func_graph);
-  void BuildGraphAsync(const SessionPtr &session, GraphId graphId);
+  GraphId CompileGraph(const SessionPtr &session, const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
+  GraphId CompileGraph(const SessionPtr &session, NotNull<FuncGraphPtr> func_graph);
+  void BuildGraph(const SessionPtr &session, GraphId graphId);
+  void RunGraph(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                VectorRef *outputs);
   void RunGraphAsync(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                      VectorRef *outputs);
-  void BuildOpAsync(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                    const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask);
-  void RunOpAsync(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                  const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs);
+  void BuildOp(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
+               const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask);
+  void RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
+             const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs);
   void OnRunGraphFinished();
   bool CreateCommGroup(const std::string &group_name, std::vector<uint32_t> ranks);
   bool DestroyCommGroup(const std::string &group_name);
@@ -166,7 +171,7 @@ class Executor {
   void UpdateOutputTensors(VectorRef *outputs,
                            const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node);
   std::vector<std::shared_ptr<RunGraphTask>> GetNewReadyTasks();
-  bool IsAllInputsReady(const std::vector<tensor::TensorPtr> &inputs);
+  bool IsTaskReady(const std::shared_ptr<RunGraphTask> &task);
   void CheckException();
   void OnWorkerExit();
 

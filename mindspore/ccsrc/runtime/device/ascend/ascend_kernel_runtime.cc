@@ -21,6 +21,7 @@
 #include <utility>
 #include <exception>
 #include <algorithm>
+#include <thread>
 #include "runtime/device/ascend/ascend_device_address.h"
 #include "runtime/device/cpu/mpi/mpi_interface.h"
 #include "utils/ms_context.h"
@@ -61,6 +62,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 static const size_t PRAMATER_OUTPUT_INDEX = 0;
+static thread_local rtContext_t thread_local_rt_context{nullptr};
 namespace {
 std::string GetRankId() {
   std::string rank_id_str;
@@ -100,6 +102,20 @@ void AscendKernelRuntime::SetContext() {
   if (rt_context_ == nullptr) {
     return;
   }
+  if (thread_local_rt_context == rt_context_) {
+    return;
+  }
+  auto ret = rtCtxSetCurrent(rt_context_);
+  thread_local_rt_context = rt_context_;
+  if (ret != RT_ERROR_NONE) {
+    MS_EXCEPTION(DeviceProcessError) << "Call rtCtxSetCurrent, ret[" << ret << "]";
+  }
+}
+
+void AscendKernelRuntime::InnerSetContext() {
+  if (rt_context_ == nullptr) {
+    return;
+  }
   auto ret = rtCtxSetCurrent(rt_context_);
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtCtxSetCurrent, ret[" << ret << "]";
@@ -107,7 +123,7 @@ void AscendKernelRuntime::SetContext() {
 }
 
 void AscendKernelRuntime::ClearGraphModelMap() {
-  SetContext();
+  InnerSetContext();
   for (auto &iter : graph_data_dumper_) {
     MS_LOG(INFO) << "[DataDump] Unload data dumper:" << iter.first;
     auto &data_dumper = iter.second;
@@ -131,7 +147,7 @@ void AscendKernelRuntime::ClearGraphModelMap() {
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &,
                                                     const std::unordered_set<ValueNodePtr> &,
                                                     const std::vector<CNodePtr> &) {
-  SetContext();
+  InnerSetContext();
   MS_LOG(DEBUG) << "Clear graph:" << graph_id << " data dumper";
   if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
     MS_LOG(DEBUG) << "Unload dump info " << graph_id;
@@ -189,7 +205,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   if (!initialized_) {
     return;
   }
-  SetContext();
+  InnerSetContext();
   // release ge runtime
   ClearGraphModelMap();
 
@@ -214,7 +230,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 
 bool AscendKernelRuntime::Init() {
   if (initialized_) {
-    SetContext();
+    InnerSetContext();
     return true;
   }
   // Start up profiling before rtSetDevice
@@ -336,7 +352,7 @@ bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
 }
 
 bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
-  SetContext();
+  InnerSetContext();
   if (graph == nullptr) {
     MS_EXCEPTION(NotExistsError) << "session::KernelGraph is NULL!";
   }
@@ -390,7 +406,7 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
 }
 
 bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
-  SetContext();
+  InnerSetContext();
   if (graph == nullptr) {
     MS_EXCEPTION(NotExistsError) << "Null pointer graph, LoadTask failed. ";
   }
@@ -505,7 +521,7 @@ bool AscendKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink, De
 }
 
 bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
-  SetContext();
+  InnerSetContext();
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "RunTask start. GraphId:" << graph->graph_id();
 
@@ -533,7 +549,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
 }
 
 bool AscendKernelRuntime::SyncStream() {
-  SetContext();
+  InnerSetContext();
   if (RT_ERROR_NONE != rtStreamSynchronize(stream_)) {  // o for switch stream
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return false;
@@ -570,7 +586,7 @@ bool AscendKernelRuntime::InitDevice() {
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtCtxCreate, ret[" << static_cast<int>(ret) << "]";
   }
-  SetContext();
+  InnerSetContext();
   ret = rtStreamCreate(&stream_, 0);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rtStreamCreate, ret[" << ret << "]";
@@ -580,7 +596,7 @@ bool AscendKernelRuntime::InitDevice() {
 }
 
 bool AscendKernelRuntime::ResetDevice() {
-  SetContext();
+  InnerSetContext();
   if (stream_ != nullptr) {
     auto ret = rtStreamDestroy(stream_);
     if (ret != RT_ERROR_NONE) {

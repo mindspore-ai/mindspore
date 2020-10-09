@@ -55,8 +55,8 @@ void AscendInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &k
   }
 }
 
-GraphId AscendInferenceSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
-  auto graph_id = AscendSession::CompileGraph(func_graph);
+GraphId AscendInferenceSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
+  auto graph_id = AscendSession::CompileGraphImpl(func_graph);
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // load weight data to device

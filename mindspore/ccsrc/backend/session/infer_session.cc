@@ -307,7 +307,7 @@ void MSInferSession::RegAllOp() {
 Status MSInferSession::CompileGraph(std::shared_ptr<FuncGraph> funcGraphPtr, uint32_t &model_id) {
   MS_ASSERT(session_impl_ != nullptr);
   try {
-    auto graph_id = session_impl_->CompileGraphAsync(NOT_NULL(funcGraphPtr));
+    auto graph_id = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
     py::gil_scoped_release gil_release;
     model_id = graph_id;
     return SUCCESS;
@@ -321,8 +321,7 @@ std::vector<tensor::TensorPtr> MSInferSession::RunGraph(uint32_t graph_id,
                                                         const std::vector<tensor::TensorPtr> &inputs) {
   try {
     VectorRef outputs;
-    session_impl_->RunGraphAsync(graph_id, inputs, &outputs);
-
+    session_impl_->RunGraph(graph_id, inputs, &outputs);
     return TransformVectorRefToMultiTensor(outputs);
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "Inference Rungraph failed";

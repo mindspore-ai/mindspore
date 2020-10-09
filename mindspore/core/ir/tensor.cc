@@ -541,7 +541,7 @@ std::string Tensor::ToStringInternal(int limit_size) const {
   std::ostringstream buf;
   auto dtype = Dtype();
   MS_EXCEPTION_IF_NULL(dtype);
-  data_sync();
+  data_sync(false);
   buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ", value=";
   if (limit_size <= 0 || DataSize() < limit_size) {
     // Only print data for small tensor.
@@ -567,14 +567,16 @@ std::string Tensor::ToStringRepr() const {
   std::ostringstream buf;
   auto dtype = Dtype();
   MS_EXCEPTION_IF_NULL(dtype);
-  data_sync();
+  data_sync(false);
   buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString()
       << ", value=" << ((data().ndim() > 1) ? '\n' : ' ') << data().ToString(data_type_, shape_, true) << ')';
   return buf.str();
 }
 
-void Tensor::data_sync() const {
-  Wait();
+void Tensor::data_sync(bool need_wait) const {
+  if (need_wait) {
+    Wait();
+  }
   if (device_sync_ == nullptr) {
     return;
   }

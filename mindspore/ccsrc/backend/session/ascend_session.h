@@ -40,7 +40,16 @@ enum GraphType : int { COMMON_GRAPH = 0, CONDITION_GRAPH = 1, BRANCH_START = 2, 
 class AscendSession : public SessionBasic {
  public:
   AscendSession() { final_graph_id_ = kInvalidGraphId; }
-  ~AscendSession() override = default;
+  ~AscendSession() {
+    if (rt_context_ != nullptr) {
+      auto ret = rtCtxDestroy(rt_context_);
+      if (ret != RT_ERROR_NONE) {
+        MS_EXCEPTION(DeviceProcessError) << "Call rtCtxDestroy, ret[" << ret << "]";
+      }
+      rt_context_ = nullptr;
+    }
+  }
+
   void Init(uint32_t device_id) override {
     InitDevice(kAscendDevice, device_id);
     auto ret = rtCtxCreate(&rt_context_, 0, device_id);
@@ -52,24 +61,26 @@ class AscendSession : public SessionBasic {
       MS_EXCEPTION(DeviceProcessError) << "Call rtCtxSetCurrent, ret[" << ret << "]";
     }
   }
-  GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
-  GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph) override;
-  GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs) override;
-  void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
-  void BuildGraph(GraphId) override;
-  void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-               const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) override;
-  void RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-             const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) override;
 
   // get graph id in child graphs by ME front anf node pointer
   GraphId GetGraphIdByNode(const AnfNodePtr &front_anf) const override;
   // get graph id of final graph
   GraphId GetFinalRunGraph() const override { return final_graph_id_; }
-  // compile child graph when session have multiple child graphs
-  void CompileChildGraph(const KernelGraphPtr &child_graph);
+
+ protected:
+  GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
+  GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) override;
+  GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs) override;
+  void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
+  void BuildGraphImpl(GraphId) override;
+  void BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                   const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) override;
+  void RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                 const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) override;
 
  private:
+  // compile child graph when session have multiple child graphs
+  void CompileChildGraph(const KernelGraphPtr &child_graph);
   void RecurseSetSummaryNodes(KernelGraph *graph, std::map<std::string, std::pair<AnfNodePtr, int>> *summary);
   void SetSummaryNodes(KernelGraph *graph) override;
   void InitRuntimeResource();

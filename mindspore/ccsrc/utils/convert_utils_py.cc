@@ -39,6 +39,17 @@ py::object BuiltinsToPyData(const BaseRef &value);
 py::object VectorToPyData(const Any &value);
 py::object VectorRefToPyData(const VectorRef &value);
 
+py::object TensorToPyData(const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->NeedWait()) {
+    py::gil_scoped_release release;
+    tensor->Wait();
+  }
+  py::tuple v(1);
+  v[0] = tensor;
+  return v[0];
+}
+
 py::object ValuePtrToPyData(const ValuePtr &value) {
   if (value == nullptr) {
     MS_LOG(EXCEPTION) << "value is null";
@@ -94,9 +105,8 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
     ret = v;
   } else if (value->isa<tensor::Tensor>()) {
     MS_LOG(DEBUG) << "tensor";
-    py::tuple v(1);
-    v[0] = value->cast<tensor::TensorPtr>();
-    ret = v[0];
+    auto tensor_ptr = value->cast<tensor::TensorPtr>();
+    ret = TensorToPyData(tensor_ptr);
   } else if (value->isa<tensor::MetaTensor>()) {
     MS_LOG(DEBUG) << "MetaTensor";
     py::tuple v(1);
@@ -166,9 +176,8 @@ py::object AnyToPyData(const Any &value) {
     ret = ValuePtrToPyData(v);
   } else if (value.is<tensor::TensorPtr>()) {
     MS_LOG(DEBUG) << "tensor";
-    py::tuple v(1);
-    v[0] = value.cast<tensor::TensorPtr>();
-    ret = v[0];
+    auto tensor_ptr = value.cast<tensor::TensorPtr>();
+    ret = TensorToPyData(tensor_ptr);
   } else if (value.is<py::object>()) {
     MS_LOG(DEBUG) << "py obj";
     ret = value.cast<py::object>();
@@ -210,9 +219,8 @@ py::object BaseRefToPyData(const BaseRef &value) {
     ret = ValuePtrToPyData(v);
   } else if (utils::isa<tensor::TensorPtr>(value)) {
     MS_LOG(DEBUG) << "tensor";
-    py::tuple v(1);
-    v[0] = utils::cast<tensor::TensorPtr>(value);
-    ret = v[0];
+    auto tensor_ptr = utils::cast<tensor::TensorPtr>(value);
+    ret = TensorToPyData(tensor_ptr);
   } else if (utils::isa<PyObjectRef>(value)) {
     MS_LOG(DEBUG) << "py obj";
     PyObjectRef py_ref = utils::cast<PyObjectRef>(value);
