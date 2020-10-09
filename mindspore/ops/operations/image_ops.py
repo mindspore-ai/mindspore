@@ -82,7 +82,7 @@ class CropAndResize(PrimitiveWithInfer):
         """Initialize CropAndResize"""
         self.init_prim_io_names(inputs=['x', 'boxes', 'box_index', 'crop_size'], outputs=['y'])
         validator.check_value_type("method", method, [str], self.name)
-        validator.check_string("method", method, ["bilinear", "nearest", "bilinear_v2"], self.name)
+        validator.check_string(method, ["bilinear", "nearest", "bilinear_v2"], "method", self.name)
         self.method = method
         validator.check_value_type("extrapolation_value", extrapolation_value, [float], self.name)
         self.extrapolation_value = extrapolation_value

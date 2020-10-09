@@ -15,7 +15,7 @@
 """Aggregator."""
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
-from mindspore._checkparam import check_int_positive, check_bool
+from mindspore._checkparam import check_int_positive, Validator
 from mindspore._extends import cell_attr_register
 from mindspore.common.initializer import initializer
 from mindspore.nn.layer.activation import get_activation
@@ -75,7 +75,7 @@ class GNNFeatureTransform(nn.Cell):
         super(GNNFeatureTransform, self).__init__()
         self.in_channels = check_int_positive(in_channels)
         self.out_channels = check_int_positive(out_channels)
-        self.has_bias = check_bool(has_bias)
+        self.has_bias = Validator.check_bool(has_bias)
 
         if isinstance(weight_init, Tensor):
             if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \
@@ -284,7 +284,7 @@ class AttentionHead(nn.Cell):
         self.batch_matmul = P.BatchMatMul()
         self.bias_add = P.BiasAdd()
         self.bias = Parameter(initializer('zeros', self.out_channel), name='bias')
-        self.residual = check_bool(residual)
+        self.residual = Validator.check_bool(residual)
         if self.residual:
             if in_channel != out_channel:
                 self.residual_transform_flag = True

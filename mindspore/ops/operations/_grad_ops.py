@@ -216,7 +216,7 @@ class KLDivLossGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, reduction='mean'):
-        self.reduction = validator.check_string('reduction', reduction, ['none', 'mean', 'sum'], self.name)
+        self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
 
     def infer_shape(self, x_shape, y_shape, doutput_shape):
         validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
@@ -233,7 +233,7 @@ class BinaryCrossEntropyGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, reduction='mean'):
-        self.reduction = validator.check_string('reduction', reduction, ['none', 'mean', 'sum'], self.name)
+        self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
 
     def infer_shape(self, x_shape, y_shape, doutput_shape, weight_shape):
         validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
@@ -609,7 +609,7 @@ class _PoolGrad(PrimitiveWithInfer):
 
         validator.check_value_type('ksize', ksize, [int, tuple], self.name)
         validator.check_value_type('strides', strides, [int, tuple], self.name)
-        self.padding = validator.check_string('padding', padding.upper(), ['VALID', 'SAME'], self.name)
+        self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
         self.add_prim_attr("padding", self.padding)
         self.is_maxpoolgradwithargmax = (self.name == "MaxPoolGradWithArgmax")
         if not self.is_maxpoolgradwithargmax:
@@ -1457,7 +1457,7 @@ class MirrorPadGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, mode="REFLECT"):
         """Initialize MirrorPad"""
-        validator.check_string('mode', mode, ['REFLECT', 'SYMMETRIC'], self.name)
+        validator.check_string(mode, ['REFLECT', 'SYMMETRIC'], 'mode', self.name)
         self.mode = mode
 
     def __infer__(self, dout, paddings):
@@ -1570,7 +1570,7 @@ class BasicLSTMCellCStateGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, forget_bias, activation):
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
-        self.activation = validator.check_string("activation", activation, ['tanh'], self.name)
+        self.activation = validator.check_string(activation, ['tanh'], "activation", self.name)
         self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, c_shape, dht_shape, dct_shape, it_shape, jt_shape, ft_shape, ot_shape, tanhct_shape):

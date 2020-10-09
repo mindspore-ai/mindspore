@@ -22,7 +22,7 @@ from mindspore._c_expression import init_exec_dataset
 from mindspore import context
 from mindspore import log as logger
 from mindspore import nn
-from mindspore._checkparam import check_input_data, check_output_data, check_int_positive, check_bool, check_int
+from mindspore._checkparam import check_input_data, check_output_data, check_int_positive, Validator, check_int
 from mindspore.common import dtype as mstype
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.tensor import Tensor
@@ -603,7 +603,7 @@ class Model:
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
             >>> model.train(2, dataset)
         """
-        check_bool(dataset_sink_mode)
+        dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         check_int(sink_size)
         if sink_size < -1 or sink_size == 0:
             raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
@@ -718,7 +718,7 @@ class Model:
             >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
             >>> model.eval(dataset)
         """
-        check_bool(dataset_sink_mode)
+        dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         _device_number_check(self._parallel_mode, self._device_number)
         if not self._metric_fns:
             raise ValueError("metric fn can not be None or empty.")

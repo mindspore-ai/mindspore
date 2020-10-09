@@ -23,7 +23,7 @@ from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Rel, check_int_positive, check_bool, twice, Validator
+from mindspore._checkparam import Validator, Rel, check_int_positive, twice
 import mindspore.context as context
 from .normalization import BatchNorm2d, BatchNorm1d
 from .activation import get_activation, ReLU, LeakyReLU
@@ -133,7 +133,7 @@ class Conv2dBnAct(Cell):
                               has_bias=has_bias,
                               weight_init=weight_init,
                               bias_init=bias_init)
-        self.has_bn = Validator.check_bool("has_bn", has_bn)
+        self.has_bn = Validator.check_bool(has_bn, "has_bn")
         self.has_act = activation is not None
         self.after_fake = after_fake
         if has_bn:
@@ -201,7 +201,7 @@ class DenseBnAct(Cell):
             weight_init,
             bias_init,
             has_bias)
-        self.has_bn = Validator.check_bool("has_bn", has_bn)
+        self.has_bn = Validator.check_bool(has_bn, "has_bn")
         self.has_act = activation is not None
         self.after_fake = after_fake
         if has_bn:
@@ -511,7 +511,7 @@ class Conv2dBnFoldQuant(Cell):
             channel_axis = 0
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
         self.bias_add = P.BiasAdd()
-        if check_bool(has_bias):
+        if Validator.check_bool(has_bias):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
         else:
             self.bias = None
@@ -668,7 +668,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
         self.quant_delay = quant_delay
 
         self.bias_add = P.BiasAdd()
-        if check_bool(has_bias):
+        if Validator.check_bool(has_bias):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
         else:
             self.bias = None
@@ -799,7 +799,7 @@ class Conv2dQuant(Cell):
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
 
         self.bias_add = P.BiasAdd()
-        if check_bool(has_bias):
+        if Validator.check_bool(has_bias):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
         else:
             self.bias = None
@@ -888,7 +888,7 @@ class DenseQuant(Cell):
         super(DenseQuant, self).__init__()
         self.in_channels = check_int_positive(in_channels)
         self.out_channels = check_int_positive(out_channels)
-        self.has_bias = check_bool(has_bias)
+        self.has_bias = Validator.check_bool(has_bias)
 
         if isinstance(weight_init, Tensor):
             if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \

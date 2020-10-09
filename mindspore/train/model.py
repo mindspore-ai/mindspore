@@ -22,7 +22,7 @@ import numpy as np
 from mindspore import log as logger
 from ..common.tensor import Tensor
 from ..nn.metrics import get_metrics
-from .._checkparam import check_input_data, check_output_data, check_int_positive, check_bool, check_int
+from .._checkparam import check_input_data, check_output_data, check_int_positive, Validator, check_int
 from .callback import _InternalCallbackParam, RunContext, _CallbackManager
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
@@ -548,7 +548,7 @@ class Model:
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
             >>> model.train(2, dataset)
         """
-        check_bool(dataset_sink_mode)
+        dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         if sink_size == -1:
             sink_size = train_dataset.get_dataset_size()
         check_int(sink_size)
@@ -664,7 +664,7 @@ class Model:
             >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
             >>> model.eval(dataset)
         """
-        check_bool(dataset_sink_mode)
+        dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         _device_number_check(self._parallel_mode, self._device_number)
         if not self._metric_fns:
             raise ValueError("metric fn can not be None or empty.")

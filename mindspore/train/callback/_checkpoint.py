@@ -21,7 +21,7 @@ import time
 import threading
 import mindspore.context as context
 from mindspore import log as logger
-from mindspore._checkparam import check_bool, check_int_non_negative
+from mindspore._checkparam import Validator, check_int_non_negative
 from mindspore.train._utils import _make_directory
 from mindspore.train.serialization import save_checkpoint, _save_graph
 from mindspore.parallel._ps_context import _is_role_pserver, _get_ps_mode_rank
@@ -132,8 +132,8 @@ class CheckpointConfig:
             if not self._keep_checkpoint_per_n_minutes or self._keep_checkpoint_per_n_minutes == 0:
                 self._keep_checkpoint_max = 1
 
-        self._integrated_save = check_bool(integrated_save)
-        self._async_save = check_bool(async_save)
+        self._integrated_save = Validator.check_bool(integrated_save)
+        self._async_save = Validator.check_bool(async_save)
 
     @property
     def save_checkpoint_steps(self):

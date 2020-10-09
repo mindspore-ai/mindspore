@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Dataset help for minddata dataset"""
-from mindspore._checkparam import check_bool
+from mindspore._checkparam import Validator
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _to_full_shapes
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes
 from mindspore.context import ParallelMode
@@ -50,7 +50,7 @@ class DatasetHelper:
     """
 
     def __init__(self, dataset, dataset_sink_mode=True, iter_first_order=0):
-        check_bool(dataset_sink_mode)
+        Validator.check_bool(dataset_sink_mode)
         self.iter = _DatasetIterMSLoopSink(dataset, iter_first_order)
 
     def __iter__(self):
