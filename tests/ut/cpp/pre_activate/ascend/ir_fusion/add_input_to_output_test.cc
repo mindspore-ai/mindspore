@@ -38,7 +38,7 @@ class MockOpFinder : public OpFinder {
  public:
   MockOpFinder() = default;
   ~MockOpFinder() override = default;
-  int GetOpRegisteredOutputNum(const std::string &op_name) override { return 2; }
+  int GetOpRegisteredOutputNum(const std::string &op_name, const CNodePtr &cnode) override { return 2; }
 };
 
 TEST_F(TestHWAddInputToOutput, test_add_input_to_output) {

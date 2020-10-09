@@ -18,27 +18,24 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.train.model import Model
+import mindspore.common.dtype as mstype
 
 context.set_context(device_target="Ascend")
 
 
 class Net(nn.Cell):
-    def __init__(self, num_segments):
+    def __init__(self):
         super(Net, self).__init__()
         self.seg_sum = P.UnsortedSegmentSum()
-        self.num_segments = num_segments
 
-    def construct(self, x, segment_ids):
-        return self.seg_sum(x, segment_ids, self.num_segments)
+    def construct(self, x, segment_ids, num_segments):
+        return self.seg_sum(x, segment_ids, num_segments)
 
 
 def me_un_seg_sum(input_, indices, num_segments):
     context.set_context(mode=context.GRAPH_MODE)
-    net = Net(num_segments)
-    net.set_train()
-    model = Model(net)
-    out = model.predict(Tensor(input_), Tensor(indices))
+    net = Net()
+    out = net(Tensor(input_), Tensor(indices), Tensor(num_segments, mstype.int32))
     return out.asnumpy()
 
 
@@ -51,5 +48,6 @@ def comapre_un_seg_sum(shape, indices, num_segments, dtype):
 
 
 def test_net():
+    np.random.seed(0)
     indices = np.random.randint(0, 1280, 1280)
     comapre_un_seg_sum([1280, 768], indices, 8192, np.float32)

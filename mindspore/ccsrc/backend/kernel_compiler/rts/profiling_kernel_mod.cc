@@ -21,8 +21,10 @@
 #include "framework/ge_runtime/task_info.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "runtime/device/ascend/executor/rts/profiling_rts_dynamic_kernel.h"
 
 using ProfilerTraceTaskInfo = ge::model_runner::ProfilerTraceTaskInfo;
+using mindspore::device::ascend::ProfilingRtsDynamicKernel;
 using mindspore::device::ascend::ProfilingUtils;
 
 namespace mindspore {
@@ -63,6 +65,10 @@ std::vector<TaskInfoPtr> ProfilingKernelMod::GenTask(const std::vector<AddressPt
   std::shared_ptr<ProfilerTraceTaskInfo> task_info_ptr =
     std::make_shared<ProfilerTraceTaskInfo>(kernel_name_, stream_id, log_id_, notify_, flags_);
   return {task_info_ptr};
+}
+
+device::DynamicKernelPtr ProfilingKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
+  return std::make_shared<ProfilingRtsDynamicKernel>(stream_ptr, cnode_ptr, log_id_, notify_, flags_);
 }
 }  // namespace kernel
 }  // namespace mindspore

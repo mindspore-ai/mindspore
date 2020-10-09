@@ -21,7 +21,7 @@ lin_space_op_info = TBERegOp("LinSpace") \
     .async_flag(False) \
     .binfile_name("lin_space.so") \
     .compute_cost(10) \
-    .kernel_name("lin_space") \
+    .kernel_name("lin_space_d") \
     .partial_flag(True) \
     .op_pattern("broadcast") \
     .input(0, "assist", False, "required", "all") \

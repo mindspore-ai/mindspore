@@ -65,6 +65,9 @@ const AnfNodePtr ConcatFission::Process(const FuncGraphPtr &func_graph, const An
                                         const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
+  if (AnfAlgo::IsDynamicShape(node)) {
+    return nullptr;
+  }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // The real input begins with index 1.

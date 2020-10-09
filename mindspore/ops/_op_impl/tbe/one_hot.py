@@ -21,7 +21,7 @@ one_hot_op_info = TBERegOp("OneHot") \
     .async_flag(False) \
     .binfile_name("one_hot.so") \
     .compute_cost(10) \
-    .kernel_name("one_hot") \
+    .kernel_name("one_hot_d") \
     .partial_flag(True) \
     .attr("depth", "required", "int", "all") \
     .attr("axis", "required", "int", "all") \

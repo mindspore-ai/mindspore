@@ -245,6 +245,41 @@ ShapeVector RealBroadcast(const std::string &op, ShapeVector x_shape, ShapeVecto
   return broadcast_shape;
 }
 
+ShapeVector BroadcastShape(ShapeVector shpx, ShapeVector shpy) {
+  int dlen = SizeToInt(shpx.size()) - SizeToInt(shpy.size());
+  if (dlen < 0) {
+    for (int i = 0; i < -dlen; ++i) {
+      (void)shpx.insert(shpx.begin(), 1);
+    }
+  } else if (dlen > 0) {
+    for (int i = 0; i < dlen; i++) {
+      (void)shpy.insert(shpy.begin(), 1);
+    }
+  }
+  if (shpx.size() != shpy.size()) {
+    MS_LOG(EXCEPTION) << "Failure: shpx.size() != shpy.size().";
+  }
+  ShapeVector shp;
+  for (size_t i = 0; i < shpx.size(); i++) {
+    auto a = shpx[i];
+    auto b = shpy[i];
+    if (a == 1) {
+      shp.push_back(b);
+    } else if (b == 1) {
+      shp.push_back(a);
+    } else if (a == -1) {
+      shp.push_back(b);
+    } else if (b == -1) {
+      shp.push_back(a);
+    } else if (a == b) {
+      shp.push_back(a);
+    } else {
+      return ShapeVector();
+    }
+  }
+  return shp;
+}
+
 ShapePtr GetBroadcastShape(const std::string &op, const AbstractTensorPtr &tensor_x,
                            const AbstractTensorPtr &tensor_y) {
   mindspore::abstract::ShapePtr tensor_x_shape = tensor_x->shape();

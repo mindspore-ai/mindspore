@@ -21,7 +21,7 @@ softmax_op_info = TBERegOp("Softmax") \
     .async_flag(False) \
     .binfile_name("softmax.so") \
     .compute_cost(10) \
-    .kernel_name("softmax") \
+    .kernel_name("softmax_v2") \
     .partial_flag(True) \
     .attr("axis", "optional", "listInt", "all") \
     .input(0, "x", False, "required", "all") \

@@ -78,6 +78,7 @@ def _check_supported(kernel_info):
     """
     try:
         op_name = kernel_info['op_info']['name']
+        is_dynamic_shape = kernel_info['op_info']['is_dynamic_shape']
         impl_path = build_in_impl_path
         custom_flag = False
         if 'impl_path' in kernel_info and kernel_info['impl_path'] is not None:
@@ -92,8 +93,11 @@ def _check_supported(kernel_info):
 
         if custom_flag:
             op_module = __import__(op_name)
+        elif is_dynamic_shape:
+            op_module = __import__("impl.dynamic." + op_name, globals(), locals(), [op_name], 0)
         else:
             op_module = __import__("impl." + op_name, globals(), locals(), [op_name], 0)
+
         # get function
         if not hasattr(op_module, "check_supported"):
             return ""

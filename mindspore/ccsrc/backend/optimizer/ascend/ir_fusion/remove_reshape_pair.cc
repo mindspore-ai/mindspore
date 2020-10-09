@@ -45,6 +45,10 @@ const AnfNodePtr RemoveReshapePair::Process(const FuncGraphPtr &func_graph, cons
   if (IsUsedByOthers(func_graph, in_reshape)) {
     return nullptr;
   }
+
+  if (AnfAlgo::IsDynamicShape(out_reshape) || AnfAlgo::IsDynamicShape(in_reshape)) {
+    return nullptr;
+  }
   auto output_shape = AnfAlgo::GetOutputDeviceShape(out_reshape, 0);
   auto input_shape = AnfAlgo::GetInputDeviceShape(in_reshape, 0);
   if (kernel::IsSameShape(input_shape, output_shape)) {

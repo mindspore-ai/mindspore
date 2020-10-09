@@ -83,8 +83,8 @@ std::map<int32_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
   while (!build_manger->IsAllTaskFinish()) {
     int task_id = -1;
     std::string task_result;
-    std::string pre_build_result;
-    auto ret = build_manger->WaitOne(&task_id, &task_result, &pre_build_result);
+    std::string build_result;
+    auto ret = build_manger->WaitOne(&task_id, &task_result, &build_result);
     if (!ret) {
       MS_EXCEPTION(ArgumentError) << "Build Failed. wait one ret:" << ret << ", task id:" << task_id;
     }
@@ -94,7 +94,7 @@ std::map<int32_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
                    << "  change to single op build.";
       build_failed_num++;
     }
-    auto kernel_mod_item = build_manger->TaskFinishProcess(task_id, false);
+    auto kernel_mod_item = build_manger->TaskFinishProcess(task_id, build_result, false);
     if (kernel_mod_item.second != nullptr) {
       (void)kernel_mod_ret.emplace(kernel_mod_item);
     }

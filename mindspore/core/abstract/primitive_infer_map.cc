@@ -37,6 +37,11 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     // Maths
     {prim::kPrimMaximumGrad, {InferImplMinOrMaxGrad, true}},
     {prim::kPrimMinimumGrad, {InferImplMinOrMaxGrad, true}},
+
+    {prim::kPrimMul, {InferImplMul, true}},
+    {prim::kPrimTensorAdd, {InferImplTensorAdd, true}},
+    {prim::kPrimSquare, {InferImplSquare, true}},
+
     {prim::kPrimSqrt, {InferImplSqrt, true}},
     // Array
     {prim::kPrimScalarToArray, {InferImplScalarToArray, true}},
@@ -47,6 +52,12 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimUniqueGrad, {InferImplUniqueGrad, true}},
     {prim::kPrimGatherV2, {InferImplGatherV2, true}},
     {prim::kPrimSparseGatherV2, {InferImplGatherV2, true}},
+    {prim::kPrimUnsortedSegmentSum, {InferImplUnsortedSegmentSum, true}},
+    {prim::kPrimScatterAdd, {InferImplScatterAdd, true}},
+    {prim::kPrimScatterUpdate, {InferImplScatterUpdate, true}},
+    {prim::kPrimDiv, {InferImplDiv, true}},
+    {prim::kPrimRealDiv, {InferImplRealDiv, true}},
+    {prim::kPrimShape, {InferImplShape, false}},
     {prim::kPrimDynamicShape, {InferImplDynamicShape, true}},
     // Structure
     {prim::kPrimMakeTuple, {InferImplMakeTuple, true}},
@@ -109,6 +120,11 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimRowTensorGetValues, {InferImplRowTensorGetValues, true}},
     {prim::kPrimRowTensorGetIndices, {InferImplRowTensorGetIndices, true}},
     {prim::kPrimRowTensorGetDenseShape, {InferImplRowTensorGetDenseShape, true}},
+    // Comm Ops
+    {prim::kPrimAllReduce, {InferImplAllReduce, true}},
+    {prim::kPrimBroadcast, {InferImplBroadcast, true}},
+    {prim::kPrimAllGather, {InferImplAllGather, true}},
+    {prim::kPrimReduceScatter, {InferImplReduceScatter, true}},
   };
   return prim_eval_implement_map;
 }

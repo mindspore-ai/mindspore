@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 assign_add_op_info = TBERegOp("AssignAdd") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("assignadd.so") \
+    .binfile_name("assign_add.so") \
     .compute_cost(10) \
-    .kernel_name("assignadd") \
+    .kernel_name("assign_add") \
     .partial_flag(True) \
     .input(0, "ref", False, "required", "all") \
     .input(1, "value", False, "required", "all") \

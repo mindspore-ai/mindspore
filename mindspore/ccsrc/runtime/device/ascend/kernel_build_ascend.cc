@@ -27,6 +27,7 @@
 #include "backend/kernel_compiler/tbe/tbe_kernel_parallel_build.h"
 #include "backend/kernel_compiler/akg/ascend/akg_ascend_kernel_build.h"
 #include "backend/kernel_compiler/aicpu/aicpu_kernel_build.h"
+#include "backend/kernel_compiler/host/host_kernel_build.h"
 #include "backend/kernel_compiler/hccl/hccl_kernel_build.h"
 #include "backend/kernel_compiler/rts/rt_kernel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
@@ -45,6 +46,10 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
   switch (kernel_type) {
     case KernelType::AICPU_KERNEL: {
       kernel_mod_ptr = kernel::AicpuOpBuild(anf_node);
+      break;
+    }
+    case KernelType::HOST_KERNEL: {
+      kernel_mod_ptr = kernel::HostOpBuild(anf_node);
       break;
     }
     case KernelType::RT_KERNEL: {

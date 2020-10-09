@@ -22,6 +22,10 @@
 #include <utility>
 #include <algorithm>
 #include <map>
+#include <unordered_map>
+#include <unordered_set>
+#include "utils/ms_utils.h"
+#include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 #include "debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
 #include "utils/ms_context.h"
@@ -493,7 +497,7 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
     }
     // we set special device info of a input tensor.
     bool is_ref = false;
-    auto op_info = kernel::OpLib::FindOp(AnfAlgo::GetCNodeName(kernel_node), kernel::kTBE);
+    auto op_info = kernel::tbe::TbeDynamicShapeUtil::FindOp(AnfAlgo::GetCNodeName(kernel_node), kernel_node);
     if (op_info != nullptr) {
       is_ref = op_info->is_ref();
     }

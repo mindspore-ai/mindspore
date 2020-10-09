@@ -372,7 +372,7 @@ kernel::KernelModPtr AscendDeviceAddress::CompileTransDataAndObtainKernelMod(con
   // get size
   std::vector<size_t> input_size_list;
   std::vector<size_t> output_size_list;
-  (void)kernel::TbeKernelBuild::GetIOSize(kernel_json, &input_size_list, &output_size_list);
+  (void)kernel::TbeKernelBuild::GetIOSize(kernel_json, &input_size_list, &output_size_list, nullptr);
   std::string json_name = kernel_json[op_info_str][kernel_name_str];
   // op build
   if (constructed_kernel.find(json_name) == constructed_kernel.end()) {
@@ -382,15 +382,15 @@ kernel::KernelModPtr AscendDeviceAddress::CompileTransDataAndObtainKernelMod(con
   while (!build_manager->IsAllTaskFinish()) {
     int task_id = -1;
     std::string task_result;
-    std::string pre_build_result;
-    auto ret = build_manager->WaitOne(&task_id, &task_result, &pre_build_result);
+    std::string build_result;
+    auto ret = build_manager->WaitOne(&task_id, &task_result, &build_result);
     if (!ret) {
       MS_EXCEPTION(ArgumentError) << "Build Failed. wait one ret:" << ret << ", task id:" << task_id;
     }
     if (task_result != "Success") {
       MS_EXCEPTION(ArgumentError) << "task compile Failed, task id:" << task_id << ", cause:" << task_result;
     }
-    (void)build_manager->TaskFinishProcess(task_id, false);
+    (void)build_manager->TaskFinishProcess(task_id, build_result, false);
   }
   constructed_kernel.insert(json_name);
   // search cache

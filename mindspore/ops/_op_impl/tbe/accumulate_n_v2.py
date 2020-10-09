@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 accumulate_n_v2_op_info = TBERegOp("AccumulateNV2") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
-    .binfile_name("accumulate_n_v2.so") \
+    .binfile_name("accumulate_nv2.so") \
     .compute_cost(10) \
-    .kernel_name("accumulate_n_v2") \
+    .kernel_name("accumulate_nv2") \
     .partial_flag(True) \
     .attr("n", "required", "int", "all") \
     .input(0, "x", False, "dynamic", "all") \

@@ -21,7 +21,7 @@ realdiv_op_info = TBERegOp("RealDiv") \
     .async_flag(False) \
     .binfile_name("realdiv.so") \
     .compute_cost(10) \
-    .kernel_name("realdiv") \
+    .kernel_name("real_div") \
     .partial_flag(True) \
     .input(0, "x", False, "required", "all") \
     .input(1, "y", False, "required", "all") \

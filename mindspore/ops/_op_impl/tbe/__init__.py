@@ -62,7 +62,9 @@ from .max_pool_grad import _max_pool_grad_tbe
 from .max_pool_grad_with_argmax import _max_pool_grad_with_argmax_tbe
 from .max_pool_with_argmax import _max_pool_with_argmax_tbe
 from .mul import _mul_tbe
+from .mul_ds import _mul_ds_tbe
 from .real_div import _real_div_tbe
+from .real_div_ds import _real_div_ds_tbe
 from .relu import _relu_tbe
 from .relu_grad import _relu_grad_tbe
 from .relu6 import _relu6_tbe
@@ -73,11 +75,11 @@ from .softmax_cross_entropy_with_logits import _softmax_cross_entropy_with_logit
 from .sigmoid_cross_entropy_with_logits import _sigmoid_cross_entropy_with_logits_tbe
 from .sigmoid_cross_entropy_with_logits_grad import _sigmoid_cross_entropy_with_logits_grad_tbe
 from .tensor_add import _tensor_add_tbe
+from .tensor_add_ds import _tensor_add_ds_tbe
 from .trans_data import _trans_data_tbe
 from .top_k import _top_k_tbe
 from .matmul import _matmul_tbe
 from .sub import _sub_tbe
-from .reduce_mean_d import _reduce_mean_d_tbe
 from .scatter_nd import _scatter_nd_tbe
 from .scatter_nd_d import _scatter_nd_d_tbe
 from .scatter_nd_add import _scatter_nd_add_tbe
@@ -87,6 +89,7 @@ from .reduce_mean import _reduce_mean_tbe
 from .tile import _tile_tbe
 from .atomic_addr_clean import _atomic_addr_clean_tbe
 from .gather_v2 import _gather_v2_tbe
+from .gather_v2_ds import _gather_v2_ds_tbe
 from .gather_nd import _gather_nd_tbe
 from .bn_training_reduce import _bn_training_reduce_tbe
 from .bn_training_reduce_grad import _bn_training_reduce_grad_tbe
@@ -106,6 +109,7 @@ from .expm1 import _expm1_tbe
 from .elu import _elu_tbe
 from .elu_grad import _elu_grad_tbe
 from .div import _div_tbe
+from .div_ds import _div_ds_tbe
 from .log import _log_tbe
 from .xdivy import _xdivy_tbe
 from .xlogy import _xlogy_tbe
@@ -134,15 +138,19 @@ from .softplus import _softplus_tbe
 from .softplus_grad import _softplus_grad_tbe
 from .softmax_grad_ext import _softmax_grad_ext_tbe
 from .square import _square_tbe
+from .square_ds import _square_ds_tbe
 from .squared_difference import _squared_difference_tbe
 from .sqrt import _sqrt_tbe
+from .sqrt_ds import _sqrt_ds_tbe
 from .sparse_apply_ftrl_d import _sparse_apply_ftrl_d
+from .sparse_apply_ftrl_d_ds import _sparse_apply_ftrl_d_ds
 from .sparse_apply_proximal_adagrad import _sparse_apply_proximal_adagrad
 from .apply_proximal_adagrad import _apply_proximal_adagrad
 from .transpose_d import _transpose_d_tbe
 from .truncate_div import _truncate_div_tbe
 from .truncate_mod import _truncate_mod_tbe
 from .unsorted_segment_sum import _unsorted_segment_sum_tbe
+from .unsorted_segment_sum_ds import _unsorted_segment_sum_ds_tbe
 from .unsorted_segment_prod import _unsorted_segment_prod_tbe
 from .logsoftmax_grad import _logsoftmax_grad_tbe
 from .logsoftmax import _logsoftmax_tbe
@@ -229,6 +237,7 @@ from .square_sum_all import _square_sum_all_tbe
 from .pack import _pack_tbe
 from .unpack import _unpack_tbe
 from .scatter_update import _scatter_update_tbe
+from .scatter_update_ds import _scatter_update_ds_tbe
 from .prelu import _prelu_tbe
 from .prelu_grad import _prelu_grad_tbe
 from .binary_cross_entropy import _binary_cross_entropy_tbe
@@ -245,6 +254,7 @@ from .sqrt_grad import _sqrt_grad_tbe
 from .rsqrt_grad import _rsqrt_grad_tbe
 from .flatten_grad import _flatten_grad_tbe
 from .scatter_add import _scatter_add_tbe
+from .scatter_add_ds import _scatter_add_ds_tbe
 from .atan2 import _atan2_tbe
 from .bessel_i0e import _bessel_i0e_tbe
 from .bessel_i1e import _bessel_i1e_tbe

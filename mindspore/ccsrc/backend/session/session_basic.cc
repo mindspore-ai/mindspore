@@ -35,6 +35,7 @@
 #include "ir/dtype.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
+#include "utils/utils.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/worker.h"
 #include "ps/common.h"
@@ -1403,6 +1404,97 @@ void SessionBasic::RunGraphAsync(const GraphId &graph_id, const std::vector<tens
                                  VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(executor_);
   executor_->RunGraphAsync(shared_from_this(), graph_id, inputs, outputs);
+}
+
+bool IsDynamicShape(const NotNull<abstract::ShapePtr> &shape) {
+  return !std::all_of(shape->shape().begin(), shape->shape().end(), [](int s) { return s > 0; });
+}
+
+bool IsNodeOutputDynamicShape(const CNodePtr &anf_node_ptr) {
+  MS_EXCEPTION_IF_NULL(anf_node_ptr);
+  auto base_shape = anf_node_ptr->Shape();
+  if (base_shape == nullptr) {
+    MS_LOG(INFO) << "Invalid bash shape ptr, node:" << anf_node_ptr->fullname_with_scope();
+    return false;
+  }
+  if (base_shape->isa<abstract::Shape>()) {
+    if (IsDynamicShape(NOT_NULL(base_shape->cast<abstract::ShapePtr>()))) {
+      return true;
+    }
+  } else if (base_shape->isa<abstract::TupleShape>()) {
+    auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+
+    for (size_t i = 0; i < tuple_shape->size(); ++i) {
+      auto b_shp = (*tuple_shape)[i];
+      if (!b_shp->isa<abstract::Shape>()) {
+        continue;
+      }
+      if (IsDynamicShape(NOT_NULL(b_shp->cast<abstract::ShapePtr>()))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
+  MS_EXCEPTION_IF_NULL(anf_node_ptr);
+  auto input_num = AnfAlgo::GetInputTensorNum(anf_node_ptr);
+  for (size_t i = 0; i < input_num; ++i) {
+    auto input_with_index = AnfAlgo::GetPrevNodeOutput(anf_node_ptr, i);
+    auto input = input_with_index.first;
+    auto index = input_with_index.second;
+    MS_EXCEPTION_IF_NULL(input);
+
+    auto base_shape = input->Shape();
+    if (base_shape == nullptr) {
+      MS_LOG(INFO) << "Invalid shape ptr, node:" << input->fullname_with_scope();
+      continue;
+    }
+    if (base_shape->isa<abstract::Shape>()) {
+      if (IsDynamicShape(NOT_NULL(base_shape->cast<abstract::ShapePtr>()))) {
+        return true;
+      }
+    } else if (base_shape->isa<abstract::TupleShape>()) {
+      auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
+      MS_EXCEPTION_IF_NULL(tuple_shape);
+
+      if (index >= tuple_shape->size()) {
+        MS_LOG(INFO) << "Node:" << anf_node_ptr->fullname_with_scope() << "Invalid index:" << index
+                     << " and tuple_shape size:" << tuple_shape->size();
+        continue;
+      }
+
+      auto b_shp = (*tuple_shape)[index];
+      if (!b_shp->isa<abstract::Shape>()) {
+        continue;
+      }
+      if (IsDynamicShape(NOT_NULL(b_shp->cast<abstract::ShapePtr>()))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+void SessionBasic::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &root_graph) {
+  for (const auto &cnode : root_graph->execution_order()) {
+    auto output_dynamic = IsNodeOutputDynamicShape(NOT_NULL(cnode));
+    auto input_dynamic = IsNodeInputDynamicShape(NOT_NULL(cnode));
+    if (output_dynamic || input_dynamic) {
+      AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), cnode);
+      MS_LOG(INFO) << "Set Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
+    }
+    if (output_dynamic) {
+      AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cnode);
+      MS_LOG(INFO) << "Set Output Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
+    }
+    if (input_dynamic) {
+      AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cnode);
+      MS_LOG(INFO) << "Set Input Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
+    }
+  }
 }
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))

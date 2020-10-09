@@ -43,6 +43,8 @@ class GPUKernelRuntime : public KernelRuntime {
                                  const std::vector<CNodePtr> &execution_order) override;
   void AssignMemory(session::KernelGraph *graph) override;
   bool Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger = nullptr) override;
+  bool GenDynamicKernel(const session::KernelGraph *graph) override { return true; }
+  bool RunDynamicKernelAsync(const session::KernelGraph *graph) override { return true; }
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,

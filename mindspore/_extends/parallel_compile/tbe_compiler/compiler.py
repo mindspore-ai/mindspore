@@ -18,6 +18,7 @@ import os
 import sys
 from te.platform.cce_conf import te_set_version
 from te.platform.fusion_util import fusion_op
+import te
 from common import check_kernel_info, get_args, get_build_in_impl_path
 
 build_in_impl_path = get_build_in_impl_path()
@@ -37,6 +38,16 @@ def _initialize(impl_path):
         raise ValueError("Can not find the env TBE_IMPL_PATH")
 
     sys.path.insert(0, op_module_name)
+
+def _replace_range(args):
+    for arg in args:
+        if not arg.__contains__('range'):
+            continue
+        shape_range = arg["range"]
+        for range_item in shape_range:
+            for index, value in enumerate(range_item):
+                if value < 0:
+                    range_item[index] = None
 
 def build_op(build_type, json_str):
     """
@@ -71,11 +82,18 @@ def build_op(build_type, json_str):
         outputs_args = get_args(kernel_info['op_info'], 'outputs')
         attrs_args = get_args(kernel_info['op_info'], 'attrs')
         kernel_name = kernel_info['op_info']['kernel_name']
+        is_dynamic_shape = kernel_info['op_info']['is_dynamic_shape']
+        if is_dynamic_shape:
+            _replace_range(inputs_args)
+            _replace_range(outputs_args)
 
         if custom_flag:
             op_module = __import__(op_name)
         else:
-            op_module = __import__("impl."+op_name, globals(), locals(), [op_name], 0)
+            if is_dynamic_shape:
+                op_module = __import__("impl.dynamic."+op_name, globals(), locals(), [op_name], 0)
+            else:
+                op_module = __import__("impl."+op_name, globals(), locals(), [op_name], 0)
         # get function
         if build_type == op_build:
             if custom_flag:
@@ -92,7 +110,12 @@ def build_op(build_type, json_str):
         if kernel_name[0:19] == "bounding_box_encode":
             return op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name_val=kernel_name)
 
-        return op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
+        if is_dynamic_shape:
+            with te.op.dynamic():
+                op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
+                return te.op.get_compile_info()
+        else:
+            return op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
 
     except Exception as e:
         raise RuntimeError(e)

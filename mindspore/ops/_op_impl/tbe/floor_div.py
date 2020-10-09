@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 floordiv_op_info = TBERegOp("FloorDiv") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
-    .binfile_name("floordiv.so") \
+    .binfile_name("floor_div.so") \
     .compute_cost(10) \
-    .kernel_name("floordiv") \
+    .kernel_name("floor_div") \
     .partial_flag(True) \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \

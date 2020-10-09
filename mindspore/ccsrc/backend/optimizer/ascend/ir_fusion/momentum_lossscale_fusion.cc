@@ -29,6 +29,9 @@ bool CheckValueNodeInputOfMul(const AnfNodePtr &node) {
   if (!node->isa<ValueNode>()) {
     return false;
   }
+  if (AnfAlgo::IsDynamicShape(node)) {
+    return false;
+  }
   std::vector<size_t> mul_input_shape = AnfAlgo::GetOutputInferShape(node, 0);
   return mul_input_shape.empty() || (mul_input_shape.size() == 1 && mul_input_shape[0] == 1);
 }

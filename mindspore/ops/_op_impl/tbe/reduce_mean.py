@@ -21,7 +21,7 @@ reduce_mean_op_info = TBERegOp("ReduceMean") \
     .async_flag(False) \
     .binfile_name("reduce_mean.so") \
     .compute_cost(10) \
-    .kernel_name("reduce_mean") \
+    .kernel_name("reduce_mean_d") \
     .partial_flag(True) \
     .attr("axis", "optional", "listInt", "all") \
     .attr("keep_dims", "optional", "bool", "all") \

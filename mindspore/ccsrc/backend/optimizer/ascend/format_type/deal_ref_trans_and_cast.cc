@@ -36,7 +36,7 @@ session::KernelWithIndex FindRefOriginNode(const AnfNodePtr &node) {
     auto cnode = cur_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     std::string op_name = AnfAlgo::GetCNodeName(cnode);
-    auto op_info = mindspore::kernel::OpLib::FindOp(op_name, kernel::kTBE);
+    auto op_info = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
     // deal ref op
     if (op_info != nullptr && op_info->is_ref()) {
       auto ref_infos = op_info->ref_infos();
@@ -223,7 +223,7 @@ const AnfNodePtr DealRefTransAndCast::Process(const FuncGraphPtr &graph, const A
   DealBroadCastAsRef(graph, cnode);
 
   auto op_name = AnfAlgo::GetCNodeName(cnode);
-  auto op_info = mindspore::kernel::OpLib::FindOp(op_name, kernel::kTBE);
+  auto op_info = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
   if (op_info == nullptr || !op_info->is_ref()) {
     return nullptr;
   }

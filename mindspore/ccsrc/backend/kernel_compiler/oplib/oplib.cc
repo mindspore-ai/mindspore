@@ -38,6 +38,7 @@ constexpr auto kDynamicFormat = "dynamicFormat";
 constexpr auto kFormatAgnostic = "formatAgnostic";
 constexpr auto kBroadcast = "broadcast";
 constexpr auto kReduce = "reduce";
+constexpr auto kDynamicShape = "dynamic_shape";
 constexpr auto kDtypeFormat = "dtype_format";
 constexpr auto kAttr = "attr";
 constexpr auto kIputs = "inputs";
@@ -110,6 +111,10 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
   op_info->set_compute_cost(obj.at(kComputeCost));
   op_info->set_kernel_name(obj.at(kKernelName));
   op_info->set_partial_flag(obj.at(kPartialFlag));
+
+  if (obj.find(kDynamicShape) != obj.end()) {
+    op_info->set_dynamic_shape(obj.at(kDynamicShape));
+  }
 
   if (obj.find(kOpPattern) != obj.end()) {
     std::string op_pattern = obj.at(kOpPattern);
@@ -322,7 +327,7 @@ bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType imply
   return ret;
 }
 
-std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType imply_type) {
+std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType imply_type, bool is_dynamic_shape) {
   if (!OpLib::RegOpFromLocalInfo()) {
     MS_LOG(INFO) << "Warning reg local op info failed.";
   }
@@ -338,16 +343,20 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
   for (auto [iter, end] = op_info_.equal_range(op_name); iter != end; ++iter) {
     auto &op_info = iter->second;
     MS_EXCEPTION_IF_NULL(op_info);
+
     if (op_info->imply_type() != imply_type) {
       continue;
     }
     if (imply_type == kAKG && op_info->processor() != target_processor) {
       continue;
     }
+    if (is_dynamic_shape && !op_info->dynamic_shape()) {
+      continue;
+    }
     return op_info;
   }
   MS_LOG(INFO) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
-               << ", current op num: " << op_info_.size();
+               << ", current op num: " << op_info_.size() << " is_dynamic_shape:" << is_dynamic_shape;
   return nullptr;
 }
 

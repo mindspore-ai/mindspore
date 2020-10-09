@@ -32,6 +32,7 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "utils/ms_context.h"
 #include "runtime/device/memory_manager.h"
+#include "runtime/device/executor/dynamic_kernel.h"
 
 using mindspore::tensor::Tensor;
 using std::vector;
@@ -58,6 +59,8 @@ class KernelRuntime {
   virtual bool LoadData(session::KernelGraph *graph, Debugger *debugger);
   virtual bool Load(session::KernelGraph *graph, bool is_task_sink);
   virtual bool Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger = nullptr) = 0;
+  virtual bool GenDynamicKernel(const session::KernelGraph *graph) = 0;
+  virtual bool RunDynamicKernelAsync(const session::KernelGraph *graph) = 0;
   bool LaunchKernel(const session::KernelGraph *graph);
   bool LaunchTaskBasedOnSingleKernel(kernel::KernelModPtr kernel_mod_ptr, const AddressPtrList &kernel_inputs,
                                      const AddressPtrList &kernel_outputs,
@@ -73,6 +76,12 @@ class KernelRuntime {
   virtual bool SyncStream() = 0;
   virtual void ClearGlobalIdleMem() {}
   virtual void SetContext() {}
+  uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address) {
+    return mem_manager_->MallocMem(type, size, address);
+  }
+  static void GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod, const AnfNodePtr &kernel,
+                            AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces,
+                            AddressPtrList *kernel_outputs);
 
   // for GPU and D to impl
   virtual void ReleaseDeviceRes() {}
@@ -100,10 +109,8 @@ class KernelRuntime {
 
  private:
   void AssignStaticMemoryOutput(const session::KernelGraph *graph);
-  void GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod, const AnfNodePtr &kernel,
-                     AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces, AddressPtrList *kernel_outputs);
   bool LaunchKernelMod(const session::KernelGraph &graph);
-  void GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs);
+  static void GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs);
   size_t CountNodeDeviceMemorySize(const AnfNodePtr &node, size_t output_index);
   void RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph *graph);
   void RunOpAssignOutputMemory(const AnfNodePtr &kernel);
@@ -119,6 +126,7 @@ class KernelRuntime {
 #endif
   void *stream_ = nullptr;
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
+  std::map<uint32_t, std::vector<DynamicKernelPtr>> graph_dynamic_kernel_map_;
 };
 using KernelRuntimePtr = std::shared_ptr<KernelRuntime>;
 }  // namespace device

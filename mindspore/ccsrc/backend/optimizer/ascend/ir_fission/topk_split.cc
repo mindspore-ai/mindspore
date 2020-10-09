@@ -127,6 +127,9 @@ const BaseRef TopKSplit::DefinePattern() const {
 const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
+  if (AnfAlgo::IsDynamicShape(node)) {
+    return nullptr;
+  }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   // set value node as topk's input
   auto cnode = node->cast<CNodePtr>();

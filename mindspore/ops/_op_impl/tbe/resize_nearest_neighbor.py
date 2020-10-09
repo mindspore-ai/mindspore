@@ -21,7 +21,7 @@ resize_nearest_neighbor_op_info = TBERegOp("ResizeNearestNeighbor") \
     .async_flag(False) \
     .binfile_name("resize_nearest_neighbor_d.so") \
     .compute_cost(10) \
-    .kernel_name("resize_nearest_neighbor_d") \
+    .kernel_name("resize_nearest_neighbor_v2_d") \
     .partial_flag(True) \
     .attr("size", "required", "listInt", "all") \
     .attr("align_corners", "optional", "bool", "all") \

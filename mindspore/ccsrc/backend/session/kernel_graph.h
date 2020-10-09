@@ -37,7 +37,13 @@ namespace session {
 using AnfWithOutIndex = std::pair<AnfNodePtr, size_t>;
 class KernelGraph : public FuncGraph {
  public:
-  KernelGraph() : graph_id_(0), start_label_(nullptr), end_goto_(nullptr), null_output_(false), current_epoch_(0) {
+  KernelGraph()
+      : graph_id_(0),
+        start_label_(nullptr),
+        end_goto_(nullptr),
+        null_output_(false),
+        current_epoch_(0),
+        is_dynamic_shape_(false) {
     inputs_ = std::make_shared<std::vector<AnfNodePtr>>();
     execution_order_ = {};
     executable_ = true;
@@ -161,6 +167,7 @@ class KernelGraph : public FuncGraph {
   void set_child_graph_result(const std::vector<AnfNodePtr> &child_graph_result) {
     child_graph_result_ = child_graph_result;
   }
+
   void InsertTupleParameterToMakeTupleMap(const AnfNodePtr &param, const AnfNodePtr &make_tuple) {
     if (tuple_parameter_to_make_tuple_map_.find(param) != tuple_parameter_to_make_tuple_map_.end()) {
       return;
@@ -175,6 +182,9 @@ class KernelGraph : public FuncGraph {
     }
   }
   void RemoveNodeFromGraph(const AnfNodePtr &node);
+
+  void UpdateGraphDynamicAttr();
+  bool is_dynamic_shape() const { return is_dynamic_shape_; }
 
  private:
   // remove value node form graph
@@ -247,10 +257,10 @@ class KernelGraph : public FuncGraph {
   std::unordered_map<AnfNodePtr, std::unordered_map<int, tensor::TensorPtr>> internal_outputs_tensor_map_;
   uint32_t current_epoch_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> tuple_parameter_to_make_tuple_map_;
-
   std::set<AnfNodePtr> visited_nodes_;
   std::map<AnfNodePtr, AnfNodePtr> edge_to_;
   std::stack<AnfNodePtr> loop_nodes_;
+  bool is_dynamic_shape_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

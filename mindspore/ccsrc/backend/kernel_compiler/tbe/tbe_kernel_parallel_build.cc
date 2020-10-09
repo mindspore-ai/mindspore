@@ -15,13 +15,11 @@
  */
 
 #include "backend/kernel_compiler/tbe/tbe_kernel_parallel_build.h"
-
 #include <memory>
 #include <set>
 #include <algorithm>
 #include <vector>
 #include <string>
-
 #include "utils/ms_context.h"
 #include "backend/kernel_compiler/tbe/tbe_adapter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
@@ -29,6 +27,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
+#include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 
 namespace mindspore {
 namespace kernel {
@@ -52,15 +51,18 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     // get size
     std::vector<size_t> input_size_list;
     std::vector<size_t> output_size_list;
-    (void)TbeKernelBuild::GetIOSize(kernel_json, &input_size_list, &output_size_list);
+    (void)TbeKernelBuild::GetIOSize(kernel_json, &input_size_list, &output_size_list, anf_node);
     // search cache
     const std::string &json_name = creator.json_name();
-    if (build_manger->SearchInCache(json_name, processor, input_size_list, output_size_list, anf_node.get())) {
-      MS_LOG(INFO) << "Use cached kernel, kernel json name:." << json_name;
+    auto IsDynamicShape = tbe::TbeDynamicShapeUtil::GetDynamicShapeAttr(anf_node);
+    if (build_manger->SearchInCache(json_name, processor, input_size_list, output_size_list, anf_node.get()) &&
+        !IsDynamicShape) {
+      MS_LOG(INFO) << "Node:" << anf_node->fullname_with_scope() << " Use cached kernel, kernel json name:."
+                   << json_name;
       continue;
     }
     // same op not need build, but need wait build finish to set kernel mode
-    if (processed_kernel.find(json_name) != processed_kernel.end()) {
+    if (processed_kernel.find(json_name) != processed_kernel.end() && !IsDynamicShape) {
       build_manger->SaveSameOpInfo(anf_node, json_name, input_size_list, output_size_list);
       continue;
     }
@@ -72,8 +74,8 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   while (!build_manger->IsAllTaskFinish()) {
     int task_id = -1;
     std::string task_result;
-    std::string pre_build_result;
-    auto ret = build_manger->WaitOne(&task_id, &task_result, &pre_build_result);
+    std::string build_result;
+    auto ret = build_manger->WaitOne(&task_id, &task_result, &build_result);
     if (!ret) {
       MS_EXCEPTION(ArgumentError) << "Build Failed. wait one ret:" << ret << ", task id:" << task_id;
     }
@@ -81,7 +83,7 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     if (task_result != "Success") {
       MS_EXCEPTION(ArgumentError) << "task compile Failed, task id:" << task_id << ", cause:" << task_result;
     }
-    (void)build_manger->TaskFinishProcess(task_id);
+    (void)build_manger->TaskFinishProcess(task_id, build_result);
   }
   return build_manger->GenSameOpKernelMod();
 }
@@ -93,7 +95,7 @@ void ParallelBuildManager::SaveTaskInfo(int32_t task_id, const mindspore::AnfNod
                                         const std::vector<size_t> &output_size_list, int32_t scope_id) {
   MS_LOG(INFO) << "SaveTaskInfo, task id: " << task_id;
   struct KernelBuildTaskInfo task_info;
-  task_info.node = anf_node.get();
+  task_info.node = anf_node;
   task_info.json_name = json_name;
   if (anf_node == nullptr) {
     task_info.processor = tbe::kProcessorAiCore;
@@ -111,7 +113,38 @@ bool ParallelBuildManager::IsAllTaskFinish() const {
   return task_map_.empty();
 }
 
-std::pair<int32_t, KernelModPtr> ParallelBuildManager::TaskFinishProcess(int32_t task_id, bool set_kernel_mod) {
+void ParallelBuildManager::PreTaskFinishProcess(int32_t task_id, const std::string &pre_build_result) {
+  auto task_iter = pre_task_map_.find(task_id);
+  if (task_iter == pre_task_map_.end()) {
+    MS_EXCEPTION(ArgumentError) << "can find pre task_id:" << task_id;
+  }
+  auto node = task_iter->second;
+  auto builder =
+    std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
+  std::string start_flag = "fusion_pattern_start";
+  std::string end_flag = "fusion_pattern_end";
+  int start = pre_build_result.find(start_flag);
+  int end = pre_build_result.find(end_flag);
+  if (start != -1 && end != -1 && end >= start) {
+    std::string result = pre_build_result.substr(start + start_flag.size(), end - start - start_flag.size());
+    if (result.empty()) {
+      (void)pre_task_map_.erase(task_iter);
+      return;
+    }
+    transform(result.begin(), result.end(), result.begin(), ::toupper);
+    AnfAlgo::SetNodeAttr(kAttrFusionType, MakeValue(result), node);
+    FusionType fusion_type = tbe::GetFusionType(result);
+    builder->SetFusionType(fusion_type);
+    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
+  }
+  (void)pre_task_map_.erase(task_iter);
+}
+
+std::pair<int32_t, KernelModPtr> ParallelBuildManager::TaskFinishProcess(int32_t task_id, const std::string &build_ret,
+                                                                         bool set_kernel_mod) {
+  auto compile_info = ProcessBuildRetStr(build_ret);
+  MS_LOG(DEBUG) << "Tbe build ret:" << compile_info;
+
   auto task_iter = task_map_.find(task_id);
   if (task_iter == task_map_.end()) {
     MS_EXCEPTION(ArgumentError) << "can find task_id:" << task_id;
@@ -133,7 +166,9 @@ std::pair<int32_t, KernelModPtr> ParallelBuildManager::TaskFinishProcess(int32_t
                                  task_iter->second.output_size_list, kernel_pack);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   if (set_kernel_mod) {
-    AnfAlgo::SetKernelMod(kernel_mod, task_iter->second.node);
+    AnfAlgo::SetKernelMod(kernel_mod, task_iter->second.node.get());
+    AnfAlgo::SetNodeAttr(kAttrCompileInfo, MakeValue(compile_info), task_iter->second.node);
+    MS_LOG(DEBUG) << "Set Node Attr compile_info:" << compile_info;
   }
   auto ret = std::make_pair(task_iter->second.scope_id, kernel_mod);
   (void)task_map_.erase(task_iter);
@@ -145,7 +180,7 @@ void ParallelBuildManager::SaveSameOpInfo(const mindspore::AnfNodePtr &anf_node,
                                           const std::vector<size_t> &input_size_list,
                                           const std::vector<size_t> &output_size_list) {
   struct KernelBuildTaskInfo task_info;
-  task_info.node = anf_node.get();
+  task_info.node = anf_node;
   task_info.json_name = json_name;
   task_info.processor = tbe::GetProcessor(anf_node);
   task_info.input_size_list.assign(input_size_list.begin(), input_size_list.end());
@@ -156,7 +191,7 @@ void ParallelBuildManager::SaveSameOpInfo(const mindspore::AnfNodePtr &anf_node,
 bool ParallelBuildManager::GenSameOpKernelMod() const {
   for (const auto &task_info : same_op_list_) {
     bool ret = SearchInCache(task_info.json_name, task_info.processor, task_info.input_size_list,
-                             task_info.output_size_list, task_info.node);
+                             task_info.output_size_list, task_info.node.get());
     if (!ret) {
       MS_LOG(INFO) << "can't find " << task_info.json_name << " in cache.";
       return false;
@@ -212,5 +247,20 @@ void ParallelBuildManager::ResetTaskInfo() {
   same_op_list_.clear();
   AscendKernelBuildClient::Instance().TbeReset();
 }
+
+std::string ParallelBuildManager::ProcessBuildRetStr(const std::string &build_result) {
+  std::string start_flag = "fusion_pattern_start";
+  std::string end_flag = "fusion_pattern_end";
+  int start = build_result.find(start_flag);
+  int end = build_result.find(end_flag);
+  if (start != -1 && end != -1 && end >= start) {
+    std::string result = build_result.substr(start + start_flag.size(), end - start - start_flag.size());
+    if (!result.empty()) {
+      return result;
+    }
+  }
+  return "";
+}
+
 }  // namespace kernel
 }  // namespace mindspore

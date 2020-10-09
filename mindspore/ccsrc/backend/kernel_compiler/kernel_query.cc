@@ -18,6 +18,7 @@
 #include <memory>
 #include <algorithm>
 #include "backend/kernel_compiler/aicpu/aicpu_kernel_metadata.h"
+#include "backend/kernel_compiler/host/host_kernel_metadata.h"
 #include "backend/kernel_compiler/rts/rt_kernel_info.h"
 #include "backend/kernel_compiler/hccl/hccl_kernel_metadata.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_select.h"
@@ -85,6 +86,9 @@ void KernelQueryAll(const CNodePtr &kernel_node,
   }
   if (kernel_info_list->empty()) {
     HcclMetadataInfo(kernel_node, kernel_info_list);
+  }
+  if (kernel_info_list->empty()) {
+    HostMetadataInfo(kernel_node, kernel_info_list);
   }
   if (kernel_info_list->empty()) {
     MS_EXCEPTION(NotExistsError)

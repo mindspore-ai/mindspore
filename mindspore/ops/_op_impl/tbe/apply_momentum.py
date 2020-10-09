@@ -21,7 +21,7 @@ apply_momentum_op_info = TBERegOp("ApplyMomentum") \
     .async_flag(False) \
     .binfile_name("apply_momentum.so") \
     .compute_cost(10) \
-    .kernel_name("apply_momentum") \
+    .kernel_name("apply_momentum_d") \
     .partial_flag(True) \
     .attr("use_nesterov", "optional", "bool", "true,false", "false") \
     .input(0, "var", False, "required", "all") \

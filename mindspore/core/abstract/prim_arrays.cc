@@ -23,42 +23,6 @@
 
 namespace mindspore {
 namespace abstract {
-namespace {
-ShapeVector BroadcastShape(ShapeVector shpx, ShapeVector shpy) {
-  int dlen = SizeToInt(shpx.size()) - SizeToInt(shpy.size());
-  if (dlen < 0) {
-    for (int i = 0; i < -dlen; ++i) {
-      (void)shpx.insert(shpx.begin(), 1);
-    }
-  } else if (dlen > 0) {
-    for (int i = 0; i < dlen; i++) {
-      (void)shpy.insert(shpy.begin(), 1);
-    }
-  }
-  if (shpx.size() != shpy.size()) {
-    MS_LOG(EXCEPTION) << "Failure: shpx.size() != shpy.size().";
-  }
-  ShapeVector shp;
-  for (size_t i = 0; i < shpx.size(); i++) {
-    auto a = shpx[i];
-    auto b = shpy[i];
-    if (a == 1) {
-      shp.push_back(b);
-    } else if (b == 1) {
-      shp.push_back(a);
-    } else if (a == -1) {
-      shp.push_back(b);
-    } else if (b == -1) {
-      shp.push_back(a);
-    } else if (a == b) {
-      shp.push_back(a);
-    } else {
-      return ShapeVector();
-    }
-  }
-  return shp;
-}
-}  // namespace
 AbstractBasePtr InferImplScalarToArray(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list) {
   // Inputs: a scalar.
@@ -229,17 +193,123 @@ AbstractBasePtr InferImplUniqueGrad(const AnalysisEnginePtr &, const PrimitivePt
   return std::make_shared<AbstractTensor>(ids->element(), ids_idx->shape());
 }
 
+AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 3);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  auto x_shape = x->shape()->shape();
+
+  auto segment_ids = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(segment_ids);
+  MS_EXCEPTION_IF_NULL(segment_ids->shape());
+  auto segment_ids_shape = segment_ids->shape()->shape();
+  auto num_segments = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
+
+  std::vector<int> shape;
+  auto num_segments_value = num_segments->BuildValue();
+  MS_EXCEPTION_IF_NULL(num_segments_value);
+  if (!num_segments_value->isa<tensor::Tensor>()) {
+    MS_LOG(WARNING) << num_segments_value << "evaluator num_segments_value should be tensor, but got "
+                    << num_segments_value->type_name();
+    shape.emplace_back(-1);
+  } else {
+    auto num_segments_tensor = num_segments_value->cast<tensor::TensorPtr>();
+    int value = *(static_cast<int *>(num_segments_tensor->data_c()));
+    MS_LOG(INFO) << "Infer UnsortedSegmentSum output shape:" << value;
+    shape.emplace_back(value);
+  }
+
+  shape.insert(shape.end(), x_shape.begin() + segment_ids_shape.size(), x_shape.end());
+
+  AbstractTensorPtr ret = std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape));
+  return ret;
+}
+
+AbstractBasePtr InferImplScatterAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 3);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  return std::make_shared<AbstractTensor>(x->element(), x->shape());
+}
+
+AbstractBasePtr InferImplScatterUpdate(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 3);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  return std::make_shared<AbstractTensor>(x->element(), x->shape());
+}
+
+AbstractBasePtr InferImplDiv(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                             const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto y = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  MS_EXCEPTION_IF_NULL(y);
+  MS_EXCEPTION_IF_NULL(y->shape());
+  std::vector<int> x_shape = x->shape()->shape();
+  std::vector<int> y_shape = y->shape()->shape();
+  std::vector<int> out_shape = BroadcastShape(x_shape, y_shape);
+  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(out_shape));
+}
+
+AbstractBasePtr InferImplRealDiv(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto y = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  MS_EXCEPTION_IF_NULL(y);
+  MS_EXCEPTION_IF_NULL(y->shape());
+  std::vector<int> x_shape = x->shape()->shape();
+  std::vector<int> y_shape = y->shape()->shape();
+  std::vector<int> out_shape = BroadcastShape(x_shape, y_shape);
+  if (out_shape.empty()) {
+    MS_LOG(EXCEPTION) << "BroadcastShape fail: " << args_spec_list[0]->ToString() << ","
+                      << args_spec_list[1]->ToString();
+  }
+  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(out_shape));
+}
+
 AbstractBasePtr InferImplGatherV2(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   const std::string &op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 3);
   AbstractTensorPtr params = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   AbstractTensorPtr indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  AbstractScalarPtr axis = CheckArg<AbstractScalar>(op_name, args_spec_list, 2);
+
+  int axis_val = 0;
+  // 3rd input is a Tensor when GatherV2 is a dynamic shape operator
+  if (args_spec_list[2]->isa<AbstractTensor>()) {
+    auto axis = args_spec_list[2]->cast<AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(axis);
+    auto axis_value_ptr = axis->BuildValue();
+    MS_EXCEPTION_IF_NULL(axis_value_ptr);
+    auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(axis_tensor);
+    axis_val = *static_cast<int *>(axis_tensor->data_c());
+  } else if (args_spec_list[2]->isa<AbstractScalar>()) {
+    auto axis = args_spec_list[2]->cast<AbstractScalarPtr>();
+    axis_val = GetValue<int>(axis->BuildValue());
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid abstract type:" << args_spec_list[2]->type_name();
+  }
 
   auto params_shp = params->shape()->shape();
   auto indices_shp = indices->shape()->shape();
-  auto axis_val = GetValue<int>(axis->BuildValue());
 
   auto params_rank = static_cast<int>(params_shp.size());
   if (axis_val < 0) {
@@ -263,6 +333,25 @@ AbstractBasePtr InferImplGatherV2(const AnalysisEnginePtr &, const PrimitivePtr 
   }
 
   return std::make_shared<AbstractTensor>(params->element(), std::make_shared<Shape>(out_shape));
+}
+
+AbstractBasePtr InferImplShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const AbstractBasePtrList &args_spec_list) {
+  const std::string &op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto shape = input->shape()->shape();
+
+  AbstractBasePtrList elements;
+  for (const auto &dim : shape) {
+    if (dim == Shape::SHP_ANY) {
+      elements.push_back(std::make_shared<AbstractScalar>(std::make_shared<AnyValue>(), std::make_shared<Int>(32)));
+    } else {
+      elements.push_back(std::make_shared<AbstractScalar>(dim));
+    }
+  }
+
+  return std::make_shared<AbstractTuple>(elements);
 }
 
 AbstractBasePtr InferImplDynamicShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

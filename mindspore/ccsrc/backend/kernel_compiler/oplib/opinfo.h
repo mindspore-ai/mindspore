@@ -102,6 +102,7 @@ class OpInfo {
     kernel_name_ = opinfo.kernel_name();
     partial_flag_ = opinfo.partial_flag_;
     dynamic_format_ = opinfo.dynamic_format_;
+    dynamic_shape_ = opinfo.dynamic_shape_;
     op_pattern_ = opinfo.op_pattern();
     processor_ = opinfo.processor_;
     for (const auto &attr : opinfo.attrs_ptr()) {
@@ -122,12 +123,14 @@ class OpInfo {
   std::string fusion_type() const { return fusion_type_; }
   std::string kernel_name() const { return kernel_name_; }
   OpPattern op_pattern() const { return op_pattern_; }
+  bool dynamic_shape() const { return dynamic_shape_; }
   std::string processor() const { return processor_; }
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr() const { return attrs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr() const { return inputs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> outputs_ptr() const { return outputs_ptr_; }
   const std::unordered_map<size_t, size_t> &ref_infos() const { return ref_infos_; }
 
+  void set_dynamic_shape(bool dynamic_shape) { dynamic_shape_ = dynamic_shape; }
   void set_op_name(const std::string &op_name) { op_name_ = op_name; }
   void set_imply_type(const OpImplyType imply_type) { imply_type_ = imply_type; }
   void set_impl_path(const std::string &impl_path) { impl_path_ = impl_path; }
@@ -149,7 +152,8 @@ class OpInfo {
   void ClearOutputs() { (void)outputs_ptr_.clear(); }
   bool equals_to(const std::shared_ptr<OpInfo> &other_info) const {
     return this->op_name_ == other_info->op_name_ && this->imply_type_ == other_info->imply_type_ &&
-           this->processor_ == other_info->processor_;
+           this->processor_ == other_info->processor_ && this->op_pattern_ == other_info->op_pattern_ &&
+           this->dynamic_shape_ == other_info->dynamic_shape_;
   }
 
  private:
@@ -163,6 +167,7 @@ class OpInfo {
   std::string kernel_name_;
   bool partial_flag_ = false;
   bool dynamic_format_ = false;
+  bool dynamic_shape_ = false;
   OpPattern op_pattern_ = kCommonPattern;
   std::string processor_;
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr_;

@@ -15,6 +15,7 @@ if (ENABLE_D)
 		"akg/akg_kernel_attrs_process.cc"
 		"akg/akg_kernel_metadata.cc"
 		"tbe/*.cc"
+		"host/*.cc"
 		"aicpu/*.cc"
 		"rts/*.cc"
 		"hccl/*.cc"

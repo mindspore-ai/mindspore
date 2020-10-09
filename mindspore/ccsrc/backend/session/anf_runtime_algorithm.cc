@@ -28,6 +28,7 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "common/trans.h"
+#include "abstract/param_validator.h"
 
 namespace mindspore {
 namespace session {
@@ -42,12 +43,27 @@ namespace {
 constexpr size_t kNopNodeInputSize = 2;
 constexpr size_t kNopNodeRealInputIndex = 1;
 
+bool IsShapeDynamic(const abstract::ShapePtr &shape) {
+  MS_EXCEPTION_IF_NULL(shape);
+  return std::any_of(shape->shape().begin(), shape->shape().end(), [](int s) { return s < 0; });
+}
+
 std::vector<size_t> TransShapeToSizet(const abstract::ShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   std::vector<size_t> shape_size_t;
-  std::transform(shape->shape().begin(), shape->shape().end(), std::back_inserter(shape_size_t), IntToSize);
+  if (IsShapeDynamic(shape)) {
+    if (std::all_of(shape->max_shape().begin(), shape->max_shape().end(), [](int s) { return s >= 0; })) {
+      std::transform(shape->max_shape().begin(), shape->max_shape().end(), std::back_inserter(shape_size_t), IntToSize);
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid Max Shape";
+    }
+  } else {
+    std::transform(shape->shape().begin(), shape->shape().end(), std::back_inserter(shape_size_t), IntToSize);
+  }
   return shape_size_t;
 }
+
+enum ShapeType { kMaxShape, kMinShape };
 }  // namespace
 
 AnfNodePtr AnfRuntimeAlgorithm::GetTupleGetItemRealInput(const CNodePtr &tuple_get_item) {
@@ -1206,19 +1222,6 @@ TypeId AnfRuntimeAlgorithm::GetPrevNodeOutputPrecision(const AnfNodePtr &node, s
   return GetCNodeOutputPrecision(kernel_with_index.first);
 }
 
-bool AnfRuntimeAlgorithm::IsDynamicShape(const AnfNodePtr &node) {
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto has_attr = AnfAlgo::HasNodeAttr(kAttrIsDynamicShape, cnode);
-  if (!has_attr) {
-    return false;
-  }
-  return AnfAlgo::GetNodeAttr<bool>(node, kAttrIsDynamicShape);
-}
-
 bool AnfRuntimeAlgorithm::IsCondControlKernel(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->inputs().empty()) {
@@ -1251,6 +1254,97 @@ bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
     }
   }
   return true;
+}
+
+bool AnfRuntimeAlgorithm::GetBooleanAttr(const AnfNodePtr &node, const std::string &attr) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto has_attr = AnfAlgo::HasNodeAttr(attr, cnode);
+  if (!has_attr) {
+    return false;
+  }
+  return AnfAlgo::GetNodeAttr<bool>(node, attr);
+}
+
+bool AnfRuntimeAlgorithm::IsDynamicShape(const AnfNodePtr &node) {
+  return GetBooleanAttr(node, kAttrInputIsDynamicShape) || GetBooleanAttr(node, kAttrOutputIsDynamicShape);
+}
+
+void AnfRuntimeAlgorithm::GetRealDynamicShape(const std::vector<size_t> &shape,
+                                              NotNull<std::vector<int64_t> *> dynamic_shape) {
+  for (auto size : shape) {
+    if (size == SIZE_MAX) {
+      dynamic_shape->push_back(-1);
+    } else {
+      dynamic_shape->push_back(SizeToLong(size));
+    }
+  }
+}
+
+std::vector<int> GetShapeFromSequeueShape(const abstract::SequeueShapePtr &sequeue_shape_ptr, size_t index,
+                                          ShapeType type) {
+  MS_EXCEPTION_IF_NULL(sequeue_shape_ptr);
+  auto shape_list = sequeue_shape_ptr->shape();
+  if (index >= shape_list.size()) {
+    MS_LOG(EXCEPTION) << "Output Index:" << index << " >= " << shape_list.size();
+  }
+
+  auto shape = shape_list[index];
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape->isa<abstract::Shape>()) {
+    auto shape_ptr = shape->cast<abstract::ShapePtr>();
+    if (type == kMaxShape) {
+      return shape_ptr->max_shape().empty() ? shape_ptr->shape() : shape_ptr->max_shape();
+    } else {
+      return shape_ptr->min_shape().empty() ? shape_ptr->shape() : shape_ptr->min_shape();
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid Shape Type In Shape List";
+  }
+}
+
+std::vector<int> AnfRuntimeAlgorithm::GetInputMaxShape(const AnfNodePtr &anf_node, size_t index) {
+  auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, index);
+  return GetOutputMaxShape(input_node_with_index.first, input_node_with_index.second);
+}
+
+std::vector<int> AnfRuntimeAlgorithm::GetInputMinShape(const AnfNodePtr &anf_node, size_t index) {
+  auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, index);
+  return GetOutputMinShape(input_node_with_index.first, input_node_with_index.second);
+}
+
+std::vector<int> AnfRuntimeAlgorithm::GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto shape = anf_node->Shape();
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape->isa<abstract::Shape>()) {
+    auto shape_ptr = shape->cast<abstract::ShapePtr>();
+    return shape_ptr->max_shape().empty() ? shape_ptr->shape() : shape_ptr->max_shape();
+  } else if (shape->isa<abstract::SequeueShape>()) {
+    auto shape_ptr = shape->cast<abstract::SequeueShapePtr>();
+    return GetShapeFromSequeueShape(shape_ptr, index, kMaxShape);
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid Shape Type";
+  }
+}
+
+std::vector<int> AnfRuntimeAlgorithm::GetOutputMinShape(const AnfNodePtr &anf_node, size_t index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto shape = anf_node->Shape();
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape->isa<abstract::Shape>()) {
+    auto shape_ptr = shape->cast<abstract::ShapePtr>();
+    return shape_ptr->min_shape().empty() ? shape_ptr->shape() : shape_ptr->min_shape();
+  } else if (shape->isa<abstract::SequeueShape>()) {
+    auto shape_ptr = shape->cast<abstract::SequeueShapePtr>();
+    return GetShapeFromSequeueShape(shape_ptr, index, kMinShape);
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid Shape Type";
+  }
 }
 }  // namespace session
 }  // namespace mindspore

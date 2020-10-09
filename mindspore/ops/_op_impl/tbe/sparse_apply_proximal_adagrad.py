@@ -21,7 +21,7 @@ sparse_apply_proximal_adagrad_d_op_info = TBERegOp("SparseApplyProximalAdagrad")
     .async_flag(False) \
     .binfile_name("sparse_apply_proximal_adagrad.so") \
     .compute_cost(10) \
-    .kernel_name("sparse_apply_proximal_adagrad") \
+    .kernel_name("sparse_apply_proximal_adagrad_d") \
     .partial_flag(True) \
     .attr("use_locking", "optional", "bool", "true,false", "false") \
     .input(0, "var", False, "required", "all") \

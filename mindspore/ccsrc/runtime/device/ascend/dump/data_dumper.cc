@@ -24,7 +24,7 @@
 #include "runtime/mem.h"
 #include "runtime/kernel.h"
 #include "runtime/rt_model.h"
-#include "runtime/device/ascend/dump/ge_dump.h"
+#include "runtime/device/ascend/ge_types_convert.h"
 #include "proto/op_mapping_info.pb.h"
 #include "utils/ms_context.h"
 #include "debug/data_dump/dump_json_parser.h"
@@ -369,13 +369,13 @@ void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<ai
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel, i);
 
     aicpu::dump::Output output;
-    output.set_data_type(GetGeDataType(data_type));
-    output.set_format(GetGeFormat(output_format, output_shape.size()));
+    output.set_data_type(GeTypesConvert::GetGeDataType(data_type));
+    output.set_format(GeTypesConvert::GetGeFormat(output_format, output_shape.size()));
     MS_EXCEPTION_IF_NULL(output.mutable_shape());
     for (auto dim : output_shape) {
       output.mutable_shape()->add_dim(dim);
     }
-    output.set_original_output_format(GetGeFormat(output_format, output_shape.size()));
+    output.set_original_output_format(GeTypesConvert::GetGeFormat(output_format, output_shape.size()));
     output.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(args)) + offset);
     // device address data size
     auto address = AnfAlgo::GetOutputAddr(kernel, i);
@@ -409,8 +409,8 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
     }
     auto output_shape = AnfAlgo::GetOutputDeviceShape(input_node, input_index);
 
-    input.set_data_type(GetGeDataType(output_type));
-    input.set_format(GetGeFormat(output_format, output_shape.size()));
+    input.set_data_type(GeTypesConvert::GetGeDataType(output_type));
+    input.set_format(GeTypesConvert::GetGeFormat(output_format, output_shape.size()));
     MS_EXCEPTION_IF_NULL(input.mutable_shape());
     for (auto dim : output_shape) {
       input.mutable_shape()->add_dim(dim);

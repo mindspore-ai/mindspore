@@ -30,6 +30,7 @@
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_reduce_selecter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/common_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_property_checker.h"
+#include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 #include "backend/session/kernel_build_client.h"
 
 namespace mindspore {
@@ -54,7 +55,8 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
   MS_EXCEPTION_IF_NULL(cnode_ptr_);
   MS_EXCEPTION_IF_NULL(kernel_info_list_);
   node_name_ = AnfAlgo::GetCNodeName(cnode_ptr_);
-  auto op_info_ptr = OpLib::FindOp(node_name_, kTBE);
+
+  auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(node_name_, cnode_ptr_);
   if (!op_info_ptr) {
     MS_LOG(INFO) << "Warning: Cann't find tbe core opinfo, node type: " << node_name_;
     return;
@@ -81,6 +83,7 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
   }
   // check support
   FilterInVaildKernelInfo();
+  MS_LOG(INFO) << "End get kernel build info size: " << kernel_info_list_->size() << ", after tbe select.";
 }
 
 void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {

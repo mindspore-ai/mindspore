@@ -40,6 +40,8 @@ class AscendKernelRuntime : public KernelRuntime {
   bool Init() override;
   bool LoadData(session::KernelGraph *graph, Debugger *debugger) override;
   bool GenTask(const session::KernelGraph *graph);
+  bool GenDynamicKernel(const session::KernelGraph *graph) override;
+  bool RunDynamicKernelAsync(const session::KernelGraph *graph) override;
   bool LoadTask(const session::KernelGraph *graph);
   bool RunTask(const session::KernelGraph *graph);
   bool Load(session::KernelGraph *graph, bool is_task_sink) override;

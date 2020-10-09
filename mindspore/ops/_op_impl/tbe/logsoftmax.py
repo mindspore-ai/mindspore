@@ -21,7 +21,7 @@ log_softmax_op_info = TBERegOp("LogSoftmax") \
     .async_flag(False) \
     .binfile_name("log_softmax.so") \
     .compute_cost(10) \
-    .kernel_name("log_softmax") \
+    .kernel_name("log_softmax_v2") \
     .partial_flag(True) \
     .attr("axis", "optional", "listInt", "all") \
     .input(0, "logits", False, "required", "all") \

@@ -174,6 +174,9 @@ void KernelPack::ParseKernelJson(const nlohmann::json &js) {
   kernel_json_info_.block_dim = js["blockDim"];
   kernel_json_info_.kernel_name = js["kernelName"];
   kernel_json_info_.magic = js["magic"];
+  if (js.contains("opParaSize")) {
+    kernel_json_info_.op_para_size = js["opParaSize"];
+  }
   if (js.find("parameters") != js.end()) {
     if (!js.at("parameters").is_array()) {
       MS_LOG(DEBUG) << "Format error!,parameters should be array.";

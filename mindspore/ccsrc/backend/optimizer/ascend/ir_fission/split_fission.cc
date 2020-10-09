@@ -174,6 +174,9 @@ const BaseRef SplitFission::DefinePattern() const {
 
 const AnfNodePtr SplitFission::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(node);
+  if (AnfAlgo::IsDynamicShape(node)) {
+    return nullptr;
+  }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // Check output num

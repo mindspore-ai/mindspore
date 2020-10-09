@@ -26,6 +26,8 @@
 #include "base/base_ref.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "base/core_ops.h"
+#include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
+#include "frontend/operator/ops.h"
 #include "utils/ms_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
@@ -394,6 +396,7 @@ bool IsNopNode(const AnfNodePtr &node) {
       context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
     return false;
   }
+
   static std::unordered_set<std::string> nop_nodes = {prim::kPrimReshape->name(), kExpandDimsOpName,
                                                       prim::kPrimSqueeze->name(), prim::kPrimFlatten->name(),
                                                       kFlattenGradOpName};

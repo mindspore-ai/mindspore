@@ -289,51 +289,25 @@ bool CreateNodeDefBytes(const std::shared_ptr<AnfNode> &anf_node,
   return true;
 }
 
-bool CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<AicpuOpKernelMod> &kernel_mod_ptr) {
-  if (!anf_node->isa<CNode>()) {
-    return true;
-  }
-
-  if (!AnfAlgo::IsDynamicShape(anf_node)) {
-    return true;
-  }
-
-  MS_LOG(INFO) << "CreateExtInfo start, " << anf_node->fullname_with_scope();
-
-  int32_t unknown_shape_type = UnknowShapeOpType::DEPEND_COMPUTE;
-  uint64_t ext_info_head_len = kExtInfoHeadSize;
-  std::string ext_info;
-  size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
-
-  // 1.addr:unknown shape type
-  uint64_t ext_info_len = ext_info.size();
-  ext_info_len += ext_info_head_len + sizeof(int32_t);
-
-  // 2.addr:input ShapeAndType
-  ext_info_len += ext_info_head_len + input_num * sizeof(ShapeAndType);
-
-  // 3.addr:output ShapeAndType
-  ext_info_len += ext_info_head_len + output_num * sizeof(ShapeAndType);
-
-  uint64_t ext_info_offset = ext_info.size();
-  ext_info.resize(ext_info_len, 0);
-  char *ext_info_buf = ext_info.data();
-
+uint64_t SetExtInfoShapeType(char *ext_info_buf, uint64_t ext_info_offset) {
   // deal1: unknown shape type
   ExtInfo *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
   info->infoType = FWK_ADPT_EXT_SHAPE_TYPE;
   info->infoLen = sizeof(int32_t);
-  ext_info_offset += ext_info_head_len;
+  ext_info_offset += kExtInfoHeadSize;
   int32_t *shape_type = reinterpret_cast<int32_t *>(ext_info_buf + ext_info_offset);
-  *shape_type = unknown_shape_type;
+  *shape_type = UnknowShapeOpType::DEPEND_COMPUTE;
   ext_info_offset += info->infoLen;
+  return ext_info_offset;
+}
 
+uint64_t SetExtInfoInputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
+                                  const std::shared_ptr<AnfNode> &anf_node, size_t input_num) {
   // deal2:input ShapeAndType
-  info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
+  ExtInfo *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
   info->infoType = FWK_ADPT_EXT_INPUT_SHAPE;
   info->infoLen = input_num * sizeof(ShapeAndType);
-  ext_info_offset += ext_info_head_len;
+  ext_info_offset += kExtInfoHeadSize;
 
   ShapeAndType *inputs = reinterpret_cast<ShapeAndType *>(ext_info_buf + ext_info_offset);
   for (size_t input_index = 0; input_index < input_num; input_index++) {
@@ -364,12 +338,16 @@ bool CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
     }
   }
   ext_info_offset += info->infoLen;
+  return ext_info_offset;
+}
 
+uint64_t SetExtInfoOutputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
+                                   const std::shared_ptr<AnfNode> &anf_node, size_t output_num) {
   // deal3:output ShapeAndType
-  info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
+  ExtInfo *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
   info->infoType = FWK_ADPT_EXT_OUTPUT_SHAPE;
   info->infoLen = output_num * sizeof(ShapeAndType);
-  ext_info_offset += ext_info_head_len;
+  ext_info_offset += kExtInfoHeadSize;
 
   ShapeAndType *outputs = reinterpret_cast<ShapeAndType *>(ext_info_buf + ext_info_offset);
   for (size_t output_index = 0; output_index < output_num; output_index++) {
@@ -387,6 +365,47 @@ bool CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
     }
   }
 
+  ext_info_offset += info->infoLen;
+  return ext_info_offset;
+}
+
+bool CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<AicpuOpKernelMod> &kernel_mod_ptr) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
+  if (!anf_node->isa<CNode>()) {
+    return true;
+  }
+
+  if (!AnfAlgo::IsDynamicShape(anf_node)) {
+    return true;
+  }
+
+  MS_LOG(INFO) << "CreateExtInfo start, " << anf_node->fullname_with_scope();
+
+  uint64_t ext_info_head_len = kExtInfoHeadSize;
+  std::string ext_info;
+  size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
+
+  // 1.addr:unknown shape type
+  uint64_t ext_info_len = ext_info.size();
+  ext_info_len += ext_info_head_len + sizeof(int32_t);
+
+  // 2.addr:input ShapeAndType
+  ext_info_len += ext_info_head_len + input_num * sizeof(ShapeAndType);
+
+  // 3.addr:output ShapeAndType
+  ext_info_len += ext_info_head_len + output_num * sizeof(ShapeAndType);
+
+  uint64_t ext_info_offset = ext_info.size();
+  ext_info.resize(ext_info_len, 0);
+  char *ext_info_buf = ext_info.data();
+
+  ext_info_offset = SetExtInfoShapeType(ext_info_buf, ext_info_offset);
+  ext_info_offset = SetExtInfoInputShapeType(ext_info_buf, ext_info_offset, anf_node, input_num);
+  ext_info_offset = SetExtInfoOutputShapeType(ext_info_buf, ext_info_offset, anf_node, output_num);
+
+  MS_LOG(INFO) << "Check ext_info_len:" << ext_info_len << " ext_info_offset:" << ext_info_offset;
   // set ext info
   kernel_mod_ptr->SetExtInfo(ext_info);
   return true;
