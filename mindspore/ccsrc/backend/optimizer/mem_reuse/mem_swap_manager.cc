@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
+#include "runtime/device/kernel_runtime_manager.h"
 
 namespace mindspore {
 namespace device {
@@ -191,6 +192,33 @@ bool MemSwapManager::IsCommunicationRelevantOp(const AnfNodePtr &kernel) const {
   return adjacent_with_communication_op;
 }
 
+bool MemSwapManager::IsInplaceRelevantOp(const TensorInfo &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor.kernel_);
+  if (AnfAlgo::IsInplaceNode(tensor.kernel_, "inplace_algo") || AnfAlgo::IsInplaceNode(tensor.kernel_, "skip")) {
+    return true;
+  }
+
+  MS_EXCEPTION_IF_NULL(kernel_graph_);
+  const auto &graph_manager = kernel_graph_->manager();
+  MS_EXCEPTION_IF_NULL(graph_manager);
+  NodeUsersMap &user_map = graph_manager->node_users();
+
+  auto users = user_map.find(tensor.kernel_);
+  for (const auto &user : users->second) {
+    if (!AnfAlgo::IsInplaceNode(user.first, "aggregate")) {
+      continue;
+    }
+
+    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(user.first, user.second);
+    if (tensor.output_idx_ == kernel_with_index.second) {
+      MS_LOG(INFO) << " [inplace optimizer] tensor: " << tensor.kernel_->DebugString()
+                   << "output idx: " << tensor.output_idx_ << " used by aggregate node: " << user.first->DebugString();
+      return true;
+    }
+  }
+  return false;
+}
+
 void MemSwapManager::SaveUserKernelTopoOrder() {
   MS_EXCEPTION_IF_NULL(kernel_graph_);
   const auto &graph_manager = kernel_graph_->manager();
@@ -231,7 +259,10 @@ void MemSwapManager::AddSwapInfo() {
     }
 
     const AnfNodePtr &kernel = tensor.kernel_;
-    if (IsCommunicationRelevantOp(kernel)) {
+    bool filter = IsCommunicationRelevantOp(kernel) || IsInplaceRelevantOp(tensor);
+    if (filter) {
+      MS_LOG(INFO) << " [inplace optimizer] ignore swap tensor: " << kernel->DebugString() << ", index"
+                   << tensor.output_idx_;
       continue;
     }
 

@@ -94,6 +94,7 @@ class GPUKernelRuntime : public KernelRuntime {
   void UpdateHostSwapInQueue(const DeviceAddressPtr device_address, bool mock);
   void UpdateHostSwapOutQueue(bool mock);
   void ClearSwapInfo(bool mock);
+  void AllocInplaceNodeMemory(const session::KernelGraph *graph);
   std::unordered_map<uint32_t, MemReuseUtilPtr> mem_reuse_util_map_;
   std::unordered_map<uint32_t, MemSwapManagerPtr> mem_swap_map_;
   std::unordered_map<uint32_t, bool> is_first_step_map_;

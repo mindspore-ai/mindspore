@@ -77,6 +77,15 @@ class GpuKernel : public KernelMod {
     }
     return GetValue<T>(attr);
   }
+  template <typename T>
+  inline T GetAttrWithDefault(const CNodePtr &kernel_node, const std::string &key, const T &value) const {
+    const PrimitivePtr &prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    const ValuePtr &attr = prim->GetAttr(key);
+    if (attr == nullptr) {
+      return value;
+    }
+    return GetValue<T>(attr);
+  }
   // expand Nd Shape to 4d (N in [0,4])
   void ShapeNdTo4d(const std::vector<size_t> &src, std::vector<int> *dst) {
     if (src.size() > 4) {

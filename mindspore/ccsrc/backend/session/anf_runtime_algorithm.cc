@@ -1035,6 +1035,21 @@ void AnfRuntimeAlgorithm::SetNodeInput(const CNodePtr &node, const AnfNodePtr &i
   node->set_input(index + 1, input_node);
 }
 
+bool AnfRuntimeAlgorithm::IsInplaceNode(const mindspore::AnfNodePtr &kernel, const string &type) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto primitive = AnfAlgo::GetCNodePrimitive(kernel);
+  if (!primitive) {
+    return false;
+  }
+
+  auto inplace_attr = primitive->GetAttr(type);
+  if (inplace_attr == nullptr) {
+    return false;
+  }
+
+  return true;
+}
+
 bool AnfRuntimeAlgorithm::IsCommunicationOp(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {

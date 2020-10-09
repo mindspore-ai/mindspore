@@ -193,6 +193,7 @@ constexpr auto kEmbeddingLookupProxyOpName = "EmbeddingLookupProxy";
 constexpr auto kPaddingOpName = "Padding";
 constexpr auto kAvgPoolOpName = "AvgPool";
 constexpr auto kAvgPoolGradGpuOpName = "AvgPoolGradGpu";
+constexpr auto kmaxPoolGradOpName = "MaxPoolGrad";
 constexpr auto kTensorAddOpName = "TensorAdd";
 constexpr auto kCastOpName = "Cast";
 constexpr auto kGreaterEqualOpName = "GreaterEqual";

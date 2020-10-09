@@ -46,7 +46,8 @@ class FusedBatchNormGradExGpuKernel : public GpuKernel {
         scale_bias_diff_desc_(nullptr),
         activation_desc_(nullptr),
         handle_(nullptr),
-        cudnn_data_type_(CUDNN_DATA_FLOAT) {}
+        cudnn_data_type_(CUDNN_DATA_FLOAT),
+        beta_data_diff_(0) {}
   ~FusedBatchNormGradExGpuKernel() override { DestroyResource(); }
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -88,12 +89,10 @@ class FusedBatchNormGradExGpuKernel : public GpuKernel {
     }
 
     const float alpha_data_diff = 1;
-    const float beta_data_diff = 0;
     const float alpha_param_diff = 1;
     const float beta_param_diff = 0;
-
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnBatchNormalizationBackwardEx(
-                                  handle_, mode_, bn_ops_, &alpha_data_diff, &beta_data_diff, &alpha_param_diff,
+                                  handle_, mode_, bn_ops_, &alpha_data_diff, &beta_data_diff_, &alpha_param_diff,
                                   &beta_param_diff, x_desc_, x, y_desc_, y, dy_desc_, dy, dz_desc_, dz, dx_desc_, dx,
                                   scale_bias_diff_desc_, scale, bias, dscale, dbias, epsilon_, save_mean, save_variance,
                                   activation_desc_, workspace_addr, workspace_size_, reserve_addr, reserve_size_),
@@ -141,6 +140,7 @@ class FusedBatchNormGradExGpuKernel : public GpuKernel {
       return true;
     }
     std::string format = AnfAlgo::GetInputFormat(kernel_node, 0);
+    beta_data_diff_ = GetAttrWithDefault(kernel_node, "inplace_algo", std::string("cover")) == "cover" ? 0 : 1;
     SetTensorDescriptor(format, shape);
     InitSizeLists();
     return true;
@@ -285,6 +285,7 @@ class FusedBatchNormGradExGpuKernel : public GpuKernel {
 
   cudnnHandle_t handle_;
   cudnnDataType_t cudnn_data_type_;
+  float beta_data_diff_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
