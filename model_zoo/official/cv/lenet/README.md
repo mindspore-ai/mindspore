@@ -119,7 +119,7 @@ Major parameters in train.py and config.py as follows:
 
 ```
 python train.py --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
-or enter script dir, and run the script
+# or enter script dir, and run the script
 sh run_standalone_train_ascend.sh Data ckpt
 ```
 
@@ -145,7 +145,7 @@ Before running the command below, please check the checkpoint path used for eval
 
 ```
 python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
-or enter script dir, and run the script
+# or enter script dir, and run the script
 sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
 ```
 

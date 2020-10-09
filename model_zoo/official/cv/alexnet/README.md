@@ -159,7 +159,7 @@ Before running the command below, please check the checkpoint path used for eval
 
   ```
   python eval.py --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-1_1562.ckpt > log.txt 2>&1 &
-  or enter script dir, and run the script
+  # or enter script dir, and run the script
   sh run_standalone_eval_ascend.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-1_1562.ckpt
   ```
 
@@ -174,7 +174,7 @@ Before running the command below, please check the checkpoint path used for eval
 
   ```
   python eval.py --device_target "GPU" --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-30_1562.ckpt > log.txt 2>&1 &
-  or enter script dir, and run the script
+  # or enter script dir, and run the script
   sh run_standalone_eval_for_gpu.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-30_1562.ckpt
   ```
 
