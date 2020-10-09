@@ -63,15 +63,15 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
       true, "conv_tuple_relu", schema::PrimitiveType_Activation, schema::ActivationType_RELU));
     pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(
       true, "conv_tuple_relu6", schema::PrimitiveType_Activation, schema::ActivationType_RELU6));
-    auto weight_format_hardcode_pass = std::make_shared<opt::WeightFormatHardCodePass>();
-    weight_format_hardcode_pass->SetFmkType(config->fmk);
-    weight_format_hardcode_pass->SetQuantType(config->quantType);
-    graph_pm->AddPass(weight_format_hardcode_pass);
-    auto weight_format_transform_pass = std::make_shared<opt::WeightFormatTransformPass>();
-    weight_format_transform_pass->SetFmkType(config->fmk);
-    weight_format_transform_pass->SetQuantType(config->quantType);
-    graph_pm->AddPass(weight_format_transform_pass);
   }
+  auto weight_format_hardcode_pass = std::make_shared<opt::WeightFormatHardCodePass>();
+  weight_format_hardcode_pass->SetFmkType(config->fmk);
+  weight_format_hardcode_pass->SetQuantType(config->quantType);
+  graph_pm->AddPass(weight_format_hardcode_pass);
+  auto weight_format_transform_pass = std::make_shared<opt::WeightFormatTransformPass>();
+  weight_format_transform_pass->SetFmkType(config->fmk);
+  weight_format_transform_pass->SetQuantType(config->quantType);
+  graph_pm->AddPass(weight_format_transform_pass);
 
   if (config->fmk == lite::converter::FmkType_MS) {
     auto remove_unused_cast_pass = std::make_shared<opt::RemoveUnusedCastOpPass>();
