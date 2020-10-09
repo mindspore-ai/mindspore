@@ -141,7 +141,8 @@ if __name__ == '__main__':
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True)
     else:
-        context.set_context(device_id=args.device_id)
+        if args.device_target == "Ascend":
+            context.set_context(device_id=args.device_id)
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 
     # select for master rank save ckpt or all rank save, compatible for model parallel
