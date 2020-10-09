@@ -186,6 +186,7 @@ Status GeneratorOp::FillBuffer(TensorQTable *tt) {
 Status GeneratorOp::operator()() {
   // Handshake with TaskManager to synchronize thread creation
   TaskManager::FindMe()->Post();
+  RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
   std::unique_ptr<DataBuffer> fetched_buffer;
   bool eof = false;
   while (!eof) {
@@ -227,8 +228,17 @@ Status GeneratorOp::operator()() {
         MS_LOG(DEBUG) << "Generator operator main execution loop complete.";
         eof = true;
       } else {
-        // Self-reset to start a new iteration
-        RETURN_IF_NOT_OK(Reset());
+        // Waiting for repeatOp to start new epoch
+        // If Reset() is called first by repeat op, this wait() will return right away.
+        // If Reset() is not called yet, this wait() will block until reset.
+        if (this->op_total_repeats() < 0) {
+          RETURN_IF_NOT_OK(wp_.Wait());
+          // Clear the status of the wait post
+          wp_.Clear();
+        } else {
+          // Self-reset to start a new iteration
+          RETURN_IF_NOT_OK(Reset());
+        }
       }
       UpdateRepeatAndEpochCounter();
     }
@@ -240,6 +250,10 @@ Status GeneratorOp::Reset() {
   // Reset Op state
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   RETURN_IF_NOT_OK(this->Init());
+  if (this->op_total_repeats() < 0) {
+    // Wake up master thread
+    wp_.Set();
+  }
   return Status(StatusCode::kOK, "GeneratorOp Reset Succeed");
 }
 
