@@ -96,6 +96,7 @@ class Distribution(Cell):
         self._set_cross_entropy()
 
         self.context_mode = context.get_context('mode')
+        self.device_target = context.get_context('device_target')
         self.checktuple = CheckTuple()
         self.checktensor = CheckTensor()
         self.broadcast = broadcast_to
