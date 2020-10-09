@@ -87,7 +87,7 @@ DATA_DIR = "/home/workspace/mindspore_dataset/coco/coco2017/mindrecord_train/yol
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@pytest.mark.env_single
 def test_yolov3():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     rank = 0
