@@ -20,7 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include "tools/converter/parser/caffe/caffe_node_parser.h"
-#include "tools/converter/parser/caffe/caffe.pb.h"
+#include "proto/caffe.pb.h"
 
 namespace mindspore::lite {
 class CaffeNodeParserRegistry {

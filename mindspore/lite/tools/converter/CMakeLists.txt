@@ -117,11 +117,15 @@ if (PLATFORM_ARM64)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
 endif ()
 
-if (WIN32)
-    set(PROTO_LIBRARY mindspore::protobuf)
-else()
-    set(PROTO_LIBRARY protobuf)
-endif()
+file(GLOB PROTO_FILE ""
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/caffe/caffe.proto
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/onnx/onnx.proto)
+ms_protobuf_generate(PROTO_SRCS PROTO_HDRS ${PROTO_FILE})
+add_library(proto_mid OBJECT ${PROTO_SRCS})
+set(TFLITE_FBS_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/tflite/schema.fbs
+        )
+ms_build_flatbuffers_lite(TFLITE_FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/parser/tflite/ tflite_fbs_src ${CMAKE_BINARY_DIR}/schema "inner")
 
 set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${CCSRC_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
@@ -136,6 +140,9 @@ add_executable(converter_lite
         ${KERNEL_SRC}
         ${LITE_SRC}
         )
+add_dependencies(converter_lite tflite_fbs_src)
+add_dependencies(converter_lite fbs_inner_src)
+
 if (WIN32)
     add_library(converter_mid OBJECT
             ${CCSRC_SRC}
@@ -143,6 +150,7 @@ if (WIN32)
             ${OPS_SRC}
             ${KERNEL_SRC}
             ${LITE_SRC}
+            ${PROTO_SRCS}
             )
     add_library(converter_parser STATIC
             $<TARGET_OBJECTS:tflite_parser_mid>
@@ -166,13 +174,15 @@ target_link_libraries(converter_lite PRIVATE
         graph_pass_mid
         fusion_mid
         quantizer_mid
-        pthread
-        ${PROTO_LIBRARY}
+        proto_mid
         ${SECUREC_LIBRARY}
         mindspore::json
         mindspore::eigen
         mindspore_core
         mindspore::glog
+        mindspore::protobuf
+        mindspore::flatbuffers
+        pthread
         )
 
 if (NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)

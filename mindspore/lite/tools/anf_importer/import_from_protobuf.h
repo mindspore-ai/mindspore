@@ -23,7 +23,7 @@
 #include <utility>
 
 #include "include/errorcode.h"
-#include "tools/converter/parser/onnx/onnx.pb.h"
+#include "proto/onnx.pb.h"
 #include "tools/converter/converter_context.h"
 #include "tools/anf_importer/anf_importer.h"
 #include "abstract/abstract_value.h"

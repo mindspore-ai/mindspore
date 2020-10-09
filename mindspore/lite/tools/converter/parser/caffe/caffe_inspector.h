@@ -21,7 +21,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
-#include "tools/converter/parser/caffe/caffe.pb.h"
+#include "proto/caffe.pb.h"
 #include "include/errorcode.h"
 
 namespace mindspore {

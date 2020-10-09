@@ -23,7 +23,7 @@
 #include "securec/include/securec.h"
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
-#include "mindspore/lite/schema/inner/model_generated.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore {
 namespace lite {

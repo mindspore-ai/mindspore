@@ -24,7 +24,7 @@
 #include <utility>
 #include "src/common/log_adapter.h"
 #include "schema/inner/model_generated.h"
-#include "tools/converter/parser/tflite/schema_generated.h"
+#include "schema/schema_generated.h"
 #include "tools/common/tensor_util.h"
 #include "ir/dtype/type_id.h"
 #include "include/errorcode.h"

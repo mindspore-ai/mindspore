@@ -287,7 +287,7 @@ if (BUILD_CONVERTER)
             fusion_mid
             quantizer_mid
             pthread
-            protobuf
+            mindspore::protobuf
             mindspore::eigen
             mindspore::json
             mindspore_core

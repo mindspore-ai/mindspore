@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 #include "google/protobuf/message.h"
-#include "tools/converter/parser/caffe/caffe.pb.h"
+#include "proto/caffe.pb.h"
 #include "include/errorcode.h"
-#include "mindspore/lite/schema/inner/model_generated.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore {
 namespace lite {

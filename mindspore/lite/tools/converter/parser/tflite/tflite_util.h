@@ -23,7 +23,7 @@
 #include <memory>
 #include "src/common/log_adapter.h"
 #include "schema/inner/model_generated.h"
-#include "tools/converter/parser/tflite/schema_generated.h"
+#include "schema/schema_generated.h"
 #include "schema/inner/ops_generated.h"
 #include "ir/dtype/type_id.h"
 #include "include/errorcode.h"

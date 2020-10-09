@@ -5,3 +5,4 @@ set_property(SOURCE ${ANF_IMPORTER_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMOD
 add_library(anf_importer_mid OBJECT
         ${ANF_IMPORTER_SRC_LIST}
         )
+add_dependencies(anf_importer_mid proto_mid)

@@ -23,7 +23,7 @@
 #include <set>
 #include <unordered_map>
 #include "tools/converter/model_parser.h"
-#include "tools/converter/parser/caffe/caffe.pb.h"
+#include "proto/caffe.pb.h"
 #include "tools/common/tensor_util.h"
 
 namespace mindspore {

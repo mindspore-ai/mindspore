@@ -24,7 +24,7 @@
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
-#include "mindspore/lite/schema/inner/model_generated.h"
+#include "schema/inner/model_generated.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 
 namespace mindspore {

@@ -34,7 +34,7 @@
 #include "securec/include/securec.h"
 #include "src/tensor.h"
 #include "src/param_value_lite.h"
-#include "tools/converter/parser/onnx/onnx.pb.h"
+#include "proto/onnx.pb.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/protobuf_utils.h"
 
