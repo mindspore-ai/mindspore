@@ -22,6 +22,7 @@
 #include "ir/anf.h"
 #include "frontend/parallel/allreduce_fusion/allreduce_graph.h"
 #include "frontend/parallel/status.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -35,7 +36,6 @@ constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALLREDUCE_INHERENT_TIME = 0
 constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALLREDUCE_BANDWIDTH = 0.1;
 constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_COMPUTATION_TIME_PARAMETER = 0.1;
 
-constexpr char FUSION[] = "fusion";
 constexpr char PARAMETER[] = "parameter";
 const uint32_t MAX_RECURSIVE_CALL_TIMES = 100;
 class AllreduceFusion {

@@ -28,7 +28,7 @@ using std::pow;
 
 namespace mindspore {
 namespace parallel {
-std::vector<Shape> combine(const Shape& in, int64_t target) {
+std::vector<Shape> combine(const Shape &in, int64_t target) {
   std::vector<Shape> output;
   for (int64_t i = 0; i < pow(2, in.size()); i++) {
     size_t temp = 0;
@@ -54,7 +54,7 @@ std::vector<Shape> combine(const Shape& in, int64_t target) {
   return output;
 }
 
-void GenerateValidShapeBySizeAndDim(int64_t pow_size, int64_t dim, std::vector<Shape>* out) {
+void GenerateValidShapeBySizeAndDim(int64_t pow_size, int64_t dim, std::vector<Shape> *out) {
   out->clear();
   Shape in;
   for (int64_t i = 1; i < pow_size; i++) {
@@ -80,7 +80,7 @@ void GenerateValidShapeBySizeAndDim(int64_t pow_size, int64_t dim, std::vector<S
   return;
 }
 
-void GenerateValidShapeBySize(int64_t pow_size, std::vector<Shape>* out) {
+void GenerateValidShapeBySize(int64_t pow_size, std::vector<Shape> *out) {
   out->clear();
   for (int64_t dim = 1; dim <= pow_size; dim++) {
     std::vector<Shape> combine_result;
@@ -92,7 +92,7 @@ void GenerateValidShapeBySize(int64_t pow_size, std::vector<Shape>* out) {
   return;
 }
 
-TensorMap GenerateTensorMap(const int64_t& map_size, const Shape& pos_index, const Shape& pos_value) {
+TensorMap GenerateTensorMap(const int64_t &map_size, const Shape &pos_index, const Shape &pos_value) {
   TensorMap tensor_map(map_size, -1);
   for (size_t i = 0; i < pos_index.size() && i < pos_value.size(); i++) {
     if (pos_index[i] >= map_size) {
@@ -103,8 +103,8 @@ TensorMap GenerateTensorMap(const int64_t& map_size, const Shape& pos_index, con
   return tensor_map;
 }
 
-void GenerateValidTensorMap(const DeviceArrangement& device_arrangement, const TensorShape& tensor_shape,
-                            std::vector<TensorMap>* tensor_map_list) {
+void GenerateValidTensorMap(const DeviceArrangement &device_arrangement, const TensorShape &tensor_shape,
+                            std::vector<TensorMap> *tensor_map_list) {
   tensor_map_list->clear();
   int64_t device_size = device_arrangement.size();
   int64_t shape_size = tensor_shape.size();
@@ -149,9 +149,8 @@ void GenerateValidTensorMap(const DeviceArrangement& device_arrangement, const T
 }
 
 void GenerateValidLayoutByDeviceSizeAndTensorSize(
-  int64_t device_pow_size, int64_t tensor_pow_size, int64_t max_device_dim,
-  int64_t max_shape_dim,
-  std::vector<std::tuple<DeviceArrangement, TensorMap, TensorShape>>* layout_list) {
+  int64_t device_pow_size, int64_t tensor_pow_size, int64_t max_device_dim, int64_t max_shape_dim,
+  std::vector<std::tuple<DeviceArrangement, TensorMap, TensorShape>> *layout_list) {
   layout_list->clear();
   std::vector<DeviceArrangement> device_arrangement_list;
   GenerateValidShapeBySize(device_pow_size, &device_arrangement_list);
@@ -174,8 +173,8 @@ void GenerateValidLayoutByDeviceSizeAndTensorSize(
   return;
 }
 
-bool CheckLayoutValid(const DeviceArrangement& device_arrangement, const TensorMap& tensor_map,
-                      const TensorShape& tensor_shape) {
+bool CheckLayoutValid(const DeviceArrangement &device_arrangement, const TensorMap &tensor_map,
+                      const TensorShape &tensor_shape) {
   bool flag = false;
   if ((tensor_map.size() - ComputeNoneNumber(tensor_map)) > device_arrangement.size()) {
     return flag;
@@ -186,7 +185,7 @@ bool CheckLayoutValid(const DeviceArrangement& device_arrangement, const TensorM
   return true;
 }
 
-size_t ComputeNoneNumber(const TensorMap& tensor_map) {
+size_t ComputeNoneNumber(const TensorMap &tensor_map) {
   size_t num = 0;
   for (size_t i = 0; i < tensor_map.size(); i++) {
     if (tensor_map[i] == -1) {
@@ -196,8 +195,8 @@ size_t ComputeNoneNumber(const TensorMap& tensor_map) {
   return num;
 }
 
-bool ShapeIsDividedByDevice(const DeviceArrangement& device_arrangement, const TensorMap& tensor_map,
-                            const TensorShape& tensor_shape) {
+bool ShapeIsDividedByDevice(const DeviceArrangement &device_arrangement, const TensorMap &tensor_map,
+                            const TensorShape &tensor_shape) {
   bool flag = false;
   for (uint32_t i = 0; i < tensor_map.size() && i < tensor_shape.size(); i++) {
     if (tensor_map[i] == -1) {
@@ -211,7 +210,7 @@ bool ShapeIsDividedByDevice(const DeviceArrangement& device_arrangement, const T
   return true;
 }
 
-bool IsExpended(const Shape& in1, const Shape& in2) {
+bool IsExpended(const Shape &in1, const Shape &in2) {
   int64_t size = 1;
   uint32_t ind = 0;
   for (uint32_t i = 0; i < in1.size(); i++) {
@@ -234,9 +233,9 @@ bool IsExpended(const Shape& in1, const Shape& in2) {
   return true;
 }
 
-void ComputeAccumDeviceTOAccumShapeMap(const DeviceArrangement& device_arrangement,
-                                       const TensorMap& tensor_map, const TensorShape& tensor_shape,
-                                       std::map<int64_t, int64_t>* accum_device_to_accum_shape_map) {
+void ComputeAccumDeviceTOAccumShapeMap(const DeviceArrangement &device_arrangement, const TensorMap &tensor_map,
+                                       const TensorShape &tensor_shape,
+                                       std::map<int64_t, int64_t> *accum_device_to_accum_shape_map) {
   accum_device_to_accum_shape_map->clear();
   std::vector<int64_t> shape_accum_reverse;
   Status status = ShapeToAccumulateProductReverse(tensor_shape, &shape_accum_reverse);
@@ -263,12 +262,10 @@ void IsLinearValue(int64_t small, int64_t big, int64_t small_value, int64_t big_
   ASSERT_EQ(middle_value, value);
 }
 
-void LayoutTransferValidLayoutChangeCheck(const DeviceArrangement& in_device_arrangement,
-                                          const TensorMap& in_tensor_map,
-                                          const TensorShape& in_tensor_shape,
-                                          const DeviceArrangement& out_device_arrangement,
-                                          const TensorMap& out_tensor_map,
-                                          const TensorShape& out_tensor_shape) {
+void LayoutTransferValidLayoutChangeCheck(const DeviceArrangement &in_device_arrangement,
+                                          const TensorMap &in_tensor_map, const TensorShape &in_tensor_shape,
+                                          const DeviceArrangement &out_device_arrangement,
+                                          const TensorMap &out_tensor_map, const TensorShape &out_tensor_shape) {
   bool is_expended = IsExpended(out_device_arrangement, in_device_arrangement);
   ASSERT_EQ(true, is_expended);
   is_expended = IsExpended(out_tensor_shape, in_tensor_shape);
@@ -317,10 +314,9 @@ void LayoutTransferValidLayoutChangeCheck(const DeviceArrangement& in_device_arr
   }
 }
 
-void ValidLayoutChangeCheck(const DeviceArrangement& in_device_arrangement,
-                            const TensorMap& in_tensor_map, const TensorShape& in_tensor_shape,
-                            const DeviceArrangement& out_device_arrangement,
-                            const TensorMap& out_tensor_map, const TensorShape& out_tensor_shape) {
+void ValidLayoutChangeCheck(const DeviceArrangement &in_device_arrangement, const TensorMap &in_tensor_map,
+                            const TensorShape &in_tensor_shape, const DeviceArrangement &out_device_arrangement,
+                            const TensorMap &out_tensor_map, const TensorShape &out_tensor_shape) {
   LayoutTransferValidLayoutChangeCheck(in_device_arrangement, in_tensor_map, in_tensor_shape, out_device_arrangement,
                                        out_tensor_map, out_tensor_shape);
 }

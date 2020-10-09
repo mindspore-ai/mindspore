@@ -37,12 +37,34 @@ class AllGatherCell(Cell):
         return x
 
 
-def get_allgather_cell():
+class SaveOptShardCkptCell(Cell):
+    """
+    Allgather cell, used in optimizer parallel scenario.
+    Firstly gather the tensor to original layout in the specified device group.
+    Then gather the whole parameter slices from all devices.
+
+    Note:
+        This could be optimized later with less communication consumption.
+    """
+    def __init__(self, group):
+        super(SaveOptShardCkptCell, self).__init__(auto_prefix=False)
+        self.allgather1 = AllGather(group)
+        self.allgather2 = AllGather()
+
+    def construct(self, x):
+        x = self.allgather1(x)
+        x = self.allgather2(x)
+
+        return x
+
+
+def get_allgather_cell(group):
     """Get AllGatherCell object."""
     global _allgather_cell
-    if not _allgather_cell:
+    if group:
+        _allgather_cell = SaveOptShardCkptCell(group)
+    else:
         _allgather_cell = AllGatherCell()
-
     return _allgather_cell
 
 

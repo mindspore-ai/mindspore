@@ -389,5 +389,39 @@ TensorLayout TensorLayout::SqueezeShape() const {
   (void)out.Init(device_arrangement_, out_map, out_shape);
   return out;
 }
+
+// Generate a totally shard tensor slice shape for parallel optimizer
+Status TensorLayout::GenerateOptShardSliceShape() {
+  MS_LOG(INFO) << "layout for GetOptShardSliceShape is " << StandardToString();
+  Shape dev_max = device_arrangement_.array();
+  Shape tensor_map = tensor_map_.array();
+  Shape repeated_dev;
+  for (size_t i = 0; i < dev_max.size(); i++) {
+    if (tensor_map_.GetIndexByValue(i) == MAP_NONE) {
+      repeated_dev.push_back(dev_max[dev_max.size() - 1 - i]);
+      dev_max[dev_max.size() - 1 - i] = 1;
+    }
+  }
+  if (repeated_dev.empty()) {
+    MS_LOG(INFO) << "Tensor is totally shard already.";
+    return Status::FAILED;
+  }
+  int64_t repeated_num =
+    std::accumulate(repeated_dev.begin(), repeated_dev.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
+  int64_t split_num;
+  if (tensor_map[0] == MAP_NONE) {
+    split_num = repeated_num;
+  } else {
+    split_num = dev_max[dev_max.size() - 1 - tensor_map[0]] * repeated_num;
+  }
+  if (tensor_shape_.array()[0] % split_num != 0) {
+    MS_LOG(INFO) << "Tensor could not be shard on the first dimension.";
+    return Status::FAILED;
+  }
+  Shape origin_slice_shape = slice_shape().array();
+  origin_slice_shape[0] = tensor_shape_.array()[0] / split_num;
+  opt_shard_slice_shape_ = origin_slice_shape;
+  return Status::SUCCESS;
+}
 }  // namespace parallel
 }  // namespace mindspore

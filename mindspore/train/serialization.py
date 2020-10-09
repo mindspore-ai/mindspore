@@ -398,7 +398,7 @@ def _get_merged_param_data(net, param_name, param_data):
         Tensor, the combined tensor which with the whole data value.
     """
     layout = net.parameter_layout_dict[param_name]
-    if len(layout) < 5:
+    if len(layout) < 6:
         logger.info("layout dict does not contain the key %s", param_name)
         return param_data
 
@@ -406,17 +406,19 @@ def _get_merged_param_data(net, param_name, param_data):
     tensor_map = layout[1]
     field_size = layout[3]
     uniform_split = layout[4]
-    if uniform_split[0] == 0:
+    opt_shard_group = layout[5]
+    if uniform_split == 0:
         raise RuntimeError("Save checkpoint only support uniform split tensor now.")
 
     from mindspore.parallel._cell_wrapper import get_allgather_cell
     from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_with_weight
-    # while any dim is not equal to -1, means param is splited and needs to be merged
+    # while any dim is not equal to -1, means param is split and needs to be merged
+    # pipeline parallel need to be supported here later
     for dim in tensor_map:
-        if dim != -1:
-            allgather_net = get_allgather_cell()
+        if dim != -1 or opt_shard_group:
+            allgather_net = get_allgather_cell(opt_shard_group)
             param_data = allgather_net(param_data)
-            if field_size[0]:
+            if field_size:
                 return _reshape_param_data_with_weight(param_data, dev_mat, field_size)
             return _reshape_param_data(param_data, dev_mat, tensor_map)
 

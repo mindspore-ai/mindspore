@@ -16,7 +16,7 @@
 import numpy as np
 
 from mindspore.common.tensor import Tensor
-from ..communication.management import get_rank
+from ..communication.management import get_rank, get_group_size
 
 
 def _get_tensor_strategy(dev_mat, tensor_map):
@@ -168,6 +168,7 @@ def _chunk_tensor_by_strategy(np_tensor, strategy):
         raise ValueError("The length of np_tensor does not match the length of strategy!")
     return _chunk_tensor(np_tensor, strategy, len(strategy))
 
+
 def _get_slice_index(dev_mat, tensor_map):
     """
     Get the slice index for current slice.
@@ -184,6 +185,7 @@ def _get_slice_index(dev_mat, tensor_map):
     tensor_slice_index = _get_tensor_slice_index(dev_mat, tensor_strategy, tensor_map, rank)
     return tensor_slice_index
 
+
 def _load_tensor(tensor, dev_mat, tensor_map):
     """
     Get the tensor slice of the local device by the device matrix and the tensor map
@@ -194,7 +196,7 @@ def _load_tensor(tensor, dev_mat, tensor_map):
         tensor_map (list): The split strategy of tensor.
 
     Returns:
-        Tensor, the sliced tensor.
+        numpy.array, the sliced array.
 
     Examples:
         >>> tensor = Tensor(np.ones([32, 32]))
@@ -208,8 +210,7 @@ def _load_tensor(tensor, dev_mat, tensor_map):
     np_tensor = tensor.asnumpy()
     np_tensor_list = _chunk_tensor_by_strategy(np_tensor, tensor_strategy)
     np_tensor_slice = np_tensor_list[int(tensor_slice_index)]
-    tensor_slice = Tensor(np_tensor_slice)
-    return tensor_slice
+    return np_tensor_slice
 
 
 def _load_tensor_by_layout(tensor, layout):
@@ -227,18 +228,25 @@ def _load_tensor_by_layout(tensor, layout):
         TypeError: If layout is not list.
         ValueError: If the length of layout is not 3.
     """
-    if not isinstance(layout, list):
-        raise TypeError("The layout should be list! layout is {}".format(layout))
-    if len(layout) < 5:
+    if not isinstance(layout, tuple):
+        raise TypeError("The layout should be tuple! layout is {}".format(layout))
+    if len(layout) < 6:
         raise ValueError("The length of layout must be larger than 5! layout is {}".format(layout))
     dev_mat = layout[0]
     tensor_map = layout[1]
     uniform_split = layout[4]
-    if uniform_split[0] == 0:
+    group = layout[5]
+    if uniform_split == 0:
         raise RuntimeError("The load tensor only support uniform split now")
     if tensor.size() == 1:
         return tensor
-    return _load_tensor(tensor, dev_mat, tensor_map)
+    tensor_slice = _load_tensor(tensor, dev_mat, tensor_map)
+    if group:
+        # get a totally shard tensor slice for parallel optimizer
+        rank = get_rank(group)
+        size = get_group_size(group)
+        tensor_slice = np.split(tensor_slice, size)[rank]
+    return Tensor(tensor_slice)
 
 
 def _reshape_param_data(param_data, dev_mat, tensor_map):
@@ -294,6 +302,7 @@ def _reshape_param_data(param_data, dev_mat, tensor_map):
 
     return Tensor(tensor_slices_new[0])
 
+
 def _reshape_param_data_with_weight(param_data, dev_mat, field_size):
     """
     Combine param slice by the device matrix, used in model parallel scenario.
@@ -318,10 +327,10 @@ def _reshape_param_data_with_weight(param_data, dev_mat, field_size):
     tensor_slices = np.split(param_data.asnumpy(), device_count, axis=0)
     tensor_slices_col = []
     for i in range(len(tensor_slices[0][0])):
-        tensor_slices_new = np.array(tensor_slices[0][:, i]).reshape(field_size[0], -1)
+        tensor_slices_new = np.array(tensor_slices[0][:, i]).reshape(field_size, -1)
         for j in range(1, device_count):
             tensor_slices_new = np.concatenate((tensor_slices_new,\
-                                   np.array(tensor_slices[j][:, i]).reshape(field_size[0], -1)), axis=1)
+                                   np.array(tensor_slices[j][:, i]).reshape(field_size, -1)), axis=1)
         tensor_slices_col.append(tensor_slices_new)
     new_tensor = np.array(tensor_slices_col[0]).reshape(-1, 1)
     for i in range(1, len(tensor_slices_col)):

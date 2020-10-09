@@ -15,6 +15,7 @@
 
 """comm_ops"""
 
+from mindspore.common import Tensor
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...communication.management import get_rank, get_group_size, GlobalComm, _get_group
@@ -158,6 +159,7 @@ class AllGather(PrimitiveWithInfer):
         validator.check('rank', self.rank, 'rank_size', self.rank_size, Rel.LT, self.name)
         self.add_prim_attr('rank_size', self.rank_size)
         self.add_prim_attr('group', _get_group(group))
+        self.add_prim_attr('fusion', 0)
 
     def infer_shape(self, x_shape):
         validator.check_integer("x shape", len(x_shape), 0, Rel.GT, self.name)
@@ -268,6 +270,7 @@ class ReduceScatter(PrimitiveWithInfer):
         self.rank_size = get_group_size(_get_group(group))
         self.add_prim_attr('rank_size', self.rank_size)
         self.add_prim_attr('group', _get_group(group))
+        self.add_prim_attr('fusion', 0)
 
     def infer_shape(self, x_shape):
         if x_shape[0] % self.rank_size != 0:
@@ -526,4 +529,4 @@ class _GetTensorSlice(PrimitiveWithInfer):
         from mindspore.parallel._tensor import _load_tensor
         validator.check_value_type("dev_mat", dev_mat, [tuple], self.name)
         validator.check_value_type("tensor_map", tensor_map, [tuple], self.name)
-        return _load_tensor(x, dev_mat, tensor_map)
+        return Tensor(_load_tensor(x, dev_mat, tensor_map))

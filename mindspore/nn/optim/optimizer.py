@@ -148,15 +148,18 @@ class Optimizer(Cell):
         self.reciprocal_scale = 1.0 / loss_scale
         self.param_length = len(self.parameters)
         self.map_ = C.Map()
-
-        use_parallel = context.get_auto_parallel_context("enable_parallel_optimizer")
-        self.use_parallel = use_parallel
-        if use_parallel:
+        if context.get_auto_parallel_context("enable_parallel_optimizer"):
+            if _get_parallel_mode() == ParallelMode.DATA_PARALLEL:
+                self.use_parallel = True
+            elif _get_parallel_mode() == ParallelMode.STAND_ALONE:
+                raise RuntimeError("Parallel optimizer is not supported in stand alone mode.")
+            else:
+                self.use_parallel = False
+        else:
+            self.use_parallel = False
+        if self.use_parallel:
             if self.cls_name not in ["Lamb", "AdamWeightDecay"]:
                 raise RuntimeError("Optimizer segmentation does not support optimizer {}".format(self.cls_name))
-            if _get_parallel_mode() != ParallelMode.DATA_PARALLEL:
-                raise RuntimeError("Optimizer segmentation does not support parallel mode {}".format
-                                   (_get_parallel_mode()))
             self.dev_num = _get_device_num()
             if self.dev_num > self.param_length:
                 raise RuntimeError("Optimizer segmentation can not be applied when the number of parameters {} is"

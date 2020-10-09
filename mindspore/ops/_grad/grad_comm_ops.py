@@ -83,8 +83,10 @@ def get_bprop_broad_cast(self):
 def get_bprop_all_gather(self):
     """Generate bprop for AllGather"""
     all_gather_grad = ReduceScatter(ReduceOp.SUM, self.group)
+    fusion = self.get_attr_dict()["fusion"]
+    all_gather_grad.add_prim_attr("fusion", fusion)
     if self.instance_name:
-        instance_name = "grad" + self.instance_name
+        instance_name = "grad_" + self.instance_name
         all_gather_grad.set_prim_instance_name(instance_name)
 
     def bprop(x, out, dout):

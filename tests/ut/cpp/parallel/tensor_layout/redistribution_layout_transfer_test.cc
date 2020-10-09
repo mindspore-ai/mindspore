@@ -35,11 +35,11 @@ class TestRedistributionLayoutTransfer : public UT::Common {
 };
 
 void RedistributionLayoutTransferTestFunction(
-  const DeviceArrangement& in_device_arrangement_shape, const TensorMap& in_tensor_map_shape,
-  const TensorShape& tensor_shape_shape, const DeviceArrangement& out_device_arrangement_shape,
-  const TensorMap& out_tensor_map_shape, DeviceArrangement* unified_device_arrangement_shape,
-  TensorMap* unified_in_tensor_map_shape, TensorMap* unified_out_tensor_map_shape,
-  TensorMap* unified_tensor_shape_shape) {
+  const DeviceArrangement &in_device_arrangement_shape, const TensorMap &in_tensor_map_shape,
+  const TensorShape &tensor_shape_shape, const DeviceArrangement &out_device_arrangement_shape,
+  const TensorMap &out_tensor_map_shape, DeviceArrangement *unified_device_arrangement_shape,
+  TensorMap *unified_in_tensor_map_shape, TensorMap *unified_out_tensor_map_shape,
+  TensorMap *unified_tensor_shape_shape) {
   Arrangement in_device_arrangement;
   Status status = in_device_arrangement.Init(in_device_arrangement_shape);
   ASSERT_EQ(Status::SUCCESS, status);
@@ -86,13 +86,13 @@ void RedistributionLayoutTransferTestFunction(
   *unified_tensor_shape_shape = unified_in_tensor_shape.array();
 }
 
-void RedistributionLayoutCheck(const DeviceArrangement& in_device_arrangement, const TensorMap& in_tensor_map,
-                               const TensorShape& tensor_shape, const DeviceArrangement& out_device_arrangement,
-                               const TensorMap& out_tensor_map,
-                               const DeviceArrangement& unified_device_arrangement_expect,
-                               const TensorMap& unified_in_tensor_map_expect,
-                               const TensorMap& unified_out_tensor_map_expect,
-                               const TensorMap& unified_tensor_shape_expect) {
+void RedistributionLayoutCheck(const DeviceArrangement &in_device_arrangement, const TensorMap &in_tensor_map,
+                               const TensorShape &tensor_shape, const DeviceArrangement &out_device_arrangement,
+                               const TensorMap &out_tensor_map,
+                               const DeviceArrangement &unified_device_arrangement_expect,
+                               const TensorMap &unified_in_tensor_map_expect,
+                               const TensorMap &unified_out_tensor_map_expect,
+                               const TensorMap &unified_tensor_shape_expect) {
   DeviceArrangement unified_device_arrangement;
   TensorMap unified_in_tensor_map;
   TensorMap unified_out_tensor_map;
@@ -224,9 +224,9 @@ TEST_F(TestRedistributionLayoutTransfer, RedistributionLayoutTransfer5) {
                             unified_out_tensor_map_expect, unified_tensor_shape_expect);
 }
 
-void ValidRedistributionLayoutCheck(const DeviceArrangement& in_device_arrangement, const TensorMap& in_tensor_map,
-                                    const TensorShape& tensor_shape, const DeviceArrangement& out_device_arrangement,
-                                    const TensorMap& out_tensor_map) {
+void ValidRedistributionLayoutCheck(const DeviceArrangement &in_device_arrangement, const TensorMap &in_tensor_map,
+                                    const TensorShape &tensor_shape, const DeviceArrangement &out_device_arrangement,
+                                    const TensorMap &out_tensor_map) {
   DeviceArrangement unified_device_arrangement;
   TensorMap unified_in_tensor_map;
   TensorMap unified_out_tensor_map;
@@ -242,8 +242,8 @@ void ValidRedistributionLayoutCheck(const DeviceArrangement& in_device_arrangeme
                          unified_out_tensor_map, unified_tensor_shape);
 }
 
-void ValidRedistributionLayoutCheckAll(int64_t device_pow_size, int64_t tensor_pow_size,
-                                       int64_t max_device_dim, int64_t max_shape_dim) {
+void ValidRedistributionLayoutCheckAll(int64_t device_pow_size, int64_t tensor_pow_size, int64_t max_device_dim,
+                                       int64_t max_shape_dim) {
   std::vector<std::tuple<DeviceArrangement, TensorMap, TensorShape>> layout_list;
   GenerateValidLayoutByDeviceSizeAndTensorSize(device_pow_size, tensor_pow_size, max_device_dim, max_shape_dim,
                                                &layout_list);
