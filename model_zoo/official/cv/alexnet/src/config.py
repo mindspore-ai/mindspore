@@ -29,6 +29,7 @@ alexnet_cifar10_cfg = edict({
     'image_width': 227,
     'save_checkpoint_steps': 1562,
     'keep_checkpoint_max': 10,
+    'air_name': "alexnet.air",
 })
 
 alexnet_imagenet_cfg = edict({
@@ -42,6 +43,7 @@ alexnet_imagenet_cfg = edict({
     'image_width': 227,
     'save_checkpoint_steps': 625,
     'keep_checkpoint_max': 10,
+    'air_name': "alexnet.air",
 
     # opt
     'weight_decay': 0.0001,
