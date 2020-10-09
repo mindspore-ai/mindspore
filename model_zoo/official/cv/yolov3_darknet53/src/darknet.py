@@ -115,39 +115,38 @@ class DarkNet(nn.Cell):
                                 out_channels[0],
                                 kernel_size=3,
                                 stride=2)
-        self.conv2 = conv_block(in_channels[1],
-                                out_channels[1],
-                                kernel_size=3,
-                                stride=2)
-        self.conv3 = conv_block(in_channels[2],
-                                out_channels[2],
-                                kernel_size=3,
-                                stride=2)
-        self.conv4 = conv_block(in_channels[3],
-                                out_channels[3],
-                                kernel_size=3,
-                                stride=2)
-        self.conv5 = conv_block(in_channels[4],
-                                out_channels[4],
-                                kernel_size=3,
-                                stride=2)
-
         self.layer1 = self._make_layer(block,
                                        layer_nums[0],
                                        in_channel=out_channels[0],
                                        out_channel=out_channels[0])
+        self.conv2 = conv_block(in_channels[1],
+                                out_channels[1],
+                                kernel_size=3,
+                                stride=2)
         self.layer2 = self._make_layer(block,
                                        layer_nums[1],
                                        in_channel=out_channels[1],
                                        out_channel=out_channels[1])
+        self.conv3 = conv_block(in_channels[2],
+                                out_channels[2],
+                                kernel_size=3,
+                                stride=2)
         self.layer3 = self._make_layer(block,
                                        layer_nums[2],
                                        in_channel=out_channels[2],
                                        out_channel=out_channels[2])
+        self.conv4 = conv_block(in_channels[3],
+                                out_channels[3],
+                                kernel_size=3,
+                                stride=2)
         self.layer4 = self._make_layer(block,
                                        layer_nums[3],
                                        in_channel=out_channels[3],
                                        out_channel=out_channels[3])
+        self.conv5 = conv_block(in_channels[4],
+                                out_channels[4],
+                                kernel_size=3,
+                                stride=2)
         self.layer5 = self._make_layer(block,
                                        layer_nums[4],
                                        in_channel=out_channels[4],
