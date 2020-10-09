@@ -25,6 +25,7 @@ from .uniform import Uniform
 from .geometric import Geometric
 from .categorical import Categorical
 from .log_normal import LogNormal
+from .logistic import Logistic
 
 __all__ = ['Distribution',
            'TransformedDistribution',
@@ -35,4 +36,5 @@ __all__ = ['Distribution',
            'Categorical',
            'Geometric',
            'LogNormal',
+           'Logistic',
            ]
