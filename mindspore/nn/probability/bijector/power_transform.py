@@ -69,6 +69,8 @@ class PowerTransform(Bijector):
         validator.check_number("power", power, 0, Rel.GE, self.name)
         self._power = power
         self.pow = P.Pow()
+        self.dtypeop = P.DType()
+        self.cast = P.Cast()
         self.exp = exp_generic
         self.expm1 = expm1_generic
         self.log = log_generic
@@ -87,15 +89,21 @@ class PowerTransform(Bijector):
 
     def _forward(self, x):
         x = self._check_value(x, 'value')
-        if self.power == 0:
-            return self.exp(x)
-        return self.exp(self.log1p(x * self.power) / self.power)
+        power_local = self.cast_param_by_value(x, self.power)
+        if power_local == 0:
+            forward_v = self.exp(x)
+        else:
+            forward_v = self.exp(self.log1p(x * power_local) / power_local)
+        return forward_v
 
     def _inverse(self, y):
         y = self._check_value(y, 'value')
-        if self.power == 0:
-            return self.log(y)
-        return self.expm1(self.log(y) * self.power) / self.power
+        power_local = self.cast_param_by_value(y, self.power)
+        if power_local == 0:
+            inverse_v = self.log(y)
+        else:
+            inverse_v = self.expm1(self.log(y) * power_local) / power_local
+        return inverse_v
 
     def _forward_log_jacobian(self, x):
         r"""
@@ -110,9 +118,12 @@ class PowerTransform(Bijector):
                 \log(f'(x)) =  (\frac{1}{c} - 1) * \log(xc + 1)
         """
         x = self._check_value(x, 'value')
-        if self.power == 0:
-            return x
-        return (1. / self.power - 1) * self.log1p(x * self.power)
+        power_local = self.cast_param_by_value(x, self.power)
+        if power_local == 0:
+            forward_log_j = x
+        else:
+            forward_log_j = (1. / power_local - 1) * self.log1p(x * power_local)
+        return forward_log_j
 
     def _inverse_log_jacobian(self, y):
         r"""
@@ -127,4 +138,6 @@ class PowerTransform(Bijector):
                 \log(f'(x)) =  \log(\frac{e^c\log(y)}{y}) = (c-1) * \log(y)
         """
         y = self._check_value(y, 'value')
-        return (self.power - 1) * self.log(y)
+        power_local = self.cast_param_by_value(y, self.power)
+        inverse_log_j = (power_local - 1) * self.log(y)
+        return inverse_log_j
