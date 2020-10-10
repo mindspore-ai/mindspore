@@ -358,7 +358,7 @@ class ExportToQuantInferNetwork:
         param_dict["std_dev"] = self.std_dev
         param_dict["symmetric"] = fake_quant_a_out.symmetric
 
-        scale_w, zp_w, _, _ = \
+        scale_w, zp_w, param_dict["filter_maxq"], param_dict["filter_minq"] = \
             quant_utils.scale_zp_max_min_from_fake_quant_cell(cell_core.fake_quant_weight, np_type)
         _, _, param_dict["output_maxq"], param_dict["output_minq"] = \
             quant_utils.scale_zp_max_min_from_fake_quant_cell(fake_quant_a_out, np_type)
@@ -401,9 +401,6 @@ class ExportToQuantInferNetwork:
             weight, bias = quant_utils.fold_batchnorm(weight, cell_core)
         elif isinstance(cell_core, quant.Conv2dBnWithoutFoldQuant):
             weight, bias = quant_utils.without_fold_batchnorm(weight, cell_core)
-        if self.is_mindir:
-            param_dict["filter_maxq"], param_dict["filter_minq"] = cell_core.fake_quant_weight.maxq, \
-                                                                   cell_core.fake_quant_weight.minq
         weight_b = weight
         bias_b = bias
         # apply the quant
