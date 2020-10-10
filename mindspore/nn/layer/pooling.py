@@ -20,7 +20,7 @@ from mindspore.ops.primitive import constexpr
 import mindspore.context as context
 from ..cell import Cell
 
-__all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d']
+__all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d']
 
 class _PoolNd(Cell):
     """N-D  AvgPool"""
@@ -137,6 +137,84 @@ class MaxPool2d(_PoolNd):
         else:
             out = self.max_pool(x)
         return out
+
+
+class MaxPool1d(_PoolNd):
+    r"""
+    Max pooling operation for temporal data.
+
+    Applies a 1D max pooling over an input Tensor which can be regarded as a composition of 1D planes.
+
+    Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, MaxPool1d outputs
+    regional maximum in the :math:`(L_{in})`-dimension. Given kernel size
+    :math:`ks = (l_{ker})` and stride :math:`s = (s_0)`, the operation is as follows.
+
+    .. math::
+        \text{output}(N_i, C_j, l) = \max_{n=0, \ldots, l_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times l + n)
+
+    Note:
+        pad_mode for training only supports "same" and "valid".
+
+    Args:
+        kernel_size (int): The size of kernel used to take the max value, Default: 1.
+        stride (int): The distance of kernel moving, an int number that represents
+            the width of movement is stride, Default: 1.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+            Default: "valid".
+
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the bottom and the right side.
+
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape :math:`(N, C, L_{in})`.
+
+    Outputs:
+        Tensor of shape :math:`(N, C, L_{out}))`.
+
+    Examples:
+        >>> max_pool = nn.MaxPool1d(kernel_size=3, strides=1)
+        >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4]), mindspore.float32)
+        >>> output = pool(x)
+        >>> output.shape
+        (1, 2, 2)
+    """
+
+    def __init__(self, kernel_size=1, stride=1, pad_mode="valid"):
+        super(MaxPool1d, self).__init__(kernel_size, stride, pad_mode)
+        validator.check_value_type('kernel_size', kernel_size, [int], self.cls_name)
+        validator.check_value_type('stride', stride, [int], self.cls_name)
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)
+        validator.check_integer("kernel_size", kernel_size, 1, Rel.GE, self.cls_name)
+        validator.check_integer("stride", stride, 1, Rel.GE, self.cls_name)
+        self.kernel_size = (1, kernel_size)
+        self.stride = (1, stride)
+        self.max_pool = P.MaxPool(ksize=self.kernel_size,
+                                  strides=self.stride,
+                                  padding=self.pad_mode)
+        self.max_pool_with_arg_max = P.MaxPoolWithArgmax(ksize=self.kernel_size,
+                                                         strides=self.stride,
+                                                         padding=self.pad_mode)
+        self.shape = F.shape
+        self.reduce_mean = P.ReduceMean(keep_dims=True)
+        self.expand = P.ExpandDims()
+        self.squeeze = P.Squeeze(2)
+        self.is_tbe = context.get_context("device_target") == "Ascend"
+
+    def construct(self, x):
+        _shape_check(self.shape(x))
+        x = self.expand(x, 2)
+        if self.is_tbe and self.training:
+            output = self.max_pool_with_arg_max(x)[0]
+        else:
+            output = self.max_pool(x)
+        output = self.squeeze(output)
+        return output
 
 
 class AvgPool2d(_PoolNd):
