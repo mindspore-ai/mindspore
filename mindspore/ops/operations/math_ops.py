@@ -449,6 +449,8 @@ class ReduceAny(_Reduce):
         >>> input_x = Tensor(np.array([[True, False], [True, True]]))
         >>> op = P.ReduceAny(keep_dims=True)
         >>> output = op(input_x, 1)
+        [[True],
+         [True]]
     """
 
     def __infer__(self, input_x, axis):
