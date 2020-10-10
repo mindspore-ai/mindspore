@@ -2,8 +2,8 @@
 #define C4NUM 4
 #define UP_DIV(x, y) (((x) + (y) - (1)) / (y))
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
-__kernel void MatMul_NHWC4_2d(__read_only image2d_t input, __global FLT16 *weight, __read_only image2d_t bias,
-                              __write_only image2d_t output, int4 in_shape, int4 out_shape, int has_bias) {
+__kernel void MatMul_NHWC4_2d(__read_only image2d_t input, __global FLT16 *weight, __write_only image2d_t output,
+                              int4 in_shape, int4 out_shape) {
   int gidx = get_global_id(0);  // CO4
   int gidz = get_global_id(2);  // N
   int lidx = get_local_id(0);
@@ -21,7 +21,6 @@ __kernel void MatMul_NHWC4_2d(__read_only image2d_t input, __global FLT16 *weigh
     result.z += dot(v, w.s89ab);
     result.w += dot(v, w.scdef);
   }
-  WRITE_IMAGE(output, (int2)(gidx, gidz), result);
   __local FLT4 temp[32][4];
   temp[lidx][lidy] = result;
   barrier(CLK_LOCAL_MEM_FENCE);
@@ -29,15 +28,12 @@ __kernel void MatMul_NHWC4_2d(__read_only image2d_t input, __global FLT16 *weigh
     result += temp[lidx][1];
     result += temp[lidx][2];
     result += temp[lidx][3];
-    if (has_bias != 0) {
-      result += READ_IMAGE(bias, smp_zero, (int2)(gidx, 0));
-    }
     WRITE_IMAGE(output, (int2)(gidx, gidz), result);
   }
 }
 
-__kernel void MatMul_NC4HW4_2d(__read_only image2d_t input, __global FLT16 *weight, __read_only image2d_t bias,
-                               __write_only image2d_t output, int4 in_shape, int4 out_shape, int has_bias) {
+__kernel void MatMul_NC4HW4_2d(__read_only image2d_t input, __global FLT16 *weight, __write_only image2d_t output,
+                               int4 in_shape, int4 out_shape) {
   int gidx = get_global_id(0);  // CO4
   int gidz = get_global_id(2);  // N
   int lidx = get_local_id(0);
@@ -62,15 +58,12 @@ __kernel void MatMul_NC4HW4_2d(__read_only image2d_t input, __global FLT16 *weig
     result += temp[lidx][1];
     result += temp[lidx][2];
     result += temp[lidx][3];
-    if (has_bias != 0) {
-      result += READ_IMAGE(bias, smp_zero, (int2)(gidx, 0));
-    }
-    WRITE_IMAGE(output, (int2)(gidz * co4 + gidx, 0), result);
+    WRITE_IMAGE(output, (int2)(0, gidz * co4 + gidx), result);
   }
 }
 
-__kernel void MatMul_NHWC4_4d(__read_only image2d_t input, __global FLT16 *weight, __read_only image2d_t bias,
-                              __write_only image2d_t output, int4 in_shape, int4 out_shape, int has_bias) {
+__kernel void MatMul_NHWC4_4d(__read_only image2d_t input, __global FLT16 *weight, __write_only image2d_t output,
+                              int4 in_shape, int4 out_shape) {
   int gidx = get_global_id(0);  // CO4
   int gidy = get_global_id(1);  // N * H * 4
   int gidz = get_global_id(2);  // W
@@ -99,15 +92,12 @@ __kernel void MatMul_NHWC4_4d(__read_only image2d_t input, __global FLT16 *weigh
     result += temp[lidx][1];
     result += temp[lidx][2];
     result += temp[lidx][3];
-    if (has_bias != 0) {
-      result += READ_IMAGE(bias, smp_zero, (int2)(gidx, 0));
-    }
     WRITE_IMAGE(output, (int2)(gidz * co4 + gidx, nh_index), result);
   }
 }
 
-__kernel void MatMul_NC4HW4_4d(__read_only image2d_t input, __global FLT16 *weight, __read_only image2d_t bias,
-                               __write_only image2d_t output, int4 in_shape, int4 out_shape, int has_bias) {
+__kernel void MatMul_NC4HW4_4d(__read_only image2d_t input, __global FLT16 *weight, __write_only image2d_t output,
+                               int4 in_shape, int4 out_shape) {
   int gidx = get_global_id(0);  // CO4
   int gidy = get_global_id(1);  // N * H * 4
   int gidz = get_global_id(2);  // W
@@ -138,9 +128,6 @@ __kernel void MatMul_NC4HW4_4d(__read_only image2d_t input, __global FLT16 *weig
     result += temp[lidx][1];
     result += temp[lidx][2];
     result += temp[lidx][3];
-    if (has_bias != 0) {
-      result += READ_IMAGE(bias, smp_zero, (int2)(gidx, 0));
-    }
     WRITE_IMAGE(output, (int2)(gidz, n_index * co4 * h + gidx * h + h_index), result);
   }
 }

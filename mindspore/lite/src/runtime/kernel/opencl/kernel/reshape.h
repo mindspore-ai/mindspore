@@ -38,6 +38,8 @@ class ReshapeOpenCLKernel : public OpenCLKernel {
  private:
   cl::Kernel kernel_;
   bool enable_fp16_{false};
+  std::vector<int> inShape;
+  std::vector<int> outShape;
 };
 }  // namespace mindspore::kernel
 

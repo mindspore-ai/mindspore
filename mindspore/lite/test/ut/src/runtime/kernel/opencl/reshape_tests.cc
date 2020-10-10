@@ -52,7 +52,7 @@ void RunTestCaseReshape(const std::vector<int> &shape, void *input_data, void *o
   }
   std::vector<int> out_shape = {n, oh, ow, c};
   if (is_output_2d) {
-    out_shape = {n, c};
+    out_shape = {n, h * w * c};
   }
   auto tensor_out_ptr =
     std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), out_shape,
@@ -155,5 +155,21 @@ TEST_F(TestReshapeOpenCL, Reshape4DFp16) {
   std::vector<float16_t> output_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
 
   RunTestCaseReshape(shape, input_data.data(), output_data.data(), true, false);
+}
+
+TEST_F(TestReshapeOpenCL, Reshape4D2DFp32) {
+  int n = 1;
+  int h = 2;
+  int w = 2;
+  int c = 4;
+  int oh = 2;
+  int ow = 2;
+  std::vector<int> shape = {n, h, w, c, oh, ow};
+  std::vector<float> input_data = {0.0f, 1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
+                                   8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
+  std::vector<float> output_data = {0.0f, 1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
+                                    8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
+
+  RunTestCaseReshape(shape, input_data.data(), output_data.data(), false, true);
 }
 }  // namespace mindspore

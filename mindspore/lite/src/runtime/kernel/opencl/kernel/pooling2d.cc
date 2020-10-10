@@ -57,6 +57,16 @@ int PoolingOpenCLKernel::Init() {
     MS_LOG(ERROR) << "Init `Pooling2d` kernel failed!";
     return RET_INVALID_OP_NAME;
   }
+  switch (parameter_->act_type_) {
+    case ActType_No:
+      break;
+    case ActType_Relu:
+      kernel_name += "_ReLU";
+      break;
+    default:
+      MS_LOG(ERROR) << "Unsupported activation type " << parameter_->act_type_;
+      return RET_ERROR;
+  }
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
