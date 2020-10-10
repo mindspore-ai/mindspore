@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 """Operations for random number generators."""
 
+from mindspore._checkparam import Validator
 from .. import operations as P
 from .. import functional as F
 from ..primitive import constexpr
@@ -54,7 +54,7 @@ def get_seed(op_seed, kernel_name):
     if op_seed is None:
         temp_seed = _get_op_seed(0, kernel_name)
     else:
-        const_utils.check_int_non_negative("seed", op_seed, kernel_name)
+        Validator.check_non_negative_int(op_seed, "seed", kernel_name)
         temp_seed = _get_op_seed(op_seed, kernel_name)
     seeds = _truncate_seed(global_seed), _truncate_seed(temp_seed)
     _update_seeds(op_seed, kernel_name)

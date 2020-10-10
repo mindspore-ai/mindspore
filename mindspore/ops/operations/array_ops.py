@@ -701,7 +701,7 @@ class Padding(PrimitiveWithInfer):
     def __init__(self, pad_dim_size=8):
         """Initialize padding"""
         validator.check_value_type("pad_dim_size", pad_dim_size, [int], self.name)
-        validator.check_integer("pad_dim_size", pad_dim_size, 0, Rel.GT, self.name)
+        validator.check_positive_int(pad_dim_size, "pad_dim_size", self.name)
         self.pad_dim_size = pad_dim_size
 
     def __infer__(self, x):
@@ -911,8 +911,8 @@ class Fill(PrimitiveWithInfer):
     def __infer__(self, dtype, dims, x):
         validator.check_value_type("shape", dims['value'], [tuple], self.name)
         validator.check_value_type("value", x['value'], [numbers.Number, bool], self.name)
-        for idx, item in enumerate(dims['value']):
-            validator.check_integer("dims[%d]" % idx, item, 0, Rel.GT, self.name)
+        for i, item in enumerate(dims['value']):
+            validator.check_positive_int(item, f'dims[{i}]', self.name)
         valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
                        mstype.uint8, mstype.uint32, mstype.uint64,
                        mstype.float16, mstype.float32, mstype.float64]
@@ -1482,20 +1482,20 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         validator.check_subclass("input_x", x_type, mstype.tensor, self.name)
         validator.check_value_type("x_shape", x_shp, [list], self.name)
         x_shp_len = len(x_shp)
-        validator.check_integer("rank of input_x", x_shp_len, 0, Rel.GT, self.name)
+        validator.check_positive_int(x_shp_len, "rank of input_x", self.name)
         segment_ids_shp = segment_ids['shape']
         segment_ids_type = segment_ids['dtype']
         validator.check_subclass("segment_ids", segment_ids_type, mstype.tensor, self.name)
         validator.check_value_type("segment_ids", segment_ids_shp, [list], self.name)
         segment_ids_shp_len = len(segment_ids_shp)
-        validator.check_integer("rank of segment_ids", segment_ids_shp_len, 0, Rel.GT, self.name)
+        validator.check_positive_int(segment_ids_shp_len, "rank of segment_ids", self.name)
         validator.check(f'rank of input_x', len(x_shp),
                         'rank of segments_id', len(segment_ids_shp), Rel.GE, self.name)
         for i, value in enumerate(segment_ids_shp):
             validator.check("ids[%d]" % i, value, 'input[%d]' % i, x_shp[i], Rel.EQ, self.name)
         num_segments_v = num_segments['value']
         validator.check_value_type('num_segments', num_segments_v, [int], self.name)
-        validator.check_integer("num_segments", num_segments_v, 0, Rel.GT, self.name)
+        validator.check_positive_int(num_segments_v, "num_segments", self.name)
         shp = [num_segments_v]
         shp += x_shp[segment_ids_shp_len:]
         out = {'shape': shp,
@@ -1544,7 +1544,7 @@ class UnsortedSegmentMin(PrimitiveWithInfer):
                         'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
         num_segments_v = num_segments['value']
         validator.check_value_type('num_segments', num_segments_v, [int], self.name)
-        validator.check_integer("num_segments", num_segments_v, 0, Rel.GT, self.name)
+        validator.check_positive_int(num_segments_v, "num_segments", self.name)
         segment_ids_shape_len = len(segment_ids_shape)
         out_shape = [num_segments_v]
         out_shape += x_shape[segment_ids_shape_len:]
@@ -1597,7 +1597,7 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
                         'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
         num_segments_v = num_segments['value']
         validator.check_value_type('num_segments', num_segments_v, [int], self.name)
-        validator.check_integer("num_segments", num_segments_v, 0, Rel.GT, self.name)
+        validator.check_positive_int(num_segments_v, "num_segments", self.name)
         segment_ids_shape_len = len(segment_ids_shape)
         out_shape = [num_segments_v]
         out_shape += x_shape[segment_ids_shape_len:]
@@ -1832,7 +1832,7 @@ class Unpack(PrimitiveWithInfer):
             self.axis = self.axis + dim
         output_num = x_shape[self.axis]
         validator.check_value_type("num", output_num, [int], self.name)
-        validator.check_integer("output_num", output_num, 0, Rel.GT, self.name)
+        validator.check_positive_int(output_num, "output_num", self.name)
         self.add_prim_attr('num', output_num)
         output_valid_check = x_shape[self.axis] - output_num
         validator.check_integer("The dimension which to unpack divides output_num", output_valid_check, 0, Rel.EQ,
@@ -2401,8 +2401,8 @@ class Eye(PrimitiveWithInfer):
         """Initialize Eye"""
 
     def infer_value(self, n, m, t):
-        validator.check_integer("n", n, 0, Rel.GT, self.name)
-        validator.check_integer("m", m, 0, Rel.GT, self.name)
+        validator.check_positive_int(n, "n", self.name)
+        validator.check_positive_int(m, "m", self.name)
         args = {"dtype": t}
         validator.check_type_same(args, mstype.number_type + (mstype.bool_,), self.name)
         np_type = mstype.dtype_to_nptype(t)
@@ -2443,7 +2443,7 @@ class ScatterNd(PrimitiveWithInfer):
         validator.check_tensor_type_same({"indices": indices['dtype']}, [mstype.int32], self.name)
         validator.check_value_type("shape", shp, [tuple], self.name)
         for i, x in enumerate(shp):
-            validator.check_integer("shape[%d]" % i, x, 0, Rel.GT, self.name)
+            validator.check_positive_int(x, f'shape[{i}]', self.name)
 
         indices_shape, update_shape = indices["shape"], update["shape"]
         if indices_shape[0] != update_shape[0]:
@@ -3469,7 +3469,7 @@ class BroadcastTo(PrimitiveWithInfer):
         validator.check_value_type("shape", shape, (tuple), self.name)
         validator.check("shape length", len(shape), "", 0, Rel.GT, self.name)
         for i in shape:
-            validator.check_integer("shape element", i, 0, Rel.GT, self.name)
+            validator.check_positive_int(i, "shape element", self.name)
         self.shape = shape
 
     def infer_shape(self, x_shape):

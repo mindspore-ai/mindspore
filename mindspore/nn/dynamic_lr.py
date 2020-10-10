@@ -52,7 +52,7 @@ def piecewise_constant_lr(milestone, learning_rates):
     lr = []
     last_item = 0
     for i, item in enumerate(milestone):
-        validator.check_integer(f'milestone[{i}]', item, 0, Rel.GT, None)
+        validator.check_positive_int(item, f'milestone[{i}]')
         validator.check_float_legal_value(f'learning_rates[{i}]', learning_rates[i], None)
         if item < last_item:
             raise ValueError(f'The value of milestone[{i}] must be greater than milestone[{i - 1}]')
@@ -63,9 +63,9 @@ def piecewise_constant_lr(milestone, learning_rates):
 
 
 def _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair):
-    validator.check_integer('total_step', total_step, 0, Rel.GT, None)
-    validator.check_integer('step_per_epoch', step_per_epoch, 0, Rel.GT, None)
-    validator.check_integer('decay_epoch', decay_epoch, 0, Rel.GT, None)
+    validator.check_positive_int(total_step, 'total_step')
+    validator.check_positive_int(step_per_epoch, 'step_per_epoch')
+    validator.check_positive_int(decay_epoch, 'decay_epoch')
     validator.check_float_positive('learning_rate', learning_rate, None)
     validator.check_float_legal_value('learning_rate', learning_rate, None)
     validator.check_float_positive('decay_rate', decay_rate, None)
@@ -236,9 +236,9 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
     validator.check_number_range("min_lr", min_lr, 0.0, float("inf"), Rel.INC_LEFT, None)
     validator.check_float_positive('max_lr', max_lr, None)
     validator.check_float_legal_value('max_lr', max_lr, None)
-    validator.check_integer('total_step', total_step, 0, Rel.GT, None)
-    validator.check_integer('step_per_epoch', step_per_epoch, 0, Rel.GT, None)
-    validator.check_integer('decay_epoch', decay_epoch, 0, Rel.GT, None)
+    validator.check_positive_int(total_step, 'total_step')
+    validator.check_positive_int(step_per_epoch, 'step_per_epoch')
+    validator.check_positive_int(decay_epoch, 'decay_epoch')
     if min_lr >= max_lr:
         raise ValueError('`max_lr` should be greater than `min_lr`.')
 
@@ -306,9 +306,9 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
     validator.check_number_range("end_learning_rate", end_learning_rate, 0.0, float("inf"), Rel.INC_LEFT, None)
     validator.check_float_positive('power', power, None)
     validator.check_float_legal_value('power', power, None)
-    validator.check_integer('total_step', total_step, 0, Rel.GT, None)
-    validator.check_integer('step_per_epoch', step_per_epoch, 0, Rel.GT, None)
-    validator.check_integer('decay_epoch', decay_epoch, 0, Rel.GT, None)
+    validator.check_positive_int(total_step, 'total_step')
+    validator.check_positive_int(step_per_epoch, 'step_per_epoch')
+    validator.check_positive_int(decay_epoch, 'decay_epoch')
     validator.check_value_type('update_decay_epoch', update_decay_epoch, [bool], None)
 
     origin_decay_epoch = decay_epoch
@@ -357,9 +357,9 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
     if not isinstance(learning_rate, float):
         raise TypeError("learning_rate must be float.")
     validator.check_number_range("learning_rate", learning_rate, 0.0, float("inf"), Rel.INC_LEFT, None)
-    validator.check_integer('warmup_epoch', warmup_epoch, 0, Rel.GT, None)
-    validator.check_integer('total_step', total_step, 0, Rel.GT, None)
-    validator.check_integer('step_per_epoch', step_per_epoch, 0, Rel.GT, None)
+    validator.check_positive_int(warmup_epoch, 'warmup_epoch')
+    validator.check_positive_int(total_step, 'total_step')
+    validator.check_positive_int(step_per_epoch, 'step_per_epoch')
 
     function = lambda x, y: (x, min(x, y))
 

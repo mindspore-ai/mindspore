@@ -1005,8 +1005,8 @@ class Conv2D(PrimitiveWithInfer):
 
         self.mode = validator.check_integer('mode', mode, 1, Rel.EQ, self.name)
         self.add_prim_attr('data_format', "NCHW")
-        self.out_channel = validator.check_integer('out_channel', out_channel, 0, Rel.GT, self.name)
-        self.group = validator.check_integer('group', group, 0, Rel.GT, self.name)
+        self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
+        self.group = validator.check_positive_int(group, 'group', self.name)
         self.add_prim_attr('offset_a', 0)
 
     def infer_shape(self, x_shape, w_shape, b_shape=None):
@@ -1142,9 +1142,8 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
                 validator.check_integer('pad item', item, 0, Rel.GE, self.name)
         self.mode = validator.check_integer("mode", mode, 3, Rel.EQ, self.name)
         self.add_prim_attr('data_format', "NCHW")
-        self.channel_multiplier = validator.check_integer("channel_multiplier", channel_multiplier, 0, Rel.GT,
-                                                          self.name)
-        self.group = validator.check_integer("group", group, 0, Rel.GT, self.name)
+        self.channel_multiplier = validator.check_positive_int(channel_multiplier, "channel_multiplier", self.name)
+        self.group = validator.check_positive_int(group, "group", self.name)
         self.add_prim_attr('offset_a', 0)
 
     def infer_shape(self, x_shape, w_shape, b_shape=None):
@@ -1508,7 +1507,7 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
                  group=1):
         """Initialize Conv2DBackpropInput"""
         self.init_prim_io_names(inputs=['out_backprop', 'filter', 'input_sizes'], outputs=['output'])
-        self.out_channel = validator.check_integer('out_channel', out_channel, 0, Rel.GT, self.name)
+        self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
         self.stride = _check_positive_int_or_tuple('stride', stride, self.name, allow_four=True, ret_four=False)
         self.add_prim_attr('stride', self.stride)
@@ -1531,7 +1530,7 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         pad_mode = pad_mode.upper()
         self.add_prim_attr('pad_mode', pad_mode)
         self.mode = validator.check_integer('mode', mode, 1, Rel.EQ, self.name)
-        self.group = validator.check_integer('group', group, 0, Rel.GT, self.name)
+        self.group = validator.check_positive_int(group, 'group', self.name)
         self.add_prim_attr('data_format', "NCHW")
         if pad_list:
             for x in pad_list:
@@ -2062,10 +2061,10 @@ class SGD(PrimitiveWithInfer):
 
     def infer_shape(self, parameters_shape, gradient_shape, learning_rate_shape,
                     accum_shape, momentum_shape, stat_shape):
-        validator.check_integer(f'parameters rank', len(parameters_shape), 0, Rel.GT, self.name)
+        validator.check_positive_int(len(parameters_shape), "parameters rank", self.name)
         validator.check_integer(f'gradient rank', len(gradient_shape), 0, Rel.GE, self.name)
         validator.check_integer(f'learning rate rank', len(learning_rate_shape), 0, Rel.GE, self.name)
-        validator.check_integer(f'accumulation rank', len(accum_shape), 0, Rel.GT, self.name)
+        validator.check_positive_int(len(accum_shape), "accumulation rank", self.name)
         validator.check_integer(f'momentum rank', len(momentum_shape), 0, Rel.GE, self.name)
         validator.check_integer(f'stat rank', len(stat_shape), 0, Rel.GE, self.name)
         validator.check("gradient shape", gradient_shape, "stat shape", stat_shape, Rel.EQ, self.name)
@@ -2748,9 +2747,9 @@ class LSTM(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
-        self.input_size = validator.check_integer("input_size", input_size, 0, Rel.GT, self.name)
-        self.hidden_size = validator.check_integer("hidden_size", hidden_size, 0, Rel.GT, self.name)
-        self.num_layers = validator.check_integer("num_layers", num_layers, 0, Rel.GT, self.name)
+        self.input_size = validator.check_positive_int(input_size, "input_size", self.name)
+        self.hidden_size = validator.check_positive_int(hidden_size, "hidden_size", self.name)
+        self.num_layers = validator.check_positive_int(num_layers, "num_layers", self.name)
         self.has_bias = validator.check_value_type("has_bias", has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type("bidirectional", bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)

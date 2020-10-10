@@ -23,7 +23,7 @@ from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Validator, Rel, check_int_positive, twice
+from mindspore._checkparam import Validator, Rel, twice
 import mindspore.context as context
 from .normalization import BatchNorm2d, BatchNorm1d
 from .activation import get_activation, ReLU, LeakyReLU
@@ -657,8 +657,8 @@ class Conv2dBnWithoutFoldQuant(Cell):
             self.kernel_size = (kernel_size, kernel_size)
         else:
             self.kernel_size = kernel_size
-        self.in_channels = check_int_positive(in_channels)
-        self.out_channels = check_int_positive(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels)
+        self.out_channels = Validator.check_positive_int(out_channels)
         self.has_bias = has_bias
         self.stride = twice(stride)
         self.dilation = twice(dilation)
@@ -785,8 +785,8 @@ class Conv2dQuant(Cell):
             self.kernel_size = (kernel_size, kernel_size)
         else:
             self.kernel_size = kernel_size
-        self.in_channels = check_int_positive(in_channels)
-        self.out_channels = check_int_positive(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels)
+        self.out_channels = Validator.check_positive_int(out_channels)
         self.has_bias = has_bias
         self.stride = twice(stride)
         self.dilation = twice(dilation)
@@ -886,8 +886,8 @@ class DenseQuant(Cell):
             narrow_range=False,
             quant_delay=0):
         super(DenseQuant, self).__init__()
-        self.in_channels = check_int_positive(in_channels)
-        self.out_channels = check_int_positive(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels)
+        self.out_channels = Validator.check_positive_int(out_channels)
         self.has_bias = Validator.check_bool(has_bias)
 
         if isinstance(weight_init, Tensor):

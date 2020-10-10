@@ -16,7 +16,7 @@
 from copy import deepcopy
 
 import numpy as np
-from mindspore._checkparam import check_int_positive, Validator
+from mindspore._checkparam import Validator
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.train import Model
@@ -81,7 +81,7 @@ class UncertaintyEvaluation:
         self.epi_train_dataset = train_dataset
         self.ale_train_dataset = deepcopy(train_dataset)
         self.task_type = task_type
-        self.epochs = check_int_positive(epochs)
+        self.epochs = Validator.check_positive_int(epochs)
         self.epi_uncer_model_path = epi_uncer_model_path
         self.ale_uncer_model_path = ale_uncer_model_path
         self.save_model = Validator.check_bool(save_model)
@@ -95,7 +95,7 @@ class UncertaintyEvaluation:
         if task_type not in ('regression', 'classification'):
             raise ValueError('The task should be regression or classification.')
         if task_type == 'classification':
-            self.num_classes = check_int_positive(num_classes)
+            self.num_classes = Validator.check_positive_int(num_classes)
         else:
             self.num_classes = num_classes
         if save_model:

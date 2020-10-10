@@ -19,7 +19,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.ops.primitive import constexpr
 import mindspore.context as context
-from mindspore._checkparam import Validator, check_typename, check_int_positive
+from mindspore._checkparam import Validator, check_typename
 from mindspore._extends import cell_attr_register
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.communication import management
@@ -64,7 +64,7 @@ class _BatchNorm(Cell):
             gamma_init, num_features), name="gamma", requires_grad=affine)
         self.beta = Parameter(initializer(
             beta_init, num_features), name="beta", requires_grad=affine)
-        self.group = check_int_positive(device_num_each_group)
+        self.group = Validator.check_positive_int(device_num_each_group)
         self.is_global = False
         if self.group != 1:
             self.rank_id = get_rank()
@@ -464,7 +464,7 @@ class GlobalBatchNorm(_BatchNorm):
                                               use_batch_statistics,
                                               device_num_each_group,
                                               input_dims='both')
-        self.group = check_int_positive(device_num_each_group)
+        self.group = Validator.check_positive_int(device_num_each_group)
         if self.group <= 1:
             raise ValueError("the number of group must be greater than 1.")
 
@@ -599,8 +599,8 @@ class GroupNorm(Cell):
 
     def __init__(self, num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros'):
         super(GroupNorm, self).__init__()
-        self.num_groups = check_int_positive(num_groups)
-        self.num_channels = check_int_positive(num_channels)
+        self.num_groups = Validator.check_positive_int(num_groups)
+        self.num_channels = Validator.check_positive_int(num_channels)
         if num_channels % num_groups != 0:
             raise ValueError("num_channels should be divided by num_groups")
         self.eps = check_typename('eps', eps, (float,))

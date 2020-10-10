@@ -22,7 +22,7 @@ from mindspore._c_expression import init_exec_dataset
 from mindspore import context
 from mindspore import log as logger
 from mindspore import nn
-from mindspore._checkparam import check_input_data, check_output_data, check_int_positive, Validator, check_int
+from mindspore._checkparam import check_input_data, check_output_data, Validator, check_int
 from mindspore.common import dtype as mstype
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.tensor import Tensor
@@ -374,7 +374,7 @@ class Model:
                                       dataset not sink.
             sink_size (int): Control the amount of data each sink. Default: -1.
         """
-        epoch = check_int_positive(epoch)
+        epoch = Validator.check_positive_int(epoch)
         self._train_network.set_train()
 
         if self._parameter_broadcast:

@@ -15,7 +15,7 @@
 """thor_layer"""
 import numpy as np
 import mindspore.common.dtype as mstype
-from mindspore._checkparam import Validator, check_int_positive
+from mindspore._checkparam import Validator
 from mindspore.common.initializer import TruncatedNormal, initializer
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
@@ -160,8 +160,8 @@ class Dense_Thor(Cell):
                  activation=None,
                  batch_size=12):
         super(Dense_Thor, self).__init__()
-        self.in_channels = check_int_positive(in_channels)
-        self.out_channels = check_int_positive(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels)
+        self.out_channels = Validator.check_positive_int(out_channels)
         self.has_bias = Validator.check_bool(has_bias)
         self.thor = True
         if isinstance(weight_init, Tensor):

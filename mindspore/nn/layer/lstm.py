@@ -15,7 +15,7 @@
 """lstm"""
 import math
 import numpy as np
-from mindspore._checkparam import Rel, Validator as validator
+from mindspore._checkparam import Validator as validator
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
@@ -103,8 +103,8 @@ class LSTM(Cell):
                  bidirectional=False):
         super(LSTM, self).__init__()
         validator.check_value_type("batch_first", batch_first, [bool], self.cls_name)
-        validator.check_integer("hidden_size", hidden_size, 0, Rel.GT, self.cls_name)
-        validator.check_integer("num_layers", num_layers, 0, Rel.GT, self.cls_name)
+        validator.check_positive_int(hidden_size, "hidden_size", self.cls_name)
+        validator.check_positive_int(num_layers, "num_layers", self.cls_name)
 
         self.batch_first = batch_first
         self.transpose = P.Transpose()

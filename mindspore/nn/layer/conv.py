@@ -21,7 +21,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Validator, Rel, twice, check_int_positive
+from mindspore._checkparam import Validator, Rel, twice
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
@@ -47,8 +47,8 @@ class _Conv(Cell):
                  bias_init,
                  transposed=False):
         super(_Conv, self).__init__()
-        self.in_channels = check_int_positive(in_channels)
-        self.out_channels = check_int_positive(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels)
+        self.out_channels = Validator.check_positive_int(out_channels)
         self.kernel_size = kernel_size
         self.stride = stride
         self.pad_mode = pad_mode
@@ -65,7 +65,7 @@ class _Conv(Cell):
             raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
 
         self.dilation = dilation
-        self.group = check_int_positive(group)
+        self.group = Validator.check_positive_int(group)
         self.has_bias = has_bias
         if (not isinstance(kernel_size[0], int)) or (not isinstance(kernel_size[1], int)) or \
                 isinstance(kernel_size[0], bool) or isinstance(kernel_size[1], bool) or \

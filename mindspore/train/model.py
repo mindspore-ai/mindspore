@@ -22,7 +22,7 @@ import numpy as np
 from mindspore import log as logger
 from ..common.tensor import Tensor
 from ..nn.metrics import get_metrics
-from .._checkparam import check_input_data, check_output_data, check_int_positive, Validator, check_int
+from .._checkparam import check_input_data, check_output_data, Validator, check_int
 from .callback import _InternalCallbackParam, RunContext, _CallbackManager
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
@@ -339,7 +339,7 @@ class Model:
                                       dataset not sink.
             sink_size (int): Control the amount of data in each sink. Default: -1.
         """
-        epoch = check_int_positive(epoch)
+        epoch = Validator.check_positive_int(epoch)
         if self._parameter_broadcast:
             self._train_network.set_broadcast_flag()
 

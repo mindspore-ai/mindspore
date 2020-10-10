@@ -15,7 +15,7 @@
 """Stochastic Variational Inference(SVI)."""
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import check_int_positive
+from mindspore._checkparam import Validator
 from ....cell import Cell
 from ....wrap.cell_wrapper import TrainOneStepCell
 from .elbo import ELBO
@@ -57,7 +57,7 @@ class SVI:
         Outputs:
             Cell, the trained probability network.
         """
-        epochs = check_int_positive(epochs)
+        epochs = Validator.check_positive_int(epochs)
         train_net = TrainOneStepCell(self.net_with_loss, self.optimizer)
         train_net.set_train()
         for _ in range(1, epochs+1):
