@@ -64,31 +64,33 @@ STATUS TfliteModelParser::CopyConstTensorData(const std::vector<std::unique_ptr<
 
 void TfliteModelParser::SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor,
                                             schema::TensorT *tensor) {
-  std::unique_ptr<schema::QuantParamT> quant_param = std::make_unique<QuantParamT>();
-  if (!tflite_tensor->quantization->scale.empty()) {
-    quant_param->scale = tflite_tensor->quantization->scale[0];
-  }
-
-  if (!tflite_tensor->quantization->zero_point.empty()) {
-    quant_param->zeroPoint = tflite_tensor->quantization->zero_point[0];
-  }
-
-  // change quant param min to 0 to fit ms-lite ops
-  if (GetTfliteDataType(tflite_tensor->type) == TypeId::kNumberTypeUInt8 && tensor->data.empty()) {
-    quant_param->zeroPoint = quant_param->zeroPoint - 128;
-    tensor->dataType = TypeId::kNumberTypeInt8;
-  }
-
-  if (!tflite_tensor->quantization->min.empty()) {
-    quant_param->min = tflite_tensor->quantization->min[0];
-  }
-
-  if (!tflite_tensor->quantization->max.empty()) {
-    quant_param->max = tflite_tensor->quantization->max[0];
-  }
-  quant_param->inited = true;
   tensor->quantParams.clear();
-  tensor->quantParams.emplace_back(std::move(quant_param));
+  for (size_t i = 0; i < tflite_tensor->quantization->scale.size(); i++) {
+    std::unique_ptr<schema::QuantParamT> quant_param = std::make_unique<QuantParamT>();
+    if (!tflite_tensor->quantization->scale.empty()) {
+      quant_param->scale = tflite_tensor->quantization->scale[i];
+    }
+
+    if (!tflite_tensor->quantization->zero_point.empty()) {
+      quant_param->zeroPoint = tflite_tensor->quantization->zero_point[i];
+    }
+
+    // change quant param min to 0 to fit ms-lite ops
+    if (GetTfliteDataType(tflite_tensor->type) == TypeId::kNumberTypeUInt8 && tensor->data.empty()) {
+      quant_param->zeroPoint = quant_param->zeroPoint - 128;
+      tensor->dataType = TypeId::kNumberTypeInt8;
+    }
+
+    if (!tflite_tensor->quantization->min.empty()) {
+      quant_param->min = tflite_tensor->quantization->min[i];
+    }
+
+    if (!tflite_tensor->quantization->max.empty()) {
+      quant_param->max = tflite_tensor->quantization->max[i];
+    }
+    quant_param->inited = true;
+    tensor->quantParams.emplace_back(std::move(quant_param));
+  }
 }
 
 STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflite_model,
