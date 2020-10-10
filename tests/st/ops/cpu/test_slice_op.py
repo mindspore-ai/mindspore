@@ -45,7 +45,6 @@ def test_slice():
 
     slice_op = Slice()
     output = slice_op(x)
-    print("output:\n", output)
     assert (output.asnumpy() == expect).all()
 
 
@@ -68,7 +67,6 @@ def test_slice2():
 
     slice_op = Slice2()
     output = slice_op(x)
-    print("output:\n", output)
     assert (output.asnumpy() == expect).all()
 
 
@@ -115,8 +113,34 @@ def test_slice4():
     assert (output.asnumpy() == inputx[:10:1, :, 2:3:1]).all()
 
 
+class Slice5(nn.Cell):
+    def __init__(self, begin, size):
+        super(Slice5, self).__init__()
+        self.relu = nn.ReLU()
+        self.slice = P.Slice()
+        self.begin = begin
+        self.size = size
+
+    def construct(self, x):
+        return self.slice(x, self.begin, self.size)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_slice5():
+    inputx = np.arange(3 * 5 * 4).reshape(3, 5, 4).astype(np.float32)
+    x = Tensor(inputx)
+    begin = (0, 1, 0)
+    size = (3, 4, 4)
+    slice_op = Slice5(begin, size)
+    output = slice_op(x)
+    assert (output.asnumpy() == inputx[0:3:1, 1:5:1, 0:4:1]).all()
+
+
 if __name__ == '__main__':
     test_slice()
     test_slice2()
     test_slice3()
     test_slice4()
+    test_slice5()
