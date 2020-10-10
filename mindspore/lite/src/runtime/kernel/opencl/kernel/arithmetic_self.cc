@@ -40,14 +40,25 @@ using mindspore::schema::PrimitiveType_Square;
 namespace mindspore::kernel {
 
 int ArithmeticSelfOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
+  auto out_shape = out_tensors_[0]->shape();
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t im_dst_x, im_dst_y;
   if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
-    im_dst_x = out_tensors_[0]->Width() * CO4;
-    im_dst_y = out_tensors_[0]->Height() * out_tensors_[0]->Batch();
+    if (in_tensors_[0]->shape().size() == 4) {
+      im_dst_x = out_tensors_[0]->Width() * CO4;
+      im_dst_y = out_tensors_[0]->Height() * out_tensors_[0]->Batch();
+    } else {
+      im_dst_x = UP_DIV(out_shape[1], C4NUM);
+      im_dst_y = out_tensors_[0]->Batch();
+    }
   } else {
-    im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * CO4;
-    im_dst_x = out_tensors_[0]->Width();
+    if (in_tensors_[0]->shape().size() == 4) {
+      im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * CO4;
+      im_dst_x = out_tensors_[0]->Width();
+    } else {
+      im_dst_y = out_tensors_[0]->Batch() * UP_DIV(out_shape[1], C4NUM);
+      im_dst_x = 1;
+    }
   }
   size_t img_dtype = CL_FLOAT;
   auto enable_fp16_ = ocl_runtime_->GetFp16Enable();
@@ -107,14 +118,14 @@ void ArithmeticSelfOpenCLKernel::GetKernelName(std::string *kernel_name, Arithme
 }
 
 int ArithmeticSelfOpenCLKernel::Init() {
-  if (in_tensors_[0]->shape().size() != 4) {
-    MS_LOG(ERROR) << " only support dim = 4 ";
+  if (in_tensors_[0]->shape().size() != 4 && in_tensors_[0]->shape().size() != 2) {
+    MS_LOG(ERROR) << " only support dim = 4 or 2 but your dim = " << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   auto param = reinterpret_cast<ArithmeticSelfParameter *>(this->op_parameter_);
 
   auto in_format = op_format_;
-  if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4) {
+  if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4 && in_format != schema::Format_NC4) {
     MS_LOG(ERROR) << "input format(" << in_format << ") "
                   << "format not support!";
     return RET_ERROR;
@@ -161,12 +172,19 @@ int ArithmeticSelfOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
 
   auto output_shape = out_tensors_[0]->shape();
-  cl_int4 output_shape_ = {output_shape[0], output_shape[1], output_shape[2], UP_DIV(output_shape[3], C4NUM)};
-
-  uint32_t OH = output_shape[0] * output_shape[1];  // N*H
-  uint32_t OW = output_shape[2];
-  uint32_t OC = UP_DIV(output_shape[3], C4NUM);
-
+  cl_int4 output_shape_ = {};
+  uint32_t OH = 1, OW = 1, OC = 1;
+  if (output_shape.size() == 4) {
+    output_shape_ = {output_shape[0], output_shape[1], output_shape[2], UP_DIV(output_shape[3], C4NUM)};
+    OH = output_shape[0] * output_shape[1];
+    OW = output_shape[2];
+    OC = UP_DIV(output_shape[3], C4NUM);
+  } else if (output_shape.size() == 2) {
+    output_shape_ = {output_shape[0], 1, 1, UP_DIV(output_shape[1], C4NUM)};
+    OH = output_shape[0];
+    OW = 1;
+    OC = UP_DIV(output_shape[1], C4NUM);
+  }
   const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
   std::vector<size_t> local = {1, 1, 1};  // init local
   std::vector<size_t> global = {OH, OW, OC};

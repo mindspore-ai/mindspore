@@ -82,7 +82,7 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
     }
     return;
   }
-  param->op_parameter_.type_ = schema::PrimitiveType_Round;
+  param->op_parameter_.type_ = schema::PrimitiveType_Sin;
   auto *arithmeticself_kernel =
     new (std::nothrow) kernel::ArithmeticSelfOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   if (arithmeticself_kernel == nullptr) {
@@ -225,4 +225,99 @@ TEST_F(TestArithmeticSelfOpenCLCI, ArithmeticSelfRound) {
   }
   delete sub_graph;
 }
+
+TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfdim2Fp16) {
+  MS_LOG(INFO) << " begin test ";
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
+  ocl_runtime->SetFp16Enable(true);
+  ocl_runtime->Init();
+  auto allocator = ocl_runtime->GetAllocator();
+
+  // get the input from .bin
+  size_t input1_size, output_size;
+  std::string input1Ppath = "./test_data/in_arithmetic_selffp16.bin";
+  std::string correctOutputPath = "./test_data/out_arithmetic_selffp16.bin";
+  auto input_data1 = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
+  auto correctOutput =
+    reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
+
+  MS_LOG(INFO) << " init tensors ";
+
+  std::vector<int> shape = {1, 512};
+  auto data_type = kNumberTypeFloat16;
+  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NC, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NC, tensor_type);
+  if (input_tensor == nullptr || output_tensor == nullptr) {
+    MS_LOG(INFO) << " new input_tensor or output_tensor failed ";
+    return;
+  }
+  std::vector<lite::Tensor *> inputs{input_tensor};
+  std::vector<lite::Tensor *> outputs{output_tensor};
+  MS_LOG(INFO) << " initialize param ";
+  auto param = reinterpret_cast<ArithmeticSelfParameter *>(malloc(sizeof(ArithmeticSelfParameter)));
+  if (param == nullptr) {
+    MS_LOG(INFO) << " new ConcatParameter failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    return;
+  }
+  param->op_parameter_.type_ = schema::PrimitiveType_Sin;
+  auto *arithmeticself_kernel =
+    new (std::nothrow) kernel::ArithmeticSelfOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (arithmeticself_kernel == nullptr) {
+    MS_LOG(INFO) << " new kernel::ArithmeticSelfOpenCLKernel failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    return;
+  }
+  arithmeticself_kernel->SetFormatType(schema::Format_NC4HW4);
+  arithmeticself_kernel->Init();
+  // to do allocate memory for inputs and outputs
+  for (auto &input_tensor : inputs) {
+    input_tensor->MallocData(allocator);
+  }
+  MS_LOG(INFO) << " initialize sub_graph ";
+  std::vector<kernel::LiteKernel *> kernels{arithmeticself_kernel};
+  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (sub_graph == nullptr) {
+    MS_LOG(INFO) << " new kernel::SubGraphOpenCLKernel failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    delete arithmeticself_kernel;
+    return;
+  }
+  sub_graph->Init();
+  MS_LOG(INFO) << " initialize input data ";
+  memcpy(inputs[0]->data_c(), input_data1, input1_size);
+
+  std::cout << "==================output data================" << std::endl;
+  sub_graph->Run();
+  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  CompareOutputData1(input_data1, output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
+  for (auto tensor : inputs) {
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  for (auto tensor : outputs) {
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  delete sub_graph;
+}
+
 }  // namespace mindspore

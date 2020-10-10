@@ -68,6 +68,7 @@ int GatherOpenCLKernel::Init() {
   }
   return RET_OK;
 }
+
 int GatherOpenCLKernel::InitBuffer() {
   auto indices_tensor = in_tensors_.at(1);
   int indices_num = indices_tensor->ElementsNum();
@@ -94,13 +95,15 @@ int GatherOpenCLKernel::InitBuffer() {
   }
   return RET_OK;
 }
+
 int GatherOpenCLKernel::ReSize() { return RET_OK; }
+
 int GatherOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t im_dst_x, im_dst_y;
   if (in_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
     im_dst_x = out_tensors_[0]->Width() * CO4;
-    im_dst_y = out_tensors_[0]->Height();
+    im_dst_y = out_tensors_[0]->Height() * out_tensors_[0]->Batch();
   } else {
     im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * CO4;
     im_dst_x = out_tensors_[0]->Width();
@@ -115,6 +118,7 @@ int GatherOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
   *img_size = std::move(vec);
   return RET_OK;
 }
+
 int GatherOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   auto param = reinterpret_cast<GatherParameter *>(this->op_parameter_);
@@ -122,7 +126,6 @@ int GatherOpenCLKernel::Run() {
   if (InitBuffer() != RET_OK) {
     return RET_ERROR;
   }
-
   auto input_shape = in_tensors_[0]->shape();
   auto output_shape = out_tensors_[0]->shape();
   int indices_num = in_tensors_[1]->ElementsNum();
@@ -132,7 +135,8 @@ int GatherOpenCLKernel::Run() {
   cl_int4 dst_size = {(cl_int)out_tensors_[0]->Width(), (cl_int)out_tensors_[0]->Height(), (cl_int)CO4,
                       (cl_int)out_tensors_[0]->Batch()};
   std::vector<size_t> local = {1, 1, 1};
-  std::vector<size_t> global = {(size_t)out_tensors_[0]->Width(), (size_t)out_tensors_[0]->Height(), CO4};
+  std::vector<size_t> global = {(size_t)out_tensors_[0]->Width(),
+                                (size_t)out_tensors_[0]->Batch() * (size_t)out_tensors_[0]->Height(), CO4};
   int arg_cn = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, indices_data_, lite::opencl::MemType::BUF);

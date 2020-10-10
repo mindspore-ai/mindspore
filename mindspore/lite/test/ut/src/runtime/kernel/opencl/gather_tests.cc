@@ -17,6 +17,7 @@
 #include <memory>
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
+#include "mindspore/lite/src/common/file_utils.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
@@ -27,6 +28,7 @@ class TestGatherOpenCL : public mindspore::CommonTest {
  public:
   TestGatherOpenCL() {}
 };
+
 template <typename T>
 void test_main_gather(void *input_data, void *correct_data, const std::vector<int> &input_shape,
                       const std::vector<int> &indices, GatherParameter *param, TypeId data_type,
@@ -41,7 +43,7 @@ void test_main_gather(void *input_data, void *correct_data, const std::vector<in
   output_shape[param->axis_] = indices.size();
 
   auto tensor_a = lite::Tensor(TypeId(data_type), input_shape, format);
-  auto tensor_b = lite::Tensor(TypeId(data_type), indices_shape, schema::Format_NC);
+  auto tensor_b = lite::Tensor(kNumberTypeInt32, indices_shape, schema::Format_NC);
   auto tensor_c = lite::Tensor(TypeId(data_type), output_shape, format);
   std::vector<lite::Tensor *> inputs{&tensor_a, &tensor_b};
   std::vector<lite::Tensor *> outputs{&tensor_c};
@@ -53,6 +55,7 @@ void test_main_gather(void *input_data, void *correct_data, const std::vector<in
     MS_LOG(INFO) << "new GatherOpenCLKernel failed ";
     return;
   }
+  pkernel->SetFormatType(schema::Format_NC4HW4);
   pkernel->Init();
 
   // to do allocate memory for inputs and outputs
@@ -72,18 +75,56 @@ void test_main_gather(void *input_data, void *correct_data, const std::vector<in
 
   MS_LOG(INFO) << " init tensors ";
   memcpy(inputs[0]->data_c(), input_data, input_size);
-
+  auto input1_tensor = reinterpret_cast<int *>(inputs[1]->data_c());
+  for (int i = 0; i < inputs[1]->ElementsNum(); ++i) {
+    input1_tensor[i] = indices.at(i);
+  }
   sub_graph->Run();
 
   std::cout << "==================output data================" << std::endl;
   auto *output_data = reinterpret_cast<T *>(outputs[0]->data_c());
-  CommonTest::CompareOutputData<T>(output_data, static_cast<T *>(correct_data), outputs[0]->ElementsNum(), 0.0001);
-  delete sub_graph;
+  CommonTest::CompareOutputData(output_data, static_cast<T *>(correct_data), outputs[0]->ElementsNum(), 0.0001);
 }
+TEST_F(TestGatherOpenCL, Axis0Fp16) {
+  std::vector<int> input_shape{5, 10, 10, 5};
+  std::vector<int> indices{1, 0, 3, 4};
+  GatherParameter *param = std::make_unique<GatherParameter>().release();
+  param->axis_ = 0;
+  size_t input_size, output_size;
+  std::string inputPpath = "./test_data/gatherfp16_input.bin";
+  std::string correctOutputPath = "./test_data/gatherfp16_output.bin";
+  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(inputPpath.c_str(), &input_size));
+  auto correct_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
+  if (param == nullptr) {
+    return;
+  }
+  TypeId data_type = kNumberTypeFloat16;
+  schema::Format format = schema::Format_NHWC;
+  test_main_gather<float16_t>(input_data, correct_data, input_shape, indices, param, data_type, format);
+}
+
+TEST_F(TestGatherOpenCL, Axis0Fp32) {
+  std::vector<int> input_shape{5, 10, 10, 5};
+  std::vector<int> indices{1, 2, 3, 4};
+  GatherParameter *param = std::make_unique<GatherParameter>().release();
+  param->axis_ = 0;
+  size_t input_size, output_size;
+  std::string inputPpath = "./test_data/gatherfp32_input.bin";
+  std::string correctOutputPath = "./test_data/gatherfp32_output.bin";
+  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(inputPpath.c_str(), &input_size));
+  auto correct_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
+  if (param == nullptr) {
+    return;
+  }
+  TypeId data_type = kNumberTypeFloat32;
+  schema::Format format = schema::Format_NHWC;
+  test_main_gather<float>(input_data, correct_data, input_shape, indices, param, data_type, format);
+}
+
 TEST_F(TestGatherOpenCL, Axis1Fp32) {
   std::vector<int> input_shape{1, 5, 4, 4};
   std::vector<int> indices{1, 3};
-  GatherParameter *param = std::make_unique<GatherParameter>().release();
+  GatherParameter *param = reinterpret_cast<GatherParameter *>(malloc(sizeof(GatherParameter)));
   param->axis_ = 1;
   float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
                         20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
@@ -98,11 +139,12 @@ TEST_F(TestGatherOpenCL, Axis1Fp32) {
   schema::Format format = schema::Format_NHWC;
   test_main_gather<float>(input_data, correct_data, input_shape, indices, param, data_type, format);
 }
-TEST_F(TestGatherOpenCL, Axis2Int32) {
+
+TEST_F(TestGatherOpenCL, Axis2Fp32) {
   std::vector<int> input_shape{1, 5, 4, 4};
   std::vector<int> indices{1, 3};
   GatherParameter *param = std::make_unique<GatherParameter>().release();
-  param->axis_ = 1;
+  param->axis_ = 2;
   float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
                         20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                         40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
@@ -114,6 +156,25 @@ TEST_F(TestGatherOpenCL, Axis2Int32) {
   }
   TypeId data_type = kNumberTypeFloat32;
   schema::Format format = schema::Format_NHWC;
-  test_main_gather<int>(input_data, correct_data, input_shape, indices, param, data_type, format);
+  test_main_gather<float>(input_data, correct_data, input_shape, indices, param, data_type, format);
+}
+
+TEST_F(TestGatherOpenCL, Axis3Fp32) {
+  std::vector<int> input_shape{1, 5, 4, 4};
+  std::vector<int> indices{1, 3};
+  GatherParameter *param = std::make_unique<GatherParameter>().release();
+  param->axis_ = 3;
+  float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+                        20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                        40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79};
+  float correct_data[] = {1,  3,  5,  7,  9,  11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39,
+                          41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67, 69, 71, 73, 75, 77, 79};
+  if (param == nullptr) {
+    return;
+  }
+  TypeId data_type = kNumberTypeFloat32;
+  schema::Format format = schema::Format_NHWC;
+  test_main_gather<float>(input_data, correct_data, input_shape, indices, param, data_type, format);
 }
 }  // namespace mindspore
