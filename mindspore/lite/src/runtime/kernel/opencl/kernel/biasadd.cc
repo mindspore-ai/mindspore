@@ -162,4 +162,5 @@ kernel::LiteKernel *OpenCLBiasAddKernelCreator(const std::vector<lite::Tensor *>
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_BiasAdd, OpenCLBiasAddKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_BiasAdd, OpenCLBiasAddKernelCreator)
 }  // namespace mindspore::kernel
