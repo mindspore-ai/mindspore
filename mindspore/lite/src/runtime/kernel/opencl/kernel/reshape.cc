@@ -38,10 +38,23 @@ int ReshapeOpenCLKernel::Init() {
     MS_LOG(ERROR) << "Reshape output size should in 2,4";
     return RET_ERROR;
   }
-  if (in_tensors_[0]->shape().back() != out_tensors_[0]->shape().back()) {
-    MS_LOG(ERROR) << "Reshape input channel " << in_tensors_[0]->shape().back() << " should equal output channel"
-                  << out_tensors_[0]->shape().back();
+  if ((in_tensors_[0]->shape().back() % 4 != 0 || out_tensors_[0]->shape().back() % 4 != 0) &&
+      in_tensors_[0]->shape().back() != out_tensors_[0]->shape().back()) {
+    MS_LOG(ERROR) << "Reshape input channel align 4 should equal output channel, cin:" << in_tensors_[0]->shape().back()
+                  << " cout:" << out_tensors_[0]->shape().back();
     return RET_ERROR;
+  }
+  if (in_tensors_[0]->shape().size() == 2) {
+    inShape = {in_tensors_[0]->shape()[0], 1, 1, in_tensors_[0]->shape()[1]};
+  } else {
+    inShape = {in_tensors_[0]->shape()[0], in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2],
+               in_tensors_[0]->shape()[3]};
+  }
+  if (out_tensors_[0]->shape().size() == 2) {
+    outShape = {out_tensors_[0]->shape()[0], 1, 1, out_tensors_[0]->shape()[1]};
+  } else {
+    outShape = {out_tensors_[0]->shape()[0], out_tensors_[0]->shape()[1], out_tensors_[0]->shape()[2],
+                out_tensors_[0]->shape()[3]};
   }
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
@@ -64,18 +77,10 @@ int ReshapeOpenCLKernel::ReSize() { return RET_OK; }
 
 int ReshapeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  std::vector<int> shapex = out_tensors_[0]->shape();
-  int n, h, w, c;
-  if (shapex.size() == 2) {
-    n = shapex[0];
-    h = w = 1;
-    c = shapex[1];
-  } else {
-    n = shapex[0];
-    h = shapex[1];
-    w = shapex[2];
-    c = shapex[3];
-  }
+  int n = outShape[0];
+  int h = outShape[1];
+  int w = outShape[2];
+  int c = outShape[3];
   if (op_format_ == schema::Format::Format_NHWC4) {
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = n * h;
@@ -98,22 +103,12 @@ int ReshapeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
 
 int ReshapeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  std::vector<int> shapex = in_tensors_[0]->shape();
-  int h = shapex[1];
-  int w = shapex[2];
-  int c = shapex[3];
-  int c4 = UP_DIV(c, C4NUM);
-  int oh, ow;
-  if (out_tensors_[0]->shape().size() == 2) {
-    oh = ow = 1;
-  } else {
-    oh = out_tensors_[0]->shape()[1];
-    ow = out_tensors_[0]->shape()[2];
-  }
+
   std::vector<size_t> local = {};
-  std::vector<size_t> global = {(size_t)oh, (size_t)ow, (size_t)c4};
-  cl_int4 size = {h, w, c4, 1};
-  cl_int4 size_out = {oh, ow, c4, 1};
+  std::vector<size_t> global = {
+    static_cast<size_t>(outShape[0] * outShape[1] * outShape[2] * UP_DIV(outShape[3], C4NUM))};
+  cl_int4 size = {inShape[0], inShape[1], inShape[2], UP_DIV(inShape[3], C4NUM)};
+  cl_int4 size_out = {outShape[0], outShape[1], outShape[2], UP_DIV(outShape[3], C4NUM)};
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());

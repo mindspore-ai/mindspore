@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_MATMUL_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_MATMUL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_FULLCONNECTION_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_FULLCONNECTION_H_
 
 #include <vector>
 
@@ -24,12 +24,12 @@
 
 namespace mindspore::kernel {
 
-class MatMulOpenCLKernel : public OpenCLKernel {
+class FullConnectionOpenCLKernel : public OpenCLKernel {
  public:
-  explicit MatMulOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs), inShape(MAX_DIMS, 1), outShape(MAX_DIMS, 1) {}
-  ~MatMulOpenCLKernel() override{};
+  explicit FullConnectionOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                      const std::vector<lite::Tensor *> &outputs)
+      : OpenCLKernel(parameter, inputs, outputs) {}
+  ~FullConnectionOpenCLKernel() override{};
 
   int Init() override;
   int ReSize() override;
@@ -40,14 +40,13 @@ class MatMulOpenCLKernel : public OpenCLKernel {
  private:
   cl::Kernel kernel_;
   void *padWeight_;
+  void *bias_;
   bool enable_fp16_{false};
   bool transposeA{false};
   bool transposeB{true};
-  int dims;
-  static constexpr int MAX_DIMS = 4;  // max supported matmul dims
   std::vector<int> inShape;
   std::vector<int> outShape;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_MATMUL_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_FULLCONNECTION_H_
