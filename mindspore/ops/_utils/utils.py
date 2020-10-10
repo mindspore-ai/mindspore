@@ -65,9 +65,9 @@ def get_broadcast_shape(x_shape, y_shape, prim_name):
 def get_concat_offset(x_shp, x_type, axis, prim_name):
     """for concat and concatoffset check args and compute offset"""
     validator.check_value_type("shape", x_shp, [tuple], prim_name)
-    validator.check_integer("input_x rank", len(x_shp), 0, Rel.GT, prim_name)
+    validator.check_positive_int(len(x_shp), "input_x rank", prim_name)
     validator.check_subclass("shape0", x_type[0], mstype.tensor, prim_name)
-    validator.check_integer("len of x_shp[0]", len(x_shp[0]), 0, Rel.GT, prim_name)
+    validator.check_positive_int(len(x_shp[0]), "len of x_shp[0]", prim_name)
     rank_base = len(x_shp[0])
     validator.check_int_range('axis', axis, -rank_base - 1, rank_base, Rel.INC_BOTH, prim_name)
     if axis < 0:

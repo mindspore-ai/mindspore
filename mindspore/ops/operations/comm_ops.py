@@ -162,7 +162,7 @@ class AllGather(PrimitiveWithInfer):
         self.add_prim_attr('fusion', 0)
 
     def infer_shape(self, x_shape):
-        validator.check_integer("x shape", len(x_shape), 0, Rel.GT, self.name)
+        validator.check_positive_int(len(x_shape), "x shape", self.name)
         x_shape[0] = x_shape[0] * self.rank_size
         return x_shape
 
@@ -212,7 +212,7 @@ class _HostAllGather(PrimitiveWithInfer):
         self.add_prim_attr('group', group)
 
     def infer_shape(self, x_shape):
-        validator.check_integer("x shape", len(x_shape), 0, Rel.GT, self.name)
+        validator.check_positive_int(len(x_shape), "x shape", self.name)
         x_shape[0] = x_shape[0] * self.group_size
         return x_shape
 

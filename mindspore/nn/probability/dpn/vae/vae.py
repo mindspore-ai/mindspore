@@ -15,7 +15,7 @@
 """Variational auto-encoder (VAE)"""
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore._checkparam import check_int_positive
+from mindspore._checkparam import Validator
 from ....cell import Cell
 from ....layer.basic import Dense
 
@@ -52,8 +52,8 @@ class VAE(Cell):
         self.decoder = decoder
         if (not isinstance(encoder, Cell)) or (not isinstance(decoder, Cell)):
             raise TypeError('The encoder and decoder should be Cell type.')
-        self.hidden_size = check_int_positive(hidden_size)
-        self.latent_size = check_int_positive(latent_size)
+        self.hidden_size = Validator.check_positive_int(hidden_size)
+        self.latent_size = Validator.check_positive_int(latent_size)
         if hidden_size < latent_size:
             raise ValueError('The latent_size should be less than or equal to the hidden_size.')
         self.normal = C.normal
@@ -94,7 +94,7 @@ class VAE(Cell):
         Returns:
             Tensor, the generated samples.
         """
-        generate_nums = check_int_positive(generate_nums)
+        generate_nums = Validator.check_positive_int(generate_nums)
         if not isinstance(shape, tuple) or len(shape) != 4 or (shape[0] != -1 and shape[0] != generate_nums):
             raise ValueError('The shape should be (generate_nums, C, H, W) or (-1, C, H, W).')
         sample_z = self.normal((generate_nums, self.latent_size), self.to_tensor(0.0), self.to_tensor(1.0), seed=0)

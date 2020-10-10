@@ -27,7 +27,7 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr
 from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
-from mindspore._checkparam import Rel, Validator, check_int_positive
+from mindspore._checkparam import Rel, Validator
 from mindspore.common.api import ms_function
 from mindspore import context
 from ..cell import Cell
@@ -203,8 +203,8 @@ class Dense(Cell):
                  has_bias=True,
                  activation=None):
         super(Dense, self).__init__()
-        self.in_channels = check_int_positive(in_channels)
-        self.out_channels = check_int_positive(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels)
+        self.out_channels = Validator.check_positive_int(out_channels)
         self.has_bias = Validator.check_bool(has_bias)
 
         if isinstance(weight_init, Tensor):

@@ -92,6 +92,25 @@ rel_strs = {
 }
 
 
+def _check_integer(arg_value, value, rel, arg_name=None, prim_name=None):
+    """
+        Check argument integer.
+
+        Usage:
+        - number = check_integer(number, 0, Rel.GE, "number", None) # number >= 0
+    """
+    rel_fn = Rel.get_fns(rel)
+    type_mismatch = not isinstance(arg_value, int) or isinstance(arg_value, bool)
+    type_except = TypeError if type_mismatch else ValueError
+    if type_mismatch or not rel_fn(arg_value, value):
+        rel_str = Rel.get_strs(rel).format(value)
+        arg_name = arg_name if arg_name else "parameter"
+        msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
+        raise type_except(f'{msg_prefix} `{arg_name}` should be an int and must {rel_str}, but got `{arg_value}`'
+                          f' with type `{type(arg_value).__name__}`.')
+    return arg_value
+
+
 class Validator:
     """validator for checking input parameters"""
 
@@ -121,6 +140,49 @@ class Validator:
                            f' with type `{type(arg_value).__name__}`.')
         return arg_value
 
+    @staticmethod
+    def check_positive_int(arg_value, arg_name=None, prim_name=None):
+        """
+        Check argument is positive integer, which mean arg_value > 0.
+
+        Usage:
+        - number = check_positive_int(number)
+        - number = check_positive_int(number, "bias")
+        """
+        return _check_integer(arg_value, 0, Rel.GT, arg_name, prim_name)
+
+    @staticmethod
+    def check_negative_int(arg_value, arg_name=None, prim_name=None):
+        """
+        Check argument is negative integer, which mean arg_value < 0.
+
+        Usage:
+        - number = check_negative_int(number)
+        - number = check_negative_int(number, "bias")
+        """
+        return _check_integer(arg_value, 0, Rel.LT, arg_name, prim_name)
+
+    @staticmethod
+    def check_non_positive_int(arg_value, arg_name=None, prim_name=None):
+        """
+        Check argument is non-negative integer, which mean arg_value <= 0.
+
+        Usage:
+        - number = check_non_positive_int(number)
+        - number = check_non_positive_int(number, "bias")
+        """
+        return _check_integer(arg_value, 0, Rel.LE, arg_name, prim_name)
+
+    @staticmethod
+    def check_non_negative_int(arg_value, arg_name=None, prim_name=None):
+        """
+        Check argument is non-negative integer, which mean arg_value >= 0.
+
+        Usage:
+        - number = check_non_negative_int(number)
+        - number = check_non_negative_int(number, "bias")
+        """
+        return _check_integer(arg_value, 0, Rel.GE, arg_name, prim_name)
 
     @staticmethod
     def check_number(arg_name, arg_value, value, rel, prim_name):
@@ -140,7 +202,13 @@ class Validator:
 
     @staticmethod
     def check_bool(arg_value, arg_name=None):
-        """Check argument is instance of bool"""
+        """
+        Check argument is instance of bool.
+
+        Usage:
+        - has_bias = check_bool(has_bias)
+        - has_bias = check_bool(has_bias, "has_bias")
+        """
         if not isinstance(arg_value, bool):
             arg_name = arg_name if arg_name else "Parameter"
             raise TypeError(f'`{arg_name}` should be isinstance of bool, but got `{arg_value}`.')
@@ -169,7 +237,12 @@ class Validator:
 
     @staticmethod
     def check_string(arg_value, valid_values, arg_name=None, prim_name=None):
-        """Checks whether a string is in some value list"""
+        """
+        Check whether string is in some value list.
+
+        Usage:
+        - method = check_string(method, ["string1", "string2", "string3"], "method")
+        """
         if isinstance(arg_value, str) and arg_value in valid_values:
             return arg_value
         arg_name = arg_name if arg_name else "Parameter"
@@ -370,28 +443,6 @@ def check_int(input_param):
     if isinstance(input_param, int) and not isinstance(input_param, bool):
         return input_param
     raise TypeError("Input type must be int!")
-
-
-def check_int_positive(input_param):
-    """Int type judgment."""
-    if isinstance(input_param, bool):
-        raise TypeError("Input type must be int cannot be bool!")
-    if isinstance(input_param, int):
-        if input_param > 0:
-            return input_param
-        raise ValueError("The input_param must be positive, but got input_param {}.".format(input_param))
-    raise TypeError("Input type must be int cannot be {}!".format(type(input_param)))
-
-
-def check_int_non_negative(input_param):
-    """Non_negative type judgment."""
-    if isinstance(input_param, bool):
-        raise TypeError("Input type must be int cannot be bool!")
-    if isinstance(input_param, int):
-        if input_param >= 0:
-            return input_param
-        raise ValueError("The input_param must be non_negative, but got input_param {}.".format(input_param))
-    raise TypeError("Input type must be int cannot be {}!".format(type(input_param)))
 
 
 def check_int_zero_one(input_param):

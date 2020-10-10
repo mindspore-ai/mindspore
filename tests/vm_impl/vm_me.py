@@ -15,8 +15,6 @@
 """VM implementations based on numpy."""
 
 import numpy as np
-
-from mindspore._checkparam import Rel
 from mindspore._checkparam import Validator as validator
 
 
@@ -33,7 +31,7 @@ def avg_pooling(x, pool_h, pool_w, stride):
     Returns:
         numpy.ndarray, an output array after applying average pooling on input array.
     """
-    validator.check_integer("stride", stride, 0, Rel.GT, None)
+    validator.check_positive_int(stride, "stride")
     num, channel, height, width = x.shape
     out_h = (height - pool_h) // stride + 1
     out_w = (width - pool_w) // stride + 1
@@ -423,7 +421,7 @@ def matmul(x, w, b=None):
 
 def max_pooling(x, pool_h, pool_w, stride):
     """Max pooling."""
-    validator.check_integer("stride", stride, 0, Rel.GT, None)
+    validator.check_positive_int(stride, "stride")
     num, channel, height, width = x.shape
     out_h = (height - pool_h) // stride + 1
     out_w = (width - pool_w) // stride + 1
@@ -466,7 +464,7 @@ def max_pool_grad_with_argmax(x, dout, arg_max, pool_h, pool_w, stride):
 
 def max_pool_with_argmax(x, pool_h, pool_w, stride):
     """Max pooling with argmax."""
-    validator.check_integer("stride", stride, 0, Rel.GT, None)
+    validator.check_positive_int(stride, "stride")
     num, channel, height, width = x.shape
     out_h = (height - pool_h) // stride + 1
     out_w = (width - pool_w) // stride + 1

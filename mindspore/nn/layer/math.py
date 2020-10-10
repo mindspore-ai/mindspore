@@ -21,7 +21,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import constexpr
 from ..cell import Cell
 from ...common import dtype as mstype
-from ..._checkparam import Rel, Validator as validator
+from ..._checkparam import Validator as validator
 
 
 __all__ = ['ReduceLogSumExp', 'Range', 'LinSpace', 'LGamma', 'MatMul']
@@ -156,7 +156,7 @@ class LinSpace(Cell):
         validator.check_value_type("start", start, [int, float], self.cls_name)
         validator.check_value_type("stop", stop, [int, float], self.cls_name)
         validator.check_value_type("num", num, [int], self.cls_name)
-        validator.check_integer("num", num, 0, Rel.GT, self.cls_name)
+        validator.check_positive_int(num, "num", self.cls_name)
 
         self.is_single = bool(num == 1)
         self.lin_space = inner.LinSpace()

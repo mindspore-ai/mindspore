@@ -14,7 +14,7 @@
 # ============================================================================
 """Graph Attention Networks."""
 import mindspore.nn as nn
-from mindspore._checkparam import Validator, check_int_positive
+from mindspore._checkparam import Validator
 
 from aggregator import AttentionAggregator
 
@@ -71,9 +71,9 @@ class GAT(nn.Cell):
                  activation=nn.ELU(),
                  residual=False):
         super(GAT, self).__init__()
-        self.ftr_dims = check_int_positive(ftr_dims)
-        self.num_class = check_int_positive(num_class)
-        self.num_nodes = check_int_positive(num_nodes)
+        self.ftr_dims = Validator.check_positive_int(ftr_dims)
+        self.num_class = Validator.check_positive_int(num_class)
+        self.num_nodes = Validator.check_positive_int(num_nodes)
         self.hidden_units = hidden_units
         self.num_heads = num_heads
         self.attn_drop = attn_drop

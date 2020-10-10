@@ -19,7 +19,7 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore import nn
 from mindspore._c_expression import init_exec_dataset
-from mindspore._checkparam import check_input_data, check_output_data, check_int_positive, Validator
+from mindspore._checkparam import check_input_data, check_output_data, Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.tensor import Tensor
@@ -377,7 +377,7 @@ class Model:
                                       Configure pynative mode, the training process will be performed with
                                       dataset not sink.
         """
-        epoch = check_int_positive(epoch)
+        epoch = Validator.check_positive_int(epoch)
         self._train_network.set_train()
 
         if self._parameter_broadcast:

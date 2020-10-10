@@ -915,9 +915,9 @@ class LSTMGradData(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
-        self.input_size = validator.check_integer('input_size', input_size, 0, Rel.GT, self.name)
-        self.hidden_size = validator.check_integer('hidden_size', hidden_size, 0, Rel.GT, self.name)
-        self.num_layers = validator.check_integer('num_layers', num_layers, 0, Rel.GT, self.name)
+        self.input_size = validator.check_positive_int(input_size, 'input_size', self.name)
+        self.hidden_size = validator.check_positive_int(hidden_size, 'hidden_size', self.name)
+        self.num_layers = validator.check_positive_int(num_layers, 'num_layers', self.name)
         self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
@@ -964,9 +964,9 @@ class LSTMGradWeight(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
-        self.input_size = validator.check_integer('input_size', input_size, 0, Rel.GT, self.name)
-        self.hidden_size = validator.check_integer('hidden_size', hidden_size, 0, Rel.GT, self.name)
-        self.num_layers = validator.check_integer('num_layers', num_layers, 0, Rel.GT, self.name)
+        self.input_size = validator.check_positive_int(input_size, 'input_size', self.name)
+        self.hidden_size = validator.check_positive_int(hidden_size, 'hidden_size', self.name)
+        self.num_layers = validator.check_positive_int(num_layers, 'num_layers', self.name)
         self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
@@ -999,9 +999,9 @@ class LSTMGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
-        self.input_size = validator.check_integer('input_size', input_size, 0, Rel.GT, self.name)
-        self.hidden_size = validator.check_integer('hidden_size', hidden_size, 0, Rel.GT, self.name)
-        self.num_layers = validator.check_integer('num_layers', num_layers, 0, Rel.GT, self.name)
+        self.input_size = validator.check_positive_int(input_size, 'input_size', self.name)
+        self.hidden_size = validator.check_positive_int(hidden_size, 'hidden_size', self.name)
+        self.num_layers = validator.check_positive_int(num_layers, 'num_layers', self.name)
         self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)

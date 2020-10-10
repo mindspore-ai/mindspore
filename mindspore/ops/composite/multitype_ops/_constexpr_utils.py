@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 """constexpr util"""
+
 from functools import reduce
 
 import numpy as np
@@ -58,30 +58,6 @@ def check_equal(param1, param2, msg="{},{}"):
     if param1 != param2:
         raise ValueError(msg.format(param1, param2))
     return param1
-
-
-@constexpr
-def check_int_positive(arg_name, arg_value, op_name):
-    """Int type judgment."""
-    if isinstance(arg_value, bool):
-        raise TypeError("For \'{}\' the `{}` must be int, cannot be bool.".format(op_name, arg_name))
-    if isinstance(arg_value, int):
-        if arg_value > 0:
-            return arg_value
-        raise ValueError("For \'{}\' the `{}` must be positive, but got {}.".format(op_name, arg_name, arg_value))
-    raise TypeError("For \'{}\' the `{}` must be int, cannot be {}.".format(op_name, arg_name, type(arg_value)))
-
-
-@constexpr
-def check_int_non_negative(arg_name, arg_value, op_name):
-    """Int type judgment."""
-    if isinstance(arg_value, bool):
-        raise TypeError("For \'{}\' the `{}` must be int, cannot be bool.".format(op_name, arg_name))
-    if isinstance(arg_value, int):
-        if arg_value >= 0:
-            return arg_value
-        raise ValueError("For \'{}\' the `{}` must be non_negative, but got {}.".format(op_name, arg_name, arg_value))
-    raise TypeError("For \'{}\' the `{}` must be int, cannot be {}.".format(op_name, arg_name, type(arg_value)))
 
 
 @constexpr

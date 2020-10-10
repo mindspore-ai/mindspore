@@ -44,7 +44,7 @@ class LearningRateSchedule(Cell):
 
 
 def _check_inputs(learning_rate, decay_rate, decay_steps, is_stair, cls_name):
-    validator.check_integer('decay_steps', decay_steps, 0, Rel.GT, cls_name)
+    validator.check_positive_int(decay_steps, 'decay_steps', cls_name)
     validator.check_float_positive('learning_rate', learning_rate, cls_name)
     validator.check_float_legal_value('learning_rate', learning_rate, cls_name)
     validator.check_float_positive('decay_rate', decay_rate, cls_name)
@@ -257,7 +257,7 @@ class CosineDecayLR(LearningRateSchedule):
         validator.check_number_range("min_lr", min_lr, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
         validator.check_float_positive('max_lr', max_lr, self.cls_name)
         validator.check_float_legal_value('max_lr', max_lr, self.cls_name)
-        validator.check_integer('decay_steps', decay_steps, 0, Rel.GT, self.cls_name)
+        validator.check_positive_int(decay_steps, "decay_steps", self.cls_name)
         if min_lr >= max_lr:
             raise ValueError('`max_lr` should be greater than `min_lr`.')
         self.min_lr = min_lr
@@ -324,7 +324,7 @@ class PolynomialDecayLR(LearningRateSchedule):
             raise TypeError("end_learning_rate must be float.")
         validator.check_number_range("end_learning_rate", end_learning_rate, 0.0, float("inf"), Rel.INC_LEFT,
                                      self.cls_name)
-        validator.check_integer('decay_steps', decay_steps, 0, Rel.GT, self.cls_name)
+        validator.check_positive_int(decay_steps, 'decay_steps', self.cls_name)
         validator.check_value_type('update_decay_steps', update_decay_steps, [bool], self.cls_name)
         validator.check_float_positive('power', power, self.cls_name)
         validator.check_float_legal_value('power', power, self.cls_name)
@@ -388,7 +388,7 @@ class WarmUpLR(LearningRateSchedule):
         if not isinstance(learning_rate, float):
             raise TypeError("learning_rate must be float.")
         validator.check_number_range("learning_rate", learning_rate, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
-        validator.check_integer('warmup_steps', warmup_steps, 0, Rel.GT, self.cls_name)
+        validator.check_positive_int(warmup_steps, 'warmup_steps', self.cls_name)
         self.warmup_steps = warmup_steps
         self.learning_rate = learning_rate
         self.min = P.Minimum()

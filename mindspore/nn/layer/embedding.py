@@ -21,7 +21,7 @@ from mindspore.common.initializer import initializer
 from mindspore.communication.management import get_group_size
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_parallel_mode
-from mindspore._checkparam import Rel, Validator as validator
+from mindspore._checkparam import Validator as validator
 from ..cell import Cell
 
 __all__ = ['Embedding', 'EmbeddingLookup']
@@ -170,7 +170,7 @@ class EmbeddingLookup(Cell):
             if not isinstance(manual_shapes, tuple):
                 raise TypeError("manual_shapes type must be tuple(int) cannot be {}!".format(type(manual_shapes)))
             for dim in manual_shapes:
-                validator.check_integer('manul shape dim', dim, 0, Rel.GT, self.cls_name)
+                validator.check_positive_int(dim, 'manual shape dim', self.cls_name)
             self.gatherv2.add_prim_attr("manual_split", manual_shapes)
             self.embeddinglookup.add_prim_attr("manual_split", manual_shapes)
             self.gatherv2.shard(((get_group_size(), 1), (1, get_group_size())))

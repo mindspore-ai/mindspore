@@ -15,8 +15,7 @@
 """ test_checkparameter """
 import pytest
 
-from mindspore._checkparam import check_int, check_int_positive, \
-    Validator, check_input_format, _expand_tuple
+from mindspore._checkparam import check_int, Validator, check_input_format, _expand_tuple
 
 once = _expand_tuple(1)
 twice = _expand_tuple(2)
@@ -32,7 +31,7 @@ def test_check_int_1():
 
 def check_int_positive_1():
     with pytest.raises(ValueError):
-        check_int_positive(-1)
+        Validator.check_positive_int(-1)
 
 
 def test_NCHW1():

@@ -19,7 +19,7 @@ from mindspore.ops import functional as F
 from mindspore._extends import cell_attr_register
 from mindspore import Tensor, Parameter
 from mindspore.common.initializer import initializer
-from mindspore._checkparam import check_int_positive, Validator
+from mindspore._checkparam import Validator
 from mindspore.nn.layer.activation import get_activation
 
 
@@ -72,8 +72,8 @@ class GNNFeatureTransform(nn.Cell):
                  bias_init='zeros',
                  has_bias=True):
         super(GNNFeatureTransform, self).__init__()
-        self.in_channels = check_int_positive(in_channels)
-        self.out_channels = check_int_positive(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels)
+        self.out_channels = Validator.check_positive_int(out_channels)
         self.has_bias = Validator.check_bool(has_bias)
 
         if isinstance(weight_init, Tensor):
@@ -259,8 +259,8 @@ class AttentionHead(nn.Cell):
                  coef_activation=nn.LeakyReLU(),
                  activation=nn.ELU()):
         super(AttentionHead, self).__init__()
-        self.in_channel = check_int_positive(in_channel)
-        self.out_channel = check_int_positive(out_channel)
+        self.in_channel = Validator.check_positive_int(in_channel)
+        self.out_channel = Validator.check_positive_int(out_channel)
         self.in_drop_ratio = in_drop_ratio
         self.in_drop = nn.Dropout(keep_prob=1 - in_drop_ratio)
         self.in_drop_2 = nn.Dropout(keep_prob=1 - in_drop_ratio)
@@ -450,9 +450,9 @@ class GAT(nn.Cell):
         super(GAT, self).__init__()
         self.features = Tensor(features)
         self.biases = Tensor(biases)
-        self.ftr_dims = check_int_positive(ftr_dims)
-        self.num_class = check_int_positive(num_class)
-        self.num_nodes = check_int_positive(num_nodes)
+        self.ftr_dims = Validator.check_positive_int(ftr_dims)
+        self.num_class = Validator.check_positive_int(num_class)
+        self.num_nodes = Validator.check_positive_int(num_nodes)
         self.hidden_units = hidden_units
         self.num_heads = num_heads
         self.attn_drop = attn_drop
