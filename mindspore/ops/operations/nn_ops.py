@@ -5549,10 +5549,10 @@ class DynamicRNN(PrimitiveWithInfer):
           The data type must be float16 or float32.
         - **b** (Tensor) - Bias. Tensor of shape (`4 x hidden_size`).
           The data type must be float16 or float32.
-        - **seq_length (Tensor) - The length of each batch. Tensor of shape (`batch_size`).
+        - **seq_length** (Tensor) - The length of each batch. Tensor of shape (`batch_size`).
           Only `None` is currently supported.
-        - **init_h (Tensor) - Hidden state of initial time. Tensor of shape (1, `batch_size`, `hidden_size`).
-        - **init_c (Tensor) - Cell state of initial time. Tensor of shape (1, `batch_size`, `hidden_size`).
+        - **init_h** (Tensor) - Hidden state of initial time. Tensor of shape (1, `batch_size`, `hidden_size`).
+        - **init_c** (Tensor) - Cell state of initial time. Tensor of shape (1, `batch_size`, `hidden_size`).
 
     Outputs:
         - **y** (Tensor) - A Tensor of shape (`num_step`, `batch_size`, `hidden_size`).
