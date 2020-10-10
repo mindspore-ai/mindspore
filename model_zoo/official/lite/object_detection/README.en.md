@@ -1,4 +1,4 @@
-# demo_object_detection
+# Demo of Object Detection
 
 The following describes how to use the MindSpore Lite C++ APIs (Android JNIs) and MindSpore Lite object detection models to perform on-device inference, detect the content captured by a device camera, and display the most possible detection result on the application's image preview screen.
 
