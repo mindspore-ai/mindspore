@@ -21,7 +21,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Validator, Rel, check_bool, twice, check_int_positive
+from mindspore._checkparam import Validator, Rel, twice, check_int_positive
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
@@ -92,7 +92,7 @@ class _Conv(Cell):
             shape = [out_channels, in_channels // group, *kernel_size]
         self.weight = Parameter(initializer(self.weight_init, shape), name='weight')
 
-        if check_bool(has_bias):
+        if Validator.check_bool(has_bias):
             self.bias = Parameter(initializer(self.bias_init, [out_channels]), name='bias')
         else:
             if self.bias_init != 'zeros':
@@ -566,7 +566,7 @@ class Conv2dTranspose(_Conv):
         self.is_valid = self.pad_mode == 'valid'
         self.is_same = self.pad_mode == 'same'
         self.is_pad = self.pad_mode == 'pad'
-        if check_bool(has_bias):
+        if Validator.check_bool(has_bias):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
 
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel.
@@ -745,7 +745,7 @@ class Conv1dTranspose(_Conv):
         self.is_valid = self.pad_mode == 'valid'
         self.is_same = self.pad_mode == 'same'
         self.is_pad = self.pad_mode == 'pad'
-        if check_bool(has_bias):
+        if Validator.check_bool(has_bias):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
 
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel.

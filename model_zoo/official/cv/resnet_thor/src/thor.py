@@ -18,8 +18,7 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
-from mindspore._checkparam import check_bool
-from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Validator
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.parallel._utils import _get_device_num, _get_gradients_mean
 from src.grad_reducer_thor import DistributedGradReducerThor
@@ -53,12 +52,12 @@ class THOR_GPU(Optimizer):
     def __init__(self, params, learning_rate, momentum, matrix_A, matrix_G, A_inv_max, G_inv_max,
                  weight_decay=0.0, loss_scale=1.0, use_nesterov=False, decay_filter=lambda x: x.name not in []):
         super(THOR_GPU, self).__init__(learning_rate, params, weight_decay, loss_scale)
-        validator.check_value_type("momentum", momentum, [float], self.cls_name)
+        Validator.check_value_type("momentum", momentum, [float], self.cls_name)
         if isinstance(momentum, float) and momentum < 0.0:
             raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.params = self.parameters
-        self.use_nesterov = check_bool(use_nesterov)
+        self.use_nesterov = Validator.check_bool(use_nesterov)
         self.moments = self.params.clone(prefix="moments", init='zeros')
         self.hyper_map = C.HyperMap()
         self.opt = P.ApplyMomentum(use_nesterov=self.use_nesterov)

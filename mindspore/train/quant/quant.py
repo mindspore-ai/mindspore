@@ -22,8 +22,7 @@ import mindspore.context as context
 
 from ... import log as logger
 from ... import nn, ops
-from ..._checkparam import Validator
-from ..._checkparam import Rel
+from ..._checkparam import Validator, Rel
 from ...common import Tensor
 from ...common import dtype as mstype
 from ...common.api import _executor
@@ -92,16 +91,16 @@ class ConvertToQuantNetwork:
         self.network = Validator.check_isinstance('network', kwargs["network"], (nn.Cell,))
         self.weight_qdelay = Validator.check_integer("quant delay", kwargs["quant_delay"][0], 0, Rel.GE)
         self.act_qdelay = Validator.check_integer("quant delay", kwargs["quant_delay"][-1], 0, Rel.GE)
-        self.bn_fold = Validator.check_bool("bn fold", kwargs["bn_fold"])
+        self.bn_fold = Validator.check_bool(kwargs["bn_fold"], "bn fold")
         self.freeze_bn = Validator.check_integer("freeze bn", kwargs["freeze_bn"], 0, Rel.GE)
         self.weight_bits = Validator.check_integer("weights bit", kwargs["num_bits"][0], 0, Rel.GE)
         self.act_bits = Validator.check_integer("activations bit", kwargs["num_bits"][-1], 0, Rel.GE)
-        self.weight_channel = Validator.check_bool("per channel", kwargs["per_channel"][0])
-        self.act_channel = Validator.check_bool("per channel", kwargs["per_channel"][-1])
-        self.weight_symmetric = Validator.check_bool("symmetric", kwargs["symmetric"][0])
-        self.act_symmetric = Validator.check_bool("symmetric", kwargs["symmetric"][-1])
-        self.weight_range = Validator.check_bool("narrow range", kwargs["narrow_range"][0])
-        self.act_range = Validator.check_bool("narrow range", kwargs["narrow_range"][-1])
+        self.weight_channel = Validator.check_bool(kwargs["per_channel"][0], "per channel")
+        self.act_channel = Validator.check_bool(kwargs["per_channel"][-1], "per channel")
+        self.weight_symmetric = Validator.check_bool(kwargs["symmetric"][0], "symmetric")
+        self.act_symmetric = Validator.check_bool(kwargs["symmetric"][-1], "symmetric")
+        self.weight_range = Validator.check_bool(kwargs["narrow_range"][0], "narrow range")
+        self.act_range = Validator.check_bool(kwargs["narrow_range"][-1], "narrow range")
         self._convert_method_map = {quant.Conv2dBnAct: self._convert_conv,
                                     quant.DenseBnAct: self._convert_dense}
 

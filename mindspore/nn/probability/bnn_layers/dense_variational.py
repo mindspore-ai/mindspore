@@ -15,7 +15,7 @@
 """dense_variational"""
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import check_int_positive, check_bool
+from mindspore._checkparam import check_int_positive, Validator
 from ...cell import Cell
 from ...layer.activation import get_activation
 from .layer_distribution import NormalPrior, NormalPosterior
@@ -41,7 +41,7 @@ class _DenseVariational(Cell):
         super(_DenseVariational, self).__init__()
         self.in_channels = check_int_positive(in_channels)
         self.out_channels = check_int_positive(out_channels)
-        self.has_bias = check_bool(has_bias)
+        self.has_bias = Validator.check_bool(has_bias)
 
         if isinstance(weight_prior_fn, Cell):
             self.weight_prior = weight_prior_fn

@@ -27,7 +27,7 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr
 from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
-from mindspore._checkparam import Rel, Validator as validator, check_int_positive, check_bool
+from mindspore._checkparam import Rel, Validator, check_int_positive
 from mindspore.common.api import ms_function
 from mindspore import context
 from ..cell import Cell
@@ -86,8 +86,8 @@ class Dropout(Cell):
         super(Dropout, self).__init__()
         if keep_prob <= 0 or keep_prob > 1:
             raise ValueError("dropout probability should be a number in range (0, 1], but got {}".format(keep_prob))
-        validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
-        validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
+        Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
+        Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
         self.keep_prob = keep_prob
         seed0 = get_seed()
         self.seed0 = seed0 if seed0 is not None else 0
@@ -205,7 +205,7 @@ class Dense(Cell):
         super(Dense, self).__init__()
         self.in_channels = check_int_positive(in_channels)
         self.out_channels = check_int_positive(out_channels)
-        self.has_bias = check_bool(has_bias)
+        self.has_bias = Validator.check_bool(has_bias)
 
         if isinstance(weight_init, Tensor):
             if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \
@@ -348,7 +348,7 @@ class Norm(Cell):
 
     def __init__(self, axis=(), keep_dims=False):
         super(Norm, self).__init__()
-        validator.check_value_type("keep_dims", keep_dims, [bool], self.cls_name)
+        Validator.check_value_type("keep_dims", keep_dims, [bool], self.cls_name)
         self.axis = axis
         self.keep_dims = keep_dims
         self.reduce_sum = P.ReduceSum(True)
@@ -472,7 +472,7 @@ class Pad(Cell):
         super(Pad, self).__init__()
         self.mode = mode
         self.paddings = paddings
-        validator.check_string('mode', self.mode, ["CONSTANT", "REFLECT", "SYMMETRIC"], self.cls_name)
+        Validator.check_string(self.mode, ["CONSTANT", "REFLECT", "SYMMETRIC"], 'mode', self.cls_name)
         if not isinstance(paddings, tuple):
             raise TypeError('Paddings must be tuple type.')
         for item in paddings:
@@ -549,7 +549,7 @@ class Unfold(Cell):
 
 @constexpr
 def _get_matrix_diag_assist(x_shape, x_dtype):
-    validator.check_integer("x rank", len(x_shape), 1, Rel.GE, "_get_matrix_diag_assist")
+    Validator.check_integer("x rank", len(x_shape), 1, Rel.GE, "_get_matrix_diag_assist")
     base_eye = np.eye(x_shape[-1], x_shape[-1]).reshape(-1)
     assist = np.tile(base_eye, x_shape[:-1]).reshape(x_shape + (x_shape[-1],))
     return Tensor(assist, x_dtype)
@@ -557,7 +557,7 @@ def _get_matrix_diag_assist(x_shape, x_dtype):
 
 @constexpr
 def _get_matrix_diag_part_assist(x_shape, x_dtype):
-    validator.check_integer("x rank", len(x_shape), 2, Rel.GE, "_get_matrix_diag_part_assist")
+    Validator.check_integer("x rank", len(x_shape), 2, Rel.GE, "_get_matrix_diag_part_assist")
     base_eye = np.eye(x_shape[-2], x_shape[-1]).reshape(-1)
     assist = np.tile(base_eye, x_shape[:-2]).reshape(x_shape)
     return Tensor(assist, x_dtype)

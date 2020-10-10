@@ -27,7 +27,7 @@ class _PoolNd(Cell):
 
     def __init__(self, kernel_size, stride, pad_mode):
         super(_PoolNd, self).__init__()
-        self.pad_mode = validator.check_string('pad_mode', pad_mode.upper(), ['VALID', 'SAME'], self.cls_name)
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)
 
         def _check_int_or_tuple(arg_name, arg_value):
             validator.check_value_type(arg_name, arg_value, [int, tuple], self.cls_name)
@@ -270,7 +270,7 @@ class AvgPool1d(_PoolNd):
         super(AvgPool1d, self).__init__(kernel_size, stride, pad_mode)
         validator.check_value_type('kernel_size', kernel_size, [int], self.cls_name)
         validator.check_value_type('stride', stride, [int], self.cls_name)
-        self.pad_mode = validator.check_string('pad_mode', pad_mode.upper(), ['VALID', 'SAME'], self.cls_name)
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)
         validator.check_integer("kernel_size", kernel_size, 1, Rel.GE, self.cls_name)
         validator.check_integer("stride", stride, 1, Rel.GE, self.cls_name)
         self.kernel_size = (1, kernel_size)

@@ -67,7 +67,7 @@ class ExtractImagePatches(PrimitiveWithInfer):
         _check_tuple_or_list("ksize", ksizes, self.name)
         _check_tuple_or_list("stride", strides, self.name)
         _check_tuple_or_list("rate", rates, self.name)
-        self.padding = validator.check_string('padding', padding.upper(), ['VALID', 'SAME'], self.name)
+        self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
         self.add_prim_attr("padding", self.padding)
         self.add_prim_attr("io_format", "NHWC")
         self.is_ge = context.get_context("enable_ge")
@@ -206,8 +206,8 @@ class Quant(PrimitiveWithInfer):
         self.scale = validator.check_value_type("scale", scale, [float], self.name)
         self.offset = validator.check_value_type("offset", offset, [float], self.name)
         self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
-        self.round_mode = validator.check_string("round_mode", round_mode,
-                                                 ["Round", "Floor", "Ceil", "Trunc"], self.name)
+        self.round_mode = validator.check_string(round_mode, ["Round", "Floor", "Ceil", "Trunc"],
+                                                 "round_mode", self.name)
         self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, x_shape):

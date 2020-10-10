@@ -513,7 +513,7 @@ class Im2Col(PrimitiveWithInfer):
         self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name, allow_four=True, ret_four=True)
         self.add_prim_attr('dilation', self.dilation)
         validator.check_value_type('pad', pad, (int,), self.name)
-        self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'], self.name)
+        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
         self.pad = validator.check_pad_value_by_mode(pad_mode, pad, self.name)
         if self.pad_mode == 'pad':
             validator.check_integer('pad', self.pad, 0, Rel.GE, self.name)

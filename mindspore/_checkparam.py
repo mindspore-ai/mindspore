@@ -26,10 +26,6 @@ from mindspore import log as logger
 from mindspore.common import dtype as mstype
 
 
-# Named string regular expression
-_name_re = r"^\w+[0-9a-zA-Z\_\.]*$"
-
-
 class Rel(Enum):
     """Numerical relationship between variables, logical relationship enumeration definition of range."""
     # scalar compare
@@ -114,7 +110,7 @@ class Validator:
 
     @staticmethod
     def check_integer(arg_name, arg_value, value, rel, prim_name=None):
-        """Integer value judgment."""
+        """Check argument is integer"""
         rel_fn = Rel.get_fns(rel)
         type_mismatch = not isinstance(arg_value, int) or isinstance(arg_value, bool)
         excp_cls = TypeError if type_mismatch else ValueError
@@ -124,6 +120,7 @@ class Validator:
             raise excp_cls(f'{msg_prefix} `{arg_name}` should be an int and must {rel_str}, but got `{arg_value}`'
                            f' with type `{type(arg_value).__name__}`.')
         return arg_value
+
 
     @staticmethod
     def check_number(arg_name, arg_value, value, rel, prim_name):
@@ -142,10 +139,11 @@ class Validator:
         return arg_value
 
     @staticmethod
-    def check_bool(arg_name, arg_value):
-        """Check arg isinstance of bool"""
+    def check_bool(arg_value, arg_name=None):
+        """Check argument is instance of bool"""
         if not isinstance(arg_value, bool):
-            raise ValueError(f'The `{arg_name}` should be isinstance of bool, but got {arg_value}.')
+            arg_name = arg_name if arg_name else "Parameter"
+            raise TypeError(f'`{arg_name}` should be isinstance of bool, but got `{arg_value}`.')
         return arg_value
 
     @staticmethod
@@ -170,15 +168,14 @@ class Validator:
         return arg_value
 
     @staticmethod
-    def check_string(arg_name, arg_value, valid_values, prim_name):
+    def check_string(arg_value, valid_values, arg_name=None, prim_name=None):
         """Checks whether a string is in some value list"""
         if isinstance(arg_value, str) and arg_value in valid_values:
             return arg_value
-        if len(valid_values) == 1:
-            raise ValueError(f'For \'{prim_name}\' the `{arg_name}` should be str and must be {valid_values[0]},'
-                             f' but got {arg_value}.')
-        raise ValueError(f'For \'{prim_name}\' the `{arg_name}` should be str and must be one of {valid_values},'
-                         f' but got {arg_value}.')
+        arg_name = arg_name if arg_name else "Parameter"
+        msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
+        raise ValueError(f'{msg_prefix} `{arg_name}` should be str and must be in `{valid_values}`,'
+                         f' but got `{arg_value}`.')
 
     @staticmethod
     def check_pad_value_by_mode(pad_mode, padding, prim_name):
@@ -404,24 +401,6 @@ def check_int_zero_one(input_param):
     raise ValueError("The data must be 0 or 1.")
 
 
-def check_bool(input_param):
-    """Bool type judgment."""
-    if isinstance(input_param, bool):
-        return input_param
-    raise TypeError("Input type must be bool!")
-
-
-def check_string(input_param, valid_values):
-    """String type judgment."""
-    if isinstance(input_param, str) and input_param in valid_values:
-        return input_param
-    if len(valid_values) == 1:
-        raise ValueError(f'Input should be str and must be {valid_values[0]},'
-                         f' but got {input_param}.')
-    raise ValueError(f'Input should be str and must be one of {valid_values},'
-                     f' but got {input_param}.')
-
-
 def check_input_format(input_param):
     """Judge input format."""
     if input_param == "NCHW":
@@ -587,7 +566,8 @@ def check_shape(arg_name, arg_value):
 
 def _check_str_by_regular(target, reg=None, flag=re.ASCII):
     if reg is None:
-        reg = _name_re
+        # Named string regular expression
+        reg = r"^\w+[0-9a-zA-Z\_\.]*$"
     if re.match(reg, target, flag) is None:
         raise ValueError("'{}' is illegal, it should be match regular'{}' by flags'{}'".format(target, reg, flag))
     return True

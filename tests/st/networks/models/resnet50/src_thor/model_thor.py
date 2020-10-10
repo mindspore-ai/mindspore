@@ -19,7 +19,7 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore import nn
 from mindspore._c_expression import init_exec_dataset
-from mindspore._checkparam import check_input_data, check_output_data, check_int_positive, check_bool
+from mindspore._checkparam import check_input_data, check_output_data, check_int_positive, Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.tensor import Tensor
@@ -575,7 +575,7 @@ class Model:
         repeat_count = train_dataset.get_repeat_count()
         if epoch != repeat_count and dataset_sink_mode is True:
             logger.warning(f"The epoch_size {epoch} is not the same with dataset repeat_count {repeat_count}")
-        check_bool(dataset_sink_mode)
+        dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         _device_number_check(self._parallel_mode, self._device_number)
         _parameter_broadcast_check(self._parallel_mode, self._parameter_broadcast)
 
@@ -682,7 +682,7 @@ class Model:
             >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
             >>> model.eval(dataset)
         """
-        check_bool(dataset_sink_mode)
+        dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         _device_number_check(self._parallel_mode, self._device_number)
         if not self._metric_fns:
             raise ValueError("metric fn can not be None or empty.")

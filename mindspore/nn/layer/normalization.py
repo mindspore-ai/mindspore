@@ -19,7 +19,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.ops.primitive import constexpr
 import mindspore.context as context
-from mindspore._checkparam import check_bool, check_typename, check_int_positive
+from mindspore._checkparam import Validator, check_typename, check_int_positive
 from mindspore._extends import cell_attr_register
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.communication import management
@@ -604,7 +604,7 @@ class GroupNorm(Cell):
         if num_channels % num_groups != 0:
             raise ValueError("num_channels should be divided by num_groups")
         self.eps = check_typename('eps', eps, (float,))
-        self.affine = check_bool(affine)
+        self.affine = Validator.check_bool(affine)
 
         gamma = initializer(gamma_init, num_channels)
         beta = initializer(beta_init, num_channels)

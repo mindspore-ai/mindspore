@@ -1484,7 +1484,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
         self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
         validator.check_integer("nbins", nbins, 1, Rel.GE, self.name)
         valid_values = ['int32', 'int64']
-        self.dtype = validator.check_string("dtype", dtype, valid_values, self.name)
+        self.dtype = validator.check_string(dtype, valid_values, "dtype", self.name)
         self.init_prim_io_names(inputs=['x', 'range'], outputs=['y'])
 
     def infer_shape(self, x_shape, range_shape):

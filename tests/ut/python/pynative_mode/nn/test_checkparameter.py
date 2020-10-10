@@ -16,7 +16,7 @@
 import pytest
 
 from mindspore._checkparam import check_int, check_int_positive, \
-    check_bool, check_input_format, _expand_tuple
+    Validator, check_input_format, _expand_tuple
 
 once = _expand_tuple(1)
 twice = _expand_tuple(2)
@@ -60,26 +60,26 @@ def test_check_int_4():
 
 
 def test_check_bool_1():
-    assert check_bool(True)
+    assert Validator.check_bool(True)
 
 
 def test_check_bool_2():
-    assert check_bool(False) is not True
+    assert Validator.check_bool(False) is not True
 
 
 def test_check_bool_3():
     with pytest.raises(TypeError):
-        check_bool("str")
+        Validator.check_bool("str")
 
 
 def test_check_bool_4():
     with pytest.raises(TypeError):
-        check_bool(1)
+        Validator.check_bool(1)
 
 
 def test_check_bool_5():
     with pytest.raises(TypeError):
-        check_bool(3.5)
+        Validator.check_bool(3.5)
 
 
 def test_twice_1():

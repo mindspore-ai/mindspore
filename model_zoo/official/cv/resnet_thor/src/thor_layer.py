@@ -16,7 +16,7 @@
 import numpy as np
 
 import mindspore.common.dtype as mstype
-from mindspore._checkparam import check_bool, twice, check_int_positive
+from mindspore._checkparam import Validator, twice, check_int_positive
 from mindspore._extends import cell_attr_register
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
@@ -111,7 +111,7 @@ class _Conv(Cell):
         self.weight = Parameter(initializer(
             weight_init, [out_channels, in_channels // group, *kernel_size]), name='weight')
 
-        if check_bool(has_bias):
+        if Validator.check_bool(has_bias):
             self.bias = Parameter(_initializer(
                 bias_init, [out_channels]), name='bias')
         else:
@@ -294,7 +294,7 @@ class Dense_Thor_GPU(Cell):
         super(Dense_Thor_GPU, self).__init__()
         self.in_channels = check_int_positive(in_channels)
         self.out_channels = check_int_positive(out_channels)
-        self.has_bias = check_bool(has_bias)
+        self.has_bias = Validator.check_bool(has_bias)
         self.thor = True
         if isinstance(weight_init, Tensor):
             if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \
@@ -643,7 +643,7 @@ class Dense_Thor(Cell):
         super(Dense_Thor, self).__init__()
         self.in_channels = check_int_positive(in_channels)
         self.out_channels = check_int_positive(out_channels)
-        self.has_bias = check_bool(has_bias)
+        self.has_bias = Validator.check_bool(has_bias)
         self.thor = True
         self.batch_size = batch_size
         if isinstance(weight_init, Tensor):

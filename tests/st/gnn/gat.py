@@ -14,7 +14,7 @@
 # ============================================================================
 """Graph Attention Networks."""
 import mindspore.nn as nn
-from mindspore._checkparam import check_bool, check_int_positive
+from mindspore._checkparam import Validator, check_int_positive
 
 from aggregator import AttentionAggregator
 
@@ -79,7 +79,7 @@ class GAT(nn.Cell):
         self.attn_drop = attn_drop
         self.ftr_drop = ftr_drop
         self.activation = activation
-        self.residual = check_bool(residual)
+        self.residual = Validator.check_bool(residual)
         self.layers = []
         # first layer
         self.layers.append(AttentionAggregator(

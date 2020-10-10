@@ -16,7 +16,7 @@
 from copy import deepcopy
 
 import numpy as np
-from mindspore._checkparam import check_int_positive, check_bool
+from mindspore._checkparam import check_int_positive, Validator
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.train import Model
@@ -84,7 +84,7 @@ class UncertaintyEvaluation:
         self.epochs = check_int_positive(epochs)
         self.epi_uncer_model_path = epi_uncer_model_path
         self.ale_uncer_model_path = ale_uncer_model_path
-        self.save_model = check_bool(save_model)
+        self.save_model = Validator.check_bool(save_model)
         self.epi_uncer_model = None
         self.ale_uncer_model = None
         self.concat = P.Concat(axis=0)
