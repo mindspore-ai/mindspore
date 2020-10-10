@@ -43,20 +43,24 @@ int ConvolutionOpenCLKernel::Init() {
   std::set<std::string> build_options;
   use_fp16_ = ocl_runtime_->GetFp16Enable();
 
+  auto input_tensor = in_tensors_[0];
+  auto output_tensor = out_tensors_[0];
+  in_ori_format_ = input_tensor->GetFormat();
+  out_ori_format_ = output_tensor->GetFormat();
   if (op_format_ != Format_NHWC4 && op_format_ != Format_NC4HW4) {
     MS_LOG(ERROR) << "op_format_ " << op_format_ << " not support!";
+    return RET_ERROR;
   }
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_tensors_[0]->SetFormat(op_format_);
+  input_tensor->SetFormat(op_format_);
+  output_tensor->SetFormat(op_format_);
 
-  CI_ = in_tensors_[0]->Channel();
-  IH_ = in_tensors_[0]->Height();
-  IW_ = in_tensors_[0]->Width();
-  CO_ = out_tensors_[0]->Channel();
-  OH_ = out_tensors_[0]->Height();
-  OW_ = out_tensors_[0]->Width();
+  batch_size_ = input_tensor->Batch();
+  CI_ = input_tensor->Channel();
+  IH_ = input_tensor->Height();
+  IW_ = input_tensor->Width();
+  CO_ = output_tensor->Channel();
+  OH_ = output_tensor->Height();
+  OW_ = output_tensor->Width();
   CI_SLICES_ = UP_DIV(CI_, C4NUM);
   CO_SLICES_ = UP_DIV(CO_, C4NUM);
   KH_ = param->kernel_h_;
@@ -68,46 +72,11 @@ int ConvolutionOpenCLKernel::Init() {
   TILES_XY_ = TILES_X_ * TILES_Y_;
   use_winograd_ = UseWinograd4x4To6x6();
 
-  std::vector<int> vpara{IH_,
-                         IW_,
-                         OH_,
-                         OW_,
-                         KH_,
-                         KW_,
-                         CI_SLICES_,
-                         CO_SLICES_,
-                         param->stride_h_,
-                         param->stride_w_,
-                         param->pad_u_,
-                         param->pad_l_,
-                         param->pad_d_,
-                         param->pad_r_};
-  std::string code_id;
-  for (auto &iv : vpara) {
-    code_id += "_" + std::to_string(iv);
-  }
-
-  std::vector<bool> vflag{
-    use_fp16_,
-    op_format_ == schema::Format_NC4HW4,
-    op_format_ == schema::Format_NHWC4,
-    param->act_type_ == ActType_Relu6,
-    param->act_type_ == ActType_Relu,
-    param->pad_u_ || param->pad_d_,
-    OW_ % 2 == 1,
-    OW_ * CO_SLICES_ <= MAX_IMAGE2D_SIZE,
-  };
-  unsigned int init_count = 0;
-  for (size_t i = 0; i < vflag.size(); ++i) {
-    init_count |= ((unsigned int)vflag[i]) << i;
-  }
-
-  code_id += "_" + std::to_string(init_count);
-
   // build kernel
+  auto code_id = get_code_id();
+  std::string program_name;
   if (use_winograd_) {
     MS_LOG(DEBUG) << "use winograd";
-    std::string program_name;
     program_name = "Winograd4x4To36" + code_id;
     ocl_runtime_->LoadSource(program_name, CodeGenWinograd4x4To36());
     ocl_runtime_->BuildKernel(kernel_4x4to36_, program_name, "Winograd4x4To36", build_options);
@@ -120,7 +89,7 @@ int ConvolutionOpenCLKernel::Init() {
     ocl_runtime_->LoadSource(program_name, CodeGenWinograd36To4x4());
     ocl_runtime_->BuildKernel(kernel_36to4x4_, program_name, "Winograd36To4x4", build_options);
   } else {
-    std::string program_name = "convolution" + code_id;
+    program_name = "Convolution" + code_id;
     std::string source = op_format_ == Format_NHWC4 ? CodeGenConvolutionNHWC4() : CodeGenConvolutionNC4HW4();
     ocl_runtime_->LoadSource(program_name, source);
     ocl_runtime_->BuildKernel(kernel_conv_, program_name, "Convolution", build_options);
@@ -281,18 +250,18 @@ int ConvolutionOpenCLKernel::InitBuffer() {
 int ConvolutionOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
   if (in_tensors_[0]->GetFormat() == Format_NHWC4) {
-    if (out_tensors_[0]->Width() * CO_SLICES_ <= MAX_IMAGE2D_SIZE) {
+    if (OW_ * CO_SLICES_ <= MAX_IMAGE2D_SIZE) {
       {
-        im_dst_x = out_tensors_[0]->Width() * CO_SLICES_;
-        im_dst_y = out_tensors_[0]->Height();
+        im_dst_y = batch_size_ * OH_;
+        im_dst_x = OW_ * CO_SLICES_;
       }
     } else {
-      im_dst_x = out_tensors_[0]->Height() * CO_SLICES_;
-      im_dst_y = out_tensors_[0]->Width();
+      im_dst_y = OW_;
+      im_dst_x = batch_size_ * OH_ * CO_SLICES_;
     }
   } else {
-    im_dst_y = out_tensors_[0]->Height() * CO_SLICES_;
-    im_dst_x = out_tensors_[0]->Width();
+    im_dst_y = batch_size_ * CO_SLICES_ * OH_;
+    im_dst_x = OW_;
   }
   size_t img_dtype = use_fp16_ ? CL_HALF_FLOAT : CL_FLOAT;
   img_size->clear();
@@ -374,6 +343,8 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNHWC4() {
   std::string code;
   code += "#define CI_TILE 4\n";
   code += "#define CO_TILE 4\n\n";
+  code += "#define N " + std::to_string(batch_size_) + "\n";
+  code += "#define N_OH " + std::to_string(batch_size_ * OH_) + "\n";
   code += "#define CI " + std::to_string(CI_ALIGN) + "\n";
   code += "#define IH " + std::to_string(IH_) + "\n";
   code += "#define IW " + std::to_string(IW_) + "\n";
@@ -404,13 +375,22 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNHWC4() {
     "                          __global FLT4 *bias)"
     "{\n";
 
+  code += "    int n_oh = get_global_id(0);  // [0, N*OH)\n";
+  if (batch_size_ == 1) {
+    code += "    #define n 0\n";
+    code += "    int oh = n_oh;\n";
+  } else {
+    code += "    int n = n_oh / " + std::to_string(OH_) + ";\n";
+    code += "    int oh = n_oh % " + std::to_string(OH_) + ";\n";
+  }
+
   code +=
-    "    int ow = get_global_id(0);  // [0, OW)\n"
-    "    int oh = get_global_id(1);  // [0, OH)\n"
+    "    int ow = get_global_id(1);  // [0, OW)\n"
     "    int co_slice = get_global_id(2); // [0, UP_DIV(CO, CO_TILE) )\n"
     "\n"
-    "    if (oh >= OH || ow >= OW || co_slice >= CO_SLICES)\n"
+    "    if (n_oh >= N_OH || ow >= OW || co_slice >= CO_SLICES) {\n"
     "        return;\n"
+    "    }\n"
     "\n"
     "    FLT4 out0_c4 = (FLT4)(0.0f, 0.0f, 0.0f, 0.0f);\n"
     "    __global FLT4 *w0_ic1_oc4 = weight + co_slice * KH * KW * CI_SLICES * CI_TILE;\n";
@@ -426,7 +406,10 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNHWC4() {
     "            {\n"
     "                for (int ci_slice = 0; ci_slice < CI_SLICES; ci_slice++)\n"
     "                {\n";
-  code += "FLT4 in_c4 = READ_IMAGE(input, smp_zero, (int2)(iw * CI_SLICES + ci_slice, ih)); // NHWC4: H WC\n\n";
+
+  code +=
+    "FLT4 in_c4 = READ_IMAGE(input, smp_zero, (int2)(iw * CI_SLICES + ci_slice, n * IH + ih)); // NHWC4: NH WC\n\n";
+
   code +=
     "                    out0_c4 += w0_ic1_oc4[0] * in_c4.x;\n"
     "                    out0_c4 += w0_ic1_oc4[1] * in_c4.y;\n"
@@ -448,11 +431,10 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNHWC4() {
   } else if (param->act_type_ == ActType_Relu6) {
     code += "    out0_c4_bias = clamp(out0_c4_bias, (FLT4)(0.0f), (FLT4)(6.0f));\n";
   }
-
   if (OW_ * CO_SLICES_ <= MAX_IMAGE2D_SIZE) {
-    code += "    WRITE_IMAGE(output, (int2)(ow * CO_SLICES + co_slice, oh), out0_c4_bias);// NHWC4: H WC\n}";
+    code += "    WRITE_IMAGE(output, (int2)(ow * CO_SLICES + co_slice, n_oh), out0_c4_bias);// NHWC4: NH WC\n}";
   } else {
-    code += "    WRITE_IMAGE(output, (int2)(oh * CO_SLICES + co_slice, ow), out0_c4_bias);// NHWC4: H WC\n}";
+    code += "    WRITE_IMAGE(output, (int2)(n_oh * CO_SLICES + co_slice, ow), out0_c4_bias);\n}";
   }
   return code;
 }
@@ -480,14 +462,26 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
     "                          __global FLT4 *bias,\n"
     "                          const int4 input_shape,\n"
     "                          const int4 output_shape)\n"
-    "{\n"
-    "    int ow = get_global_id(0) * 2;\n"
-    "    int oh = get_global_id(1);\n"
+    "{\n";
+
+  code += "    int n_oh = get_global_id(0);  // [0, N*OH)\n";
+  if (batch_size_ == 1) {
+    code += "    #define n 0\n";
+    code += "    int oh = n_oh;\n";
+  } else {
+    code += "    int n = n_oh / " + std::to_string(OH_) + ";\n";
+    code += "    int oh = n_oh % " + std::to_string(OH_) + ";\n";
+  }
+
+  code +=
+    "    int ow = get_global_id(1) * 2;\n"
     "    int co_slice = get_global_id(2);\n"
     "\n"
     "    int CI_SLICES = input_shape.w;\n"
     "    int CO_SLICES = output_shape.w;\n\n";
 
+  code += "    #define N " + std::to_string(batch_size_) + "\n";
+  code += "    #define N_OH " + std::to_string(batch_size_ * OH_) + "\n";
   code += "    #define IH " + std::to_string(IH_) + "\n";
   code += "    #define IW " + std::to_string(IW_) + "\n";
   code += "    #define OH " + std::to_string(OH_) + "\n";
@@ -500,8 +494,9 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
   code += "    #define padLeft " + std::to_string(padLeft) + "\n\n";
 
   code +=
-    "    if (oh >= OH || ow >= OW || co_slice >= CO_SLICES)\n"
-    "        return;\n\n";
+    "    if (n_oh >= N_OH || ow >= OW || co_slice >= CO_SLICES) {\n"
+    "        return;\n"
+    "    }\n";
 
   bool check_ow = (OW_ % 2) == 1;
   if (check_ow) {
@@ -539,12 +534,12 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
     "                int iw1 = kw + (ow + 1) * strideW - padLeft;\n"
     "                for (int ci_slice = 0; ci_slice < CI_SLICES; ci_slice++)\n"
     "                {\n"
-    "                    FLT4 in0 = READ_IMAGE(input, smp_zero, (int2)(iw0, ci_slice * IH + ih));\n"
+    "                    FLT4 in0 = READ_IMAGE(input, smp_zero, (int2)(iw0, (n * CI_SLICES + ci_slice) * IH + ih));\n"
     "                    out0 += w[0] * in0.x;\n"
     "                    out0 += w[1] * in0.y;\n"
     "                    out0 += w[2] * in0.z;\n"
     "                    out0 += w[3] * in0.w;\n"
-    "                    FLT4 in1 = READ_IMAGE(input, smp_zero, (int2)(iw1, ci_slice * IH + ih));\n"
+    "                    FLT4 in1 = READ_IMAGE(input, smp_zero, (int2)(iw1, (n * CI_SLICES + ci_slice) * IH + ih));\n"
     "                    out1 += w[0] * in1.x;\n"
     "                    out1 += w[1] * in1.y;\n"
     "                    out1 += w[2] * in1.z;\n"
@@ -558,7 +553,7 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
       "            {\n"
       "                for (int ci_slice = 0; ci_slice < CI_SLICES; ci_slice++)\n"
       "                {\n"
-      "                    FLT4 in0 = READ_IMAGE(input, smp_zero, (int2)(iw0, ci_slice * IH + ih));\n"
+      "                    FLT4 in0 = READ_IMAGE(input, smp_zero, (int2)(iw0, (n * CI_SLICES + ci_slice) * IH + ih));\n"
       "                    out0 += w[0] * in0.x;\n"
       "                    out0 += w[1] * in0.y;\n"
       "                    out0 += w[2] * in0.z;\n"
@@ -585,7 +580,7 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
   } else if (param->act_type_ == ActType_Relu6) {
     code += "    out0 = clamp(out0, (FLT4)(0.0f), (FLT4)(6.0f));\n";
   }
-  code += "    WRITE_IMAGE(output, (int2)(ow + 0, co_slice * OH + oh), out0);\n";
+  code += "    WRITE_IMAGE(output, (int2)(ow + 0, (n * CO_SLICES + co_slice) * OH + oh), out0);\n";
 
   if (check_ow) {
     code +=
@@ -598,7 +593,7 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
   } else if (param->act_type_ == ActType_Relu6) {
     code += "    out1 = clamp(out1, (FLT4)(0.0f), (FLT4)(6.0f));\n";
   }
-  code += "    WRITE_IMAGE(output, (int2)(ow + 1, co_slice * OH + oh), out1);\n";
+  code += "    WRITE_IMAGE(output, (int2)(ow + 1, (n * CO_SLICES + co_slice) * OH + oh), out1);\n";
   if (check_ow) {
     code += "}\n";
   }
@@ -860,7 +855,7 @@ int ConvolutionOpenCLKernel::SetGlobalLocalConv(std::vector<size_t> *global, std
   size_t max_work_group_size = ocl_runtime_->GetKernelMaxWorkGroupSize(kernel_conv_(), (*ocl_runtime_->Device())());
   const size_t max_z_size = std::min<size_t>(16, max_work_item_sizes[2]);
 
-  size_t global_h = UP_DIV(OH_, work_group_size[0]) * work_group_size[0];
+  size_t global_nh = UP_DIV(batch_size_ * OH_, work_group_size[0]) * work_group_size[0];
   size_t global_w = UP_DIV(OW_, work_group_size[1]) * work_group_size[1];
   size_t global_c = UP_DIV(CO_SLICES_, work_group_size[2]) * work_group_size[2];
 
@@ -871,9 +866,9 @@ int ConvolutionOpenCLKernel::SetGlobalLocalConv(std::vector<size_t> *global, std
   }
   size_t local_hw_size = std::min<size_t>(256, max_work_group_size) / local_c;
   size_t local_w = std::min(global_w, local_hw_size);
-  size_t local_h = std::min(local_hw_size / local_w, global_h);
-  if (local_h == global_h && global_h % 2 == 0) {
-    local_h = global_h / 2;
+  size_t local_nh = std::min(local_hw_size / local_w, global_nh);
+  if (local_nh == global_nh && global_nh % 2 == 0) {
+    local_nh = global_nh / 2;
   }
 
   if (op_format_ == Format_NHWC4) {
@@ -883,22 +878,21 @@ int ConvolutionOpenCLKernel::SetGlobalLocalConv(std::vector<size_t> *global, std
   }
 
   global->clear();
+  global->push_back(UP_DIV(batch_size_ * OH_, local_nh) * local_nh);
   global->push_back(UP_DIV(OW_, local_w) * local_w);
-  global->push_back(UP_DIV(OH_, local_h) * local_h);
   global->push_back(UP_DIV(CO_SLICES_, local_c) * local_c);
   local->clear();
+  local->push_back(local_nh);
   local->push_back(local_w);
-  local->push_back(local_h);
   local->push_back(local_c);
 
   if (op_format_ == Format_NC4HW4) {
     // calculate 2 FLT4 along width per work-item
-    global->at(0) = UP_DIV(global->at(0), 2);
-    if (local->at(0) > global->at(0)) {
-      local->at(0) = global->at(0);
+    global->at(1) = UP_DIV(global->at(1), 2);
+    if (local->at(1) > global->at(1)) {
+      local->at(1) = global->at(1);
     }
   }
-
   return RET_OK;
 }
 

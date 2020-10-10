@@ -41,6 +41,7 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
  private:
   bool use_fp16_ = false;
 
+  int batch_size_{};
   int CI_{};
   int IH_{};
   int IW_{};
@@ -84,10 +85,39 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
     const bool attr_valid = param->kernel_h_ == 3 && param->kernel_w_ == 3 && param->stride_h_ == 1 &&
                             param->stride_w_ == 1 && param->pad_u_ == 1 && param->pad_d_ == 1 && param->pad_l_ == 1 &&
                             param->pad_r_ == 1 && param->dilation_h_ == 1 && param->dilation_w_ == 1 && IH_ == OH_ &&
-                            IW_ == OW_;
+                            IW_ == OW_ && batch_size_ == 1;
     const bool channel_good = CI_SLICES_ >= 12 && CO_SLICES_ >= 12;
     const bool hw_good = TILES_X_ * TILES_Y_ >= 16;
     return attr_valid && channel_good && hw_good;
+  }
+
+  std::string get_code_id() {
+    auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
+    std::vector<int> vpara{batch_size_,
+                           CI_,
+                           IH_,
+                           IW_,
+                           CO_,
+                           OH_,
+                           OW_,
+                           KH_,
+                           KW_,
+                           param->stride_h_,
+                           param->stride_w_,
+                           param->pad_u_,
+                           param->pad_l_,
+                           param->pad_d_,
+                           param->pad_r_,
+                           param->dilation_h_,
+                           param->dilation_w_,
+                           use_fp16_,
+                           op_format_,
+                           param->act_type_};
+    std::string code_id;
+    for (auto &iv : vpara) {
+      code_id += "_" + std::to_string(iv);
+    }
+    return code_id;
   }
 };
 }  // namespace mindspore::kernel
