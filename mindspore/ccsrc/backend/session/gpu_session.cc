@@ -218,7 +218,7 @@ void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const
   }
 }
 
-GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
+GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   // Construct graph, if successfully, graph_sum_ + 1
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
@@ -277,7 +277,8 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   return graph_id;
 }
 
-void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
+void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                              VectorRef *outputs) {
   auto &kernel_graph = graphs_[graph_id];
   // Load input data from user input
   LoadInputData(kernel_graph, inputs);
@@ -298,8 +299,9 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   PostIterationDbg(kernel_graph);
 }
 
-void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                         const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) {
+void GPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                             const std::vector<tensor::TensorPtr> &input_tensors,
+                             const std::vector<int> &tensors_mask) {
   // Check if the graph cache exists.
   if (run_op_graphs_.find(graph_info) != run_op_graphs_.end()) {
     return;
@@ -315,8 +317,8 @@ void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_in
   run_op_graphs_[graph_info] = kernel_graph;
 }
 
-void GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                       const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
+void GPUSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                           const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Remove NopOp from execution graph

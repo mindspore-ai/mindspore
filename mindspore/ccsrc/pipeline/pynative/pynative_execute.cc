@@ -669,10 +669,10 @@ py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info, input_tensors);
   session::OpRunInfo op_run_info = {op_exec_info->op_name, op_exec_info->py_primitive, op_exec_info->abstract,
                                     op_exec_info->value};
-  session->BuildOpAsync(&op_run_info, graph_info, input_tensors, tensors_mask);
+  session->BuildOp(&op_run_info, graph_info, input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, &input_tensors);
   VectorRef outputs;
-  session->RunOpAsync(&op_run_info, graph_info, input_tensors, &outputs);
+  session->RunOp(&op_run_info, graph_info, input_tensors, &outputs);
   auto result = BaseRefToPyData(outputs);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   *status = PYNATIVE_SUCCESS;

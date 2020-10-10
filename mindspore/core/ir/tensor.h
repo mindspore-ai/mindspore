@@ -229,8 +229,8 @@ class Tensor : public MetaTensor {
 
   void *data_c() const { return data_->data(); }
 
-  // brief Sync data with device.
-  void data_sync() const;
+  // brief Sync data with device, need wait data valid.
+  void data_sync(bool need_wait = true) const;
 
   // brief Get the internal data object.
   //

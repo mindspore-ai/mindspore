@@ -38,7 +38,6 @@ class AscendInferenceSession : public AscendSession {
   ~AscendInferenceSession() = default;
   void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                      const std::vector<tensor::TensorPtr> &inputs_const) const;
-  GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph) override;
   bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
                         std::string *error_msg) const override;
   bool CompareInput(const tensor::TensorPtr &input, const ParameterPtr &parameter) const;
@@ -46,6 +45,9 @@ class AscendInferenceSession : public AscendSession {
   std::string PrintInputShape(std::vector<T> shape) const;
   std::string InputsInfo(const std::vector<ParameterPtr> &paras, const std::vector<tensor::TensorPtr> &inputs) const;
   void GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *inputs) const override;
+
+ protected:
+  GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) override;
 };
 MS_REG_SESSION(kDavinciInferenceDevice, AscendInferenceSession);
 }  // namespace session

@@ -72,6 +72,7 @@ class KernelRuntime {
                                   const std::vector<CNodePtr> &execution_order);
   virtual bool SyncStream() = 0;
   virtual void ClearGlobalIdleMem() {}
+  virtual void SetContext() {}
 
   // for GPU and D to impl
   virtual void ReleaseDeviceRes() {}

@@ -97,6 +97,12 @@ const std::set<std::string> kOpNeedTransFormat = {kOpFormat_NHWC,        kOpForm
                                                   kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
 
 void SyncMemory(void *dst, const void *src, uint64_t size, rtMemcpyKind_t kind) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->SetContext();
   auto ret_rt_memcpy = rtMemcpy(dst, size, src, size, kind);
   if (ret_rt_memcpy != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "rtMemcpy failed";

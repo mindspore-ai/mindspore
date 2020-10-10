@@ -114,7 +114,7 @@ void InsertMakeTupleForOutput(NotNull<KernelGraphPtr> root_graph) {
 }
 }  // namespace
 
-GraphId AscendSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
+GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   MS_LOG(INFO) << "Start";
   // construct graph, if successfully, graph_sum_ + 1
   auto graph = ConstructKernelGraph(lst, outputs);
@@ -123,7 +123,7 @@ GraphId AscendSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrL
   return graph_id;
 }
 
-GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
+GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   MS_LOG(INFO) << "Start";
   std::vector<KernelGraphPtr> all_graphs;
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
@@ -205,7 +205,7 @@ void AscendSession::SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> 
   kernel_graph->set_summary_node_exist(false);
 }
 
-void AscendSession::BuildGraph(GraphId graph_id) {
+void AscendSession::BuildGraphImpl(GraphId graph_id) {
   MS_LOG(INFO) << "Start";
   auto graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(graph);
@@ -301,8 +301,8 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   runtime_instance->AssignStaticMemoryValueNode(child_graph.get());
 }
 
-void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
-                             VectorRef *const outputs) {
+void AscendSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                                 VectorRef *const outputs) {
   MS_LOG(INFO) << "Start";
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -350,8 +350,9 @@ bool AscendSession::GraphCacheExist(const GraphInfo &graph_info) const {
   return run_op_graphs_.find(graph_info) != run_op_graphs_.end();
 }
 
-void AscendSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                            const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) {
+void AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                                const std::vector<tensor::TensorPtr> &input_tensors,
+                                const std::vector<int> &tensors_mask) {
   MS_LOG(INFO) << "Build op " << op_run_info.op_name << " start !";
   if (GraphCacheExist(graph_info)) {
     MS_LOG(INFO) << "Build op " << op_run_info.op_name << " graph cache has existed !";
@@ -375,8 +376,8 @@ void AscendSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   MS_LOG(INFO) << "Build op " << op_run_info.op_name << " finish !";
 }
 
-void AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                          const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
+void AscendSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                              const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
   auto graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " start!";
@@ -1049,9 +1050,9 @@ void AscendSession::UpdateRefOutputMap(NotNull<KernelGraphPtr> graph,
   }
 }
 
-GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph, const vector<tensor::TensorPtr> &inputs) {
+GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph, const vector<tensor::TensorPtr> &inputs) {
   RunInfer(func_graph, inputs);
-  return CompileGraph(func_graph);
+  return CompileGraphImpl(func_graph);
 }
 }  // namespace session
 }  // namespace mindspore

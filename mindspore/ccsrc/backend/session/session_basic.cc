@@ -100,9 +100,7 @@ tensor::TensorPtr CreateCNodeOutputTensor(const session::KernelWithIndex &node_o
   } else {
     tensor->set_sync_status(kNeedSyncDeviceToHost);
   }
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    tensor->SetNeedWait(true);
-  }
+  tensor->SetNeedWait(true);
   return tensor;
 }
 
@@ -953,8 +951,12 @@ bool TensorNeedSync(const AnfNodePtr &parameter, const tensor::TensorPtr &tensor
   if (tensor->NeedSyncHostToDevice()) {
     return true;
   }
-  if (tensor->device_address() != device_address) {
-    (void)tensor->data_sync();
+  auto tensor_address = tensor->device_address();
+  if (tensor_address != device_address) {
+    if (tensor_address != nullptr) {
+      tensor_address->SyncDeviceToHost(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
+                                       tensor->data_c());
+    }
     return true;
   }
   return false;
@@ -1023,6 +1025,30 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
     tensor->set_device_address(address);
     tensor->SetNeedWait(false);
   }
+}
+
+std::vector<tensor::TensorPtr> SessionBasic::GetNeedLockInputTensors(const GraphId &graph_id,
+                                                                     const std::vector<tensor::TensorPtr> &inputs) {
+  auto graph = GetGraph(graph_id);
+  MS_EXCEPTION_IF_NULL(graph);
+  bool has_optimizer = false;
+  for (const auto &cnode : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (kOptOperatorSet.find(AnfAlgo::GetCNodeName(cnode)) != kOptOperatorSet.end()) {
+      has_optimizer = true;
+      break;
+    }
+  }
+  if (!has_optimizer) {
+    return {};
+  }
+  std::vector<tensor::TensorPtr> result;
+  for (auto &tensor : inputs) {
+    if (!tensor->NeedWait()) {
+      result.emplace_back(tensor);
+    }
+  }
+  return result;
 }
 
 void SessionBasic::CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
@@ -1341,32 +1367,36 @@ AnfNodePtr SessionBasic::FindPullNode(const AnfNodePtr &push_node, const std::ve
   return nullptr;
 }
 
-GraphId SessionBasic::CompileGraphAsync(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
+GraphId SessionBasic::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   MS_EXCEPTION_IF_NULL(executor_);
-  return executor_->CompileGraphAsync(shared_from_this(), lst, outputs);
+  return executor_->CompileGraph(shared_from_this(), lst, outputs);
 }
 
-GraphId SessionBasic::CompileGraphAsync(NotNull<FuncGraphPtr> func_graph) {
+GraphId SessionBasic::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   MS_EXCEPTION_IF_NULL(executor_);
-  return executor_->CompileGraphAsync(shared_from_this(), func_graph);
+  return executor_->CompileGraph(shared_from_this(), func_graph);
 }
 
-void SessionBasic::BuildGraphAsync(GraphId graph_id) {
+void SessionBasic::BuildGraph(GraphId graph_id) {
   MS_EXCEPTION_IF_NULL(executor_);
-  executor_->BuildGraphAsync(shared_from_this(), graph_id);
+  executor_->BuildGraph(shared_from_this(), graph_id);
 }
 
-void SessionBasic::BuildOpAsync(OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                                const std::vector<tensor::TensorPtr> &input_tensors,
-                                const std::vector<int> &tensors_mask) {
+void SessionBasic::BuildOp(OpRunInfo *op_run_info, const GraphInfo &graph_info,
+                           const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(executor_);
-  executor_->BuildOpAsync(shared_from_this(), op_run_info, graph_info, input_tensors, tensors_mask);
+  executor_->BuildOp(shared_from_this(), op_run_info, graph_info, input_tensors, tensors_mask);
 }
 
-void SessionBasic::RunOpAsync(OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                              const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
+void SessionBasic::RunOp(OpRunInfo *op_run_info, const GraphInfo &graph_info,
+                         const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(executor_);
-  executor_->RunOpAsync(shared_from_this(), op_run_info, graph_info, input_tensors, outputs);
+  executor_->RunOp(shared_from_this(), op_run_info, graph_info, input_tensors, outputs);
+}
+
+void SessionBasic::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
+  MS_EXCEPTION_IF_NULL(executor_);
+  executor_->RunGraph(shared_from_this(), graph_id, inputs, outputs);
 }
 
 void SessionBasic::RunGraphAsync(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,

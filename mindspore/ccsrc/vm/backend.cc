@@ -55,9 +55,9 @@ LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::stri
   GraphId graph_id = kInvalidGraphId;
   if (target != target_device_ && !target.empty()) {
     CreateOtherSession(target);
-    graph_id = other_sess_->CompileGraphAsync(lst, outputs);
+    graph_id = other_sess_->CompileGraph(lst, outputs);
   } else {
-    graph_id = target_sess_->CompileGraphAsync(lst, outputs);
+    graph_id = target_sess_->CompileGraph(lst, outputs);
   }
 
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
@@ -65,9 +65,9 @@ LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::stri
     return result;
   }
   if (target != target_device_ && !target.empty()) {
-    other_sess_->BuildGraphAsync(graph_id);
+    other_sess_->BuildGraph(graph_id);
   } else if (!is_multi_graph_sink_) {
-    target_sess_->BuildGraphAsync(graph_id);
+    target_sess_->BuildGraph(graph_id);
   }
   result.run = std::make_shared<RunFunc>(
     [graph_id, target, this](const VectorRef &args) -> VectorRef { return MsRunGraph(graph_id, args, target); });
@@ -151,7 +151,7 @@ void MsBackend::Link(GraphId graph_id) {
   if (graph_id == kInvalidGraphId) {
     graph_id = target_sess_->GetFinalRunGraph();
   }
-  target_sess_->BuildGraphAsync(graph_id);
+  target_sess_->BuildGraph(graph_id);
 }
 
 Backend::Backend(const std::string &name) : name_(name) {
@@ -187,7 +187,7 @@ void MsBackend::CreateOtherSession(const std::string &target) {
   other_device_ = target;
 }
 
-GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) { return target_sess_->CompileGraphAsync(fg); }
+GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) { return target_sess_->CompileGraph(fg); }
 
 VectorRef MsBackend::RunGraph(GraphId graph_id, const VectorRef &args) { return MsRunGraph(graph_id, args); }
 

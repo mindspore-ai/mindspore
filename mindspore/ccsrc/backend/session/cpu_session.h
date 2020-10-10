@@ -30,13 +30,12 @@ class CPUSession : public SessionBasic {
   CPUSession() = default;
   ~CPUSession() override = default;
   void Init(uint32_t device_id) override { InitDevice(kCPUDevice, device_id); }
-  GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
-  void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
-
-  void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *,
-                           std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) override;
 
  protected:
+  void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *,
+                           std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) override;
+  GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
+  void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
   ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph) override;
   void Optimize(const std::shared_ptr<KernelGraph> &kernel_graph);
 

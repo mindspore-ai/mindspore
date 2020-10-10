@@ -65,36 +65,16 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 
   void InitDevice(const std::string &device_name, uint32_t device_id);
 
-  virtual void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
-                                   VectorRef *outputs,
-                                   std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node);
-
   virtual ~SessionBasic() { summary_callback_ = nullptr; }
 
-  virtual GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) = 0;
-  virtual GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph) { return kInvalidGraphId; }
-  virtual GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs) {
-    MS_EXCEPTION(NotExistsError) << "Call an empty function";
-  }
-  // build graph, used to handle multiple child graphs
-  virtual void BuildGraph(GraphId) {}
-
-  virtual void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) = 0;
-
-  virtual void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                       const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) {}
-
-  virtual void RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                     const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {}
-
-  GraphId CompileGraphAsync(const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
-  GraphId CompileGraphAsync(NotNull<FuncGraphPtr> func_graph);
-  void BuildGraphAsync(GraphId graphId);
+  GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
+  GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph);
+  void BuildGraph(GraphId graphId);
+  void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
   void RunGraphAsync(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
-  void BuildOpAsync(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
-                    const std::vector<int> &tensors_mask);
-  void RunOpAsync(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
-                  VectorRef *outputs);
+  void BuildOp(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
+               const std::vector<int> &tensors_mask);
+  void RunOp(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs);
 
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
 
@@ -118,7 +98,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
     return true;
   }
   virtual void GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *inputs) const {}
-
+  std::vector<tensor::TensorPtr> GetNeedLockInputTensors(const GraphId &graph_id,
+                                                         const std::vector<tensor::TensorPtr> &inputs);
 #ifdef ENABLE_DEBUGGER
   // set debugger
   void SetDebugger() {
@@ -140,6 +121,28 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                          std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
 
  protected:
+  friend class Executor;
+  friend class CompileNodesTask;
+  friend class CompileGraphTask;
+  friend class BuildGraphTask;
+  friend class RunGraphTask;
+  friend class BuildOpTask;
+  friend class RunOpTask;
+  virtual void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
+                                   VectorRef *outputs,
+                                   std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node);
+  virtual GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) = 0;
+  virtual GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) { return kInvalidGraphId; }
+  virtual GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs) {
+    MS_EXCEPTION(NotExistsError) << "Call an empty function";
+  }
+  virtual void BuildGraphImpl(GraphId) {}
+  virtual void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                            VectorRef *outputs) = 0;
+  virtual void BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                           const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) {}
+  virtual void RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                         const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {}
   void RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs);
   // Get graph by graph id ,if not exist return null ptr
   KernelGraphPtr GetGraph(GraphId graph_id) const;

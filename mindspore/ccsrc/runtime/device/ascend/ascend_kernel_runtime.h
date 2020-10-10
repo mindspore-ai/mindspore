@@ -49,6 +49,7 @@ class AscendKernelRuntime : public KernelRuntime {
                                  const std::vector<CNodePtr> &execution_order) override;
   void ClearGlobalIdleMem() override;
   bool SyncStream() override;
+  void SetContext() override;
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -62,7 +63,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool HcclInit();
   bool NeedDestroyHccl();
   bool DestroyHccl();
-  void SetContext();
+  void InnerSetContext();
 
   void ClearGraphModelMap();
   void ReleaseDeviceRes() override;
