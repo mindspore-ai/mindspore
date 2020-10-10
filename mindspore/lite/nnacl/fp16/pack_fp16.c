@@ -65,6 +65,14 @@ void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float1
   }  // tile num loop
 }
 
+void PackHWCToWHCFp16(const float16_t *src, float16_t *dst, int height, int width, int channel) {
+  for (int i = 0; i < height; ++i) {
+    for (int j = 0; j < width; ++j) {
+      memcpy(dst + (j * height + i) * channel, src + (i * width + j) * channel, channel * sizeof(float16_t));
+    }
+  }
+}
+
 void PackWeightToC8Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data, ConvParameter *conv_param) {
   // origin weight format : ohwi
   int input_channel = conv_param->input_channel_;

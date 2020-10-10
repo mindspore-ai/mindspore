@@ -31,6 +31,8 @@ void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float1
 
 void PackWeightToC8Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data, ConvParameter *conv_param);
 
+void PackHWCToWHCFp16(const float16_t *src, float16_t *dst, int height, int width, int channel);
+
 void PackWeightToC4Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data, ConvParameter *conv_param);
 
 void PackNHWCToNC4HW4Fp16(const void *src, void *dst, int batch, int plane, int channel);

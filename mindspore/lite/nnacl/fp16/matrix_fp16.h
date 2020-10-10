@@ -26,6 +26,8 @@ void MatrixMultiplyFp16(const float16_t *matrix_a, const float16_t *matrix_b, fl
 
 void MatrixMultiplyVecFp16(const float16x8_t *matrix_a, const float16x8_t *matrix_b, float16x8_t *matrix_c,
                            const float16_t *bias, int m, int k, int n);
+void MatrixMultiplyWinogradFp16(const float16_t *matix_a, const float16_t *matrix_b, float16_t *matrix_c, int m, int k,
+                                int n, int in_channel);
 #ifdef __cplusplus
 }
 #endif
