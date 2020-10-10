@@ -91,7 +91,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-- Runing on Ascend
+- Running on Ascend
 ```
 # distributed training
 Usage: sh run_distribute_train.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
@@ -104,7 +104,7 @@ Usage: sh run_standalone_train.sh [resnet50|resnet101|se-resnet50] [cifar10|imag
 Usage: sh run_eval.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
-- Runing on GPU
+- Running on GPU
 ```
 # distributed training example
 sh run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
@@ -124,7 +124,7 @@ sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [C
 .
 └──resnet
   ├── README.md
-  ├── script
+  ├── scripts
     ├── run_distribute_train.sh            # launch ascend distributed training(8 pcs)
     ├── run_parameter_server_train.sh      # launch ascend parameter server training(8 pcs)
     ├── run_eval.sh                        # launch ascend evaluation
@@ -136,7 +136,7 @@ sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [C
   ├── src
     ├── config.py                          # parameter configuration
     ├── dataset.py                         # data preprocessing
-    ├── crossentropy.py                    # loss definition for ImageNet2012 dataset
+    ├── CrossEntropySmooth.py                    # loss definition for ImageNet2012 dataset
     ├── lr_generator.py                    # generate learning rate for each step
     └── resnet.py                          # resnet backbone, including resnet50 and resnet101 and se-resnet50
   ├── eval.py                              # eval net
@@ -172,7 +172,7 @@ Parameters for both training and evaluation can be set in config.py.
 
 ```
 "class_num": 1001,                # dataset class number
-"batch_size": 32,                 # batch size of input tensor
+"batch_size": 256,                 # batch size of input tensor
 "loss_scale": 1024,               # loss scale
 "momentum": 0.9,                  # momentum optimizer
 "weight_decay": 1e-4,             # weight decay 
@@ -184,10 +184,10 @@ Parameters for both training and evaluation can be set in config.py.
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 0,               # number of warmup epoch
 "lr_decay_mode": "Linear",        # decay mode for generating learning rate
-"label_smooth": True,             # label smooth
+"use_label_smooth": True,             # label smooth
 "label_smooth_factor": 0.1,       # label smooth factor
 "lr_init": 0,                     # initial learning rate
-"lr_max": 0.1,                    # maximum learning rate
+"lr_max": 0.8,                    # maximum learning rate
 "lr_end": 0.0,                    # minimum learning rate
 ```
 
@@ -207,7 +207,7 @@ Parameters for both training and evaluation can be set in config.py.
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 0,               # number of warmup epoch
 "lr_decay_mode": "cosine"         # decay mode for generating learning rate
-"label_smooth": 1,                # label_smooth
+"use_label_smooth": True,                # label_smooth
 "label_smooth_factor": 0.1,       # label_smooth_factor
 "lr": 0.1                         # base learning rate
 ```
@@ -229,7 +229,7 @@ Parameters for both training and evaluation can be set in config.py.
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 3,               # number of warmup epoch
 "lr_decay_mode": "cosine"         # decay mode for generating learning rate
-"label_smooth": True,             # label_smooth
+"use_label_smooth": True,             # label_smooth
 "label_smooth_factor": 0.1,       # label_smooth_factor
 "lr_init": 0.0,                   # initial learning rate
 "lr_max": 0.3,                    # maximum learning rate
@@ -421,13 +421,13 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | uploaded Date              | 04/01/2020 (month/day/year)  ；                        | 08/01/2020 (month/day/year)
 | MindSpore Version          | 0.1.0-alpha                                                       |0.6.0-alpha   |
 | Dataset                    | ImageNet2012                                                    | ImageNet2012|
-| Training Parameters        | epoch=90, steps per epoch=5004, batch_size = 32             |epoch=90, steps per epoch=5004, batch_size = 32  |
+| Training Parameters        | epoch=90, steps per epoch=626, batch_size = 256             |epoch=90, steps per epoch=5004, batch_size = 32  |
 | Optimizer                  | Momentum                                                         |Momentum|
 | Loss Function              | Softmax Cross Entropy                                       |Softmax Cross Entropy           |
 | outputs                    | probability                                                 |  probability          |
 | Loss                       | 1.8464266                                                    | 1.9023  |
-| Speed                      | 18.4ms/step（8pcs）                     |67.1ms/step（8pcs）|
-| Total time                 | 139 mins                          | 500 mins|
+| Speed                      | 118ms/step（8pcs）                     |67.1ms/step（8pcs）|
+| Total time                 | 114 mins                          | 500 mins|
 | Parameters (M)             | 25.5                                                         | 25.5 |
 | Checkpoint for Fine tuning | 197M (.ckpt file)                                         |197M (.ckpt file)     |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
