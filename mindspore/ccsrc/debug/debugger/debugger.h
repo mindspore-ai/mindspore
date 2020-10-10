@@ -94,7 +94,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   int32_t step_num() const;
 
-  std::map<std::pair<uint32_t, uint32_t>, std::string> GetStreamTaskToOpnameMap() const;
+  void SetStreamTaskToOpnameMap(const std::map<std::pair<uint32_t, uint32_t>, std::string> &mapping);
 
   // check if any feature that uses the debugger backend is enabled
   bool DebuggerBackendEnabled();

@@ -364,7 +364,7 @@ void DumpJsonParser::PrintUnusedKernel() {
 }
 
 std::string DumpJsonParser::GetOpOverflowBinPath(uint32_t graph_id, uint32_t device_id) const {
-  std::string bin_path = "/var/log/npu/ide_daemon/dump";
+  std::string bin_path;
   bin_path.append(path_);
   bin_path.append("_");
   bin_path.append(std::to_string(device_id));
