@@ -94,6 +94,22 @@ void TransferControl(const CNodePtr &hccl_node, const std::vector<AnfNodePtr> &m
     }
   }
 }
+// NodeUsersMap, for node B input i use node A, it will be one item in map with key: A, and value: (B, i)
+bool IsNodeOutPutUsedByOtherRealKernel(const AnfNodeIndexSet &node_users) {
+  if (node_users.size() == 1) {
+    MS_LOG(INFO) << "This node only used once, no need to insert memcpy node.";
+    return false;
+  }
+  for (const auto &node_pair : node_users) {
+    auto node = node_pair.first;
+    if (AnfAlgo::IsRealKernel(node) && !AnfAlgo::IsCommunicationOp(node)) {
+      MS_LOG(INFO) << "This node only used other real kernel: " << node->fullname_with_scope();
+      return true;
+    }
+  }
+  MS_LOG(INFO) << "This node used by other node, but the node is not real kernel, no need to insert memcpy node.";
+  return false;
+}
 }  // namespace
 
 bool InsertMemcpyAsyncForHcclOp::NeedInsertMemcpy(const FuncGraphPtr &graph, const AnfNodePtr &input,
@@ -126,7 +142,7 @@ bool InsertMemcpyAsyncForHcclOp::NeedInsertMemcpy(const FuncGraphPtr &graph, con
     if (iter == node_users.end()) {
       MS_LOG(EXCEPTION) << "node has no output in manager";
     }
-    if (iter->second.size() > 1) {
+    if (IsNodeOutPutUsedByOtherRealKernel(iter->second)) {
       return true;
     }
   }
