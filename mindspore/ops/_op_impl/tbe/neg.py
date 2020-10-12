@@ -29,6 +29,7 @@ neg_op_info = TBERegOp("Neg") \
     .dtype_format(DataType.I32_None, DataType.I32_None) \
     .dtype_format(DataType.F16_None, DataType.F16_None) \
     .dtype_format(DataType.F32_None, DataType.F32_None) \
+    .dtype_format(DataType.I8_None, DataType.I8_None) \
     .get_op_info()
 
 

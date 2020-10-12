@@ -491,7 +491,7 @@ class LayerNorm(Cell):
     Args:
         normalized_shape (Union(tuple[int], list[int]): The normalization is performed over axis
             `begin_norm_axis ... R - 1`.
-        begin_norm_axis (int): It first normalization dimension: normalization will be performed along dimensions
+        begin_norm_axis (int): The first normalization dimension: normalization will be performed along dimensions
             `begin_norm_axis: rank(inputs)`, the value should be in [-1, rank(input)). Default: -1.
         begin_params_axis (int): The first parameter(beta, gamma)dimension: scale and centering parameters
             will have dimensions `begin_params_axis: rank(inputs)` and will be broadcast with
@@ -515,7 +515,8 @@ class LayerNorm(Cell):
         >>> x = Tensor(np.ones([20, 5, 10, 10]), mindspore.float32)
         >>> shape1 = x.shape[1:]
         >>> m = nn.LayerNorm(shape1,  begin_norm_axis=1, begin_params_axis=1)
-        >>> m(x)
+        >>> m(x).shape
+        (20, 5, 10, 10)
     """
 
     def __init__(self,
