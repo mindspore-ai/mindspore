@@ -19,7 +19,6 @@ from mindspore.ops import functional as F
 from mindspore._extends import cell_attr_register
 from mindspore import Tensor, Parameter
 from mindspore.common.initializer import initializer
-from mindspore._checkparam import Validator
 from mindspore.nn.layer.activation import get_activation
 
 
@@ -72,9 +71,9 @@ class GNNFeatureTransform(nn.Cell):
                  bias_init='zeros',
                  has_bias=True):
         super(GNNFeatureTransform, self).__init__()
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
-        self.has_bias = Validator.check_bool(has_bias)
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.has_bias = has_bias
 
         if isinstance(weight_init, Tensor):
             if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \
@@ -259,8 +258,8 @@ class AttentionHead(nn.Cell):
                  coef_activation=nn.LeakyReLU(),
                  activation=nn.ELU()):
         super(AttentionHead, self).__init__()
-        self.in_channel = Validator.check_positive_int(in_channel)
-        self.out_channel = Validator.check_positive_int(out_channel)
+        self.in_channel = in_channel
+        self.out_channel = out_channel
         self.in_drop_ratio = in_drop_ratio
         self.in_drop = nn.Dropout(keep_prob=1 - in_drop_ratio)
         self.in_drop_2 = nn.Dropout(keep_prob=1 - in_drop_ratio)
@@ -284,7 +283,7 @@ class AttentionHead(nn.Cell):
         self.matmul = P.MatMul()
         self.bias_add = P.BiasAdd()
         self.bias = Parameter(initializer('zeros', self.out_channel), name='bias')
-        self.residual = Validator.check_bool(residual)
+        self.residual = residual
         if self.residual:
             if in_channel != out_channel:
                 self.residual_transform_flag = True
@@ -436,8 +435,6 @@ class GAT(nn.Cell):
     """
 
     def __init__(self,
-                 features,
-                 biases,
                  ftr_dims,
                  num_class,
                  num_nodes,
@@ -448,17 +445,15 @@ class GAT(nn.Cell):
                  activation=nn.ELU(),
                  residual=False):
         super(GAT, self).__init__()
-        self.features = Tensor(features)
-        self.biases = Tensor(biases)
-        self.ftr_dims = Validator.check_positive_int(ftr_dims)
-        self.num_class = Validator.check_positive_int(num_class)
-        self.num_nodes = Validator.check_positive_int(num_nodes)
+        self.ftr_dims = ftr_dims
+        self.num_class = num_class
+        self.num_nodes = num_nodes
         self.hidden_units = hidden_units
         self.num_heads = num_heads
         self.attn_drop = attn_drop
         self.ftr_drop = ftr_drop
         self.activation = activation
-        self.residual = Validator.check_bool(residual)
+        self.residual = residual
         self.layers = []
         # first layer
         self.layers.append(AttentionAggregator(
@@ -491,9 +486,9 @@ class GAT(nn.Cell):
             output_transform='sum'))
         self.layers = nn.layer.CellList(self.layers)
 
-    def construct(self, training=True):
-        input_data = self.features
-        bias_mat = self.biases
+    def construct(self, feature, biases, training=True):
+        input_data = feature
+        bias_mat = biases
         for cell in self.layers:
             input_data = cell(input_data, bias_mat, training)
         return input_data/self.num_heads[-1]

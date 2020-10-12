@@ -91,8 +91,8 @@ class LossAccuracyWrapper(nn.Cell):
         self.loss = Loss(label, mask, weight_decay, network.trainable_params()[0])
         self.accuracy = Accuracy(label, mask)
 
-    def construct(self):
-        preds = self.network()
+    def construct(self, adj, feature):
+        preds = self.network(adj, feature)
         loss = self.loss(preds)
         accuracy = self.accuracy(preds)
         return loss, accuracy
@@ -114,8 +114,8 @@ class LossWrapper(nn.Cell):
         self.network = network
         self.loss = Loss(label, mask, weight_decay, network.trainable_params()[0])
 
-    def construct(self):
-        preds = self.network()
+    def construct(self, adj, feature):
+        preds = self.network(adj, feature)
         loss = self.loss(preds)
         return loss
 
@@ -154,11 +154,11 @@ class TrainOneStepCell(nn.Cell):
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
 
-    def construct(self):
+    def construct(self, adj, feature):
         weights = self.weights
-        loss = self.network()
+        loss = self.network(adj, feature)
         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
-        grads = self.grad(self.network, weights)(sens)
+        grads = self.grad(self.network, weights)(adj, feature, sens)
         return F.depend(loss, self.optimizer(grads))
 
 
@@ -182,7 +182,7 @@ class TrainNetWrapper(nn.Cell):
         self.loss_train_net = TrainOneStepCell(loss_net, optimizer)
         self.accuracy = Accuracy(label, mask)
 
-    def construct(self):
-        loss = self.loss_train_net()
-        accuracy = self.accuracy(self.network())
+    def construct(self, adj, feature):
+        loss = self.loss_train_net(adj, feature)
+        accuracy = self.accuracy(self.network(adj, feature))
         return loss, accuracy
