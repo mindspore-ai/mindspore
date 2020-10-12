@@ -14,51 +14,18 @@
 # ============================================================================
 """Operations for random number generators."""
 
-from mindspore._checkparam import Validator
+from mindspore.ops.primitive import constexpr
 from .. import operations as P
 from .. import functional as F
-from ..primitive import constexpr
 from .multitype_ops import _constexpr_utils as const_utils
 from ...common import dtype as mstype
-from ...common import get_seed as get_global_seed
-from ...common import _truncate_seed, _update_seeds, _get_op_seed
+from ...common import _get_seed
 
 @constexpr
 def get_seed(op_seed, kernel_name):
-    """
-    Get the graph-level seed.
-    Graph-level seed is used as a global variable, that can be used in different ops in case op-level seed is not set.
-    If op-level seed is 0, use graph-level seed; if graph-level seed is also 0, the system would generate a
-    random seed.
+    "Get the graph-level seed."
+    return _get_seed(op_seed, kernel_name)
 
-    Note:
-        For each seed, either op-seed or graph-seed, a random sequence will be generated relating to this seed.
-        So, the state of the seed regarding to this op should be recorded.
-        A simple illustration should be:
-          If a random op is called twice within one program, the two results should be different:
-          print(C.uniform((1, 4), seed=1))  # generates 'A1'
-          print(C.uniform((1, 4), seed=1))  # generates 'A2'
-          If the same program runs again, it repeat the results:
-          print(C.uniform((1, 4), seed=1))  # generates 'A1'
-          print(C.uniform((1, 4), seed=1))  # generates 'A2'
-
-    Returns:
-        Interger. The current graph-level seed.
-
-    Examples:
-        >>> C.get_seed(seed, 'normal')
-    """
-    global_seed = get_global_seed()
-    if global_seed is None:
-        global_seed = 0
-    if op_seed is None:
-        temp_seed = _get_op_seed(0, kernel_name)
-    else:
-        Validator.check_non_negative_int(op_seed, "seed", kernel_name)
-        temp_seed = _get_op_seed(op_seed, kernel_name)
-    seeds = _truncate_seed(global_seed), _truncate_seed(temp_seed)
-    _update_seeds(op_seed, kernel_name)
-    return seeds
 
 def normal(shape, mean, stddev, seed=None):
     """
