@@ -99,12 +99,11 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
   auto type = (schema::PrimitiveType)primitive_c->Type();
   MS_LOG(INFO) << "Primitive type: " << type;
   static const std::vector<schema::PrimitiveType> uint8OpList = {
-    schema::PrimitiveType_Nchw2Nhwc, schema::PrimitiveType_Nhwc2Nchw,
-    schema::PrimitiveType_Conv2D,    schema::PrimitiveType_DepthwiseConv2D,
-    schema::PrimitiveType_Add,       schema::PrimitiveType_Pooling,
-    schema::PrimitiveType_Concat, /*schema::PrimitiveType_SoftMax,*/
-    schema::PrimitiveType_Reshape,   schema::PrimitiveType_FullConnection,
-    schema::PrimitiveType_MatMul,    schema::PrimitiveType_Activation};
+    schema::PrimitiveType_Nchw2Nhwc, schema::PrimitiveType_Nhwc2Nchw, schema::PrimitiveType_Conv2D,
+    schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_Add, schema::PrimitiveType_Pooling,
+    /*schema::PrimitiveType_Concat, schema::PrimitiveType_SoftMax,*/
+    schema::PrimitiveType_Reshape, schema::PrimitiveType_FullConnection, schema::PrimitiveType_MatMul,
+    schema::PrimitiveType_Activation};
   return IsContain(uint8OpList, type);
 }
 

@@ -32,6 +32,7 @@ ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector
   for (auto &quant_param : quant_params) {
     std::vector<schema::QuantParamT> quant_params_in = {quant_param};
     primTValue->AddInputQuantParam(quant_params_in);
+    primTValue->AddOutputQuantParam(quant_params_in);
   }
   return NewValueNode(primTValue);
 }
@@ -88,7 +89,7 @@ STATUS QuantCast::Run(FuncGraphPtr graph) {
         } else if (curnode_quant_type == schema::QuantType_QUANT_NONE &&
                    input_cnode_quant_type == schema::QuantType_PostTraining) {
           value_node = NewQuantCastValueNode(kNumberTypeInt8, kNumberTypeFloat32,
-                                             input_cnode_primitive_c->GetInputQuantParams().front());
+                                             input_cnode_primitive_c->GetOutputQuantParams().front());
         }
         if (value_node == nullptr) {
           MS_LOG(WARNING) << "value_node is null! "
