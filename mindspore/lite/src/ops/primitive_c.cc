@@ -131,6 +131,7 @@
 #include "src/ops/custom_predict.h"
 #include "src/ops/custom_normalize.h"
 #include "src/ops/custom_extract_features.h"
+#include "src/ops/upsample.h"
 #ifdef PRIMITIVE_WRITEABLE
 #include "tools/converter/quantizer/quantize_util.h"
 #endif
@@ -692,6 +693,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new CustomNormalize(primitive);
     case schema::PrimitiveType_CustomExtractFeatures:
       return new CustomExtractFeatures(primitive);
+    case schema::PrimitiveType_Upsample:
+      return new Upsample(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
@@ -960,6 +963,8 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
       return NewPrimitiveC<CustomNormalize>(primitive);
     case schema::PrimitiveType_CustomExtractFeatures:
       return NewPrimitiveC<CustomExtractFeatures>(primitive);
+    case schema::PrimitiveType_Upsample:
+      return NewPrimitiveC<Upsample>(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:

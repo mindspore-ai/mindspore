@@ -15,7 +15,7 @@
  */
 
 #include <memory>
-#include "tools/converter/parser/onnx/onnx_unsample_parser.h"
+#include "tools/converter/parser/onnx/onnx_upsample_parser.h"
 
 namespace mindspore {
 namespace lite {

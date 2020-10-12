@@ -95,7 +95,7 @@ int Cast::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
     return RET_OK;
   }
 
-  if (input->data_type() != GetSrcT()) {
+  if (GetSrcT() != 0 && input->data_type() != GetSrcT()) {
     MS_LOG(ERROR) << "input dataType is error";
     return RET_INPUT_TENSOR_ERROR;
   }

@@ -43,9 +43,9 @@ class OnnxModelParser : public ModelParser {
   schema::MetaGraphT *ParseToFb(const std::string &modelFile, const std::string &weightFile,
                                 const QuantType &quantType = QuantType_QUANT_NONE) override;
 
- private:
-  TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
+  static TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
 
+ private:
   std::vector<int32_t> GetDimsFromOnnxValue(const onnx::ValueInfoProto &onnx_value);
 
   STATUS SetGraphConstTensor(const onnx::GraphProto &onnx_graph, TensorCache *tensor_cache);
