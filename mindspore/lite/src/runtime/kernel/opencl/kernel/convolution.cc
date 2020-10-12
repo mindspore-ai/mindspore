@@ -359,6 +359,8 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNHWC4() {
   code += "#define padBottom " + std::to_string(padBottom) + "\n";
   code += "#define padLeft " + std::to_string(padLeft) + "\n";
   code += "#define padRight " + std::to_string(padRight) + "\n";
+  code += "#define dilationH " + std::to_string(param->dilation_h_) + "\n";
+  code += "#define dilationW " + std::to_string(param->dilation_w_) + "\n";
   code += "#define CI_SLICES " + std::to_string(CI_SLICES_) + "\n";
   code += "#define CO_SLICES " + std::to_string(CO_SLICES_) + "\n\n";
 
@@ -398,10 +400,10 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNHWC4() {
   code +=
     "    for (int kh = 0; kh < KH; ++kh)\n"
     "    {\n"
-    "        int ih = kh + oh * strideH - padTop;\n"
+    "        int ih = kh * dilationH + oh * strideH - padTop;\n"
     "        for (int kw = 0; kw < KW; ++kw)\n"
     "        {\n"
-    "            int iw = kw + ow * strideW - padLeft;\n"
+    "            int iw = kw * dilationW + ow * strideW - padLeft;\n"
     "            if (ih >= 0 && ih < IH && iw >= 0 && iw < IW)\n"
     "            {\n"
     "                for (int ci_slice = 0; ci_slice < CI_SLICES; ci_slice++)\n"
@@ -491,7 +493,9 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
   code += "    #define strideH " + std::to_string(strideH) + "\n";
   code += "    #define strideW " + std::to_string(strideW) + "\n";
   code += "    #define padTop " + std::to_string(padTop) + "\n";
-  code += "    #define padLeft " + std::to_string(padLeft) + "\n\n";
+  code += "    #define padLeft " + std::to_string(padLeft) + "\n";
+  code += "    #define dilationH " + std::to_string(param->dilation_h_) + "\n";
+  code += "    #define dilationW " + std::to_string(param->dilation_w_) + "\n";
 
   code +=
     "    if (n_oh >= N_OH || ow >= OW || co_slice >= CO_SLICES) {\n"
@@ -513,7 +517,7 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
     "\n"
     "    for (int kh = 0; kh < KH; ++kh)\n"
     "    {\n"
-    "        int ih = kh + oh * strideH - padTop;\n"
+    "        int ih = kh * dilationH + oh * strideH - padTop;\n"
     "        for (int kw = 0; kw < KW; ++kw)\n"
     "        {\n";
 
@@ -523,7 +527,7 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
       "{\n";
   }
 
-  code += "            int iw0 = kw + (ow + 0) * strideW - padLeft;\n";
+  code += "            int iw0 = kw * dilationW + (ow + 0) * strideW - padLeft;\n";
   if (check_ow) {
     code +=
       "            if (last_is_double)\n"
@@ -531,7 +535,7 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
   }
 
   code +=
-    "                int iw1 = kw + (ow + 1) * strideW - padLeft;\n"
+    "                int iw1 = kw * dilationW + (ow + 1) * strideW - padLeft;\n"
     "                for (int ci_slice = 0; ci_slice < CI_SLICES; ci_slice++)\n"
     "                {\n"
     "                    FLT4 in0 = READ_IMAGE(input, smp_zero, (int2)(iw0, (n * CI_SLICES + ci_slice) * IH + ih));\n"
@@ -916,4 +920,5 @@ kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::Tenso
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Conv2D, OpenCLConvolutionKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Conv2D, OpenCLConvolutionKernelCreator)
 }  // namespace mindspore::kernel

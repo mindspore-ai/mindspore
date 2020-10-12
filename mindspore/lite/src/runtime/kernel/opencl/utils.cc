@@ -235,14 +235,16 @@ void PrintTensor(lite::Tensor *tensor, int num, const std::string &out_file) {
   if (tensor->data_c() == nullptr) {
     return;
   }
-  auto runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
+  auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
+  auto runtime = runtime_wrapper.GetInstance();
   runtime->SyncCommandQueue();
 
   auto allocator = runtime->GetAllocator();
   auto origin_data = tensor->data_c();
-  allocator->MapBuffer(origin_data, CL_MAP_READ, nullptr, true);
+  allocator->MapBuffer(origin_data, CL_MAP_READ | CL_MAP_WRITE, nullptr, true);
   tensor->SetData(origin_data);
 
+  auto Batch = tensor->Batch();
   auto Height = tensor->shape().size() == 4 ? tensor->Height() : 1;
   auto Width = tensor->shape().size() == 4 ? tensor->Width() : 1;
   auto SLICES = UP_DIV(tensor->Channel(), C4NUM);
@@ -250,17 +252,8 @@ void PrintTensor(lite::Tensor *tensor, int num, const std::string &out_file) {
   auto dtype_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half4) : sizeof(cl_float4);
   auto row_pitch = (Width * SLICES + alignment - 1) / alignment * alignment * dtype_size;
   auto row_size = Width * SLICES * dtype_size;
-  std::cout << "tensor->GetFormat() =" << tensor->GetFormat() << "\n";
-  std::cout << "Height              =" << Height << "\n";
-  std::cout << "Width               =" << Width << "\n";
-  std::cout << "SLICES              =" << SLICES << "\n";
-  std::cout << "image_alignment     =" << alignment << "\n";
-  std::cout << "dtype_size          =" << dtype_size << "\n";
-  std::cout << "row_pitch           =" << row_pitch << "\n";
-  std::cout << "row_size            =" << row_size << "\n";
-  std::cout << "tensor->Size()      =" << tensor->Size() << "\n";
   std::vector<char> data(tensor->Size());
-  for (int i = 0; i < Height; ++i) {
+  for (int i = 0; i < Batch * Height; ++i) {
     memcpy(static_cast<char *>(data.data()) + i * row_size, static_cast<char *>(origin_data) + i * row_pitch, row_size);
   }
 

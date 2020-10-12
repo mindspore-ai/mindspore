@@ -18,7 +18,6 @@
 
 #include <set>
 #include <vector>
-#include <map>
 
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -36,85 +35,116 @@ namespace mindspore::kernel {
 
 void PReluOpenCLKernel::InitBuffer() {
   auto allocator = ocl_runtime_->GetAllocator();
-  int elem_num = in_tensors_[0]->shape().size() == 2 ? in_tensors_[0]->shape()[1] : in_tensors_[0]->shape()[3];
-  int elem_num_c4 = UP_DIV(elem_num, C4NUM);
-  size_t img_dtype = CL_FLOAT;
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  std::vector<size_t> img_size{size_t(elem_num_c4), 1, img_dtype};
-  PReluWeight_ = allocator->Malloc(elem_num_c4 * C4NUM * fp_size, img_size);
-  PReluWeight_ = allocator->MapBuffer(PReluWeight_, CL_MAP_WRITE, nullptr, true);
-  memset(PReluWeight_, 0x00, elem_num_c4 * C4NUM * fp_size);
-  if (enable_fp16_) {
-    if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
-      auto PReluWeight_fp16 = reinterpret_cast<uint16_t *>(PReluWeight_);
-      auto in_tensor_data_fp32 = reinterpret_cast<float *>(in_tensors_[1]->data_c());
-      for (int i = 0; i < elem_num; i++) {
-        PReluWeight_fp16[i] = static_cast<float16_t>(in_tensor_data_fp32[i]);
-      }
+  auto weight_tensor = in_tensors_[1];
+  if (weight_is_scalar) {
+    if (weight_tensor->data_type() == kNumberTypeFloat16) {
+      weight_scalar_ = static_cast<float>(*reinterpret_cast<float16_t *>(weight_tensor->data_c()));
     } else {
-      memcpy(PReluWeight_, in_tensors_[1]->data_c(), elem_num * fp_size);
+      weight_scalar_ = *reinterpret_cast<float *>(weight_tensor->data_c());
     }
   } else {
-    if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
-      auto PReluWeight_fp32 = reinterpret_cast<float *>(PReluWeight_);
-      auto in_tensor_data_fp16 = reinterpret_cast<float16_t *>(in_tensors_[1]->data_c());
-      for (int i = 0; i < elem_num; i++) {
-        PReluWeight_fp32[i] = static_cast<float>(in_tensor_data_fp16[i]);
+    auto sizeof_FLT = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
+    size_t weight_size = UP_ROUND(C_, C4NUM) * sizeof_FLT;
+    weight_vector_ = allocator->Malloc(weight_size);
+    allocator->MapBuffer(weight_vector_, CL_MAP_WRITE, nullptr, true);
+    memset(weight_vector_, 0x00, weight_size);
+    if (weight_tensor->data_type() == kNumberTypeFloat16) {
+      if (enable_fp16_) {
+        memcpy(weight_vector_, weight_tensor->data_c(), C_ * sizeof_FLT);
+      } else {
+        auto weight_fp32 = reinterpret_cast<float *>(weight_vector_);
+        auto origin_bias_fp16 = reinterpret_cast<float16_t *>(weight_tensor->data_c());
+        for (int i = 0; i < C_; ++i) {
+          weight_fp32[i] = static_cast<float>(origin_bias_fp16[i]);
+        }
       }
     } else {
-      memcpy(PReluWeight_, in_tensors_[1]->data_c(), elem_num * fp_size);
+      if (enable_fp16_) {
+        auto weight_fp16 = reinterpret_cast<float16_t *>(weight_vector_);
+        auto origin_bias_fp32 = reinterpret_cast<float *>(weight_tensor->data_c());
+        for (int i = 0; i < C_; ++i) {
+          weight_fp16[i] = static_cast<float16_t>(origin_bias_fp32[i]);
+        }
+      } else {
+        memcpy(weight_vector_, weight_tensor->data_c(), C_ * sizeof_FLT);
+      }
     }
+    allocator->UnmapBuffer(weight_vector_);
   }
-  allocator->UnmapBuffer(PReluWeight_);
 }
 
 int PReluOpenCLKernel::Init() {
-  if (in_tensors_[0]->shape().size() != 4) {
-    MS_LOG(ERROR) << "PRelu only support dim=4, but your dim=" << in_tensors_[0]->shape().size();
+  auto input_tensor = in_tensors_[0];
+  auto weight_tensor = in_tensors_[1];
+  if (input_tensor->shape().size() != 4) {
+    MS_LOG(ERROR) << "PRelu only support dim=4, but your dim=" << input_tensor->shape().size();
     return RET_ERROR;
   }
-  int C_Weight = in_tensors_[1]->shape()[0];
-  int C = in_tensors_[0]->shape()[3];
-  if (C_Weight != 1 && UP_DIV(C_Weight, C4NUM) != UP_DIV(C, C4NUM)) {
+  batch_size_ = input_tensor->Batch();
+  C_ = input_tensor->Channel();
+  H_ = input_tensor->Height();
+  W_ = input_tensor->Width();
+  if (input_tensor->GetFormat() != schema::Format_NC4HW4 && input_tensor->GetFormat() != schema::Format_NHWC4) {
+    MS_LOG(ERROR) << "PRelu only support Format_NC4HW4 and Format_NHWC4";
+    return RET_ERROR;
+  }
+  if (batch_size_ != 1) {
+    MS_LOG(ERROR) << "Init PRelu kernel failed: Unsupported multi-batch.";
+    return RET_ERROR;
+  }
+  auto weight_channel = weight_tensor->shape()[0];
+  if (weight_channel != 1 && weight_channel != C_) {
     MS_LOG(ERROR)
       << "PRelu weight channel size must be 1 or must be equal with in_teneors channel size, but your weight size is "
-      << C_Weight << " and your input channel size is " << C;
+      << weight_channel << " and your input channel size is " << C_;
     return RET_ERROR;
   }
-  for (int i = 0; i < in_tensors_[0]->shape().size(); ++i) {
-    input_shape_.s[i] = in_tensors_[0]->shape()[i];
+  weight_is_scalar = weight_channel == 1;
+  if (weight_tensor->data_type() != kNumberTypeFloat16 && weight_tensor->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "PRelu weight must be float32 or float16";
+    return RET_ERROR;
   }
+
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
+  in_ori_format_ = input_tensor->GetFormat();
+  out_ori_format_ = out_tensors_[0]->GetFormat();
+  input_tensor->SetFormat(op_format_);
+  out_tensors_[0]->SetFormat(op_format_);
+
   std::set<std::string> build_options;
   std::string source = prelu_source;
   std::string program_name = "PRelu";
-  std::string kernel_name = "PRelu";
-  enable_fp16_ = ocl_runtime_->GetFp16Enable();
-  fp_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
-  InitBuffer();
+  std::string kernel_name = "PRelu_" + std::string(weight_is_scalar ? "scalar" : "vector");
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(op_format_);
+
+  InitBuffer();
   MS_LOG(DEBUG) << program_name << " init Done!";
   return RET_OK;
 }
 
 int PReluOpenCLKernel::Run() {
   MS_LOG(DEBUG) << op_parameter_->name_ << " Running!";
-  std::map<schema::Format, int> data_type{{schema::Format::Format_NHWC4, 1}, {schema::Format::Format_NC4HW4, 2}};
+  auto CO_SLICES_ = UP_DIV(C_, C4NUM);
+  cl_int4 shape = {batch_size_, H_, W_, CO_SLICES_};
+
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_shape_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, PReluWeight_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, data_type[op_format_]);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, reinterpret_cast<int>(in_tensors_[1]->shape()[0]));
-  std::vector<size_t> local = {1, 1};
-  std::vector<size_t> global = {static_cast<size_t>(global_shape_.s[1]), static_cast<size_t>(global_shape_.s[2])};
+  if (weight_is_scalar) {
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight_scalar_);
+  } else {
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight_vector_);
+  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, shape);
+  if (op_format_ == schema::Format_NHWC4) {
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, 2);
+  } else {  // Format_NC4HW4 = 100
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, 100);
+  }
+
+  std::vector<size_t> local = {4, 4, 1};
+  std::vector<size_t> global = {static_cast<size_t>(H_), static_cast<size_t>(W_), static_cast<size_t>(CO_SLICES_)};
   auto ret = ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
@@ -124,22 +154,26 @@ int PReluOpenCLKernel::Run() {
 }
 
 int PReluOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t img_dtype = CL_FLOAT;
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  global_shape_ = input_shape_;
-  if (op_format_ == schema::Format::Format_NC4HW4) {
-    global_shape_.s[1] = UP_DIV(input_shape_.s[3], C4NUM) * input_shape_.s[1];
-  } else if (op_format_ == schema::Format::Format_NHWC4) {
-    global_shape_.s[2] = UP_DIV(input_shape_.s[3], C4NUM) * input_shape_.s[2];
+  size_t im_dst_x, im_dst_y;
+  auto CO_SLICES_ = UP_DIV(C_, C4NUM);
+  if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+    if (W_ * CO_SLICES_ <= MAX_IMAGE2D_SIZE) {
+      {
+        im_dst_y = batch_size_ * H_;
+        im_dst_x = W_ * CO_SLICES_;
+      }
+    } else {
+      im_dst_y = W_;
+      im_dst_x = batch_size_ * H_ * CO_SLICES_;
+    }
   } else {
-    MS_LOG(ERROR) << "op_format_:" << op_format_ << " is do not support!";
-    return RET_ERROR;
+    im_dst_y = batch_size_ * CO_SLICES_ * H_;
+    im_dst_x = W_;
   }
+  size_t img_dtype = enable_fp16_ ? CL_HALF_FLOAT : CL_FLOAT;
   img_size->clear();
-  img_size->push_back(global_shape_.s[2]);
-  img_size->push_back(global_shape_.s[1]);
+  img_size->push_back(im_dst_x);
+  img_size->push_back(im_dst_y);
   img_size->push_back(img_dtype);
   return RET_OK;
 }
@@ -152,16 +186,11 @@ kernel::LiteKernel *OpenCLPReluKernelCreator(const std::vector<lite::Tensor *> &
     MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << inputs.size();
     return nullptr;
   }
-  if (inputs[0]->shape()[0] > 1) {
-    MS_LOG(ERROR) << "Init PRelu kernel failed: Unsupported multi-batch.";
-    return nullptr;
-  }
   auto *kernel = new (std::nothrow) PReluOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
     return nullptr;
   }
-
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init PRelu kernel failed!";
