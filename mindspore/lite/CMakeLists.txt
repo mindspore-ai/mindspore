@@ -190,8 +190,8 @@ if (PLATFORM_ARM64)
 endif ()
 
 if (BUILD_MINDDATA STREQUAL "lite" OR BUILD_MINDDATA STREQUAL "full")
-    # TODO: add sentencepiece dependency
-    #include(${TOP_DIR}/cmake/external_libs/sentencepiece.cmake)
+    # add sentencepiece dependency
+    # include(${TOP_DIR}/cmake/external_libs/sentencepiece.cmake)
     # opencv
     set(OpenCV_DIR ${TOP_DIR}/third_party/opencv/build)
     find_package(OpenCV REQUIRED)

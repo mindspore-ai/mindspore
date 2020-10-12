@@ -96,7 +96,7 @@ endif ()
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND PLATFORM_ARM)
     add_custom_command(TARGET mindspore-lite POST_BUILD
             COMMAND ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
-            ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite.so)
+            ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)
 endif ()
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
@@ -124,10 +124,10 @@ endif ()
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND (PLATFORM_ARM64))
     add_custom_command(TARGET mindspore-lite-optimize POST_BUILD COMMAND
             ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
-            ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite-optimize.so)
+            ${CMAKE_BINARY_DIR}/src/libmindspore-lite-optimize.so)
 
     add_custom_command(TARGET mindspore-lite-fp16 POST_BUILD COMMAND
             ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
-            ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite-fp16.so)
+            ${CMAKE_BINARY_DIR}/src/libmindspore-lite-fp16.so)
 endif ()
 

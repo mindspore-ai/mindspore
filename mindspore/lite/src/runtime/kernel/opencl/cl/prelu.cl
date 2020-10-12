@@ -1,41 +1,80 @@
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
-#define SLICES 4
-#define UP_DIV(x, y) (((x) + (y) - (1)) / (y))
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 
-__kernel void PRelu(__read_only image2d_t input, __write_only image2d_t output, const int4 input_shape,
-                    __read_only image2d_t alpha, const int data_type, const int bias_dim) {
-  int H = input_shape.y;
-  int C = input_shape.w;  // channel size
-  C = UP_DIV(C, SLICES);
-  if (C == 0 || H == 0) {
+#define NHWC4 2
+#define NC4HW4 100
+
+__kernel void PRelu_scalar(__read_only image2d_t input, __write_only image2d_t output, float weight, int4 shape,
+                           int data_format) {
+  int h = get_global_id(0);
+  int w = get_global_id(1);
+  int slice = get_global_id(2);
+  int H = shape.y;
+  int W = shape.z;
+  int SLICES = shape.w;
+  if (h >= H || w >= W || slice >= SLICES) {
     return;
   }
-  int Y = get_global_id(0);  // height id
-  int X = get_global_id(1);  // weight id
-  FLT4 in_c4 = READ_IMAGE(input, smp_zero, (int2)(X, Y));
-  FLT4 tmp;
-  int index = 0;
-  if (data_type == 1) {  // NHWC4
-    index = X % C;
-  } else if (data_type == 2) {  // NC4HW4
-    index = Y / H;
+
+  int x, y;
+  if (data_format == 2) {
+    x = w * SLICES + slice;
+    y = h;
   } else {
+    x = w;
+    y = slice * H + h;
+  }
+
+  FLT4 out = READ_IMAGE(input, smp_zero, (int2)(x, y));
+  if (out.x < 0) {
+    out.x *= weight;
+  }
+  if (out.y < 0) {
+    out.y *= weight;
+  }
+  if (out.z < 0) {
+    out.z *= weight;
+  }
+  if (out.w < 0) {
+    out.w *= weight;
+  }
+  WRITE_IMAGE(output, (int2)(x, y), out);
+}
+
+__kernel void PRelu_vector(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight_vector,
+                           int4 shape, int data_format) {
+  int h = get_global_id(0);
+  int w = get_global_id(1);
+  int slice = get_global_id(2);
+  int H = shape.y;
+  int W = shape.z;
+  int SLICES = shape.w;
+  if (h >= H || w >= W || slice >= SLICES) {
     return;
   }
-  if (bias_dim == 1) {
-    index = 0;
+  FLT4 weight = weight_vector[slice];
+
+  int x, y;
+  if (data_format == 2) {
+    x = w * SLICES + slice;
+    y = h;
+  } else {
+    x = w;
+    y = slice * H + h;
   }
-  FLT4 weight = READ_IMAGE(alpha, smp_zero, (int2)(index, 0));
-  FLT4 bias = weight;
-  if (bias_dim == 1) {
-    bias.y = weight.x;
-    bias.z = weight.x;
-    bias.w = weight.x;
+
+  FLT4 out = READ_IMAGE(input, smp_zero, (int2)(x, y));
+  if (out.x < 0) {
+    out.x *= weight.x;
   }
-  tmp.x = in_c4.x > 0.0f ? in_c4.x : in_c4.x * bias.x;
-  tmp.y = in_c4.y > 0.0f ? in_c4.y : in_c4.y * bias.y;
-  tmp.z = in_c4.z > 0.0f ? in_c4.z : in_c4.z * bias.z;
-  tmp.w = in_c4.w > 0.0f ? in_c4.w : in_c4.w * bias.w;
-  WRITE_IMAGE(output, (int2)(X, Y), tmp);
+  if (out.y < 0) {
+    out.y *= weight.y;
+  }
+  if (out.z < 0) {
+    out.z *= weight.z;
+  }
+  if (out.w < 0) {
+    out.w *= weight.w;
+  }
+  WRITE_IMAGE(output, (int2)(x, y), out);
 }

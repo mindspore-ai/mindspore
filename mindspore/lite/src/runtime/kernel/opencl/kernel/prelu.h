@@ -39,11 +39,14 @@ class PReluOpenCLKernel : public OpenCLKernel {
 
  private:
   cl::Kernel kernel_;
-  void *PReluWeight_;
-  cl_int4 input_shape_;
-  cl_int4 global_shape_;
-  size_t fp_size;
   bool enable_fp16_{false};
+  int batch_size_{};
+  int C_{};
+  int H_{};
+  int W_{};
+  void *weight_vector_{nullptr};
+  float weight_scalar_{0.f};
+  bool weight_is_scalar{false};
 };
 
 }  // namespace mindspore::kernel
