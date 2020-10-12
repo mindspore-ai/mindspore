@@ -101,11 +101,9 @@ int BatchToSpaceNDOpenCLKernel::Run() {
 
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t CI4 = UP_DIV(in_tensors_[0]->Channel(), C4NUM);
-  cl_int4 src_size = {
-    (cl_int)CI4, in_tensors_[0]->Width(),
-    in_tensors_[0]->Height() * in_tensors_[0]->Batch() / param->block_shape_[0] / param->block_shape_[1], 1};
-  cl_int4 dst_size = {(cl_int)CO4, out_tensors_[0]->Width() / param->block_shape_[1],
-                      out_tensors_[0]->Height() / param->block_shape_[0] * out_tensors_[0]->Batch(), 1};
+  cl_int4 src_size = {(cl_int)CI4, in_tensors_[0]->Width(), in_tensors_[0]->Height() * out_tensors_[0]->Batch(), 1};
+  std::vector<int> out_shape = out_tensors_[0]->shape();
+  cl_int4 dst_size = {(cl_int)CO4, out_shape[2], out_shape[1], out_shape[0]};
   cl_int2 block_size = {param->block_shape_[0], param->block_shape_[1]};
   cl_int4 paddings = {param->crops_[0], param->crops_[1], param->crops_[2], param->crops_[3]};
   std::vector<size_t> local = {1, 1, 1};
