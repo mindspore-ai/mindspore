@@ -47,7 +47,7 @@ class DumpJsonParser {
   uint32_t input_output() const { return input_output_; }
   uint32_t op_debug_mode() const { return op_debug_mode_; }
   bool trans_flag() const { return trans_flag_; }
-  uint32_t cur_dump_iter() { return cur_dump_iter_; }
+  uint32_t cur_dump_iter() const { return cur_dump_iter_; }
   void UpdateDumpIter() { ++cur_dump_iter_; }
   bool InputNeedDump() const;
   bool OutputNeedDump() const;

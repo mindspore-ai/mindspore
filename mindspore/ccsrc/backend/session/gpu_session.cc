@@ -335,7 +335,7 @@ void GPUSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_
 void GPUSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   if (debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
-    E2eDumpUtil::DumpData(kernel_graph.get(), debugger_.get());
+    E2eDumpUtil::DumpData(kernel_graph.get(), device_id_, debugger_.get());
   } else {
     DumpJsonParser::GetInstance().UpdateDumpIter();
   }
