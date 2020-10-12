@@ -138,6 +138,11 @@ bool HcclExecutorManager::Initialize() {
   if (initialized_) {
     return true;
   }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (!context->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
+    return true;
+  }
   initialized_ = true;
   MS_LOG(INFO) << "Start Initialize Hccl DynamicKernel";
   handle_ = dlopen(kHcomGraphAdaptorPath, RTLD_NOW | RTLD_GLOBAL);
@@ -165,9 +170,12 @@ bool HcclExecutorManager::Initialize() {
 }
 
 bool HcclExecutorManager::Finalize() {
+  if (!initialized_) {
+    return true;
+  }
   auto HcomExecutorFinalize = (HcclResult(*)())dlsym(handle_, "HcomExcutorFinalize");
   if (HcomExecutorFinalize == nullptr) {
-    MS_LOG(ERROR) << "Faile to dlsym HcomExecutorFinalize";
+    MS_LOG(ERROR) << "Fail to dlsym HcomExecutorFinalize";
     return false;
   }
   HcclResult hccl_ret = HcomExecutorFinalize();
@@ -179,7 +187,7 @@ bool HcclExecutorManager::Finalize() {
     MS_LOG(ERROR) << "Failed to close hcom handle";
     return false;
   }
-  MS_LOG(INFO) << "Hccl DynamicKernel Finalize failed";
+  MS_LOG(INFO) << "Hccl DynamicKernel Finalize success";
   return true;
 }
 }  // namespace ascend
