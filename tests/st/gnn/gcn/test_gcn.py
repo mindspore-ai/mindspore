@@ -17,6 +17,7 @@ import time
 import pytest
 import numpy as np
 from mindspore import context
+from mindspore import Tensor
 from model_zoo.official.gnn.gcn.src.gcn import GCN
 from model_zoo.official.gnn.gcn.src.metrics import LossAccuracyWrapper, TrainNetWrapper
 from model_zoo.official.gnn.gcn.src.config import ConfigGCN
@@ -49,8 +50,12 @@ def test_gcn():
     test_mask = get_mask(nodes_num, nodes_num - TEST_NODE_NUM, nodes_num)
 
     class_num = label_onehot.shape[1]
-    gcn_net = GCN(config, adj, feature, class_num)
+    input_dim = feature.shape[1]
+    gcn_net = GCN(config, input_dim, class_num)
     gcn_net.add_flags_recursive(fp16=True)
+
+    adj = Tensor(adj)
+    feature = Tensor(feature)
 
     eval_net = LossAccuracyWrapper(gcn_net, label_onehot, eval_mask, config.weight_decay)
     test_net = LossAccuracyWrapper(gcn_net, label_onehot, test_mask, config.weight_decay)
@@ -61,12 +66,12 @@ def test_gcn():
         t = time.time()
 
         train_net.set_train()
-        train_result = train_net()
+        train_result = train_net(adj, feature)
         train_loss = train_result[0].asnumpy()
         train_accuracy = train_result[1].asnumpy()
 
         eval_net.set_train(False)
-        eval_result = eval_net()
+        eval_result = eval_net(adj, feature)
         eval_loss = eval_result[0].asnumpy()
         eval_accuracy = eval_result[1].asnumpy()
 
@@ -80,7 +85,7 @@ def test_gcn():
             break
 
     test_net.set_train(False)
-    test_result = test_net()
+    test_result = test_net(adj, feature)
     test_loss = test_result[0].asnumpy()
     test_accuracy = test_result[1].asnumpy()
     print("Test set results:", "loss=", "{:.5f}".format(test_loss),

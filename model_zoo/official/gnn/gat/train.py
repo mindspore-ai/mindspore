@@ -20,6 +20,7 @@ import numpy as np
 import mindspore.context as context
 from mindspore.train.serialization import save_checkpoint, load_checkpoint
 from mindspore.common import set_seed
+from mindspore import Tensor
 
 from src.config import GatConfig
 from src.dataset import load_and_process
@@ -56,9 +57,7 @@ def train():
     num_nodes = feature.shape[1]
     num_class = y_train.shape[2]
 
-    gat_net = GAT(feature,
-                  biases,
-                  feature_size,
+    gat_net = GAT(feature_size,
                   num_class,
                   num_nodes,
                   hid_units,
@@ -66,6 +65,9 @@ def train():
                   attn_drop=GatConfig.attn_dropout,
                   ftr_drop=GatConfig.feature_dropout)
     gat_net.add_flags_recursive(fp16=True)
+
+    feature = Tensor(feature)
+    biases = Tensor(biases)
 
     eval_net = LossAccuracyWrapper(gat_net,
                                    num_class,
@@ -84,11 +86,11 @@ def train():
     val_acc_max = 0.0
     val_loss_min = np.inf
     for _epoch in range(num_epochs):
-        train_result = train_net()
+        train_result = train_net(feature, biases)
         train_loss = train_result[0].asnumpy()
         train_acc = train_result[1].asnumpy()
 
-        eval_result = eval_net()
+        eval_result = eval_net(feature, biases)
         eval_loss = eval_result[0].asnumpy()
         eval_acc = eval_result[1].asnumpy()
 
@@ -110,9 +112,7 @@ def train():
                 print("Early Stop Triggered!, Min loss: {}, Max accuracy: {}".format(val_loss_min, val_acc_max))
                 print("Early stop model validation loss: {}, accuracy{}".format(val_loss_model, val_acc_model))
                 break
-    gat_net_test = GAT(feature,
-                       biases,
-                       feature_size,
+    gat_net_test = GAT(feature_size,
                        num_class,
                        num_nodes,
                        hid_units,
@@ -127,7 +127,7 @@ def train():
                                    y_test,
                                    test_mask,
                                    l2_coeff)
-    test_result = test_net()
+    test_result = test_net(feature, biases)
     print("Test loss={}, test acc={}".format(test_result[0], test_result[1]))
 
 

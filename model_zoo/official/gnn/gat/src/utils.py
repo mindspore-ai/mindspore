@@ -103,8 +103,8 @@ class LossAccuracyWrapper(nn.Cell):
         self.loss_func = MaskedSoftMaxLoss(num_class, label, mask, l2_coeff, self.network.trainable_params())
         self.acc_func = MaskedAccuracy(num_class, label, mask)
 
-    def construct(self):
-        logits = self.network(training=False)
+    def construct(self, feature, biases):
+        logits = self.network(feature, biases, training=False)
         loss = self.loss_func(logits)
         accuracy = self.acc_func(logits)
         return loss, accuracy
@@ -120,8 +120,8 @@ class LossNetWrapper(nn.Cell):
         params = list(param for param in self.network.trainable_params() if param.name[-4:] != 'bias')
         self.loss_func = MaskedSoftMaxLoss(num_class, label, mask, l2_coeff, params)
 
-    def construct(self):
-        logits = self.network()
+    def construct(self, feature, biases):
+        logits = self.network(feature, biases)
         loss = self.loss_func(logits)
         return loss
 
@@ -145,11 +145,11 @@ class TrainOneStepCell(nn.Cell):
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
 
-    def construct(self):
+    def construct(self, feature, biases):
         weights = self.weights
-        loss = self.network()
+        loss = self.network(feature, biases)
         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
-        grads = self.grad(self.network, weights)(sens)
+        grads = self.grad(self.network, weights)(feature, biases, sens)
         return F.depend(loss, self.optimizer(grads))
 
 
@@ -174,7 +174,7 @@ class TrainGAT(nn.Cell):
         self.loss_train_net = TrainOneStepCell(loss_net, optimizer)
         self.accuracy_func = MaskedAccuracy(num_class, label, mask)
 
-    def construct(self):
-        loss = self.loss_train_net()
-        accuracy = self.accuracy_func(self.network())
+    def construct(self, feature, biases):
+        loss = self.loss_train_net(feature, biases)
+        accuracy = self.accuracy_func(self.network(feature, biases))
         return loss, accuracy

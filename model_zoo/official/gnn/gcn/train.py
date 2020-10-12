@@ -26,6 +26,7 @@ from matplotlib import pyplot as plt
 from matplotlib import animation
 from sklearn import manifold
 from mindspore import context
+from mindspore import Tensor
 from mindspore.common import set_seed
 from mindspore.train.serialization import save_checkpoint, load_checkpoint
 
@@ -71,8 +72,12 @@ def train():
     test_mask = get_mask(nodes_num, nodes_num - args_opt.test_nodes_num, nodes_num)
 
     class_num = label_onehot.shape[1]
-    gcn_net = GCN(config, adj, feature, class_num)
+    input_dim = feature.shape[1]
+    gcn_net = GCN(config, input_dim, class_num)
     gcn_net.add_flags_recursive(fp16=True)
+
+    adj = Tensor(adj)
+    feature = Tensor(feature)
 
     eval_net = LossAccuracyWrapper(gcn_net, label_onehot, eval_mask, config.weight_decay)
     train_net = TrainNetWrapper(gcn_net, label_onehot, train_mask, config)
@@ -92,12 +97,12 @@ def train():
         t = time.time()
 
         train_net.set_train()
-        train_result = train_net()
+        train_result = train_net(adj, feature)
         train_loss = train_result[0].asnumpy()
         train_accuracy = train_result[1].asnumpy()
 
         eval_net.set_train(False)
-        eval_result = eval_net()
+        eval_result = eval_net(adj, feature)
         eval_loss = eval_result[0].asnumpy()
         eval_accuracy = eval_result[1].asnumpy()
 
@@ -115,14 +120,14 @@ def train():
             print("Early stopping...")
             break
     save_checkpoint(gcn_net, "ckpts/gcn.ckpt")
-    gcn_net_test = GCN(config, adj, feature, class_num)
+    gcn_net_test = GCN(config, input_dim, class_num)
     load_checkpoint("ckpts/gcn.ckpt", net=gcn_net_test)
     gcn_net_test.add_flags_recursive(fp16=True)
 
     test_net = LossAccuracyWrapper(gcn_net_test, label_onehot, test_mask, config.weight_decay)
     t_test = time.time()
     test_net.set_train(False)
-    test_result = test_net()
+    test_result = test_net(adj, feature)
     test_loss = test_result[0].asnumpy()
     test_accuracy = test_result[1].asnumpy()
     print("Test set results:", "loss=", "{:.5f}".format(test_loss),
