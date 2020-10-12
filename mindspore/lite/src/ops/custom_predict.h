@@ -27,9 +27,15 @@ class CustomPredict : public PrimitiveC {
   MS_DECLARE_PARENT(CustomPredict, PrimitiveC);
   CustomPredict() = default;
   explicit CustomPredict(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  int GetOutputNum() const;
+  float GetWeightThreshold() const;
+  void SetOutputNum(int output_num);
+  void SetWeightThreshold(float weight_threshold);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   CustomPredict() = default;
+  int GetOutputNum() const;
+  float GetWeightThreshold() const;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) override;
