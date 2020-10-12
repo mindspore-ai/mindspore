@@ -30,9 +30,9 @@ class AlexNet(nn.Cell):
     def __init__(self, num_classes=10, channel=3, phase='train', include_top=True):
         super(AlexNet, self).__init__()
         self.conv1 = conv(channel, 64, 11, stride=4, pad_mode="same", has_bias=True)
-        self.conv2 = conv(64, 192, 5, pad_mode="same", has_bias=True)
-        self.conv3 = conv(192, 384, 3, pad_mode="same", has_bias=True)
-        self.conv4 = conv(384, 256, 3, pad_mode="same", has_bias=True)
+        self.conv2 = conv(64, 128, 5, pad_mode="same", has_bias=True)
+        self.conv3 = conv(128, 192, 3, pad_mode="same", has_bias=True)
+        self.conv4 = conv(192, 256, 3, pad_mode="same", has_bias=True)
         self.conv5 = conv(256, 256, 3, pad_mode="same", has_bias=True)
         self.relu = P.ReLU()
         self.max_pool2d = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode='valid')
