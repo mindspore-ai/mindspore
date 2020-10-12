@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef WEIGHT_QUANTIZER_H
-#define WEIGHT_QUANTIZER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H
 
 #include <memory>
 #include <list>
@@ -45,6 +45,7 @@ class WeightQuantizer : public Quantizer {
   static bool IsPosNum(const std::string &str);
   int quant_max{INT8_MAX};
   int quant_min{INT8_MIN};
+
  private:
   std::unique_ptr<QuantStrategy> mStrategy;
   size_t bitNum;

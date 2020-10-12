@@ -40,11 +40,11 @@ bool WeightQuantizer::IsPosNum(const std::string &str) {
 }
 STATUS WeightQuantizer::WeightQuantInputCheck(const converter::Flags *config) {
   MS_ASSERT(config != nullptr);
-  if (!WeightQuantizer::IsPosNum(config->convWeightQuantChannelThreshold)) {
+  if (!WeightQuantizer::IsPosNum(config->quantWeightChannel)) {
     MS_LOG(ERROR) << "convWeightQuantChannelThreshold must be valid pos num.";
     return RET_ERROR;
   }
-  if (!WeightQuantizer::IsPosNum(config->quantSize)) {
+  if (!WeightQuantizer::IsPosNum(config->quantWeightSize)) {
     MS_LOG(ERROR) << "quantSize must be valid pos num.";
     return RET_ERROR;
   }

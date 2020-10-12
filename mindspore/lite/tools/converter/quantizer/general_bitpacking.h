@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_GENERAL_BITPACKING_H
-#define MINDSPORE_GENERAL_BITPACKING_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER__GENERAL_BITPACKING_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER__GENERAL_BITPACKING_H
 #include <stdint.h>
 #include <stack>
 #include <queue>

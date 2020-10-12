@@ -176,7 +176,8 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
         MS_LOG(ERROR) << "in_tensor is null!";
         return;
       }
-      this->input_map_[in_node->name_].emplace_back(in_tensor);
+      auto tensor_name = in_node->name_ + std::to_string(i);
+      this->input_map_[tensor_name] = in_tensor;
     }
   }
 }
@@ -315,6 +316,19 @@ int LiteSession::Init(Context *context) {
   }
 
   MS_ASSERT(nullptr != context);
+  if (context->device_type_ == DT_NPU) {
+    MS_LOG(ERROR) << "NPU is not supported.";
+    is_running_.store(false);
+    return RET_NOT_SUPPORT;
+  }
+#ifndef SUPPORT_GPU
+  if (context->device_type_ == DT_GPU) {
+    MS_LOG(ERROR) << "GPU is not supported.";
+    is_running_.store(false);
+    return RET_NOT_SUPPORT;
+  }
+#endif
+
   this->context_ = new (std::nothrow) InnerContext();
   if (this->context_ == nullptr) {
     MS_LOG(ERROR) << "New Context failed";
@@ -325,7 +339,7 @@ int LiteSession::Init(Context *context) {
   this->context_->thread_num_ = context->thread_num_;
   this->context_->cpu_bind_mode_ = context->cpu_bind_mode_;
   this->context_->device_type_ = context->device_type_;
-  this->context_->float16_priority = context->float16_priority;
+  this->context_->enable_float16_ = context->enable_float16_;
   auto ret = this->context_->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
@@ -341,7 +355,7 @@ int LiteSession::Init(Context *context) {
 #if SUPPORT_GPU
   if (context_->device_type_ == DT_GPU) {
     auto opencl_runtime = ocl_runtime_wrap_.GetInstance();
-    opencl_runtime->SetFp16Enable(context_->float16_priority);
+    opencl_runtime->SetFp16Enable(context_->enable_float16_);
     if (opencl_runtime->Init() != RET_OK) {
       context_->device_type_ = DT_CPU;
       MS_LOG(WARNING) << "Init OpenCL runtime failed, change to CPU mode.";
@@ -397,12 +411,11 @@ LiteSession::~LiteSession() {
   is_running_.store(false);
 }
 
-std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputsByName(const std::string &name) const {
+mindspore::tensor::MSTensor *LiteSession::GetInputsByTensorName(const std::string &name) const {
   auto ret = input_map_.find(name);
   if (ret == input_map_.end()) {
-    MS_LOG(WARNING) << "Node  " << name << " is not an input node";
-    std::vector<mindspore::tensor::MSTensor *> empty_ret;
-    return empty_ret;
+    MS_LOG(WARNING) << "Tensor  " << name << " is not exist";
+    return nullptr;
   }
   return ret->second;
 }

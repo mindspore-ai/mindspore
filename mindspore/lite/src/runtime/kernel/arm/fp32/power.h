@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_POWER_H_
 
 #include <vector>
-#include "include/context.h"
 #include "src/lite_kernel.h"
+#include "include/context.h"
 #include "nnacl/power.h"
 #include "src/runtime/kernel/arm/base/power_base.h"
 

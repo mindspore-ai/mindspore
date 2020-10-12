@@ -50,7 +50,7 @@ class LiteSession : public session::LiteSession {
 
   std::vector<mindspore::tensor::MSTensor *> GetInputs() const override;
 
-  std::vector<mindspore::tensor::MSTensor *> GetInputsByName(const std::string &name) const override;
+  mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &name) const override;
 
   int RunGraph(const session::KernelCallBack &before = nullptr,
                const session::KernelCallBack &after = nullptr) override;
@@ -101,8 +101,8 @@ class LiteSession : public session::LiteSession {
   std::vector<Tensor *> outputs_;
   // graph input MSTensors
   std::vector<mindspore::tensor::MSTensor *> input_vec_;
-  // graph input node name -- input tensors
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> input_map_;
+  // graph input tensor name -- input tensors
+  std::unordered_map<std::string, mindspore::tensor::MSTensor *> input_map_;
   // graph output node name -- output tensors
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> output_node_map_;
 

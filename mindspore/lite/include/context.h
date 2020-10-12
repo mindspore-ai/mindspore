@@ -20,18 +20,14 @@
 #include <string>
 #include <memory>
 #include "include/ms_tensor.h"
+#include "include/lite_utils.h"
 
 namespace mindspore::lite {
-/// \brief Allocator defined a memory pool for malloc memory and free memory dynamically.
-///
-/// \note List public class and interface for reference.
-class Allocator;
-
 /// \brief CpuBindMode defined for holding bind cpu strategy argument.
 typedef enum {
-  MID_CPU = -1,   /**< bind middle cpu first */
+  NO_BIND = 0,    /**< no bind */
   HIGHER_CPU = 1, /**< bind higher cpu first */
-  NO_BIND = 0     /**< no bind */
+  MID_CPU = 2     /**< bind middle cpu first */
 } CpuBindMode;
 
 /// \brief DeviceType defined for holding user's preferred backend.
@@ -43,10 +39,10 @@ typedef enum {
 
 /// \brief Context defined for holding environment variables during runtime.
 struct Context {
-  bool float16_priority = false; /**< prior enable float16 inference */
+  bool enable_float16_ = false; /**< prior enable float16 inference */
   DeviceType device_type_ = DT_CPU;
   int thread_num_ = 2; /**< thread number config for thread pool */
-  std::shared_ptr<Allocator> allocator = nullptr;
+  AllocatorPtr allocator = nullptr;
   CpuBindMode cpu_bind_mode_ = MID_CPU;
 };
 }  // namespace mindspore::lite

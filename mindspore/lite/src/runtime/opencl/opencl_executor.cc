@@ -30,7 +30,7 @@ int OpenCLExecutor::Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &ou
   for (auto *kernel : kernels) {
     MS_ASSERT(nullptr != kernel);
     session::CallBackParam callbackParam;
-    callbackParam.name_callback_param = kernel->name();
+    callbackParam.node_name = kernel->name();
 
     if (before != nullptr) {
       if (!before(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()), callbackParam)) {

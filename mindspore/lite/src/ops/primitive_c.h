@@ -27,7 +27,6 @@
 #else
 #include "schema/model_generated.h"
 #endif
-
 #include "src/tensor.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"

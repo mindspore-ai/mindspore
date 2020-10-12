@@ -34,24 +34,24 @@ static const char *DELIM_SLASH = "/";
 
 int Benchmark::GenerateRandomData(size_t size, void *data) {
   MS_ASSERT(data != nullptr);
-  char *castedData = static_cast<char *>(data);
+  char *casted_data = static_cast<char *>(data);
   for (size_t i = 0; i < size; i++) {
-    castedData[i] = static_cast<char>(i);
+    casted_data[i] = static_cast<char>(i);
   }
   return RET_OK;
 }
 
 int Benchmark::GenerateInputData() {
-  for (auto tensor : msInputs) {
+  for (auto tensor : ms_inputs_) {
     MS_ASSERT(tensor != nullptr);
-    auto inputData = tensor->MutableData();
-    if (inputData == nullptr) {
+    auto input_data = tensor->MutableData();
+    if (input_data == nullptr) {
       MS_LOG(ERROR) << "MallocData for inTensor failed";
       return RET_ERROR;
     }
     MS_ASSERT(tensor->GetData() != nullptr);
-    auto tensorByteSize = tensor->Size();
-    auto status = GenerateRandomData(tensorByteSize, inputData);
+    auto tensor_byte_size = tensor->Size();
+    auto status = GenerateRandomData(tensor_byte_size, input_data);
     if (status != 0) {
       std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
       MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
@@ -62,7 +62,7 @@ int Benchmark::GenerateInputData() {
 }
 
 int Benchmark::LoadInput() {
-  if (_flags->inDataPath.empty()) {
+  if (flags_->in_data_file_.empty()) {
     auto status = GenerateInputData();
     if (status != 0) {
       std::cerr << "Generate input data error " << status << std::endl;
@@ -81,33 +81,34 @@ int Benchmark::LoadInput() {
 }
 
 int Benchmark::ReadInputFile() {
-  if (msInputs.empty()) {
+  if (ms_inputs_.empty()) {
     return RET_OK;
   }
 
-  if (this->_flags->inDataType == kImage) {
+  if (this->flags_->in_data_type_ == kImage) {
     MS_LOG(ERROR) << "Not supported image input";
     return RET_ERROR;
   } else {
-    for (size_t i = 0; i < _flags->input_data_list.size(); i++) {
-      auto cur_tensor = msInputs.at(i);
+    for (size_t i = 0; i < flags_->input_data_list_.size(); i++) {
+      auto cur_tensor = ms_inputs_.at(i);
       MS_ASSERT(cur_tensor != nullptr);
       size_t size;
-      char *binBuf = ReadFile(_flags->input_data_list[i].c_str(), &size);
-      if (binBuf == nullptr) {
+      char *bin_buf = ReadFile(flags_->input_data_list_[i].c_str(), &size);
+      if (bin_buf == nullptr) {
         MS_LOG(ERROR) << "ReadFile return nullptr";
         return RET_ERROR;
       }
-      auto tensorDataSize = cur_tensor->Size();
-      if (size != tensorDataSize) {
-        std::cerr << "Input binary file size error, required: " << tensorDataSize << ", in fact: " << size << std::endl;
-        MS_LOG(ERROR) << "Input binary file size error, required: " << tensorDataSize << ", in fact: " << size;
-        delete binBuf;
+      auto tensor_data_size = cur_tensor->Size();
+      if (size != tensor_data_size) {
+        std::cerr << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size
+                  << std::endl;
+        MS_LOG(ERROR) << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size;
+        delete bin_buf;
         return RET_ERROR;
       }
-      auto inputData = cur_tensor->MutableData();
-      memcpy(inputData, binBuf, tensorDataSize);
-      delete[](binBuf);
+      auto input_data = cur_tensor->MutableData();
+      memcpy(input_data, bin_buf, tensor_data_size);
+      delete[](bin_buf);
     }
   }
   return RET_OK;
@@ -115,94 +116,96 @@ int Benchmark::ReadInputFile() {
 
 // calibData is FP32
 int Benchmark::ReadCalibData() {
-  const char *calibDataPath = _flags->calibDataPath.c_str();
+  const char *calib_data_path = flags_->benchmark_data_file_.c_str();
   // read calib data
-  std::ifstream inFile(calibDataPath);
-  if (!inFile.good()) {
-    std::cerr << "file: " << calibDataPath << " is not exist" << std::endl;
-    MS_LOG(ERROR) << "file: " << calibDataPath << " is not exist";
+  std::ifstream in_file(calib_data_path);
+  if (!in_file.good()) {
+    std::cerr << "file: " << calib_data_path << " is not exist" << std::endl;
+    MS_LOG(ERROR) << "file: " << calib_data_path << " is not exist";
     return RET_ERROR;
   }
 
-  if (!inFile.is_open()) {
-    std::cerr << "file: " << calibDataPath << " open failed" << std::endl;
-    MS_LOG(ERROR) << "file: " << calibDataPath << " open failed";
-    inFile.close();
+  if (!in_file.is_open()) {
+    std::cerr << "file: " << calib_data_path << " open failed" << std::endl;
+    MS_LOG(ERROR) << "file: " << calib_data_path << " open failed";
+    in_file.close();
     return RET_ERROR;
   }
 
   std::string line;
 
   MS_LOG(INFO) << "Start reading calibData file";
-  std::string tensorName;
-  while (!inFile.eof()) {
-    getline(inFile, line);
-    std::stringstream stringLine1(line);
+  std::string tensor_name;
+  while (!in_file.eof()) {
+    getline(in_file, line);
+    std::stringstream string_line1(line);
     size_t dim = 0;
-    stringLine1 >> tensorName >> dim;
+    string_line1 >> tensor_name >> dim;
     std::vector<size_t> dims;
-    size_t shapeSize = 1;
+    size_t shape_size = 1;
     for (size_t i = 0; i < dim; i++) {
-      size_t tmpDim;
-      stringLine1 >> tmpDim;
-      dims.push_back(tmpDim);
-      shapeSize *= tmpDim;
+      size_t tmp_dim;
+      string_line1 >> tmp_dim;
+      dims.push_back(tmp_dim);
+      shape_size *= tmp_dim;
     }
 
-    getline(inFile, line);
-    std::stringstream stringLine2(line);
-    std::vector<float> tensorData;
-    for (size_t i = 0; i < shapeSize; i++) {
-      float tmpData;
-      stringLine2 >> tmpData;
-      tensorData.push_back(tmpData);
+    getline(in_file, line);
+    std::stringstream string_line2(line);
+    std::vector<float> tensor_data;
+    for (size_t i = 0; i < shape_size; i++) {
+      float tmp_data;
+      string_line2 >> tmp_data;
+      tensor_data.push_back(tmp_data);
     }
 
-    auto *checkTensor = new CheckTensor(dims, tensorData);
-    this->calibData.insert(std::make_pair(tensorName, checkTensor));
+    auto *check_tensor = new CheckTensor(dims, tensor_data);
+    this->benchmark_data_.insert(std::make_pair(tensor_name, check_tensor));
   }
-  inFile.close();
+  in_file.close();
   MS_LOG(INFO) << "Finish reading calibData file";
   return RET_OK;
 }
 
 int Benchmark::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
-  float totalBias = 0;
-  int totalSize = 0;
-  bool hasError = false;
-  for (const auto &calibTensor : calibData) {
-    std::string nodeOrTensorName = calibTensor.first;
-    auto tensors = session->GetOutputsByNodeName(nodeOrTensorName);
+  float total_bias = 0;
+  int total_size = 0;
+  bool has_error = false;
+  for (const auto &calib_tensor : benchmark_data_) {
+    std::string node_or_tensor_name = calib_tensor.first;
+    auto tensors = session_->GetOutputsByNodeName(node_or_tensor_name);
     mindspore::tensor::MSTensor *tensor = nullptr;
     if (tensors.empty() || tensors.size() != 1) {
-      MS_LOG(INFO) << "Cannot find output node: " << nodeOrTensorName
+      MS_LOG(INFO) << "Cannot find output node: " << node_or_tensor_name
                    << " or node has more than one output tensor, switch to GetOutputByTensorName";
-      tensor = session->GetOutputByTensorName(nodeOrTensorName);
+      tensor = session_->GetOutputByTensorName(node_or_tensor_name);
       if (tensor == nullptr) {
-        MS_LOG(ERROR) << "Cannot find output tensor " << nodeOrTensorName << ", get model output failed";
+        MS_LOG(ERROR) << "Cannot find output tensor " << node_or_tensor_name << ", get model output failed";
         return RET_ERROR;
       }
     } else {
       tensor = tensors.front();
     }
-    MS_ASSERT(tensor->GetData() != nullptr);
+    MS_ASSERT(tensor->MutableData() != nullptr);
     float bias = 0;
     switch (msCalibDataType) {
       case TypeId::kNumberTypeFloat: {
-        bias = CompareData<float>(nodeOrTensorName, tensor->shape(), static_cast<float *>(tensor->MutableData()));
+        bias = CompareData<float>(node_or_tensor_name, tensor->shape(), static_cast<float *>(tensor->MutableData()));
         break;
       }
       case TypeId::kNumberTypeInt8: {
-        bias = CompareData<int8_t>(nodeOrTensorName, tensor->shape(), static_cast<int8_t *>(tensor->MutableData()));
+        bias = CompareData<int8_t>(node_or_tensor_name, tensor->shape(), static_cast<int8_t *>(tensor->MutableData()));
         break;
       }
       case TypeId::kNumberTypeUInt8: {
-        bias = CompareData<uint8_t>(nodeOrTensorName, tensor->shape(), static_cast<uint8_t *>(tensor->MutableData()));
+        bias =
+          CompareData<uint8_t>(node_or_tensor_name, tensor->shape(), static_cast<uint8_t *>(tensor->MutableData()));
         break;
       }
       case TypeId::kNumberTypeInt32: {
-        bias = CompareData<int32_t>(nodeOrTensorName, tensor->shape(), static_cast<int32_t *>(tensor->MutableData()));
+        bias =
+          CompareData<int32_t>(node_or_tensor_name, tensor->shape(), static_cast<int32_t *>(tensor->MutableData()));
         break;
       }
       default:
@@ -210,28 +213,28 @@ int Benchmark::CompareOutput() {
         return RET_ERROR;
     }
     if (bias >= 0) {
-      totalBias += bias;
-      totalSize++;
+      total_bias += bias;
+      total_size++;
     } else {
-      hasError = true;
+      has_error = true;
       break;
     }
   }
 
-  if (!hasError) {
-    float meanBias;
-    if (totalSize != 0) {
-      meanBias = totalBias / totalSize * 100;
+  if (!has_error) {
+    float mean_bias;
+    if (total_size != 0) {
+      mean_bias = total_bias / total_size * 100;
     } else {
-      meanBias = 0;
+      mean_bias = 0;
     }
 
-    std::cout << "Mean bias of all nodes/tensors: " << meanBias << "%" << std::endl;
+    std::cout << "Mean bias of all nodes/tensors: " << mean_bias << "%" << std::endl;
     std::cout << "=======================================================" << std::endl << std::endl;
 
-    if (meanBias > this->_flags->accuracyThreshold) {
-      MS_LOG(ERROR) << "Mean bias of all nodes/tensors is too big: " << meanBias << "%";
-      std::cerr << "Mean bias of all nodes/tensors is too big: " << meanBias << "%" << std::endl;
+    if (mean_bias > this->flags_->accuracy_threshold_) {
+      MS_LOG(ERROR) << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%";
+      std::cerr << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%" << std::endl;
       return RET_ERROR;
     } else {
       return RET_OK;
@@ -247,8 +250,8 @@ int Benchmark::CompareOutput() {
 int Benchmark::MarkPerformance() {
   MS_LOG(INFO) << "Running warm up loops...";
   std::cout << "Running warm up loops..." << std::endl;
-  for (int i = 0; i < _flags->warmUpLoopCount; i++) {
-    auto status = session->RunGraph();
+  for (int i = 0; i < flags_->warm_up_loop_count_; i++) {
+    auto status = session_->RunGraph();
     if (status != 0) {
       MS_LOG(ERROR) << "Inference error " << status;
       std::cerr << "Inference error " << status << std::endl;
@@ -258,15 +261,15 @@ int Benchmark::MarkPerformance() {
 
   MS_LOG(INFO) << "Running benchmark loops...";
   std::cout << "Running benchmark loops..." << std::endl;
-  uint64_t timeMin = 1000000;
-  uint64_t timeMax = 0;
-  uint64_t timeAvg = 0;
+  uint64_t time_min = 1000000;
+  uint64_t time_max = 0;
+  uint64_t time_avg = 0;
 
-  for (int i = 0; i < _flags->loopCount; i++) {
-    session->BindThread(true);
+  for (int i = 0; i < flags_->loop_count_; i++) {
+    session_->BindThread(true);
     auto start = GetTimeUs();
     auto status =
-      _flags->runTimeProfiler ? session->RunGraph(before_call_back_, after_call_back_) : session->RunGraph();
+      flags_->time_profiling_ ? session_->RunGraph(before_call_back_, after_call_back_) : session_->RunGraph();
     if (status != 0) {
       MS_LOG(ERROR) << "Inference error " << status;
       std::cerr << "Inference error " << status;
@@ -275,28 +278,28 @@ int Benchmark::MarkPerformance() {
 
     auto end = GetTimeUs();
     auto time = end - start;
-    timeMin = std::min(timeMin, time);
-    timeMax = std::max(timeMax, time);
-    timeAvg += time;
+    time_min = std::min(time_min, time);
+    time_max = std::max(time_max, time);
+    time_avg += time;
 
-    session->BindThread(false);
+    session_->BindThread(false);
   }
 
-  if (_flags->runTimeProfiler) {
+  if (flags_->time_profiling_) {
     const std::vector<std::string> per_op_name = {"opName", "avg(ms)", "percent", "calledTimes", "opTotalTime"};
     const std::vector<std::string> per_op_type = {"opType", "avg(ms)", "percent", "calledTimes", "opTotalTime"};
     PrintResult(per_op_name, op_times_by_name_);
     PrintResult(per_op_type, op_times_by_type_);
   }
 
-  if (_flags->loopCount > 0) {
-    timeAvg /= _flags->loopCount;
-    MS_LOG(INFO) << "Model = " << _flags->modelPath.substr(_flags->modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
-                 << ", NumThreads = " << _flags->numThreads << ", MinRunTime = " << timeMin / 1000.0f
-                 << ", MaxRuntime = " << timeMax / 1000.0f << ", AvgRunTime = " << timeAvg / 1000.0f;
+  if (flags_->loop_count_ > 0) {
+    time_avg /= flags_->loop_count_;
+    MS_LOG(INFO) << "Model = " << flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
+                 << ", NumThreads = " << flags_->num_threads_ << ", MinRunTime = " << time_min / 1000.0f
+                 << ", MaxRuntime = " << time_max / 1000.0f << ", AvgRunTime = " << time_avg / 1000.0f;
     printf("Model = %s, NumThreads = %d, MinRunTime = %f ms, MaxRuntime = %f ms, AvgRunTime = %f ms\n",
-           _flags->modelPath.substr(_flags->modelPath.find_last_of(DELIM_SLASH) + 1).c_str(), _flags->numThreads,
-           timeMin / 1000.0f, timeMax / 1000.0f, timeAvg / 1000.0f);
+           flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1).c_str(), flags_->num_threads_,
+           time_min / 1000.0f, time_max / 1000.0f, time_avg / 1000.0f);
   }
   return RET_OK;
 }
@@ -304,7 +307,7 @@ int Benchmark::MarkPerformance() {
 int Benchmark::MarkAccuracy() {
   MS_LOG(INFO) << "MarkAccuracy";
   std::cout << "MarkAccuracy" << std::endl;
-  for (auto &msInput : msInputs) {
+  for (auto &msInput : ms_inputs_) {
     switch (msInput->data_type()) {
       case TypeId::kNumberTypeFloat:
         PrintInputData<float>(msInput);
@@ -326,7 +329,7 @@ int Benchmark::MarkAccuracy() {
         return RET_ERROR;
     }
   }
-  auto status = session->RunGraph();
+  auto status = session_->RunGraph();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Inference error " << status;
     std::cerr << "Inference error " << status << std::endl;
@@ -350,90 +353,83 @@ int Benchmark::MarkAccuracy() {
 }
 
 int Benchmark::RunBenchmark() {
-  auto startPrepareTime = GetTimeUs();
+  auto start_prepare_time = GetTimeUs();
   // Load graph
-  std::string modelName = _flags->modelPath.substr(_flags->modelPath.find_last_of(DELIM_SLASH) + 1);
+  std::string model_name = flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1);
 
   MS_LOG(INFO) << "start reading model file";
   std::cout << "start reading model file" << std::endl;
   size_t size = 0;
-  char *graphBuf = ReadFile(_flags->modelPath.c_str(), &size);
-  if (graphBuf == nullptr) {
-    MS_LOG(ERROR) << "Read model file failed while running " << modelName.c_str();
-    std::cerr << "Read model file failed while running " << modelName.c_str() << std::endl;
+  char *graph_buf = ReadFile(flags_->model_file_.c_str(), &size);
+  if (graph_buf == nullptr) {
+    MS_LOG(ERROR) << "Read model file failed while running " << model_name.c_str();
+    std::cerr << "Read model file failed while running " << model_name.c_str() << std::endl;
     return RET_ERROR;
   }
-  auto model = lite::Model::Import(graphBuf, size);
-  delete[](graphBuf);
+  auto model = std::shared_ptr<Model>(lite::Model::Import(graph_buf, size));
+  delete[](graph_buf);
   if (model == nullptr) {
-    MS_LOG(ERROR) << "Import model file failed while running " << modelName.c_str();
-    std::cerr << "Import model file failed while running " << modelName.c_str() << std::endl;
+    MS_LOG(ERROR) << "Import model file failed while running " << model_name.c_str();
+    std::cerr << "Import model file failed while running " << model_name.c_str() << std::endl;
     return RET_ERROR;
   }
-  auto context = new (std::nothrow) lite::Context;
+  auto context = std::make_shared<Context>();
   if (context == nullptr) {
-    MS_LOG(ERROR) << "New context failed while running " << modelName.c_str();
-    std::cerr << "New context failed while running " << modelName.c_str() << std::endl;
+    MS_LOG(ERROR) << "New context failed while running " << model_name.c_str();
+    std::cerr << "New context failed while running " << model_name.c_str() << std::endl;
     return RET_ERROR;
   }
-  if (_flags->device == "CPU") {
+  if (flags_->device_ == "CPU") {
     context->device_type_ = lite::DT_CPU;
-  } else if (_flags->device == "GPU") {
+  } else if (flags_->device_ == "GPU") {
     context->device_type_ = lite::DT_GPU;
   }
 
-  if (_flags->cpuBindMode == -1) {
+  if (flags_->cpu_bind_mode_ == -1) {
     context->cpu_bind_mode_ = MID_CPU;
-  } else if (_flags->cpuBindMode == 0) {
+  } else if (flags_->cpu_bind_mode_ == 0) {
     context->cpu_bind_mode_ = HIGHER_CPU;
   } else {
     context->cpu_bind_mode_ = NO_BIND;
   }
-  context->thread_num_ = _flags->numThreads;
-  context->float16_priority = _flags->fp16Priority;
-  session = session::LiteSession::CreateSession(context);
-  delete (context);
-  if (session == nullptr) {
-    MS_LOG(ERROR) << "CreateSession failed while running ", modelName.c_str();
-    std::cout << "CreateSession failed while running ", modelName.c_str();
+  context->thread_num_ = flags_->num_threads_;
+  context->enable_float16_ = flags_->enable_fp16_;
+  session_ = session::LiteSession::CreateSession(context.get());
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "CreateSession failed while running ", model_name.c_str();
+    std::cout << "CreateSession failed while running ", model_name.c_str();
     return RET_ERROR;
   }
-  auto ret = session->CompileGraph(model);
+  auto ret = session_->CompileGraph(model.get());
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CompileGraph failed while running ", modelName.c_str();
-    std::cout << "CompileGraph failed while running ", modelName.c_str();
-    delete (session);
-    delete (model);
+    MS_LOG(ERROR) << "CompileGraph failed while running ", model_name.c_str();
+    std::cout << "CompileGraph failed while running ", model_name.c_str();
     return ret;
   }
   model->Free();
-  msInputs = session->GetInputs();
-  auto endPrepareTime = GetTimeUs();
-  MS_LOG(INFO) << "PrepareTime = " << (endPrepareTime - startPrepareTime) / 1000 << " ms";
-  std::cout << "PrepareTime = " << (endPrepareTime - startPrepareTime) / 1000 << " ms" << std::endl;
+  ms_inputs_ = session_->GetInputs();
+  auto end_prepare_time = GetTimeUs();
+  MS_LOG(INFO) << "PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms";
+  std::cout << "PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms" << std::endl;
 
   // Load input
   MS_LOG(INFO) << "start generate input data";
   auto status = LoadInput();
   if (status != 0) {
     MS_LOG(ERROR) << "Generate input data error";
-    delete (session);
-    delete (model);
     return status;
   }
-  if (!_flags->calibDataPath.empty()) {
+  if (!flags_->benchmark_data_file_.empty()) {
     status = MarkAccuracy();
-    for (auto &data : calibData) {
+    for (auto &data : benchmark_data_) {
       data.second->shape.clear();
       data.second->data.clear();
       delete data.second;
     }
-    calibData.clear();
+    benchmark_data_.clear();
     if (status != 0) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: " << status;
       std::cout << "Run MarkAccuracy error: " << status << std::endl;
-      delete (session);
-      delete (model);
       return status;
     }
   } else {
@@ -441,24 +437,20 @@ int Benchmark::RunBenchmark() {
     if (status != 0) {
       MS_LOG(ERROR) << "Run MarkPerformance error: " << status;
       std::cout << "Run MarkPerformance error: " << status << std::endl;
-      delete (session);
-      delete (model);
       return status;
     }
   }
-  delete (session);
-  delete (model);
   return RET_OK;
 }
 
 void BenchmarkFlags::InitInputDataList() {
-  char *input_list = new char[this->inDataPath.length() + 1];
-  snprintf(input_list, this->inDataPath.length() + 1, "%s", this->inDataPath.c_str());
+  char *input_list = new char[this->in_data_file_.length() + 1];
+  snprintf(input_list, this->in_data_file_.length() + 1, "%s", this->in_data_file_.c_str());
   char *cur_input;
   const char *split_c = ",";
   cur_input = strtok(input_list, split_c);
   while (cur_input != nullptr) {
-    input_data_list.emplace_back(cur_input);
+    input_data_list_.emplace_back(cur_input);
     cur_input = strtok(nullptr, split_c);
   }
   delete[] input_list;
@@ -466,19 +458,19 @@ void BenchmarkFlags::InitInputDataList() {
 
 void BenchmarkFlags::InitResizeDimsList() {
   std::string content;
-  content = this->resizeDimsIn;
+  content = this->resize_dims_in_;
   std::vector<int64_t> shape;
-  auto shapeStrs = StringSplit(content, std::string(DELIM_COLON));
-  for (const auto &shapeStr : shapeStrs) {
+  auto shape_strs = StringSplit(content, std::string(DELIM_COLON));
+  for (const auto &shape_str : shape_strs) {
     shape.clear();
-    auto dimStrs = StringSplit(shapeStr, std::string(DELIM_COMMA));
+    auto dim_strs = StringSplit(shape_str, std::string(DELIM_COMMA));
     std::cout << "Resize Dims: ";
-    for (const auto &dimStr : dimStrs) {
-      std::cout << dimStr << " ";
-      shape.emplace_back(static_cast<int64_t>(std::stoi(dimStr)));
+    for (const auto &dim_str : dim_strs) {
+      std::cout << dim_str << " ";
+      shape.emplace_back(static_cast<int64_t>(std::stoi(dim_str)));
     }
     std::cout << std::endl;
-    this->resizeDims.emplace_back(shape);
+    this->resize_dims_.emplace_back(shape);
   }
 }
 
@@ -493,11 +485,11 @@ int Benchmark::InitCallbackParameter() {
     if (before_outputs.empty()) {
       MS_LOG(INFO) << "The num of beforeOutputs is empty";
     }
-    if (op_times_by_type_.find(callParam.type_callback_param) == op_times_by_type_.end()) {
-      op_times_by_type_.insert(std::make_pair(callParam.type_callback_param, std::make_pair(0, 0.0f)));
+    if (op_times_by_type_.find(callParam.node_type) == op_times_by_type_.end()) {
+      op_times_by_type_.insert(std::make_pair(callParam.node_type, std::make_pair(0, 0.0f)));
     }
-    if (op_times_by_name_.find(callParam.name_callback_param) == op_times_by_name_.end()) {
-      op_times_by_name_.insert(std::make_pair(callParam.name_callback_param, std::make_pair(0, 0.0f)));
+    if (op_times_by_name_.find(callParam.node_name) == op_times_by_name_.end()) {
+      op_times_by_name_.insert(std::make_pair(callParam.node_name, std::make_pair(0, 0.0f)));
     }
 
     op_call_times_total_++;
@@ -520,10 +512,10 @@ int Benchmark::InitCallbackParameter() {
 
     float cost = static_cast<float>(opEnd - op_begin_) / 1000.0f;
     op_cost_total_ += cost;
-    op_times_by_type_[call_param.type_callback_param].first++;
-    op_times_by_type_[call_param.type_callback_param].second += cost;
-    op_times_by_name_[call_param.name_callback_param].first++;
-    op_times_by_name_[call_param.name_callback_param].second += cost;
+    op_times_by_type_[call_param.node_type].first++;
+    op_times_by_type_[call_param.node_type].second += cost;
+    op_times_by_name_[call_param.node_name].first++;
+    op_times_by_name_[call_param.node_name].second += cost;
     return true;
   };
 
@@ -531,36 +523,36 @@ int Benchmark::InitCallbackParameter() {
 }
 
 int Benchmark::Init() {
-  if (this->_flags == nullptr) {
+  if (this->flags_ == nullptr) {
     return 1;
   }
-  MS_LOG(INFO) << "ModelPath = " << this->_flags->modelPath;
-  MS_LOG(INFO) << "InDataPath = " << this->_flags->inDataPath;
-  MS_LOG(INFO) << "InDataType = " << this->_flags->inDataTypeIn;
-  MS_LOG(INFO) << "LoopCount = " << this->_flags->loopCount;
-  MS_LOG(INFO) << "DeviceType = " << this->_flags->device;
-  MS_LOG(INFO) << "AccuracyThreshold = " << this->_flags->accuracyThreshold;
-  MS_LOG(INFO) << "WarmUpLoopCount = " << this->_flags->warmUpLoopCount;
-  MS_LOG(INFO) << "NumThreads = " << this->_flags->numThreads;
-  MS_LOG(INFO) << "Fp16Priority = " << this->_flags->fp16Priority;
-  MS_LOG(INFO) << "calibDataPath = " << this->_flags->calibDataPath;
+  MS_LOG(INFO) << "ModelPath = " << this->flags_->model_file_;
+  MS_LOG(INFO) << "InDataPath = " << this->flags_->in_data_file_;
+  MS_LOG(INFO) << "InDataType = " << this->flags_->in_data_type_in_;
+  MS_LOG(INFO) << "LoopCount = " << this->flags_->loop_count_;
+  MS_LOG(INFO) << "DeviceType = " << this->flags_->device_;
+  MS_LOG(INFO) << "AccuracyThreshold = " << this->flags_->accuracy_threshold_;
+  MS_LOG(INFO) << "WarmUpLoopCount = " << this->flags_->warm_up_loop_count_;
+  MS_LOG(INFO) << "NumThreads = " << this->flags_->num_threads_;
+  MS_LOG(INFO) << "Fp16Priority = " << this->flags_->enable_fp16_;
+  MS_LOG(INFO) << "calibDataPath = " << this->flags_->benchmark_data_file_;
 
-  if (this->_flags->loopCount < 1) {
-    MS_LOG(ERROR) << "LoopCount:" << this->_flags->loopCount << " must be greater than 0";
-    std::cerr << "LoopCount:" << this->_flags->loopCount << " must be greater than 0" << std::endl;
+  if (this->flags_->loop_count_ < 1) {
+    MS_LOG(ERROR) << "LoopCount:" << this->flags_->loop_count_ << " must be greater than 0";
+    std::cerr << "LoopCount:" << this->flags_->loop_count_ << " must be greater than 0" << std::endl;
     return RET_ERROR;
   }
 
-  if (this->_flags->numThreads < 1) {
-    MS_LOG(ERROR) << "numThreads:" << this->_flags->numThreads << " must be greater than 0";
-    std::cerr << "numThreads:" << this->_flags->numThreads << " must be greater than 0" << std::endl;
+  if (this->flags_->num_threads_ < 1) {
+    MS_LOG(ERROR) << "numThreads:" << this->flags_->num_threads_ << " must be greater than 0";
+    std::cerr << "numThreads:" << this->flags_->num_threads_ << " must be greater than 0" << std::endl;
     return RET_ERROR;
   }
 
-  if (this->_flags->cpuBindMode == -1) {
+  if (this->flags_->cpu_bind_mode_ == -1) {
     MS_LOG(INFO) << "cpuBindMode = MID_CPU";
     std::cout << "cpuBindMode = MID_CPU" << std::endl;
-  } else if (this->_flags->cpuBindMode == 1) {
+  } else if (this->flags_->cpu_bind_mode_ == 1) {
     MS_LOG(INFO) << "cpuBindMode = HIGHER_CPU";
     std::cout << "cpuBindMode = HIGHER_CPU" << std::endl;
   } else {
@@ -568,38 +560,38 @@ int Benchmark::Init() {
     std::cout << "cpuBindMode = NO_BIND" << std::endl;
   }
 
-  this->_flags->inDataType = this->_flags->inDataTypeIn == "img" ? kImage : kBinary;
+  this->flags_->in_data_type_ = this->flags_->in_data_type_in_ == "img" ? kImage : kBinary;
 
-  if (!_flags->calibDataType.empty()) {
-    if (dataTypeMap.find(_flags->calibDataType) == dataTypeMap.end()) {
-      MS_LOG(ERROR) << "CalibDataType not supported: " << _flags->calibDataType.c_str();
+  if (!flags_->benchmark_data_type_.empty()) {
+    if (data_type_map_.find(flags_->benchmark_data_type_) == data_type_map_.end()) {
+      MS_LOG(ERROR) << "CalibDataType not supported: " << flags_->benchmark_data_type_.c_str();
       return RET_ERROR;
     }
-    msCalibDataType = dataTypeMap.at(_flags->calibDataType);
-    MS_LOG(INFO) << "CalibDataType = " << _flags->calibDataType.c_str();
-    std::cout << "CalibDataType = " << _flags->calibDataType.c_str() << std::endl;
+    msCalibDataType = data_type_map_.at(flags_->benchmark_data_type_);
+    MS_LOG(INFO) << "CalibDataType = " << flags_->benchmark_data_type_.c_str();
+    std::cout << "CalibDataType = " << flags_->benchmark_data_type_.c_str() << std::endl;
   }
 
-  if (_flags->modelPath.empty()) {
+  if (flags_->model_file_.empty()) {
     MS_LOG(ERROR) << "modelPath is required";
     std::cerr << "modelPath is required" << std::endl;
     return 1;
   }
-  _flags->InitInputDataList();
-  _flags->InitResizeDimsList();
-  if (!_flags->resizeDims.empty() && _flags->resizeDims.size() != _flags->input_data_list.size()) {
+  flags_->InitInputDataList();
+  flags_->InitResizeDimsList();
+  if (!flags_->resize_dims_.empty() && flags_->resize_dims_.size() != flags_->input_data_list_.size()) {
     MS_LOG(ERROR) << "Size of input resizeDims should be equal to size of input inDataPath";
     std::cerr << "Size of input resizeDims should be equal to size of input inDataPath" << std::endl;
     return RET_ERROR;
   }
 
-  if (_flags->device != "CPU" && _flags->device != "GPU") {
-    MS_LOG(ERROR) << "Device type:" << _flags->device << " is not supported.";
-    std::cerr << "Device type:" << _flags->device << " is not supported." << std::endl;
+  if (flags_->device_ != "CPU" && flags_->device_ != "GPU") {
+    MS_LOG(ERROR) << "Device type:" << flags_->device_ << " is not supported.";
+    std::cerr << "Device type:" << flags_->device_ << " is not supported." << std::endl;
     return RET_ERROR;
   }
 
-  if (_flags->runTimeProfiler) {
+  if (flags_->time_profiling_) {
     auto status = InitCallbackParameter();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Init callback Parameter failed.";
@@ -627,7 +619,7 @@ int Benchmark::PrintResult(const std::vector<std::string> &title,
     }
     columns.push_back(iter.first);
 
-    len = snprintf(stringBuf[1], sizeof(stringBuf[1]), "%f", iter.second.second / _flags->loopCount);
+    len = snprintf(stringBuf[1], sizeof(stringBuf[1]), "%f", iter.second.second / flags_->loop_count_);
     if (len > columnLenMax.at(1)) {
       columnLenMax.at(1) = len + 4;
     }
@@ -676,10 +668,11 @@ int Benchmark::PrintResult(const std::vector<std::string> &title,
 }
 
 Benchmark::~Benchmark() {
-  for (auto iter : this->calibData) {
+  for (auto iter : this->benchmark_data_) {
     delete (iter.second);
   }
-  this->calibData.clear();
+  this->benchmark_data_.clear();
+  delete (session_);
 }
 
 int RunBenchmark(int argc, const char **argv) {
@@ -697,26 +690,27 @@ int RunBenchmark(int argc, const char **argv) {
     return RET_OK;
   }
 
-  Benchmark mBenchmark(&flags);
-  auto status = mBenchmark.Init();
+  Benchmark benchmark(&flags);
+  auto status = benchmark.Init();
   if (status != 0) {
     MS_LOG(ERROR) << "Benchmark init Error : " << status;
     std::cerr << "Benchmark init Error : " << status << std::endl;
     return RET_ERROR;
   }
 
-  status = mBenchmark.RunBenchmark();
+  status = benchmark.RunBenchmark();
   if (status != 0) {
-    MS_LOG(ERROR) << "Run Benchmark " << flags.modelPath.substr(flags.modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
+    MS_LOG(ERROR) << "Run Benchmark "
+                  << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
                   << " Failed : " << status;
-    std::cerr << "Run Benchmark " << flags.modelPath.substr(flags.modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
+    std::cerr << "Run Benchmark " << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
               << " Failed : " << status << std::endl;
     return RET_ERROR;
   }
 
-  MS_LOG(INFO) << "Run Benchmark " << flags.modelPath.substr(flags.modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
+  MS_LOG(INFO) << "Run Benchmark " << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
                << " Success.";
-  std::cout << "Run Benchmark " << flags.modelPath.substr(flags.modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
+  std::cout << "Run Benchmark " << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
             << " Success." << std::endl;
   return RET_OK;
 }

@@ -29,8 +29,8 @@ namespace mindspore {
 namespace session {
 /// \brief CallBackParam defined input arguments for callBack function.
 struct CallBackParam {
-  std::string name_callback_param; /**< node name argument */
-  std::string type_callback_param; /**< node type argument */
+  std::string node_name; /**< node name argument */
+  std::string node_type; /**< node type argument */
 };
 
 /// \brief KernelCallBack defined the function pointer for callBack.
@@ -69,12 +69,12 @@ class MS_API LiteSession {
   /// \return The vector of MindSpore Lite MSTensor.
   virtual std::vector<tensor::MSTensor *> GetInputs() const = 0;
 
-  /// \brief Get input MindSpore Lite MSTensors of model by node name.
+  /// \brief Get input MindSpore Lite MSTensors of model by tensor name.
   ///
-  /// \param[in] node_name Define node name.
+  /// \param[in] node_name Define tensor name.
   ///
   /// \return The vector of MindSpore Lite MSTensor.
-  virtual std::vector<tensor::MSTensor *> GetInputsByName(const std::string &node_name) const = 0;
+  virtual mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &tensor_name) const = 0;
 
   /// \brief Run session with callback.
   ///
@@ -90,8 +90,9 @@ class MS_API LiteSession {
   ///
   /// \param[in] node_name Define node name.
   ///
+  /// \note Deprecated, replace with GetOutputByTensorName
+  ///
   /// \return The vector of MindSpore Lite MSTensor.
-  /// deprecated, replace with GetOutputByTensorName
   virtual std::vector<tensor::MSTensor *> GetOutputsByNodeName(const std::string &node_name) const = 0;
 
   /// \brief Get output MindSpore Lite MSTensors of model mapped by tensor name.
@@ -117,7 +118,7 @@ class MS_API LiteSession {
   /// \param[in] dims Define the inputs new shape.
   ///
   /// \return STATUS as an error code of resize inputs, STATUS is defined in errorcode.h.
-  virtual int Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>>& dims) = 0;
+  virtual int Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) = 0;
 };
 }  // namespace session
 }  // namespace mindspore

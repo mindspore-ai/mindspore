@@ -101,8 +101,8 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
         ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
         return nullptr;
       }
-      this->mQuantizer = std::make_unique<quant::WeightQuantizer>(
-        new_graph, config->quantSize, config->convWeightQuantChannelThreshold, config->bitNum);
+      this->mQuantizer = std::make_unique<quant::WeightQuantizer>(new_graph, config->quantWeightSize,
+                                                                  config->quantWeightChannel, config->bitNum);
       if (mQuantizer == nullptr) {
         MS_LOG(ERROR) << "New WeightQuantizer failed";
         ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);

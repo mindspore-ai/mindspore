@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef QUANTIZER_UTIL_H
-#define QUANTIZER_UTIL_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZER_UTIL_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZER_UTIL_H
 
 #include <memory>
 #include <string>

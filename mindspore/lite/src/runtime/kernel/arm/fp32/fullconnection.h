@@ -18,10 +18,10 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FULLCONNECTION_H_
 
 #include <vector>
+#include "src/runtime/kernel/arm/base/fullconnection_base.h"
 #include "include/errorcode.h"
 #include "include/context.h"
 #include "nnacl/fp32/matmul.h"
-#include "src/runtime/kernel/arm/base/fullconnection_base.h"
 
 using mindspore::lite::InnerContext;
 

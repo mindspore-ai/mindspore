@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CALC_QUANT_PARAM_H
-#define CALC_QUANT_PARAM_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_CALC_QUANT_PARAM_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_CALC_QUANT_PARAM_H
 
 #include <unordered_map>
 #include <memory>

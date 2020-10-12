@@ -18,11 +18,11 @@
 #define MINDSPORE_LITE_SRC_LITE_KERNEL_H_
 #include <vector>
 #include <string>
+#include "src/ops/primitive_c.h"
 #include "src/common/utils.h"
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
-#include "src/ops/primitive_c.h"
 #include "nnacl/op_base.h"
 #include "src/inner_context.h"
 #include "src/tensor.h"

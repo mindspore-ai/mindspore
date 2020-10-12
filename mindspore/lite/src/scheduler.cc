@@ -195,7 +195,7 @@ void Scheduler::ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels) {
   for (auto temp_kernels : sub_kernels_list) {
     std::vector<Tensor *> output_tensor = kernel::LiteKernelUtil::SubgraphOutputTensors(temp_kernels);
     for (auto tensor : output_tensor) {
-      if (context_->float16_priority && tensor->data_type() == kNumberTypeFloat16) {
+      if (context_->enable_float16_ && tensor->data_type() == kNumberTypeFloat16) {
         tensor->set_data_type(kNumberTypeFloat32);
       }
     }
@@ -262,7 +262,7 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<Tensor *> &in_tens
 #endif
   desc.arch = kernel::KERNEL_ARCH::kCPU;
   kernel::LiteKernel *kernel = nullptr;
-  if ((context_->float16_priority && data_type == kNumberTypeFloat32) || data_type == kNumberTypeFloat16) {
+  if ((context_->enable_float16_ && data_type == kNumberTypeFloat32) || data_type == kNumberTypeFloat16) {
     // check if support fp16
     kernel::KernelKey key{desc.arch, kNumberTypeFloat16, desc.type};
     kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, key);

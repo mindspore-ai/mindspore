@@ -18,9 +18,9 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MATMUL_INT8_H_
 
 #include <vector>
+#include "src/runtime/kernel/arm/base/matmul_base.h"
 #include "include/context.h"
 #include "nnacl/quantization/quantize.h"
-#include "src/runtime/kernel/arm/base/matmul_base.h"
 
 using mindspore::lite::InnerContext;
 

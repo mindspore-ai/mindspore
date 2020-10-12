@@ -48,8 +48,7 @@ void GraphDefTransform::CreateQuantizer(const converter::Flags *flags) {
   switch (type) {
     case QuantType::QuantType_AwareTraining: {
       MS_LOG(INFO) << "create AwareTrainingQuantizer!";
-      fbQuantizer =
-        std::make_unique<quant::AwareQuantizer>(graphDefT, flags->inferenceType, flags->stdDev, flags->mean);
+      fbQuantizer = std::make_unique<quant::AwareQuantizer>(graphDefT, flags->inferenceType);
       break;
     }
     default:

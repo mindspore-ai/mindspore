@@ -25,7 +25,7 @@ using STATUS = int;
 /* Success */
 constexpr int RET_OK = 0; /**< No error occurs. */
 
-/* Common error code, range: [-1, -100]*/
+/* Common error code, range: [-1, -100）*/
 constexpr int RET_ERROR = -1;         /**< Common error code. */
 constexpr int RET_NULL_PTR = -2;      /**< NULL pointer returned.*/
 constexpr int RET_PARAM_INVALID = -3; /**< Invalid parameter.*/
@@ -34,30 +34,29 @@ constexpr int RET_SUCCESS_EXIT = -5;  /**< No error but exit. */
 constexpr int RET_MEMORY_FAILED = -6; /**< Fail to create memory. */
 constexpr int RET_NOT_SUPPORT = -7;   /**< Fail to support. */
 
-/* Executor error code, range: [-101,-200] */
-constexpr int RET_OUT_OF_TENSOR_RANGE = -101; /**< Failed to check range. */
-constexpr int RET_INPUT_TENSOR_ERROR = -102;  /**< Failed to check input tensor. */
-constexpr int RET_REENTRANT_ERROR = -103;     /**< Exist executor running. */
+/* Executor error code, range: [-100,-200) */
+constexpr int RET_OUT_OF_TENSOR_RANGE = -100; /**< Failed to check range. */
+constexpr int RET_INPUT_TENSOR_ERROR = -101;  /**< Failed to check input tensor. */
+constexpr int RET_REENTRANT_ERROR = -102;     /**< Exist executor running. */
 
-/* Graph error code, range: [-201,-300] */
-constexpr int RET_GRAPH_FILE_ERR = -201; /**< Failed to verify graph file. */
+/* Graph error code, range: [-200,-300) */
+constexpr int RET_GRAPH_FILE_ERR = -200; /**< Failed to verify graph file. */
 
-/* Node error code, range: [-301,-400] */
-constexpr int RET_NOT_FIND_OP = -301;        /**< Failed to find operator. */
-constexpr int RET_INVALID_OP_NAME = -302;    /**< Invalid operator name. */
-constexpr int RET_INVALID_OP_ATTR = -303;    /**< Invalid operator attr. */
-constexpr int RET_OP_EXECUTE_FAILURE = -304; /**< Failed to execution operator. */
+/* Node error code, range: [-300,-400) */
+constexpr int RET_NOT_FIND_OP = -300;        /**< Failed to find operator. */
+constexpr int RET_INVALID_OP_NAME = -301;    /**< Invalid operator name. */
+constexpr int RET_INVALID_OP_ATTR = -302;    /**< Invalid operator attr. */
+constexpr int RET_OP_EXECUTE_FAILURE = -303; /**< Failed to execution operator. */
 
-/* Tensor error code, range: [-401,-500] */
-constexpr int RET_FORMAT_ERR = -401; /**< Failed to checking tensor format. */
+/* Tensor error code, range: [-400,-500) */
+constexpr int RET_FORMAT_ERR = -400; /**< Failed to checking tensor format. */
 
-/* InferShape error code, range: [-501,-600] */
-constexpr int RET_INFER_ERR = -501;     /**< Failed to infer shape. */
-constexpr int RET_INFER_INVALID = -502; /**< Invalid infer shape before runtime. */
+/* InferShape error code, range: [-500,-600) */
+constexpr int RET_INFER_ERR = -500;     /**< Failed to infer shape. */
+constexpr int RET_INFER_INVALID = -501; /**< Invalid infer shape before runtime. */
 
-/* User input param error code, range: [-601, 700]*/
-constexpr int RET_INPUT_PARAM_INVALID = -601;     /**< Invalid input param by user. */
-constexpr int RET_INPUT_PARAM_LACK = -602;     /**< LACK input param by user. */
+/* User input param error code, range: [-600, 700)*/
+constexpr int RET_INPUT_PARAM_INVALID = -600; /**< Invalid input param by user. */
 }  // namespace lite
 }  // namespace mindspore
 

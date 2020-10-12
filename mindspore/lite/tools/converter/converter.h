@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MS_CONVERTER_H
-#define MS_CONVERTER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_H
 
 #include <memory>
 #include <string>

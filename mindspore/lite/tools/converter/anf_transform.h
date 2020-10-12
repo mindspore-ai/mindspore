@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MS_ANF_TRANSFORM_H
-#define MS_ANF_TRANSFORM_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ANF_TRANSFORM_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ANF_TRANSFORM_H
 
 #include <memory>
 #include "schema/inner/model_generated.h"

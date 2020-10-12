@@ -18,12 +18,19 @@
 #define MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_
 #include <vector>
 #include <string>
+#include <memory>
 #include "schema/model_generated.h"
 
 namespace mindspore::lite {
+/// \brief Allocator defined a memory pool for malloc memory and free memory dynamically.
+///
+/// \note List public class and interface for reference.
+class Allocator;
+
 using TensorPtrVector = std::vector<mindspore::schema::Tensor *>;
 using Uint32Vector = std::vector<uint32_t>;
 using String = std::string;
 using NodeType = schema::NodeType;
+using AllocatorPtr = std::shared_ptr<Allocator>;
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_

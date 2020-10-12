@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MS_GRAPHDEF_TRANSFORM_H
-#define MS_GRAPHDEF_TRANSFORM_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_GRAPHDEF_TRANSFORM_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_GRAPHDEF_TRANSFORM_H
 
 #include <memory>
 #include "tools/converter/optimizer.h"

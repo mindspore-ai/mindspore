@@ -18,9 +18,9 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_FULLCONNECTION_INT8_H_
 
 #include <vector>
+#include "src/runtime/kernel/arm/base/fullconnection_base.h"
 #include "include/context.h"
 #include "nnacl/quantization/quantize.h"
-#include "src/runtime/kernel/arm/base/fullconnection_base.h"
 #include "nnacl/int8/common_func.h"
 
 using mindspore::lite::InnerContext;
