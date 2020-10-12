@@ -26,6 +26,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.operations._quant_ops import FakeQuantWithMinMaxVars, FakeQuantWithMinMaxVarsPerChannel
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -1029,6 +1030,18 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[True, False, False], [False, True, True]])),
                         [2, 3], [2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('FakeQuantWithMinMaxVars', {
+        'block': FakeQuantWithMinMaxVars(num_bits=8, narrow_range=False),
+        'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 5), mstype.float32),
+                        Tensor(np.array([-6]), mstype.float32),
+                        Tensor(np.array([6]), mstype.float32)],
+        'desc_bprop': [Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)]}),
+    ('FakeQuantWithMinMaxVarsPerChannel', {
+        'block': FakeQuantWithMinMaxVarsPerChannel(num_bits=8, narrow_range=False),
+        'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 4), mstype.float32),
+                        Tensor(np.array([-6, -1, -2, -3]), mstype.float32),
+                        Tensor(np.array([6, 1, 2, 3]), mstype.float32)],
+        'desc_bprop': [Tensor(np.random.rand(3, 16, 5, 4), mstype.float32)]}),
     ('Rank', {
         'block': P.Rank(),
         'desc_inputs': [[2, 3]],

@@ -23,6 +23,10 @@ from ...common import dtype as mstype
 
 __all__ = ["MinMaxUpdatePerLayer",
            "MinMaxUpdatePerChannel",
+           "FakeQuantWithMinMaxVars",
+           "FakeQuantWithMinMaxVarsGradient",
+           "FakeQuantWithMinMaxVarsPerChannel",
+           "FakeQuantWithMinMaxVarsPerChannelGradient",
            "FakeQuantPerLayer",
            "FakeQuantPerLayerGrad",
            "FakeQuantPerChannel",
@@ -163,6 +167,237 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
         validator.check_tensor_type_same(
             {"max": max_type}, valid_types, self.name)
         return min_type, max_type
+
+
+class FakeQuantWithMinMaxVars(PrimitiveWithInfer):
+    r"""
+    Fake-quantize the input by min and max.
+
+    Args:
+        num_bits (int): Quantization bitwidth; between 2 and 16. Default: 8.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not.
+            if True, the quantization range is [0, 2^num_bits-1]. Otherwise, the quantization
+            range is [1, 2^num_bits-1]. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - Float32 tensor representing the shape of the output tensor.
+        - **min** (Tensor) - Value of the min range of the input data x.
+        - **max** (Tensor) - Value of the max range of the input data x.
+
+    Outputs:
+        - Tensor, the data type and shape of output tensor is the same as input x.
+
+    Examples:
+        >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
+        >>> min_tensor = Tensor(np.array([-6]), mstype.float32)
+        >>> max_tensor = Tensor(np.array([6]), mstype.float32)
+        >>> output_tensor = FakeQuantWithMinMaxVars(num_bits=8, narrow_range=False)(
+        >>>                 input_tensor, min_tensor, max_tensor)
+        >>> output_tensor shape: (3, 16, 5, 5)  data type: mstype.float32
+    """
+    @prim_attr_register
+    def __init__(self,
+                 num_bits=8,
+                 narrow_range=False):
+        self.num_bits = validator.check_positive_int(num_bits, 'num_bits', self.name)
+        self.num_bits = validator.check_int_range(self.num_bits, 2, 16, Rel.INC_BOTH, 'num_bits', self.name)
+        self.narrow_range = validator.check_value_type(
+            'narrow_range', narrow_range, (bool,), self.name)
+
+    def check_broadcast(self, min_shape, input_shape):
+        shape_val = 1
+        for shape in input_shape:
+            shape_val = shape_val * shape
+        if min_shape[0] > 1 and min_shape[0] != shape_val:
+            raise ValueError(f"For '{self.name}', the shape of \'min\' cannot broadcast to the shape of \'x\'.")
+
+    def infer_shape(self, x_shape, min_shape, max_shape):
+        validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
+        validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
+        validator.check_integer("min shape", len(min_shape), 1, Rel.EQ, self.name)
+        self.check_broadcast(min_shape, x_shape)
+        return x_shape
+
+    def infer_dtype(self, x_type, min_type, max_type):
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same({'x': x_type}, valid_types, self.name)
+        validator.check_tensor_type_same({'min': min_type}, valid_types, self.name)
+        validator.check_tensor_type_same({'max': max_type}, valid_types, self.name)
+        return x_type
+
+
+class FakeQuantWithMinMaxVarsGradient(PrimitiveWithInfer):
+    r"""
+    Performs grad of FakeQuantWithMinMaxVars operation.
+
+    Args:
+        num_bits (int): Quantization bitwidth; between 2 and 16, inclusive. Default: 8.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not.
+            if True, the quantization range is [0, 2^num_bits-1]. Otherwise, the quantization
+            range is [1, 2^num_bits-1]. Default: False.
+
+    Inputs:
+        - **gradients** (Tensor) - The gradient above the FakeQuantWithMinMaxVars.
+        - **x** (Tensor) - Float32 tensor representing the shape of the output tensor.
+        - **min** (Tensor) - Value of the min range of the input data x.
+        - **max** (Tensor) - Value of the max range of the input data x.
+
+    Outputs:
+        - **backprops_wrt_x** (Tensor) - The gradient of input x, with the same shape date type as input x.
+        - **backprops_wrt_min** (Tensor) - The gradient of input min, with the same shape date type as input min.
+        - **backprops_wrt_max** (Tensor) - The gradient of input max, with the same shape date type as input max.
+
+    Examples:
+        >>> gradients = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
+        >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
+        >>> min_tensor = Tensor(np.array([-6]), mstype.float32)
+        >>> max_tensor = Tensor(np.array([6]), mstype.float32)
+        >>> x_gradient, min_gradient, max_gradient = FakeQuantWithMinMaxVarsGradient(num_bits=8,narrow_range=False)
+        >>>                                          (gradients, input_tensor, min_tensor, max_tensor)
+        >>> x_gradient   shape: (3, 16, 5, 5)  data type: mstype.float32
+        >>> min_gradient shape: (1,)           data type: mstype.float32
+        >>> max_gradient shape: (1,)           data type: mstype.float32
+    """
+    @prim_attr_register
+    def __init__(self,
+                 num_bits=8,
+                 narrow_range=False):
+        self.num_bits = validator.check_positive_int(num_bits, 'num_bits', self.name)
+        self.num_bits = validator.check_int_range(self.num_bits, 2, 16, Rel.INC_BOTH, 'num_bits', self.name)
+        self.narrow_range = validator.check_value_type(
+            'narrow_range', narrow_range, (bool,), self.name)
+
+    def check_broadcast(self, min_shape, input_shape):
+        shape_val = 1
+        for shape in input_shape:
+            shape_val = shape_val * shape
+        if min_shape[0] > 1 and min_shape[0] != shape_val:
+            raise ValueError(f"For '{self.name}', the shape of \'min\' cannot broadcast to the shape of \'x\'.")
+
+    def infer_shape(self, dout_shape, x_shape, min_shape, max_shape):
+        validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
+        validator.check("dout shape", dout_shape, "x shape", x_shape, Rel.EQ, self.name)
+        validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
+        validator.check_integer("min shape", len(min_shape), 1, Rel.EQ, self.name)
+        self.check_broadcast(min_shape, x_shape)
+        return x_shape, min_shape, max_shape
+
+    def infer_dtype(self, dout_type, x_type, min_type, max_type):
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same({'dout': dout_type}, valid_types, self.name)
+        validator.check_tensor_type_same({'x': x_type}, valid_types, self.name)
+        validator.check_tensor_type_same({'min': min_type}, valid_types, self.name)
+        validator.check_tensor_type_same({'max': max_type}, valid_types, self.name)
+        return x_type, min_type, max_type
+
+
+class FakeQuantWithMinMaxVarsPerChannel(PrimitiveWithInfer):
+    r"""
+    Fake-quantize the input and one of shape: [d], [b, d], [b, h, w, d] by per-channel min and max
+
+    Args:
+        num_bits (int): Quantization bitwidth; between 2 and 16, inclusive. Default: 8.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not.
+            if True, the quantization range is [0, 2^num_bits-1]. Otherwise, the quantization
+            range is [1, 2^num_bits-1]. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - Float32 tensor representing the shape of the output tensor.
+        - **min** (Tensor) - Value of the min range of the input data x.
+        - **max** (Tensor) - Value of the max range of the input data x.
+
+    Outputs:
+        - Tensor, the data type and shape of output tensor is the same as input x.
+
+    Examples:
+        >>> input_tensor = Tensor(np.random.rand(3, 16, 3, 4), mstype.float32)
+        >>> min_tensor = Tensor(np.array([-6, -1, -2, -3]), mstype.float32)
+        >>> max_tensor = Tensor(np.array([6, 1, 2, 3]), mstype.float32)
+        >>> output_tensor = FakeQuantWithMinMaxVars(num_bits=8, narrow_range=False)(
+        >>>                 input_tensor, min_tensor, max_tensor)
+        >>> output_tensor shape: (3, 16, 3, 4)  data type: mstype.float32
+    """
+    @prim_attr_register
+    def __init__(self,
+                 num_bits=8,
+                 narrow_range=False):
+        self.num_bits = validator.check_positive_int(num_bits, 'num_bits', self.name)
+        self.num_bits = validator.check_int_range(self.num_bits, 2, 16, Rel.INC_BOTH, 'num_bits', self.name)
+        self.narrow_range = validator.check_value_type(
+            'narrow_range', narrow_range, (bool,), self.name)
+
+    def infer_shape(self, x_shape, min_shape, max_shape):
+        validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
+        validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
+        validator.check_integer("min shape", len(min_shape), 1, Rel.EQ, self.name)
+        validator.check("min shape", min_shape[0], "x shape", x_shape[-1], Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_type, min_type, max_type):
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same({'x': x_type}, valid_types, self.name)
+        validator.check_tensor_type_same({'min': min_type}, valid_types, self.name)
+        validator.check_tensor_type_same({'max': max_type}, valid_types, self.name)
+        return x_type
+
+
+class FakeQuantWithMinMaxVarsPerChannelGradient(PrimitiveWithInfer):
+    r"""
+    Performs grad of FakeQuantWithMinMaxVars operation.
+
+    Args:
+        num_bits (int): Quantization bitwidth; between 2 and 16, inclusive. Default: 8.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not.
+            if True, the quantization range is [0, 2^num_bits-1]. Otherwise, the quantization
+            range is [1, 2^num_bits-1]. Default: False.
+
+    Inputs:
+        - **gradients** (Tensor) - The gradient above the FakeQuantWithMinMaxVars.
+        - **x** (Tensor) - Float32 tensor representing the shape of the output tensor.
+        - **min** (Tensor) - Value of the min range of the input data x.
+        - **max** (Tensor) - Value of the max range of the input data x.
+
+    Outputs:
+        - **backprops_wrt_x** (Tensor) - The gradient of input x, with the same shape date type as input x.
+        - **backprops_wrt_min** (Tensor) - The gradient of input min, with the same shape date type as input min.
+        - **backprops_wrt_max** (Tensor) - The gradient of input max, with the same shape date type as input max.
+
+    Examples:
+        >>> gradients = Tensor(np.random.rand(3, 16, 3, 4), mstype.float32)
+        >>> input_tensor = Tensor(np.random.rand(3, 16, 3, 4), mstype.float32)
+        >>> min_tensor = Tensor(np.array([-6, -1, -2, -3]), mstype.float32)
+        >>> max_tensor = Tensor(np.array([6, 1, 2, 3]), mstype.float32)
+        >>> x_gradient, min_gradient, max_gradient = FakeQuantWithMinMaxVarsPerChannelGradient(
+        >>>                                          num_bits=8, narrow_range=False)(
+        >>>                                          gradients, input_tensor, min_tensor, max_tensor)
+        >>> x_gradient   shape: (3, 16, 3, 4)  data type: mstype.float32
+        >>> min_gradient shape: (4,)           data type: mstype.float32
+        >>> max_gradient shape: (4,)           data type: mstype.float32
+    """
+    @prim_attr_register
+    def __init__(self,
+                 num_bits=8,
+                 narrow_range=False):
+        self.num_bits = validator.check_positive_int(num_bits, 'num_bits', self.name)
+        self.num_bits = validator.check_int_range(self.num_bits, 2, 16, Rel.INC_BOTH, 'num_bits', self.name)
+        self.narrow_range = validator.check_value_type(
+            'narrow_range', narrow_range, (bool,), self.name)
+
+    def infer_shape(self, dout_shape, x_shape, min_shape, max_shape):
+        validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
+        validator.check("dout shape", dout_shape, "x shape", x_shape, Rel.EQ, self.name)
+        validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
+        validator.check_integer("min shape", len(min_shape), 1, Rel.EQ, self.name)
+        validator.check("min shape", min_shape[0], "x shape", x_shape[-1], Rel.EQ, self.name)
+        return x_shape, min_shape, max_shape
+
+    def infer_dtype(self, dout_type, x_type, min_type, max_type):
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same({'dout': dout_type}, valid_types, self.name)
+        validator.check_tensor_type_same({'x': x_type}, valid_types, self.name)
+        validator.check_tensor_type_same({'min': min_type}, valid_types, self.name)
+        validator.check_tensor_type_same({'max': max_type}, valid_types, self.name)
+        return x_type, min_type, max_type
 
 
 class FakeQuantPerLayer(PrimitiveWithInfer):

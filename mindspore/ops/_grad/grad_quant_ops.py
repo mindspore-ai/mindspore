@@ -34,6 +34,31 @@ def get_bprop_fakequant_with_minmax(self):
 
     return bprop
 
+@bprop_getters.register(Q.FakeQuantWithMinMaxVars)
+def get_bprop_fakequant_with_minmax_vars(self):
+    """Generate bprop for FakeQuantWithMinMaxVars for Ascend"""
+    op = Q.FakeQuantWithMinMaxVarsGradient(
+        num_bits=self.num_bits, narrow_range=self.narrow_range)
+
+    def bprop(x, x_min, x_max, out, dout):
+        dx = op(dout, x, x_min, x_max)
+        return dx, zeros_like(x_min), zeros_like(x_max)
+
+    return bprop
+
+
+@bprop_getters.register(Q.FakeQuantWithMinMaxVarsPerChannel)
+def get_bprop_fakequant_with_minmax_vars_perchannel(self):
+    """Generate bprop for FakeQuantWithMinMaxVarsPerChannel for Ascend"""
+    op = Q.FakeQuantWithMinMaxVarsPerChannelGradient(
+        num_bits=self.num_bits, narrow_range=self.narrow_range)
+
+    def bprop(x, x_min, x_max, out, dout):
+        dx = op(dout, x, x_min, x_max)
+        return dx, zeros_like(x_min), zeros_like(x_max)
+
+    return bprop
+
 
 @bprop_getters.register(Q.FakeQuantPerChannel)
 def get_bprop_fakequant_with_minmax_perchannel(self):
