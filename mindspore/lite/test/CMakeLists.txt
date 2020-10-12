@@ -11,14 +11,14 @@ string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-if(BUILD_CONVERTER)
+if(ENABLE_CONVERTER)
 set(CCSRC_SRC
         ## ccsrc
         ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
         )
-else(BUILD_CONVERTER)
+else(ENABLE_CONVERTER)
     set(TEST_LITE_SRC ${LITE_DIR}/src/common/log_adapter.cc)
     add_compile_definitions(USE_ANDROID_LOG)
 endif()
@@ -150,7 +150,7 @@ if (SUPPORT_GPU)
             )
 endif()
 ### converter
-if(BUILD_CONVERTER)
+if(ENABLE_CONVERTER)
     add_definitions(-DPRIMITIVE_WRITEABLE)
     add_definitions(-DUSE_GLOG)
     file(GLOB_RECURSE TEST_CASE_TFLITE_PARSERS_SRC
@@ -264,20 +264,17 @@ if (PLATFORM_ARM64)
     target_link_libraries(lite-test mslite_internal)
 endif()
 
+if (PLATFORM_ARM32 OR PLATFORM_ARM64)
+    target_link_libraries(lite-test log)
+endif()
+
 if (BUILD_MINDDATA STREQUAL "lite")
     target_link_libraries(lite-test
-	   minddata_eager_mid
+    	   minddata_eager_mid
            minddata-lite
            )
-    if (PLATFORM_ARM32 OR PLATFORM_ARM64)
-           target_link_libraries(lite-test log)
-    endif()
-elseif(BUILD_MINDDATA STREQUAL "full")
-    if (PLATFORM_ARM32 OR PLATFORM_ARM64)
-           target_link_libraries(lite-test log)
-    endif()
 endif()
-if (BUILD_CONVERTER)
+if (ENABLE_CONVERTER)
     target_link_libraries(lite-test
             anf_importer_mid
             anf_exporter_mid
@@ -287,13 +284,13 @@ if (BUILD_CONVERTER)
             graph_pass_mid
             fusion_mid
             quantizer_mid
+            proto_mid
             pthread
             mindspore::protobuf
             mindspore::eigen
             mindspore::json
             mindspore_core
             mindspore::glog
+            ${SECUREC_LIBRARY}
             )
-else(BUILD_CONVERTER)
-    target_link_libraries(lite-test log)
 endif()
