@@ -491,6 +491,10 @@ void OutputTransform8x7ReluUnitFp16(const float16_t *src_data, float16_t *dst_da
                                     int src_step, int dst_step, int out_c, int r_w, int r_h, int r_c);
 void OutputTransform8x7Relu6UnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
                                      int src_step, int dst_step, int out_c, int r_w, int r_h, int r_c);
+
+int SelectOutputUnitFp16(ConvParameter *conv_param);
+
+void CheckIfUseWinogradFp16(bool *use_winograd, int *output_unit, ConvParameter *conv_param);
 #ifdef __cplusplus
 }
 #endif

@@ -26,7 +26,7 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
-#include "nnacl/winograd_utils.h"
+#include "nnacl/fp16/winograd_utils_fp16.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -207,7 +207,7 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &
     conv_param->output_w_ = outputs.front()->Width();
     conv_param->output_channel_ = outputs.front()->Channel();
     conv_param->op_parameter_.thread_num_ = ctx->thread_num_;
-    CheckIfUseWinograd(&use_winograd, &out_unit, conv_param);
+    CheckIfUseWinogradFp16(&use_winograd, &out_unit, conv_param);
   }
 
   kernel::LiteKernel *kernel = nullptr;
