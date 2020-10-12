@@ -31,7 +31,7 @@ namespace kernel {
 bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes);
 
 struct KernelBuildTaskInfo {
-  AnfNode *node;
+  AnfNodePtr node;
   std::string processor;
   std::string json_name;
   std::vector<size_t> input_size_list;
@@ -53,15 +53,20 @@ class ParallelBuildManager {
                      const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
                      AnfNode *node) const;
   bool IsAllTaskFinish() const;
-  std::pair<int32_t, KernelModPtr> TaskFinishProcess(int32_t task_id, bool set_kernel_mod = true);
+  void PreTaskFinishProcess(int32_t task_id, const std::string &pre_build_result);
+  std::pair<int32_t, KernelModPtr> TaskFinishProcess(int32_t task_id, const std::string &build_ret,
+                                                     bool set_kernel_mod = true);
   KernelModPtr GenKernelMod(const string &json_name, const string &processor,
                             const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
                             const KernelPackPtr &kernel_pack) const;
 
   // Interactive with real backend, who could be implemented by Python.
-  int StartCompileOp(const nlohmann::json &kernel_json);
-  bool WaitOne(int *task_id, std::string *task_result, std::string *pre_build_result);
+  static int StartCompileOp(const nlohmann::json &kernel_json);
+  static bool WaitOne(int *task_id, std::string *task_result, std::string *build_result);
   void ResetTaskInfo();
+
+ private:
+  std::string ProcessBuildRetStr(const std::string &build_result);
 
  private:
   std::map<int32_t, AnfNodePtr> pre_task_map_;

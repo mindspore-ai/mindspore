@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 fused_mul_add_n_l2loss_op_info = TBERegOp("FusedMulAddNL2loss") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("fused_mul_addn_l2loss.so") \
+    .binfile_name("fused_mul_addn_l2_loss.so") \
     .compute_cost(10) \
-    .kernel_name("fused_mul_addn_l2loss") \
+    .kernel_name("fused_mul_addn_l2_loss") \
     .partial_flag(True) \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \

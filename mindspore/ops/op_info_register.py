@@ -354,6 +354,7 @@ class TBERegOp(RegOp):
         self.partial_flag_ = False
         self.reshape_type_ = ''
         self.dynamic_format_ = False
+        self.dynamic_shape_ = False
         self.op_pattern_ = ""
 
     def async_flag(self, async_flag):
@@ -431,6 +432,17 @@ class TBERegOp(RegOp):
         """
         self._is_bool(dynamic_format)
         self.dynamic_format_ = dynamic_format
+        return self
+
+    def dynamic_shape(self, dynamic_shape):
+        """
+        Whether the operator supports dynamic shape.
+
+        Args:
+            dynamic_shape (bool): Value of dynamic shape. Default: false.
+        """
+        self._is_bool(dynamic_shape)
+        self.dynamic_shape_ = dynamic_shape
         return self
 
     def op_pattern(self, pattern=None):

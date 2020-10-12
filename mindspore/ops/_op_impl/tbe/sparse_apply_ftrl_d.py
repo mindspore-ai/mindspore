@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 sparse_apply_ftrl_d_op_info = TBERegOp("SparseApplyFtrl") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("sparse_apply_ftrl.so") \
+    .binfile_name("sparse_apply_ftrl_d.so") \
     .compute_cost(10) \
-    .kernel_name("sparse_apply_ftrl") \
+    .kernel_name("sparse_apply_ftrl_d") \
     .partial_flag(True) \
     .attr("lr", "required", "float", "all") \
     .attr("l1", "required", "float", "all") \

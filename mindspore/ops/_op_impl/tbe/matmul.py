@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 matmul_op_info = TBERegOp("MatMul") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("matmul.so") \
+    .binfile_name("mat_mul.so") \
     .compute_cost(10) \
-    .kernel_name("matmul") \
+    .kernel_name("mat_mul") \
     .partial_flag(True) \
     .attr("transpose_x1", "required", "bool", "all") \
     .attr("transpose_x2", "required", "bool", "all") \

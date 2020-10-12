@@ -35,7 +35,6 @@ class TbeAdapter {
  public:
   TbeAdapter() = default;
   ~TbeAdapter() = default;
-  static void NormalizeFuncName(std::string *func_name);
 
   static void InputOrderPass(const std::string &op_name, std::vector<std::vector<nlohmann::json>> const &inputs_list,
                              nlohmann::json *inputs_json);

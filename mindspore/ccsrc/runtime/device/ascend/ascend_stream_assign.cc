@@ -34,7 +34,7 @@ const uint32_t kHcomMaxTask = 5;
 const uint32_t kCommonMaxTask = 350;
 
 void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) {
-  if (IsTaskSink()) {
+  if (IsTaskSink() && !graph_ptr->is_dynamic_shape()) {
     Reset();
     SetLoopSink();
     ReorderIndependentOrders(graph_ptr);

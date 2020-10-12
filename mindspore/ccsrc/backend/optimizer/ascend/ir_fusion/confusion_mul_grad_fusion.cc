@@ -84,6 +84,9 @@ bool QuitFusion(const FuncGraphPtr &graph, const AnfNodePtr &mul0_anf, const Anf
     MS_LOG(INFO) << "mul's second input is not addn";
     return true;
   }
+  if (AnfAlgo::IsDynamicShape(addn)) {
+    return true;
+  }
   std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(addn, 0);
   if (shape.size() != 2 || !(shape[1] == 1024 || shape[1] == 768)) {
     MS_LOG(INFO) << "Addn's infer shape is not equal [x,1024] or [x,768]";

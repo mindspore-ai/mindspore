@@ -21,7 +21,7 @@ resize_nearest_neighbor_grad_op_info = TBERegOp("ResizeNearestNeighborGrad") \
     .async_flag(False) \
     .binfile_name("resize_nearest_neighbor_grad_d.so") \
     .compute_cost(10) \
-    .kernel_name("resize_nearest_neighbor_grad_d") \
+    .kernel_name("resize_nearest_neighbor_v2_grad_d") \
     .partial_flag(True) \
     .attr("size", "required", "listInt", "all") \
     .attr("align_corners", "optional", "bool", "all") \

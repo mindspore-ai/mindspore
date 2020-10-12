@@ -27,6 +27,10 @@
 #include "utils/symbolic.h"
 #include "utils/shape_utils.h"
 
+namespace {
+constexpr auto kRankSize = "rank_size";
+}
+
 namespace mindspore {
 namespace abstract {
 AbstractBasePtr InferImplIdentity(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -361,6 +365,70 @@ AbstractBasePtr InferImplSparseTensorGetDenseShape(const AnalysisEnginePtr &, co
   auto sparse_tensor = CheckArg<AbstractSparseTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(sparse_tensor->dense_shape());
   return sparse_tensor->dense_shape();
+}
+
+AbstractBasePtr InferImplAllReduce(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(x->shape()->shape()));
+}
+
+AbstractBasePtr InferImplBroadcast(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(x->shape()->shape()));
+}
+
+AbstractBasePtr InferImplAllGather(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  auto tmp_shape = x->shape()->shape();
+  if (!primitive->HasAttr(kRankSize)) {
+    MS_LOG(EXCEPTION) << "Primitive don't have rank_size attr";
+  }
+  auto rank_size = GetValue<int>(primitive->GetAttr(kRankSize));
+  if (rank_size == 0) {
+    MS_LOG(EXCEPTION) << "rank_size is 0";
+  }
+  if (tmp_shape.empty()) {
+    MS_LOG(EXCEPTION) << "shape size is 0";
+  }
+  if (tmp_shape[0] % rank_size != 0) {
+    MS_LOG(EXCEPTION) << "first dimension of x should be divided by rank_size";
+  }
+  tmp_shape[0] = tmp_shape[0] / rank_size;
+  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(tmp_shape));
+}
+
+AbstractBasePtr InferImplReduceScatter(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  auto tmp_shape = x->shape()->shape();
+  if (!primitive->HasAttr(kRankSize)) {
+    MS_LOG(EXCEPTION) << "Primitive don't have rank_size attr";
+  }
+  auto rank_size = GetValue<int>(primitive->GetAttr(kRankSize));
+  if (tmp_shape.empty()) {
+    MS_LOG(EXCEPTION) << "shape size is 0";
+  }
+  tmp_shape[0] = IntMulWithOverflowCheck(tmp_shape[0], rank_size);
+  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(tmp_shape));
 }
 }  // namespace abstract
 }  // namespace mindspore

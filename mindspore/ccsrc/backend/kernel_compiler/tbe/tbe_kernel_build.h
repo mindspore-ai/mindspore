@@ -38,7 +38,7 @@ class TbeKernelBuild {
 
  public:
   static bool GetIOSize(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
-                        std::vector<size_t> *output_size_list);
+                        std::vector<size_t> *output_size_list, const AnfNodePtr &anf_node);
   // Ub Fuison
   static bool GenFusionScopeJson(const std::vector<AnfNodePtr> &input_nodes,
                                  const std::vector<AnfNodePtr> &compute_nodes, nlohmann::json *fusion_json,

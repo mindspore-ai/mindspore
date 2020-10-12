@@ -53,6 +53,9 @@ CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
 
   // ReluV2's 2rd output is mask whose data type is uint8
   TypeId mask_dtype = kNumberTypeUInt8;
+  if (AnfAlgo::IsDynamicShape(relu)) {
+    return nullptr;
+  }
   std::vector<size_t> mask_shape = AnfAlgo::GetOutputInferShape(relu, 0);
   if (mask_shape.size() != 4) {
     MS_LOG(DEBUG) << "relu's infer shape size not equal 4";

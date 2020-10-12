@@ -431,7 +431,7 @@ class Reshape(PrimitiveWithInfer):
         return out
 
 
-class Shape(PrimitiveWithInfer):
+class Shape(Primitive):
     """
     Returns the shape of input tensor.
 
@@ -452,13 +452,6 @@ class Shape(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Shape"""
 
-    def __infer__(self, x):
-        validator.check_subclass("input_x", x['dtype'], mstype.tensor, self.name)
-        out = {'shape': (),
-               'dtype': mstype.tuple_,
-               'value': tuple(x['shape'])}
-        return out
-
 
 class DynamicShape(Primitive):
     """
@@ -478,8 +471,10 @@ class DynamicShape(Primitive):
 
     @prim_attr_register
     def __init__(self):
-        """Initialize Shape"""
-
+        """init Shape"""
+        self.init_prim_io_names(inputs=['tensor'], outputs=['output'])
+        self.add_prim_attr('is_dynamic_shape', True)
+        self.add_prim_attr("dynamic_shape_depends", [0])
 
 class Squeeze(PrimitiveWithInfer):
     """
@@ -643,6 +638,7 @@ class GatherV2(PrimitiveWithCheck):
     def __init__(self):
         """Initialize index_select"""
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
+        self.add_prim_attr("dynamic_shape_depends", [2,])
 
     def __check__(self, params, indices, axis):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
@@ -652,6 +648,17 @@ class GatherV2(PrimitiveWithCheck):
         params_shp = params['shape']
         rank = len(params_shp)
         validator.check_int_range("axis", axis_v, -rank, rank, Rel.INC_LEFT, self.name)
+
+        if axis_v < 0:
+            axis_v += rank
+        out_shape = params_shp[:axis_v] + indices['shape'] + params_shp[axis_v + 1:]
+        out = {'shape': out_shape,
+               'dtype': params['dtype'],
+               'value': None}
+        if 'min_shape' in indices and 'max_shape' in indices:
+            out['min_shape'] = params_shp[:axis_v] + indices['min_shape'] + params_shp[axis_v + 1:]
+            out['max_shape'] = params_shp[:axis_v] + indices['max_shape'] + params_shp[axis_v + 1:]
+        return out
 
 
 class SparseGatherV2(GatherV2):
@@ -1475,6 +1482,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
     def __init__(self):
         """Initialize UnsortedSegmentSum"""
         self.init_prim_io_names(inputs=['x', 'segment_ids', 'num_segments'], outputs=['y'])
+        self.add_prim_attr("dynamic_shape_depends", [2,])
 
     def __infer__(self, x, segment_ids, num_segments):
         x_type = x['dtype']
@@ -1494,11 +1502,24 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         for i, value in enumerate(segment_ids_shp):
             validator.check("ids[%d]" % i, value, 'input[%d]' % i, x_shp[i], Rel.EQ, self.name)
         num_segments_v = num_segments['value']
-        validator.check_value_type('num_segments', num_segments_v, [int], self.name)
-        validator.check_positive_int(num_segments_v, "num_segments", self.name)
-        shp = [num_segments_v]
+        num_segments_type = num_segments['dtype']
+        validator.check_subclass("num_segments", num_segments_type, [mstype.tensor, mstype.number], self.name)
+        if isinstance(num_segments_type, type(mstype.tensor)):
+            validator.check_tensor_type_same({"num_segments": num_segments_type}, [mstype.int32], self.name)
+            shp = [-1]
+        else:
+            validator.check_value_type('num_segments', num_segments_v, [int], self.name)
+            validator.check_positive_int(num_segments_v, "num_segments", self.name)
+            shp = [num_segments_v]
+
         shp += x_shp[segment_ids_shp_len:]
+        if 'max_shape' in x:
+            output_max_shape = x['max_shape']
+        else:
+            output_max_shape = x_shp
         out = {'shape': shp,
+               'max_shape': output_max_shape,
+               'min_shape': [1] * segment_ids_shp_len + x_shp[segment_ids_shp_len:],
                'dtype': mstype.tensor_type(x_type.element_type()),
                'value': None}
         return out

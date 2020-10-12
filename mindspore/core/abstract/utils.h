@@ -48,6 +48,8 @@ bool CheckType(const TypePtr &expected_type, const TypePtr &x);
 
 int GetPositiveAxis(int axis_value, size_t increment);
 
+std::vector<int> BroadcastShape(std::vector<int> shpx, std::vector<int> shpy);
+
 // Get broadcasted shape for binary element-wise operation
 ShapePtr GetBroadcastShape(const std::string &op, const AbstractTensorPtr &tensor_x, const AbstractTensorPtr &tensor_y);
 }  // namespace abstract

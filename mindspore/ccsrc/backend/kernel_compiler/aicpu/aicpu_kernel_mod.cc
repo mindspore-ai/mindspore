@@ -26,8 +26,13 @@
 #include "utils/convert_utils.h"
 #include "backend/kernel_compiler/aicpu/aicpu_util.h"
 #include "utils/ms_context.h"
+#include "runtime/device/ascend/executor/ai_cpu_dynamic_kernel.h"
+#include "runtime/device/kernel_runtime.h"
+#include "runtime/device/ascend/executor/host_dynamic_kernel.h"
 
 using AicpuTaskInfoPtr = std::shared_ptr<ge::model_runner::AicpuTaskInfo>;
+using AicpuDynamicKernel = mindspore::device::ascend::AiCpuDynamicKernel;
+using HostDynamicKernel = mindspore::device::ascend::HostDynamicKernel;
 
 namespace mindspore {
 namespace kernel {
@@ -93,7 +98,7 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
   param_len += node_def_len;
   param_len += sizeof(uint32_t);
 
-  AicpuParamHead aicpu_param_head;
+  AicpuParamHead aicpu_param_head{};
   aicpu_param_head.length = param_len;
   aicpu_param_head.ioAddrNum = io_addrs_num;
 
@@ -177,6 +182,16 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
 
   MS_LOG(INFO) << "AicpuOpKernelMod GenTask end";
   return {task_info_ptr};
+}
+
+device::DynamicKernelPtr AicpuOpKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
+  AddressPtrList kernel_inputs;
+  AddressPtrList kernel_workspaces;
+  AddressPtrList kernel_outputs;
+  device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+
+  CreateCpuKernelInfo(kernel_inputs, kernel_outputs);
+  return std::make_shared<AicpuDynamicKernel>(stream_ptr, cnode_ptr, args_, ext_info_, node_so_, node_name_);
 }
 }  // namespace kernel
 }  // namespace mindspore

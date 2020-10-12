@@ -21,7 +21,7 @@ apply_adam_op_info = TBERegOp("Adam") \
     .async_flag(False) \
     .binfile_name("apply_adam.so") \
     .compute_cost(10) \
-    .kernel_name("apply_adam") \
+    .kernel_name("apply_adam_d") \
     .partial_flag(True) \
     .attr("use_locking", "optional", "bool", "true,false", "false") \
     .attr("use_nesterov", "optional", "bool", "true,false", "false") \

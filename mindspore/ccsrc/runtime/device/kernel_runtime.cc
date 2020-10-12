@@ -290,6 +290,7 @@ void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value
 void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  MS_LOG(INFO) << "AssignStaticMemoryInput start";
   auto graph_inputs = graph->inputs();
   auto graph_valid_input = graph->valid_inputs();
   graph_inputs.insert(graph_inputs.end(), graph->child_graph_result().begin(), graph->child_graph_result().end());
@@ -334,6 +335,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
       }
       auto tensor_size = CountNodeDeviceMemorySize(item, index);
       auto address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
+      MS_LOG(DEBUG) << "Malloc static memory for " << item->fullname_with_scope();
       if (mem_manager_->MallocMem(kStaticMem, tensor_size, address) == nullptr) {
         MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
       }
@@ -342,10 +344,12 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
       AnfAlgo::SetOutputAddr(address, index, item.get());
     }
   }
+  MS_LOG(INFO) << "AssignStaticMemoryInput end";
 }
 
 void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "AssignStaticMemoryOutput start";
   auto nodes = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
   std::vector<session::KernelWithIndex> non_communication_op;
   // Assign Communicate Op Memory firstly.
@@ -363,8 +367,10 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph *graph) 
   }
 
   for (const auto &item_with_index : non_communication_op) {
+    MS_LOG(DEBUG) << "AssignNodeOutputMem for " << item_with_index.first->fullname_with_scope();
     AssignNodeOutputMem(kStaticMem, item_with_index.first, SizeToInt(item_with_index.second));
   }
+  MS_LOG(INFO) << "AssignStaticMemoryOutput end";
 }
 
 void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph *graph) {
@@ -553,6 +559,7 @@ void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, in
       MS_LOG(INFO) << "Already malloc index:" << i;
       continue;
     }
+    MS_LOG(DEBUG) << "Assign Node:" << node->fullname_with_scope() << " output memeory size:" << output_sizes[i];
     std::string output_format = AnfAlgo::GetOutputFormat(node, i);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(node, i);
     auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type);
@@ -612,6 +619,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
 void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  MS_LOG(INFO) << "AssignStaticMemoryValueNode start";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   for (auto &value_node : graph->graph_value_nodes()) {
@@ -622,6 +630,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
     }
     auto &node_value = value_node->value();
     MS_EXCEPTION_IF_NULL(node_value);
+    MS_LOG(DEBUG) << "Malloc memeory for " << value_node->fullname_with_scope();
     if (node_value->isa<Tensor>() || node_value->isa<ValueTuple>()) {
       AssignValueNodeTensor(value_node, node_value, 0);
     } else if (node_value->isa<StringImm>()) {
@@ -643,6 +652,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
       }
     }
   }
+  MS_LOG(INFO) << "AssignStaticMemoryValueNode end";
 }
 
 void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {

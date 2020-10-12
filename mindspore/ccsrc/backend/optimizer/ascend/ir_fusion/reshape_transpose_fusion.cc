@@ -50,6 +50,9 @@ const AnfNodePtr ReshapeTransposeFusion::Process(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(transpose_cnode);
   auto reshape_cnode = CheckAnfNodeIfCNodeAndInputSize(transpose_cnode->input(1), kBackendReshapeInputNum);
   MS_EXCEPTION_IF_NULL(reshape_cnode);
+  if (AnfAlgo::IsDynamicShape(transpose_cnode) || AnfAlgo::IsDynamicShape(reshape_cnode)) {
+    return nullptr;
+  }
   std::vector<size_t> reshape_input0_shape = AnfAlgo::GetPrevNodeOutputInferShape(reshape_cnode, 0);
   std::vector<size_t> transpose_output0_shape = AnfAlgo::GetOutputInferShape(transpose_cnode, 0);
   if (!CheckShapeDimInfo(reshape_input0_shape) || !CheckShapeDimInfo(transpose_output0_shape)) {

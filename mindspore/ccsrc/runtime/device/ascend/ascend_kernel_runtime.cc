@@ -46,12 +46,22 @@
 #ifdef MEM_REUSE_DEBUG
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #endif
+#include "runtime/device/ascend/executor/tiling/op_tiling_calculater.h"
+#include "runtime/device/ascend/executor/executor_callback.h"
+#include "runtime/device/ascend/executor/hccl_dynamic_kernel.h"
+#include "profiler/device/ascend/ascend_profiling.h"
+#include "profiler/device/ascend/profiling_context.h"
+#include "profiler/device/ascend/rt_callback_manager.h"
 
 using ge::model_runner::ModelRunner;
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingUtils;
 using mindspore::device::ascend::tasksink::TaskGenerator;
 using mindspore::kernel::tbe::TbeUtils;
+using mindspore::profiler::ascend::AscendProfiler;
+using mindspore::profiler::ascend::CallbackManager;
+using mindspore::profiler::ascend::GetTid;
+using mindspore::profiler::ascend::kCallback;
 using std::vector;
 
 constexpr uint32_t kTupleTaskId = 0;
@@ -135,6 +145,8 @@ void AscendKernelRuntime::ClearGraphModelMap() {
   // tell users which dump kernel name not used
   DumpJsonParser::GetInstance().PrintUnusedKernel();
 
+  graph_dynamic_kernel_map_.clear();
+
   for (auto &iter : graph_model_map_) {
     MS_LOG(INFO) << "Ge UnloadModel " << iter.first;
     auto ret = ModelRunner::Instance().UnloadModel(iter.first);
@@ -158,6 +170,13 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std
     graph_data_dumper_.erase(dumper_iter);
   } else {
     MS_LOG(DEBUG) << "GraphId:" << graph_id << " not found";
+  }
+
+  MS_LOG(DEBUG) << "Clear graph:" << graph_id << " dynamic kernels";
+  if (auto dynamic_kernel_iter = graph_dynamic_kernel_map_.find(graph_id);
+      dynamic_kernel_iter != graph_dynamic_kernel_map_.end()) {
+    MS_LOG(DEBUG) << "Start Clear graph:" << graph_id << " dynamic kernel";
+    graph_dynamic_kernel_map_.erase(dynamic_kernel_iter);
   }
 
   MS_LOG(DEBUG) << "Clear graph:" << graph_id << " runtime resource";
@@ -233,6 +252,7 @@ bool AscendKernelRuntime::Init() {
     InnerSetContext();
     return true;
   }
+  OpTilingCalculater::GetInstance().Init();
   // Start up profiling before rtSetDevice
   bool ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
   if (!ret) {
@@ -342,6 +362,11 @@ bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
   if (!is_task_sink) {
     return true;
   }
+  // Do HcomExecutorInitialize
+  if (graph->is_dynamic_shape() && !HcclExecutorManager::GetInstance().Initialize()) {
+    MS_LOG(ERROR) << "Init Hccl Executor Failed";
+    return false;
+  }
   if (!GenTask(graph)) {
     return false;
   }
@@ -351,8 +376,35 @@ bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
   return true;
 }
 
+bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "GenDynamicKernel start";
+  auto cnode_list = graph->execution_order();
+  std::vector<DynamicKernelPtr> dynamic_kernels;
+  for (const auto &cnode : cnode_list) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    MS_LOG(INFO) << "Generate node:" << cnode->fullname_with_scope() << " dynamic kernel";
+    auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
+    auto dynamic_kernel = kernel_mod->GenDynamicKernel(cnode, stream_);
+    MS_EXCEPTION_IF_NULL(dynamic_kernel);
+    dynamic_kernel->Initialize();
+    dynamic_kernels.emplace_back(dynamic_kernel);
+  }
+  auto ret = graph_dynamic_kernel_map_.try_emplace(graph->graph_id(), dynamic_kernels);
+  if (!ret.second) {
+    MS_LOG(ERROR) << "Graph:" << graph->graph_id() << " already generator executor";
+    return false;
+  }
+  MS_LOG(INFO) << "GenDynamicKernel end";
+  return true;
+}
+
 bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   InnerSetContext();
+  if (graph->is_dynamic_shape()) {
+    MS_LOG(INFO) << "Dynamic Shape Graph Generate Dynamic kernel";
+    return GenDynamicKernel(graph);
+  }
   if (graph == nullptr) {
     MS_EXCEPTION(NotExistsError) << "session::KernelGraph is NULL!";
   }
@@ -407,6 +459,11 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
 
 bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   InnerSetContext();
+  if (graph->is_dynamic_shape()) {
+    MS_LOG(INFO) << "Dynamic Shape Graph Skip Load Task Step";
+    return true;
+  }
+
   if (graph == nullptr) {
     MS_EXCEPTION(NotExistsError) << "Null pointer graph, LoadTask failed. ";
   }
@@ -520,9 +577,70 @@ bool AscendKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink, De
   return ret;
 }
 
+bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "RunExecutorAsync start. GraphId:" << graph->graph_id();
+
+  auto iter = graph_dynamic_kernel_map_.find(graph->graph_id());
+  if (iter == graph_dynamic_kernel_map_.end()) {
+    MS_LOG(ERROR) << "GraphId:" << graph->graph_id() << " Not Found! Please generator executor first";
+    return false;
+  }
+
+  // Profiling Init
+  auto &async_profiler = AscendProfiler::GetInstance();
+  auto &rt_callback = CallbackManager::GetInstance(stream_);
+  rt_callback.Init();
+
+  auto dynamic_kernels = iter->second;
+  for (const auto &dynamic_kernel : dynamic_kernels) {
+    if (dynamic_kernel->have_depends()) {
+      MS_LOG(INFO) << "Match Dynamic Kernel, Start SyncStream";
+      if (!SyncStream()) {
+        MS_LOG(ERROR) << "SyncStream failed";
+        return false;
+      }
+    }
+
+    if (dynamic_kernel->is_dynamic_shape()) {
+      ExecutorCallback::GetInstance().Consume();
+      dynamic_kernel->InferShape();
+      dynamic_kernel->UpdateArgs();
+    }
+
+    // Enable profiling trace point start
+    rt_callback.RegisterCallback(
+      [&]() { RECORD_CALLBACK_EVENT(&async_profiler, dynamic_kernel->GetKernelName().c_str(), "[Callback] start"); });
+
+    dynamic_kernel->Execute();
+
+    // Enable profiling trace point end
+    rt_callback.RegisterCallback(
+      [&]() { RECORD_CALLBACK_EVENT(&async_profiler, dynamic_kernel->GetKernelName().c_str(), "[Callback] end"); });
+
+    ExecutorCallback::GetInstance().RegistCallback([&dynamic_kernel] { dynamic_kernel->PostExecute(); });
+  }
+
+  if (!SyncStream()) {
+    MS_LOG(ERROR) << "SyncStream failed";
+    return false;
+  }
+  ExecutorCallback::GetInstance().Consume();
+
+  rt_callback.Destroy();
+  async_profiler.Dump(std::cout);
+  async_profiler.Reset();
+  return true;
+}
+
 bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
   InnerSetContext();
   MS_EXCEPTION_IF_NULL(graph);
+  if (graph->is_dynamic_shape()) {
+    MS_LOG(INFO) << "Dynamic Shape Graph Run Task Async";
+    return RunDynamicKernelAsync(graph);
+  }
+
   MS_LOG(INFO) << "RunTask start. GraphId:" << graph->graph_id();
 
   auto context_ptr = MsContext::GetInstance();
@@ -657,7 +775,12 @@ bool AscendKernelRuntime::DestroyHccl() {
     MS_LOG(INFO) << "Hccl is not enable, no need to close.";
     return true;
   }
+  // Dynamic Shape Hccl Finalize
+  if (!HcclExecutorManager::GetInstance().Finalize()) {
+    MS_LOG(ERROR) << "Dynamic Shape Hccl Finalize Failed";
+  }
   HcclResult res = hcom_destroy();
+
   if (res != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "Hccl destroy failed";
     return false;

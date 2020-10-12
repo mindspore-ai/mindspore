@@ -25,9 +25,18 @@
 #include "ir/tensor.h"
 #include "abstract/dshape.h"
 #include "utils/log_adapter.h"
+#include "runtime/device/executor/dynamic_kernel.h"
 
 namespace mindspore {
-enum KernelType : int { UNKNOWN_KERNEL_TYPE = 0, AKG_KERNEL, AICPU_KERNEL, RT_KERNEL, HCCL_KERNEL, TBE_KERNEL };
+enum KernelType : int {
+  UNKNOWN_KERNEL_TYPE = 0,
+  AKG_KERNEL,
+  AICPU_KERNEL,
+  RT_KERNEL,
+  HCCL_KERNEL,
+  TBE_KERNEL,
+  HOST_KERNEL
+};
 
 namespace kernel {
 // Supported fusion type
@@ -69,7 +78,8 @@ struct KernelJsonInfo {
   std::vector<size_t> parameters;
   std::string sha256;
   std::vector<size_t> workspaces;
-  KernelJsonInfo() : block_dim(0) {}
+  uint32_t op_para_size;
+  KernelJsonInfo() : block_dim(0), op_para_size(0) {}
 };
 
 class KernelPack {
@@ -118,6 +128,7 @@ class KernelMod {
   virtual const std::vector<size_t> &GetWorkspaceSizeList() const = 0;
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
+  virtual device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) { return nullptr; }
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void ReleaseResource() {}
 

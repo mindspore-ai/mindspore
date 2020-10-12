@@ -21,7 +21,7 @@ matrix_diag_d_op_info = TBERegOp("MatrixSetDiag") \
     .async_flag(False) \
     .binfile_name("matrix_diag_d.so") \
     .compute_cost(10) \
-    .kernel_name("matrix_diag_d") \
+    .kernel_name("matrix_set_diag_d") \
     .partial_flag(True) \
     .input(0, "x", False, "required", "all") \
     .input(1, "diagonal", False, "required", "all") \

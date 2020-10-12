@@ -221,6 +221,12 @@ class AnfRuntimeAlgorithm {
   static bool IsDynamicShape(const AnfNodePtr &node);
   static bool IsCondControlKernel(const CNodePtr &node);
   static bool IsIndependentNode(const CNodePtr &node);
+  static bool GetBooleanAttr(const AnfNodePtr &node, const std::string &attr);
+  static void GetRealDynamicShape(const std::vector<size_t> &shape, NotNull<std::vector<int64_t> *> dynamic_shape);
+  static std::vector<int> GetInputMaxShape(const AnfNodePtr &anf_node, size_t index);
+  static std::vector<int> GetInputMinShape(const AnfNodePtr &anf_node, size_t index);
+  static std::vector<int> GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index);
+  static std::vector<int> GetOutputMinShape(const AnfNodePtr &anf_node, size_t index);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

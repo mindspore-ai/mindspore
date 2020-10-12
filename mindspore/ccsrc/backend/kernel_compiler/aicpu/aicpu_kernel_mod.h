@@ -31,6 +31,7 @@ class AicpuOpKernelMod : public AscendKernelMod {
 
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+  device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) override;
 
   void SetInputList(const std::vector<int64_t> &inputList);
   void SetOutputList(const std::vector<int64_t> &outputList);

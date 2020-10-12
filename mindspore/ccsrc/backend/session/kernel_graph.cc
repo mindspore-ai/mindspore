@@ -1201,6 +1201,17 @@ void KernelGraph::RemoveNodeFromGraph(const AnfNodePtr &node) {
   }
 }
 
+void KernelGraph::UpdateGraphDynamicAttr() {
+  for (const auto &cnode : execution_order_) {
+    if (AnfAlgo::IsDynamicShape(cnode)) {
+      MS_LOG(INFO) << "Update Graph Dynamic Attr";
+      is_dynamic_shape_ = true;
+      return;
+    }
+  }
+  is_dynamic_shape_ = false;
+}
+
 std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
 
 KernelGraph::~KernelGraph() {

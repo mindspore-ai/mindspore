@@ -15,14 +15,33 @@
  */
 
 #include "backend/kernel_compiler/hccl/hccl_kernel.h"
+
+#include <map>
 #include "runtime/device/ascend/tasksink/runtime_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 #include "utils/ms_context.h"
+#include "runtime/device/kernel_runtime.h"
+#include "runtime/device/ascend/executor/hccl_dynamic_kernel.h"
 
 using HcclTaskInfoPtr = std::shared_ptr<ge::model_runner::HcclTaskInfo>;
 using ge::model_runner::HcclTaskInfo;
 using mindspore::device::ascend::tasksink::RuntimeUtils;
+
+namespace {
+static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
+  {mindspore::kAllReduceOpName, mindspore::kHcomOpTypeAllReduce},
+  {mindspore::kAllGatherOpName, mindspore::kHcomOpTypeAllGather},
+  {mindspore::kBroadcastOpName, mindspore::kHcomOpTypeBroadcast},
+  {mindspore::kReduceScatterOpName, mindspore::kHcomOpTypeReduceScatter}};
+std::string MsOpNameToHcomOpType(const std::string &ms_op_type) {
+  auto iter = kMsOpNameToHcomHcclType.find(ms_op_type);
+  if (iter == kMsOpNameToHcomHcclType.end()) {
+    MS_LOG(EXCEPTION) << "Invalid MsOpType:" << ms_op_type;
+  }
+  return iter->second;
+}
+}  // namespace
 
 namespace mindspore {
 namespace kernel {
@@ -155,6 +174,31 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
     RuntimeUtils::HcomUnbindModel, RuntimeUtils::HcomDistribute, NeedDump());
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};
+}
+
+device::DynamicKernelPtr HcclKernel::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
+  AddressPtrList inputs;
+  AddressPtrList workspaces;
+  AddressPtrList outputs;
+  device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &inputs, &workspaces, &outputs);
+
+  std::string hccl_type = MsOpNameToHcomOpType(AnfAlgo::GetCNodeName(anf_node_));
+
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "Hccl kernel input is empty";
+  }
+  if (hccl_data_type_list_.empty()) {
+    MS_LOG(EXCEPTION) << "Hccl data type list is empty";
+  }
+  MS_EXCEPTION_IF_NULL(inputs.at(0));
+  auto input_data_addr = inputs.at(0)->addr;
+  MS_EXCEPTION_IF_NULL(outputs.at(0));
+  auto output_data_addr = outputs.at(0)->addr;
+  HcclDataType data_type = hccl_data_type_list_[0];
+
+  auto executor = std::make_shared<device::ascend::HcclDynamicKernel>(
+    hccl_type, input_data_addr, output_data_addr, hccl_count_, data_type, op_type_, root_id_, stream_ptr, cnode_ptr);
+  return executor;
 }
 }  // namespace kernel
 }  // namespace mindspore

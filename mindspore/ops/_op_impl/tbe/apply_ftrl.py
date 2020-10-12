@@ -21,7 +21,7 @@ apply_ftrl_op_info = TBERegOp("ApplyFtrl") \
     .async_flag(False) \
     .binfile_name("apply_ftrl.so") \
     .compute_cost(10) \
-    .kernel_name("apply_ftrl") \
+    .kernel_name("apply_ftrl_d") \
     .partial_flag(True) \
     .input(0, "var", False, "required", "all") \
     .input(1, "accum", False, "required", "all") \

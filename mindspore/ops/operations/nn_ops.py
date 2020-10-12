@@ -5122,6 +5122,8 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         self.l2 = validator.check_number_range("l2", l2, 0.0, float("inf"), Rel.INC_LEFT, self.name)
         self.lr_power = validator.check_number("lr_power", lr_power, 0, Rel.LE, self.name)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.init_prim_io_names(inputs=['var', 'accum', 'linear', 'grad', 'indices'],
+                                outputs=['var', 'accum', 'linear'])
 
     def check_shape(self, var_shape, accum_shape, linear_shape, grad_shape, indices_shape):
         validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)

@@ -219,6 +219,7 @@ if (ENABLE_D)
         set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
         set(ASCEND_DRIVER_BACK_PATH ${ASCEND_PATH}/driver/lib64/driver)
         set(ASCEND_RUNTIME_PATH ${ASCEND_PATH}/fwkacllib/lib64)
+        set(ASCEND_OPP_PATH ${ASCEND_PATH}/opp/op_impl/built-in/ai_core/tbe/op_tiling)
     endif()
 
     MESSAGE("USE DAV LIB PATH: ${ASCEND_PATH}")
@@ -228,7 +229,8 @@ if (ENABLE_D)
     find_library(TSDCLIENT tsdclient HINTS ${ASCEND_RUNTIME_PATH} ${ASCEND_DRIVER_BACK_PATH})
     find_library(DATATRANSFER datatransfer HINTS ${ASCEND_RUNTIME_PATH} ${ASCEND_DRIVER_BACK_PATH})
     find_library(PROFILING msprofiler ${ASCEND_RUNTIME_PATH})
-    target_link_libraries(mindspore ge_runtime ${CCE_LIB} ${RUNTIME_LIB} ${TSDCLIENT}  ${HCCL} ${DATATRANSFER})
+    find_library(OPTILING optiling ${ASCEND_OPP_PATH})
+    target_link_libraries(mindspore ge_runtime ${CCE_LIB} ${RUNTIME_LIB} ${TSDCLIENT}  ${HCCL} ${DATATRANSFER} ${OPTILING})
     target_link_libraries(mindspore -Wl,--start-group proto_input ${PROFILING} mindspore::protobuf -Wl,--end-group)
 elseif (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf mindspore::sentencepiece -Wl,--end-group)
@@ -258,6 +260,7 @@ if (ENABLE_D)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/fwkacllib/lib64)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/add-ons)
+    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
 elseif (ENABLE_GPU)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/cuda/lib64)
 endif ()
@@ -315,6 +318,8 @@ add_library(inference SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/session/infer_session.cc
         ${LOAD_ONNX_SRC}
         )
+
+set_target_properties(inference PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
         -Wl,--whole-archive mindspore proto_input -Wl,--no-whole-archive mindspore_gvar)
 

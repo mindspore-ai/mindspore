@@ -23,6 +23,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/tbe/tbe_adapter.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
+#include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
@@ -61,6 +62,7 @@ constexpr auto kJDataType = "data_type";
 constexpr auto kJOutputIndex = "output_index";
 constexpr auto kJOutputDesc = "output_desc";
 constexpr auto kJInputDesc = "input_desc";
+constexpr auto kJRange = "range";
 constexpr auto kVTypeInt = "int";
 constexpr auto kVTypeStr = "str";
 constexpr auto kVTypeBool = "bool";
@@ -89,24 +91,21 @@ constexpr auto kJKwdArgs = "kwds_args";
 constexpr auto kJListArgs = "list_args";
 constexpr auto kJSocVersion = "socVersion";
 constexpr auto kSOC_VERSION = "SOC_VERSION";
+constexpr auto kJIsDynamicShape = "is_dynamic_shape";
 
 bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspore::AnfNode> &anf_node,
                                                   nlohmann::json *kernel_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(kernel_json);
   std::string op_name = AnfAlgo::GetCNodeName(anf_node);
-  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kTBE);
+  auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, anf_node);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   (*kernel_json)[kPlatform] = kPlatTBE;
   (*kernel_json)[kGenModel] = kSingle;
   (*kernel_json)[kImplPath] = op_info_ptr->impl_path();
   nlohmann::json op_info_json;
-  if (op_info_ptr->impl_path().empty()) {
-    tbe::TbeAdapter::NormalizeFuncName(&op_name);
-  } else {
-    op_name = op_info_ptr->kernel_name();
-  }
-  op_info_json[kJName] = op_name;
+  op_info_json[kJIsDynamicShape] = tbe::TbeDynamicShapeUtil::GetDynamicShapeAttr(anf_node->cast<CNodePtr>());
+  op_info_json[kJName] = op_info_ptr->kernel_name();
   // generate inputs json
   nlohmann::json inputs_json;
   if (!GenTbeInputsJson(anf_node, op_info_ptr, &inputs_json)) {
@@ -180,6 +179,7 @@ bool TbeKernelJsonCreator::GenInputDescJson(const std::shared_ptr<AnfNode> &anf_
     input_desc_json[kJFormat] = format;
     input_desc_json[kJValid] = value;
     input_desc_json[kJParamType] = input_ptr->param_type();
+    input_desc_json[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index);
     input_list->emplace_back(input_desc_json);
   }
   return true;
@@ -359,8 +359,13 @@ void TbeKernelJsonCreator::GenOutputList(const std::shared_ptr<AnfNode> &anf_nod
   for (size_t i = 0; i < output_obj_num; i++) {
     auto dtype = GetDeviceOutputType(anf_node, *output_idx);
     auto format = GetDeviceOutputFormat(anf_node, *output_idx);
-    auto shape = GetDeviceOutputShape(anf_node, *output_idx);
-    std::vector<size_t> ori_shape = AnfAlgo::GetOutputInferShape(anf_node, *output_idx);
+
+    std::vector<int64_t> shape;
+    AnfAlgo::GetRealDynamicShape(GetDeviceOutputShape(anf_node, *output_idx), NOT_NULL(&shape));
+
+    std::vector<int64_t> ori_shape;
+    AnfAlgo::GetRealDynamicShape(AnfAlgo::GetOutputInferShape(anf_node, *output_idx), NOT_NULL(&ori_shape));
+    // std::vector<size_t> ori_shape = AnfAlgo::GetOutputInferShape(anf_node, *output_idx);
     if (ori_shape.empty()) {
       ori_shape.emplace_back(1);
     }
@@ -373,6 +378,7 @@ void TbeKernelJsonCreator::GenOutputList(const std::shared_ptr<AnfNode> &anf_nod
     output_obj[kJName] = output_ptr->name();
     output_obj[kJValid] = true;
     output_obj[kJParamType] = output_ptr->param_type();
+    output_obj[kJRange] = tbe::TbeDynamicShapeUtil::GetOutputDynamicRange(anf_node, *output_idx);
     output_list->emplace_back(output_obj);
     (*output_idx)++;
   }
@@ -575,48 +581,76 @@ std::string TbeKernelJsonCreator::GetDeviceOutputFormat(const AnfNodePtr &anf_no
   return format;
 }
 
+void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *input_size_list,
+                      const AnfNodePtr &anf_node) {
+  for (size_t i = 0; i < input_json.size(); i++) {
+    for (size_t m = 0; m < input_json[i].size(); m++) {
+      size_t size_i = 1;
+      if (input_json[i][m][kJValid] == false) {
+        std::string input_name = input_json[i][m][kJName];
+        MS_LOG(INFO) << "Input name:" << input_name << "is optional, valid is false.";
+        continue;
+      }
+      for (size_t j = 0; j < input_json[i][m][kJShape].size(); ++j) {
+        if (input_json[i][m][kJShape][j] == -1) {
+          auto input_max_shape = AnfAlgo::GetInputMaxShape(anf_node, i);
+          if (j >= input_max_shape.size()) {
+            MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
+          }
+          MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << input_max_shape[j];
+          size_i *= input_max_shape[j];
+          continue;
+        }
+        size_i *= static_cast<size_t>(input_json[i][m][kJShape][j]);
+      }
+      std::string dtype = input_json[i][m][kJDtype];
+      size_t nbyte = tbe::GetDtypeNbyte(dtype);
+      size_i *= nbyte;
+      input_size_list->push_back(size_i);
+    }
+  }
+}
+
+void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *output_size_list,
+                       const AnfNodePtr &anf_node) {
+  for (size_t i = 0; i < output_json.size(); i++) {
+    for (size_t m = 0; m < output_json[i].size(); m++) {
+      size_t size_i = 1;
+      if (output_json[i][m][kJValid] == false) {
+        std::string output_name = output_json[i][m][kJName];
+        MS_LOG(INFO) << "Output name:" << output_name << " is optional, valid is false.";
+        continue;
+      }
+      for (size_t j = 0; j < output_json[i][m][kJShape].size(); ++j) {
+        if (output_json[i][m][kJShape][j] == -1) {
+          auto output_max_shape = AnfAlgo::GetOutputMaxShape(anf_node, i);
+          if (j >= output_max_shape.size()) {
+            MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
+          }
+          MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << output_max_shape[j];
+          size_i *= output_max_shape[j];
+          continue;
+        }
+        size_i *= static_cast<size_t>(output_json[i][m][kJShape][j]);
+      }
+      std::string dtype = output_json[i][m][kJDtype];
+      size_t nbyte = tbe::GetDtypeNbyte(dtype);
+      size_i *= nbyte;
+      output_size_list->push_back(size_i);
+    }
+  }
+}
+
 bool TbeKernelBuild::GetIOSize(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
-                               std::vector<size_t> *output_size_list) {
+                               std::vector<size_t> *output_size_list, const AnfNodePtr &anf_node) {
   if (input_size_list == nullptr || output_size_list == nullptr) {
     MS_LOG(ERROR) << "Input size or output size is nullptr";
     return false;
   }
   input_size_list->clear();
   output_size_list->clear();
-  for (size_t i = 0; i < kernel_json[kJOpInfo][kJInputs].size(); i++) {
-    for (size_t m = 0; m < kernel_json[kJOpInfo][kJInputs][i].size(); m++) {
-      size_t size_i = 1;
-      if (kernel_json[kJOpInfo][kJInputs][i][m][kJValid] == false) {
-        std::string input_name = kernel_json[kJOpInfo][kJInputs][i][m][kJName];
-        MS_LOG(INFO) << "Input name:" << input_name << "is optional, valid is false.";
-        continue;
-      }
-      for (const auto &j : kernel_json[kJOpInfo][kJInputs][i][m][kJShape]) {
-        size_i *= static_cast<size_t>(j);
-      }
-      std::string dtype = kernel_json[kJOpInfo][kJInputs][i][m][kJDtype];
-      size_t nbyte = tbe::GetDtypeNbyte(dtype);
-      size_i *= nbyte;
-      input_size_list->push_back(size_i);
-    }
-  }
-  for (size_t i = 0; i < kernel_json[kJOpInfo][kJOutputs].size(); i++) {
-    for (size_t m = 0; m < kernel_json[kJOpInfo][kJOutputs][i].size(); m++) {
-      size_t size_i = 1;
-      if (kernel_json[kJOpInfo][kJOutputs][i][m][kJValid] == false) {
-        std::string output_name = kernel_json[kJOpInfo][kJOutputs][i][m][kJName];
-        MS_LOG(INFO) << "Output name:" << output_name << " is optional, valid is false.";
-        continue;
-      }
-      for (const auto &j : kernel_json[kJOpInfo][kJOutputs][i][m][kJShape]) {
-        size_i *= static_cast<size_t>(j);
-      }
-      std::string dtype = kernel_json[kJOpInfo][kJOutputs][i][m][kJDtype];
-      size_t nbyte = tbe::GetDtypeNbyte(dtype);
-      size_i *= nbyte;
-      output_size_list->push_back(size_i);
-    }
-  }
+  GetInputSizeList(kernel_json[kJOpInfo][kJInputs], input_size_list, anf_node);
+  GetOutputSizeList(kernel_json[kJOpInfo][kJOutputs], output_size_list, anf_node);
   return true;
 }
 
@@ -678,17 +712,18 @@ void TbeKernelBuild::GenFusionComputeCommonJson(const mindspore::CNodePtr &cnode
   MS_EXCEPTION_IF_NULL(fusion_kernel_name);
   // gen others
   auto origin_type = AnfAlgo::GetCNodeName(cnode);
+  auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(origin_type, cnode);
   // replace special op type for buffer fusion op
   auto type = GetRealOpType(origin_type);
   (*compute_op_str)[kJtype] = type;
-  tbe::TbeAdapter::NormalizeFuncName(&type);
-  (*compute_op_str)[kJFuncName] = type;
+  auto kernel_name = op_info_ptr->kernel_name();
+  (*compute_op_str)[kJFuncName] = kernel_name;
   (*compute_op_str)[kJModuleName] = std::string("impl.") + type;
   (*compute_op_str)[kJName] = cnode->fullname_with_scope();
   (*compute_op_str)[kJPattern] = GetNodeFusionType(cnode);
   (*compute_op_str)[kJPyModulePath] = "/usr/local/Ascend/opp/op_impl/build_in/ai_core/tbe";
   (void)(*fusion_kernel_name).append("_");
-  (void)(*fusion_kernel_name).append(type);
+  (void)(*fusion_kernel_name).append(kernel_name);
 }
 
 void TbeKernelBuild::GenFusionComputePreBuildJson(const mindspore::CNodePtr &cnode, nlohmann::json *compute_op_str) {
@@ -952,7 +987,7 @@ size_t TbeKernelBuild::GetOptionalInput(const mindspore::CNodePtr &cnode, bool i
   }
   MS_EXCEPTION_IF_NULL(cnode);
   auto node_name = AnfAlgo::GetCNodeName(cnode);
-  auto op_info = OpLib::FindOp(node_name, kTBE);
+  auto op_info = tbe::TbeDynamicShapeUtil::FindOp(node_name, cnode);
   MS_EXCEPTION_IF_NULL(cnode);
   if (op_info->inputs_ptr().size() < (cnode->inputs().size() - 1)) {
     MS_EXCEPTION(ArgumentError) << "op info error, node name:" << cnode->fullname_with_scope();

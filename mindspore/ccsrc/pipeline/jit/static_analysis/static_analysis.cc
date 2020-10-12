@@ -713,5 +713,16 @@ EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrLi
   auto eval_result = trivial_evaluator->EvalPrim(nullptr, arg_specs);
   return eval_result;
 }
+
+AbstractBasePtr CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto &prim_eval_implement_map = GetPrimitiveToEvalImplMap();
+  auto ret = prim_eval_implement_map.find(prim);
+  if (ret == prim_eval_implement_map.end()) {
+    MS_LOG(EXCEPTION) << "Get infer shape function failed, primitive name:" << prim->name()
+                      << " primitive type:" << prim->type_name();
+  }
+  return ret->second.impl_(nullptr, prim, args_spec_list);
+}
 }  // namespace abstract
 }  // namespace mindspore

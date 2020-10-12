@@ -223,6 +223,12 @@ constexpr auto kBasicLSTMCellOpName = "BasicLSTMCell";
 constexpr auto kDynamicRNNOpName = "DynamicRNN";
 constexpr auto kLSTMInputGradOpName = "LSTMInputGrad";
 
+// Hcom Op Type
+constexpr auto kHcomOpTypeAllReduce = "HcomAllReduce";
+constexpr auto kHcomOpTypeAllGather = "HcomAllGather";
+constexpr auto kHcomOpTypeBroadcast = "HcomBroadcast";
+constexpr auto kHcomOpTypeReduceScatter = "HcomReduceScatter";
+
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
 constexpr auto kAttrIsAICPUKernel = "is_AICPU_kernel";
@@ -301,6 +307,10 @@ constexpr auto kAttrNumSegments = "num_segments";
 constexpr auto kAttrBegin = "begin";
 constexpr auto kAttrSize = "size";
 constexpr auto kAttrIsDynamicShape = "is_dynamic_shape";
+constexpr auto kAttrInputIsDynamicShape = "input_is_dynamic_shape";
+constexpr auto kAttrOutputIsDynamicShape = "output_is_dynamic_shape";
+constexpr auto kAttrCompileInfo = "compile_info";
+constexpr auto kAttrFusionType = "fusion_type";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";

@@ -23,6 +23,7 @@
 #include "backend/kernel_compiler/kernel_query.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 
 namespace mindspore {
 namespace opt {
@@ -62,7 +63,7 @@ class KernelQuery {
     if (!node->isa<CNode>()) {
       return false;
     }
-    auto op_info = mindspore::kernel::OpLib::FindOp(AnfAlgo::GetCNodeName(node), kernel::kTBE);
+    auto op_info = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(AnfAlgo::GetCNodeName(node), node);
     if (op_info != nullptr) {
       return op_info->is_ref();
     }
@@ -75,8 +76,8 @@ class OpFinder {
  public:
   OpFinder() = default;
   virtual ~OpFinder() = default;
-  virtual int GetOpRegisteredOutputNum(const std::string &op_name) {
-    auto op_info = kernel::OpLib::FindOp(op_name, kernel::kTBE);
+  virtual int GetOpRegisteredOutputNum(const std::string &op_name, const CNodePtr &cnode) {
+    auto op_info = kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
     if (op_info == nullptr) {
       return -1;
     }

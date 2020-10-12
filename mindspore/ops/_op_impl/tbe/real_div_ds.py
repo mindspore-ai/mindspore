@@ -13,29 +13,27 @@
 # limitations under the License.
 # ============================================================================
 
-"""ReduceMeanD op"""
+"""RealDiv op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-reduce_mean_d_op_info = TBERegOp("ReduceMeanD") \
+realdiv_op_info = TBERegOp("RealDiv") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("reduce_mean_d.so") \
+    .binfile_name("realdiv.so") \
     .compute_cost(10) \
-    .kernel_name("reduce_mean_d") \
+    .kernel_name("real_div") \
     .partial_flag(True) \
-    .attr("axis", "optional", "listInt", "all") \
-    .attr("keep_dims", "optional", "bool", "all") \
+    .dynamic_shape(True) \
     .input(0, "x", False, "required", "all") \
-    .output(0, "y", False, "required", "all") \
-    .op_pattern("reduce") \
-    .dtype_format(DataType.I8_None, DataType.I8_None) \
-    .dtype_format(DataType.U8_None, DataType.U8_None) \
-    .dtype_format(DataType.F16_None, DataType.F16_None) \
-    .dtype_format(DataType.F32_None, DataType.F32_None) \
+    .input(1, "y", False, "required", "all") \
+    .output(0, "z", False, "required", "all") \
+    .op_pattern("broadcast") \
+    .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F16_None) \
+    .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None) \
     .get_op_info()
 
 
-@op_info_register(reduce_mean_d_op_info)
-def _reduce_mean_d_tbe():
-    """Conv2D TBE register"""
+@op_info_register(realdiv_op_info)
+def _real_div_ds_tbe():
+    """RealDiv TBE register"""
     return

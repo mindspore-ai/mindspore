@@ -46,7 +46,8 @@ inline int64_t SizeToLong(size_t u) {
 
 inline size_t IntToSize(int u) {
   if (u < 0) {
-    MS_LOG(EXCEPTION) << "The int value(" << u << ") is less than 0.";
+    MS_LOG(WARNING) << "The int value(" << u << ") is less than 0.";
+    return SIZE_MAX;
   }
   return static_cast<size_t>(u);
 }

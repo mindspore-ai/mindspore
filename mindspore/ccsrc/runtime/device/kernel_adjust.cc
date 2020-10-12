@@ -124,6 +124,10 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
     return;
   }
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  if (kernel_graph_ptr->is_dynamic_shape()) {
+    MS_LOG(INFO) << "KernelGraph:" << kernel_graph_ptr->graph_id() << " is dynamic shape, skip InsertSwitchLoop";
+    return;
+  }
   bool eos_mode = ConfigManager::GetInstance().iter_num() == INT32_MAX;
   ReorderGetNext(kernel_graph_ptr);
   std::map<std::string, mindspore::ParameterPtr> switch_loop_input;
@@ -513,6 +517,10 @@ bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph
     return true;
   }
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  if (kernel_graph_ptr->is_dynamic_shape()) {
+    MS_LOG(INFO) << "Skip StepLoadCtrlInputs";
+    return true;
+  }
   auto input_nodes = kernel_graph_ptr->inputs();
   std::vector<tensor::TensorPtr> inputs;
   LoadSwitchInputs(&inputs);

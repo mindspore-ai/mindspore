@@ -21,7 +21,7 @@ square_sum_all_op_info = TBERegOp("SquareSumAll") \
     .async_flag(False) \
     .binfile_name("square_sum_all.so") \
     .compute_cost(10) \
-    .kernel_name("square_sum") \
+    .kernel_name("square_sum_all") \
     .partial_flag(True) \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \

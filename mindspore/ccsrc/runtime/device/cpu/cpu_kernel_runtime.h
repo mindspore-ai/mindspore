@@ -44,6 +44,8 @@ class CPUKernelRuntime : public KernelRuntime {
                        VectorRef *outputs);
   void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
   void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
+  bool GenDynamicKernel(const session::KernelGraph *graph) override { return true; }
+  bool RunDynamicKernelAsync(const session::KernelGraph *graph) override { return true; }
 
  protected:
   bool SyncStream() override { return true; };

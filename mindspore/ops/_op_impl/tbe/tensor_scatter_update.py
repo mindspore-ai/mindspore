@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 tensor_scatter_update_op_info = TBERegOp("TensorScatterUpdate") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
-    .binfile_name("tensor_scatter_update.so") \
+    .binfile_name("scatter_update.so") \
     .compute_cost(10) \
-    .kernel_name("tensor_scatter_update") \
+    .kernel_name("scatter_update") \
     .partial_flag(True) \
     .input(0, "x", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \

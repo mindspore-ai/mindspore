@@ -55,18 +55,19 @@ struct AicpuParamHead {
   uint64_t extInfoAddr;    // extInfo address
 } __attribute__((packed));
 
-const uint32_t kExtInfoHeadSize = 8;
-struct ExtInfo {
-  int32_t infoType;  // extend type
-  uint32_t infoLen;  // length for infoMsg
-  char infoMsg[0];   // extend value
-} __attribute__((packed));
-
 // Extent info ShapeAndType
 const uint32_t kMaxShapeDims = 8;
 struct ShapeAndType {
   int32_t type;
   int64_t dims[kMaxShapeDims];
+} __attribute__((packed));
+
+// Extend info structure for extInfoAddr
+const uint32_t kExtInfoHeadSize = 8;
+struct ExtInfo {
+  int32_t infoType;  // extend type
+  uint32_t infoLen;  // length for infoMsg
+  char infoMsg[0];   // extend value
 } __attribute__((packed));
 
 // Extend Info type for task
@@ -88,6 +89,7 @@ enum UnknowShapeOpType {
 class AicpuOpUtil {
  public:
   static int MsTypeToProtoType(TypeId ms_type);
+  static int ProtoTypeToMsType(int proto_type);
 
  private:
   // kernel id

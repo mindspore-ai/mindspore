@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 relugrad_op_info = TBERegOp("ReluGrad") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
-    .binfile_name("relugrad.so") \
+    .binfile_name("relu_grad.so") \
     .compute_cost(10) \
-    .kernel_name("relugrad") \
+    .kernel_name("relu_grad") \
     .partial_flag(True) \
     .input(0, "gradients", False, "required", "all") \
     .input(1, "features", False, "required", "all") \

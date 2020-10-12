@@ -18,6 +18,8 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 confusion_mul_grad_op_info = TBERegOp("ConfusionMulGrad") \
     .fusion_type("OPAQUE") \
+    .binfile_name("confusion_mul_grad.so") \
+    .kernel_name("confusion_mul_grad") \
     .attr("axis", "required", "listInt", "all") \
     .attr("keep_dims", "required", "bool", "all") \
     .input(0, "input0", False, "required", "all") \

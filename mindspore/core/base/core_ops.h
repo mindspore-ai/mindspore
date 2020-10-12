@@ -108,6 +108,9 @@ inline const PrimitivePtr kPrimUniqueGrad = std::make_shared<Primitive>("UniqueG
 inline const PrimitivePtr kPrimExtractImagePatches = std::make_shared<Primitive>("ExtractImagePatches");
 inline const PrimitivePtr kPrimDynamicRNN = std::make_shared<Primitive>("DynamicRNN");
 inline const PrimitivePtr kPrimDynamicRNNGrad = std::make_shared<Primitive>("DynamicRNNGrad");
+inline const PrimitivePtr kPrimScatterAdd = std::make_shared<Primitive>("ScatterAdd");
+inline const PrimitivePtr kPrimScatterUpdate = std::make_shared<Primitive>("ScatterUpdate");
+inline const PrimitivePtr kPrimDiv = std::make_shared<Primitive>("Div");
 
 // NN
 inline const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");
@@ -171,6 +174,9 @@ inline const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOper
 inline const PrimitivePtr kPrimVirtualDiv = std::make_shared<Primitive>("_VirtualDiv");
 inline const PrimitivePtr kPrimVirtualDataset = std::make_shared<Primitive>("_VirtualDataset");
 inline const PrimitivePtr kPrimAllReduce = std::make_shared<Primitive>("AllReduce");
+inline const PrimitivePtr kPrimBroadcast = std::make_shared<Primitive>("Broadcast");
+inline const PrimitivePtr kPrimAllGather = std::make_shared<Primitive>("AllGather");
+inline const PrimitivePtr kPrimReduceScatter = std::make_shared<Primitive>("ReduceScatter");
 
 // RowTensor
 inline const PrimitivePtr kPrimMakeRowTensor = std::make_shared<Primitive>("MakeRowTensor");

@@ -85,6 +85,9 @@ const AnfNodePtr MulAddNFusion::Process(const FuncGraphPtr &graph, const AnfNode
       break;
     }
   }
+  if (AnfAlgo::IsDynamicShape(mul->input(lossscale_input_index))) {
+    return nullptr;
+  }
   auto constant_shape = AnfAlgo::GetOutputInferShape(mul->input(lossscale_input_index), 0);
   if (!(constant_shape.size() == 0 || (constant_shape.size() == 1 && constant_shape[0] == 1))) {
     MS_LOG(DEBUG) << "The const input of Mul node must be scalar or shape=(1,), but shape size is "

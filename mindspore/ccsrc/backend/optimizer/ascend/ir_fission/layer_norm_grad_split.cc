@@ -86,6 +86,9 @@ const AnfNodePtr LayerNormGradSplit::Process(const FuncGraphPtr &graph, const An
                                              const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
+  if (AnfAlgo::IsDynamicShape(node)) {
+    return nullptr;
+  }
   auto cnode = node->cast<CNodePtr>();
   if (cnode->inputs().size() != kLayerNormGradInputNum) {
     return nullptr;

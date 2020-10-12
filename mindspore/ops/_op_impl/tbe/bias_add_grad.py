@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 bias_add_grad_op_info = TBERegOp("BiasAddGrad") \
     .fusion_type("COMMREDUCE") \
     .async_flag(False) \
-    .binfile_name("biasaddgrad.so") \
+    .binfile_name("bias_add_grad.so") \
     .compute_cost(10) \
-    .kernel_name("biasaddgrad") \
+    .kernel_name("bias_add_grad") \
     .partial_flag(True) \
     .attr("data_format", "required", "str", "all") \
     .input(0, "output_backprop", False, "required", "all") \

@@ -86,7 +86,7 @@ const AnfNodePtr AddInputToOutput::Process(const FuncGraphPtr &func_graph, const
   if (!InputToOutputRegistry::Instance().GetRegisterByOpName(op_name, &reg)) {
     return nullptr;
   }
-  int output_num = op_finder_->GetOpRegisteredOutputNum(op_name);
+  int output_num = op_finder_->GetOpRegisteredOutputNum(op_name, cnode);
   // No need add output when it is not a tbe op.
   if (output_num == -1) {
     return nullptr;

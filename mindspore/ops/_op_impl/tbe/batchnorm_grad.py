@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 batch_norm_grad_op_info = TBERegOp("BatchNormGrad") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("batchnormgrad.so") \
+    .binfile_name("batch_norm_grad.so") \
     .compute_cost(10) \
-    .kernel_name("batchnormgrad") \
+    .kernel_name("batch_norm_grad") \
     .partial_flag(True) \
     .attr("epsilon", "optional", "float", "all") \
     .attr("data_format", "optional", "str", "all") \

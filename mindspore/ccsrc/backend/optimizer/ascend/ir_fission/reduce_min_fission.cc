@@ -105,6 +105,9 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
   if (graph == nullptr || node == nullptr) {
     return nullptr;
   }
+  if (AnfAlgo::IsDynamicShape(node)) {
+    return nullptr;
+  }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   CheckCNodeInputSize(cnode, 2);
