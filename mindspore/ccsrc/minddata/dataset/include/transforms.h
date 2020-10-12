@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "minddata/dataset/core/constants.h"
 
 namespace mindspore {
@@ -48,12 +49,19 @@ namespace transforms {
 
 // Transform Op classes (in alphabetical order)
 class OneHotOperation;
+class TypeCastOperation;
 
 /// \brief Function to create a OneHot TensorOperation.
 /// \notes Convert the labels into OneHot format.
 /// \param[in] num_classes number of classes.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<OneHotOperation> OneHot(int32_t num_classes);
+
+/// \brief Function to create a TypeCast TensorOperation.
+/// \notes Tensor operation to cast to a given MindSpore data type.
+/// \param[in] data_type mindspore.dtype to be cast to.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<TypeCastOperation> TypeCast(std::string data_type);
 
 /* ####################################### Derived TensorOperation classes ################################# */
 
@@ -69,6 +77,20 @@ class OneHotOperation : public TensorOperation {
 
  private:
   float num_classes_;
+};
+
+class TypeCastOperation : public TensorOperation {
+ public:
+  explicit TypeCastOperation(std::string data_type);
+
+  ~TypeCastOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  std::string data_type_;
 };
 }  // namespace transforms
 }  // namespace api

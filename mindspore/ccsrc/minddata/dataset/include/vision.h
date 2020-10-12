@@ -43,6 +43,7 @@ class RandomAffineOperation;
 class RandomColorOperation;
 class RandomColorAdjustOperation;
 class RandomCropOperation;
+class RandomCropDecodeResizeOperation;
 class RandomHorizontalFlipOperation;
 class RandomPosterizeOperation;
 class RandomRotationOperation;
@@ -195,6 +196,23 @@ std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float>
 std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
                                                 bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
                                                 BorderType padding_mode = BorderType::kConstant);
+
+/// \brief Function to create a RandomCropDecodeResize TensorOperation.
+/// \notes Equivalent to RandomResizedCrop, but crops before decodes.
+/// \param[in] size - a vector representing the output size of the cropped image.
+///               If size is a single value, a square crop of size (size, size) is returned.
+///               If size has 2 values, it should be (height, width).
+/// \param[in] scale - range [min, max) of respective size of the
+///               original size to be cropped (default=(0.08, 1.0))
+/// \param[in] ratio - range [min, max) of aspect ratio to be
+///               cropped (default=(3. / 4., 4. / 3.))
+/// \param[in] interpolation - an enum for the mode of interpolation
+/// \param[in] The maximum number of attempts to propose a valid crop_area (default=10).
+///               If exceeded, fall back to use center_crop instead.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomCropDecodeResizeOperation> RandomCropDecodeResize(
+  std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0}, std::vector<float> ratio = {3. / 4, 4. / 3},
+  InterpolationMode interpolation = InterpolationMode::kLinear, int32_t max_attempts = 10);
 
 /// \brief Function to create a RandomHorizontalFlip TensorOperation.
 /// \notes Tensor operation to perform random horizontal flip.
@@ -478,6 +496,25 @@ class RandomCropOperation : public TensorOperation {
   bool pad_if_needed_;
   std::vector<uint8_t> fill_value_;
   BorderType padding_mode_;
+};
+
+class RandomCropDecodeResizeOperation : public TensorOperation {
+ public:
+  RandomCropDecodeResizeOperation(std::vector<int32_t> size, std::vector<float> scale, std::vector<float> ratio,
+                                  InterpolationMode interpolation, int32_t max_attempts);
+
+  ~RandomCropDecodeResizeOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  std::vector<int32_t> size_;
+  std::vector<float> scale_;
+  std::vector<float> ratio_;
+  InterpolationMode interpolation_;
+  int32_t max_attempts_;
 };
 
 class RandomHorizontalFlipOperation : public TensorOperation {

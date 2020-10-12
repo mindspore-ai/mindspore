@@ -32,6 +32,7 @@
 #include "minddata/dataset/kernels/image/random_color_op.h"
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
 #include "minddata/dataset/kernels/image/random_crop_op.h"
+#include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
 #include "minddata/dataset/kernels/image/random_posterize_op.h"
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
@@ -193,6 +194,20 @@ std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::
                                                 bool pad_if_needed, std::vector<uint8_t> fill_value,
                                                 BorderType padding_mode) {
   auto op = std::make_shared<RandomCropOperation>(size, padding, pad_if_needed, fill_value, padding_mode);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create RandomCropDecodeResizeOperation.
+std::shared_ptr<RandomCropDecodeResizeOperation> RandomCropDecodeResize(std::vector<int32_t> size,
+                                                                        std::vector<float> scale,
+                                                                        std::vector<float> ratio,
+                                                                        InterpolationMode interpolation,
+                                                                        int32_t max_attempts) {
+  auto op = std::make_shared<RandomCropDecodeResizeOperation>(size, scale, ratio, interpolation, max_attempts);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -781,6 +796,66 @@ std::shared_ptr<TensorOp> RandomCropOperation::Build() {
 
   auto tensor_op = std::make_shared<RandomCropOp>(crop_height, crop_width, pad_top, pad_bottom, pad_left, pad_right,
                                                   padding_mode_, pad_if_needed_, fill_r, fill_g, fill_b);
+  return tensor_op;
+}
+
+// RandomCropDecodeResizeOperation
+RandomCropDecodeResizeOperation::RandomCropDecodeResizeOperation(std::vector<int32_t> size, std::vector<float> scale,
+                                                                 std::vector<float> ratio,
+                                                                 InterpolationMode interpolation, int32_t max_attempts)
+    : size_(size), scale_(scale), ratio_(ratio), interpolation_(interpolation), max_attempts_(max_attempts) {}
+
+bool RandomCropDecodeResizeOperation::ValidateParams() {
+  if (size_.empty() || size_.size() > 2) {
+    MS_LOG(ERROR) << "RandomCropDecodeResize: size vector has incorrect size: " << size_.size();
+    return false;
+  }
+
+  if (scale_.empty() || scale_.size() != 2) {
+    MS_LOG(ERROR) << "RandomCropDecodeResize: scale vector has incorrect size: " << scale_.size();
+    return false;
+  }
+
+  if (scale_[0] > scale_[1]) {
+    MS_LOG(ERROR) << "RandomCropDecodeResize: scale should be in (min,max) format. Got (max,min).";
+    return false;
+  }
+
+  if (ratio_.empty() || ratio_.size() != 2) {
+    MS_LOG(ERROR) << "RandomCropDecodeResize: ratio vector has incorrect size: " << ratio_.size();
+    return false;
+  }
+
+  if (ratio_[0] > ratio_[1]) {
+    MS_LOG(ERROR) << "RandomCropDecodeResize: ratio should be in (min,max) format. Got (max,min).";
+    return false;
+  }
+
+  if (max_attempts_ < 1) {
+    MS_LOG(ERROR) << "RandomCropDecodeResize: max_attempts must be greater than or equal to 1.";
+    return false;
+  }
+  return true;
+}
+
+std::shared_ptr<TensorOp> RandomCropDecodeResizeOperation::Build() {
+  int32_t crop_height = size_[0];
+  int32_t crop_width = size_[0];
+
+  // User has specified the crop_width value.
+  if (size_.size() == 2) {
+    crop_width = size_[1];
+  }
+
+  float scale_lower_bound = scale_[0];
+  float scale_upper_bound = scale_[1];
+
+  float aspect_lower_bound = ratio_[0];
+  float aspect_upper_bound = ratio_[1];
+
+  auto tensor_op =
+    std::make_shared<RandomCropDecodeResizeOp>(crop_height, crop_width, scale_lower_bound, scale_upper_bound,
+                                               aspect_lower_bound, aspect_upper_bound, interpolation_, max_attempts_);
   return tensor_op;
 }
 
