@@ -31,7 +31,7 @@
 #include "tools/converter/model_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 #include "tools/common/tensor_util.h"
-#include "mindspore/lite/schema/inner/model_generated.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore {
 namespace lite {

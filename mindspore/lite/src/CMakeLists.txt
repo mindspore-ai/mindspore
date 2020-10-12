@@ -67,9 +67,11 @@ file(GLOB_RECURSE C_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc)
 add_subdirectory(runtime/kernel/arm)
 
 add_library(mindspore-lite SHARED ${LITE_SRC} ${C_OPS_SRC})
+add_dependencies(mindspore-lite fbs_src)
 set_target_properties(mindspore-lite PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
 add_library(mindspore-lite_static STATIC ${LITE_SRC} ${C_OPS_SRC})
+add_dependencies(mindspore-lite_static fbs_src)
 set_target_properties(mindspore-lite_static PROPERTIES OUTPUT_NAME "mindspore-lite")
 set_target_properties(mindspore-lite_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
@@ -91,14 +93,14 @@ if (BUILD_MINDDATA STREQUAL "lite")
     target_link_libraries(mindspore-lite_static minddata_eager_mid)
 endif ()
 
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND (PLATFORM_ARM64 OR PLATFORM_ARM32))
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND PLATFORM_ARM)
     add_custom_command(TARGET mindspore-lite POST_BUILD
             COMMAND ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
             ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite.so)
 endif ()
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    if (PLATFORM_ARM64 OR PLATFORM_ARM32)
+    if (PLATFORM_ARM)
         add_custom_command(TARGET mindspore-lite POST_BUILD
                 COMMAND ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
                 ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)

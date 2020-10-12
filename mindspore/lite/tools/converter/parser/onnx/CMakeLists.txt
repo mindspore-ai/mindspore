@@ -3,3 +3,4 @@ set_property(SOURCE ${ONNX_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=m
 add_library(onnx_parser_mid OBJECT
         ${ONNX_SRC_LIST}
         )
+add_dependencies(onnx_parser_mid proto_mid)

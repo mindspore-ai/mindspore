@@ -463,37 +463,6 @@ build_flatbuffer() {
     fi
 }
 
-gene_protobuf() {
-    PROTO_SRC_DIR="${BASEPATH}/mindspore/lite/tools/converter/parser/caffe"
-    find ${PROTO_SRC_DIR} -name "*.proto" -print0 | xargs -0 "${PROTOC}" -I"${PROTO_SRC_DIR}" --cpp_out="${PROTO_SRC_DIR}"
-    PROTO_SRC_DIR="${BASEPATH}/mindspore/lite/tools/converter/parser/onnx"
-    find ${PROTO_SRC_DIR} -name "*.proto" -print0 | xargs -0 "${PROTOC}" -I"${PROTO_SRC_DIR}" --cpp_out="${PROTO_SRC_DIR}"
-}
-
-build_protobuf() {
-    cd ${BASEPATH}
-    PROTOC="${BASEPATH}"/third_party/protobuf/build/bin/protoc
-    if [[ ! -f "${PROTOC}" ]]; then
-        if [[ "${MSLIBS_SERVER}" ]]; then
-            cd "${BASEPATH}"/third_party/
-            rm -rf ./v3.8.0.tar.gz ./protobuf
-            wget http://${MSLIBS_SERVER}:8081/libs/protobuf/v3.8.0.tar.gz
-            tar -zxvf ./v3.8.0.tar.gz
-            mv ./protobuf-3.8.0 ./protobuf
-        else
-            git submodule update --init --recursive third_party/protobuf
-        fi
-        cd ${BASEPATH}/third_party/protobuf
-        rm -rf build && mkdir -pv build && ./autogen.sh
-        ./configure --prefix=${BASEPATH}/third_party/protobuf/build
-        make clean && make -j$THREAD_NUM && make install
-        gene_protobuf
-    fi
-    if [[ "${INC_BUILD}" == "off" ]]; then
-        gene_protobuf
-    fi
-}
-
 build_gtest() {
     cd ${BASEPATH}
     git submodule update --init --recursive third_party/googletest
@@ -663,10 +632,6 @@ build_lite()
       echo "start build opencl"
       build_opencl
     fi
-    if [[ "${LITE_PLATFORM}" == "x86_64" ]]; then
-      build_protobuf
-    fi
-    build_flatbuffer
     build_gtest
 
     if [ "${COMPILE_MINDDATA_LITE}" == "lite" ] || [ "${COMPILE_MINDDATA_LITE}" == "full" ]; then
@@ -689,7 +654,7 @@ build_lite()
         cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
               -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
               -DANDROID_STL="c++_static" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}                     \
-              -DBUILD_DEVICE=on -DPLATFORM_ARM64=on -DENABLE_NEON=on -DENABLE_FP16="off"      \
+              -DPLATFORM_ARM64=on -DENABLE_NEON=on -DENABLE_FP16="off"      \
               -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
               -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
@@ -700,14 +665,14 @@ build_lite()
         cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
               -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="clang"                      \
               -DANDROID_STL="c++_static" -DCMAKE_BUILD_TYPE=${BUILD_TYPE}                                                      \
-              -DBUILD_DEVICE=on -DPLATFORM_ARM32=on -DENABLE_NEON=on -DSUPPORT_TRAIN=${SUPPORT_TRAIN}  \
+              -DPLATFORM_ARM32=on -DENABLE_NEON=on -DSUPPORT_TRAIN=${SUPPORT_TRAIN}  \
               -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
               -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
                "${BASEPATH}/mindspore/lite"
     else
-        cmake -DBUILD_DEVICE=on -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=${SUPPORT_TRAIN}   \
+        cmake -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=${SUPPORT_TRAIN}   \
         -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${ENABLE_GPU} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
         -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp  \

@@ -30,7 +30,7 @@
 #include "tools/converter/model_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 #include "tools/common/tensor_util.h"
-#include "tools/converter/parser/onnx/onnx.pb.h"
+#include "proto/onnx.pb.h"
 
 namespace mindspore {
 namespace lite {
