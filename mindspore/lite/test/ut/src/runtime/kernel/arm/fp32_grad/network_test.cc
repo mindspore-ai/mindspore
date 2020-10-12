@@ -22,7 +22,7 @@
 #include <string>
 #include <functional>
 
-#include "mindspore/lite/schema/inner/model_generated.h"
+#include "schema/inner/model_generated.h"
 #include "mindspore/lite/include/train_model.h"
 #include "common/common_test.h"
 #include "include/train_session.h"
