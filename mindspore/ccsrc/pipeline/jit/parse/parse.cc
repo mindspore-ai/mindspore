@@ -915,7 +915,7 @@ AnfNodePtr Parser::ParseTuple(const FunctionBlockPtr &block, const py::object &n
 AnfNodePtr Parser::ParseList(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast List";
   MS_EXCEPTION_IF_NULL(block);
-  py::tuple elts = python_adapter::GetPyObjAttr(node, "elts");
+  py::list elts = python_adapter::GetPyObjAttr(node, "elts");
   if (elts.size() == 0) {
     auto empty_list = std::vector<ValuePtr>();
     return NewValueNode(std::make_shared<ValueList>(empty_list));
