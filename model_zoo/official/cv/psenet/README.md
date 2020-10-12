@@ -57,11 +57,15 @@ After installing MindSpore via the official website, you can start training and 
 # run distributed training example
 sh scripts/run_distribute_train.sh pretrained_model.ckpt
 
-#setup opencv library
-download pyblind11, opencv3.4,setup opencv3.4
+#download opencv library
+download pyblind11, opencv3.4
 
-#make so file
-run src/ETSNET/pse/Makefile; make libadaptor.so
+#install pyblind11 opencv3.4
+setup pyblind11(install the library by the pip command)
+setup opencv3.4(compile source code install the library)
+
+#enter the path ,run Makefile to product file
+cd ./src/ETSNET/pse/;make
 
 #run test.py
 python test.py --ckpt=pretrained_model.ckpt
@@ -81,10 +85,10 @@ sh scripts/run_eval_ascend.sh
 	├── README.md                           // descriptions about PSENet
 	├── scripts  
 		├── run_distribute_train.sh  		// shell script for distributed
-		└── eval_ic15.sh  					// shell script for evaluation 
+		└── run_eval_ascend.sh  			// shell script for evaluation 
 	├── src  
 		├── __init__.py  
-        ├── generate_hccn_file.py          // creating rank.json
+        ├── generate_hccn_file.py           // creating rank.json
 		├── ETSNET  
 			├── __init__.py  
 			├── base.py                     // convolution and BN operator
@@ -127,7 +131,7 @@ sh scripts/run_distribute_train.sh pretrained_model.ckpt
 ```
 
 The above shell script will run distribute training in the background. You can view the results through the file 
-`device[X]/log`. The loss value will be achieved as follows:
+`device[X]/test_*.log`. The loss value will be achieved as follows:
 
 ```
 # grep "epoch: " device_*/loss.log
@@ -140,6 +144,8 @@ device_1/log:epcoh: 2, step: 40, loss is 0.76629
 ```
 
 ## [Evaluation Process](#contents)
+### run test code
+python test.py --ckpt=./device*/ckpt*/ETSNet-*.ckpt
 
 ### Eval Script for ICDAR2015
 #### Usage
@@ -161,7 +167,7 @@ Calculated!{"precision": 0.814796668299853, "recall": 0.8006740491092923, "hmean
 | Parameters                 | PSENet                                                   |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | Inception V1                                                |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             |
+| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
 | uploaded Date              | 09/15/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0-alpha                                                   |
 | Dataset                    | ICDAR2015                                                   |
@@ -187,7 +193,7 @@ Calculated!{"precision": 0.814796668299853, "recall": 0.8006740491092923, "hmean
 | MindSpore Version   | 1.0-alpha                   |
 | Dataset             | ICDAR2015                   |
 | outputs             | probability                 |
-| Accuracy            | 1pc: 81%;  8pcs: 81%   |
+| Accuracy            | 1pc: 81%;  4pcs: 81%   |
 
 ## [How to use](#contents)
 
