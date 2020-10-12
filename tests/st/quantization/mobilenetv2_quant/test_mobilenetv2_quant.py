@@ -53,7 +53,7 @@ config_ascend_quant = ed({
     "quantization_aware": True,
 })
 
-dataset_path = "/dataset/workspace/mindspore_dataset/cifar-10-batches-bin/"
+dataset_path = "/home/workspace/mindspore_dataset/cifar-10-batches-bin/"
 
 
 @pytest.mark.level1
