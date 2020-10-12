@@ -15,6 +15,7 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_cast_parser.h"
+#include "tools/converter/parser/onnx/onnx_model_parser.h"
 #include <memory>
 
 namespace mindspore {
@@ -40,7 +41,8 @@ STATUS OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "to") {
-      attr->dstT = static_cast<int32_t>(onnx_node_attr.i());
+      attr->dstT = static_cast<int32_t>(
+        OnnxModelParser::GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_node_attr.i())));
     }
   }
 
