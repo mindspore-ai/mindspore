@@ -1895,7 +1895,11 @@ LossNodeInfo FindLossCNode(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(pre_node);
 
   auto pre_cnode = pre_node->cast<CNodePtr>();
-  if (pre_cnode == nullptr) {
+  if (pre_cnode == nullptr || !IsValueNode<Primitive>(pre_cnode->input(0))) {
+    return loss_node_info;
+  }
+  if (!IsValueNode<Primitive>(pre_cnode->input(0))) {
+    MS_LOG(DEBUG) << "pre_cnode:" << pre_cnode->ToString();
     return loss_node_info;
   }
   auto prim = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
