@@ -126,7 +126,7 @@ void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
   std::vector<AnfNodePtr> kwarg_keys_tuple_nodes = {NewValueNode(prim::kPrimMakeTuple)};
   std::vector<AnfNodePtr> kwarg_values_tuple_nodes = {NewValueNode(prim::kPrimMakeTuple)};
 
-  std::set<AnfNodePtr> key_ward_para_nodes;
+  std::set<AnfNodePtr> kwarg_nodes;
   for (const auto &kwarg : kwarg_list) {
     MS_EXCEPTION_IF_NULL(kwarg);
     std::string kw_param_name = kwarg->get_key();
@@ -160,14 +160,13 @@ void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
     } else {
       auto node_itr = std::find(specialized_parameter_list->begin(), specialized_parameter_list->end(), param_node);
       // multiply values found given for parameter
-      if (node_itr != specialized_parameter_list->end() &&
-          key_ward_para_nodes.find(param_node) == key_ward_para_nodes.end()) {
+      if (node_itr != specialized_parameter_list->end() && kwarg_nodes.find(param_node) == kwarg_nodes.end()) {
         MS_EXCEPTION(TypeError) << "Multiply values for specific argument: " << kw_param_name;
       } else {
         specialized_parameter_list->push_back(param_node);
         auto extract_node = specialized_graph->NewCNode(
           {NewValueNode(prim::kPrimExtractKeywordArg), NewValueNode(kw_param_name), param_node});
-        key_ward_para_nodes.insert(param_node);
+        kwarg_nodes.insert(param_node);
         (void)repl_nodes->emplace(param_node, extract_node);
       }
     }
