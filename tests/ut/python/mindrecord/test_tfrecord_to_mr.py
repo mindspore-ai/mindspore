@@ -23,7 +23,7 @@ from mindspore import log as logger
 from mindspore.mindrecord import FileReader
 from mindspore.mindrecord import TFRecordToMR
 
-SupportedTensorFlowVersion = '2.1.0'
+SupportedTensorFlowVersion = '1.13.0-rc1'
 
 try:
     tf = import_module("tensorflow")    # just used to convert tfrecord to mindrecord
@@ -58,8 +58,15 @@ def cast_name(key):
     return casted_key
 
 def verify_data(transformer, reader):
-    """Verify the data by read from mindrecord"""
-    tf_iter = transformer.tfrecord_iterator()
+    """
+    Verify the data by read from mindrecord
+    If in 1.x.x version, use old version to receive that iteration
+    """
+
+    if tf.__version__ < '2.0.0':
+        tf_iter = transformer.tfrecord_iterator_oldversion()
+    else:
+        tf_iter = transformer.tfrecord_iterator()
     mr_iter = reader.get_next()
 
     count = 0
