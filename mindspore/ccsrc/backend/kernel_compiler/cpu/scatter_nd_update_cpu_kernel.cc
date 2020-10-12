@@ -16,8 +16,8 @@
 
 #include "backend/kernel_compiler/cpu/scatter_nd_update_cpu_kernel.h"
 #include <string>
-#include <thread>
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -116,18 +116,20 @@ void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &input
   params.out_strides_ = &out_strides_;
 
   const size_t thread_num = 24;
-  std::vector<std::thread> threads;
-  threads.reserve(thread_num);
+  std::vector<Task> tasks;
   size_t start = 0;
   size_t once_compute_size = (num_units_ + thread_num - 1) / thread_num;
   while (start < num_units_) {
     size_t end = (start + once_compute_size) > num_units_ ? num_units_ : (start + once_compute_size);
-    threads.emplace_back(std::thread(Compute<T>, &params, start, end));
+    auto task = [&params, start, end]() -> int {
+      Compute<T>(&params, start, end);
+      return SUCCESS;
+    };
+    tasks.emplace_back(task);
     start += once_compute_size;
   }
-  for (size_t i = 0; i < threads.size(); ++i) {
-    threads[i].join();
-  }
+  ThreadPool::GetInstance()->LaunchMultipleTask(tasks);
+
   auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;

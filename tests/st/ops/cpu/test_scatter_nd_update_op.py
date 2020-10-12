@@ -23,7 +23,7 @@ from mindspore import Parameter
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, device_target='CPU', save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE, device_target='CPU', save_graphs=False)
 
 
 class ScatterNdUpdate1(nn.Cell):
