@@ -54,6 +54,7 @@
 #include "src/ops/resize.h"
 #include "src/ops/tile.h"
 #include "src/ops/one_hot.h"
+#include "src/ops/lsh_projection.h"
 #include "src/ops/space_to_depth.h"
 #include "src/ops/split.h"
 #include "src/ops/argmax.h"
@@ -131,6 +132,7 @@
 #include "nnacl/unstack.h"
 #include "nnacl/depth_to_space.h"
 #include "nnacl/conv_parameter.h"
+#include "nnacl/lsh_projection_parameter.h"
 #include "nnacl/fp32/pooling.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/fp32/roi_pooling.h"
@@ -1323,6 +1325,20 @@ OpParameter *PopulateCropParameter(const mindspore::lite::PrimitiveC *primitive)
   return reinterpret_cast<OpParameter *>(crop_param);
 }
 
+OpParameter *PopulateLshProjectionParameter(const mindspore::lite::PrimitiveC *primitive) {
+  LshProjectionParameter *lsh_project_param =
+    reinterpret_cast<LshProjectionParameter *>(malloc(sizeof(LshProjectionParameter)));
+  if (lsh_project_param == nullptr) {
+    MS_LOG(ERROR) << "malloc LshProjectionParameter failed.";
+    return nullptr;
+  }
+  memset(lsh_project_param, 0, sizeof(LshProjectionParameter));
+  lsh_project_param->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::LshProjection *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  lsh_project_param->lsh_type_ = param->GetLshType();
+  return reinterpret_cast<OpParameter *>(lsh_project_param);
+}
+
 OpParameter *PopulateOneHotParameter(const mindspore::lite::PrimitiveC *primitive) {
   OneHotParameter *one_hot_param = reinterpret_cast<OneHotParameter *>(malloc(sizeof(OneHotParameter)));
   if (one_hot_param == nullptr) {
@@ -1747,6 +1763,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_CustomExtractFeatures] = PopulateCommonOpParameter;
   populate_parameter_funcs_[schema::PrimitiveType_CustomPredict] = PopulateCustomPredictParameter;
   populate_parameter_funcs_[schema::PrimitiveType_HashtableLookup] = PopulateCommonOpParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_LshProjection] = PopulateLshProjectionParameter;
 }
 
 PopulateParameterRegistry *PopulateParameterRegistry::GetInstance() {
