@@ -26,7 +26,6 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <exception>
 #include "backend/session/session_basic.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
@@ -168,6 +167,7 @@ class Executor {
   bool DestroyCommGroup(const std::string &group_name);
 
  private:
+  void SyncRunTask(const std::shared_ptr<Task> &task);
   void UpdateOutputTensors(VectorRef *outputs,
                            const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node);
   std::vector<std::shared_ptr<RunGraphTask>> GetNewReadyTasks();
@@ -184,7 +184,6 @@ class Executor {
   std::queue<std::shared_ptr<Task>> ready_tasks_;
   std::list<std::shared_ptr<RunGraphTask>> pending_tasks_;
   std::shared_ptr<std::thread> worker_;
-  std::exception_ptr exception_ptr_{nullptr};
 };
 }  // namespace session
 }  // namespace mindspore

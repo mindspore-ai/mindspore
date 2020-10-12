@@ -251,8 +251,7 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
       MS_EXCEPTION_IF_NULL(address);
       MS_EXCEPTION_IF_NULL(tensor);
       if (tensor_address != nullptr && tensor_address != address) {
-        tensor_address->SyncDeviceToHost(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                         tensor->data_c());
+        tensor->data_sync(false);
       }
       if (tensor->data_type() == address->type_id_ || tensor->data_type() == kNumberTypeFloat32 ||
           tensor->data_type() == kNumberTypeInt32 || tensor->data_type() == kNumberTypeInt64) {

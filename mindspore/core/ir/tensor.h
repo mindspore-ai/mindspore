@@ -29,6 +29,7 @@
 #include "utils/log_adapter.h"
 #include "base/float16.h"
 #include "utils/shape_utils.h"
+#include "utils/ms_exception.h"
 
 // brief mindspore namespace.
 //
@@ -88,6 +89,7 @@ struct WaitEvent {
       return;
     }
     cond_var_.wait(lock, [this] { return !need_wait_; });
+    MsException::GetInstance().CheckException();
   }
 
   void set_need_wait(bool need_wait) {

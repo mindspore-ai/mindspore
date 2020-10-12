@@ -954,10 +954,7 @@ bool TensorNeedSync(const AnfNodePtr &parameter, const tensor::TensorPtr &tensor
   }
   auto tensor_address = tensor->device_address();
   if (tensor_address != device_address) {
-    if (tensor_address != nullptr) {
-      tensor_address->SyncDeviceToHost(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                       tensor->data_c());
-    }
+    tensor->data_sync(false);
     return true;
   }
   return false;
