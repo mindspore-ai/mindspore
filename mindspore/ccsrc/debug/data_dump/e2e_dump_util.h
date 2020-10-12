@@ -28,7 +28,7 @@ class E2eDumpUtil {
  public:
   E2eDumpUtil() = default;
   ~E2eDumpUtil() = default;
-  static bool DumpData(const session::KernelGraph *graph, Debugger *debugger = nullptr);
+  static bool DumpData(const session::KernelGraph *graph, uint32_t device_id, Debugger *debugger = nullptr);
 
  private:
   static void DumpOutput(const session::KernelGraph *graph, const std::string &dump_path, Debugger *debugger);
