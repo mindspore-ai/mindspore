@@ -92,7 +92,7 @@ rel_strs = {
 }
 
 
-def _check_integer(arg_value, value, rel, arg_name=None, prim_name=None):
+def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=None):
     """
         Check argument integer.
 
@@ -100,13 +100,13 @@ def _check_integer(arg_value, value, rel, arg_name=None, prim_name=None):
         - number = check_integer(number, 0, Rel.GE, "number", None) # number >= 0
     """
     rel_fn = Rel.get_fns(rel)
-    type_mismatch = not isinstance(arg_value, int) or isinstance(arg_value, bool)
+    type_mismatch = not isinstance(arg_value, arg_type) or isinstance(arg_value, bool)
     type_except = TypeError if type_mismatch else ValueError
     if type_mismatch or not rel_fn(arg_value, value):
         rel_str = Rel.get_strs(rel).format(value)
         arg_name = arg_name if arg_name else "parameter"
         msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
-        raise type_except(f'{msg_prefix} `{arg_name}` should be an int and must {rel_str}, but got `{arg_value}`'
+        raise type_except(f'{msg_prefix} `{arg_name}` should be an {arg_type} and must {rel_str}, but got `{arg_value}`'
                           f' with type `{type(arg_value).__name__}`.')
     return arg_value
 
@@ -149,7 +149,7 @@ class Validator:
         - number = check_positive_int(number)
         - number = check_positive_int(number, "bias")
         """
-        return _check_integer(arg_value, 0, Rel.GT, arg_name, prim_name)
+        return check_number(arg_value, 0, Rel.GT, int, arg_name, prim_name)
 
     @staticmethod
     def check_negative_int(arg_value, arg_name=None, prim_name=None):
@@ -160,7 +160,7 @@ class Validator:
         - number = check_negative_int(number)
         - number = check_negative_int(number, "bias")
         """
-        return _check_integer(arg_value, 0, Rel.LT, arg_name, prim_name)
+        return check_number(arg_value, 0, Rel.LT, int, arg_name, prim_name)
 
     @staticmethod
     def check_non_positive_int(arg_value, arg_name=None, prim_name=None):
@@ -171,7 +171,7 @@ class Validator:
         - number = check_non_positive_int(number)
         - number = check_non_positive_int(number, "bias")
         """
-        return _check_integer(arg_value, 0, Rel.LE, arg_name, prim_name)
+        return check_number(arg_value, 0, Rel.LE, int, arg_name, prim_name)
 
     @staticmethod
     def check_non_negative_int(arg_value, arg_name=None, prim_name=None):
@@ -182,7 +182,52 @@ class Validator:
         - number = check_non_negative_int(number)
         - number = check_non_negative_int(number, "bias")
         """
-        return _check_integer(arg_value, 0, Rel.GE, arg_name, prim_name)
+        return check_number(arg_value, 0, Rel.GE, int, arg_name, prim_name)
+
+    @staticmethod
+    def check_positive_float(arg_value, arg_name=None, prim_name=None):
+        """
+        Check argument is positive float, which mean arg_value > 0.
+
+        Usage:
+        - number = check_positive_float(number)
+        - number = check_positive_float(number, "bias")
+        - number = check_positive_float(number, "bias", "bias_class")
+        """
+        return check_number(arg_value, 0, Rel.GT, float, arg_name, prim_name)
+
+    @staticmethod
+    def check_negative_float(arg_value, arg_name=None, prim_name=None):
+        """
+        Check argument is negative float, which mean arg_value < 0.
+
+        Usage:
+        - number = check_negative_float(number)
+        - number = check_negative_float(number, "bias")
+        """
+        return check_number(arg_value, 0, Rel.LT, float, arg_name, prim_name)
+
+    @staticmethod
+    def check_non_positive_float(arg_value, arg_name=None, prim_name=None):
+        """
+        Check argument is non-negative float, which mean arg_value <= 0.
+
+        Usage:
+        - number = check_non_positive_float(number)
+        - number = check_non_positive_float(number, "bias")
+        """
+        return check_number(arg_value, 0, Rel.LE, float, arg_name, prim_name)
+
+    @staticmethod
+    def check_non_negative_float(arg_value, arg_name=None, prim_name=None):
+        """
+        Check argument is non-negative float, which mean arg_value >= 0.
+
+        Usage:
+        - number = check_non_negative_float(number)
+        - number = check_non_negative_float(number, "bias")
+        """
+        return check_number(arg_value, 0, Rel.GE, float, arg_name, prim_name)
 
     @staticmethod
     def check_number(arg_name, arg_value, value, rel, prim_name):
@@ -256,16 +301,6 @@ class Validator:
         if pad_mode != 'pad' and padding != 0:
             raise ValueError(f"For '{prim_name}', padding must be zero when pad_mode is '{pad_mode}'.")
         return padding
-
-    @staticmethod
-    def check_float_positive(arg_name, arg_value, prim_name):
-        """Float type judgment."""
-        msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
-        if isinstance(arg_value, float):
-            if arg_value > 0:
-                return arg_value
-            raise ValueError(f"{msg_prefix} `{arg_name}` must be positive, but got {arg_value}.")
-        raise TypeError(f"{msg_prefix} `{arg_name}` must be float.")
 
     @staticmethod
     def check_subclass(arg_name, type_, template_types, prim_name):

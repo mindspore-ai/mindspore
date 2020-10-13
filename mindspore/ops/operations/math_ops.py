@@ -3560,7 +3560,7 @@ class IFMR(PrimitiveWithInfer):
         validator.check_value_type("max_percentile", max_percentile, [float], self.name)
         validator.check_value_type("search_range", search_range, [list, tuple], self.name)
         for item in search_range:
-            validator.check_float_positive("item of search_range", item, self.name)
+            validator.check_positive_float(item, "item of search_range", self.name)
         validator.check('search_range[1]', search_range[1], 'search_range[0]', search_range[0], Rel.GE, self.name)
         validator.check_value_type("search_step", search_step, [float], self.name)
         validator.check_value_type("offset_flag", with_offset, [bool], self.name)

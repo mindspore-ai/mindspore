@@ -66,9 +66,9 @@ def _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_e
     validator.check_positive_int(total_step, 'total_step')
     validator.check_positive_int(step_per_epoch, 'step_per_epoch')
     validator.check_positive_int(decay_epoch, 'decay_epoch')
-    validator.check_float_positive('learning_rate', learning_rate, None)
+    validator.check_positive_float(learning_rate, 'learning_rate')
     validator.check_float_legal_value('learning_rate', learning_rate, None)
-    validator.check_float_positive('decay_rate', decay_rate, None)
+    validator.check_positive_float(decay_rate, 'decay_rate')
     validator.check_float_legal_value('decay_rate', decay_rate, None)
     validator.check_value_type('is_stair', is_stair, [bool], None)
 
@@ -234,7 +234,7 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
     if not isinstance(min_lr, float):
         raise TypeError("min_lr must be float.")
     validator.check_number_range("min_lr", min_lr, 0.0, float("inf"), Rel.INC_LEFT, None)
-    validator.check_float_positive('max_lr', max_lr, None)
+    validator.check_positive_float(max_lr, 'max_lr')
     validator.check_float_legal_value('max_lr', max_lr, None)
     validator.check_positive_int(total_step, 'total_step')
     validator.check_positive_int(step_per_epoch, 'step_per_epoch')
@@ -299,12 +299,12 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         >>> polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
         [0.1, 0.1, 0.07363961030678928, 0.07363961030678928, 0.01, 0.01]
     """
-    validator.check_float_positive('learning_rate', learning_rate, None)
+    validator.check_positive_float(learning_rate, 'learning_rate')
     validator.check_float_legal_value('learning_rate', learning_rate, None)
     if not isinstance(end_learning_rate, float):
         raise TypeError("end_learning_rate must be float.")
     validator.check_number_range("end_learning_rate", end_learning_rate, 0.0, float("inf"), Rel.INC_LEFT, None)
-    validator.check_float_positive('power', power, None)
+    validator.check_positive_float(power, 'power')
     validator.check_float_legal_value('power', power, None)
     validator.check_positive_int(total_step, 'total_step')
     validator.check_positive_int(step_per_epoch, 'step_per_epoch')
