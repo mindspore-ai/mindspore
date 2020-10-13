@@ -209,6 +209,7 @@ file(GLOB_RECURSE TEST_CASE_KERNEL_SRC
     ${TEST_DIR}/ut/src/runtime/kernel/arm/common/*.cc
     ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
     ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
+    ${TEST_DIR}/ut/src/runtime/kernel/arm/string/*.cc
 )
 
 file(GLOB_RECURSE TEST_CASE_KERNEL_TRAIN_SRC
