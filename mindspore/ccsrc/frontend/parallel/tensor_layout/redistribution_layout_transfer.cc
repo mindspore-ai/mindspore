@@ -63,6 +63,14 @@ std::shared_ptr<ReshapeLayoutTransfer> RedistributionLayoutTransfer::UnifyDevice
   if (unified_device_arrangement_ptr == nullptr) {
     return nullptr;
   }
+  Shape in_expand_shape;
+  Status status = ExpandShape(unified_device_arrangement_ptr->from_in().tensor_shape().array(),
+                              unified_device_arrangement_ptr->to_in().tensor_shape().array(), &in_expand_shape);
+  if (status != Status::SUCCESS) {
+    MS_LOG(INFO) << "The shape of from and to cannot transfer by unify";
+    unified_device_arrangement_ptr->SetExpandAble(false);
+    return unified_device_arrangement_ptr;
+  }
   return unified_device_arrangement_ptr->UnifyDeviceArrangementAndTensorShape();
 }
 }  // namespace parallel

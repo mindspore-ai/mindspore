@@ -88,6 +88,8 @@ class TensorLayout {
 
   TensorLayout SqueezeShape() const;
 
+  TensorLayout TransferRepeatLayout() const;
+
   Status GenerateOptShardSliceShape();
 
   Shape opt_shard_slice_shape() { return opt_shard_slice_shape_; }

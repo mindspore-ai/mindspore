@@ -390,6 +390,15 @@ TensorLayout TensorLayout::SqueezeShape() const {
   return out;
 }
 
+TensorLayout TensorLayout::TransferRepeatLayout() const {
+  Shape dev_mat(device_arrangement_.array());
+  Shape tensor_map(tensor_map_.GetDimSize(), -1);
+  Shape tensor_shape(tensor_shape_.array());
+  TensorLayout repeat;
+  repeat.InitFromVector(dev_mat, tensor_map, tensor_shape);
+  return repeat;
+}
+
 // Generate a totally shard tensor slice shape for parallel optimizer
 Status TensorLayout::GenerateOptShardSliceShape() {
   MS_LOG(INFO) << "layout for GetOptShardSliceShape is " << StandardToString();

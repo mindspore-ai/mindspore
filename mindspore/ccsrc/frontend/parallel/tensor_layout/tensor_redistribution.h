@@ -61,8 +61,12 @@ class TensorRedistribution {
  private:
   Status InferReshape(const TensorLayout &from_layout, const TensorLayout &to_layout,
                       OperatorVector *const operator_vector, OutPutInfoVector *const output_info_vector);
+  Status InferRedistribution(const TensorLayout &from_layout, const TensorLayout &to_layout,
+                             OperatorVector *const operator_vector, OutPutInfoVector *const output_info_vector,
+                             bool is_cost_model);
   Status ComputeConcatCost(double input_size, Shape attrs);
   Status ComputePermuteCost(double input_size, Shape attrs);
+  RedistributionOpListPtr InferTensorRedistributionOperatorListUnExpand(bool is_cost_model = false);
   TensorLayout from_origin_;
   TensorLayout to_origin_;
   TensorLayout from_;
@@ -84,6 +88,7 @@ class TensorRedistribution {
   double memory_cost_;
   bool construct_op_flag_;
   bool keep_reshape_;
+  bool expand_able_ = true;
 };
 }  // namespace parallel
 }  // namespace mindspore
