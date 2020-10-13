@@ -20,7 +20,7 @@ echo "bash run_eval.sh DATA_PATH DATASET_TYPE DEVICE_TYPE CHECKPOINT_PATH"
 echo "for example: bash run_eval.sh /path/ImageNet2012/train cifar10 Ascend /path/a.ckpt "
 echo "=============================================================================================================="
 
-DATA_PATH=&1
+DATA_PATH=$1
 DATASET_TYPE=$2
 DEVICE_TYPE=$3
 CHECKPOINT_PATH=$4
