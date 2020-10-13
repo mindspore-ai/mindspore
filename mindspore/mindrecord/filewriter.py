@@ -39,11 +39,11 @@ class FileWriter:
 
     Args:
         file_name (str): File name of MindRecord File.
-        shard_num (int, optional): Number of MindRecord File (default=1).
+        shard_num (int, optional): The Number of MindRecord File (default=1).
             It should be between [1, 1000].
 
     Raises:
-        ParamValueError: If file_name or shard_num is invalid.
+        ParamValueError: If `file_name` or `shard_num` is invalid.
     """
     def __init__(self, file_name, shard_num=1):
         check_filename(file_name)
@@ -88,7 +88,7 @@ class FileWriter:
 
         Raises:
             ParamValueError: If file_name is invalid.
-            FileNameError: If path contains invalid character.
+            FileNameError: If path contains invalid characters.
             MRMOpenError: If failed to open MindRecord File.
             MRMOpenForAppendError: If failed to open file for appending data.
         """
@@ -111,14 +111,14 @@ class FileWriter:
 
     def add_schema(self, content, desc=None):
         """
-        Returns a schema id if added schema successfully, or raise exception.
+        Return a schema id if schema is added successfully, or raise an exception.
 
         Args:
-            content (dict): Dict of user defined schema.
+            content (dict): Dictionary of user defined schema.
             desc (str, optional): String of schema description (default=None).
 
         Returns:
-            int, schema id.
+            An integer, schema id.
 
         Raises:
             MRMInvalidSchemaError: If schema is invalid.
@@ -145,7 +145,7 @@ class FileWriter:
             ParamTypeError: If index field is invalid.
             MRMDefineIndexError: If index field is not primitive type.
             MRMAddIndexError: If failed to add index field.
-            MRMGetMetaError: If the schema is not set or get meta failed.
+            MRMGetMetaError: If the schema is not set or failed to get meta.
         """
         if not index_fields or not isinstance(index_fields, list):
             raise ParamTypeError('index_fields', 'list')
@@ -205,7 +205,7 @@ class FileWriter:
 
     def open_and_set_header(self):
         """
-        Open writer and set header
+        Open writer and set header.
 
         """
         if not self._writer.is_open:
@@ -245,7 +245,7 @@ class FileWriter:
         """
         Set the size of header which contains shard information, schema information, \
         page meta information, etc. The larger the header, the more training data \
-        a single mindrecord file can store.
+        a single Mindrecord file can store.
 
         Args:
             header_size (int): Size of header, between 16KB and 128MB.
@@ -278,7 +278,7 @@ class FileWriter:
 
     def commit(self):
         """
-        Flush data to disk and generate the corresponding db files.
+        Flush data to disk and generate the corresponding database files.
 
         Returns:
             MSRStatus, SUCCESS or FAILED.

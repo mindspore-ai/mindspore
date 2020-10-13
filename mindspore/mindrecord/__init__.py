@@ -13,12 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 """
-Introduction to mindrecord:
+Introduction of mindrecord:
 
 Mindrecord is a module to implement reading, writing, search and
 converting for MindSpore format dataset. Users could load(modify)
 mindrecord data through FileReader(FileWriter). Users could also
-convert other format dataset to mindrecord data through
+convert other format datasets to mindrecord data through
 corresponding sub-module.
 """
 

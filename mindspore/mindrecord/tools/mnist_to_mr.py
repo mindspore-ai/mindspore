@@ -34,17 +34,17 @@ __all__ = ['MnistToMR']
 
 class MnistToMR:
     """
-    Class is for transformation from Mnist to MindRecord.
+    A class to transform from Mnist to MindRecord.
 
     Args:
-        source (str): directory which contains t10k-images-idx3-ubyte.gz,
-                      train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz,
-                      train-labels-idx1-ubyte.gz.
+        source (str): directory that contains t10k-images-idx3-ubyte.gz,
+                      train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz
+                      and train-labels-idx1-ubyte.gz.
         destination (str): the MindRecord file directory to transform into.
         partition_number (int, optional): partition size (default=1).
 
     Raises:
-        ValueError: If source/destination/partition_number is invalid.
+        ValueError: If `source`, `destination`, `partition_number` is invalid.
     """
 
     def __init__(self, source, destination, partition_number=1):
@@ -173,7 +173,7 @@ class MnistToMR:
         Executes transformation from Mnist test part to MindRecord.
 
         Returns:
-            SUCCESS/FAILED, whether successfully written into MindRecord.
+            SUCCESS or FAILED, whether Mnist is successfully transformed to MindRecord.
         """
         t0_total = time.time()
 

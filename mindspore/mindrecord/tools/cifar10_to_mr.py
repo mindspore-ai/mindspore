@@ -34,7 +34,7 @@ __all__ = ['Cifar10ToMR']
 
 class Cifar10ToMR:
     """
-    Class is for transformation from cifar10 to MindRecord.
+    A class to transform from cifar10 to MindRecord.
 
     Args:
         source (str): the cifar10 directory to be transformed.
@@ -70,10 +70,10 @@ class Cifar10ToMR:
         Executes transformation from cifar10 to MindRecord.
 
         Args:
-            fields (list[str], optional): list of index fields, ie. ["label"] (default=None).
+            fields (list[str], optional): A list of index fields, e.g.["label"] (default=None).
 
         Returns:
-            SUCCESS/FAILED, whether successfully written into MindRecord.
+            SUCCESS or FAILED, whether cifar10 is successfully transformed to MindRecord.
         """
         if fields and not isinstance(fields, list):
             raise ValueError("The parameter fields should be None or list")

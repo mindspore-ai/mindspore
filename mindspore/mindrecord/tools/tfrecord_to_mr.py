@@ -99,25 +99,25 @@ def _cast_name(key):
 
 class TFRecordToMR:
     """
-    Class is for tranformation from TFRecord to MindRecord.
+    A class to transform from TFRecord to MindRecord.
 
     Args:
         source (str): the TFRecord file to be transformed.
         destination (str): the MindRecord file path to tranform into.
-        feature_dict (dict): a dictionary that states the feature type, i.e.
+        feature_dict (dict): a dictionary that states the feature type, e.g.
             feature_dict = {"xxxx": tf.io.FixedLenFeature([], tf.string), \
                             "yyyy": tf.io.FixedLenFeature([], tf.int64)}
 
-            **Follow case which uses VarLenFeature not support**
+            **Follow case which uses VarLenFeature is not supported.**
 
             feature_dict = {"context": {"xxxx": tf.io.FixedLenFeature([], tf.string), \
                                         "yyyy": tf.io.VarLenFeature(tf.int64)}, \
                             "sequence": {"zzzz": tf.io.FixedLenSequenceFeature([], tf.float32)}}
-        bytes_fields (list, optional): the bytes fields which are in feature_dict and can be images bytes.
+        bytes_fields (list, optional): the bytes fields which are in `feature_dict` and can be images bytes.
 
     Raises:
         ValueError: If parameter is invalid.
-        Exception: when tensorflow module not found or version is not correct.
+        Exception: when tensorflow module is not found or version is not correct.
     """
     def __init__(self, source, destination, feature_dict, bytes_fields=None):
         if not tf:
@@ -264,7 +264,7 @@ class TFRecordToMR:
                     raise ValueError("TFRecord feature_dict parameter error.")
 
     def tfrecord_iterator(self):
-        """Yield a dict with key to be fields in schema, and value to be data."""
+        """Yield a dictionary whose keys are fields in schema."""
         dataset = tf.data.TFRecordDataset(self.source)
         dataset = dataset.map(self._parse_record)
         iterator = dataset.__iter__()
@@ -291,10 +291,10 @@ class TFRecordToMR:
 
     def run(self):
         """
-        Executes transform from TFRecord to MindRecord.
+        Execute transformation from TFRecord to MindRecord.
 
         Returns:
-            SUCCESS/FAILED, whether successfuly written into MindRecord.
+            SUCCESS or FAILED, whether TFRecord is successfuly transformed to MindRecord.
         """
         writer = FileWriter(self.destination)
         logger.info("Transformed MindRecord schema is: {}, TFRecord feature dict is: {}"

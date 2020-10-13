@@ -28,11 +28,10 @@ __all__ = ['ImageNetToMR']
 
 class ImageNetToMR:
     """
-    Class is for transformation from imagenet to MindRecord.
+    A class to transform from imagenet to MindRecord.
 
     Args:
-        map_file (str): the map file which indicates label.
-                  the map file content should like this:
+        map_file (str): the map file that indicates label. The map file content should be like this:
 
                   .. code-block::
 
@@ -41,12 +40,12 @@ class ImageNetToMR:
                       n02110185 2
                       n02096294 3
 
-        image_dir (str): image directory contains n02119789, n02100735, n02110185, n02096294 dir.
+        image_dir (str): image directory contains n02119789, n02100735, n02110185 and n02096294 directory.
         destination (str): the MindRecord file path to transform into.
         partition_number (int, optional): partition size (default=1).
 
     Raises:
-        ValueError: If map_file, image_dir or destination is invalid.
+        ValueError: If `map_file`, `image_dir` or `destination` is invalid.
     """
     def __init__(self, map_file, image_dir, destination, partition_number=1):
         check_filename(map_file)
@@ -123,7 +122,7 @@ class ImageNetToMR:
         Executes transformation from imagenet to MindRecord.
 
         Returns:
-            SUCCESS/FAILED, whether successfully written into MindRecord.
+            SUCCESS or FAILED, whether imagenet is successfully transformed to MindRecord.
         """
         t0_total = time.time()
 

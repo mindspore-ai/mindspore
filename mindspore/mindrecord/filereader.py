@@ -29,10 +29,10 @@ class FileReader:
     Class to read MindRecord File series.
 
     Args:
-       file_name (str, list[str]): One of MindRecord File or file list.
+       file_name (str, list[str]): One of MindRecord File or a file list.
        num_consumer(int, optional): Number of consumer threads which load data to memory (default=4).
-           It should not be smaller than 1 or larger than the number of CPU.
-       columns (list[str], optional): List of fields which corresponding data would be read (default=None).
+           It should not be smaller than 1 or larger than the number of CPUs.
+       columns (list[str], optional): A list of fields where corresponding data would be read (default=None).
        operator(int, optional): Reserved parameter for operators (default=None).
 
     Raises:
@@ -72,7 +72,7 @@ class FileReader:
         Yield a batch of data according to columns at a time.
 
         Yields:
-            dict: keys is the same as columns.
+            dictionary: keys are the same as columns.
 
         Raises:
             MRMUnsupportedSchemaError: If schema is invalid.

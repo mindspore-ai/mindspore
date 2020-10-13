@@ -28,12 +28,12 @@ class MindPage:
     Class to read MindRecord File series in pagination.
 
     Args:
-        file_name (str): One of MindRecord File or file list.
-        num_consumer(int, optional): Number of consumer threads which load data to memory (default=4).
-            It should not be smaller than 1 or larger than the number of CPU.
+        file_name (str): One of MindRecord File or a file list.
+        num_consumer(int, optional): The number of consumer threads which load data to memory (default=4).
+            It should not be smaller than 1 or larger than the number of CPUs.
 
     Raises:
-        ParamValueError: If file_name, num_consumer or columns is invalid.
+        ParamValueError: If `file_name`, `num_consumer` or columns is invalid.
         MRMInitSegmentError: If failed to initialize ShardSegment.
     """
     def __init__(self, file_name, num_consumer=4):
@@ -97,7 +97,7 @@ class MindPage:
 
     @property
     def category_field(self):
-        """Getter function for category field"""
+        """Getter function for category fields."""
         return self._category_field
 
     @category_field.setter
@@ -127,7 +127,7 @@ class MindPage:
         Query by category id in pagination.
 
         Args:
-             category_id (int): Category id, referred to the return of read_category_info.
+             category_id (int): Category id, referred to the return of `read_category_info`.
              page (int): Index of page.
              num_row (int): Number of rows in a page.
 
@@ -153,7 +153,7 @@ class MindPage:
 
         Args:
             category_name (str): String of category field's value,
-                referred to the return of read_category_info.
+                referred to the return of `read_category_info`.
             page (int): Index of page.
             num_row (int): Number of row in a page.
 
