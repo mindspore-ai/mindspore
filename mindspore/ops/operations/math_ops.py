@@ -413,6 +413,8 @@ class ReduceAll(_Reduce):
         >>> input_x = Tensor(np.array([[True, False], [True, True]]))
         >>> op = P.ReduceAll(keep_dims=True)
         >>> output = op(input_x, 1)
+        [[False]
+         [True ]]
     """
 
     def __infer__(self, input_x, axis):
@@ -1942,6 +1944,7 @@ class Mod(_MathBinaryOp):
         >>> input_y = Tensor(np.array([3.0, 2.0, 3.0]), mindspore.float32)
         >>> mod = P.Mod()
         >>> mod(input_x, input_y)
+        [-1. 1. 0.]
     """
 
     def infer_value(self, x, y):
@@ -3269,6 +3272,7 @@ class SquareSumAll(PrimitiveWithInfer):
          >>> input_x2 = Tensor(np.random.randint([3, 2, 5, 7]), mindspore.float32)
          >>> square_sum_all = P.SquareSumAll()
          >>> square_sum_all(input_x1, input_x2)
+         (27, 26)
     """
 
     @prim_attr_register

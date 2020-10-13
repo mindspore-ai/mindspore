@@ -79,10 +79,12 @@ def normal(shape, mean, stddev, seed=None):
         The dtype is float32.
 
     Examples:
-        >>> shape = (4, 16)
+        >>> shape = (2, 4)
         >>> mean = Tensor(1.0, mstype.float32)
         >>> stddev = Tensor(1.0, mstype.float32)
         >>> output = C.normal(shape, mean, stddev, seed=5)
+        [[1.0996436 0.44371283 0.11127508 -0.48055804]
+         [0.31989878 -1.0644426 1.5076542 1.2290289  ]]
     """
     mean_dtype = F.dtype(mean)
     stddev_dtype = F.dtype(stddev)

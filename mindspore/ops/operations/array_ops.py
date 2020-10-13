@@ -446,6 +446,7 @@ class Shape(Primitive):
         >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
         >>> shape = P.Shape()
         >>> output = shape(input_tensor)
+        (3, 2, 1)
     """
 
     @prim_attr_register
@@ -501,6 +502,9 @@ class Squeeze(PrimitiveWithInfer):
         >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
         >>> squeeze = P.Squeeze(2)
         >>> output = squeeze(input_tensor)
+        [[1. 1.]
+         [1. 1.]
+         [1. 1.]]
     """
 
     @prim_attr_register
@@ -748,6 +752,10 @@ class Split(PrimitiveWithInfer):
         >>> split = P.Split(1, 2)
         >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))
         >>> output = split(x)
+        ([[1, 1],
+          [2, 2]],
+         [[1, 1],
+          [2, 2]])
     """
 
     @prim_attr_register
@@ -828,7 +836,7 @@ class TruncatedNormal(PrimitiveWithInfer):
         - **shape** (tuple[int]) - The shape of the output tensor, is a tuple of positive integer.
 
     Outputs:
-        Tensor, the dat type of output tensor is the same as attribute `dtype`.
+        Tensor, the data type of output tensor is the same as attribute `dtype`.
 
     Examples:
         >>> shape = (1, 2, 3)
@@ -2451,6 +2459,9 @@ class ScatterNd(PrimitiveWithInfer):
         >>> update = Tensor(np.array([3.2, 1.1]), mindspore.float32)
         >>> shape = (3, 3)
         >>> output = op(indices, update, shape)
+        [[0. 3.2 0.]
+         [0. 1.1 0.]
+         [0. 0. 0. ]]
     """
 
     @prim_attr_register
@@ -2676,6 +2687,8 @@ class ScatterNdUpdate(_ScatterNdOp):
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
         >>> op = P.ScatterNdUpdate()
         >>> output = op(input_x, indices, update)
+        [[1. 0.3 3.6]
+         [0.4 2.2 -3.2]]
     """
 
 
@@ -3136,7 +3149,7 @@ class SpaceToBatch(PrimitiveWithInfer):
 
     Args:
         block_size (int): The block size of dividing blocks with value greater than 2.
-        paddings (list): The padding values for H and W dimension, containing 2 subtraction lists.
+        paddings (Union[tuple, list]): The padding values for H and W dimension, containing 2 subtraction lists.
             Each subtraction list contains 2 integer value. All values must be greater than 0.
             paddings[i] specifies the paddings for the spatial dimension i, which corresponds to the
             input dimension i+2. It is required that input_shape[i+2]+paddings[i][0]+paddings[i][1]
@@ -3284,7 +3297,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
     Args:
         block_shape (Union[list(int), tuple(int)]): The block shape of dividing block with all value greater than 1.
             The length of `block_shape` is M correspoding to the number of spatial dimensions. M must be 2.
-        paddings (list): The padding values for H and W dimension, containing 2 subtraction list.
+        paddings (Union[tuple, list]): The padding values for H and W dimension, containing 2 subtraction list.
             Each contains 2 integer value. All values must be greater than 0.
             `paddings[i]` specifies the paddings for the spatial dimension i,
             which corresponds to the input dimension i+2.
