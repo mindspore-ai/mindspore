@@ -39,7 +39,7 @@ KernelRuntime::~KernelRuntime() {}
 
 bool KernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) { return true; }
 
-bool KernelRuntime::LoadData(session::KernelGraph *graph, Debugger *debugger) { return false; }
+bool KernelRuntime::LoadData(session::KernelGraph *graph) { return false; }
 
 bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_t index) {
   MS_EXCEPTION_IF_NULL(kernel);

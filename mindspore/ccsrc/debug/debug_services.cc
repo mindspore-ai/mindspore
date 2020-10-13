@@ -234,8 +234,7 @@ void DebugServices::ReadNodesTensors(std::vector<std::string> name, std::vector<
   }
 }
 
-bool DebugServices::IsWatchPoint(std::string kernel_name,
-                                 std::unordered_map<unsigned int, watchpoint_t> watchpoint_table) {
+bool DebugServices::IsWatchPoint(std::string kernel_name) {
   bool ret = false;
   for (auto w_table_item : watchpoint_table) {
     auto check_node_list = std::get<1>(w_table_item).check_node_list;

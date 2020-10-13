@@ -136,7 +136,7 @@ class DebugServices {
                         std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
                         std::vector<TypePtr> *dtype, std::vector<std::vector<int>> *shape);
 
-  bool IsWatchPoint(std::string kernel_name, std::unordered_map<unsigned int, watchpoint_t> watchpoint_table);
+  bool IsWatchPoint(std::string kernel_name);
 
   TensorLoader *tensor_loader() const;
 

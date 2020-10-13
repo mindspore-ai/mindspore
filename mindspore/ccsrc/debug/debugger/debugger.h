@@ -105,6 +105,12 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void LoadParametersAndConst();
 
+  void UpdateStepNum();
+
+  void ClearCurrentData();
+
+  void LoadGraphOutputs();
+
  private:
   // private constructor for singleton
   Debugger();

@@ -20,8 +20,8 @@
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #endif
 #ifdef ENABLE_DEBUGGER
-#include "debug/debugger/debugger.h"
 #include "debug/debug_services.h"
+#include "debug/debugger/debugger.h"
 #endif
 
 namespace mindspore {
@@ -82,9 +82,8 @@ bool BestFitMemReuse::IsUsable(const KernelDefPtr &kernel_curr, const MembufPtr 
   auto debugger_ = mindspore::Debugger::GetInstance();
   if (debugger_->DebuggerBackendEnabled()) {
     DebugServices *debug_services = debugger_->debug_services();
-    auto watchpoint_table = debug_services->GetWatchpointTable();
     std::string current_kernel_name = kernel_curr->scope_full_name();
-    if (debug_services->IsWatchPoint(current_kernel_name, watchpoint_table)) {
+    if (debug_services->IsWatchPoint(current_kernel_name)) {
       return false;
     }
   }

@@ -602,7 +602,7 @@ void AscendSession::LoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph)
     tensor_loader->EmptyTensor();
     uint32_t iter_num = tensor_loader->GetIterNum();
     tensor_loader->set_iter_num(++iter_num);
-    (void)runtime_instance->LoadData(kernel_graph.get(), debugger_.get());
+    (void)runtime_instance->LoadData(kernel_graph.get());
     tensor_loader->EmptyPrevTensor();
   }
 #endif

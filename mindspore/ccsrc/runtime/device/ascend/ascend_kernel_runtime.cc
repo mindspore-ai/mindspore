@@ -263,6 +263,7 @@ bool AscendKernelRuntime::Init() {
   if (!ret) {
     return ret;
   }
+  SetDebugger();
   mem_manager_ = std::make_shared<AscendMemoryManager>();
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->MallocDeviceMemory();
@@ -271,63 +272,16 @@ bool AscendKernelRuntime::Init() {
   return ret;
 }
 
-#ifdef ENABLE_DEBUGGER
-namespace {
-void LoadOutput(mindspore::session::KernelGraph *graph, Debugger *debugger) {
-  MS_EXCEPTION_IF_NULL(graph);
-  // trans_flag: "true" means tensor values will be transfered to host format, otherwise not.
-  bool trans_flag = false;
-  const auto &apply_kernels = graph->execution_order();
-  // for kernels, execution order starts from 1
-  int exec_order = 1;
-  auto debugger_i = mindspore::Debugger::GetInstance();
-  DebugServices *debug_services = debugger_i->debug_services();
-  auto watchpoint_table = debug_services->GetWatchpointTable();
-  for (const auto &node : apply_kernels) {
-    MS_EXCEPTION_IF_NULL(node);
-    auto node_name = AnfAlgo::GetCNodeName(node);
-    std::string kernel_name = node->fullname_with_scope();
-    auto output_size = AnfAlgo::GetOutputTensorNum(node);
-    if (debugger_i->partial_memory()) {
-      if (!debug_services->IsWatchPoint(kernel_name, watchpoint_table)) {
-        continue;
-      }
-    }
-    for (size_t j = 0; j < output_size; ++j) {
-      auto addr = AnfAlgo::GetOutputAddr(node, j);
-      auto type = AnfAlgo::GetOutputInferDataType(node, j);
-      auto format = kOpFormat_DEFAULT;
-      string tensor_name = kernel_name + ':' + std::to_string(j);
-      auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
-      MS_EXCEPTION_IF_NULL(ascend_addr);
-      ShapeVector int_shapes;
-      auto shape = AnfAlgo::GetOutputDeviceShape(node, j);
-      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                           [](size_t inner_item) { return SizeToInt(inner_item); });
-      auto ret = ascend_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false);
-      if (!ret) {
-        MS_LOG(ERROR) << "LoadMemToHost: flag:" << trans_flag << ", tensor_name:" << tensor_name
-                      << ", host_format:" << format << ".!";
-      }
-    }
-    exec_order = exec_order + 1;
-  }
-}
-
-}  // namespace
-#endif
-
-bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
+bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
 #ifdef ENABLE_DEBUGGER
-  debugger_ = debugger;
   MS_LOG(INFO) << "Start load step";
   uint32_t cur_iter = 0;
   MS_LOG(INFO) << "Cur iter is " << cur_iter;
   // load output
-  LoadOutput(graph, debugger);
+  debugger_->LoadGraphOutputs();
   // load parameters
-  if (debugger) debugger->LoadParametersAndConst();
+  debugger_->LoadParametersAndConst();
 #endif
   return true;
 }
@@ -550,7 +504,7 @@ void AscendKernelRuntime::DebugTaskIdName(GraphId graph_id) {
   }
 }
 
-bool AscendKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger) {
+bool AscendKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
   bool ret = false;
 #if defined(_WIN32) || defined(_WIN64)
   auto start_time = std::chrono::steady_clock::now();

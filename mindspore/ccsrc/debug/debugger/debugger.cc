@@ -49,7 +49,7 @@ namespace mindspore {
 
 DebuggerPtr Debugger::debugger_ = nullptr;
 std::mutex Debugger::instance_lock_;
-static const size_t PRAMATER_OUTPUT_INDEX = 0;
+static const size_t PARAMETER_OUTPUT_INDEX = 0;
 static const size_t VALUE_NODE_OUTPUT_INDEX = 0;
 
 Debugger::Debugger()
@@ -279,8 +279,7 @@ void Debugger::PostExecute() {
 
 bool Debugger::ReadNodeDataRequired() {
   if (debugger_enabled_ && !is_dataset_graph_) {
-    auto watchpoint_table = debug_services_->GetWatchpointTable();
-    auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_, watchpoint_table);
+    auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_);
     // if node has a watchpoint on it, is next_to node, or continue_to node then read the kernel tensor data
     if (is_watchpoint || (run_level_ == "node" && (node_name_ == "" || node_name_ == cur_name_))) {
       return true;
@@ -296,8 +295,7 @@ void Debugger::PostExecuteNode() {
     return;
   }
   if (debugger_enabled_ && !is_dataset_graph_) {
-    auto watchpoint_table = debug_services_->GetWatchpointTable();
-    auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_, watchpoint_table);
+    auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_);
 
     // if kernel is watchpoint,and get hit. suspend.
     bool hit_empty_flag = true;
@@ -914,7 +912,7 @@ void Debugger::LoadParametersAndConst() {
   MS_LOG(INFO) << "Start to load Parameters!";
   const auto &parameters = graph_ptr_->inputs();
   for (auto &item : parameters) {
-    LoadSingleAnfnode(item, PRAMATER_OUTPUT_INDEX);
+    LoadSingleAnfnode(item, PARAMETER_OUTPUT_INDEX);
   }
   // load value nodes
   // get all constant avlues from the graph
@@ -923,6 +921,52 @@ void Debugger::LoadParametersAndConst() {
   for (auto &item : value_nodes) {
     LoadSingleAnfnode(item, VALUE_NODE_OUTPUT_INDEX);
   }
+}
+
+void Debugger::LoadGraphOutputs() {
+  if (!(debugger_enabled() && device_target_ == kAscendDevice)) return;
+  MS_EXCEPTION_IF_NULL(graph_ptr_);
+  const auto &apply_kernels = graph_ptr_->execution_order();
+  // for kernels, execution order starts from 1
+  int exec_order = 1;
+  for (const auto &node : apply_kernels) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto node_name = AnfAlgo::GetCNodeName(node);
+    std::string kernel_name = node->fullname_with_scope();
+    auto output_size = AnfAlgo::GetOutputTensorNum(node);
+    if (partial_memory_) {
+      if (!debug_services_->IsWatchPoint(kernel_name)) {
+        continue;
+      }
+    }
+    for (size_t j = 0; j < output_size; ++j) {
+      auto addr = AnfAlgo::GetOutputAddr(node, j);
+      MS_EXCEPTION_IF_NULL(addr);
+      auto type = AnfAlgo::GetOutputInferDataType(node, j);
+      auto format = kOpFormat_DEFAULT;
+      string tensor_name = kernel_name + ':' + std::to_string(j);
+      ShapeVector int_shapes;
+      auto shape = AnfAlgo::GetOutputDeviceShape(node, j);
+      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                           [](size_t inner_item) { return SizeToInt(inner_item); });
+      auto ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false);
+      if (!ret) {
+        MS_LOG(ERROR) << "LoadMemToHost:"
+                      << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
+      }
+    }
+    exec_order = exec_order + 1;
+  }
+}
+
+void Debugger::UpdateStepNum() {
+  if (device_target_ == kGPUDevice && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration()))
+    ++num_step_;
+}
+
+void Debugger::ClearCurrentData() {
+  if (device_target_ == kGPUDevice && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration()))
+    debug_services_->tensor_loader()->EmptyCurrentTensor();
 }
 
 }  // namespace mindspore
