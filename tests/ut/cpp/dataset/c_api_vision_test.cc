@@ -1313,3 +1313,117 @@ TEST_F(MindDataTestPipeline, TestNormalizeFail) {
   normalize = mindspore::dataset::api::vision::Normalize({300.0, 115.0, 100.0}, {70.0, 68.0, 71.0});
   EXPECT_EQ(normalize, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestRandomCropDecodeResizeSucess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropDecodeResize with default params.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, SequentialSampler(0, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_crop_decode_resize =
+    mindspore::dataset::api::vision::RandomCropDecodeResize({50, 60});
+  EXPECT_NE(random_crop_decode_resize, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_crop_decode_resize});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+    EXPECT_EQ(image->shape()[0], 50);
+    EXPECT_EQ(image->shape()[1], 60);
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomCropDecodeResizeSucess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropDecodeResize with single size.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, RandomSampler(false, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_crop_decode_resize =
+    mindspore::dataset::api::vision::RandomCropDecodeResize({100});
+  EXPECT_NE(random_crop_decode_resize, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_crop_decode_resize});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+    EXPECT_EQ(image->shape()[0], 100);
+    EXPECT_EQ(image->shape()[1], 100);
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomCropDecodeResizeFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropDecodeResize with invalid params.";
+  // size of size vector is not 1 or 2
+  std::shared_ptr<TensorOperation> random_crop_decode_resize_1 =
+    mindspore::dataset::api::vision::RandomCropDecodeResize({50, 100, 150});
+  EXPECT_EQ(random_crop_decode_resize_1, nullptr);
+
+  // incorrect scale vector
+  std::shared_ptr<TensorOperation> random_crop_decode_resize_2 =
+    mindspore::dataset::api::vision::RandomCropDecodeResize({50, 50}, {0.5});
+  EXPECT_EQ(random_crop_decode_resize_2, nullptr);
+
+  std::shared_ptr<TensorOperation> random_crop_decode_resize_3 =
+    mindspore::dataset::api::vision::RandomCropDecodeResize({50, 50}, {0.5, 0.1});
+  EXPECT_EQ(random_crop_decode_resize_3, nullptr);
+
+  // incorrect ratio vector
+  std::shared_ptr<TensorOperation> random_crop_decode_resize_4 =
+    mindspore::dataset::api::vision::RandomCropDecodeResize({50, 50}, {0.5, 0.6}, {0.9});
+  EXPECT_EQ(random_crop_decode_resize_4, nullptr);
+
+  std::shared_ptr<TensorOperation> random_crop_decode_resize_5 =
+    mindspore::dataset::api::vision::RandomCropDecodeResize({50, 50}, {0.5, 0.6}, {0.9, 0.1});
+  EXPECT_EQ(random_crop_decode_resize_5, nullptr);
+
+  // incorrect max_attempts range
+  std::shared_ptr<TensorOperation> random_crop_decode_resize_6 =
+    mindspore::dataset::api::vision::RandomCropDecodeResize({50, 50}, {0.5, 0.6}, {0.9, 0.9},
+                                                            mindspore::dataset::InterpolationMode::kLinear, 0);
+  EXPECT_EQ(random_crop_decode_resize_6, nullptr);
+}

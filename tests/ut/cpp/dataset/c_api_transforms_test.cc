@@ -142,3 +142,61 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess2) {
   // Manually terminate the pipeline
   iter->Stop();
 }
+
+TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTypeCastSuccess.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 1));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  // Check original data type of dataset
+  auto image = row["image"];
+  std::string ori_type = image->type().ToString();
+  MS_LOG(INFO) << "Original data type: " << ori_type;
+  EXPECT_NE(ori_type.c_str(), "uint8");
+
+  // Manually terminate the pipeline
+  iter->Stop();
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> type_cast = transforms::TypeCast("uint16");
+  EXPECT_NE(type_cast, nullptr);
+
+  // Create a Map operation on ds
+  std::shared_ptr<Dataset> ds2 = ds->Map({type_cast}, {"image"});
+  EXPECT_NE(ds2, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  EXPECT_NE(iter2, nullptr);
+
+  // Check current data type of dataset
+  iter2->GetNextRow(&row);
+  auto image2 = row["image"];
+  std::string cur_type = image2->type().ToString();
+  MS_LOG(INFO) << "Current data type: " << cur_type;
+  EXPECT_NE(cur_type.c_str(), "uint16");
+
+  // Manually terminate the pipeline
+  iter2->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestTypeCastFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTypeCastFail with invalid params.";
+
+  // incorrect data type
+  std::shared_ptr<TensorOperation> type_cast = transforms::TypeCast("char");
+  EXPECT_EQ(type_cast, nullptr);
+}

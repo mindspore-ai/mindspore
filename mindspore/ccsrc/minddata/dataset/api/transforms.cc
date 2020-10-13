@@ -19,6 +19,7 @@
 
 // Kernel data headers (in alphabetical order)
 #include "minddata/dataset/kernels/data/one_hot_op.h"
+#include "minddata/dataset/kernels/data/type_cast_op.h"
 
 namespace mindspore {
 namespace dataset {
@@ -35,6 +36,16 @@ namespace transforms {
 // Function to create OneHotOperation.
 std::shared_ptr<OneHotOperation> OneHot(int32_t num_classes) {
   auto op = std::make_shared<OneHotOperation>(num_classes);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create TypeCastOperation.
+std::shared_ptr<TypeCastOperation> TypeCast(std::string data_type) {
+  auto op = std::make_shared<TypeCastOperation>(data_type);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -61,6 +72,24 @@ bool OneHotOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> OneHotOperation::Build() { return std::make_shared<OneHotOp>(num_classes_); }
+
+// TypeCastOperation
+TypeCastOperation::TypeCastOperation(std::string data_type) : data_type_(data_type) {}
+
+bool TypeCastOperation::ValidateParams() {
+  std::vector<std::string> predefine_type = {"bool",  "int8",   "uint8",   "int16",   "uint16",  "int32", "uint32",
+                                             "int64", "uint64", "float16", "float32", "float64", "string"};
+  auto itr = std::find(predefine_type.begin(), predefine_type.end(), data_type_);
+  if (itr == predefine_type.end()) {
+    MS_LOG(ERROR) << "TypeCast: Only support type bool, int8, uint8, int16, uint16, int32, uint32, "
+                  << "int64, uint64, float16, float32, float64, string, but got " << data_type_;
+    return false;
+  }
+
+  return true;
+}
+
+std::shared_ptr<TensorOp> TypeCastOperation::Build() { return std::make_shared<TypeCastOp>(data_type_); }
 
 }  // namespace transforms
 }  // namespace api
