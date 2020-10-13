@@ -701,9 +701,10 @@ bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann:
   auto type_id = tensor->data_type();
   auto *data = tensor->data_c();
   MS_EXCEPTION_IF_NULL(data);
-  if (tensor->DataDim() > 1 || tensor->DataSize() != 1) {
+  if (tensor->DataSize() > 1) {
     // not const tensor.
-    MS_LOG(WARNING) << "We take first value of tensor whose datasize != 1, [" << input_node->DebugString(2) << "]";
+    MS_LOG(WARNING) << "Not take value of tensor whose datasize greater than 1, [" << input_node->DebugString(2) << "]";
+    return false;
   }
 
   if (type_id == kFloat32->type_id()) {
