@@ -489,6 +489,11 @@ Status BatchOp::ComputeColMap() {
   // from this point onward, per_batch_map is needed, therefore, child_map_ must be set
   child_map_ = child_[0]->column_name_id_map();
 
+  // check all input columns exist
+  for (const auto &col : in_col_names_) {
+    CHECK_FAIL_RETURN_UNEXPECTED(child_map_.find(col) != child_map_.end(), "col:" + col + " doesn't exist.");
+  }
+
   // following logic deals with per_batch_map
   bool col_name_flag = (out_col_names_.empty() || out_col_names_ == in_col_names_);  // true if col name is unchanged
 
@@ -498,13 +503,11 @@ Status BatchOp::ComputeColMap() {
     column_name_id_map_ = child_map_;
     return Status::OK();
   }
-
   // column names are changed from this point onward, this map is the child_map without input cols for per_batch_map
   auto child_map_no_in_col = child_map_;
+
   for (const auto &col : in_col_names_) {
-    const auto itr = child_map_no_in_col.find(col);
-    CHECK_FAIL_RETURN_UNEXPECTED(itr != child_map_no_in_col.end(), "col:" + col + " doesn't exist.");
-    child_map_no_in_col.erase(itr);
+    child_map_no_in_col.erase(col);
   }
 
   // col names are changed
