@@ -103,7 +103,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void SendMetadata();
 
-  void LoadParameters();
+  void LoadParametersAndConst();
 
  private:
   // private constructor for singleton
@@ -163,6 +163,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   // Check if the port is valid
   bool CheckPort(const char *port);
+
+  void LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index);
 
   // class members
   std::unique_ptr<GrpcClient> grpc_client_;

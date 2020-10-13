@@ -650,7 +650,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
   }
   if (!mock) {
     // collect weights and bias for dump mode
-    if (debugger) debugger->LoadParameters();
+    if (debugger) debugger->LoadParametersAndConst();
     CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
   }
   ClearSwapInfo(mock);
