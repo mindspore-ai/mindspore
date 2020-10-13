@@ -42,7 +42,10 @@ class ArithmeticOpenCLKernel : public OpenCLKernel {
 
   cl::Kernel kernel_;
   bool element_flag_{true};
-  void *weight_ptr_{nullptr};
+  float activation_min_{-FLT_MAX};
+  float activation_max_{FLT_MAX};
+  std::vector<std::vector<int>> inputs_nhwc_shapes_;
+  std::vector<void *> inputs_weight_ptrs_;
 
   std::vector<size_t> local_size_;
   std::vector<size_t> global_size_;

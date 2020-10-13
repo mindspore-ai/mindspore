@@ -27,6 +27,8 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_Nchw2Nhwc;
+using mindspore::schema::PrimitiveType_Nhwc2Nchw;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
@@ -141,4 +143,8 @@ kernel::LiteKernel *OpenCLTransposeKernelCreator(const std::vector<lite::Tensor 
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Transpose, OpenCLTransposeKernelCreator)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Transpose, OpenCLTransposeKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Nhwc2Nchw, OpenCLTransposeKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Nhwc2Nchw, OpenCLTransposeKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Nchw2Nhwc, OpenCLTransposeKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Nchw2Nhwc, OpenCLTransposeKernelCreator)
 }  // namespace mindspore::kernel

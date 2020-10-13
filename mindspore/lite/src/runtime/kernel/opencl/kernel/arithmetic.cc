@@ -32,13 +32,7 @@ using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
 
-ArithmeticOpenCLKernel::~ArithmeticOpenCLKernel() {
-  if (weight_ptr_ != nullptr) {
-    auto allocator = ocl_runtime_->GetAllocator();
-    allocator->Free(weight_ptr_);
-    weight_ptr_ = nullptr;
-  }
-}
+ArithmeticOpenCLKernel::~ArithmeticOpenCLKernel() {}
 
 std::vector<size_t> ArithmeticOpenCLKernel::InitGlobalSize() const {
   const size_t global_x = out_tensors_[0]->Width();
@@ -114,90 +108,83 @@ int ArithmeticOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_si
 }
 
 int ArithmeticOpenCLKernel::InitBuffer() {
-  const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
-  if (!arithmetic_parameter->broadcasting_) {
-    if (in_tensors_[1]->category() == lite::Tensor::Category::CONST && in_tensors_[1]->data_c() != nullptr) {
+  auto fp16_enable = ocl_runtime_->GetFp16Enable();
+  auto data_size = fp16_enable ? sizeof(float16_t) : sizeof(float);
+  for (auto in_tensor_ : in_tensors_) {
+    auto nhwc_shape = GetNHWCShape(in_tensor_->shape());
+    inputs_nhwc_shapes_.push_back(nhwc_shape);
+    if (in_tensor_->category() != lite::Tensor::Category::CONST || in_tensor_->data_c() == nullptr) {
+      inputs_weight_ptrs_.push_back(nullptr);
+    } else {
       auto allocator = ocl_runtime_->GetAllocator();
-      std::vector<size_t> img_size;
-      GetImageSize(0, &img_size);
-      int pack_weight_size = in_tensors_[1]->ElementsC4Num();
-      int plane = in_tensors_[1]->Height() * in_tensors_[1]->Width();
-      int channel = in_tensors_[1]->Channel();
-      int batch = in_tensors_[1]->Batch();
-
-      if (in_tensors_[0]->GetFormat() == in_tensors_[1]->GetFormat()) {
-        if (in_tensors_[0]->data_type() == in_tensors_[1]->data_type()) {
-          weight_ptr_ =
-            allocator->CreateImageFromHost(in_tensors_[1]->data_c(), in_tensors_[1]->ElementsNum(), img_size);
-        } else {
-          MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
-                        << in_tensors_[0]->data_type();
+      std::vector<size_t> img_size = GetImage2dShapeFromNHWC(nhwc_shape, op_format_);
+      int pack_weight_size = img_size[0] * img_size[1] * C4NUM;
+      int plane = nhwc_shape[1] * nhwc_shape[2];
+      int channel = nhwc_shape[3];
+      int batch = nhwc_shape[0];
+      img_size.push_back(fp16_enable ? CL_HALF_FLOAT : CL_FLOAT);
+      if (!fp16_enable) {
+        float *weight = new (std::nothrow) float[pack_weight_size];
+        if (weight == nullptr) {
+          MS_LOG(ERROR) << "Malloc buffer failed!";
           return RET_ERROR;
         }
-      } else if (in_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
-        if (in_tensors_[1]->GetFormat() == schema::Format_NHWC) {
-          if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-            float *weight = new (std::nothrow) float[pack_weight_size];
-            if (weight == nullptr) {
-              MS_LOG(ERROR) << "Malloc buffer failed!";
-              return RET_ERROR;
-            }
+        memset(weight, 0x00, pack_weight_size * data_size);
+        if (op_format_ == schema::Format_NHWC4) {
+          if (in_tensor_->data_type() == kNumberTypeFloat32) {
             std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-            PackNHWCToNC4HW4<float, float>(in_tensors_[1]->data_c(), weight, batch, plane, channel, to_dtype);
-            weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
-            delete[] weight;
-          } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
-            float16_t *weight = new (std::nothrow) float16_t[pack_weight_size];
-            if (weight == nullptr) {
-              MS_LOG(ERROR) << "Malloc buffer failed!";
-              return RET_ERROR;
-            }
-            std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
-            PackNHWCToNC4HW4<float, float16_t>(in_tensors_[1]->data_c(), weight, batch, plane, channel, to_dtype);
-            weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
-            delete[] weight;
-          } else {
-            MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
-                          << in_tensors_[0]->data_type();
-            return RET_ERROR;
+            PackNHWCToNHWC4<float, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
+          } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
+            std::function<float(float16_t)> to_dtype = [](float16_t x) -> float { return static_cast<float>(x); };
+            PackNHWCToNHWC4<float16_t, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
           }
-        } else {
-          MS_LOG(ERROR) << "Unsupport format transpose from " << in_tensors_[1]->GetFormat() << "to "
-                        << in_tensors_[0]->GetFormat();
-          return RET_ERROR;
-        }
-      } else if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
-        if (in_tensors_[1]->GetFormat() == schema::Format_NHWC) {
-          if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-            float *weight = new (std::nothrow) float[pack_weight_size];
-            if (weight == nullptr) {
-              MS_LOG(ERROR) << "Malloc buffer failed!";
-              return RET_ERROR;
-            }
+        } else if (op_format_ == schema::Format_NC4HW4) {
+          if (in_tensor_->data_type() == kNumberTypeFloat32) {
             std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-            PackNHWCToNHWC4<float, float>(in_tensors_[1]->data_c(), weight, batch, plane, channel, to_dtype);
-            weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
-            delete[] weight;
-          } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
-            float16_t *weight = new (std::nothrow) float16_t[pack_weight_size];
-            if (weight == nullptr) {
-              MS_LOG(ERROR) << "Malloc buffer failed!";
-              return RET_ERROR;
-            }
-            std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
-            PackNHWCToNHWC4<float, float16_t>(in_tensors_[1]->data_c(), weight, batch, plane, channel, to_dtype);
-            weight_ptr_ = allocator->CreateImageFromHost(weight, in_tensors_[1]->ElementsNum(), img_size);
-            delete[] weight;
-          } else {
-            MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
-                          << in_tensors_[0]->data_type();
-            return RET_ERROR;
+            PackNHWCToNC4HW4<float, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
+          } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
+            std::function<float(float16_t)> to_dtype = [](float16_t x) -> float { return static_cast<float>(x); };
+            PackNHWCToNC4HW4<float16_t, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
           }
-        } else {
-          MS_LOG(ERROR) << "Unsupport format transpose from " << in_tensors_[1]->GetFormat() << "to "
-                        << in_tensors_[0]->GetFormat();
+        }
+        if (batch * plane * channel == 1) {
+          // scalar
+          weight[3] = weight[2] = weight[1] = weight[0];
+        }
+        auto weight_ptr_ = allocator->CreateImageFromHost(weight, pack_weight_size, img_size);
+        inputs_weight_ptrs_.push_back(weight_ptr_);
+        delete[] weight;
+      } else {
+        float16_t *weight = new (std::nothrow) float16_t[pack_weight_size];
+        if (weight == nullptr) {
+          MS_LOG(ERROR) << "Malloc buffer failed!";
           return RET_ERROR;
         }
+        memset(weight, 0x00, pack_weight_size * data_size);
+        if (op_format_ == schema::Format_NHWC4) {
+          if (in_tensor_->data_type() == kNumberTypeFloat32) {
+            std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
+            PackNHWCToNHWC4<float, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
+          } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
+            std::function<float16_t(float16_t)> to_dtype = [](float16_t x) -> float16_t { return x; };
+            PackNHWCToNHWC4<float16_t, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
+          }
+        } else if (op_format_ == schema::Format_NC4HW4) {
+          if (in_tensor_->data_type() == kNumberTypeFloat32) {
+            std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
+            PackNHWCToNC4HW4<float, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
+          } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
+            std::function<float16_t(float16_t)> to_dtype = [](float16_t x) -> float16_t { return x; };
+            PackNHWCToNC4HW4<float16_t, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
+          }
+        }
+        if (batch * plane * channel == 1) {
+          // scalar
+          weight[3] = weight[2] = weight[1] = weight[0];
+        }
+        auto weight_ptr_ = allocator->CreateImageFromHost(weight, pack_weight_size, img_size);
+        inputs_weight_ptrs_.push_back(weight_ptr_);
+        delete[] weight;
       }
     }
   }
@@ -211,7 +198,13 @@ int ArithmeticOpenCLKernel::Init() {
 
   if (arithmetic_parameter->broadcasting_) {
     element_flag_ = false;
-    kernel_name = "Broadcast";
+    if (op_format_ == schema::Format_NHWC4) {
+      kernel_name = "BroadcastNHWC4";
+    } else {
+      kernel_name = "BroadcastNC4HW4";
+      MS_LOG(ERROR) << "Don't support BroadcastNC4HW4 yet";
+      return RET_ERROR;
+    }
   } else {
     kernel_name = "Element";
   }
@@ -277,15 +270,14 @@ int ArithmeticOpenCLKernel::Init() {
     case schema::ActivationType_NO_ACTIVATION:
       break;
     case schema::ActivationType_RELU:
-      if (op_parameter_->type_ == PrimitiveType_Add && element_flag_) {
-        kernel_name += "ReLU";
-      } else {
-        MS_LOG(ERROR) << "Only support ElementAdd + ReLU";
-        return RET_ERROR;
-      }
+      activation_min_ = 0.f;
+      break;
+    case schema::ActivationType_RELU6:
+      activation_min_ = 0.f;
+      activation_max_ = 6.f;
       break;
     default:
-      MS_LOG(ERROR) << "Error activation type " << arithmetic_parameter->activation_type_;
+      MS_LOG(ERROR) << "Unsupported activation type " << arithmetic_parameter->activation_type_;
       return RET_ERROR;
   }
 
@@ -328,47 +320,41 @@ int ArithmeticOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
 
   int arg_idx = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  if (element_flag_) {
-    void *weight = weight_ptr_ == nullptr ? in_tensors_[1]->data_c() : weight_ptr_;
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight);
-  } else {
-    float weight = 0.f;
-    if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
-      weight = static_cast<float *>(in_tensors_[1]->data_c())[0];
-    } else if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
-      weight = static_cast<float>(static_cast<float16_t *>(in_tensors_[1]->data_c())[0]);
-    } else {
-      MS_LOG(ERROR) << "Unsupport data type " << in_tensors_[1]->data_type();
-      return RET_ERROR;
-    }
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight);
-  }
+  auto input_0_ptr = inputs_weight_ptrs_[0] == nullptr ? in_tensors_[0]->data_c() : inputs_weight_ptrs_[0];
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_0_ptr);
+  auto input_1_ptr = inputs_weight_ptrs_[1] == nullptr ? in_tensors_[1]->data_c() : inputs_weight_ptrs_[1];
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_1_ptr);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-
-  cl_int2 output_shape{static_cast<int>(global_size_[0]), static_cast<int>(global_size_[1])};
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
-  ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
+  if (!element_flag_) {
+    cl_int4 input0_shape = {inputs_nhwc_shapes_[0][0], inputs_nhwc_shapes_[0][1], inputs_nhwc_shapes_[0][2],
+                            UP_DIV(inputs_nhwc_shapes_[0][3], C4NUM)};
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input0_shape);
+    cl_int4 input1_shape = {inputs_nhwc_shapes_[1][0], inputs_nhwc_shapes_[1][1], inputs_nhwc_shapes_[1][2],
+                            UP_DIV(inputs_nhwc_shapes_[1][3], C4NUM)};
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input1_shape);
+    auto out_shape = GetNHWCShape(out_tensors_[0]->shape());
+    cl_int4 output_shape{out_shape[0], out_shape[1], out_shape[2], UP_DIV(out_shape[3], C4NUM)};
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_min_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_max_);
+    ocl_runtime_->RunKernel(kernel_,
+                            {static_cast<size_t>(UP_DIV(out_shape[3], C4NUM)), static_cast<size_t>(out_shape[2]),
+                             static_cast<size_t>(out_shape[1] * out_shape[0])},
+                            {}, nullptr);
+  } else {
+    cl_int2 output_shape{static_cast<int>(global_size_[0]), static_cast<int>(global_size_[1])};
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_min_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_max_);
+    ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
+  }
   return RET_OK;
 }
-
-kernel::LiteKernel *OpenCLBiasAddKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                               const lite::PrimitiveC *primitive);
 
 kernel::LiteKernel *OpenCLArithmeticKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
-  const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(opParameter);
-  if (arithmetic_parameter->broadcasting_) {
-    for (size_t i = 0; i < arithmetic_parameter->ndim_; i++) {
-      if (arithmetic_parameter->in_shape1_[i] != 0 && arithmetic_parameter->in_shape1_[i] != 1) {
-        return OpenCLBiasAddKernelCreator(inputs, outputs, opParameter, ctx, desc, primitive);
-      }
-    }
-  }
   auto *kernel =
     new (std::nothrow) ArithmeticOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, ctx);
   if (kernel == nullptr) {
