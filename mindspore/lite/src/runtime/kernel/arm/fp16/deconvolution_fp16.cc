@@ -156,7 +156,7 @@ int DeConvolutionFp16CPUKernel::DoDeconv(int task_id) {
   auto tmp_buf = tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_16_;
   MatMulFp16(pack_input_, execute_weight_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
              tmp_buf, nullptr, ActType_No, matmul_param_->deep_, matmul_param_->row_, oc * C8NUM * kernel_plane_, 0,
-             false);
+             OutType_C8);
   DeConvPostFp16(tmp_buf, pack_output_ + task_id * thread_stride_ * C8NUM * output_plane_,
                  reinterpret_cast<float16_t *>(bias_data_) + task_id * thread_stride_ * C8NUM,
                  execute_output_ + task_id * thread_stride_ * C8NUM, oc_res, conv_param_);

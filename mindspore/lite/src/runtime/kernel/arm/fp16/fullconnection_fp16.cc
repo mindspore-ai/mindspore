@@ -137,7 +137,7 @@ int FullconnectionFP16CPUKernel::RunImpl(int task_id) {
   auto bias = (bias_ptr_ == nullptr) ? nullptr : bias_ptr_ + thread_stride_ * task_id;
   auto c = output_ptr_ + task_id * thread_stride_;
   MatMulFp16(a_pack_ptr_, b, c, bias, fc_param_->act_type_, fc_param_->deep_, fc_param_->row_, cur_oc, fc_param_->col_,
-             true);
+             OutType_Nhwc);
   return RET_OK;
 }
 
