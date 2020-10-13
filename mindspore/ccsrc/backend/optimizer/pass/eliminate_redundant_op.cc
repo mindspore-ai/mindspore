@@ -107,8 +107,12 @@ const AnfNodePtr ProcessMatchedNodes(const FuncGraphPtr &func_graph, const CNode
   } else {  // rebuild the pass nodes
     for (size_t idx = pass_size - 2; idx > 0; --idx) {
       auto new_node = func_graph->NewCNode((*pass_vector)[idx].first->inputs());
-      new_node->set_input((*pass_vector)[idx].second,
-                          (*pass_vector)[idx + 1].first->input((*pass_vector)[idx + 1].second));
+      if (idx == pass_size - 2) {
+        new_node->set_input((*pass_vector)[idx].second,
+                            (*pass_vector)[idx + 1].first->input((*pass_vector)[idx + 1].second));
+      } else {
+        new_node->set_input((*pass_vector)[idx].second, (*pass_vector)[idx + 1].first);
+      }
       (*pass_vector)[idx].first = new_node;
     }
     return (*pass_vector)[1].first;
