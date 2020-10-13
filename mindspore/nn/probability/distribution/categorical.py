@@ -47,7 +47,7 @@ class Categorical(Distribution):
         >>>     def __init__(self, probs):
         >>>         super(net, self).__init__():
         >>>         self.ca = msd.Categorical(probs=[0.2, 0.8], dtype=mstype.int32)
-        >>>         self.ca1 = msd.Categorical(probs=[0.2, 0.8], dtype=mstype.int32)
+        >>>         self.ca1 = msd.Categorical(dtype=mstype.int32)
         >>>
         >>>     # All the following calls in construct are valid
         >>>     def construct(self, value):
@@ -95,8 +95,8 @@ class Categorical(Distribution):
         >>>         #     probs (Tensor): event probabilities. Default: self.probs.
         >>>         ans = self.ca.sample()
         >>>         ans = self.ca.sample((2,3))
-        >>>         ans = self.b1.sample((2,3), probs_b)
-        >>>         ans = self.b2.sample((2,3), probs_a)
+        >>>         ans = self.ca.sample((2,3), probs_b)
+        >>>         ans = self.ca1.sample((2,3), probs_a)
     """
 
     def __init__(self,

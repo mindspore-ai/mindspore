@@ -94,8 +94,8 @@ class Logistic(Distribution):
         >>>         #     scale (Tensor): the scale of the distribution. Default: self.scale.
         >>>         ans = self.l1.sample()
         >>>         ans = self.l1.sample((2,3))
-        >>>         ans = self.l1.sample((2,3), scale_b, scale_b)
-        >>>         ans = self.l2.sample((2,3), scale_a, scale_a)
+        >>>         ans = self.l1.sample((2,3), loc_b, scale_b)
+        >>>         ans = self.l2.sample((2,3), loc_a, scale_a)
     """
 
     def __init__(self,

@@ -65,14 +65,15 @@ class ScalarAffine(Bijector):
             'scale', scale, [int, float], type(self).__name__)
         validator.check_value_type(
             'shift', shift, [int, float], type(self).__name__)
-        self._scale = cast_to_tensor(scale)
-        self._shift = cast_to_tensor(shift)
         super(ScalarAffine, self).__init__(
             is_constant_jacobian=True,
             is_injective=True,
             name=name,
             dtype=None,
             param=param)
+
+        self._scale = cast_to_tensor(scale)
+        self._shift = cast_to_tensor(shift)
 
         self.abs = P.Abs()
         self.oneslike = P.OnesLike()
