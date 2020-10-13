@@ -25,7 +25,7 @@ from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed, dtype
-from src.ssd import SSD300, SSDWithLossCell, TrainingWrapper, ssd_mobilenet_v2
+from src.ssd import SSD300, SSDWithLossCell, TrainingWrapper, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn
 from src.config import config
 from src.dataset import create_ssd_dataset, create_mindrecord
 from src.lr_schedule import get_lr
@@ -74,63 +74,85 @@ def main():
             context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                               device_num=device_num)
             init()
+            context.set_auto_parallel_context(all_reduce_fusion_config=[29, 58, 89])
             rank = get_rank()
 
     mindrecord_file = create_mindrecord(args_opt.dataset, "ssd.mindrecord", True)
-    if not args_opt.only_create_dataset:
-        loss_scale = float(args_opt.loss_scale)
-        if args_opt.run_platform == "CPU":
-            loss_scale = 1.0
 
-        # When create MindDataset, using the fitst mindrecord file, such as ssd.mindrecord0.
-        use_multiprocessing = (args_opt.run_platform != "CPU")
-        dataset = create_ssd_dataset(mindrecord_file, repeat_num=1, batch_size=args_opt.batch_size,
-                                     device_num=device_num, rank=rank, use_multiprocessing=use_multiprocessing)
+    if args_opt.only_create_dataset:
+        return
 
-        dataset_size = dataset.get_dataset_size()
-        print("Create dataset done!")
+    loss_scale = float(args_opt.loss_scale)
+    if args_opt.run_platform == "CPU":
+        loss_scale = 1.0
 
-        backbone = ssd_mobilenet_v2()
+    # When create MindDataset, using the fitst mindrecord file, such as ssd.mindrecord0.
+    use_multiprocessing = (args_opt.run_platform != "CPU")
+    dataset = create_ssd_dataset(mindrecord_file, repeat_num=1, batch_size=args_opt.batch_size,
+                                 device_num=device_num, rank=rank, use_multiprocessing=use_multiprocessing)
+
+    dataset_size = dataset.get_dataset_size()
+    print("Create dataset done!")
+
+    backbone = ssd_mobilenet_v2()
+    if config.model == "ssd300":
         ssd = SSD300(backbone=backbone, config=config)
-        if args_opt.run_platform == "GPU":
-            ssd.to_float(dtype.float16)
-        net = SSDWithLossCell(ssd, config)
-        init_net_param(net)
+    elif config.model == "ssd_mobilenet_v1_fpn":
+        ssd = ssd_mobilenet_v1_fpn(config=config)
+    else:
+        raise ValueError(f'config.model: {config.model} is not supported')
+    if args_opt.run_platform == "GPU":
+        ssd.to_float(dtype.float16)
+    net = SSDWithLossCell(ssd, config)
 
-        # checkpoint
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=dataset_size * args_opt.save_checkpoint_epochs)
-        save_ckpt_path = './ckpt_' + str(rank) + '/'
-        ckpoint_cb = ModelCheckpoint(prefix="ssd", directory=save_ckpt_path, config=ckpt_config)
+    init_net_param(net)
 
-        if args_opt.pre_trained:
-            param_dict = load_checkpoint(args_opt.pre_trained)
-            if args_opt.filter_weight:
-                filter_checkpoint_parameter(param_dict)
-            load_param_into_net(net, param_dict)
+    if config.feature_extractor_base_param != "":
+        param_dict = load_checkpoint(config.feature_extractor_base_param)
+        for x in list(param_dict.keys()):
+            param_dict["network.feature_extractor.mobilenet_v1." + x] = param_dict[x]
+            del param_dict[x]
+        load_param_into_net(ssd.feature_extractor.mobilenet_v1.network, param_dict)
 
-        if args_opt.freeze_layer == "backbone":
-            for param in backbone.feature_1.trainable_params():
-                param.requires_grad = False
+    # checkpoint
+    ckpt_config = CheckpointConfig(save_checkpoint_steps=dataset_size * args_opt.save_checkpoint_epochs)
+    save_ckpt_path = './ckpt_' + str(rank) + '/'
+    ckpoint_cb = ModelCheckpoint(prefix="ssd", directory=save_ckpt_path, config=ckpt_config)
 
-        lr = Tensor(get_lr(global_step=args_opt.pre_trained_epoch_size * dataset_size,
-                           lr_init=config.lr_init, lr_end=config.lr_end_rate * args_opt.lr, lr_max=args_opt.lr,
-                           warmup_epochs=config.warmup_epochs,
-                           total_epochs=args_opt.epoch_size,
-                           steps_per_epoch=dataset_size))
+    if args_opt.pre_trained:
+        param_dict = load_checkpoint(args_opt.pre_trained)
+        if args_opt.filter_weight:
+            filter_checkpoint_parameter(param_dict)
+        load_param_into_net(net, param_dict)
 
+    if args_opt.freeze_layer == "backbone":
+        for param in backbone.feature_1.trainable_params():
+            param.requires_grad = False
+
+    lr = Tensor(get_lr(global_step=args_opt.pre_trained_epoch_size * dataset_size,
+                       lr_init=config.lr_init, lr_end=config.lr_end_rate * args_opt.lr, lr_max=args_opt.lr,
+                       warmup_epochs=config.warmup_epochs,
+                       total_epochs=args_opt.epoch_size,
+                       steps_per_epoch=dataset_size))
+
+    if "use_global_norm" in config and config.use_global_norm:
+        opt = nn.Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr,
+                          config.momentum, config.weight_decay, 1.0)
+        net = TrainingWrapper(net, opt, loss_scale, True)
+    else:
         opt = nn.Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr,
                           config.momentum, config.weight_decay, loss_scale)
-
         net = TrainingWrapper(net, opt, loss_scale)
 
-        callback = [TimeMonitor(data_size=dataset_size), LossMonitor(), ckpoint_cb]
-        model = Model(net)
-        dataset_sink_mode = False
-        if args_opt.mode == "sink" and args_opt.run_platform != "CPU":
-            print("In sink mode, one epoch return a loss.")
-            dataset_sink_mode = True
-        print("Start train SSD, the first epoch will be slower because of the graph compilation.")
-        model.train(args_opt.epoch_size, dataset, callbacks=callback, dataset_sink_mode=dataset_sink_mode)
+
+    callback = [TimeMonitor(data_size=dataset_size), LossMonitor(), ckpoint_cb]
+    model = Model(net)
+    dataset_sink_mode = False
+    if args_opt.mode == "sink" and args_opt.run_platform != "CPU":
+        print("In sink mode, one epoch return a loss.")
+        dataset_sink_mode = True
+    print("Start train SSD, the first epoch will be slower because of the graph compilation.")
+    model.train(args_opt.epoch_size, dataset, callbacks=callback, dataset_sink_mode=dataset_sink_mode)
 
 if __name__ == '__main__':
     main()

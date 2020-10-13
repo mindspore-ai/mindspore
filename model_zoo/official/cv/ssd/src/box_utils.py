@@ -19,6 +19,7 @@ import math
 import itertools as it
 import numpy as np
 from .config import config
+from .anchor_generator import GridAnchorGenerator
 
 
 class GeneratDefaultBoxes():
@@ -36,7 +37,7 @@ class GeneratDefaultBoxes():
             sk1 = scales[idex]
             sk2 = scales[idex + 1]
             sk3 = math.sqrt(sk1 * sk2)
-            if idex == 0:
+            if idex == 0 and not config.aspect_ratios[idex]:
                 w, h = sk1 * math.sqrt(2), sk1 / math.sqrt(2)
                 all_sizes = [(0.1, 0.1), (w, h), (h, w)]
             else:
@@ -61,9 +62,12 @@ class GeneratDefaultBoxes():
         self.default_boxes_tlbr = np.array(tuple(to_tlbr(*i) for i in self.default_boxes), dtype='float32')
         self.default_boxes = np.array(self.default_boxes, dtype='float32')
 
-
-default_boxes_tlbr = GeneratDefaultBoxes().default_boxes_tlbr
-default_boxes = GeneratDefaultBoxes().default_boxes
+if 'use_anchor_generator' in config and config.use_anchor_generator:
+    generator = GridAnchorGenerator(config.img_shape, 4, 2, [1.0, 2.0, 0.5])
+    default_boxes, default_boxes_tlbr = generator.generate_multi_levels(config.steps)
+else:
+    default_boxes_tlbr = GeneratDefaultBoxes().default_boxes_tlbr
+    default_boxes = GeneratDefaultBoxes().default_boxes
 y1, x1, y2, x2 = np.split(default_boxes_tlbr[:, :4], 4, axis=-1)
 vol_anchors = (x2 - x1) * (y2 - y1)
 matching_threshold = config.match_threshold

@@ -26,6 +26,8 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 
+from .mobilenet_v1_fpn import mobilenet_v1_fpn
+
 
 def _make_divisible(v, divisor, min_value=None):
     """nsures that all layers have a channel number that is divisible by 8."""
@@ -67,6 +69,7 @@ class ConvBNReLU(nn.Cell):
         kernel_size (int): Input kernel size.
         stride (int): Stride size for the first convolutional layer. Default: 1.
         groups (int): channel group. Convolution is 1 while Depthiwse is input channel. Default: 1.
+        shared_conv(Cell): Use the weight shared conv, default: None.
 
     Returns:
         Tensor, output tensor.
@@ -74,18 +77,21 @@ class ConvBNReLU(nn.Cell):
     Examples:
         >>> ConvBNReLU(16, 256, kernel_size=1, stride=1, groups=1)
     """
-    def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
+    def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1, shared_conv=None):
         super(ConvBNReLU, self).__init__()
         padding = 0
         in_channels = in_planes
         out_channels = out_planes
-        if groups == 1:
-            conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, pad_mode='same', padding=padding)
+        if shared_conv is None:
+            if groups == 1:
+                conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, pad_mode='same', padding=padding)
+            else:
+                out_channels = in_planes
+                conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, pad_mode='same',
+                                 padding=padding, group=in_channels)
+            layers = [conv, _bn(out_planes), nn.ReLU6()]
         else:
-            out_channels = in_planes
-            conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, pad_mode='same',
-                             padding=padding, group=in_channels)
-        layers = [conv, _bn(out_planes), nn.ReLU6()]
+            layers = [shared_conv, _bn(out_planes), nn.ReLU6()]
         self.features = nn.SequentialCell(layers)
 
     def construct(self, x):
@@ -205,6 +211,86 @@ class MultiBox(nn.Cell):
         return self.flatten_concat(loc_outputs), self.flatten_concat(cls_outputs)
 
 
+class WeightSharedMultiBox(nn.Cell):
+    """
+    Weight shared Multi-box conv layers. Each multi-box layer contains class conf scores and localization predictions.
+    All box predictors shares the same conv weight in different features.
+
+    Args:
+        config (dict): The default config of SSD.
+        loc_cls_shared_addition(bool): Whether the location predictor and classifier prediction share the
+                                       same addition layer.
+    Returns:
+        Tensor, localization predictions.
+        Tensor, class conf scores.
+    """
+    def __init__(self, config, loc_cls_shared_addition=False):
+        super(WeightSharedMultiBox, self).__init__()
+        num_classes = config.num_classes
+        out_channels = config.extras_out_channels[0]
+        num_default = config.num_default[0]
+        num_features = len(config.feature_size)
+        num_addition_layers = config.num_addition_layers
+        self.loc_cls_shared_addition = loc_cls_shared_addition
+
+        if not loc_cls_shared_addition:
+            loc_convs = [
+                _conv2d(out_channels, out_channels, 3, 1) for x in range(num_addition_layers)
+            ]
+            cls_convs = [
+                _conv2d(out_channels, out_channels, 3, 1) for x in range(num_addition_layers)
+            ]
+            addition_loc_layer_list = []
+            addition_cls_layer_list = []
+            for _ in range(num_features):
+                addition_loc_layer = [
+                    ConvBNReLU(out_channels, out_channels, 3, 1, 1, loc_convs[x]) for x in range(num_addition_layers)
+                ]
+                addition_cls_layer = [
+                    ConvBNReLU(out_channels, out_channels, 3, 1, 1, cls_convs[x]) for x in range(num_addition_layers)
+                ]
+                addition_loc_layer_list.append(nn.SequentialCell(addition_loc_layer))
+                addition_cls_layer_list.append(nn.SequentialCell(addition_cls_layer))
+            self.addition_layer_loc = nn.CellList(addition_loc_layer_list)
+            self.addition_layer_cls = nn.CellList(addition_cls_layer_list)
+        else:
+            convs = [
+                _conv2d(out_channels, out_channels, 3, 1) for x in range(num_addition_layers)
+            ]
+            addition_layer_list = []
+            for _ in range(num_features):
+                addition_layers = [
+                    ConvBNReLU(out_channels, out_channels, 3, 1, 1, convs[x]) for x in range(num_addition_layers)
+                ]
+                addition_layer_list.append(nn.SequentialCell(addition_layers))
+            self.addition_layer = nn.SequentialCell(addition_layer_list)
+
+        loc_layers = [_conv2d(out_channels, 4 * num_default,
+                              kernel_size=3, stride=1, pad_mod='same')]
+        cls_layers = [_conv2d(out_channels, num_classes * num_default,
+                              kernel_size=3, stride=1, pad_mod='same')]
+
+        self.loc_layers = nn.SequentialCell(loc_layers)
+        self.cls_layers = nn.SequentialCell(cls_layers)
+        self.flatten_concat = FlattenConcat(config)
+
+    def construct(self, inputs):
+        loc_outputs = ()
+        cls_outputs = ()
+        num_heads = len(inputs)
+        for i in range(num_heads):
+            if self.loc_cls_shared_addition:
+                features = self.addition_layer[i](inputs[i])
+                loc_outputs += (self.loc_layers(features),)
+                cls_outputs += (self.cls_layers(features),)
+            else:
+                features = self.addition_layer_loc[i](inputs[i])
+                loc_outputs += (self.loc_layers(features),)
+                features = self.addition_layer_cls[i](inputs[i])
+                cls_outputs += (self.cls_layers(features),)
+        return self.flatten_concat(loc_outputs), self.flatten_concat(cls_outputs)
+
+
 class SSD300(nn.Cell):
     """
     SSD300 Network. Default backbone is resnet34.
@@ -248,6 +334,40 @@ class SSD300(nn.Cell):
             feature = residual(feature)
             multi_feature += (feature,)
         pred_loc, pred_label = self.multi_box(multi_feature)
+        if not self.is_training:
+            pred_label = self.activation(pred_label)
+        pred_loc = F.cast(pred_loc, mstype.float32)
+        pred_label = F.cast(pred_label, mstype.float32)
+        return pred_loc, pred_label
+
+
+class SsdMobilenetV1Fpn(nn.Cell):
+    """
+    SSD Network using mobilenetV1 with fpn to extract features
+
+    Args:
+        config (dict): The default config of SSD.
+        is_training (bool): Used for training, default is True.
+
+    Returns:
+        Tensor, localization predictions.
+        Tensor, class conf scores.
+
+    Examples:backbone
+         SsdMobilenetV1Fpn(config, True).
+    """
+    def __init__(self, config, is_training=True):
+        super(SsdMobilenetV1Fpn, self).__init__()
+        self.multi_box = WeightSharedMultiBox(config)
+        self.is_training = is_training
+        if not is_training:
+            self.activation = P.Sigmoid()
+
+        self.feature_extractor = mobilenet_v1_fpn(config)
+
+    def construct(self, x):
+        features = self.feature_extractor(x)
+        pred_loc, pred_label = self.multi_box(features)
         if not self.is_training:
             pred_label = self.activation(pred_label)
         pred_loc = F.cast(pred_loc, mstype.float32)
@@ -328,6 +448,12 @@ class SSDWithLossCell(nn.Cell):
         return self.reduce_sum((loss_cls + loss_loc) / num_matched_boxes)
 
 
+grad_scale = C.MultitypeFuncGraph("grad_scale")
+@grad_scale.register("Tensor", "Tensor")
+def tensor_grad_scale(scale, grad):
+    return grad * P.Reciprocal()(scale)
+
+
 class TrainingWrapper(nn.Cell):
     """
     Encapsulation class of SSD network training.
@@ -339,8 +465,9 @@ class TrainingWrapper(nn.Cell):
         network (Cell): The training network. Note that loss function should have been added.
         optimizer (Optimizer): Optimizer for updating the weights.
         sens (Number): The adjust parameter. Default: 1.0.
+        use_global_nrom(bool): Whether apply global norm before optimizer. Default: False
     """
-    def __init__(self, network, optimizer, sens=1.0):
+    def __init__(self, network, optimizer, sens=1.0, use_global_norm=False):
         super(TrainingWrapper, self).__init__(auto_prefix=False)
         self.network = network
         self.network.set_grad()
@@ -350,6 +477,7 @@ class TrainingWrapper(nn.Cell):
         self.sens = sens
         self.reducer_flag = False
         self.grad_reducer = None
+        self.use_global_norm = use_global_norm
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
         if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
             self.reducer_flag = True
@@ -360,6 +488,7 @@ class TrainingWrapper(nn.Cell):
             else:
                 degree = get_group_size()
             self.grad_reducer = nn.DistributedGradReducer(optimizer.parameters, mean, degree)
+        self.hyper_map = C.HyperMap()
 
     def construct(self, *args):
         weights = self.weights
@@ -369,6 +498,9 @@ class TrainingWrapper(nn.Cell):
         if self.reducer_flag:
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)
+        if self.use_global_norm:
+            grads = self.hyper_map(F.partial(grad_scale, F.scalar_to_array(self.sens)), grads)
+            grads = C.clip_by_global_norm(grads)
         return F.depend(loss, self.optimizer(grads))
 
 
@@ -438,6 +570,11 @@ class SSDWithMobileNetV2(nn.Cell):
 
     def get_out_channels(self):
         return self.last_channel
+
+
+def ssd_mobilenet_v1_fpn(**kwargs):
+    return SsdMobilenetV1Fpn(**kwargs)
+
 
 def ssd_mobilenet_v2(**kwargs):
     return SSDWithMobileNetV2(**kwargs)
