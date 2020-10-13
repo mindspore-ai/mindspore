@@ -50,7 +50,10 @@ class SliceGradGpuKernel : public GpuKernel {
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == "StridedSliceGrad") {
       is_strided_slice_ = true;
-      input_shape_ = GetAttr<std::vector<int>>(kernel_node, "shapex");
+      auto shapex = GetAttr<std::vector<int>>(kernel_node, "shapex");
+      for (auto x : shapex) {
+        input_shape_.push_back(IntToSize(x));
+      }
       for (auto i = input_shape_.size(); i < 4; i++) {
         (void)input_shape_.insert(input_shape_.begin(), 1);
       }
@@ -69,11 +72,11 @@ class SliceGradGpuKernel : public GpuKernel {
     ShapeNdTo4d(dy_shape, &dy_shape_);
     begin_ = GetAttr<std::vector<int>>(kernel_node, "begin");
     DealParam();
-    input_size_ = IntToSize(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3]) * sizeof(T);
+    input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T);
 
     output_size_ = sizeof(T);
     for (auto x : dy_shape_) {
-      output_size_ = output_size_ * IntToSize(x);
+      output_size_ = output_size_ * x;
     }
     InitSizeLists();
     return true;
@@ -125,8 +128,8 @@ class SliceGradGpuKernel : public GpuKernel {
   std::vector<int> begin_;
   std::vector<int> size_;
   std::vector<int> strides_;
-  std::vector<int> input_shape_;
-  std::vector<int> dy_shape_;
+  std::vector<size_t> input_shape_;
+  std::vector<size_t> dy_shape_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

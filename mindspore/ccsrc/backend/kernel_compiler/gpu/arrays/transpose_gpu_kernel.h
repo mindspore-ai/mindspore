@@ -37,17 +37,16 @@ class TransposeGpuFwdKernel : public GpuKernel {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
-    int *input_shape = GetDeviceAddress<int>(workspace, 0);
-    int *input_axis = GetDeviceAddress<int>(workspace, 1);
+    size_t *input_shape = GetDeviceAddress<size_t>(workspace, 0);
+    size_t *input_axis = GetDeviceAddress<size_t>(workspace, 1);
     CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(input_shape, &input_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync input_shape failed");
     CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(input_axis, &input_axis_[0], workspace_size_, cudaMemcpyHostToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync input_axis failed");
-    int size = SizeToInt(input_size_ / sizeof(T));
-    CalTranspose(size, input, input_shape, input_axis, SizeToInt(shape_size_), output,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    size_t size = input_size_ / sizeof(T);
+    CalTranspose(size, input, input_shape, input_axis, shape_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -88,15 +87,15 @@ class TransposeGpuFwdKernel : public GpuKernel {
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
-    workspace_size_ = shape_size_ * sizeof(int);
+    workspace_size_ = shape_size_ * sizeof(size_t);
     workspace_size_list_.push_back(workspace_size_);
     workspace_size_list_.push_back(workspace_size_);
     return;
   }
 
  private:
-  std::vector<int> input_shape_;
-  std::vector<int> input_axis_;
+  std::vector<size_t> input_shape_;
+  std::vector<size_t> input_axis_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

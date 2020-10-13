@@ -72,7 +72,7 @@ class StridedSliceGpuKernel : public GpuKernel {
     }
     input_size_list_.push_back(size);
 
-    int size1 = sizeof(T);
+    size_t size1 = sizeof(T);
     for (size_t i = 0; i < MAX_DIMS; i++) {
       size1 *= output_shape_[i];
     }
@@ -188,7 +188,7 @@ class StridedSliceGpuKernel : public GpuKernel {
   std::vector<int> end_;
   std::vector<int> strides_;
   std::vector<size_t> input_shape_;
-  std::vector<int> output_shape_;
+  std::vector<size_t> output_shape_;
   int null_output_;
 
   std::vector<size_t> input_size_list_;

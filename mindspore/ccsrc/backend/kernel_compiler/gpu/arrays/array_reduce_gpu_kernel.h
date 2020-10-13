@@ -180,15 +180,16 @@ class ArrayReduceGpuKernel : public GpuKernel {
     return;
   }
   void InferInAndOutDesc(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape) {
-    std::vector<int> inputA;
+    std::vector<size_t> inputA;
     std::vector<size_t> outputC_shape = output_shape;
     const int split_dim = 4;
 
     if (input_shape.size() <= split_dim) {
       ShapeNdTo4d(input_shape, &inputA);
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
-                                                             inputA[0], inputA[1], inputA[2], inputA[3]),
-                                  "cudnnSetTensor4dDescriptor failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT(
+        cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_, SizeToInt(inputA[0]),
+                                   SizeToInt(inputA[1]), SizeToInt(inputA[2]), SizeToInt(inputA[3])),
+        "cudnnSetTensor4dDescriptor failed");
     } else {
       CudnnSetTensorNdDescriptor(input_shape, inputA_descriptor_, data_type_);
       for (auto dim : input_shape) {
@@ -216,7 +217,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
       return;
     }
 
-    std::vector<int> outputC;
+    std::vector<size_t> outputC;
     if (!keep_dims_) {
       for (auto i : axis_) {
         (void)(outputC_shape.insert(outputC_shape.begin() + i, 1));
@@ -225,9 +226,10 @@ class ArrayReduceGpuKernel : public GpuKernel {
 
     if (outputC_shape.size() <= split_dim) {
       ShapeNdTo4d(outputC_shape, &outputC);
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
-                                                             outputC[0], outputC[1], outputC[2], outputC[3]),
-                                  "cudnnSetTensor4dDescriptor failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT(
+        cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, SizeToInt(outputC[0]),
+                                   SizeToInt(outputC[1]), SizeToInt(outputC[2]), SizeToInt(outputC[3])),
+        "cudnnSetTensor4dDescriptor failed");
     } else {
       CudnnSetTensorNdDescriptor(outputC_shape, outputC_descriptor_, data_type_);
       for (auto dim : outputC_shape) {

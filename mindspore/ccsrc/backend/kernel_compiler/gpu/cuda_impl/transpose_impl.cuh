@@ -19,7 +19,7 @@
 
 #define TRANSPOSE_MAX_DIMENSION 100
 template <typename T>
-void CalTranspose(const int size, const T* input, const int* input_shape, const int* input_axis, const int shape_size,
-                  T* output, cudaStream_t cuda_stream);
+void CalTranspose(const size_t size, const T *input, const size_t *input_shape, const size_t *input_axis,
+                  const size_t shape_size, T *output, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_TRANSPOSE_H_
