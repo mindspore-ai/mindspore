@@ -30,7 +30,6 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
-#include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/queue.h"
@@ -288,9 +287,7 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   int64_t buf_cnt_;
   int64_t sampler_ind_;
   int64_t dirname_offset_;
-  WaitPost wp_;
   std::vector<std::string> image_rows_;
-  QueueList<std::unique_ptr<IOBlock>> io_block_queues_;  // queues of IOBlocks
 };
 }  // namespace dataset
 }  // namespace mindspore

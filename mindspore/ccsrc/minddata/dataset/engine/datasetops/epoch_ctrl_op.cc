@@ -51,15 +51,7 @@ void EpochCtrlOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     PipelineOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nCurrent epoch count: " << repeat_count_ << "\nMax epoch count: " << num_repeats_
-        << "\nLeaf Nodes in execution path:";
-    if (!eoe_ops_.empty()) {
-      for (size_t i = 0; i < eoe_ops_.size(); i++) {
-        out << "\n  Operator: " << eoe_ops_[i]->id();
-      }
-    } else {
-      out << " None.";
-    }
+    out << "\nCurrent epoch count: " << repeat_count_ << "\nMax epoch count: " << num_repeats_;
     out << "\n\n";
   }
 }
@@ -93,13 +85,6 @@ Status EpochCtrlOp::EoeReceived(int32_t worker_id) {
 
   // This will allow GetNextInput in DatasetOp class to pass EOE buffer instead of eating it.
   state_ = OpState::kDeOpIdle;
-
-  if (repeat_count_ != num_repeats_) {
-    for (auto &eoe_op : eoe_ops_) {
-      MS_LOG(DEBUG) << "Epoch Control driving reset to op: " << eoe_op->id();
-      RETURN_IF_NOT_OK(eoe_op->Reset());
-    }
-  }
 
   return Status::OK();
 }

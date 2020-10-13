@@ -126,10 +126,6 @@ class BucketBatchByLengthOp : public PipelineOp {
   // @return Status - The error code returned
   Status operator()() override;
 
-  // Function that is called by ResetOp at the end of every epoch
-  // @return Status - The error code returned
-  Status Reset() override;
-
  private:
   Status ObtainElementLength(int32_t *out_element_length, TensorRow element);
 
