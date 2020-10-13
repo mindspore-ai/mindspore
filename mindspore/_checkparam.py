@@ -111,6 +111,24 @@ def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=N
     return arg_value
 
 
+def check_is_number(arg_value, arg_type, arg_name=None, prim_name=None):
+    """
+    Checks input value is float type or not.
+
+    Usage:
+    - number = check_is_number(number, int)
+    - number = check_is_number(number, int, "bias")
+    - number = check_is_number(number, int, "bias", "bias_class")
+    """
+    prim_name = f'in \'{prim_name}\'' if prim_name else ''
+    arg_name = f'\'{prim_name}\'' if arg_name else 'Input value'
+    if isinstance(arg_value, arg_type):
+        if math.isinf(arg_value) or math.isnan(arg_value):
+            raise ValueError(f'{arg_name} {prim_name} must be legal float, but got `{arg_value}`.')
+        return arg_value
+    raise TypeError(f'{arg_name} {prim_name} must be float, but got `{type(arg_value).__name__}`')
+
+
 class Validator:
     """validator for checking input parameters"""
 
@@ -139,6 +157,18 @@ class Validator:
             raise excp_cls(f'{msg_prefix} `{arg_name}` should be an int and must {rel_str}, but got `{arg_value}`'
                            f' with type `{type(arg_value).__name__}`.')
         return arg_value
+
+    @staticmethod
+    def check_is_int(arg_value, arg_name=None, prim_name=None):
+        """
+        Checks input value is float type or not.
+
+        Usage:
+        - number = check_is_int(number, int)
+        - number = check_is_int(number, int, "bias")
+        - number = check_is_int(number, int, "bias", "bias_class")
+        """
+        check_is_number(arg_value, int, arg_name, prim_name)
 
     @staticmethod
     def check_positive_int(arg_value, arg_name=None, prim_name=None):
@@ -183,6 +213,18 @@ class Validator:
         - number = check_non_negative_int(number, "bias")
         """
         return check_number(arg_value, 0, Rel.GE, int, arg_name, prim_name)
+
+    @staticmethod
+    def check_is_float(arg_value, arg_name=None, prim_name=None):
+        """
+        Checks input value is float type or not.
+
+        Usage:
+        - number = check_is_float(number, int)
+        - number = check_is_float(number, int, "bias")
+        - number = check_is_float(number, int, "bias", "bias_class")
+        """
+        check_is_number(arg_value, float, arg_name, prim_name)
 
     @staticmethod
     def check_positive_float(arg_value, arg_name=None, prim_name=None):
@@ -452,16 +494,6 @@ class Validator:
                             f' but got {get_typename(arg_type)}.')
         raise TypeError(f'{msg_prefix} type of `{arg_name}` should be one of {type_names},'
                         f' but got {get_typename(arg_type)}.')
-
-    @staticmethod
-    def check_float_legal_value(arg_name, arg_value, prim_name):
-        """Checks whether a legal value of float type"""
-        msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
-        if isinstance(arg_value, float):
-            if math.isinf(arg_value) or math.isnan(arg_value):
-                raise ValueError(f"{msg_prefix} `{arg_name}` must be legal value, but got {arg_value}.")
-            return arg_value
-        raise TypeError(f"{msg_prefix} `{arg_name}` must be float.")
 
     @staticmethod
     def check_reduce_shape(ori_shape, shape, axis, prim_name):

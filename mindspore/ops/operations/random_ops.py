@@ -44,8 +44,8 @@ class StandardNormal(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Initialize StandardNormal"""
         self.init_prim_io_names(inputs=['shape'], outputs=['output'])
-        Validator.check_integer("seed", seed, 0, Rel.GE, self.name)
-        Validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
+        Validator.check_non_negative_int(seed, "seed", self.name)
+        Validator.check_non_negative_int(seed2, "seed2", self.name)
 
     def __infer__(self, shape):
         shape_v = shape["value"]
@@ -141,8 +141,8 @@ class Gamma(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Initialize Gamma"""
         self.init_prim_io_names(inputs=['shape', 'alpha', 'beta'], outputs=['output'])
-        Validator.check_integer("seed", seed, 0, Rel.GE, self.name)
-        Validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
+        Validator.check_non_negative_int(seed, "seed", self.name)
+        Validator.check_non_negative_int(seed2, "seed2", self.name)
 
     def __infer__(self, shape, alpha, beta):
         shape_v = shape["value"]
@@ -193,8 +193,8 @@ class Poisson(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Initialize Poisson"""
         self.init_prim_io_names(inputs=['shape', 'mean'], outputs=['output'])
-        Validator.check_integer("seed", seed, 0, Rel.GE, self.name)
-        Validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
+        Validator.check_non_negative_int(seed, "seed", self.name)
+        Validator.check_non_negative_int(seed2, "seed2", self.name)
 
     def __infer__(self, shape, mean):
         shape_v = shape["value"]
@@ -249,8 +249,8 @@ class UniformInt(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Initialize UniformInt"""
         self.init_prim_io_names(inputs=['shape', 'minval', 'maxval'], outputs=['output'])
-        Validator.check_integer("seed", seed, 0, Rel.GE, self.name)
-        Validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
+        Validator.check_non_negative_int(seed, "seed", self.name)
+        Validator.check_non_negative_int(seed2, "seed2", self.name)
 
     def __infer__(self, shape, minval, maxval):
         shape_v = shape["value"]
@@ -296,8 +296,8 @@ class UniformReal(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Initialize UniformReal"""
         self.init_prim_io_names(inputs=['shape'], outputs=['output'])
-        Validator.check_integer("seed", seed, 0, Rel.GE, self.name)
-        Validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
+        Validator.check_non_negative_int(seed, "seed", self.name)
+        Validator.check_non_negative_int(seed2, "seed2", self.name)
 
     def __infer__(self, shape):
         shape_v = shape["value"]
@@ -449,7 +449,7 @@ class Multinomial(PrimitiveWithInfer):
     def __init__(self, seed=0):
         """init"""
         Validator.check_value_type("seed", seed, [int], self.name)
-        Validator.check_integer("seed", seed, 0, Rel.GE, self.name)
+        Validator.check_non_negative_int(seed, "seed", self.name)
         self.init_prim_io_names(inputs=['input', 'num_sample'], outputs=['output'])
 
     def __infer__(self, inputs, num_samples):

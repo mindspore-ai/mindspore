@@ -55,11 +55,11 @@ class _Conv(Cell):
         self.weight_init = weight_init
         self.bias_init = bias_init
         if isinstance(padding, int):
-            Validator.check_integer('padding', padding, 0, Rel.GE, self.cls_name)
+            Validator.check_non_negative_int(padding, 'padding', self.cls_name)
             self.padding = padding
         elif isinstance(padding, tuple):
             for pad in padding:
-                Validator.check_integer('padding item', pad, 0, Rel.GE, self.cls_name)
+                Validator.check_non_negative_int(pad, 'padding item', self.cls_name)
             self.padding = padding
         else:
             raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
@@ -386,7 +386,7 @@ class Conv1d(_Conv):
         Validator.check_value_type("dilation", dilation, [int], self.cls_name)
         Validator.check_integer('kernel_size', kernel_size, 1, Rel.GE, self.cls_name)
         Validator.check_integer('stride', stride, 1, Rel.GE, self.cls_name)
-        Validator.check_integer('padding', padding, 0, Rel.GE, self.cls_name)
+        Validator.check_non_negative_int(padding, 'padding', self.cls_name)
         Validator.check_integer('dilation', dilation, 1, Rel.GE, self.cls_name)
         kernel_size = (1, kernel_size)
         stride = (1, stride)
@@ -705,7 +705,7 @@ class Conv1dTranspose(_Conv):
         Validator.check_value_type("dilation", dilation, [int], self.cls_name)
         Validator.check_integer('kernel_size', kernel_size, 1, Rel.GE, self.cls_name)
         Validator.check_integer('stride', stride, 1, Rel.GE, self.cls_name)
-        Validator.check_integer('padding', padding, 0, Rel.GE, self.cls_name)
+        Validator.check_non_negative_int(padding, 'padding', self.cls_name)
         Validator.check_integer('dilation', dilation, 1, Rel.GE, self.cls_name)
         kernel_size = (1, kernel_size)
         stride = (1, stride)

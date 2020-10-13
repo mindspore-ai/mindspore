@@ -17,7 +17,6 @@ from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
 from mindspore.common import get_seed
 from ._utils.utils import raise_none_error, cast_to_tensor, set_param_type, cast_type_for_device,\
                           raise_not_implemented_util
@@ -64,7 +63,7 @@ class Distribution(Cell):
             if seed is None:
                 seed = 0
         validator.check_value_type('name', name, [str], type(self).__name__)
-        validator.check_integer('seed', seed, 0, Rel.GE, name)
+        validator.check_non_negative_int(seed, 'seed', name)
 
         self._name = name
         self._seed = seed

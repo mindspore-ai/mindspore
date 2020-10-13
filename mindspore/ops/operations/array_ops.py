@@ -763,7 +763,7 @@ class Split(PrimitiveWithInfer):
         x_shape = list(x['shape'])
         dim = len(x_shape)
         validator.check_int_range('axis value', self.axis, -dim, dim, Rel.INC_LEFT, self.name)
-        validator.check_integer("output_num", self.output_num, 0, Rel.GT, self.name)
+        validator.check_positive_int(self.output_num, "output_num", self.name)
         output_valid_check = x_shape[self.axis] % self.output_num
         if output_valid_check != 0:
             raise ValueError(f"x_shape[{self.axis}] {x_shape[self.axis]} must be divide exactly by"
@@ -846,7 +846,7 @@ class TruncatedNormal(PrimitiveWithInfer):
         shape_value = shape['value']
         validator.check_value_type("shape", shape_value, [tuple], self.name)
         for i, value in enumerate(shape_value):
-            validator.check_integer(f'{i}th value of shape', value, 0, Rel.GT, self.name)
+            validator.check_positive_int(value, f'{i}th value of shape', self.name)
         out = {'shape': shape_value,
                'dtype': mstype.tensor_type(self.dtype),
                'value': None}
@@ -2180,13 +2180,13 @@ class StridedSlice(PrimitiveWithInfer):
                  shrink_axis_mask=0):
         """Initialize StrideSlice"""
         self.init_prim_io_names(inputs=['x', 'begin', 'end', 'strides'], outputs=['output'])
-        validator.check_integer('begin_mask', begin_mask, 0, Rel.GE, self.name)
-        validator.check_integer('end_mask', end_mask, 0, Rel.GE, self.name)
-        validator.check_integer('ellipsis_mask', ellipsis_mask, 0, Rel.GE, self.name)
+        validator.check_non_negative_int(begin_mask, 'begin_mask', self.name)
+        validator.check_non_negative_int(end_mask, 'end_mask', self.name)
+        validator.check_non_negative_int(ellipsis_mask, 'ellipsis_mask', self.name)
         if len(tuple(filter(lambda x: x == '1', bin(ellipsis_mask)[-1:1:-1]))) > 1:
             raise ValueError(f"For '{self.name}', only support one ellipsis in the index, but got {end_mask}.")
-        validator.check_integer('new_axis_mask', new_axis_mask, 0, Rel.GE, self.name)
-        validator.check_integer('shrink_axis_mask', shrink_axis_mask, 0, Rel.GE, self.name)
+        validator.check_non_negative_int(new_axis_mask, 'new_axis_mask', self.name)
+        validator.check_non_negative_int(shrink_axis_mask, 'shrink_axis_mask', self.name)
 
     def __infer__(self, x, begin, end, strides):
         begin_v, end_v, strides_v = begin['value'], end['value'], strides['value']
@@ -2507,7 +2507,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
         validator.check_value_type("align_corners", align_corners, [bool], self.name)
         validator.check_integer("length of size", len(size), 2, Rel.EQ, self.name)
         for i, value in enumerate(size):
-            validator.check_integer(f'{i}th value of size', value, 0, Rel.GE, self.name)
+            validator.check_non_negative_int(value, f'{i}th value of size', self.name)
         self.init_prim_io_names(inputs=['image_in'], outputs=['image_out'])
 
     def infer_shape(self, x):
@@ -3176,7 +3176,7 @@ class SpaceToBatch(PrimitiveWithInfer):
         self.block_size = block_size
         validator.check('paddings shape', np.array(paddings).shape, '', (2, 2), Rel.EQ, self.name)
         for elem in itertools.chain(*paddings):
-            validator.check_integer('paddings element', elem, 0, Rel.GE, self.name)
+            validator.check_non_negative_int(elem, 'paddings element', self.name)
             validator.check_value_type('paddings element', elem, [int], self.name)
         self.paddings = paddings
 
@@ -3248,7 +3248,7 @@ class BatchToSpace(PrimitiveWithInfer):
         validator.check_value_type('crops type', crops, [list, tuple], self.name)
         validator.check('crops shape', np.array(crops).shape, '', (2, 2))
         for elem in itertools.chain(*crops):
-            validator.check_integer('crops element', elem, 0, Rel.GE, self.name)
+            validator.check_non_negative_int(elem, 'crops element', self.name)
             validator.check_value_type('crops element', elem, [int], self.name)
         self.crops = crops
 
@@ -3333,7 +3333,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
         validator.check('paddings length', len(paddings), '', 2, Rel.EQ, self.name)
         validator.check('paddings shape', np.array(paddings).shape, '', (block_rank, 2), Rel.EQ, self.name)
         for elem in itertools.chain(*paddings):
-            validator.check_integer('paddings element', elem, 0, Rel.GE, self.name)
+            validator.check_non_negative_int(elem, 'paddings element', self.name)
             validator.check_value_type('paddings element', elem, [int], self.name)
         self.paddings = paddings
         block_shape_append = [1] + list(self.block_shape)
@@ -3426,7 +3426,7 @@ class BatchToSpaceND(PrimitiveWithInfer):
         validator.check('crops length', len(crops), '', 2, Rel.EQ, self.name)
         validator.check('crops shape', np.array(crops).shape, '', (block_rank, 2), Rel.EQ, self.name)
         for elem in itertools.chain(*crops):
-            validator.check_integer('crops element', elem, 0, Rel.GE, self.name)
+            validator.check_non_negative_int(elem, 'crops element', self.name)
             validator.check_value_type('crops element', elem, [int], self.name)
         self.crops = crops
         block_shape_append = [1] + list(self.block_shape)
