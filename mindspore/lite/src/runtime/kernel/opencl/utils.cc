@@ -276,4 +276,41 @@ void PrintTensor(lite::Tensor *tensor, int num, const std::string &out_file) {
   }
   allocator->UnmapBuffer(origin_data);
 }
+
+std::vector<int> GetNHWCShape(const std::vector<int> &tensor_shape) {
+  int n, h, w, c;
+  n = h = w = c = 1;
+  if (tensor_shape.size() == 1) {
+    c = tensor_shape[0];
+  } else if (tensor_shape.size() == 2) {
+    n = tensor_shape[0];
+    c = tensor_shape[1];
+  } else if (tensor_shape.size() == 3) {
+    n = tensor_shape[0];
+    h = tensor_shape[1];
+    c = tensor_shape[2];
+  } else if (tensor_shape.size() == 4) {
+    n = tensor_shape[0];
+    h = tensor_shape[1];
+    w = tensor_shape[2];
+    c = tensor_shape[3];
+  }
+  return {n, h, w, c};
+}
+
+std::vector<size_t> GetImage2dShapeFromNHWC(const std::vector<int> &tensor_shape, schema::Format format) {
+  if (tensor_shape.size() != 4) {
+    return {1, 1};
+  }
+  size_t image_x, image_y;
+  image_x = image_y = 1;
+  if (format == schema::Format_NHWC4) {
+    image_x = tensor_shape[2] * UP_DIV(tensor_shape[3], C4NUM);
+    image_y = tensor_shape[0] * tensor_shape[1];
+  } else if (format == schema::Format_NC4HW4) {
+    image_x = tensor_shape[2];
+    image_y = tensor_shape[0] * tensor_shape[1] * UP_DIV(tensor_shape[3], C4NUM);
+  }
+  return {image_x, image_y};
+}
 }  // namespace mindspore::kernel

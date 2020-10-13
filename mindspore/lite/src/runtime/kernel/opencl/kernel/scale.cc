@@ -54,6 +54,12 @@ std::vector<size_t> ScaleOpenCLKernel::InitGlobalSize() const {
 
 void ScaleOpenCLKernel::Image2dGetWorkGroupSize() {
   local_size_ = {16, 16};
+  if (out_tensors_[0]->shape().size() == 2) {
+    size_t H = out_tensors_[0]->shape()[0];
+    size_t W = UP_DIV(out_tensors_[0]->shape()[1], C4NUM);
+    global_size_ = {W, H};
+    return;
+  }
   if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
     size_t H = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
     size_t W = out_tensors_[0]->Width();
@@ -78,18 +84,23 @@ void ScaleOpenCLKernel::BufferGetWorkGroupSize() {
 
 int ScaleOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
-    im_dst_x = out_tensors_[0]->Width();
-    im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
-    im_dst_x = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
-    im_dst_y = out_tensors_[0]->Batch();
-    im_dst_x = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  if (out_tensors_[0]->shape().size() == 2) {
+    im_dst_x = UP_DIV(out_tensors_[0]->shape()[1], C4NUM);
+    im_dst_y = out_tensors_[0]->shape()[0];
   } else {
-    MS_LOG(ERROR) << "Unsupport data format " << out_tensors_[0]->GetFormat();
-    return RET_ERROR;
+    if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
+      im_dst_x = out_tensors_[0]->Width();
+      im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+    } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+      im_dst_x = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+      im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
+    } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
+      im_dst_y = out_tensors_[0]->Batch();
+      im_dst_x = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+    } else {
+      MS_LOG(ERROR) << "Unsupport data format " << out_tensors_[0]->GetFormat();
+      return RET_ERROR;
+    }
   }
 
   size_t img_dtype = CL_FLOAT;
@@ -114,7 +125,7 @@ int ScaleOpenCLKernel::InitBuffer() {
     auto allocator = ocl_runtime_->GetAllocator();
     std::vector<size_t> img_size;
     GetImageSize(0, &img_size);
-    if (in_tensors_[1]->shape().size() == 1 && axis_ == 3) {
+    if (scale_C_flag_) {
       img_size[1] = 1;
       img_size[0] = UP_DIV(in_tensors_[1]->shape()[0], C4NUM);
       scale_ptr_ = allocator->CreateImageFromHost(in_tensors_[1]->data_c(), in_tensors_[1]->ElementsNum(), img_size);
@@ -256,8 +267,10 @@ int ScaleOpenCLKernel::Init() {
     if (scale_tensor->ElementsNum() == 1) {
       element_flag_ = false;
       kernel_name = "BoardcastScale";
-    } else if (axis_ == 3 && scale_shape.size() == 1) {
+    } else if (((in_shape.size() == 4 && axis_ == 3) || (in_shape.size() == 2 && axis_ == 1)) &&
+               scale_shape.size() == 1) {
       element_flag_ = true;
+      scale_C_flag_ = true;
       kernel_name = "Scale_C";
     }
   } else {
@@ -327,24 +340,9 @@ int ScaleOpenCLKernel::Run() {
     }
   }
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  int H = 0;
-  int W = 0;
-  if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
-    H = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    W = out_tensors_[0]->Width();
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
-    H = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
-    W = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
-    H = out_tensors_[0]->Batch();
-    W = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  } else {
-    MS_LOG(ERROR) << "Error output type " << out_tensors_[0]->GetFormat();
-    return RET_ERROR;
-  }
-  cl_int2 output_shape{W, H};
+  cl_int2 output_shape{static_cast<int>(global_size_[0]), static_cast<int>(global_size_[1])};
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
-  if (element_flag_ && axis_ == 3) {
+  if (element_flag_ && scale_C_flag_) {
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, UP_DIV(in_tensors_[1]->shape()[0], C4NUM));
   }
   ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
