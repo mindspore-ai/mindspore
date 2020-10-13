@@ -51,7 +51,7 @@ int Lstm::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   }
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
-  auto weight_i = inputs_.front();
+  auto weight_i = inputs_[1];
   MS_ASSERT(input0 != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
