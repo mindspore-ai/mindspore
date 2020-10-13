@@ -37,7 +37,7 @@ def parse_args():
                                         "helper utilty that will generate hccl"
                                         " config file")
     parser.add_argument("--device_num", type=str, default="[0,8)",
-                        help="The number of the D chip used. please note that the D chips"
+                        help="The number of the Ascend accelerators used. please note that the Ascend accelerators"
                              "used must be continuous, such [0,4) means to use four chips "
                              "0，1，2，3; [0,1) means to use chip 0; The first four chips are"
                              "a group, and the last four chips are a group. In addition to"

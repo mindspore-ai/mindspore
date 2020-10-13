@@ -411,20 +411,22 @@ epoch: 0.0, current epoch percent: 0.002, step: 200, outpus are (Tensor(shape=[1
 Before running the command below, please check the load pretrain checkpoint path has been set. Please set the checkpoint path to be the absolute full path, e.g:"/username/pretrain/checkpoint_100_300.ckpt".
 ```
 bash scripts/run_classifier.sh
-
+```
 The command above will run in the background, you can view training logs in classfier_log.txt.
 
 If you choose accuracy as assessment method, the result will be as follows:
+```
 acc_num XXX, total_num XXX, accuracy 0.588986
 ```
 
 #### evaluation on cluener dataset when running on Ascend    
 ```
 bash scripts/ner.sh
-
+```
 The command above will run in the background, you can view training logs in ner_log.txt.
 
 If you choose F1 as assessment method, the result will be as follows:
+```
 Precision 0.920507
 Recall 0.948683
 F1 0.920507
@@ -433,9 +435,10 @@ F1 0.920507
 #### evaluation on squad v1.1 dataset when running on Ascend   
 ```
 bash scripts/squad.sh
-
+```
 The command above will run in the background, you can view training logs in squad_log.txt.
 The result will be as follows:
+```
 {"exact_match": 80.3878923040233284, "f1": 87.6902384023850329}
 ```
 

@@ -59,7 +59,7 @@ def append_cmd_env(cmd, key, value):
 
 def distribute_pretrain():
     """
-    distribute pretrain scripts. The number of D chips can be automatically allocated
+    distribute pretrain scripts. The number of Ascend accelerators can be automatically allocated
     based on the device_num set in hccl config file, You don not need to specify that.
     """
     cmd = ""
