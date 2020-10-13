@@ -22,6 +22,7 @@
 #include "tools/anf_importer/import_from_meta_graphT.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
+#include "tools/common/tensor_util.h"
 
 namespace mindspore::lite {
 int AnfImporterFromMetaGraphT::ConverterConstTensor() {
@@ -75,8 +76,12 @@ ValueNodePtr AnfImporterFromMetaGraphT::ConvertPrimitive(const std::unique_ptr<s
   if (cNode->quantType != schema::QuantType_PostTraining && cNode->quantType != schema::QuantType_WeightQuant) {
     primitiveCValue->SetQuantType(cNode->quantType);
     for (int index : cNode->inputIndex) {
-      if (meta_graph_->allTensors[index]->quantParams.size() > 0) {
-        std::vector<schema::QuantParamT> quant_params = {*(meta_graph_->allTensors[index]->quantParams[0])};
+      if (!meta_graph_->allTensors[index]->quantParams.empty()) {
+        std::vector<schema::QuantParamT> quant_params(meta_graph_->allTensors[index]->quantParams.size());
+        std::transform(
+          meta_graph_->allTensors[index]->quantParams.begin(), meta_graph_->allTensors[index]->quantParams.end(),
+          quant_params.begin(),
+          [](std::unique_ptr<schema::QuantParamT> &quant_param) -> schema::QuantParamT { return *quant_param; });
         primitiveCValue->AddInputQuantParam(quant_params);
       } else {
         std::vector<schema::QuantParamT> empty_quant_params;
@@ -84,8 +89,12 @@ ValueNodePtr AnfImporterFromMetaGraphT::ConvertPrimitive(const std::unique_ptr<s
       }
     }
     for (int index : cNode->outputIndex) {
-      if (meta_graph_->allTensors[index]->quantParams.size() > 0) {
-        std::vector<schema::QuantParamT> quant_params = {*(meta_graph_->allTensors[index]->quantParams[0])};
+      if (!meta_graph_->allTensors[index]->quantParams.empty()) {
+        std::vector<schema::QuantParamT> quant_params(meta_graph_->allTensors[index]->quantParams.size());
+        std::transform(
+          meta_graph_->allTensors[index]->quantParams.begin(), meta_graph_->allTensors[index]->quantParams.end(),
+          quant_params.begin(),
+          [](std::unique_ptr<schema::QuantParamT> &quant_param) -> schema::QuantParamT { return *quant_param; });
         primitiveCValue->AddOutputQuantParam(quant_params);
       }
     }
