@@ -118,7 +118,7 @@ number_type = (int8,
                float64,)
 
 int_type = (int8, int16, int32, int64,)
-uint_type = (uint8, uint16, uint32, uint64)
+uint_type = (uint8, uint16, uint32, uint64,)
 float_type = (float16, float32, float64,)
 
 implicit_conversion_seq = {t: idx for idx, t in enumerate((

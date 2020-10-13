@@ -375,17 +375,14 @@ class Validator:
         """Type checking."""
         def raise_error_msg():
             """func for raising error message when check failed"""
-            type_names = [t.__name__ for t in valid_types]
-            num_types = len(valid_types)
-            raise TypeError(f'The type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
-                            f'{type_names if num_types > 1 else type_names[0]}, but got {type(arg_value).__name__}.')
+            raise TypeError(f'The type of `{arg_name}` should be in {valid_types}, but got {type(arg_value).__name__}.')
 
         if isinstance(arg_value, type(mstype.tensor)):
             arg_value = arg_value.element_type()
-        # Notice: bool is subclass of int, so `check_type('x', True, [int])` will check fail, and
-        #         `check_type('x', True, [bool, int])` will check pass
         if isinstance(arg_value, bool) and bool not in tuple(valid_types):
             raise_error_msg()
+        if arg_value in valid_types:
+            return arg_value
         if isinstance(arg_value, tuple(valid_types)):
             return arg_value
         raise_error_msg()

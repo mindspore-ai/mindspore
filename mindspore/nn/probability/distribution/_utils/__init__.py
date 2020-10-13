@@ -24,7 +24,6 @@ __all__ = [
     'check_greater_equal_zero',
     'check_greater_zero',
     'check_prob',
-    'check_type',
     'exp_generic',
     'expm1_generic',
     'log_generic',

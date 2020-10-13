@@ -15,9 +15,10 @@
 """Uniform Distribution"""
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+from mindspore._checkparam import Validator
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import check_greater, check_type, check_distribution_name
+from ._utils.utils import check_greater, check_distribution_name
 from ._utils.custom_ops import exp_generic, log_generic
 
 
@@ -125,7 +126,7 @@ class Uniform(Distribution):
         param = dict(locals())
         param['param_dict'] = {'low': low, 'high': high}
         valid_dtype = mstype.float_type
-        check_type(dtype, valid_dtype, type(self).__name__)
+        Validator.check_type(type(self).__name__, dtype, valid_dtype)
         super(Uniform, self).__init__(seed, dtype, name, param)
 
         self._low = self._add_parameter(low, 'low')

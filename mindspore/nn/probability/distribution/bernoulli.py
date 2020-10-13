@@ -16,8 +16,9 @@
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+from mindspore._checkparam import Validator
 from .distribution import Distribution
-from ._utils.utils import check_prob, check_type, check_distribution_name
+from ._utils.utils import check_prob, check_distribution_name
 from ._utils.custom_ops import exp_generic, log_generic
 
 
@@ -118,7 +119,7 @@ class Bernoulli(Distribution):
         param = dict(locals())
         param['param_dict'] = {'probs': probs}
         valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
-        check_type(dtype, valid_dtype, type(self).__name__)
+        Validator.check_type(type(self).__name__, dtype, valid_dtype)
         super(Bernoulli, self).__init__(seed, dtype, name, param)
 
         self._probs = self._add_parameter(probs, 'probs')
