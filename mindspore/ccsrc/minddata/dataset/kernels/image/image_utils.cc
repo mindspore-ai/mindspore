@@ -214,7 +214,12 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
   std::vector<JSAMPLE> scanline(scanline_size);
   JSAMPLE *scanline_ptr = &scanline[0];
   while (cinfo->output_scanline < static_cast<unsigned int>(max_scanlines_to_read)) {
-    int num_lines_read = jpeg_read_scanlines(cinfo, &scanline_ptr, 1);
+    int num_lines_read = 0;
+    try {
+      num_lines_read = jpeg_read_scanlines(cinfo, &scanline_ptr, 1);
+    } catch (std::runtime_error &e) {
+      RETURN_STATUS_UNEXPECTED("jpeg_read_scanlines error.");
+    }
     if (cinfo->out_color_space == JCS_CMYK && num_lines_read > 0) {
       for (int i = 0; i < crop_w; ++i) {
         int cmyk_pixel = 4 * i + offset;
