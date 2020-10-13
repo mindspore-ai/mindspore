@@ -36,6 +36,7 @@ class MakeTupleCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int DoActivation(int task_id);
 
  private:
   OpParameter *param;

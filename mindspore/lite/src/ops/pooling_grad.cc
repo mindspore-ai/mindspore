@@ -145,7 +145,15 @@ int PoolingGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuf
 #endif
 
 int PoolingGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  if (3 != inputs_.size()) {
+    MS_LOG(ERROR) << "Pooling Grad Filter should have 3 inputs";
+    return RET_ERROR;
+  }
+  if (1 != outputs_.size()) {
+    MS_LOG(ERROR) << "Pooling Grad Filter should have one output";
+    return RET_ERROR;
+  }
+
   auto input = inputs_.at(0);
   MS_ASSERT(input != nullptr);
   int input_h = input->shape().at(1);

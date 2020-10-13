@@ -20,10 +20,8 @@
 static int is_a_ge_zero_and_a_lt_b(int a, int b) { return (unsigned)(a) < (unsigned)(b); }
 
 void im2col_hwc(const float *in_data, float *data_col, ConvParameter *conv_param) {
-  const int pad_left = /*conv_param->pad_l_*/ conv_param->pad_l_;
-  // const int pad_right =  /*conv_param->pad_r_*/conv_param->pad_w_;
-  const int pad_up = /*conv_param->pad_u_*/ conv_param->pad_u_;
-  // const int pad_down =   /*conv_param->pad_d/*/conv_param->pad_h_;
+  const int pad_left = conv_param->pad_l_;
+  const int pad_up = conv_param->pad_u_;
 
   const int stride_h = conv_param->stride_h_;
   const int stride_w = conv_param->stride_w_;
@@ -39,10 +37,11 @@ void im2col_hwc(const float *in_data, float *data_col, ConvParameter *conv_param
 
   const int output_h = conv_param->output_h_;
   const int output_w = conv_param->output_w_;
+
   const int channels = conv_param->input_channel_ / conv_param->group_;
   const int tot_channels = conv_param->input_channel_;
 
-  int /*channel,*/ kernel_row, kernel_col, output_rows, output_col;
+  int kernel_row, kernel_col, output_rows, output_col;
 
   int row_stride_offset = 0;
 
@@ -71,11 +70,9 @@ void im2col_hwc(const float *in_data, float *data_col, ConvParameter *conv_param
 }
 
 // output matrix is (kernel_h*kernel_w*channels)X(output_h*output_w)
-void im2row_hwc(const float *in_data, float *data_row, ConvParameter *conv_param) {
-  const int pad_left = /*conv_param->pad_l_*/ conv_param->pad_l_;
-  // const int pad_right =  /*conv_param->pad_r_*/conv_param->pad_w_;
-  const int pad_up = /*conv_param->pad_u_*/ conv_param->pad_u_;
-  // const int pad_down =   /*conv_param->pad_d/*/conv_param->pad_h_;
+void im2row_hwc(const float *in_data, float *data_row, ConvParameter *conv_param, bool transpose) {
+  const int pad_left = conv_param->pad_l_;
+  const int pad_up = conv_param->pad_u_;
 
   const int stride_h = conv_param->stride_h_;
   const int stride_w = conv_param->stride_w_;
@@ -86,38 +83,67 @@ void im2row_hwc(const float *in_data, float *data_row, ConvParameter *conv_param
   const int kernel_h = conv_param->kernel_h_;
   const int kernel_w = conv_param->kernel_w_;
 
-  const int in_height = conv_param->input_h_;
-  const int in_width = conv_param->input_w_;
+  const int in_height = (transpose) ? conv_param->output_h_ : conv_param->input_h_;
+  const int in_width = (transpose) ? conv_param->output_w_ : conv_param->input_w_;
 
-  const int output_h = conv_param->output_h_;
-  const int output_w = conv_param->output_w_;
-  const int channels = conv_param->input_channel_ / conv_param->group_;
-  const int tot_channels = conv_param->input_channel_;
+  const int output_h = (transpose) ? conv_param->input_h_ : conv_param->output_h_;
+  const int output_w = (transpose) ? conv_param->input_w_ : conv_param->output_w_;
 
+  const int tot_channels = (transpose) ? conv_param->output_channel_ : conv_param->input_channel_;
+  const int channels = tot_channels / conv_param->group_;
   int channel, kernel_row, kernel_col, output_rows, output_col;
 
-  for (kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
-    for (kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
-      for (channel = 0; channel < channels; channel++) {
-        int input_row = -pad_up + kernel_row * dilation_h;
-        for (output_rows = output_h; output_rows; output_rows--) {
-          if (!is_a_ge_zero_and_a_lt_b(input_row, in_height)) {
-            for (output_col = output_w; output_col; output_col--) {
-              *(data_row++) = 0;
-            }
-          } else {
-            int input_col = -pad_left + kernel_col * dilation_w;
-            for (output_col = output_w; output_col; output_col--) {
-              if (is_a_ge_zero_and_a_lt_b(input_col, in_width)) {
-                const int offset = (input_row * in_width + input_col) * tot_channels + channel;
-                *(data_row++) = in_data[offset];
-              } else {
+  if (transpose) {
+    for (channel = 0; channel < channels; channel++) {
+      for (kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+        for (kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+          int input_row = -pad_up + kernel_row * dilation_h;
+          for (output_rows = output_h; output_rows; output_rows--) {
+            if (!is_a_ge_zero_and_a_lt_b(input_row, in_height)) {
+              for (output_col = output_w; output_col; output_col--) {
                 *(data_row++) = 0;
               }
-              input_col += stride_w;
+            } else {
+              int input_col = -pad_left + kernel_col * dilation_w;
+              for (output_col = output_w; output_col; output_col--) {
+                if (is_a_ge_zero_and_a_lt_b(input_col, in_width)) {
+                  const int offset = (input_row * in_width + input_col) * tot_channels + channel;
+                  *(data_row++) = in_data[offset];
+                } else {
+                  *(data_row++) = 0;
+                }
+                input_col += stride_w;
+              }
             }
+            input_row += stride_h;
           }
-          input_row += stride_h;
+        }
+      }
+    }
+  } else {
+    for (kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+      for (kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+        for (channel = 0; channel < channels; channel++) {
+          int input_row = -pad_up + kernel_row * dilation_h;
+          for (output_rows = output_h; output_rows; output_rows--) {
+            if (!is_a_ge_zero_and_a_lt_b(input_row, in_height)) {
+              for (output_col = output_w; output_col; output_col--) {
+                *(data_row++) = 0;
+              }
+            } else {
+              int input_col = -pad_left + kernel_col * dilation_w;
+              for (output_col = output_w; output_col; output_col--) {
+                if (is_a_ge_zero_and_a_lt_b(input_col, in_width)) {
+                  const int offset = (input_row * in_width + input_col) * tot_channels + channel;
+                  *(data_row++) = in_data[offset];
+                } else {
+                  *(data_row++) = 0;
+                }
+                input_col += stride_w;
+              }
+            }
+            input_row += stride_h;
+          }
         }
       }
     }
@@ -125,10 +151,8 @@ void im2row_hwc(const float *in_data, float *data_row, ConvParameter *conv_param
 }
 
 void col2im_hwc(const float *data_col, float *data_im, ConvParameter *conv_param) {
-  const int pad_left = /*conv_param->pad_l_*/ conv_param->pad_l_;
-  // const int pad_right =  /*conv_param->pad_r_*/conv_param->pad_w_;
-  const int pad_up = /*conv_param->pad_u_*/ conv_param->pad_u_;
-  // const int pad_down =   /*conv_param->pad_d/*/conv_param->pad_h_;
+  const int pad_left = conv_param->pad_l_;
+  const int pad_up = conv_param->pad_u_;
 
   const int stride_h = conv_param->stride_h_;
   const int stride_w = conv_param->stride_w_;

@@ -20,6 +20,7 @@
 #include "nnacl/fp32_grad/reduce_grad.h"
 #include "nnacl/fp32_grad/arithmetic_grad.h"
 #include "include/errorcode.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -36,14 +37,13 @@ int ArithmeticGradCPUKernel::Init() {
   MS_ASSERT(dx2 != nullptr);
 
   if ((Type() == PrimitiveType_MulGrad) || (Type() == PrimitiveType_DivGrad)) {
-    // if (inShape0.size() < inShape1.size())
     if (dx1->ElementsNum() < dx2->ElementsNum()) {
       if (Type() == PrimitiveType_MulGrad)
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradMul2L;
       else if (Type() == PrimitiveType_DivGrad)
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradDiv2L;
 
-    } else if (dx2->ElementsNum() < dx1->ElementsNum()) {  // if (inShape0.size() > inShape1.size())
+    } else if (dx2->ElementsNum() < dx1->ElementsNum()) {
       if (Type() == PrimitiveType_MulGrad)
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradMul1L;
       else if (Type() == PrimitiveType_DivGrad)
@@ -157,7 +157,6 @@ void ArithmeticGradCPUKernel::ArithmeticGradDiv1L(float *dy, int dy_size, float 
   ReduceSumByAxes(tile_data2, arithmeticParameter_->in_shape0_, dx2, arithmeticParameter_->in_shape1_,
                   arithmeticParameter_->ndim_);
   for (int i = 0; i < dx2_size; i++) dx2[i] = -dx2[i];
-  // ReduceNegSumPrefix(tile_data2, dy_size, dx2, dx2_size); //then reduce into dx2
 
   // broadcasting x2
   BroadcastDiv(dy, x2_data, tile_data0, tile_data1, dx1, dy_size, arithmeticParameter_);  // broadcast directly to dx1
@@ -180,7 +179,7 @@ void ArithmeticGradCPUKernel::ArithmeticGradDiv2L(float *dy, int dy_size, float 
 
 int ArithmeticGradCPUKernel::ReSize() { return RET_OK; }
 
-int ArithmeticGradCPUKernel::Run() {
+int ArithmeticGradCPUKernel::Execute(int task_id) {
   auto dy = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto dx1 = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   auto dx2 = reinterpret_cast<float *>(out_tensors_[1]->MutableData());
@@ -189,6 +188,30 @@ int ArithmeticGradCPUKernel::Run() {
   size_t dx1_size = out_tensors_.at(0)->ElementsNum();
   size_t dx2_size = out_tensors_[1]->ElementsNum();
   (this->*arithmetic_grad_)(dy, dy_size, dx1, dx1_size, dx2, dx2_size);
+  return RET_OK;
+}
+
+int ArithmeticGradRun(void *cdata, int task_id) {
+  auto Arithmetic_kernel = reinterpret_cast<ArithmeticGradCPUKernel *>(cdata);
+  auto error_code = Arithmetic_kernel->Execute(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "ArithmeticGradRun error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ArithmeticGradCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ArithmeticGradCPUKernel Prepare failed.";
+    return ret;
+  }
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ArithmeticGradRun, this, 1);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Arithmetic Grad function error error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

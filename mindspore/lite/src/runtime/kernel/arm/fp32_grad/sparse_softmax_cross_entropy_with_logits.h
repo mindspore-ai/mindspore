@@ -32,13 +32,10 @@ class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
                                                         const std::vector<lite::Tensor *> &outputs,
                                                         const lite::InnerContext *ctx,
                                                         const mindspore::lite::PrimitiveC *primitive)
-      : LossKernel(parameter, inputs, outputs, ctx, primitive), losses_(nullptr), sum_data_(nullptr) {
+      : LossKernel(parameter, inputs, outputs, ctx, primitive) {
     param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(parameter);
   }
-  ~SparseSoftmaxCrossEntropyWithLogitsCPUKernel() override {
-    if (losses_) delete[] losses_;
-    if (sum_data_) delete[] sum_data_;
-  }
+  ~SparseSoftmaxCrossEntropyWithLogitsCPUKernel() override {}
 
   int ForwardPostExecute(const int *labels, const float *losses, float *output) const;
   int GradPostExecute(const int *labels, const float *losses, float *grads, float *output) const;
@@ -46,12 +43,11 @@ class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Execute(int task_id);
 
  private:
   SoftmaxCrossEntropyParameter *param;
   SoftmaxParameter sm_params_;
-  float *losses_ = nullptr;
-  float *sum_data_ = nullptr;
 };
 
 }  // namespace mindspore::kernel

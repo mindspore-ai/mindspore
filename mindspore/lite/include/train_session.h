@@ -17,37 +17,28 @@
 #define MINDSPORE_LITE_INCLUDE_TRAIN_SESSION_H_
 #include <vector>
 #include <string>
+#include <tuple>
 #include <unordered_map>
-#include "src/lite_session.h"
+#include "include/lite_session.h"
+#include "include/train_model.h"
 
 namespace mindspore {
-namespace lite {
-struct TrainModel;
-}
-
 namespace session {
-class TrainSession : public lite::LiteSession {
+
+class TrainSession : public session::LiteSession {
  public:
-  TrainSession();
-  ~TrainSession();
+  virtual ~TrainSession() = default;
+  static TrainSession *CreateSession(lite::Context *context);
 
-  int RunGraph(const session::KernelCallBack &before = nullptr,
-               const session::KernelCallBack &after = nullptr) override;
-
-  int CompileGraph(lite::Model *model) override;
-  virtual void* ExportToBuf(char* buf, size_t* len) const;
-
-  virtual void Train();
+  virtual int CompileTrainGraph(lite::TrainModel *model) = 0;
+  virtual void *ExportToBuf(char *buf, size_t *len) const = 0;
+  virtual void Train() = 0;
   bool IsTrain() { return train_mode_ == true; }
-  virtual void Eval();
+  virtual void Eval() = 0;
   bool IsEval() { return train_mode_ == false; }
 
  protected:
-  virtual void ReplaceOps();
   bool train_mode_ = false;
-  lite::TrainModel *model_ = nullptr;
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> orig_output_map_;
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> orig_output_tensor_map_;
 };
 }  // namespace session
 }  // namespace mindspore

@@ -17,7 +17,7 @@
 #include <float.h>
 #include "nnacl/fp32_grad/pooling_grad.h"
 
-void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param) {
+void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
@@ -41,7 +41,7 @@ void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter 
     for (uint16_t yh = 0; yh < output_h; yh++) {
       for (uint16_t yw = 0; yw < output_w; yw++) {
         for (uint16_t ic = 0; ic < channel; ic++) {
-          int idx = (yw + yh * output_w) * channel + ic;  // (ic*in_h*in_w) + (in_w*yh) + yw;
+          int idx = (yw + yh * output_w) * channel + ic;
           float delta = inPtr[idx] / kk;
           for (int32_t kh = 0; kh < win_h; kh++) {
             int xh = yh * stride_h + kh - pad_h;
@@ -63,7 +63,7 @@ void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter 
 }
 
 void MaxPoolingGrad(const float *input_ptr, const float *dx_ptr, const float *dy_ptr, float *output_ptr,
-                    PoolingParameter *pooling_param) {
+                    PoolingParameter *pooling_param, int task_id) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;

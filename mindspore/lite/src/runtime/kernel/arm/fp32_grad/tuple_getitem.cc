@@ -19,6 +19,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -28,21 +29,50 @@ using mindspore::schema::PrimitiveType_TupleGetItem;
 
 namespace mindspore::kernel {
 
-int TupleGetItemCPUKernel::Init() { return RET_OK; }
-
-int TupleGetItemCPUKernel::ReSize() { return 0; }
-
-int TupleGetItemCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+int TupleGetItemCPUKernel::Init() {
+  if (1 != in_tensors_.size()) {
+    MS_LOG(ERROR) << "Tuple Grad Filter should have one input";
     return RET_ERROR;
   }
+  if (1 != out_tensors_.size()) {
+    MS_LOG(ERROR) << "Tuple Grad Filter should have one output";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int TupleGetItemCPUKernel::ReSize() { return RET_OK; }
+
+int TupleGetItemCPUKernel::Execute(int task_id) {
   auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
   memcpy(out, in, in_tensors_.at(0)->Size());
 
+  return RET_OK;
+}
+
+int TupleRun(void *cdata, int task_id) {
+  auto tuple_kernel = reinterpret_cast<TupleGetItemCPUKernel *>(cdata);
+  auto error_code = tuple_kernel->Execute(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "tuple grad error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int TupleGetItemCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "TupleGetItemCPUKernel Prepare failed.";
+    return RET_ERROR;
+  }
+  int error_code = ParallelLaunch(this->context_->thread_pool_, TupleRun, this, 1);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "tuple function error error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

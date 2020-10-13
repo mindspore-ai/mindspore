@@ -73,5 +73,20 @@ float FusedBatchNorm::GetMomentum() const { return this->primitive_->value_as_Fu
 int FusedBatchNorm::GetSpatial() const { return this->primitive_->value_as_FusedBatchNorm()->spatial(); }
 
 #endif
+int FusedBatchNorm::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
+  for (size_t i = 0; i < inputs_.size(); i++) {
+    if (outputs_.size() <= i) break;
+    outputs_.at(i)->set_shape(inputs_.at(i)->shape());
+    outputs_.at(i)->set_data_type(inputs_.at(i)->data_type());
+    outputs_.at(i)->SetFormat(inputs_.at(i)->GetFormat());
+  }
+  if (outputs_.size() > 5) {
+    outputs_.at(5)->set_data_type(inputs_.at(0)->data_type());
+    outputs_.at(5)->SetFormat(inputs_.at(0)->GetFormat());
+    outputs_.at(5)->set_shape({1});
+  }
+  return 0;
+}
+
 }  // namespace lite
 }  // namespace mindspore

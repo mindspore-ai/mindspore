@@ -22,6 +22,7 @@
 typedef struct BatchNormParameter {
   OpParameter op_parameter_;
   float epsilon_;
+  float momentum_;
   int unit_;
   int units_;
   int channel_;

@@ -21,6 +21,7 @@
 #include "src/kernel_registry.h"
 #include "nnacl/fp32_grad/batch_norm.h"
 #include "include/errorcode.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -33,23 +34,13 @@ namespace mindspore::kernel {
 int BNGradCPUKernel::Init() {
   auto *input_x = in_tensors_.at(1);
   int channels = input_x->shape().at(kNHWC_C);
-  workspace_size = 4 * channels;
-  workspace = new (std::nothrow) float[workspace_size];
-  if (workspace == nullptr) {
-    MS_LOG(ERROR) << "new workspace fail!";
-    return RET_ERROR;
-  }
+  SetWorkspaceSize(4 * channels * sizeof(float));
   return RET_OK;
 }
 
 int BNGradCPUKernel::ReSize() { return RET_OK; }
 
-int BNGradCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
+int BNGradCPUKernel::Execute(int task_id) {
   auto bn_param = reinterpret_cast<BNGradParameter *>(op_parameter_);
   auto *input_yt = in_tensors_.at(0);
   auto *input_x = in_tensors_.at(1);
@@ -61,7 +52,9 @@ int BNGradCPUKernel::Run() {
   int channels = input_x->Channel();
   int spatial = input_x->Height() * input_x->Width();
   float eps = bn_param->epsilon_;
-  std::fill(workspace, workspace + workspace_size, 0.f);
+
+  float *workspace = static_cast<float *>(GetWorkspace());
+  std::fill(workspace, workspace + GetWorkspaceSize() / sizeof(*workspace), 0.f);
   float *mean = workspace;
   float *invar = mean + channels;
   float *dxhat_sum = invar + channels;
@@ -79,6 +72,33 @@ int BNGradCPUKernel::Run() {
   sumSpatialBatch(yt, batch * spatial, channels, dbias);
   // dscale
   backwardScale(x, mean, invar, yt, batch, channels, spatial, dscale);
+  return RET_OK;
+}
+
+int BNGradRun(void *cdata, int task_id) {
+  auto bn_kernel = reinterpret_cast<BNGradCPUKernel *>(cdata);
+  if (task_id == 0) {
+    auto error_code = bn_kernel->Execute(task_id);
+    if (error_code != RET_OK) {
+      MS_LOG(ERROR) << "BNGradRun error task_id[" << task_id << "] error_code[" << error_code << "]";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+int BNGradCPUKernel::Run() {
+  // std::cout << "run succ" << std::endl;
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "BNGradCPUKernel Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
+  int error_code = ParallelLaunch(this->context_->thread_pool_, BNGradRun, this, 1);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "BN function error error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

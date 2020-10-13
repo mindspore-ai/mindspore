@@ -18,6 +18,7 @@
 #include "nnacl/fp32_grad/pack_ext.h"
 #include "nnacl/fp32_grad/gemm.h"
 #include "include/errorcode.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::RET_ERROR;
@@ -25,6 +26,14 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int ConvolutionTrainCPUKernel::Init() {
+  if (2 != in_tensors_.size()) {
+    MS_LOG(ERROR) << "Convolution should have two inputs";
+    return RET_ERROR;
+  }
+  if (1 != out_tensors_.size()) {
+    MS_LOG(ERROR) << "Convolution should have one output";
+    return RET_ERROR;
+  }
   auto conv_param_ = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto *input_x = in_tensors_.at(kInputIndex);
   auto *input_weight = in_tensors_.at(kWeightIndex);
@@ -46,22 +55,13 @@ int ConvolutionTrainCPUKernel::Init() {
   int ws_size = conv_param_->output_h_ * conv_param_->output_w_ * conv_param_->kernel_h_ * conv_param_->kernel_w_ *
                 conv_param_->input_channel_ / conv_param_->group_;
 
-  workspace = new (std::nothrow) float[ws_size];
-  if (workspace == nullptr) {
-    MS_LOG(ERROR) << "new workspace fail!";
-    return RET_ERROR;
-  }
+  SetWorkspaceSize(ws_size * sizeof(float));
   return RET_OK;
 }
 
 int ConvolutionTrainCPUKernel::ReSize() { return RET_OK; }
 
-int ConvolutionTrainCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
+int ConvolutionTrainCPUKernel::Execute(int task_id) {
   auto conv_param_ = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto *input_x = in_tensors_.at(kInputIndex);
   auto *input_w = in_tensors_.at(kWeightIndex);
@@ -86,6 +86,7 @@ int ConvolutionTrainCPUKernel::Run() {
   int m = out_h * out_w;
   int n = out_ch / groups;
   int k = k_h * k_w * in_ch / groups;
+  float *workspace = static_cast<float *>(GetWorkspace());
 
   memset(y_addr, 0, out_y->Size());
 
@@ -98,6 +99,31 @@ int ConvolutionTrainCPUKernel::Run() {
       im2col_hwc(im, mat_a, conv_param_);
       gemm(0, 1, m, n, k, 1, mat_a, k, mat_b, k, 1, mat_c, out_ch);
     }
+  }
+
+  return RET_OK;
+}
+
+int ConvolutionTrainRun(void *cdata, int task_id) {
+  auto conv_kernel = reinterpret_cast<ConvolutionTrainCPUKernel *>(cdata);
+  auto error_code = conv_kernel->Execute(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionTrainRun error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ConvolutionTrainCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionTrainCPUKernel Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionTrainRun, this, 1);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "conv train function error error_code[" << error_code << "]";
+    return RET_ERROR;
   }
   return RET_OK;
 }

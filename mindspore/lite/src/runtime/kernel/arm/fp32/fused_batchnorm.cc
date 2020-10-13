@@ -37,6 +37,14 @@ void FusedBatchnormCPUKernel::FreeScaleAndOffset() {
     free(offset_);
     offset_ = nullptr;
   }
+  if (save_mean_ != nullptr) {
+    free(save_mean_);
+    save_mean_ = nullptr;
+  }
+  if (save_variance_ != nullptr) {
+    free(save_variance_);
+    save_variance_ = nullptr;
+  }
 }
 
 int FusedBatchnormCPUKernel::InitConstTensor() {
@@ -49,8 +57,11 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
   offset_ = malloc(offset->Size());
   mean_ = malloc(mean->Size());
   variance_ = malloc(variance->Size());
+  save_mean_ = malloc(mean->Size());
+  save_variance_ = malloc(variance->Size());
 
-  if (scale_ == nullptr || offset_ == nullptr || mean_ == nullptr || variance_ == nullptr) {
+  if (scale_ == nullptr || offset_ == nullptr || mean_ == nullptr || variance_ == nullptr || save_mean_ == nullptr ||
+      save_variance_ == nullptr) {
     FreeMeanAndVariance();
     FreeScaleAndOffset();
     MS_LOG(ERROR) << "Memory allocation failed";
@@ -60,6 +71,15 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
   memcpy(offset_, offset->MutableData(), offset->Size());
   memcpy(mean_, mean->MutableData(), mean->Size());
   memcpy(variance_, variance->MutableData(), variance->Size());
+  memset(save_mean_, 0, mean->Size());
+  memset(save_variance_, 0, variance->Size());
+  if (out_tensors_.size() > 4) {
+    for (size_t i = 1; i < out_tensors_.size(); i++) {
+      auto *data = static_cast<float *>(out_tensors_[i]->MutableData());
+      std::fill(data, data + out_tensors_[i]->ElementsNum(), 0.f);
+    }
+  }
+
   return RET_OK;
 }
 
@@ -70,21 +90,47 @@ int FusedBatchnormCPUKernel::Run() {
     return ret;
   }
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-  if (is_train()) {
+  if (is_train() && in_tensors_.size() >= 5) {
     float *in = static_cast<float *>(in_tensors_[0]->MutableData());
-    float *run_mean = static_cast<float *>(out_tensors_[1]->MutableData());
-    float *run_var = static_cast<float *>(out_tensors_[2]->MutableData());
-    float *save_mean = static_cast<float *>(out_tensors_[3]->MutableData());
-    float *save_inv_var = static_cast<float *>(out_tensors_[4]->MutableData());
-    std::fill(run_mean, run_mean + param->channel_, 0.f);
-    std::fill(run_var, run_var + param->channel_, 0.f);
-    FusedBatchNormFp32MeanVar(in, 0.9, run_mean, run_var, param, save_mean, save_inv_var);
+    float *scale = static_cast<float *>(in_tensors_[1]->MutableData());
+    float *bias = static_cast<float *>(in_tensors_[2]->MutableData());
+    float *mean = static_cast<float *>(in_tensors_[3]->MutableData());
+    float *var = static_cast<float *>(in_tensors_[4]->MutableData());
+    std::fill(mean, mean + in_tensors_[3]->ElementsNum(), 0.f);
+    std::fill(var, var + in_tensors_[4]->ElementsNum(), 0.f);
+    FusedBatchNormFp32MeanVar(in, mean, var, param, static_cast<float *>(save_mean_),
+                              static_cast<float *>(save_variance_));
+    memcpy(out_tensors_[3]->MutableData(), save_mean_, out_tensors_[3]->Size());
+    memcpy(out_tensors_[4]->MutableData(), save_variance_, out_tensors_[3]->Size());
+    memcpy(mean_, mean, in_tensors_[3]->Size());
+    memcpy(variance_, var, in_tensors_[4]->Size());
+    memcpy(scale_, scale, in_tensors_[1]->Size());
+    memcpy(offset_, bias, in_tensors_[2]->Size());
+    trained_ = true;  // trained at least once
   }
   ret = ParallelLaunch(this->context_->thread_pool_, BatchNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }
   return ret;
+}
+
+void FusedBatchnormCPUKernel::eval() {
+  LiteKernel::eval();
+  if (trained_) {
+    float *run_mean = static_cast<float *>(in_tensors_[3]->MutableData());
+    float *run_var = static_cast<float *>(in_tensors_[4]->MutableData());
+    float *scale = static_cast<float *>(in_tensors_[1]->MutableData());
+    float *bias = static_cast<float *>(in_tensors_[2]->MutableData());
+    // Copy to input tensors for Model export
+    memcpy(run_mean, save_mean_, in_tensors_[3]->Size());
+    memcpy(run_var, save_variance_, in_tensors_[4]->Size());
+    // Copy to local variables
+    memcpy(mean_, run_mean, in_tensors_[3]->Size());
+    memcpy(variance_, run_var, in_tensors_[4]->Size());
+    memcpy(scale_, scale, in_tensors_[1]->Size());
+    memcpy(offset_, bias, in_tensors_[2]->Size());
+  }
 }
 
 int FusedBatchnormCPUKernel::DoExecute(int task_id) {

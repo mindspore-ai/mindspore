@@ -29,6 +29,11 @@
 #include "nnacl/power_parameter.h"
 #include "src/ops/bias_grad.h"
 #include "nnacl/arithmetic_common.h"
+#include "nnacl/fp32_grad/optimizer.h"
+#include "src/ops/apply_momentum.h"
+#include "src/ops/sgd.h"
+#include "src/ops/bn_grad.h"
+#include "nnacl/fp32_grad/batch_norm.h"
 
 namespace mindspore::kernel {
 
@@ -46,6 +51,49 @@ OpParameter *DefaultPopulateParameter(const mindspore::lite::PrimitiveC *primiti
 
   param->type_ = primitive->Type();
   return param;
+}
+
+OpParameter *PopulateApplyMomentumParameter(const mindspore::lite::PrimitiveC *primitive) {
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
+    return nullptr;
+  }
+  ApplyMomentumParameter *p = reinterpret_cast<ApplyMomentumParameter *>(malloc(sizeof(ApplyMomentumParameter)));
+  if (p == nullptr) {
+    MS_LOG(ERROR) << "new ApplyMomentumParameter failed.";
+    return nullptr;
+  }
+  p->op_parameter_.type_ = primitive->Type();
+
+  auto apply_momentum_primitive =
+    reinterpret_cast<mindspore::lite::ApplyMomentum *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+
+  p->grad_scale_ = apply_momentum_primitive->GetGradientScale();
+  p->use_locking_ = apply_momentum_primitive->GetUseLocking();
+  p->use_nesterov_ = apply_momentum_primitive->GetUseNesterov();
+
+  return reinterpret_cast<OpParameter *>(p);
+}
+
+OpParameter *PopulateSgdParameter(const mindspore::lite::PrimitiveC *primitive) {
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
+    return nullptr;
+  }
+  SgdParameter *p = reinterpret_cast<SgdParameter *>(malloc(sizeof(SgdParameter)));
+  if (p == nullptr) {
+    MS_LOG(ERROR) << "new SgdParameter failed.";
+    return nullptr;
+  }
+  p->op_parameter_.type_ = primitive->Type();
+
+  auto sgd_primitive = reinterpret_cast<mindspore::lite::Sgd *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+
+  p->weight_decay_ = sgd_primitive->GetWeightDecay();
+  p->dampening_ = sgd_primitive->GetDampening();
+  p->use_nesterov_ = sgd_primitive->GetUseNesterov();
+
+  return reinterpret_cast<OpParameter *>(p);
 }
 
 OpParameter *PopulateSoftmaxCrossEntropyParameter(const mindspore::lite::PrimitiveC *primitive) {
@@ -250,9 +298,27 @@ OpParameter *PopulateBiasGradParameter(const mindspore::lite::PrimitiveC *primit
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
 
+OpParameter *PopulateBNGradParameter(const mindspore::lite::PrimitiveC *primitive) {
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
+    return nullptr;
+  }
+
+  BNGradParameter *bnGrad_param = reinterpret_cast<BNGradParameter *>(malloc(sizeof(BNGradParameter)));
+  if (bnGrad_param == nullptr) {
+    MS_LOG(ERROR) << "new BNGradParameter failed.";
+    return nullptr;
+  }
+  bnGrad_param->op_parameter_.type_ = primitive->Type();
+  auto bngrad = reinterpret_cast<mindspore::lite::BNGrad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  bnGrad_param->epsilon_ = bngrad->GetEps();
+  bnGrad_param->momentum_ = 0.1;
+  return reinterpret_cast<OpParameter *>(bnGrad_param);
+}
+
 void PopulateTrainParameters() {
   auto ppr = PopulateParameterRegistry::GetInstance();
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_ApplyMomentum, DefaultPopulateParameter);
+  ppr->AddPopulateParameterFunc(schema::PrimitiveType_ApplyMomentum, PopulateApplyMomentumParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_BiasGrad, PopulateBiasGradParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_SoftmaxCrossEntropy, PopulateSoftmaxCrossEntropyParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_ActivationGrad, PopulateActivationGradParameter);
@@ -263,6 +329,8 @@ void PopulateTrainParameters() {
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_Conv2DGradInput, PopulateConvolutionGradInputParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_PoolingGrad, PopulatePoolingGradParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_PowerGrad, PopulatePowerGradParameter);
+  ppr->AddPopulateParameterFunc(schema::PrimitiveType_Sgd, PopulateSgdParameter);
+  ppr->AddPopulateParameterFunc(schema::PrimitiveType_BNGrad, PopulateBNGradParameter);
 }
 
 }  // namespace mindspore::kernel

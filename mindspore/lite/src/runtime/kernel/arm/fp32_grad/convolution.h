@@ -26,17 +26,13 @@ class ConvolutionTrainCPUKernel : public LiteKernel {
   explicit ConvolutionTrainCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                      const lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), workspace(nullptr) {}
-  ~ConvolutionTrainCPUKernel() override {
-    if (workspace) delete[] workspace;
-  }
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~ConvolutionTrainCPUKernel() override {}
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-
- private:
-  float *workspace;
+  int Execute(int task_id);
 };
 
 kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,

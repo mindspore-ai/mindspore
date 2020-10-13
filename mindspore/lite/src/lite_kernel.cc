@@ -18,6 +18,22 @@
 #include <algorithm>
 
 namespace mindspore::kernel {
+
+void *LiteKernel::workspace_ = nullptr;
+
+void LiteKernel::AllocWorkspace(size_t size) {
+  if (size == 0) return;
+  workspace_ = malloc(size);
+  if (workspace_ == nullptr) {
+    MS_LOG(ERROR) << "fail to alloc " << size;
+  }
+}
+
+void LiteKernel::FreeWorkspace() {
+  free(workspace_);
+  workspace_ = nullptr;
+}
+
 void LiteKernel::InitOutTensorRefCount() {
   for (auto *tensor : this->out_tensors_) {
     tensor->SetRefCount(this->out_kernels_.size());

@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 void im2col_hwc(const float *in_data, float *data_col, ConvParameter *conv_param);
-void im2row_hwc(const float *in_data, float *data_row, ConvParameter *conv_param);
+void im2row_hwc(const float *in_data, float *data_row, ConvParameter *conv_param, bool transpose);
 void col2im_hwc(const float *data_col, float *data_im, ConvParameter *conv_param);
 #ifdef __cplusplus
 }

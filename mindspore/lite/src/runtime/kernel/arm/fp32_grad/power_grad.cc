@@ -19,6 +19,7 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/fp32/arithmetic.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -26,11 +27,21 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_PowerGrad;
 
 namespace mindspore::kernel {
-int PowerGradCPUKernel::Init() { return RET_OK; }
+int PowerGradCPUKernel::Init() {
+  if (2 != in_tensors_.size()) {
+    MS_LOG(ERROR) << "Power Grad Filter should have 2 inputs";
+    return RET_ERROR;
+  }
+  if (1 != out_tensors_.size()) {
+    MS_LOG(ERROR) << "Power Grad Filter should have one output";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
 
 int PowerGradCPUKernel::ReSize() { return RET_OK; }
 
-int PowerGradCPUKernel::Run() {
+int PowerGradCPUKernel::Execute(int task_id) {
   auto dy_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto x_addr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto dx_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
@@ -44,6 +55,30 @@ int PowerGradCPUKernel::Run() {
     dx_addr[i] *= scale;
   }
 
+  return RET_OK;
+}
+
+int PowerGradRun(void *cdata, int task_id) {
+  auto power_kernel = reinterpret_cast<PowerGradCPUKernel *>(cdata);
+  auto error_code = power_kernel->Execute(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "power grad error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int PowerGradCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "PowerGradCPUKernel Prepare failed.";
+    return RET_ERROR;
+  }
+  int error_code = ParallelLaunch(this->context_->thread_pool_, PowerGradRun, this, 1);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "power grad function error error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

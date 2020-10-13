@@ -75,7 +75,7 @@ float BNGrad::GetEps() const { return this->primitive_->value_as_BNGrad()->eps()
 float BNGrad::GetMomentum() const { return this->primitive_->value_as_BNGrad()->momentum(); }
 #endif
 int BNGrad::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
-  if (5 != inputs.size()) {
+  if (6 != inputs.size()) {
     MS_LOG(ERROR) << "BNGrad should have five inputs";
     return RET_ERROR;
   }
@@ -85,6 +85,7 @@ int BNGrad::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Ten
   }
   auto in = inputs[1];
   auto scale = inputs[2];
+
   outputs[0]->set_shape(in->shape());
   outputs[1]->set_shape(scale->shape());
   outputs[2]->set_shape(scale->shape());

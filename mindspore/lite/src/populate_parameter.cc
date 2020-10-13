@@ -635,6 +635,7 @@ OpParameter *PopulateFusedBatchNorm(const mindspore::lite::PrimitiveC *primitive
   auto param =
     reinterpret_cast<mindspore::lite::FusedBatchNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   batch_norm_param->epsilon_ = param->GetEpsilon();
+  batch_norm_param->momentum_ = param->GetMomentum();
   batch_norm_param->fused_ = true;
   return reinterpret_cast<OpParameter *>(batch_norm_param);
 }

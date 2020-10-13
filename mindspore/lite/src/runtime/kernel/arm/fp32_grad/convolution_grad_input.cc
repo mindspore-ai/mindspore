@@ -20,6 +20,7 @@
 #include "nnacl/fp32_grad/pack_ext.h"
 #include "nnacl/fp32_grad/gemm.h"
 #include "include/errorcode.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -50,26 +51,16 @@ int ConvolutionGradInputCPUKernel::Init() {
   conv_param->output_h_ = dy_tensor->shape()[kNHWC_H];
   conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
 
-  int ws_size = conv_param->output_h_ * conv_param->output_w_ * conv_param->kernel_h_ * conv_param->kernel_w_ *
-                conv_param->input_channel_ / conv_param->group_;
+  size_t ws_size = conv_param->output_h_ * conv_param->output_w_ * conv_param->kernel_h_ * conv_param->kernel_w_ *
+                   conv_param->input_channel_ / conv_param->group_;
 
-  workspace = new (std::nothrow) float[ws_size];
-  if (workspace == nullptr) {
-    MS_LOG(ERROR) << "new workspace fail!";
-    return RET_ERROR;
-  }
+  SetWorkspaceSize(ws_size * sizeof(float));
   return RET_OK;
 }
 
-int ConvolutionGradInputCPUKernel::ReSize() { return 0; }
+int ConvolutionGradInputCPUKernel::ReSize() { return RET_OK; }
 
-int ConvolutionGradInputCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
+int ConvolutionGradInputCPUKernel::Execute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto *input_dy = in_tensors_.at(0);
   auto *input_w = in_tensors_.at(1);
@@ -95,6 +86,7 @@ int ConvolutionGradInputCPUKernel::Run() {
   int m = out_h * out_w;
   int n = k_w * k_h * in_ch / groups;
   int k = out_ch / groups;
+  float *workspace = reinterpret_cast<float *>(GetWorkspace());
 
   memset(dx_addr, 0, sizeof(float) * batch * in_ch * in_h * in_w);
 
@@ -106,6 +98,32 @@ int ConvolutionGradInputCPUKernel::Run() {
       gemm(0, 0, m, n, k, 1, mat_a, out_ch, mat_b, n, 0, mat_c, n);
       col2im_hwc(mat_c, dx_addr + (i * groups) * (in_ch / groups) * in_h * in_w + j * (in_ch / groups), conv_param);
     }
+  }
+
+  return RET_OK;
+}
+
+int ConvolutionGradInputRun(void *cdata, int task_id) {
+  auto convinput_kernel = reinterpret_cast<ConvolutionGradInputCPUKernel *>(cdata);
+  auto error_code = convinput_kernel->Execute(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "conv input error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ConvolutionGradInputCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionGradInputCPUKernel Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
+
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionGradInputRun, this, 1);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "bias function error error_code[" << error_code << "]";
+    return RET_ERROR;
   }
   return RET_OK;
 }

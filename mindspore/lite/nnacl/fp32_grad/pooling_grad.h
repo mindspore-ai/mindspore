@@ -22,9 +22,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param);
+void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id);
 void MaxPoolingGrad(const float *input_ptr, const float *dx_ptr, const float *dy_ptr, float *output_ptr,
-                    PoolingParameter *pooling_param);
+                    PoolingParameter *pooling_param, int task_id);
 #ifdef __cplusplus
 }
 #endif

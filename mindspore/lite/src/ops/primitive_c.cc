@@ -151,6 +151,7 @@
 #include "src/ops/depend.h"
 #include "src/ops/flatten_grad.h"
 #include "src/ops/log_grad.h"
+#include "src/ops/sgd.h"
 #endif
 
 namespace mindspore {
@@ -384,7 +385,7 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Dequant>(prim, inputs, quantType);
   } else if (op_type == "Flatten") {
     return NewPrimitiveC<Flatten>(prim, inputs, quantType);
-  } else if (op_type == "FusedBatchNorm") {
+  } else if ((op_type == "FusedBatchNorm") || (op_type == "FusedBatchNormEx")) {
     return NewPrimitiveC<FusedBatchNorm>(prim, inputs, quantType);
   } else if (op_type == "make_tuple") {
     return NewPrimitiveC<MakeTuple>(prim, inputs, quantType);
@@ -452,7 +453,7 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Conv2DGradFilter>(prim, inputs, quantType);
   } else if (op_type == "Conv2DBackpropInput") {
     return NewPrimitiveC<Conv2DGradInput>(prim, inputs, quantType);
-  } else if (op_type == "BatchNormGrad") {
+  } else if ((op_type == "BatchNormGrad") || (op_type == "FusedBatchNormGradEx")) {
     return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
   } else if (op_type == "FlattenGrad") {
     return NewPrimitiveC<FlattenGrad>(prim, inputs, quantType);
@@ -460,6 +461,10 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
   } else if (op_type == "Tile") {
     return NewPrimitiveC<Tile>(prim, inputs, quantType);
+  } else if (op_type == "PowerGrad") {
+    return NewPrimitiveC<PowerGrad>(prim, inputs, quantType);
+  } else if (op_type == "SGD") {
+    return NewPrimitiveC<Sgd>(prim, inputs, quantType);
 #else
   } else if (op_type == "Conv2DBackpropInput") {
     return NewPrimitiveC<DeConv2D>(prim, inputs, quantType);
@@ -731,6 +736,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new NegGrad(primitive);
     case schema::PrimitiveType_LogGrad:
       return new LogGrad(primitive);
+    case schema::PrimitiveType_Sgd:
+      return new Sgd(primitive);
 #endif
 
     default:
@@ -995,6 +1002,8 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
       return NewPrimitiveC<NegGrad>(primitive);
     case schema::PrimitiveType_LogGrad:
       return NewPrimitiveC<LogGrad>(primitive);
+    case schema::PrimitiveType_Sgd:
+      return NewPrimitiveC<Sgd>(primitive);
 #endif
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in Create : " << schema::EnumNamePrimitiveType(op_type);

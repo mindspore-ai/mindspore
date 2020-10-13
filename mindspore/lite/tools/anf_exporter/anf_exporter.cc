@@ -206,12 +206,11 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
       ret = RET_MEMORY_FAILED;
       break;
     }
-    if (primitive_c->Type() == schema::PrimitiveType_TupleGetItem ||
-        primitive_c->Type() == schema::PrimitiveType_MakeTuple
+    if ((primitive_c->Type() == schema::PrimitiveType_TupleGetItem) ||
 #ifdef SUPPORT_TRAIN
-        || primitive_c->Type() == schema::PrimitiveType_Depend
+        (primitive_c->Type() == schema::PrimitiveType_Depend) ||
 #endif
-    ) {
+        (primitive_c->Type() == schema::PrimitiveType_MakeTuple)) {
       continue;
     }
     RemoveIfMakeTuple(cnode);
@@ -273,6 +272,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
 int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> input_anode, schema::CNodeT *output_cnode) {
   std::string input_name = input_anode->fullname_with_scope();
   auto input_cnode = utils::cast<CNodePtr>(input_anode);
+
   if (!IsPrimitiveCNode(input_cnode, schema::PrimitiveType_TupleGetItem)) {
     if (node_id_map_.find(input_name) != node_id_map_.end()) {
       output_cnode->inputIndex.emplace_back(node_id_map_[input_name]);
@@ -298,8 +298,17 @@ int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> input_anode, s
       get_item_input_cnode->fullname_with_scope() + "_o:" + std::to_string(GetValue<int>(value_node->value()));
     auto iter = node_id_map_.find(input_index_key);
     if (iter == node_id_map_.end()) {
-      MS_LOG(ERROR) << "Can not find get_item output tensor";
+#ifdef SUPPORT_TRAIN
+      input_index_key = get_item_input_cnode->fullname_with_scope() + "_o:" + std::to_string(0);  // try name with 0
+      iter = node_id_map_.find(input_index_key);
+      if (iter == node_id_map_.end()) {
+        MS_LOG(ERROR) << "Can not find get_item output tensor" << input_index_key;
+        return RET_ERROR;
+      }
+#else
+      MS_LOG(ERROR) << "Can not find get_item output tensor" << input_index_key;
       return RET_ERROR;
+#endif
     }
     output_cnode->inputIndex.emplace_back(iter->second);
   }
@@ -341,6 +350,7 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> input_anod
     paramTensor->format = schema::Format(paramValue->format());
     memcpy(paramTensor->data.data(), paramValue->tensor_addr(), paramValue->tensor_size());
   }
+
   node_id_map_[input_name] = meta_graphT->allTensors.size();
   output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
   meta_graphT->allTensors.emplace_back(std::move(paramTensor));
@@ -490,6 +500,14 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
       auto msTensor = new schema::TensorT();
       msTensor->nodeType = schema::NodeType_CNode;
       fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());
+#ifdef SUPPORT_TRAIN
+      std::string name = cnode_name + "_o:" + std::to_string(i);
+      node_id_map_[name] = meta_graphT->allTensors.size();
+      meta_graphT->allTensors.emplace_back(msTensor);
+      if (IsPrimitiveCNode(cnode, schema::PrimitiveType_Conv2D) ||
+          IsPrimitiveCNode(cnode, schema::PrimitiveType_DepthwiseConv2D))
+        break;
+#else
       if (tuple->size() == 1) {
         node_id_map_[cnode_name] = meta_graphT->allTensors.size();
       } else {
@@ -502,6 +520,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
           IsPrimitiveCNode(cnode, schema::PrimitiveType_FusedBatchNorm)) {
         break;
       }
+#endif
     }
   } else {
     auto ms_tensor = new schema::TensorT();

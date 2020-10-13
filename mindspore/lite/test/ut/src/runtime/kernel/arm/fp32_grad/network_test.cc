@@ -26,18 +26,22 @@
 #include "mindspore/lite/include/train_model.h"
 #include "common/common_test.h"
 #include "include/train_session.h"
-// #include "include/lite_session.h"
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
 #include "src/common/file_utils_ext.h"
+#include "src/kernel_registry.h"
+#include "src/runtime/kernel/arm/fp32_grad/convolution.h"
 
 namespace mindspore {
 class NetworkTest : public mindspore::CommonTest {
  public:
   NetworkTest() {}
 };
+
+int32_t runNet(mindspore::session::LiteSession *session, const std::string &in, const std::string &out,
+               const char *tensor_name, bool debug = false);
 
 //             INPUT(0)
 //                V
@@ -352,15 +356,13 @@ TEST_F(NetworkTest, tuning_layer) {
   ASSERT_NE(nullptr, model);
   meta_graph.reset();
   content = nullptr;
-  lite::InnerContext context;
+  lite::Context context;
   context.device_type_ = lite::DT_CPU;
   context.cpu_bind_mode_ = lite::NO_BIND;
   context.thread_num_ = 1;
-  ASSERT_EQ(lite::RET_OK, context.Init());
-  auto session = new session::TrainSession();
+  auto session = session::TrainSession::CreateSession(&context);
   ASSERT_NE(nullptr, session);
-  session->Init(&context);
-  auto ret = session->CompileGraph(model);
+  auto ret = session->CompileTrainGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
   session->Train();
   session->Train();  // Just double check that calling Train twice does not cause a problem
@@ -469,59 +471,67 @@ int32_t fileIterator(mindspore::session::TrainSession *session, const std::strin
 }
 void replaceExt(const std::string &src, std::string *dst) { *dst = src.substr(0, src.find_last_of('.')) + ".emb"; }
 
-int32_t runNet(mindspore::lite::LiteSession *session, const std::string &in, const std::string &out,
-               const char *tensor_name) {
+int32_t runNet(mindspore::session::LiteSession *session, const std::string &in, const std::string &out,
+               const char *tensor_name, bool debug) {
   // setup input
   auto inputs = session->GetInputs();
   auto inTensor = inputs.at(0);
   float *data = reinterpret_cast<float *>(inTensor->MutableData());
-
   size_t input_size;
   float *in_buf = reinterpret_cast<float *>(lite::ReadFile(in.c_str(), &input_size));
   auto input_data = reinterpret_cast<float *>(in_buf);
   std::copy(input_data, input_data + inTensor->ElementsNum(), data);
+  std::cout << "==============Input===========================" << std::endl;
+  for (int i = 0; i < 10; i++) {
+    std::cout << data[i] << ", ";
+  }
+  std::cout << std::endl;
   delete[] in_buf;
 
   // execute network
   session->RunGraph();
-
-  // compare outputs
   auto output = session->GetOutputByTensorName(tensor_name);
-  float *output_data = reinterpret_cast<float *>(output->MutableData());
+  if (output != nullptr) {
+    float *output_data = reinterpret_cast<float *>(output->MutableData());
+    // compare outputs
+    if (debug) {
+      std::cout << "==============Output===========================" << std::endl;
+      for (int i = 0; i < 10; i++) {
+        std::cout << output_data[i] << ", ";
+      }
+      std::cout << std::endl;
+    }
+    return mindspore::lite::CompareRelativeOutput(output_data, out);
+  }
 
-  return mindspore::lite::CompareRelativeOutput(output_data, out);
+  return lite::RET_ERROR;
 }
 
 TEST_F(NetworkTest, efficient_net) {
   char *buf = nullptr;
   size_t net_size = 0;
-  // std::string net = "./test_data/nets/efficientnet_b0_f.ms";
 
   std::string net = "./test_data/nets/effnetb0_fwd_nofuse.ms";
   ReadFile(net.c_str(), &net_size, &buf);
   auto model = lite::TrainModel::Import(buf, net_size);
   delete[] buf;
-  auto context = new lite::InnerContext;
+  auto context = new lite::Context;
   context->device_type_ = lite::DT_CPU;
   context->cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
-  ASSERT_EQ(lite::RET_OK, context->Init());
 
-  auto session = new mindspore::session::TrainSession();
+  auto session = session::TrainSession::CreateSession(context);
   ASSERT_NE(session, nullptr);
-  auto ret = session->Init(context);
-  ASSERT_EQ(lite::RET_OK, ret);
-  ret = session->CompileGraph(model);
+  auto ret = session->CompileTrainGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
   session->Eval();
 
   std::string in = "./test_data/nets/effNet_input_x_1_3_224_224.bin";
   std::string out = "./test_data/nets/effNet_output_y_1_1000.bin";
-  auto res = runNet(session, in, out, "631");
-
-  ASSERT_EQ(res, 0);
+  auto res = runNet(session, in, out, "650");
   delete session;
   delete context;
+  ASSERT_EQ(res, 0);
 }
 
 TEST_F(NetworkTest, lenetnet) {
@@ -536,19 +546,105 @@ TEST_F(NetworkTest, lenetnet) {
   context->cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 
-  auto session = new mindspore::session::TrainSession();
-  ASSERT_NE(session, nullptr);
-  auto ret = session->Init(context);
-  ASSERT_EQ(lite::RET_OK, ret);
-  ret = session->CompileGraph(model);
-  ASSERT_EQ(lite::RET_OK, ret);
-  session->Eval();
+  // check registration
+  mindspore::lite::KernelRegistry *reg = mindspore::lite::KernelRegistry::GetInstance();
+  mindspore::kernel::KernelKey desc1 = {mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32,
+                                        mindspore::schema::PrimitiveType_Conv2D};
+  mindspore::kernel::KernelKey desc2 = {mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32,
+                                        mindspore::schema::PrimitiveType_DepthwiseConv2D};
+  auto regb1 = reg->GetCreator(desc1);
+  auto regb2 = reg->GetCreator(desc2);
+  ASSERT_EQ(regb1 == mindspore::kernel::CpuConvTrainFp32KernelCreator, false);
 
+  auto session = session::TrainSession::CreateSession(context);
+  ASSERT_NE(session, nullptr);
+  auto ret = session->CompileTrainGraph(model);
+  ASSERT_EQ(lite::RET_OK, ret);
+
+  auto rega1 = reg->GetCreator(desc1);
+  auto rega2 = reg->GetCreator(desc2);
+  ASSERT_EQ(regb1, rega1);
+  ASSERT_EQ(regb2, rega2);
+  ASSERT_EQ(rega1 == mindspore::kernel::CpuConvTrainFp32KernelCreator, false);
+  // end of check registration
+
+  session->Eval();
   std::string in = "./test_data/nets/x_lenet.bin";
   std::string out = "./test_data/nets/y_lenet.bin";
   auto res = runNet(session, in, out, "24");
+  delete session;
+  delete context;
+  ASSERT_EQ(res, 0);
+}
+#if 0
+TEST_F(NetworkTest, retina_net) {
+  char *buf = nullptr;
+  size_t net_size = 0;
+
+  std::string net = "./test_data/nets/retinaface1009.ms";
+  ReadFile(net.c_str(), &net_size, &buf);
+  // auto model = lite::TrainModel::Import(buf, net_size);
+  auto model = lite::Model::Import(buf, net_size);
+  delete[] buf;
+  auto context = new lite::Context;
+  context->device_type_ = lite::DT_CPU;
+  context->cpu_bind_mode_ = lite::NO_BIND;
+  context->thread_num_ = 1;
+
+  // auto session = session::TrainSession::CreateSession(context);
+  auto session = session::LiteSession::CreateSession(context);
+  ASSERT_NE(session, nullptr);
+  auto ret = session->CompileGraph(model);
+  ASSERT_EQ(lite::RET_OK, ret);
+  // session->Eval();
+
+  std::string in = "./test_data/nets/retinaface_input.f32";
+  std::cout << "----- Output 0 -----" << std::endl;
+  std::string out = "./test_data/nets/retinaface_out_0.f32";
+  auto res = runNet(session, in, out, "448", true);
+  ASSERT_EQ(res, 0);
+
+  std::cout << "----- Output 1 -----" << std::endl;
+  out = "./test_data/nets/retinaface_out_1.f32";
+  res = runNet(session, in, out, "435", true);
+  ASSERT_EQ(res, 0);
+
+  std::cout << "----- Output 2 -----" << std::endl;
+  out = "./test_data/nets/retinaface_out_2.f32";
+  res = runNet(session, in, out, "421", true);
+  ASSERT_EQ(res, 0);
+
+  delete session;
+  delete context;
+}
+#endif
+TEST_F(NetworkTest, mobileface_net) {
+  char *buf = nullptr;
+  size_t net_size = 0;
+
+  std::string net = "./test_data/nets/mobilefacenet0924.ms";
+  ReadFile(net.c_str(), &net_size, &buf);
+  // auto model = lite::TrainModel::Import(buf, net_size);
+  auto model = lite::Model::Import(buf, net_size);
+  delete[] buf;
+  auto context = new lite::Context;
+  context->device_type_ = lite::DT_CPU;
+  context->cpu_bind_mode_ = lite::NO_BIND;
+  context->thread_num_ = 1;
+
+  // auto session = session::TrainSession::CreateSession(context);
+  auto session = session::LiteSession::CreateSession(context);
+  ASSERT_NE(session, nullptr);
+  auto ret = session->CompileGraph(model);
+  ASSERT_EQ(lite::RET_OK, ret);
+  // session->Eval();
+
+  std::string in = "./test_data/nets/facenet_input.f32";
+  std::string out = "./test_data/nets/facenet_output.f32";
+  auto res = runNet(session, in, out, "354", true);
 
   ASSERT_EQ(res, 0);
+  delete model;
   delete session;
   delete context;
 }
