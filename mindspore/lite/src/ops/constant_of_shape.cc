@@ -67,7 +67,11 @@ int ConstantOfShape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tenso
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto in_data = reinterpret_cast<int *>(in_tensor->MutableData());
+  auto in_data = reinterpret_cast<int *>(in_tensor->data_c());
+  if (in_data == nullptr) {
+    MS_LOG(ERROR) << "Input data is nullptr";
+    return RET_INFER_INVALID;
+  }
   int size = in_tensor->ElementsNum();
   std::vector<int> out_shape(size);
   for (int i = 0; i < size; ++i) {
