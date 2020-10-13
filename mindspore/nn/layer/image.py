@@ -221,7 +221,7 @@ class SSIM(Cell):
         validator.check_number('max_val', max_val, 0.0, Rel.GT, self.cls_name)
         self.max_val = max_val
         self.filter_size = validator.check_integer('filter_size', filter_size, 1, Rel.GE, self.cls_name)
-        self.filter_sigma = validator.check_float_positive('filter_sigma', filter_sigma, self.cls_name)
+        self.filter_sigma = validator.check_positive_float(filter_sigma, 'filter_sigma', self.cls_name)
         self.k1 = validator.check_value_type('k1', k1, [float], self.cls_name)
         self.k2 = validator.check_value_type('k2', k2, [float], self.cls_name)
         window = _create_window(filter_size, filter_sigma)
@@ -299,7 +299,7 @@ class MSSSIM(Cell):
         self.max_val = max_val
         validator.check_value_type('power_factors', power_factors, [tuple, list], self.cls_name)
         self.filter_size = validator.check_integer('filter_size', filter_size, 1, Rel.GE, self.cls_name)
-        self.filter_sigma = validator.check_float_positive('filter_sigma', filter_sigma, self.cls_name)
+        self.filter_sigma = validator.check_positive_float(filter_sigma, 'filter_sigma', self.cls_name)
         self.k1 = validator.check_value_type('k1', k1, [float], self.cls_name)
         self.k2 = validator.check_value_type('k2', k2, [float], self.cls_name)
         window = _create_window(filter_size, filter_sigma)

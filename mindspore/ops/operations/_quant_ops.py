@@ -503,7 +503,7 @@ class BatchNormFold(PrimitiveWithInfer):
     def __init__(self, momentum=0.9, epsilon=1e-5, is_training=True, freeze_bn=0):
         """Initialize batch norm fold layer"""
         self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
-        self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
+        self.epsilon = validator.check_positive_float(epsilon, 'epsilon', self.name)
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
         self.freeze_bn = validator.check_value_type('freeze_bn', freeze_bn, (int,), self.name)
 
@@ -546,7 +546,7 @@ class BatchNormFoldGrad(PrimitiveWithInfer):
         """Initialize BatchNormGrad layer"""
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
         self.freeze_bn = validator.check_value_type('freeze_bn', freeze_bn, (int,), self.name)
-        self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
+        self.epsilon = validator.check_positive_float(epsilon, 'epsilon', self.name)
         self.init_prim_io_names(inputs=['d_batch_mean', 'd_batch_std', 'x', 'batch_mean', 'batch_std', 'global_step'],
                                 outputs=['dx'])
 
@@ -814,7 +814,7 @@ class BatchNormFoldD(PrimitiveWithInfer):
         """Initialize _BatchNormFold layer"""
         from mindspore.ops._op_impl._custom_op import batchnorm_fold
         self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
-        self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
+        self.epsilon = validator.check_positive_float(epsilon, 'epsilon', self.name)
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
         self.freeze_bn = validator.check_value_type('freeze_bn', freeze_bn, (int,), self.name)
         self.data_format = "NCHW"
@@ -842,7 +842,7 @@ class BatchNormFoldGradD(PrimitiveWithInfer):
     def __init__(self, epsilon=1e-5, is_training=True, freeze_bn=0):
         """Initialize _BatchNormFoldGrad layer"""
         from mindspore.ops._op_impl._custom_op import batchnorm_fold_grad
-        self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
+        self.epsilon = validator.check_positive_float(epsilon, 'epsilon', self.name)
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
         self.freeze_bn = validator.check_value_type('freeze_bn', freeze_bn, (int,), self.name)
         self.init_prim_io_names(inputs=['d_batch_mean', 'd_batch_std', 'x', 'batch_mean', 'batch_std'],

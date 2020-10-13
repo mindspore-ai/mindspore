@@ -45,9 +45,9 @@ class LearningRateSchedule(Cell):
 
 def _check_inputs(learning_rate, decay_rate, decay_steps, is_stair, cls_name):
     validator.check_positive_int(decay_steps, 'decay_steps', cls_name)
-    validator.check_float_positive('learning_rate', learning_rate, cls_name)
+    validator.check_positive_float(learning_rate, 'learning_rate', cls_name)
     validator.check_float_legal_value('learning_rate', learning_rate, cls_name)
-    validator.check_float_positive('decay_rate', decay_rate, cls_name)
+    validator.check_positive_float(decay_rate, 'decay_rate', cls_name)
     validator.check_float_legal_value('decay_rate', decay_rate, cls_name)
     validator.check_value_type('is_stair', is_stair, [bool], cls_name)
 
@@ -255,7 +255,7 @@ class CosineDecayLR(LearningRateSchedule):
         if not isinstance(min_lr, float):
             raise TypeError("min_lr must be float.")
         validator.check_number_range("min_lr", min_lr, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
-        validator.check_float_positive('max_lr', max_lr, self.cls_name)
+        validator.check_positive_float(max_lr, 'max_lr', self.cls_name)
         validator.check_float_legal_value('max_lr', max_lr, self.cls_name)
         validator.check_positive_int(decay_steps, "decay_steps", self.cls_name)
         if min_lr >= max_lr:
@@ -318,7 +318,7 @@ class PolynomialDecayLR(LearningRateSchedule):
     """
     def __init__(self, learning_rate, end_learning_rate, decay_steps, power, update_decay_steps=False):
         super(PolynomialDecayLR, self).__init__()
-        validator.check_float_positive('learning_rate', learning_rate, None)
+        validator.check_positive_float(learning_rate, 'learning_rate')
         validator.check_float_legal_value('learning_rate', learning_rate, None)
         if not isinstance(end_learning_rate, float):
             raise TypeError("end_learning_rate must be float.")
@@ -326,7 +326,7 @@ class PolynomialDecayLR(LearningRateSchedule):
                                      self.cls_name)
         validator.check_positive_int(decay_steps, 'decay_steps', self.cls_name)
         validator.check_value_type('update_decay_steps', update_decay_steps, [bool], self.cls_name)
-        validator.check_float_positive('power', power, self.cls_name)
+        validator.check_positive_float(power, 'power', self.cls_name)
         validator.check_float_legal_value('power', power, self.cls_name)
 
         self.decay_steps = decay_steps

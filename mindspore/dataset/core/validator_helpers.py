@@ -82,12 +82,6 @@ def check_positive(value, arg_name=""):
         raise ValueError("Input {0}must be greater than 0.".format(arg_name))
 
 
-def check_positive_float(value, arg_name=""):
-    arg_name = pad_arg_name(arg_name)
-    type_check(value, (float,), arg_name)
-    check_positive(value, arg_name)
-
-
 def check_2tuple(value, arg_name=""):
     if not (isinstance(value, tuple) and len(value) == 2):
         raise ValueError("Value {0}needs to be a 2-tuple.".format(arg_name))
