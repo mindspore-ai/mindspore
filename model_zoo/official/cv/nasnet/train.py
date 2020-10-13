@@ -25,6 +25,7 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
+from mindspore.common import dtype as mstype
 
 from src.config import nasnet_a_mobile_config_gpu as cfg
 from src.dataset import create_dataset
