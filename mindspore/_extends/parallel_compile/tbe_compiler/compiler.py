@@ -107,7 +107,7 @@ def build_op(build_type, json_str):
             raise ValueError("Op:{} function {} is not supported by Tbe.".format(op_name, build_type))
 
         # call function
-        if kernel_name[0:19] == "bounding_box_encode":
+        if op_name == "bounding_box_encode":
             return op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name_val=kernel_name)
 
         if is_dynamic_shape:
