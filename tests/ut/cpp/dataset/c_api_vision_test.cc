@@ -228,6 +228,133 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchFail3) {
   EXPECT_EQ(cutmix_batch_op, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess1) {
+  // Testing RandomResizedCrop with default values
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCrop({5});
+  EXPECT_NE(random_resized_crop, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_resized_crop}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    EXPECT_EQ(image->shape()[0] == 5 && image->shape()[1] == 5, true);
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess2) {
+  // Testing RandomResizedCrop with non-default values
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_resized_crop =
+    vision::RandomResizedCrop({5, 10}, {0.25, 0.75}, {0.5, 1.25}, mindspore::dataset::InterpolationMode::kArea, 20);
+  EXPECT_NE(random_resized_crop, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_resized_crop}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    EXPECT_EQ(image->shape()[0] == 5 && image->shape()[1] == 10, true);
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomResizedCropFail1) {
+  // This should fail because size has negative value
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCrop({5, -10});
+  EXPECT_EQ(random_resized_crop, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomResizedCropFail2) {
+  // This should fail because scale isn't in {min, max} format
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCrop({5, 10}, {4, 3});
+  EXPECT_EQ(random_resized_crop, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomResizedCropFail3) {
+  // This should fail because ratio isn't in {min, max} format
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCrop({5, 10}, {4, 5}, {7, 6});
+  EXPECT_EQ(random_resized_crop, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomResizedCropFail4) {
+  // This should fail because scale has a size of more than 2
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCrop({5, 10, 20}, {4, 5}, {7, 6});
+  EXPECT_EQ(random_resized_crop, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestCutOut) {
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -1303,8 +1430,8 @@ TEST_F(MindDataTestPipeline, TestCenterCropFail) {
 TEST_F(MindDataTestPipeline, TestNormalizeFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalize with invalid params.";
   // mean value 0.0
-  std::shared_ptr<TensorOperation> normalize = mindspore::dataset::api::vision::Normalize({0.0, 115.0, 100.0},
-                                                                                          {70.0, 68.0, 71.0});
+  std::shared_ptr<TensorOperation> normalize =
+    mindspore::dataset::api::vision::Normalize({0.0, 115.0, 100.0}, {70.0, 68.0, 71.0});
   EXPECT_EQ(normalize, nullptr);
   // std value at 0.0
   normalize = mindspore::dataset::api::vision::Normalize({121.0, 115.0, 100.0}, {0.0, 68.0, 71.0});

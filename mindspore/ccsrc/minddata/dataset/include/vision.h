@@ -46,6 +46,7 @@ class RandomCropOperation;
 class RandomCropDecodeResizeOperation;
 class RandomHorizontalFlipOperation;
 class RandomPosterizeOperation;
+class RandomResizedCropOperation;
 class RandomRotationOperation;
 class RandomSharpnessOperation;
 class RandomSolarizeOperation;
@@ -225,6 +226,23 @@ std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob =
 /// \param[in] bit_range - uint8_t vector representing the minimum and maximum bit in range. (Default={4, 8})
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomPosterizeOperation> RandomPosterize(const std::vector<uint8_t> &bit_range = {4, 8});
+
+/// \brief Function to create a RandomResizedCrop TensorOperation.
+/// \notes Crop the input image to a random size and aspect ratio.
+/// \param[in] size A vector representing the output size of the cropped image.
+///     If size is a single value, a square crop of size (size, size) is returned.
+///     If size has 2 values, it should be (height, width).
+/// \param[in] scale Range [min, max) of respective size of the original
+///     size to be cropped (default=(0.08, 1.0))
+/// \param[in] ratio Range [min, max) of aspect ratio to be cropped
+///     (default=(3. / 4., 4. / 3.)).
+/// \param[in] interpolation Image interpolation mode (default=InterpolationMode::kLinear)
+/// \param[in] max_attempts The maximum number of attempts to propose a valid
+///     crop_area (default=10). If exceeded, fall back to use center_crop instead.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomResizedCropOperation> RandomResizedCrop(
+  std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0}, std::vector<float> ratio = {3. / 4., 4. / 3.},
+  InterpolationMode interpolation = InterpolationMode::kLinear, int32_t max_attempts = 10);
 
 /// \brief Function to create a RandomRotation TensorOp
 /// \notes Rotates the image according to parameters
@@ -543,6 +561,27 @@ class RandomPosterizeOperation : public TensorOperation {
 
  private:
   std::vector<uint8_t> bit_range_;
+};
+
+class RandomResizedCropOperation : public TensorOperation {
+ public:
+  explicit RandomResizedCropOperation(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
+                                      std::vector<float> ratio = {3. / 4., 4. / 3.},
+                                      InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
+                                      int32_t max_attempts = 10);
+
+  ~RandomResizedCropOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  std::vector<int32_t> size_;
+  std::vector<float> scale_;
+  std::vector<float> ratio_;
+  InterpolationMode interpolation_;
+  int32_t max_attempts_;
 };
 
 class RandomRotationOperation : public TensorOperation {

@@ -31,6 +31,7 @@
 #include "minddata/dataset/kernels/image/random_affine_op.h"
 #include "minddata/dataset/kernels/image/random_color_op.h"
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
+#include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
@@ -228,6 +229,18 @@ std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob) 
 // Function to create RandomPosterizeOperation.
 std::shared_ptr<RandomPosterizeOperation> RandomPosterize(const std::vector<uint8_t> &bit_range) {
   auto op = std::make_shared<RandomPosterizeOperation>(bit_range);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create RandomResizedCropOperation.
+std::shared_ptr<RandomResizedCropOperation> RandomResizedCrop(std::vector<int32_t> size, std::vector<float> scale,
+                                                              std::vector<float> ratio, InterpolationMode interpolation,
+                                                              int32_t max_attempts) {
+  auto op = std::make_shared<RandomResizedCropOperation>(size, scale, ratio, interpolation, max_attempts);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -895,6 +908,43 @@ bool RandomPosterizeOperation::ValidateParams() {
 
 std::shared_ptr<TensorOp> RandomPosterizeOperation::Build() {
   std::shared_ptr<RandomPosterizeOp> tensor_op = std::make_shared<RandomPosterizeOp>(bit_range_);
+  return tensor_op;
+}
+
+// RandomResizedCropOperation
+RandomResizedCropOperation::RandomResizedCropOperation(std::vector<int32_t> size, std::vector<float> scale,
+                                                       std::vector<float> ratio, InterpolationMode interpolation,
+                                                       int32_t max_attempts)
+    : size_(size), scale_(scale), ratio_(ratio), interpolation_(interpolation), max_attempts_(max_attempts) {}
+bool RandomResizedCropOperation::ValidateParams() {
+  if (size_.size() != 2 && size_.size() != 1) {
+    MS_LOG(ERROR) << "RandomResizedCrop: size variable must have a length of 1 or 2 but it has a length of: "
+                  << size_.size();
+    return false;
+  }
+  if (size_[0] < 0 || (size_.size() == 2 && size_[1] < 0)) {
+    MS_LOG(ERROR) << "RandomResizedCrop: size variable must only contain positive integers. However, it is: " << size_;
+    return false;
+  }
+  if (scale_.size() != 2 || scale_[1] < scale_[0]) {
+    MS_LOG(ERROR)
+      << "RandomResizedCrop: scale variable must have a size of two in the format of (min, max). However, it is: "
+      << scale_;
+    return false;
+  }
+  if (ratio_.size() != 2 || ratio_[1] < ratio_[0]) {
+    MS_LOG(ERROR) << "RandomResizedCrop: ratio variable must be in the format of (min, max). However , it is: "
+                  << ratio_;
+    return false;
+  }
+  return true;
+}
+
+std::shared_ptr<TensorOp> RandomResizedCropOperation::Build() {
+  int32_t height = size_[0], width = size_[0];
+  if (size_.size() == 2) width = size_[1];
+  std::shared_ptr<RandomCropAndResizeOp> tensor_op = std::make_shared<RandomCropAndResizeOp>(
+    height, width, scale_[0], scale_[1], ratio_[0], ratio_[1], interpolation_, max_attempts_);
   return tensor_op;
 }
 
