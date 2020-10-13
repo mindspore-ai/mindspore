@@ -331,7 +331,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
       // if graph output is a weight and doesn't link to any cnode, it's data type will be unknown
       if (output_type_id == kTypeUnknown) {
         MS_LOG(WARNING) << "It is not suggested to use a lonely weight parameter as the output of graph";
-        output_type_id = AnfAlgo::GetOutputInferDataType(item, index);
+        continue;
       }
       auto tensor_size = CountNodeDeviceMemorySize(item, index);
       auto address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
