@@ -1427,3 +1427,93 @@ TEST_F(MindDataTestPipeline, TestRandomCropDecodeResizeFail) {
                                                             mindspore::dataset::InterpolationMode::kLinear, 0);
   EXPECT_EQ(random_crop_decode_resize_6, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestRescaleSucess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRescaleSucess1.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, SequentialSampler(0, 1));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  auto image = row["image"];
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> rescale = mindspore::dataset::api::vision::Rescale(1.0, 0.0);
+  EXPECT_NE(rescale, nullptr);
+
+  // Convert to the same type
+  std::shared_ptr<TensorOperation> type_cast = transforms::TypeCast("uint8");
+  EXPECT_NE(type_cast, nullptr);
+
+  ds = ds->Map({rescale, type_cast}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter1 = ds->CreateIterator();
+  EXPECT_NE(iter1, nullptr);
+
+  // Iterate the dataset and get each row1
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row1;
+  iter1->GetNextRow(&row1);
+
+  auto image1 = row1["image"];
+
+  EXPECT_EQ(*image, *image1);
+
+  // Manually terminate the pipeline
+  iter1->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRescaleSucess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRescaleSucess2 with different params.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 1));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> rescale = mindspore::dataset::api::vision::Rescale(1.0 / 255, 1.0);
+  EXPECT_NE(rescale, nullptr);
+
+  ds = ds->Map({rescale}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRescaleFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRescaleSucess3 with invalid params.";
+  // incorrect negative rescale parameter
+  std::shared_ptr<TensorOperation> rescale = mindspore::dataset::api::vision::Rescale(-1.0, 0.0);
+  EXPECT_EQ(rescale, nullptr);
+}

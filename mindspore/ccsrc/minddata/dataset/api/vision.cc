@@ -39,6 +39,7 @@
 #include "minddata/dataset/kernels/image/random_sharpness_op.h"
 #include "minddata/dataset/kernels/image/random_solarize_op.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_op.h"
+#include "minddata/dataset/kernels/image/rescale_op.h"
 #include "minddata/dataset/kernels/image/resize_op.h"
 #include "minddata/dataset/kernels/image/rgba_to_bgr_op.h"
 #include "minddata/dataset/kernels/image/rgba_to_rgb_op.h"
@@ -270,6 +271,16 @@ std::shared_ptr<RandomSharpnessOperation> RandomSharpness(std::vector<float> deg
 // Function to create RandomVerticalFlipOperation.
 std::shared_ptr<RandomVerticalFlipOperation> RandomVerticalFlip(float prob) {
   auto op = std::make_shared<RandomVerticalFlipOperation>(prob);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create RescaleOperation.
+std::shared_ptr<RescaleOperation> Rescale(float rescale, float shift) {
+  auto op = std::make_shared<RescaleOperation>(rescale, shift);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -974,6 +985,22 @@ bool RandomVerticalFlipOperation::ValidateParams() { return true; }
 
 std::shared_ptr<TensorOp> RandomVerticalFlipOperation::Build() {
   std::shared_ptr<RandomVerticalFlipOp> tensor_op = std::make_shared<RandomVerticalFlipOp>(probability_);
+  return tensor_op;
+}
+
+// RescaleOperation
+RescaleOperation::RescaleOperation(float rescale, float shift) : rescale_(rescale), shift_(shift) {}
+
+bool RescaleOperation::ValidateParams() {
+  if (rescale_ < 0) {
+    MS_LOG(ERROR) << "Rescale: rescale must be greater than or equal to 0, got: rescale = " << rescale_;
+    return false;
+  }
+  return true;
+}
+
+std::shared_ptr<TensorOp> RescaleOperation::Build() {
+  std::shared_ptr<RescaleOp> tensor_op = std::make_shared<RescaleOp>(rescale_, shift_);
   return tensor_op;
 }
 
