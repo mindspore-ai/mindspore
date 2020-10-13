@@ -373,6 +373,13 @@ static bool CheckZero(const std::vector<float> &vs) {
   return false;
 }
 
+static bool CheckZero(const std::vector<size_t> &vs) {
+  for (int i = 0; i < vs.size(); i++) {
+    if (vs[i] == 0) return true;
+  }
+  return false;
+}
+
 static bool CheckMeanAndStd(int channel, const std::vector<float> &mean, const std::vector<float> &std) {
   if (mean.size() == 0 && std.size() == 0) {
     return false;
@@ -638,7 +645,11 @@ std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std:
 }
 
 template <typename Pixel_Type>
-void ImplementAffine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> &dsize, Pixel_Type borderValue) {
+bool ImplementAffine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> &dsize, Pixel_Type borderValue) {
+  if (dsize.size() != 2 || CheckZero(dsize)) {
+    return false;
+  }
+
   double IM[6];
   for (int i = 0; i < 6; i++) {
     IM[i] = M[i];
@@ -669,14 +680,16 @@ void ImplementAffine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<si
       }
     }
   }
+
+  return true;
 }
 
-void Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue) {
-  ImplementAffine(src, out_img, M, dsize, borderValue);
+bool Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue) {
+  return ImplementAffine(src, out_img, M, dsize, borderValue);
 }
 
-void Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue) {
-  ImplementAffine(src, out_img, M, dsize, borderValue);
+bool Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue) {
+  return ImplementAffine(src, out_img, M, dsize, borderValue);
 }
 
 }  // namespace dataset

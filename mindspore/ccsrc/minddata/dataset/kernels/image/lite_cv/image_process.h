@@ -71,10 +71,10 @@ bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int ri
          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r);
 
 /// \brief Apply affine transformation for 1 channel image
-void Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue);
+bool Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue);
 
 /// \brief Apply affine transformation for 3 channel image
-void Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue);
+bool Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue);
 
 /// \brief Get default anchor boxes for Faster R-CNN, SSD, YOLO etc
 std::vector<std::vector<float>> GetDefaultBoxes(const BoxesConfig config);
