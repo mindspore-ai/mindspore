@@ -141,7 +141,7 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
         if self.is_ascend:
             self.channel_axis = validator.check_int_range('channel_axis', channel_axis, 0, 1, Rel.INC_BOTH, self.name)
         else:
-            self.channel_axis = validator.check_integer('channel_axis', channel_axis, 0, Rel.GE, self.name)
+            self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
         self.init_prim_io_names(
             inputs=['x', 'min', 'max'], outputs=['min_up', 'max_up'])
 
@@ -226,10 +226,8 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
             'training', training, (bool,), self.name)
         self.ema_decay = validator.check_number_range(
             'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
-        self.num_bits = validator.check_integer(
-            'num_bits', num_bits, 0, Rel.GT, self.name)
-        self.quant_delay = validator.check_integer(
-            'quant_delay', quant_delay, 0, Rel.GE, self.name)
+        self.num_bits = validator.check_positive_int(num_bits, 'num_bits', self.name)
+        self.quant_delay = validator.check_non_negative_int(quant_delay, 'quant_delay', self.name)
         self.init_prim_io_names(inputs=['x', 'min', 'max'],
                                 outputs=['out'])
 
@@ -275,8 +273,7 @@ class FakeQuantPerLayerGrad(PrimitiveWithInfer):
             raise ValueError(
                 f"For '{self.name}' attr \'num_bits\' is not support.")
 
-        self.num_bits = validator.check_integer(
-            'num_bits', num_bits, 0, Rel.GT, self.name)
+        self.num_bits = validator.check_positive_int(num_bits, 'num_bits', self.name)
         self.quant_delay = validator.check_value_type(
             'quant_delay', quant_delay, (int,), self.name)
         self.symmetric = validator.check_value_type(
@@ -371,14 +368,12 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
             'training', training, (bool,), self.name)
         self.ema_decay = validator.check_number_range(
             'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
-        self.num_bits = validator.check_integer(
-            'num_bits', num_bits, 0, Rel.GT, self.name)
-        self.quant_delay = validator.check_integer(
-            'quant_delay', quant_delay, 0, Rel.GE, self.name)
+        self.num_bits = validator.check_positive_int(num_bits, 'num_bits', self.name)
+        self.quant_delay = validator.check_non_negative_int(quant_delay, 'quant_delay', self.name)
         if self.is_ascend:
             self.channel_axis = validator.check_int_range('channel_axis', channel_axis, 0, 1, Rel.INC_BOTH, self.name)
         else:
-            self.channel_axis = validator.check_integer('channel_axis', channel_axis, 0, Rel.GE, self.name)
+            self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
         self.init_prim_io_names(inputs=['x', 'min', 'max'], outputs=['out'])
 
     def infer_shape(self, x_shape, min_shape, max_shape):
@@ -433,16 +428,14 @@ class FakeQuantPerChannelGrad(PrimitiveWithInfer):
             raise ValueError(
                 f"For '{self.name}' attr \'num_bits\' is not support.")
 
-        self.num_bits = validator.check_integer(
-            'num_bits', num_bits, 0, Rel.GT, self.name)
+        self.num_bits = validator.check_positive_int(num_bits, 'num_bits', self.name)
         self.quant_delay = validator.check_value_type(
             'quant_delay', quant_delay, (int,), self.name)
         self.symmetric = validator.check_value_type(
             'symmetric', symmetric, (bool,), self.name)
         self.narrow_range = validator.check_value_type(
             'narrow_range', narrow_range, (bool,), self.name)
-        self.channel_axis = validator.check_integer(
-            'channel axis', channel_axis, 0, Rel.GE, self.name)
+        self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel axis', self.name)
         self.init_prim_io_names(
             inputs=['dout', 'x', 'min', 'max'], outputs=['dx'])
 

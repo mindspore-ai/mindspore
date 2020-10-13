@@ -1001,7 +1001,7 @@ class Conv2D(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', padding must be zero when pad_mode is '{pad_mode}'.")
         if self.pad_mode == 'pad':
             for item in pad:
-                validator.check_integer('pad item', item, 0, Rel.GE, self.name)
+                validator.check_non_negative_int(item, 'pad item', self.name)
 
         self.mode = validator.check_integer('mode', mode, 1, Rel.EQ, self.name)
         self.add_prim_attr('data_format', "NCHW")
@@ -1139,7 +1139,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', padding must be zero when pad_mode is '{pad_mode}'.")
         if self.pad_mode == 'pad':
             for item in pad:
-                validator.check_integer('pad item', item, 0, Rel.GE, self.name)
+                validator.check_non_negative_int(item, 'pad item', self.name)
         self.mode = validator.check_integer("mode", mode, 3, Rel.EQ, self.name)
         self.add_prim_attr('data_format', "NCHW")
         self.channel_multiplier = validator.check_positive_int(channel_multiplier, "channel_multiplier", self.name)
@@ -1525,7 +1525,7 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', padding must be zero when pad_mode is '{pad_mode}'.")
         if self.pad_mode == 'pad':
             for item in pad:
-                validator.check_integer('pad item', item, 0, Rel.GE, self.name)
+                validator.check_non_negative_int(item, 'pad item', self.name)
 
         pad_mode = pad_mode.upper()
         self.add_prim_attr('pad_mode', pad_mode)
@@ -1534,7 +1534,7 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         self.add_prim_attr('data_format', "NCHW")
         if pad_list:
             for x in pad_list:
-                validator.check_integer('element of pad_list', x, 0, Rel.GE, self.name)
+                validator.check_non_negative_int(x, 'element of pad_list', self.name)
             self.pad_list = pad_list
 
     def __infer__(self, doutput, w, x_size):
@@ -2568,7 +2568,7 @@ class OneHot(PrimitiveWithInfer):
         indices_shp = indices['shape']
         validator.check_int_range("axis", self.axis, -1, len(indices_shp), Rel.INC_BOTH, self.name)
         depth_val = depth['value']
-        validator.check_integer("depth", depth_val, 0, Rel.GE, self.name)
+        validator.check_non_negative_int(depth_val, "depth", self.name)
         # create new dimension at end if self.axis is -1
         _ = indices_shp.insert(self.axis, depth_val) if self.axis >= 0 else indices_shp.append(depth_val)
 
@@ -5722,7 +5722,7 @@ class LRN(PrimitiveWithInfer):
         validator.check_value_type("beta", beta, [float], self.name)
         validator.check_value_type("norm_region", norm_region, [str], self.name)
         validator.check_string(norm_region, ['ACROSS_CHANNELS'], 'norm_region', self.name)
-        validator.check_integer("depth_radius", depth_radius, 0, Rel.GE, self.name)
+        validator.check_non_negative_int(depth_radius, "depth_radius", self.name)
 
     def infer_dtype(self, x_dtype):
         validator.check_tensor_type_same({"x": x_dtype}, (mstype.float16, mstype.float32,), self.name)

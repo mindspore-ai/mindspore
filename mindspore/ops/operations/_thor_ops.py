@@ -516,7 +516,7 @@ class Im2Col(PrimitiveWithInfer):
         self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
         self.pad = validator.check_pad_value_by_mode(pad_mode, pad, self.name)
         if self.pad_mode == 'pad':
-            validator.check_integer('pad', self.pad, 0, Rel.GE, self.name)
+            validator.check_non_negative_int(self.pad, 'pad', self.name)
         self.add_prim_attr('data_format', "NCHW")
 
     def infer_shape(self, x_shape):
