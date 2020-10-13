@@ -74,6 +74,38 @@ std::string GpuKernelFactory::SupportedTypeList(const std::string &kernel_name) 
   return type_lists;
 }
 
+bool GpuKernelFactory::ReducePrecision(
+  const std::string &kernel_name, std::shared_ptr<mindspore::kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder) {
+  auto kernel_info = builder->Build();
+  auto iter = map_kernel_name_to_creater_.find(kernel_name);
+  if (map_kernel_name_to_creater_.end() == iter) {
+    MS_LOG(INFO) << "Not registered GPU kernel: op[" << kernel_name << "]!";
+    return false;
+  }
+  reduce_flag_.first.clear();
+  for (size_t attr_index = 0; attr_index < (iter->second).size(); ++attr_index) {
+    auto attr_size = (&(iter->second))->at(attr_index).first.GetInputSize();
+    for (size_t input_index = 0; input_index < kernel_info->GetInputNum(); input_index++) {
+      if (kernel_info->GetInputDeviceType(input_index) == kNumberTypeInt64 &&
+          (iter->second)[attr_index].first.GetInputAttr(input_index % attr_size).first == kNumberTypeInt32) {
+        builder->SetInputDeviceType(kNumberTypeInt32, input_index);
+        reduce_flag_.first.push_back(input_index);
+        MS_LOG(WARNING) << "Kernel [" << kernel_name << "] does not support int64, cast input " << input_index
+                        << " to int32.";
+      }
+    }
+    for (size_t output_index = 0; output_index < kernel_info->GetOutputNum(); output_index++) {
+      if (kernel_info->GetOutputDeviceType(output_index) == kNumberTypeInt64 &&
+          (iter->second)[attr_index].first.GetOutputAttr(output_index % attr_size).first == kNumberTypeInt32) {
+        builder->SetOutputDeviceType(kNumberTypeInt32, output_index);
+        MS_LOG(WARNING) << "Kernel [" << kernel_name << "] does not support int64, cast output " << output_index
+                        << " to int32.";
+      }
+    }
+  }
+  return GpuKernelFactory::SearchRegistered(kernel_name, builder->Build());
+}
+
 std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &kernel_name,
                                                              const KernelBuildInfo *kernel_info) {
   auto iter = map_kernel_name_to_creater_.find(kernel_name);
