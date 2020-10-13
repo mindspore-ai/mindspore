@@ -85,14 +85,14 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
   auto input_channel = weight_tensor->Channel();
   auto output_channel = weight_tensor->Batch();
 
-  size_t size = UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
-  bias_data_ = malloc(size);
-  if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
-    return RET_ERROR;
-  }
-  memset(bias_data_, 0, size);
   if (in_tensors_.size() == 3) {
+    size_t size = UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
+    size_t weight_size = output_channel * sizeof(float16_t);
+    bias_data_ = malloc(size);
+    if (bias_data_ == nullptr) {
+      MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
+      return RET_ERROR;
+    }
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     if (bias_tensor->data_type() == kNumberTypeFloat16) {
       memcpy(bias_data_, bias_tensor->MutableData(), output_channel * sizeof(float16_t));
@@ -100,15 +100,17 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
       Float32ToFloat16(reinterpret_cast<float *>(bias_tensor->MutableData()), reinterpret_cast<float16_t *>(bias_data_),
                        output_channel);
     }
+    memset(reinterpret_cast<char *>(bias_data_) + weight_size, 0, size - weight_size);
   }
 
-  size = input_channel * UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
+  size_t size = input_channel * UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
+  size_t down_size = input_channel * DOWN_DIV(output_channel, C8NUM) * C8NUM * sizeof(float16_t);
   weight_ptr_ = reinterpret_cast<float16_t *>(malloc(size));
   if (weight_ptr_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc weight_ptr_ error!";
     return RET_ERROR;
   }
-  memset(weight_ptr_, 0, size);
+  memset(reinterpret_cast<char *>(weight_ptr_) + down_size, 0, size - down_size);
   ColMajor2Row8MajorFp16(weight_tensor->MutableData(), weight_ptr_, input_channel, output_channel,
                          weight_tensor->data_type() == kNumberTypeFloat16);
   return RET_OK;

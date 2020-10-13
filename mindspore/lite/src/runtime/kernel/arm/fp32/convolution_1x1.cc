@@ -71,24 +71,26 @@ int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
   auto input_channel = filter_tensor->Channel();
   auto output_channel = filter_tensor->Batch();
 
-  int size = UP_ROUND(output_channel, C8NUM) * sizeof(float);
-  bias_data_ = malloc(size);
-  if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
-    return RET_ERROR;
-  }
-  memset(bias_data_, 0, size);
   if (in_tensors_.size() == 3) {
-    memcpy(bias_data_, in_tensors_[kBiasIndex]->MutableData(), output_channel * sizeof(float));
+    int size = UP_ROUND(output_channel, C8NUM) * sizeof(float);
+    int weight_size = output_channel * sizeof(float);
+    bias_data_ = malloc(size);
+    if (bias_data_ == nullptr) {
+      MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
+      return RET_ERROR;
+    }
+    memcpy(bias_data_, in_tensors_[kBiasIndex]->MutableData(), weight_size);
+    memset(reinterpret_cast<char *>(bias_data_) + weight_size, 0, size - weight_size);
   }
 
-  size = input_channel * UP_ROUND(output_channel, C8NUM) * sizeof(float);
+  int size = input_channel * UP_ROUND(output_channel, C8NUM) * sizeof(float);
+  int down_size = input_channel * DOWN_DIV(output_channel, C8NUM) * C8NUM * sizeof(float);
   weight_ptr_ = reinterpret_cast<float *>(malloc(size));
   if (weight_ptr_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc weight_ptr_ error!";
     return RET_ERROR;
   }
-  memset(weight_ptr_, 0, size);
+  memset(reinterpret_cast<char *>(weight_ptr_) + down_size, 0, size - down_size);
   RowMajor2Col8Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
                      input_channel);
   return RET_OK;
@@ -141,10 +143,10 @@ int Convolution1x1CPUKernel::DoConv1x1(int task_id) {
   if (cur_oc <= 0) {
     return RET_OK;
   }
+  auto bias = (bias_data_ == nullptr) ? nullptr : reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id;
   MatMulOpt(pack_input_, weight_ptr_ + task_id * thread_stride_ * matmul_param_->deep_,
-            output_ptr_ + task_id * thread_stride_, reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id,
-            matmul_param_->act_type_, matmul_param_->deep_, matmul_param_->row_, cur_oc, matmul_param_->col_,
-            OutType_Nhwc);
+            output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
+            matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
   return RET_OK;
 }
 
@@ -178,7 +180,6 @@ int Convolution1x1CPUKernel::DoConv1x1Hw(int task_id) {
   MatMulOpt(thread_pack_input, weight_ptr_, thread_output_ptr, reinterpret_cast<float *>(bias_data_),
             matmul_param_->act_type_, matmul_param_->deep_, cur_hw_, matmul_param_->col_, matmul_param_->col_,
             OutType_Nhwc);
-
   return RET_OK;
 }
 

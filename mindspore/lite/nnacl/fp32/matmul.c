@@ -220,68 +220,104 @@ void RowMajor2Col12Major(float *src_ptr, float *dst_ptr, size_t row, size_t col)
 
 void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, size_t row, size_t col) {
   size_t row8 = row / C8NUM * C8NUM;
-  size_t col4 = col / C4NUM * C4NUM;
+#ifdef ENABLE_ARM64
+  size_t col_skip = col / C8NUM * C8NUM;
+  int skip_size = C8NUM;
+#else
+  size_t col_skip = col / C4NUM * C4NUM;
+  int skip_size = C4NUM;
+#endif
   float *src_r = src_ptr;
   float *dst_r = dst_ptr;
 
   size_t ri = 0;
   for (; ri < row8; ri += C8NUM) {
     size_t ci = 0;
-    for (; ci < col4; ci += C4NUM) {
+    for (; ci < col_skip; ci += skip_size) {
       float *src_c = src_r + ci;
       float *dst_c = dst_r + ci * C8NUM;
 
-      /* 8x4 row-major to col-major */
 #ifdef ENABLE_ARM64
+      /* 8x8 row-major to col-major */
       size_t stride = col * sizeof(float);
       asm volatile(
         "mov x10, %[src_c]\n"
         "mov x11, %[dst_c]\n"
 
-        "ld1 {v0.4s}, [x10], %[stride]\n"
-        "ld1 {v1.4s}, [x10], %[stride]\n"
-        "ld1 {v2.4s}, [x10], %[stride]\n"
-        "ld1 {v3.4s}, [x10], %[stride]\n"
+        "ld1 {v0.4s, v1.4s}, [x10], %[stride]\n"
+        "ld1 {v2.4s, v3.4s}, [x10], %[stride]\n"
+        "ld1 {v4.4s, v5.4s}, [x10], %[stride]\n"
+        "ld1 {v6.4s, v7.4s}, [x10], %[stride]\n"
 
-        "zip1 v4.4s, v0.4s, v1.4s\n"
-        "zip2 v5.4s, v0.4s, v1.4s\n"
-        "zip1 v6.4s, v2.4s, v3.4s\n"
-        "zip2 v7.4s, v2.4s, v3.4s\n"
+        "zip1 v8.4s, v0.4s, v2.4s\n"
+        "zip2 v9.4s, v0.4s, v2.4s\n"
+        "zip1 v10.4s, v4.4s, v6.4s\n"
+        "zip2 v11.4s, v4.4s, v6.4s\n"
 
-        "ld1 {v8.4s},  [x10], %[stride]\n"
-        "ld1 {v9.4s},  [x10], %[stride]\n"
-        "ld1 {v10.4s}, [x10],  %[stride]\n"
-        "ld1 {v11.4s}, [x10],  %[stride]\n"
+        "ld1 {v16.4s, v17.4s}, [x10], %[stride]\n"
+        "ld1 {v18.4s, v19.4s}, [x10], %[stride]\n"
+        "ld1 {v20.4s, v21.4s}, [x10], %[stride]\n"
+        "ld1 {v22.4s, v23.4s}, [x10], %[stride]\n"
 
-        "trn1 v0.2d, v4.2d, v6.2d\n"
-        "trn2 v1.2d, v4.2d, v6.2d\n"
-        "trn1 v2.2d, v5.2d, v7.2d\n"
-        "trn2 v3.2d, v5.2d, v7.2d\n"
+        "zip1 v12.4s, v1.4s, v3.4s\n"
+        "zip2 v13.4s, v1.4s, v3.4s\n"
+        "zip1 v14.4s, v5.4s, v7.4s\n"
+        "zip2 v15.4s, v5.4s, v7.4s\n"
 
-        "zip1 v12.4s, v8.4s, v9.4s\n"
-        "zip2 v13.4s, v8.4s, v9.4s\n"
-        "zip1 v14.4s, v10.4s, v11.4s\n"
-        "zip2 v15.4s, v10.4s, v11.4s\n"
+        "trn1 v0.2d, v8.2d, v10.2d\n"
+        "trn2 v1.2d, v8.2d, v10.2d\n"
+        "trn1 v2.2d, v9.2d, v11.2d\n"
+        "trn2 v3.2d, v9.2d, v11.2d\n"
 
-        "trn1 v8.2d, v12.2d, v14.2d\n"
-        "trn2 v9.2d, v12.2d, v14.2d\n"
-        "trn1 v10.2d, v13.2d, v15.2d\n"
-        "trn2 v11.2d, v13.2d, v15.2d\n"
+        "zip1 v24.4s, v16.4s, v18.4s\n"
+        "zip2 v25.4s, v16.4s, v18.4s\n"
+        "zip1 v26.4s, v20.4s, v22.4s\n"
+        "zip2 v27.4s, v20.4s, v22.4s\n"
 
-        "st1 {v0.4s}, [x11],  #16\n"
-        "st1 {v8.4s}, [x11],  #16\n"
-        "st1 {v1.4s}, [x11],  #16\n"
-        "st1 {v9.4s}, [x11],  #16\n"
-        "st1 {v2.4s},  [x11],#16\n"
-        "st1 {v10.4s}, [x11], #16\n"
-        "st1 {v3.4s},  [x11],#16\n"
-        "st1 {v11.4s}, [x11], #16\n"
+        "trn1 v4.2d, v12.2d, v14.2d\n"
+        "trn2 v5.2d, v12.2d, v14.2d\n"
+        "trn1 v6.2d, v13.2d, v15.2d\n"
+        "trn2 v7.2d, v13.2d, v15.2d\n"
+
+        "zip1 v28.4s, v17.4s, v19.4s\n"
+        "zip2 v29.4s, v17.4s, v19.4s\n"
+        "zip1 v30.4s, v21.4s, v23.4s\n"
+        "zip2 v31.4s, v21.4s, v23.4s\n"
+
+        "trn1 v16.2d, v24.2d, v26.2d\n"
+        "trn2 v17.2d, v24.2d, v26.2d\n"
+        "trn1 v18.2d, v25.2d, v27.2d\n"
+        "trn2 v19.2d, v25.2d, v27.2d\n"
+
+        "trn1 v20.2d, v28.2d, v30.2d\n"
+        "trn2 v21.2d, v28.2d, v30.2d\n"
+        "trn1 v22.2d, v29.2d, v31.2d\n"
+        "trn2 v23.2d, v29.2d, v31.2d\n"
+
+        "st1 {v0.4s}, [x11], #16\n"
+        "st1 {v16.4s}, [x11], #16\n"
+        "st1 {v1.4s}, [x11], #16\n"
+        "st1 {v17.4s}, [x11], #16\n"
+        "st1 {v2.4s}, [x11], #16\n"
+        "st1 {v18.4s}, [x11], #16\n"
+        "st1 {v3.4s}, [x11], #16\n"
+        "st1 {v19.4s}, [x11], #16\n"
+        "st1 {v4.4s}, [x11], #16\n"
+        "st1 {v20.4s}, [x11], #16\n"
+        "st1 {v5.4s}, [x11], #16\n"
+        "st1 {v21.4s}, [x11], #16\n"
+        "st1 {v6.4s}, [x11], #16\n"
+        "st1 {v22.4s}, [x11], #16\n"
+        "st1 {v7.4s}, [x11], #16\n"
+        "st1 {v23.4s}, [x11], #16\n"
 
         :
         : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ stride ] "r"(stride)
         : "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14",
-          "v15");
+          "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29",
+          "v30", "v31");
 #elif ENABLE_ARM32
+      /* 8x4 row-major to col-major */
       size_t stride = col * sizeof(float);
       asm volatile(
         "mov r10, %[src_c]\n"
