@@ -3509,6 +3509,103 @@ class BroadcastTo(PrimitiveWithInfer):
         return x_dtype
 
 
+class Meshgrid(PrimitiveWithInfer):
+    """
+    Generates coordinate matrices from given coordinate tensors.
+
+    Given N one-dimensional coordinate tensors, returns a list outputs of N N-D
+    coordinate tensors for evaluating expressions on an N-D grid.
+
+
+    Args:
+        indexing (str): Either 'xy' or 'ij'. Default: 'xy'.
+        When the indexing argument is set to 'xy' (the default),
+        the broadcasting instructions for the first two dimensions are swapped.
+
+    Inputs:
+        - **input_x** (Union[tuple, list]) - A Tuple or list of N 1-D Tensor objects.
+          The length of input_x should be greater than 1
+
+    Outputs:
+        Tensors, A Tuple of N N-D Tensor objects.
+
+    Examples:
+        >>> x = np.array([1, 2, 3, 4]).astype(np.int32)
+        >>> y = np.array([5, 6, 7]).astype(np.int32)
+        >>> z = np.array([8, 9, 0, 1, 2]).astype(np.int32)
+        >>> inputs = (x, y, z)
+        >>> meshgrid = P.Meshgrid(indexing="xy")
+        >>> meshgrid(inputs)
+        (Tensor(shape=[3, 4, 6], dtype=UInt32, value=
+         [[[1, 1, 1, 1, 1],
+          [2, 2, 2, 2, 2],
+          [3, 3, 3, 3, 3],
+          [4, 4, 4, 4, 4]],
+         [[1, 1, 1, 1, 1],
+          [2, 2, 2, 2, 2],
+          [3, 3, 3, 3, 3],
+          [4, 4, 4, 4, 4]],
+         [[1, 1, 1, 1, 1],
+          [2, 2, 2, 2, 2],
+          [3, 3, 3, 3, 3],
+          [4, 4, 4, 4, 4]]]),
+         Tensor(shape=[3, 4, 6], dtype=UInt32, value=
+         [[[5, 5, 5, 5, 5],
+          [5, 5, 5, 5, 5],
+          [5, 5, 5, 5, 5],
+          [5, 5, 5, 5, 5]],
+         [[6, 6, 6, 6, 6],
+          [6, 6, 6, 6, 6],
+          [6, 6, 6, 6, 6],
+          [6, 6, 6, 6, 6]],
+         [[7, 7, 7, 7, 7],
+          [7, 7, 7, 7, 7],
+          [7, 7, 7, 7, 7],
+          [7, 7, 7, 7, 7]]]),
+         Tensor(shape=[3, 4, 6], dtype=UInt32, value=
+         [[[8, 9, 0, 1, 2],
+          [8, 9, 0, 1, 2],
+          [8, 9, 0, 1, 2],
+          [8, 9, 0, 1, 2]],
+         [[8, 9, 0, 1, 2],
+          [8, 9, 0, 1, 2],
+          [8, 9, 0, 1, 2],
+          [8, 9, 0, 1, 2]],
+         [[8, 9, 0, 1, 2],
+          [8, 9, 0, 1, 2],
+          [8, 9, 0, 1, 2],
+          [8, 9, 0, 1, 2]]]))
+    """
+
+    @prim_attr_register
+    def __init__(self, indexing="xy"):
+        """Init Meshgrid"""
+        validator.check_value_type("indexing", indexing, (str), self.name)
+        if indexing not in ("xy", "ij"):
+            raise ValueError("indexing parameter must be either 'xy' or 'ij'")
+        self.indexing = indexing
+
+    def infer_shape(self, x_shape):
+        validator.check_value_type("shape", x_shape, [tuple, list], self.name)
+        validator.check_integer("len of input_x", len(x_shape), 2, Rel.GE, self.name)
+        n = len(x_shape)
+        shape_0 = []
+        for s in x_shape:
+            validator.check_integer('each_input_rank', len(s), 1, Rel.EQ, self.name)
+            shape_0.append(s[0])
+        if self.indexing == "xy":
+            shape_0[0], shape_0[1] = shape_0[1], shape_0[0]
+        out_shape = tuple(tuple(shape_0) for _ in range(n))
+        return out_shape
+
+
+    def infer_dtype(self, x_type):
+        validator.check_subclass("input_x[0]", x_type[0], mstype.tensor, self.name)
+        n = len(x_type)
+        for i in range(1, n):
+            validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, self.name, TypeError)
+        return x_type
+
 class InplaceUpdate(PrimitiveWithInfer):
     r"""
     Updates specified rows with values in `v`.

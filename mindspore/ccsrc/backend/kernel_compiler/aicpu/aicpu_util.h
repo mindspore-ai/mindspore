@@ -29,6 +29,7 @@ constexpr auto kInitData = "InitData";
 constexpr auto kGetNext = "GetNext";
 constexpr auto kPrint = "Print";
 constexpr auto kPack = "Pack";
+constexpr auto kMeshgrid = "Meshgrid";
 constexpr auto kOutputTypes = "output_types";
 constexpr auto kOutputShapes = "output_shapes";
 constexpr auto kChannelName = "channel_name";
@@ -46,7 +47,7 @@ constexpr auto kEditDistance = "EditDistance";
 constexpr auto kGatherD = "GatherD";
 constexpr auto kIdentity = "Identity";
 constexpr auto kCustRunApi = "RunCpuKernel";
-const std::set<std::string> kCustAiCpuKernelOps{kEditDistance, kGatherD, kIdentity};
+const std::set<std::string> kCustAiCpuKernelOps{kEditDistance, kGatherD, kIdentity, kMeshgrid};
 
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
