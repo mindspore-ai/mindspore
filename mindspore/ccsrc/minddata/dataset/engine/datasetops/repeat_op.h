@@ -129,6 +129,16 @@ class RepeatOp : public PipelineOp {
   /// \return The number of repeats that the user requested
   int32_t num_repeats() { return num_repeats_; }
 
+  /// \brief reset Op
+  /// \@return Status - The error code return
+  Status Reset() override;
+
+  // \brief Adds an operator to the repeat ops list of tracked leaf/eoe nodes
+  // \param[in] eoe_op The input leaf/eoe operator to add to the list
+  void AddToEoeList(std::shared_ptr<DatasetOp> eoe_op) { eoe_ops_.push_back(std::move(eoe_op)); }
+
+  std::vector<std::shared_ptr<DatasetOp>> eoe_ops_;  // List of operators that can generate EOE underneath this repeat.
+
  protected:
   // The number of repeats that the user requested.
   // Note that num_repeats_ is different with op_total_repeats_ or op_num_repeats_per_epoch_ in base DatasetOp class.

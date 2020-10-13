@@ -98,6 +98,12 @@ class RepeatPass : public NodePass {
   /// \return Status The error code return
   Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) override;
 
+  /// \brief Special case for GeneratorOp
+  /// \param[in] node The node being visited
+  /// \param[inout] modified Indicator if the node was changed at all
+  /// \return Status The error code return
+  Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) override;
+
   /// \brief All operators have a flag that might be set related to the repeat and any leaf nodes need to be set up
   ///     for use with a controlling repeat above it.
   /// \param[in] node The node being visited
@@ -106,6 +112,19 @@ class RepeatPass : public NodePass {
   Status RunOnNode(std::shared_ptr<DatasetOp> node, bool *modified) override;
 
  private:
+  /// \brief Adds an operator to the eoe operator stack save area
+  /// \param op - The dataset op to work add to eoe stack
+  /// \return Status - The error code return
+  void AddToEOEOpStack(std::shared_ptr<DatasetOp> dataset_op);
+
+  /// \brief Pops an operator from the eoe operator stack save area
+  /// \return shared_ptr to the popped operator
+  std::shared_ptr<DatasetOp> PopFromEOEOpStack();
+
+  bool is_repeated_;                                     // T/F if we are processing under a repeat
+  int32_t nested_repeats_;                               // A counter for nested repeats
+  std::stack<std::unique_ptr<op_stack>> eoe_op_stacks_;  // A save area for leaf/eoe ops (with nesting)
+
   /// \brief Adds an operator to the cached operator stack save area
   /// \param op - The dataset op to work add to cached stack
   /// \return Status - The error code return
