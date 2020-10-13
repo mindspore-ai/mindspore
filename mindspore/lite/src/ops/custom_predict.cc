@@ -18,8 +18,20 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
+int CustomPredict::GetOutputNum() const { return this->primitive_->value.AsCustomPredict()->outputNum; }
+float CustomPredict::GetWeightThreshold() const { return this->primitive_->value.AsCustomPredict()->weightThreshold; }
+
+void CustomPredict::SetOutputNum(int output_num) { this->primitive_->value.AsCustomPredict()->outputNum = output_num; }
+void CustomPredict::SetWeightThreshold(float weight_threshold) {
+  this->primitive_->value.AsCustomPredict()->weightThreshold = weight_threshold;
+}
 int CustomPredict::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) { return RET_OK; }
 #else
+int CustomPredict::GetOutputNum() const { return this->primitive_->value_as_CustomPredict()->outputNum(); }
+float CustomPredict::GetWeightThreshold() const {
+  return this->primitive_->value_as_CustomPredict()->weightThreshold();
+}
+
 int CustomPredict::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
@@ -30,8 +42,23 @@ int CustomPredict::UnPackToFlatBuilder(const schema::Primitive *primitive, flatb
 }
 #endif
 int CustomPredict::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  PrimitiveC::InferShape(inputs_, outputs_);
-  return RET_INFER_INVALID;
+  auto input = inputs_.at(0);
+  auto output0 = outputs_.at(0);
+  auto output1 = outputs_.at(1);
+  MS_ASSERT(input != nullptr);
+  MS_ASSERT(output0 != nullptr);
+  MS_ASSERT(output1 != nullptr);
+
+  std::vector<int> shape;
+  shape.push_back(GetOutputNum());
+
+  output0->set_shape(shape);
+  output0->set_data_type(kNumberTypeInt32);
+  output0->SetFormat(input->GetFormat());
+  output1->set_shape(shape);
+  output1->set_data_type(kNumberTypeFloat32);
+  output1->SetFormat(input->GetFormat());
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

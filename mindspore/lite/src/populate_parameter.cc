@@ -116,6 +116,7 @@
 #include "src/ops/neg.h"
 #include "src/ops/detection_post_process.h"
 #include "src/ops/skip_gram.h"
+#include "src/ops/custom_predict.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/arg_min_max.h"
 #include "nnacl/fp32/cast.h"
@@ -176,6 +177,7 @@
 #include "nnacl/detection_post_process_parameter.h"
 #include "nnacl/fp32/exp.h"
 #include "nnacl/fp32/skip_gram.h"
+#include "nnacl/predict_parameter.h"
 
 namespace mindspore::kernel {
 
@@ -1603,6 +1605,31 @@ OpParameter *PopulateSkipGramParameter(const mindspore::lite::PrimitiveC *primit
   return reinterpret_cast<OpParameter *>(skipGramParameter);
 }
 
+OpParameter *PopulateCommonOpParameter(const mindspore::lite::PrimitiveC *primitive) {
+  OpParameter *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "new OpParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(OpParameter));
+  param->type_ = primitive->Type();
+  return param;
+}
+
+OpParameter *PopulateCustomPredictParameter(const mindspore::lite::PrimitiveC *primitive) {
+  PredictParameter *param = reinterpret_cast<PredictParameter *>(malloc(sizeof(PredictParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc param failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(PredictParameter));
+  param->op_parameter_.type_ = primitive->Type();
+  auto prim = reinterpret_cast<mindspore::lite::CustomPredict *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  param->output_num = prim->GetOutputNum();
+  param->weight_threshold = prim->GetWeightThreshold();
+  return reinterpret_cast<OpParameter *>(param);
+}
+
 PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_SparseToDense] = PopulateSparseToDenseParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SoftMax] = PopulateSoftmaxParameter;
@@ -1706,6 +1733,8 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_L2Norm] = PopulateL2NormParameter;
   populate_parameter_funcs_[schema::PrimitiveType_DetectionPostProcess] = PopulateDetectionPostProcessParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SkipGram] = PopulateSkipGramParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_CustomExtractFeatures] = PopulateCommonOpParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_CustomPredict] = PopulateCustomPredictParameter;
 }
 
 PopulateParameterRegistry *PopulateParameterRegistry::GetInstance() {
