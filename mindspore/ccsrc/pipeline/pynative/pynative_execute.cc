@@ -284,7 +284,7 @@ py::object DoParamMixPrecisionCastTuple(bool *is_cast, const py::tuple tuple) {
     if (py::isinstance<tensor::MetaTensor>(tuple[i])) {
       MS_LOG(DEBUG) << "call cast for item " << i;
       result[i] = DoParamMixPrecisionCast(is_cast, tuple[i]);
-    } else if (py::isinstance<py::tuple>(tuple[i])) {
+    } else if (py::isinstance<py::tuple>(tuple[i]) || py::isinstance<py::list>(tuple[i])) {
       result[i] = DoParamMixPrecisionCastTuple(is_cast, tuple[i]);
     } else {
       result[i] = tuple[i];
@@ -779,7 +779,7 @@ AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::v
         }
         // redundant cast call if the tensor is a const Tensor.
         cast_output = DoParamMixPrecisionCast(&is_cast, obj);
-      } else if (py::isinstance<py::tuple>(obj)) {
+      } else if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
         // mix precision for tuple inputs
         cast_output = DoParamMixPrecisionCastTuple(&is_cast, obj);
       }
