@@ -29,6 +29,7 @@ class FusedBatchnormCPUKernel : public BatchnormCPUKernel {
       : BatchnormCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~FusedBatchnormCPUKernel() { FreeScaleAndOffset(); }
 
+  void eval() override;
   int ReSize() override;
   int Run() override;
   int InitConstTensor() override;
@@ -38,6 +39,9 @@ class FusedBatchnormCPUKernel : public BatchnormCPUKernel {
   void FreeScaleAndOffset();
   void *scale_ = nullptr;
   void *offset_ = nullptr;
+  void *save_mean_ = nullptr;
+  void *save_variance_ = nullptr;
+  bool trained_ = false;
 };
 }  // namespace mindspore::kernel
 

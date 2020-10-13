@@ -20,12 +20,12 @@
 #include "mindspore/lite/include/context.h"
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/kernel_registry.h"
 #include "src/common/utils.h"
 #include "src/common/file_utils.h"
 #include "src/common/file_utils_ext.h"
-#include "src/runtime/kernel/arm/fp32_grad/pooling_grad.h"
 #include "nnacl/fp32_grad/pooling_grad.h"
+#include "src/runtime/kernel/arm/fp32_grad/pooling_grad.h"
+#include "mindspore/lite/src/kernel_registry.h"
 
 namespace mindspore {
 class TestPoolingGradFp32 : public mindspore::CommonTest {
@@ -78,13 +78,13 @@ TEST_F(TestPoolingGradFp32, AvgPoolingGradFp32) {
   auto output_data = new float[output_data_size];
   // warm up loop
   for (int i = 0; i < 3; i++) {
-    AvgPoolingGrad(input_data, output_data, pooling_param);
+    AvgPoolingGrad(input_data, output_data, pooling_param, 1);
   }
 
   int loop_count = 100;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
-    AvgPoolingGrad(input_data, output_data, pooling_param);
+    AvgPoolingGrad(input_data, output_data, pooling_param, 1);
   }
   auto time_end = mindspore::lite::GetTimeUs();
   auto cost = time_end - time_start;
@@ -140,10 +140,14 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
   dx_tensor.SetData(output_data);
   std::vector<lite::Tensor *> outputs = {&dx_tensor};
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
 
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(pooling_param), NULL, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(pooling_param), &context, desc, nullptr);
 
   kernel_obj->Run();
 
@@ -201,10 +205,14 @@ TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
   auto output_data = reinterpret_cast<float *>(dx_tensor.MutableData());
   std::vector<lite::Tensor *> outputs = {&dx_tensor};
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
 
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(pooling_param), NULL, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(pooling_param), &context, desc, nullptr);
 
   kernel_obj->Run();
 
@@ -259,17 +267,22 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
   float *out_data = static_cast<float *>(out_tensor.MutableData());
   std::vector<lite::Tensor *> inputs = {&yt_tensor, &x_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
-  // ----------------------------------------
+
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
   kernel::KernelKey pool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto pool_creator = lite::KernelRegistry::GetInstance()->GetCreator(pool_desc);
-  auto kernel = pool_creator(inputs, outputs, reinterpret_cast<OpParameter *>(pool), NULL, pool_desc, nullptr);
+  auto kernel = pool_creator(inputs, outputs, reinterpret_cast<OpParameter *>(pool), &context, pool_desc, nullptr);
 
   kernel->Init();
 
   auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
   auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %llu ms\n", time_end - time_start);
+  printf("single thread running time : %lu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/avgpoolgradfp32_s2_dx_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);
@@ -319,17 +332,22 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
 
   std::vector<lite::Tensor *> inputs = {&yt_tensor, &x_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
-  // ----------------------------------------
+
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
   kernel::KernelKey pool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto pool_creator = lite::KernelRegistry::GetInstance()->GetCreator(pool_desc);
-  auto kernel = pool_creator(inputs, outputs, reinterpret_cast<OpParameter *>(pool), NULL, pool_desc, nullptr);
+  auto kernel = pool_creator(inputs, outputs, reinterpret_cast<OpParameter *>(pool), &context, pool_desc, nullptr);
 
   kernel->Init();
 
   auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
   auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %llu ms\n", time_end - time_start);
+  printf("single thread running time : %lu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/avgpoolgradfp32_s3_dx_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);
@@ -371,13 +389,13 @@ TEST_F(TestPoolingGradFp32, MaxPoolingGradFp32) {
   auto output_data = new float[output_data_size];
   // warm up loop
   for (int i = 0; i < 3; i++) {
-    MaxPoolingGrad(in_data, dx_data, dy_data, output_data, pooling_param);
+    MaxPoolingGrad(in_data, dx_data, dy_data, output_data, pooling_param, 1);
   }
 
   int loop_count = 100;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
-    MaxPoolingGrad(in_data, dx_data, dy_data, output_data, pooling_param);
+    MaxPoolingGrad(in_data, dx_data, dy_data, output_data, pooling_param, 1);
   }
   auto time_end = mindspore::lite::GetTimeUs();
   auto cost = time_end - time_start;
@@ -435,10 +453,15 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
   auto out_data = static_cast<float *>(out_tensor.MutableData());
   std::vector<lite::Tensor *> maxpool_inputs = {&x_tensor, &y_tensor, &yt_tensor};
   std::vector<lite::Tensor *> maxpool_outputs = {&out_tensor};
-  // ----------------------------------------
+
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
   kernel::KernelKey maxpool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto maxpool_creator = lite::KernelRegistry::GetInstance()->GetCreator(maxpool_desc);
-  auto kernel = maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), NULL,
+  auto kernel = maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), &context,
                                 maxpool_desc, nullptr);
 
   kernel->Init();
@@ -446,7 +469,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
   auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
   auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %llu ms\n", time_end - time_start);
+  printf("single thread running time : %lu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_1_xgrad_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);
@@ -505,10 +528,15 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
 
   std::vector<lite::Tensor *> maxpool_inputs = {&x_tensor, &y_tensor, &yt_tensor};
   std::vector<lite::Tensor *> maxpool_outputs = {&out_tensor};
-  // ----------------------------------------
+
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
   kernel::KernelKey maxpool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto maxpool_creator = lite::KernelRegistry::GetInstance()->GetCreator(maxpool_desc);
-  auto kernel = maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), NULL,
+  auto kernel = maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), &context,
                                 maxpool_desc, nullptr);
 
   kernel->Init();
@@ -516,7 +544,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
   auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
   auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %llu ms\n", time_end - time_start);
+  printf("single thread running time : %lu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_s2_xgrad_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);
@@ -575,10 +603,15 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
 
   std::vector<lite::Tensor *> maxpool_inputs = {&x_tensor, &y_tensor, &yt_tensor};
   std::vector<lite::Tensor *> maxpool_outputs = {&out_tensor};
-  // ----------------------------------------
+
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
   kernel::KernelKey maxpool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto maxpool_creator = lite::KernelRegistry::GetInstance()->GetCreator(maxpool_desc);
-  auto kernel = maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), NULL,
+  auto kernel = maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), &context,
                                 maxpool_desc, nullptr);
 
   kernel->Init();
@@ -586,7 +619,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
   auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
   auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %llu ms\n", time_end - time_start);
+  printf("single thread running time : %lu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_s3_xgrad_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);

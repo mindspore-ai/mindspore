@@ -19,6 +19,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -43,14 +44,9 @@ int BiasGradCPUKernel::Init() {
   return RET_OK;
 }
 
-int BiasGradCPUKernel::ReSize() { return 0; }
+int BiasGradCPUKernel::ReSize() { return RET_OK; }
 
-int BiasGradCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
+int BiasGradCPUKernel::Execute(int task_id) {
   auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
@@ -66,6 +62,30 @@ int BiasGradCPUKernel::Run() {
     }
   }
 
+  return RET_OK;
+}
+
+int BiasGradRun(void *cdata, int task_id) {
+  auto bias_kernel = reinterpret_cast<BiasGradCPUKernel *>(cdata);
+  auto error_code = bias_kernel->Execute(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "bias error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int BiasGradCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "BiasGradCPUKernel Prepare failed.";
+    return RET_ERROR;
+  }
+  int error_code = ParallelLaunch(this->context_->thread_pool_, BiasGradRun, this, 1);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "bias function error error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

@@ -26,17 +26,14 @@ class ConvolutionGradFilterCPUKernel : public LiteKernel {
   explicit ConvolutionGradFilterCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                           const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), workspace(nullptr) {}
-  ~ConvolutionGradFilterCPUKernel() override {
-    if (workspace) delete[] workspace;
-  }
+
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~ConvolutionGradFilterCPUKernel() override {}
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-
- private:
-  float *workspace = nullptr;
+  int Execute(int task_id);
 };
 
 }  // namespace mindspore::kernel

@@ -68,6 +68,7 @@ class ArithmeticGradCPUKernel : public LiteKernel {
   int InferShape();
   int ReSize() override;
   int Run() override;
+  int Execute(int task_id);
 
  private:
   void ArithmeticGradAdd(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);

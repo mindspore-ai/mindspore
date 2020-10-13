@@ -38,6 +38,7 @@ class PowerGradCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Execute(int task_id);
 
  private:
   float power_;

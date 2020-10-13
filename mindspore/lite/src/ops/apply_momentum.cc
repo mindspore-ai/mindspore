@@ -17,6 +17,10 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
+float ApplyMomentum::GetGradientScale() const { return this->primitive_->value.AsApplyMomentum()->gradientScale; }
+bool ApplyMomentum::GetUseLocking() const { return this->primitive_->value.AsApplyMomentum()->useLocking; }
+bool ApplyMomentum::GetUseNesterov() const { return this->primitive_->value.AsApplyMomentum()->useNesterov; }
+
 int ApplyMomentum::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   if (this->primitive_ == nullptr) {
     this->primitive_ = new (std::nothrow) schema::PrimitiveT;
@@ -36,6 +40,10 @@ int ApplyMomentum::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePt
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
+    attr->gradientScale = GetValue<float>(prim.GetAttr("gradient_scale"));
+    attr->useLocking = GetValue<bool>(prim.GetAttr("use_locking"));
+    attr->useNesterov = GetValue<bool>(prim.GetAttr("use_nesterov"));
+
     this->primitive_->value.value = attr.release();
     if (this->primitive_->value.value == nullptr) {
       MS_LOG(ERROR) << "new primitiveT value failed";
@@ -45,6 +53,10 @@ int ApplyMomentum::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePt
   return RET_OK;
 }
 #else
+float ApplyMomentum::GetGradientScale() const { return this->primitive_->value_as_ApplyMomentum()->gradientScale(); }
+bool ApplyMomentum::GetUseLocking() const { return this->primitive_->value_as_ApplyMomentum()->useLocking(); }
+bool ApplyMomentum::GetUseNesterov() const { return this->primitive_->value_as_ApplyMomentum()->useNesterov(); }
+
 int ApplyMomentum::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
@@ -53,7 +65,7 @@ int ApplyMomentum::UnPackToFlatBuilder(const schema::Primitive *primitive, flatb
     MS_LOG(ERROR) << "value_as_ApplyMomentum return nullptr";
     return RET_ERROR;
   }
-  auto val_offset = schema::CreateApplyMomentum(*fbb);
+  auto val_offset = schema::CreateApplyMomentum(*fbb, attr->gradientScale(), attr->useLocking(), attr->useNesterov());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ApplyMomentum, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
@@ -62,7 +74,7 @@ int ApplyMomentum::UnPackToFlatBuilder(const schema::Primitive *primitive, flatb
 
 int ApplyMomentum::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   if (5 != inputs.size()) {
-    MS_LOG(ERROR) << "ApplyMomentum should have at 5 input tensors";
+    MS_LOG(ERROR) << "ApplyMomentum should have at least 5 input tensors";
     return RET_ERROR;
   }
 
@@ -76,6 +88,7 @@ int ApplyMomentum::InferShape(std::vector<lite::Tensor *> inputs, std::vector<li
     MS_ASSERT(out != nullptr);
     out->set_data_type(inputs[0]->data_type());
     out->SetFormat(inputs[0]->GetFormat());
+    out->set_shape({1});
   }
 
   return RET_OK;

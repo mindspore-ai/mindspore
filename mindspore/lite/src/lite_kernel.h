@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_LITE_KERNEL_H_
 #include <vector>
 #include <string>
+#include <memory>
 #include "src/ops/primitive_c.h"
 #include "src/common/utils.h"
 #ifdef ENABLE_ARM
@@ -145,6 +146,11 @@ class LiteKernel {
   void set_desc(const KernelKey kernel_key) { desc_ = kernel_key; }
 
   const mindspore::lite::PrimitiveC *GetPrimitive() const { return primitive_; }
+  void SetWorkspaceSize(size_t value) { workspace_size_ = value; }
+  size_t GetWorkspaceSize() { return workspace_size_; }
+  static void AllocWorkspace(size_t size);
+  static void FreeWorkspace();
+  void *GetWorkspace() { return workspace_; }
 
  protected:
   bool InferShapeDone() { return !(primitive_ != nullptr && !primitive_->GetInferFlag()) && true; }
@@ -161,6 +167,8 @@ class LiteKernel {
   std::vector<LiteKernel *> out_kernels_;
   bool train_mode_ = false;
   bool is_model_output_ = false;
+  size_t workspace_size_ = 0;
+  static void *workspace_;
 };
 
 class SubGraphKernel : public LiteKernel {

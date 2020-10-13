@@ -20,6 +20,7 @@
 #include "nnacl/fp32/softmax.h"
 #include "src/runtime/kernel/arm/fp32_grad/softmax_cross_entropy_with_logits.h"
 #include "include/errorcode.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -56,13 +57,8 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *lab
   }
   output2[0] = total_loss / param_->batch_size_;
 }
-int SoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return ret;
-  }
 
+int SoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   float *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
@@ -75,10 +71,37 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
   MS_ASSERT(out != nullptr);
   MS_ASSERT(labels != nullptr);
   MS_ASSERT(ins != nullptr);
+  float *losses_ = static_cast<float *>(GetWorkspace());
+  float *sum_data_ = losses_ + data_size;
   std::fill(losses_, losses_ + data_size, 0);
   std::fill(sum_data_, sum_data_ + sm_params_.input_shape_[0], 0);
   Softmax(ins, losses_, sum_data_, &sm_params_);
   ForwardPostExecute(labels, losses_, grads, out);
+  return RET_OK;
+}
+
+int SoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id) {
+  auto softmax_kernel = reinterpret_cast<SoftmaxCrossEntropyWithLogitsCPUKernel *>(cdata);
+  auto error_code = softmax_kernel->Execute(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "SoftmaxCrossEntropy error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int SoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SoftmaxCrossEntropyWithLogitsCPUKernel Prepare failed.";
+    return ret;
+  }
+
+  int error_code = ParallelLaunch(this->context_->thread_pool_, SoftmaxCrossEntropyWithLogitsRun, this, 1);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "SoftmaxCrossEntropy function error error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -99,18 +122,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
   }
 
   size_t data_size = in_tensors_.at(0)->ElementsNum();
-  losses_ = new (std::nothrow) float[data_size];
-  if (losses_ == nullptr) {
-    MS_LOG(ERROR) << "failed to malloc losses!";
-    return RET_ERROR;
-  }
-
-  sum_data_ = new (std::nothrow) float[dims[0]];
-  if (sum_data_ == nullptr) {
-    MS_LOG(ERROR) << "failed to malloc sum_data_!";
-    return RET_ERROR;
-  }
-
+  SetWorkspaceSize((data_size + dims[0]) * sizeof(float));
   sm_params_.n_dim_ = 2;
   sm_params_.element_size_ = data_size;
   sm_params_.axis_ = 1;
@@ -138,5 +150,4 @@ kernel::LiteKernel *CpuSoftmaxCrossEntropyFp32KernelCreator(const std::vector<li
   }
   return kernel;
 }
-// REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SoftmaxCrossEntropy, CpuSoftmaxCrossEntropyFp32KernelCreator)
 }  // namespace mindspore::kernel

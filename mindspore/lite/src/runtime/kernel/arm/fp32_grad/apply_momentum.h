@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
+#include "nnacl/fp32_grad/optimizer.h"
 
 namespace mindspore::kernel {
 class ApplyMomentumCPUKernel : public LiteKernel {
@@ -26,11 +27,17 @@ class ApplyMomentumCPUKernel : public LiteKernel {
   explicit ApplyMomentumCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                   const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), apply_momentum_param_(nullptr) {
+    apply_momentum_param_ = reinterpret_cast<ApplyMomentumParameter *>(parameter);
+  }
   ~ApplyMomentumCPUKernel() override {}
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Execute(int task_id);
+
+ private:
+  ApplyMomentumParameter *apply_momentum_param_;
 };
 }  // namespace mindspore::kernel
 

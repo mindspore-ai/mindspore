@@ -107,10 +107,15 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
   std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc, nullptr);
-
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
   // warm up loop
   for (int i = 0; i < 3; i++) {
     kernel->Run();
@@ -134,6 +139,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
   delete[] input_data;
   delete[] dy_data;
   delete[] dw_data;
+  mindspore::kernel::LiteKernel::FreeWorkspace();
   delete kernel;
   // delete conv_param;
   dw_tensor.SetData(nullptr);
@@ -175,9 +181,15 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
   printf("Calculating runtime cost...\n");
   uint64_t time_avg = 0;
 
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradInput};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -203,6 +215,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
   w_tensor.SetData(nullptr);
   dy_tensor.SetData(nullptr);
   dx_tensor.SetData(nullptr);
+  mindspore::kernel::LiteKernel::FreeWorkspace();
   delete kernel;
   // delete conv_param;
 
@@ -241,10 +254,15 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
   std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc, nullptr);
-
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
   // warm up loop
   for (int i = 0; i < 3; i++) {
     kernel->Run();
@@ -270,6 +288,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
   dw_tensor.SetData(nullptr);
   x_tensor.SetData(nullptr);
   dy_tensor.SetData(nullptr);
+  mindspore::kernel::LiteKernel::FreeWorkspace();
   delete kernel;
   // delete conv_param;
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
@@ -308,10 +327,15 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
   printf("Calculating runtime cost...\n");
   uint64_t time_avg = 0;
 
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradInput};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc, nullptr);
-
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
   // warm up loop
   for (int i = 0; i < 3; i++) {
     kernel->Run();
@@ -338,6 +362,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
   dy_tensor.SetData(nullptr);
 
   delete kernel;
+  mindspore::kernel::LiteKernel::FreeWorkspace();
   // delete conv_param;
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
 }
@@ -375,9 +400,15 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
   std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -403,6 +434,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
   dw_tensor.SetData(nullptr);
   dy_tensor.SetData(nullptr);
   x_tensor.SetData(nullptr);
+  mindspore::kernel::LiteKernel::FreeWorkspace();
   delete kernel;
   // delete conv_param;
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
@@ -441,14 +473,15 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
   printf("Calculating runtime cost...\n");
   uint64_t time_avg = 0;
 
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradInput};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), NULL, desc, nullptr);
-
-  // warm up loop
-  for (int i = 0; i < 3; i++) {
-    kernel->Run();
-  }
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
 
   int loop_count = 100;
   auto time_start = mindspore::lite::GetTimeUs();
@@ -469,6 +502,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
   dx_tensor.SetData(nullptr);
   dy_tensor.SetData(nullptr);
   w_tensor.SetData(nullptr);
+  mindspore::kernel::LiteKernel::FreeWorkspace();
   delete kernel;
   // delete conv_param;
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
@@ -515,6 +549,8 @@ TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
   auto *kernel = new mindspore::kernel::ConvolutionTrainCPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs,
                                                                   outputs, &context, 0);
   kernel->Init();
+  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
+
   kernel->train();
   EXPECT_EQ(kernel->is_train(), 1);
 
@@ -543,9 +579,208 @@ TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
   x_tensor.SetData(nullptr);
   y_tensor.SetData(nullptr);
   w_tensor.SetData(nullptr);
+  mindspore::kernel::LiteKernel::FreeWorkspace();
   delete kernel;
 
   MS_LOG(INFO) << "TestConvolutionFp32 Filter Grad passed";
+}
+
+TEST_F(TestConvolutionGradFp32, ConvFp32Dilation2Group2Stride2FilterGrad) {
+  // prepare stage
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  conv_param->input_batch_ = 2;
+  conv_param->input_h_ = 32;
+  conv_param->input_w_ = 32;
+  conv_param->input_channel_ = 4;
+
+  conv_param->output_batch_ = 2;
+  conv_param->output_h_ = 15;
+  conv_param->output_w_ = 15;
+  conv_param->output_channel_ = 12;
+
+  conv_param->kernel_h_ = 3;
+  conv_param->kernel_w_ = 3;
+
+  conv_param->stride_h_ = 2;
+  conv_param->stride_w_ = 2;
+
+  conv_param->dilation_h_ = 2;
+  conv_param->dilation_w_ = 2;
+
+  conv_param->pad_u_ = 1;
+  conv_param->pad_l_ = 1;
+  conv_param->pad_r_ = 1;
+  conv_param->pad_d_ = 1;
+
+  conv_param->group_ = 2;
+  conv_param->act_type_ = ActType_No;
+  conv_param->thread_num_ = 1;
+
+  size_t dy_size;
+  std::string dy_path = "./test_data/conv/convfp32_dy_d2_g2_s2_2_12_15_15.bin";
+  auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
+  std::vector<int> dim_dy({2, 15, 15, 12});
+  lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
+  dy_tensor.SetData(dy_data);
+
+  // runtime part
+  printf("Calculating runtime cost...\n");
+  uint64_t time_avg = 0;
+  size_t output_data_size =
+    conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
+
+  size_t input_size;
+  std::string input_path = "./test_data/conv/convfp32_input0_d2_g2_s2_2_4_32_32.bin";
+  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  std::vector<int> dim_x({2, 32, 32, 4});
+  lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  x_tensor.SetData(input_data);
+
+  auto dw_data = new float[output_data_size];
+  std::vector<int> dim_dw({12, 3, 3, 2});
+  lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
+  dw_tensor.SetData(dw_data);
+  std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
+  std::vector<lite::Tensor *> outputs = {&dw_tensor};
+
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradFilter};
+  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
+
+  // warm up loop
+  for (int i = 0; i < 3; i++) {
+    kernel->Run();
+  }
+
+  int loop_count = 100;
+  auto time_start = mindspore::lite::GetTimeUs();
+  for (int i = 0; i < loop_count; i++) {
+    kernel->Run();
+  }
+  auto time_end = mindspore::lite::GetTimeUs();
+  auto cost = time_end - time_start;
+  time_avg = cost / loop_count;
+  printf("single thread running time : %f ms\n", time_avg / 1000.0f);
+
+  std::string output_path = "./test_data/conv/convfp32_dw_d2_g2_s2_12_2_3_3.bin";
+  auto res = lite::CompareRelativeOutput(dw_data, output_path);
+
+  EXPECT_EQ(res, 0);
+
+  delete[] input_data;
+  delete[] dy_data;
+  delete[] dw_data;
+  delete kernel;
+  // delete conv_param;
+  dw_tensor.SetData(nullptr);
+  x_tensor.SetData(nullptr);
+  dy_tensor.SetData(nullptr);
+  mindspore::kernel::LiteKernel::FreeWorkspace();
+  MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
+}
+
+TEST_F(TestConvolutionGradFp32, ConvGroup2Dilation2Stride2) {
+  // prepare stage
+  auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  conv_param->input_batch_ = 2;
+  conv_param->input_h_ = 32;
+  conv_param->input_w_ = 32;
+  conv_param->input_channel_ = 4;
+
+  conv_param->output_batch_ = 2;
+  conv_param->output_h_ = 15;
+  conv_param->output_w_ = 15;
+  conv_param->output_channel_ = 12;
+
+  conv_param->kernel_h_ = 3;
+  conv_param->kernel_w_ = 3;
+
+  conv_param->stride_h_ = 2;
+  conv_param->stride_w_ = 2;
+
+  conv_param->dilation_h_ = 2;
+  conv_param->dilation_w_ = 2;
+
+  conv_param->pad_u_ = 1;
+  conv_param->pad_l_ = 1;
+  conv_param->pad_r_ = 1;
+  conv_param->pad_d_ = 1;
+
+  conv_param->group_ = 2;
+  conv_param->act_type_ = ActType_No;
+  conv_param->thread_num_ = 1;
+
+  size_t dy_size;
+  std::string dy_path = "./test_data/conv/convfp32_dy_d2_g2_s2_2_12_15_15.bin";
+  auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
+  std::vector<int> dim_dy({2, 15, 15, 12});
+  lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
+  dy_tensor.SetData(dy_data);
+
+  size_t w_size;
+  std::string w_path = "./test_data/conv/convfp32_w_d2_g2_s2_12_2_3_3.bin";
+  auto w_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(w_path.c_str(), &w_size));
+  std::vector<int> dim_w({12, 3, 3, 2});
+  lite::Tensor w_tensor(TypeId::kNumberTypeFloat32, dim_w);
+  w_tensor.SetData(w_data);
+
+  size_t output_data_size =
+    conv_param->input_batch_ * conv_param->input_h_ * conv_param->input_w_ * conv_param->input_channel_;
+  auto dx_data = new float[output_data_size];
+  std::vector<int> dim_dx({2, 32, 32, 4});
+  lite::Tensor dx_tensor(TypeId::kNumberTypeFloat32, dim_dx);
+  dx_tensor.SetData(dx_data);
+
+  std::vector<lite::Tensor *> inputs = {&dy_tensor, &w_tensor};
+  std::vector<lite::Tensor *> outputs = {&dx_tensor};
+  // runtime part
+
+  printf("Calculating runtime cost...\n");
+  uint64_t time_avg = 0;
+
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradInput};
+  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
+
+  // warm up loop
+  for (int i = 0; i < 3; i++) {
+    kernel->Run();
+  }
+
+  int loop_count = 100;
+  auto time_start = mindspore::lite::GetTimeUs();
+  for (int i = 0; i < loop_count; i++) {
+    kernel->Run();
+  }
+  auto time_end = mindspore::lite::GetTimeUs();
+  auto cost = time_end - time_start;
+  time_avg = cost / loop_count;
+  printf("single thread running time : %f ms\n", time_avg / 1000.0f);
+
+  std::string output_path = "./test_data/conv/convfp32_inputdx_d2_g2_s2_2_4_32_32.bin";
+  auto res = lite::CompareRelativeOutput(dx_data, output_path);
+  EXPECT_EQ(res, 0);
+  delete[] dx_data;
+  delete[] w_data;
+  delete[] dy_data;
+  dx_tensor.SetData(nullptr);
+  dy_tensor.SetData(nullptr);
+  w_tensor.SetData(nullptr);
+  delete kernel;
+  mindspore::kernel::LiteKernel::FreeWorkspace();
+  MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
 }
 
 }  // namespace mindspore

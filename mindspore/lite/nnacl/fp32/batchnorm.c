@@ -54,22 +54,22 @@ void FusedBatchNormFp32(const void *input, const void *scale, const void *offset
   }
 }
 
-void FusedBatchNormFp32MeanVar(const float *input, float momentum, float *run_mean, float *run_var,
-                               BatchNormParameter *param, float *save_mean, float *save_inv_var) {
+void FusedBatchNormFp32MeanVar(const float *input, float *run_mean, float *run_var, BatchNormParameter *param,
+                               float *save_mean, float *save_var) {
   float N = (float)param->unit_;
   for (int i = 0; i < param->unit_; i++) {
-    for (int f = 0; f < param->channel_; f++) {
-      int idx = i * param->channel_ + f;
-      run_mean[f] += input[idx];
-      run_var[f] += input[idx] * input[idx];
+    for (int c = 0; c < param->channel_; c++) {
+      int idx = i * param->channel_ + c;
+      run_mean[c] += input[idx];
+      run_var[c] += input[idx] * input[idx];
     }
   }
   const float VN = (N > 1.0f) ? (N - 1.0f) : 1.0f;
-  for (int f = 0; f < param->channel_; f++) {
-    run_mean[f] = run_mean[f] / N;
-    run_var[f] = run_var[f] / VN - run_mean[f] * run_mean[f];
-    save_mean[f] = momentum * save_mean[f] + (1 - momentum) * run_mean[f];
-    const float inv_var = 1.f / sqrt(run_var[f] + param->epsilon_);
-    save_inv_var[f] = momentum * save_inv_var[f] + (1 - momentum) * inv_var;
+  for (int c = 0; c < param->channel_; c++) {
+    run_mean[c] = run_mean[c] / N;
+    run_var[c] = run_var[c] / VN - run_mean[c] * run_mean[c];
+    save_mean[c] = param->momentum_ * save_mean[c] + (1 - param->momentum_) * run_mean[c];
+    const float var = run_var[c];
+    save_var[c] = param->momentum_ * save_var[c] + (1 - param->momentum_) * var;
   }
 }

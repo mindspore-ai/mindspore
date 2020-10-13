@@ -45,7 +45,7 @@ int CompareRelativeOutput(float *output_data, std::string file_path) {
     return 1;
   }
   size_t output_num = output_size / sizeof(float);
-  int error = CompareOutputRelativeData(output_data, ground_truth, output_num);
+  float error = CompareOutputRelativeData(output_data, ground_truth, output_num);
   delete[] ground_truth;
   if (error > 1e-4) {
     return 1;

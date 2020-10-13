@@ -33,7 +33,7 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_BNGrad,
   schema::PrimitiveType_ActivationGrad,
   schema::PrimitiveType_ApplyMomentum,
-
+  schema::PrimitiveType_Sgd,
 #endif
   schema::PrimitiveType_Conv2D,
   schema::PrimitiveType_DeConv2D,
@@ -48,7 +48,7 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
 
 static const std::vector<schema::PrimitiveType> nhwcOpDualInputList = {
 #ifdef SUPPORT_TRAIN
-  schema::PrimitiveType_Conv2DGradFilter
+  schema::PrimitiveType_Conv2DGradFilter, schema::PrimitiveType_BNGrad
 #endif
 };
 

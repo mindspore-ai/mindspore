@@ -108,7 +108,9 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   // postconvert pass
   {
     Optimizer fusionOptimizer;
-    fusionOptimizer.AddPass(new (std::nothrow) BatchNormConvertScalePass());
+    if (ctx.trainModel == false) {
+      fusionOptimizer.AddPass(new (std::nothrow) BatchNormConvertScalePass());
+    }
     fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     status = fusionOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {

@@ -134,7 +134,7 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
       MS_LOG(ERROR) << "Op should have " << kMinInputNum << " input tensor at least";
       return RET_ERROR;
     }
-    if (node->outputIndex.size() != kOutputNum) {
+    if (node->outputIndex.size() < kOutputNum) {
       MS_LOG(ERROR) << "Op should have " << kOutputNum << " output tensor";
       return RET_ERROR;
     }
@@ -160,6 +160,7 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
     } else {
       int idx = 0;
       if (GetCNodeTType(**iter) == schema::PrimitiveType_ApplyMomentum) idx = 3;
+      if (GetCNodeTType(**iter) == schema::PrimitiveType_Sgd) idx = 1;
       iter = InsertFormatTransNode(graph, iter, kBefore, idx, beforeNodeType, &status);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "InsertNhwc2NchwNode after " << nodeName << "failed";

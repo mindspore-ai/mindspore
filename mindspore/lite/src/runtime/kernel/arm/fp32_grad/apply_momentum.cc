@@ -19,6 +19,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "src/runtime/runtime_api.h"
 #include "src/runtime/kernel/arm/fp32/nchw2nhwc.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -31,13 +32,7 @@ namespace mindspore::kernel {
 
 int ApplyMomentumCPUKernel::ReSize() { return RET_OK; }
 
-int ApplyMomentumCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
+int ApplyMomentumCPUKernel::Execute(int task_id) {
   auto weight = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto accumulate = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
   float learning_rate = reinterpret_cast<float *>(in_tensors_[2]->MutableData())[0];
@@ -45,9 +40,41 @@ int ApplyMomentumCPUKernel::Run() {
   float moment = reinterpret_cast<float *>(in_tensors_[4]->MutableData())[0];
   size_t elem_num = in_tensors_[0]->ElementsNum();
 
-  for (size_t i = 0; i < elem_num; ++i) {
-    accumulate[i] = accumulate[i] * moment + gradient[i];  // * (1.0 - moment);
-    weight[i] -= accumulate[i] * learning_rate;
+  if (apply_momentum_param_->use_nesterov_) {
+    for (size_t i = 0; i < elem_num; ++i) {
+      accumulate[i] = accumulate[i] * moment + gradient[i];
+      weight[i] -= (accumulate[i] * moment + gradient[i]) * learning_rate;
+    }
+  } else {
+    for (size_t i = 0; i < elem_num; ++i) {
+      accumulate[i] = accumulate[i] * moment + gradient[i];
+      weight[i] -= accumulate[i] * learning_rate;
+    }
+  }
+  return RET_OK;
+}
+
+int ApplyMomentumRun(void *cdata, int task_id) {
+  auto applyMomentum_kernel = reinterpret_cast<ApplyMomentumCPUKernel *>(cdata);
+  auto error_code = applyMomentum_kernel->Execute(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "apply Momentum run error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ApplyMomentumCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "ApplyMomentumCPUKernel Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
+
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ApplyMomentumRun, this, 1);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Apply Momentum function error error_code[" << error_code << "]";
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -77,6 +104,7 @@ kernel::LiteKernel *CpuApplyMomentumFp32KernelCreator(const std::vector<lite::Te
     delete kernel;
     return nullptr;
   }
+
   return kernel;
 }
 

@@ -407,6 +407,27 @@ table DeConv2D {
     hasBias: bool = false;
     activationType: ActivationType = 0;
 }
+
+table DeConv2DGradFilter {
+    format: Format = 0;
+    group: int;
+    channelIn: int;
+    channelOut: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool = false;
+    activationType: ActivationType = 0;
+}
+
 table BNGrad {
     eps : float;
     momentum: float;
@@ -884,6 +905,11 @@ table ApplyMomentum {
     useNesterov: bool;
 }
 
+table Sgd {
+    weightDecay: float;
+    dampening: float;
+    useNesterov: bool;
+}
 
 table Where{
     condition: [bool];

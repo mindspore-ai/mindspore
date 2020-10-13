@@ -59,9 +59,15 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   grad_tensor.SetData(grad);
   std::vector<lite::Tensor *> outputs = {&loss_tensor, &grad_tensor};
 
+  lite::InnerContext context;
+  context.device_type_ = lite::DT_CPU;
+  context.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, context.Init());
+
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_SoftmaxCrossEntropy};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(sce_param), NULL, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(sce_param), &context, desc, nullptr);
+  mindspore::kernel::LiteKernel::AllocWorkspace(kernel_obj->GetWorkspaceSize());
   kernel_obj->Run();
 
   printf("==================total loss=================\n");
@@ -92,6 +98,7 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   y_tensor.SetData(nullptr);
   loss_tensor.SetData(nullptr);
   grad_tensor.SetData(nullptr);
+  mindspore::kernel::LiteKernel::FreeWorkspace();
   delete kernel_obj;
   MS_LOG(INFO) << "SoftmaxCrossEntropyFp32 passed";
 }

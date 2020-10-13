@@ -20,6 +20,7 @@
 #include "nnacl/fp32_grad/softmax_grad.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
+#include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
@@ -46,33 +47,49 @@ int SoftmaxGradCPUKernel::Init() {
     axis = param->axis_ = (in_dims - 1);
   }
 
-  int inner_size = 1;
+  inner_size_ = 1;
   for (size_t i = axis + 1; i < in_dims; i++) {
-    inner_size *= in_shape[i];
+    inner_size_ *= in_shape[i];
   }
-
-  sum_data_ = new (std::nothrow) float[inner_size];
-  if (sum_data_ == nullptr) {
-    MS_LOG(ERROR) << "failed to malloc sum_data_!";
-    return RET_ERROR;
-  }
-
-  sum_mul_ = new (std::nothrow) float[inner_size * in_shape[axis]];
-  if (sum_mul_ == nullptr) {
-    MS_LOG(ERROR) << "failed to malloc sum_mul_!";
-    return RET_ERROR;
-  }
-
+  SetWorkspaceSize(inner_size_ * (1 + in_shape[axis]) * sizeof(float));
   return RET_OK;
 }
 
 int SoftmaxGradCPUKernel::ReSize() { return RET_OK; }
 
-int SoftmaxGradCPUKernel::Run() {
+int SoftmaxGradCPUKernel::Execute(int task_id) {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   auto yt_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  float *sum_data_ = static_cast<float *>(GetWorkspace());
+  float *sum_mul_ = sum_data_ + inner_size_;
   SoftmaxGrad(input_ptr, yt_ptr, output_ptr, sum_data_, sum_mul_, reinterpret_cast<SoftmaxParameter *>(op_parameter_));
+
+  return RET_OK;
+}
+
+int SoftmaxGradRun(void *cdata, int task_id) {
+  auto softmax_kernel = reinterpret_cast<SoftmaxGradCPUKernel *>(cdata);
+  auto error_code = softmax_kernel->Execute(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "softmax_kernel SoftmaxGradRun task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int SoftmaxGradCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SoftmaxGradCPUKernel Prepare failed.";
+    return ret;
+  }
+
+  int error_code = ParallelLaunch(this->context_->thread_pool_, SoftmaxGradRun, this, 1);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "SoftmaxGradRun function error error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

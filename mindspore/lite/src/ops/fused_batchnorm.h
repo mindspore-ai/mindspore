@@ -39,6 +39,7 @@ class FusedBatchNorm : public PrimitiveC {
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
+  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   float GetEpsilon() const;
   float GetMomentum() const;
   int GetSpatial() const;

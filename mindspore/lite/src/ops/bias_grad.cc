@@ -89,6 +89,7 @@ int BiasGrad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> out
   auto *out = outputs.front();
   MS_ASSERT(in0 != nullptr);
   MS_ASSERT(out != nullptr);
+
   auto inshape = in0->shape();
   int ndim = inshape.size();
   for (int i = 0; i < ndim - 1; i++) {

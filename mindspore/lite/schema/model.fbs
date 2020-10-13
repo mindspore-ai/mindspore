@@ -207,6 +207,7 @@ union PrimitiveType {
     LshProjection,
     HashtableLookup,
     SkipGram,
+    DeConv2DGradFilter,
     CustomPredict,
     CustomNormalize,
     CustomExtractFeatures,
@@ -215,6 +216,7 @@ union PrimitiveType {
     Rfft,
     FftReal,
     FftImag,
+    Sgd,
 }
 
 enum QuantType: int {

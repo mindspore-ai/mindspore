@@ -27,21 +27,18 @@ class SoftmaxGradCPUKernel : public LiteKernel {
   explicit SoftmaxGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                 const lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), sum_data_(nullptr), sum_mul_(nullptr) {
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     param = reinterpret_cast<SoftmaxParameter *>(parameter);
   }
-  ~SoftmaxGradCPUKernel() override {
-    if (sum_data_) delete[] sum_data_;
-    if (sum_mul_) delete[] sum_mul_;
-  }
+  ~SoftmaxGradCPUKernel() override {}
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Execute(int task_id);
 
  private:
   SoftmaxParameter *param;
-  float *sum_data_ = nullptr;
-  float *sum_mul_ = nullptr;
+  size_t inner_size_;
 };
 
 }  // namespace mindspore::kernel

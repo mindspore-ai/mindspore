@@ -32,7 +32,13 @@ using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::PrimitiveType_ActivationGrad;
 
 namespace mindspore::kernel {
-int ActivationGradCPUKernel::Init() { return RET_OK; }
+int ActivationGradCPUKernel::Init() {
+  if (2 != in_tensors_.size()) {
+    MS_LOG(ERROR) << "ActivationGrad should have 2 input tensors";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
 
 int ActivationGradCPUKernel::ReSize() { return RET_OK; }
 
@@ -42,22 +48,32 @@ int ActivationGradCPUKernel::DoActivation(int task_id) {
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   int length = in_tensors_.at(0)->ElementsNum();
 
+  int stride = UP_DIV(length, thread_count_);
+  int count = MSMIN(stride, length - stride * task_id);
+
   auto error_code = RET_OK;
 
   if (param_act_grad_->type_ == schema::ActivationType_RELU) {
-    error_code = ReluGrad(yt_addr, input_addr, length, output_addr);
+    error_code =
+      ReluGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (param_act_grad_->type_ == schema::ActivationType_RELU6) {
-    error_code = Relu6Grad(yt_addr, input_addr, length, output_addr);
+    error_code =
+      Relu6Grad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (param_act_grad_->type_ == schema::ActivationType_LEAKY_RELU) {
-    error_code = LReluGrad(yt_addr, input_addr, length, output_addr, param_act_grad_->alpha_);
+    error_code = LReluGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count,
+                           output_addr + stride * task_id, param_act_grad_->alpha_);
   } else if (param_act_grad_->type_ == schema::ActivationType_SIGMOID) {
-    error_code = SigmoidGrad(yt_addr, input_addr, length, output_addr);
+    error_code =
+      SigmoidGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (param_act_grad_->type_ == schema::ActivationType_TANH) {
-    error_code = TanhGrad(yt_addr, input_addr, length, output_addr);
+    error_code =
+      TanhGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (param_act_grad_->type_ == schema::ActivationType_HSWISH) {
-    error_code = HSwishGrad(yt_addr, input_addr, length, output_addr);
+    error_code =
+      HSwishGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (param_act_grad_->type_ == schema::ActivationType_HSIGMOID) {
-    error_code = HSigmoidGrad(yt_addr, input_addr, length, output_addr);
+    error_code =
+      HSigmoidGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else {
     MS_LOG(ERROR) << "Activation type error";
     return RET_ERROR;
@@ -81,13 +97,13 @@ int ActivationGradRun(void *cdata, int task_id) {
 int ActivationGradCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+    MS_LOG(ERROR) << "ActivationGradCPUKernel Prepare failed.";
     return ret;
   }
 
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ActivationGradRun, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ActivationGradRun, this, 1);
   if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "Activation function error error_code[" << error_code << "]";
+    MS_LOG(ERROR) << "Activation Grad function error error_code[" << error_code << "]";
     return RET_ERROR;
   }
   return RET_OK;
@@ -107,7 +123,7 @@ kernel::LiteKernel *CpuActivationGradFp32KernelCreator(const std::vector<lite::T
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "InferShape kernel failed, name: " << opParameter->name_ << ", type: "
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;
     return nullptr;

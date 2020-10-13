@@ -45,10 +45,13 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   dw_tensor.SetData(output_data);
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_BiasGrad};
+  lite::InnerContext ctx;
+  ctx.thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
 
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_BiasGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bias_param), NULL, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bias_param), &ctx, desc, nullptr);
 
   kernel_obj->Run();
 

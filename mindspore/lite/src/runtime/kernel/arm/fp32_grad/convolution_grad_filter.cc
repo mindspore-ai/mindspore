@@ -20,6 +20,7 @@
 #include "nnacl/fp32_grad/pack_ext.h"
 #include "nnacl/fp32_grad/gemm.h"
 #include "include/errorcode.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -50,26 +51,16 @@ int ConvolutionGradFilterCPUKernel::Init() {
   conv_param->output_h_ = dy_tensor->shape()[kNHWC_H];
   conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
 
-  int ws_size = conv_param->output_h_ * conv_param->output_w_ * conv_param->kernel_h_ * conv_param->kernel_w_ *
-                conv_param->input_channel_ / conv_param->group_;
+  size_t ws_size = conv_param->output_h_ * conv_param->output_w_ * conv_param->kernel_h_ * conv_param->kernel_w_ *
+                   conv_param->input_channel_ / conv_param->group_;
 
-  workspace = new (std::nothrow) float[ws_size];
-  if (workspace == nullptr) {
-    MS_LOG(ERROR) << "new workspace fail!";
-    return RET_ERROR;
-  }
-
+  SetWorkspaceSize(ws_size * sizeof(float));
   return RET_OK;
 }
 
 int ConvolutionGradFilterCPUKernel::ReSize() { return RET_OK; }
 
-int ConvolutionGradFilterCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
+int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto *input_dy = in_tensors_.at(0);
   auto *input_x = in_tensors_.at(1);
@@ -84,8 +75,8 @@ int ConvolutionGradFilterCPUKernel::Run() {
   int in_ch = conv_param->input_channel_;
   int in_h = conv_param->input_h_;
   int in_w = conv_param->input_w_;
-  int k_h = conv_param->kernel_h_;  // out_dw->shape()[1];
-  int k_w = conv_param->kernel_w_;  // out_dw->shape()[2];
+  int k_h = conv_param->kernel_h_;
+  int k_w = conv_param->kernel_w_;
   int batch = conv_param->output_batch_;
   int out_ch = conv_param->output_channel_;
   int groups = conv_param->group_;
@@ -96,6 +87,8 @@ int ConvolutionGradFilterCPUKernel::Run() {
   int n = k_h * k_w * in_ch / groups;
   int k = out_ch / groups;
 
+  float *workspace = reinterpret_cast<float *>(GetWorkspace());
+
   // zero out pointer
   memset(dw_addr, 0, out_dw->Size());
 
@@ -104,11 +97,35 @@ int ConvolutionGradFilterCPUKernel::Run() {
       float *mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups);
       float *mat_b = workspace;
       float *mat_c = dw_addr + j * nweights / groups;
-      float *im = x_addr + (i * groups) * (in_ch / groups) * in_h * in_w + j * (in_ch / groups);
+      float *im = x_addr + (i * in_ch * in_h * in_w) + j * (in_ch / groups);
 
-      im2row_hwc(im, mat_b, conv_param);
+      im2row_hwc(im, mat_b, conv_param, false);
       gemm(1, 1, k, n, m, 1, mat_a, out_ch, mat_b, m, 1, mat_c, n);
     }
+  }
+  return RET_OK;
+}
+
+int ConvolutionGradFilterRun(void *cdata, int task_id) {
+  auto convfilter_kernel = reinterpret_cast<ConvolutionGradFilterCPUKernel *>(cdata);
+  auto error_code = convfilter_kernel->Execute(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionGradFilterRun error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ConvolutionGradFilterCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionGradFilterCPUKernel Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionGradFilterRun, this, 1);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "conv filter function error error_code[" << error_code << "]";
+    return RET_ERROR;
   }
   return RET_OK;
 }
