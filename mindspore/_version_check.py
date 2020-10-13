@@ -92,8 +92,8 @@ class GPUEnvChecker(EnvChecker):
         v = version.parse(v)
         v_str = str(v.major) + "." + str(v.minor)
         if v_str not in self.version:
-            raise EnvironmentError(f"MindSpore version {__version__} and cuda version {v_str} does not match, "
-                                   "reference to the match info on: https://www.mindspore.cn/install")
+            logger.warning(f"MindSpore version {__version__} and cuda version {v_str} does not match, "
+                           "reference to the match info on: https://www.mindspore.cn/install")
 
     def _check_env(self):
         """gpu cuda path check"""
@@ -176,9 +176,8 @@ class AscendEnvChecker(EnvChecker):
 
         v = self._read_version(self.fwk_version)
         if v not in self.version:
-            raise EnvironmentError(
-                f"MindSpore version {__version__} and Ascend 910 AI software package version {v} does not "
-                "match, reference to the match info on: https://www.mindspore.cn/install")
+            logger.warning(f"MindSpore version {__version__} and Ascend 910 AI software package version {v} does not "
+                           "match, reference to the match info on: https://www.mindspore.cn/install")
 
     def set_env(self):
         if not self.tbe_path:
