@@ -43,10 +43,6 @@ typedef struct {
 extern "C" {
 #endif
 
-void nms_multi_classes_regular();
-
-void nms_multi_classes_fase();
-
 int DetectionPostProcess(const int num_boxes, const int num_classes_with_bg, float *input_boxes, float *input_scores,
                          float *input_anchors, float *output_boxes, float *output_classes, float *output_scores,
                          float *output_num, DetectionPostProcessParameter *param);
