@@ -15,6 +15,7 @@
 """Provide random seed api."""
 import numpy as np
 import mindspore.dataset as de
+from mindspore._checkparam import Validator
 
 # constants
 _MAXINT32 = 2**31 - 1
@@ -48,8 +49,7 @@ def set_seed(seed):
     """
     if not isinstance(seed, int):
         raise TypeError("The seed must be type of int.")
-    if seed < 0:
-        raise ValueError("The seed must be greater or equal to 0.")
+    Validator.check_non_negative_int(seed, "seed", "global_seed")
     np.random.seed(seed)
     de.config.set_seed(seed)
     _reset_op_seed()
@@ -57,7 +57,7 @@ def set_seed(seed):
     _GLOBAL_SEED = seed
 
 
-def get_seed():
+def get_global_seed():
     """
     Get global random seed.
     """
@@ -82,10 +82,7 @@ def _update_seeds(op_seed, kernel_name):
         seed (int): The op-seed to be updated.
         kernel_name (string): The random op kernel.
     """
-    global _GLOBAL_SEED
     global _KERNEL_SEED
-    if _GLOBAL_SEED is not None:
-        _GLOBAL_SEED += keyConstant[1] + keyConstant[3] * (2**8)
     if op_seed is not None:
         _KERNEL_SEED[(kernel_name, op_seed)] = _KERNEL_SEED[(kernel_name, op_seed)] + (keyConstant[0] ^ keyConstant[2])
 
@@ -102,6 +99,47 @@ def _get_op_seed(op_seed, kernel_name):
     if (kernel_name, op_seed) not in _KERNEL_SEED:
         _KERNEL_SEED[(kernel_name, op_seed)] = op_seed
     return _KERNEL_SEED[(kernel_name, op_seed)]
+
+
+def _get_seed(op_seed, kernel_name):
+    """
+    Get the graph-level seed.
+    Graph-level seed is used as a global variable, that can be used in different ops in case op-level seed is not set.
+    If op-level seed is 0, use graph-level seed; if graph-level seed is also 0, the system would generate a
+    random seed.
+
+    Note:
+        For each seed, either op-seed or graph-seed, a random sequence will be generated relating to this seed.
+        So, the state of the seed regarding to this op should be recorded.
+        A simple illustration should be:
+          If a random op is called twice within one program, the two results should be different:
+          print(C.uniform((1, 4), seed=1))  # generates 'A1'
+          print(C.uniform((1, 4), seed=1))  # generates 'A2'
+          If the same program runs again, it repeat the results:
+          print(C.uniform((1, 4), seed=1))  # generates 'A1'
+          print(C.uniform((1, 4), seed=1))  # generates 'A2'
+
+    Returns:
+        Interger. The current graph-level seed.
+
+    Examples:
+        >>> _get_seed(seed, 'normal')
+    """
+    global_seed = get_global_seed()
+    if global_seed is None:
+        global_seed = 0
+    if op_seed is None:
+        op_seed = 0
+    # eigther global seed or op seed is set, return (0, 0) to let kernel choose random seed.
+    if global_seed == 0 and op_seed == 0:
+        seeds = 0, 0
+    else:
+        Validator.check_non_negative_int(op_seed, "seed", kernel_name)
+        temp_seed = _get_op_seed(op_seed, kernel_name)
+        seeds = _truncate_seed(global_seed), _truncate_seed(temp_seed)
+        _update_seeds(op_seed, kernel_name)
+    return seeds
+
 
 def _reset_op_seed():
     """

@@ -17,7 +17,6 @@ from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator as validator
-from mindspore.common import get_seed
 from ._utils.utils import raise_none_error, cast_to_tensor, set_param_type, cast_type_for_device,\
                           raise_not_implemented_util
 from ._utils.utils import CheckTuple, CheckTensor
@@ -29,7 +28,7 @@ class Distribution(Cell):
     Base class for all mathematical distributions.
 
     Args:
-        seed (int): The seed is used in sampling. The global seed is used if it is None.
+        seed (int): The seed is used in sampling. 0 is used if it is None.
         dtype (mindspore.dtype): The type of the event samples.
         name (str): The name of the distribution.
         param (dict): The parameters used to initialize the distribution.
@@ -59,9 +58,7 @@ class Distribution(Cell):
         """
         super(Distribution, self).__init__()
         if seed is None:
-            seed = get_seed()
-            if seed is None:
-                seed = 0
+            seed = 0
         validator.check_value_type('name', name, [str], type(self).__name__)
         validator.check_non_negative_int(seed, 'seed', name)
 

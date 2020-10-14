@@ -17,7 +17,7 @@
 
 import numpy as np
 import mindspore.common.dtype as mstype
-from mindspore.common.seed import get_seed
+from mindspore.common.seed import _get_seed
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.ops import operations as P
@@ -89,9 +89,9 @@ class Dropout(Cell):
         Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
         Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
         self.keep_prob = keep_prob
-        seed0 = get_seed()
-        self.seed0 = seed0 if seed0 is not None else 0
-        self.seed1 = 0
+        seed0, seed1 = _get_seed(0, "dropout")
+        self.seed0 = seed0
+        self.seed1 = seed1
         self.dtype = dtype
         self.get_shape = P.Shape()
         self.dropout_gen_mask = P.DropoutGenMask(Seed0=self.seed0, Seed1=self.seed1)

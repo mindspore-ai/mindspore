@@ -18,7 +18,7 @@ from .api import ms_function
 from .dtype import *
 from .parameter import Parameter, ParameterTuple
 from .tensor import MetaTensor, Tensor, RowTensor, SparseTensor
-from .seed import set_seed, get_seed, _truncate_seed, _update_seeds, _get_op_seed
+from .seed import set_seed, _get_seed, get_global_seed
 
 
 __all__ = dtype.__all__
@@ -27,5 +27,5 @@ __all__.extend([
     'ms_function',  # api
     'Parameter', 'ParameterTuple',  # parameter
     "dtype",
-    "set_seed", "get_seed", '_truncate_seed', '_update_seeds', '_get_op_seed'  # random seed
+    "set_seed", "_get_seed", "get_global_seed"  # random seed
     ])

@@ -24,7 +24,7 @@ from mindspore import log as logger
 
 from . import dtype as mstype
 from .tensor import Tensor
-from .seed import get_seed
+from .seed import get_global_seed
 from .._c_expression import random_normal
 
 _INITIALIZER_ALIAS = dict()
@@ -89,7 +89,7 @@ class Initializer:
             logger.error(msg)
             raise ValueError(msg)
 
-        global_seed = get_seed()
+        global_seed = get_global_seed()
         need_set_seed = ((slice_index is not None) and (global_seed is None))
         seed_saved = np.random.get_state()[1][0]
         if need_set_seed:
