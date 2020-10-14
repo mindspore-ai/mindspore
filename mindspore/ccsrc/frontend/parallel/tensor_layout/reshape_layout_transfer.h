@@ -35,12 +35,15 @@ class ReshapeLayoutTransfer : public LayoutTransfer {
   std::shared_ptr<ReshapeLayoutTransfer> ExpandFromTensorShapeAndExpandToDeviceArrangement(
     const Arrangement &expand_shape) const;
   std::shared_ptr<ReshapeLayoutTransfer> ExchangeFromAndTo() const;
+  bool ExpandAble() const { return is_expand_able_; }
+  bool FromTensorShapeCanBeExpandByTo() const;
+  bool ToTensorShapeCanBeExpandByFrom() const;
+  void SetExpandAble(const bool is_expand_able) { is_expand_able_ = is_expand_able; }
 
  private:
   Status CheckValidTransfer() override;
   std::shared_ptr<Arrangement> ComputeExpandedFromTensorShapeByTo() const;
-  bool FromTensorShapeCanBeExpandByTo() const;
-  bool ToTensorShapeCanBeExpandByFrom() const;
+  bool is_expand_able_ = true;
 };
 }  // namespace parallel
 }  // namespace mindspore

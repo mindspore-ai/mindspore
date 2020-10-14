@@ -488,10 +488,7 @@ Status ReshapeInfo::GenetateStrategyCosts(const std::vector<std::shared_ptr<Stra
       }
       TensorInfo next_in_tensor_info = next_in_tensor_infos[in_index];
       SetOutputLayout(next_in_tensor_info.tensor_layout());
-      if (Init(nullptr) == FAILED) {
-        MS_LOG(DEBUG) << "Failure:operator reshape init failed";
-        continue;
-      }
+      InferTensorInfoByLayout();
       SetCostForReshape(reshape_stra);
     }
   }

@@ -39,6 +39,42 @@ Status TensorRedistribution::Init(const TensorLayout &from, const TensorLayout &
   return Status::SUCCESS;
 }
 
+RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorListUnExpand(bool is_cost_model) {
+  TensorLayout from_repeat = from_origin_.TransferRepeatLayout();
+  TensorLayout to_repeat = to_origin_.TransferRepeatLayout();
+  MS_LOG(DEBUG) << "reshape from_repeat " << from_repeat.ToString();
+  MS_LOG(DEBUG) << "reshape to_layout " << to_repeat.ToString();
+  MS_LOG(DEBUG) << "reshape from_origin_ " << from_origin_.ToString();
+  MS_LOG(DEBUG) << "reshape to_origin_ " << to_origin_.ToString();
+  MS_LOG(DEBUG) << "reshape from_ " << from_.ToString();
+  MS_LOG(DEBUG) << "reshape to_ " << to_.ToString();
+  OperatorVector operator_vector;
+  OutPutInfoVector output_info_vector;
+  if (InferRedistribution(from_origin_, from_repeat, &operator_vector, &output_info_vector, is_cost_model) ==
+      Status::FAILED) {
+    return nullptr;
+  }
+  if (from_repeat.slice_shape().array() != to_repeat.slice_shape().array()) {
+    reshape_flag_ = true;
+    ConstructOperator constructor;
+    constructor.UpdateTensorShape(from_repeat.slice_shape().array());
+    Arrangement shape = to_repeat.slice_shape();
+    MS_LOG(DEBUG) << "reshape " << shape.ToString();
+    if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
+      return nullptr;
+    } else {
+      (void)operator_vector.push_back(constructor.GetOperator());
+      (void)output_info_vector.push_back(std::make_pair(false, 0));
+    }
+  }
+  if (InferRedistribution(to_repeat, to_origin_, &operator_vector, &output_info_vector, is_cost_model) ==
+      Status::FAILED) {
+    return nullptr;
+  }
+  return std::make_shared<std::pair<OperatorVector, OutPutInfoVector>>(
+    std::make_pair(operator_vector, output_info_vector));
+}
+
 RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorList(bool is_cost_model) {
   // Step 1: Match device arrangement between from_ and to_
   RedistributionLayoutTransfer layout_transfer;
@@ -51,6 +87,10 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
     MS_LOG(ERROR) << "Infer tensor layout return nullptr!";
     return nullptr;
   }
+  if (!ptr->ExpandAble()) {
+    expand_able_ = false;
+    return InferTensorRedistributionOperatorListUnExpand(is_cost_model);
+  }
   TensorLayout from_layout = ptr->from_in();
   TensorLayout to_layout = ptr->to_in();
   MS_LOG(DEBUG) << "reshape from_layout " << from_layout.ToString();
@@ -61,27 +101,17 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
   MS_LOG(DEBUG) << "reshape to_ " << to_.ToString();
   // Step 2: Infer redistribution and insert operators
   RedistributionOperatorInfer operator_infer(construct_op_flag_);
-  if (operator_infer.Init(from_layout, to_layout.tensor_map(), dev_list_, is_cost_model) == Status::FAILED) {
-    MS_LOG(ERROR) << "Init operatorInfer failed!";
-    return nullptr;
-  }
   OperatorVector operator_vector;
   OutPutInfoVector output_info_vector;
-  if (operator_infer.InferRedistributionOperator() != Status::SUCCESS) {
-    MS_LOG(ERROR) << "Infer redistribution failed!";
+  if (InferRedistribution(from_layout, to_layout, &operator_vector, &output_info_vector, is_cost_model) !=
+      Status::SUCCESS) {
     return nullptr;
-  } else {
-    operator_vector = operator_infer.operator_vector();
-    output_info_vector = operator_infer.output_info_vector();
-    operator_list_ = operator_infer.operator_list();
   }
-
   // Step 3: Infer reshape and insert operators
   if (InferReshape(from_layout, to_layout, &operator_vector, &output_info_vector) != Status::SUCCESS) {
     MS_LOG(ERROR) << "Construct Reshape operator failed!";
     return nullptr;
   }
-
   return std::make_shared<std::pair<OperatorVector, OutPutInfoVector>>(
     std::make_pair(operator_vector, output_info_vector));
 }
@@ -136,6 +166,31 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
   return Status::SUCCESS;
 }
 
+Status TensorRedistribution::InferRedistribution(const TensorLayout &from_layout, const TensorLayout &to_layout,
+                                                 OperatorVector *const operator_vector,
+                                                 OutPutInfoVector *const output_info_vector, bool is_cost_model) {
+  RedistributionOperatorInfer operator_infer(construct_op_flag_);
+  if (operator_infer.Init(from_layout, to_layout.tensor_map(), dev_list_, is_cost_model) == Status::FAILED) {
+    MS_LOG(ERROR) << "Init operatorInfer failed";
+    return Status::FAILED;
+  }
+  if (operator_infer.InferRedistributionOperator() != Status::SUCCESS) {
+    MS_LOG(ERROR) << "Infer redistribution failed";
+    return Status::FAILED;
+  } else {
+    for (auto op : operator_infer.operator_vector()) {
+      operator_vector->insert(operator_vector->end(), op);
+    }
+    for (auto info : operator_infer.output_info_vector()) {
+      output_info_vector->insert(output_info_vector->end(), info);
+    }
+    for (auto opc : operator_infer.operator_list()) {
+      operator_list_.insert(operator_list_.end(), opc);
+    }
+  }
+  return Status::SUCCESS;
+}
+
 Status TensorRedistribution::ComputeCost() {
   RedistributionOpListPtr redistribution_oplist_ptr = InferTensorRedistributionOperatorList(true);
   if (redistribution_oplist_ptr == nullptr) {
@@ -162,8 +217,13 @@ Status TensorRedistribution::ComputeCost() {
     }
   }
   if (reshape_flag()) {
-    Shape prev_slice_shape = from_.slice_shape().array();
-    double prev_prod = std::accumulate(prev_slice_shape.begin(), prev_slice_shape.end(), 1, std::multiplies<int>());
+    Shape prev_shape;
+    if (expand_able_) {
+      prev_shape = from_.slice_shape().array();
+    } else {
+      prev_shape = from_.tensor_shape().array();
+    }
+    double prev_prod = std::accumulate(prev_shape.begin(), prev_shape.end(), 1, std::multiplies<int>());
     computation_cost_ += 2.0 * prev_prod;
     memory_cost_ += 2.0 * prev_prod;
   }
