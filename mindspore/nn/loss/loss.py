@@ -137,6 +137,7 @@ class MSELoss(_Loss):
         >>> input_data = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> target_data = Tensor(np.array([1, 2, 2]), mindspore.float32)
         >>> loss(input_data, target_data)
+        0.33333334
     """
     def construct(self, base, target):
         x = F.square(base - target)

@@ -341,6 +341,10 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         >>> rnd_choice_mask = P.RandomChoiceWithMask()
         >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool))
         >>> output_y, output_mask = rnd_choice_mask(input_x)
+        >>> output_y.shape
+        (256, 2)
+        >>> output_mask.shape
+        (256,)
     """
 
     @prim_attr_register
