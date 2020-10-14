@@ -1146,7 +1146,7 @@ void DfGraphConvertor::ConvertMakeTuple(const CNodePtr node) {
     }
   }
 
-  MS_LOG(WARNING) << "ConvertMakeTuple: " << node.get() << " " << tuple_items->size();
+  MS_LOG(DEBUG) << "ConvertMakeTuple: " << node.get() << " " << tuple_items->size();
   tuple_out_handle_cache_[node.get()] = tuple_items;
 }
 
