@@ -381,6 +381,8 @@ LoopRow:
         ldr lr, [sp, #20]
         cmp lr, #0
         beq C8DstStep
+        cmp lr, #2
+        beq WinoDstStep
         mov lr, #4
         ldr r7, [sp, #12] // reload rhs col
         mul lr, lr, r7
@@ -390,6 +392,10 @@ LoopRow:
     C8DstStep:
         ldr lr, [sp, #-40]
         add r2, lr, #128
+        str r2, [sp, #-40]
+        b NoDstStep
+    WinoDstStep:
+        add r2, r2, r10
         str r2, [sp, #-40]
     NoDstStep:
         cmp r6, #4

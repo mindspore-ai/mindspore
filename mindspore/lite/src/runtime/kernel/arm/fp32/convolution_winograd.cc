@@ -184,11 +184,7 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
 int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   int channel_out = conv_param_->output_channel_;
   int oc8 = UP_DIV(channel_out, C8NUM);
-#ifdef ENABLE_ARM32
-  int tile_num = 4;
-#else
-  int tile_num = 12;
-#endif
+  int tile_num = C12NUM;
   MS_ASSERT(ctx_->allocator != nullptr);
 
   size_t tile_buffer_size =

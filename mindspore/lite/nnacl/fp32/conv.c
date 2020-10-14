@@ -81,11 +81,7 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
   int out_w_block = UP_DIV(conv_param->output_w_, out_unit);
   int out_h_block = UP_DIV(conv_param->output_h_, out_unit);
   int output_count = out_w_block * out_h_block;
-#ifdef ENABLE_ARM32
-  const int tile_num = 4;
-#else
-  const int tile_num = 12;
-#endif
+  const int tile_num = C12NUM;
   int output_tile_count = UP_DIV(output_count, tile_num);
   int out_channel = conv_param->output_channel_;
   int oc8 = UP_DIV(out_channel, C8NUM);
@@ -117,7 +113,7 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
       float *tmp_col_ptr = col_buffer + task_id * col_buffer_offset;
       for (int i = 0; i < input_unit_square; ++i) {
 #ifdef ENABLE_ARM32
-        RowMajor2Col4Major(src_ptr + i * C4NUM * in_channel, tmp_col_ptr, C4NUM, in_channel);
+        RowMajor2Col4Major(src_ptr + i * C12NUM * in_channel, tmp_col_ptr, C12NUM, in_channel);
 #else
         RowMajor2Col12Major(src_ptr + i * C12NUM * in_channel, tmp_col_ptr, C12NUM, in_channel);
 #endif

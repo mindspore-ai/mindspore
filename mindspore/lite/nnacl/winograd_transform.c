@@ -85,11 +85,7 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
         }    // interval y loop
       }
       // input transform
-#ifdef ENABLE_ARM32
-      const int tile_num = 4;
-#else
-      const int tile_num = 12;
-#endif
+      const int tile_num = C12NUM;
       int dst_ic4_offset = dst_plane_offset + ic * C4NUM;
       size_t dst_step = tile_num * in_channel;
       float *trans_input_ptr = trans_input + dst_ic4_offset;
