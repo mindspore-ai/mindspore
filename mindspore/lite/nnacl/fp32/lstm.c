@@ -42,7 +42,7 @@ void MatMulAcc(float *output, const float *input, const float *weight, int rows,
       int index = 0;
 #ifdef ENABLE_ARM
       float32x4_t out = vdupq_n_f32(0.0f);
-      for (; index < inner_size - 4; index += 4) {
+      for (; index <= inner_size - 4; index += 4) {
         float32x4_t in_0 = vld1q_f32(input_col + index);
         float32x4_t in_1 = vld1q_f32(weight_col + index);
         out = vmlaq_f32(out, in_1, in_0);
@@ -66,7 +66,7 @@ void MatMulAcc(float *output, const float *input, const float *weight, int rows,
 void ElementMulAcc(const float *input0, const float *input1, float *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_ARM
-  for (; index < element_size - 4; index += 4) {
+  for (; index <= element_size - 4; index += 4) {
     float32x4_t in_0 = vld1q_f32(input0 + index);
     float32x4_t in_1 = vld1q_f32(input1 + index);
     float32x4_t out = vld1q_f32(output + index);
