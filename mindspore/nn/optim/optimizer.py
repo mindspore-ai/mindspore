@@ -151,8 +151,8 @@ class Optimizer(Cell):
         if context.get_auto_parallel_context("enable_parallel_optimizer"):
             if _get_parallel_mode() == ParallelMode.DATA_PARALLEL:
                 self.use_parallel = True
-            elif _get_parallel_mode() == ParallelMode.STAND_ALONE:
-                raise RuntimeError("Parallel optimizer is not supported in stand alone mode.")
+            elif _get_parallel_mode() in (ParallelMode.STAND_ALONE, ParallelMode.HYBRID_PARALLEL):
+                raise RuntimeError("Parallel optimizer is not supported in {}.".format(_get_parallel_mode()))
             else:
                 self.use_parallel = False
         else:
