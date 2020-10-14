@@ -22,6 +22,7 @@ from mindspore.common.dtype import dtype_to_nptype
 from mindspore.common import dtype as mstype
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
+from mindspore.common.seed import get_seed
 
 
 def _get_parallel_mode():
@@ -139,7 +140,7 @@ def _get_parameter_broadcast():
     parallel_mode = auto_parallel_context().get_parallel_mode()
     parameter_broadcast = auto_parallel_context().get_parameter_broadcast()
 
-    if parallel_mode in ("data_parallel", "hybrid_parallel") and parameter_broadcast is False:
+    if parallel_mode in ("data_parallel", "hybrid_parallel") and parameter_broadcast is False and get_seed is None:
         logger.warning("You are suggested to use mindspore.common.set_seed() to share"
                        " parameters among devices.")
 

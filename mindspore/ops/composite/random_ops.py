@@ -19,12 +19,12 @@ from .. import operations as P
 from .. import functional as F
 from .multitype_ops import _constexpr_utils as const_utils
 from ...common import dtype as mstype
-from ...common import _get_seed
+from ...common.seed import _get_graph_seed
 
 @constexpr
 def get_seed(op_seed, kernel_name):
     "Get the graph-level seed."
-    return _get_seed(op_seed, kernel_name)
+    return _get_graph_seed(op_seed, kernel_name)
 
 
 def normal(shape, mean, stddev, seed=None):
