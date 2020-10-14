@@ -50,6 +50,7 @@ class RandomRotationOperation;
 class RandomSharpnessOperation;
 class RandomSolarizeOperation;
 class RandomVerticalFlipOperation;
+class RescaleOperation;
 class ResizeOperation;
 class RgbaToBgrOperation;
 class RgbaToRgbOperation;
@@ -256,6 +257,13 @@ std::shared_ptr<RandomSolarizeOperation> RandomSolarize(std::vector<uint8_t> thr
 /// \param[in] prob - float representing the probability of flip.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomVerticalFlipOperation> RandomVerticalFlip(float prob = 0.5);
+
+/// \brief Function to create a RescaleOperation TensorOperation.
+/// \notes Tensor operation to rescale the input image.
+/// \param[in] rescale Rescale factor.
+/// \param[in] shift Shift factor.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RescaleOperation> Rescale(float rescale, float shift);
 
 /// \brief Function to create a Resize TensorOperation.
 /// \notes Resize the input image to the given size.
@@ -604,6 +612,21 @@ class RandomVerticalFlipOperation : public TensorOperation {
 
  private:
   float probability_;
+};
+
+class RescaleOperation : public TensorOperation {
+ public:
+  explicit RescaleOperation(float rescale, float shift);
+
+  ~RescaleOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  bool ValidateParams() override;
+
+ private:
+  float rescale_;
+  float shift_;
 };
 
 class ResizeOperation : public TensorOperation {
