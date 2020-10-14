@@ -36,4 +36,4 @@ if __name__ == '__main__':
 
     input_arr = Tensor(np.random.uniform(0.0, 1.0, size=[1, 3, config.INFER_LONG_SIZE, config.INFER_LONG_SIZE]),
                        ms.float32)
-    export(net, input_arr, file_name=config.geir_filename)
+    export(net, input_arr, file_name=config.air_filename)
