@@ -26,7 +26,7 @@ usage()
   echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I arm64|arm32|x86_64] [-K] \\"
   echo "              [-B on|off] [-w on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off] \\"
-  echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] \\"
+  echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] [-S on|off] \\"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -63,6 +63,7 @@ usage()
   echo "    -T Enable on-device training, default off"
   echo "    -C Enable mindspore lite converter compilation, enabled when -I is specified, default on"
   echo "    -o Enable mindspore lite tools compilation, enabled when -I is specified, default on"
+  echo "    -S Enable enable download cmake compile dependency from gitee , default off"
 }
 
 # check value of input is 'on' or 'off'
@@ -113,9 +114,10 @@ checkopts()
   ENABLE_TOOLS="on"
   ENABLE_CONVERTER="on"
   LITE_LANGUAGE="cpp"
+  ENABLE_GITEE="off"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:swB:En:T:A:C:o:' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:swB:En:T:A:C:o:S:' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -198,6 +200,11 @@ checkopts()
       R)
         ENABLE_TIMELINE="on"
         echo "enable time_line record"
+        ;;
+      S)
+        check_on_off $OPTARG S
+        ENABLE_GITEE="$OPTARG"
+        echo "enable download from gitee"
         ;;
       e)
         if [[ "X$OPTARG" == "Xgpu" ]]; then
@@ -373,6 +380,9 @@ build_mindspore()
     fi
     if [[ "X$ENABLE_DUMP2PROTO" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_PROTO=ON"
+    fi
+    if [[ "X$ENABLE_GITEE" = "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_GITEE=ON"
     fi
     CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_IR=${ENABLE_DUMP_IR}"
     CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_PYTHON=${ENABLE_PYTHON}"
