@@ -36,8 +36,7 @@ class SigmoidInt8CPUKernel : public LiteKernel {
   int DoActivation(int task_id);
 
  private:
-  SigmoidQuantArg quant_arg_;
-  void MultiplierInt32ToInt16(int32_t input, int16_t *output);
+  int8_t table_list_[256]{0};
 };
 }  // namespace mindspore::kernel
 
