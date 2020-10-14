@@ -25,6 +25,7 @@
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include "tools/optimizer/fusion/constant_folding_fusion.h"
 #include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
+#include "tools/optimizer/fusion/layer_norm_fusion.h"
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
@@ -57,6 +58,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
     pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
     pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>());
     pm->AddPass(std::make_shared<opt::ConvScaleFusion>());
+    pm->AddPass(std::make_shared<opt::LayerNormFusion>());
     pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu", schema::PrimitiveType_Activation,
                                                             schema::ActivationType_RELU));
     pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu6", schema::PrimitiveType_Activation,

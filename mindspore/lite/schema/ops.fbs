@@ -1097,3 +1097,10 @@ table Loop {
 
 table Identity {
 }
+
+table LayerNorm {
+    normalizedShape : [int];
+    epsilon : float = 0.00001;
+    elementwiseAffine : bool;
+}
+

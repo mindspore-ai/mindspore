@@ -120,6 +120,7 @@
 #include "src/ops/detection_post_process.h"
 #include "src/ops/skip_gram.h"
 #include "src/ops/custom_predict.h"
+#include "src/ops/layer_norm.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/arg_min_max.h"
 #include "nnacl/fp32/cast.h"
@@ -183,6 +184,7 @@
 #include "nnacl/fp32/exp.h"
 #include "nnacl/fp32/skip_gram.h"
 #include "nnacl/predict_parameter.h"
+#include "nnacl/layer_norm_parameter.h"
 
 namespace mindspore::kernel {
 
@@ -1674,6 +1676,27 @@ OpParameter *PopulateCustomPredictParameter(const mindspore::lite::PrimitiveC *p
   return reinterpret_cast<OpParameter *>(param);
 }
 
+OpParameter *PopulateLayerNormParameter(const mindspore::lite::PrimitiveC *primitive) {
+  auto layer_norm_parameter = reinterpret_cast<LayerNormParameter *>(malloc(sizeof(LayerNormParameter)));
+  if (layer_norm_parameter == nullptr) {
+    MS_LOG(ERROR) << "malloc LayerNormParameter failed.";
+    return nullptr;
+  }
+  memset(layer_norm_parameter, 0, sizeof(LayerNormParameter));
+  layer_norm_parameter->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::LayerNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  auto normalized_shape = param->GetNormalizedShape();
+  layer_norm_parameter->normalized_dims_ = normalized_shape.size();
+  layer_norm_parameter->normalized_shape_ = reinterpret_cast<int *>(malloc(normalized_shape.size() * sizeof(int)));
+  for (size_t i = 0; i < normalized_shape.size(); i++) {
+    layer_norm_parameter->normalized_shape_[i] = normalized_shape[i];
+  }
+  layer_norm_parameter->epsilon_ = param->GetEpsilon();
+  layer_norm_parameter->elementwise_affine_ = param->GetElementwiseAffine();
+
+  return reinterpret_cast<OpParameter *>(layer_norm_parameter);
+}
+
 PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_SparseToDense] = PopulateSparseToDenseParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SoftMax] = PopulateSoftmaxParameter;
@@ -1784,6 +1807,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_LshProjection] = PopulateLshProjectionParameter;
   populate_parameter_funcs_[schema::PrimitiveType_CustomPredict] = PopulateCustomPredictParameter;
   populate_parameter_funcs_[schema::PrimitiveType_HashtableLookup] = PopulateCommonOpParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_LayerNorm] = PopulateLayerNormParameter;
 }
 
 PopulateParameterRegistry *PopulateParameterRegistry::GetInstance() {
