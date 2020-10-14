@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/int8/sigmoid_int8.h"
 #include <limits>
+#include <algorithm>
 #include "nnacl/int8/sigmoid_int8.h"
 #include "nnacl/quantization/quantize.h"
 #include "schema/model_generated.h"
@@ -30,39 +31,36 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::ActivationType_SIGMOID;
 
 namespace mindspore::kernel {
+void CalculateTableList(int8_t *table, const float input_scale, const int32_t input_zp) {
+  int32_t min_value = std::numeric_limits<int8_t>::min();
+  int32_t max_value = std::numeric_limits<int8_t>::max();
+  const float output_scale = 1.0f / 256;
+  const int32_t output_zp = -128;
+
+  for (int i = min_value; i < max_value; ++i) {
+    const float real_input_value = input_scale * (i - input_zp);
+    const float sigmoid_value = 1.0f / (1.0f + std::exp(-real_input_value));
+    const int32_t quantized = std::round(sigmoid_value / output_scale) + output_zp;
+    int8_t out_value = static_cast<int8_t>(std::max(std::min(quantized, max_value), min_value));
+    uint8_t index = static_cast<uint8_t>(i);
+    table[index] = out_value;
+  }
+}
+
 int SigmoidInt8CPUKernel::Init() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
-  MS_ASSERT(input);
-  MS_ASSERT(output);
-
-  quant_arg_.input_scale = input->GetQuantParams().front().scale;
-  quant_arg_.input_zp = input->GetQuantParams().front().zeroPoint;
-  quant_arg_.output_scale = output->GetQuantParams().front().scale;
-  quant_arg_.output_zp = output->GetQuantParams().front().zeroPoint;
-
-  const float output_multiplier = (1.0f / 128.0f) * quant_arg_.input_scale / quant_arg_.output_scale;
-
-  int32_t output_multiplier_fixedpoint;
-  QuantizeMultiplier(output_multiplier, &output_multiplier_fixedpoint, &quant_arg_.output_multiplier_exponent);
-  MS_ASSERT(quant_arg_.output_multiplier_exponent <= 0);
-  MultiplierInt32ToInt16(output_multiplier_fixedpoint, &quant_arg_.output_multiplier_fixedpoint_int16);
-
-  const float relu6_multiplier = (1.0f / 128.0f) * quant_arg_.input_scale / (3.0f / 32768.0f);
-  int32_t relu6_multiplier_fixedpoint;
-  QuantizeMultiplier(relu6_multiplier, &relu6_multiplier_fixedpoint, &quant_arg_.relu6_multiplier_exponent);
-  MultiplierInt32ToInt16(relu6_multiplier_fixedpoint, &quant_arg_.relu6_multiplier_fixedpoint_int16);
-
-  return RET_OK;
-}
-
-void SigmoidInt8CPUKernel::MultiplierInt32ToInt16(int32_t input, int16_t *output) {
-  MS_ASSERT(input >= 0);
-  if (input >= std::numeric_limits<int32_t>::max() - (1 << 15)) {
-    *output = std::numeric_limits<int16_t>::max();
-    return;
+  const float input_scale = input->GetQuantParams().front().scale;
+  const int32_t input_zp = input->GetQuantParams().front().zeroPoint;
+  const float output_scale = output->GetQuantParams().front().scale;
+  const int32_t output_zp = output->GetQuantParams().front().zeroPoint;
+  if (output_scale != (1.0f / 256) || output_zp != -128) {
+    MS_LOG(ERROR) << "Output scale is : " << output_scale << ", should be 1/256. Output zp is : " << output_zp
+                  << ", should be -128.";
+    return RET_ERROR;
   }
-  *output = (input + (1 << 15)) >> 16;
+  CalculateTableList(table_list_, input_scale, input_zp);
+  return RET_OK;
 }
 
 int SigmoidInt8CPUKernel::ReSize() { return RET_OK; }
@@ -71,11 +69,10 @@ int SigmoidInt8CPUKernel::DoActivation(int task_id) {
   auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
   auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   auto length = in_tensors_.at(0)->ElementsNum();
-
   int stride = UP_DIV(length, op_parameter_->thread_num_);
   int count = MSMIN(stride, length - stride * task_id);
 
-  SigmoidInt8(input_addr + stride * task_id, count, output_addr + stride * task_id, &quant_arg_);
+  SigmoidInt8(input_addr + stride * task_id, count, output_addr + stride * task_id, table_list_);
   return RET_OK;
 }
 

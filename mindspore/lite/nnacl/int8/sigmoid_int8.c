@@ -16,15 +16,11 @@
 
 #include "nnacl/int8/sigmoid_int8.h"
 
-int SigmoidInt8(const int8_t *src, int length, int8_t *dst, SigmoidQuantArg *arg) {
+int SigmoidInt8(const int8_t *src, int length, int8_t *dst, int8_t *table) {
   for (int i = 0; i < length; i++) {
-    const int16_t input_value = src[i] - arg->input_zp;
-    int16_t output;
-    output = round(1 / arg->output_scale * (1 / (1 + exp(-arg->input_scale * input_value))));
-    output += arg->output_zp;
-    output = MSMIN(output, 127);
-    output = MSMAX(output, -128);
-    dst[i] = (int8_t)output;
+    const int8_t input_value = src[i];
+    uint8_t index = (uint8_t)input_value;
+    dst[i] = table[index];
   }
   return 0;
 }
