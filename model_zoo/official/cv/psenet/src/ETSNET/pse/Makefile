@@ -13,15 +13,20 @@
 # limitations under the License.
 # ============================================================================
 
-
-CXXFLAGS = -I include  -std=c++11 -O3
+mindspore_home = ${MINDSPORE_HOME}
+CXXFLAGS = -I include -I ${mindspore_home}/mindspore/official/cv/psenet -std=c++11 -O3
 CXX_SOURCES = adaptor.cpp
-OPENCV = `pkg-config --cflags --libs opencv`
+opencv_home = ${OPENCV_HOME}
+OPENCV = -I$(opencv_home)/include -L$(opencv_home)/lib64 -lopencv_superres -lopencv_ml -lopencv_objdetect \
+-lopencv_highgui -lopencv_dnn -lopencv_stitching -lopencv_videostab -lopencv_calib3d -lopencv_videoio \
+-lopencv_features2d -lopencv_photo -lopencv_flann -lopencv_shape -lopencv_video -lopencv_imgcodecs -lopencv_imgproc \
+-lopencv_core
+PYBIND11 = `python -m pybind11 --includes`
 
 LIB_SO = adaptor.so
 
 $(LIB_SO): $(CXX_SOURCES) $(DEPS)
-	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $(CXX_SOURCES) --shared -fPIC $(OPENCV)
+	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $(CXX_SOURCES) --shared -fPIC $(OPENCV) $(PYBIND11)
 
 clean:
 	rm -rf $(LIB_SO)
