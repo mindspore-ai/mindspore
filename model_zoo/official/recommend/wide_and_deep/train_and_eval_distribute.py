@@ -120,6 +120,7 @@ if __name__ == "__main__":
 
     context.set_context(mode=context.GRAPH_MODE, device_target=wide_deep_config.device_target, save_graphs=True)
     init()
+    context.set_context(save_graphs_path='./graphs_of_device_id_'+str(get_rank()))
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                       device_num=get_group_size())
 
