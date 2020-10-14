@@ -97,7 +97,9 @@ sh run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
     │	├── thor_layer.py                         # thor layer
     │	└── dataset.py                            # data preprocessing    
     ├── eval.py                                   # infer script
-    └── train.py                                  # train script
+    ├── train.py                                  # train script
+    ├── export.py                                 # export checkpoint file into air file
+    └── mindspore_hub_conf.py                     # config file for mindspore hub repository
 ```
 
 ### Script Parameters
@@ -229,16 +231,16 @@ Inference result will be stored in the example path, whose folder name is "eval"
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                                |ResNet50-v1.5|
 | Resource                   | Ascend 910，CPU 2.60GHz 192cores，Memory 755G  | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
-| uploaded Date              | 06/01/2020 (month/day/year)                       |   
-| MindSpore Version          | 0.3.0-alpha                                                       |  |
+| uploaded Date              | 06/01/2020 (month/day/year)                       |   09/23/2020(month/day/year)
+| MindSpore Version          | 0.3.0-alpha                                                       | 1.0.0 |
 | Dataset                    | ImageNet2012                                                    | ImageNet2012|
-| Training Parameters        | epoch=42, steps per epoch=5004, batch_size = 32             |epoch=36, steps per epoch=5004, batch_size = 32  |
+| Training Parameters        | epoch=45, steps per epoch=5004, batch_size = 32             |epoch=40, steps per epoch=5004, batch_size = 32  |
 | Optimizer                  | THOR                                                         |THOR|
 | Loss Function              | Softmax Cross Entropy                                       |Softmax Cross Entropy           |
 | outputs                    | probability                                                 |  probability          |
 | Loss                       |1.6453942                                                    | 1.645802 |
 | Speed                      |  20.4ms/step（8pcs）                     |76ms/step（8pcs）|
-| Total time                 | 72 mins                          | 229 mins|
+| Total time(acc to 75.9%)   | 72 mins                          | 229 mins|
 | Parameters (M)             | 25.5                                                         | 25.5 |
 | Checkpoint for Fine tuning | 491M (.ckpt file)                                         |380M (.ckpt file)     |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet_thor) |[Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet_thor) |
