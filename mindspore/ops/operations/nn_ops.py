@@ -58,6 +58,23 @@ def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=Fals
     return ret_value
 
 
+def _check_shape(arg_name, arg_value, prim_name):
+    """
+    Checks whether an shape dims is a positive int elements.
+    """
+
+    def _raise_message():
+        raise ValueError(f"For '{prim_name}' attr '{arg_name}' dims elements should be positive int numbers, "
+                         f"but got {arg_value}")
+
+    validator.check_value_type(arg_name, arg_value, (list, tuple), prim_name)
+    for item in arg_value:
+        if isinstance(item, int) and item > 0:
+            continue
+        _raise_message()
+    return arg_value
+
+
 class Flatten(PrimitiveWithInfer):
     r"""
     Flattens a tensor without changing its batch size on the 0-th axis.
@@ -1052,6 +1069,7 @@ class Conv2D(PrimitiveWithInfer):
         self.add_prim_attr('pad_list', (pad_top, pad_bottom, pad_left, pad_right))
         out_channel = self.out_channel
         out_shape = [x_shape[0], out_channel, h_out, w_out]
+        _check_shape('output', out_shape, self.name)
         return out_shape
 
     def infer_dtype(self, x_dtype, w_dtype, b_dtype=None):

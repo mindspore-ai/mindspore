@@ -2026,22 +2026,22 @@ class Select(PrimitiveWithInfer):
     and :math:`y`.
 
     Inputs:
-        - **input_x** (Tensor[bool]) - The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+        - **input_cond** (Tensor[bool]) - The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
           The condition tensor, decides which element is chosen.
-        - **input_y** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
           The first input tensor.
-        - **input_z** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+        - **input_y** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
           The second input tensor.
 
     Outputs:
-        Tensor, has the same shape as `input_y`. The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+        Tensor, has the same shape as `input_x`. The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
 
     Examples:
         >>> select = P.Select()
-        >>> input_x = Tensor([True, False])
-        >>> input_y = Tensor([2,3], mindspore.float32)
-        >>> input_z = Tensor([1,2], mindspore.float32)
-        >>> select(input_x, input_y, input_z)
+        >>> input_cond = Tensor([True, False])
+        >>> input_x = Tensor([2,3], mindspore.float32)
+        >>> input_y = Tensor([1,2], mindspore.float32)
+        >>> select(input_cond, input_x, input_y)
     """
 
     @prim_attr_register

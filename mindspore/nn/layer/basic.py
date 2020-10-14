@@ -629,9 +629,9 @@ class MatrixSetDiag(Cell):
     Modify the batched diagonal part of a batched tensor.
 
     Inputs:
-        - **x** (Tensor) - The batched tensor. It can be one of the following data types:
+        - **x** (Tensor) - The batched tensor. Rank k+1, where k >= 1. It can be one of the following data types:
           float32, float16, int32, int8, and uint8.
-        - **diagonal** (Tensor) - The diagonal values.
+        - **diagonal** (Tensor) - The diagonal values. Must have the same type as input `x`. Rank k, where k >= 1.
 
     Outputs:
         Tensor, has the same type and shape as input `x`.
