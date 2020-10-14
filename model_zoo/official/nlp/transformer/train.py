@@ -146,7 +146,8 @@ def run_transformer_train():
     dataset = create_transformer_dataset(epoch_count=1, rank_size=device_num,
                                          rank_id=rank_id, do_shuffle=args.do_shuffle,
                                          dataset_path=args.data_path,
-                                         bucket_boundaries=args.bucket_boundaries)
+                                         bucket_boundaries=args.bucket_boundaries,
+                                         device_target=args.device_target)
     if args.device_target == "Ascend":
         netwithloss = TransformerNetworkWithLoss(transformer_net_cfg, True)
     else:
