@@ -199,7 +199,7 @@ MatrixMultiplyWinogradFp16:
 
     EndLoopM:
         sub sp, sp, #48
-        st1 {v8.8h}, [sp], #16
+        ld1 {v8.8h}, [sp], #16
         ldp x19, x20, [sp], #16
         ldp x21, x22, [sp], #16
     ret
