@@ -98,6 +98,8 @@ def test_kl_cross_entropy():
     """
     Test kl_loss and cross_entropy.
     """
+    from mindspore import context
+    context.set_context(device_target="Ascend")
     net = KL()
     loc_b = Tensor(np.array([1.0]).astype(np.float32), dtype=dtype.float32)
     scale_b = Tensor(np.array([1.0]).astype(np.float32), dtype=dtype.float32)

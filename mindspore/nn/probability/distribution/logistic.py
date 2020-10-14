@@ -175,6 +175,20 @@ class Logistic(Distribution):
         """
         return self._scale
 
+    def _get_dist_type(self):
+        return "Logistic"
+
+    def _get_dist_args(self, loc=None, scale=None):
+        if loc is not None:
+            self.checktensor(loc, 'loc')
+        else:
+            loc = self.loc
+        if scale is not None:
+            self.checktensor(scale, 'scale')
+        else:
+            scale = self.scale
+        return loc, scale
+
     def _mean(self, loc=None, scale=None):
         """
         The mean of the distribution.

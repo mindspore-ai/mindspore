@@ -161,6 +161,20 @@ class LogNormal(msd.TransformedDistribution):
         """Distribution parameter for the pre-transformed standard deviation."""
         return self.distribution("sd")
 
+    def _get_dist_type(self):
+        return "LogNormal"
+
+    def _get_dist_args(self, loc=None, scale=None):
+        if loc is not None:
+            self.checktensor(loc, 'loc')
+        else:
+            loc = self.distribution("mean")
+        if scale is not None:
+            self.checktensor(scale, 'scale')
+        else:
+            scale = self.distribution("sd")
+        return loc, scale
+
     def extend_repr(self):
         if self.is_scalar_batch:
             s = f'loc = {self._mean_value}, scale = {self._sd_value}'

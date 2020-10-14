@@ -169,6 +169,16 @@ class Categorical(Distribution):
         """
         return self._probs
 
+    def _get_dist_type(self):
+        return "Categorical"
+
+    def _get_dist_args(self, probs=None):
+        if probs is not None:
+            self.checktensor(probs, 'probs')
+        else:
+            probs = self.probs
+        return (probs,)
+
     def _mean(self, probs=None):
         r"""
         .. math::

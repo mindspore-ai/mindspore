@@ -173,6 +173,20 @@ class Uniform(Distribution):
         """
         return self._high
 
+    def _get_dist_type(self):
+        return "Uniform"
+
+    def _get_dist_args(self, low=None, high=None):
+        if low is not None:
+            self.checktensor(low, 'low')
+        else:
+            low = self.low
+        if high is not None:
+            self.checktensor(high, 'high')
+        else:
+            high = self.high
+        return high, low
+
     def _range(self, low=None, high=None):
         r"""
         Return the range of the distribution.

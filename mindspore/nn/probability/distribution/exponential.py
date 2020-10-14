@@ -157,6 +157,16 @@ class Exponential(Distribution):
         """
         return self._rate
 
+    def _get_dist_type(self):
+        return "Exponential"
+
+    def _get_dist_args(self, rate=None):
+        if rate is not None:
+            self.checktensor(rate, 'rate')
+        else:
+            rate = self.rate
+        return (rate,)
+
     def _mean(self, rate=None):
         r"""
         .. math::
