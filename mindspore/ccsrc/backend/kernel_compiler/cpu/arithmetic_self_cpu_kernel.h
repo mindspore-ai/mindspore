@@ -15,8 +15,8 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_SELF_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_SELF_CPU_KERNEL_H_
-#include <vector>
 #include <memory>
+#include <vector>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -40,9 +40,11 @@ class ArithmeticSelfCPUKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(Square, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ArithmeticSelfCPUKernel);
 MS_REG_CPU_KERNEL(Square, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                  ArithmeticSelfCPUKernel);
+MS_REG_CPU_KERNEL(Neg, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  ArithmeticSelfCPUKernel);
+MS_REG_CPU_KERNEL(Neg, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
                   ArithmeticSelfCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore

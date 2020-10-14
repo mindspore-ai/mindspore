@@ -49,5 +49,5 @@ def test_relu_grad():
     output = relu_grad()
     expect = np.array([[[[0, 0, 1,], [0, 0, 0,], [1, 1, 0.]]]]).astype(np.float32)
     error = np.ones(shape=[3, 3]) * 1.0e-6
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 import numpy as np
 import pytest
 
@@ -22,55 +21,55 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
-class NetReLU6(nn.Cell):
+class NetSqrtGrad(nn.Cell):
     def __init__(self):
-        super(NetReLU6, self).__init__()
-        self.relu6 = P.ReLU6()
+        super(NetSqrtGrad, self).__init__()
+        self.sqrt_grad = G.SqrtGrad()
+
+    def construct(self, x, dx):
+        return self.sqrt_grad(x, dx)
+
+
+class Net(nn.Cell):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.ops = P.Sqrt()
 
     def construct(self, x):
-        return self.relu6(x)
-
-class NetReLU6Grad(nn.Cell):
-    def __init__(self):
-        super(NetReLU6Grad, self).__init__()
-        self.relu6_grad = G.ReLU6Grad()
-
-    def construct(self, x, dy):
-        return self.relu6_grad(dy, x)
+        return self.ops(x)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_relu6():
-    x = Tensor(np.array([[[[-1, 1, 10],
-                           [5.9, 6.1, 6],
-                           [10, 1, -1]]]]).astype(np.float32))
-    expect = np.array([[[[0, 1, 6,],
-                         [5.9, 6, 6,],
-                         [6, 1, 0.]]]]).astype(np.float32)
+def test_net():
+    x = np.abs(np.random.randn(2, 3, 3, 4)).astype(np.float32)
+    y_expect = np.sqrt(x)
+    net = Net()
+    out = net(Tensor(x))
+    diff = out.asnumpy() - y_expect
+    err = np.ones(shape=y_expect.shape) * 1.0e-5
+    assert np.all(diff < err)
+    assert out.shape == y_expect.shape
 
-    relu6 = NetReLU6()
-    output = relu6(x)
-    assert (output.asnumpy() == expect).all()
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_relu6_grad():
+def test_sqrt_grad():
     x = Tensor(np.array([[[[-1, 1, 10],
                            [5.9, 6.1, 6],
                            [10, 1, -1]]]]).astype(np.float32))
-    dy = Tensor(np.array([[[[1, 1, 1],
-                            [1, 1, 1],
-                            [1, 1, 1]]]]).astype(np.float32))
-    expect = np.array([[[[0, 1, 0,],
-                         [1, 0, 1,],
-                         [0, 1, 0,]]]]).astype(np.float32)
+    dx = Tensor(np.array([[[[1, 1, 1],
+                            [2, 2, 2],
+                            [3, 3, 3]]]]).astype(np.float32))
+    expect = np.array([[[[-0.5, 0.5, 0.05,],
+                         [0.16949153, 0.16393442, 0.16666667,],
+                         [0.15, 1.5, -1.5,]]]]).astype(np.float32)
     error = np.ones(shape=[3, 3]) * 1.0e-6
 
-    relu6_grad = NetReLU6Grad()
-    output = relu6_grad(x, dy)
+    sqrt_grad = NetSqrtGrad()
+    output = sqrt_grad(x, dx)
     diff = np.abs(output.asnumpy() - expect)
     assert np.all(np.abs(diff) < error)

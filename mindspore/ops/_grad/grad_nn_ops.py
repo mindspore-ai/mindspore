@@ -560,11 +560,17 @@ def get_bprop_gelu(self):
 def get_bprop_fused_batch_norm(self):
     """Grad definition for `FusedBatchNorm` operation."""
     input_grad = G.FusedBatchNormGrad(self.epsilon, self.momentum)
-
+    target_cpu = False
+    if self.target == "CPU":
+        input_grad = G.FusedBatchNormGradCPU(self.epsilon, self.momentum)
+        target_cpu = True
     def bprop(x, scale, b, mean, variance, out, dout):
         saved_mean = out[3]
         saved_variance = out[4]
-        out = input_grad(dout[0], x, scale, saved_mean, saved_variance)
+        if target_cpu:
+            out = input_grad(dout[0], x, scale, b, saved_mean, saved_variance)
+        else:
+            out = input_grad(dout[0], x, scale, saved_mean, saved_variance)
         dx = out[0]
         dscale = out[1]
         dbias = out[2]

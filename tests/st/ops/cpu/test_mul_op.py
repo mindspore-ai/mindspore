@@ -16,38 +16,53 @@
 import numpy as np
 import pytest
 
-import mindspore.context as context
+import mindspore.common.dtype as mstype
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, context
 from mindspore.common.api import ms_function
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 
-x = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)
-y = np.random.uniform(-2, 2, (1, 1, 1, 1)).astype(np.float32)
-
-context.set_context(device_target='CPU')
+context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
         self.mul = P.Mul()
-        self.x = Parameter(initializer(Tensor(x), x.shape), name='x3')
-        self.y = Parameter(initializer(Tensor(y), y.shape), name='y3')
 
     @ms_function
-    def construct(self):
-        return self.mul(self.x, self.y)
+    def construct(self, x, y):
+        return self.mul(x, y)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_Mul():
+def test_mul():
+    x0 = Tensor(np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32))
+    y0 = Tensor(np.random.uniform(-2, 2, (1, 1, 1, 1)).astype(np.float32))
+    x1 = Tensor(np.random.uniform(-2, 2, (1, 3, 1, 4)).astype(np.float32))
+    y1 = Tensor(np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32))
+    x2 = Tensor(np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32))
+    y2 = Tensor(2, mstype.float32)
     mul = Net()
-    output = mul()
-    print(x)
-    print(y)
-    print(output)
+    out = mul(x0, y0).asnumpy()
+    exp = x0.asnumpy() * y0.asnumpy()
+    diff = np.abs(out - exp)
+    err = np.ones(shape=exp.shape) * 1.0e-5
+    assert np.all(diff < err)
+    assert out.shape == exp.shape
+
+    out = mul(x1, y1).asnumpy()
+    exp = x1.asnumpy() * y1.asnumpy()
+    diff = np.abs(out - exp)
+    err = np.ones(shape=exp.shape) * 1.0e-5
+    assert np.all(diff < err)
+    assert out.shape == exp.shape
+
+    out = mul(x2, y2).asnumpy()
+    exp = x2.asnumpy() * y2.asnumpy()
+    diff = np.abs(out - exp)
+    err = np.ones(shape=exp.shape) * 1.0e-5
+    assert np.all(diff < err)
+    assert out.shape == exp.shape

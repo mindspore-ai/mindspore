@@ -15,15 +15,14 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CPU_KERNEL_H_
-
-#include <string>
-#include <vector>
+#include <functional>
 #include <memory>
 #include <numeric>
-#include <functional>
+#include <string>
+#include <vector>
 #include "backend/kernel_compiler/kernel.h"
-#include "ir/anf.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "ir/anf.h"
 
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
@@ -52,7 +51,26 @@ const char END[] = "end";
 const char SIZE[] = "size";
 const char USE_NESTEROV[] = "use_nesterov";
 const char GROUP[] = "group";
-enum OperateType { ADD = 0, SUB, MUL, DIV, SQUARE, SQRT, ASSIGNADD };
+
+enum OperateType {
+  ADD = 0,
+  SUB,
+  MUL,
+  DIV,
+  SQUARE,
+  SQRT,
+  POW,
+  REALDIV,
+  NEG,
+  LESS,
+  ASSIGNADD,
+  RELUGRAD,
+  RELU6GRAD,
+  ABSGRAD,
+  TANHGRAD,
+  SQRTGRAD,
+  SIGMOIDGRAD
+};
 
 class CPUKernel : public kernel::KernelMod {
  public:

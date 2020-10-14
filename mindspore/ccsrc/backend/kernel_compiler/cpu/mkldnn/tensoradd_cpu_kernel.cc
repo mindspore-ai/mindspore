@@ -25,17 +25,45 @@ void TensorAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> src0_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> src1_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (src0_shape.size() != src1_shape.size() && src1_shape.size() > 1) {
-    MS_LOG(EXCEPTION) << "TensorAdd only support same dim input or tensor * scalar " << src0_shape.size() << " vs "
-                      << src1_shape.size();
-  }
-  if (src1_shape.size() < src0_shape.size()) {
-    for (size_t i = src1_shape.size(); i < src0_shape.size(); ++i) {
-      src1_shape.emplace_back(1);
+  if (src1_shape.size() != src0_shape.size()) {
+    if (src0_shape.size() == 0) {
+      need_swap_ = true;
+      for (size_t i = 0; i < src1_shape.size(); ++i) {
+        src0_shape.emplace_back(1);
+      }
+    } else if (src1_shape.size() == 0) {
+      for (size_t i = 0; i < src0_shape.size(); ++i) {
+        src1_shape.emplace_back(1);
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid broadcast! " << src0_shape << " vs " << src1_shape;
+    }
+  } else {
+    bool visit_src0 = false;
+    bool visit_src1 = false;
+    for (size_t i = 0; i < src0_shape.size(); ++i) {
+      if (src0_shape[i] != src1_shape[i]) {
+        if (src0_shape[i] == 1 && !visit_src1) {
+          need_swap_ = true;
+          visit_src0 = true;
+        } else if (src1_shape[i] == 1 && !visit_src0) {
+          need_swap_ = false;
+          visit_src1 = true;
+        } else {
+          MS_LOG(EXCEPTION) << "Invalid broadcast! " << src0_shape << " vs " << src1_shape;
+        }
+      }
     }
   }
-  dnnl::memory::desc src0_desc = GetDefaultMemDesc(src0_shape);
-  dnnl::memory::desc src1_desc = GetDefaultMemDesc(src1_shape);
+  dnnl::memory::desc src0_desc;
+  dnnl::memory::desc src1_desc;
+  if (need_swap_) {
+    src0_desc = GetDefaultMemDesc(src1_shape);
+    src1_desc = GetDefaultMemDesc(src0_shape);
+  } else {
+    src0_desc = GetDefaultMemDesc(src0_shape);
+    src1_desc = GetDefaultMemDesc(src1_shape);
+  }
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
   dnnl::binary::desc desc = dnnl::binary::desc(dnnl::algorithm::binary_add, src0_desc, src1_desc, dst_desc);
   auto prim_desc = dnnl::binary::primitive_desc(desc, MKLKernelEngine::Get().engine());
@@ -51,8 +79,13 @@ bool TensorAddCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   if (inputs.size() < 2 || outputs.empty()) {
     MS_LOG(EXCEPTION) << "TensorAdd error input output size!";
   }
-  SetArgumentHandle(DNNL_ARG_SRC_0, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_SRC_1, inputs[1]->addr);
+  if (need_swap_) {
+    SetArgumentHandle(DNNL_ARG_SRC_0, inputs[1]->addr);
+    SetArgumentHandle(DNNL_ARG_SRC_1, inputs[0]->addr);
+  } else {
+    SetArgumentHandle(DNNL_ARG_SRC_0, inputs[0]->addr);
+    SetArgumentHandle(DNNL_ARG_SRC_1, inputs[1]->addr);
+  }
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
   ExecutePrimitive();
   return true;

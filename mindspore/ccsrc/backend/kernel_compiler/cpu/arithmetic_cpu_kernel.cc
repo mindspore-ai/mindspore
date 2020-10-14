@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/kernel_compiler/cpu/arithmetic_cpu_kernel.h"
-#include <thread>
+#include <cmath>
 #include <string>
+#include <thread>
+#include "backend/kernel_compiler/cpu/arithmetic_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
@@ -52,13 +53,35 @@ void ArithmeticCPUKernel::Mul(const T *input1, const T *input2, T *out, size_t s
 }
 
 template <typename T>
-void ArithmeticCPUKernel::Div(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void ArithmeticCPUKernel::RealDiv(const T *input1, const T *input2, T *out, size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
-    auto div_number = input2[i];
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    auto div_number = input2[idx[1]];
     if (div_number == 0) {
       MS_LOG(EXCEPTION) << "Cannot divided by 0!";
     }
-    out[i] = input1[i] / div_number;
+    out[i] = input1[idx[0]] / div_number;
+  }
+}
+
+template <typename T>
+void ArithmeticCPUKernel::Pow(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    auto x = static_cast<double>(input1[idx[0]]);
+    auto y = static_cast<double>(input2[idx[1]]);
+    out[i] = static_cast<T>(std::pow(x, y));
+  }
+}
+
+template <typename T>
+void ArithmeticCPUKernel::Less(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    out[i] = input1[idx[0]] < input2[idx[1]];
   }
 }
 
@@ -71,10 +94,16 @@ void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = SUB;
   } else if (kernel_name == prim::kPrimMul->name()) {
     operate_type_ = MUL;
-  } else if (kernel_name == "Div") {
-    operate_type_ = DIV;
+  } else if (kernel_name == prim::kPrimRealDiv->name()) {
+    operate_type_ = REALDIV;
+  } else if (kernel_name == prim::kPrimPow->name()) {
+    operate_type_ = POW;
+  } else if (kernel_name == prim::kPrimLess->name()) {
+    operate_type_ = LESS;
   } else if (kernel_name == prim::kPrimAssignAdd->name()) {
     operate_type_ = ASSIGNADD;
+  } else {
+    MS_LOG(EXCEPTION) << "Not support " << kernel_name;
   }
 
   input_shape0_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -145,14 +174,45 @@ void ArithmeticCPUKernel::GenIndex(size_t num, std::vector<size_t> *idx) {
   idx->push_back(idx0);
   idx->push_back(idx1);
 }
+
+template <typename T>
+void ArithmeticCPUKernel::LaunchLess(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+  T *input1 = reinterpret_cast<T *>(inputs[0]->addr);
+  T *input2 = reinterpret_cast<T *>(inputs[1]->addr);
+  bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+
+  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  auto max_thread_num = std::thread::hardware_concurrency();
+  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
+  MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
+  std::vector<std::thread> threads;
+  threads.reserve(thread_num);
+  size_t start = 0;
+  size_t once_compute_size = (lens + thread_num - 1) / thread_num;
+  while (start < lens) {
+    size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
+    threads.emplace_back(std::thread(&ArithmeticCPUKernel::Less<T>, this, input1, input2, output, start, end));
+    start += once_compute_size;
+  }
+  for (size_t i = 0; i < threads.size(); ++i) {
+    threads[i].join();
+  }
+}
+
 template <typename T>
 void ArithmeticCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+  if (operate_type_ == LESS) {
+    LaunchLess<T>(inputs, outputs);
+    return;
+  }
   T *input1 = reinterpret_cast<T *>(inputs[0]->addr);
   T *input2 = reinterpret_cast<T *>(inputs[1]->addr);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  auto lens = outputs[0]->size / sizeof(T);
-  size_t thread_num = lens < 128 * 24 ? std::ceil(lens / 128.0) : 24;
-  MS_LOG(INFO) << "lens=" << lens << "; use thread_num=" << thread_num;
+
+  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  auto max_thread_num = std::thread::hardware_concurrency();
+  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
+  MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
   std::vector<std::thread> threads;
   threads.reserve(thread_num);
   size_t start = 0;
@@ -165,10 +225,14 @@ void ArithmeticCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, co
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::Sub<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == MUL) {
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::Mul<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == DIV) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Div<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == REALDIV) {
+      threads.emplace_back(std::thread(&ArithmeticCPUKernel::RealDiv<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == POW) {
+      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Pow<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == ASSIGNADD) {
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::AssignAdd<T>, this, input1, input2, output, start, end));
+    } else {
+      MS_LOG(EXCEPTION) << "Not support " << operate_type_;
     }
     start += once_compute_size;
   }

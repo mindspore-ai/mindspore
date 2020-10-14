@@ -540,6 +540,22 @@ class FusedBatchNormGrad(Primitive):
         raise NotImplementedError
 
 
+class FusedBatchNormGradCPU(PrimitiveWithInfer):
+    """Gradients of FusedBatchNorm operation for CPU."""
+
+    @prim_attr_register
+    def __init__(self, epsilon=0.0, momentum=0.1):
+        self.init_prim_io_names(inputs=['dy', 'x', 'scale', 'bias', 'save_mean', 'save_inv_variance'],
+                                outputs=['dx', 'bn_scale', 'bn_bias'])
+        self.add_prim_attr('data_format', "NCHW")
+
+    def infer_shape(self, dy_shape, x_shape, scale_shape, bias_shape, save_mean_shape, save_inv_variance_shape):
+        return (x_shape, scale_shape, bias_shape)
+
+    def infer_dtype(self, dy_type, x_type, scale_type, bias_type, save_mean_type, save_inv_variance_type):
+        return (x_type, scale_type, bias_type)
+
+
 class FusedBatchNormGradEx(PrimitiveWithInfer):
     """Gradients of FusedBatchNormEx operation."""
 

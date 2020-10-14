@@ -31,6 +31,9 @@ class TensorAddCPUKernel : public MKLCPUKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ private:
+  bool need_swap_{false};
 };
 
 MS_REG_CPU_KERNEL(
