@@ -86,6 +86,7 @@ class KernelRuntime {
   // for GPU and D to impl
   virtual void ReleaseDeviceRes() {}
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
+  uint32_t device_id() { return device_id_; }
   DeviceAddressPtr AssignSingleOpLaunchMemory(size_t size, const std::string &format, TypeId type);
 
  protected:
