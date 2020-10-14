@@ -25,11 +25,11 @@
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 namespace mindspore {
-class Conv2d : public PrimitiveC {
+class Conv2D : public PrimitiveC {
  public:
-  Conv2d();
-  ~Conv2d() = default;
-  MS_DECLARE_PARENT(Conv2d, PrimitiveC);
+  Conv2D();
+  ~Conv2D() = default;
+  MS_DECLARE_PARENT(Conv2D, PrimitiveC);
   void Init(int out_channel, const std::vector<int> &kernel_size, int mode = 1, const std::string &pad_mode = "valid",
             const std::vector<int> &pad = {0, 0, 0, 0}, const std::vector<int> &stride = {1, 1, 1, 1},
             const std::vector<int> &dilation = {1, 1, 1, 1}, int group = 1);
@@ -39,7 +39,7 @@ class Conv2d : public PrimitiveC {
   std::string GetPadMode() const;
   std::vector<int> GetPad() const;
   int GetMode() const;
-  int GetGroup() const;
+  int get_group() const;
   int GetOutputChannel() const;
   void SetKernelSize(const std::vector<int> &kernel_size);
   void SetStride(const std::vector<int> &stride);
@@ -53,6 +53,6 @@ class Conv2d : public PrimitiveC {
 };
 AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);
-using PrimConv2dPtr = std::shared_ptr<Conv2d>;
+using PrimConv2dPtr = std::shared_ptr<Conv2D>;
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_C_OPS_CONV2D_H_
