@@ -27,6 +27,7 @@
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "utils/utils.h"
+#include "pipeline/jit/base.h"
 
 namespace mindspore {
 class ProtoExporter {
@@ -525,16 +526,7 @@ void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix) {
     MS_LOG(ERROR) << "Func graph is nullptr";
     return;
   }
-  auto ms_context = MsContext::GetInstance();
-  if (ms_context == nullptr) {
-    MS_LOG(ERROR) << "ms_context is nullptr";
-    return;
-  }
-  auto save_graphs_path = ms_context->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
-  std::string file_path = save_graphs_path + "/" + "ms_output_" + suffix + ".pb";
+  std::string file_path = pipeline::GetSaveGraphsPathName("ms_output_" + suffix + ".pb");
   if (file_path.size() > PATH_MAX) {
     MS_LOG(ERROR) << "File path " << file_path << " is too long.";
     return;

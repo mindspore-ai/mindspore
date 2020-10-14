@@ -257,14 +257,9 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_before" + "_graph_" +
-                            std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_path, kernel_graph);
+    std::string file_name = "hwopt_d_ir_fusion_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
     DumpIRProto(kernel_graph, "before_hwopt_" + std::to_string(kernel_graph->graph_id()));
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
@@ -300,9 +295,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
-    std::string file_path =
-      save_graphs_path + "/" + "hwopt_d_ir_fusion_after" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_path, kernel_graph);
+    std::string file_name = "hwopt_d_ir_fusion_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
   }
 }
 
@@ -314,13 +308,8 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
     return;
   }
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_before.ir";
-    DumpIR(file_path, kernel_graph);
+    DumpIR("hwopt_d_ir_fusion_before.ir", kernel_graph);
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
@@ -336,8 +325,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_after.ir";
-    DumpIR(file_path, kernel_graph);
+    DumpIR("hwopt_d_ir_fusion_after.ir", kernel_graph);
   }
 }
 
@@ -345,14 +333,9 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
   if (save_graphs) {
-    std::string file_path =
-      save_graphs_path + "/" + "hwopt_d_before" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_path, kernel_graph);
+    std::string file_name = "hwopt_d_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
   }
   // data layout optimization
   AscendDataLayout(kernel_graph);
@@ -390,9 +373,8 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   kernel_graph->SetExecOrderByDefault();
 
   if (save_graphs) {
-    std::string file_path =
-      save_graphs_path + "/" + "hwopt_d_end" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_path, kernel_graph, true);
+    std::string file_name = "hwopt_d_end_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true);
     DumpIRProto(kernel_graph, "after_hwopt_" + std::to_string(kernel_graph->graph_id()));
     kernel_graph->DumpFuncGraph("hwopt_d_end");
   }
@@ -406,25 +388,19 @@ void AscendBackendGraphKernelOpt(const std::shared_ptr<session::KernelGraph> &ke
     return;
   }
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_graph_kernel_opt_before_graph_" +
-                            std::to_string(!is_before_kernel_select) + "_" + std::to_string(kernel_graph->graph_id()) +
-                            ".ir";
-    DumpIR(file_path, kernel_graph);
+    std::string file_name = "hwopt_d_graph_kernel_opt_before_graph_" + std::to_string(!is_before_kernel_select) + "_" +
+                            std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
   }
 
   // Fuse graph kernels with basic ops
   static_cast<void>(FuseCompositeOps(kernel_graph, is_before_kernel_select));
 
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_graph_kernel_opt_end_graph_" +
-                            std::to_string(!is_before_kernel_select) + "_" + std::to_string(kernel_graph->graph_id()) +
-                            ".ir";
-    DumpIR(file_path, kernel_graph, true);
+    std::string file_name = "hwopt_d_graph_kernel_opt_end_graph_" + std::to_string(!is_before_kernel_select) + "_" +
+                            std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true);
   }
 }
 
@@ -436,25 +412,19 @@ void AscendBackendFuseBasicOpt(const std::shared_ptr<session::KernelGraph> &kern
     return;
   }
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_fuse_basic_opt_before_graph_" +
-                            std::to_string(!is_before_kernel_select) + "_" + std::to_string(kernel_graph->graph_id()) +
-                            ".ir";
-    DumpIR(file_path, kernel_graph, true);
+    std::string file_name = "hwopt_fuse_basic_opt_before_graph_" + std::to_string(!is_before_kernel_select) + "_" +
+                            std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true);
   }
 
   // Fuse basic ops with basic ops
   static_cast<void>(FuseBasicOps(kernel_graph, is_before_kernel_select));
 
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_fuse_basic_opt_end_graph_" +
-                            std::to_string(!is_before_kernel_select) + "_" + std::to_string(kernel_graph->graph_id()) +
-                            ".ir";
-    DumpIR(file_path, kernel_graph, true);
+    std::string file_name = "hwopt_fuse_basic_opt_end_graph_" + std::to_string(!is_before_kernel_select) + "_" +
+                            std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true);
   }
 }
 
@@ -465,22 +435,16 @@ void AscendBackendAddAtomicClean(const std::shared_ptr<session::KernelGraph> &ke
     return;
   }
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_add_atomic_clean_before" + "_graph_" +
-                            std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_path, kernel_graph);
+    std::string file_name = "hwopt_d_add_atomic_clean_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
   }
 
   AddAtomicClean(kernel_graph);
 
   if (save_graphs) {
-    std::string file_path =
-      save_graphs_path + "/" + "hwopt_d_end" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_path, kernel_graph, true);
+    std::string file_name = "hwopt_d_end_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true);
   }
 }
 
@@ -492,14 +456,9 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
     return;
   }
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
   if (save_graphs) {
-    std::string file_path =
-      save_graphs_path + "/hwopt_d_ub_fusion_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_path, kernel_graph);
+    std::string file_name = "hwopt_d_ub_fusion_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
   }
   auto fusion_id_allocator = std::make_shared<FusionIdAllocator>();
   MS_EXCEPTION_IF_NULL(fusion_id_allocator);
@@ -525,9 +484,8 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
-    std::string file_path =
-      save_graphs_path + "/hwopt_d_ub_fusion_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_path, kernel_graph);
+    std::string file_name = "hwopt_d_ub_fusion_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
   }
 }
 }  // namespace opt

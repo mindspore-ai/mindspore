@@ -215,9 +215,9 @@ bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::di
   }
 
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
-    convertor.DrawComputeGraph(GetFilePathName("ge_graph.dot"));                      // for debug
-    convertor.DrawInitGraph(GetFilePathName("init_graph.dot"));                       // for debug
-    convertor.DrawSaveCheckpointGraph(GetFilePathName("save_checkpoint_graph.dot"));  // for debug
+    convertor.DrawComputeGraph(GetSaveGraphsPathName("ge_graph.dot"));                      // for debug
+    convertor.DrawInitGraph(GetSaveGraphsPathName("init_graph.dot"));                       // for debug
+    convertor.DrawSaveCheckpointGraph(GetSaveGraphsPathName("save_checkpoint_graph.dot"));  // for debug
   }
   std::string init_graph = "init_subgraph." + net_id;
   std::string checkpoint_name = "save." + net_id;
@@ -245,8 +245,8 @@ FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, co
   FuncGraphPtr anf_graph = info.at(phase)->func_graph;
 
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
-    draw::Draw(GetFilePathName("anf_graph.dot"), anf_graph);  // for debug
-    DumpIR(GetFilePathName("anf_graph.ir"), anf_graph, true);
+    draw::Draw("anf_graph.dot", anf_graph);  // for debug
+    DumpIR("anf_graph.ir", anf_graph, true);
   }
 
   if (!AddDFGraph(info, init_params, phase, broadcast_params)) {

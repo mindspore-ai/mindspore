@@ -304,7 +304,6 @@ TEST_F(TestHWLambNextMVWithDecayRule, test_lamb_next_mv_with_decay_rule_cond2) {
     args_spec_list.push_back(x_abstract);
   }
   auto fg = GetKernelGraph(g, args_spec_list);
-  DumpIR("fg.ir", fg, true);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
@@ -313,8 +312,6 @@ TEST_F(TestHWLambNextMVWithDecayRule, test_lamb_next_mv_with_decay_rule_cond2) {
   FuncGraphPtr new_graph = optimizer->Optimize(fg);
 
   FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_lamb_next_mv_with_decay_rule_cond2", "after");
-  DumpIR("g_after.ir", g_after, true);
-  DumpIR("new_graph.ir", new_graph, true);
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 
@@ -348,7 +345,6 @@ TEST_F(TestHWLambNextMVWithDecayRule, test_lamb_next_mv_with_decay_rule_cond3) {
     args_spec_list.push_back(x_abstract);
   }
   auto fg = GetKernelGraph(g, args_spec_list);
-  DumpIR("fg.ir", fg, true);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
@@ -357,8 +353,6 @@ TEST_F(TestHWLambNextMVWithDecayRule, test_lamb_next_mv_with_decay_rule_cond3) {
   FuncGraphPtr new_graph = optimizer->Optimize(fg);
 
   FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_lamb_next_mv_with_decay_rule_cond3", "after");
-  DumpIR("g_after.ir", g_after, true);
-  DumpIR("new_graph.ir", new_graph, true);
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 

@@ -37,6 +37,7 @@
 #include "utils/label.h"
 #include "utils/ms_context.h"
 #include "frontend/operator/ops.h"
+#include "pipeline/jit/base.h"
 
 using mindspore::tensor::TensorPy;
 
@@ -690,19 +691,21 @@ void ExportIR(const std::string &filename, const std::string &id, const FuncGrap
     return;
   }
 
+  auto real_filename = pipeline::GetSaveGraphsPathName(filename);
   AnfExporter exporter(id);
-  ChangeFileMode(filename, S_IRWXU);
-  exporter.ExportFuncGraph(filename, func_graph);
+  ChangeFileMode(real_filename, S_IRWXU);
+  exporter.ExportFuncGraph(real_filename, func_graph);
   // set file mode to read only by user
-  ChangeFileMode(filename, S_IRUSR);
+  ChangeFileMode(real_filename, S_IRUSR);
 }
 
 void ExportIR(const std::string &filename, const std::vector<TaggedGraph> &graphs) {
+  auto real_filename = pipeline::GetSaveGraphsPathName(filename);
   AnfExporter exporter("", false);
-  ChangeFileMode(filename, S_IRWXU);
-  exporter.ExportFuncGraph(filename, graphs);
+  ChangeFileMode(real_filename, S_IRWXU);
+  exporter.ExportFuncGraph(real_filename, graphs);
   // set file mode to read only by user
-  ChangeFileMode(filename, S_IRUSR);
+  ChangeFileMode(real_filename, S_IRUSR);
 }
 #else
 void ExportIR(const std::string &, const std::string &, const FuncGraphPtr &) {

@@ -41,10 +41,6 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
   bool changed = false;
   size_t num = 0;
   for (const auto &pass : passes) {
@@ -71,9 +67,8 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
       MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost << " us";
 #endif
       if (save_graphs) {
-        auto dump_file_path =
-          save_graphs_path + "/" + "hwopt_" + name() + "_" + std::to_string(num) + "_" + pass->name() + ".ir";
-        DumpIR(dump_file_path, func_graph, true);
+        auto file_name = "hwopt_" + name() + "_" + std::to_string(num) + "_" + pass->name() + ".ir";
+        DumpIR(file_name, func_graph, true);
       }
       num++;
     }
