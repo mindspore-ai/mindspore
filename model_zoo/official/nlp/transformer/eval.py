@@ -14,7 +14,7 @@
 # ============================================================================
 """Transformer evaluation script."""
 
-import os
+import argparse
 import numpy as np
 
 import mindspore.nn as nn
@@ -97,9 +97,14 @@ def run_transformer_eval():
     """
     Transformer evaluation.
     """
-    device_id = int(os.getenv('DEVICE_ID'))
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False,
-                        device_id=device_id)
+    parser = argparse.ArgumentParser(description='tranformer')
+    parser.add_argument("--device_target", type=str, default="Ascend",
+                        help="device where the code will be implemented, default is Ascend")
+    parser.add_argument('--device_id', type=int, default=None, help='device id of GPU or Ascend. (Default: None)')
+    args = parser.parse_args()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, reserve_class_name_in_scope=False,
+                        device_id=args.device_id)
 
     dataset = load_test_data(batch_size=transformer_net_cfg.batch_size, data_file=cfg.data_file)
     tfm_model = TransformerModel(config=transformer_net_cfg, is_training=False, use_one_hot_embeddings=False)

@@ -23,7 +23,7 @@ nasnet_a_mobile_config_gpu = edict({
     'rank': 0,
     'group_size': 1,
     'work_nums': 8,
-    'epoch_size': 500,
+    'epoch_size': 600,
     'keep_checkpoint_max': 100,
     'ckpt_path': './checkpoint/',
     'is_save_on_master': 0,
@@ -39,7 +39,7 @@ nasnet_a_mobile_config_gpu = edict({
 
     ### Learning Rate Config
     # 'lr_decay_method': 'exponential',
-    'lr_init': 0.04,
+    'lr_init': 0.04*8,
     'lr_decay_rate': 0.97,
     'num_epoch_per_decay': 2.4,
 

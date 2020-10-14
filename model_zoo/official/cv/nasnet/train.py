@@ -29,7 +29,7 @@ from mindspore.common import dtype as mstype
 
 from src.config import nasnet_a_mobile_config_gpu as cfg
 from src.dataset import create_dataset
-from src.nasnet_a_mobile import NASNetAMobile, CrossEntropy
+from src.nasnet_a_mobile import NASNetAMobileWithLoss, NASNetAMobileTrainOneStepWithClipGradient
 from src.lr_generator import get_lr
 
 
@@ -69,13 +69,10 @@ if __name__ == '__main__':
     batches_per_epoch = dataset.get_dataset_size()
 
     # network
-    net = NASNetAMobile(cfg.num_classes)
+    net_with_loss = NASNetAMobileWithLoss(cfg)
     if args_opt.resume:
         ckpt = load_checkpoint(args_opt.resume)
-        load_param_into_net(net, ckpt)
-
-    #loss
-    loss = CrossEntropy(smooth_factor=cfg.label_smooth_factor, num_classes=cfg.num_classes, factor=cfg.aux_factor)
+        load_param_into_net(net_with_loss, ckpt)
 
     # learning rate schedule
     lr = get_lr(lr_init=cfg.lr_init, lr_decay_rate=cfg.lr_decay_rate,
@@ -88,26 +85,28 @@ if __name__ == '__main__':
         resume = split_result[-2].split("-")
         resume_epoch = int(resume[-1])
         step_num_in_epoch = int(split_result[-1])
-        assert step_num_in_epoch == ds_train.get_dataset_size()\
+        assert step_num_in_epoch == dataset.get_dataset_size()\
         , "This script only supports resuming at the end of epoch"
-        lr = lr[(ds_train.get_dataset_size() * (resume_epoch - 1) + step_num_in_epoch):]
+        lr = lr[(dataset.get_dataset_size() * (resume_epoch - 1) + step_num_in_epoch):]
     lr = Tensor(lr, mstype.float32)
 
     # optimizer
     decayed_params = []
     no_decayed_params = []
-    for param in net.trainable_params():
+    for param in net_with_loss.trainable_params():
         if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
             decayed_params.append(param)
         else:
             no_decayed_params.append(param)
     group_params = [{'params': decayed_params, 'weight_decay': cfg.weight_decay},
                     {'params': no_decayed_params},
-                    {'order_params': net.trainable_params()}]
+                    {'order_params': net_with_loss.trainable_params()}]
     optimizer = RMSProp(group_params, lr, decay=cfg.rmsprop_decay, weight_decay=cfg.weight_decay,
                         momentum=cfg.momentum, epsilon=cfg.opt_eps, loss_scale=cfg.loss_scale)
 
-    model = Model(net, loss_fn=loss, optimizer=optimizer)
+    net_with_grads = NASNetAMobileTrainOneStepWithClipGradient(net_with_loss, optimizer)
+    net_with_grads.set_train()
+    model = Model(net_with_grads)
 
     print("============== Starting Training ==============")
     loss_cb = LossMonitor(per_print_times=batches_per_epoch)
