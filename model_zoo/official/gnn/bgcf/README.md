@@ -33,6 +33,7 @@ Specially, BGCF contains two main modules. The first is sampling, which produce 
 aggregate the neighbors sampling from nodes consisting of mean aggregator and attention aggregator.
 
 # [Dataset](#contents)
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 - Dataset size:
   Statistics of dataset used are summarized as below:
   
@@ -61,10 +62,6 @@ aggregate the neighbors sampling from nodes consisting of mean aggregator and at
   sh run_process_data_ascend.sh [SRC_PATH]
   ```
   
-    - Launch
-  ```
-  # Generate dataset in mindrecord format for Amazon-Beauty.
-  sh ./run_process_data_ascend.sh ./data
   
 # [Features](#contents)
 
@@ -128,12 +125,12 @@ Parameters for both training and evaluation can be set in config.py.
   
   ```python
   "learning_rate": 0.001,            # Learning rate
-  "num_epochs": 600,                 # Epoch sizes for training
+  "num_epoch": 600,                 # Epoch sizes for training
   "num_neg": 10,                     # Negative sampling rate 
   "raw_neighs": 40,                  # Num of sampling neighbors in raw graph
   "gnew_neighs": 20,                 # Num of sampling neighbors in sample graph
   "input_dim": 64,                   # User and item embedding dimension
-  "l2_coeff": 0.03                   # l2 coefficient
+  "l2": 0.03                   # l2 coefficient
   "neighbor_dropout": [0.0, 0.2, 0.3]# Dropout ratio for different aggregation layer
   "num_graphs":5                     # Num of sample graph
   ```
@@ -200,8 +197,8 @@ Parameters for both training and evaluation can be set in config.py.
 | Parameter                            | BGCF                                      |
 | ------------------------------------ | ----------------------------------------- |
 | Resource                             | Ascend 910                                |
-| uploaded Date                        |                                           |
-| MindSpore Version                    |                                           |
+| uploaded Date                        | 09/23/2020(month/day/year)                                          |
+| MindSpore Version                    | 1.0.0                                          |
 | Dataset                              | Amazon-Beauty                             |
 | Training Parameter                   | epoch=600                                 |
 | Optimizer                            | Adam                                      |
@@ -209,7 +206,7 @@ Parameters for both training and evaluation can be set in config.py.
 | Recall@20                            | 0.1534                                    |
 | NDCG@20                              | 0.0912                                    |
 | Training Cost                        | 25min                                     |
-| Scripts                              |                                           |
+| Scripts                              | [bgcf script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/bgcf)                                          |
 
 # [Description of random situation](#contents)
 

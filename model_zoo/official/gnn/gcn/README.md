@@ -28,6 +28,8 @@ GCN contains two graph convolution layers. Each layer takes nodes features and a
 
 
 # [Dataset](#contents)
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
+
 | Dataset  | Type             | Nodes | Edges | Classes | Features | Label rate |
 | -------  | ---------------: |-----: | ----: | ------: |--------: | ---------: |
 | Cora    | Citation network | 2708  | 5429  | 7       | 1433     | 0.052      |
@@ -162,7 +164,7 @@ Test set results: cost= 1.00983 accuracy= 0.81300 time= 0.39083
 | -------------------------- | -------------------------------------------------------------- |
 | Resource                   | Ascend 910                                                     |
 | uploaded Date              | 06/09/2020 (month/day/year)                                    |
-| MindSpore Version          | 0.5.0-beta                                                     |
+| MindSpore Version          | 1.0.0                                                   |
 | Dataset                    | Cora/Citeseer                                                  |
 | Training Parameters        | epoch=200                                                      |
 | Optimizer                  | Adam                                                           |
