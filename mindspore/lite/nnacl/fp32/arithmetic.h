@@ -27,6 +27,7 @@
 extern "C" {
 #endif
 int ElementOptAdd(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
+int ElementOptAddInt(int *input0, int *input1, int *output, int element_size, ArithmeticParameter *param);
 int ElementOptAddRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
 int ElementOptAddRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
 int ElementOptSub(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
@@ -87,10 +88,12 @@ int BroadcastMinimum(float *input0, float *input1, float *tile_input0, float *ti
                      int element_size, ArithmeticParameter *param);
 
 int ElementFloorDiv(float *input0, float *input1, float *output, int element_size);
+int ElementFloorDivInt(int *input0, int *input1, int *output, int element_size);
 int BroadcastFloorDiv(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                       int element_size, ArithmeticParameter *param);
 
 int ElementFloorMod(float *input0, float *input1, float *output, int element_size);
+int ElementFloorModInt(int *input0, int *input1, int *output, int element_size);
 int BroadcastFloorMod(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                       int element_size, ArithmeticParameter *param);
 

@@ -125,9 +125,11 @@ class ArithmeticCPUKernel : public LiteKernel {
         break;
       case PrimitiveType_FloorDiv:
         arithmetic_run_ = ElementFloorDiv;
+        arithmetic_run_int_ = ElementFloorDivInt;
         break;
       case PrimitiveType_FloorMod:
         arithmetic_run_ = ElementFloorMod;
+        arithmetic_run_int_ = ElementFloorModInt;
         break;
       case PrimitiveType_Equal:
         arithmetic_run_ = ElementEqual;
