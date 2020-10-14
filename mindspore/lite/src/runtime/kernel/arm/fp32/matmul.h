@@ -37,6 +37,9 @@ class MatmulCPUKernel : public MatmulBaseCPUKernel {
   void eval() override;
 
  private:
+  int MallocMatrixABuffer();
+  int MallocMatrixBBuffer();
+  int InitBias();
   void InitMatrixA(float *src_ptr, float *dst_ptr);
   void InitMatrixB(float *src_ptr, float *dst_ptr);
   void FreeTmpBuffer();
