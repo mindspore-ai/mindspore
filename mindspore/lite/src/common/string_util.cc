@@ -52,8 +52,8 @@ int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_b
     return RET_ERROR;
   }
 
-  auto *string_info = reinterpret_cast<int32_t *>(data);
-  auto *string_data = reinterpret_cast<char *>(data);
+  int32_t *string_info = reinterpret_cast<int32_t *>(data);
+  char *string_data = reinterpret_cast<char *>(data);
 
   string_info[0] = num;
   for (int i = 0; i <= num; i++) {
