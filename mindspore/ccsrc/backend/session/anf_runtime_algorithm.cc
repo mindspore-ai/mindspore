@@ -1327,6 +1327,8 @@ std::vector<int> AnfRuntimeAlgorithm::GetOutputMaxShape(const AnfNodePtr &anf_no
   } else if (shape->isa<abstract::SequeueShape>()) {
     auto shape_ptr = shape->cast<abstract::SequeueShapePtr>();
     return GetShapeFromSequeueShape(shape_ptr, index, kMaxShape);
+  } else if (shape->isa<abstract::NoShape>()) {
+    return {};
   } else {
     MS_LOG(EXCEPTION) << "Invalid Shape Type";
   }
@@ -1342,6 +1344,8 @@ std::vector<int> AnfRuntimeAlgorithm::GetOutputMinShape(const AnfNodePtr &anf_no
   } else if (shape->isa<abstract::SequeueShape>()) {
     auto shape_ptr = shape->cast<abstract::SequeueShapePtr>();
     return GetShapeFromSequeueShape(shape_ptr, index, kMinShape);
+  } else if (shape->isa<abstract::NoShape>()) {
+    return {};
   } else {
     MS_LOG(EXCEPTION) << "Invalid Shape Type";
   }
