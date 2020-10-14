@@ -20,7 +20,7 @@
 #include "nnacl/fp32/common_func.h"
 #include "src/kernel_registry.h"
 #ifndef PROGRAM_WITH_IL
-#include "src/runtime/kernel/opencl/cl/conv2d_transpose2x2.cl.inc"
+#include "src/runtime/kernel/opencl/cl/conv2d_transpose.cl.inc"
 #endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -31,22 +31,20 @@ namespace mindspore::kernel {
 
 int Conv2dTransposeOpenCLKernel::Init() {
   ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
-  if (param->kernel_h_ != 2 || param->kernel_w_ != 2 || param->stride_h_ != 2 || param->stride_w_ != 2) {
-    MS_LOG(ERROR) << "only support kh=kw=2 and stride_h=stride_w=2.";
+  if (param->pad_l_ != param->pad_r_ || param->kernel_h_ - param->stride_h_ != 2 * param->pad_l_ ||
+      param->pad_u_ != param->pad_d_ || param->kernel_w_ - param->stride_w_ != 2 * param->pad_u_) {
+    MS_LOG(ERROR) << "only support kernel - stride == 2 * pad";
     return RET_ERROR;
   }
-  if (param->pad_u_ != 0 || param->pad_l_ != 0) {
-    MS_LOG(ERROR) << "only support pad =0.";
-    return RET_ERROR;
-  }
-  std::string kernel_name = "conv2d_transpose2x2_" + std::string(EnumNameFormat(op_format_));
+  std::string kernel_name = "conv2d_transpose";
+  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
-  std::string source = conv2d_transpose2x2_source;
+  std::string source = conv2d_transpose_source;
   std::set<std::string> build_options;
-  std::string program_name = "conv2d_transpose2x2";
+  std::string program_name = "conv2d_transpose";
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
@@ -181,19 +179,22 @@ int Conv2dTransposeOpenCLKernel::Run() {
   int co4 = UP_DIV(co, C4NUM);
   int kh = param->kernel_h_;
   int kw = param->kernel_w_;
-  int pad = param->pad_u_;
+  int pad_h = param->pad_l_;
+  int pad_w = param->pad_u_;
+  int stride_h = param->stride_h_;
+  int stride_w = param->stride_w_;
   int oh = out_tensors_[0]->shape()[1];
   int ow = out_tensors_[0]->shape()[2];
   int h = in_tensors_[0]->shape()[1];
   int w = in_tensors_[0]->shape()[2];
   // local size should less than MAX_GROUP_SIZE
   std::vector<size_t> local = {16, 1, 16};
-  std::vector<size_t> global = {UP_ROUND((size_t)UP_ROUND(oh / 2, 2), local[0]),
-                                UP_ROUND((size_t)UP_ROUND(ow / 2, 2), local[1]), UP_ROUND(co4, local[2])};
+  std::vector<size_t> global = {UP_ROUND(co4, local[0]), UP_ROUND((size_t)UP_ROUND(ow / 2, stride_w), local[1]),
+                                UP_ROUND((size_t)UP_ROUND(oh / 2, stride_h), local[2])};
 
   cl_int2 kernel_size = {kh, kw};
-  cl_int2 stride = {2, 2};
-  cl_int2 padding = {pad, pad};
+  cl_int2 stride = {stride_h, stride_w};
+  cl_int2 padding = {pad_h, pad_w};
   cl_int4 src_size = {h, w, UP_DIV(ci, C4NUM), 1};
   cl_int4 dst_size = {oh, ow, UP_DIV(co, C4NUM), 1};
   int arg_cnt = 0;

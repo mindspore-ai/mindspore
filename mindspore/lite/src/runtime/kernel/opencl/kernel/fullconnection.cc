@@ -47,10 +47,6 @@ int FullConnectionOpenCLKernel::Init() {
     return RET_ERROR;
   }
   if (in_tensors_[0]->shape().size() == 4) {
-    if (in_tensors_[0]->shape()[3] % C4NUM != 0) {
-      MS_LOG(ERROR) << "fullconnection only support input shape channel % 4 = 0 if input shape size = 4";
-      return RET_ERROR;
-    }
     inShape = {in_tensors_[0]->shape()[0], in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2],
                in_tensors_[0]->shape()[3]};
   } else {
@@ -92,30 +88,30 @@ int FullConnectionOpenCLKernel::ReSize() { return RET_OK; }
 void FullConnectionOpenCLKernel::PadWeight() {
   // ABMCI @ ABCICO = ABMCO
   auto allocator = ocl_runtime_->GetAllocator();
-  int ci = inShape[1] * inShape[2] * inShape[3];
+  int ci = inShape[3];
   int ci4 = UP_DIV(ci, C4NUM);
   int co = outShape[1];
   int co4 = UP_DIV(co, C4NUM);
-  int a = 1;
-  int b = 1;
+  int h = inShape[1];
+  int w = inShape[2];
 
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
-  padWeight_ = allocator->Malloc(a * b * ci4 * co4 * C4NUM * C4NUM * dtype_size);
+  padWeight_ = allocator->Malloc(h * w * ci4 * co4 * C4NUM * C4NUM * dtype_size);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
   auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
   auto padWeightFp16 = reinterpret_cast<float16_t *>(padWeight_);
-  memset(padWeight_, 0x00, a * b * ci4 * co4 * C4NUM * C4NUM * dtype_size);
+  memset(padWeight_, 0x00, h * w * ci4 * co4 * C4NUM * C4NUM * dtype_size);
   auto originWeightFp32 = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->data_c());
   auto originWeightFp16 = reinterpret_cast<float16_t *>(in_tensors_.at(kWeightIndex)->data_c());
   bool isModelFp16 = in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16;
 
   // pad weight
-  // ABCICO -> AB(CI4)(CO4)(4 from CO)(4 from CI)
-  // if tranposeB, ABCOCI -> AB(CI4)(CO4)(4 from CO)(4 from CI)
+  // HWCICO -> (HWCI4)(CO4)(4 from CO)(4 from CI)
+  // if tranposeB, COHWCI -> (HWCI4)(CO4)(4 from CO)(4 from CI)
   int index = 0;
-  for (int aa = 0; aa < a; aa++) {
-    for (int bb = 0; bb < b; bb++) {
-      int baseAB = (aa * b + bb) * ci * co;
+  for (int hh = 0; hh < h; hh++) {
+    for (int ww = 0; ww < w; ww++) {
+      int baseHW = hh * w + ww;
       for (int i = 0; i < ci4; ++i) {
         for (int j = 0; j < co4; ++j) {
           for (int k = 0; k < C4NUM; ++k) {
@@ -123,9 +119,9 @@ void FullConnectionOpenCLKernel::PadWeight() {
               int src_ci = i * C4NUM + l;
               int src_co = j * C4NUM + k;
               if (src_ci < ci && src_co < co) {
-                int originId = baseAB + src_ci * co + src_co;
+                int originId = baseHW * ci * co + src_ci * co + src_co;
                 if (transposeB) {
-                  originId = baseAB + src_co * ci + src_ci;
+                  originId = src_co * ci * h * w + baseHW * ci + src_ci;
                 }
                 if (enable_fp16_) {
                   if (!isModelFp16) {
