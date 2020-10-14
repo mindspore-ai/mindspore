@@ -348,6 +348,38 @@ int ElementOptAdd(float *input0, float *input1, float *output, int element_size,
   return NNACL_OK;
 }
 
+int ElementOptAddInt(int *input0, int *input1, int *output, int element_size, ArithmeticParameter *param) {
+#ifdef ENABLE_NEON
+  int32x4_t vin0_opt = vdupq_n_s32(input0[0]);
+  int32x4_t vin1_opt = vdupq_n_s32(input1[0]);
+#endif
+  int index = 0;
+  if (param->in_elements_num0_ == 1) {
+#ifdef ENABLE_NEON
+    for (; index <= element_size - 4; index += C4NUM) {
+      int32x4_t vin1 = vld1q_s32(input1 + index);
+      int32x4_t vout = vaddq_s32(vin0_opt, vin1);
+      vst1q_s32(output + index, vout);
+    }
+#endif
+    for (; index < element_size; index++) {
+      output[index] = input0[0] + input1[index];
+    }
+  } else {
+#ifdef ENABLE_NEON
+    for (; index <= element_size - 4; index += C4NUM) {
+      int32x4_t vin0 = vld1q_s32(input0 + index);
+      int32x4_t vout = vaddq_s32(vin0, vin1_opt);
+      vst1q_s32(output + index, vout);
+    }
+#endif
+    for (; index < element_size; index++) {
+      output[index] = input0[index] + input1[0];
+    }
+  }
+  return NNACL_OK;
+}
+
 int ElementOptAddRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float32x4_t vin0_opt = vdupq_n_f32(input0[0]);
@@ -739,6 +771,13 @@ int ElementFloorMod(float *input0, float *input1, float *output, int element_siz
   return NNACL_OK;
 }
 
+int ElementFloorModInt(int *input0, int *input1, int *output, int element_size) {
+  for (int i = 0; i < element_size; i++) {
+    output[i] = input0[i] - (input0[i] / input1[i]) * input1[i];
+  }
+  return NNACL_OK;
+}
+
 int BroadcastFloorMod(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                       int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
@@ -748,6 +787,13 @@ int BroadcastFloorMod(float *input0, float *input1, float *tile_input0, float *t
 int ElementFloorDiv(float *input0, float *input1, float *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = floorf(input0[i] / input1[i]);
+  }
+  return NNACL_OK;
+}
+
+int ElementFloorDivInt(int *input0, int *input1, int *output, int element_size) {
+  for (int i = 0; i < element_size; i++) {
+    output[i] = input0[i] / input1[i];
   }
   return NNACL_OK;
 }
