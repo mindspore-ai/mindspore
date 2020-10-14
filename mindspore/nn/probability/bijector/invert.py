@@ -57,10 +57,18 @@ class Invert(Bijector):
                                      name=name,
                                      param=param)
         self._bijector = bijector
+        if hasattr(self._bijector, 'event_shape'):
+            self._event_shape = self.bijector.event_shape
+        else:
+            self._event_shape = ()
 
     @property
     def bijector(self):
         return self._bijector
+
+    @property
+    def event_shape(self):
+        return self._event_shape
 
     def inverse(self, y):
         return self.bijector("forward", y)

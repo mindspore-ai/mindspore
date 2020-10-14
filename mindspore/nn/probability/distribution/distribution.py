@@ -132,6 +132,10 @@ class Distribution(Cell):
     def broadcast_shape(self):
         return self._broadcast_shape
 
+    def _reset_parameters(self):
+        self.default_parameters = []
+        self.parameter_names = []
+
     def _add_parameter(self, value, name):
         """
         Cast `value` to a tensor and add it to `self.default_parameters`.
