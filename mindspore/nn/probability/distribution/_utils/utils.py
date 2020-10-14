@@ -206,12 +206,6 @@ def probs_to_logits(probs, is_binary=False):
     return P.Log()(ps_clamped)
 
 
-def check_type(data_type, value_type, name):
-    if not data_type in value_type:
-        raise TypeError(
-            f"For {name}, valid type include {value_type}, {data_type} is invalid")
-
-
 @constexpr
 def raise_none_error(name):
     raise TypeError(f"the type {name} should be subclass of Tensor."
