@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/hashtable_lookup.h"
+#include "src/common/string_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -30,8 +31,34 @@ int HashtableLookup::UnPackToFlatBuilder(const schema::Primitive *primitive, fla
 }
 #endif
 int HashtableLookup::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  PrimitiveC::InferShape(inputs_, outputs_);
-  return RET_INFER_INVALID;
+  auto input = inputs_.at(0);
+  auto values = inputs_.at(2);
+  auto output = outputs_.at(0);
+  auto hits = outputs_.at(1);
+  MS_ASSERT(input != nullptr);
+  MS_ASSERT(keys != nullptr);
+  MS_ASSERT(values != nullptr);
+  MS_ASSERT(output != nullptr);
+  MS_ASSERT(hits != nullptr);
+
+  std::vector<int> hits_shape;
+  hits_shape.push_back(input->DimensionSize(0));
+
+  output->set_data_type(values->data_type());
+  output->SetFormat(input->GetFormat());
+  hits->set_shape(hits_shape);
+  hits->set_data_type(kNumberTypeUInt8);
+  hits->SetFormat(input->GetFormat());
+
+  if (input->data_c() == nullptr) {
+    MS_LOG(INFO) << "Do infer shape in runtime.";
+    return RET_INFER_INVALID;
+  }
+  int string_num = lite::GetStringCount(input);
+  std::vector<int> output_shape;
+  output_shape.push_back(string_num == 0 ? 1 : string_num);
+  output->set_shape(output_shape);
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

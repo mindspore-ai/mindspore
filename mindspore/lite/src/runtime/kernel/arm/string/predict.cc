@@ -68,7 +68,7 @@ std::vector<LabelInfo> PredictCPUKernel::GetLabelInfo() {
   return label_info_vec;
 }
 
-bool LabelInfoCmp(const LabelInfo &lhs, const LabelInfo &rhs) { return lhs.weight > rhs.weight; }
+static bool LabelInfoCmp(const LabelInfo &lhs, const LabelInfo &rhs) { return lhs.weight > rhs.weight; }
 
 int PredictCPUKernel::Run() {
   auto ret = Prepare();
