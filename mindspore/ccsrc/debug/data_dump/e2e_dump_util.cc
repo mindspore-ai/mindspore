@@ -20,6 +20,7 @@
 #include "common/trans.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
+#include "runtime/device/kernel_runtime_manager.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #include "debug/tensor_load.h"
@@ -192,6 +193,15 @@ void E2eDumpUtil::DumpParameters(const session::KernelGraph *graph, const std::s
   }
 }
 
+uint32_t ConvertPhysicalDeviceId(uint32_t device_id) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  auto kernel_runtime = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(device_target, device_id);
+  MS_EXCEPTION_IF_NULL(kernel_runtime);
+  return kernel_runtime->device_id();
+}
+
 bool E2eDumpUtil::DumpData(const session::KernelGraph *graph, uint32_t device_id, Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
@@ -208,6 +218,7 @@ bool E2eDumpUtil::DumpData(const session::KernelGraph *graph, uint32_t device_id
     }
   }
   MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
+  auto physical_device = ConvertPhysicalDeviceId(device_id);
 
   std::string net_name = dump_json_parser.net_name();
   std::string iterator = std::to_string(dump_json_parser.cur_dump_iter());
@@ -215,7 +226,7 @@ bool E2eDumpUtil::DumpData(const session::KernelGraph *graph, uint32_t device_id
   if (dump_path.back() != '/') {
     dump_path += "/";
   }
-  dump_path += (net_name + "/device_" + std::to_string(device_id) + "/iteration_" + iterator);
+  dump_path += (net_name + "/device_" + std::to_string(physical_device) + "/iteration_" + iterator);
   DumpInput(graph, dump_path, debugger);
   DumpOutput(graph, dump_path, debugger);
   DumpParameters(graph, dump_path, debugger);
