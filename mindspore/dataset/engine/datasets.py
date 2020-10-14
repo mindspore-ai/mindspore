@@ -3047,7 +3047,10 @@ class MindDataset(MappableDataset):
     A source dataset that reads MindRecord files.
 
     Args:
-        dataset_file (Union[str, list[str]]): One of file names or file list in dataset.
+        dataset_file (Union[str, list[str]]): If dataset_file is a str, it represents for
+            a file name of one component of a mindrecord source, other files with identical source
+            in the same path will be found and loaded automatically. If dataset_file is a list,
+            it represents for a list of dataset files to be read directly.
         columns_list (list[str], optional): List of columns to be read (default=None).
         num_parallel_workers (int, optional): The number of readers (default=None).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset
@@ -3059,7 +3062,7 @@ class MindDataset(MappableDataset):
             dataset (default=None, sampler is exclusive
             with shuffle and block_reader). Support list: SubsetRandomSampler,
             PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
-        padded_sample (dict, optional): Samples will be appended to dataset, which
+        padded_sample (dict, optional): Samples will be appended to dataset, where
             keys are the same as column_list.
         num_padded (int, optional): Number of padding samples. Dataset size
             plus num_padded should be divisible by num_shards.

@@ -31,6 +31,7 @@
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/manifest_op.h"
+#include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
 #endif
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
@@ -222,6 +223,27 @@ std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const
   return ds->ValidateParams() ? ds : nullptr;
 }
 #endif
+
+// Function to create a MindDataDataset.
+std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                                          const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
+                                          int64_t num_padded) {
+  auto ds = std::make_shared<MindDataDataset>(dataset_file, columns_list, sampler, padded_sample, num_padded);
+
+  // Call derived class validation method.
+  return ds->ValidateParams() ? ds : nullptr;
+}
+
+// Function to create a MindDataDataset.
+std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
+                                          const std::vector<std::string> &columns_list,
+                                          const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
+                                          int64_t num_padded) {
+  auto ds = std::make_shared<MindDataDataset>(dataset_files, columns_list, sampler, padded_sample, num_padded);
+
+  // Call derived class validation method.
+  return ds->ValidateParams() ? ds : nullptr;
+}
 
 // Function to create a MnistDataset.
 std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage,
@@ -706,6 +728,11 @@ Status ValidateDatasetFilesParam(const std::string &dataset_name, const std::vec
     Path dataset_file(f);
     if (!dataset_file.Exists()) {
       std::string err_msg = dataset_name + ": dataset file: [" + f + "] is invalid or does not exist.";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+    if (access(dataset_file.toString().c_str(), R_OK) == -1) {
+      std::string err_msg = dataset_name + ": No access to specified dataset file: " + f;
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
@@ -1384,6 +1411,146 @@ std::vector<std::shared_ptr<DatasetOp>> ManifestDataset::Build() {
                                  class_index_, std::move(schema), std::move(sampler_->Build()), usage_);
 
   node_ops.push_back(manifest_op);
+  return node_ops;
+}
+#endif
+
+#ifndef ENABLE_ANDROID
+MindDataDataset::MindDataDataset(const std::vector<std::string> &dataset_files,
+                                 const std::vector<std::string> &columns_list,
+                                 const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
+                                 int64_t num_padded)
+    : dataset_file_(std::string()),
+      dataset_files_(dataset_files),
+      search_for_pattern_(false),
+      columns_list_(columns_list),
+      sampler_(sampler),
+      padded_sample_(padded_sample),
+      sample_bytes_({}),
+      num_padded_(num_padded) {}
+
+MindDataDataset::MindDataDataset(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                                 const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
+                                 int64_t num_padded)
+    : dataset_file_(dataset_file),
+      dataset_files_({}),
+      search_for_pattern_(true),
+      columns_list_(columns_list),
+      sampler_(sampler),
+      padded_sample_(padded_sample),
+      sample_bytes_({}),
+      num_padded_(num_padded) {}
+
+Status MindDataDataset::ValidateParams() {
+  if (!search_for_pattern_ && dataset_files_.size() > 4096) {
+    std::string err_msg =
+      "MindDataDataset: length of dataset_file must be less than or equal to 4096, dataset_file length: " +
+      std::to_string(dataset_file_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  std::vector<std::string> dataset_file_vec =
+    search_for_pattern_ ? std::vector<std::string>{dataset_file_} : dataset_files_;
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("MindDataDataset", dataset_file_vec));
+
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("MindDataDataset", sampler_));
+
+  if (!columns_list_.empty()) {
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MindDataDataset", "columns_list", columns_list_));
+  }
+
+  if (padded_sample_ != nullptr) {
+    if (num_padded_ < 0) {
+      std::string err_msg =
+        "MindDataDataset: num_padded must be greater than or equal to zero, num_padded: " + std::to_string(num_padded_);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+    if (columns_list_.empty()) {
+      std::string err_msg = "MindDataDataset: padded_sample is specified and requires columns_list as well";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+    for (std::string &column : columns_list_) {
+      if (padded_sample_.find(column) == padded_sample_.end()) {
+        std::string err_msg =
+          "MindDataDataset: " + column + " in columns_list does not match any column in padded_sample";
+        MS_LOG(ERROR) << err_msg << ", padded_sample: " << padded_sample_;
+        RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      }
+    }
+  }
+  if (num_padded_ > 0) {
+    if (padded_sample_ == nullptr) {
+      std::string err_msg = "MindDataDataset: num_padded is specified but padded_sample is not";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+
+  return Status::OK();
+}
+
+// Helper function to create runtime sampler for minddata dataset
+Status MindDataDataset::BuildMindDatasetSamplerChain(
+  const std::shared_ptr<SamplerObj> &sampler, std::vector<std::shared_ptr<mindrecord::ShardOperator>> *operators_,
+  int64_t num_padded) {
+  std::shared_ptr<mindrecord::ShardOperator> op = sampler->BuildForMindDataset();
+  if (op == nullptr) {
+    std::string err_msg =
+      "MindDataDataset: Unsupported sampler is supplied for MindDataset. Supported sampler list: "
+      "SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler and DistributedSampler";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  std::stack<std::shared_ptr<mindrecord::ShardOperator>> stack_ops;
+  while (op != nullptr) {
+    auto sampler_op = std::dynamic_pointer_cast<mindrecord::ShardDistributedSample>(op);
+    if (sampler_op && num_padded > 0) {
+      sampler_op->SetNumPaddedSamples(num_padded);
+      stack_ops.push(sampler_op);
+    } else {
+      stack_ops.push(op);
+    }
+    op = op->GetChildOp();
+  }
+  while (!stack_ops.empty()) {
+    operators_->push_back(stack_ops.top());
+    stack_ops.pop();
+  }
+  return Status::OK();
+}
+
+// Helper function to set sample_bytes from py::byte type
+void MindDataDataset::SetSampleBytes(std::map<std::string, std::string> *sample_bytes) {
+  sample_bytes_ = *sample_bytes;
+}
+
+std::vector<std::shared_ptr<DatasetOp>> MindDataDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  std::vector<std::shared_ptr<ShardOperator>> operators_;
+  RETURN_EMPTY_IF_ERROR(BuildMindDatasetSamplerChain(sampler_, &operators_, num_padded_));
+
+  std::shared_ptr<MindRecordOp> mindrecord_op;
+  // If pass a string to MindData(), it will be treated as a pattern to search for matched files,
+  // else if pass a vector to MindData(), it will be treated as specified files to be read
+  if (search_for_pattern_) {
+    std::vector<std::string> dataset_file_vec_ = {dataset_file_};
+    mindrecord_op = std::make_shared<MindRecordOp>(num_workers_, rows_per_buffer_, dataset_file_vec_,
+                                                   search_for_pattern_, connector_que_size_, columns_list_, operators_,
+                                                   num_padded_, padded_sample_, sample_bytes_);
+  } else {
+    mindrecord_op = std::make_shared<MindRecordOp>(num_workers_, rows_per_buffer_, dataset_files_, search_for_pattern_,
+                                                   connector_que_size_, columns_list_, operators_, num_padded_,
+                                                   padded_sample_, sample_bytes_);
+  }
+
+  RETURN_EMPTY_IF_ERROR(mindrecord_op->Init());
+  node_ops.push_back(mindrecord_op);
+
   return node_ops;
 }
 #endif

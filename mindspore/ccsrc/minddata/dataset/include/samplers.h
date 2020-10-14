@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
 
 namespace mindspore {
 namespace dataset {
@@ -30,12 +31,24 @@ namespace api {
 
 class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
  public:
+  /// \brief Constructor
   SamplerObj();
 
+  /// \brief Destructor
   ~SamplerObj() = default;
 
-  virtual std::shared_ptr<Sampler> Build() = 0;
+  /// \brief Pure virtual function for derived class to implement parameters validation
+  /// \return bool true if all the parameters are valid
   virtual bool ValidateParams() = 0;
+
+  /// \brief Pure virtual function to convert a SamplerObj class into a runtime sampler object
+  /// \return Shared pointers to the newly created Sampler
+  virtual std::shared_ptr<Sampler> Build() = 0;
+
+  /// \brief Virtual function to convert a SamplerObj class into a runtime mindrecord sampler object,
+  ///     only override by SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler
+  /// \return Shared pointers to the newly created Sampler
+  virtual std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() { return nullptr; }
 };
 
 class DistributedSamplerObj;
@@ -110,6 +123,8 @@ class DistributedSamplerObj : public SamplerObj {
 
   std::shared_ptr<Sampler> Build() override;
 
+  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
+
   bool ValidateParams() override;
 
  private:
@@ -130,6 +145,8 @@ class PKSamplerObj : public SamplerObj {
 
   std::shared_ptr<Sampler> Build() override;
 
+  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
+
   bool ValidateParams() override;
 
  private:
@@ -146,6 +163,8 @@ class RandomSamplerObj : public SamplerObj {
 
   std::shared_ptr<Sampler> Build() override;
 
+  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
+
   bool ValidateParams() override;
 
  private:
@@ -161,6 +180,8 @@ class SequentialSamplerObj : public SamplerObj {
 
   std::shared_ptr<Sampler> Build() override;
 
+  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
+
   bool ValidateParams() override;
 
  private:
@@ -175,6 +196,8 @@ class SubsetRandomSamplerObj : public SamplerObj {
   ~SubsetRandomSamplerObj() = default;
 
   std::shared_ptr<Sampler> Build() override;
+
+  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
 
   bool ValidateParams() override;
 

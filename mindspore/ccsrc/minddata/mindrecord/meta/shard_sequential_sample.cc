@@ -22,7 +22,7 @@ using mindspore::MsLogLevel::ERROR;
 
 namespace mindspore {
 namespace mindrecord {
-ShardSequentialSample::ShardSequentialSample(int n, int offset)
+ShardSequentialSample::ShardSequentialSample(int64_t n, int64_t offset)
     : ShardSample(n), offset_(offset), per_(0.0f), per_offset_(0.0f) {}
 
 ShardSequentialSample::ShardSequentialSample(float per, float per_offset)

@@ -23,10 +23,28 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/pk_sampler.h"
 
+#include "minddata/mindrecord/include/shard_distributed_sample.h"
+#include "minddata/mindrecord/include/shard_operator.h"
+#include "minddata/mindrecord/include/shard_pk_sample.h"
+#include "minddata/mindrecord/include/shard_sample.h"
+#include "minddata/mindrecord/include/shard_sequential_sample.h"
+#include "minddata/mindrecord/include/shard_shuffle.h"
+#include "minddata/dataset/util/random.h"
+
 namespace mindspore {
 namespace dataset {
 namespace api {
 
+#define RETURN_NULL_IF_ERROR(_s) \
+  do {                           \
+    Status __rc = (_s);          \
+    if (__rc.IsError()) {        \
+      MS_LOG(ERROR) << __rc;     \
+      return nullptr;            \
+    }                            \
+  } while (false)
+
+// Constructor
 SamplerObj::SamplerObj() {}
 
 /// Function to create a Distributed Sampler.
@@ -126,8 +144,17 @@ bool DistributedSamplerObj::ValidateParams() {
 }
 
 std::shared_ptr<Sampler> DistributedSamplerObj::Build() {
-  return std::make_shared<dataset::DistributedSampler>(num_samples_, num_shards_, shard_id_, shuffle_, seed_, offset_,
-                                                       even_dist_);
+  // runtime sampler object
+  auto sampler = std::make_shared<dataset::DistributedSampler>(num_samples_, num_shards_, shard_id_, shuffle_, seed_,
+                                                               offset_, even_dist_);
+  return sampler;
+}
+
+std::shared_ptr<mindrecord::ShardOperator> DistributedSamplerObj::BuildForMindDataset() {
+  // runtime mindrecord sampler object
+  auto mind_sampler = std::make_shared<mindrecord::ShardDistributedSample>(num_shards_, shard_id_, shuffle_, seed_,
+                                                                           num_samples_, offset_);
+  return mind_sampler;
 }
 
 // PKSampler
@@ -148,7 +175,23 @@ bool PKSamplerObj::ValidateParams() {
 }
 
 std::shared_ptr<Sampler> PKSamplerObj::Build() {
-  return std::make_shared<dataset::PKSampler>(num_samples_, num_val_, shuffle_);
+  // runtime sampler object
+  auto sampler = std::make_shared<dataset::PKSampler>(num_samples_, num_val_, shuffle_);
+
+  return sampler;
+}
+
+std::shared_ptr<mindrecord::ShardOperator> PKSamplerObj::BuildForMindDataset() {
+  // runtime mindrecord sampler object
+  std::shared_ptr<mindrecord::ShardOperator> mind_sampler;
+  if (shuffle_ == true) {
+    mind_sampler = std::make_shared<mindrecord::ShardPkSample>("label", num_val_, std::numeric_limits<int64_t>::max(),
+                                                               GetSeed(), num_samples_);
+  } else {
+    mind_sampler = std::make_shared<mindrecord::ShardPkSample>("label", num_val_, num_samples_);
+  }
+
+  return mind_sampler;
 }
 
 // RandomSampler
@@ -164,9 +207,20 @@ bool RandomSamplerObj::ValidateParams() {
 }
 
 std::shared_ptr<Sampler> RandomSamplerObj::Build() {
+  // runtime sampler object
   bool reshuffle_each_epoch = true;
   auto sampler = std::make_shared<dataset::RandomSampler>(num_samples_, replacement_, reshuffle_each_epoch);
+
   return sampler;
+}
+
+std::shared_ptr<mindrecord::ShardOperator> RandomSamplerObj::BuildForMindDataset() {
+  // runtime mindrecord sampler object
+  bool reshuffle_each_epoch_ = true;
+  auto mind_sampler =
+    std::make_shared<mindrecord::ShardShuffle>(GetSeed(), num_samples_, replacement_, reshuffle_each_epoch_);
+
+  return mind_sampler;
 }
 
 // SequentialSampler
@@ -188,8 +242,17 @@ bool SequentialSamplerObj::ValidateParams() {
 }
 
 std::shared_ptr<Sampler> SequentialSamplerObj::Build() {
+  // runtime sampler object
   auto sampler = std::make_shared<dataset::SequentialSampler>(num_samples_, start_index_);
+
   return sampler;
+}
+
+std::shared_ptr<mindrecord::ShardOperator> SequentialSamplerObj::BuildForMindDataset() {
+  // runtime mindrecord sampler object
+  auto mind_sampler = std::make_shared<mindrecord::ShardSequentialSample>(num_samples_, start_index_);
+
+  return mind_sampler;
 }
 
 // SubsetRandomSampler
@@ -206,8 +269,17 @@ bool SubsetRandomSamplerObj::ValidateParams() {
 }
 
 std::shared_ptr<Sampler> SubsetRandomSamplerObj::Build() {
+  // runtime sampler object
   auto sampler = std::make_shared<dataset::SubsetRandomSampler>(num_samples_, indices_);
+
   return sampler;
+}
+
+std::shared_ptr<mindrecord::ShardOperator> SubsetRandomSamplerObj::BuildForMindDataset() {
+  // runtime mindrecord sampler object
+  auto mind_sampler = std::make_shared<mindrecord::ShardSample>(indices_, GetSeed());
+
+  return mind_sampler;
 }
 
 // WeightedRandomSampler
