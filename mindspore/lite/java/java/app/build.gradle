@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
 
 android {
     compileSdkVersion 30
@@ -8,7 +9,7 @@ android {
         minSdkVersion 19
         targetSdkVersion 30
         versionCode 1
-        versionName "1.0"
+        versionName project.hasProperty("LITE_VERSION") ? LITE_VERSION : ""
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -47,3 +48,21 @@ dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     testImplementation 'junit:junit:4.12'
 }
+
+publishing {
+    repositories {
+        maven {
+            url uri("build")
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            groupId = 'mindspore'
+            artifactId = 'mindspore-lite'
+            version = project.hasProperty("LITE_VERSION") ? LITE_VERSION : ""
+            String path = project.buildDir.path + File.separator + "outputs" + File.separator + "aar" + File.separator + "mindspore-lite.aar";
+            artifact(path)
+        }
+    }
+}
+

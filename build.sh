@@ -304,7 +304,7 @@ checkopts()
           LITE_LANGUAGE="cpp"
         elif [[ "$OPTARG" == "java" ]]; then
           LITE_LANGUAGE="java"
-	  ENABLE_CONVERTER="off"
+          ENABLE_CONVERTER="off"
         elif [[ "$OPTARG" == "object-c" ]]; then
           LITE_LANGUAGE="object-c"
         else
@@ -795,8 +795,12 @@ build_java() {
   gradle wrapper
   ./gradlew build
 
+  gradle publish -PLITE_VERSION=${VERSION_STR}-SNAPSHOT
+
+  cd ${JAVA_PATH}/java/app/build
+  zip -r mindspore-lite-maven-${VERSION_STR}.zip mindspore
   # copy output
-  cp ${JAVA_PATH}/java/app/build/outputs/aar/mindspore-lite.aar ${BASEPATH}/output/mindspore-lite-${VERSION_STR}.aar
+  cp mindspore-lite-maven-${VERSION_STR}.zip ${BASEPATH}/output/
   exit 0
 }
 

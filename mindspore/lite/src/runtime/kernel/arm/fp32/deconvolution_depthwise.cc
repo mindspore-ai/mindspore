@@ -33,7 +33,7 @@ DeconvolutionDepthwiseCPUKernel::~DeconvolutionDepthwiseCPUKernel() {
     sliding_ = nullptr;
   }
   if (packed_weight_ != nullptr) {
-    delete packed_weight_;
+    free(packed_weight_);
     packed_weight_ = nullptr;
   }
 }

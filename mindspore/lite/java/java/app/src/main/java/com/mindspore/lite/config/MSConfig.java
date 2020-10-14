@@ -23,14 +23,6 @@ public class MSConfig {
         this.msConfigPtr = 0;
     }
 
-    public long getMSConfigPtr() {
-        return msConfigPtr;
-    }
-
-    public void setMSConfigPtr(long msConfigPtr) {
-        this.msConfigPtr = msConfigPtr;
-    }
-
     public boolean init(int deviceType, int threadNum, int cpuBindMode) {
         this.msConfigPtr = createMSConfig(deviceType, threadNum, cpuBindMode);
         return this.msConfigPtr != 0;
@@ -51,6 +43,10 @@ public class MSConfig {
     public void free() {
         this.free(this.msConfigPtr);
         this.msConfigPtr = 0;
+    }
+
+    public long getMSConfigPtr() {
+        return msConfigPtr;
     }
 
     private native long createMSConfig(int deviceType, int threadNum, int cpuBindMode);
