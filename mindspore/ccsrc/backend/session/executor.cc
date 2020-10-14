@@ -245,6 +245,10 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
                              const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(session);
   MS_EXCEPTION_IF_NULL(outputs);
+  if (session != nullptr) {
+    RunGraph(session, graph_id, inputs, outputs);
+    return;
+  }
   auto task = std::make_shared<RunGraphTask>();
   task->session_ = session;
   task->graph_id_ = graph_id;
