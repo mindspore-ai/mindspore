@@ -518,13 +518,6 @@ bool NormalizeOperation::ValidateParams() {
     MS_LOG(ERROR) << "Normalize: mean vector has incorrect size: " << mean_.size();
     return false;
   }
-  // check mean value
-  for (int i = 0; i < mean_.size(); ++i) {
-    if (mean_[i] < 0.0f || mean_[i] > 255.0f || CmpFloat(mean_[i], 0.0f)) {
-      MS_LOG(ERROR) << "Normalize: mean vector has incorrect value: " << mean_[i];
-      return false;
-    }
-  }
   if (std_.size() != 3) {
     MS_LOG(ERROR) << "Normalize: std vector has incorrect size: " << std_.size();
     return false;

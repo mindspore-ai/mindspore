@@ -90,11 +90,9 @@ AlbumOp::AlbumOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir
 // Helper function for string comparison
 // album sorts the files via numerical values, so this is not a simple string comparison
 bool StrComp(const std::string &a, const std::string &b) {
-  // returns 1 if string a represent a numeric value
-  // less than string b
-  // quite similar to strcmp operation
+  // returns 1 if string "a" represent a numeric value less than string "b"
   // the following will always return name, provided there is only one "." character in name
-  // "." character is guranteed since the extension is checked befor this function call.
+  // "." character is guaranteed to exist since the extension is checked befor this function call.
   int64_t value_a = std::atoi(a.substr(1, a.find(".")).c_str());
   int64_t value_b = std::atoi(b.substr(1, b.find(".")).c_str());
   return value_a < value_b;

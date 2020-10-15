@@ -723,15 +723,9 @@ TEST_F(MindDataTestPipeline, TestNormalize) {
 TEST_F(MindDataTestPipeline, TestNormalizeFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizeFail with invalid parameters.";
 
-  // mean value 0.0
-  std::shared_ptr<TensorOperation> normalize =
-    mindspore::dataset::api::vision::Normalize({0.0, 115.0, 100.0}, {70.0, 68.0, 71.0});
-  EXPECT_EQ(normalize, nullptr);
   // std value at 0.0
-  normalize = mindspore::dataset::api::vision::Normalize({121.0, 115.0, 100.0}, {0.0, 68.0, 71.0});
-  EXPECT_EQ(normalize, nullptr);
-  // mean value 300.0 greater than 255.0
-  normalize = mindspore::dataset::api::vision::Normalize({300.0, 115.0, 100.0}, {70.0, 68.0, 71.0});
+  std::shared_ptr<TensorOperation> normalize =
+    mindspore::dataset::api::vision::Normalize({121.0, 115.0, 100.0}, {0.0, 68.0, 71.0});
   EXPECT_EQ(normalize, nullptr);
   // normalize with 2 values (not 3 values) for mean
   normalize = mindspore::dataset::api::vision::Normalize({121.0, 115.0}, {70.0, 68.0, 71.0});
