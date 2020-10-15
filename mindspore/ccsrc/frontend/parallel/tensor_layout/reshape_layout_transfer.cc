@@ -36,11 +36,14 @@ std::shared_ptr<ReshapeLayoutTransfer> ReshapeLayoutTransfer::UnifyDeviceArrange
   while (!is_unified) {
     std::shared_ptr<ReshapeLayoutTransfer> temp_layout_ptr = out_layout_ptr->ExtendFromTensorShapeByTo();
     if (temp_layout_ptr == nullptr) {
-      return nullptr;
+      out_layout_ptr->SetExpandAble(false);
+      return out_layout_ptr;
     }
     out_layout_ptr = temp_layout_ptr->ExtendToTensorShapeByFrom();
     if (out_layout_ptr == nullptr) {
-      return nullptr;
+      std::shared_ptr<ReshapeLayoutTransfer> layout_ptr = std::make_shared<ReshapeLayoutTransfer>(*this);
+      layout_ptr->SetExpandAble(false);
+      return layout_ptr;
     }
     is_unified = out_layout_ptr->IsSameTensorShape();
   }
