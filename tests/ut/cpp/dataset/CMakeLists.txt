@@ -70,12 +70,13 @@ SET(DE_UT_SRCS
         stand_alone_samplers_test.cc
         status_test.cc
         task_manager_test.cc
-        tensor_test.cc
         tensor_row_test.cc
         tensor_string_test.cc
+        tensor_test.cc
         tensorshape_test.cc
         tfReader_op_test.cc
         to_float16_op_test.cc
+        tree_adapter_test.cc
         type_cast_op_test.cc
         zip_op_test.cc
         random_resize_op_test.cc
@@ -112,8 +113,8 @@ SET(DE_UT_SRCS
         c_api_dataset_csv_test.cc
         c_api_dataset_manifest_test.cc
         c_api_dataset_randomdata_test.cc
-	c_api_dataset_textfile_test.cc
-	c_api_dataset_tfrecord_test.cc
+        c_api_dataset_textfile_test.cc
+        c_api_dataset_tfrecord_test.cc
         c_api_dataset_voc_test.cc
         c_api_datasets_test.cc
         c_api_dataset_iterator_test.cc

@@ -14,6 +14,7 @@ add_library(engine OBJECT
     data_buffer.cc
     data_schema.cc
     dataset_iterator.cc
+    tree_adapter.cc
     )
 
 if (ENABLE_PYTHON)
