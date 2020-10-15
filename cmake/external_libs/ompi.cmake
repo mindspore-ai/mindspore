@@ -1,10 +1,10 @@
 
 set(ompi_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 mindspore_add_pkg(ompi
-        VER 3.1.5
+        VER 4.0.3
         LIBS mpi
-        URL https://github.com/open-mpi/ompi/archive/v3.1.5.tar.gz
-        MD5 f7f220b26532c11a2efbc0bb73af3282
+        URL https://github.com/open-mpi/ompi/archive/v4.0.3.tar.gz
+        MD5 86cb724e8fe71741ad3be4e7927928a2
         PRE_CONFIGURE_COMMAND ./autogen.pl
         CONFIGURE_COMMAND ./configure)
 include_directories(${ompi_INC})
