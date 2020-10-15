@@ -378,21 +378,28 @@ int Benchmark::RunBenchmark() {
     std::cerr << "New context failed while running " << model_name.c_str() << std::endl;
     return RET_ERROR;
   }
+  auto &device_ctx = context->device_list_[0];
   if (flags_->device_ == "CPU") {
-    context->device_type_ = lite::DT_CPU;
+    device_ctx.device_type_ = lite::DT_CPU;
   } else if (flags_->device_ == "GPU") {
-    context->device_type_ = lite::DT_GPU;
+    device_ctx.device_type_ = lite::DT_GPU;
   }
 
-  if (flags_->cpu_bind_mode_ == 2) {
-    context->cpu_bind_mode_ = MID_CPU;
-  } else if (flags_->cpu_bind_mode_ == 1) {
-    context->cpu_bind_mode_ = HIGHER_CPU;
-  } else {
-    context->cpu_bind_mode_ = NO_BIND;
+  if (device_ctx.device_type_ == DT_CPU) {
+    if (flags_->cpu_bind_mode_ == MID_CPU) {
+      device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = MID_CPU;
+    } else if (flags_->cpu_bind_mode_ == HIGHER_CPU) {
+      device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = HIGHER_CPU;
+    } else {
+      device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
+    }
+    device_ctx.device_info_.cpu_device_info_.enable_float16_ = flags_->enable_fp16_;
+  }
+  if (device_ctx.device_type_ == DT_GPU) {
+    device_ctx.device_info_.gpu_device_info_.enable_float16_ = flags_->enable_fp16_;
   }
   context->thread_num_ = flags_->num_threads_;
-  context->enable_float16_ = flags_->enable_fp16_;
+
   session_ = session::LiteSession::CreateSession(context.get());
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "CreateSession failed while running ", model_name.c_str();

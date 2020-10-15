@@ -108,7 +108,6 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -182,7 +181,6 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
   uint64_t time_avg = 0;
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -255,7 +253,6 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -328,7 +325,6 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
   uint64_t time_avg = 0;
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -401,7 +397,6 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -474,7 +469,6 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
   uint64_t time_avg = 0;
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -542,7 +536,6 @@ TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
   uint64_t time_avg = 0;
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -644,7 +637,6 @@ TEST_F(TestConvolutionGradFp32, ConvFp32Dilation2Group2Stride2FilterGrad) {
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -745,7 +737,6 @@ TEST_F(TestConvolutionGradFp32, ConvGroup2Dilation2Stride2) {
   uint64_t time_avg = 0;
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 

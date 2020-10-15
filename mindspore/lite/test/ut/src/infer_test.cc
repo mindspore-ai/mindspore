@@ -106,8 +106,9 @@ TEST_F(InferTest, TestConvNode) {
   meta_graph.reset();
   content = nullptr;
   auto context = new lite::InnerContext;
-  context->cpu_bind_mode_ = lite::NO_BIND;
-  context->device_type_ = lite::DT_CPU;
+  auto &device_list = context->device_list_;
+  lite::DeviceContext device_ctx = {lite::DT_CPU, {false, lite::NO_BIND}};
+  device_list.push_back(device_ctx);
   context->thread_num_ = 4;
   ASSERT_EQ(lite::RET_OK, context->Init());
   auto session = session::LiteSession::CreateSession(context);
@@ -205,8 +206,9 @@ TEST_F(InferTest, TestAddNode) {
   meta_graph.reset();
   content = nullptr;
   auto context = new lite::InnerContext;
-  context->cpu_bind_mode_ = lite::NO_BIND;
-  context->device_type_ = lite::DT_CPU;
+  auto &device_list = context->device_list_;
+  lite::DeviceContext device_ctx = {lite::DT_CPU, {false, lite::NO_BIND}};
+  device_list.push_back(device_ctx);
   context->thread_num_ = 4;
   ASSERT_EQ(lite::RET_OK, context->Init());
   auto session = session::LiteSession::CreateSession(context);
@@ -295,8 +297,9 @@ TEST_F(InferTest, TestParallelExecutor) {
   meta_graph.reset();
   content = nullptr;
   auto context = new lite::InnerContext;
-  context->cpu_bind_mode_ = lite::NO_BIND;
-  context->device_type_ = lite::DT_CPU;
+  auto &device_list = context->device_list_;
+  lite::DeviceContext device_ctx = {lite::DT_CPU, {false, lite::NO_BIND}};
+  device_list.push_back(device_ctx);
   context->thread_num_ = 4;
   ASSERT_EQ(lite::RET_OK, context->Init());
   auto session = new SessionWithParallelExecutor();
@@ -336,8 +339,7 @@ TEST_F(InferTest, TestModel) {
   ASSERT_NE(nullptr, model);
   delete[] buf[0];
   auto context = new lite::InnerContext;
-  context->cpu_bind_mode_ = lite::NO_BIND;
-  context->device_type_ = lite::DT_CPU;
+  context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 4;
   ASSERT_EQ(lite::RET_OK, context->Init());
   auto session = session::LiteSession::CreateSession(context);

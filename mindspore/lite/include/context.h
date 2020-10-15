@@ -37,13 +37,35 @@ typedef enum {
   DT_NPU  /**< NPU device type, not supported yet */
 } DeviceType;
 
+/// \brief CpuDeviceInfo defined for CPU's configuration information.
+typedef struct {
+  bool enable_float16_ = false; /**< prior enable float16 inference */
+  CpuBindMode cpu_bind_mode_ = MID_CPU;
+} CpuDeviceInfo;
+
+/// \brief GpuDeviceInfo defined for GPU's configuration information.
+typedef struct {
+  bool enable_float16_ = false; /**< prior enable float16 inference */
+} GpuDeviceInfo;
+
+/// \brief DeviceInfo defined for backend's configuration information.
+union DeviceInfo {
+  CpuDeviceInfo cpu_device_info_;
+  GpuDeviceInfo gpu_device_info_;
+};
+
+/// \brief DeviceContext defined for holding backend's configuration information.
+struct DeviceContext {
+  DeviceType device_type_ = DT_CPU;
+  DeviceInfo device_info_;
+};
+
 /// \brief Context defined for holding environment variables during runtime.
 struct Context {
-  bool enable_float16_ = false; /**< prior enable float16 inference */
-  DeviceType device_type_ = DT_CPU;
+  std::string vendor_name_;
   int thread_num_ = 2; /**< thread number config for thread pool */
   AllocatorPtr allocator = nullptr;
-  CpuBindMode cpu_bind_mode_ = MID_CPU;
+  DeviceContextVector device_list_ = {{DT_CPU, {false, MID_CPU}}};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_INCLUDE_CONTEXT_H_

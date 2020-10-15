@@ -68,7 +68,6 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   std::vector<lite::Tensor *> outputs = {&dx_tensor, &dscale_tensor, &dbias_tensor};
 
   lite::InnerContext ctx;
-  ctx.device_type_ = lite::DT_CPU;
   ctx.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
 
@@ -171,7 +170,6 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_FusedBatchNorm};
 
   mindspore::lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 

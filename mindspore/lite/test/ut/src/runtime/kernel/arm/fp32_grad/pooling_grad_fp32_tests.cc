@@ -141,7 +141,6 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
   std::vector<lite::Tensor *> outputs = {&dx_tensor};
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -206,7 +205,6 @@ TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
   std::vector<lite::Tensor *> outputs = {&dx_tensor};
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -269,7 +267,6 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -334,7 +331,6 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -455,7 +451,6 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
   std::vector<lite::Tensor *> maxpool_outputs = {&out_tensor};
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -530,7 +525,6 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
   std::vector<lite::Tensor *> maxpool_outputs = {&out_tensor};
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
@@ -605,7 +599,6 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
   std::vector<lite::Tensor *> maxpool_outputs = {&out_tensor};
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 

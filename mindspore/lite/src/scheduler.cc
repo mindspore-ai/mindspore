@@ -192,10 +192,12 @@ void Scheduler::ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels) {
 
   std::vector<kernel::LiteKernel *> subgraph_kernels;
   size_t sub_cnt{0};
+  auto &device_ctx = context_->device_list_[0];
   for (auto temp_kernels : sub_kernels_list) {
     std::vector<Tensor *> output_tensor = kernel::LiteKernelUtil::SubgraphOutputTensors(temp_kernels);
     for (auto tensor : output_tensor) {
-      if (context_->enable_float16_ && tensor->data_type() == kNumberTypeFloat16) {
+      if (device_ctx.device_type_ == DT_CPU && device_ctx.device_info_.cpu_device_info_.enable_float16_ &&
+          tensor->data_type() == kNumberTypeFloat16) {
         tensor->set_data_type(kNumberTypeFloat32);
       }
     }
@@ -246,8 +248,9 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<Tensor *> &in_tens
   MS_ASSERT(primitive != nullptr);
   TypeId data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(primitive->Type())};
+  auto &device_ctx = context_->device_list_[0];
 #if SUPPORT_GPU
-  if (context_->device_type_ == DT_GPU) {
+  if (device_ctx.device_type_ == DT_GPU) {
     desc.arch = kernel::KERNEL_ARCH::kGPU;
     auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
     if (kernel != nullptr) {
@@ -262,7 +265,8 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<Tensor *> &in_tens
 #endif
   desc.arch = kernel::KERNEL_ARCH::kCPU;
   kernel::LiteKernel *kernel = nullptr;
-  if ((context_->enable_float16_ && data_type == kNumberTypeFloat32) || data_type == kNumberTypeFloat16) {
+  if ((device_ctx.device_info_.cpu_device_info_.enable_float16_ && data_type == kNumberTypeFloat32) ||
+      data_type == kNumberTypeFloat16) {
     // check if support fp16
     kernel::KernelKey key{desc.arch, kNumberTypeFloat16, desc.type};
     kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, key);

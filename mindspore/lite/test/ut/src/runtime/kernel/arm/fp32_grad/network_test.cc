@@ -357,8 +357,7 @@ TEST_F(NetworkTest, tuning_layer) {
   meta_graph.reset();
   content = nullptr;
   lite::Context context;
-  context.device_type_ = lite::DT_CPU;
-  context.cpu_bind_mode_ = lite::NO_BIND;
+  context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context.thread_num_ = 1;
   auto session = session::TrainSession::CreateSession(&context);
   ASSERT_NE(nullptr, session);
@@ -518,8 +517,7 @@ TEST_F(NetworkTest, efficient_net) {
   auto model = lite::TrainModel::Import(buf, net_size);
   delete[] buf;
   auto context = new lite::Context;
-  context->device_type_ = lite::DT_CPU;
-  context->cpu_bind_mode_ = lite::NO_BIND;
+  context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 
   auto session = session::TrainSession::CreateSession(context);
@@ -544,8 +542,7 @@ TEST_F(NetworkTest, lenetnet) {
   auto model = lite::TrainModel::Import(buf, net_size);
   delete[] buf;
   auto context = new lite::Context;
-  context->device_type_ = lite::DT_CPU;
-  context->cpu_bind_mode_ = lite::NO_BIND;
+  context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 
   // check registration
@@ -589,8 +586,7 @@ TEST_F(NetworkTest, retina_net) {
   auto model = lite::Model::Import(buf, net_size);
   delete[] buf;
   auto context = new lite::Context;
-  context->device_type_ = lite::DT_CPU;
-  context->cpu_bind_mode_ = lite::NO_BIND;
+  context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 
   // auto session = session::TrainSession::CreateSession(context);
@@ -640,8 +636,7 @@ TEST_F(NetworkTest, mobileface_net) {
   auto model = lite::Model::Import(buf, net_size);
   delete[] buf;
   auto context = new lite::Context;
-  context->device_type_ = lite::DT_CPU;
-  context->cpu_bind_mode_ = lite::NO_BIND;
+  context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 
   // auto session = session::TrainSession::CreateSession(context);
