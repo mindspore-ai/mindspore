@@ -931,6 +931,11 @@ bool AnfRuntimeAlgorithm::IsGraphKernel(const AnfNodePtr &node) {
   return func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
 }
 
+bool AnfRuntimeAlgorithm::IsNodeInGraphKernel(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  return node->func_graph() != nullptr && node->func_graph()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
+}
+
 bool AnfRuntimeAlgorithm::IsParameterWeight(const ParameterPtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   return node->has_default();

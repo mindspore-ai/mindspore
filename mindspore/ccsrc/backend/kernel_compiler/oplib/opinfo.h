@@ -175,6 +175,10 @@ class OpInfo {
   std::vector<std::shared_ptr<OpIOInfo>> outputs_ptr_;
   std::unordered_map<size_t, size_t> ref_infos_;
 };
+
+using OpAttrPtr = std::shared_ptr<OpAttr>;
+using OpIOInfoPtr = std::shared_ptr<OpIOInfo>;
+using OpInfoPtr = std::shared_ptr<OpInfo>;
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_OPLIB_OPINFO_H_

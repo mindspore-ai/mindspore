@@ -184,6 +184,8 @@ class AnfRuntimeAlgorithm {
   static bool IsRealCNodeKernel(const AnfNodePtr &node);
   // checkout whether the anf node is a graph kernel.
   static bool IsGraphKernel(const AnfNodePtr &node);
+  // checkout whether the anf node is an inner node of graph kernel.
+  static bool IsNodeInGraphKernel(const AnfNodePtr &node);
   // check parameter is weight or data
   static bool IsParameterWeight(const ParameterPtr &node);
   // set stream id of kernel,which will be set in stream assign and be used in stream generate

@@ -103,6 +103,13 @@ bool SelectAkgKernel(const CNodePtr &kernel_node, const std::shared_ptr<KernelBu
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_info);
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
+
+  if (AnfAlgo::IsNodeInGraphKernel(kernel_node)) {
+    // The op_info in OpLib is only used for basic ops,
+    // we don't care it in GraphKernel.
+    return true;
+  }
+
   std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
 
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kAKG);
