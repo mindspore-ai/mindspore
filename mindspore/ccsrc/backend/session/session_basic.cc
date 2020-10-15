@@ -516,8 +516,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
   MS_EXCEPTION_IF_NULL(other_graph_cnode);
   MS_EXCEPTION_IF_NULL(cnode_inputs);
   auto origin_inputs = cnode->inputs();
-  bool optimize_depend = IsPrimitiveCNode(cnode, prim::kPrimDepend) && origin_inputs.size() == 3 &&
-                         origin_inputs[kRealInputIndexInDepend]->isa<ValueNode>();
+  bool optimize_depend = IsPrimitiveCNode(cnode, prim::kPrimDepend) && origin_inputs.size() == 3;
   bool optimize_control_depend = IsPrimitiveCNode(cnode, prim::kPrimControlDepend) && origin_inputs.size() == 3;
   // if has multiple depends,only select first depend as parameter
   for (size_t input_idx = 1; input_idx < origin_inputs.size(); input_idx++) {
@@ -526,6 +525,9 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
     // anf has been created before
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
       cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
+      continue;
+    } else if (optimize_depend && input_idx == kDependAttachNodeIndex) {
+      cnode_inputs->push_back(NewValueNode(MakeValue(SizeToInt(input_idx))));
       continue;
     } else if (other_graph_cnode->find(anf) != other_graph_cnode->end()) {
       cnode_inputs->push_back((*other_graph_cnode)[anf]);
@@ -545,9 +547,6 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
       } else {
         (*other_graph_cnode)[anf] = new_parameter;
       }
-      continue;
-    } else if (optimize_depend && input_idx == kDependAttachNodeIndex) {
-      cnode_inputs->push_back(origin_inputs[kRealInputIndexInDepend]);
       continue;
     } else if (optimize_control_depend) {
       cnode_inputs->push_back(NewValueNode(MakeValue(SizeToInt(input_idx))));

@@ -289,10 +289,14 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
     }
     return target;
   }
-  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+  if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    auto &inputs = cnode->inputs();
+    if (inputs.size() == 3 && !IsPrimitiveCNode(inputs[1], prim::kPrimMakeTuple)) {
+      return GetCNodeTarget(inputs[1]);
+    }
+  } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
     return GetMaketupleNodeTarget(cnode);
-  }
-  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+  } else if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
     return GetTupleGetItemTarget(cnode, primitive);
   }
   return default_target;
