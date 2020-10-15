@@ -138,9 +138,32 @@ def test_slice5():
     assert (output.asnumpy() == inputx[0:3:1, 1:5:1, 0:4:1]).all()
 
 
+class Slice6(nn.Cell):
+    def __init__(self):
+        super(Slice6, self).__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        return (x[-10:], x[-5:10:2, :, :], x[-10:10:1, :, -10:10:1])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_slice6():
+    inputx = np.random.rand(4, 4, 4).astype(np.float32)
+    x = Tensor(inputx)
+    slice_op = Slice6()
+    output = slice_op(x)
+    assert (output[0].asnumpy() == inputx[-10:]).all()
+    assert (output[1].asnumpy() == inputx[-5:10:2, :, :]).all()
+    assert (output[2].asnumpy() == inputx[-10:10:1, :, -10:10:1]).all()
+
+
 if __name__ == '__main__':
     test_slice()
     test_slice2()
     test_slice3()
     test_slice4()
     test_slice5()
+    test_slice6()

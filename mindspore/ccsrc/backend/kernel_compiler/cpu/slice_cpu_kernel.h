@@ -41,6 +41,7 @@ class SliceCPUKernel : public CPUKernel {
                         int id) const;
   void CheckParam(const CNodePtr &kernel_node) const;
   void TransArg();
+  void ClipBegin();
   std::vector<int> begin_;
   std::vector<int> end_;
   std::vector<int> strides_;
