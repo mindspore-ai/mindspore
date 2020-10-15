@@ -634,7 +634,7 @@ class ExportManualQuantNetwork:
         """
     __quant_op_name__ = ["TensorAdd", "Sub", "Mul", "RealDiv"]
 
-    def __init__(self, network, mean, std_dev, *inputs, is_mindir):
+    def __init__(self, network, mean, std_dev, *inputs, is_mindir=False):
         network = Validator.check_isinstance('network', network, (nn.Cell,))
         self.input_scale = 1 / std_dev
         self.input_zero_point = round(mean)

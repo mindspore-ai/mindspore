@@ -21,6 +21,6 @@ operations. Note that the entire computation is carried out in floating point. A
 aware training, MindSpore provides conversion functions to convert the trained model into lower precision.
 """
 
-from .quant import convert_quant_network, export
+from .quant import convert_quant_network, export, manual_export
 
-__all__ = ["convert_quant_network", "export"]
+__all__ = ["convert_quant_network", "export", "manual_export"]
