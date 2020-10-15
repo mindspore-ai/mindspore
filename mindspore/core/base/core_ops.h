@@ -124,6 +124,7 @@ inline const PrimitivePtr kPrimPoolingGrad = std::make_shared<Primitive>("Poolin
 inline const PrimitivePtr kPrimMaxPool = std::make_shared<Primitive>("MaxPool");
 inline const PrimitivePtr kPrimMaxPoolGrad = std::make_shared<Primitive>("MaxPoolGrad");
 inline const PrimitivePtr kPrimApplyCenteredRMSProp = std::make_shared<Primitive>("ApplyCenteredRMSProp");
+inline const PrimitivePtr kPrimAvgPool = std::make_shared<Primitive>("AvgPool");
 inline const PrimitivePtr kPrimAvgPoolGrad = std::make_shared<Primitive>("AvgPoolGrad");
 inline const PrimitivePtr kPrimAvgPoolGradVm = std::make_shared<Primitive>("AvgPoolGradVm");
 inline const PrimitivePtr kPrimFusedBatchNorm = std::make_shared<Primitive>("FusedBatchNorm");
