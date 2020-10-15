@@ -713,26 +713,6 @@ class CostModelSplitSchemer : public Splitter::SplitSchemer {
   std::vector<int> need_inline_;
 };
 
-// Eliminate the redundant MakeTuple-GetItem operations.
-void EliminateTupleGetItem(const FuncGraphPtr &func_graph) {
-  auto callback = [](const AnfNodePtr &node) {
-    auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr) return;
-    for (size_t i = 1; i < cnode->size(); ++i) {
-      auto getitem = cnode->input(i);
-      if (!AnfAlgo::CheckPrimitiveType(getitem, prim::kPrimTupleGetItem)) continue;
-      auto getitem_cnode = getitem->cast<CNodePtr>();
-      auto maketuple = getitem_cnode->input(kRealInputNodeIndexInTupleGetItem);
-      if (!AnfAlgo::CheckPrimitiveType(maketuple, prim::kPrimMakeTuple)) continue;
-      auto maketuple_cnode = maketuple->cast<CNodePtr>();
-      int getitem_idx =
-        GetValue<int>(getitem_cnode->input(kInputNodeOutputIndexInTupleGetItem)->cast<ValueNodePtr>()->value());
-      cnode->set_input(i, maketuple_cnode->input(getitem_idx + 1));
-    }
-  };
-  TraverseFuncGraph(func_graph, callback);
-}
-
 bool TrySplit(const CNodePtr &sub_root_cnode) {
   MS_LOG(INFO) << "Split process node: " << sub_root_cnode->fullname_with_scope();
   auto splitter = Splitter::MakeSplitter(sub_root_cnode, std::make_shared<CostModelSplitSchemer>());
@@ -760,9 +740,6 @@ bool GraphKernelSplitter::Run(const FuncGraphPtr &func_graph) {
     if (node != nullptr && AnfAlgo::IsGraphKernel(node)) {
       changed = TrySplit(node) || changed;
     }
-  }
-  if (changed) {
-    EliminateTupleGetItem(func_graph);
   }
   mng->RemoveRoots();
   mng->KeepRoots({func_graph});
