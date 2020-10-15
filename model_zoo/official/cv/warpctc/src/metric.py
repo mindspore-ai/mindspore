@@ -39,9 +39,6 @@ class WarpCTCAccuracy(nn.Metric):
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
-        if self.device_target == 'GPU':
-            y = y[:, :-1]
-
         self._count += 1
 
         pred_lbls = self._get_prediction(y_pred)
