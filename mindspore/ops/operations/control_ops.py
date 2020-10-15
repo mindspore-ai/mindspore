@@ -70,8 +70,7 @@ class ControlDepend(Primitive):
     @prim_attr_register
     def __init__(self, depend_mode=0):
         """init"""
-        validator.check_int_range(
-            "depend_mode", depend_mode, 0, 1, Rel.INC_BOTH, self.name)
+        validator.check_int_range(depend_mode, 0, 1, Rel.INC_BOTH, "depend_mode", self.name)
 
     def __call__(self, src, dst):
         return src

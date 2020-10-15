@@ -254,7 +254,7 @@ class CosineDecayLR(LearningRateSchedule):
         super(CosineDecayLR, self).__init__()
         if not isinstance(min_lr, float):
             raise TypeError("min_lr must be float.")
-        validator.check_number_range("min_lr", min_lr, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+        validator.check_non_negative_float(min_lr, "min_lr", self.cls_name)
         validator.check_positive_float(max_lr, 'max_lr', self.cls_name)
         validator.check_is_float(max_lr, 'max_lr', self.cls_name)
         validator.check_positive_int(decay_steps, "decay_steps", self.cls_name)
@@ -322,8 +322,7 @@ class PolynomialDecayLR(LearningRateSchedule):
         validator.check_is_float(learning_rate, 'learning_rate')
         if not isinstance(end_learning_rate, float):
             raise TypeError("end_learning_rate must be float.")
-        validator.check_number_range("end_learning_rate", end_learning_rate, 0.0, float("inf"), Rel.INC_LEFT,
-                                     self.cls_name)
+        validator.check_non_negative_float(end_learning_rate, "end_learning_rate", self.cls_name)
         validator.check_positive_int(decay_steps, 'decay_steps', self.cls_name)
         validator.check_value_type('update_decay_steps', update_decay_steps, [bool], self.cls_name)
         validator.check_positive_float(power, 'power', self.cls_name)
@@ -387,7 +386,7 @@ class WarmUpLR(LearningRateSchedule):
         super(WarmUpLR, self).__init__()
         if not isinstance(learning_rate, float):
             raise TypeError("learning_rate must be float.")
-        validator.check_number_range("learning_rate", learning_rate, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+        validator.check_non_negative_float(learning_rate, "learning_rate", self.cls_name)
         validator.check_positive_int(warmup_steps, 'warmup_steps', self.cls_name)
         self.warmup_steps = warmup_steps
         self.learning_rate = learning_rate

@@ -69,7 +69,7 @@ def get_concat_offset(x_shp, x_type, axis, prim_name):
     validator.check_subclass("shape0", x_type[0], mstype.tensor, prim_name)
     validator.check_positive_int(len(x_shp[0]), "len of x_shp[0]", prim_name)
     rank_base = len(x_shp[0])
-    validator.check_int_range('axis', axis, -rank_base - 1, rank_base, Rel.INC_BOTH, prim_name)
+    validator.check_int_range(axis, -rank_base - 1, rank_base, Rel.INC_BOTH, 'axis', prim_name)
     if axis < 0:
         axis = axis + rank_base
     all_shp = x_shp[0][axis]

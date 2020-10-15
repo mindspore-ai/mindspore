@@ -451,8 +451,7 @@ class CentralCrop(Cell):
     def __init__(self, central_fraction):
         super(CentralCrop, self).__init__()
         validator.check_value_type("central_fraction", central_fraction, [float], self.cls_name)
-        self.central_fraction = validator.check_number_range('central_fraction', central_fraction,
-                                                             0.0, 1.0, Rel.INC_RIGHT, self.cls_name)
+        self.central_fraction = validator.check_float_range(0.0, 1.0, Rel.INC_RIGHT, 'central_fraction', central_fraction, self.cls_name)
         self.slice = P.Slice()
 
     def construct(self, image):

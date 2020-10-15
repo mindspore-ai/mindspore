@@ -154,11 +154,11 @@ class RMSProp(Optimizer):
                  use_locking=False, centered=False, loss_scale=1.0, weight_decay=0.0):
         super(RMSProp, self).__init__(learning_rate, params, weight_decay, loss_scale)
         validator.check_value_type("decay", decay, [float], self.cls_name)
-        validator.check_number_range("decay", decay, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+        validator.check_non_negative_float(decay, "decay", self.cls_name)
         validator.check_value_type("momentum", momentum, [float], self.cls_name)
-        validator.check_number_range("momentum", momentum, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+        validator.check_non_negative_float(momentum, "momentum", self.cls_name)
         validator.check_value_type("epsilon", epsilon, [float], self.cls_name)
-        validator.check_number_range("epsilon", epsilon, 0.0, float("inf"), Rel.INC_NEITHER, self.cls_name)
+        validator.check_positive_float(epsilon, "epsilon", self.cls_name)
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("centered", centered, [bool], self.cls_name)
 

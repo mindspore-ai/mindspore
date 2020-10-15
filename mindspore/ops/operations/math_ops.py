@@ -31,7 +31,7 @@ def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
 
     def reduce_one_axis(one_axis):
-        validator.check_int_range('axis', one_axis, -dim, dim, Rel.INC_LEFT, prim_name)
+        validator.check_int_range(one_axis, -dim, dim, Rel.INC_LEFT, 'axis', prim_name)
         if one_axis < 0:
             one_axis += dim
         axis_reduce.add(one_axis)

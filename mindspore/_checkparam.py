@@ -94,10 +94,10 @@ rel_strs = {
 
 def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=None):
     """
-        Check argument integer.
+    Check argument integer.
 
-        Usage:
-        - number = check_integer(number, 0, Rel.GE, "number", None) # number >= 0
+    Usage:
+    - number = check_integer(number, 0, Rel.GE, "number", None) # number >= 0
     """
     rel_fn = Rel.get_fns(rel)
     type_mismatch = not isinstance(arg_value, arg_type) or isinstance(arg_value, bool)
@@ -122,11 +122,31 @@ def check_is_number(arg_value, arg_type, arg_name=None, prim_name=None):
     """
     prim_name = f'in \'{prim_name}\'' if prim_name else ''
     arg_name = f'\'{prim_name}\'' if arg_name else 'Input value'
-    if isinstance(arg_value, arg_type):
+    if isinstance(arg_value, arg_type) and not isinstance(arg_value, bool):
         if math.isinf(arg_value) or math.isnan(arg_value):
             raise ValueError(f'{arg_name} {prim_name} must be legal float, but got `{arg_value}`.')
         return arg_value
     raise TypeError(f'{arg_name} {prim_name} must be float, but got `{type(arg_value).__name__}`')
+
+
+def check_number_range(arg_value, lower_limit, upper_limit, rel, value_type, arg_name=None, prim_name=None):
+    """
+    Method for checking whether an int value is in some range.
+
+    Usage:
+    - number = check_number_range(number, 0.0, 1.0, Rel.INC_NEITHER, "number", float) # number in [0.0, 1.0]
+    - number = check_number_range(number, 0, 1, Rel.INC_NEITHER, "number", int) # number in [0, 1]
+    """
+    prim_name = f'in `{prim_name}`' if prim_name else ''
+    arg_name = f'`{arg_name}`' if arg_name else ''
+    rel_fn = Rel.get_fns(rel)
+    type_mismatch = not isinstance(arg_value, (np.ndarray, np.generic, value_type)) or isinstance(arg_value, bool)
+    excp_cls = TypeError if type_mismatch else ValueError
+    if type_mismatch or not rel_fn(arg_value, lower_limit, upper_limit):
+        rel_str = Rel.get_strs(rel).format(lower_limit, upper_limit)
+        raise excp_cls("{} {} should be in range of {}, but got {:.3f} with type {}.".format(
+            arg_name, prim_name, rel_str, arg_value, type(arg_value).__name__))
+    return arg_value
 
 
 class Validator:
@@ -147,16 +167,13 @@ class Validator:
 
     @staticmethod
     def check_integer(arg_name, arg_value, value, rel, prim_name=None):
-        """Check argument is integer"""
-        rel_fn = Rel.get_fns(rel)
-        type_mismatch = not isinstance(arg_value, int) or isinstance(arg_value, bool)
-        excp_cls = TypeError if type_mismatch else ValueError
-        if type_mismatch or not rel_fn(arg_value, value):
-            rel_str = Rel.get_strs(rel).format(value)
-            msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
-            raise excp_cls(f'{msg_prefix} `{arg_name}` should be an int and must {rel_str}, but got `{arg_value}`'
-                           f' with type `{type(arg_value).__name__}`.')
-        return arg_value
+        """
+        Checks input integer value `arg_value` compare to `value`.
+
+        Usage:
+        - number = check_integer(number, 0, Rel.GE, "number", None) # number >= 0
+        """
+        return check_number(arg_value, value, rel, int, arg_name, prim_name)
 
     @staticmethod
     def check_is_int(arg_value, arg_name=None, prim_name=None):
@@ -168,7 +185,7 @@ class Validator:
         - number = check_is_int(number, int, "bias")
         - number = check_is_int(number, int, "bias", "bias_class")
         """
-        check_is_number(arg_value, int, arg_name, prim_name)
+        return check_is_number(arg_value, int, arg_name, prim_name)
 
     @staticmethod
     def check_positive_int(arg_value, arg_name=None, prim_name=None):
@@ -215,6 +232,16 @@ class Validator:
         return check_number(arg_value, 0, Rel.GE, int, arg_name, prim_name)
 
     @staticmethod
+    def check_float(arg_value, value, rel, arg_name=None, prim_name=None):
+        """
+        Checks input float value `arg_value` compare to `value`.
+
+        Usage:
+        - number = check_float(number, 0.0, Rel.GE, "number", None) # number >= 0
+        """
+        return check_number(arg_value, value, rel, float, arg_name, prim_name)
+
+    @staticmethod
     def check_is_float(arg_value, arg_name=None, prim_name=None):
         """
         Checks input value is float type or not.
@@ -224,7 +251,7 @@ class Validator:
         - number = check_is_float(number, int, "bias")
         - number = check_is_float(number, int, "bias", "bias_class")
         """
-        check_is_number(arg_value, float, arg_name, prim_name)
+        return check_is_number(arg_value, float, arg_name, prim_name)
 
     @staticmethod
     def check_positive_float(arg_value, arg_name=None, prim_name=None):
@@ -302,25 +329,26 @@ class Validator:
         return arg_value
 
     @staticmethod
-    def check_int_range(arg_name, arg_value, lower_limit, upper_limit, rel, prim_name):
-        """Method for checking whether an int value is in some range."""
-        rel_fn = Rel.get_fns(rel)
-        type_mismatch = not isinstance(arg_value, int) or isinstance(arg_value, bool)
-        excp_cls = TypeError if type_mismatch else ValueError
-        if type_mismatch or not rel_fn(arg_value, lower_limit, upper_limit):
-            rel_str = Rel.get_strs(rel).format(lower_limit, upper_limit)
-            raise excp_cls(f'For \'{prim_name}\' the `{arg_name}` should be an int in range {rel_str},'
-                           f' but got `{arg_value}` with type `{type(arg_value).__name__}`.')
-        return arg_value
+    def check_int_range(arg_value, lower_limit, upper_limit, rel, arg_name=None, prim_name=None):
+        """
+        Method for checking whether input value is in int range.
+
+        Usage:
+        - number = check_int_range(number, 0, 1, Rel.INC_NEITHER) # number in [0, 1]
+        - number = check_int_range(number, 0, 1, Rel.INC_NEITHER, "number") # number in [0, 1]
+        """
+        return check_number_range(arg_value, lower_limit, upper_limit, rel, int, arg_name, prim_name)
 
     @staticmethod
-    def check_number_range(arg_name, arg_value, lower_limit, upper_limit, rel, prim_name):
-        """Method for checking whether a numeric value is in some range."""
-        rel_fn = Rel.get_fns(rel)
-        if not rel_fn(arg_value, lower_limit, upper_limit):
-            rel_str = Rel.get_strs(rel).format(lower_limit, upper_limit)
-            raise ValueError(f'For \'{prim_name}\' the `{arg_name}` should be in range {rel_str}, but got {arg_value}.')
-        return arg_value
+    def check_float_range(arg_value, lower_limit, upper_limit, rel, arg_name=None, prim_name=None):
+        """
+        Method for checking whether input value is in float range.
+
+        Usage:
+        - number = check_float_range(number, 0.0, 1.0, Rel.INC_NEITHER) # number in [0.0, 1.0]
+        - number = check_float_range(number, 0.0, 1.0, Rel.INC_NEITHER, "number") # number in [0.0, 1.0]
+        """
+        return check_number_range(arg_value, lower_limit, upper_limit, rel, float, arg_name, prim_name)
 
     @staticmethod
     def check_string(arg_value, valid_values, arg_name=None, prim_name=None):
@@ -500,13 +528,6 @@ class Validator:
         if list(shape) != exp_shape:
             raise ValueError(f'For {prim_name}, {ori_shape} reduce on {axis} should be '
                              f'{tuple(exp_shape)}, but got {shape}.')
-
-
-def check_int(input_param):
-    """Int type judgment."""
-    if isinstance(input_param, int) and not isinstance(input_param, bool):
-        return input_param
-    raise TypeError("Input type must be int!")
 
 
 def check_int_zero_one(input_param):

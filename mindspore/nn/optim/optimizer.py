@@ -100,7 +100,7 @@ class Optimizer(Cell):
         if isinstance(loss_scale, int):
             loss_scale = float(loss_scale)
         validator.check_value_type("loss_scale", loss_scale, [float], self.cls_name)
-        validator.check_number_range("loss_scale", loss_scale, 0.0, float("inf"), Rel.INC_NEITHER, self.cls_name)
+        validator.check_positive_float(loss_scale, "loss_scale", self.cls_name)
         self.loss_scale = loss_scale
 
         weight_decay = self._preprocess_weight_decay(weight_decay)
@@ -221,7 +221,7 @@ class Optimizer(Cell):
         """Check weight decay, and convert int to float."""
         if isinstance(weight_decay, (float, int)):
             weight_decay = float(weight_decay)
-            validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+            validator.check_non_negative_float(weight_decay, "weight_decay", self.cls_name)
             return weight_decay
         raise TypeError("Weight decay should be int or float.")
 
@@ -229,7 +229,7 @@ class Optimizer(Cell):
         """Check lr value, and convert lr to a float, a Tensor or a LearningRateSchedule."""
         if isinstance(learning_rate, (float, int)):
             learning_rate = float(learning_rate)
-            validator.check_number_range("learning rate", learning_rate, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+            validator.check_non_negative_float(learning_rate, "learning rate", self.cls_name)
             return learning_rate
         if isinstance(learning_rate, Tensor) and learning_rate.dim() == 0:
             return learning_rate

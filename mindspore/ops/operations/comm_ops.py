@@ -206,7 +206,7 @@ class _HostAllGather(PrimitiveWithInfer):
         validator.check_value_type('group', group, (tuple, list), self.name)
         validator.check_integer("group size", len(group), 2, Rel.GE, self.name)
         for r in group:
-            validator.check_int_range("rank_id", r, 0, 7, Rel.INC_BOTH, self.name)
+            validator.check_int_range(r, 0, 7, Rel.INC_BOTH, "rank_id", self.name)
             validator.check_value_type("rank_id", r, (int,), self.name)
         self.group_size = len(group)
         self.add_prim_attr('group', group)
@@ -315,7 +315,7 @@ class _HostReduceScatter(PrimitiveWithInfer):
         validator.check_value_type('group', group, (tuple, list), self.name)
         validator.check_integer("group size", len(group), 2, Rel.GE, self.name)
         for r in group:
-            validator.check_int_range("rank_id", r, 0, 7, Rel.INC_BOTH, self.name)
+            validator.check_int_range(r, 0, 7, Rel.INC_BOTH, "rank_id", self.name)
             validator.check_value_type("rank_id", r, (int,), self.name)
         self.op = op
         self.group_size = len(group)

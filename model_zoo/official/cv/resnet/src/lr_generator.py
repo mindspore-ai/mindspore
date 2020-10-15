@@ -100,8 +100,8 @@ def _generate_cosine_lr(lr_init, lr_end, lr_max, total_steps, warmup_steps):
             lr_inc = (float(lr_max) - float(lr_init)) / float(warmup_steps)
             lr = float(lr_init) + lr_inc * (i + 1)
         else:
-            cosine_decay = 0.5 * (1 + math.cos(math.pi * (i-warmup_steps) / decay_steps))
-            lr = (lr_max-lr_end)*cosine_decay + lr_end
+            cosine_decay = 0.5 * (1 + math.cos(math.pi * (i - warmup_steps) / decay_steps))
+            lr = (lr_max - lr_end) * cosine_decay + lr_end
         lr_each_step.append(lr)
     return lr_each_step
 
