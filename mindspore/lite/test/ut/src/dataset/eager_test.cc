@@ -19,6 +19,8 @@
 #include "./securec.h"
 #include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/vision.h"
 #include "minddata/dataset/include/execute.h"
 #include "minddata/dataset/util/path.h"
 

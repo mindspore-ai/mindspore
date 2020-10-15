@@ -29,10 +29,10 @@
 #include <thread>
 #include "minddata/dataset/util/intrp_resource.h"
 #include "minddata/dataset/util/list.h"
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/memory_pool.h"
 #include "minddata/dataset/util/services.h"
 #include "minddata/dataset/util/wait_post.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {

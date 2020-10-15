@@ -16,9 +16,9 @@
 #include "minddata/dataset/util/arena.h"
 #include <unistd.h>
 #include <utility>
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/system_pool.h"
 #include "./securec.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {

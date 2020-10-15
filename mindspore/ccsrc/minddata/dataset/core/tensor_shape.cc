@@ -20,7 +20,11 @@
 #include <limits>
 
 #include "utils/ms_utils.h"
+#ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 #include "minddata/dataset/core/constants.h"
 
 namespace mindspore {

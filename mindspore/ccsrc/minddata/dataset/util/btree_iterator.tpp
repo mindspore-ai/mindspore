@@ -15,7 +15,8 @@
 #ifndef DATASET_UTIL_BTREE_ITERATOR_H_
 #define DATASET_UTIL_BTREE_ITERATOR_H_
 
-#include "utils/log_adapter.h"
+#include "./securec.h"
+#include "minddata/dataset/util/log_adapter.h"
 #include "btree.h"
 
 namespace mindspore {

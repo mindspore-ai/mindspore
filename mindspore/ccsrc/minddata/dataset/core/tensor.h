@@ -21,7 +21,11 @@
 #include <string>
 #include <vector>
 #include "./securec.h"
+#ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 #if defined(_WIN32) || defined(_WIN64)
 #undef HAVE_STDDEF_H
 #undef HAVE_STDLIB_H
@@ -33,12 +37,12 @@
 #include "pybind11/stl.h"
 #endif
 
-#include "utils/ms_utils.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor_helpers.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/util/status.h"
+#include "utils/ms_utils.h"
 #ifndef ENABLE_ANDROID
 #include "proto/example.pb.h"
 #else

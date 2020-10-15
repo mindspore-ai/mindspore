@@ -21,7 +21,11 @@
 #include <string>
 #include <vector>
 #include "./securec.h"
+#ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 #if defined(_WIN32) || defined(_WIN64)
 #undef HAVE_STDDEF_H
 #undef HAVE_STDLIB_H

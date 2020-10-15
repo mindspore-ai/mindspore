@@ -28,7 +28,7 @@
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
-#include "utils/log_adapter.h"
+#include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {

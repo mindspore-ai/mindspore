@@ -23,11 +23,11 @@
 #include <sstream>
 #include <nlohmann/json.hpp>
 
-#include "minddata/dataset/util/status.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
-#include "utils/log_adapter.h"
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/path.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {

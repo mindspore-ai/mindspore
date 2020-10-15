@@ -74,12 +74,13 @@ Status AffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   float_t cx = ((input_cv->mat().cols - 1) / 2.0);
   float_t cy = ((input_cv->mat().rows - 1) / 2.0);
   // Calculate RSS
-  std::vector<float_t> matrix{scale_ * cos(degrees + shear_y) / cos(shear_y),
-                              scale_ * (-1 * cos(degrees + shear_y) * tan(shear_x) / cos(shear_y) - sin(degrees)),
-                              0,
-                              scale_ * sin(degrees + shear_y) / cos(shear_y),
-                              scale_ * (-1 * sin(degrees + shear_y) * tan(shear_x) / cos(shear_y) + cos(degrees)),
-                              0};
+  std::vector<float_t> matrix{
+    static_cast<float>(scale_ * cos(degrees + shear_y) / cos(shear_y)),
+    static_cast<float>(scale_ * (-1 * cos(degrees + shear_y) * tan(shear_x) / cos(shear_y) - sin(degrees))),
+    0,
+    static_cast<float>(scale_ * sin(degrees + shear_y) / cos(shear_y)),
+    static_cast<float>(scale_ * (-1 * sin(degrees + shear_y) * tan(shear_x) / cos(shear_y) + cos(degrees))),
+    0};
   // Compute T * C * RSS * C^-1
   matrix[2] = (1 - matrix[0]) * cx - matrix[1] * cy + translation_x;
   matrix[5] = (1 - matrix[4]) * cy - matrix[3] * cx + translation_y;

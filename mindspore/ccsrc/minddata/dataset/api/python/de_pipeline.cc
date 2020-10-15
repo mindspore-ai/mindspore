@@ -41,6 +41,7 @@
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
 #include "minddata/dataset/kernels/py_func_op.h"
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/mindrecord/include/shard_category.h"
@@ -51,7 +52,6 @@
 #include "minddata/mindrecord/include/shard_shuffle.h"
 #include "minddata/mindrecord/include/shard_writer.h"
 #include "pybind11/stl.h"
-#include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {

@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-#include "minddata/dataset/engine/cache/cache_grpc_server.h"
 #include <limits>
+#include "minddata/dataset/engine/cache/cache_grpc_server.h"
 #include "minddata/dataset/engine/cache/cache_server.h"
 #include "minddata/dataset/util/path.h"
+#ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 namespace mindspore {
 namespace dataset {
 CacheServerGreeterImpl::CacheServerGreeterImpl(int32_t port, int32_t shared_memory_sz_in_gb)

@@ -118,7 +118,14 @@ if (BUILD_MINDDATA STREQUAL "full")
 
     list(REMOVE_ITEM MINDDATA_ENGINE_OPT_PRE_SRC_FILES
         "${MINDDATA_DIR}/engine/opt/pre/cache_transform_pass.cc"
+        "${MINDDATA_DIR}/engine/opt/pre/cache_error_pass.cc"
         )
+
+    #list(REMOVE_ITEM MINDDATA_KERNELS_IMAGE_SRC_FILES
+        #"${MINDDATA_DIR}/kernels/image/affine_op.cc"
+        #"${MINDDATA_DIR}/kernels/image/cutmix_batch_op.cc"
+        #"${MINDDATA_DIR}/kernels/image/random_affine_op.cc"
+	#)
 
     include_directories("${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
 
@@ -149,8 +156,6 @@ if (BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_EXAMPLE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log_adapter.cc
         ${CORE_DIR}/utils/ms_utils.cc
-        ${CORE_DIR}/gvar/logging_level.cc
-        ${CCSRC_DIR}/utils/system/crc32c.cc
         )
 
     target_link_libraries(minddata-lite
@@ -189,6 +194,10 @@ elseif (BUILD_MINDDATA STREQUAL "lite")
         ${MINDDATA_DIR}/api/execute.cc
         )
 
+   list(REMOVE_ITEM MINDDATA_KERNELS_IMAGE_SRC_FILES
+        "${MINDDATA_DIR}/kernels/image/bounding_box_augment_op.cc"
+        "${MINDDATA_DIR}/kernels/image/cut_out_op.cc"
+	)
     add_library(minddata-lite SHARED
         ${MINDDATA_CORE_SRC_FILES}
         ${MINDDATA_KERNELS_SRC_FILES}
@@ -198,8 +207,6 @@ elseif (BUILD_MINDDATA STREQUAL "lite")
         ${MINDDATA_DIR}/util/memory_pool.cc
         ${MINDDATA_DIR}/util/path.cc
         ${MINDDATA_DIR}/api/transforms.cc
-        ${CORE_DIR}/utils/log_adapter.cc
-        ${CORE_DIR}/gvar/logging_level.cc
         )
 
     target_link_libraries(minddata-lite
