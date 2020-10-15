@@ -25,6 +25,15 @@ keyConstant = [3528531795, 2654435769, 3449720151, 3144134277]
 _GLOBAL_SEED = None
 _KERNEL_SEED = {}
 
+
+def _reset_op_seed():
+    """
+    Reset op seeds in the kernel's dictionary.
+    """
+    for kernel_name, op_seed in _KERNEL_SEED.items():
+        _KERNEL_SEED[(kernel_name, op_seed)] = op_seed
+
+
 def set_seed(seed):
     """
     Set global random seed.
@@ -46,6 +55,81 @@ def set_seed(seed):
     Raises:
         ValueError: If seed is invalid (< 0).
         TypeError: If seed isn't a int.
+
+    Examples:
+        1. If global seed is not set, numpy.random and initializer will choose a random seed:
+        >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
+        >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A2
+        >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W1
+        >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W2
+        Rerun the program will get diferent results:
+        >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A3
+        >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A4
+        >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W3
+        >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W4
+
+        2. If global seed is set, numpy.random and initializer will use it:
+        >>> set_seed(1234)
+        >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
+        >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A2
+        >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W1
+        >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W2
+        Rerun the program will get the same results:
+        >>> set_seed(1234)
+        >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
+        >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A2
+        >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W1
+        >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W2
+
+        3. If neither global seed nor op seed is set, mindspore.ops.composite.random_ops and
+        mindspore.nn.probability.distribution will choose a random seed:
+        >>> c1 = C.uniform((1, 4)) # C1
+        >>> c2 = C.uniform((1, 4)) # C2
+        Rerun the program will get different results:
+        >>> c1 = C.uniform((1, 4)) # C3
+        >>> c2 = C.uniform((1, 4)) # C4
+
+        4. If global seed is set, but op seed is not set, mindspore.ops.composite.random_ops and
+        mindspore.nn.probability.distribution will caculate a seed according to global seed and
+        default op seed. Each call will change the default op seed, thus each call get different
+        results.
+        >>> set_seed(1234)
+        >>> c1 = C.uniform((1, 4)) # C1
+        >>> c2 = C.uniform((1, 4)) # C2
+        Rerun the program will get the same results:
+        >>> set_seed(1234)
+        >>> c1 = C.uniform((1, 4)) # C1
+        >>> c2 = C.uniform((1, 4)) # C2
+
+        5. If both global seed and op seed are set, mindspore.ops.composite.random_ops and
+        mindspore.nn.probability.distribution will caculate a seed according to global seed and
+        op seed counter. Each call will change the op seed counter, thus each call get different
+        results.
+        >>> set_seed(1234)
+        >>> c1 = C.uniform((1, 4), seed=2) # C1
+        >>> c2 = C.uniform((1, 4), seed=2) # C2
+        Rerun the program will get the same results:
+        >>> set_seed(1234)
+        >>> c1 = C.uniform((1, 4), seed=2) # C1
+        >>> c2 = C.uniform((1, 4), seed=2) # C2
+
+        6. If op seed is set but global seed is not set, 0 will be used as global seed. Then
+        mindspore.ops.composite.random_ops and mindspore.nn.probability.distribution act as in
+        condition 5.
+        >>> c1 = C.uniform((1, 4), seed=2) # C1
+        >>> c2 = C.uniform((1, 4), seed=2) # C2
+        Rerun the program will get the same results:
+        >>> c1 = C.uniform((1, 4), seed=2) # C1
+        >>> c2 = C.uniform((1, 4), seed=2) # C2
+
+        7. Recall set_seed() in the program will reset numpy seed and op seed counter of
+        mindspore.ops.composite.random_ops and mindspore.nn.probability.distribution.
+        >>> set_seed(1234)
+        >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
+        >>> c1 = C.uniform((1, 4), seed=2) # C1
+        >>> set_seed(1234)
+        >>> np_2 = np.random.normal(0, 1, [1]).astype(np.float32) # still get A1
+        >>> c2 = C.uniform((1, 4), seed=2) # still get C1
     """
     if not isinstance(seed, int):
         raise TypeError("The seed must be type of int.")
@@ -57,7 +141,7 @@ def set_seed(seed):
     _GLOBAL_SEED = seed
 
 
-def get_global_seed():
+def get_seed():
     """
     Get global random seed.
     """
@@ -101,7 +185,7 @@ def _get_op_seed(op_seed, kernel_name):
     return _KERNEL_SEED[(kernel_name, op_seed)]
 
 
-def _get_seed(op_seed, kernel_name):
+def _get_graph_seed(op_seed, kernel_name):
     """
     Get the graph-level seed.
     Graph-level seed is used as a global variable, that can be used in different ops in case op-level seed is not set.
@@ -125,12 +209,12 @@ def _get_seed(op_seed, kernel_name):
     Examples:
         >>> _get_seed(seed, 'normal')
     """
-    global_seed = get_global_seed()
+    global_seed = get_seed()
     if global_seed is None:
         global_seed = 0
     if op_seed is None:
         op_seed = 0
-    # eigther global seed or op seed is set, return (0, 0) to let kernel choose random seed.
+    # neither global seed or op seed is set, return (0, 0) to let kernel choose random seed.
     if global_seed == 0 and op_seed == 0:
         seeds = 0, 0
     else:
@@ -139,11 +223,3 @@ def _get_seed(op_seed, kernel_name):
         seeds = _truncate_seed(global_seed), _truncate_seed(temp_seed)
         _update_seeds(op_seed, kernel_name)
     return seeds
-
-
-def _reset_op_seed():
-    """
-    Reset op seeds in the kernel's dictionary.
-    """
-    for (kernel_name, op_seed) in _KERNEL_SEED:
-        _KERNEL_SEED[(kernel_name, op_seed)] = op_seed
