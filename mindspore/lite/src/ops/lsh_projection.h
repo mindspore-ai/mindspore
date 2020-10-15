@@ -33,6 +33,7 @@ class LshProjection : public PrimitiveC {
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) override;
+  int GetLshType() const;
 };
 }  // namespace lite
 }  // namespace mindspore

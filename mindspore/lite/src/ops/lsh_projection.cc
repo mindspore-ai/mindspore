@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 #include "src/ops/lsh_projection.h"
+#include "nnacl/lsh_projection_parameter.h"
 
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 int LshProjection::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) { return RET_OK; }
+int LshProjection::GetLshType() const { return this->primitive_->value.AsLshProjection()->type; }
 #else
+int LshProjection::GetLshType() const { return this->primitive_->value_as_LshProjection()->type(); }
+
 int LshProjection::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
@@ -29,9 +33,51 @@ int LshProjection::UnPackToFlatBuilder(const schema::Primitive *primitive, flatb
   return RET_OK;
 }
 #endif
+namespace {
+constexpr int kSparseType = 1;
+constexpr int kDenseType = 2;
+}  // namespace
 int LshProjection::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  PrimitiveC::InferShape(inputs_, outputs_);
-  return RET_INFER_INVALID;
+  if (inputs_.size() != kDoubleNum || inputs_.size() != kMultiNum) {
+    MS_LOG(ERROR) << "inputs to LshProjection operator should be 2 or 3, but " << inputs_.size() << " is given.";
+    return RET_ERROR;
+  }
+  if (outputs_.size() != kSingleNum) {
+    MS_LOG(ERROR) << "outputs to Shape operator should be 1, but " << outputs_.size() << " is given.";
+    return RET_ERROR;
+  }
+
+  auto in_hash = inputs_.at(kSingleNum);
+  MS_ASSERT(in_hash->shape().size() == 2);
+  MS_ASSERT(in_hash->DimensionSize(1) <= 32);
+  MS_ASSERT(inputs_.at(kDoubleNum)->shape().size() >= 1);
+
+  if (inputs_.size() == kMultiNum) {
+    MS_ASSERT(inputs_.at(kMultiNum)->shape().size() == 1);
+    MS_ASSERT(inputs_.at(kMultiNum)->DimensionSize(0) == in_value->DimensionSize(0));
+  }
+
+  auto out_tensor = outputs_.front();
+  out_tensor->set_data_type(kNumberTypeInt32);
+  out_tensor->SetFormat(schema::Format::Format_NHWC);
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+
+  std::vector<int> out_shape;
+  switch (GetLshType()) {
+    case kSparseType:
+      out_shape.push_back(in_hash->DimensionSize(0));
+      break;
+    case kDenseType:
+      out_shape.push_back(in_hash->DimensionSize(0) * in_hash->DimensionSize(1));
+      break;
+    default:
+      return RET_ERROR;
+  }
+  out_tensor->set_shape(out_shape);
+  return RET_OK;
 }
+
 }  // namespace lite
 }  // namespace mindspore
