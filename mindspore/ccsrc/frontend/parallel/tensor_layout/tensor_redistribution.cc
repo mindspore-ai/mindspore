@@ -43,7 +43,7 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
   TensorLayout from_repeat = from_origin_.TransferRepeatLayout();
   TensorLayout to_repeat = to_origin_.TransferRepeatLayout();
   MS_LOG(DEBUG) << "reshape from_repeat " << from_repeat.ToString();
-  MS_LOG(DEBUG) << "reshape to_layout " << to_repeat.ToString();
+  MS_LOG(DEBUG) << "reshape to_repeat " << to_repeat.ToString();
   MS_LOG(DEBUG) << "reshape from_origin_ " << from_origin_.ToString();
   MS_LOG(DEBUG) << "reshape to_origin_ " << to_origin_.ToString();
   MS_LOG(DEBUG) << "reshape from_ " << from_.ToString();

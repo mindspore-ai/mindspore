@@ -770,7 +770,7 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
   }
 }
 
-bool FindReshape(const CNodePtr &cnode) {
+bool FindReshape(const CNodePtr &cnode, std::unordered_set<std::string> *op_cache) {
   if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
     return false;
   }
@@ -780,7 +780,16 @@ bool FindReshape(const CNodePtr &cnode) {
   ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
   MS_EXCEPTION_IF_NULL(prim);
-  return (prim->name() == RESHAPE);
+  if (prim->name() == RESHAPE) {
+    auto operator_info = cnode->user_data<OperatorInfo>();
+    std::string op_info_name = operator_info->name();
+    if (op_cache->find(op_info_name) != op_cache->end()) {
+      return false;
+    }
+    op_cache->insert(op_info_name);
+    return true;
+  }
+  return false;
 }
 
 // find previous node, then obtain its strategy_cost_ vector to get its layout vector.
@@ -871,9 +880,10 @@ bool FindNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator
 }
 
 void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
+  std::unordered_set<std::string> op_cache;
   for (auto node : all_nodes) {
     auto cnode = node->cast<CNodePtr>();
-    if (!FindReshape(cnode)) {
+    if (!FindReshape(cnode, &op_cache)) {
       continue;
     }
     MS_ASSERT(cnode->inputs().size() == 3);

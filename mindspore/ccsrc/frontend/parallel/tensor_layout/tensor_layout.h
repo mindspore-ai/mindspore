@@ -46,6 +46,10 @@ class TensorLayout {
 
   void set_skip_redistribution(bool flag) { skip_redistribution_ = flag; }
 
+  bool layout_transfer() const { return layout_transfer_; }
+
+  void set_layout_transfer(bool flag) { layout_transfer_ = flag; }
+
   int32_t get_field_size() const { return field_size_; }
 
   void set_field_size(int32_t field_size) { field_size_ = field_size; }
@@ -113,14 +117,15 @@ class TensorLayout {
   int32_t GetTensorDimensionIndexByDeviceDimensionIndex(int64_t idx) const;
 
   Arrangement device_arrangement_origin_;
-  Map tensor_map_origin_;
   Arrangement tensor_shape_origin_;
   Arrangement device_arrangement_;
-  Map tensor_map_;
   Arrangement tensor_shape_;
+  Map tensor_map_;
+  Map tensor_map_origin_;
   bool skip_redistribution_ = false;
-  int32_t field_size_ = 0;
   bool uniform_split_ = true;
+  bool layout_transfer_ = false;
+  int32_t field_size_ = 0;
   Shape opt_shard_slice_shape_;
   std::string opt_shard_group_ = "";
 };
