@@ -37,29 +37,12 @@ class LstmCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
 
+ private:
+  void FreeTmpBuffer();
   int InitParam();
   int InitBuffer();
   int InitWeightBias();
 
- private:
-  void FreeTmpBuffer() {
-    if (gate_buffer_ != nullptr) {
-      free(gate_buffer_);
-      gate_buffer_ = nullptr;
-    }
-    if (weight_i_ptr_ != nullptr) {
-      free(weight_i_ptr_);
-      weight_i_ptr_ = nullptr;
-    }
-    if (weight_h_ptr_ != nullptr) {
-      free(weight_h_ptr_);
-      weight_h_ptr_ = nullptr;
-    }
-    if (bias_ptr_ != nullptr) {
-      free(bias_ptr_);
-      bias_ptr_ = nullptr;
-    }
-  }
   float *gate_buffer_ = nullptr;
   float *weight_i_ptr_ = nullptr;
   float *weight_h_ptr_ = nullptr;

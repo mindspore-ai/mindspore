@@ -27,6 +27,25 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Lstm;
 
 namespace mindspore::kernel {
+void LstmCPUKernel::FreeTmpBuffer() {
+  if (gate_buffer_ != nullptr) {
+    free(gate_buffer_);
+    gate_buffer_ = nullptr;
+  }
+  if (weight_i_ptr_ != nullptr) {
+    free(weight_i_ptr_);
+    weight_i_ptr_ = nullptr;
+  }
+  if (weight_h_ptr_ != nullptr) {
+    free(weight_h_ptr_);
+    weight_h_ptr_ = nullptr;
+  }
+  if (bias_ptr_ != nullptr) {
+    free(bias_ptr_);
+    bias_ptr_ = nullptr;
+  }
+}
+
 int LstmCPUKernel::InitParam() {
   auto input = in_tensors_.front();
   MS_ASSERT(input != nullptr);
