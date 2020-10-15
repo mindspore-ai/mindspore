@@ -911,7 +911,7 @@ class NASNetAMobileTrainOneStepWithClipGradient(nn.Cell):
         self.network.add_flags(defer_inline=True)
         self.weights = optimizer.parameters
         self.optimizer = optimizer
-        self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
+        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.hyper_map = C.HyperMap()
         self.sens = sens
         self.reducer_flag = False
