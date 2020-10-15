@@ -37,13 +37,17 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
   if (pad_mode == PAD_MODE_LOWER_SAME || pad_mode == PAD_MODE_UPPER_SAME) {
     for (size_t i = 0; i < weight_height.size(); ++i) {
       auto wh = weight_height[i];
-      int rad = kernel_size[i] / 2;
-      int need_pad = kernel_size[i] - 1;
-      int re = (wh - 1) % stride;
-      int pad = std::max(rad - (re / 2), 0);
-      padding_r->emplace_back(pad);
-      pad = std::max(need_pad - pad - re, 0);
-      padding_l->emplace_back(pad);
+      int re = wh % stride;
+      if (re == 0) {
+        re = stride;
+      }
+      int pad = kernel_size[i] - re;
+      padding_l->emplace_back(pad / 2);
+      if (pad % 2 == 0) {
+        padding_r->emplace_back(pad / 2);
+      } else {
+        padding_r->emplace_back(pad / 2 + 1);
+      }
     }
   } else if (pad_mode == PAD_MODE_LOWER_VALID || pad_mode == PAD_MODE_UPPER_VALID) {
     MS_LOG(INFO) << "pad valid";
