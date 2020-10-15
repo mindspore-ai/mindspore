@@ -24,6 +24,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+// Tests for datasets (in alphabetical order)
+
 TEST_F(MindDataTestPipeline, TestCelebADataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebADataset.";
 
@@ -129,24 +131,6 @@ TEST_F(MindDataTestPipeline, TestCelebADatasetWithNullSampler) {
   EXPECT_EQ(ds, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestMnistFailWithWrongDatasetDir) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithWrongDatasetDir.";
-
-  // Create a Mnist Dataset
-  std::shared_ptr<Dataset> ds = Mnist("", "all", RandomSampler(false, 10));
-  EXPECT_EQ(ds, nullptr);
-}
-
-TEST_F(MindDataTestPipeline, TestMnistFailWithNullSampler) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithNullSampler.";
-
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", nullptr);
-  // Expect failure: sampler can not be nullptr
-  EXPECT_EQ(ds, nullptr);
-}
-
 TEST_F(MindDataTestPipeline, TestImageFolderWithWrongDatasetDir) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderWithWrongDatasetDir.";
 
@@ -196,4 +180,22 @@ TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongSampler) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, SequentialSampler(-2, 5));
   // Expect failure: sampler is not construnced correctly
   EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestMnistFailWithWrongDatasetDir) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithWrongDatasetDir.";
+
+// Create a Mnist Dataset
+std::shared_ptr<Dataset> ds = Mnist("", "all", RandomSampler(false, 10));
+EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestMnistFailWithNullSampler) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithNullSampler.";
+
+// Create a Mnist Dataset
+std::string folder_path = datasets_root_path_ + "/testMnistData/";
+std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", nullptr);
+// Expect failure: sampler can not be nullptr
+EXPECT_EQ(ds, nullptr);
 }

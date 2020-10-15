@@ -60,7 +60,7 @@ class UniformAugOperation;
 
 /// \brief Function to create a CenterCrop TensorOperation.
 /// \notes Crops the input image at the center to the given size.
-/// \param[in] size - a vector representing the output size of the cropped image.
+/// \param[in] size A vector representing the output size of the cropped image.
 ///      If size is a single value, a square crop of size (size, size) is returned.
 ///      If size has 2 values, it should be (height, width).
 /// \return Shared pointer to the current TensorOperation.
@@ -92,7 +92,7 @@ std::shared_ptr<CutOutOperation> CutOut(int32_t length, int32_t num_patches = 1)
 
 /// \brief Function to create a Decode TensorOperation.
 /// \notes Decode the input image in RGB mode.
-/// \param[in] rgb - a boolean of whether to decode in RGB mode or not.
+/// \param[in] rgb A boolean of whether to decode in RGB mode or not.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<DecodeOperation> Decode(bool rgb = true);
 
@@ -139,18 +139,18 @@ std::shared_ptr<PadOperation> Pad(std::vector<int32_t> padding, std::vector<uint
 
 /// \brief Function to create a RandomAffine TensorOperation.
 /// \notes Applies a Random Affine transformation on input image in RGB or Greyscale mode.
-/// \param[in] degrees A float vector size 2, representing the starting and ending degree
-/// \param[in] translate_range A float vector size 2 or 4, representing percentages of translation on x and y axes.
+/// \param[in] degrees A float vector of size 2, representing the starting and ending degree
+/// \param[in] translate_range A float vector of size 2 or 4, representing percentages of translation on x and y axes.
 ///    if size is 2, (min_dx, max_dx, 0, 0)
 ///    if size is 4, (min_dx, max_dx, min_dy, max_dy)
 ///    all values are in range [-1, 1]
-/// \param[in] scale_range A float vector size 2, representing the starting and ending scales in the range.
-/// \param[in] shear_ranges A float vector size 2 or 4, representing the starting and ending shear degrees vertically
+/// \param[in] scale_range A float vector of size 2, representing the starting and ending scales in the range.
+/// \param[in] shear_ranges A float vector of size 2 or 4, representing the starting and ending shear degrees vertically
 ///    and horizontally.
 ///    if size is 2, (min_shear_x, max_shear_x, 0, 0)
 ///    if size is 4, (min_shear_x, max_shear_x, min_shear_y, max_shear_y)
 /// \param[in] interpolation An enum for the mode of interpolation
-/// \param[in] fill_value A uint8_t vector size 3, representing the pixel intensity of the borders, it is used to
+/// \param[in] fill_value A uint8_t vector of size 3, representing the pixel intensity of the borders, it is used to
 ///    fill R, G, B channels respectively.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomAffineOperation> RandomAffine(
@@ -162,8 +162,8 @@ std::shared_ptr<RandomAffineOperation> RandomAffine(
 /// \brief Blends an image with its grayscale version with random weights
 ///        t and 1 - t generated from a given range. If the range is trivial
 ///        then the weights are determinate and t equals the bound of the interval
-/// \param[in] t_lb lower bound on the range of random weights
-/// \param[in] t_lb upper bound on the range of random weights
+/// \param[in] t_lb Lower bound on the range of random weights
+/// \param[in] t_lb Upper bound on the range of random weights
 /// \return Shared pointer to the current TensorOp
 std::shared_ptr<RandomColorOperation> RandomColor(float t_lb, float t_ub);
 
@@ -185,14 +185,14 @@ std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float>
 
 /// \brief Function to create a RandomCrop TensorOperation.
 /// \notes Crop the input image at a random location.
-/// \param[in] size - a vector representing the output size of the cropped image.
+/// \param[in] size A vector representing the output size of the cropped image.
 ///               If size is a single value, a square crop of size (size, size) is returned.
 ///               If size has 2 values, it should be (height, width).
-/// \param[in] padding - a vector with the value of pixels to pad the image. If 4 values are provided,
+/// \param[in] padding A vector with the value of pixels to pad the image. If 4 values are provided,
 ///                  it pads the left, top, right and bottom respectively.
-/// \param[in] pad_if_needed - a boolean whether to pad the image if either side is smaller than
+/// \param[in] pad_if_needed A boolean whether to pad the image if either side is smaller than
 ///                        the given output size.
-/// \param[in] fill_value - a vector representing the pixel intensity of the borders, it is used to
+/// \param[in] fill_value A vector representing the pixel intensity of the borders, it is used to
 ///                     fill R, G, B channels respectively.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
@@ -218,7 +218,7 @@ std::shared_ptr<RandomCropDecodeResizeOperation> RandomCropDecodeResize(
 
 /// \brief Function to create a RandomHorizontalFlip TensorOperation.
 /// \notes Tensor operation to perform random horizontal flip.
-/// \param[in] prob - float representing the probability of flip.
+/// \param[in] prob A float representing the probability of flip.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob = 0.5);
 
@@ -247,11 +247,11 @@ std::shared_ptr<RandomResizedCropOperation> RandomResizedCrop(
 
 /// \brief Function to create a RandomRotation TensorOp
 /// \notes Rotates the image according to parameters
-/// \param[in] degrees A float vector size 2, representing the starting and ending degree
+/// \param[in] degrees A float vector of size 2, representing the starting and ending degree
 /// \param[in] resample An enum for the mode of interpolation
 /// \param[in] expand A boolean representing whether the image is expanded after rotation
-/// \param[in] center A float vector size 2, representing the x and y center of rotation.
-/// \param[in] fill_value A uint8_t vector size 3, representing the rgb value of the fill color
+/// \param[in] center A float vector of size 2, representing the x and y center of rotation.
+/// \param[in] fill_value A uint8_t vector of size 3, representing the rgb value of the fill color
 /// \return Shared pointer to the current TensorOp
 std::shared_ptr<RandomRotationOperation> RandomRotation(
   std::vector<float> degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
@@ -259,14 +259,14 @@ std::shared_ptr<RandomRotationOperation> RandomRotation(
 
 /// \brief Function to create a RandomSharpness TensorOperation.
 /// \notes Tensor operation to perform random sharpness.
-/// \param[in] start_degree - float representing the start of the range to uniformly sample the factor from it.
-/// \param[in] end_degree - float representing the end of the range.
+/// \param[in] degrees A float vector of size 2, representing the starting and ending degree to uniformly
+///               sample from, to select a degree to adjust sharpness.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomSharpnessOperation> RandomSharpness(std::vector<float> degrees = {0.1, 1.9});
 
 /// \brief Function to create a RandomSolarize TensorOperation.
 /// \notes Invert pixels within specified range. If min=max, then it inverts all pixel above that threshold
-/// \param[in] threshold - a vector with two elements specifying the pixel range to invert.
+/// \param[in] threshold A vector with two elements specifying the pixel range to invert.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomSolarizeOperation> RandomSolarize(std::vector<uint8_t> threshold = {0, 255});
 
@@ -285,7 +285,7 @@ std::shared_ptr<RescaleOperation> Rescale(float rescale, float shift);
 
 /// \brief Function to create a Resize TensorOperation.
 /// \notes Resize the input image to the given size.
-/// \param[in] size - a vector representing the output size of the resized image.
+/// \param[in] size A vector representing the output size of the resized image.
 ///               If size is a single value, the image will be resized to this value with
 ///               the same image aspect ratio. If size has 2 values, it should be (height, width).
 /// \param[in] interpolation An enum for the mode of interpolation
@@ -310,8 +310,8 @@ std::shared_ptr<SwapRedBlueOperation> SwapRedBlue();
 
 /// \brief Function to create a UniformAugment TensorOperation.
 /// \notes Tensor operation to perform randomly selected augmentation.
-/// \param[in] transforms - a vector of TensorOperation transforms.
-/// \param[in] num_ops - integer representing the number of OPs to be selected and applied.
+/// \param[in] transforms A vector of TensorOperation transforms.
+/// \param[in] num_ops An integer representing the number of OPs to be selected and applied.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<TensorOperation>> transforms,
                                                     int32_t num_ops = 2);

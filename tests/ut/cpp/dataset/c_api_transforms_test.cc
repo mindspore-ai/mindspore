@@ -26,6 +26,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+// Tests for data transforms ops (in alphabetical order)
+
 TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
   // Testing CutMixBatch on a batch of CHW images
   // Create a Cifar10 Dataset
