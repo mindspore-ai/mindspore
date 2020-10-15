@@ -410,10 +410,10 @@ class MatrixSetDiag(PrimitiveWithInfer):
     Modifies the batched diagonal part of a batched tensor.
 
     Inputs:
-        - **x** (Tensor) - The batched tensor. It can be one of the following data types:
+        - **x** (Tensor) - The batched tensor. Rank k+1, where k >= 1. It can be one of the following data types:
           float32, float16, int32, int8, uint8.
+        - **diagonal** (Tensor) - The diagonal values. Must have the same type as input `x`. Rank k, where k >= 1.
         - **assist** (Tensor) - A eye tensor of the same type as `x`. With shape same as `x`.
-        - **diagonal** (Tensor) - The diagonal values.
 
     Outputs:
         Tensor, data type same as input `x`. The shape same as `x`.
