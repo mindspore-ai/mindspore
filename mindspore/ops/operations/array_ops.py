@@ -196,6 +196,8 @@ class SameTypeShape(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> input_y = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> out = P.SameTypeShape()(input_x, input_y)
+        [[2. 2.]
+         [2. 2.]]
     """
 
     @prim_attr_register
@@ -383,6 +385,9 @@ class Reshape(PrimitiveWithInfer):
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> reshape = P.Reshape()
         >>> output = reshape(input_tensor, (3, 2))
+        [[-0.1 0.3]
+         [3.6 0.4 ]
+         [0.5 -3.2]]
     """
 
     @prim_attr_register
@@ -553,7 +558,7 @@ class Transpose(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         - **input_perm** (tuple[int]) - The permutation to be converted. The input tuple is constructed by multiple
           indexes. The length of `input_perm` and the shape of `input_x` must be the same. Only constant value is
-          allowed.
+          allowed. Must be in the range [0, rank(input_x)).
 
     Outputs:
         Tensor, the type of output tensor is the same as `input_x` and the shape of output tensor is decided by the
@@ -564,6 +569,12 @@ class Transpose(PrimitiveWithInfer):
         >>> perm = (0, 2, 1)
         >>> transpose = P.Transpose()
         >>> output = transpose(input_tensor, perm)
+        [[[1. 4.]
+          [2. 5.]
+          [3. 6.]]
+         [[7. 10.]
+          [8. 11.]
+          [9. 12.]]]
     """
 
     @prim_attr_register
@@ -1904,6 +1915,7 @@ class Slice(PrimitiveWithInfer):
         >>>                         [[3, 3, 3], [4, 4, 4]],
         >>>                         [[5, 5, 5], [6, 6, 6]]]).astype(np.int32))
         >>> type = P.Slice()(data, (1, 0, 0), (1, 1, 3))
+        [[[3 3 3]]]
     """
 
     @prim_attr_register
@@ -2049,6 +2061,7 @@ class Select(PrimitiveWithInfer):
         >>> input_x = Tensor([2,3], mindspore.float32)
         >>> input_y = Tensor([1,2], mindspore.float32)
         >>> select(input_cond, input_x, input_y)
+        [2. 2.]
     """
 
     @prim_attr_register
@@ -2513,9 +2526,11 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
         Tensor, the shape of the output tensor is :math:`(N, C, NEW\_H, NEW\_W)`.
 
     Examples:
-        >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+        >>> input_tensor = Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), mindspore.float32)
         >>> resize = P.ResizeNearestNeighbor((2, 2))
         >>> output = resize(input_tensor)
+        [[[[-0.1 0.3]
+           [0.4 0.5 ]]]]
     """
 
     @prim_attr_register

@@ -197,8 +197,8 @@ class SSIM(Cell):
     Args:
         max_val (Union[int, float]): The dynamic range of the pixel values (255 for 8-bit grayscale images).
           Default: 1.0.
-        filter_size (int): The size of the Gaussian filter. Default: 11.
-        filter_sigma (float): The standard deviation of Gaussian kernel. Default: 1.5.
+        filter_size (int): The size of the Gaussian filter. Default: 11. The value must be greater than or equal to 1.
+        filter_sigma (float): The standard deviation of Gaussian kernel. Default: 1.5. The value must be greater than 0.
         k1 (float): The constant used to generate c1 in the luminance comparison function. Default: 0.01.
         k2 (float): The constant used to generate c2 in the contrast comparison function. Default: 0.03.
 
@@ -211,9 +211,10 @@ class SSIM(Cell):
 
     Examples:
         >>> net = nn.SSIM()
-        >>> img1 = Tensor(np.random.random((1,3,16,16)))
-        >>> img2 = Tensor(np.random.random((1,3,16,16)))
+        >>> img1 = Tensor(np.random.random((1,3,16,16)), mindspore.float32)
+        >>> img2 = Tensor(np.random.random((1,3,16,16)), mindspore.float32)
         >>> ssim = net(img1, img2)
+        [0.12174469]
     """
     def __init__(self, max_val=1.0, filter_size=11, filter_sigma=1.5, k1=0.01, k2=0.03):
         super(SSIM, self).__init__()

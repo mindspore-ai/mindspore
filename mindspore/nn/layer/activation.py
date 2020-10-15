@@ -382,9 +382,11 @@ class PReLU(Cell):
         Tensor, with the same type and shape as the `input_data`.
 
     Examples:
-        >>> input_x = Tensor(np.random.rand(1, 10, 4, 4), mindspore.float32)
+        >>> input_x = Tensor(np.array([[[[0.1, 0.6], [0.9, 0.9]]]]), mindspore.float32)
         >>> prelu = nn.PReLU()
         >>> prelu(input_x)
+        [[[[0.1 0.6]
+           [0.9 0.9]]]]
 
     """
     @cell_attr_register(attrs="")

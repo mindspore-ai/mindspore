@@ -326,7 +326,7 @@ class ReduceMean(_Reduce):
     Inputs:
         - **input_x** (Tensor[Number]) - The input tensor.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed.
+          Only constant value is allowed. Must be in the range [-rank(input_x), rank(input_x)).
 
     Outputs:
         Tensor, has the same dtype as the `input_x`.
@@ -342,6 +342,8 @@ class ReduceMean(_Reduce):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceMean(keep_dims=True)
         >>> output = op(input_x, 1)
+        >>> output.shape
+        (3, 1, 5, 6)
     """
 
 
@@ -358,7 +360,7 @@ class ReduceSum(_Reduce):
     Inputs:
          - **input_x** (Tensor[Number]) - The input tensor.
          - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-           Only constant value is allowed.
+           Only constant value is allowed. Must be in the range [-rank(input_x), rank(input_x)).
 
     Outputs:
         Tensor, has the same dtype as the `input_x`.
@@ -374,6 +376,8 @@ class ReduceSum(_Reduce):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceSum(keep_dims=True)
         >>> output = op(input_x, 1)
+        >>> output.shape
+        (3, 1, 5, 6)
     """
 
     @prim_attr_register
@@ -397,7 +401,7 @@ class ReduceAll(_Reduce):
     Inputs:
         - **input_x** (Tensor[bool]) - The input tensor.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed.
+          Only constant value is allowed. Must be in the range [-rank(input_x), rank(input_x)).
 
     Outputs:
         Tensor, the dtype is bool.
@@ -435,7 +439,7 @@ class ReduceAny(_Reduce):
     Inputs:
         - **input_x** (Tensor[bool]) - The input tensor.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed.
+          Only constant value is allowed. Must be in the range [-rank(input_x), rank(input_x)).
 
     Outputs:
         Tensor, the dtype is bool.
@@ -473,7 +477,7 @@ class ReduceMax(_Reduce):
     Inputs:
          - **input_x** (Tensor[Number]) - The input tensor.
          - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-           Only constant value is allowed.
+           Only constant value is allowed. Must be in the range [-rank(input_x), rank(input_x)).
 
     Outputs:
         Tensor, has the same dtype as the `input_x`.
@@ -514,7 +518,7 @@ class ReduceMin(_Reduce):
     Inputs:
         - **input_x** (Tensor[Number]) - The input tensor.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed.
+          Only constant value is allowed. Must be in the range [-rank(input_x), rank(input_x)).
 
     Outputs:
         Tensor, has the same dtype as the `input_x`.
@@ -530,6 +534,8 @@ class ReduceMin(_Reduce):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceMin(keep_dims=True)
         >>> output = op(input_x, 1)
+        >>> output.shape
+        (3, 1, 5, 6)
     """
 
 
@@ -547,7 +553,7 @@ class ReduceProd(_Reduce):
     Inputs:
         - **input_x** (Tensor[Number]) - The input tensor.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed.
+          Only constant value is allowed. Must be in the range [-rank(input_x), rank(input_x)).
 
     Outputs:
         Tensor, has the same dtype as the `input_x`.
@@ -3270,11 +3276,11 @@ class SquareSumAll(PrimitiveWithInfer):
         - **output_y2** (Tensor) - The same type as the `input_x1`.
 
     Examples:
-         >>> input_x1 = Tensor(np.random.randint([3, 2, 5, 7]), mindspore.float32)
-         >>> input_x2 = Tensor(np.random.randint([3, 2, 5, 7]), mindspore.float32)
+         >>> input_x1 = Tensor(np.array([0, 0, 2, 0]), mindspore.float32)
+         >>> input_x2 = Tensor(np.array([0, 0, 2, 4]), mindspore.float32)
          >>> square_sum_all = P.SquareSumAll()
          >>> square_sum_all(input_x1, input_x2)
-         (27, 26)
+         (4, 20)
     """
 
     @prim_attr_register
