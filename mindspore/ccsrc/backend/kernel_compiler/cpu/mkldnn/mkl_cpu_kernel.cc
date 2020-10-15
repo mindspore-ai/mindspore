@@ -56,11 +56,11 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
     padding_r->emplace_back(0);
     padding_r->emplace_back(0);
   } else {
-    int pad = AnfAlgo::GetNodeAttr<int>(kernel_node, PAD);
-    padding_l->emplace_back(pad);
-    padding_l->emplace_back(pad);
-    padding_r->emplace_back(pad);
-    padding_r->emplace_back(pad);
+    std::vector<int> pad = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, PAD_LIST);
+    padding_l->emplace_back(pad[0]);
+    padding_l->emplace_back(pad[1]);
+    padding_r->emplace_back(pad[2]);
+    padding_r->emplace_back(pad[3]);
   }
 }
 

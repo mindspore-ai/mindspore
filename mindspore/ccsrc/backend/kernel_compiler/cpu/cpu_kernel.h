@@ -34,6 +34,7 @@ const char STRIDE[] = "stride";
 const char STRIDES[] = "strides";
 const char DILATION[] = "dilation";
 const char PAD[] = "pad";
+const char PAD_LIST[] = "pad_list";
 const char PAD_MODE[] = "pad_mode";
 const char PADDING[] = "padding";
 const char PAD_MODE_LOWER_SAME[] = "same";
