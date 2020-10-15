@@ -225,7 +225,16 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=F
     logger.info("Save checkpoint process finish.")
 
 
-def load_checkpoint(ckpt_file_name, net=None, strict_load=False):
+def _check_param_prefix(filter_prefix, param_name):
+    """Checks whether the prefix of parameter name matches the given filter_prefix."""
+    for prefix in filter_prefix:
+        if param_name.find(prefix) == 0 \
+                and (param_name == prefix or param_name[len(prefix)] == "." or (prefix and prefix[-1] == ".")):
+            return True
+    return False
+
+
+def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None):
     """
     Loads checkpoint info from a specified file.
 
@@ -234,6 +243,8 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False):
         net (Cell): Cell network. Default: None
         strict_load (bool): Whether to strict load the parameter into net. If False, it will load parameter
                            in the param_dict into net with the same suffix. Default: False
+        filter_prefix (Union[str, list[str], tuple[str]]): Parameter with the filter prefix will not be loaded.
+            Default: None.
 
     Returns:
         Dict, key is parameter name, value is a Parameter.
@@ -253,6 +264,19 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False):
     if os.path.getsize(ckpt_file_name) == 0:
         raise ValueError("The checkpoint file may be empty, please make sure enter the correct file name.")
 
+    if filter_prefix is not None:
+        if not isinstance(filter_prefix, (str, list, tuple)):
+            raise TypeError(f"The type of filter_prefix must be str, list[str] or tuple[str] "
+                            f"when filter_prefix is not None, but got {str(type(filter_prefix))}.")
+        if isinstance(filter_prefix, str):
+            filter_prefix = (filter_prefix,)
+        if not filter_prefix:
+            raise ValueError("The filter_prefix can't be empty when filter_prefix is list or tuple.")
+        for index, prefix in enumerate(filter_prefix):
+            if not isinstance(prefix, str):
+                raise TypeError(f"The type of filter_prefix must be str, list[str] or tuple[str], "
+                                f"but got {str(type(prefix))} at index {index}.")
+
     logger.info("Execute load checkpoint process.")
     checkpoint_list = Checkpoint()
 
@@ -266,9 +290,10 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False):
 
     parameter_dict = {}
     try:
-        element_id = 0
         param_data_list = []
-        for element in checkpoint_list.value:
+        for element_id, element in enumerate(checkpoint_list.value):
+            if filter_prefix is not None and _check_param_prefix(filter_prefix, element.tag):
+                continue
             data = element.tensor.tensor_content
             data_type = element.tensor.tensor_type
             np_type = tensor_to_np_type[data_type]
@@ -296,13 +321,14 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False):
                     param_value = param_data.reshape(param_dim)
                     parameter_dict[element.tag] = Parameter(Tensor(param_value, ms_type), name=element.tag)
 
-            element_id += 1
-
         logger.info("Load checkpoint process finish.")
 
     except BaseException as e:
         logger.error("Failed to load the checkpoint file `%s`.", ckpt_file_name)
         raise RuntimeError(e.__str__())
+
+    if not parameter_dict:
+        raise ValueError(f"The loaded parameter dict is empty after filtering, please check filter_prefix.")
 
     if net is not None:
         load_param_into_net(net, parameter_dict, strict_load)
