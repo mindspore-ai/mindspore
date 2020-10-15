@@ -76,6 +76,7 @@ int ConcatOpenCLKernel::Init() {
 
   auto param = reinterpret_cast<ConcatParameter *>(this->op_parameter_);
   MS_LOG(DEBUG) << " concat at axis=:  " << param->axis_;
+  param->axis_ = (param->axis_ == -1) ? (in_tensors_[0]->shape().size() - 1) : param->axis_;
   if (param->axis_ < 0 || param->axis_ > 3) {
     MS_LOG(ERROR) << " only support axis >= 0 and axis <= 3 ";
     return RET_ERROR;
