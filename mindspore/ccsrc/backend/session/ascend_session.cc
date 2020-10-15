@@ -280,21 +280,15 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
   if (save_graphs) {
-    std::string file_path =
-      save_graphs_path + "/" + "select_kernel_before" + "_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
-    DumpIR(file_path, child_graph);
+    std::string file_name = "select_kernel_before_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
+    DumpIR(file_name, child_graph);
   }
   // select kernel build info
   SelectKernel(*child_graph);
   if (save_graphs) {
-    std::string file_path =
-      save_graphs_path + "/" + "select_kernel_after" + "_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
-    DumpIR(file_path, child_graph);
+    std::string file_name = "select_kernel_after_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
+    DumpIR(file_name, child_graph);
   }
   // optimize graph
   HardwareOptimize(child_graph);
@@ -469,13 +463,8 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "after_adjust_kernel.ir";
-    DumpIR(file_path, kernel_graph);
+    DumpIR("after_adjust_kernel.ir", kernel_graph);
   }
   MS_LOG(INFO) << "Finish!";
 }
@@ -589,14 +578,10 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
   if (!save_graphs) {
     return;
   }
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
   for (auto &graph : all_graphs) {
     MS_EXCEPTION_IF_NULL(graph);
-    std::string file_path = save_graphs_path + "/graph_build_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_path, graph, true);
+    std::string file_name = "graph_build_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph, true);
     DumpIRProto(graph, "vm_build_" + std::to_string(graph->graph_id()));
   }
 #endif
@@ -910,14 +895,9 @@ void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<st
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs) {
-    if (save_graphs_path.empty()) {
-      save_graphs_path = ".";
-    }
-    std::string file_path =
-      save_graphs_path + "/" + "select_kernel_before" + "_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_path, graph.get());
+    std::string file_name = "select_kernel_before_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph.get());
   }
 
   for (auto &child_graph : graph->child_graph_order()) {
@@ -982,14 +962,9 @@ void AscendSession::RecurseSelectKernelInfo(NotNull<KernelGraphPtr> graph,
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs) {
-    if (save_graphs_path.empty()) {
-      save_graphs_path = ".";
-    }
-    std::string file_path =
-      save_graphs_path + "/" + "select_kernel_after" + "_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_path, graph.get());
+    std::string file_name = "select_kernel_after_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph.get());
   }
   MS_LOG(INFO) << "Finish selecting kernel info in graph: " << graph->graph_id();
 }

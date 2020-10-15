@@ -85,15 +85,7 @@ std::unordered_map<abstract::AbstractBasePtrList, int, abstract::AbstractBasePtr
 namespace {
 std::string GetBaseNameForIR(int stage_idx, const std::string &action_name) {
   std::ostringstream oss;
-  auto ms_context = MsContext::GetInstance();
-  if (ms_context == nullptr) {
-    MS_LOG(EXCEPTION) << "ms_context is nullptr";
-  }
-  auto save_graphs_path = ms_context->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
-  oss << save_graphs_path << "/" << stage_idx << "_" << action_name;
+  oss << stage_idx << "_" << action_name;
   return oss.str();
 }
 }  // namespace
@@ -690,9 +682,7 @@ void Pipeline::Run() {
 #endif
 
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && (user_graph != nullptr)) {
-    std::string user_graph_file = GetFilePathName("ModelDigraph.dot");
-    MS_LOG(DEBUG) << "Save user graph to: " << user_graph_file;
-    draw::DrawUserFuncGraph(user_graph_file, user_graph);
+    draw::DrawUserFuncGraph("ModelDigraph.dot", user_graph);
   }
   MS_LOG(INFO) << "End";
 }

@@ -29,6 +29,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "ir/tensor.h"
+#include "pipeline/jit/base.h"
 
 namespace mindspore {
 
@@ -189,11 +190,11 @@ void Draw(const std::string &filename, const FuncGraphPtr &func_graph) {
   const std::string dot_suffix = ".dot";
   std::string filename_with_suffix =
     (filename.rfind(dot_suffix) != (filename.size() - dot_suffix.size())) ? (filename + dot_suffix) : filename;
-  DrawByOpt(filename_with_suffix, func_graph, false);
+  DrawByOpt(pipeline::GetSaveGraphsPathName(filename_with_suffix), func_graph, false);
 }
 
 void DrawUserFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph) {
-  DrawByOpt(filename, func_graph, true);
+  DrawByOpt(pipeline::GetSaveGraphsPathName(filename), func_graph, true);
 }
 #else
 void Draw(const std::string &, const FuncGraphPtr &) {

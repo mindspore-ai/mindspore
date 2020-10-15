@@ -27,6 +27,7 @@
 #include "ir/graph_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/parallel/ops_info/operator_info.h"
+#include "pipeline/jit/base.h"
 
 namespace mindspore {
 const std::string ToShortString(const TypeId &typeId) {
@@ -482,7 +483,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   if (graph == nullptr) {
     return;
   }
-  auto real_filename = AddGlobalId(filename);
+  auto real_filename = pipeline::GetSaveGraphsPathName(AddGlobalId(filename));
   if (real_filename.size() > PATH_MAX) {
     MS_LOG(ERROR) << "File path " << real_filename << " is too long.";
     return;

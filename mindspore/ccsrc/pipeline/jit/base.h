@@ -43,7 +43,7 @@ inline std::string GetPhasePrefix(const std::string &phase) {
   return phase.substr(0, pos);
 }
 
-inline std::string GetFilePathName(const std::string &file_name) {
+inline std::string GetSaveGraphsPathName(const std::string &file_name) {
   std::ostringstream oss;
   auto ms_context = MsContext::GetInstance();
   if (ms_context == nullptr) {
