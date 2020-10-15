@@ -59,9 +59,9 @@ install(
 )
 
 install(
-        TARGETS mindspore_gvar
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
+    TARGETS mindspore_gvar
+    DESTINATION ${INSTALL_LIB_DIR}
+    COMPONENT mindspore
 )
 
 if (USE_GLOG)
@@ -198,6 +198,11 @@ if (NOT ENABLE_GE)
                 ${CMAKE_BINARY_DIR}/graphengine/src/ge/common/libge_common.so
                 ${CMAKE_BINARY_DIR}/graphengine/src/ge/ge_runtime/libge_runtime.so
                 ${CMAKE_SOURCE_DIR}/build/graphengine/libc_sec.so
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+        )
+        install(
+            TARGETS ms_profile
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
         )
