@@ -122,15 +122,24 @@ class AscendEnvChecker(EnvChecker):
 
     def __init__(self):
         self.version = ["1.75.22.0.220"]
-        atlas_fwk_version = "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/version.info"
+        atlas_nnae_version = "/usr/local/Ascend/nnae/latest/fwkacllib/version.info"
+        atlas_toolkit_version = "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/version.info"
         hisi_fwk_version = "/usr/local/Ascend/fwkacllib/version.info"
-        if os.path.exists(atlas_fwk_version):
+        if os.path.exists(atlas_nnae_version):
+            # atlas default path
+            self.fwk_path = "/usr/local/Ascend/nnae/latest/fwkacllib"
+            self.op_impl_path = "/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe"
+            self.tbe_path = self.fwk_path + "/lib64"
+            self.cce_path = self.fwk_path + "/ccec_compiler/bin"
+            self.fwk_version = atlas_nnae_version
+            self.op_path = "/usr/local/Ascend/nnae/latest/opp"
+        elif os.path.exists(atlas_toolkit_version):
             # atlas default path
             self.fwk_path = "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib"
             self.op_impl_path = "/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe"
             self.tbe_path = self.fwk_path + "/lib64"
             self.cce_path = self.fwk_path + "/ccec_compiler/bin"
-            self.fwk_version = atlas_fwk_version
+            self.fwk_version = atlas_toolkit_version
             self.op_path = "/usr/local/Ascend/ascend-toolkit/latest/opp"
         elif os.path.exists(hisi_fwk_version):
             # hisi default path
