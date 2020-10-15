@@ -17,20 +17,20 @@
 #ifndef MINDSPORE_CCSRC_UTILS_PRIMITIVE_PY_H_
 #define MINDSPORE_CCSRC_UTILS_PRIMITIVE_PY_H_
 
-#include <unordered_map>
-#include <vector>
+#include <map>
 #include <memory>
 #include <string>
 #include <tuple>
-#include <map>
+#include <unordered_map>
+#include <vector>
 
 #include "abstract/abstract_value.h"
-#include "utils/misc.h"
-#include "pybind11/pybind11.h"
-#include "utils/log_adapter.h"
+#include "frontend/parallel/ops_info/operator_info.h"
 #include "ir/primitive.h"
 #include "ir/signature.h"
-#include "frontend/parallel/ops_info/operator_info.h"
+#include "pybind11/pybind11.h"
+#include "utils/log_adapter.h"
+#include "utils/misc.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -69,6 +69,7 @@ class PrimitivePy : public Primitive {
 
  private:
   py::function GetComputeFunction() const;
+  void CheckHookConsistency(const py::object &grad_out, const py::object &expected_grad_out) const;
   py::object python_obj_;
   py::function hook_;
   std::vector<Signature> signatures_;
