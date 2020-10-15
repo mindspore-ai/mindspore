@@ -17,6 +17,7 @@
 #include "nnacl/pack.h"
 #include <string.h>
 #include <stdlib.h>
+#include "nnacl/int8/conv_int8.h"
 
 void PackWeightKHWToHWKFp32(const void *src, void *dst, int plane, int channel) {
   return PackNCHWToNHWCFp32(src, dst, 1, plane, channel);
@@ -65,54 +66,6 @@ void PackWeightInt8(int8_t *weight_data, ConvParameter *conv_param, int8_t *pack
           for (int k = 0; k < real_oc_num; k++) {
             int8_t *origin_data_ptr = weight_data + kernel_block_stride + k * kernel_plane * in_channel;
             int8_t *packed_data_ptr = packed_weight + packed_kernel_block_size + k * C4NUM * C4NUM;
-            *packed_data_ptr = origin_data_ptr[0];
-            int32_t f_zp;
-            if (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL) {
-              f_zp = filter_args[j * C4NUM + k].zp_;
-            } else {
-              f_zp = filter_args[0].zp_;
-            }
-            weight_sum[j * C4NUM + k] += (int32_t)(packed_data_ptr[0] - f_zp);
-          }
-        }  // kernel block loop
-      }    // inchannel block loop
-    }      // channel block loop
-  }        // kernel plane loop
-}
-
-void PackWeightInt8Opt(int8_t *weight_data, ConvParameter *conv_param, int8_t *packed_weight, int32_t *weight_sum) {
-  // original weight format : ohwi
-  int kernel_h = conv_param->kernel_h_;
-  int kernel_w = conv_param->kernel_w_;
-  int in_channel = conv_param->input_channel_;
-  int out_channel = conv_param->output_channel_;
-  int oc4 = UP_DIV(out_channel, C4NUM);
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int kernel_plane = kernel_h * kernel_w;
-  int pack_weight_size = oc4 * ic4 * C4NUM * C4NUM * kernel_plane;
-  int unit_size = C4NUM * C4NUM;
-  int block_size = pack_weight_size / oc4;
-  QuantArg *filter_args = conv_param->conv_quant_arg_.filter_quant_args_;
-
-  for (int m = 0; m < kernel_plane; m++) {
-    int kernel_plane_stride = m * in_channel;
-    int packed_kernel_plane_stride = m * unit_size * ic4;
-    for (int i = 0; i < ic4; i++) {
-      int channel_block_stride = kernel_plane_stride + i * C4NUM;
-      int packed_channel_block_size = packed_kernel_plane_stride + i * unit_size;
-      int ic_remainder = in_channel - i * C4NUM;
-      int real_ic_num = ic_remainder < C4NUM ? ic_remainder : C4NUM;
-      for (int h = 0; h < real_ic_num; h++) {
-        int block_stride = channel_block_stride + h;
-        int packed_block_stride = packed_channel_block_size + h;
-        for (int j = 0; j < oc4; j++) {
-          int kernel_block_stride = block_stride + j * C4NUM * kernel_plane * in_channel;
-          int packed_kernel_block_size = packed_block_stride + j * block_size;
-          int oc_remainder = out_channel - j * C4NUM;
-          int real_oc_num = oc_remainder < C4NUM ? oc_remainder : C4NUM;
-          for (int k = 0; k < real_oc_num; k++) {
-            int8_t *origin_data_ptr = weight_data + kernel_block_stride + k * kernel_plane * in_channel;
-            int8_t *packed_data_ptr = packed_weight + packed_kernel_block_size + k * C4NUM;
             *packed_data_ptr = origin_data_ptr[0];
             int32_t f_zp;
             if (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL) {
@@ -391,11 +344,10 @@ void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real
   }  // tile num loop
 }
 
-void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int real_cal_num, int block_index,
-                           int32_t *input_sum, ConvParameter *conv_param) {
+void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, int real_cal_num,
+                           int block_index, int32_t *filter_zp, int32_t *input_sum, ConvParameter *conv_param,
+                           bool per_channel) {
   // input format : nhwc
-  int tile_num = conv_param->tile_num_;
-  QuantArg *filter_arg = conv_param->conv_quant_arg_.filter_quant_args_;
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int stride_h = conv_param->stride_h_;
@@ -407,11 +359,8 @@ void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int r
   int in_channel = conv_param->input_channel_;
   int in_h = conv_param->input_h_;
   int in_w = conv_param->input_w_;
-  int ic4_minus = in_channel / C4NUM;
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int oc4 = UP_DIV(conv_param->output_channel_, C4NUM);
   int out_w = conv_param->output_w_;
-  int block_size = kernel_h * kernel_w;
+  int kernel_plane = kernel_h * kernel_w;
 
   for (int i = 0; i < real_cal_num; i++) {
     int block_start = block_index + i;
@@ -422,47 +371,30 @@ void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int r
     int kh_e = MSMIN(kernel_h, UP_DIV(in_h - input_h, dilation_h));
     int kw_s = MSMAX(0, UP_DIV(-input_w, dilation_w));
     int kw_e = MSMIN(kernel_w, UP_DIV(in_w - input_w, dilation_w));
-    for (int j = kh_s; j < kh_e; j++) {
-      int input_y_stride = j * dilation_h * in_w * in_channel + input_stride;
-      for (int n = kw_s; n < kw_e; n++) {
-        int input_x_stride = input_y_stride + n * dilation_w * in_channel;
-        int input_plane_offset = (j * kernel_w + n) * tile_num * C4NUM * ic4 + i * C4NUM;
-        for (int m = 0; m < ic4_minus; m++) {
-          int channel_block_stride = input_x_stride + m * C4NUM;
-          int channel_block_offset = input_plane_offset + m * tile_num * C4NUM;
-          memcpy(packed_input + channel_block_offset, input_data + channel_block_stride, 4);
-        }  // channel_block loop
-        int ic_res = conv_param->input_channel_ - ic4_minus * C4NUM;
-        for (int l = 0; l < ic_res; ++l) {
-          int channel_block_stride = input_x_stride + ic4_minus * C4NUM + l;
-          int channel_block_offset = input_plane_offset + ic4_minus * tile_num * C4NUM + l;
-          packed_input[channel_block_offset] = input_data[channel_block_stride];
+    if (dilation_w == 1 && dilation_h == 1) {
+      for (int j = kh_s; j < kh_e; j++) {
+        int input_y_stride = j * in_w * in_channel + input_stride;
+        int input_x_stride = input_y_stride + kw_s * in_channel;
+        int input_plane_offset = (j * kernel_w + kw_s) * in_channel + i * in_channel * kernel_plane;
+        memcpy(matmul_input + input_plane_offset, input_data + input_x_stride, (kw_e - kw_s) * in_channel);
+      }  // kernel_h loop
+    } else {
+      for (int j = kh_s; j < kh_e; j++) {
+        int input_y_stride = j * dilation_h * in_w * in_channel + input_stride;
+        for (int k = kw_s; k < kw_e; ++k) {
+          int input_x_stride = input_y_stride + k * dilation_w * in_channel;
+          int input_plane_offset = (j * kernel_w + k) * in_channel + i * in_channel * kernel_plane;
+          memcpy(matmul_input + input_plane_offset, input_data + input_x_stride, in_channel);
         }
-      }  // kernel_w loop
-    }    // kernel_h loop
-    int32_t input_accumulator = 0;
-    for (int j = 0; j < block_size; j++) {
-      int block_offset = j * tile_num * ic4 * C4NUM + i * C4NUM;
-      for (int c = 0; c < ic4; c++) {
-        int ic4_offset = block_offset + c * tile_num * C4NUM;
-        for (int k = 0; k < C4NUM; ++k) {
-          input_accumulator += (packed_input + ic4_offset)[k];
-        }
-      }
-    }
-    if (!(conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC)) {
-      continue;
-    } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
-               (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-      int cal_num_offset = i * oc4 * C4NUM;
-      for (int l = 0; l < conv_param->output_channel_; ++l) {
-        input_sum[cal_num_offset + l] = input_accumulator * filter_arg[l].zp_;
-      }
-    } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
-               !(conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-      input_sum[i] = input_accumulator * filter_arg[0].zp_;
+      }  // kernel_h loop
     }
   }  // tile num loop
+  if (per_channel) {
+    Conv1x1PreOptPeroc(matmul_input, packed_input, input_sum, kernel_plane * in_channel, conv_param->output_channel_,
+                       real_cal_num, filter_zp, C8NUM * C8NUM);
+  } else {
+    Conv1x1PreOptPert(matmul_input, packed_input, input_sum, kernel_plane * in_channel, real_cal_num, conv_param);
+  }
 }
 
 void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, ConvParameter *conv_param) {
