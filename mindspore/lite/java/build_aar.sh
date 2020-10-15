@@ -61,7 +61,7 @@ build_jni_arm64() {
     cd build
     cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
                   -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
-                  -DANDROID_STL="c++_shared" -DCMAKE_BUILD_TYPE=Debug ..
+                  -DANDROID_STL="c++_static" -DCMAKE_BUILD_TYPE=Debug ..
     VERBOSE=2 make -j8
     mkdir -p ${BASE_PATH}/java/app/libs/arm64-v8a/
     cp ${BASE_PATH}/java/app/src/main/native/build/libmindspore-lite-jni.so ${BASE_PATH}/java/app/libs/arm64-v8a/
@@ -75,7 +75,7 @@ build_jni_arm32() {
     cd build
     cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
                   -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
-                  -DANDROID_STL="c++_shared" -DCMAKE_BUILD_TYPE=Debug ..
+                  -DANDROID_STL="c++_static" -DCMAKE_BUILD_TYPE=Debug ..
     VERBOSE=2 make -j8
     mkdir -p ${BASE_PATH}/java/app/libs/armeabi-v7a/
     cp ${BASE_PATH}/java/app/src/main/native/build/libmindspore-lite-jni.so ${BASE_PATH}/java/app/libs/armeabi-v7a/
