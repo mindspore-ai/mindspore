@@ -53,21 +53,24 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitSlideParam() {
 }
 
 int DeconvolutionDepthwiseFp16CPUKernel::InitBuffer() {
-  int C8 = UP_DIV(conv_param_->input_channel_, C8NUM);
-  int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C8NUM * C8;
-  packed_input_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(pack_input_size * sizeof(float16_t)));
-  if (packed_input_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
-  }
+  if (conv_param_->input_channel_ % C8NUM != 0) {
+    need_align_ = true;
+    int C8 = UP_DIV(conv_param_->input_channel_, C8NUM);
+    int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C8NUM * C8;
+    packed_input_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(pack_input_size * sizeof(float16_t)));
+    if (packed_input_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
 
-  int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C8NUM * C8;
-  packed_output_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(pack_output_size * sizeof(float16_t)));
-  if (packed_output_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
+    int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C8NUM * C8;
+    packed_output_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(pack_output_size * sizeof(float16_t)));
+    if (packed_output_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
+    memset(packed_output_, 0, pack_output_size * sizeof(float16_t));
   }
-  memset(packed_output_, 0, pack_output_size * sizeof(float16_t));
   return RET_OK;
 }
 
