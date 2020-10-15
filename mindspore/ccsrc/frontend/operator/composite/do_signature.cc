@@ -143,7 +143,7 @@ TypeId GetMaxTypeId(const std::vector<TypePtr> &input_types, std::vector<size_t>
     }
   }
   if (max_type_id != kNumberTypeFloat16 && max_type_id != kNumberTypeFloat32 && max_type_id != kNumberTypeFloat64 &&
-      has_scalar_float32) {
+      max_type_id != kTypeUnknown && has_scalar_float32) {
     max_type_id = kNumberTypeFloat32;
   }
   return max_type_id;

@@ -224,7 +224,7 @@ std::map<SignatureEnumDType, TypeId> GetDstType(const py::tuple &py_args,
       }
     }
     if (max_type != TypeId::kNumberTypeFloat16 && max_type != TypeId::kNumberTypeFloat32 &&
-        max_type != TypeId::kNumberTypeFloat64 && has_float) {
+        max_type != TypeId::kNumberTypeFloat64 && max_type != TypeId::kTypeUnknown && has_float) {
       max_type = TypeId::kNumberTypeFloat32;
     }
     if (max_type == TypeId::kNumberTypeUInt8 && has_int8) {
