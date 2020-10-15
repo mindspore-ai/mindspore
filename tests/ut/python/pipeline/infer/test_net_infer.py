@@ -98,7 +98,7 @@ def test_dup_context():
 
             return net1() + net2()
 
-    Net()(5.0)
+    Net()(Tensor(np.array(5.0).astype(np.float32)))
 
 
 def test_maybe_poly_func():
@@ -125,4 +125,4 @@ def test_maybe_poly_func():
 
     y_input = Tensor(np.array([1, 2]).astype(np.int32))
     z_input = Tensor(np.array([[2, 2], [3, 3]]).astype(np.int32))
-    Net()(1, y_input, z_input)
+    Net()(Tensor(np.array(1).astype(np.int32)), y_input, z_input)

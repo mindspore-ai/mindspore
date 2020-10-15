@@ -74,7 +74,7 @@ def test_remove_and_fv_2():
         return ret
 
     @ms_function
-    def out_loop(input1, input_data):
+    def out_loop(input1, input_data0, input_data1):
         ret = ()
 
         def fv_func1(y):
@@ -82,14 +82,15 @@ def test_remove_and_fv_2():
         def fv_func2(y):
             return input1 - y
         fv_func_list = [fv_func1, fv_func2]
-        ele0 = inner_loop(input1, input_data[0], fv_func_list)
-        ele1 = inner_loop(input1, input_data[1], fv_func_list)
+        ele0 = inner_loop(input1, input_data0, fv_func_list)
+        ele1 = inner_loop(input1, input_data1, fv_func_list)
         ret = (ele0, ele1)
         return ret
 
-    input_data = (Tensor(normal(0, 0.1, (3, 3))), Tensor(normal(0, 0.1, (3, 1))))
+    input_data0 = Tensor(normal(0, 0.1, (3, 3)))
+    input_data1 = Tensor(normal(0, 0.1, (3, 1)))
     input1 = Tensor(normal(0, 0.1, (3, 3)))
-    out_loop(input1, input_data)
+    out_loop(input1, input_data0, input_data1)
 
 
 # test cell as high order argument

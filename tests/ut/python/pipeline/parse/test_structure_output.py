@@ -25,7 +25,21 @@ from mindspore.ops.functional import depend
 context.set_context(mode=context.GRAPH_MODE)
 
 
-def test_output_const_tuple():
+def test_output_const_tuple_0():
+    class Net(Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = (1, 2, 3)
+
+        def construct(self):
+            return self.x
+
+    x = (1, 2, 3)
+    net = Net()
+    assert net() == x
+
+
+def test_output_const_tuple_1():
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -83,32 +97,6 @@ def test_output_const_str():
     assert net() == "hello world"
 
 
-def test_output_parameter_tuple():
-    class Net(Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
-        def construct(self, x):
-            return x
-
-    x = (1, 2, 3)
-    net = Net()
-    assert net(x) == x
-
-
-def test_output_parameter_list():
-    class Net(Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
-        def construct(self, x):
-            return x
-
-    x = [1, 2, 3]
-    net = Net()
-    assert net(x) == x
-
-
 def test_output_parameter_int():
     class Net(Cell):
         def __init__(self):
@@ -117,7 +105,7 @@ def test_output_parameter_int():
         def construct(self, x):
             return x
 
-    x = 88
+    x = Tensor(np.array(88).astype(np.int32))
     net = Net()
     assert net(x) == x
 
@@ -126,13 +114,14 @@ def test_output_parameter_str():
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()
+            self.x = "hello world"
 
-        def construct(self, x):
-            return x
+        def construct(self):
+            return self.x
 
     x = "hello world"
     net = Net()
-    assert net(x) == x
+    assert net() == x
 
 
 def test_tuple_tuple_0():

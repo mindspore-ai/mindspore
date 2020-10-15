@@ -466,7 +466,7 @@ def test_tensor_assign():
     # Error for A[Slice] = Number
     # 1. A[Slice] = Number,  Slice error
     with pytest.raises(IndexError):
-        net_e2(t, 2)
+        net_e2(t, Tensor(2, mstype.int32))
 
     # Error for A[Slice] = U, U is a Tensor
     # 1. A[Slice] = U,  u.size is error
@@ -493,7 +493,7 @@ def test_tensor_assign():
     # Error for A[Tuple(Slice...)] = Number
     # 1. A[Tuple(Slice...)] = Number,  Slice error
     with pytest.raises(IndexError):
-        net_e1(Ta, 2)
+        net_e1(Ta, Tensor(2, mstype.int32))
 
     net = TensorAssignWithInteger()
     # Error for A[Number] = scalar/Tensor
@@ -675,12 +675,12 @@ def test_tensor_assign_bool_index():
     with pytest.raises(AttributeError):
         net3(Ta, Tb, Tc, u_tensor)
     with pytest.raises(AttributeError):
-        net3(Ta, Tb, Tc, u_scalar)
+        net3(Ta, Tb, Tc, Tensor(u_scalar, mstype.int32))
     net4 = TensorAssignWithBoolTensorIndex2Error()
     with pytest.raises(AttributeError):
         net4(Ta, u_tensor)
     with pytest.raises(AttributeError):
-        net4(Ta, u_scalar)
+        net4(Ta, Tensor(u_scalar, mstype.int32))
 
 
 test_cases = [

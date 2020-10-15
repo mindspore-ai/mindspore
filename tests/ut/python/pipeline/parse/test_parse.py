@@ -179,7 +179,8 @@ def test_bprop_with_wrong_output_num():
             return BpropWithWrongOutputNum()(x, y)
 
     with pytest.raises(ValueError):
-        grad_all(BpropWithWrongOutputNumCell())(1, 2)
+        grad_all(BpropWithWrongOutputNumCell())(Tensor(np.array(1).astype(np.int32)),
+                                                Tensor(np.array(2).astype(np.int32)))
 
 def test_bprop_with_wrong_output_type():
     context.set_context(check_bprop=True)

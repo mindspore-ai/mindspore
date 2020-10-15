@@ -15,7 +15,7 @@
 """ Test Dynamic Learning Rate """
 import pytest
 
-from mindspore import Tensor, Parameter
+from mindspore import Tensor
 from mindspore.nn import learning_rate_schedule as lr_schedules
 from mindspore.common.api import _executor
 import mindspore.common.dtype as mstype
@@ -29,7 +29,7 @@ warmup_steps = 2
 min_lr = 0.01
 max_lr = 0.1
 power = 0.5
-global_step = Parameter(Tensor(2, mstype.int32), 'global_step')
+global_step = Tensor(2, mstype.int32)
 
 
 class TestInit:

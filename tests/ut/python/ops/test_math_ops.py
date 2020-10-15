@@ -104,7 +104,6 @@ def test_pow():
     result = testpow(input_tensor, power)
     assert np.all(result.asnumpy() == expect)
     net = PowNet()
-    net(input_tensor, True)
     net(input_tensor, power2)
 
 
