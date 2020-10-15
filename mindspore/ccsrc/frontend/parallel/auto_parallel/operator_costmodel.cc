@@ -947,5 +947,122 @@ double GatherV2PCost::GetBackwardComputationCost(const std::vector<TensorInfo> &
 
   return result;
 }
+
+// The forward communication is determined by whether the slice is column split or row split
+// The number of segments is actually the shape[0] of the output, which is the cost of the AllReduce
+double UnsortedSegmentSumCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs,
+                                                  const std::vector<TensorInfo> &outputs, int32_t stage_id) const {
+  TensorInfo input0 = inputs[0];
+  TensorInfo input1 = inputs[1];
+  TensorInfo output0 = outputs[0];
+  Shape input0_shape = input0.shape();
+  Shape input0_slice_shape = inputs[0].slice_shape();
+  double result = 0.0;
+  if (inputs_type_lengths_.size() != inputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for UnsortedSegmentSum cost";
+  }
+  // If the shape b is not the same as the shape a, we regard it as column slice
+  for (size_t i = 0; i < input1.shape().size(); ++i) {
+    if (input0_shape[i] != input0_slice_shape[i]) {
+      result = ListProduct(output0.slice_shape()) * static_cast<double>(outputs_type_lengths_[0]);
+      return result;
+    }
+  }
+  return result;
+}
+
+double UnsortedSegmentSumCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs,
+                                                   const std::vector<TensorInfo> &outputs, int32_t stage_id) const {
+  TensorInfo input0 = inputs[0];
+  TensorInfo input1 = inputs[1];
+  TensorInfo output0 = outputs[0];
+  Shape input0_shape = input0.shape();
+  Shape input0_slice_shape = inputs[0].slice_shape();
+  double result = 0.0;
+  if (inputs_type_lengths_.size() != inputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for UnsortedSegmentSum cost";
+  }
+  if (is_parameter_[0]) {
+    // If the forward process has a AllReduce, then the backward also needs one.
+    for (size_t i = 0; i < input1.shape().size(); ++i) {
+      if (input0_shape[i] != input0_slice_shape[i]) {
+        result = ListProduct(output0.slice_shape()) * static_cast<double>(outputs_type_lengths_[0]);
+        return result;
+      }
+    }
+  }
+  return result;
+}
+double UnsortedSegmentSumCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                                         const std::vector<TensorInfo> &outputs, int32_t) const {
+  // In forward phase, the computation cost = slice(A) + slice(B)
+  Shape input0_slice_shape = inputs[0].slice_shape();
+  Shape input1_slice_shape = inputs[1].slice_shape();
+  Shape output_slice_shape = outputs[0].slice_shape();
+  double result = ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) +
+                  ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) +
+                  ListProduct(output_slice_shape) * static_cast<double>(outputs_type_lengths_[0]);
+  return result;
+}
+
+double UnsortedSegmentMinCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs,
+                                                  const std::vector<TensorInfo> &outputs, int32_t stage_id) const {
+  TensorInfo input0 = inputs[0];
+  TensorInfo input1 = inputs[1];
+  TensorInfo output0 = outputs[0];
+  Shape input0_shape = input0.shape();
+  Shape input0_slice_shape = inputs[0].slice_shape();
+  double result = 0.0;
+  if (inputs_type_lengths_.size() != inputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size()
+                      << " for UnsortedSegmentMinCost cost";
+  }
+  // If the shape b is not the same as the shape a, we regard it as column slice
+  // The cost is a AllGather operation, the shape is the same as the output of UnsortedSegmentMin.
+  for (size_t i = 0; i < input1.shape().size(); ++i) {
+    if (input0_shape[i] != input0_slice_shape[i]) {
+      result = ListProduct(output0.slice_shape()) * static_cast<double>(outputs_type_lengths_[0]);
+      return result;
+    }
+  }
+  return result;
+}
+
+double UnsortedSegmentMinCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs,
+                                                   const std::vector<TensorInfo> &outputs, int32_t stage_id) const {
+  TensorInfo input0 = inputs[0];
+  TensorInfo input1 = inputs[1];
+  TensorInfo output0 = outputs[0];
+  Shape input0_shape = input0.shape();
+  Shape input0_slice_shape = inputs[0].slice_shape();
+  double result = 0.0;
+  if (inputs_type_lengths_.size() != inputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size()
+                      << " for UnsortedSegmentMinCost cost";
+  }
+  if (is_parameter_[0]) {
+    // If the forward process has a AllGather, then the backward also needs one ReduceScatter.
+    for (size_t i = 0; i < input1.shape().size(); ++i) {
+      if (input0_shape[i] != input0_slice_shape[i]) {
+        result = ListProduct(output0.slice_shape()) * static_cast<double>(outputs_type_lengths_[0]);
+        return result;
+      }
+    }
+  }
+  return result;
+}
+double UnsortedSegmentMinCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                                         const std::vector<TensorInfo> &outputs, int32_t) const {
+  // In forward phase, the computation cost = slice(A) + slice(B)
+  Shape input0_slice_shape = inputs[0].slice_shape();
+  Shape input1_slice_shape = inputs[1].slice_shape();
+  Shape output_slice_shape = outputs[0].slice_shape();
+  // The forward operation is UnsortedSegmentMin + ReudceMin
+  double result = ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) +
+                  ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) +
+                  ListProduct(output_slice_shape) * static_cast<double>(outputs_type_lengths_[0]) +
+                  ListProduct(output_slice_shape) * static_cast<double>(outputs_type_lengths_[0]);  // ReduceMin
+  return result;
+}
 }  // namespace parallel
 }  // namespace mindspore

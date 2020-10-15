@@ -35,6 +35,7 @@
 #include "frontend/parallel/ops_info/reduce_method_info.h"
 #include "frontend/parallel/ops_info/reshape_info.h"
 #include "frontend/parallel/ops_info/transpose_info.h"
+#include "frontend/parallel/ops_info/unsorted_segment_op_info.h"
 #include "frontend/parallel/ops_info/virtual_dataset_info.h"
 #include "frontend/parallel/ops_info/gather_v2_p_info.h"
 #include "frontend/parallel/ops_info/tile_info.h"
