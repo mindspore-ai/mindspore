@@ -49,6 +49,8 @@ typedef struct MatMulParameter {
   bool b_transpose_; /* true  :  col-major  */
   bool a_const_;
   bool b_const_;
+  bool a_has_shape_;
+  bool b_has_shape_;
   ActType act_type_;
 } MatMulParameter;
 
