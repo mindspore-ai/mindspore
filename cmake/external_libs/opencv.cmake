@@ -13,13 +13,21 @@ else()
     set(opencv_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 endif()
 
+if (ENABLE_GITEE)
+    set(REQ_URL "https://gitee.com/mirrors/opencv/repository/archive/4.2.0.tar.gz")
+    set(MD5 "00424c7c4acde1e26ebf17aaa155bf23")
+else()
+    set(REQ_URL "https://github.com/opencv/opencv/archive/4.2.0.tar.gz")
+    set(MD5 "e8cb208ce2723481408b604b480183b6")
+endif ()
+
 if (WIN32)
     mindspore_add_pkg(opencv
             VER 4.2.0
             LIBS libopencv_core420.dll.a libopencv_imgcodecs420.dll.a libopencv_imgproc420.dll.a
             LIB_PATH x64/mingw/lib
-            URL https://github.com/opencv/opencv/archive/4.2.0.tar.gz
-            MD5 e8cb208ce2723481408b604b480183b6
+            URL ${REQ_URL}
+            MD5 ${MD5}
             CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DWITH_PROTOBUF=OFF -DWITH_WEBP=OFF -DWITH_IPP=OFF -DWITH_ADE=OFF
             -DBUILD_ZLIB=ON
             -DBUILD_JPEG=ON
@@ -42,8 +50,8 @@ else()
     mindspore_add_pkg(opencv
             VER 4.2.0
             LIBS opencv_core opencv_imgcodecs opencv_imgproc
-            URL https://github.com/opencv/opencv/archive/4.2.0.tar.gz
-            MD5 e8cb208ce2723481408b604b480183b6
+            URL ${REQ_URL}
+            MD5  ${MD5}
             CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DWITH_PROTOBUF=OFF -DWITH_WEBP=OFF -DWITH_IPP=OFF -DWITH_ADE=OFF
             -DBUILD_ZLIB=ON
             -DBUILD_JPEG=ON
