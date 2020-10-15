@@ -41,7 +41,14 @@ STATUS OnnxConstantOfShapeParser::Parse(const onnx::GraphProto &onnx_graph, cons
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "value") {
-      attr->value = static_cast<int32_t>(onnx_node_attr.i());
+      if (onnx_node_attr.type() == onnx::AttributeProto_AttributeType_TENSOR) {
+        auto tensor = onnx_node_attr.t();
+        if (tensor.data_type() == onnx::AttributeProto_AttributeType_FLOAT) {
+          attr->value = onnx_node_attr.f();
+        } else if (tensor.data_type() == onnx::AttributeProto_AttributeType_INT) {
+          attr->value = static_cast<int32_t>(onnx_node_attr.i());
+        }
+      }
     }
   }
 

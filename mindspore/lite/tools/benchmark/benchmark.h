@@ -70,6 +70,8 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::benchmark_data_type_, "benchmarkDataType",
             "Benchmark data type. FLOAT | INT32 | INT8 | UINT8", "FLOAT");
     AddFlag(&BenchmarkFlags::accuracy_threshold_, "accuracyThreshold", "Threshold of accuracy", 0.5);
+    AddFlag(&BenchmarkFlags::input_shape_list_, "inputShapes",
+            "Shape of input data, the format should be NHWC. e.g. 1,32,32,32;1,1,32,32,1", "");
   }
 
   ~BenchmarkFlags() override = default;
@@ -86,6 +88,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   InDataType in_data_type_;
   std::string in_data_type_in_ = "bin";
   int cpu_bind_mode_ = 1;
+  std::string input_shape_list_;
   // MarkPerformance
   int loop_count_;
   int num_threads_;
