@@ -25,6 +25,7 @@
 namespace mindspore::kernel {
 
 enum class OpenCLMemType { BUF, IMG };
+enum OpenCLImageSizeIndex { IDX_X = 0, IDX_Y, IDX_DTYPE, IDX_NUM };
 
 struct OpenCLToFormatParameter {
   OpParameter op_parameter;
@@ -66,6 +67,7 @@ class OpenCLKernel : public LiteKernel {
   schema::Format op_format_{schema::Format::Format_NHWC4};
   lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
   lite::opencl::OpenCLRuntime *ocl_runtime_;
+  std::vector<size_t> img_size_;
 };
 }  // namespace mindspore::kernel
 

@@ -38,12 +38,6 @@ int ReshapeOpenCLKernel::Init() {
     MS_LOG(ERROR) << "Reshape output size should in 2,4";
     return RET_ERROR;
   }
-  if ((in_tensors_[0]->shape().back() % 4 != 0 || out_tensors_[0]->shape().back() % 4 != 0) &&
-      in_tensors_[0]->shape().back() != out_tensors_[0]->shape().back()) {
-    MS_LOG(ERROR) << "Reshape input channel align 4 should equal output channel, cin:" << in_tensors_[0]->shape().back()
-                  << " cout:" << out_tensors_[0]->shape().back();
-    return RET_ERROR;
-  }
   if (in_tensors_[0]->shape().size() == 2) {
     inShape = {in_tensors_[0]->shape()[0], 1, 1, in_tensors_[0]->shape()[1]};
   } else {
@@ -81,6 +75,10 @@ int ReshapeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
   int h = outShape[1];
   int w = outShape[2];
   int c = outShape[3];
+  if (img_size_.size() == OpenCLImageSizeIndex::IDX_NUM) {
+    *img_size = img_size_;
+    return RET_OK;
+  }
   if (op_format_ == schema::Format::Format_NHWC4) {
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = n * h;
@@ -98,6 +96,7 @@ int ReshapeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
+  img_size_ = vec;
   return RET_OK;
 }
 
@@ -105,15 +104,15 @@ int ReshapeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
 
   std::vector<size_t> local = {};
-  std::vector<size_t> global = {
-    static_cast<size_t>(outShape[0] * outShape[1] * outShape[2] * UP_DIV(outShape[3], C4NUM))};
-  cl_int4 size = {inShape[0], inShape[1], inShape[2], UP_DIV(inShape[3], C4NUM)};
-  cl_int4 size_out = {outShape[0], outShape[1], outShape[2], UP_DIV(outShape[3], C4NUM)};
+  std::vector<size_t> global{img_size_[0], img_size_[1]};
+  cl_int4 src_size = {inShape[3], inShape[2], inShape[1], inShape[0]};
+  cl_int4 dst_size = {static_cast<cl_int>(img_size_[0]), static_cast<cl_int>(img_size_[1]), outShape[3],
+                      outShape[3] * outShape[2]};
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size_out);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, src_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, dst_size);
   ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }
