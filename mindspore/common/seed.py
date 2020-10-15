@@ -207,7 +207,7 @@ def _get_graph_seed(op_seed, kernel_name):
         Interger. The current graph-level seed.
 
     Examples:
-        >>> _get_seed(seed, 'normal')
+        >>> _get_graph_seed(seed, 'normal')
     """
     global_seed = get_seed()
     if global_seed is None:
