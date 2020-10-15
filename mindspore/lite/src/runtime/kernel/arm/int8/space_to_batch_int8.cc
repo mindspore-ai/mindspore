@@ -36,6 +36,11 @@ int SpaceToBatchInt8CPUKernel::Run() {
   auto input_ptr = reinterpret_cast<const int8_t *>(input_tensor->MutableData());
   auto output_ptr = reinterpret_cast<int8_t *>(output_tensor->MutableData());
   SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
+  if (output_tensor->GetQuantParams().empty()) {
+    MS_LOG(ERROR) << "SpaceToBatchInt8 need quantization parameters which is not found.";
+    return RET_ERROR;
+  }
+  auto quant_arg = output_tensor->GetQuantParams().front();
 
   if (param->need_paddings_) {
     padded_input_ = context_->allocator->Malloc(param->padded_input_element_num * sizeof(int8_t));
@@ -45,7 +50,7 @@ int SpaceToBatchInt8CPUKernel::Run() {
     }
     auto padded_input = reinterpret_cast<int8_t *>(padded_input_);
     DoSpaceToBatchPaddingNHWCInt8(input_ptr, padded_input, param->input_shape_, param->paddings_,
-                                  param->padded_in_shape_);
+                                  param->padded_in_shape_, quant_arg.zeroPoint);
     DoSpaceToBatchNHWCInt8(padded_input, output_ptr, param->block_sizes_, param->padded_in_shape_,
                            param->output_shape_);
     FreeTmpBuffer();
