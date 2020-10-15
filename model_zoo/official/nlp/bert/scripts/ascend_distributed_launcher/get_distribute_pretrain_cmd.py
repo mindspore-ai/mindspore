@@ -77,7 +77,7 @@ def distribute_pretrain():
 
     print("hccl_config_dir:", args.hccl_config_dir)
     print("hccl_time_out:", args.hccl_time_out)
-    cmd = append_cmd_env(cmd, 'HCCL_CONNECTION_TIMEOUT', args.hccl_time_out)
+    cmd = append_cmd_env(cmd, 'HCCL_CONNECT_TIMEOUT', args.hccl_time_out)
     cmd = append_cmd_env(cmd, 'RANK_TABLE_FILE', args.hccl_config_dir)
 
     cores = multiprocessing.cpu_count()
