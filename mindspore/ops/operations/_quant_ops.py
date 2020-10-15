@@ -76,8 +76,7 @@ class MinMaxUpdatePerLayer(PrimitiveWithInfer):
                 f"For '{self.name}' attr \'ema\' and \'ema_decay\' should set together.")
 
         self.ema = validator.check_value_type('ema', ema, (bool,), self.name)
-        self.ema_decay = validator.check_number_range(
-            'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
+        self.ema_decay = validator.check_float_range(ema_decay, 0, 1, Rel.INC_BOTH, 'ema_decay', self.name)
         self.init_prim_io_names(inputs=['x', 'min', 'max'],
                                 outputs=['min_up', 'max_up'])
 
@@ -136,10 +135,9 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
                 f"For '{self.name}' attr \'ema\' and \'ema_decay\' should set together.")
 
         self.ema = validator.check_value_type('ema', ema, (bool,), self.name)
-        self.ema_decay = validator.check_number_range(
-            'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
+        self.ema_decay = validator.check_float_range(ema_decay, 0, 1, Rel.INC_BOTH, 'ema_decay', self.name)
         if self.is_ascend:
-            self.channel_axis = validator.check_int_range('channel_axis', channel_axis, 0, 1, Rel.INC_BOTH, self.name)
+            self.channel_axis = validator.check_int_range(channel_axis, 0, 1, Rel.INC_BOTH, 'channel_axis', self.name)
         else:
             self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
         self.init_prim_io_names(
@@ -222,10 +220,8 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
             'symmetric', symmetric, (bool,), self.name)
         self.narrow_range = validator.check_value_type(
             'narrow_range', narrow_range, (bool,), self.name)
-        self.training = validator.check_value_type(
-            'training', training, (bool,), self.name)
-        self.ema_decay = validator.check_number_range(
-            'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
+        self.training = validator.check_value_type('training', training, (bool,), self.name)
+        self.ema_decay = validator.check_float_range(ema_decay, 0, 1, Rel.INC_BOTH, 'ema_decay', self.name)
         self.num_bits = validator.check_positive_int(num_bits, 'num_bits', self.name)
         self.quant_delay = validator.check_non_negative_int(quant_delay, 'quant_delay', self.name)
         self.init_prim_io_names(inputs=['x', 'min', 'max'],
@@ -366,12 +362,11 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
             'narrow_range', narrow_range, (bool,), self.name)
         self.training = validator.check_value_type(
             'training', training, (bool,), self.name)
-        self.ema_decay = validator.check_number_range(
-            'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
+        self.ema_decay = validator.check_float_range(ema_decay, 0, 1, Rel.INC_BOTH, 'ema_decay', self.name)
         self.num_bits = validator.check_positive_int(num_bits, 'num_bits', self.name)
         self.quant_delay = validator.check_non_negative_int(quant_delay, 'quant_delay', self.name)
         if self.is_ascend:
-            self.channel_axis = validator.check_int_range('channel_axis', channel_axis, 0, 1, Rel.INC_BOTH, self.name)
+            self.channel_axis = validator.check_int_range(channel_axis, 0, 1, Rel.INC_BOTH, 'channel_axis', self.name)
         else:
             self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
         self.init_prim_io_names(inputs=['x', 'min', 'max'], outputs=['out'])
@@ -495,7 +490,7 @@ class BatchNormFold(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, momentum=0.9, epsilon=1e-5, is_training=True, freeze_bn=0):
         """Initialize batch norm fold layer"""
-        self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
+        self.momentum = validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         self.epsilon = validator.check_positive_float(epsilon, 'epsilon', self.name)
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
         self.freeze_bn = validator.check_value_type('freeze_bn', freeze_bn, (int,), self.name)
@@ -806,7 +801,7 @@ class BatchNormFoldD(PrimitiveWithInfer):
     def __init__(self, momentum=0.9, epsilon=1e-5, is_training=True, freeze_bn=0):
         """Initialize _BatchNormFold layer"""
         from mindspore.ops._op_impl._custom_op import batchnorm_fold
-        self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
+        self.momentum = validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         self.epsilon = validator.check_positive_float(epsilon, 'epsilon', self.name)
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
         self.freeze_bn = validator.check_value_type('freeze_bn', freeze_bn, (int,), self.name)

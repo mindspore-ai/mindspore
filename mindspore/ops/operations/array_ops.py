@@ -129,7 +129,7 @@ class ExpandDims(PrimitiveWithInfer):
         x_shape = list(x['shape'])
         axis_v = axis['value']
         rank = len(x_shape)
-        validator.check_int_range('axis', axis_v, -rank - 1, rank, Rel.INC_BOTH, self.name)
+        validator.check_int_range(axis_v, -rank - 1, rank, Rel.INC_BOTH, 'axis', self.name)
         value = None
         if x['value'] is not None:
             value = x['value'].asnumpy()
@@ -534,7 +534,7 @@ class Squeeze(PrimitiveWithInfer):
             ret = [d for d in x_shape if d != 1]
         else:
             for a in axis:
-                validator.check_int_range('axis or its elements', a, -ndim, ndim - 1, Rel.INC_BOTH, self.name)
+                validator.check_int_range(a, -ndim, ndim - 1, Rel.INC_BOTH, 'axis or its elements', self.name)
                 if x_shape[a] != 1:
                     raise ValueError('Cannot select an axis to squeeze out which has size not equal to one.')
             ret = [x_shape[i] for i in range(ndim) if not (i in axis or (i - ndim) in axis)]
@@ -658,7 +658,7 @@ class GatherV2(PrimitiveWithCheck):
         axis_v = axis['value']
         params_shp = params['shape']
         rank = len(params_shp)
-        validator.check_int_range("axis", axis_v, -rank, rank, Rel.INC_LEFT, self.name)
+        validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, "axis", self.name)
 
         if axis_v < 0:
             axis_v += rank
@@ -777,7 +777,7 @@ class Split(PrimitiveWithInfer):
         validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
         x_shape = list(x['shape'])
         dim = len(x_shape)
-        validator.check_int_range('axis value', self.axis, -dim, dim, Rel.INC_LEFT, self.name)
+        validator.check_int_range(self.axis, -dim, dim, Rel.INC_LEFT, 'axis value', self.name)
         validator.check_positive_int(self.output_num, "output_num", self.name)
         output_valid_check = x_shape[self.axis] % self.output_num
         if output_valid_check != 0:
@@ -1224,7 +1224,7 @@ class Argmax(PrimitiveWithInfer):
         if axis is None:
             axis = 0
         x_rank = len(x_shape)
-        validator.check_int_range("axis", axis, -x_rank, x_rank, Rel.INC_LEFT, self.name)
+        validator.check_int_range(axis, -x_rank, x_rank, Rel.INC_LEFT, "axis", self.name)
         axis = axis + x_rank if axis < 0 else axis
         ouput_shape = [x_shape[i] for i in range(x_rank) if i != axis]
         return ouput_shape
@@ -1272,7 +1272,7 @@ class Argmin(PrimitiveWithInfer):
         if axis is None:
             axis = 0
         x_rank = len(x_shape)
-        validator.check_int_range("axis", axis, -x_rank, x_rank, Rel.INC_LEFT, self.name)
+        validator.check_int_range(axis, -x_rank, x_rank, Rel.INC_LEFT, "axis", self.name)
         axis = axis + x_rank if axis < 0 else axis
         ouput_shape = [x_shape[i] for i in range(x_rank) if i != axis]
         return ouput_shape
@@ -1325,7 +1325,7 @@ class ArgMaxWithValue(PrimitiveWithInfer):
     def infer_shape(self, x_shape):
         axis = self.axis
         x_rank = len(x_shape)
-        validator.check_int_range("axis", axis, -x_rank, x_rank, Rel.INC_LEFT, self.name)
+        validator.check_int_range(axis, -x_rank, x_rank, Rel.INC_LEFT, "axis", self.name)
         ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.name)
         return ouput_shape, ouput_shape
 
@@ -1377,7 +1377,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
     def infer_shape(self, x_shape):
         axis = self.axis
         x_rank = len(x_shape)
-        validator.check_int_range("axis", axis, -x_rank, x_rank, Rel.INC_LEFT, self.name)
+        validator.check_int_range(axis, -x_rank, x_rank, Rel.INC_LEFT, "axis", self.name)
         ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.name)
         return ouput_shape, ouput_shape
 
@@ -1760,7 +1760,7 @@ def _get_pack_shape(x_shape, x_type, axis, prim_name):
     rank_base = len(x_shape[0])
     N = len(x_shape)
     out_shape = x_shape[0]
-    validator.check_int_range('axis', axis, -rank_base - 1, rank_base, Rel.INC_BOTH, prim_name)
+    validator.check_int_range(axis, -rank_base - 1, rank_base, Rel.INC_BOTH, 'axis', prim_name)
     if axis < 0:
         axis = axis + rank_base + 1
     for i in range(1, N):
@@ -1863,7 +1863,7 @@ class Unpack(PrimitiveWithInfer):
         validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
         x_shape = list(x['shape'])
         dim = len(x_shape)
-        validator.check_int_range('axis value', self.axis, -dim, dim, Rel.INC_LEFT, self.name)
+        validator.check_int_range(self.axis, -dim, dim, Rel.INC_LEFT, 'axis value', self.name)
         if self.axis < 0:
             self.axis = self.axis + dim
         output_num = x_shape[self.axis]
@@ -1965,7 +1965,7 @@ class ReverseV2(PrimitiveWithInfer):
     def infer_shape(self, x_shape):
         dim = len(x_shape)
         for i, each in enumerate(self.axis):
-            validator.check_int_range(f'axis[{i}]', each, -dim, dim, Rel.INC_LEFT, self.name)
+            validator.check_int_range(each, -dim, dim, Rel.INC_LEFT, f'axis[{i}]', self.name)
         return x_shape
 
     def infer_dtype(self, x_dtype):

@@ -45,9 +45,9 @@ def _check_param_value(accum, l1, l2, use_locking, prim_name=None):
     validator.check_value_type("l1", l1, [float], prim_name)
     validator.check_value_type("l2", l2, [float], prim_name)
     validator.check_value_type("use_locking", use_locking, [bool], prim_name)
-    validator.check_number_range("accum", accum, 0.0, float("inf"), Rel.INC_LEFT, prim_name)
-    validator.check_number_range("l1", l1, 0.0, float("inf"), Rel.INC_LEFT, prim_name)
-    validator.check_number_range("l2", l2, 0.0, float("inf"), Rel.INC_LEFT, prim_name)
+    validator.check_non_negative_float(accum, "accum", prim_name)
+    validator.check_non_negative_float(l1, "l1", prim_name)
+    validator.check_non_negative_float(l2, "l2", prim_name)
 
 
 class ProximalAdagrad(Optimizer):

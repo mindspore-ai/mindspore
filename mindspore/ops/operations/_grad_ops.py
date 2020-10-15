@@ -188,7 +188,7 @@ class BatchNormGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, is_training=False, epsilon=1e-5):
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
-        self.epsilon = validator.check_number_range('epsilon', epsilon, 0, 1, Rel.INC_RIGHT, self.name)
+        self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         self.add_prim_attr('data_format', "NCHW")
 
     def infer_shape(self, y_backprop_shape, x_shape, scale_shape, reserve_1_shape, reserve_2_shape):
@@ -485,7 +485,7 @@ class DropoutGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, keep_prob=0.5):
-        self.keep_prob = validator.check_number_range("keep_prob", keep_prob, 0, 1, Rel.INC_RIGHT, self.name)
+        self.keep_prob = validator.check_float_range(keep_prob, 0, 1, Rel.INC_RIGHT, "keep_prob", self.name)
 
     def infer_shape(self, dy_shape, mask_shape):
         return dy_shape
@@ -902,7 +902,7 @@ class LogSoftmaxGrad(PrimitiveWithInfer):
 
     def infer_shape(self, dout, logits):
         rank = len(logits)
-        validator.check_int_range('axis', self.axis, -rank - 1, rank, Rel.INC_BOTH, self.name)
+        validator.check_int_range(self.axis, -rank - 1, rank, Rel.INC_BOTH, 'axis', self.name)
         return logits
 
     def infer_dtype(self, dout, logits):
@@ -921,7 +921,7 @@ class LSTMGradData(PrimitiveWithInfer):
         self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
-        self.dropout = validator.check_number_range('dropout', dropout, 0, 1, Rel.INC_BOTH, self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
 
         if bidirectional:
             self.num_directions = 2
@@ -970,7 +970,7 @@ class LSTMGradWeight(PrimitiveWithInfer):
         self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
-        self.dropout = validator.check_number_range('dropout', dropout, 0, 1, Rel.INC_BOTH, self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
 
         if bidirectional:
             self.num_directions = 2
@@ -1005,7 +1005,7 @@ class LSTMGrad(PrimitiveWithInfer):
         self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
-        self.dropout = validator.check_number_range('dropout', dropout, 0, 1, Rel.INC_BOTH, self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
 
         if bidirectional:
             self.num_directions = 2
@@ -1652,7 +1652,7 @@ class BasicLSTMCellInputGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, keep_prob):
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
-        self.keep_prob = validator.check_number_range("keep_prob", keep_prob, 0.0, 1.0, Rel.INC_BOTH, self.name)
+        self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
         self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, dgate_shape, w_shape):

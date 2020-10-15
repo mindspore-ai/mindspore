@@ -233,7 +233,7 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
     """
     if not isinstance(min_lr, float):
         raise TypeError("min_lr must be float.")
-    validator.check_number_range("min_lr", min_lr, 0.0, float("inf"), Rel.INC_LEFT, None)
+    validator.check_non_negative_float(min_lr, "min_lr", None)
     validator.check_positive_float(max_lr, 'max_lr')
     validator.check_is_float(max_lr, 'max_lr')
     validator.check_positive_int(total_step, 'total_step')
@@ -303,7 +303,7 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
     validator.check_is_float(learning_rate, 'learning_rate')
     if not isinstance(end_learning_rate, float):
         raise TypeError("end_learning_rate must be float.")
-    validator.check_number_range("end_learning_rate", end_learning_rate, 0.0, float("inf"), Rel.INC_LEFT, None)
+    validator.check_non_negative_float(end_learning_rate, "end_learning_rate", None)
     validator.check_positive_float(power, 'power')
     validator.check_is_float(power, 'power')
     validator.check_positive_int(total_step, 'total_step')
@@ -356,7 +356,7 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
     """
     if not isinstance(learning_rate, float):
         raise TypeError("learning_rate must be float.")
-    validator.check_number_range("learning_rate", learning_rate, 0.0, float("inf"), Rel.INC_LEFT, None)
+    validator.check_non_negative_float(learning_rate, "learning_rate", None)
     validator.check_positive_int(warmup_epoch, 'warmup_epoch')
     validator.check_positive_int(total_step, 'total_step')
     validator.check_positive_int(step_per_epoch, 'step_per_epoch')

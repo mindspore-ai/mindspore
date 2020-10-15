@@ -368,7 +368,7 @@ class CosineEmbeddingLoss(_Loss):
         self.reduce_sum = P.ReduceSum()
         self.maximum = P.Maximum()
         validator.check_value_type("margin", margin, [float], self.cls_name)
-        self.margin = validator.check_number_range("margin", margin, -1.0, 1.0, Rel.INC_BOTH, self.cls_name)
+        self.margin = validator.check_float_range(margin, -1.0, 1.0, Rel.INC_BOTH, "margin", self.cls_name)
 
     def construct(self, x1, x2, y):
         F.same_type_shape(x1, x2)
