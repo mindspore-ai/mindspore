@@ -297,6 +297,12 @@ STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph)
               MS_LOG(ERROR) << "Trans depthwiseConv Filter schema::Format failed.";
               return RET_ERROR;
             }
+          } else if (weight_tensor->dataType == kNumberTypeInt8) {
+            auto status = TransFilterFormat<int8_t>(weight_tensor.get(), kKHWC2CHWK);
+            if (status != RET_OK) {
+              MS_LOG(ERROR) << "Trans filter format failed.";
+              return RET_ERROR;
+            }
           } else if (weight_tensor->dataType == kNumberTypeFloat32 || weight_tensor->dataType == kNumberTypeFloat) {
             auto status = TransFilterFormat<float>(weight_tensor.get(), kKHWC2CHWK);
             if (status != RET_OK) {
