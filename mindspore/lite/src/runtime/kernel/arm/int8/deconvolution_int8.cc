@@ -300,6 +300,7 @@ kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::Tensor *>
   auto kernel = new (std::nothrow) kernel::DeConvInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

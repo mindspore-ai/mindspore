@@ -285,6 +285,7 @@ kernel::LiteKernel *CpuArithmeticFp32KernelCreator(const std::vector<lite::Tenso
   auto kernel = new (std::nothrow) ArithmeticCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

@@ -184,11 +184,13 @@ kernel::LiteKernel *CpuOneHotFp32KernelCreator(const std::vector<lite::Tensor *>
   }
   if (desc.type != schema::PrimitiveType_OneHot) {
     MS_LOG(ERROR) << "OneHot desc type should be " << schema::PrimitiveType_OneHot << " got " << desc.type;
+    free(opParameter);
     return nullptr;
   }
   auto *kernel = new (std::nothrow) OneHotCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "OneHot new kernel failed.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

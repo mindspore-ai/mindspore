@@ -131,6 +131,7 @@ kernel::LiteKernel *OpenCLTransposeKernelCreator(const std::vector<lite::Tensor 
     new (std::nothrow) TransposeOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

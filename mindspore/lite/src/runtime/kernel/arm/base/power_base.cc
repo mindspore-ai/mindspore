@@ -43,6 +43,7 @@ kernel::LiteKernel *CpuPowerInt8KernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) PowerInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PowerInt8CPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -64,6 +65,7 @@ kernel::LiteKernel *CpuPowerFp32KernelCreator(const std::vector<lite::Tensor *> 
   PowerCPUKernel *kernel = new (std::nothrow) PowerCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PowerCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

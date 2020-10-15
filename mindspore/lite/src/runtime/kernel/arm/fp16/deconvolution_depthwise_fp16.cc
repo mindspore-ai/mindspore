@@ -213,6 +213,7 @@ kernel::LiteKernel *CpuDeconvDwFp16KernelCreator(const std::vector<lite::Tensor 
     auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
       MS_LOG(ERROR) << "dequant data is nullptr.";
+      free(opParameter);
       return nullptr;
     }
     weight_tensor->set_data_type(kNumberTypeFloat32);
@@ -227,6 +228,7 @@ kernel::LiteKernel *CpuDeconvDwFp16KernelCreator(const std::vector<lite::Tensor 
       weight_tensor->set_data_type(kNumberTypeInt8);
       weight_tensor->SetData(restore_data);
     }
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

@@ -62,6 +62,7 @@ kernel::LiteKernel *CpuActivationInt8KernelCreator(const std::vector<lite::Tenso
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed";
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

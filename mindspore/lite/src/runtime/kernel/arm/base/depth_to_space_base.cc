@@ -100,6 +100,7 @@ kernel::LiteKernel *CpuDepthToSpaceFp32KernelCreator(const std::vector<lite::Ten
   auto *kernel = new (std::nothrow) DepthToSpaceCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new DepthToSpaceCPUKernel fail!";
+    free(op_parameter);
     return nullptr;
   }
 

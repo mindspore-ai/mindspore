@@ -40,6 +40,7 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::Tensor *> &in
     auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
       MS_LOG(ERROR) << "dequant data is nullptr.";
+      free(opParameter);
       return nullptr;
     }
     weight_tensor->SetData(dequant_weight);
@@ -59,6 +60,7 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::Tensor *> &in
       weight_tensor->FreeData();
       weight_tensor->SetData(restore_data);
     }
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

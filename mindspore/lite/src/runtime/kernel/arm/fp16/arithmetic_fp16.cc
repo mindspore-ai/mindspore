@@ -241,6 +241,7 @@ kernel::LiteKernel *CpuArithmeticFp16KernelCreator(const std::vector<lite::Tenso
   auto kernel = new (std::nothrow) ArithmeticFP16CPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

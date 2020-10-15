@@ -99,6 +99,7 @@ kernel::LiteKernel *CpuWhereFp32KernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) WhereCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new WhereCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/base/quant_dtype_cast.h"
+#include "src/runtime/kernel/arm/fp16/quant_dtype_cast_fp16.h"
 #include <vector>
 #include "nnacl/int8/quant_dtype_cast.h"
+#include "nnacl/fp16/quant_dtype_cast_fp16.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 #include "schema/model_generated.h"
@@ -29,7 +30,7 @@ using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_QuantDTypeCast;
 
 namespace mindspore::kernel {
-int QuantDTypeCastCPUKernel::Init() {
+int QuantDTypeCastFp16CPUKernel::Init() {
   if (in_tensors_.size() != 1) {
     MS_LOG(ERROR) << "inputs number should be 1, but " << in_tensors_.size() << " is given.";
     return RET_PARAM_INVALID;
@@ -41,26 +42,14 @@ int QuantDTypeCastCPUKernel::Init() {
   auto in_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
   auto param = reinterpret_cast<QuantDTypeCastParameter *>(op_parameter_);
-  if (param->srcT == kNumberTypeFloat32 && param->dstT == kNumberTypeInt8) {
-    if (in_tensor->data_type() != kNumberTypeFloat32 || out_tensor->data_type() != kNumberTypeInt8) {
+  if (param->dstT == kNumberTypeInt8) {
+    if (in_tensor->data_type() != kNumberTypeFloat16 || out_tensor->data_type() != kNumberTypeInt8) {
       MS_LOG(ERROR) << "param data type and tensor data type do not match.";
       return RET_ERROR;
     }
     inverse_ = false;
-  } else if (param->srcT == kNumberTypeInt8 && param->dstT == kNumberTypeFloat32) {
-    if (in_tensor->data_type() != kNumberTypeInt8 || out_tensor->data_type() != kNumberTypeFloat32) {
-      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
-      return RET_ERROR;
-    }
-    inverse_ = true;
-  } else if (param->srcT == kNumberTypeUInt8 && param->dstT == kNumberTypeInt8) {
-    if (in_tensor->data_type() != kNumberTypeUInt8 || out_tensor->data_type() != kNumberTypeInt8) {
-      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
-      return RET_ERROR;
-    }
-    inverse_ = false;
-  } else if (param->srcT == kNumberTypeInt8 && param->dstT == kNumberTypeUInt8) {
-    if (in_tensor->data_type() != kNumberTypeInt8 || out_tensor->data_type() != kNumberTypeUInt8) {
+  } else if (param->srcT == kNumberTypeInt8) {
+    if (in_tensor->data_type() != kNumberTypeInt8 || out_tensor->data_type() != kNumberTypeFloat16) {
       MS_LOG(ERROR) << "param data type and tensor data type do not match.";
       return RET_ERROR;
     }
@@ -77,7 +66,7 @@ int QuantDTypeCastCPUKernel::Init() {
   return ReSize();
 }
 
-int QuantDTypeCastCPUKernel::ReSize() {
+int QuantDTypeCastFp16CPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
   num_unit_ = static_cast<int>(in_tensor->ElementsNum());
   thread_n_num_ = MSMIN(thread_num_, num_unit_);
@@ -85,7 +74,7 @@ int QuantDTypeCastCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
+int QuantDTypeCastFp16CPUKernel::QuantDTypeCast(int task_id) {
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
   if (num_unit_thread <= 0) {
     return RET_OK;
@@ -98,31 +87,23 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
   auto quant_arg = !out_tensors_.front()->GetQuantParams().empty() ? out_tensors_.front()->GetQuantParams().front()
                                                                    : in_tensors_.front()->GetQuantParams().front();
   int ret;
-  if (uint8_ptr_ == nullptr) {
-    if (inverse_) {
-      ret = DoDequantizeInt8ToFp32(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
-                                   quant_arg.zeroPoint, num_unit_thread);
-    } else {
-      ret = DoQuantizeToInt8FromFp32(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
-                                     quant_arg.zeroPoint, num_unit_thread);
-    }
+  if (inverse_) {
+    ret = DoDequantizeInt8ToFp16(int8_ptr_ + thread_offset, float16_ptr_ + thread_offset, quant_arg.scale,
+                                 quant_arg.zeroPoint, num_unit_thread);
   } else {
-    if (inverse_) {
-      ret = DoDequantizeInt8ToUInt8(int8_ptr_ + thread_offset, uint8_ptr_ + thread_offset, num_unit_thread);
-    } else {
-      ret = DoQuantizeToInt8FromUint8(uint8_ptr_ + thread_offset, int8_ptr_ + thread_offset, num_unit_thread);
-    }
+    ret = DoQuantizeToInt8FromFp16(float16_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
+                                   quant_arg.zeroPoint, num_unit_thread);
   }
 
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "QuantDTypeCast error task_id[" << task_id << "] error_code[" << ret << "]";
+    MS_LOG(ERROR) << "QuantDTypeCastFp16 error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
 int QuantDTypeCastRun(void *cdata, int task_id) {
-  auto g_kernel = reinterpret_cast<QuantDTypeCastCPUKernel *>(cdata);
+  auto g_kernel = reinterpret_cast<QuantDTypeCastFp16CPUKernel *>(cdata);
   auto ret = g_kernel->QuantDTypeCast(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "QuantDTypeCastRun error task_id[" << task_id << "] error_code[" << ret << "]";
@@ -131,7 +112,7 @@ int QuantDTypeCastRun(void *cdata, int task_id) {
   return RET_OK;
 }
 
-int QuantDTypeCastCPUKernel::Run() {
+int QuantDTypeCastFp16CPUKernel::Run() {
   auto prepare_ret = Prepare();
   if (prepare_ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
@@ -139,21 +120,16 @@ int QuantDTypeCastCPUKernel::Run() {
   }
 
   if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
-      out_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32) {
+      out_tensors_[0]->data_type() == TypeId::kNumberTypeFloat16) {
     int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
-    float32_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->data_c());
-  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32 &&
+    float16_ptr_ = reinterpret_cast<float16_t *>(out_tensors_[0]->data_c());
+  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeFloat16 &&
              out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
-    float32_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->data_c());
+    float16_ptr_ = reinterpret_cast<float16_t *>(in_tensors_[0]->data_c());
     int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
-  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
-             out_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8) {
-    int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
-    uint8_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c());
-  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8 &&
-             out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
-    uint8_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_[0]->data_c());
-    int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
+  } else {
+    MS_LOG(ERROR) << "QuantDTypeCastFp16 not support input or output type";
+    return RET_ERROR;
   }
 
   auto ret = ParallelLaunch(this->context_->thread_pool_, QuantDTypeCastRun, this, thread_n_num_);
@@ -165,7 +141,7 @@ int QuantDTypeCastCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuQuantDTypeCastFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+kernel::LiteKernel *CpuQuantDTypeCastFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                        const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::InnerContext *ctx,
                                                        const kernel::KernelKey &desc,
@@ -174,9 +150,9 @@ kernel::LiteKernel *CpuQuantDTypeCastFp32KernelCreator(const std::vector<lite::T
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) QuantDTypeCastCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) QuantDTypeCastFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new QuantDTypeCastCPUKernel fail!";
+    MS_LOG(ERROR) << "new QuantDTypeCastFp16CPUKernel fail!";
     free(opParameter);
     return nullptr;
   }
@@ -189,7 +165,5 @@ kernel::LiteKernel *CpuQuantDTypeCastFp32KernelCreator(const std::vector<lite::T
   }
   return kernel;
 }
-REG_KERNEL(kCPU, kNumberTypeUInt8, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp32KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp32KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp16KernelCreator)
 }  // namespace mindspore::kernel

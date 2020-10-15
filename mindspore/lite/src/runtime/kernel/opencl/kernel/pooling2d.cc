@@ -166,6 +166,7 @@ kernel::LiteKernel *OpenCLPooling2dKernelCreator(const std::vector<lite::Tensor 
   auto *kernel = new (std::nothrow) PoolingOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create OpenCL Pooling kernel failed!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

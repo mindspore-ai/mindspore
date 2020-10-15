@@ -110,6 +110,7 @@ kernel::LiteKernel *CpuSpaceToBatchFp32KernelCreator(const std::vector<lite::Ten
   auto *kernel = new (std::nothrow) SpaceToBatchCPUKernel(param, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SpaceToBatchCPUKernel fail!";
+    free(param);
     return nullptr;
   }
   auto ret = kernel->Init();

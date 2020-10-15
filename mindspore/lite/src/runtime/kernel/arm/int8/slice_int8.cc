@@ -99,6 +99,7 @@ kernel::LiteKernel *CpuSliceInt8KernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) SliceInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SliceInt8CPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

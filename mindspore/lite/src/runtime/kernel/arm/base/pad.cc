@@ -37,6 +37,7 @@ kernel::LiteKernel *CpuPadInt8KernelCreator(const std::vector<lite::Tensor *> &i
   auto *kernel = new (std::nothrow) PadInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PadCPUKernel failed.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -58,6 +59,7 @@ kernel::LiteKernel *CpuPadFp32KernelCreator(const std::vector<lite::Tensor *> &i
   auto *kernel = new (std::nothrow) PadCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PadCPUKernel failed.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

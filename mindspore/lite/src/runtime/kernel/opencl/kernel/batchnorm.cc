@@ -128,6 +128,7 @@ kernel::LiteKernel *OpenCLBatchnormKernelCreator(const std::vector<lite::Tensor 
   auto *kernel = new (std::nothrow) BatchNormOpenCLKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << " new BatchnormOpenCLKernel failed ";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

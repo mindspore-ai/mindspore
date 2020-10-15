@@ -213,6 +213,7 @@ kernel::LiteKernel *OpenCLConcatKernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) ConcatOpenCLKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << " new ConcatOpenCLKernel failed ";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

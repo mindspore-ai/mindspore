@@ -90,6 +90,7 @@ kernel::LiteKernel *CpuUnsqueezeFp32KernelCreator(const std::vector<lite::Tensor
   auto *kernel = new (std::nothrow) UnsqueezeCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new UnsqueezeCPUKernel fail!";
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

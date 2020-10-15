@@ -186,11 +186,13 @@ kernel::LiteKernel *CpuPriorBoxKernelCreator(const std::vector<lite::Tensor *> &
   }
   if (desc.type != schema::PrimitiveType_PriorBox) {
     MS_LOG(ERROR) << "PriorBox invalid desc type " << desc.type;
+    free(op_parameter);
     return nullptr;
   }
   auto *kernel = new (std::nothrow) PriorBoxCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PriorBoxCPUKernel fail!";
+    free(op_parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

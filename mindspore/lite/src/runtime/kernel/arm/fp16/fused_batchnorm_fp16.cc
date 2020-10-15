@@ -86,6 +86,7 @@ kernel::LiteKernel *CpuFusedBatchnormFp16KernelCreator(const std::vector<lite::T
     new (std::nothrow) FusedBatchnormFp16CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new FusedBatchnormFp16CPUKernel fail!";
+    free(op_parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

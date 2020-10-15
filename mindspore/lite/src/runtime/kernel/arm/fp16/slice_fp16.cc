@@ -75,6 +75,7 @@ kernel::LiteKernel *CpuSliceFp16KernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) SliceFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SliceFp16CPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

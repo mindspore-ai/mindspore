@@ -71,6 +71,7 @@ kernel::LiteKernel *CpuSpaceToBatchInt8KernelCreator(const std::vector<lite::Ten
   auto *kernel = new (std::nothrow) SpaceToBatchInt8CPUKernel(param, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SpaceToBatchInt8CPUKernel fail!";
+    free(param);
     return nullptr;
   }
   auto ret = kernel->Init();

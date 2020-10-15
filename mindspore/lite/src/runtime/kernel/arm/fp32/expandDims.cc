@@ -49,15 +49,15 @@ int ExpandDimsCPUKernel::DoExpandDims(int task_id) {
   }
   int offset = task_id * thread_sz_stride_;
   if (this->in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-    int ret = ExpandDims(reinterpret_cast<float *>(in_ptr_) + offset,
-                         reinterpret_cast<float *>(out_ptr_) + offset, size * sizeof(float));
+    int ret = ExpandDims(reinterpret_cast<float *>(in_ptr_) + offset, reinterpret_cast<float *>(out_ptr_) + offset,
+                         size * sizeof(float));
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ExpandDimsRun error task_id[" << task_id << "] error_code[" << ret << "]";
       return ret;
     }
   } else if (this->in_tensors_[0]->data_type() == kNumberTypeInt8) {
-    int ret = ExpandDims(reinterpret_cast<int8_t *>(in_ptr_) + offset,
-                         reinterpret_cast<int8_t *>(out_ptr_) + offset, size * sizeof(int8_t));
+    int ret = ExpandDims(reinterpret_cast<int8_t *>(in_ptr_) + offset, reinterpret_cast<int8_t *>(out_ptr_) + offset,
+                         size * sizeof(int8_t));
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ExpandDimsRun error task_id[" << task_id << "] error_code[" << ret << "]";
       return ret;
@@ -102,6 +102,7 @@ kernel::LiteKernel *CpuExpandsDimsFp32KernelCreator(const std::vector<lite::Tens
   auto *kernel = new (std::nothrow) ExpandDimsCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ExpandDimsCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

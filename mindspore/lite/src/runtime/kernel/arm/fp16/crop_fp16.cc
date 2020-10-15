@@ -115,6 +115,7 @@ kernel::LiteKernel *CpuCropFp16KernelCreator(const std::vector<lite::Tensor *> &
   auto *kernel = new (std::nothrow) CropFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new CropFp16CPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

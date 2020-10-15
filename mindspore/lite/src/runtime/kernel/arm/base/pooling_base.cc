@@ -115,6 +115,7 @@ kernel::LiteKernel *CpuPoolingInt8KernelCreator(const std::vector<lite::Tensor *
   auto *kernel = new (std::nothrow) PoolingInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PoolingInt8CPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -139,6 +140,7 @@ kernel::LiteKernel *CpuPoolingFp32KernelCreator(const std::vector<lite::Tensor *
   auto *kernel = new (std::nothrow) PoolingCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PoolingCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

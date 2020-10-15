@@ -161,6 +161,7 @@ kernel::LiteKernel *CpuMulInt8KernelCreator(const std::vector<lite::Tensor *> &i
 
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

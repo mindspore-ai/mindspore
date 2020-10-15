@@ -191,6 +191,7 @@ kernel::LiteKernel *CpuL2NormFp32KernelCreator(const std::vector<lite::Tensor *>
   auto *kernel = new (std::nothrow) L2NormCPUKernel(param, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new L2NormCPUKernel fail!";
+    free(param);
     return nullptr;
   }
   auto ret = kernel->Init();

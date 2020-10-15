@@ -119,15 +119,18 @@ kernel::LiteKernel *CpuROIPoolingFp32KernelCreator(const std::vector<lite::Tenso
   }
   if (ctx == nullptr) {
     MS_LOG(ERROR) << "Input context is nullptr!";
+    free(opParameter);
     return nullptr;
   }
   if (ctx->thread_num_ == 0) {
     MS_LOG(ERROR) << "context thread num is 0!";
+    free(opParameter);
     return nullptr;
   }
   auto *kernel = new (std::nothrow) ROIPoolingCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ROIPoolingCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

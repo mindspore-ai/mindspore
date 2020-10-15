@@ -101,6 +101,7 @@ kernel::LiteKernel *CpuAddNFp32KernelCreator(const std::vector<lite::Tensor *> &
   }
   if (ctx == nullptr) {
     MS_LOG(ERROR) << "Input context is nullptr!";
+    free(op_parameter);
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_AddN);
@@ -108,6 +109,7 @@ kernel::LiteKernel *CpuAddNFp32KernelCreator(const std::vector<lite::Tensor *> &
   auto *kernel = new (std::nothrow) AddNCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new AddNCPUKernel fail!";
+    free(op_parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

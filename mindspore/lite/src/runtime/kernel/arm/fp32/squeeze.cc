@@ -68,6 +68,7 @@ kernel::LiteKernel *CpuSqueezeFp32KernelCreator(const std::vector<lite::Tensor *
   auto *kernel = new (std::nothrow) SqueezeCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "New kernel fails.";
+    free(parameter);
     return nullptr;
   }
 

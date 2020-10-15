@@ -67,14 +67,20 @@ kernel::LiteKernel *CpuTileFp32KernelCreator(const std::vector<lite::Tensor *> &
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                              const lite::InnerContext *ctx, const KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
-  if (parameter == nullptr || ctx == nullptr) {
-    MS_LOG(ERROR) << "parameter or ctx is nullptr";
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "parameter is nullptr";
+    return nullptr;
+  }
+  if (ctx == nullptr) {
+    MS_LOG(ERROR) << "ctx is nullptr";
+    free(parameter);
     return nullptr;
   }
   MS_ASSERT(desc.type == PrimitiveType_Tile);
   auto *kernel = new (std::nothrow) TileCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
+    free(parameter);
     return nullptr;
   }
 

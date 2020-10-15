@@ -205,11 +205,13 @@ kernel::LiteKernel *CpuMeanFp16KernelCreator(const std::vector<lite::Tensor *> &
   }
   if (desc.type != schema::PrimitiveType_Mean) {
     MS_LOG(ERROR) << "Reduce op desc.type should be PrimitiveType_Mean, got " << desc.type;
+    free(opParameter);
     return nullptr;
   }
   auto *kernel = new (std::nothrow) ReduceFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Reduce new ReduceCPUKernel failed.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

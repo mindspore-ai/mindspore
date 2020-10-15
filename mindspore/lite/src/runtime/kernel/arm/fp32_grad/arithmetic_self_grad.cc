@@ -90,6 +90,7 @@ kernel::LiteKernel *CpuArithmeticSelfGradFp32KernelCreator(const std::vector<lit
   auto *kernel = new (std::nothrow) ArithmeticSelfGradCPUKernel(param, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ArithmeticSelfGradCPUKernel fail!";
+    free(param);
     return nullptr;
   }
 

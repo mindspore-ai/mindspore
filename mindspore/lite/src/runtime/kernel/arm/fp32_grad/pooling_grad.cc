@@ -120,6 +120,7 @@ kernel::LiteKernel *CpuPoolingGradFp32KernelCreator(const std::vector<lite::Tens
   auto *kernel = new (std::nothrow) PoolingGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PoolingGradCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
 

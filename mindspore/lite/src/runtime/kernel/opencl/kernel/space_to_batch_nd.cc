@@ -132,6 +132,7 @@ kernel::LiteKernel *OpenCLSpaceToBatchNDKernelCreator(const std::vector<lite::Te
   auto *kernel = new (std::nothrow) SpaceToBatchNDOpenCLKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Kernel " << opParameter->name_ << " new failed.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

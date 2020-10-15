@@ -124,6 +124,7 @@ kernel::LiteKernel *OpenCLSliceKernelCreator(const std::vector<lite::Tensor *> &
   auto *kernel = new (std::nothrow) SliceOpenCLKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << " new SliceOpenCLKernel failed ";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

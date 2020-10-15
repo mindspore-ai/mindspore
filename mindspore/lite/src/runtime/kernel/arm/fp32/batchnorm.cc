@@ -105,6 +105,7 @@ kernel::LiteKernel *CpuBatchnormKernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) BatchnormCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BatchNormCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

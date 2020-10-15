@@ -272,6 +272,7 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
       weight_tensor->set_data_type(kNumberTypeInt8);
       weight_tensor->SetData(restore_data);
     }
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

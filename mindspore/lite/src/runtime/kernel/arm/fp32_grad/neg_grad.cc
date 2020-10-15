@@ -77,6 +77,7 @@ kernel::LiteKernel *CpuNegGradFp32KernelCreator(const std::vector<lite::Tensor *
   auto *kernel = new (std::nothrow) NegGradCPUKernel(param, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new NegGradCPUKernel fail!";
+    free(param);
     return nullptr;
   }
 

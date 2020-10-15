@@ -84,6 +84,7 @@ kernel::LiteKernel *CpuConstantOfShapeFp32KernelCreator(const std::vector<lite::
   auto *kernel = new (std::nothrow) ConstantOfShapeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ConstantOfShapeCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

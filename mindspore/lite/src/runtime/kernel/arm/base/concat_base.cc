@@ -96,6 +96,7 @@ kernel::LiteKernel *CpuConcatFp32KernelCreator(const std::vector<lite::Tensor *>
   auto *kernel = new (std::nothrow) ConcatCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ConcatCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

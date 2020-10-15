@@ -144,6 +144,7 @@ kernel::LiteKernel *CpuNormalizeKernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) NormalizeCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new NormalizeCPUKernel fail!";
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

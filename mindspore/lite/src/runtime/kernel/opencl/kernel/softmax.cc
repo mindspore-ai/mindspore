@@ -192,6 +192,7 @@ kernel::LiteKernel *OpenCLSoftMaxKernelCreator(const std::vector<lite::Tensor *>
   auto *kernel = new (std::nothrow) SoftmaxOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
+    free(opParameter);
     delete kernel;
     return nullptr;
   }

@@ -54,6 +54,7 @@ kernel::LiteKernel *CpuRankFp32KernelCreator(const std::vector<lite::Tensor *> &
   auto *kernel = new (std::nothrow) RankCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new RankCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

@@ -211,6 +211,7 @@ kernel::LiteKernel *CpuBatchnormInt8KernelCreator(const std::vector<lite::Tensor
   auto *kernel = new (std::nothrow) BatchnormInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BatchnormInt8CPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

@@ -136,7 +136,11 @@ kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D || desc.type == schema::PrimitiveType_DepthwiseConv2D);
 
   auto *kernel = new (std::nothrow) ConvolutionTrainCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new ConvolutionTrainCPUKernel failed!";
+    free(opParameter);
+    return nullptr;
+  }
 
   auto ret = kernel->Init();
   if (RET_OK != ret) {

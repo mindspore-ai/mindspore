@@ -127,15 +127,18 @@ kernel::LiteKernel *CpuCastFp32KernelCreator(const std::vector<lite::Tensor *> &
   }
   if (ctx == nullptr) {
     MS_LOG(ERROR) << "Input context is nullptr!";
+    free(opParameter);
     return nullptr;
   }
   if (ctx->thread_num_ == 0) {
     MS_LOG(ERROR) << "context thread num is 0!";
+    free(opParameter);
     return nullptr;
   }
   auto *kernel = new (std::nothrow) CastCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new CastCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

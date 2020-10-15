@@ -111,6 +111,7 @@ kernel::LiteKernel *CpuReverseSequenceFp32KernelCreator(const std::vector<lite::
   auto *kernel = new (std::nothrow) ReverseSequenceCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

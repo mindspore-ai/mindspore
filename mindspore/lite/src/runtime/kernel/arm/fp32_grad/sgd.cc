@@ -104,10 +104,14 @@ kernel::LiteKernel *CpuSgdFp32KernelCreator(const std::vector<lite::Tensor *> &i
                                             const lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Sgd);
   auto *kernel = new (std::nothrow) SgdCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new SgdCPUKernel failed!";
+    free(opParameter);
+    return nullptr;
+  }
 
   auto ret = kernel->Init();
-  if (0 != ret) {
+  if (RET_OK != ret) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;

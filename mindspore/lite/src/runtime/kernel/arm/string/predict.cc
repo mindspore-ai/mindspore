@@ -102,6 +102,7 @@ kernel::LiteKernel *CpuPredictKernelCreator(const std::vector<lite::Tensor *> &i
   auto *kernel = new (std::nothrow) PredictCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PredictCPUKernel fail!";
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();
