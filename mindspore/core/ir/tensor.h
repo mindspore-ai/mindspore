@@ -306,12 +306,16 @@ class Tensor : public MetaTensor {
 
   bool NeedSyncHostToDevice() const { return sync_status_ == kNeedSyncHostToDevice; }
 
+  bool IsGraphOutput() { return graph_output_; }
+  void SetIsGraphOutput() { graph_output_ = true; }
+
  private:
   bool init_flag_{false};
   TensorDataPtr data_{nullptr};
   std::string id_{""};
   mutable std::shared_ptr<WaitEvent> event_{nullptr};
   mutable TensorSyncStatus sync_status_{kNeedSyncHostToDevice};
+  bool graph_output_{false};
   DeviceSyncPtr device_sync_{nullptr};
   std::vector<Axis> padding_type_;
   TypePtr cast_dtype_{nullptr};

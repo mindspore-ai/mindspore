@@ -78,6 +78,7 @@ tensor::TensorPtr CreateCNodeOutputTensor(const session::KernelWithIndex &node_o
     tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(node, output_index));
     tensor->set_sync_status(kNoNeedSync);
     tensor->SetNeedWait(true);
+    tensor->SetIsGraphOutput();
     return tensor;
   }
 
@@ -102,6 +103,7 @@ tensor::TensorPtr CreateCNodeOutputTensor(const session::KernelWithIndex &node_o
     tensor->set_sync_status(kNeedSyncDeviceToHost);
   }
   tensor->SetNeedWait(true);
+  tensor->SetIsGraphOutput();
   return tensor;
 }
 
@@ -1041,7 +1043,7 @@ std::vector<tensor::TensorPtr> SessionBasic::GetNeedLockInputTensors(const Graph
   }
   std::vector<tensor::TensorPtr> result;
   for (auto &tensor : inputs) {
-    if (!tensor->NeedWait()) {
+    if (!tensor->IsGraphOutput()) {
       result.emplace_back(tensor);
     }
   }
