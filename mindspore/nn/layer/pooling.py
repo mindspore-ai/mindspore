@@ -190,8 +190,8 @@ class MaxPool1d(_PoolNd):
         validator.check_value_type('kernel_size', kernel_size, [int], self.cls_name)
         validator.check_value_type('stride', stride, [int], self.cls_name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)
-        validator.check_integer("kernel_size", kernel_size, 1, Rel.GE, self.cls_name)
-        validator.check_integer("stride", stride, 1, Rel.GE, self.cls_name)
+        validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", self.cls_name)
+        validator.check_int(stride, 1, Rel.GE, "stride", self.cls_name)
         self.kernel_size = (1, kernel_size)
         self.stride = (1, stride)
         self.max_pool = P.MaxPool(ksize=self.kernel_size,
@@ -349,8 +349,8 @@ class AvgPool1d(_PoolNd):
         validator.check_value_type('kernel_size', kernel_size, [int], self.cls_name)
         validator.check_value_type('stride', stride, [int], self.cls_name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)
-        validator.check_integer("kernel_size", kernel_size, 1, Rel.GE, self.cls_name)
-        validator.check_integer("stride", stride, 1, Rel.GE, self.cls_name)
+        validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", self.cls_name)
+        validator.check_int(stride, 1, Rel.GE, "stride", self.cls_name)
         self.kernel_size = (1, kernel_size)
         self.stride = (1, stride)
         self.avg_pool = P.AvgPool(ksize=self.kernel_size,

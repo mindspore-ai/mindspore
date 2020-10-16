@@ -98,16 +98,16 @@ class BoundingBoxEncode(PrimitiveWithInfer):
             validator.check_value_type("means[%d]" % i, value, [float], self.name)
         for i, value in enumerate(stds):
             validator.check_value_type("stds[%d]" % i, value, [float], self.name)
-        validator.check_integer("means len", len(means), 4, Rel.EQ, self.name)
-        validator.check_integer("stds len", len(stds), 4, Rel.EQ, self.name)
+        validator.check_equal_int(len(means), 4, "means len", self.name)
+        validator.check_equal_int(len(stds), 4, "stds len", self.name)
 
     def infer_shape(self, anchor_box, groundtruth_box):
         validator.check('anchor_box shape[0]', anchor_box[0], 'groundtruth_box shape[0]', groundtruth_box[0], Rel.EQ,
                         self.name)
         validator.check("anchor_box rank", len(anchor_box), "", 2, Rel.EQ, self.name)
         validator.check("groundtruth_box rank", len(groundtruth_box), "", 2, Rel.EQ, self.name)
-        validator.check_integer('anchor_box shape[1]', anchor_box[1], 4, Rel.EQ, self.name)
-        validator.check_integer('groundtruth_box shape[1]', groundtruth_box[1], 4, Rel.EQ, self.name)
+        validator.check_equal_int(anchor_box[1], 4, 'anchor_box shape[1]', self.name)
+        validator.check_equal_int(groundtruth_box[1], 4, 'groundtruth_box shape[1]', self.name)
         return anchor_box
 
     def infer_dtype(self, anchor_box, groundtruth_box):
@@ -153,18 +153,18 @@ class BoundingBoxDecode(PrimitiveWithInfer):
         for i, value in enumerate(stds):
             validator.check_value_type("stds[%d]" % i, value, [float], self.name)
         validator.check_value_type('wh_ratio_clip', wh_ratio_clip, [float], self.name)
-        validator.check_integer("means len", len(means), 4, Rel.EQ, self.name)
-        validator.check_integer("stds len", len(stds), 4, Rel.EQ, self.name)
+        validator.check_equal_int(len(means), 4, "means len", self.name)
+        validator.check_equal_int(len(stds), 4, "stds len", self.name)
         if max_shape is not None:
             validator.check_value_type('max_shape', max_shape, [tuple], self.name)
-            validator.check_integer("max_shape len", len(max_shape), 2, Rel.EQ, self.name)
+            validator.check_equal_int(len(max_shape), 2, "max_shape len", self.name)
 
     def infer_shape(self, anchor_box, deltas):
         validator.check('anchor_box shape[0]', anchor_box[0], 'deltas shape[0]', deltas[0], Rel.EQ, self.name)
         validator.check("anchor_box rank", len(anchor_box), "", 2, Rel.EQ, self.name)
         validator.check("deltas rank", len(deltas), "", 2, Rel.EQ, self.name)
-        validator.check_integer('anchor_box shape[1]', anchor_box[1], 4, Rel.EQ, self.name)
-        validator.check_integer('deltas shape[1]', deltas[1], 4, Rel.EQ, self.name)
+        validator.check_equal_int(anchor_box[1], 4, 'anchor_box shape[1]', self.name)
+        validator.check_equal_int(deltas[1], 4, 'deltas shape[1]', self.name)
         return anchor_box
 
     def infer_dtype(self, anchor_box, deltas):
@@ -272,10 +272,10 @@ class IOU(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['anchor_boxes', 'gt_boxes'], outputs=['overlap'])
 
     def infer_shape(self, anchor_boxes, gt_boxes):
-        validator.check_integer('gt_boxes shape[1]', gt_boxes[1], 4, Rel.EQ, self.name)
-        validator.check_integer('anchor_boxes shape[1]', anchor_boxes[1], 4, Rel.EQ, self.name)
-        validator.check_integer('anchor_boxes rank', len(anchor_boxes), 2, Rel.EQ, self.name)
-        validator.check_integer('gt_boxes rank', len(gt_boxes), 2, Rel.EQ, self.name)
+        validator.check_equal_int(gt_boxes[1], 4, 'gt_boxes shape[1]', self.name)
+        validator.check_equal_int(anchor_boxes[1], 4, 'anchor_boxes shape[1]', self.name)
+        validator.check_equal_int(len(anchor_boxes), 2, 'anchor_boxes rank', self.name)
+        validator.check_equal_int(len(gt_boxes), 2, 'gt_boxes rank', self.name)
         iou = [gt_boxes[0], anchor_boxes[0]]
         return iou
 

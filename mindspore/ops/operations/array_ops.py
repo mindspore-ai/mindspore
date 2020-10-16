@@ -583,8 +583,8 @@ class Transpose(PrimitiveWithInfer):
 
         tmp = list(p_value)
         for i, dim in enumerate(p_value):
-            validator.check_integer("perm[%d]" % i, dim, 0, Rel.GE, self.name)
-            validator.check_integer("perm[%d]" % i, dim, len(p_value), Rel.LT, self.name)
+            validator.check_int(dim, 0, Rel.GE, f'perm[{i}]', self.name)
+            validator.check_int(dim, len(p_value), Rel.LT, f'perm[{i}]', self.name)
             tmp.remove(dim)
             if dim in tmp:
                 raise ValueError('The value of perm is wrong.')
@@ -725,8 +725,8 @@ class Padding(PrimitiveWithInfer):
     def __infer__(self, x):
         validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
         x_shape = list(x['shape'])
-        validator.check_integer("rank of x", len(x_shape), 1, Rel.GT, self.name)
-        validator.check_integer("last dim of x", x_shape[-1], 1, Rel.EQ, self.name)
+        validator.check_int(len(x_shape), 1, Rel.GT, "rank of x", self.name)
+        validator.check_int(x_shape[-1], 1, Rel.EQ, "last dim of x", self.name)
         out_shape = x_shape
         out_shape[-1] = self.pad_dim_size
         out = {'shape': out_shape,
@@ -1575,7 +1575,7 @@ class UnsortedSegmentMin(PrimitiveWithInfer):
         valid_type = [mstype.float16, mstype.float32, mstype.int32]
         validator.check_tensor_type_same({"x": x['dtype']}, valid_type, self.name)
         validator.check_tensor_type_same({"segment_ids": segment_ids['dtype']}, [mstype.int32], self.name)
-        validator.check_integer("rank of segment_ids_shape", len(segment_ids_shape), 1, Rel.EQ, self.name)
+        validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
         validator.check(f'first shape of input_x', x_shape[0],
                         'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
         num_segments_v = num_segments['value']
@@ -1628,7 +1628,7 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
         valid_type = [mstype.float16, mstype.float32, mstype.int32]
         validator.check_tensor_type_same({"x": x['dtype']}, valid_type, self.name)
         validator.check_tensor_type_same({"segment_ids": segment_ids['dtype']}, [mstype.int32], self.name)
-        validator.check_integer("rank of segment_ids_shape", len(segment_ids_shape), 1, Rel.EQ, self.name)
+        validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
         validator.check(f'first shape of input_x', x_shape[0],
                         'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
         num_segments_v = num_segments['value']
@@ -1730,7 +1730,7 @@ class ParallelConcat(PrimitiveWithInfer):
         x_shp = values['shape']
         x_type = values['dtype']
 
-        validator.check_integer(f'x_shp length', len(x_shp), 1, Rel.GE, self.name)
+        validator.check_int(len(x_shp), 1, Rel.GE, f'x_shp length', self.name)
 
         args = {f"x_type[{i}]": elem for i, elem in enumerate(x_type)}
         validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), self.name)
@@ -1738,7 +1738,7 @@ class ParallelConcat(PrimitiveWithInfer):
         first_elem = x_shp[0]
         for i, elem in enumerate(x_shp[1:]):
             j = i + 1
-            validator.check_integer(f'x_shp[{j}][0]', elem[0], 1, Rel.EQ, self.name)
+            validator.check_equal_int(elem[0], 1, f'x_shp[{j}][0]', self.name)
             validator.check(f"x_shp[0] shape", first_elem, f"x_shp[{j}] shape", elem, Rel.EQ, self.name)
 
         ret_shp = x_shp[0].copy()
@@ -1755,7 +1755,7 @@ class ParallelConcat(PrimitiveWithInfer):
 def _get_pack_shape(x_shape, x_type, axis, prim_name):
     """for pack output shape"""
     validator.check_value_type("shape", x_shape, [tuple, list], prim_name)
-    validator.check_integer("len of input_x", len(x_shape), 1, Rel.GE, prim_name)
+    validator.check_int(len(x_shape), 1, Rel.GE, "len of input_x", prim_name)
     validator.check_subclass("input_x[0]", x_type[0], mstype.tensor, prim_name)
     rank_base = len(x_shape[0])
     N = len(x_shape)
@@ -1871,8 +1871,8 @@ class Unpack(PrimitiveWithInfer):
         validator.check_positive_int(output_num, "output_num", self.name)
         self.add_prim_attr('num', output_num)
         output_valid_check = x_shape[self.axis] - output_num
-        validator.check_integer("The dimension which to unpack divides output_num", output_valid_check, 0, Rel.EQ,
-                                self.name)
+        validator.check_int(output_valid_check, 0, Rel.EQ,
+                            "The dimension which to unpack divides output_num", self.name)
         out_shapes = []
         out_dtypes = []
         out_shape = x_shape[:self.axis] + x_shape[self.axis + 1:]
@@ -2523,7 +2523,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
         """Initialize ResizeNearestNeighbor"""
         validator.check_value_type("size", size, [tuple, list], self.name)
         validator.check_value_type("align_corners", align_corners, [bool], self.name)
-        validator.check_integer("length of size", len(size), 2, Rel.EQ, self.name)
+        validator.check_equal_int(len(size), 2, "length of size", self.name)
         for i, value in enumerate(size):
             validator.check_non_negative_int(value, f'{i}th value of size', self.name)
         self.init_prim_io_names(inputs=['image_in'], outputs=['image_out'])
@@ -3134,9 +3134,8 @@ class DepthToSpace(PrimitiveWithInfer):
         for i in range(2):
             out_shape[i + 2] *= self.block_size
 
-        validator.check_integer('x_shape[1] % (block_size*block_size)',
-                                x_shape[1] % (self.block_size * self.block_size),
-                                0, Rel.EQ, self.name)
+        validator.check_int(x_shape[1] % (self.block_size * self.block_size),
+                            0, Rel.EQ, 'x_shape[1] % (block_size*block_size)', self.name)
         out_shape[1] //= self.block_size * self.block_size
         return out_shape
 
@@ -3205,7 +3204,7 @@ class SpaceToBatch(PrimitiveWithInfer):
         return x_dtype
 
     def infer_shape(self, x_shape):
-        validator.check_integer('rank of input_x', len(x_shape), 4, Rel.EQ, self.name)
+        validator.check_equal_int(len(x_shape), 4, 'rank of input_x', self.name)
         out_shape = copy.deepcopy(x_shape)
         for i in range(2):
             padded = out_shape[i + 2] + self.paddings[i][0] + self.paddings[i][1]
@@ -3367,7 +3366,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         x_rank = len(x_shape)
-        validator.check_integer('x_shape rank', x_rank, 4, Rel.EQ, self.name)
+        validator.check_equal_int(x_rank, 4, 'x_shape rank', self.name)
         out_shape = copy.deepcopy(x_shape)
 
         block_shape_prod = 1
@@ -3460,7 +3459,7 @@ class BatchToSpaceND(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         x_rank = len(x_shape)
-        validator.check_integer('x_shape rank', x_rank, 4, Rel.EQ, self.name)
+        validator.check_int(x_rank, 4, Rel.EQ, 'x_shape rank', self.name)
         out_shape = copy.deepcopy(x_shape)
 
         block_shape_prod = 1
@@ -3607,11 +3606,11 @@ class Meshgrid(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         validator.check_value_type("shape", x_shape, [tuple, list], self.name)
-        validator.check_integer("len of input_x", len(x_shape), 2, Rel.GE, self.name)
+        validator.check_int(len(x_shape), 2, Rel.GE, "len of input_x", self.name)
         n = len(x_shape)
         shape_0 = []
         for s in x_shape:
-            validator.check_integer('each_input_rank', len(s), 1, Rel.EQ, self.name)
+            validator.check_int(len(s), 1, Rel.EQ, 'each_input_rank', self.name)
             shape_0.append(s[0])
         if self.indexing == "xy":
             shape_0[0], shape_0[1] = shape_0[1], shape_0[0]

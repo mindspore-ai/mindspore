@@ -549,7 +549,7 @@ class Unfold(Cell):
 
 @constexpr
 def _get_matrix_diag_assist(x_shape, x_dtype):
-    Validator.check_integer("x rank", len(x_shape), 1, Rel.GE, "_get_matrix_diag_assist")
+    Validator.check_int(len(x_shape), 1, Rel.GE, "x rank", "_get_matrix_diag_assist")
     base_eye = np.eye(x_shape[-1], x_shape[-1]).reshape(-1)
     assist = np.tile(base_eye, x_shape[:-1]).reshape(x_shape + (x_shape[-1],))
     return Tensor(assist, x_dtype)
@@ -557,7 +557,7 @@ def _get_matrix_diag_assist(x_shape, x_dtype):
 
 @constexpr
 def _get_matrix_diag_part_assist(x_shape, x_dtype):
-    Validator.check_integer("x rank", len(x_shape), 2, Rel.GE, "_get_matrix_diag_part_assist")
+    Validator.check_int(len(x_shape), 2, Rel.GE, "x rank", "_get_matrix_diag_part_assist")
     base_eye = np.eye(x_shape[-2], x_shape[-1]).reshape(-1)
     assist = np.tile(base_eye, x_shape[:-2]).reshape(x_shape)
     return Tensor(assist, x_dtype)

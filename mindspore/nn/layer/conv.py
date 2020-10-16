@@ -239,8 +239,8 @@ class Conv2d(_Conv):
         """Initialize depthwise conv2d op"""
         if context.get_context("device_target") == "Ascend" and self.group > 1:
             self.dilation = self._dilation
-            Validator.check_integer('group', self.group, self.in_channels, Rel.EQ)
-            Validator.check_integer('group', self.group, self.out_channels, Rel.EQ)
+            Validator.check_equal_int(self.group, self.in_channels, 'group')
+            Validator.check_equal_int(self.group, self.out_channels, 'group')
             self.conv2d = P.DepthwiseConv2dNative(channel_multiplier=1,
                                                   kernel_size=self.kernel_size,
                                                   pad_mode=self.pad_mode,
@@ -384,10 +384,10 @@ class Conv1d(_Conv):
         Validator.check_value_type("stride", stride, [int], self.cls_name)
         Validator.check_value_type("padding", padding, [int], self.cls_name)
         Validator.check_value_type("dilation", dilation, [int], self.cls_name)
-        Validator.check_integer('kernel_size', kernel_size, 1, Rel.GE, self.cls_name)
-        Validator.check_integer('stride', stride, 1, Rel.GE, self.cls_name)
+        Validator.check_int(kernel_size, 1, Rel.GE, 'kernel_size', self.cls_name)
+        Validator.check_int(stride, 1, Rel.GE, 'stride', self.cls_name)
         Validator.check_non_negative_int(padding, 'padding', self.cls_name)
-        Validator.check_integer('dilation', dilation, 1, Rel.GE, self.cls_name)
+        Validator.check_int(dilation, 1, Rel.GE, 'dilation', self.cls_name)
         kernel_size = (1, kernel_size)
         stride = (1, stride)
         dilation = (1, dilation)
@@ -395,7 +395,7 @@ class Conv1d(_Conv):
         get_dtype = P.DType()
         if isinstance(weight_init, Tensor):
             weight_init_shape = get_shape(weight_init)
-            Validator.check_integer('weight_init_shape', len(weight_init_shape), 3, Rel.EQ, self.cls_name)
+            Validator.check_equal_int(len(weight_init_shape), 3, 'weight_init_shape', self.cls_name)
             weight_init_dtype = get_dtype(weight_init)
             weight_init_value = weight_init.asnumpy()
             weight_init_value = np.expand_dims(weight_init_value, 2)
@@ -539,7 +539,7 @@ class Conv2dTranspose(_Conv):
         dilation = twice(dilation)
         Validator.check_value_type('padding', padding, (int, tuple), self.cls_name)
         if isinstance(padding, tuple):
-            Validator.check_integer('padding size', len(padding), 4, Rel.EQ, self.cls_name)
+            Validator.check_equal_int(len(padding), 4, 'padding size', self.cls_name)
         # out_channels and in_channels swap.
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel,
         # then Conv2dTranspose's out_channel refers to Conv2DBackpropInput's in_channel.
@@ -703,10 +703,10 @@ class Conv1dTranspose(_Conv):
         Validator.check_value_type("stride", stride, [int], self.cls_name)
         Validator.check_value_type("padding", padding, [int], self.cls_name)
         Validator.check_value_type("dilation", dilation, [int], self.cls_name)
-        Validator.check_integer('kernel_size', kernel_size, 1, Rel.GE, self.cls_name)
-        Validator.check_integer('stride', stride, 1, Rel.GE, self.cls_name)
+        Validator.check_int(kernel_size, 1, Rel.GE, 'kernel_size', self.cls_name)
+        Validator.check_int(stride, 1, Rel.GE, 'stride', self.cls_name)
         Validator.check_non_negative_int(padding, 'padding', self.cls_name)
-        Validator.check_integer('dilation', dilation, 1, Rel.GE, self.cls_name)
+        Validator.check_int(dilation, 1, Rel.GE, 'dilation', self.cls_name)
         kernel_size = (1, kernel_size)
         stride = (1, stride)
         dilation = (1, dilation)
@@ -714,7 +714,7 @@ class Conv1dTranspose(_Conv):
         get_dtype = P.DType()
         if isinstance(weight_init, Tensor):
             weight_init_shape = get_shape(weight_init)
-            Validator.check_integer('weight_init_shape', len(weight_init_shape), 3, Rel.EQ, self.cls_name)
+            Validator.check_equal_int(len(weight_init_shape), 3, 'weight_init_shape', self.cls_name)
             weight_init_dtype = get_dtype(weight_init)
             weight_init_value = weight_init.asnumpy()
             weight_init_value = np.expand_dims(weight_init_value, 2)

@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 from mindspore import context, Tensor, Parameter, ParameterTuple, nn
-from mindspore._checkparam import _check_str_by_regular
+from mindspore._checkparam import Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
 
@@ -124,15 +124,15 @@ def test_check_str_by_regular():
     str4 = ".12_sf.asdf"
     str5 = "12_sf.a$sdf."
     str6 = "12+sf.asdf"
-    _check_str_by_regular(str1)
-    _check_str_by_regular(str2)
-    _check_str_by_regular(str3)
+    Validator.check_str_by_regular(str1)
+    Validator.check_str_by_regular(str2)
+    Validator.check_str_by_regular(str3)
     with pytest.raises(ValueError):
-        _check_str_by_regular(str4)
+        Validator.check_str_by_regular(str4)
     with pytest.raises(ValueError):
-        _check_str_by_regular(str5)
+        Validator.check_str_by_regular(str5)
     with pytest.raises(ValueError):
-        _check_str_by_regular(str6)
+        Validator.check_str_by_regular(str6)
 
 def test_parameter_compute():
     para_1 = Parameter(initializer('ones', [1, 2, 3], mstype.int32), 'test1')

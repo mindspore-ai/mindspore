@@ -89,12 +89,12 @@ class ConvertToQuantNetwork:
 
     def __init__(self, **kwargs):
         self.network = Validator.check_isinstance('network', kwargs["network"], (nn.Cell,))
-        self.weight_qdelay = Validator.check_integer("quant delay", kwargs["quant_delay"][0], 0, Rel.GE)
-        self.act_qdelay = Validator.check_integer("quant delay", kwargs["quant_delay"][-1], 0, Rel.GE)
+        self.weight_qdelay = Validator.check_non_negative_int(kwargs["quant_delay"][0], "quant delay")
+        self.act_qdelay = Validator.check_int(kwargs["quant_delay"][-1], 0, Rel.GE, "quant delay")
         self.bn_fold = Validator.check_bool(kwargs["bn_fold"], "bn fold")
-        self.freeze_bn = Validator.check_integer("freeze bn", kwargs["freeze_bn"], 0, Rel.GE)
-        self.weight_bits = Validator.check_integer("weights bit", kwargs["num_bits"][0], 0, Rel.GE)
-        self.act_bits = Validator.check_integer("activations bit", kwargs["num_bits"][-1], 0, Rel.GE)
+        self.freeze_bn = Validator.check_non_negative_int(kwargs["freeze_bn"], "freeze bn")
+        self.weight_bits = Validator.check_non_negative_int(kwargs["num_bits"][0], "weights bit")
+        self.act_bits = Validator.check_int(kwargs["num_bits"][-1], 0, Rel.GE, "activations bit")
         self.weight_channel = Validator.check_bool(kwargs["per_channel"][0], "per channel")
         self.act_channel = Validator.check_bool(kwargs["per_channel"][-1], "per channel")
         self.weight_symmetric = Validator.check_bool(kwargs["symmetric"][0], "symmetric")

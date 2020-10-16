@@ -520,7 +520,7 @@ class Im2Col(PrimitiveWithInfer):
         self.add_prim_attr('data_format', "NCHW")
 
     def infer_shape(self, x_shape):
-        validator.check_integer("x rank", len(x_shape), 4, Rel.EQ, self.name)
+        validator.check_equal_int(len(x_shape), 4, "x rank", self.name)
         kernel_size_h = self.kernel_size[0]
         kernel_size_w = self.kernel_size[1]
         stride_h = self.stride[2]

@@ -23,7 +23,7 @@ from collections import namedtuple
 from types import FunctionType
 from mindspore import log as logger
 from mindspore._c_expression import MSContext, ms_ctx_param
-from mindspore._checkparam import args_type_check
+from mindspore._checkparam import args_type_check, Validator
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
 from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _reset_ps_context
@@ -35,9 +35,9 @@ __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_aut
 
 GRAPH_MODE = 0
 PYNATIVE_MODE = 1
-# The max memory size of graph plus variable.
-_DEVICE_APP_MEMORY_SIZE = 31
-
+_DEVICE_APP_MEMORY_SIZE = 31 # The max memory size of graph plus variable.
+_re_pattern = r'[1-9][0-9]*(\.)?[0-9]*GB|0\.[0-9]*GB'
+_k_context = None
 
 def _make_directory(path):
     """Make directory."""
@@ -223,7 +223,7 @@ class _Context:
 
     def set_variable_memory_max_size(self, variable_memory_max_size):
         """set values of variable_memory_max_size and graph_memory_max_size"""
-        if not _check_input_format(variable_memory_max_size):
+        if not Validator.check_str_by_regular(variable_memory_max_size, _re_pattern):
             raise ValueError("Context param variable_memory_max_size should be in correct format! Such as \"5GB\"")
         if int(variable_memory_max_size[:-2]) >= _DEVICE_APP_MEMORY_SIZE:
             raise ValueError("Context param variable_memory_max_size should be less than 31GB.")
@@ -235,7 +235,7 @@ class _Context:
         self.set_param(ms_ctx_param._graph_memory_max_size, graph_memory_max_size_)
 
     def set_max_device_memory(self, max_device_memory):
-        if not _check_input_format(max_device_memory):
+        if not Validator.check_str_by_regular(max_device_memory, _re_pattern):
             raise ValueError("Context param max_device_memory should be in correct format! Such as \"3.5GB\"")
         max_device_memory_value = float(max_device_memory[:-2])
         if max_device_memory_value == 0:
@@ -292,16 +292,6 @@ class _Context:
     def enable_debug_runtime(self, enable):
         thread_info = self._thread_local_info
         thread_info.debug_runtime = enable
-
-
-def _check_input_format(x):
-    import re
-    pattern = r'[1-9][0-9]*(\.)?[0-9]*GB|0\.[0-9]*GB'
-    result = re.match(pattern, x)
-    return result is not None
-
-
-_k_context = None
 
 
 def _context():

@@ -356,8 +356,8 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         Validator.check_value_type('seed2', seed2, [int], self.name)
 
     def infer_shape(self, x_shape):
-        Validator.check_integer("input_x rank", len(x_shape), 1, Rel.GE, self.name)
-        Validator.check_integer("input_x rank", len(x_shape), 5, Rel.LE, self.name)
+        Validator.check_int(len(x_shape), 1, Rel.GE, "input_x rank", self.name)
+        Validator.check_int(len(x_shape), 5, Rel.LE, "input_x rank", self.name)
         return ([self.count, len(x_shape)], [self.count])
 
     def infer_dtype(self, x_dtype):

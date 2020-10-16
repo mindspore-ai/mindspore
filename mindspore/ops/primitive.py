@@ -227,7 +227,7 @@ class PrimitiveWithCheck(Primitive):
         >>>     def __init__(self):
         >>>         pass
         >>>     def check_shape(self, input_x):
-        >>>         validator.check_integer('input_x rank', len(input_x), 1, Rel.GE, self.name)
+        >>>         validator.check_int(len(input_x), 1, Rel.GE, 'input_x rank', self.name)
         >>>
         >>>     def check_dtype(self, input_x):
         >>>         validator.check_subclass("input_x", input_x, mstype.tensor, self.name)

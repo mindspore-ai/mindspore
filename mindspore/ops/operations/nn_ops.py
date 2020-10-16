@@ -98,7 +98,7 @@ class Flatten(PrimitiveWithInfer):
         pass
 
     def infer_shape(self, input_x):
-        validator.check_integer('input_x rank', len(input_x), 1, Rel.GE, self.name)
+        validator.check_int(len(input_x), 1, Rel.GE, 'input_x rank', self.name)
         prod = 1 if len(input_x) == 1 else reduce(operator.mul, input_x[1:])
         return input_x[0], prod
 
@@ -146,7 +146,7 @@ class Softmax(PrimitiveWithInfer):
             validator.check_value_type("item of axis", item, [int], self.name)
 
     def infer_shape(self, logits):
-        validator.check_integer("length of axis", len(self.axis), 1, Rel.GE, self.name)
+        validator.check_int(len(self.axis), 1, Rel.GE, "length of axis", self.name)
         rank = len(logits)
         for axis_v in self.axis:
             validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, "axis", self.name)
@@ -636,7 +636,7 @@ class FusedBatchNorm(Primitive):
     def __init__(self, mode=0, epsilon=1e-5, momentum=0.1):
         self.init_prim_io_names(inputs=['x', 'scale', 'b', 'mean', 'variance'],
                                 outputs=['y', 'running_mean', 'running_variance', 'save_mean', 'save_inv_variance'])
-        self.mode = validator.check_integer('mode', mode, [0, 1], Rel.IN, self.name)
+        self.mode = validator.check_int(mode, [0, 1], Rel.IN, 'mode', self.name)
         self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         self.momentum = validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         self._update_parameter = True
@@ -709,17 +709,17 @@ class FusedBatchNormEx(PrimitiveWithInfer):
     def __init__(self, mode=0, epsilon=1e-5, momentum=0.1):
         self.init_prim_io_names(inputs=['x', 'scale', 'b', 'mean', 'variance'],
                                 outputs=['y', 'save_scale', 'save_bias', 'save_mean', 'save_inv_variance', 'reserve'])
-        self.mode = validator.check_integer('mode', mode, [0, 1], Rel.IN, self.name)
+        self.mode = validator.check_int(mode, [0, 1], Rel.IN, 'mode', self.name)
         self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         self.momentum = validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         self._update_parameter = True
         self.add_prim_attr('data_format', "NCHW")
 
     def infer_shape(self, input_x, scale, bias, mean, variance):
-        validator.check_integer("scale rank", len(scale), 1, Rel.EQ, self.name)
+        validator.check_equal_int(len(scale), 1, "scale rank", self.name)
         validator.check("scale shape", scale, "bias shape", bias, Rel.EQ, self.name)
         validator.check("scale shape[0]", scale[0], "input_x shape[1]", input_x[1], Rel.EQ, self.name)
-        validator.check_integer("mean rank", len(mean), 1, Rel.EQ, self.name)
+        validator.check_equal_int(len(mean), 1, "mean rank", self.name)
         validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
         validator.check("mean shape", mean, "scale shape", scale, Rel.EQ, self.name)
         return (input_x, scale, scale, scale, scale, scale)
@@ -757,7 +757,7 @@ class BNTrainingReduce(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x'], outputs=['sum', 'square_sum'])
 
     def infer_shape(self, x_shape):
-        validator.check_integer("x rank", len(x_shape), 4, Rel.EQ, self.name)
+        validator.check_equal_int(len(x_shape), 4, "x rank", self.name)
         return ([x_shape[1]], [x_shape[1]])
 
     def infer_dtype(self, x_type):
@@ -822,13 +822,13 @@ class BNTrainingUpdate(PrimitiveWithInfer):
         self.factor = validator.check_float_range(factor, 0, 1, Rel.INC_BOTH, 'factor', 'BNTrainingUpdate')
 
     def infer_shape(self, x, sum, square_sum, scale, b, mean, variance):
-        validator.check_integer("x rank", len(x), 4, Rel.EQ, self.name)
-        validator.check_integer("sum rank", len(sum), 1, Rel.EQ, self.name)
-        validator.check_integer("square_sum rank", len(square_sum), 1, Rel.EQ, self.name)
-        validator.check_integer("scale rank", len(scale), 1, Rel.EQ, self.name)
-        validator.check_integer("b rank", len(b), 1, Rel.EQ, self.name)
-        validator.check_integer("mean rank", len(mean), 1, Rel.EQ, self.name)
-        validator.check_integer("variance rank", len(variance), 1, Rel.EQ, self.name)
+        validator.check_equal_int(len(x), 4, "x rank", self.name)
+        validator.check_equal_int(len(sum), 1, "sum rank", self.name)
+        validator.check_equal_int(len(square_sum), 1, "square_sum rank", self.name)
+        validator.check_equal_int(len(scale), 1, "scale rank", self.name)
+        validator.check_equal_int(len(b), 1, "b rank", self.name)
+        validator.check_equal_int(len(mean), 1, "mean rank", self.name)
+        validator.check_equal_int(len(variance), 1, "variance rank", self.name)
         validator.check("sum shape", sum, "x_shape[1]", x[1], Rel.EQ, self.name)
         validator.check("square_sum shape", square_sum, "sum", sum, Rel.EQ, self.name)
         validator.check("scale shape", scale, "x_shape[1]", x[1], Rel.EQ, self.name)
@@ -904,11 +904,11 @@ class BatchNorm(PrimitiveWithInfer):
                                 outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
 
     def infer_shape(self, input_x, scale, bias, mean, variance):
-        validator.check_integer("scale rank", len(scale), 1, Rel.EQ, self.name)
+        validator.check_equal_int(len(scale), 1, "scale rank", self.name)
         validator.check("scale shape", scale, "bias shape", bias, Rel.EQ, self.name)
         validator.check("scale shape[0]", scale[0], "input_x shape[1]", input_x[1], Rel.EQ, self.name)
         if not self.is_training:
-            validator.check_integer("mean rank", len(mean), 1, Rel.EQ, self.name)
+            validator.check_equal_int(len(mean), 1, "mean rank", self.name)
             validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
             validator.check("mean shape", mean, "scale shape", scale, Rel.EQ, self.name)
         return (input_x, scale, scale, scale, scale)
@@ -1010,7 +1010,7 @@ class Conv2D(PrimitiveWithInfer):
         if isinstance(pad, int):
             pad = (pad,) * 4
         else:
-            validator.check_integer('pad size', len(pad), 4, Rel.EQ, self.name)
+            validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.padding = pad
         self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
 
@@ -1020,15 +1020,15 @@ class Conv2D(PrimitiveWithInfer):
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
 
-        self.mode = validator.check_integer('mode', mode, 1, Rel.EQ, self.name)
+        self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
         self.add_prim_attr('data_format', "NCHW")
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.group = validator.check_positive_int(group, 'group', self.name)
         self.add_prim_attr('offset_a', 0)
 
     def infer_shape(self, x_shape, w_shape, b_shape=None):
-        validator.check_integer("weight rank", len(w_shape), 4, Rel.EQ, self.name)
-        validator.check_integer("x rank", len(x_shape), 4, Rel.EQ, self.name)
+        validator.check_equal_int(len(w_shape), 4, "weight rank", self.name)
+        validator.check_equal_int(len(x_shape), 4, "x rank", self.name)
         validator.check(f"x_shape[1] / group", x_shape[1] // self.group, "w_shape[1]", w_shape[1], Rel.EQ, self.name)
         validator.check('out_channel', self.out_channel, 'w_shape[0]', w_shape[0], Rel.EQ, self.name)
         validator.check('kernel_size', self.kernel_size, 'w_shape[2:4]', tuple(w_shape[2:4]), Rel.EQ, self.name)
@@ -1150,7 +1150,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         if isinstance(pad, int):
             pad = (pad,) * 4
         else:
-            validator.check_integer('pad size', len(pad), 4, Rel.EQ, self.name)
+            validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.padding = pad
         self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
@@ -1158,15 +1158,15 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
-        self.mode = validator.check_integer("mode", mode, 3, Rel.EQ, self.name)
+        self.mode = validator.check_equal_int(mode, 3, "mode", self.name)
         self.add_prim_attr('data_format', "NCHW")
         self.channel_multiplier = validator.check_positive_int(channel_multiplier, "channel_multiplier", self.name)
         self.group = validator.check_positive_int(group, "group", self.name)
         self.add_prim_attr('offset_a', 0)
 
     def infer_shape(self, x_shape, w_shape, b_shape=None):
-        validator.check_integer("weight rank", len(w_shape), 4, Rel.EQ, self.name)
-        validator.check_integer("x rank", len(x_shape), 4, Rel.EQ, self.name)
+        validator.check_equal_int(len(w_shape), 4, "weight rank", self.name)
+        validator.check_equal_int(len(x_shape), 4, "x rank", self.name)
         validator.check("x_shape[1]", x_shape[1], "w_shape[1]", w_shape[1], Rel.EQ, self.name)
         validator.check('kernel_size', self.kernel_size, 'w_shape[2:4]', tuple(w_shape[2:4]), Rel.EQ, self.name)
 
@@ -1250,7 +1250,7 @@ class _Pool(PrimitiveWithInfer):
         self.add_prim_attr("strides", self.strides)
 
     def infer_shape(self, x_shape):
-        validator.check_integer("x rank", len(x_shape), 4, Rel.EQ, self.name)
+        validator.check_equal_int(len(x_shape), 4, "x rank", self.name)
         batch, channel, input_h, input_w = x_shape
         if self.is_maxpoolwithargmax:
             _, kernel_h, kernel_w, _ = self.ksize
@@ -1536,7 +1536,7 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         if isinstance(pad, int):
             pad = (pad,) * 4
         else:
-            validator.check_integer('pad size', len(pad), 4, Rel.EQ, self.name)
+            validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.padding = pad
         self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
@@ -1547,7 +1547,7 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
 
         pad_mode = pad_mode.upper()
         self.add_prim_attr('pad_mode', pad_mode)
-        self.mode = validator.check_integer('mode', mode, 1, Rel.EQ, self.name)
+        self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
         self.group = validator.check_positive_int(group, 'group', self.name)
         self.add_prim_attr('data_format', "NCHW")
         if pad_list:
@@ -1624,8 +1624,8 @@ class BiasAdd(PrimitiveWithInfer):
         self.add_prim_attr('data_format', 'NCHW')
 
     def infer_shape(self, x_shape, b_shape):
-        validator.check_integer("x rank", len(x_shape), 2, Rel.GE, self.name)
-        validator.check_integer("bias rank", len(b_shape), 1, Rel.EQ, self.name)
+        validator.check_int(len(x_shape), 2, Rel.GE, "x rank", self.name)
+        validator.check_equal_int(len(b_shape), 1, "bias rank", self.name)
         validator.check("b_shape[0]", b_shape[0], "x_shape[1]", x_shape[1], Rel.EQ, self.name)
         return x_shape
 
@@ -2007,10 +2007,10 @@ class RNNTLoss(PrimitiveWithInfer):
                                 outputs=['costs', 'grads'])
 
     def infer_shape(self, acts_shape, labels_shape, input_length_shape, label_length_shape):
-        validator.check_integer('acts_rank', len(acts_shape), 4, Rel.EQ, self.name)
-        validator.check_integer('labels_rank', len(labels_shape), 2, Rel.EQ, self.name)
-        validator.check_integer('input_length_rank', len(input_length_shape), 1, Rel.EQ, self.name)
-        validator.check_integer('label_length_rank', len(label_length_shape), 1, Rel.EQ, self.name)
+        validator.check_equal_int(len(acts_shape), 4, 'acts_rank', self.name)
+        validator.check_equal_int(len(labels_shape), 2, 'labels_rank', self.name)
+        validator.check_equal_int(len(input_length_shape), 1, 'input_length_rank', self.name)
+        validator.check_equal_int(len(label_length_shape), 1, 'label_length_rank', self.name)
         validator.check('labels shape[0]', labels_shape[0], 'acts shape[0]', acts_shape[0], Rel.EQ, self.name)
         validator.check('labels shape[1]', labels_shape[1], 'acts shape[2]-1', acts_shape[2]-1, Rel.EQ, self.name)
         validator.check('input_length size', input_length_shape[0], 'acts shape[0]', acts_shape[0], Rel.EQ, self.name)
@@ -2080,11 +2080,11 @@ class SGD(PrimitiveWithInfer):
     def infer_shape(self, parameters_shape, gradient_shape, learning_rate_shape,
                     accum_shape, momentum_shape, stat_shape):
         validator.check_positive_int(len(parameters_shape), "parameters rank", self.name)
-        validator.check_integer(f'gradient rank', len(gradient_shape), 0, Rel.GE, self.name)
-        validator.check_integer(f'learning rate rank', len(learning_rate_shape), 0, Rel.GE, self.name)
+        validator.check_int(len(gradient_shape), 0, Rel.GE, f'gradient rank', self.name)
+        validator.check_int(len(learning_rate_shape), 0, Rel.GE, f'learning rate rank', self.name)
         validator.check_positive_int(len(accum_shape), "accumulation rank", self.name)
-        validator.check_integer(f'momentum rank', len(momentum_shape), 0, Rel.GE, self.name)
-        validator.check_integer(f'stat rank', len(stat_shape), 0, Rel.GE, self.name)
+        validator.check_int(len(momentum_shape), 0, Rel.GE, f'momentum rank', self.name)
+        validator.check_int(len(stat_shape), 0, Rel.GE, f'stat rank', self.name)
         validator.check("gradient shape", gradient_shape, "stat shape", stat_shape, Rel.EQ, self.name)
         return parameters_shape
 
@@ -2780,17 +2780,17 @@ class LSTM(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape, h_shape, c_shape, w_shape):
         # (seq, batch_size, feature)
-        validator.check_integer("x rank", len(x_shape), 3, Rel.EQ, self.name)
-        validator.check_integer("x[2]", x_shape[2], self.input_size, Rel.EQ, self.name)
+        validator.check_equal_int(len(x_shape), 3, "x rank", self.name)
+        validator.check_equal_int(x_shape[2], self.input_size, "x[2]", self.name)
 
         # h and c should be same shape
-        validator.check_integer("h rank", len(h_shape), 3, Rel.EQ, self.name)
+        validator.check_equal_int(len(h_shape), 3, "h rank", self.name)
         validator.check("h_shape", h_shape, "c_shape", c_shape, Rel.EQ, self.name)
 
         # (num_layers * num_directions, batch, hidden_size)
-        validator.check_integer("h[0]", h_shape[0], self.num_layers * self.num_directions, Rel.EQ, self.name)
-        validator.check_integer("h[1]", h_shape[1], x_shape[1], Rel.EQ, self.name)
-        validator.check_integer("h[2]", h_shape[2], self.hidden_size, Rel.EQ, self.name)
+        validator.check_int(h_shape[0], self.num_layers * self.num_directions, Rel.EQ, "h[0]", self.name)
+        validator.check_equal_int(h_shape[1], x_shape[1], "h[1]", self.name)
+        validator.check_int(h_shape[2], self.hidden_size, Rel.EQ, "h[2]", self.name)
 
         y_shape = (x_shape[0], x_shape[1], self.hidden_size * self.num_directions)
 
@@ -2918,7 +2918,7 @@ class Pad(PrimitiveWithInfer):
 
     def infer_shape(self, x):
         paddings = np.array(self.paddings)
-        validator.check_integer('paddings.shape', paddings.size, len(x) * 2, Rel.EQ, self.name)
+        validator.check_int(paddings.size, len(x) * 2, Rel.EQ, 'paddings.shape', self.name)
         if not np.all(paddings >= 0):
             raise ValueError('All elements of paddings must be >= 0.')
         y_shape = ()
@@ -2992,7 +2992,7 @@ class MirrorPad(PrimitiveWithInfer):
         x_shape = list(input_x['shape'])
         paddings_value = paddings['value'].asnumpy()
         paddings_size = paddings_value.size
-        validator.check_integer('paddings.shape', paddings_size, len(x_shape) * 2, Rel.EQ, self.name)
+        validator.check_int(paddings_size, len(x_shape) * 2, Rel.EQ, 'paddings.shape', self.name)
         if not np.all(paddings_value >= 0):
             raise ValueError('All elements of paddings must be >= 0.')
         adjust = 0
@@ -3276,7 +3276,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
                     beta1_shape, beta2_shape, epsilon_shape, grad_shape, indices_shape):
         validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
-        validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
+        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
         if len(var_shape) > 1 and grad_shape != indices_shape + var_shape[1:]:
             raise ValueError(f"For '{self.name}', the shape of updates should be [] or "
@@ -3409,7 +3409,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
                     beta1_shape, beta2_shape, epsilon_shape, grad_shape, indices_shape):
         validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
-        validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
+        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
         if len(var_shape) > 1 and grad_shape != indices_shape + var_shape[1:]:
             raise ValueError(f"For '{self.name}', the shape of updates should be [] or "
@@ -3513,7 +3513,7 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         validator.check('var shape', var_shape, 'linear shape', linear_shape, Rel.EQ, self.name)
         if len(var_shape) > 1:
             validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
-        validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
+        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
         return [1], [1], [1]
 
@@ -3602,7 +3602,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
     def infer_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape, indices_shape):
-        validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
+        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
         return [1], [1]
 
     def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype, grad_dtype, indices_dtype):
@@ -3869,25 +3869,25 @@ class ApplyAdaMax(PrimitiveWithInfer):
         validator.check("v_shape", v_shape, "var_shape", var_shape, Rel.EQ, self.name)
         validator.check("grad_shape", grad_shape, "var_shape", var_shape, Rel.EQ, self.name)
         beta1_power_shp_len = len(beta1_power_shape)
-        validator.check_integer("beta1 power's rank", beta1_power_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(beta1_power_shp_len, 1, Rel.LE, "beta1 power's rank", self.name)
         if beta1_power_shp_len == 1:
-            validator.check_integer("beta1_power_shape[0]", beta1_power_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(beta1_power_shape[0], 1, Rel.EQ, "beta1_power_shape[0]", self.name)
         lr_shp_len = len(lr_shape)
-        validator.check_integer("lr's rank", lr_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(lr_shp_len, 1, Rel.LE, "lr's rank", self.name)
         if lr_shp_len == 1:
-            validator.check_integer("lr_shape[0]", lr_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(lr_shape[0], 1, Rel.EQ, "lr_shape[0]", self.name)
         beta1_shp_len = len(beta1_shape)
-        validator.check_integer("beta1's rank", beta1_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(beta1_shp_len, 1, Rel.LE, "beta1's rank", self.name)
         if beta1_shp_len == 1:
-            validator.check_integer("beta1_shape[0]", beta1_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(beta1_shape[0], 1, Rel.EQ, "beta1_shape[0]", self.name)
         beta2_shp_len = len(beta2_shape)
-        validator.check_integer("beta2's rank", beta2_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(beta2_shp_len, 1, Rel.LE, "beta2's rank", self.name)
         if beta2_shp_len == 1:
-            validator.check_integer("beta2_shape[0]", beta2_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(beta2_shape[0], 1, Rel.EQ, "beta2_shape[0]", self.name)
         epsilon_shp_len = len(epsilon_shape)
-        validator.check_integer("epsilon's rank", epsilon_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(epsilon_shp_len, 1, Rel.LE, "epsilon's rank", self.name)
         if epsilon_shp_len == 1:
-            validator.check_integer("epsilon_shape[0]", epsilon_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(epsilon_shape[0], 1, Rel.EQ, "epsilon_shape[0]", self.name)
         return var_shape, m_shape, v_shape
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, beta1_power_dtype, lr_dtype,
@@ -3985,17 +3985,17 @@ class ApplyAdadelta(PrimitiveWithInfer):
         validator.check("accum_update_shape", accum_update_shape, "var_shape", var_shape, Rel.EQ, self.name)
         validator.check("grad_shape", grad_shape, "var_shape", var_shape, Rel.EQ, self.name)
         lr_shp_len = len(lr_shape)
-        validator.check_integer("lr's rank", lr_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(lr_shp_len, 1, Rel.LE, "lr's rank", self.name)
         if lr_shp_len == 1:
-            validator.check_integer("lr_shape[0]", lr_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(lr_shape[0], 1, Rel.EQ, "lr_shape[0]", self.name)
         rho_shp_len = len(rho_shape)
-        validator.check_integer("rho's rank", rho_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(rho_shp_len, 1, Rel.LE, "rho's rank", self.name)
         if rho_shp_len == 1:
-            validator.check_integer("rho_shape[0]", rho_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(rho_shape[0], 1, Rel.EQ, "rho_shape[0]", self.name)
         epsilon_shp_len = len(epsilon_shape)
-        validator.check_integer("lepsilon's rank", epsilon_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(epsilon_shp_len, 1, Rel.LE, "lepsilon's rank", self.name)
         if epsilon_shp_len == 1:
-            validator.check_integer("epsilon_shape[0]", epsilon_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(epsilon_shape[0], 1, Rel.EQ, "epsilon_shape[0]", self.name)
         return var_shape, accum_shape, accum_update_shape
 
     def infer_dtype(self, var_dtype, accum_dtype, accum_update_dtype, lr_dtype, rho_dtype,
@@ -4077,9 +4077,9 @@ class ApplyAdagrad(PrimitiveWithInfer):
         validator.check('accum shape', accum_shape, 'var shape', var_shape, Rel.EQ, self.name)
         validator.check('grad shape', grad_shape, 'var shape', var_shape, Rel.EQ, self.name)
         lr_shp_len = len(lr_shape)
-        validator.check_integer("lr's rank", lr_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(lr_shp_len, 1, Rel.LE, "lr's rank", self.name)
         if lr_shp_len == 1:
-            validator.check_integer("lr_shape[0]", lr_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(lr_shape[0], 1, Rel.EQ, "lr_shape[0]", self.name)
         return var_shape, accum_shape
 
     def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, grad_dtype):
@@ -4161,9 +4161,9 @@ class ApplyAdagradV2(PrimitiveWithInfer):
         validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
         validator.check('var shape', var_shape, 'grad shape', grad_shape, Rel.EQ, self.name)
         lr_shp_len = len(lr_shape)
-        validator.check_integer("lr's rank", lr_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(lr_shp_len, 1, Rel.LE, "lr's rank", self.name)
         if lr_shp_len == 1:
-            validator.check_integer("lr_shape[0]", lr_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(lr_shape[0], 1, Rel.EQ, "lr_shape[0]", self.name)
         return var_shape, accum_shape
 
     def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, grad_dtype):
@@ -4249,7 +4249,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         validator.check('len of var shape', len(var_shape), 'len of grad shape', len(grad_shape), Rel.EQ, self.name)
         if len(var_shape) > 1:
             validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
-        validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
+        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
         return var_shape, accum_shape
 
@@ -4338,7 +4338,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         validator.check('len of var shape', len(var_shape), 'len of grad shape', len(grad_shape), Rel.EQ, self.name)
         if len(var_shape) > 1:
             validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
-        validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
+        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
         return var_shape, accum_shape
 
@@ -4428,17 +4428,17 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
         validator.check('accum shape', accum_shape, 'var shape', var_shape, Rel.EQ, self.name)
         validator.check('grad shape', grad_shape, 'var shape', var_shape, Rel.EQ, self.name)
         lr_shp_len = len(lr_shape)
-        validator.check_integer("lr's rank", lr_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(lr_shp_len, 1, Rel.LE, "lr's rank", self.name)
         if lr_shp_len == 1:
-            validator.check_integer("lr_shape[0]", lr_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(lr_shape[0], 1, Rel.EQ, "lr_shape[0]", self.name)
         l1_shp_len = len(l1_shape)
-        validator.check_integer("l1's rank", l1_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(l1_shp_len, 1, Rel.LE, "l1's rank", self.name)
         if l1_shp_len == 1:
-            validator.check_integer("l1_shape[0]", l1_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(l1_shape[0], 1, Rel.EQ, "l1_shape[0]", self.name)
         l2_shp_len = len(l2_shape)
-        validator.check_integer("l2's rank", l2_shp_len, 1, Rel.LE, self.name)
+        validator.check_int(l2_shp_len, 1, Rel.LE, "l2's rank", self.name)
         if l2_shp_len == 1:
-            validator.check_integer("l2_shape[0]", l2_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(l2_shape[0], 1, Rel.EQ, "l2_shape[0]", self.name)
         return var_shape, accum_shape
 
     def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype, grad_dtype):
@@ -4532,7 +4532,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
     def check_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape, indices_shape):
-        validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
+        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
 
     def check_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype, grad_dtype, indices_dtype):
         args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
@@ -4623,21 +4623,21 @@ class ApplyAddSign(PrimitiveWithInfer):
         validator.check('m_shape', m_shape, 'var_shape', var_shape, Rel.EQ, self.name)
         validator.check('grad_shape', grad_shape, 'var_shape', var_shape, Rel.EQ, self.name)
         lr_shape_len = len(lr_shape)
-        validator.check_integer("lr's rank", lr_shape_len, 1, Rel.LE, self.name)
+        validator.check_int(lr_shape_len, 1, Rel.LE, "lr's rank", self.name)
         if lr_shape_len == 1:
-            validator.check_integer("lr_shape[0]", lr_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(lr_shape[0], 1, Rel.EQ, "lr_shape[0]", self.name)
         alpha_shape_len = len(alpha_shape)
-        validator.check_integer("alpha's rank", alpha_shape_len, 1, Rel.LE, self.name)
+        validator.check_int(alpha_shape_len, 1, Rel.LE, "alpha's rank", self.name)
         if alpha_shape_len == 1:
-            validator.check_integer("alpha_shape[0]", alpha_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(alpha_shape[0], 1, Rel.EQ, "alpha_shape[0]", self.name)
         sign_decay_shape_len = len(sign_decay_shape)
-        validator.check_integer("sign_decay's rank", sign_decay_shape_len, 1, Rel.LE, self.name)
+        validator.check_int(sign_decay_shape_len, 1, Rel.LE, "sign_decay's rank", self.name)
         if sign_decay_shape_len == 1:
-            validator.check_integer("sign_decay_shape[0]", sign_decay_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(sign_decay_shape[0], 1, Rel.EQ, "sign_decay_shape[0]", self.name)
         beta_shape_len = len(beta_shape)
-        validator.check_integer("beta's rank", beta_shape_len, 1, Rel.LE, self.name)
+        validator.check_int(beta_shape_len, 1, Rel.LE, "beta's rank", self.name)
         if beta_shape_len == 1:
-            validator.check_integer("beta_shape[0]", beta_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(beta_shape[0], 1, Rel.EQ, "beta_shape[0]", self.name)
         return var_shape, m_shape
 
     def infer_dtype(self, var_dtype, m_dtype, lr_dtype, alpha_dtype, sign_decay_dtype, beta_dtype, grad_dtype):
@@ -4732,21 +4732,21 @@ class ApplyPowerSign(PrimitiveWithInfer):
         validator.check('m_shape', m_shape, 'var_shape', var_shape, Rel.EQ, self.name)
         validator.check('grad_shape', grad_shape, 'var_shape', var_shape, Rel.EQ, self.name)
         lr_shape_len = len(lr_shape)
-        validator.check_integer("lr's rank", lr_shape_len, 1, Rel.LE, self.name)
+        validator.check_int(lr_shape_len, 1, Rel.LE, "lr's rank", self.name)
         if lr_shape_len == 1:
-            validator.check_integer("lr_shape[0]", lr_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(lr_shape[0], 1, Rel.EQ, "lr_shape[0]", self.name)
         logbase_shape_len = len(logbase_shape)
-        validator.check_integer("logbase's rank", logbase_shape_len, 1, Rel.LE, self.name)
+        validator.check_int(logbase_shape_len, 1, Rel.LE, "logbase's rank", self.name)
         if logbase_shape_len == 1:
-            validator.check_integer("logbase_shape[0]", logbase_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(logbase_shape[0], 1, Rel.EQ, "logbase_shape[0]", self.name)
         sign_decay_shape_len = len(sign_decay_shape)
-        validator.check_integer("sign_decay's rank", sign_decay_shape_len, 1, Rel.LE, self.name)
+        validator.check_int(sign_decay_shape_len, 1, Rel.LE, "sign_decay's rank", self.name)
         if sign_decay_shape_len == 1:
-            validator.check_integer("sign_decay_shape[0]", sign_decay_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(sign_decay_shape[0], 1, Rel.EQ, "sign_decay_shape[0]", self.name)
         beta_shape_len = len(beta_shape)
-        validator.check_integer("beta's rank", beta_shape_len, 1, Rel.LE, self.name)
+        validator.check_int(beta_shape_len, 1, Rel.LE, "beta's rank", self.name)
         if beta_shape_len == 1:
-            validator.check_integer("beta_shape[0]", beta_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(beta_shape[0], 1, Rel.EQ, "beta_shape[0]", self.name)
         return var_shape, m_shape
 
     def infer_dtype(self, var_dtype, m_dtype, lr_dtype, logbase_dtype, sign_decay_dtype, beta_dtype, grad_dtype):
@@ -4812,9 +4812,9 @@ class ApplyGradientDescent(PrimitiveWithInfer):
     def infer_shape(self, var_shape, alpha_shape, delta_shape):
         validator.check('delta shape', delta_shape, 'var shape', var_shape, Rel.EQ, self.name)
         alpha_shape_len = len(alpha_shape)
-        validator.check_integer("alpha's rank", alpha_shape_len, 1, Rel.LE, self.name)
+        validator.check_int(alpha_shape_len, 1, Rel.LE, "alpha's rank", self.name)
         if alpha_shape_len == 1:
-            validator.check_integer("alpha_shape[0]", alpha_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(alpha_shape[0], 1, Rel.EQ, "alpha_shape[0]", self.name)
         return var_shape
 
     def infer_dtype(self, var_dtype, alpha_dtype, delta_dtype):
@@ -4887,17 +4887,17 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
     def infer_shape(self, var_shape, alpha_shape, l1_shape, l2_shape, delta_shape):
         validator.check('delta shape', delta_shape, 'var shape', var_shape, Rel.EQ, self.name)
         alpha_shape_len = len(alpha_shape)
-        validator.check_integer("alpha's rank", alpha_shape_len, 1, Rel.LE, self.name)
+        validator.check_int(alpha_shape_len, 1, Rel.LE, "alpha's rank", self.name)
         if alpha_shape_len == 1:
-            validator.check_integer("alpha_shape[0]", alpha_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(alpha_shape[0], 1, Rel.EQ, "alpha_shape[0]", self.name)
         l1_shape_len = len(l1_shape)
-        validator.check_integer("l1's rank", l1_shape_len, 1, Rel.LE, self.name)
+        validator.check_int(l1_shape_len, 1, Rel.LE, "l1's rank", self.name)
         if l1_shape_len == 1:
-            validator.check_integer("l1_shape[0]", l1_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(l1_shape[0], 1, Rel.EQ, "l1_shape[0]", self.name)
         l2_shape_len = len(l2_shape)
-        validator.check_integer("l2's rank", l2_shape_len, 1, Rel.LE, self.name)
+        validator.check_int(l2_shape_len, 1, Rel.LE, "l2's rank", self.name)
         if l2_shape_len == 1:
-            validator.check_integer("l2_shape[0]", l2_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(l2_shape[0], 1, Rel.EQ, "l2_shape[0]", self.name)
         return var_shape
 
     def infer_dtype(self, var_dtype, alpha_dtype, l1_dtype, l2_dtype, delta_dtype):
@@ -4965,13 +4965,13 @@ class LARSUpdate(PrimitiveWithInfer):
         validator.check("norm weight shape", norm_weight_shape, "norm gradient shape", norm_gradient_shape, Rel.EQ,
                         self.name)
         shp_len = len(weight_decay_shape)
-        validator.check_integer("weight decay's rank", shp_len, 1, Rel.LE, self.name)
+        validator.check_int(shp_len, 1, Rel.LE, "weight decay's rank", self.name)
         if shp_len == 1:
-            validator.check_integer("weight_decay_shape[0]", weight_decay_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(weight_decay_shape[0], 1, Rel.EQ, "weight_decay_shape[0]", self.name)
         shp_len = len(learning_rate_shape)
-        validator.check_integer("learning rate's rank", shp_len, 1, Rel.LE, self.name)
+        validator.check_int(shp_len, 1, Rel.LE, "learning rate's rank", self.name)
         if shp_len == 1:
-            validator.check_integer("learning_rate_shape[0]", learning_rate_shape[0], 1, Rel.EQ, self.name)
+            validator.check_int(learning_rate_shape[0], 1, Rel.EQ, "learning_rate_shape[0]", self.name)
         return weight_shape
 
     def infer_dtype(self, weight_dtype, gradient_dtype, norm_weight_dtype, norm_gradient_dtype,
@@ -5155,7 +5155,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         validator.check('var shape', var_shape, 'linear shape', linear_shape, Rel.EQ, self.name)
         if len(var_shape) > 1:
             validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
-        validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
+        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
 
     def check_dtype(self, var_dtype, accum_dtype, linear_dtype, grad_dtype, indices_dtype):
@@ -5251,7 +5251,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         validator.check('var shape', var_shape, 'linear shape', linear_shape, Rel.EQ, self.name)
         if len(var_shape) > 1:
             validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
-        validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
+        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
         return var_shape, accum_shape, linear_shape
 
@@ -5288,7 +5288,7 @@ class Dropout(PrimitiveWithInfer):
         self.keep_prob = validator.check_float_range(keep_prob, 0, 1, Rel.INC_RIGHT, "keep_prob", self.name)
 
     def infer_shape(self, x_shape):
-        validator.check_integer("x_shape", len(x_shape), 1, Rel.GE, self.name)
+        validator.check_int(len(x_shape), 1, Rel.GE, "x_shape", self.name)
         mask_shape = x_shape
         return x_shape, mask_shape
 
@@ -5352,11 +5352,11 @@ class CTCLoss(PrimitiveWithInfer):
         self.ignore_longer_outputs_than_inputs_ = ignore_longer_outputs_than_inputs
 
     def infer_shape(self, inputs, labels_indices, labels_values, sequence_length):
-        validator.check_integer("inputs rank", len(inputs), 3, Rel.EQ, self.name)
-        validator.check_integer("labels_indices rank", len(labels_indices), 2, Rel.EQ, self.name)
-        validator.check_integer("labels_indices dim one", labels_indices[1], 2, Rel.EQ, self.name)
-        validator.check_integer("labels_values rank", len(labels_values), 1, Rel.EQ, self.name)
-        validator.check_integer("sequence_length rank", len(sequence_length), 1, Rel.EQ, self.name)
+        validator.check_int(len(inputs), 3, Rel.EQ, "inputs rank", self.name)
+        validator.check_int(len(labels_indices), 2, Rel.EQ, "labels_indices rank", self.name)
+        validator.check_int(labels_indices[1], 2, Rel.EQ, "labels_indices dim one", self.name)
+        validator.check_int(len(labels_values), 1, Rel.EQ, "labels_values rank", self.name)
+        validator.check_int(len(sequence_length), 1, Rel.EQ, "sequence_length rank", self.name)
         validator.check('labels_indices size', labels_indices[0], 'labels_values size',
                         labels_values[0], Rel.EQ, self.name)
         validator.check('inputs batch_size', inputs[1], 'sequence_length batch_size',
@@ -5422,8 +5422,8 @@ class CTCGreedyDecoder(PrimitiveWithInfer):
         self.merge_repeated = validator.check_value_type("merge_repeated", merge_repeated, [bool], self.name)
 
     def infer_shape(self, inputs_shape, sequence_length_shape):
-        validator.check_integer("inputs rank", len(inputs_shape), 3, Rel.EQ, self.name)
-        validator.check_integer("sequence_length rank", len(sequence_length_shape), 1, Rel.EQ, self.name)
+        validator.check_int(len(inputs_shape), 3, Rel.EQ, "inputs rank", self.name)
+        validator.check_int(len(sequence_length_shape), 1, Rel.EQ, "sequence_length rank", self.name)
         validator.check('inputs batch_size', inputs_shape[1], 'sequence_length batch_size',
                         sequence_length_shape[0], Rel.EQ, self.name)
         total_decoded_outputs = -1
@@ -5517,11 +5517,11 @@ class BasicLSTMCell(PrimitiveWithInfer):
         self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, x_shape, h_shape, c_shape, w_shape, b_shape):
-        validator.check_integer("x rank", len(x_shape), 2, Rel.EQ, self.name)
-        validator.check_integer("h rank", len(h_shape), 2, Rel.EQ, self.name)
-        validator.check_integer("c rank", len(c_shape), 2, Rel.EQ, self.name)
-        validator.check_integer("w rank", len(w_shape), 2, Rel.EQ, self.name)
-        validator.check_integer("b rank", len(b_shape), 1, Rel.EQ, self.name)
+        validator.check_int(len(x_shape), 2, Rel.EQ, "x rank", self.name)
+        validator.check_int(len(h_shape), 2, Rel.EQ, "h rank", self.name)
+        validator.check_int(len(c_shape), 2, Rel.EQ, "c rank", self.name)
+        validator.check_int(len(w_shape), 2, Rel.EQ, "w rank", self.name)
+        validator.check_int(len(b_shape), 1, Rel.EQ, "b rank", self.name)
         validator.check("x_shape[0]", x_shape[0], "h_shape[0]", h_shape[0], Rel.EQ, self.name)
         validator.check("c_shape[0]", c_shape[0], "h_shape[0]", h_shape[0], Rel.EQ, self.name)
         validator.check("c_shape[1]", c_shape[1], "h_shape[1]", h_shape[1], Rel.EQ, self.name)
@@ -5637,11 +5637,11 @@ class DynamicRNN(PrimitiveWithInfer):
         self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, x_shape, w_shape, b_shape, seq_shape, h_shape, c_shape):
-        validator.check_integer("x_shape", len(x_shape), 3, Rel.EQ, self.name)
-        validator.check_integer("w rank", len(w_shape), 2, Rel.EQ, self.name)
-        validator.check_integer("b rank", len(b_shape), 1, Rel.EQ, self.name)
-        validator.check_integer("h_shape", len(h_shape), 3, Rel.EQ, self.name)
-        validator.check_integer("c_shape", len(c_shape), 3, Rel.EQ, self.name)
+        validator.check_int(len(x_shape), 3, Rel.EQ, "x_shape", self.name)
+        validator.check_int(len(w_shape), 2, Rel.EQ, "w rank", self.name)
+        validator.check_int(len(b_shape), 1, Rel.EQ, "b rank", self.name)
+        validator.check_int(len(h_shape), 3, Rel.EQ, "h_shape", self.name)
+        validator.check_int(len(c_shape), 3, Rel.EQ, "c_shape", self.name)
         if seq_shape is not None:
             raise ValueError(f"For {self.name}, seq_shape should be None.")
 
@@ -5654,7 +5654,7 @@ class DynamicRNN(PrimitiveWithInfer):
         validator.check("w_shape[0]", w_shape[0], "input_size + hidden_size",
                         input_size + hidden_size, Rel.EQ, self.name)
         validator.check("b_shape[0]", b_shape[0], "w_shape[1]", w_shape[1], Rel.EQ, self.name)
-        validator.check_integer("h_shape[0]", h_shape[0], 1, Rel.EQ, self.name)
+        validator.check_int(h_shape[0], 1, Rel.EQ, "h_shape[0]", self.name)
         validator.check("h_shape[1]", h_shape[1], "batch_size", batch_size, Rel.EQ, self.name)
         validator.check("h_shape[2]", h_shape[2], "hidden_size", hidden_size, Rel.EQ, self.name)
         validator.check("c_shape", c_shape, "h_shape", h_shape, Rel.EQ, self.name)
@@ -5754,5 +5754,5 @@ class LRN(PrimitiveWithInfer):
         return x_dtype
 
     def infer_shape(self, x_shape):
-        validator.check_integer("x_shape", len(x_shape), 4, Rel.EQ, self.name)
+        validator.check_int(len(x_shape), 4, Rel.EQ, "x_shape", self.name)
         return x_shape

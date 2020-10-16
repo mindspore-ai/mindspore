@@ -21,7 +21,7 @@ import threading
 from mindspore import log as logger
 
 from ..._c_expression import Tensor
-from ..._checkparam import _check_str_by_regular
+from ..._checkparam import Validator
 from .._utils import _check_lineage_value, _check_to_numpy, _make_directory
 from ._summary_adapter import get_event_file_name, package_graph_event
 from ._writer_pool import WriterPool
@@ -103,8 +103,8 @@ class SummaryRecord:
         self._closed, self._event_writer = False, None
         self._mode, self._data_pool = 'train', _dictlist()
 
-        _check_str_by_regular(file_prefix)
-        _check_str_by_regular(file_suffix)
+        Validator.check_str_by_regular(file_prefix)
+        Validator.check_str_by_regular(file_suffix)
 
         self.log_path = _make_directory(log_dir)
 
