@@ -19,9 +19,9 @@
 
 /// \brief CpuBindMode defined for holding bind cpu strategy argument.
 typedef enum {
-  MID_CPU = -1,   /**< bind middle cpu first */
+  NO_BIND = 0,    /**< no bind */
   HIGHER_CPU = 1, /**< bind higher cpu first */
-  NO_BIND = 0     /**< no bind */
+  MID_CPU = 2     /**< bind middle cpu first */
 } CpuBindMode;
 
 /// \brief DeviceType defined for holding user's preferred backend.

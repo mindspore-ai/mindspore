@@ -281,7 +281,6 @@ int Benchmark::MarkPerformance() {
     time_min = std::min(time_min, time);
     time_max = std::max(time_max, time);
     time_avg += time;
-
     session_->BindThread(false);
   }
 
@@ -385,9 +384,9 @@ int Benchmark::RunBenchmark() {
     context->device_type_ = lite::DT_GPU;
   }
 
-  if (flags_->cpu_bind_mode_ == -1) {
+  if (flags_->cpu_bind_mode_ == 2) {
     context->cpu_bind_mode_ = MID_CPU;
-  } else if (flags_->cpu_bind_mode_ == 0) {
+  } else if (flags_->cpu_bind_mode_ == 1) {
     context->cpu_bind_mode_ = HIGHER_CPU;
   } else {
     context->cpu_bind_mode_ = NO_BIND;
@@ -573,7 +572,7 @@ int Benchmark::Init() {
     return RET_ERROR;
   }
 
-  if (this->flags_->cpu_bind_mode_ == -1) {
+  if (this->flags_->cpu_bind_mode_ == 2) {
     MS_LOG(INFO) << "cpuBindMode = MID_CPU";
     std::cout << "cpuBindMode = MID_CPU" << std::endl;
   } else if (this->flags_->cpu_bind_mode_ == 1) {
