@@ -15,15 +15,9 @@
  */
 #include "backend/session/gpu_session.h"
 
-#include "runtime/device/gpu/kernel_info_setter.h"
-#include "runtime/device/gpu/gpu_kernel_build.h"
-#include "runtime/device/gpu/gpu_kernel_runtime.h"
-#include "runtime/device/gpu/gpu_stream_assign.h"
+#include "backend/optimizer/common/helper.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
-#include "backend/optimizer/common/helper.h"
-#include "backend/optimizer/pass/communication_op_fusion.h"
-#include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/gpu/adam_weight_decay_fusion.h"
 #include "backend/optimizer/gpu/adam_fusion.h"
 #include "backend/optimizer/gpu/apply_momentum_weight_scale_fusion.h"
@@ -32,27 +26,34 @@
 #include "backend/optimizer/gpu/batch_norm_relu_grad_fusion.h"
 #include "backend/optimizer/gpu/batch_norm_add_relu_fusion.h"
 #include "backend/optimizer/gpu/batch_norm_add_relu_grad_fusion.h"
+#include "backend/optimizer/gpu/cudnn_inplace_fusion.h"
+#include "backend/optimizer/gpu/insert_format_transform_op.h"
 #include "backend/optimizer/gpu/replace_momentum_cast_fusion.h"
 #include "backend/optimizer/gpu/replace_addn_fusion.h"
-#include "backend/optimizer/gpu/insert_format_transform_op.h"
 #include "backend/optimizer/gpu/remove_format_transform_pair.h"
 #include "backend/optimizer/gpu/remove_redundant_format_transform.h"
-#include "backend/optimizer/gpu/cudnn_inplace_fusion.h"
 #include "backend/optimizer/gpu/reduce_precision_fusion.h"
-#include "backend/optimizer/graph_kernel/value_graph_binder.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
+#include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 #include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
-#include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
-#include "runtime/device/kernel_runtime_manager.h"
-#include "utils/ms_utils.h"
-#include "utils/config_manager.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_cse.h"
+#include "backend/optimizer/graph_kernel/value_graph_binder.h"
+#include "backend/optimizer/pass/communication_op_fusion.h"
+#include "backend/optimizer/pass/getitem_tuple.h"
 #include "common/trans.h"
-#include "utils/ms_context.h"
 #include "debug/data_dump/e2e_dump_util.h"
 #include "debug/tensor_load.h"
 #include "debug/dump_proto.h"
+#include "runtime/device/gpu/gpu_kernel_build.h"
+#include "runtime/device/gpu/gpu_kernel_runtime.h"
+#include "runtime/device/gpu/gpu_stream_assign.h"
+#include "runtime/device/gpu/kernel_info_setter.h"
+#include "runtime/device/kernel_runtime_manager.h"
+#include "utils/ms_utils.h"
+#include "utils/config_manager.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace session {
@@ -119,7 +120,9 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
   pm->AddPass(std::make_shared<opt::CompositeOpsFusion>());
+  pm->AddPass(std::make_shared<opt::GraphKernelCSE>());
   pm->AddPass(std::make_shared<opt::ArithmeticSimplify>());
+  pm->AddPass(std::make_shared<opt::GraphKernelCSE>());
   pm->AddPass(std::make_shared<opt::GraphKernelSplitter>());
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
   // will be exposed, use GetitemTuple Pass to delete them.

@@ -14,15 +14,27 @@
  * limitations under the License.
  */
 #include "backend/optimizer/pass/common_subexpression_elimination.h"
+
 #include <memory>
-#include "runtime/device/kernel_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "runtime/device/kernel_info.h"
 #include "utils/flags.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-bool CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNodePtr &node) {
+bool HasSideEffectAttr(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!AnfAlgo::HasNodeAttr(GRAPH_FLAG_SIDE_EFFECT, cnode)) {
+    return false;
+  }
+  return AnfAlgo::GetNodeAttr<bool>(cnode, GRAPH_FLAG_SIDE_EFFECT);
+}
+}  // namespace
+
+bool BackendCSE::CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(main);
   MS_EXCEPTION_IF_NULL(node);
   auto main_kernel_info = dynamic_cast<device::KernelInfo *>(main->kernel_info());
@@ -35,17 +47,6 @@ bool CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNodePtr &node) {
   }
   return false;
 }
-
-bool HasSideEffectAttr(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!AnfAlgo::HasNodeAttr(GRAPH_FLAG_SIDE_EFFECT, cnode)) {
-    return false;
-  }
-  return AnfAlgo::GetNodeAttr<bool>(cnode, GRAPH_FLAG_SIDE_EFFECT);
-}
-}  // namespace
 
 bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect) const {
   MS_EXCEPTION_IF_NULL(main);
