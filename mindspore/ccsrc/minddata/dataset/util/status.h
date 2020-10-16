@@ -66,6 +66,11 @@ namespace dataset {
     }                                 \
   } while (false)
 
+#define RETURN_STATUS_SYNTAX_ERROR(_e)                               \
+  do {                                                               \
+    return Status(StatusCode::kSyntaxError, __LINE__, __FILE__, _e); \
+  } while (false)
+
 enum class StatusCode : char {
   kOK = 0,
   kOutOfMemory = 1,
