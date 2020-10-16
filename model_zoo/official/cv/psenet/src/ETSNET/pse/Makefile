@@ -14,7 +14,7 @@
 # ============================================================================
 
 mindspore_home = ${MINDSPORE_HOME}
-CXXFLAGS = -I include -I ${mindspore_home}/mindspore/official/cv/psenet -std=c++11 -O3
+CXXFLAGS = -I include -I ${mindspore_home}/model_zoo/official/cv/psenet -std=c++11 -O3
 CXX_SOURCES = adaptor.cpp
 opencv_home = ${OPENCV_HOME}
 OPENCV = -I$(opencv_home)/include -L$(opencv_home)/lib64 -lopencv_superres -lopencv_ml -lopencv_objdetect \
