@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */ 
+ */
 
 #include "random_op_impl.cuh"
 template <typename T>
@@ -29,7 +29,7 @@ __global__ void UniformIntKernel(int seed, curandState *globalState, T *input1, 
                                  T *input2, size_t input_size_2, T *output, size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     curand_init(seed, i, 0, &globalState[i]);
-    output[i] = (T)(curand_uniform(&globalState[i])) * (input2[0] - input1[0]) + input1[0];
+    output[i] = (T)(curand_uniform(&globalState[i]) * (input2[0] - input1[0])) + input1[0];
   }
   return;
 }
