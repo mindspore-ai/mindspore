@@ -23,9 +23,9 @@
 
 /// \brief BindMode defined for holding bind cpu strategy argument.
 typedef enum {
-  MID_MODE = -1,   /**< bind middle cpu first */
-  HIGHER_MODE = 1, /**< bind higher cpu first */
-  NO_BIND_MODE = 0 /**< no bind */
+  NO_BIND_MODE = 0, /**< no bind */
+  HIGHER_MODE = 1,  /**< bind higher cpu first */
+  MID_MODE = 2      /**< bind middle cpu first */
 } BindMode;
 
 /// \brief ThreadPoolId defined for specifying which thread pool to use.
