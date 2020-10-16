@@ -100,10 +100,14 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
   for (const auto &tflite_op : tflite_subgraph->operators) {
     auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
     auto op_type = GetMSOpType(tflite_op_type);
-    if (op_type == "CUSTOM") {
+    if (op_type == "Custom") {
       auto custom_type = (tflite_model->operator_codes[tflite_op->opcode_index])->custom_code;
-      MS_LOG(ERROR) << "CUSTOM op is not supported, the type is " << custom_type;
-      return RET_ERROR;
+      if (custom_type != "TFLite_Detection_PostProcess") {
+        MS_LOG(ERROR) << "CUSTOM op is not supported, the type is " << custom_type;
+        NoSupportOp::GetInstance()->InsertOp(custom_type);
+        status = (status == RET_OK ? RET_NOT_FIND_OP : status);
+        continue;
+      }
     }
 
     auto op = std::make_unique<schema::CNodeT>();
@@ -121,7 +125,7 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
       status = node_parser->Parse(tflite_op, tflite_subgraph->tensors, tflite_model->buffers, op.get(), &tensorsId,
                                   &tensorsFormat, &tensorsIdMap);
       if (status != RET_OK) {
-        if (status == RET_NOT_SUPPORT) {
+        if (status == RET_NOT_FIND_OP) {
           NoSupportOp::GetInstance()->InsertOp(op_type);
         } else {
           MS_LOG(ERROR) << "node " << op_type.c_str() << " parser failed";

@@ -243,12 +243,12 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
       auto status_node = nodeParser->Parse(layer, layerP, op.get(), &weightVec);
       if (status_node != RET_OK) {
         interrupt = true;
-        if (status_node == RET_NOT_SUPPORT) {
+        if (status_node == RET_NOT_FIND_OP) {
           NoSupportOp::GetInstance()->InsertOp(layer.type());
         } else {
           MS_LOG(ERROR) << "Parse weight for " << layer.name() << " Failed!";
         }
-        status = (status == RET_OK ? RET_NOT_FIND_OP : status);
+        status = (status == RET_OK ? status_node : status);
         continue;
       }
 
@@ -263,7 +263,7 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
       if (status_node != RET_OK) {
         interrupt = true;
         MS_LOG(ERROR) << "Set Op " << layer.name() << " Output Index Failed!";
-        status = (status == RET_OK ? RET_NOT_FIND_OP : status);
+        status = (status == RET_OK ? status_node : status);
         continue;
       }
 
@@ -280,8 +280,15 @@ STATUS CaffeModelParser::GetModelInput(const caffe::NetParameter &proto, TensorC
       continue;
     }
     std::unique_ptr<schema::TensorT> msTensor = std::make_unique<schema::TensorT>();
-    for (int j = 0; j < proto.input_dim_size(); j++) {
-      msTensor->dims.push_back(proto.input_dim(j));
+    if (proto.input_dim_size() > 4) {
+      int step = proto.input_dim_size() / proto.input_size();
+      for (int j = i * step; j < (i + 1) * step; j++) {
+        msTensor->dims.push_back(proto.input_dim(j));
+      }
+    } else {
+      for (int j = 0; j < proto.input_dim_size(); j++) {
+        msTensor->dims.push_back(proto.input_dim(j));
+      }
     }
     msTensor->refCount = schema::NodeType::NodeType_ValueNode;
     msTensor->dataType = kNumberTypeFloat32;

@@ -271,7 +271,7 @@ STATUS OnnxModelParser::ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph,
   auto status = node_parser->Parse(onnx_graph, onnx_node, dst_op);
   if (status != RET_OK) {
     interrupt = true;
-    if (status == RET_NOT_SUPPORT) {
+    if (status == RET_NOT_FIND_OP) {
       NoSupportOp::GetInstance()->InsertOp(onnx_node.op_type());
     } else {
       MS_LOG(ERROR) << "parser onnx node " << onnx_node.op_type() << " attr failed";
