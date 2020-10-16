@@ -15,27 +15,15 @@
 """ test checkparameter """
 import pytest
 import numpy as np
-from mindspore._checkparam import check_input_format, Validator, twice, Rel
+from mindspore._checkparam import twice, Validator
 
 kernel_size = 5
 kernel_size1 = twice(kernel_size)
 assert kernel_size1 == (5, 5)
 
-def test_check_integer1():
-    with pytest.raises(TypeError):
-        Validator.check_integer("input", 0, Rel.GE, "number")
-
-def test_check_integer2():
-    with pytest.raises(ValueError):
-        Validator.check_integer(-1, 0, Rel.GE, "number")
-
-def test_check_integer3():
-    input = np.random.randint(0, 100)
-    assert Validator.check_integer(input, 0, Rel.GE, "number") == input
-
 def test_check_int1():
-    input = np.random.randint(-100, 100)
-    assert Validator.check_is_int(input) == input
+    a = np.random.randint(-100, 100)
+    assert Validator.check_is_int(a) == a
 
 def test_check_int2():
     with pytest.raises(TypeError):
@@ -56,16 +44,16 @@ def test_check_is_int5():
         Validator.check_is_int(False)
 
 def test_check_positive_int1():
-    input = np.random.randint(0, 100)
-    assert Validator.check_positive_int(input) == input
+    a = np.random.randint(0, 100)
+    assert Validator.check_positive_int(a) == a
 
 def test_check_positive_int2():
-    input = np.random.randint(-100, 0)
+    a = np.random.randint(-100, 0)
     with pytest.raises(ValueError):
-        Validator.check_positive_int(input)
+        Validator.check_positive_int(a)
 
 def test_check_positive_int3():
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         Validator.check_positive_int(3.3)
 
 def test_check_positive_int4():
@@ -73,16 +61,16 @@ def test_check_positive_int4():
         Validator.check_positive_int("str")
 
 def test_check_negative_int1():
-    input = np.random.randint(-100, -1)
-    assert Validator.check_negative_int(input) == input
+    a = np.random.randint(-100, -1)
+    assert Validator.check_negative_int(a) == a
 
 def test_check_negative_int2():
-    input = np.random.randint(0, 100)
+    a = np.random.randint(0, 100)
     with pytest.raises(ValueError):
-        Validator.check_negative_int(input)
+        Validator.check_negative_int(a)
 
 def test_check_negative_int3():
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         Validator.check_negative_int(3.3)
 
 def test_check_negative_int4():
@@ -90,16 +78,16 @@ def test_check_negative_int4():
         Validator.check_negative_int("str")
 
 def test_check_non_positive_int1():
-    input = np.random.randint(-100, 0)
-    assert Validator.check_non_positive_int(input) == input
+    a = np.random.randint(-100, 0)
+    assert Validator.check_non_positive_int(a) == a
 
 def test_check_non_positive_int2():
-    input = np.random.randint(1, 100)
+    a = np.random.randint(1, 100)
     with pytest.raises(ValueError):
-        Validator.check_non_positive_int(input)
+        Validator.check_non_positive_int(a)
 
 def test_check_non_positive_int3():
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         Validator.check_non_positive_int(3.3)
 
 def test_check_non_positive_int4():

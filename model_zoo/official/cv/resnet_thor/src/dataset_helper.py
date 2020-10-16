@@ -15,7 +15,7 @@
 """Dataset help for minddata dataset"""
 import math
 import os
-from mindspore._checkparam import Validator, check_int
+from mindspore._checkparam import Validator
 from mindspore import context
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes
 from mindspore.nn.wrap import GetNextSingleOp
@@ -62,7 +62,7 @@ class DatasetHelper:
 
     def __init__(self, dataset, dataset_sink_mode=True, sink_size=-1, epoch_num=1, iter_first_order=1):
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
-        check_int(sink_size)
+        Validator.check_is_int(sink_size)
         if sink_size < -1 or sink_size == 0:
             raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
 

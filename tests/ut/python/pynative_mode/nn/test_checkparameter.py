@@ -15,7 +15,7 @@
 """ test_checkparameter """
 import pytest
 
-from mindspore._checkparam import check_int, Validator, check_input_format, _expand_tuple
+from mindspore._checkparam import Validator, check_input_format, _expand_tuple
 
 once = _expand_tuple(1)
 twice = _expand_tuple(2)
@@ -26,7 +26,7 @@ assert kernel_size1 == (5, 5)
 
 
 def test_check_int_1():
-    assert check_int(3) == 3
+    assert Validator.check_is_int(3) == 3
 
 
 def check_int_positive_1():
@@ -45,17 +45,17 @@ def test_NCHW3():
 
 def test_check_int_2():
     with pytest.raises(TypeError):
-        check_int(3.3)
+        Validator.check_is_int(3.3)
 
 
 def test_check_int_3():
     with pytest.raises(TypeError):
-        check_int("str")
+        Validator.check_is_int("str")
 
 
 def test_check_int_4():
     with pytest.raises(TypeError):
-        check_int(True)
+        Validator.check_is_int(True)
 
 
 def test_check_bool_1():

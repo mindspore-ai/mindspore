@@ -15,7 +15,6 @@
 
 """Pipelines for forward computing."""
 
-from ...components.executor.check_exceptions import CheckExceptionsEC
 from ...components.executor.exec_forward import IdentityEC
 from ...components.facade.me_facade import MeFacadeFC
 from ...components.function.compile_block import CompileBlockBC
@@ -61,4 +60,4 @@ pipeline_for_compile_forward_ge_graph_for_case_by_case_config = [MeFacadeFC, Gen
                                                                  IdCartesianProductFIPC, IdentityEC]
 
 pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception = [MeFacadeFC, GenerateFromShapeDC, RunBlockBC,
-                                                                           IdCartesianProductFIPC, CheckExceptionsEC]
+                                                                           IdCartesianProductFIPC]

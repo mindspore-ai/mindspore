@@ -15,7 +15,6 @@
 
 """Pipelines for exception checking."""
 
-from ...components.executor.check_exceptions import CheckExceptionsEC
 from ...components.facade.me_facade import MeFacadeFC
 from ...components.function.get_function_from_config import IdentityBC
 from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
@@ -34,4 +33,4 @@ Example:
     ]
 """
 pipeline_for_verify_exception_for_case_by_case_config = [MeFacadeFC, IdentityDC, IdentityBC,
-                                                         IdCartesianProductFIPC, CheckExceptionsEC]
+                                                         IdCartesianProductFIPC]
