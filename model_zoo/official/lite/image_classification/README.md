@@ -9,7 +9,7 @@
 - NDK 21.3
 - CMake 3.10.2   [CMake](https://cmake.org/download) 
 - Android SDK >= 26
-- JDK >= 1.8   [JDK]( https://www.oracle.com/downloads/otn-pub/java/JDK/)   
+- JDK >= 1.8 
 
 ### 构建与运行
 
@@ -68,7 +68,7 @@ app
 |   |   └── MsNetWork.cpp # MindSpre接口封装
 │   |
 │   ├── java # java层应用代码
-│   │   └── com.huawei.himindsporedemo 
+│   │   └── com.mindspore.himindsporedemo 
 │   │       ├── gallery.classify # 图像处理及MindSpore JNI调用相关实现
 │   │       │   └── ...
 │   │       └── widget # 开启摄像头及绘制相关实现
@@ -200,34 +200,50 @@ target_link_libraries(
 2. 将输入图片转换为传入MindSpore模型的Tensor格式。 
 
     将待检测图片数据转换为输入MindSpore模型的Tensor。
-
+    
     ```cpp
-    // Convert the Bitmap image passed in from the JAVA layer to Mat for OpenCV processing
-    BitmapToMat(env, srcBitmap, matImageSrc);
-   // Processing such as zooming the picture size.
-    matImgPreprocessed = PreProcessImageData(matImageSrc);  
-
-    ImgDims inputDims; 
-    inputDims.channel = matImgPreprocessed.channels();
-    inputDims.width = matImgPreprocessed.cols;
-    inputDims.height = matImgPreprocessed.rows;
-    float *dataHWC = new float[inputDims.channel * inputDims.width * inputDims.height]
-
-    // Copy the image data to be detected to the dataHWC array.
-    // The dataHWC[image_size] array here is the intermediate variable of the input MindSpore model tensor.
-    float *ptrTmp = reinterpret_cast<float *>(matImgPreprocessed.data);
-    for(int i = 0; i < inputDims.channel * inputDims.width * inputDims.height; i++){
-       dataHWC[i] = ptrTmp[i];
+    if (!BitmapToLiteMat(env, srcBitmap, &lite_mat_bgr)) {
+     MS_PRINT("BitmapToLiteMat error");
+     return NULL;
+    }
+    if (!PreProcessImageData(lite_mat_bgr, &lite_norm_mat_cut)) {
+     MS_PRINT("PreProcessImageData error");
+     return NULL;
     }
 
-    // Assign dataHWC[image_size] to the input tensor variable.
+    ImgDims inputDims;
+    inputDims.channel = lite_norm_mat_cut.channel_;
+    inputDims.width = lite_norm_mat_cut.width_;
+    inputDims.height = lite_norm_mat_cut.height_;
+
+    // Get the mindsore inference environment which created in loadModel().
+    void **labelEnv = reinterpret_cast<void **>(netEnv);
+    if (labelEnv == nullptr) {
+     MS_PRINT("MindSpore error, labelEnv is a nullptr.");
+     return NULL;
+    }
+    MSNetWork *labelNet = static_cast<MSNetWork *>(*labelEnv);
+
+    auto mSession = labelNet->session();
+    if (mSession == nullptr) {
+     MS_PRINT("MindSpore error, Session is a nullptr.");
+     return NULL;
+    }
+    MS_PRINT("MindSpore get session.");
+
     auto msInputs = mSession->GetInputs();
+    if (msInputs.size() == 0) {
+     MS_PRINT("MindSpore error, msInputs.size() equals 0.");
+     return NULL;
+    }
     auto inTensor = msInputs.front();
+
+    float *dataHWC = reinterpret_cast<float *>(lite_norm_mat_cut.data_ptr_);
+    // Copy dataHWC to the model input tensor.
     memcpy(inTensor->MutableData(), dataHWC,
-        inputDims.channel * inputDims.width * inputDims.height * sizeof(float));
-    delete[] (dataHWC);
-   ```
-   
+         inputDims.channel * inputDims.width * inputDims.height * sizeof(float));
+    ```
+    
 3. 对输入Tensor按照模型进行推理，获取输出Tensor，并进行后处理。    
 
    - 图执行，端测推理。
@@ -245,45 +261,62 @@ target_link_libraries(
             auto temp_dat =mSession->GetOutputByTensorName(name);
             msOutputs.insert(std::pair<std::string, mindspore::tensor::MSTensor *> {name, temp_dat});
           }
-        std::string retStr = ProcessRunnetResult(msOutputs, ret);
+         std::string resultStr = ProcessRunnetResult(::RET_CATEGORY_SUM,
+                                              ::labels_name_map, msOutputs);
         ```
         
    - 输出数据的后续处理。
         ```cpp
         std::string ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const labels_name_map[],
-                            std::unordered_map<std::string, mindspore::tensor::MSTensor *> msOutputs) {
-          // Get the branch of the model output.
-          // Use iterators to get map elements.
-          std::unordered_map<std::string, mindspore::tensor::MSTensor *>::iterator iter;
-          iter = msOutputs.begin();
+                 std::unordered_map<std::string, mindspore::tensor::MSTensor *> msOutputs) {
+         // Get the branch of the model output.
+         // Use iterators to get map elements.
+         std::unordered_map<std::string, mindspore::tensor::MSTensor *>::iterator iter;
+         iter = msOutputs.begin();
 
-          // The mobilenetv2.ms model output just one branch.
-          auto outputTensor = iter->second;
+         // The mobilenetv2.ms model output just one branch.
+         auto outputTensor = iter->second;
 
-          int tensorNum = outputTensor->ElementsNum();
-          MS_PRINT("Number of tensor elements:%d", tensorNum);
+         int tensorNum = outputTensor->ElementsNum();
+         MS_PRINT("Number of tensor elements:%d", tensorNum);
 
-          // Get a pointer to the first score.
-          float *temp_scores = static_cast<float * >(outputTensor->MutableData());
+         // Get a pointer to the first score.
+         float *temp_scores = static_cast<float *>(outputTensor->MutableData());
+         float scores[RET_CATEGORY_SUM];
+         for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
+          scores[i] = temp_scores[i];
+         }
 
-          float scores[RET_CATEGORY_SUM];
-          for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
-            if (temp_scores[i] > 0.5) {
-              MS_PRINT("MindSpore scores[%d] : [%f]", i, temp_scores[i]);
-            }
-            scores[i] = temp_scores[i];
-          }
-
-          // Score for each category.
-          // Converted to text information that needs to be displayed in the APP.
-          std::string categoryScore = "";
-          for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
-            categoryScore += labels_name_map[i];
-            categoryScore += ":";
-            std::string score_str = std::to_string(scores[i]);
-            categoryScore += score_str;
-            categoryScore += ";";
-          }
-          return categoryScore;
+         float unifiedThre = 0.5;
+         float probMax = 1.0;
+         for (size_t i = 0; i < RET_CATEGORY_SUM; ++i) {
+          float threshold = g_thres_map[i];
+          float tmpProb = scores[i];
+          if (tmpProb < threshold) {
+           tmpProb = tmpProb / threshold * unifiedThre;
+          } else {
+           tmpProb = (tmpProb - threshold) / (probMax - threshold) * unifiedThre + unifiedThre;
+         }
+          scores[i] = tmpProb;
         }
+
+         for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
+         if (scores[i] > 0.5) {
+             MS_PRINT("MindSpore scores[%d] : [%f]", i, scores[i]);
+          }
+         }
+
+         // Score for each category.
+         // Converted to text information that needs to be displayed in the APP.
+         std::string categoryScore = "";
+         for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
+          categoryScore += labels_name_map[i];
+          categoryScore += ":";
+          std::string score_str = std::to_string(scores[i]);
+          categoryScore += score_str;
+          categoryScore += ";";
+         }
+           return categoryScore;
+        }
+        
         ```
