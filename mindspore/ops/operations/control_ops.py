@@ -126,7 +126,7 @@ class GeSwitch(PrimitiveWithInfer):
         raise NotImplementedError
 
     def infer_shape(self, data, pred):
-        validator.check_integer("pred rank", len(pred), 0, Rel.EQ, self.name)
+        validator.check_equal_int(len(pred), 0, "pred rank", self.name)
         return (data, data)
 
     def infer_dtype(self, data_type, pred_type):

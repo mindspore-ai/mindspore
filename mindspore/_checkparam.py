@@ -97,7 +97,7 @@ def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=N
     Check argument integer.
 
     Usage:
-    - number = check_integer(number, 0, Rel.GE, "number", None) # number >= 0
+    - number = check_int(number, 0, Rel.GE, "number", None) # number >= 0
     """
     rel_fn = Rel.get_fns(rel)
     type_mismatch = not isinstance(arg_value, arg_type) or isinstance(arg_value, bool)
@@ -166,12 +166,12 @@ class Validator:
         return arg_value
 
     @staticmethod
-    def check_integer(arg_name, arg_value, value, rel, prim_name=None):
+    def check_int(arg_value, value, rel, arg_name=None, prim_name=None):
         """
         Checks input integer value `arg_value` compare to `value`.
 
         Usage:
-        - number = check_integer(number, 0, Rel.GE, "number", None) # number >= 0
+        - number = check_int(number, 0, Rel.GE, "number", None) # number >= 0
         """
         return check_number(arg_value, value, rel, int, arg_name, prim_name)
 
@@ -186,6 +186,16 @@ class Validator:
         - number = check_is_int(number, int, "bias", "bias_class")
         """
         return check_is_number(arg_value, int, arg_name, prim_name)
+
+    @staticmethod
+    def check_equal_int(arg_value, value, arg_name=None, prim_name=None):
+        """
+        Checks input integer value `arg_value` compare to `value`.
+
+        Usage:
+        - number = check_int(number, 0, Rel.GE, "number", None) # number >= 0
+        """
+        return check_number(arg_value, value, Rel.EQ, int, arg_name, prim_name)
 
     @staticmethod
     def check_positive_int(arg_value, arg_name=None, prim_name=None):
@@ -366,6 +376,17 @@ class Validator:
                          f' but got `{arg_value}`.')
 
     @staticmethod
+    def check_str_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
+        if reg is None:
+            # Named string regular expression
+            reg = r"^\w+[0-9a-zA-Z\_\.]*$"
+        if re.match(reg, target, flag) is None:
+            prim_name = f'in `{prim_name}`' if prim_name else ""
+            raise ValueError("'{}' {} is illegal, it should be match regular'{}' by flags'{}'".format(
+                target, prim_name, reg, flag))
+        return True
+
+    @staticmethod
     def check_pad_value_by_mode(pad_mode, padding, prim_name):
         """Validates value of padding according to pad_mode"""
         if pad_mode != 'pad' and padding != 0:
@@ -530,39 +551,11 @@ class Validator:
                              f'{tuple(exp_shape)}, but got {shape}.')
 
 
-def check_int_zero_one(input_param):
-    """Judge whether it is 0 or 1."""
-    if input_param in (0, 1):
-        return input_param
-    raise ValueError("The data must be 0 or 1.")
-
-
 def check_input_format(input_param):
     """Judge input format."""
     if input_param == "NCHW":
         return input_param
     raise ValueError("The data format must be NCHW.")
-
-
-def check_padding(padding):
-    """Check padding."""
-    if padding >= 0:
-        return padding
-    raise ValueError("The padding must be at least 0,"" but got padding {}.".format(padding))
-
-
-def check_padmode(mode):
-    """Check padmode."""
-    if mode in ("same", "valid", "pad"):
-        return mode
-    raise ValueError("The pad mode must be same or valid or pad,"" but got mode {}.".format(mode))
-
-
-def check_tensor_supported_type(dtype):
-    """Check tensor dtype."""
-    if dtype in (mstype.int32, mstype.float32):
-        return dtype
-    raise ValueError("The dtype must be mstype.int32 or mstype.float32, but got mstype {}.".format(dtype))
 
 
 def _expand_tuple(n_dimensions):
@@ -671,42 +664,6 @@ def check_typename(arg_name, arg_type, valid_types):
                         f' but got {get_typename(arg_type)}.')
     raise TypeError(f'The type of `{arg_name}` should be one of {type_names},'
                     f' but got {get_typename(arg_type)}.')
-
-
-def check_shape(arg_name, arg_value):
-    """Check shape."""
-    # First, check if shape is a tuple
-    if not isinstance(arg_value, tuple):
-        raise TypeError(f'The type of `{arg_name}` should be one of {tuple.__name__},'
-                        f' but got {type(arg_value).__name__}.')
-
-    # Second, wrap arg_value with numpy array so that it can be checked through numpy api
-    arg_value = np.array(arg_value)
-
-    # shape can not be ()
-    if arg_value.size == 0:
-        raise ValueError('Shape can not be empty.')
-
-    # shape's dimension should be 1
-    if arg_value.ndim != 1:
-        raise ValueError('Shape of tensor should be 1-dim vector, but got {}-dim.'.format(arg_value.ndim))
-
-    # Thirdly, check each element's type of the shape
-    valid_types = (int, np.int8, np.int16, np.int32, np.int64,
-                   np.uint8, np.uint16, np.uint32, np.uint64)
-    for dim_size in arg_value:
-        if not isinstance(dim_size, valid_types) or dim_size <= 0:
-            raise ValueError('Every dimension size of the tensor shape should be a positive integer,'
-                             ' but got {}.'.format(dim_size))
-
-
-def _check_str_by_regular(target, reg=None, flag=re.ASCII):
-    if reg is None:
-        # Named string regular expression
-        reg = r"^\w+[0-9a-zA-Z\_\.]*$"
-    if re.match(reg, target, flag) is None:
-        raise ValueError("'{}' is illegal, it should be match regular'{}' by flags'{}'".format(target, reg, flag))
-    return True
 
 
 def args_type_check(*type_args, **type_kwargs):

@@ -323,7 +323,7 @@ class FakeQuantWithMinMax(Cell):
         Validator.check_type("min_init", min_init, [int, float])
         Validator.check_type("max_init", max_init, [int, float])
         Validator.check("min_init", min_init, "max_init", max_init, rel=Rel.LT)
-        Validator.check_integer('quant_delay', quant_delay, 0, Rel.GE)
+        Validator.check_non_negative_int(quant_delay, 'quant_delay')
         self.min_init = min_init
         self.max_init = max_init
         self.num_bits = num_bits
@@ -489,8 +489,8 @@ class Conv2dBnFoldQuant(Cell):
 
         # initialize convolution op and Parameter
         if context.get_context('device_target') == "Ascend" and group > 1:
-            Validator.check_integer('group', group, in_channels, Rel.EQ)
-            Validator.check_integer('group', group, out_channels, Rel.EQ)
+            Validator.check_equal_int(group, in_channels, 'group')
+            Validator.check_equal_int(group, out_channels, 'group')
             self.conv = P.DepthwiseConv2dNative(channel_multiplier=1,
                                                 kernel_size=self.kernel_size,
                                                 pad_mode=pad_mode,
@@ -674,8 +674,8 @@ class Conv2dBnWithoutFoldQuant(Cell):
             self.bias = None
         # initialize convolution op and Parameter
         if context.get_context('device_target') == "Ascend" and group > 1:
-            Validator.check_integer('group', group, in_channels, Rel.EQ)
-            Validator.check_integer('group', group, out_channels, Rel.EQ)
+            Validator.check_equal_int(group, in_channels, 'group')
+            Validator.check_equal_int(group, out_channels, 'group')
             self.conv = P.DepthwiseConv2dNative(channel_multiplier=1,
                                                 kernel_size=self.kernel_size,
                                                 pad_mode=pad_mode,

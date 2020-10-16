@@ -23,7 +23,7 @@ from mindspore import log as logger
 from .. import context
 from ..common import dtype as mstype
 from ..common.api import _executor, _pynative_exec
-from .._checkparam import _check_str_by_regular
+from .._checkparam import Validator
 from ..common.parameter import Parameter, ParameterTuple
 from .._c_expression import init_backend, Cell_
 from ..ops.primitive import Primitive
@@ -715,7 +715,7 @@ class Cell(Cell_):
             recurse (bool): Whether contains the parameters of subcells. Default: True.
         """
 
-        _check_str_by_regular(prefix)
+        Validator.check_str_by_regular(prefix)
         for name, param in self.parameters_and_names(expand=recurse):
             if prefix != '':
                 param.is_init = False

@@ -347,7 +347,7 @@ class MatrixDiag(PrimitiveWithInfer):
         return x_dtype
 
     def infer_shape(self, x_shape, assist_shape):
-        validator.check_integer("assist rank", len(assist_shape), 2, Rel.GE, self.name)
+        validator.check_int(len(assist_shape), 2, Rel.GE, "assist rank", self.name)
         validator.check('rank of x', len(x_shape)+1,
                         'rank of assist', len(assist_shape), Rel.LE, self.name)
         validator.check('assist\'s penultimate dimension', assist_shape[-2], 'assist\'s last dimension',
@@ -395,7 +395,7 @@ class MatrixDiagPart(PrimitiveWithInfer):
         return x_dtype
 
     def infer_shape(self, x_shape, assist_shape):
-        validator.check_integer("x rank", len(x_shape), 2, Rel.GE, self.name)
+        validator.check_int(len(x_shape), 2, Rel.GE, "x rank", self.name)
         validator.check("x shape", x_shape, "assist shape", assist_shape, Rel.EQ, self.name)
 
         if assist_shape[-2] < assist_shape[-1]:
@@ -438,7 +438,7 @@ class MatrixSetDiag(PrimitiveWithInfer):
         return x_dtype
 
     def infer_shape(self, x_shape, diagonal_shape, assist_shape):
-        validator.check_integer("x rank", len(x_shape), 2, Rel.GE, self.name)
+        validator.check_int(len(x_shape), 2, Rel.GE, "x rank", self.name)
         validator.check("x shape", x_shape, "assist shape", assist_shape, Rel.EQ, self.name)
 
         if x_shape[-2] < x_shape[-1]:

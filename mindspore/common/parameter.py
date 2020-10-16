@@ -19,7 +19,7 @@ from .._c_expression import ParamInfo
 from . import dtype as mstype
 from .initializer import initializer, Initializer
 from .tensor import Tensor, MetaTensor
-from .._checkparam import _check_str_by_regular
+from .._checkparam import Validator
 from ..parallel._tensor import _get_slice_index
 from ..parallel._auto_parallel_context import auto_parallel_context
 from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched
@@ -263,7 +263,7 @@ class Parameter(MetaTensor):
         Returns:
             Parameter, a new parameter.
         """
-        _check_str_by_regular(prefix)
+        Validator.check_str_by_regular(prefix)
         x = copy(self)
         # pylint: disable=protected-access
         x._param_info = self._param_info.clone()
@@ -446,7 +446,7 @@ class ParameterTuple(tuple):
         Returns:
             Tuple, the new Parameter tuple.
         """
-        _check_str_by_regular(prefix)
+        Validator.check_str_by_regular(prefix)
         new = []
         for x in self:
             x1 = x.clone(prefix, init)

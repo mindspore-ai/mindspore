@@ -827,7 +827,7 @@ class AddN(PrimitiveWithInfer):
 
     def infer_shape(self, inputs):
         cls_name = self.name
-        validator.check_integer("inputs", len(inputs), 1, Rel.GE, cls_name)
+        validator.check_int(len(inputs), 1, Rel.GE, "inputs", cls_name)
         self.add_prim_attr('n', len(inputs))
         shp0 = inputs[0]
         for i, shp in enumerate(inputs):
@@ -837,7 +837,7 @@ class AddN(PrimitiveWithInfer):
     def infer_dtype(self, inputs):
         cls_name = self.name
         validator.check_value_type("inputs", inputs, [tuple, list], cls_name)
-        validator.check_integer("inputs", len(inputs), 1, Rel.GE, cls_name)
+        validator.check_int(len(inputs), 1, Rel.GE, "inputs", cls_name)
         args = {}
         contains_undetermined = False
         for i, dtype in enumerate(inputs):
@@ -910,7 +910,7 @@ class AccumulateNV2(PrimitiveWithInfer):
 
     def infer_shape(self, inputs):
         cls_name = self.name
-        validator.check_integer("inputs", len(inputs), 1, Rel.GE, cls_name)
+        validator.check_int(len(inputs), 1, Rel.GE, "inputs", cls_name)
         self.add_prim_attr('n', len(inputs))
         shp0 = inputs[0]
         for i, shp in enumerate(inputs):
@@ -920,7 +920,7 @@ class AccumulateNV2(PrimitiveWithInfer):
     def infer_dtype(self, inputs):
         cls_name = self.name
         validator.check_value_type("inputs", inputs, [tuple, list], cls_name)
-        validator.check_integer("inputs", len(inputs), 1, Rel.GE, cls_name)
+        validator.check_int(len(inputs), 1, Rel.GE, "inputs", cls_name)
         args = {}
         for i, dtype in enumerate(inputs):
             args[f"inputs[{i}]"] = dtype
@@ -1488,7 +1488,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, nbins, dtype='int32'):
         self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
-        validator.check_integer("nbins", nbins, 1, Rel.GE, self.name)
+        validator.check_int(nbins, 1, Rel.GE, "nbins", self.name)
         valid_values = ['int32', 'int64']
         self.dtype = validator.check_string(dtype, valid_values, "dtype", self.name)
         self.init_prim_io_names(inputs=['x', 'range'], outputs=['y'])
@@ -2810,8 +2810,8 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         cls_name = self.name
-        validator.check_integer("len(x_shape)", len(x_shape), 1, Rel.EQ, cls_name)
-        validator.check_integer("x_shape[0]", x_shape[0], 8, Rel.EQ, cls_name)
+        validator.check_equal_int(len(x_shape), 1, "len(x_shape)", cls_name)
+        validator.check_equal_int(x_shape[0], 8, "x_shape[0]", cls_name)
         return [8]
 
     def infer_dtype(self, x_dtype):
@@ -2853,8 +2853,8 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         cls_name = self.name
-        validator.check_integer("len(x_shape)", len(x_shape), 1, Rel.EQ, cls_name)
-        validator.check_integer("x_shape[0]", x_shape[0], 8, Rel.EQ, cls_name)
+        validator.check_equal_int(len(x_shape), 1, "len(x_shape)", cls_name)
+        validator.check_equal_int(x_shape[0], 8, "x_shape[0]", cls_name)
         return [8]
 
     def infer_dtype(self, x_dtype):
@@ -3023,9 +3023,9 @@ class NMSWithMask(PrimitiveWithInfer):
 
     def infer_shape(self, bboxes_shape):
         cls_name = self.name
-        validator.check_integer("bboxes rank", len(bboxes_shape), 2, Rel.EQ, cls_name)
+        validator.check_equal_int(len(bboxes_shape), 2, "bboxes rank", cls_name)
         validator.check_positive_int(bboxes_shape[0], "bboxes.shape[0]", cls_name)
-        validator.check_integer("bboxes.shape[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
+        validator.check_equal_int(bboxes_shape[1], 5, "bboxes.shape[1]", cls_name)
         num = bboxes_shape[0]
         return (bboxes_shape, (num,), (num,))
 
@@ -3572,11 +3572,11 @@ class IFMR(PrimitiveWithInfer):
         validator.check_value_type("offset_flag", with_offset, [bool], self.name)
 
     def infer_shape(self, data_shape, data_min_shape, data_max_shape, cumsum_shape):
-        validator.check_integer("dims of data_min", len(data_min_shape), 1, Rel.EQ, self.name)
-        validator.check_integer("data_min[0]", data_min_shape[0], 1, Rel.EQ, self.name)
-        validator.check_integer("dims of data_max", len(data_max_shape), 1, Rel.EQ, self.name)
-        validator.check_integer("data_max[0]", data_max_shape[0], 1, Rel.EQ, self.name)
-        validator.check_integer("dims of cumsum", len(cumsum_shape), 1, Rel.EQ, self.name)
+        validator.check_equal_int(len(data_min_shape), 1, "dims of data_min", self.name)
+        validator.check_equal_int(data_min_shape[0], 1, "data_min[0]", self.name)
+        validator.check_equal_int(len(data_max_shape), 1, "dims of data_max", self.name)
+        validator.check_equal_int(data_max_shape[0], 1, "data_max[0]", self.name)
+        validator.check_equal_int(len(cumsum_shape), 1, "dims of cumsum", self.name)
         return (1,), (1,)
 
     def infer_dtype(self, data_dtype, data_min_dtype, data_max_dtype, cumsum_dtype):

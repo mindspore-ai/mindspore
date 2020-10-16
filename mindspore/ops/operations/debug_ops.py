@@ -374,9 +374,9 @@ class Assert(PrimitiveWithInfer):
 
     def infer_shape(self, condition, inputs):
         condition_len = len(condition)
-        validator.check_integer("condition's rank", condition_len, 1, Rel.LE, self.name)
+        validator.check_int(condition_len, 1, Rel.LE, "condition's rank", self.name)
         if condition_len == 1:
-            validator.check_integer("condition[0]", condition[0], 1, Rel.EQ, self.name)
+            validator.check_equal_int(condition[0], 1, "condition[0]", self.name)
         return [1]
 
     def infer_dtype(self, condition, inputs):

@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test checkparameter """
+""" test check parameter """
 import pytest
 import numpy as np
-from mindspore._checkparam import twice, Validator
+from mindspore._checkparam import Validator, twice
 
 kernel_size = 5
 kernel_size1 = twice(kernel_size)
