@@ -3,7 +3,7 @@ __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP 
 __kernel void conv2d_transpose2x2_NHWC4(__read_only image2d_t src_data, __global FLT16 *weight,
                                         __read_only image2d_t biases, __write_only image2d_t dst_data, int2 kernel_size,
                                         int2 stride, int2 padding, int4 src_size, int4 dst_size) {
-  int h = get_global_id(2);
+  int h = get_global_id(0);
   int kh = h % 2;
   int src_h = h / 2;
   src_h = src_h * 2;
@@ -11,7 +11,7 @@ __kernel void conv2d_transpose2x2_NHWC4(__read_only image2d_t src_data, __global
   int kw = w % 2;
   int src_w = w / 2;
   src_w = src_w * 2;
-  int co = get_global_id(0);
+  int co = get_global_id(2);
   if (src_h * 2 >= dst_size.x || src_w * 2 >= dst_size.y || co >= dst_size.z) return;
   FLT4 r0 = (FLT4)(0.f);
   FLT4 r1 = (FLT4)(0.f);
@@ -59,7 +59,7 @@ __kernel void conv2d_transpose2x2_NHWC4(__read_only image2d_t src_data, __global
 __kernel void conv2d_transpose2x2_NC4HW4(__read_only image2d_t src_data, __global FLT16 *weight,
                                          __read_only image2d_t biases, __write_only image2d_t dst_data,
                                          int2 kernel_size, int2 stride, int2 padding, int4 src_size, int4 dst_size) {
-  int h = get_global_id(2);
+  int h = get_global_id(0);
   int kh = h % 2;
   int src_h = h / 2;
   src_h = src_h * 2;
@@ -67,7 +67,7 @@ __kernel void conv2d_transpose2x2_NC4HW4(__read_only image2d_t src_data, __globa
   int kw = w % 2;
   int src_w = w / 2;
   src_w = src_w * 2;
-  int co = get_global_id(0);
+  int co = get_global_id(2);
   if (src_h * 2 >= dst_size.x || src_w * 2 >= dst_size.y || co >= dst_size.z) return;
   FLT4 r0 = (FLT4)(0.f);
   FLT4 r1 = (FLT4)(0.f);
@@ -115,7 +115,7 @@ __kernel void conv2d_transpose2x2_NC4HW4(__read_only image2d_t src_data, __globa
 __kernel void conv2d_transpose_NHWC4(__read_only image2d_t src_data, __global FLT16 *weight,
                                      __read_only image2d_t biases, __write_only image2d_t dst_data, int2 kernel_size,
                                      int2 stride, int2 padding, int4 src_size, int4 dst_size) {
-  int dst_h = get_global_id(2);
+  int dst_h = get_global_id(0);
   int rem_h = dst_h % stride.x;
   int ceil_h = dst_h / stride.x;
   dst_h = ceil_h * stride.x * 2 + rem_h;
@@ -123,7 +123,7 @@ __kernel void conv2d_transpose_NHWC4(__read_only image2d_t src_data, __global FL
   int rem_w = dst_w % stride.y;
   int ceil_w = dst_w / stride.y;
   dst_w = ceil_w * stride.y * 2 + rem_w;
-  int dst_c = get_global_id(0);
+  int dst_c = get_global_id(2);
   if (dst_h >= dst_size.x || dst_w >= dst_size.y || dst_c >= dst_size.z) return;
   int weight_base = dst_c * src_size.z * kernel_size.x * kernel_size.y;
   FLT4 r0 = (FLT4)(0.f);

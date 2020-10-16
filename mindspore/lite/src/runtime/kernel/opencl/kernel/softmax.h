@@ -49,8 +49,9 @@ class SoftmaxOpenCLKernel : public OpenCLKernel {
   bool onexone_flag_{false};
   std::vector<size_t> local_size_;
   std::vector<size_t> global_size_;
-  bool is_image_out_{true};
   bool enable_fp16_{false};
+  int axis_{0};
+  std::vector<int> nhwc_shape_;
 };
 
 }  // namespace mindspore::kernel

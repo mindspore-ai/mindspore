@@ -189,8 +189,7 @@ int Conv2dTransposeOpenCLKernel::Run() {
   int w = in_tensors_[0]->shape()[2];
   // local size should less than MAX_GROUP_SIZE
   std::vector<size_t> local = {16, 1, 16};
-  std::vector<size_t> global = {UP_ROUND(co4, local[0]), UP_ROUND((size_t)UP_ROUND(ow / 2, stride_w), local[1]),
-                                UP_ROUND((size_t)UP_ROUND(oh / 2, stride_h), local[2])};
+  std::vector<size_t> global = {(size_t)UP_ROUND(oh / 2, stride_h), (size_t)UP_ROUND(ow / 2, stride_w), (size_t)co4};
 
   cl_int2 kernel_size = {kh, kw};
   cl_int2 stride = {stride_h, stride_w};

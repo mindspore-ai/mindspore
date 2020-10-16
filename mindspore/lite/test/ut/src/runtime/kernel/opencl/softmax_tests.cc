@@ -29,7 +29,8 @@ class TestSoftmaxOpenCL : public mindspore::CommonTest {
   TestSoftmaxOpenCL() {}
 };
 
-void RunTestCaseSoftmax(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16) {
+void RunTestCaseSoftmax(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16,
+                        int axis) {
   auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
@@ -68,7 +69,14 @@ void RunTestCaseSoftmax(const std::vector<int> &shape, void *input_data, void *o
   }
   std::vector<lite::Tensor *> inputs{tensor_x};
   std::vector<lite::Tensor *> outputs{tensor_out};
-  auto arith_kernel_ptr = std::make_unique<kernel::SoftmaxOpenCLKernel>(nullptr, inputs, outputs);
+  auto opParameter = static_cast<SoftmaxParameter *>(malloc(sizeof(SoftmaxParameter)));
+  if (opParameter == nullptr) {
+    MS_LOG(ERROR) << "opParameter create error.";
+    return;
+  }
+  opParameter->axis_ = axis;
+  auto arith_kernel_ptr =
+    std::make_unique<kernel::SoftmaxOpenCLKernel>(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   auto arith_kernel = arith_kernel_ptr.release();
   if (arith_kernel == nullptr) {
     MS_LOG(ERROR) << "arith_kernel create error.";
@@ -112,7 +120,7 @@ TEST_F(TestSoftmaxOpenCL, Softmax2DFp32) {
   std::vector<float> input_data = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
   std::vector<float> output_data = {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f};
 
-  RunTestCaseSoftmax(shape, input_data.data(), output_data.data(), false);
+  RunTestCaseSoftmax(shape, input_data.data(), output_data.data(), false, 1);
 }
 
 TEST_F(TestSoftmaxOpenCL, Softmax2DFp16) {
@@ -122,7 +130,7 @@ TEST_F(TestSoftmaxOpenCL, Softmax2DFp16) {
   std::vector<float16_t> input_data = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
   std::vector<float16_t> output_data = {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f};
 
-  RunTestCaseSoftmax(shape, input_data.data(), output_data.data(), true);
+  RunTestCaseSoftmax(shape, input_data.data(), output_data.data(), true, 1);
 }
 
 TEST_F(TestSoftmaxOpenCL, Softmax4DFp32) {
@@ -134,7 +142,7 @@ TEST_F(TestSoftmaxOpenCL, Softmax4DFp32) {
   std::vector<float> input_data = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
   std::vector<float> output_data = {0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f};
 
-  RunTestCaseSoftmax(shape, input_data.data(), output_data.data(), false);
+  RunTestCaseSoftmax(shape, input_data.data(), output_data.data(), false, 3);
 }
 
 TEST_F(TestSoftmaxOpenCL, Softmax4DFp16) {
@@ -146,6 +154,18 @@ TEST_F(TestSoftmaxOpenCL, Softmax4DFp16) {
   std::vector<float16_t> input_data = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
   std::vector<float16_t> output_data = {0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f};
 
-  RunTestCaseSoftmax(shape, input_data.data(), output_data.data(), true);
+  RunTestCaseSoftmax(shape, input_data.data(), output_data.data(), true, 3);
+}
+
+TEST_F(TestSoftmaxOpenCL, Softmax4DAxis1Fp32) {
+  int n = 1;
+  int h = 2;
+  int w = 1;
+  int c = 1;
+  std::vector<int> shape = {n, h, w, c};
+  std::vector<float> input_data = {1.0f, 1.0f};
+  std::vector<float> output_data = {0.5f, 0.5f};
+
+  RunTestCaseSoftmax(shape, input_data.data(), output_data.data(), false, 1);
 }
 }  // namespace mindspore
