@@ -66,14 +66,14 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "kernel_shape") {
       if (onnx_node_attr.ints_size() == 2) {
-        attr->windowW = static_cast<int32_t>(onnx_node_attr.ints(0));
-        attr->windowH = static_cast<int32_t>(onnx_node_attr.ints(1));
+        attr->windowH = static_cast<int32_t>(onnx_node_attr.ints(0));
+        attr->windowW = static_cast<int32_t>(onnx_node_attr.ints(1));
       }
     }
     if (attribute_name == "strides") {
       if (onnx_node_attr.ints_size() == 2) {
-        attr->strideW = static_cast<int32_t>(onnx_node_attr.ints(0));
-        attr->strideH = static_cast<int32_t>(onnx_node_attr.ints(1));
+        attr->strideH = static_cast<int32_t>(onnx_node_attr.ints(0));
+        attr->strideW = static_cast<int32_t>(onnx_node_attr.ints(1));
       }
     }
     if (attribute_name == "auto_pad") {

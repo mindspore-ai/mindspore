@@ -406,6 +406,30 @@ int Benchmark::RunBenchmark() {
     std::cout << "CompileGraph failed while running ", model_name.c_str();
     return ret;
   }
+  if (!flags_->input_shape_list_.empty()) {
+    std::vector<std::vector<int>> input_shapes;
+    std::string input_dims_list = flags_->input_shape_list_;
+    while (!input_dims_list.empty()) {
+      auto position =
+        input_dims_list.find(";") != input_dims_list.npos ? input_dims_list.find(";") + 1 : input_dims_list.length();
+      std::string input_dims = input_dims_list.substr(0, position);
+      std::vector<int> input_shape;
+      while (!input_dims.empty()) {
+        auto pos = input_dims.find(",") != input_dims.npos ? input_dims.find(",") + 1 : input_dims.length();
+        std::string dim = input_dims.substr(0, pos);
+        input_shape.emplace_back(std::stoi(dim));
+        input_dims = input_dims.substr(pos);
+      }
+      input_shapes.emplace_back(input_shape);
+      input_dims_list = input_dims_list.substr(position);
+    }
+    ret = session_->Resize(session_->GetInputs(), input_shapes);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Input tensor resize failed.";
+      std::cout << "Input tensor resize failed.";
+      return ret;
+    }
+  }
   model->Free();
   ms_inputs_ = session_->GetInputs();
   auto end_prepare_time = GetTimeUs();

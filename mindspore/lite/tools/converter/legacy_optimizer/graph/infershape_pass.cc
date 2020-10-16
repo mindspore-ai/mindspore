@@ -26,6 +26,9 @@ using mindspore::lite::Tensor;
 namespace mindspore {
 namespace lite {
 namespace {
+constexpr int DEFAULT_DIM_VALUE = -1;
+}
+namespace {
 std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::vector<uint32_t> &tensor_indexs,
                                                 const schema::PrimitiveType node_type) {
   std::vector<Tensor *> lite_tensors;
@@ -85,6 +88,15 @@ void FreeTensors(std::vector<Tensor *> input_tensors, std::vector<Tensor *> outp
 }  // namespace
 STATUS InferShapePass::Run(MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
+  for (auto idx : graph->inputIndex) {
+    auto input_tensor = graph->allTensors[idx].get();
+    for (auto &dim : input_tensor->dims) {
+      if (dim == 0) {
+        MS_LOG(WARNING) << "One dimension of the input shape is 0, which would be set to 32 as a default value.";
+        dim = DEFAULT_DIM_VALUE;
+      }
+    }
+  }
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto &node = *iter;
     auto input_tensors = ConvertTensorToLiteTensor(graph, node->inputIndex, node->primitive->value.type);
