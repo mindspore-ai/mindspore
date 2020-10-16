@@ -5,6 +5,8 @@ if (NOT (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU)))
     list(REMOVE_ITEM _PS_SRC_FILES "optimizer_info.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "scheduler.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "util.cc")
+    list(REMOVE_ITEM _PS_SRC_FILES "comm/http_message_handler.cc")
+    list(REMOVE_ITEM _PS_SRC_FILES "comm/http_server.cc")
 endif()
 
 set_property(SOURCE ${_PS_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PS)

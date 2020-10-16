@@ -73,6 +73,16 @@ if (USE_GLOG)
     )
 endif ()
 
+file(GLOB_RECURSE LIBEVENT_LIB_LIST
+        ${libevent_LIBPATH}/libevent*
+        ${libevent_LIBPATH}/libevent_pthreads*
+        )
+
+install(
+        FILES ${LIBEVENT_LIB_LIST}
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+)
 if (ENABLE_MINDDATA)
     install(
         TARGETS _c_dataengine _c_mindrecord

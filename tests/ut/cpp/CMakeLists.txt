@@ -55,6 +55,7 @@ if(ENABLE_MINDDATA)
             ./transform/*.cc
             ./utils/*.cc
             ./vm/*.cc
+            ./ps/*.cc
             )
    
     if(NOT ENABLE_PYTHON)
@@ -128,6 +129,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/session/kernel_build_client.cc"
         "../../../mindspore/ccsrc/transform/graph_ir/*.cc"
         "../../../mindspore/ccsrc/transform/graph_ir/op_declare/*.cc"
+        "../../../mindspore/ccsrc/ps/*.cc"
         )
 
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")
