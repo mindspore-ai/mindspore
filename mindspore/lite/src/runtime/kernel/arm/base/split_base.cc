@@ -84,6 +84,7 @@ kernel::LiteKernel *CpuSplitInt8KernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) SplitInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SplitCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -108,6 +109,7 @@ kernel::LiteKernel *CpuSplitInt32KernelCreator(const std::vector<lite::Tensor *>
   auto *kernel = new (std::nothrow) SplitCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SplitCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -132,6 +134,7 @@ kernel::LiteKernel *CpuSplitFp32KernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) SplitCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SplitCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

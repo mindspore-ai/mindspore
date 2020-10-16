@@ -188,6 +188,7 @@ kernel::LiteKernel *CpuLstmKernelCreator(const std::vector<lite::Tensor *> &inpu
   auto *kernel = new (std::nothrow) LstmCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

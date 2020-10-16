@@ -357,6 +357,7 @@ kernel::LiteKernel *OpenCLScaleKernelCreator(const std::vector<lite::Tensor *> &
     new (std::nothrow) ScaleOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create OpenCL Scale kernel failed!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

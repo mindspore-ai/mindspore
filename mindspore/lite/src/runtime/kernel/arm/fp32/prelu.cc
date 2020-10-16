@@ -159,6 +159,7 @@ kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) PReluCPUKernel(param, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PReluCPUKernel fail!";
+    free(param);
     return nullptr;
   }
   auto ret = kernel->Init();

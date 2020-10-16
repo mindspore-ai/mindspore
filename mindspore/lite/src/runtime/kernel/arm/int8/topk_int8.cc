@@ -80,6 +80,7 @@ kernel::LiteKernel *CpuTopKInt8KernelCreator(const std::vector<lite::Tensor *> &
   TopKInt8CPUKernel *kernel = new (std::nothrow) TopKInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new TopKInt8CPUKernel fail!";
+    free(parameter);
     return nullptr;
   }
 

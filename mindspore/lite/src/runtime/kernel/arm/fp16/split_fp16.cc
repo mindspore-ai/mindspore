@@ -133,6 +133,7 @@ kernel::LiteKernel *CpuSplitFp16KernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) SplitFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SplitFp16CPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

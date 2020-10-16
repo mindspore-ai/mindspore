@@ -91,6 +91,7 @@ kernel::LiteKernel *CpuPowerGradFp32KernelCreator(const std::vector<lite::Tensor
   auto *kernel = new (std::nothrow) PowerGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PowerGradCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
 

@@ -83,6 +83,7 @@ kernel::LiteKernel *CpuBiasFp32KernelCreator(const std::vector<lite::Tensor *> &
   auto kernel = new (std::nothrow) BiasCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
+    free(parameter);
     return nullptr;
   }
 

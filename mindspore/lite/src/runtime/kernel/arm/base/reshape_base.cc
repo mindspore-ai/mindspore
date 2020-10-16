@@ -42,6 +42,7 @@ kernel::LiteKernel *CpuReshapeInt8KernelCreator(const std::vector<lite::Tensor *
   auto *kernel = new (std::nothrow) ReshapeInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ReshapeInt8CPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -66,6 +67,7 @@ kernel::LiteKernel *CpuReshapeInt32KernelCreator(const std::vector<lite::Tensor 
   auto *kernel = new (std::nothrow) ReshapeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ReshapeCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -90,6 +92,7 @@ kernel::LiteKernel *CpuReshapeFp32KernelCreator(const std::vector<lite::Tensor *
   auto *kernel = new (std::nothrow) ReshapeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ReshapeCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

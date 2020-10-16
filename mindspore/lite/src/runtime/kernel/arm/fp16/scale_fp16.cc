@@ -198,6 +198,7 @@ kernel::LiteKernel *CpuScaleFp16KernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) ScaleFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "New kernel fails.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

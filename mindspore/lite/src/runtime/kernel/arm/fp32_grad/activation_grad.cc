@@ -119,6 +119,7 @@ kernel::LiteKernel *CpuActivationGradFp32KernelCreator(const std::vector<lite::T
   auto *kernel = new (std::nothrow) ActivationGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ActivationGradCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

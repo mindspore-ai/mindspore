@@ -124,6 +124,7 @@ kernel::LiteKernel *OpenCLReshapeKernelCreator(const std::vector<lite::Tensor *>
   auto *kernel = new (std::nothrow) ReshapeOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << " create failed.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

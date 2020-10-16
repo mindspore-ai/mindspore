@@ -73,6 +73,7 @@ kernel::LiteKernel *CpuBroadcastToFp32KernelCreator(const std::vector<lite::Tens
   auto *kernel = new (std::nothrow) BroadcastToCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BroadcastToCPUKernel fail!";
+    free(op_parameter);
     return nullptr;
   }
 

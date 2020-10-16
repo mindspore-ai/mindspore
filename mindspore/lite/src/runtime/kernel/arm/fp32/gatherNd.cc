@@ -140,6 +140,7 @@ kernel::LiteKernel *CpuGatherNdFp32KernelCreator(const std::vector<lite::Tensor 
 
   auto *kernel = new (std::nothrow) GatherNdCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

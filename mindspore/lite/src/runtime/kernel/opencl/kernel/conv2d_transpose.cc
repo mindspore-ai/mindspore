@@ -220,6 +220,7 @@ kernel::LiteKernel *OpenCLConv2dTransposeKernelCreator(const std::vector<lite::T
     new (std::nothrow) Conv2dTransposeOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

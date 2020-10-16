@@ -208,6 +208,7 @@ kernel::LiteKernel *OpenCLArithmeticSelfKernelCreator(const std::vector<lite::Te
   auto *kernel = new (std::nothrow) ArithmeticSelfOpenCLKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << " new ArithmeticSelfOpenCLKernel failed ";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

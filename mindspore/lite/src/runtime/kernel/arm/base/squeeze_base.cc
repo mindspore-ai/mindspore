@@ -41,6 +41,7 @@ kernel::LiteKernel *CpuSqueezeInt8KernelCreator(const std::vector<lite::Tensor *
   auto *kernel = new (std::nothrow) SqueezeInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SqueezeCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

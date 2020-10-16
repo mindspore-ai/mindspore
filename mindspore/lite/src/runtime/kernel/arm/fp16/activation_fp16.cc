@@ -139,6 +139,7 @@ kernel::LiteKernel *CpuActivationFp16KernelCreator(const std::vector<lite::Tenso
   auto *kernel = new (std::nothrow) ActivationFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

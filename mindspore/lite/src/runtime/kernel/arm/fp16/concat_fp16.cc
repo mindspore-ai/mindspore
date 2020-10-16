@@ -151,6 +151,7 @@ kernel::LiteKernel *CpuConcatFp16KernelCreator(const std::vector<lite::Tensor *>
   kernel::LiteKernel *kernel = new (std::nothrow) ConcatFp16CPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ConcatCPUKernel fail!";
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

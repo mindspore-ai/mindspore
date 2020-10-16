@@ -95,7 +95,11 @@ kernel::LiteKernel *CpuApplyMomentumFp32KernelCreator(const std::vector<lite::Te
                                                       const lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_ApplyMomentum);
   auto *kernel = new (std::nothrow) ApplyMomentumCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new ApplyMomentumCPUKernel fail!";
+    free(opParameter);
+    return nullptr;
+  }
 
   auto ret = kernel->Init();
   if (0 != ret) {

@@ -908,6 +908,7 @@ kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::Tenso
     new (std::nothrow) ConvolutionOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create OpenCL Convolution kernel failed!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

@@ -130,6 +130,7 @@ kernel::LiteKernel *CpuGatherInt8KernelCreator(const std::vector<lite::Tensor *>
   }
   auto *kernel = new (std::nothrow) GatherInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

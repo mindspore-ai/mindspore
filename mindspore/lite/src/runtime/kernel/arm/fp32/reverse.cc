@@ -153,6 +153,7 @@ kernel::LiteKernel *CpuReverseFp32KernelCreator(const std::vector<lite::Tensor *
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Kernel is NULL! name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    free(opParameter);
     return nullptr;
   }
 

@@ -143,12 +143,14 @@ kernel::LiteKernel *OpenClActivationKernelCreator(const std::vector<lite::Tensor
   }
   if (inputs[0]->shape().size() > 2 && inputs[0]->shape()[0] > 1) {
     MS_LOG(ERROR) << "Activation kernel:" << opParameter->name_ << " failed: Unsupported multi-batch.";
+    free(opParameter);
     return nullptr;
   }
   auto *kernel =
     new (std::nothrow) ActivationOpenClKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "New kernel:" << opParameter->name_ << "is nullptr.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

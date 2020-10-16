@@ -138,6 +138,7 @@ kernel::LiteKernel *CpuDeConvGradFilterFp32KernelCreator(const std::vector<lite:
   auto *kernel = new (std::nothrow) DeConvolutionGradFilterCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new kernel fail!";
+    free(opParameter);
     return nullptr;
   }
 

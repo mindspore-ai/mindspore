@@ -157,6 +157,7 @@ kernel::LiteKernel *OpenCLGatherKernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) GatherOpenCLKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Kernel " << opParameter->name_ << " new failed.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

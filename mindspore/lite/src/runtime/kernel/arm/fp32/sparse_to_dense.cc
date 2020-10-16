@@ -202,6 +202,7 @@ kernel::LiteKernel *CpuSparseToDenseFp32KernelCreator(const std::vector<lite::Te
   auto *kernel = new (std::nothrow) SparseToDenseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SparseToDenseCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

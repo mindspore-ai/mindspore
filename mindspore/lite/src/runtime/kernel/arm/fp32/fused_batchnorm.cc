@@ -149,6 +149,7 @@ kernel::LiteKernel *CpuFusedBatchnormKernelCreator(const std::vector<lite::Tenso
     new (std::nothrow) FusedBatchnormCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new FusedBatchnormCPUKernel fail!";
+    free(op_parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

@@ -171,6 +171,7 @@ kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::Tenso
   auto kernel = new (std::nothrow) ArithmeticInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create ArithmeticInt8CPUKernel failed, name: " << parameter->name_;
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

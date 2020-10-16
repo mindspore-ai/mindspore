@@ -83,7 +83,11 @@ kernel::LiteKernel *CpuTupleGetItemFp32KernelCreator(const std::vector<lite::Ten
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_TupleGetItem);
   auto *kernel = new (std::nothrow) TupleGetItemCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new TupleGetItemCPUKernel failed!";
+    free(opParameter);
+    return nullptr;
+  }
 
   auto ret = kernel->Init();
   if (RET_OK != ret) {

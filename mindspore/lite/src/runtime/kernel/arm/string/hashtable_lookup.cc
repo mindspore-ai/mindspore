@@ -80,6 +80,7 @@ kernel::LiteKernel *CpuHashtableLookupKernelCreator(const std::vector<lite::Tens
   auto *kernel = new (std::nothrow) HashtableLookupCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new HashtableLookupCPUKernel fail!";
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

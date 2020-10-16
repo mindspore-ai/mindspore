@@ -134,6 +134,7 @@ kernel::LiteKernel *OpenCLCastKernelCreator(const std::vector<lite::Tensor *> &i
   auto *kernel = new (std::nothrow) CastOpenCLKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << " new CastOpenCLKernel failed ";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

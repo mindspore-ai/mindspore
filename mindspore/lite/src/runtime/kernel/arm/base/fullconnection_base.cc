@@ -78,6 +78,7 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::T
       weight_tensor->FreeData();
       weight_tensor->SetData(restore_data);
     }
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

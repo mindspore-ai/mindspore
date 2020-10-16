@@ -81,6 +81,7 @@ kernel::LiteKernel *CpuExtractFeatureKernelCreator(const std::vector<lite::Tenso
   auto *kernel = new (std::nothrow) ExtractFeatureCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ExtractFeatureCPUKernel fail!";
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

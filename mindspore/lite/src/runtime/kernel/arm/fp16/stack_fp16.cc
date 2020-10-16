@@ -117,6 +117,7 @@ kernel::LiteKernel *CpuStackFp16KernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) StackFp16CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new StackFp16CPUKernel fail!";
+    free(op_parameter);
     return nullptr;
   }
 

@@ -86,6 +86,7 @@ kernel::LiteKernel *CpuStackFp32KernelCreator(const std::vector<lite::Tensor *> 
   auto *kernel = new (std::nothrow) StackCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new StackCPUKernel fail!";
+    free(op_parameter);
     return nullptr;
   }
 

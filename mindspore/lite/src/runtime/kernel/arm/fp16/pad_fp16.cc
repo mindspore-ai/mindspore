@@ -87,6 +87,7 @@ kernel::LiteKernel *CpuPadFp16KernelCreator(const std::vector<lite::Tensor *> &i
   auto *kernel = new (std::nothrow) PadFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PadFp16CPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

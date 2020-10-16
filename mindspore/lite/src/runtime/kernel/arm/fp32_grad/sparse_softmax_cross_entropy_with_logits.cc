@@ -163,7 +163,11 @@ kernel::LiteKernel *CpuSparseSoftmaxCrossEntropyFp32KernelCreator(
   MS_ASSERT(desc.type == schema::PrimitiveType_SoftmaxCrossEntropy);
   auto *kernel =
     new (std::nothrow) SparseSoftmaxCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new SparseSoftmaxCrossEntropyWithLogitsCPUKernel failed!";
+    free(opParameter);
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (RET_OK != ret) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "

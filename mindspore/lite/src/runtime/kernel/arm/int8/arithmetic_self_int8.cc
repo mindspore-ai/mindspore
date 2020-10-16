@@ -126,6 +126,7 @@ kernel::LiteKernel *CpuArithmeticSelfInt8KernelCreator(const std::vector<lite::T
   auto *kernel = new (std::nothrow) ArithmeticSelfInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ArithmeticSelfInt8CPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
 

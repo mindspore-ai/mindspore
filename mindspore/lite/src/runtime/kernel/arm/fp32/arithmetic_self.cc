@@ -108,6 +108,7 @@ kernel::LiteKernel *CpuArithmeticSelfFp32KernelCreator(const std::vector<lite::T
   auto *kernel = new (std::nothrow) ArithmeticSelfCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ArithmeticSelfCPUKernel fail!";
+    free(parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

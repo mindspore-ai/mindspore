@@ -124,6 +124,7 @@ kernel::LiteKernel *CpuArgMinMaxFp32KernelCreator(const std::vector<lite::Tensor
   auto kernel = new (std::nothrow) ArgMinMaxCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ArgMinMaxCPUKernel fail!";
+    free(op_parameter);
     return nullptr;
   }
   auto ret = kernel->Init();

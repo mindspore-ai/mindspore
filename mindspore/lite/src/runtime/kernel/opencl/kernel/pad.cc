@@ -141,6 +141,7 @@ kernel::LiteKernel *OpenCLPadKernelCreator(const std::vector<lite::Tensor *> &in
   auto *kernel = new (std::nothrow) PadOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create OpenCL Pad kernel failed!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

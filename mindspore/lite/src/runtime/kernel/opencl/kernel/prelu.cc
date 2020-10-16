@@ -184,11 +184,13 @@ kernel::LiteKernel *OpenCLPReluKernelCreator(const std::vector<lite::Tensor *> &
                                              const lite::PrimitiveC *primitive) {
   if (inputs.empty()) {
     MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << inputs.size();
+    free(opParameter);
     return nullptr;
   }
   auto *kernel = new (std::nothrow) PReluOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

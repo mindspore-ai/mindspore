@@ -136,6 +136,7 @@ kernel::LiteKernel *CpuDetectionPostProcessFp32KernelCreator(const std::vector<l
   auto *kernel = new (std::nothrow) DetectionPostProcessCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new DetectionPostProcessCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

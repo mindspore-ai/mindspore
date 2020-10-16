@@ -115,6 +115,9 @@ kernel::LiteKernel *CpuArithmeticSelfFp16KernelCreator(const std::vector<lite::T
   auto *kernel = new (std::nothrow) ArithmeticSelfFp16CPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ArithmeticSelfFp16CPUKernel fail!";
+    if (parameter != nullptr) {
+      free(parameter);
+    }
     return nullptr;
   }
   auto ret = kernel->Init();

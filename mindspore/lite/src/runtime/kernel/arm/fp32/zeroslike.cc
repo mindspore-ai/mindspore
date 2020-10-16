@@ -54,6 +54,7 @@ kernel::LiteKernel *CpuZerosLikeFp32KernelCreator(const std::vector<lite::Tensor
   auto *kernel = new (std::nothrow) ZerosLikeCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ZerosLikeCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

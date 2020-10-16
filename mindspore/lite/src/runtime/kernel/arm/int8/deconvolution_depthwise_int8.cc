@@ -222,6 +222,7 @@ kernel::LiteKernel *CpuDeconvDwInt8KernelCreator(const std::vector<lite::Tensor 
     new (std::nothrow) kernel::DeconvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();
