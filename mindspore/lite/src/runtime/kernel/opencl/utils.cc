@@ -237,33 +237,33 @@ void PrintTensor(lite::Tensor *tensor, int num, const std::string &out_file) {
   }
   auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
   auto runtime = runtime_wrapper.GetInstance();
-  runtime->SyncCommandQueue();
-
   auto allocator = runtime->GetAllocator();
   auto origin_data = tensor->data_c();
-  allocator->MapBuffer(origin_data, CL_MAP_READ | CL_MAP_WRITE, nullptr, true);
-  tensor->SetData(origin_data);
+  runtime->SyncCommandQueue();
+  allocator->MapBuffer(origin_data, CL_MAP_READ, nullptr, true);
 
-  auto Batch = tensor->Batch();
-  auto Height = tensor->shape().size() == 4 ? tensor->Height() : 1;
-  auto Width = tensor->shape().size() == 4 ? tensor->Width() : 1;
-  auto SLICES = UP_DIV(tensor->Channel(), C4NUM);
+  auto shape = tensor->shape();
+  auto N = shape.size() > 0 ? shape[0] : 1;
+  auto H = shape.size() > 1 ? shape[1] : 1;
+  auto W = shape.size() > 2 ? shape[2] : 1;
+  auto C = shape.size() > 3 ? shape[3] : 1;
+  auto SLICES = UP_DIV(C, C4NUM);
+  auto ElementsC4Num = N * H * W * UP_ROUND(C, C4NUM);
   auto alignment = runtime->GetImagePitchAlignment();
-  auto dtype_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half4) : sizeof(cl_float4);
-  auto row_pitch = (Width * SLICES + alignment - 1) / alignment * alignment * dtype_size;
-  auto row_size = Width * SLICES * dtype_size;
-  std::vector<char> data(tensor->Size());
-  for (int i = 0; i < Batch * Height; ++i) {
+  auto FLT4_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half4) : sizeof(cl_float4);
+  auto row_pitch = (W * SLICES + alignment - 1) / alignment * alignment * FLT4_size;
+  auto row_size = W * SLICES * FLT4_size;
+  std::vector<char> data(N * H * row_size);
+  for (int i = 0; i < N * H; ++i) {
     memcpy(static_cast<char *>(data.data()) + i * row_size, static_cast<char *>(origin_data) + i * row_pitch, row_size);
   }
 
   std::cout << "shape=(";
-  for (auto x : tensor->shape()) {
+  for (auto x : shape) {
     printf("%3d,", x);
   }
   printf("): ");
-
-  for (size_t i = 0; i < num && i < tensor->ElementsNum(); ++i) {
+  for (size_t i = 0; i < num && i < ElementsC4Num; ++i) {
     if (tensor->data_type() == kNumberTypeFloat16)
       printf("%zu %6.3f | ", i, (reinterpret_cast<float16_t *>(data.data()))[i]);
     else
@@ -272,7 +272,7 @@ void PrintTensor(lite::Tensor *tensor, int num, const std::string &out_file) {
   printf("\n");
 
   if (!out_file.empty()) {
-    Write2File(data.data(), out_file, tensor->Size());
+    Write2File(data.data(), out_file, data.size());
   }
   allocator->UnmapBuffer(origin_data);
 }

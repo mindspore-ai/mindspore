@@ -65,6 +65,7 @@ int ConvolutionOpenCLKernel::Init() {
   CO_SLICES_ = UP_DIV(CO_, C4NUM);
   KH_ = param->kernel_h_;
   KW_ = param->kernel_w_;
+  has_bias_ = in_tensors_.size() == 3;
 
   // note: TILES_X TILES_Y TILES_XY is only used when use_winograd_=true
   TILES_X_ = UP_DIV(OW_, 4);
@@ -243,7 +244,9 @@ int ConvolutionOpenCLKernel::InitBias() {
 
 int ConvolutionOpenCLKernel::InitBuffer() {
   InitWeight();
-  InitBias();
+  if (has_bias_) {
+    InitBias();
+  }
   return RET_OK;
 }
 
@@ -298,7 +301,9 @@ int ConvolutionOpenCLKernel::Run() {
     cl_int4 _36to4x4_out_shape = {1, OH_, OW_, CO_SLICES_};
     ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, winograd_mem1_, lite::opencl::MemType::IMG);
     ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
+    if (has_bias_) {
+      ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
+    }
     ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, _36to4x4_in_shape);
     ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, _36to4x4_out_shape);
   } else {
@@ -306,7 +311,9 @@ int ConvolutionOpenCLKernel::Run() {
     ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
     ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
     ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
+    if (has_bias_) {
+      ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
+    }
     if (op_format_ == Format_NC4HW4) {
       cl_int4 input_shape = {1, IH_, IW_, CI_SLICES_};
       cl_int4 output_shape = {1, OH_, OW_, CO_SLICES_};
@@ -372,10 +379,14 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNHWC4() {
 
   code +=
     "__kernel void Convolution(__read_only image2d_t input,\n"
-    "                          __write_only image2d_t output,\n"
-    "                          __global FLT4 *weight,\n"
-    "                          __global FLT4 *bias)"
-    "{\n";
+    "                          __write_only image2d_t output,\n";
+  if (has_bias_) {
+    code +=
+      "                          __global FLT4 *weight,\n"
+      "                          __global FLT4 *bias) {\n";
+  } else {
+    code += "                          __global FLT4 *weight) {\n";
+  }
 
   code += "    int n_oh = get_global_id(0);  // [0, N*OH)\n";
   if (batch_size_ == 1) {
@@ -426,17 +437,20 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNHWC4() {
     "            }\n"
     "        }\n"
     "    }\n\n";
-  code += "    FLT4 out0_c4_bias = out0_c4 + bias[co_slice];\n";
+
+  if (has_bias_) {
+    code += "    out0_c4 = out0_c4 + bias[co_slice];\n";
+  }
 
   if (param->act_type_ == ActType_Relu) {
-    code += "    out0_c4_bias = max(out0_c4_bias, (FLT4)(0.0f));\n";
+    code += "    out0_c4 = max(out0_c4, (FLT4)(0.0f));\n";
   } else if (param->act_type_ == ActType_Relu6) {
-    code += "    out0_c4_bias = clamp(out0_c4_bias, (FLT4)(0.0f), (FLT4)(6.0f));\n";
+    code += "    out0_c4 = clamp(out0_c4, (FLT4)(0.0f), (FLT4)(6.0f));\n";
   }
   if (OW_ * CO_SLICES_ <= MAX_IMAGE2D_SIZE) {
-    code += "    WRITE_IMAGE(output, (int2)(ow * CO_SLICES + co_slice, n_oh), out0_c4_bias);// NHWC4: NH WC\n}";
+    code += "    WRITE_IMAGE(output, (int2)(ow * CO_SLICES + co_slice, n_oh), out0_c4);// NHWC4: NH WC\n}";
   } else {
-    code += "    WRITE_IMAGE(output, (int2)(n_oh * CO_SLICES + co_slice, ow), out0_c4_bias);\n}";
+    code += "    WRITE_IMAGE(output, (int2)(n_oh * CO_SLICES + co_slice, ow), out0_c4);\n}";
   }
   return code;
 }
@@ -460,8 +474,11 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
     "\n"
     "__kernel void Convolution(__read_only image2d_t input,\n"
     "                          __write_only image2d_t output,\n"
-    "                          __global FLT4 *weight,\n"
-    "                          __global FLT4 *bias,\n"
+    "                          __global FLT4 *weight,\n";
+  if (has_bias_) {
+    code += "                          __global FLT4 *bias,\n";
+  }
+  code +=
     "                          const int4 input_shape,\n"
     "                          const int4 output_shape)\n"
     "{\n";
@@ -578,7 +595,10 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
     "        }\n"
     "    }\n\n";
 
-  code += "    out0 = out0 + bias[co_slice];\n";
+  if (has_bias_) {
+    code += "    out0 = out0 + bias[co_slice];\n";
+  }
+
   if (param->act_type_ == ActType_Relu) {
     code += "    out0 = max(out0, (FLT4)(0.0f));\n";
   } else if (param->act_type_ == ActType_Relu6) {
@@ -591,7 +611,9 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
       "    if (last_is_double)"
       "    {\n";
   }
-  code += "    out1 = out1 + bias[co_slice];\n";
+  if (has_bias_) {
+    code += "    out1 = out1 + bias[co_slice];\n";
+  }
   if (param->act_type_ == ActType_Relu) {
     code += "    out1 = max(out1, (FLT4)(0.0f));\n";
   } else if (param->act_type_ == ActType_Relu6) {
@@ -788,8 +810,11 @@ std::string ConvolutionOpenCLKernel::CodeGenWinograd36To4x4() {
     "};\n"
     "\n"
     "__kernel void Winograd36To4x4(__read_only image2d_t input,\n"
-    "                              __write_only image2d_t output,\n"
-    "                              __global FLT4 *bias,\n"
+    "                              __write_only image2d_t output,\n";
+  if (has_bias_) {
+    code += "                              __global FLT4 *bias,\n";
+  }
+  code +=
     "                              int4 input_shape,      // N 36 H/4*W/4 CO_SLICES\n"
     "                              int4 output_shape)     // N H W CO_SLICES\n"
     "{\n"
@@ -824,9 +849,10 @@ std::string ConvolutionOpenCLKernel::CodeGenWinograd36To4x4() {
     "        for (int y = 0; y < 6; y++)\n"
     "        {\n"
     "            acc += AtM_row[y] * At[x * 6 + y];\n"
-    "        }\n"
-    "        acc += bias[slice];\n"
-    "\n";
+    "        }\n";
+  if (has_bias_) {
+    code += "        acc += bias[slice];\n";
+  }
 
   auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
   if (param->act_type_ == ActType_Relu) {
