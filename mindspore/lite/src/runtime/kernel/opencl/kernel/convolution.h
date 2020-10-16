@@ -35,44 +35,15 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
 
   int Init() override;
   int Run() override;
-  int InitBuffer();
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
-  bool use_fp16_ = false;
-
-  int batch_size_{};
-  int CI_{};
-  int IH_{};
-  int IW_{};
-  int CO_{};
-  int OH_{};
-  int OW_{};
-  int CI_SLICES_{};
-  int CO_SLICES_{};
-  int KH_{};
-  int KW_{};
-  void *packed_weight_ = nullptr;
-  void *packed_bias_ = nullptr;
-
-  bool use_winograd_ = false;
-  int TILES_X_{};
-  int TILES_Y_{};
-  int TILES_XY_{};
-  void *winograd_mem0_ = nullptr;
-  void *winograd_mem1_ = nullptr;
-
-  cl::Kernel kernel_4x4to36_;
-  cl::Kernel kernel_conv_;
-  cl::Kernel kernel_36to4x4_;
-
+  int InitBuffer();
   int InitWeight();
   int InitBias();
   int GenerateWinogradWeight();
-
   std::string CodeGenConvolutionNHWC4();
   std::string CodeGenConvolutionNC4HW4();
-
   std::string CodeGenWinograd4x4To36();
   std::string CodeGenWinogradConvolution();
   std::string CodeGenWinograd36To4x4();
@@ -110,6 +81,7 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
                            param->pad_r_,
                            param->dilation_h_,
                            param->dilation_w_,
+                           has_bias_,
                            use_fp16_,
                            op_format_,
                            param->act_type_};
@@ -119,6 +91,34 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
     }
     return code_id;
   }
+
+  bool use_fp16_ = false;
+
+  int batch_size_{};
+  int CI_{};
+  int IH_{};
+  int IW_{};
+  int CO_{};
+  int OH_{};
+  int OW_{};
+  int CI_SLICES_{};
+  int CO_SLICES_{};
+  int KH_{};
+  int KW_{};
+  void *packed_weight_ = nullptr;
+  void *packed_bias_ = nullptr;
+  bool has_bias_ = false;
+
+  bool use_winograd_ = false;
+  int TILES_X_{};
+  int TILES_Y_{};
+  int TILES_XY_{};
+  void *winograd_mem0_ = nullptr;
+  void *winograd_mem1_ = nullptr;
+
+  cl::Kernel kernel_4x4to36_;
+  cl::Kernel kernel_conv_;
+  cl::Kernel kernel_36to4x4_;
 };
 }  // namespace mindspore::kernel
 
