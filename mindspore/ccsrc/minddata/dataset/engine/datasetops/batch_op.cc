@@ -44,7 +44,7 @@ Status BatchOp::Builder::Build(std::shared_ptr<BatchOp> *ptr) {
                                    builder_batch_size_func_, builder_batch_map_func_, builder_pad_map_);
 #else
   *ptr = std::make_shared<BatchOp>(builder_batch_size_, builder_drop_, builder_pad_, builder_op_connector_size_,
-                                   builder_num_workers_, builder_cols_to_map_, builder_pad_map_);
+                                   builder_num_workers_, builder_in_names_, builder_pad_map_);
 #endif
   return Status::OK();
 }
@@ -86,7 +86,7 @@ BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size,
       start_batch_size_(batch_size),
       drop_(drop),
       pad_(pad),
-      pyfunc_column_names_(cols_to_map),
+      in_col_names_(cols_to_map),
       pad_info_(pad_map) {
   worker_queues_.Init(num_workers, op_queue_size);
 }
