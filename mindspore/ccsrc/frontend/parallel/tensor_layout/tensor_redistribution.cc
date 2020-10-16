@@ -223,7 +223,8 @@ Status TensorRedistribution::ComputeCost() {
     } else {
       prev_shape = from_.tensor_shape().array();
     }
-    double prev_prod = std::accumulate(prev_shape.begin(), prev_shape.end(), 1, std::multiplies<int>());
+    double prev_prod =
+      std::accumulate(prev_shape.begin(), prev_shape.end(), static_cast<double>(1.0), std::multiplies<double>());
     computation_cost_ += 2.0 * prev_prod;
     memory_cost_ += 2.0 * prev_prod;
   }
