@@ -29,7 +29,7 @@ from mindspore import nn, Tensor, ParameterTuple, Parameter
 from mindspore.common.initializer import Uniform, initializer
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 
 from src.callback import EvalCallBack, LossCallBack
@@ -270,7 +270,7 @@ class TrainStepWrap(nn.Cell):
         self.weights = ParameterTuple(network.trainable_params())
         self.optimizer = Adam(self.weights, learning_rate=lr, eps=eps, loss_scale=loss_scale)
         self.hyper_map = C.HyperMap()
-        self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
+        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = loss_scale
 
         self.reducer_flag = False
