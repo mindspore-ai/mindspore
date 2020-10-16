@@ -350,7 +350,8 @@ Status GatherV2PInfo::InferDevMatrixShape() {
   auto param_product = std::accumulate(param_strategy.begin(), param_strategy.end(), 1, std::multiplies<int>());
   auto index_product = std::accumulate(index_strategy.begin(), index_strategy.end(), 1, std::multiplies<int>());
   if (param_product * index_product < SizeToInt(dev_num)) {
-    out_dev_matrix_shape_.insert(out_dev_matrix_shape_.begin(), SizeToInt(dev_num / (param_product * index_product)));
+    // add the repeated calculation num to the last dimension of dev matrix
+    out_dev_matrix_shape_.push_back(SizeToInt(dev_num / (param_product * index_product)));
   }
 
   return SUCCESS;

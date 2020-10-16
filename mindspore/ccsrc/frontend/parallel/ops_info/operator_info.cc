@@ -164,14 +164,42 @@ Status OperatorInfo::InferRepeatedCalcInfo() {
   return SUCCESS;
 }
 
-// if repeated calculation, need to set the repeated_calc_num as the first dimension of dev-matrix,
-// only use for infer tensor layout
+// If repeated calculation, need to set the repeated_calc_num as the last dimension of dev-matrix,
+// only use for infer tensor layout. Because if the previous shard is (a, b), and the next shard is
+// (a, 1), adding the repeated_calc_num to the last dimension of dev-matrix, there is no need to redistribution.
 void OperatorInfo::SetRepeatedCalcDevMatrix() {
   if (repeated_calc_num_ <= 1) {
     return;
   }
 
-  (void)dev_matrix_shape_.insert(dev_matrix_shape_.begin(), repeated_calc_num_);
+  (void)dev_matrix_shape_.push_back(repeated_calc_num_);
+}
+
+// If repeated calculation, since the repeated_calc_num is added to the last dimension of the dev-matrix,
+// the index value of tensor map needs to be increased by 1.
+void OperatorInfo::ResetTensorMapIfRepeatedCalc() {
+  if (repeated_calc_num_ <= 1) {
+    return;
+  }
+
+  MS_LOG(DEBUG) << name_ << ": the repeated calc num is " << repeated_calc_num_ << ", and reset the tensor maps";
+  for (auto &tensor_map : inputs_tensor_map_) {
+    for (auto &element : tensor_map) {
+      if (element == MAP_NONE) {
+        continue;
+      }
+      element += 1;
+    }
+  }
+
+  for (auto &tensor_map : outputs_tensor_map_) {
+    for (auto &element : tensor_map) {
+      if (element == MAP_NONE) {
+        continue;
+      }
+      element += 1;
+    }
+  }
 }
 
 // use for loss repeated calculation
@@ -454,13 +482,15 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &strat
     return FAILED;
   }
 
-  // if repeated calculation, need to set the repeated_calc_num as the first dimension of dev-matrix for layout
+  // if repeated calculation, need to set the repeated_calc_num as the last dimension of dev-matrix for layout
   SetRepeatedCalcDevMatrix();
 
   if (InferTensorMap() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": InferTensorMap failed.";
     return FAILED;
   }
+
+  ResetTensorMapIfRepeatedCalc();
 
   if (InferTensorInfo() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": InferTensorInfo failed.";

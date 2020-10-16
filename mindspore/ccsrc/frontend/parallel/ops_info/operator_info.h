@@ -184,6 +184,7 @@ class OperatorInfo {
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
   void SetDeviceListByStrategy();
   void SetRepeatedCalcDevMatrix();
+  void ResetTensorMapIfRepeatedCalc();
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
   Status InferAttrs();
   void ResetQueueMember();

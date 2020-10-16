@@ -85,7 +85,7 @@ TEST_F(TestTransposeInfo, InferDevMatrixShape2) {
   transpose->Init(strategy);
   Shape dev_matrix_shape = transpose->dev_matrix_shape();
 
-  Shape expect = {8, 4, 1};
+  Shape expect = {4, 1, 8};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
