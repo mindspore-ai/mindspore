@@ -1,17 +1,17 @@
-## Demo_image_classification
+# Demo of Image Classification
 
 The following describes how to use the MindSpore Lite C++ APIs (Android JNIs) and MindSpore Lite image classification models to perform on-device inference, classify the content captured by a device camera, and display the most possible classification result on the application's image preview screen.
 
 
-### 运行依赖
+### Running Dependencies
 
 - Android Studio 3.2 or later (Android 4.0 or later is recommended.)
 - Native development kit (NDK) 21.3
 - CMake 3.10.2 [CMake](https://cmake.org/download) 
 - Android software development kit (SDK) 26 or later
-- JDK 1.8 or later [JDK]( https://www.oracle.com/downloads/otn-pub/java/JDK/) 
+- JDK 1.8 or later
 
-### 构建与运行
+### Building and Running
 
 1. Load the sample source code to Android Studio and install the corresponding SDK. (After the SDK version is specified, Android Studio automatically installs the SDK.)
 
@@ -35,9 +35,7 @@ The following describes how to use the MindSpore Lite C++ APIs (Android JNIs) an
 
     The mobile phone needs to be turn on "USB debugging mode" before Android Studio can recognize the mobile phone. Huawei mobile phones generally turn on "USB debugging model" in Settings > system and update > developer Options > USB debugging.
 
-3. 在Android设备上，点击“继续安装”，安装完即可查看到设备摄像头捕获的内容和推理结果。
-
-    Continue the installation on the Android device. After the installation is complete, you can view the content captured by a camera and the inference result.
+3. Continue the installation on the Android device. After the installation is complete, you can view the content captured by a camera and the inference result.
 
     ![result](images/app_result.jpg)
 
@@ -60,7 +58,7 @@ app
 │   |   └── MindSporeNetnative.h # header file
 │   |
 │   ├── java # application code at the Java layer
-│   │   └── com.huawei.himindsporedemo 
+│   │   └── com.mindspore.himindsporedemo 
 │   │       ├── gallery.classify # implementation related to image processing and MindSpore JNI calling
 │   │       │   └── ...
 │   │       └── widget # implementation related to camera enabling and drawing
@@ -190,31 +188,47 @@ The inference code process is as follows. For details about the complete code, s
    Convert the image data to be detected into the Tensor format of the MindSpore model.
 
      ```cpp
-     // Convert the Bitmap image passed in from the JAVA layer to Mat for OpenCV processing
-     BitmapToMat(env, srcBitmap, matImageSrc);
-     // Processing such as zooming the picture size.
-     matImgPreprocessed = PreProcessImageData(matImageSrc);
+    if (!BitmapToLiteMat(env, srcBitmap, &lite_mat_bgr)) {
+     MS_PRINT("BitmapToLiteMat error");
+     return NULL;
+    }
+    if (!PreProcessImageData(lite_mat_bgr, &lite_norm_mat_cut)) {
+     MS_PRINT("PreProcessImageData error");
+     return NULL;
+    }
 
-     ImgDims inputDims;
-     inputDims.channel = matImgPreprocessed.channels();
-     inputDims.width = matImgPreprocessed.cols;
-     inputDims.height = matImgPreprocessed.rows;
-     float *dataHWC = new float[inputDims.channel * inputDims.width * inputDims.height]
+    ImgDims inputDims;
+    inputDims.channel = lite_norm_mat_cut.channel_;
+    inputDims.width = lite_norm_mat_cut.width_;
+    inputDims.height = lite_norm_mat_cut.height_;
 
-     // Copy the image data to be detected to the dataHWC array.
-     // The dataHWC[image_size] array here is the intermediate variable of the input MindSpore model tensor.
-     float *ptrTmp = reinterpret_cast<float *>(matImgPreprocessed.data);
-     for(int i = 0; i < inputDims.channel * inputDims.width * inputDims.height; i++){
-        dataHWC[i] = ptrTmp[i];
-     }
+    // Get the mindsore inference environment which created in loadModel().
+    void **labelEnv = reinterpret_cast<void **>(netEnv);
+    if (labelEnv == nullptr) {
+     MS_PRINT("MindSpore error, labelEnv is a nullptr.");
+     return NULL;
+    }
+    MSNetWork *labelNet = static_cast<MSNetWork *>(*labelEnv);
 
-     // Assign dataHWC[image_size] to the input tensor variable.
-     auto msInputs = mSession->GetInputs();
-     auto inTensor = msInputs.front();
-     memcpy(inTensor->MutableData(), dataHWC,
+    auto mSession = labelNet->session();
+    if (mSession == nullptr) {
+     MS_PRINT("MindSpore error, Session is a nullptr.");
+     return NULL;
+    }
+    MS_PRINT("MindSpore get session.");
+
+    auto msInputs = mSession->GetInputs();
+    if (msInputs.size() == 0) {
+     MS_PRINT("MindSpore error, msInputs.size() equals 0.");
+     return NULL;
+    }
+    auto inTensor = msInputs.front();
+
+    float *dataHWC = reinterpret_cast<float *>(lite_norm_mat_cut.data_ptr_);
+    // Copy dataHWC to the model input tensor.
+    memcpy(inTensor->MutableData(), dataHWC,
          inputDims.channel * inputDims.width * inputDims.height * sizeof(float));
-     delete[] (dataHWC);
-     ```
+    ```
 
 3. Perform inference on the input tensor based on the model, obtain the output tensor, and perform post-processing.    
 
@@ -240,39 +254,56 @@ The inference code process is as follows. For details about the complete code, s
    - Perform post-processing of the output data.
 
      ```cpp
-     std::string ProcessRunnetResult(std::unordered_map<std::string,
-             mindspore::tensor::MSTensor *> msOutputs, int runnetRet) {
-     
-       std::unordered_map<std::string, mindspore::tensor::MSTensor *>::iterator iter;
-       iter = msOutputs.begin();
-     
-       // The mobilenetv2.ms model output just one branch.
-       auto outputTensor = iter->second;
-       int tensorNum = outputTensor->ElementsNum();
-       MS_PRINT("Number of tensor elements:%d", tensorNum);
-     
-       // Get a pointer to the first score.
-       float *temp_scores = static_cast<float * >(outputTensor->MutableData());
-     
-       float scores[RET_CATEGORY_SUM];
-       for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
-         if (temp_scores[i] > 0.5) {
-           MS_PRINT("MindSpore scores[%d] : [%f]", i, temp_scores[i]);
-         }
-         scores[i] = temp_scores[i];
-       }
-     
-       // Score for each category.
-       // Converted to text information that needs to be displayed in the APP.
-       std::string categoryScore = "";
-       for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
-         categoryScore += labels_name_map[i];
-         categoryScore += ":";
-         std::string score_str = std::to_string(scores[i]);
-         categoryScore += score_str;
-         categoryScore += ";";
-       }
-       return categoryScore;
-     }      
-     ```
+     std::string ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const labels_name_map[],
+              std::unordered_map<std::string, mindspore::tensor::MSTensor *> msOutputs) {
+      // Get the branch of the model output.
+      // Use iterators to get map elements.
+      std::unordered_map<std::string, mindspore::tensor::MSTensor *>::iterator iter;
+      iter = msOutputs.begin();
 
+      // The mobilenetv2.ms model output just one branch.
+      auto outputTensor = iter->second;
+
+      int tensorNum = outputTensor->ElementsNum();
+      MS_PRINT("Number of tensor elements:%d", tensorNum);
+
+      // Get a pointer to the first score.
+      float *temp_scores = static_cast<float *>(outputTensor->MutableData());
+      float scores[RET_CATEGORY_SUM];
+      for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
+       scores[i] = temp_scores[i];
+      }
+
+      float unifiedThre = 0.5;
+      float probMax = 1.0;
+      for (size_t i = 0; i < RET_CATEGORY_SUM; ++i) {
+       float threshold = g_thres_map[i];
+       float tmpProb = scores[i];
+       if (tmpProb < threshold) {
+        tmpProb = tmpProb / threshold * unifiedThre;
+       } else {
+        tmpProb = (tmpProb - threshold) / (probMax - threshold) * unifiedThre + unifiedThre;
+      }
+       scores[i] = tmpProb;
+     }
+
+      for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
+      if (scores[i] > 0.5) {
+          MS_PRINT("MindSpore scores[%d] : [%f]", i, scores[i]);
+       }
+      }
+
+      // Score for each category.
+      // Converted to text information that needs to be displayed in the APP.
+      std::string categoryScore = "";
+      for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
+       categoryScore += labels_name_map[i];
+       categoryScore += ":";
+       std::string score_str = std::to_string(scores[i]);
+       categoryScore += score_str;
+       categoryScore += ";";
+      }
+        return categoryScore;
+     }
+     
+     ```
