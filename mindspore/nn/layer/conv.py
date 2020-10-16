@@ -45,6 +45,7 @@ class _Conv(Cell):
                  has_bias,
                  weight_init,
                  bias_init,
+                 data_format='NCHW',
                  transposed=False):
         super(_Conv, self).__init__()
         self.in_channels = Validator.check_positive_int(in_channels)
@@ -54,6 +55,9 @@ class _Conv(Cell):
         self.pad_mode = pad_mode
         self.weight_init = weight_init
         self.bias_init = bias_init
+        self.format = Validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
         if isinstance(padding, int):
             Validator.check_non_negative_int(padding, 'padding', self.cls_name)
             self.padding = padding
@@ -89,7 +93,8 @@ class _Conv(Cell):
         if transposed:
             shape = [in_channels, out_channels // group, *kernel_size]
         else:
-            shape = [out_channels, in_channels // group, *kernel_size]
+            shape = [out_channels, in_channels // group, *kernel_size] if self.format == "NCHW" else \
+                [out_channels, *kernel_size, in_channels // group]
         self.weight = Parameter(initializer(self.weight_init, shape), name='weight')
 
         if Validator.check_bool(has_bias):
@@ -181,12 +186,15 @@ class Conv2d(_Conv):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Possible
             Initializer and string are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: 'zeros'.
+        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
+            Default: 'NCHW'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` \
+            or `(N, H_{in}, W_{in}, C_{in})`.
 
     Outputs:
-        Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+        Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})` or `(N, H_{out}, W_{out}, C_{out})`.
 
     Examples:
         >>> net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
@@ -207,7 +215,8 @@ class Conv2d(_Conv):
                  group=1,
                  has_bias=False,
                  weight_init='normal',
-                 bias_init='zeros'):
+                 bias_init='zeros',
+                 data_format='NCHW'):
         kernel_size = twice(kernel_size)
         stride = twice(stride)
         self._dilation = dilation
@@ -223,7 +232,8 @@ class Conv2d(_Conv):
             group,
             has_bias,
             weight_init,
-            bias_init)
+            bias_init,
+            data_format)
         self.conv2d = P.Conv2D(out_channel=self.out_channels,
                                kernel_size=self.kernel_size,
                                mode=1,
@@ -231,7 +241,8 @@ class Conv2d(_Conv):
                                pad=self.padding,
                                stride=self.stride,
                                dilation=self.dilation,
-                               group=self.group)
+                               group=self.group,
+                               data_format=self.format)
         self._init_depthwise_conv2d()
         self.bias_add = P.BiasAdd()
 
@@ -263,8 +274,8 @@ class Conv2d(_Conv):
     def extend_repr(self):
         s = 'input_channels={}, output_channels={}, kernel_size={},' \
             'stride={},  pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={},' \
-            'weight_init={}, bias_init={}'.format(
+            'group={}, has_bias={}' \
+            'weight_init={}, bias_init={}, format={}'.format(
                 self.in_channels,
                 self.out_channels,
                 self.kernel_size,
@@ -275,7 +286,8 @@ class Conv2d(_Conv):
                 self.group,
                 self.has_bias,
                 self.weight_init,
-                self.bias_init)
+                self.bias_init,
+                self.format)
         return s
 
 

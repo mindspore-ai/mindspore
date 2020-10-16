@@ -341,6 +341,12 @@ void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<s
       format_transform_ = false;
       return;
     }
+    auto value = AnfAlgo::GetCNodePrimitive(kernel);
+    if (value != nullptr && value->GetAttr("data_format") != nullptr &&
+        GetValue<std::string>(value->GetAttr("data_format")) == kOpFormat_NHWC) {
+      format_transform_ = false;
+      return;
+    }
     if (kernel_name == prim::kPrimConv2D->name()) {
       conv_cnt++;
     }

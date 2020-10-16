@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCH_NORM_EX_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCH_NORM_EX_GPU_KERNEL_H_
 
-#include <vector>
 #include <string>
+#include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
@@ -131,6 +131,10 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
       return true;
     }
     auto format = AnfAlgo::GetInputFormat(kernel_node, 0);
+    auto format_attr = GetAttr<std::string>(kernel_node, "data_format");
+    if (format_attr == kOpFormat_NHWC) {
+      format = kOpFormat_NHWC;
+    }
     SetTensorDescriptor(format, shape);
     InitSizeLists();
     return true;

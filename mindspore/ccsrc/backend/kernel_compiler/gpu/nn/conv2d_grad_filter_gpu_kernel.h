@@ -17,12 +17,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_CONV2D_GRAD_FILTER_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_CONV2D_GRAD_FILTER_GPU_KERNEL_H_
 
-#include <vector>
-#include <string>
 #include <algorithm>
+#include <string>
+#include <vector>
+
+#include "backend/kernel_compiler/gpu/cuda_impl/pad_impl.cuh"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
-#include "backend/kernel_compiler/gpu/cuda_impl/pad_impl.cuh"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
 
 namespace mindspore {
@@ -79,7 +80,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
 
     if ((pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) && use_pad_) {
       T *padded = GetDeviceAddress<T>(workspace, 1);
-      if (data_format_ == "NHWC") {
+      if (data_format_ == kOpFormat_NHWC) {
         CalPadNHWC(padded_size_ / sizeof(T), x, n_, old_height_, old_width_, c_, old_height_ + pad_height_,
                    old_width_ + pad_width_, pad_top_, pad_left_, pad_value_, padded,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -115,9 +116,13 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
       return true;
     }
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
+    format_attr_ = GetAttr<std::string>(kernel_node, "data_format");
+    if (format_attr_ == kOpFormat_NHWC) {
+      data_format_ = kOpFormat_NHWC;
+    }
     std::vector<size_t> filter_shape;
     GetFilterShape(kernel_node, &filter_shape);
-    if (data_format_ == "NHWC") {
+    if (data_format_ == kOpFormat_NHWC) {
       compute_format_ = CUDNN_TENSOR_NHWC;
     }
     SetNCHW(in_shape, &n_, &c_, &old_height_, &old_width_, data_format_);
@@ -145,12 +150,12 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
       }
       int dimA[4];
       int strideApadded[4];
-      if (data_format_ == "NCHW" || data_format_ == "DefaultFormat") {
+      if (data_format_ == kOpFormat_NCHW || data_format_ == kOpFormat_DEFAULT) {
         auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_height_ + pad_height_),
                              IntToSize(old_width_ + pad_width_)};
         SetDimA(padded_shape, dimA, 4, data_format_);
         SetStrideA(padded_shape, strideApadded, 4, data_format_);
-      } else if (data_format_ == "NHWC") {
+      } else if (data_format_ == kOpFormat_NHWC) {
         auto padded_shape = {IntToSize(n_), IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_),
                              IntToSize(c_)};
         SetDimA(padded_shape, dimA, 4, data_format_);
@@ -292,10 +297,9 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
     SetStrideA(in_shape, strideAin, 4, data_format_);
     SetDimA(dy_shape, dimAdy, 4, data_format_);
     SetStrideA(dy_shape, strideAdy, 4, data_format_);
-    // filter shape always keep OIHW.
-    int filterDimA[4] = {SizeToInt(filter_shape[0]), SizeToInt(filter_shape[1]), SizeToInt(filter_shape[2]),
-                         SizeToInt(filter_shape[3])};
-
+    // filter shape relued by format_attr_. In native mode it's OHWI. In transpose mode it's OIHW.
+    int filterDimA[4];
+    SetDimA(filter_shape, filterDimA, 4, format_attr_);
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptor(dy_desc_, cudnn_data_type_, nbDims, dimAdy, strideAdy),
                                 "cudnnSetTensorNdDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
@@ -325,7 +329,8 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
   cudnnTensorDescriptor_t padded_descriptor_;
   cudnnConvolutionBwdFilterAlgo_t algo_;
   std::string pad_mode_;
-  std::string data_format_ = "NCHW";
+  std::string data_format_ = kOpFormat_NCHW;
+  std::string format_attr_ = kOpFormat_NCHW;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

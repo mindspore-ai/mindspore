@@ -31,7 +31,7 @@ from ... import context
 @bprop_getters.register(P.BiasAdd)
 def get_bprop_bias_add(self):
     """Grad definition for `BiasAdd` operation."""
-    bias_grad = SG.BiasAddGrad()
+    bias_grad = SG.BiasAddGrad(self.data_format)
 
     def bprop(x, w, out, dout):
         return dout, bias_grad(dout)
@@ -44,11 +44,11 @@ def get_bprop_conv2d(self):
     """Grad definition for `Conv2D` operation."""
     input_grad = P.Conv2DBackpropInput(
         self.out_channel, self.kernel_size, self.pad_mode, self.pad, self.pad_list, mode=self.mode,
-        dilation=self.dilation, stride=self.stride, group=self.group
+        dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
     filter_grad = G.Conv2DBackpropFilter(
         self.out_channel, self.kernel_size, self.pad_mode, self.pad, self.pad_list, mode=self.mode,
-        dilation=self.dilation, stride=self.stride, group=self.group
+        dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
     get_shape = P.Shape()
 
@@ -224,7 +224,8 @@ def get_bprop_max_pool_grad(self):
     maxpool_grad = G.MaxPoolGrad(
         ksize=self.ksize,
         strides=self.strides,
-        padding=self.padding)
+        padding=self.padding,
+        data_format=self.format)
 
     def bprop(x, out, dout):
         dx = maxpool_grad(x, out, dout)
@@ -324,7 +325,8 @@ def get_bprop_avg_pool_grad(self):
         avgpool_grad_gpu = G.AvgPoolGradGpu(
                         ksize=self.ksize,
                         strides=self.strides,
-                        padding=self.padding)
+                        padding=self.padding,
+                        data_format=self.format)
 
         def bprop_gpu(x, out, dout):
             dx = avgpool_grad_gpu(x, out, dout)
@@ -574,7 +576,7 @@ def get_bprop_fused_batch_norm(self):
 @bprop_getters.register(P.FusedBatchNormEx)
 def get_bprop_fused_batch_norm_ex(self):
     """Grad definition for `FusedBatchNormEx` operation."""
-    input_grad = G.FusedBatchNormGradEx(self.epsilon, self.momentum)
+    input_grad = G.FusedBatchNormGradEx(self.epsilon, self.momentum, self.format)
 
     def bprop(x, scale, b, mean, variance, out, dout):
         saved_mean = out[3]
@@ -922,11 +924,11 @@ def get_bprop_conv2d_backprop_input(self):
     """Grad definition for `Conv2DBackpropInput` operation."""
     filter_grad = G.Conv2DBackpropFilter(
         self.out_channel, self.kernel_size, self.pad_mode, self.pad, self.pad_list, mode=self.mode,
-        dilation=self.dilation, stride=self.stride, group=self.group
+        dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
     input_grad = P.Conv2D(
         self.out_channel, self.kernel_size, pad_mode=self.pad_mode.lower(), pad=self.pad,
-        dilation=self.dilation, stride=self.stride, group=self.group
+        dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
 
     def bprop(x, w, f_sizes, out, dout):

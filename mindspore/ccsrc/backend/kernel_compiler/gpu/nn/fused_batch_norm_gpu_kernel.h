@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCH_NORM_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCH_NORM_GPU_KERNEL_H_
 
+#include <string>
 #include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -98,11 +99,14 @@ class FusedBatchNormGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    batch_ = SizeToInt(shape[0]);
-    channel_ = SizeToInt(shape[1]);
-    height_ = SizeToInt(shape[2]);
-    width_ = SizeToInt(shape[3]);
-
+    cudnnTensorFormat_t cudnn_format = CUDNN_TENSOR_NCHW;
+    auto format = AnfAlgo::GetInputFormat(kernel_node, 0);
+    auto format_attr = GetAttr<std::string>(kernel_node, "data_format");
+    if (format_attr == kOpFormat_NHWC) {
+      format = kOpFormat_NHWC;
+      cudnn_format = CUDNN_TENSOR_NHWC;
+    }
+    SetNCHW(shape, &batch_, &channel_, &height_, &width_, format);
     mode_ = CUDNN_BATCHNORM_SPATIAL;
     epsilon_ = GetAttr<float>(kernel_node, "epsilon");
     // P.FusedBatchNorm is used for training; P.BatchNorm is used for inference
@@ -113,15 +117,15 @@ class FusedBatchNormGpuKernel : public GpuKernel {
     }
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensor4dDescriptor(x_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch_, channel_, height_, width_),
+      cudnnSetTensor4dDescriptor(x_desc_, cudnn_format, cudnn_data_type_, batch_, channel_, height_, width_),
       "Set x desc failed");
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensor4dDescriptor(y_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch_, channel_, height_, width_),
+      cudnnSetTensor4dDescriptor(y_desc_, cudnn_format, cudnn_data_type_, batch_, channel_, height_, width_),
       "Set y desc failed");
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensor4dDescriptor(scale_bias_mean_var_desc_, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, channel_, 1, 1),
+      cudnnSetTensor4dDescriptor(scale_bias_mean_var_desc_, cudnn_format, CUDNN_DATA_FLOAT, 1, channel_, 1, 1),
       "Set para desc failed");
 
     InitSizeLists();

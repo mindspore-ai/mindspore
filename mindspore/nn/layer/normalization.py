@@ -44,14 +44,17 @@ class _BatchNorm(Cell):
                  moving_var_init='ones',
                  use_batch_statistics=None,
                  device_num_each_group=1,
-                 input_dims='2d'):
+                 input_dims='2d',
+                 data_format='NCHW'):
         super(_BatchNorm, self).__init__()
         if num_features < 1:
             raise ValueError("num_features must be at least 1")
 
         if momentum < 0 or momentum > 1:
             raise ValueError("momentum should be a number in range [0, 1], but got {}".format(momentum))
-
+        self.format = Validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
         self.use_batch_statistics = use_batch_statistics
         self.num_features = num_features
         self.eps = eps
@@ -99,7 +102,8 @@ class _BatchNorm(Cell):
         elif self.is_gpu:
             self.bn_train = P.FusedBatchNormEx(mode=1,
                                                epsilon=self.eps,
-                                               momentum=self.momentum)
+                                               momentum=self.momentum,
+                                               data_format=self.format)
         else:
             self.bn_train = P.FusedBatchNorm(mode=1,
                                              epsilon=self.eps,
@@ -352,6 +356,8 @@ class BatchNorm2d(_BatchNorm):
             use the mean value and variance value of specified value. If None, the training process will use the mean
             and variance of current batch data and track the running mean and variance, the evaluation process will use
             the running mean and variance. Default: None.
+        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
+            Default: 'NCHW'.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -374,7 +380,8 @@ class BatchNorm2d(_BatchNorm):
                  beta_init='zeros',
                  moving_mean_init='zeros',
                  moving_var_init='ones',
-                 use_batch_statistics=None):
+                 use_batch_statistics=None,
+                 data_format='NCHW'):
         super(BatchNorm2d, self).__init__(num_features,
                                           eps,
                                           momentum,
@@ -384,7 +391,8 @@ class BatchNorm2d(_BatchNorm):
                                           moving_mean_init,
                                           moving_var_init,
                                           use_batch_statistics,
-                                          input_dims='2d')
+                                          input_dims='2d',
+                                          data_format=data_format)
 
     def _check_data_dim(self, x):
         if x.dim() != 4:

@@ -666,6 +666,8 @@ class FusedBatchNormEx(PrimitiveWithInfer):
         momentum (float): The hyper parameter to compute moving average for running_mean and running_var
             (e.g. :math:`new\_running\_mean = momentum * running\_mean + (1 - momentum) * current\_mean`).
             Momentum value must be [0, 1]. Default: 0.9.
+        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
+            Default: "NCHW".
 
     Inputs:
         - **input_x** (Tensor) - The input of FusedBatchNormEx, Tensor of shape :math:`(N, C)`,
@@ -706,20 +708,25 @@ class FusedBatchNormEx(PrimitiveWithInfer):
     )
 
     @prim_attr_register
-    def __init__(self, mode=0, epsilon=1e-5, momentum=0.1):
+    def __init__(self, mode=0, epsilon=1e-5, momentum=0.1, data_format="NCHW"):
         self.init_prim_io_names(inputs=['x', 'scale', 'b', 'mean', 'variance'],
                                 outputs=['y', 'save_scale', 'save_bias', 'save_mean', 'save_inv_variance', 'reserve'])
         self.mode = validator.check_int(mode, [0, 1], Rel.IN, 'mode', self.name)
         self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         self.momentum = validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         self._update_parameter = True
-        self.add_prim_attr('data_format', "NCHW")
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
+        self.add_prim_attr('data_format', self.format)
 
     def infer_shape(self, input_x, scale, bias, mean, variance):
+        input_shape_norm = input_x if self.format == "NCHW" else (input_x[0], input_x[3], input_x[1], input_x[2])
         validator.check_equal_int(len(scale), 1, "scale rank", self.name)
         validator.check("scale shape", scale, "bias shape", bias, Rel.EQ, self.name)
-        validator.check("scale shape[0]", scale[0], "input_x shape[1]", input_x[1], Rel.EQ, self.name)
+        validator.check("scale shape[0]", scale[0], "input channel", input_shape_norm[1], Rel.EQ, self.name)
         validator.check_equal_int(len(mean), 1, "mean rank", self.name)
+
         validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
         validator.check("mean shape", mean, "scale shape", scale, Rel.EQ, self.name)
         return (input_x, scale, scale, scale, scale, scale)
@@ -868,6 +875,8 @@ class BatchNorm(PrimitiveWithInfer):
         is_training (bool): If `is_training` is True, `mean` and `variance` are computed during training.
             If `is_training` is False, they're loaded from checkpoint during inference. Default: False.
         epsilon (float): A small value added for numerical stability. Default: 1e-5.
+        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
+            Default: "NCHW".
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
@@ -896,17 +905,21 @@ class BatchNorm(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, is_training=False, epsilon=1e-5):
+    def __init__(self, is_training=False, epsilon=1e-5, data_format="NCHW"):
         validator.check_value_type('is_training', is_training, (bool,), self.name)
         validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
-        self.add_prim_attr('data_format', "NCHW")
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
+        self.add_prim_attr('data_format', self.format)
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
                                 outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
 
     def infer_shape(self, input_x, scale, bias, mean, variance):
+        input_shape_norm = input_x if self.format == "NCHW" else (input_x[0], input_x[3], input_x[1], input_x[2])
         validator.check_equal_int(len(scale), 1, "scale rank", self.name)
         validator.check("scale shape", scale, "bias shape", bias, Rel.EQ, self.name)
-        validator.check("scale shape[0]", scale[0], "input_x shape[1]", input_x[1], Rel.EQ, self.name)
+        validator.check("scale shape[0]", scale[0], "input_x channel", input_shape_norm[1], Rel.EQ, self.name)
         if not self.is_training:
             validator.check_equal_int(len(mean), 1, "mean rank", self.name)
             validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
@@ -970,6 +983,7 @@ class Conv2D(PrimitiveWithInfer):
         stride (Union(int, tuple[int])): The stride to be applied to the convolution filter. Default: 1.
         dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: 1.
         group (int): Splits input into groups. Default: 1.
+        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'. Default: "NCHW".
 
     Returns:
         Tensor, the value that applied 2D convolution.
@@ -998,7 +1012,8 @@ class Conv2D(PrimitiveWithInfer):
                  pad=0,
                  stride=1,
                  dilation=1,
-                 group=1):
+                 group=1,
+                 data_format="NCHW"):
         """Initialize Conv2D"""
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
@@ -1021,54 +1036,63 @@ class Conv2D(PrimitiveWithInfer):
                 validator.check_non_negative_int(item, 'pad item', self.name)
 
         self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
-        self.add_prim_attr('data_format', "NCHW")
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
+        self.add_prim_attr('data_format', self.format)
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.group = validator.check_positive_int(group, 'group', self.name)
         self.add_prim_attr('offset_a', 0)
 
     def infer_shape(self, x_shape, w_shape, b_shape=None):
-        validator.check_equal_int(len(w_shape), 4, "weight rank", self.name)
-        validator.check_equal_int(len(x_shape), 4, "x rank", self.name)
-        validator.check(f"x_shape[1] / group", x_shape[1] // self.group, "w_shape[1]", w_shape[1], Rel.EQ, self.name)
-        validator.check('out_channel', self.out_channel, 'w_shape[0]', w_shape[0], Rel.EQ, self.name)
-        validator.check('kernel_size', self.kernel_size, 'w_shape[2:4]', tuple(w_shape[2:4]), Rel.EQ, self.name)
+        x_shape_norm = x_shape if self.format == "NCHW" else (x_shape[0], x_shape[3], x_shape[1], x_shape[2])
+        w_shape_norm = w_shape if self.format == "NCHW" else (w_shape[0], w_shape[3], w_shape[1], w_shape[2])
 
-        kernel_size_h = w_shape[2]
-        kernel_size_w = w_shape[3]
+        validator.check_equal_int(len(w_shape_norm), 4, "weight rank", self.name)
+        validator.check_equal_int(len(x_shape_norm), 4, "x rank", self.name)
+        validator.check(f"x_shape[1] / group", x_shape_norm[1] // self.group, "w_shape[1]", w_shape_norm[1], \
+             Rel.EQ, self.name)
+        validator.check('out_channel', self.out_channel, 'w_shape[0]', w_shape_norm[0], Rel.EQ, self.name)
+        validator.check('kernel_size', self.kernel_size, 'w_shape[2:4]', tuple(w_shape_norm[2:4]), Rel.EQ, self.name)
+
+        kernel_size_h = w_shape_norm[2]
+        kernel_size_w = w_shape_norm[3]
+
         stride_h = self.stride[2]
         stride_w = self.stride[3]
         dilation_h = self.dilation[2]
         dilation_w = self.dilation[3]
 
         if self.pad_mode == "valid":
-            h_out = math.ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
-            w_out = math.ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
+            h_out = math.ceil((x_shape_norm[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
+            w_out = math.ceil((x_shape_norm[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
             pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0
         elif self.pad_mode == "same":
-            h_out = math.ceil(x_shape[2] / stride_h)
-            w_out = math.ceil(x_shape[3] / stride_w)
+            h_out = math.ceil(x_shape_norm[2] / stride_h)
+            w_out = math.ceil(x_shape_norm[3] / stride_w)
 
-            pad_needed_h = max(0, (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[2])
+            pad_needed_h = max(0, (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape_norm[2])
             pad_top = math.floor(pad_needed_h / 2)
             pad_bottom = pad_needed_h - pad_top
 
-            pad_needed_w = max(0, (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape[3])
+            pad_needed_w = max(0, (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape_norm[3])
             pad_left = math.floor(pad_needed_w / 2)
             pad_right = pad_needed_w - pad_left
         elif self.pad_mode == 'pad':
             pad_top, pad_bottom, pad_left, pad_right = self.padding
 
-            h_out = 1 + (x_shape[2] + pad_top + pad_bottom - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
-                / stride_h
-            w_out = 1 + (x_shape[3] + pad_left + pad_right - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
-                / stride_w
+            h_out = 1 + (x_shape_norm[2] + pad_top + pad_bottom - kernel_size_h - (kernel_size_h - 1) \
+                * (dilation_h - 1)) / stride_h
+            w_out = 1 + (x_shape_norm[3] + pad_left + pad_right - kernel_size_w - (kernel_size_w - 1) \
+                * (dilation_w - 1)) / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
 
         self.pad_list = [pad_top, pad_bottom, pad_left, pad_right]
         self.add_prim_attr('pad_list', (pad_top, pad_bottom, pad_left, pad_right))
         out_channel = self.out_channel
-        out_shape = [x_shape[0], out_channel, h_out, w_out]
+        out_shape = [x_shape_norm[0], out_channel, h_out, w_out] if self.format == "NCHW" else\
+            [x_shape_norm[0], h_out, w_out, out_channel]
         _check_shape('output', out_shape, self.name)
         return out_shape
 
@@ -1226,18 +1250,23 @@ class _Pool(PrimitiveWithInfer):
             a tuple of two `int` for height and width. Default: 1.
         padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
+        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
+            Default: "NCHW".
     """
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="valid"):
+    def __init__(self, ksize=1, strides=1, padding="valid", data_format="NCHW"):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         validator.check_value_type('ksize', ksize, [int, tuple], self.name)
         validator.check_value_type('strides', strides, [int, tuple], self.name)
         self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
         self.add_prim_attr("padding", self.padding)
         self.is_maxpoolwithargmax = (self.name == "MaxPoolWithArgmax")
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
         if not self.is_maxpoolwithargmax:
-            self.add_prim_attr('data_format', "NCHW")
+            self.add_prim_attr('data_format', self.format)
 
         self.ksize = _check_positive_int_or_tuple("ksize", ksize, self.name, allow_four=False, ret_four=True)
         if self.is_maxpoolwithargmax:
@@ -1250,8 +1279,9 @@ class _Pool(PrimitiveWithInfer):
         self.add_prim_attr("strides", self.strides)
 
     def infer_shape(self, x_shape):
-        validator.check_equal_int(len(x_shape), 4, "x rank", self.name)
-        batch, channel, input_h, input_w = x_shape
+        x_shape_norm = x_shape if self.format == "NCHW" else [x_shape[0], x_shape[3], x_shape[1], x_shape[2]]
+        validator.check_equal_int(len(x_shape_norm), 4, "x rank", self.name)
+        batch, channel, input_h, input_w = x_shape_norm
         if self.is_maxpoolwithargmax:
             _, kernel_h, kernel_w, _ = self.ksize
             _, stride_h, stride_w, _ = self.strides
@@ -1265,7 +1295,7 @@ class _Pool(PrimitiveWithInfer):
         elif self.padding == "SAME":
             out_h = math.ceil(input_h / stride_h)
             out_w = math.ceil(input_w / stride_w)
-        out_shape = [batch, channel, out_h, out_w]
+        out_shape = [batch, channel, out_h, out_w] if self.format == "NCHW" else [batch, out_h, out_w, channel]
 
         for shape_value in out_shape:
             if shape_value <= 0:
@@ -1301,6 +1331,8 @@ class MaxPool(_Pool):
             represent height and width of movement respectively. Default: 1.
         padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
+        format (str) : The optional value for data format, is 'NHWC' or 'NCHW'.
+            Default: 'NCHW'.
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
               the input. The total number of padding will be calculated in horizontal and vertical
@@ -1323,8 +1355,8 @@ class MaxPool(_Pool):
     """
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="valid"):
-        super(MaxPool, self).__init__(ksize, strides, padding)
+    def __init__(self, ksize=1, strides=1, padding="valid", data_format="NCHW"):
+        super(MaxPool, self).__init__(ksize, strides, padding, data_format)
 
 
 class MaxPoolWithArgmax(_Pool):
@@ -1374,8 +1406,8 @@ class MaxPoolWithArgmax(_Pool):
         >>> output_tensor, argmax = maxpool_arg_op(input_tensor)
     """
 
-    def __init__(self, ksize=1, strides=1, padding="valid"):
-        super(MaxPoolWithArgmax, self).__init__(ksize, strides, padding)
+    def __init__(self, ksize=1, strides=1, padding="valid", data_format="NCHW"):
+        super(MaxPoolWithArgmax, self).__init__(ksize, strides, padding, data_format)
         self.is_tbe = context.get_context("device_target") == "Ascend"
         self.is_gpu = context.get_context("device_target") == "GPU"
 
@@ -1439,6 +1471,8 @@ class AvgPool(_Pool):
 
             - valid: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
+        data_format (str) - The format of input and output data. It should be 'NHWC' or 'NCHW'，\
+            default is 'NCHW'.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1473,14 +1507,14 @@ class AvgPool(_Pool):
     """
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="valid"):
+    def __init__(self, ksize=1, strides=1, padding="valid", data_format="NCHW"):
         if context.get_context("device_target") == "GPU":
             self.target = "GPU"
         elif context.get_context("enable_ge"):
             self.target = "GE"
         else:
             self.target = "OTHER"
-        super(AvgPool, self).__init__(ksize, strides, padding)
+        super(AvgPool, self).__init__(ksize, strides, padding, data_format)
 
 
 class Conv2DBackpropInput(PrimitiveWithInfer):
@@ -1500,6 +1534,8 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         dilation (Union[int. tuple[int]]): Specifies the dilation rate to be used for the dilated convolution.
             Default: 1.
         group (int): Splits input into groups. Default: 1.
+        data_format (str) - The format of input and output data. It should be 'NHWC' or 'NCHW'，\
+            default is 'NCHW'.
 
     Returns:
         Tensor, the gradients of convolution.
@@ -1522,7 +1558,8 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
                  mode=1,
                  stride=1,
                  dilation=1,
-                 group=1):
+                 group=1,
+                 data_format="NCHW"):
         """Initialize Conv2DBackpropInput"""
         self.init_prim_io_names(inputs=['out_backprop', 'filter', 'input_sizes'], outputs=['output'])
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
@@ -1549,7 +1586,10 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         self.add_prim_attr('pad_mode', pad_mode)
         self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
         self.group = validator.check_positive_int(group, 'group', self.name)
-        self.add_prim_attr('data_format', "NCHW")
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
+        self.add_prim_attr('data_format', self.format)
         if pad_list:
             for x in pad_list:
                 validator.check_non_negative_int(x, 'element of pad_list', self.name)
@@ -1566,6 +1606,8 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
 
         # infer shape
         dout_shape = doutput['shape']
+        dout_shape_norm = dout_shape if self.format == "NCHW" else\
+            [dout_shape[0], dout_shape[2], dout_shape[3], dout_shape[1]]
         kernel_h = self.kernel_size[0]
         kernel_w = self.kernel_size[1]
         stride_h = self.stride[0]
@@ -1577,11 +1619,11 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         if self.pad_list:
             pad_list = tuple(self.pad_list)
         elif self.pad_mode == "SAME":
-            pad_needed_h = max(0, (dout_shape[2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[2])
+            pad_needed_h = max(0, (dout_shape_norm[2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[2])
             pad_top = math.floor(pad_needed_h / 2)
             pad_bottom = pad_needed_h - pad_top
 
-            pad_needed_w = max(0, (dout_shape[3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[3])
+            pad_needed_w = max(0, (dout_shape_norm[3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[3])
             pad_left = math.floor(pad_needed_w / 2)
             pad_right = pad_needed_w - pad_left
             pad_list = (pad_top, pad_bottom, pad_left, pad_right)
@@ -1606,6 +1648,8 @@ class BiasAdd(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Tensor) - The input tensor. The shape can be 2-4 dimensions.
         - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`.
+        - **data_format** (str) - The format of input and output data. It should be 'NHWC' or 'NCHW'，\
+            default is 'NCHW'.
           The shape of `bias` must be the same as `input_x` in the second dimension.
 
     Outputs:
@@ -1619,14 +1663,18 @@ class BiasAdd(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, data_format="NCHW"):
         self.init_prim_io_names(inputs=['x', 'b'], outputs=['output'])
-        self.add_prim_attr('data_format', 'NCHW')
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
+        self.add_prim_attr('data_format', self.format)
 
     def infer_shape(self, x_shape, b_shape):
         validator.check_int(len(x_shape), 2, Rel.GE, "x rank", self.name)
         validator.check_equal_int(len(b_shape), 1, "bias rank", self.name)
-        validator.check("b_shape[0]", b_shape[0], "x_shape[1]", x_shape[1], Rel.EQ, self.name)
+        x_channel = x_shape[1] if self.format == "NCHW" else x_shape[-1]
+        validator.check("b_shape[0]", b_shape[0], "x_shape[1]", x_channel, Rel.EQ, self.name)
         return x_shape
 
     def infer_dtype(self, x_type, b_type):
