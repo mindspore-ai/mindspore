@@ -20,6 +20,7 @@
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
+#include "nnacl/softmax_parameter.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/softmax.cl.inc"
 #endif
@@ -40,9 +41,21 @@ std::vector<float> SoftmaxOpenCLKernel::GetMaskForLastChannel(int channels) {
 }
 
 int SoftmaxOpenCLKernel::InitGlobalSize() {
-  const size_t global_x = out_tensors_[0]->shape()[1];
-  const size_t global_y = out_tensors_[0]->shape()[2];
-  const size_t global_z = 1;
+  size_t global_x, global_y, global_z;
+  global_z = 1;
+  if (axis_ == 1) {
+    global_x = UP_DIV(nhwc_shape_[3], C4NUM);
+    global_y = nhwc_shape_[2];
+  } else if (axis_ == 2) {
+    global_x = UP_DIV(nhwc_shape_[3], C4NUM);
+    global_y = nhwc_shape_[1];
+  } else if (axis_ == 3) {
+    global_x = nhwc_shape_[2];
+    global_y = nhwc_shape_[1];
+  } else {
+    global_x = 1;
+    global_y = 1;
+  }
   global_size_ = {global_x, global_y, global_z};
   return lite::RET_OK;
 }
@@ -65,16 +78,7 @@ int SoftmaxOpenCLKernel::SetWorkGroupSize1x1() {
 int SoftmaxOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
   auto out_shape = out_tensors_[0]->shape();
-  int n = 1, h = 1, w = 1, c = 1;
-  if (out_shape.size() == 2) {
-    n = out_shape[0];
-    c = out_shape[1];
-  } else if (out_shape.size() == 4) {
-    n = out_shape[0];
-    h = out_shape[1];
-    w = out_shape[2];
-    c = out_shape[3];
-  }
+  int n = nhwc_shape_[0], h = nhwc_shape_[1], w = nhwc_shape_[2], c = nhwc_shape_[3];
   if (op_format_ == schema::Format_NHWC4) {
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = n * h;
@@ -98,38 +102,39 @@ int SoftmaxOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
 int SoftmaxOpenCLKernel::Init() {
   std::string kernel_name = "SoftMax";
   std::string program_name = "SoftMax";
-
+  auto softmax_param = reinterpret_cast<SoftmaxParameter *>(op_parameter_);
+  axis_ = softmax_param->axis_;
+  auto in_shape = in_tensors_[0]->shape();
+  if (in_shape.size() > 4) {
+    MS_LOG(ERROR) << "Init `Softmax` kernel failed: Unsupported shape size: " << in_shape.size();
+    return RET_ERROR;
+  }
+  if (axis_ < 0) {
+    axis_ = in_shape.size() + axis_;
+  }
+  axis_ += 4 - in_shape.size();
+  if (axis_ != 1 && axis_ != 2 && axis_ != 3) {
+    MS_LOG(ERROR) << "Init `Softmax` kernel failed: softmax axis should be H W or C";
+    return RET_ERROR;
+  }
+  nhwc_shape_ = GetNHWCShape(in_shape);
   std::string source = softmax_source;
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   // framework not set this param yet! just use default.
-  if (in_tensors_[0]->shape().size() == 4) {
+  if (nhwc_shape_[1] == 1 && nhwc_shape_[2] == 1 && axis_ == 3) {
     // support 4d tensor
-    onexone_flag_ = false;
-  } else if (in_tensors_[0]->shape().size() == 2) {
-    // support 2d tensor
+    onexone_flag_ = true;
     kernel_name += "1x1";
     program_name += "1x1";
-    onexone_flag_ = true;
   } else {
-    MS_LOG(ERROR) << "Init `Softmax` kernel failed: Unsupported shape size: " << in_tensors_[0]->shape().size();
-    return RET_ERROR;
+    onexone_flag_ = false;
+    kernel_name += "Axis" + std::to_string(axis_);
+    program_name += "Axis" + std::to_string(axis_);
   }
   kernel_name += "_" + std::string(EnumNameFormat(op_format_));
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
-  if (!is_image_out_) {
-    out_mem_type_ = OpenCLMemType::BUF;
-  } else {
-    out_mem_type_ = OpenCLMemType::IMG;
-  }
-  if (out_mem_type_ == OpenCLMemType::BUF) {
-    kernel_name += "_BUF";
-    program_name += "_BUF";
-  } else {
-    kernel_name += "_IMG";
-    program_name += "_IMG";
-  }
   std::set<std::string> build_options;
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
@@ -138,9 +143,6 @@ int SoftmaxOpenCLKernel::Init() {
   out_ori_format_ = out_tensors_[0]->GetFormat();
   in_tensors_[0]->SetFormat(op_format_);
   out_tensors_[0]->SetFormat(op_format_);
-  if (!is_image_out_) {
-    out_tensors_[0]->SetFormat(out_ori_format_);
-  }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return lite::RET_OK;
 }
@@ -149,34 +151,18 @@ int SoftmaxOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
 
   int arg_idx = 0;
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  int channel = nhwc_shape_[3];
+  int c4 = UP_DIV(channel, C4NUM);
+  auto mask_ = GetMaskForLastChannel(channel);
+  cl_float4 mask = {mask_[0], mask_[1], mask_[2], mask_[3]};
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, mask);
+  cl_int4 input_shape = {nhwc_shape_[0], nhwc_shape_[1], nhwc_shape_[2], c4};
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx, input_shape);
   if (onexone_flag_) {
-    int channel_size = in_tensors_[0]->shape()[1];
-    int slices = UP_DIV(channel_size, C4NUM);
-    cl_int slices_x32 = UP_DIV(slices, 32);
-    auto mask_ = GetMaskForLastChannel(channel_size);
-    cl_float4 mask = {mask_[0], mask_[1], mask_[2], mask_[3]};
-
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-    if (is_image_out_) {
-      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-    } else {
-      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
-    }
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, mask);
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, slices);
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx, slices_x32);
     SetWorkGroupSize1x1();
   } else {
-    int slices = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
-    cl_int4 input_shape = {in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2], in_tensors_[0]->shape()[3], slices};
-
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-    if (is_image_out_) {
-      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-    } else {
-      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
-    }
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx, input_shape);
     SetWorkGroupSize();
   }
 
