@@ -147,6 +147,5 @@ StatementMacros:
   - QT_REQUIRE_VERSION
 TabWidth:        2
 UseTab:          Never
-SortIncludes:    false
 ...
 
