@@ -32,7 +32,7 @@ STATUS OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph, const onnx:
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::UpsampleT> attr = std::make_unique<schema::UpsampleT>();
+  std::unique_ptr<schema::ResizeT> attr = std::make_unique<schema::ResizeT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
@@ -41,14 +41,19 @@ STATUS OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph, const onnx:
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "mode") {
-      attr->mode = onnx_node_attr.s();
-    } else if (attribute_name == "scales") {
-      for (int i = 0; i < onnx_node_attr.floats_size(); ++i) {
-        attr->scales[i] = onnx_node_attr.floats(i);
+      if ("nearest" == onnx_node_attr.s()) {
+        attr->method = schema::ResizeMethod_NEAREST_NEIGHBOR;
+      } else if ("bilinear" == onnx_node_attr.s()) {
+        attr->method = schema::ResizeMethod_BILINEAR;
+      } else {
+        MS_LOG(ERROR) << "Resize do not support upsample mode";
+        return RET_ERROR;
       }
     }
   }
-
+  attr->newWidth = 1;
+  attr->newHeight = 1;
+  attr->alignCorners = false;
   op->primitive->value.type = schema::PrimitiveType_Upsample;
   op->primitive->value.value = attr.release();
   return RET_OK;

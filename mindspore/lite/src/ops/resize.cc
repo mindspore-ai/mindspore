@@ -127,9 +127,60 @@ int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
       return RET_INFER_INVALID;
     }
     size_t shape_size = shape_tensor->ElementsNum();
-    auto data = reinterpret_cast<int32_t *>(shape_tensor->data_c());
-    for (size_t i = 0; i < shape_size; i++) {
-      output_shape.push_back(data[i]);
+    switch (shape_size) {
+      case kDimension_4d: {
+        if (shape_tensor->data_type() == kNumberTypeInt32) {
+          auto data = reinterpret_cast<int32_t *>(shape_tensor->data_c());
+          if (data == nullptr) {
+            MS_LOG(INFO) << "Resize op size can't cast int.";
+            return RET_INFER_INVALID;
+          }
+          switch (shape_tensor->GetFormat()) {
+            case schema::Format_NCHW:
+              output_shape.push_back(data[2] * input->Height());
+              output_shape.push_back(data[3] * input->Width());
+              break;
+            case schema::Format_NHWC:
+              output_shape.push_back(data[1] * input->Height());
+              output_shape.push_back(data[2] * input->Width());
+              break;
+            default:
+              MS_LOG(INFO) << "Resize don't support tensor format.";
+              return RET_INFER_INVALID;
+          }
+        } else if (shape_tensor->data_type() == kNumberTypeFloat32) {
+          auto data = reinterpret_cast<float *>(shape_tensor->data_c());
+          if (data == nullptr) {
+            MS_LOG(INFO) << "Resize op size can't cast float.";
+            return RET_INFER_INVALID;
+          }
+          switch (shape_tensor->GetFormat()) {
+            case schema::Format_NCHW:
+              output_shape.push_back(data[2] * input->Height());
+              output_shape.push_back(data[3] * input->Width());
+              break;
+            case schema::Format_NHWC:
+              output_shape.push_back(data[1] * input->Height());
+              output_shape.push_back(data[2] * input->Width());
+              break;
+            default:
+              MS_LOG(INFO) << "Resize don't support tensor format.";
+              return RET_INFER_INVALID;
+          }
+        }
+        break;
+      }
+      default: {
+        auto data = reinterpret_cast<int32_t *>(shape_tensor->data_c());
+        if (data == nullptr) {
+          MS_LOG(INFO) << "Resize op size can't cast float.";
+          return RET_INFER_INVALID;
+        }
+        for (size_t i = 0; i < shape_size; i++) {
+          output_shape.push_back(data[i]);
+        }
+        break;
+      }
     }
   } else if (inputs_.size() == kSingleNum) {
     auto new_height = GetNewHeight();
