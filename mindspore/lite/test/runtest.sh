@@ -1,6 +1,9 @@
 #!/bin/bash
-cd ./mindspore/lite/test/ || exit 1
+set -e 
+
+CURRPATH=$(cd "$(dirname $0)"; pwd) 
+cd ${CURRPATH}
 if [ $1 == train ]; then
     echo 'run train ut tests'
-    ./run_train_ut.sh
+    bash run_train_ut.sh
 fi
