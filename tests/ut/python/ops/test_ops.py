@@ -26,7 +26,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
-from mindspore.ops.operations._quant_ops import FakeQuantWithMinMaxVars, FakeQuantWithMinMaxVarsPerChannel
+from mindspore.ops.operations import _quant_ops as Q
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -214,6 +214,31 @@ class HistogramSummaryNet(nn.Cell):
         string_in = "out"
         self.summary(string_in, out)
         return out
+
+
+class Moments(nn.Cell):
+    """Moments net definition"""
+
+    def __init__(self, axis=None, keep_dims=None):
+        super(Moments, self).__init__()
+        self.moments = nn.Moments(axis=axis, keep_dims=keep_dims)
+
+    def construct(self, input_x):
+        mean, variance = self.moments(input_x)
+        return mean, variance
+
+
+class CountNonZero(nn.Cell):
+    """CountNonZero net definition"""
+
+    def __init__(self, axis, keep_dims, dtype):
+        super(CountNonZero, self).__init__()
+        self.axis = axis
+        self.keep_dims = keep_dims
+        self.dtype = dtype
+    def construct(self, input_x):
+        nonzero_num = C.count_nonzero(input_x, self.axis, self.keep_dims, self.dtype)
+        return nonzero_num
 
 
 class ScatterUpdate(nn.Cell):
@@ -1057,14 +1082,22 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[True, False, False], [False, True, True]])),
                         [2, 3], [2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('Moments', {
+        'block': Moments(axis=(), keep_dims=False),
+        'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 4).astype(np.float32))],
+        'skip': ['backward']}),
+    ('CountNonZero', {
+        'block': CountNonZero(axis=(), keep_dims=False, dtype=mstype.int32),
+        'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 4).astype(np.float32))],
+        'skip': ['backward']}),
     ('FakeQuantWithMinMaxVars', {
-        'block': FakeQuantWithMinMaxVars(num_bits=8, narrow_range=False),
+        'block': Q.FakeQuantWithMinMaxVars(num_bits=8, narrow_range=False),
         'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 5), mstype.float32),
                         Tensor(np.array([-6]), mstype.float32),
                         Tensor(np.array([6]), mstype.float32)],
         'desc_bprop': [Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)]}),
     ('FakeQuantWithMinMaxVarsPerChannel', {
-        'block': FakeQuantWithMinMaxVarsPerChannel(num_bits=8, narrow_range=False),
+        'block': Q.FakeQuantWithMinMaxVarsPerChannel(num_bits=8, narrow_range=False),
         'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 4), mstype.float32),
                         Tensor(np.array([-6, -1, -2, -3]), mstype.float32),
                         Tensor(np.array([6, 1, 2, 3]), mstype.float32)],

@@ -19,12 +19,13 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import constexpr
+from mindspore.ops import functional as F
 from ..cell import Cell
 from ...common import dtype as mstype
 from ..._checkparam import Validator as validator
 
 
-__all__ = ['ReduceLogSumExp', 'Range', 'LinSpace', 'LGamma', 'MatMul']
+__all__ = ['ReduceLogSumExp', 'Range', 'LinSpace', 'LGamma', 'MatMul', 'Moments']
 
 
 class ReduceLogSumExp(Cell):
@@ -451,3 +452,65 @@ class MatMul(Cell):
             matmul_broadcast = self.squeeze_right_op(matmul_broadcast)
 
         return matmul_broadcast
+
+
+@constexpr
+def _check_input_dtype(param_name, input_dtype, allow_dtypes, cls_name):
+    validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
+
+
+class Moments(Cell):
+    """
+    Calculate the mean and variance of `x`.
+
+    Args:
+        axis (Union[int, tuple(int)]): Calculates the mean and variance along the specified axis. Default: ().
+        keep_dims (bool): If true, The dimension of mean and variance are identical with input's.
+                          If false, don't keep these dimensions. Default: False.
+
+    Inputs:
+        - **input_x** (Tensor) - The tensor to be calculated. Only float16 and float32 are supported.
+
+    Outputs:
+        - **mean** (Tensor) - The mean of input x, with the same date type as input x.
+        - **variance** (Tensor) - The variance of input x, with the same date type as input x.
+
+    Examples:
+        >>> net = nn.Moments(axis=3, keep_dims=True)
+        >>> input_x = Tensor(np.array([[[[1, 2, 3, 4], [3, 4, 5, 6]]]]), mindspore.float32)
+        >>> mean, var = net(input_x)
+        mean: [[[[2.5], [4.5]]]]
+        var:  [[[[1.25], [1.25]]]]
+    """
+
+    def __init__(self, axis=None, keep_dims=None):
+        super(Moments, self).__init__()
+        if axis is None:
+            axis = ()
+        if isinstance(axis, tuple):
+            for idx, item in enumerate(axis):
+                validator.check_value_type("axis[%d]" % idx, item, [int], self.cls_name)
+        self.axis = validator.check_value_type('axis', axis, [int, tuple], self.cls_name)
+        if keep_dims is None:
+            keep_dims = False
+        self.keep_dims = validator.check_value_type('keep_dims', keep_dims, [bool], self.cls_name)
+        self.cast = P.Cast()
+        self.reduce_mean = P.ReduceMean(keep_dims=True)
+        self.square_diff = P.SquaredDifference()
+        self.squeeze = P.Squeeze(self.axis)
+
+    def construct(self, x):
+        tensor_dtype = x.dtype
+        _check_input_dtype("input x", tensor_dtype, [mstype.float16, mstype.float32], self.cls_name)
+        if tensor_dtype == mstype.float16:
+            x = self.cast(x, mstype.float32)
+        mean = self.reduce_mean(x, self.axis)
+        variance = self.reduce_mean(self.square_diff(x, F.stop_gradient(mean)), self.axis)
+        if not self.keep_dims:
+            mean = self.squeeze(mean)
+            variance = self.squeeze(variance)
+        if tensor_dtype == mstype.float16:
+            mean = self.cast(mean, mstype.float16)
+            variance = self.cast(variance, mstype.float16)
+            return mean, variance
+        return mean, variance
