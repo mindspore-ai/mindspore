@@ -22,7 +22,7 @@ from mindspore._c_expression import init_exec_dataset
 from mindspore import context
 from mindspore import log as logger
 from mindspore import nn
-from mindspore._checkparam import check_input_data, check_output_data, Validator, check_int
+from mindspore._checkparam import check_input_data, check_output_data, Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.tensor import Tensor
@@ -604,7 +604,7 @@ class Model:
             >>> model.train(2, dataset)
         """
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
-        check_int(sink_size)
+        Validator.check_is_int(sink_size)
         if sink_size < -1 or sink_size == 0:
             raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
 

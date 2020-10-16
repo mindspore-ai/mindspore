@@ -22,7 +22,7 @@ import numpy as np
 from mindspore import log as logger
 from ..common.tensor import Tensor
 from ..nn.metrics import get_metrics
-from .._checkparam import check_input_data, check_output_data, Validator, check_int
+from .._checkparam import check_input_data, check_output_data, Validator
 from .callback import _InternalCallbackParam, RunContext, _CallbackManager
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
@@ -551,7 +551,7 @@ class Model:
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         if sink_size == -1:
             sink_size = train_dataset.get_dataset_size()
-        check_int(sink_size)
+        Validator.check_is_int(sink_size)
         if sink_size < -1 or sink_size == 0:
             raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
 
