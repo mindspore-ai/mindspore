@@ -22,7 +22,8 @@ import mindspore.nn as nn
 from mindspore import context, Tensor
 from mindspore.communication.management import init
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, LossMonitor, TimeMonitor
-from mindspore.train import Model, ParallelMode
+from mindspore.train import Model
+from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.ssd_ghostnet import SSD300, SSDWithLossCell, TrainingWrapper, ssd_ghostnet
 from src.config_ghostnet_13x import config
