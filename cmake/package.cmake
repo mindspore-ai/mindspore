@@ -263,6 +263,7 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/ops
         ${CMAKE_SOURCE_DIR}/mindspore/communication
         ${CMAKE_SOURCE_DIR}/mindspore/profiler
+        ${CMAKE_SOURCE_DIR}/mindspore/compression
     DESTINATION ${INSTALL_PY_DIR}
     COMPONENT mindspore
 )
