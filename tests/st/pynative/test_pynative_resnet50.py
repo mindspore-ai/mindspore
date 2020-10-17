@@ -32,7 +32,6 @@ from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.ops import composite as CP
 from mindspore.nn.optim.momentum import Momentum
-from mindspore.common.initializer import initializer
 from mindspore.nn.wrap.cell_wrapper import WithLossCell
 
 random.seed(1)
@@ -41,14 +40,6 @@ ds.config.set_seed(1)
 
 
 grad_by_list = CP.GradOperation(get_by_list=True)
-
-
-def weight_variable(shape):
-    return initializer('XavierUniform', shape=shape, dtype=mstype.float32)
-
-
-def weight_variable_uniform(shape):
-    return initializer('Uniform', shape=shape, dtype=mstype.float32)
 
 
 def weight_variable_0(shape):
@@ -63,26 +54,23 @@ def weight_variable_1(shape):
 
 def conv3x3(in_channels, out_channels, stride=1, padding=0):
     """3x3 convolution """
-    weight_shape = (out_channels, in_channels, 3, 3)
-    weight = weight_variable(weight_shape)
     return nn.Conv2d(in_channels, out_channels,
-                     kernel_size=3, stride=stride, padding=padding, weight_init=weight, has_bias=False, pad_mode="same")
+                     kernel_size=3, stride=stride, padding=padding, weight_init='XavierUniform',
+                     has_bias=False, pad_mode="same")
 
 
 def conv1x1(in_channels, out_channels, stride=1, padding=0):
     """1x1 convolution"""
-    weight_shape = (out_channels, in_channels, 1, 1)
-    weight = weight_variable(weight_shape)
     return nn.Conv2d(in_channels, out_channels,
-                     kernel_size=1, stride=stride, padding=padding, weight_init=weight, has_bias=False, pad_mode="same")
+                     kernel_size=1, stride=stride, padding=padding, weight_init='XavierUniform',
+                     has_bias=False, pad_mode="same")
 
 
 def conv7x7(in_channels, out_channels, stride=1, padding=0):
     """1x1 convolution"""
-    weight_shape = (out_channels, in_channels, 7, 7)
-    weight = weight_variable(weight_shape)
     return nn.Conv2d(in_channels, out_channels,
-                     kernel_size=7, stride=stride, padding=padding, weight_init=weight, has_bias=False, pad_mode="same")
+                     kernel_size=7, stride=stride, padding=padding, weight_init='XavierUniform',
+                     has_bias=False, pad_mode="same")
 
 
 def bn_with_initialize(out_channels):
@@ -90,8 +78,7 @@ def bn_with_initialize(out_channels):
     mean = weight_variable_0(shape)
     var = weight_variable_1(shape)
     beta = weight_variable_0(shape)
-    gamma = weight_variable_uniform(shape)
-    bn = nn.BatchNorm2d(out_channels, momentum=0.99, eps=0.00001, gamma_init=gamma,
+    bn = nn.BatchNorm2d(out_channels, momentum=0.99, eps=0.00001, gamma_init='Uniform',
                         beta_init=beta, moving_mean_init=mean, moving_var_init=var)
     return bn
 
@@ -101,18 +88,13 @@ def bn_with_initialize_last(out_channels):
     mean = weight_variable_0(shape)
     var = weight_variable_1(shape)
     beta = weight_variable_0(shape)
-    gamma = weight_variable_uniform(shape)
-    bn = nn.BatchNorm2d(out_channels, momentum=0.99, eps=0.00001, gamma_init=gamma,
+    bn = nn.BatchNorm2d(out_channels, momentum=0.99, eps=0.00001, gamma_init='Uniform',
                         beta_init=beta, moving_mean_init=mean, moving_var_init=var)
     return bn
 
 
 def fc_with_initialize(input_channels, out_channels):
-    weight_shape = (out_channels, input_channels)
-    weight = weight_variable(weight_shape)
-    bias_shape = (out_channels)
-    bias = weight_variable_uniform(bias_shape)
-    return nn.Dense(input_channels, out_channels, weight, bias)
+    return nn.Dense(input_channels, out_channels, weight_init='XavierUniform', bias_init='Uniform')
 
 
 class ResidualBlock(nn.Cell):

@@ -15,8 +15,9 @@
 """Tensor implementation."""
 import numpy as np
 
+from mindspore import log as logger
 from .._c_expression import Tensor as Tensor_
-from .._c_expression import MetaTensor
+from .._c_expression import MetaTensor as MetaTensor_
 from .._checkparam import check_type, check_typename
 from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
@@ -393,6 +394,50 @@ class SparseTensor:
     @property
     def dense_shape(self):
         return self.__dense_shape
+
+
+class MetaTensor(MetaTensor_):
+    """
+    The base class of the MetaTensor.
+    Initialization of tensor basic attributes and model weight values.
+
+    Returns:
+        Array, an array after being initialized.
+    """
+    def __init__(self, init, dtype, shape):
+        #check param
+        self.init = init
+        MetaTensor_.__init__(self, dtype, shape)
+
+    def to_tensor(self, slice_index=None, shape=None):
+        """
+        Get the tensor format data of this MetaTensor.
+
+        Args:
+            slice_index (int): Slice index of a parameter's slices.
+                It is used when initialize a slice of a parameter, it guarantees that devices
+                using the same slice can generate the same tensor.
+            shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter.
+        """
+        if shape is None:
+            shape = self.shape
+
+        try:
+            arr = np.ndarray(shape, dtype=mstype.dtype_to_nptype(self.dtype))
+        except ValueError:
+            msg = "Error shape={}".format(shape)
+            logger.error(msg)
+            raise ValueError(msg)
+        from .seed import get_seed
+        global_seed = get_seed()
+        need_set_seed = ((slice_index is not None) and (global_seed is None))
+        seed_saved = np.random.get_state()[1][0]
+        if need_set_seed:
+            np.random.seed(slice_index)
+        self.init(arr)
+        if need_set_seed:
+            np.random.seed(seed_saved)
+        return Tensor(arr, dtype=self.dtype)
 
 
 def _vm_compare(*args):

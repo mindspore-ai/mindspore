@@ -15,16 +15,13 @@
 """Initializer for cell parameters."""
 import numbers
 import math
-import copy
 
 from functools import reduce
 import numpy as np
 from scipy.stats import truncnorm
-from mindspore import log as logger
 
 from . import dtype as mstype
-from .tensor import Tensor
-from .seed import get_seed
+from .tensor import Tensor, MetaTensor
 from .._c_expression import random_normal
 
 _INITIALIZER_ALIAS = dict()
@@ -51,54 +48,6 @@ class Initializer:
 
     def __call__(self, arr):
         return self._initialize(arr)
-
-    @property
-    def shape(self):
-        return self._shape
-
-    @shape.setter
-    def shape(self, shape):
-        self._shape = shape
-
-    @property
-    def dtype(self):
-        return self._dtype
-
-    @dtype.setter
-    def dtype(self, dtype):
-        self._dtype = dtype
-
-    def to_tensor(self, slice_index=None, shape=None):
-        """
-        Get the tensor format data of this Initializer.
-
-        Args:
-            slice_index (int): Slice index of a parameter's slices.
-                It is used when initialize a slice of a parameter, it guarantees that devices
-                using the same slice can generate the same tensor.
-            shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter.
-        """
-        arr = None
-        if shape is None:
-            shape = self.shape
-
-        try:
-            arr = np.ndarray(shape, dtype=mstype.dtype_to_nptype(self.dtype))
-        except ValueError:
-            msg = "Error shape={}".format(shape)
-            logger.error(msg)
-            raise ValueError(msg)
-
-        global_seed = get_seed()
-        need_set_seed = ((slice_index is not None) and (global_seed is None))
-        seed_saved = np.random.get_state()[1][0]
-        if need_set_seed:
-            np.random.seed(slice_index)
-        self.__call__(arr)
-        if need_set_seed:
-            np.random.seed(seed_saved)
-        return Tensor(arr, dtype=self.dtype)
-
 
 def _register(*aliases):
     """Return the alias register."""
@@ -478,27 +427,16 @@ def initializer(init, shape=None, dtype=mstype.float32):
         if not isinstance(value, int) or value <= 0:
             raise ValueError(f"shape is invalid, shape value must be positive integer, shape:{shape}")
 
-    if isinstance(init, Initializer):
-        init_copy = copy.deepcopy(init)
-        init_copy.shape = shape if shape is not None else init.shape
-        init_copy.dtype = init.dtype if init.dtype is not None else dtype
-        return init_copy
-
     if isinstance(init, str):
-        init_obj = _INITIALIZER_ALIAS[init.lower()]()
-        if init_obj is None:
+        init = _INITIALIZER_ALIAS[init.lower()]()
+        if init is None:
             raise ValueError("The class corresponding to '{}' was not found.".format(init))
-        init = init_obj
-        init.shape = shape
-        init.dtype = dtype
-        return init
-
-    if isinstance(init, numbers.Number):
-        init_obj = Constant(init)
-        init_obj.shape = shape
-        init_obj.dtype = dtype
-        return init_obj
-    raise TypeError("Unsupported init type '{}'.".format(type(init)))
+    elif isinstance(init, numbers.Number):
+        init = Constant(init)
+    shape = shape if shape is not None else init.shape
+    dtype = init.dtype if init.dtype is not None else dtype
+    init_obj = MetaTensor(init, dtype, shape)
+    return init_obj
 
 __all__ = [
     'Initializer',

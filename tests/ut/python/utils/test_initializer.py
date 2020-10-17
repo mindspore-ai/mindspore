@@ -24,7 +24,7 @@ import mindspore.common.initializer as init
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.parameter import Parameter
-from mindspore.common.tensor import Tensor
+from mindspore.common.tensor import Tensor, MetaTensor
 from mindspore.nn import Conv2d
 from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
@@ -58,7 +58,7 @@ def _check_uniform(tensor, boundary_a, boundary_b):
 
 def test_init_Initializer():
     tensor = init.initializer(InitTwo(), [2, 2], ms.int32)
-    assert tensor.shape == (2, 2)
+    assert tensor.shape == [2, 2]
     _check_value(tensor.to_tensor(), 2, 2)
 
 
@@ -119,22 +119,22 @@ def test_init_uniform_alias():
 
 def test_init_normal():
     tensor = init.initializer(init.Normal(), [5, 4], ms.float32)
-    assert isinstance(tensor, init.Normal), 'Normal init failed!'
+    assert isinstance(tensor, MetaTensor), 'Normal init failed!'
 
 
 def test_init_truncated_normal():
     tensor = init.initializer(init.TruncatedNormal(), [5, 4], ms.float32)
-    assert isinstance(tensor, init.TruncatedNormal), 'TruncatedNormal init failed!'
+    assert isinstance(tensor, MetaTensor), 'TruncatedNormal init failed!'
 
 
 def test_init_normal_alias():
     tensor = init.initializer('normal', [5, 4], ms.float32)
-    assert isinstance(tensor, init.Normal), 'Normal init failed!'
+    assert isinstance(tensor, MetaTensor), 'Normal init failed!'
 
 
 def test_init_truncatednormal_alias():
     tensor = init.initializer('truncatednormal', [5, 4], ms.float32)
-    assert isinstance(tensor, init.TruncatedNormal), 'TruncatedNormal init failed!'
+    assert isinstance(tensor, MetaTensor), 'TruncatedNormal init failed!'
 
 
 def test_init_abnormal():
@@ -144,15 +144,7 @@ def test_init_abnormal():
 
 def test_initializer_reinit():
     weights = init.initializer("XavierUniform", shape=(10, 1, 10, 10), dtype=ms.float16)
-    assert weights.dtype == ms.float16
-    assert weights.shape == (10, 1, 10, 10)
-    weights = init.initializer(weights)
-    assert weights.dtype == ms.float16
-    assert weights.shape == (10, 1, 10, 10)
-    weights.shape = None
-    weights = init.initializer(weights, (10, 1))
-    assert weights.dtype == ms.float16
-    assert weights.shape == (10, 1)
+    assert isinstance(weights, MetaTensor), 'XavierUniform init failed!'
 
 
 def test_init_xavier_uniform():

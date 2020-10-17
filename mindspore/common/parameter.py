@@ -16,8 +16,9 @@
 """Parameter for cell."""
 from copy import copy
 from .._c_expression import ParamInfo
+from .._c_expression import MetaTensor as MetaTensor_
 from . import dtype as mstype
-from .initializer import initializer, Initializer
+from .initializer import initializer
 from .tensor import Tensor, MetaTensor
 from .._checkparam import Validator
 from ..parallel._tensor import _get_slice_index
@@ -34,14 +35,14 @@ def _is_in_parallel_mode():
     return auto_parallel_context().get_parallel_mode() in ["semi_auto_parallel", "auto_parallel"]
 
 
-class Parameter(MetaTensor):
+class Parameter(MetaTensor_):
     """
     Parameter types of cell models.
 
     After initialized `Parameter` is a subtype of `Tensor`.
 
     In auto_parallel mode of  "semi_auto_parallel" and "auto_parallel", if init `Parameter` by
-    an `Initializer`, the type of Parameter will be `MetaTensor` not `Tensor`. `MetaTensor`
+    an `MetaTensor`, the type of Parameter will be `MetaTensor` not `Tensor`. `MetaTensor_`
     only saves the shape and type info of a tensor with no memory usage. The shape can be changed while
     compiling for auto-parallel. Call `init_data` will return a Tensor Parameter with initialized data.
 
@@ -52,7 +53,7 @@ class Parameter(MetaTensor):
         then the Parameters as this part of the inputs are not allowed to be cast.
 
     Args:
-        default_input (Union[Tensor, Initializer, Number]): Parameter data, to be set initialized.
+        default_input (Union[Tensor, MetaTensor, Number]): Parameter data, to be set initialized.
         name (str): Name of the child parameter.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in parallel mode,
@@ -94,9 +95,9 @@ class Parameter(MetaTensor):
         input_class.__init__(obj, *class_init_args)
         # it's better to make the Initializer a kind of metatensor.
         obj.init_mode = None
-        obj.is_default_input_initializer = False
-        if isinstance(default_input, Initializer):
-            obj.is_default_input_initializer = True
+        obj.is_default_input_meta = False
+        if isinstance(default_input, MetaTensor):
+            obj.is_default_input_meta = True
         if not isinstance(obj, Tensor):
             obj.init_mode = default_input
         return obj
@@ -142,10 +143,10 @@ class Parameter(MetaTensor):
         """Set `set_data` of current `Parameter`."""
         if isinstance(data, bool):
             raise ValueError('Parameter data can not be `bool`')
-        if isinstance(data, Initializer):
+        if isinstance(data, MetaTensor):
             if _is_in_parallel_mode():
                 # do not init data while in auto parallel.
-                return (MetaTensor, data.dtype, data.shape)
+                return (MetaTensor_, data.dtype, data.shape)
             data = data.to_tensor()
         if isinstance(data, Tensor):
             # make a copy of Tensor to init the parameter
@@ -257,7 +258,7 @@ class Parameter(MetaTensor):
         Args:
             prefix (str): Namespace of parameter. The cloned Parameter name is
                 combined of prefix and current name: `f"{perfix}.{self.name}"`.
-            init (Union[Tensor, str, Initializer, numbers.Number]): Initialize the shape of the parameter.
+            init (Union[Tensor, str, MetaTensor, numbers.Number]): Initialize the shape of the parameter.
                 Default: 'same'.
 
         Returns:
@@ -314,7 +315,7 @@ class Parameter(MetaTensor):
         Set `set_data` of current `Parameter`.
 
         Args:
-            data (Union[Tensor, Initializer, int, float]): new data.
+            data (Union[Tensor, MetaTensor, int, float]): new data.
             slice_shape (bool): If slice the Parameter, will not check if shape is match. Default: False.
 
         Retruns:
@@ -325,9 +326,9 @@ class Parameter(MetaTensor):
                             f"Current dtype is {self.dtype}, and incoming is {incoming}. "
                             f"Use .set_dtype(xxx) to change the dtype.")
 
-        if not isinstance(data, (MetaTensor, Initializer, int, float)):
-            raise TypeError(f"Parameter data must be [`Initializer`, `int`, `float`] or a kind of `MetaTensor` "
-                            f"(like `Tensor` or `MetaTensor`). But with type {type(data)}.")
+        if not isinstance(data, (MetaTensor_, int, float)):
+            raise TypeError(f"Parameter data must be [`MetaTensor`, `int`, `float`] or a kind of `MetaTensor_` "
+                            f"(like `Tensor` or `MetaTensor_`). But with type {type(data)}.")
         if isinstance(data, (int, float)):
             if self.dtype in mstype.int_type and isinstance(data, float):
                 raise_type_error(mstype.float_)
@@ -337,8 +338,8 @@ class Parameter(MetaTensor):
         is_current_tensor = isinstance(self, Tensor)
 
         if is_incoming_tensor and not is_current_tensor:
-            raise TypeError("Parameter is a `MetaTensor` and not initializered, `data` for `set_data`"
-                            "should be a Initializer. If you want to update it by Tensor, call method"
+            raise TypeError("Parameter is a `MetaTensor_` and not initializered, `data` for `set_data`"
+                            "should be a MetaTensor. If you want to update it by Tensor, call method"
                             "`init_parameters_data` of `Cell` to init and replace all the Parameter of"
                             "network, then call this method.")
         if tuple(self.shape) != tuple(data.shape):
@@ -351,7 +352,7 @@ class Parameter(MetaTensor):
                 raise_type_error(data.dtype)
             else:
                 data = Tensor(data, self.dtype)
-        if isinstance(data, Initializer):
+        if isinstance(data, MetaTensor):
             # The parameter has been initializered, directly update by the data
             if is_current_tensor:
                 self._update_tensor_data(data.to_tensor())
@@ -387,10 +388,10 @@ class Parameter(MetaTensor):
             Parameter, the `Parameter` after initializing data. If current `Parameter` was already initialized before,
             returns the same initialized `Parameter`.
         """
-        if self.is_default_input_initializer:
+        if self.is_default_input_meta:
             is_current_in_parallel = _is_in_parallel_mode()
             if self.is_in_parallel != is_current_in_parallel:
-                raise RuntimeError("Must set or change parallel mode before any Initializer created.")
+                raise RuntimeError("Must set or change parallel mode before any MetaTensor created.")
         if self.init_mode is None:
             return self
         if self.inited_param is not None:
@@ -401,12 +402,12 @@ class Parameter(MetaTensor):
             if len(layout) < 3:
                 raise ValueError("The length of layout must be larger than 3! layout is {}.".format(layout))
             slice_index = int(_get_slice_index(layout[0], layout[1]))
-            if (self.init_in_server and self.is_param_ps and isinstance(self.init_mode, Initializer)):
+            if (self.init_in_server and self.is_param_ps and isinstance(self.init_mode, MetaTensor)):
                 data = self.init_mode.to_tensor(0, [1])
             else:
                 data = self.init_mode.to_tensor(slice_index, layout[2])
         else:
-            if (self.init_in_server and self.is_param_ps and isinstance(self.init_mode, Initializer)):
+            if (self.init_in_server and self.is_param_ps and isinstance(self.init_mode, MetaTensor)):
                 data = self.init_mode.to_tensor(0, [1])
             else:
                 data = self.init_mode.to_tensor()
