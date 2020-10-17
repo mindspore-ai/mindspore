@@ -1556,8 +1556,7 @@ void SessionBasic::InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
     auto input_node = input_nodes[i];
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0)) {
-      auto pk_node = input_node->cast<ParameterPtr>();
-      ps::worker.InitPSParamAndOptim(pk_node->fullname_with_scope(), tensor);
+      ps::worker.InitPSParamAndOptim(input_node, tensor);
     }
   }
 }

@@ -42,6 +42,9 @@ class ParamInfo {
   bool requires_grad() const { return requires_grad_; }
   void set_requires_grad(bool requires_grad) { requires_grad_ = requires_grad; }
 
+  bool init_in_server() const { return init_in_server_; }
+  void set_init_in_server(bool init_in_server) { init_in_server_ = init_in_server; }
+
   bool layerwise_parallel() const { return layerwise_parallel_; }
   void set_layerwise_parallel(bool layerwise_parallel) { layerwise_parallel_ = layerwise_parallel; }
 
@@ -68,12 +71,14 @@ class ParamInfo {
     clone->cloned_index_ = index;
     this->be_cloned_ = true;
     this->be_cloned_index_.push_back(index);
+    clone->init_in_server_ = this->init_in_server_;
     return clone;
   }
 
  private:
   std::string name_{"Parameter"};
   bool requires_grad_{true};
+  bool init_in_server_{false};
   bool layerwise_parallel_{false};
   bool be_cloned_{false};
   bool cloned_{false};
