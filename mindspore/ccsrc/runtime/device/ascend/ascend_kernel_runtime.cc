@@ -327,7 +327,7 @@ bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph, Debug
   // load output
   LoadOutput(graph, debugger);
   // load parameters
-  if (debugger) debugger->LoadParameters();
+  if (debugger) debugger->LoadParametersAndConst();
 #endif
   return true;
 }

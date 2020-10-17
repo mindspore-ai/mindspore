@@ -31,6 +31,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/kernel_runtime.h"
+#include "debug/data_dump/e2e_dump_util.h"
 
 using debugger::EventReply;
 using debugger::GraphProto;
@@ -49,6 +50,7 @@ namespace mindspore {
 DebuggerPtr Debugger::debugger_ = nullptr;
 std::mutex Debugger::instance_lock_;
 static const size_t PRAMATER_OUTPUT_INDEX = 0;
+static const size_t VALUE_NODE_OUTPUT_INDEX = 0;
 
 Debugger::Debugger()
     : grpc_client_(nullptr),
@@ -254,6 +256,9 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
 void Debugger::PostExecute() {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
+  if (pipeline::ExecutorPy::GetDebugTerminate()) {
+    return;
+  }
   if (debugger_->DebuggerBackendEnabled()) {
     // analyze tensor data and send the watchpoints been hit
     if (run_level_ == "node") {
@@ -287,6 +292,9 @@ bool Debugger::ReadNodeDataRequired() {
 void Debugger::PostExecuteNode() {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
+  if (pipeline::ExecutorPy::GetDebugTerminate()) {
+    return;
+  }
   if (debugger_enabled_ && !is_dataset_graph_) {
     auto watchpoint_table = debug_services_->GetWatchpointTable();
     auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_, watchpoint_table);
@@ -333,7 +341,7 @@ void Debugger::CheckGraphPtr(const KernelGraphPtr &graph_ptr) {
       // only try to enable debugger if it is not a dataset graph
       EnableDebugger();
       if (debugger_enabled_) {
-        LoadParameters();
+        LoadParametersAndConst();
         // get graph proto and send to mindinsight
         SendGraphAndSuspend(GetGraphProto());
       }
@@ -601,7 +609,7 @@ void Debugger::Exit() {
   if (run_level_ == "node") {
     pipeline::ClearResAtexit();
     exit(1);
-  } else if (run_level_ == "step") {
+  } else if (run_level_ == "step" || device_target_ == kAscendDevice) {
     // Notify main thread to terminate
     pipeline::ExecutorPy::DebugTerminate(true);
   } else {
@@ -861,33 +869,59 @@ bool Debugger::CheckPort(const char *port) {
   return true;
 }
 
-void Debugger::LoadParameters() {
+void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  if (!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) {
+    return;
+  }
+  bool keep_prev;
+  if (anf_node->isa<Parameter>()) {
+    keep_prev = true;
+  } else {
+    keep_prev = false;
+  }
+  // for parameters and value nodes, set its execution order to be 0;
+  int exec_order = 0;
+  std::string node_name = anf_node->fullname_with_scope();
+  E2eDumpUtil::GetFileKernelName(NOT_NULL(&node_name));
+  // check if output adde exists, if not, return;
+  if (!AnfAlgo::OutputAddrExist(anf_node, output_index)) {
+    return;
+  }
+  auto addr = AnfAlgo::GetOutputAddr(anf_node, output_index);
+  MS_EXCEPTION_IF_NULL(addr);
+  auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
+  auto format = kOpFormat_DEFAULT;
+  string tensor_name = node_name + ':' + "0";
+  ShapeVector int_shapes;
+  auto shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                       [](size_t inner_item) { return SizeToInt(inner_item); });
+  bool ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, 0, keep_prev);
+  if (!ret) {
+    MS_LOG(ERROR) << "LoadMemToHost:"
+                  << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
+  }
+}
+
+void Debugger::LoadParametersAndConst() {
   if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
   if (!(num_step_ == 0 || device_target_ == kAscendDevice ||
         (device_target_ == kGPUDevice && device::KernelRuntime::DumpDataEnabledIteration())))
     return;
   MS_EXCEPTION_IF_NULL(graph_ptr_);
+  // load parameters
+  MS_LOG(INFO) << "Start to load Parameters!";
   const auto &parameters = graph_ptr_->inputs();
-  // for parameters, set its execution order to be 0;
-  int exec_order = 0;
   for (auto &item : parameters) {
-    if (!item->isa<Parameter>()) {
-      continue;
-    }
-    std::string parameter_name = item->fullname_with_scope();
-    auto addr = AnfAlgo::GetOutputAddr(item, PRAMATER_OUTPUT_INDEX);
-    auto type = AnfAlgo::GetOutputInferDataType(item, PRAMATER_OUTPUT_INDEX);
-    auto format = kOpFormat_DEFAULT;
-    string tensor_name = parameter_name + ':' + "0";
-    ShapeVector int_shapes;
-    auto shape = AnfAlgo::GetOutputDeviceShape(item, PRAMATER_OUTPUT_INDEX);
-    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                         [](size_t inner_item) { return SizeToInt(inner_item); });
-    bool ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, 0, true);
-    if (!ret) {
-      MS_LOG(ERROR) << "LoadMemToHost:"
-                    << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
-    }
+    LoadSingleAnfnode(item, PRAMATER_OUTPUT_INDEX);
+  }
+  // load value nodes
+  // get all constant avlues from the graph
+  MS_LOG(INFO) << "Start to load value nodes!";
+  const auto value_nodes = graph_ptr_->graph_value_nodes();
+  for (auto &item : value_nodes) {
+    LoadSingleAnfnode(item, VALUE_NODE_OUTPUT_INDEX);
   }
 }
 

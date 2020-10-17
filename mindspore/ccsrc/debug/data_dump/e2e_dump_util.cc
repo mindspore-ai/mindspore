@@ -29,7 +29,8 @@
 
 namespace {
 const size_t PRAMATER_OUTPUT_INDEX = 0;
-}
+const size_t VALUE_NODE_OUTPUT_INDEX = 0;
+}  // namespace
 
 namespace mindspore {
 void E2eDumpUtil::GetFileKernelName(NotNull<std::string *> kernel_name) {
@@ -164,32 +165,52 @@ void E2eDumpUtil::DumpInput(const session::KernelGraph *graph, const std::string
   }
 }
 
-void E2eDumpUtil::DumpParameters(const session::KernelGraph *graph, const std::string &dump_path, Debugger *debugger) {
+void E2eDumpUtil::DumpSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
+                                    bool trans_flag, Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) {
+    return;
+  }
+  std::string node_name = anf_node->fullname_with_scope();
+  if (!dump_json_parser.NeedDump(node_name)) {
+    return;
+  }
+  DumpJsonParser::GetInstance().MatchKernel(node_name);
+  GetFileKernelName(NOT_NULL(&node_name));
+  // check if output adde exists, if not, return;
+  if (!AnfAlgo::OutputAddrExist(anf_node, output_index)) {
+    return;
+  }
+  auto addr = AnfAlgo::GetOutputAddr(anf_node, output_index);
+  MS_EXCEPTION_IF_NULL(addr);
+  ShapeVector int_shapes;
+  GetDumpIntShape(anf_node, output_index, trans_flag, NOT_NULL(&int_shapes));
+  auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
+
+  std::string file_path = dump_path + '/' + node_name + '_' + "output_0";
+  if (IsDeviceTargetGPU()) {
+    DumpGPUMemToFile(file_path, node_name, NOT_NULL(addr), trans_flag, int_shapes, type, 0, debugger);
+  } else {
+    DumpMemToFile(file_path, NOT_NULL(addr), trans_flag, int_shapes, type);
+  }
+}
+
+void E2eDumpUtil::DumpParametersAndConst(const session::KernelGraph *graph, const std::string &dump_path,
+                                         Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  MS_LOG(INFO) << "Start e2e dump parameters";
+  MS_LOG(INFO) << "Start e2e dump parameters and Const values";
   bool trans_flag = dump_json_parser.trans_flag();
+  // dump parameters
   const auto &parameters = graph->inputs();
   for (auto &item : parameters) {
-    if (!item->isa<Parameter>()) {
-      continue;
-    }
-    std::string parameter_name = item->fullname_with_scope();
-    if (!dump_json_parser.NeedDump(parameter_name)) {
-      continue;
-    }
-    DumpJsonParser::GetInstance().MatchKernel(parameter_name);
-    auto addr = AnfAlgo::GetOutputAddr(item, PRAMATER_OUTPUT_INDEX);
-    ShapeVector int_shapes;
-    GetDumpIntShape(item, PRAMATER_OUTPUT_INDEX, trans_flag, NOT_NULL(&int_shapes));
-    auto type = AnfAlgo::GetOutputInferDataType(item, PRAMATER_OUTPUT_INDEX);
-
-    std::string file_path = dump_path + '/' + parameter_name + '_' + "output_0";
-    if (IsDeviceTargetGPU()) {
-      DumpGPUMemToFile(file_path, parameter_name, NOT_NULL(addr), trans_flag, int_shapes, type, 0, debugger);
-    } else {
-      DumpMemToFile(file_path, NOT_NULL(addr), trans_flag, int_shapes, type);
-    }
+    DumpSingleAnfnode(item, PRAMATER_OUTPUT_INDEX, dump_path, trans_flag, debugger);
+  }
+  // dump const values
+  auto value_nodes = graph->graph_value_nodes();
+  for (const auto &value_node : value_nodes) {
+    DumpSingleAnfnode(value_node, VALUE_NODE_OUTPUT_INDEX, dump_path, trans_flag, debugger);
   }
 }
 
@@ -229,7 +250,7 @@ bool E2eDumpUtil::DumpData(const session::KernelGraph *graph, uint32_t device_id
   dump_path += (net_name + "/device_" + std::to_string(physical_device) + "/iteration_" + iterator);
   DumpInput(graph, dump_path, debugger);
   DumpOutput(graph, dump_path, debugger);
-  DumpParameters(graph, dump_path, debugger);
+  DumpParametersAndConst(graph, dump_path, debugger);
   return true;
 }
 }  // namespace mindspore
