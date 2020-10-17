@@ -31,19 +31,21 @@ IF NOT EXIST "%BUILD_PATH%/mindspore" (
 cd %CD%/mindspore
 
 IF "%1%" == "lite" (
-    call :run_cmake
-    IF errorlevel 1 (
-        echo "cmake fail one time."
-        call :gene_protobuf
-        call :gene_flatbuffer
+    IF "%3%" == "" (
         call :run_cmake
         IF errorlevel 1 (
-            echo "cmake fail."
-            call :run_fail
+            echo "cmake fail one time."
+            call :gene_protobuf
+            call :gene_flatbuffer
+            call :run_cmake
+            IF errorlevel 1 (
+                echo "cmake fail."
+                call :run_fail
+            )
+        ) ELSE (
+            call :gene_protobuf
+            call :gene_flatbuffer
         )
-    ) ELSE (
-        call :gene_protobuf
-        call :gene_flatbuffer
     )
 
     cd %BUILD_PATH%/mindspore
@@ -88,7 +90,7 @@ goto run_eof
     set VERSION_REVISION=0
     echo "============ Start building MindSpore Lite %VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION% ============"
     cd %BUILD_PATH%/mindspore
-    cmake -DBUILD_DEVICE=on -DBUILD_CONVERTER=on -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=off ^
+    cmake -DBUILD_DEVICE=on -DENABLE_CONVERTER=on -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=off ^
     -DCMAKE_BUILD_TYPE=Release -DSUPPORT_GPU=off -DBUILD_MINDDATA=off -DOFFLINE_COMPILE=off ^
     -DMS_VERSION_MAJOR=%VERSION_MAJOR% -DMS_VERSION_MINOR=%VERSION_MINOR% -DMS_VERSION_REVISION=%VERSION_REVISION% ^
     -G "CodeBlocks - MinGW Makefiles" "%BASEPATH%/mindspore/lite"

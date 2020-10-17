@@ -13,5 +13,3 @@ add_executable(schema_gen
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/ops_def.cc
     ${COMMON_SRC})
 target_link_libraries(schema_gen mindspore-lite pthread)
-install(TARGETS schema_gen
-    RUNTIME DESTINATION ${MAIN_DIR}-${RUN_X86_COMPONENT_NAME}/schema_gen COMPONENT ${RUN_X86_COMPONENT_NAME})
