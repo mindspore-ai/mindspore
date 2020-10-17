@@ -38,7 +38,7 @@ constexpr int kSparseType = 1;
 constexpr int kDenseType = 2;
 }  // namespace
 int LshProjection::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  if (inputs_.size() != kDoubleNum || inputs_.size() != kMultiNum) {
+  if (inputs_.size() != kDoubleNum && inputs_.size() != kMultiNum) {
     MS_LOG(ERROR) << "inputs to LshProjection operator should be 2 or 3, but " << inputs_.size() << " is given.";
     return RET_ERROR;
   }

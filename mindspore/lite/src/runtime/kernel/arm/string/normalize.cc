@@ -84,7 +84,7 @@ std::string NormalizeCPUKernel::Normalize(const std::string &str) {
   if (result.size() > kMaxStringLength) {
     result = result.substr(0, kMaxStringLength);
   }
-
+  result = "<S> " + result + " <E>";
   return result;
 }
 
@@ -112,9 +112,9 @@ int NormalizeCPUKernel::Run() {
 
   for (int i = 0; i < string_num; ++i) {
     auto chars = all_string_pack[i];
-    std::string str(chars.data);
+    std::string str(chars.data, chars.len);
     std::string result = Normalize(str);
-    int str_length = result.size() + 1;
+    int str_length = result.size();
 
     char *normalized_str = nullptr;
     normalized_str = reinterpret_cast<char *>(context_->allocator->Malloc(sizeof(char) * str_length));

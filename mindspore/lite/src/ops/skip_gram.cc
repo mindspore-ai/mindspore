@@ -40,7 +40,7 @@ int SkipGram::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffer
     return RET_ERROR;
   }
 
-  auto val_offset = schema::CreateSkipGram(*fbb, attr->ngramSize(), attr->maxSkipSize(), attr->includeAllGrams());
+  auto val_offset = schema::CreateSkipGram(*fbb, attr->includeAllGrams(), attr->maxSkipSize(), attr->ngramSize());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_SkipGram, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;

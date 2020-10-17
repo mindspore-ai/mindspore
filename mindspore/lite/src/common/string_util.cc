@@ -47,6 +47,7 @@ int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_b
   }
   std::vector<int> shape = {offset[num]};
   tensor->set_shape(shape);
+  tensor->FreeData();
   void *data = tensor->MutableData();
   if (data == nullptr) {
     return RET_ERROR;
@@ -80,6 +81,7 @@ int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<
 
   std::vector<int> shape = {offset[num]};
   tensor->set_shape(shape);
+  tensor->FreeData();
   void *data = tensor->MutableData();
   if (data == nullptr) {
     return RET_ERROR;
