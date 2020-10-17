@@ -2500,7 +2500,8 @@ class ResizeBilinear(PrimitiveWithInfer):
     can be represented by different data types, but the data types of output images are always float32.
 
     Args:
-        size (tuple[int]): A tuple of 2 int elements `(new_height, new_width)`, the new size of the images.
+        size (Union[tuple[int], list[int]]): A tuple or list of 2 int elements `(new_height, new_width)`, the new size
+            of the images.
         align_corners (bool): If true, rescale input by `(new_height - 1) / (height - 1)`,
                        which exactly aligns the 4 corners of images and resized images. If false,
                        rescale by `new_height / height`. Default: False.
@@ -2521,7 +2522,7 @@ class ResizeBilinear(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, size, align_corners=False):
-        pass
+        validator.check_value_type("size", size, [tuple, list], self.name)
 
     def infer_shape(self, input_shape):
         validator.check("input shape rank", len(input_shape), "", 4, Rel.EQ, self.name)
@@ -2857,10 +2858,12 @@ class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
         Tensor, with the same shape and type as input `logits`.
 
     Examples:
-        >>> logits = Tensor(np.random.randn(2, 3).astype(np.float16))
-        >>> labels = Tensor(np.random.randn(2, 3).astype(np.float16))
+        >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float16))
+        >>> labels = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float16))
         >>> sigmoid = P.SigmoidCrossEntropyWithLogits()
         >>> sigmoid(logits, labels)
+        [[0.6113 0.5034 0.263 ]
+         [0.5845 0.553 -0.4365]]
     """
 
     @prim_attr_register
@@ -3043,7 +3046,8 @@ class ROIAlign(PrimitiveWithInfer):
         >>> rois = Tensor(np.array([[0, 0.2, 0.3, 0.2, 0.3]]), mindspore.float32)
         >>> roi_align = P.ROIAlign(2, 2, 0.5, 2)
         >>> output_tensor = roi_align(input_tensor, rois)
-        >>> assert output_tensor == Tensor(np.array([[[[2.15]]]]), mindspore.float32)
+        [[[[1.77499998e+00, 2.02500010e+00],
+           [2.27500010e+00, 2.52500010e+00]]]]
     """
 
     @prim_attr_register
@@ -3062,6 +3066,7 @@ class ROIAlign(PrimitiveWithInfer):
         self.roi_end_mode = roi_end_mode
 
     def infer_shape(self, inputs_shape, rois_shape):
+        validator.check("input shape rank", len(inputs_shape), "", 4, Rel.LE, self.name)
         return [rois_shape[0], inputs_shape[1], self.pooled_height, self.pooled_width]
 
     def infer_dtype(self, inputs_type, rois_type):
@@ -5162,7 +5167,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         args = {"var_dtype": var_dtype, "accum_dtype": accum_dtype,
                 "linear_dtype": linear_dtype, "grad_dtype": grad_dtype}
         validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
-        validator.check_tensor_type_same({"indices_dtype": indices_dtype}, [mstype.int32], self.name)
+        validator.check_tensor_type_same({"indices_dtype": indices_dtype}, [mstype.int32, mstype.int64], self.name)
 
 
 class SparseApplyFtrlV2(PrimitiveWithInfer):

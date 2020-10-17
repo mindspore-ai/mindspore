@@ -42,6 +42,12 @@ sparse_apply_ftrl_d_op_info = TBERegOp("SparseApplyFtrl") \
                   DataType.I32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
                   DataType.I32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW,
+                  DataType.I64_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW) \
+    .dtype_format(DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC,
+                  DataType.I64_NHWC, DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.I64_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()
 
 
