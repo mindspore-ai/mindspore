@@ -89,6 +89,7 @@ enum class StatusCode : char {
   kTimeOut = 14,
   kBuddySpaceFull = 15,
   kNetWorkError = 16,
+  kNotImplementedYet = 17,
   // Make this error code the last one. Add new error code above it.
   kUnexpectedError = 127
 };

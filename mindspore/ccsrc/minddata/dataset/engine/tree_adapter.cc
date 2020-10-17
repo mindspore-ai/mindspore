@@ -26,8 +26,6 @@ Status TreeAdapter::BuildAndPrepare(std::shared_ptr<api::Dataset> root_ir, int32
   // Check whether this function has been called before. If so, return fail
   CHECK_FAIL_RETURN_UNEXPECTED(tree_ == nullptr, "ExecutionTree is already built.");
   RETURN_UNEXPECTED_IF_NULL(root_ir);
-  // GlobalInit, might need to be moved to the proper place once RuntimeConext is complete
-  RETURN_IF_NOT_OK(GlobalInit());
 
   // this will evolve in the long run
   tree_ = std::make_unique<ExecutionTree>();
