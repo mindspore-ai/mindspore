@@ -606,6 +606,32 @@ class LayerNormCost : public OperatorCost {
 
 using DropOutCostPtr = std::shared_ptr<DropOutCost>;
 
+class UniqueCost : public OperatorCost {
+ public:
+  explicit UniqueCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  UniqueCost() : OperatorCost(true) {}
+  ~UniqueCost() override = default;
+
+  double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                     int32_t stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int32_t stage_id) const override;
+  double GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                             int32_t stage_id) const override;
+  double GetComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int32_t stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                   int32_t stage_id) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                    int32_t) const override;
+};
+
+using UniqueCostPtr = std::shared_ptr<UniqueCost>;
+
 class GatherV2Cost : public OperatorCost {
  public:
   explicit GatherV2Cost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}

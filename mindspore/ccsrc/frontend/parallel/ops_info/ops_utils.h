@@ -48,6 +48,9 @@ constexpr size_t DROPOUT_DO_MASK_KEEP_PROB_INDEX = 3;
 constexpr size_t SoftmaxCrossEntropyWithLogitsAttrSize = 1;
 constexpr size_t SoftmaxCrossEntropyWithLogitsInputsSize = 2;
 constexpr size_t SoftmaxCrossEntropyWithLogitsOutputsSize = 2;
+constexpr size_t UNIQUE_INPUTS_SIZE = 1;
+constexpr size_t UNIQUE_INPUT_SIZE = 1;
+constexpr size_t UNIQUE_OUTPUTS_SIZE = 2;
 constexpr double EPS = 1e-6;
 constexpr double INF = 1e20;
 
@@ -285,6 +288,7 @@ constexpr char DEPTHWISE_CONV2D[] = "DepthwiseConv2D";
 constexpr char ADD[] = "Add";
 constexpr char DROPOUT[] = "Dropout";
 constexpr char KStridedSlice[] = "StridedSlice";
+constexpr char UNIQUE[] = "Unique";
 
 // Parallel don't care
 constexpr char TUPLE_GETITEM[] = "tuple_getitem";

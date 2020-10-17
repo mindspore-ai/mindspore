@@ -151,6 +151,10 @@ Status GatherV2PInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": The axis or offset must be 0 if manual split, bug got " << axis_;
     return FAILED;
   }
+
+  if (std::find(inputs_shape_[1].begin(), inputs_shape_[1].end(), -1) != inputs_shape_[1].end()) {
+    dynamic_shape_indices_ = true;
+  }
   return SUCCESS;
 }
 
@@ -240,7 +244,7 @@ Status GatherV2PInfo::CheckStrategy(const StrategyPtr &strategy) {
 
   // axis=0, index_shape(0)%param_strategy(0) must be 0
   Shape index_shape = inputs_shape_.at(1);
-  if ((axis_ == 0) && (index_shape.at(0) % param_strategy.at(0) != 0)) {
+  if ((axis_ == 0) && (index_shape.at(0) % param_strategy.at(0) != 0) && !dynamic_shape_indices_) {
     MS_LOG(DEBUG) << name_ << ": index_shape(0) can't be divided by param_strategy(0).";
     return FAILED;
   }
@@ -357,13 +361,7 @@ Status GatherV2PInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status GatherV2PInfo::InferTensorMap() {
-  if (manual_split_) {
-    inputs_tensor_map_.push_back({1, 0});
-    inputs_tensor_map_.push_back({-1, 1});
-    outputs_tensor_map_.push_back({-1, 1, 0});
-    return SUCCESS;
-  }
+void GatherV2PInfo::InferInputsTensorMap() {
   // infer input tensor map
   // param_strategy(axis) != 1
   size_t param_size = inputs_shape_.at(0).size();
@@ -373,7 +371,7 @@ Status GatherV2PInfo::InferTensorMap() {
   Shape tensor_map_params;
   auto param_strategy = strategy_->GetInputDim().at(0);
   if (param_strategy.at(IntToSize(axis_)) != 1) {
-    tensor_map_index.insert(tensor_map_index.begin(), index_size, -1);
+    tensor_map_index.insert(tensor_map_index.begin(), index_size, MAP_NONE);
     for (size_t i = 0; i < param_size; ++i) {
       tensor_map_params.push_back(SizeToInt(i));
     }
@@ -386,9 +384,17 @@ Status GatherV2PInfo::InferTensorMap() {
       tensor_map_index.push_back(SizeToInt(index_size - i - 1));
     }
   }
+  inputs_tensor_map_.emplace_back(std::move(tensor_map_params));
+  inputs_tensor_map_.emplace_back(std::move(tensor_map_index));
+}
 
+void GatherV2PInfo::InferOutputsTensorMap() {
   // infer output tensor map
+  size_t param_size = inputs_shape_.at(0).size();
+  size_t index_size = inputs_shape_.at(1).size();
+  size_t total_size = param_size + index_size;
   Shape tensor_map_out;
+  auto param_strategy = strategy_->GetInputDim().at(0);
   if (param_strategy.at(IntToSize(axis_)) == 1) {
     // param_strategy(axis) == 1
     for (size_t i = 0; i < param_size; ++i) {
@@ -403,25 +409,40 @@ Status GatherV2PInfo::InferTensorMap() {
   } else {
     // param_strategy(axis) != 1
     if (axis_ == 0) {
-      tensor_map_out.insert(tensor_map_out.end(), 0);
-      tensor_map_out.insert(tensor_map_out.end(), index_size - 1, -1);
+      if (dynamic_shape_indices_) {
+        tensor_map_out.insert(tensor_map_out.end(), MAP_NONE);
+      } else {
+        tensor_map_out.insert(tensor_map_out.end(), 0);
+      }
+      tensor_map_out.insert(tensor_map_out.end(), index_size - 1, MAP_NONE);
       for (size_t i = 1; i < param_size; ++i) {
         tensor_map_out.push_back(i);
       }
     } else {
       for (size_t i = 0; i < param_size; ++i) {
         if (i == IntToSize(axis_)) {
-          tensor_map_out.insert(tensor_map_out.end(), index_size, -1);
+          tensor_map_out.insert(tensor_map_out.end(), index_size, MAP_NONE);
         } else {
+          if (i == 0 && dynamic_shape_indices_) {
+            tensor_map_out.push_back(MAP_NONE);
+          }
           tensor_map_out.push_back(SizeToInt(param_size - i - 1));
         }
       }
     }
   }
-
-  inputs_tensor_map_.emplace_back(std::move(tensor_map_params));
-  inputs_tensor_map_.emplace_back(std::move(tensor_map_index));
   outputs_tensor_map_.emplace_back(std::move(tensor_map_out));
+}
+
+Status GatherV2PInfo::InferTensorMap() {
+  if (manual_split_) {
+    inputs_tensor_map_.push_back({1, 0});
+    inputs_tensor_map_.push_back({-1, 1});
+    outputs_tensor_map_.push_back({-1, 1, 0});
+    return SUCCESS;
+  }
+  InferInputsTensorMap();
+  InferOutputsTensorMap();
   return SUCCESS;
 }
 

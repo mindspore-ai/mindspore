@@ -82,17 +82,24 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
   if (status != Status::SUCCESS) {
     return nullptr;
   }
-  std::shared_ptr<ReshapeLayoutTransfer> ptr = layout_transfer.UnifyDeviceArrangementAndTensorShape();
-  if (ptr == nullptr) {
-    MS_LOG(ERROR) << "Infer tensor layout return nullptr!";
-    return nullptr;
+  TensorLayout from_layout;
+  TensorLayout to_layout;
+  if (layout_transfer.IsDynamicShape()) {
+    from_layout = layout_transfer.from_in();
+    to_layout = layout_transfer.to_in();
+  } else {
+    std::shared_ptr<ReshapeLayoutTransfer> ptr = layout_transfer.UnifyDeviceArrangementAndTensorShape();
+    if (ptr == nullptr) {
+      MS_LOG(ERROR) << "Infer tensor layout return nullptr!";
+      return nullptr;
+    }
+    if (!ptr->ExpandAble()) {
+      expand_able_ = false;
+      return InferTensorRedistributionOperatorListUnExpand(is_cost_model);
+    }
+    from_layout = ptr->from_in();
+    to_layout = ptr->to_in();
   }
-  if (!ptr->ExpandAble()) {
-    expand_able_ = false;
-    return InferTensorRedistributionOperatorListUnExpand(is_cost_model);
-  }
-  TensorLayout from_layout = ptr->from_in();
-  TensorLayout to_layout = ptr->to_in();
   MS_LOG(DEBUG) << "reshape from_layout " << from_layout.ToString();
   MS_LOG(DEBUG) << "reshape to_layout " << to_layout.ToString();
   MS_LOG(DEBUG) << "reshape from_origin_ " << from_origin_.ToString();

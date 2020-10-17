@@ -357,6 +357,10 @@ bool TensorLayout::operator==(const TensorLayout &t1) const {
   return (IsSameDeviceArrangement(t1) && IsSameTensorMap(t1) && IsSameTensorShape(t1));
 }
 
+bool TensorLayout::operator!=(const TensorLayout &t1) const {
+  return !(IsSameDeviceArrangement(t1) && IsSameTensorMap(t1) && IsSameTensorShape(t1));
+}
+
 /*
  * remove elements equal to 1 in tensor_shape, if all elements are 1, squeeze the tensor_shape to [ 1 ]
  * example 1:
