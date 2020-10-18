@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_SQUEEZE_H_
-#define LITE_MINDSPORE_LITE_C_OPS_SQUEEZE_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_SQUEEZE_H_
+#define MINDSPORE_LITE_SRC_OPS_SQUEEZE_H_
 
 #include <vector>
 #include <set>
@@ -33,6 +33,7 @@ class Squeeze : public PrimitiveC {
   Squeeze() = default;
   explicit Squeeze(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(const std::vector<int> &axis);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 
 #else
   Squeeze() = default;
@@ -45,4 +46,4 @@ class Squeeze : public PrimitiveC {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_SQUEEZE_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_SQUEEZE_H_

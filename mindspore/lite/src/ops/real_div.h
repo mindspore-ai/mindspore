@@ -36,10 +36,7 @@ class RealDiv : public Arithmetic {
 #else
   RealDiv() = default;
 
-  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override {
-    return RET_ERROR;
-  }
-
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

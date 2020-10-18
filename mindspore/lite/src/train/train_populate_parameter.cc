@@ -24,6 +24,7 @@
 #include "nnacl/fp32/activation.h"
 #include "src/ops/conv2d_grad_filter.h"
 #include "src/ops/conv2d_grad_input.h"
+#include "src/ops/group_conv2d_grad_input.h"
 #include "nnacl/conv_parameter.h"
 #include "src/ops/power_grad.h"
 #include "nnacl/power_parameter.h"
@@ -34,6 +35,7 @@
 #include "src/ops/sgd.h"
 #include "src/ops/bn_grad.h"
 #include "nnacl/fp32_grad/batch_norm.h"
+#include "src/ops/adam.h"
 
 namespace mindspore::kernel {
 
@@ -69,9 +71,26 @@ OpParameter *PopulateApplyMomentumParameter(const mindspore::lite::PrimitiveC *p
     reinterpret_cast<mindspore::lite::ApplyMomentum *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
 
   p->grad_scale_ = apply_momentum_primitive->GetGradientScale();
-  p->use_locking_ = apply_momentum_primitive->GetUseLocking();
   p->use_nesterov_ = apply_momentum_primitive->GetUseNesterov();
 
+  return reinterpret_cast<OpParameter *>(p);
+}
+
+OpParameter *PopulateAdamParameter(const mindspore::lite::PrimitiveC *primitive) {
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
+    return nullptr;
+  }
+  AdamParameter *p = reinterpret_cast<AdamParameter *>(malloc(sizeof(AdamParameter)));
+  if (p == nullptr) {
+    MS_LOG(ERROR) << "new AdamParameter failed.";
+    return nullptr;
+  }
+  p->op_parameter_.type_ = primitive->Type();
+
+  auto apply_momentum_primitive =
+    reinterpret_cast<mindspore::lite::Adam *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  p->use_nesterov_ = apply_momentum_primitive->GetUseNesterov();
   return reinterpret_cast<OpParameter *>(p);
 }
 
@@ -264,6 +283,47 @@ OpParameter *PopulateConvolutionGradInputParameter(const mindspore::lite::Primit
   return reinterpret_cast<OpParameter *>(param);
 }
 
+OpParameter *PopulateGroupConvolutionGradInputParameter(const mindspore::lite::PrimitiveC *primitive) {
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
+    return nullptr;
+  }
+
+  ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "new Param for conv grad filter failed.";
+    return nullptr;
+  }
+  param->op_parameter_.type_ = primitive->Type();
+
+  auto convg_primitive =
+    reinterpret_cast<mindspore::lite::GroupConv2DGradInput *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  param->kernel_h_ = convg_primitive->GetKernelH();
+  param->kernel_w_ = convg_primitive->GetKernelW();
+  param->stride_h_ = convg_primitive->GetStrideH();
+  param->stride_w_ = convg_primitive->GetStrideW();
+  param->dilation_h_ = convg_primitive->GetDilateH();
+  param->dilation_w_ = convg_primitive->GetDilateW();
+  param->pad_u_ = convg_primitive->GetPadUp();
+  param->pad_d_ = convg_primitive->GetPadDown();
+  param->pad_l_ = convg_primitive->GetPadLeft();
+  param->pad_r_ = convg_primitive->GetPadRight();
+  param->group_ = convg_primitive->GetGroup();
+  param->act_type_ = ActType_No;
+  switch (convg_primitive->GetActivationType()) {
+    case schema::ActivationType_RELU:
+      param->act_type_ = ActType_Relu;
+      break;
+    case schema::ActivationType_RELU6:
+      param->act_type_ = ActType_Relu6;
+      break;
+    default:
+      break;
+  }
+
+  return reinterpret_cast<OpParameter *>(param);
+}
+
 OpParameter *PopulatePowerGradParameter(const mindspore::lite::PrimitiveC *primitive) {
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
@@ -327,10 +387,13 @@ void PopulateTrainParameters() {
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_BNGrad, DefaultPopulateParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_Conv2DGradFilter, PopulateConvolutionGradFilterParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_Conv2DGradInput, PopulateConvolutionGradInputParameter);
+  ppr->AddPopulateParameterFunc(schema::PrimitiveType_GroupConv2DGradInput, PopulateGroupConvolutionGradInputParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_PoolingGrad, PopulatePoolingGradParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_PowerGrad, PopulatePowerGradParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_Sgd, PopulateSgdParameter);
   ppr->AddPopulateParameterFunc(schema::PrimitiveType_BNGrad, PopulateBNGradParameter);
+  ppr->AddPopulateParameterFunc(schema::PrimitiveType_Adam, PopulateAdamParameter);
+  ppr->AddPopulateParameterFunc(schema::PrimitiveType_Assign, DefaultPopulateParameter);
 }
 
 }  // namespace mindspore::kernel

@@ -35,6 +35,66 @@ void Slice::SetFormat(int format) { this->primitive_->value.AsSlice()->format = 
 void Slice::SetBegin(const std::vector<int> &begin) { this->primitive_->value.AsSlice()->begin = begin; }
 void Slice::SetSize(const std::vector<int> &size) { this->primitive_->value.AsSlice()->size = size; }
 
+int Slice::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Slice;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Slice) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::SliceT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    if (inputs.size() >= kAnfPopulaterThree) {
+      auto beginNode = inputs[kAnfPopulaterOne];
+      MS_ASSERT(beginNode != nullptr);
+      if (beginNode->isa<ValueNode>()) {
+        auto valueNode = beginNode->cast<ValueNodePtr>();
+        MS_ASSERT(valueNode != nullptr);
+        auto value = valueNode->value();
+        MS_ASSERT(value != nullptr);
+        if (value->isa<ValueTuple>()) {
+          auto valTuplPtr = dyn_cast<ValueTuple>(value);
+          MS_ASSERT(valTuplPtr != nullptr);
+          for (size_t i = 0; i < valTuplPtr->size(); i++) {
+            auto elem = dyn_cast<Int32Imm>((*valTuplPtr)[i]);
+            MS_ASSERT(elem != nullptr);
+            attr->begin.emplace_back(elem->value());
+          }
+        }
+      }
+      auto sizeNode = inputs[kAnfPopulaterTwo];
+      MS_ASSERT(sizeNode != nullptr);
+      if (sizeNode->isa<ValueNode>()) {
+        auto valueNode = sizeNode->cast<ValueNodePtr>();
+        MS_ASSERT(valueNode != nullptr);
+        auto value = valueNode->value();
+        MS_ASSERT(value != nullptr);
+        if (value->isa<ValueTuple>()) {
+          auto valTuplPtr = dyn_cast<ValueTuple>(value);
+          MS_ASSERT(valTuplPtr != nullptr);
+          for (size_t i = 0; i < valTuplPtr->size(); i++) {
+            auto elem = dyn_cast<Int32Imm>((*valTuplPtr)[i]);
+            MS_ASSERT(elem != nullptr);
+            attr->size.emplace_back(elem->value());
+          }
+        }
+      }
+    }
+    this->primitive_->value.value = attr;
+  }
+  return RET_OK;
+}
+
 #else
 
 int Slice::GetFormat() const { return this->primitive_->value_as_Slice()->format(); }
@@ -46,10 +106,12 @@ std::vector<int> Slice::GetSize() const {
   auto fb_vector = this->primitive_->value_as_Slice()->size();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
+
 std::vector<int> Slice::GetAxes() const {
   auto fb_vector = this->primitive_->value_as_Slice()->axes();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
+
 int Slice::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
@@ -90,7 +152,7 @@ std::vector<int> Slice::GetPostProcessBegin() const { return this->begin; }
 std::vector<int> Slice::GetPostProcessSize() const { return this->size; }
 int Slice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
-  if (inputs.size() != kSliceInputNum || outputs.size() != kSliceOutputNum) {
+  if (inputs.size() < kSliceInputNum || outputs.size() != kSliceOutputNum) {
     MS_LOG(ERROR) << "input size:" << inputs.size() << ",output size:" << outputs.size();
     return RET_PARAM_INVALID;
   }

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_ACTIVATION_H_
-#define MINDSPORE_LITE_NNACL_ACTIVATION_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_ACTIVATION_H_
+#define MINDSPORE_LITE_NNACL_FP32_ACTIVATION_H_
 
 #include <math.h>
 #include "nnacl/op_base.h"
@@ -36,9 +36,10 @@ int Fp32Relu6(const float *src, int length, float *dst);
 int LRelu(const float *src, int length, float *dst, float alpha);
 int Sigmoid(const float *src, int length, float *dst);
 int Tanh(const float *src, int length, float *dst);
+int HSigmoid(const float *src, int length, float *dst);
 int HSwish(const float *src, int length, float *dst);
 int HardTanh(const float *src, int length, float *dst, float min_val, float max_val);
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_LITE_NNACL_ACTIVATION_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_ACTIVATION_H_

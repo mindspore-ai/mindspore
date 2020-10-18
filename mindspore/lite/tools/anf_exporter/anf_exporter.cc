@@ -274,9 +274,24 @@ int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> input_anode, s
   auto input_cnode = utils::cast<CNodePtr>(input_anode);
 
   if (!IsPrimitiveCNode(input_cnode, schema::PrimitiveType_TupleGetItem)) {
+#ifndef SUPPORT_TRAIN
     if (node_id_map_.find(input_name) != node_id_map_.end()) {
       output_cnode->inputIndex.emplace_back(node_id_map_[input_name]);
     }
+#else
+    bool found = false;
+    if (node_id_map_.find(input_name) != node_id_map_.end()) {
+      output_cnode->inputIndex.emplace_back(node_id_map_[input_name]);
+      found = true;
+    }
+
+    if (found == false) {
+      auto input_index_key = input_name + "_o:" + std::to_string(0);
+      if (node_id_map_.find(input_index_key) != node_id_map_.end()) {
+        output_cnode->inputIndex.emplace_back(node_id_map_[input_index_key]);
+      }
+    }
+#endif
   } else {
     auto inputs = input_cnode->inputs();
     if (inputs.size() != 3) {
@@ -369,6 +384,9 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
     auto typePtr = abstractTensor->element()->GetTypeTrack();
     paramTensor->dataType = typePtr->type_id();
     paramTensor->dims = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
+#ifdef SUPPORT_TRAIN
+    if (paramTensor->dims.size() == 0) paramTensor->dims = {1};
+#endif
     paramTensor->nodeType = schema::NodeType::NodeType_ValueNode;
     auto data = value->cast<tensor::TensorPtr>();
     paramTensor->data.resize(data->Size());
@@ -505,7 +523,8 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
       node_id_map_[name] = meta_graphT->allTensors.size();
       meta_graphT->allTensors.emplace_back(msTensor);
       if (IsPrimitiveCNode(cnode, schema::PrimitiveType_Conv2D) ||
-          IsPrimitiveCNode(cnode, schema::PrimitiveType_DepthwiseConv2D))
+          IsPrimitiveCNode(cnode, schema::PrimitiveType_DepthwiseConv2D) ||
+          IsPrimitiveCNode(cnode, schema::PrimitiveType_Adam))
         break;
 #else
       if (tuple->size() == 1) {

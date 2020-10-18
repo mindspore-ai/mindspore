@@ -224,7 +224,29 @@ table Conv2DGradInput {
     dilateH: int;
     hasBias: bool = false;
     activationType: ActivationType = 0;
-}table FusedBatchNorm {
+}
+
+table GroupConv2DGradInput {
+    format: Format = 0;
+    group: int;
+    channelIn: int;
+    channelOut: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool = false;
+    activationType: ActivationType = 0;
+}
+
+table FusedBatchNorm {
     epsilon: float = 0.00001;   // eg. epsilon=0.001
     momentum: float = 0.9;
     spatial: int = 1;
@@ -901,7 +923,6 @@ table TupleGetItem {
 
 table ApplyMomentum {
     gradientScale: float;
-    useLocking: bool;
     useNesterov: bool;
 }
 
@@ -910,6 +931,14 @@ table Sgd {
     dampening: float;
     useNesterov: bool;
 }
+
+table Adam {
+    useNesterov: bool;
+}
+
+table Assign {
+}
+
 
 table Where{
     condition: [bool];

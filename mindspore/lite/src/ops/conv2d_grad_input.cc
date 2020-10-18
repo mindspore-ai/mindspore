@@ -15,7 +15,7 @@
  */
 
 #include "src/ops/conv2d_grad_input.h"
-
+#include "src/ops/group_conv2d_grad_input.h"
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -86,6 +86,9 @@ int Conv2DGradInput::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
       return RET_ERROR;
     }
     attr->group = GetValue<int>(prim.GetAttr("group"));
+    if (attr->group > 1) {
+      this->primitive_->value.type = schema::PrimitiveType_GroupConv2DGradInput;
+    }
     auto format = GetValue<std::string>(prim.GetAttr("data_format"));
     if (format == "NCHW") {
       attr->format = schema::Format_NCHW;

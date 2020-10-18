@@ -79,14 +79,7 @@ int ApplyMomentumCPUKernel::Run() {
   return RET_OK;
 }
 
-int ApplyMomentumCPUKernel::Init() {
-  // Only for test with uninitialized Data
-  size_t elem_num = in_tensors_[0]->ElementsNum();
-  auto accumulate = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
-  for (size_t i = 0; i < elem_num; i++) accumulate[i] = 0.0;
-
-  return RET_OK;
-}
+int ApplyMomentumCPUKernel::Init() { return RET_OK; }
 
 kernel::LiteKernel *CpuApplyMomentumFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,

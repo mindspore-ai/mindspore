@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef TESTS_UT_COMMON_UT_COMMON_H_
-#define TESTS_UT_COMMON_UT_COMMON_H_
+#ifndef MINDSPORE_LITE_TEST_COMMON_COMMON_TEST_H_
+#define MINDSPORE_LITE_TEST_COMMON_COMMON_TEST_H_
 
 #include <cmath>
 #include <fstream>
@@ -37,11 +37,11 @@ class CommonTest : public testing::Test {
   void PrintData(std::string name, T *output_data, int size) {
     std::cout << "The " << name << " is as follows:" << std::endl;
     if (typeid(output_data[0]) == typeid(uint8_t) || typeid(output_data[0]) == typeid(int8_t)) {
-      for (size_t i = 0; i < std::min(size, 100); i++) {
+      for (int i = 0; i < std::min(size, 100); i++) {
         std::cout << static_cast<int>(output_data[i]) << " ";
       }
     } else {
-      for (size_t i = 0; i < std::min(size, 100); i++) {
+      for (int i = 0; i < std::min(size, 100); i++) {
         std::cout << output_data[i] << " ";
       }
     }
@@ -58,7 +58,7 @@ class CommonTest : public testing::Test {
 
   void CompareOutputInt8(int8_t *output_data, int8_t *correct_data, int size, float err_percent) {
     int bias_count = 0;
-    for (size_t i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++) {
       int8_t diff = abs(output_data[i] - correct_data[i]);
       ASSERT_LE(diff, 1);
       if (diff == 1) {
@@ -88,4 +88,4 @@ class CommonTest : public testing::Test {
   }
 };
 }  // namespace mindspore
-#endif  // TESTS_UT_COMMON_UT_COMMON_H_
+#endif  // MINDSPORE_LITE_TEST_COMMON_COMMON_TEST_H_

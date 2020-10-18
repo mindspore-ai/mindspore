@@ -161,6 +161,7 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
       int idx = 0;
       if (GetCNodeTType(**iter) == schema::PrimitiveType_ApplyMomentum) idx = 3;
       if (GetCNodeTType(**iter) == schema::PrimitiveType_Sgd) idx = 1;
+      if (GetCNodeTType(**iter) == schema::PrimitiveType_Adam) idx = 9;
       iter = InsertFormatTransNode(graph, iter, kBefore, idx, beforeNodeType, &status);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "InsertNhwc2NchwNode after " << nodeName << "failed";

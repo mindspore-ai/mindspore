@@ -24,6 +24,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::ActivationType_HSIGMOID;
 using mindspore::schema::ActivationType_HSWISH;
 using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
@@ -57,6 +58,8 @@ int ActivationCPUKernel::DoActivation(int task_id) {
     error_code = Tanh(input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (type_ == schema::ActivationType_HSWISH) {
     error_code = HSwish(input_addr + stride * task_id, count, output_addr + stride * task_id);
+  } else if (type_ == schema::ActivationType_HSIGMOID) {
+    error_code = HSigmoid(input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (type_ == schema::ActivationType_HARD_TANH) {
     error_code = HardTanh(input_addr + stride * task_id, count, output_addr + stride * task_id, min_val_, max_val_);
   } else {

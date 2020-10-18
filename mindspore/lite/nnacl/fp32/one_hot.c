@@ -31,14 +31,14 @@ int OneHot(const int *indices, float *output, const OneHotParameter *one_hot_par
   int i, j, k;
   for (i = tid; i < outer_size; i += thread_num) {
     float *output_ptr = output + i * depth * inner_size;
-    for (k = 0; k < depth; k++) {
-      for (j = 0; j < inner_size; j++) {
+    for (k = 0; k < inner_size; k++) {
+      int index = indices[i * inner_size + k];
+      for (j = 0; j < depth; j++) {
         *output_ptr = off_value;
-        int index = indices[i * inner_size + j];
         if (index >= depth) {
           return NNACL_ERRCODE_INDEX_OUT_OF_RANGE;
         }
-        if (index == k) {
+        if (index == j) {
           *output_ptr = on_value;
         }
         output_ptr++;

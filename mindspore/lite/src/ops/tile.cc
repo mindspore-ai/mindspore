@@ -24,7 +24,7 @@ std::vector<int> Tile::GetMultiples() const { return this->primitive_->value.AsT
 
 void Tile::SetMultiples(const std::vector<int> &multiples) { this->primitive_->value.AsTile()->multiples = multiples; }
 
-std::vector<int> Tile::GetDims() const { return this->primitive_->value.AsTile()->multiples; }
+std::vector<int> Tile::GetDims() const { return this->primitive_->value.AsTile()->dims; }
 
 void Tile::SetDims(const std::vector<int> &dims) { this->primitive_->value.AsTile()->dims = dims; }
 
@@ -42,11 +42,32 @@ int Tile::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &input
     return RET_ERROR;
   }
   if (this->primitive_->value.value == nullptr) {
-    this->primitive_->value.value = new (std::nothrow) schema::TileT();
-    if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::TileT();
+
+    if (attr == nullptr) {
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
+    if (inputs.size() == kAnfPopulaterTwo) {
+      auto inputNode = inputs[kAnfPopulaterOne];
+      MS_ASSERT(inputNode != nullptr);
+      if (inputNode->isa<ValueNode>()) {
+        auto valueNode = inputNode->cast<ValueNodePtr>();
+        MS_ASSERT(valueNode != nullptr);
+        auto value = valueNode->value();
+        MS_ASSERT(value != nullptr);
+        if (value->isa<ValueTuple>()) {
+          auto valTuplPtr = dyn_cast<ValueTuple>(value);
+          MS_ASSERT(valTuplPtr != nullptr);
+          for (size_t i = 0; i < valTuplPtr->size(); i++) {
+            auto elem = dyn_cast<Int32Imm>((*valTuplPtr)[i]);
+            MS_ASSERT(elem != nullptr);
+            attr->multiples.emplace_back(elem->value());
+          }
+        }
+      }
+    }
+    this->primitive_->value.value = attr;
   }
   return RET_OK;
 }
@@ -103,15 +124,19 @@ int Tile::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
 
   MS_ASSERT(tile_prim != nullptr);
   std::vector<int> out_shape;
-  std::vector<int> multiples;
-  for (size_t i = 0; i < GetMultiples().size(); ++i) {
-    multiples.push_back(GetMultiples()[i]);
-  }
-  for (size_t i = 0; i < input->shape().size(); ++i) {
-    int tmp = input->shape()[i] * multiples[i];
+  std::vector<int> multiples = GetMultiples();
+  const size_t in_dims = input->shape().size();
+  const size_t delta_dims = in_dims - multiples.size();
+
+  size_t i = 0;
+  for (; i < delta_dims; ++i) {
+    int tmp = input->shape()[i];
     out_shape.push_back(tmp);
   }
-
+  for (; i < in_dims; ++i) {
+    int tmp = input->shape()[i] * (multiples[i - delta_dims]);
+    out_shape.push_back(tmp);
+  }
   output->set_shape(out_shape);
   return RET_OK;
 }

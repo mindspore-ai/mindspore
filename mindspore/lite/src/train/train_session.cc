@@ -104,23 +104,15 @@ int TrainSession::RunGraph(const session::KernelCallBack &before, const session:
     for (auto ms_tensor : ms_tensors.second) this->outputs_.push_back((static_cast<lite::Tensor *>(ms_tensor)));
   if (train_mode_) return lite::LiteSession::RunGraph(before, after);
 
-  // object is expected to run only inference part of graph
-  // prepare a list of kernels till the loss function -- temporary solution
-  std::vector<kernel::LiteKernel *> inference_kernels;
-  for (auto kernel : this->kernels_) {
-    if (IsLossKernel(kernel)) break;
-    inference_kernels.push_back(kernel);
-  }
-
   if (this->context_ == nullptr) {
     MS_LOG(ERROR) << "context is null";
     return lite::RET_NULL_PTR;
   }
   lite::Executor executor;
   if (before == nullptr && after == nullptr) {
-    return executor.Run(this->inputs_, this->outputs_, inference_kernels, this->context_->allocator.get());
+    return executor.Run(this->inputs_, this->outputs_, inference_kernels_, this->context_->allocator.get());
   } else {
-    return executor.Run(this->inputs_, this->outputs_, inference_kernels, this->context_->allocator.get(), before,
+    return executor.Run(this->inputs_, this->outputs_, inference_kernels_, this->context_->allocator.get(), before,
                         after);
   }
 }
@@ -172,6 +164,38 @@ void TrainSession::Eval() {
         }
       }
     }
+  }
+  if (inference_kernels_.size() == 0) {
+    BuildInferenceKernelsMap();
+  }
+}
+
+void TrainSession::BuildInferenceKernelsRecursive(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *v) {
+  if (std::find(v->begin(), v->end(), kernel) == v->end()) {  // kernel is not in vector
+    v->push_back(kernel);
+    for (auto in_node : kernel->in_kernels()) {
+      BuildInferenceKernelsRecursive(in_node, v);
+    }
+  }
+}
+
+void TrainSession::BuildInferenceKernelsMap() {
+  std::vector<kernel::LiteKernel *> req_kernels;
+  for (auto kernel : this->kernels_) {
+    if (IsLossKernel(kernel)) {  // For each loss in the system add backward tree
+      for (auto in_node : kernel->in_kernels()) {
+        BuildInferenceKernelsRecursive(in_node, &req_kernels);
+      }
+    }
+  }
+  inference_kernels_.clear();
+  for (auto kernel : this->kernels_) {
+    if (std::find(req_kernels.begin(), req_kernels.end(), kernel) != req_kernels.end()) {
+      inference_kernels_.push_back(kernel);
+    }
+  }
+  if (inference_kernels_.size() == 0) {
+    inference_kernels_ = this->kernels_;
   }
 }
 

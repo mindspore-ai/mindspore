@@ -182,7 +182,7 @@ union PrimitiveType {
     Conv2DGradInput,
     PoolingGrad,
     BNGrad,
-    BNGradInput,
+    Assign,
     ApplyMomentum,
     BiasGrad,
     SoftmaxCrossEntropy,
@@ -217,6 +217,8 @@ union PrimitiveType {
     FftReal,
     FftImag,
     Sgd,
+    Adam,
+    GroupConv2DGradInput,
 }
 
 enum QuantType: int {

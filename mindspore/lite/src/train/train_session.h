@@ -82,12 +82,16 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
 
  protected:
   void AllocWorkSpace();
+  bool IsLossKernel(kernel::LiteKernel *kernel);
   virtual std::vector<CreatorOp> ReplaceOps();
   virtual void RestoreOps(const std::vector<CreatorOp> &restore);
-  bool IsLossKernel(kernel::LiteKernel *kernel);
+  virtual void BuildInferenceKernelsMap();
+  virtual void BuildInferenceKernelsRecursive(kernel::LiteKernel *ker, std::vector<kernel::LiteKernel *> *req_kernels);
+
   TrainModel *model_ = nullptr;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> orig_output_map_;
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> orig_output_tensor_map_;
+  std::vector<kernel::LiteKernel *> inference_kernels_;
 };
 }  // namespace lite
 }  // namespace mindspore
