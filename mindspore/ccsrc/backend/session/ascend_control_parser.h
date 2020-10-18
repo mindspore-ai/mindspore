@@ -74,7 +74,8 @@ class AscendControlParser {
   static void AttachChildGraphToReturnNode(NotNull<KernelGraphPtr> graph,
                                            const NotNull<std::set<KernelGraphPtr> *> memo);
   // root graph order
-  static bool CheckLabelIndex(uint32_t index, uint32_t label_index, const CNodePtr &cnode);
+  static bool CheckLabelIndex(uint32_t index, uint32_t label_index, const CNodePtr &cnode,
+                              KernelGraphPtr *cur_child_graph);
   static std::vector<CNodePtr> RecurseGraph(NotNull<KernelGraphPtr> graph,
                                             const NotNull<std::set<KernelGraphPtr> *> memo);
   static void AttachOriginalInputsToGraph(NotNull<KernelGraphPtr> graph, const std::vector<AnfNodePtr> orig_inputs);
