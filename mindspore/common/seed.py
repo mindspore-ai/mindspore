@@ -30,7 +30,7 @@ def _reset_op_seed():
     """
     Reset op seeds in the kernel's dictionary.
     """
-    for kernel_name, op_seed in _KERNEL_SEED.items():
+    for (kernel_name, op_seed) in _KERNEL_SEED:
         _KERNEL_SEED[(kernel_name, op_seed)] = op_seed
 
 

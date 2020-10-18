@@ -14,7 +14,7 @@
 
 import numpy as np
 from numpy import allclose
-
+from mindspore.common import set_seed
 import mindspore.common.initializer as init
 import mindspore.nn as nn
 from mindspore import Parameter
@@ -40,10 +40,10 @@ class ParameterNet(nn.Cell):
 
 
 def test_using_same_seed_for_initializer():
-    np.random.seed(0)
+    set_seed(0)
     net1 = ParameterNet()
     net1.init_parameters_data()
-    np.random.seed(0)
+    set_seed(0)
     net2 = ParameterNet()
     net2.init_parameters_data()
     for key in net1.parameters_dict():
