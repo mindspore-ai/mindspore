@@ -18,17 +18,17 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_
 
 #include <unistd.h>
-#include <vector>
+#include <map>
 #include <memory>
 #include <set>
-#include <map>
-#include <utility>
 #include <string>
+#include <utility>
+#include <vector>
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/engine/data_schema.h"
-#include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
+#include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/include/type_id.h"
 #include "minddata/dataset/kernels/c_func_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -442,8 +442,8 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   virtual std::vector<std::shared_ptr<DatasetOp>> Build() = 0;
 
   /// \brief Pure virtual function for derived class to implement parameters validation
-  /// \return bool true if all the parameters are valid
-  virtual bool ValidateParams() = 0;
+  /// \return Status Status::OK() if all the parameters are valid
+  virtual Status ValidateParams() = 0;
 
   /// \brief Setter function for runtime number of workers
   /// \param[in] num_workers The number of threads in this operator
@@ -692,8 +692,8 @@ class AlbumDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::string dataset_dir_;
@@ -717,8 +717,8 @@ class CelebADataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::string dataset_dir_;
@@ -743,8 +743,8 @@ class Cifar10Dataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::string dataset_dir_;
@@ -765,8 +765,8 @@ class Cifar100Dataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::string dataset_dir_;
@@ -790,8 +790,8 @@ class CLUEDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   /// \brief Split string based on a character delimiter
@@ -821,8 +821,8 @@ class CocoDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::string dataset_dir_;
@@ -869,8 +869,8 @@ class CSVDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::vector<std::string> dataset_files_;
@@ -899,8 +899,8 @@ class ImageFolderDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::string dataset_dir_;
@@ -926,8 +926,8 @@ class ManifestDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::string dataset_file_;
@@ -951,8 +951,8 @@ class MnistDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::string dataset_dir_;
@@ -989,8 +989,8 @@ class RandomDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   /// \brief A quick inline for producing a random number between (and including) min/max
@@ -1023,8 +1023,8 @@ class TextFileDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::vector<std::string> dataset_files_;
@@ -1074,8 +1074,8 @@ class TFRecordDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::vector<std::string> dataset_files_;
@@ -1104,8 +1104,8 @@ class VOCDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   const std::string kColumnImage = "image";
@@ -1140,8 +1140,8 @@ class BatchDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   int32_t batch_size_;
@@ -1170,8 +1170,8 @@ class BucketBatchByLengthDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::vector<std::string> column_names_;
@@ -1198,8 +1198,8 @@ class BuildVocabDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::shared_ptr<Vocab> vocab_;
@@ -1224,8 +1224,8 @@ class ConcatDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::vector<std::shared_ptr<Dataset>> datasets_;
@@ -1245,8 +1245,8 @@ class MapDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::vector<std::shared_ptr<TensorOperation>> operations_;
@@ -1268,8 +1268,8 @@ class ProjectDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::vector<std::string> columns_;
@@ -1288,8 +1288,8 @@ class RenameDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::vector<std::string> input_columns_;
@@ -1309,8 +1309,8 @@ class RepeatDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   int32_t repeat_count_;
@@ -1324,7 +1324,7 @@ class ShuffleDataset : public Dataset {
 
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   int32_t shuffle_size_;
@@ -1345,8 +1345,8 @@ class SkipDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   int32_t skip_count_;
@@ -1365,8 +1365,8 @@ class TakeDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   int32_t take_count_;
@@ -1385,8 +1385,8 @@ class ZipDataset : public Dataset {
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
-  /// \return bool true if all the params are valid
-  bool ValidateParams() override;
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
 
  private:
   std::vector<std::shared_ptr<Dataset>> datasets_;
