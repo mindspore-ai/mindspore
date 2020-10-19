@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_CONV2D_H_
-#define MINDSPORE_CORE_C_OPS_CONV2D_H_
+#ifndef MINDSPORE_CORE_C_OPS_DEPTHWISE_CONV2D_H
+#define MINDSPORE_CORE_C_OPS_DEPTHWISE_CONV2D_H
 #include <map>
 #include <vector>
 #include <string>
 #include <memory>
-
-#include "c_ops/op_utils.h"
 #include "c_ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
+
 namespace mindspore {
-constexpr auto kConv2DName = "Conv2D";
-class Conv2D : public PrimitiveC {
+constexpr auto kNameDepthWiseConv2D = "DepthwiseConv2dNative";
+class DepthWiseConv2D : public PrimitiveC {
  public:
-  Conv2D();
-  ~Conv2D() = default;
-  MS_DECLARE_PARENT(Conv2D, PrimitiveC);
+  DepthWiseConv2D() : PrimitiveC(kNameDepthWiseConv2D) { InitIOName({"x", "w"}, {"output"}); }
+  ~DepthWiseConv2D() = default;
+  MS_DECLARE_PARENT(DepthWiseConv2D, PrimitiveC);
   void Init(int out_channel, const std::vector<int> &kernel_size, int mode = 1, const std::string &pad_mode = "valid",
             const std::vector<int> &pad = {0, 0, 0, 0}, const std::vector<int> &stride = {1, 1, 1, 1},
             const std::vector<int> &dilation = {1, 1, 1, 1}, int group = 1);
@@ -51,10 +50,11 @@ class Conv2D : public PrimitiveC {
   void set_mode(int mode);
   void set_group(int group);
   void set_out_channel(int output_channel);
-  void set_pad_list(const std::vector<int> &pad_list);
+  void set_pads(const std::vector<int> &pad_list);
 };
-AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
-using PrimConv2dPtr = std::shared_ptr<Conv2D>;
+AbstractBasePtr DepthWiseConv2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<AbstractBasePtr> &input_args);
+using PrimDepthWiseConv2DPtr = std::shared_ptr<DepthWiseConv2D>;
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_CONV2D_H_
+
+#endif  // MINDSPORE_CORE_C_OPS_DEPTHWISE_CONV2D_H
