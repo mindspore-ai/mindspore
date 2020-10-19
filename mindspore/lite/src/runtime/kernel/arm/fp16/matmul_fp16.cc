@@ -20,6 +20,7 @@
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
+#include "src/runtime/kernel/arm/base/dequant.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -256,7 +257,7 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
   auto *weight_tensor = inputs.at(kWeightIndex);
   auto *restore_data = weight_tensor->data_c();
   if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
-    auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
+    auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
       MS_LOG(ERROR) << "dequant data is nullptr.";
       return nullptr;
@@ -269,7 +270,6 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
       weight_tensor->FreeData();
-      weight_tensor->set_data_type(kNumberTypeInt8);
       weight_tensor->SetData(restore_data);
     }
     free(opParameter);
@@ -282,14 +282,12 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
     delete kernel;
     if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
       weight_tensor->FreeData();
-      weight_tensor->set_data_type(kNumberTypeInt8);
       weight_tensor->SetData(restore_data);
     }
     return nullptr;
   }
   if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
     weight_tensor->FreeData();
-    weight_tensor->set_data_type(kNumberTypeInt8);
     weight_tensor->SetData(restore_data);
   }
   return kernel;

@@ -43,8 +43,9 @@ class WeightQuantizer : public Quantizer {
   STATUS DoMulQuantize(const std::list<CNodePtr> &nodes);
   static STATUS WeightQuantInputCheck(const converter::Flags *config);
   static bool IsPosNum(const std::string &str);
-  int quant_max{INT8_MAX};
-  int quant_min{INT8_MIN};
+  int quant_max;
+  int quant_min;
+  TypeId type_id{kTypeUnknown};
 
  private:
   std::unique_ptr<QuantStrategy> mStrategy;

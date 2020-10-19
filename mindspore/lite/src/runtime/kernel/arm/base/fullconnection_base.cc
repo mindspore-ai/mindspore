@@ -20,6 +20,7 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "include/context.h"
+#include "src/runtime/kernel/arm/base/dequant.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -64,7 +65,7 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::T
   // data of second tensor of fc may be nullptr
   auto *restore_data = weight_tensor->data_c();
   if (!weight_tensor->GetQuantParams().empty() && restore_data != nullptr) {
-    auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
+    auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
       MS_LOG(ERROR) << "dequant data is nullptr.";
       return nullptr;
