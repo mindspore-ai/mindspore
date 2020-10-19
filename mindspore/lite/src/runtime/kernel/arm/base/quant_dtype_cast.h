@@ -39,10 +39,13 @@ class QuantDTypeCastCPUKernel : public LiteKernel {
   int thread_n_num_;
   int thread_n_stride_;
   int num_unit_;
-  int8_t *int8_ptr_;
+  int8_t *int8_ptr_ = nullptr;
+  int8_t *int8_out_ptr_ = nullptr;
   uint8_t *uint8_ptr_ = nullptr;
-  float *float32_ptr_;
-  bool inverse_;
+  float *float32_ptr_ = nullptr;
+
+  int32_t src_dtype;
+  int32_t dst_dtype;
 };
 }  // namespace mindspore::kernel
 
