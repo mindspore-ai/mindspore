@@ -29,12 +29,20 @@ if (OPENSSL_ROOT_DIR)
   set(_CMAKE_ARGS_OPENSSL_ROOT_DIR "-DOPENSSL_ROOT_DIR:PATH=${OPENSSL_ROOT_DIR}")
 endif()
 
+if (ENABLE_GITEE)
+    set(REQ_URL "https://gitee.com/mirrors/grpc/repository/archive/v1.27.3.tar.gz")
+    set(MD5 "b8b6d8defeda0355105e3b64b4201786")
+else()
+    set(REQ_URL "https://github.com/grpc/grpc/archive/v1.27.3.tar.gz")
+    set(MD5 "0c6c3fc8682d4262dd0e5e6fabe1a7e2")
+endif ()
+
 mindspore_add_pkg(grpc
         VER 1.27.3
         LIBS grpc++ grpc gpr upb address_sorting
         EXE grpc_cpp_plugin
-        URL https://github.com/grpc/grpc/archive/v1.27.3.tar.gz
-        MD5 0c6c3fc8682d4262dd0e5e6fabe1a7e2
+        URL ${REQ_URL}
+        MD5 ${MD5}
         CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release
         -DgRPC_INSTALL:BOOL=ON
         -DgRPC_BUILD_TESTS:BOOL=OFF
