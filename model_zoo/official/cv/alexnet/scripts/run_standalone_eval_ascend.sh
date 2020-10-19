@@ -26,4 +26,4 @@ export CKPT_PATH=$3
 export DEVICE_ID=$4
 
 python eval.py --dataset_name=$DATASET_NAME --data_path=$DATA_PATH --ckpt_path=$CKPT_PATH \
-               --device_id=$DEVICE_ID --device_target="Ascend"  > log.txt 2>&1 &
+               --device_id=$DEVICE_ID --device_target="Ascend" > eval_log 2>&1 &

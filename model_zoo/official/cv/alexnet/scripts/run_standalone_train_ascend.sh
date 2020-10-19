@@ -25,4 +25,4 @@ export DATA_PATH=$2
 export DEVICE_ID=$3
 
 python train.py --dataset_name=$DATASET_NAME --data_path=$DATA_PATH \
-               --device_id=$DEVICE_ID --device_target="Ascend"  > log.txt 2>&1 &
+               --device_id=$DEVICE_ID --device_target="Ascend" > log 2>&1 &
