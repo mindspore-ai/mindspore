@@ -40,6 +40,10 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
       free(input_sum_);
       input_sum_ = nullptr;
     }
+    if (filter_zp_ptr_ != nullptr) {
+      free(filter_zp_ptr_);
+      filter_zp_ptr_ = nullptr;
+    }
   }
 
   int Init() override;
@@ -58,6 +62,10 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
       ctx_->allocator->Free(packed_input_);
       packed_input_ = nullptr;
     }
+    if (matmul_packed_input_ != nullptr) {
+      ctx_->allocator->Free(matmul_packed_input_);
+      matmul_packed_input_ = nullptr;
+    }
     if (tmp_dst_ != nullptr) {
       ctx_->allocator->Free(tmp_dst_);
       tmp_dst_ = nullptr;
@@ -70,10 +78,12 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
   bool support_optimize_ = true;
   int8_t *packed_weight_ = nullptr;
   int8_t *packed_input_ = nullptr;
+  int8_t *matmul_packed_input_ = nullptr;
+  int32_t *filter_zp_ptr_ = nullptr; /* per-oc */
   int32_t *input_sum_ = nullptr;
   int32_t *tmp_dst_ = nullptr;
   int8_t *tmp_out_ = nullptr;
-  GEMM_FUNC gemm_func_ = nullptr;
+  MATMUL_OPT_R_FUNC matmul_func_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
