@@ -315,14 +315,27 @@ int LiteSession::Init(Context *context) {
     return RET_ERROR;
   }
 
-  MS_ASSERT(nullptr != context);
-  if (context->device_type_ == DT_NPU) {
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "context is nullptr";
+    is_running_.store(false);
+    return RET_NULL_PTR;
+  }
+
+  if (context->device_list_.empty()) {
+    MS_LOG(ERROR) << "Device list is empty.";
+    is_running_.store(false);
+    return RET_NOT_SUPPORT;
+  }
+
+  auto &device_type = context->device_list_[0].device_type_;
+
+  if (device_type == DT_NPU) {
     MS_LOG(ERROR) << "NPU is not supported.";
     is_running_.store(false);
     return RET_NOT_SUPPORT;
   }
 #ifndef SUPPORT_GPU
-  if (context->device_type_ == DT_GPU) {
+  if (device_type == DT_GPU) {
     MS_LOG(ERROR) << "GPU is not supported.";
     is_running_.store(false);
     return RET_NOT_SUPPORT;
@@ -337,9 +350,10 @@ int LiteSession::Init(Context *context) {
   }
   this->context_->allocator = context->allocator;
   this->context_->thread_num_ = context->thread_num_;
-  this->context_->cpu_bind_mode_ = context->cpu_bind_mode_;
-  this->context_->device_type_ = context->device_type_;
-  this->context_->enable_float16_ = context->enable_float16_;
+  this->context_->device_list_.clear();
+  for (auto &device_ctx : context->device_list_) {
+    this->context_->device_list_.push_back(device_ctx);
+  }
   auto ret = this->context_->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
@@ -353,11 +367,12 @@ int LiteSession::Init(Context *context) {
     return ret;
   }
 #if SUPPORT_GPU
-  if (context_->device_type_ == DT_GPU) {
+  if (device_type == DT_GPU) {
+    auto gpu_device_info = this->context_->device_list_[0].device_info_.gpu_device_info_;
     auto opencl_runtime = ocl_runtime_wrap_.GetInstance();
-    opencl_runtime->SetFp16Enable(context_->enable_float16_);
+    opencl_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
     if (opencl_runtime->Init() != RET_OK) {
-      context_->device_type_ = DT_CPU;
+      device_type = DT_CPU;
       MS_LOG(WARNING) << "Init OpenCL runtime failed, change to CPU mode.";
     } else {
       MS_LOG(INFO) << "Init OpenCL runtime success.";
@@ -375,9 +390,18 @@ int LiteSession::Init(Context *context) {
 }
 
 void LiteSession::BindThread(bool if_bind) {
-  if (this->context_->cpu_bind_mode_ != NO_BIND) {
+  if (this->context_->device_list_.empty()) {
+    MS_LOG(ERROR) << "Device list is empty.";
+    return;
+  }
+  auto &device_ctx = this->context_->device_list_[0];
+  if (device_ctx.device_type_ != DT_CPU) {
+    MS_LOG(ERROR) << "Device is not CPU.";
+    return;
+  }
+  if (device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ != NO_BIND) {
     MS_ASSERT(this->context_->thread_pool_ != NULL);
-    BindThreads(this->context_->thread_pool_, if_bind, this->context_->cpu_bind_mode_);
+    BindThreads(this->context_->thread_pool_, if_bind, device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_);
   }
 }
 

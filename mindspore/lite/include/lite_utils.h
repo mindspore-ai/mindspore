@@ -27,7 +27,11 @@ namespace mindspore::lite {
 /// \note List public class and interface for reference.
 class Allocator;
 
+/// \brief DeviceContext defined a device context.
+struct DeviceContext;
+
 using TensorPtrVector = std::vector<mindspore::schema::Tensor *>;
+using DeviceContextVector = std::vector<DeviceContext>;
 using Uint32Vector = std::vector<uint32_t>;
 using String = std::string;
 using NodeType = schema::NodeType;

@@ -1369,9 +1369,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   auto model = lite::Model::Import(content, size);
 
   Context ctx;
-  ctx.device_type_ = DT_CPU;
   ctx.thread_num_ = calibrator_->GetThreadNum();
-  ctx.cpu_bind_mode_ = MID_CPU;
 
   fp32_session_ = dynamic_cast<mindspore::lite::LiteSession *>(session::LiteSession::CreateSession(&ctx));
   if (fp32_session_ == nullptr) {
@@ -1452,9 +1450,8 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     auto int8_model = lite::Model::Import(int8_content, size);
 
     Context int8_ctx;
-    int8_ctx.device_type_ = DT_CPU;
     int8_ctx.thread_num_ = calibrator_->GetThreadNum();
-    int8_ctx.cpu_bind_mode_ = HIGHER_CPU;
+    int8_ctx.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = HIGHER_CPU;
 
     int8_session_ = dynamic_cast<mindspore::lite::LiteSession *>(session::LiteSession::CreateSession(&int8_ctx));
     if (int8_session_ == nullptr) {

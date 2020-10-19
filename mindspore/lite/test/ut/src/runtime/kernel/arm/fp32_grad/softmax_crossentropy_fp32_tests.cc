@@ -61,7 +61,6 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   std::vector<lite::Tensor *> outputs = {&loss_tensor, &grad_tensor};
 
   lite::InnerContext context;
-  context.device_type_ = lite::DT_CPU;
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
