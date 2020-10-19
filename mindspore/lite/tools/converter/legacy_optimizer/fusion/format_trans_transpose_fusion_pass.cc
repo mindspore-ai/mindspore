@@ -118,6 +118,17 @@ STATUS FormatTransPermuteFusionPass::DoFusion(schema::MetaGraphT *graph, const s
   std::vector<int32_t> nhwc2nchwPerm = {0, 3, 1, 2};
   if ((perm == nchw2nhwcPerm && formatTransType == PrimitiveType_Nhwc2Nchw) ||
       (perm == nhwc2nchwPerm && formatTransType == PrimitiveType_Nchw2Nhwc)) {
+    if (formatTransPath->nodeIdx < transposePath->nodeIdx) {
+      if (graph->allTensors.at(formatTransNode->inputIndex[0])->format !=
+          graph->allTensors.at(transposeNode->outputIndex[0])->format) {
+        return RET_OK;
+      }
+    } else {
+      if (graph->allTensors.at(transposeNode->inputIndex[0])->format !=
+          graph->allTensors.at(formatTransNode->outputIndex[0])->format) {
+        return RET_OK;
+      }
+    }
     auto status = IsolateOneWayNode(graph, formatTransPath->nodeIdx);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "IsolateOneWayNode failed, node: " << formatTransNode->name << ", error: " << status;

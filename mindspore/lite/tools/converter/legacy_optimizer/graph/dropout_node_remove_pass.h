@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAGP_UNUSED_NODE_REMOVE_PASS_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAGP_UNUSED_NODE_REMOVE_PASS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAGP_DROPOUT_NODE_REMOVE_PASS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAGP_DROPOUT_NODE_REMOVE_PASS_H_
 
 #include <unordered_map>
 #include "tools/converter/optimizer.h"
 
 namespace mindspore {
 namespace lite {
-class UnusedNodeRemovePass : public GraphPass {
+class DropoutNodeRemovePass : public GraphPass {
  public:
-  UnusedNodeRemovePass() = default;
+  DropoutNodeRemovePass() = default;
 
-  ~UnusedNodeRemovePass() override = default;
+  ~DropoutNodeRemovePass() override = default;
 
   STATUS Run(schema::MetaGraphT *graph) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAGP_UNUSED_NODE_REMOVE_PASS_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAGP_DROPOUT_NODE_REMOVE_PASS_H_

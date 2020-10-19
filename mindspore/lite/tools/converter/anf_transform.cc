@@ -27,6 +27,7 @@
 #include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
+#include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
@@ -45,6 +46,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
+  auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
 
   // for now - trainning is not supporting fuse operations
   if (config != nullptr && config->trainModel == false) {
@@ -79,6 +81,8 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
     pm->AddPass(remove_unused_cast_pass);
   }
   pm->AddPass(std::make_shared<opt::ConstFoldPass>());
+  convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
+  optimizer->AddPassManager(convert_pm);
   optimizer->AddPassManager(pm);
   optimizer->AddPassManager(graph_pm);
   auto new_graph = optimizer->Optimize(old_graph);

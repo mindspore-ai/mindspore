@@ -128,6 +128,7 @@
 #include "src/ops/lsh_projection.h"
 #include "src/ops/hashtable_lookup.h"
 #include "src/ops/skip_gram.h"
+#include "src/ops/clip.h"
 #include "src/ops/custom_predict.h"
 #include "src/ops/custom_normalize.h"
 #include "src/ops/custom_extract_features.h"
@@ -712,6 +713,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new HashtableLookup(primitive);
     case schema::PrimitiveType_SkipGram:
       return new SkipGram(primitive);
+    case schema::PrimitiveType_Clip:
+      return new Clip(primitive);
     case schema::PrimitiveType_CustomPredict:
       return new CustomPredict(primitive);
     case schema::PrimitiveType_CustomNormalize:
@@ -991,6 +994,8 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
       return NewPrimitiveC<HashtableLookup>(primitive);
     case schema::PrimitiveType_SkipGram:
       return NewPrimitiveC<SkipGram>(primitive);
+    case schema::PrimitiveType_Clip:
+      return NewPrimitiveC<Clip>(primitive);
     case schema::PrimitiveType_CustomPredict:
       return NewPrimitiveC<CustomPredict>(primitive);
     case schema::PrimitiveType_CustomNormalize:

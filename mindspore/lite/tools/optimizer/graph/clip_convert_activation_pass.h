@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_WEIGHT_FORMAT_HARDCODE_PASS_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_WEIGHT_FORMAT_HARDCODE_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CLIP_CONVERT_ACTIVATION_PASS_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CLIP_CONVERT_ACTIVATION_PASS_H_
 #include <string>
 #include "schema/inner/model_generated.h"
 #include "tools/converter/converter_flags.h"
@@ -25,23 +25,13 @@
 using mindspore::lite::converter::FmkType;
 using mindspore::schema::QuantType;
 namespace mindspore::opt {
-class WeightFormatHardCodePass : public Pass {
+class ClipConvertActivationPass : public Pass {
  public:
-  WeightFormatHardCodePass() : Pass("weight_format_hardcode_pass") {}
-  ~WeightFormatHardCodePass() override = default;
-  void SetQuantType(QuantType type);
-  void SetFmkType(FmkType fmkType);
+  ClipConvertActivationPass() : Pass("clip_convert_activation_pass") {}
+  ~ClipConvertActivationPass() override = default;
+  // void SetQuantType(QuantType type);
+  // void SetFmkType(FmkType fmkType);
   bool Run(const FuncGraphPtr &graph) override;
-
- private:
-  lite::STATUS HardCodeCAFFE(const AnfNodePtr &node, const ParamValueLitePtr &param_value) const;
-  lite::STATUS HardCodeONNX(const AnfNodePtr &node, const ParamValueLitePtr &param_value) const;
-  lite::STATUS HardCodeMS(const AnfNodePtr &node, const ParamValueLitePtr &param_value) const;
-  lite::STATUS HardCodeTFLITE(const AnfNodePtr &node, const ParamValueLitePtr &param_value) const;
-
- private:
-  QuantType quant_type = schema::QuantType_QUANT_NONE;
-  FmkType fmk_type = lite::converter::FmkType_TF;
 };
 }  // namespace mindspore::opt
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_WEIGHT_FORMAT_HARDCODE_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CLIP_CONVERT_ACTIVATION_PASS_H_
