@@ -289,6 +289,11 @@ void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const floa
   return;
 }
 
+void MatVecMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type, int depth,
+                   int col) {
+  MatmulFp16Neon64_1xN(a, b, c, bias, act_type, depth, col);
+}
+
 void RowMajor2Col16MajorFp16Opt(float16_t *src_ptr, float16_t *dst_ptr, size_t row, size_t col) {
   size_t row_up_16 = UP_ROUND(row, C16NUM);
   size_t row16 = row / C16NUM * C16NUM;

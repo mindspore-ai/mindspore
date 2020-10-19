@@ -62,38 +62,59 @@ int FullconnectionFP16CPUKernel::ReSize() {
   thread_count_ = MSMIN(thread_count_, UP_DIV(fc_param_->col_, C8NUM));
   thread_stride_ = UP_DIV(UP_DIV(fc_param_->col_, C8NUM), thread_count_) * C8NUM;
 
+  if (row == 1) is_vector_input_ = true;
+  int a_pack_row = 0;
+  int b_pack_col = 0;
+  if (is_vector_input_) {
+    a_pack_row = 1;
+    b_pack_col = fc_param_->col_;
+  } else {
+    a_pack_row = fc_param_->row_16_;
+    b_pack_col = fc_param_->col_8_;
+  }
   a_pack_ptr_ =
-    reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(fc_param_->row_16_ * fc_param_->deep_ * sizeof(float16_t)));
+    reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(a_pack_row * fc_param_->deep_ * sizeof(float16_t)));
   if (a_pack_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
-  memset(a_pack_ptr_, 0, fc_param_->row_16_ * fc_param_->deep_ * sizeof(float16_t));
+  memset(a_pack_ptr_, 0, a_pack_row * fc_param_->deep_ * sizeof(float16_t));
 
   b_pack_ptr_ =
-    reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(fc_param_->col_8_ * fc_param_->deep_ * sizeof(float16_t)));
+    reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(b_pack_col * fc_param_->deep_ * sizeof(float16_t)));
   if (b_pack_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
-  memset(b_pack_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(float16_t));
+  memset(b_pack_ptr_, 0, b_pack_col * fc_param_->deep_ * sizeof(float16_t));
 
   fc_param_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
   if (fc_param_->b_const_) {
     if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
-      InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+      if (is_vector_input_) {
+        Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_,
+                         fc_param_->col_ * fc_param_->deep_);
+      } else {
+        InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+      }
     } else {
-      InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+      if (is_vector_input_) {
+        memcpy(b_pack_ptr_, reinterpret_cast<float16_t *>(in_tensors_[1]->data_c()),
+               fc_param_->col_ * fc_param_->deep_ * sizeof(float16_t));
+      } else {
+        InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+      }
     }
+    b_ptr_ = b_pack_ptr_;
   }
 
   if (in_tensors_.size() == 3) {
-    bias_ptr_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(fc_param_->col_8_ * sizeof(float16_t)));
+    bias_ptr_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(b_pack_col * sizeof(float16_t)));
     if (bias_ptr_ == nullptr) {
       FreeTmpBuffer();
       return RET_MEMORY_FAILED;
     }
-    memset(bias_ptr_, 0, fc_param_->col_8_ * sizeof(float16_t));
+    memset(bias_ptr_, 0, b_pack_col * sizeof(float16_t));
     Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->data_c()), bias_ptr_, fc_param_->col_);
   }
 
@@ -102,7 +123,7 @@ int FullconnectionFP16CPUKernel::ReSize() {
       reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(fc_param_->row_ * fc_param_->col_ * sizeof(float16_t)));
   }
   return RET_OK;
-}
+}  // namespace mindspore::kernel
 
 void FullconnectionFP16CPUKernel::InitMatrixA(float *a_ptr, float16_t *a_pack_ptr) {
   RowMajor2Col16MajorFp16(reinterpret_cast<void *>(a_ptr), a_pack_ptr, fc_param_->row_, fc_param_->deep_, true);
@@ -133,11 +154,16 @@ int FullconnectionFP16CPUKernel::RunImpl(int task_id) {
   if (cur_oc <= 0) {
     return RET_OK;
   }
-  auto b = b_pack_ptr_ + task_id * thread_stride_ * fc_param_->deep_;
+  auto b = b_ptr_ + task_id * thread_stride_ * fc_param_->deep_;
   auto bias = (bias_ptr_ == nullptr) ? nullptr : bias_ptr_ + thread_stride_ * task_id;
   auto c = output_ptr_ + task_id * thread_stride_;
-  MatMulFp16(a_pack_ptr_, b, c, bias, fc_param_->act_type_, fc_param_->deep_, fc_param_->row_, cur_oc, fc_param_->col_,
-             OutType_Nhwc);
+  if (is_vector_input_) {
+    MatVecMulFp16(a_ptr_, b, c, bias, fc_param_->act_type_, fc_param_->deep_, cur_oc);
+  } else {
+    MatMulFp16(a_ptr_, b, c, bias, fc_param_->act_type_, fc_param_->deep_, fc_param_->row_, cur_oc, fc_param_->col_,
+               OutType_Nhwc);
+  }
+
   return RET_OK;
 }
 
@@ -163,16 +189,39 @@ int FullconnectionFP16CPUKernel::Run() {
   } else {
     output_ptr_ = reinterpret_cast<float16_t *>(out_tensor->data_c());
   }
+
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_pack_ptr_);
+    if (is_vector_input_) {
+      Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_pack_ptr_, fc_param_->deep_);
+    } else {
+      InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_pack_ptr_);
+    }
+    a_ptr_ = a_pack_ptr_;
   } else {
-    InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->data_c()), a_pack_ptr_);
+    if (is_vector_input_) {
+      a_ptr_ = reinterpret_cast<float16_t *>(in_tensors_[0]->data_c());
+    } else {
+      InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->data_c()), a_pack_ptr_);
+      a_ptr_ = a_pack_ptr_;
+    }
   }
+
   if (!fc_param_->b_const_) {
     if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
-      InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+      if (is_vector_input_) {
+        Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_,
+                         fc_param_->col_ * fc_param_->deep_);
+      } else {
+        InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+      }
+      b_ptr_ = b_pack_ptr_;
     } else {
-      InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+      if (is_vector_input_) {
+        b_ptr_ = reinterpret_cast<float16_t *>(in_tensors_[1]->data_c());
+      } else {
+        InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+        b_ptr_ = b_pack_ptr_;
+      }
     }
   }
   ParallelLaunch(this->context_->thread_pool_, FcFP16Run, this, thread_count_);

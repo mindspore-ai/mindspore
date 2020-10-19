@@ -51,6 +51,9 @@ class FullconnectionFP16CPUKernel : public FullconnectionBaseCPUKernel {
   float16_t *bias_ptr_ = nullptr;
   float16_t *output_fp16_ = nullptr;
   float16_t *output_ptr_ = nullptr;
+  float16_t *a_ptr_ = nullptr;
+  float16_t *b_ptr_ = nullptr;
+  bool is_vector_input_ = false;
 };
 }  // namespace mindspore::kernel
 
