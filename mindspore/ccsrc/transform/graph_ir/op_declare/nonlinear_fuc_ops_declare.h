@@ -19,8 +19,8 @@
 
 #include <string>
 #include <unordered_map>
-#include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/nonlinear_fuc_ops.h"
+#include "transform/graph_ir/op_declare/op_declare_macro.h"
 
 namespace mindspore::transform {
 DECLARE_OP_ADAPTER(ReluGrad)
@@ -31,6 +31,12 @@ DECLARE_OP_USE_OUTPUT(Relu6)
 
 DECLARE_OP_ADAPTER(Relu6Grad)
 DECLARE_OP_USE_OUTPUT(Relu6Grad)
+
+DECLARE_OP_ADAPTER(Softplus)
+DECLARE_OP_USE_OUTPUT(Softplus)
+
+DECLARE_OP_ADAPTER(SoftplusGrad)
+DECLARE_OP_USE_OUTPUT(SoftplusGrad)
 
 DECLARE_OP_ADAPTER(Tanh)
 DECLARE_OP_USE_OUTPUT(Tanh)

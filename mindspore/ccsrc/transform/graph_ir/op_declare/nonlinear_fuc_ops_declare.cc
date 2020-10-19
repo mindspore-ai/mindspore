@@ -71,6 +71,18 @@ ATTR_MAP(Relu6Grad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Relu6Grad) = {{0, OUTPUT_DESC(backprops)}};
 REG_ADPT_DESC(Relu6Grad, kNameReLU6Grad, ADPT_DESC(Relu6Grad))
 
+// Softplus
+INPUT_MAP(Softplus) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Softplus) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Softplus) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Softplus, kNameSoftplus, ADPT_DESC(Softplus))
+
+// SoftplusGrad
+INPUT_MAP(SoftplusGrad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
+ATTR_MAP(SoftplusGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SoftplusGrad) = {{0, OUTPUT_DESC(backprops)}};
+REG_ADPT_DESC(SoftplusGrad, kNameSoftplusGrad, ADPT_DESC(SoftplusGrad))
+
 // ReluGrad
 INPUT_MAP(ReluGrad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
 ATTR_MAP(ReluGrad) = EMPTY_ATTR_MAP;
