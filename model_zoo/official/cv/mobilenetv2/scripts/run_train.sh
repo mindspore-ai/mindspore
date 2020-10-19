@@ -31,21 +31,32 @@ run_ascend()
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
     export RANK_TABLE_FILE=$4
+    DEVICE_NUM=$2
     if [ -d "../train" ];
     then
         rm -rf ../train
     fi
     mkdir ../train
     cd ../train || exit
-    python ${BASEPATH}/../src/launch.py \
+    for((i=0; i<${DEVICE_NUM}; i++))
+    do
+        export DEVICE_ID=$i
+        export RANK_ID=$i
+        rm -rf ./rank$i
+        mkdir ./rank$i
+        cp ../*.py ./rank$i
+        cp -r ../src ./rank$i
+        cd ./rank$i || exit
+        echo "start training for rank $RANK_ID, device $DEVICE_ID"
+        env > env.log
+        python train.py \
             --platform=$1 \
-            --nproc_per_node=$2 \
-            --visible_devices=$3 \
-            --training_script=${BASEPATH}/../train.py \
             --dataset_path=$5 \
             --pretrain_ckpt=$6 \
             --freeze_layer=$7 \
-            &> ../train.log &  # dataset train folder
+            &> log$i.log & 
+        cd ..
+    done
 }
 
 run_gpu()

@@ -70,7 +70,6 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   │   ├──args.py        # parse args
   │   ├──config.py      # parameter configuration
   │   ├──dataset.py     # creating dataset
-  │   ├──launch.py      # start python script
   │   ├──lr_generator.py     # learning rate config
   │   ├──mobilenetV2.py      # MobileNetV2 architecture
   │   ├──models.py      # contain define_net and Loss, Monitor

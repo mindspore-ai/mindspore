@@ -100,7 +100,7 @@ def metrics(pred_data):
             class_boxes = pred_boxes[score_mask] * [h, w, h, w]
 
             if score_mask.any():
-                nms_index = apply_nms(class_boxes, class_box_scores, config.nms_thershold, config.max_boxes)
+                nms_index = apply_nms(class_boxes, class_box_scores, config.nms_threshold, config.max_boxes)
                 class_boxes = class_boxes[nms_index]
                 class_box_scores = class_box_scores[nms_index]
 

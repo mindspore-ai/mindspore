@@ -64,7 +64,6 @@ Dataset used: [imagenet](http://www.image-net.org/)
   ├── src                              
   │   ├──config.py      # parameter configuration               
   │   ├──dataset.py     # creating dataset
-  │   ├──launch.py      # start python script
   │   ├──lr_generator.py     # learning rate config                            
   │   ├──mobilenetV3.py      # MobileNetV3 architecture
   ├── train.py      # training script
