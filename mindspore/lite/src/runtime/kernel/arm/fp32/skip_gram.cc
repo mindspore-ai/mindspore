@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/skip_gram.h"
+
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
@@ -59,6 +60,11 @@ void ParseSentenceToWords(const StringPack &sentence, std::vector<StringPack> *w
 }
 
 int SkipGramCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
+  }
   skip_gram_parameter_ = reinterpret_cast<SkipGramParameter *>(op_parameter_);
   if (skip_gram_parameter_->ngram_size < 1) {
     MS_LOG(ERROR) << "Skip Gram Parameter Error, NgramSize should be at least 1, get "
@@ -99,8 +105,7 @@ int SkipGramCPUKernel::Run() {
       index--;
     }
   }
-
-  int ret = mindspore::lite::WriteSeperatedStringsToTensor(out_tensors_[0], result);
+  ret = mindspore::lite::WriteSeperatedStringsToTensor(out_tensors_[0], result);
   return ret;
 }
 

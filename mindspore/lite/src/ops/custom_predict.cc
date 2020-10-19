@@ -35,7 +35,12 @@ float CustomPredict::GetWeightThreshold() const {
 int CustomPredict::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
-  auto val_offset = schema::CreateCustomPredict(*fbb);
+  auto attr = primitive->value_as_CustomPredict();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "CustomPredict attr is nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateCustomPredict(*fbb, attr->outputNum(), attr->weightThreshold());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_CustomPredict, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;

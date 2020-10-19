@@ -116,13 +116,13 @@ static uint64_t k2 = 0x9ae16a3b2f90404fULL;
 uint64_t Fetch64Bit(const char *p) {
   uint64_t result;
   memcpy(&result, p, sizeof(uint64_t));
-  return __builtin_bswap64(result);
+  return result;
 }
 
 uint32_t Fetch32Bit(const char *p) {
   uint32_t result;
   memcpy(&result, p, sizeof(uint32_t));
-  return __builtin_bswap32(result);
+  return result;
 }
 
 uint64_t Rotate64(uint64_t value, int shift) {

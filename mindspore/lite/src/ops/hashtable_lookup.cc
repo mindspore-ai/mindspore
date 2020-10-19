@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/hashtable_lookup.h"
+
 #include "src/common/string_util.h"
 
 namespace mindspore {
@@ -54,10 +55,6 @@ int HashtableLookup::InferShape(std::vector<Tensor *> inputs_, std::vector<Tenso
     MS_LOG(INFO) << "Do infer shape in runtime.";
     return RET_INFER_INVALID;
   }
-  int string_num = lite::GetStringCount(input);
-  std::vector<int> output_shape;
-  output_shape.push_back(string_num == 0 ? 1 : string_num);
-  output->set_shape(output_shape);
   return RET_OK;
 }
 }  // namespace lite
