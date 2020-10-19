@@ -17,10 +17,13 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_E_2_E_DUMP_UTIL_H_
 #define MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_E_2_E_DUMP_UTIL_H_
 
+#include <map>
 #include <string>
+
 #include "backend/session/kernel_graph.h"
 #include "runtime/device/device_address.h"
 #include "debug/data_dump/dump_json_parser.h"
+
 #ifndef ENABLE_DEBUGGER
 class Debugger;
 #endif
@@ -46,7 +49,7 @@ class E2eDumpUtil {
   static void GetDumpIntShape(const AnfNodePtr &node, size_t index, bool trans_flag, NotNull<ShapeVector *> int_shapes);
   static bool IsDeviceTargetGPU();
   static void DumpSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
-                                bool trans_flag, Debugger *debugger);
+                                bool trans_flag, std::map<std::string, size_t> *const_map, Debugger *debugger);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_E_2_E_DUMP_UTIL_H_

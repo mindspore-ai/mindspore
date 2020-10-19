@@ -246,10 +246,6 @@ GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   HardwareOptimize(graph);
   // Graph kernel fusion optimization
   GraphKernelOptimize(graph);
-  // Dump .pb graph after graph optimization
-  if (save_graphs) {
-    DumpIRProto(graph, "after_opt_" + std::to_string(graph_id));
-  }
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   // Assign parameter keys.
@@ -271,6 +267,11 @@ GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   SetSummaryNodes(graph.get());
   // Remove NopOp from execution graph
   opt::RemoveNopNode(graph.get());
+  // Dump .pb graph after graph optimization
+  if (save_graphs) {
+    DumpIRProto(graph, "after_opt_" + std::to_string(graph_id));
+  }
+
   // Set graph manager.
   MS_EXCEPTION_IF_NULL(context_);
   FuncGraphManagerPtr manager = MakeManager({graph});

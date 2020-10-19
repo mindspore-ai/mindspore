@@ -15,7 +15,11 @@
  */
 
 #include "debug/data_dump/e2e_dump_util.h"
+
 #include <algorithm>
+#include <map>
+#include <vector>
+
 #include "debug/data_dump/dump_json_parser.h"
 #include "common/trans.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -165,20 +169,75 @@ void E2eDumpUtil::DumpInput(const session::KernelGraph *graph, const std::string
   }
 }
 
+void SetConstNodeId(const AnfNodePtr &node, std::map<std::string, size_t> *const_map) {
+  if (!node->isa<ValueNode>()) {
+    return;
+  }
+  auto iter = const_map->find(node->fullname_with_scope());
+  if (iter == const_map->end()) {
+    auto const_idx = const_map->size() + 1;
+    (*const_map)[node->fullname_with_scope()] = const_idx;
+  }
+}
+
+void GetCNodeConstantId(const session::KernelGraph *graph, const CNodePtr &node,
+                        std::map<std::string, size_t> *const_map) {
+  auto &inputs = node->inputs();
+  if (inputs.size() < 1) {
+    MS_LOG(EXCEPTION) << "Inputs of apply node is empty";
+  }
+  AnfNodePtr op = inputs[0];
+
+  // CNode/ConstGraph/Const/Parameter
+  if (op->isa<CNode>() || IsValueNode<FuncGraph>(op) || op->isa<Parameter>()) {
+    MS_LOG(WARNING) << "Operator must be a primitive.";
+  } else {
+    // process OP inputs
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      SetConstNodeId(inputs[i], const_map);
+    }
+  }
+}
+
+void GetConstantId(const session::KernelGraph *graph, std::map<std::string, size_t> *const_map) {
+  std::vector<AnfNodePtr> nodes = TopoSort(graph->get_return(), SuccIncoming, AlwaysInclude);
+  for (const AnfNodePtr &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode != graph->get_return()) {
+      GetCNodeConstantId(graph, cnode, const_map);
+    } else {
+      SetConstNodeId(cnode->input(1), const_map);
+    }
+  }
+}
+
 void E2eDumpUtil::DumpSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
-                                    bool trans_flag, Debugger *debugger) {
+                                    bool trans_flag, std::map<std::string, size_t> *const_map, Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) {
     return;
   }
   std::string node_name = anf_node->fullname_with_scope();
+  std::string dump_name = node_name;
+  if (anf_node->isa<ValueNode>()) {
+    auto iter = const_map->find(node_name);
+    if (iter == const_map->end()) {
+      return;
+    }
+    dump_name = std::string("cst") + std::to_string(iter->second);
+  }
+
   if (!dump_json_parser.NeedDump(node_name)) {
     return;
   }
   DumpJsonParser::GetInstance().MatchKernel(node_name);
   GetFileKernelName(NOT_NULL(&node_name));
-  // check if output adde exists, if not, return;
+  // check if output address exists, if not, return;
   if (!AnfAlgo::OutputAddrExist(anf_node, output_index)) {
     return;
   }
@@ -188,7 +247,7 @@ void E2eDumpUtil::DumpSingleAnfnode(const AnfNodePtr &anf_node, const size_t out
   GetDumpIntShape(anf_node, output_index, trans_flag, NOT_NULL(&int_shapes));
   auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
 
-  std::string file_path = dump_path + '/' + node_name + '_' + "output_0";
+  std::string file_path = dump_path + '/' + dump_name + '_' + "output_0";
   if (IsDeviceTargetGPU()) {
     DumpGPUMemToFile(file_path, node_name, NOT_NULL(addr), trans_flag, int_shapes, type, 0, debugger);
   } else {
@@ -202,15 +261,18 @@ void E2eDumpUtil::DumpParametersAndConst(const session::KernelGraph *graph, cons
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   MS_LOG(INFO) << "Start e2e dump parameters and Const values";
   bool trans_flag = dump_json_parser.trans_flag();
+  std::map<std::string, size_t> const_map;
+  GetConstantId(graph, &const_map);
+
   // dump parameters
   const auto &parameters = graph->inputs();
   for (auto &item : parameters) {
-    DumpSingleAnfnode(item, PRAMATER_OUTPUT_INDEX, dump_path, trans_flag, debugger);
+    DumpSingleAnfnode(item, PRAMATER_OUTPUT_INDEX, dump_path, trans_flag, &const_map, debugger);
   }
   // dump const values
   auto value_nodes = graph->graph_value_nodes();
   for (const auto &value_node : value_nodes) {
-    DumpSingleAnfnode(value_node, VALUE_NODE_OUTPUT_INDEX, dump_path, trans_flag, debugger);
+    DumpSingleAnfnode(value_node, VALUE_NODE_OUTPUT_INDEX, dump_path, trans_flag, &const_map, debugger);
   }
 }
 
