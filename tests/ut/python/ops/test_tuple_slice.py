@@ -32,7 +32,8 @@ class NetWork_1(Cell):
         super(NetWork_1, self).__init__()
         self.addN = P.AddN()
 
-    def construct(self, tensor_tuple):
+    def construct(self, tensor1, tensor2, tensor3, tensor4, tensor5, tensor6):
+        tensor_tuple = (tensor1, tensor2, tensor3, tensor4, tensor5, tensor6)
         tensor_tuple_slice0 = tensor_tuple[:]
         tensor_tuple_slice1 = tensor_tuple[:3]
         tensor_tuple_slice2 = tensor_tuple[1:]
@@ -52,7 +53,8 @@ class NetWork_2(Cell):
         super(NetWork_2, self).__init__()
         self.addN = P.AddN()
 
-    def construct(self, tensor_tuple):
+    def construct(self, tensor1, tensor2, tensor3, tensor4, tensor5, tensor6):
+        tensor_tuple = (tensor1, tensor2, tensor3, tensor4, tensor5, tensor6)
         tensor_tuple_slice0 = tensor_tuple[::-1]
         tensor_tuple_slice1 = tensor_tuple[-1::-1]
         tensor_tuple_slice2 = tensor_tuple[:-4:-1]
@@ -94,21 +96,21 @@ class NetWorkOutOfBounds(Cell):
 test_cases = [
     ('SlicePositive', {
         'block': NetWork_1(),
-        'desc_inputs': [(Tensor(np.ones([2, 3, 4], np.int32)),
-                         Tensor(np.zeros([2, 3, 4], np.int32)),
-                         Tensor(np.ones([2, 3, 4], np.int32)),
-                         Tensor(np.ones([2, 3, 4], np.int32)),
-                         Tensor(np.zeros([2, 3, 4], np.int32)),
-                         Tensor(np.ones([2, 3, 4], np.int32)))],
+        'desc_inputs': [Tensor(np.ones([2, 3, 4], np.int32)),
+                        Tensor(np.zeros([2, 3, 4], np.int32)),
+                        Tensor(np.ones([2, 3, 4], np.int32)),
+                        Tensor(np.ones([2, 3, 4], np.int32)),
+                        Tensor(np.zeros([2, 3, 4], np.int32)),
+                        Tensor(np.ones([2, 3, 4], np.int32))],
     }),
     ('SliceNegative', {
         'block': NetWork_2(),
-        'desc_inputs': [(Tensor(np.ones([2, 3, 4], np.int32)),
-                         Tensor(np.zeros([2, 3, 4], np.int32)),
-                         Tensor(np.ones([2, 3, 4], np.int32)),
-                         Tensor(np.ones([2, 3, 4], np.int32)),
-                         Tensor(np.zeros([2, 3, 4], np.int32)),
-                         Tensor(np.ones([2, 3, 4], np.int32)))],
+        'desc_inputs': [Tensor(np.ones([2, 3, 4], np.int32)),
+                        Tensor(np.zeros([2, 3, 4], np.int32)),
+                        Tensor(np.ones([2, 3, 4], np.int32)),
+                        Tensor(np.ones([2, 3, 4], np.int32)),
+                        Tensor(np.zeros([2, 3, 4], np.int32)),
+                        Tensor(np.ones([2, 3, 4], np.int32))],
     }),
 ]
 

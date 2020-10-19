@@ -88,6 +88,17 @@ std::string GetBaseNameForIR(int stage_idx, const std::string &action_name) {
   oss << stage_idx << "_" << action_name;
   return oss.str();
 }
+
+void CheckArgIsTensor(const ValuePtr &arg, std::size_t idx) {
+  MS_EXCEPTION_IF_NULL(arg);
+  auto tensor_arg = arg->cast<TensorPtr>();
+  if (tensor_arg == nullptr) {
+    MS_EXCEPTION(TypeError) << "For 'graph mode', the " << idx << "th arg: " << arg->ToString() << " is not a tensor.";
+  }
+  if (tensor_arg->is_parameter()) {
+    MS_EXCEPTION(TypeError) << "The inputs could not be Parameter.";
+  }
+}
 }  // namespace
 
 py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::string, py::object> &defaults) {
@@ -460,6 +471,9 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
     if (!succ) {
       MS_LOG(EXCEPTION) << "Args convert error";
     }
+    if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+      CheckArgIsTensor(converted, i);
+    }
     bool broaden = true;
     args_spec.push_back(abstract::FromValue(converted, broaden));
   }
@@ -700,15 +714,6 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
     bool succ = parse::ConvertData(arg, &converted);
     if (!succ) {
       MS_LOG(EXCEPTION) << "The " << i << "th arg convert failed.";
-    }
-    if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == 0) {
-      if (!converted->isa<tensor::Tensor>()) {
-        MS_EXCEPTION(TypeError) << "For 'graph mode', the " << i << "th arg: " << converted->ToString()
-                                << " is not tensor.";
-      }
-      if (converted->cast<TensorPtr>()->is_parameter()) {
-        MS_EXCEPTION(TypeError) << "The inputs could not be Parameter.";
-      }
     }
     arg_list->push_back(converted);
   }

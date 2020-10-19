@@ -192,10 +192,10 @@ def test_enumerate_start_type_error():
             super(Net, self).__init__()
 
         def construct(self, x):
-            return enumerate(x, start=1.2)
+            return enumerate((x, x), start=1.2)
 
     x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)))
     net = Net()
     with pytest.raises(TypeError) as ex:
-        net((x, x))
+        net(x)
     assert "For 'enumerate', the 'start'" in str(ex.value)

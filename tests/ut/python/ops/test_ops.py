@@ -86,6 +86,33 @@ class NetForConcat1(nn.Cell):
         return self.concat((x1, x2))
 
 
+class NetForConcat2(nn.Cell):
+    def __init__(self):
+        super(NetForConcat2, self).__init__()
+        self.concat = P.Concat(axis=2)
+
+    def construct(self, x1, x2):
+        return self.concat((x1, x2))
+
+
+class NetForConcat3(nn.Cell):
+    def __init__(self):
+        super(NetForConcat3, self).__init__()
+        self.concat = P.Concat(axis=0)
+
+    def construct(self, x1, x2, x3):
+        return self.concat((x1, x2, x3))
+
+
+class NetForConcat4(nn.Cell):
+    def __init__(self):
+        super(NetForConcat4, self).__init__()
+        self.concat = P.Concat(axis=-1)
+
+    def construct(self, x1, x2, x3):
+        return self.concat((x1, x2, x3))
+
+
 class NetForPackInput(nn.Cell):
     def __init__(self, op):
         super(NetForPackInput, self).__init__()
@@ -1093,7 +1120,7 @@ test_case_math_ops = [
         'desc_bprop': [Tensor(np.ones((2, 3, 4, 5), np.bool_))]}),
     ('NotEqual_0', {
         'block': P.NotEqual(),
-        'desc_inputs': [1, [2, 3, 4, 5]],
+        'desc_inputs': [Tensor(np.array(1).astype(np.int32)), [2, 3, 4, 5]],
         'desc_bprop': [Tensor(np.ones((2, 3, 4, 5), np.bool_))],
         'skip': ['backward']}),
     ('ApproximateEqual', {
@@ -1906,15 +1933,15 @@ test_case_array_ops = [
         'desc_inputs': [(Tensor(np.array([-1.6, -0.1, 1.5, 2.0]).astype(np.float32)))],
         'skip': ['backward']}),
     ('ConcatV2_0', {
-        'block': P.Concat(),
+        'block': NetForConcat1(),
         'desc_inputs': [
-            (Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32)),
-             Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32)))],
+            Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32)),
+            Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))],
         'desc_bprop': [([4, 2], {'dtype': np.int32})]}),
     ('ConcatV2_1', {
-        'block': P.Concat(axis=2),
-        'desc_inputs': [(Tensor(np.array([[[0, 1, 2]], [[2, 1, 2]]]).astype(np.int32)),
-                         Tensor(np.array([[[0, 1]], [[2, 1]]]).astype(np.int32)))],
+        'block': NetForConcat2(),
+        'desc_inputs': [Tensor(np.array([[[0, 1, 2]], [[2, 1, 2]]]).astype(np.int32)),
+                        Tensor(np.array([[[0, 1]], [[2, 1]]]).astype(np.int32))],
         'desc_bprop': [([2, 1, 5], {'dtype': np.int32})]}),
     ('ConcatV2_2', {
         'block': NetForConcat(),
@@ -1925,17 +1952,17 @@ test_case_array_ops = [
         'desc_inputs': [[2, 2], [2, 2]],
         'desc_bprop': [[4, 2]]}),
     ('ConcatV2_4', {
-        'block': P.Concat(axis=0),
+        'block': NetForConcat3(),
         'desc_inputs': [
-            (Tensor(np.ones((3, 2, 3), np.float32)),
-             Tensor(np.ones((5, 2, 3), np.float32)),
-             Tensor(np.ones((6, 2, 3), np.float32)))],
+            Tensor(np.ones((3, 2, 3), np.float32)),
+            Tensor(np.ones((5, 2, 3), np.float32)),
+            Tensor(np.ones((6, 2, 3), np.float32))],
         'desc_bprop': [[14, 2, 3]]}),
     ('ConcatV2_5', {
-        'block': P.Concat(axis=-1),
-        'desc_inputs': [(Tensor(np.array([1], np.float32)),
-                         Tensor(np.array([1], np.float32)),
-                         Tensor(np.array([1], np.float32)))],
+        'block': NetForConcat4(),
+        'desc_inputs': [Tensor(np.array([1], np.float32)),
+                        Tensor(np.array([1], np.float32)),
+                        Tensor(np.array([1], np.float32))],
         'desc_bprop': [[3, ]]}),
     ('Pack_0', {
         'block': NetForPackInput(P.Pack()),
