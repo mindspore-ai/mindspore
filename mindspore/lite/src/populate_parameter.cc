@@ -1759,11 +1759,12 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Elu] = PopulateEluParameter;
   populate_parameter_funcs_[schema::PrimitiveType_L2Norm] = PopulateL2NormParameter;
   populate_parameter_funcs_[schema::PrimitiveType_DetectionPostProcess] = PopulateDetectionPostProcessParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_CustomNormalize] = PopulateCommonOpParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SkipGram] = PopulateSkipGramParameter;
   populate_parameter_funcs_[schema::PrimitiveType_CustomExtractFeatures] = PopulateCommonOpParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_LshProjection] = PopulateLshProjectionParameter;
   populate_parameter_funcs_[schema::PrimitiveType_CustomPredict] = PopulateCustomPredictParameter;
   populate_parameter_funcs_[schema::PrimitiveType_HashtableLookup] = PopulateCommonOpParameter;
-  populate_parameter_funcs_[schema::PrimitiveType_LshProjection] = PopulateLshProjectionParameter;
 }
 
 PopulateParameterRegistry *PopulateParameterRegistry::GetInstance() {

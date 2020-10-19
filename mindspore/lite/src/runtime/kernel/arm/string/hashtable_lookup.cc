@@ -52,7 +52,7 @@ int HashtableLookupCPUKernel::Run() {
   int32_t *input_data = reinterpret_cast<int32_t *>(input_tensor->MutableData());
   uint8_t *hits_data = reinterpret_cast<uint8_t *>(hits_tensor->MutableData());
   std::vector<lite::StringPack> output_string_pack;
-  std::vector<lite::StringPack> all_string_pack = ParseTensorBuffer(input_tensor);
+  std::vector<lite::StringPack> all_string_pack = ParseTensorBuffer(values_tensor);
 
   for (int i = 0; i < input_tensor->ElementsNum(); i++) {
     int index = -1;
