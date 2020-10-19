@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.14)
 project (Lite-java)
 
+set(BUILD_LITE "on")
+set(PLATFORM_ARM "on")
+
 set(MS_VERSION_MAJOR ${MS_VERSION_MAJOR})
 set(MS_VERSION_MINOR ${MS_VERSION_MINOR})
 set(MS_VERSION_REVISION ${MS_VERSION_REVISION})
@@ -19,10 +22,17 @@ if (PLATFORM_ARM64)
     add_compile_definitions(ENABLE_ARM64)
 endif ()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../)  ## lite include
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../../core/) ## core include
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../../../third_party/flatbuffers/include) ## third_party
+set(TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../../..)
+set(LITE_DIR ${TOP_DIR}/mindspore/lite)
+
+include(${TOP_DIR}/cmake/utils.cmake)
+include(${TOP_DIR}/cmake/external_libs/flatbuffers.cmake)
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${LITE_DIR})  ## lite include
+include_directories(${TOP_DIR}/mindspore/core/) ## core include
+include_directories(${LITE_DIR}/build)
+
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../libs/${ANDROID_ABI}/)
 
 add_library(mindspore-lite-jni SHARED

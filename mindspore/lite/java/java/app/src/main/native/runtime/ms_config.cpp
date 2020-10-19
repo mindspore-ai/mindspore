@@ -22,7 +22,8 @@
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_config_MSConfig_createMSConfig(JNIEnv *env, jobject thiz,
                                                                                           jint device_type,
                                                                                           jint thread_num,
-                                                                                          jint cpu_bind_mode) {
+                                                                                          jint cpu_bind_mode,
+                                                                                          jboolean enable_float16) {
   auto *context = new (std::nothrow) mindspore::lite::Context();
   if (context == nullptr) {
     MS_LOGE("new Context fail!");
@@ -43,20 +44,21 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_config_MSConfig_creat
       return (jlong)context;
   }
   switch (cpu_bind_mode) {
-    case -1:
-      context->cpu_bind_mode_ = mindspore::lite::MID_CPU;
-      break;
     case 0:
       context->cpu_bind_mode_ = mindspore::lite::NO_BIND;
       break;
     case 1:
       context->cpu_bind_mode_ = mindspore::lite::HIGHER_CPU;
       break;
+    case 2:
+      context->cpu_bind_mode_ = mindspore::lite::MID_CPU;
+      break;
     default:
       MS_LOGE("Invalid cpu_bind_mode : %d", cpu_bind_mode);
       return (jlong)context;
   }
   context->thread_num_ = thread_num;
+  context->enable_float16_ = enable_float16;
   return (jlong)context;
 }
 
