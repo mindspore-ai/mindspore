@@ -73,6 +73,7 @@ Status OneHotInfo::InferDevMatrixShape() {
     dev_matrix_shape_.push_back(input_strategy[0]);  // the features is splittable
     dev_matrix_shape_.push_back(input_strategy[1]);  // the depth is un-splittable
   }
+  old_dev_matrix_back_ = dev_matrix_shape_.back();
 
   return SUCCESS;
 }
@@ -134,7 +135,7 @@ Status OneHotInfo::InferTensorInfo() {
 Status OneHotInfo::ExtractInputInfo() {
   CheckGlobalDeviceManager();
   rank_ = g_device_manager->global_rank();
-  mod_rank_ = rank_ % dev_matrix_shape_.back();
+  mod_rank_ = rank_ % old_dev_matrix_back_;
   if (!cnode_) {
     MS_LOG(ERROR) << "Failure:OneHot cnode_ is nullptr";
     return FAILED;
@@ -162,13 +163,13 @@ Status OneHotInfo::ExtractInputInfo() {
     MS_LOG(ERROR) << "OneHot Primitive depth type must be int";
     return FAILED;
   }
-  classes_each_device_ = total_class_number_ / dev_matrix_shape_.back();
+  classes_each_device_ = total_class_number_ / old_dev_matrix_back_;
 
   return SUCCESS;
 }
 
 Status OneHotInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
-  if (dev_matrix_shape_.back() == 1) {
+  if (old_dev_matrix_back_ == 1) {
     replace_graph_ = nullptr;
     return SUCCESS;
   }

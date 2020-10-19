@@ -60,6 +60,7 @@ class OneHotInfo : public OperatorInfo {
   int32_t rank_ = 0;
   int32_t total_class_number_ = 1;
   int32_t classes_each_device_ = 1;
+  int32_t old_dev_matrix_back_ = 1;
   ValuePtr axis_value_ptr_;
   int32_t mod_rank_ = 0;
 };

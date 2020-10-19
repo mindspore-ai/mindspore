@@ -74,7 +74,7 @@ TEST_F(TestReshapeInfo, InferDevMatrixShape1) {
   reshape->Init(strategy);
   Shape dev_matrix_shape = reshape->dev_matrix_shape();
 
-  Shape expect = {8, 4};
+  Shape expect = {4, 8};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
@@ -139,8 +139,8 @@ TEST_F(TestReshapeInfo, GetTensorLayout1) {
   std::vector<TensorInfo> inputs = reshape->inputs_tensor_info();
   std::vector<TensorInfo> outputs = reshape->outputs_tensor_info();
 
-  TensorMap input_expect = {0, -1, -1, -1};
-  TensorMap output_expect = {0, -1};
+  TensorMap input_expect = {1, -1, -1, -1};
+  TensorMap output_expect = {1, -1};
 
   TensorInfo input_tensor_info = inputs.at(0);
   TensorInfo output_tensor_info = outputs.at(0);

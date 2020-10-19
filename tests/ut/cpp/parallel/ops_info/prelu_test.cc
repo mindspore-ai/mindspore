@@ -70,7 +70,7 @@ TEST_F(TestPReLUInfo, InferDevMatrixShape1) {
   prelu->Init(strategy);
   Shape dev_matrix_shape = prelu->dev_matrix_shape();
 
-  Shape expect = {4, 2, 1, 8, 16};
+  Shape expect = {2, 1, 8, 16, 4};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
@@ -105,9 +105,9 @@ TEST_F(TestPReLUInfo, GetTensorLayout1) {
   std::vector<TensorInfo> inputs = prelu->inputs_tensor_info();
   std::vector<TensorInfo> outputs = prelu->outputs_tensor_info();
 
-  TensorMap input_expect = {3, 2, 1, 0};
+  TensorMap input_expect = {4, 3, 2, 1};
   TensorMap param_expect = {2};
-  TensorMap output_expect = {3, 2, 1, 0};
+  TensorMap output_expect = {4, 3, 2, 1};
 
   TensorInfo input_tensor_info = inputs.at(0);
   TensorInfo param_tensor_info = inputs.at(1);
@@ -175,7 +175,7 @@ TEST_F(TestPReLUInfo, InferDevMatrixShape_2d1) {
   prelu_2d->Init(strategy);
   Shape dev_matrix_shape = prelu_2d->dev_matrix_shape();
 
-  Shape expect = {8, 128, 1};
+  Shape expect = {128, 1, 8};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
@@ -210,9 +210,9 @@ TEST_F(TestPReLUInfo, GetTensorLayout_2d1) {
   std::vector<TensorInfo> inputs = prelu_2d->inputs_tensor_info();
   std::vector<TensorInfo> outputs = prelu_2d->outputs_tensor_info();
 
-  TensorMap input_expect = {1, 0};
+  TensorMap input_expect = {2, 1};
   TensorMap param_expect = {0};
-  TensorMap output_expect = {1, 0};
+  TensorMap output_expect = {2, 1};
 
   TensorInfo input_tensor_info = inputs.at(0);
   TensorInfo param_tensor_info = inputs.at(1);

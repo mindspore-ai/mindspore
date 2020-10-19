@@ -83,7 +83,7 @@ TEST_F(TestOneHotInfo, InferDevMatrixShape2) {
   ASSERT_EQ(status, SUCCESS);
   Shape dev_matrix_shape = onehot_info->dev_matrix_shape();
 
-  Shape expect = {2, 4, 1};
+  Shape expect = {4, 1, 2};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
