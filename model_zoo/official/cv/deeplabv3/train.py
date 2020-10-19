@@ -17,7 +17,8 @@
 import os
 import argparse
 from mindspore import context
-from mindspore.train.model import ParallelMode, Model
+from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 import mindspore.nn as nn
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train.serialization import load_checkpoint, load_param_into_net

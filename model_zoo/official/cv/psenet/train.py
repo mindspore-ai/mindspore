@@ -19,7 +19,8 @@ import mindspore.nn as nn
 from mindspore import context
 from mindspore.communication.management import init, get_rank
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
 
