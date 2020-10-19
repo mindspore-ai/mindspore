@@ -33,6 +33,7 @@ class Exp : public PrimitiveC {
   void SetBase(float base);
   void SetShift(float shift);
   void SetScale(float scale);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   Exp() = default;
 

@@ -27,6 +27,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2DGradInput;
+using mindspore::schema::PrimitiveType_GroupConv2DGradInput;
 
 namespace mindspore::kernel {
 int ConvolutionGradInputCPUKernel::Init() {
@@ -134,7 +135,8 @@ kernel::LiteKernel *CpuConvGradInputFp32KernelCreator(const std::vector<lite::Te
                                                       const kernel::KernelKey &desc,
                                                       const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DGradInput);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DGradInput ||
+            desc.type == schema::PrimitiveType_GroupConv2DGradInput);
 
   auto *kernel = new (std::nothrow) ConvolutionGradInputCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
@@ -154,4 +156,6 @@ kernel::LiteKernel *CpuConvGradInputFp32KernelCreator(const std::vector<lite::Te
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Conv2DGradInput, CpuConvGradInputFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_GroupConv2DGradInput, CpuConvGradInputFp32KernelCreator)
+
 }  // namespace mindspore::kernel

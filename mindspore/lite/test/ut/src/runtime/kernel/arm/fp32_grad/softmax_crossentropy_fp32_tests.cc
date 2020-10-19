@@ -41,10 +41,11 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
 
   std::string label_path = "./test_data/operators/sce_fp32_1_l_6.bin";
   auto ll_labels = reinterpret_cast<int64_t *>(mindspore::lite::ReadFile(label_path.c_str(), &input_size));
-  auto labels = new int[6];
-  for (int i = 0; i < 6; i++) labels[i] = static_cast<int>(ll_labels[i]);
+  auto labels = new float[6 * 4];
+  std::fill(labels, labels + 6 * 4, 0.f);
+  for (int i = 0; i < 6; i++) labels[i * 4 + ll_labels[i]] = 1.0;
 
-  std::vector<int> dim_l({6});
+  std::vector<int> dim_l({6, 4});
   lite::Tensor l_tensor(TypeId::kNumberTypeInt32, dim_l);
   l_tensor.SetData(labels);
 

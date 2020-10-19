@@ -117,6 +117,14 @@ int HSwish(const float *src, int length, float *dst) {
   return NNACL_OK;
 }
 
+int HSigmoid(const float *src, int length, float *dst) {
+  for (int i = 0; i < length; ++i) {
+    float relu6 = MSMIN(MSMAX(src[i] + 3, 0), 6);
+    dst[i] = relu6 / 6;
+  }
+  return NNACL_OK;
+}
+
 int HardTanh(const float *src, int length, float *dst, float min_val, float max_val) {
   if (max_val <= min_val) {
     return NNACL_ERR;

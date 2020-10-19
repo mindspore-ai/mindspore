@@ -82,8 +82,11 @@ int AddN::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs
   if (!GetInferFlag()) {
     return RET_OK;
   }
+  output->set_shape(input->shape());
+
+  // make sure all elements have the same size or 1 (broadcasting) in all dimensions
   for (size_t i = 1; i < inputs.size(); ++i) {
-    if (inputs.at(i)->shape() != inputs.at(0)->shape()) {
+    if (inputs.at(i)->shape().size() != inputs.at(0)->shape().size()) {
       MS_LOG(ERROR) << "AddN inputs shape is not equal!";
       return RET_INPUT_TENSOR_ERROR;
     }
@@ -93,7 +96,22 @@ int AddN::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs
     }
   }
 
-  output->set_shape(input->shape());
+  for (size_t d = 0; d < input->shape().size(); ++d) {
+    int max_dim = input->shape().at(d);
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      if (inputs.at(i)->shape().at(d) > max_dim) {
+        max_dim = inputs.at(i)->shape().at(d);
+      }
+    }
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      if ((inputs.at(0)->shape().at(d) != max_dim) && (inputs.at(0)->shape().at(d) != 1)) {
+        MS_LOG(ERROR) << "AddN inputs shape is not equal!";
+        return RET_INPUT_TENSOR_ERROR;
+      }
+    }
+    output->shape()[d] = max_dim;  // set the biggest dimension in the output tensor
+  }
+
   return RET_OK;
 }
 }  // namespace lite

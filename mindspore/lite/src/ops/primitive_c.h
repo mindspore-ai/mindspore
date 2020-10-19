@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
-#define MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_PRIMITIVE_C_H_
+#define MINDSPORE_LITE_SRC_OPS_PRIMITIVE_C_H_
 #include <string>
 #include <set>
 #include <vector>
@@ -48,7 +48,9 @@ constexpr int kAnfPopulaterTwo = 2;
 constexpr int kAnfPopulaterThree = 3;
 static std::map<std::string, schema::ActivationType> kActivationTypeMap{{"ReLU", schema::ActivationType_RELU},
                                                                         {"ReLU6", schema::ActivationType_RELU6},
-                                                                        {"Sigmoid", schema::ActivationType_SIGMOID}};
+                                                                        {"Sigmoid", schema::ActivationType_SIGMOID},
+                                                                        {"HSwish", schema::ActivationType_HSWISH},
+                                                                        {"HSigmoid", schema::ActivationType_HSIGMOID}};
 class PrimitiveC : public mindspore::Primitive {
  public:
   // Argument primitive is deliverd into PrimitiveC and will be deleted in ~PrimitiveC().
@@ -213,4 +215,4 @@ class PrimitiveC {
 #endif
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_PRIMITIVE_C_H_

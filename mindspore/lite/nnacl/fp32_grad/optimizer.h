@@ -21,7 +21,6 @@
 
 typedef struct ApplyMomentumParameter {
   OpParameter op_parameter_;
-  bool use_locking_;
   bool use_nesterov_;
   float grad_scale_;
 } ApplyMomentumParameter;
@@ -32,5 +31,10 @@ typedef struct SgdParameter {
   bool use_nesterov_;
   float weight_decay_;
 } SgdParameter;
+
+typedef struct AdamParameter {
+  OpParameter op_parameter_;
+  bool use_nesterov_;
+} AdamParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_FP32_GRAD_OPTIMIZER_H_

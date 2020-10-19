@@ -40,7 +40,6 @@ class ApplyMomentum : public PrimitiveC {
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   float GetGradientScale() const;
-  bool GetUseLocking() const;
   bool GetUseNesterov() const;
 };
 }  // namespace lite

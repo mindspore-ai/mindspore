@@ -48,7 +48,7 @@ int ActivationGradCPUKernel::DoActivation(int task_id) {
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   int length = in_tensors_.at(0)->ElementsNum();
 
-  int stride = UP_DIV(length, thread_count_);
+  int stride = UP_DIV(length, 1);
   int count = MSMIN(stride, length - stride * task_id);
 
   auto error_code = RET_OK;
@@ -63,8 +63,9 @@ int ActivationGradCPUKernel::DoActivation(int task_id) {
     error_code = LReluGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count,
                            output_addr + stride * task_id, param_act_grad_->alpha_);
   } else if (param_act_grad_->type_ == schema::ActivationType_SIGMOID) {
+    // Sigmoid gets the input tensors in reverse order!
     error_code =
-      SigmoidGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);
+      SigmoidGrad(input_addr + stride * task_id, yt_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (param_act_grad_->type_ == schema::ActivationType_TANH) {
     error_code =
       TanhGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);

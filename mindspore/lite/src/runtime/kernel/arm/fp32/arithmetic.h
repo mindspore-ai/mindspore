@@ -37,6 +37,7 @@ using mindspore::schema::PrimitiveType_Maximum;
 using mindspore::schema::PrimitiveType_Minimum;
 using mindspore::schema::PrimitiveType_Mul;
 using mindspore::schema::PrimitiveType_NotEqual;
+using mindspore::schema::PrimitiveType_RealDiv;
 using mindspore::schema::PrimitiveType_SquaredDifference;
 using mindspore::schema::PrimitiveType_Sub;
 
@@ -99,6 +100,7 @@ class ArithmeticCPUKernel : public LiteKernel {
         }
         break;
       case PrimitiveType_Div:
+      case PrimitiveType_RealDiv:
         switch (arithmeticParameter_->activation_type_) {
           case schema::ActivationType_RELU:
             arithmetic_run_ = ElementDivRelu;

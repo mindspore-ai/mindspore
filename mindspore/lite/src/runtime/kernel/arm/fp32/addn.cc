@@ -60,14 +60,34 @@ int AddNCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  elements_num_ = in_tensors_[0]->ElementsNum();
+  elements_num_ = out_tensors_[0]->ElementsNum();
   auto input0_data = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto input1_data = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
   auto output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   if (static_cast<int>(elements_num_) < op_parameter_->thread_num_) {
-    ElementAdd(input0_data, input1_data, output_data, elements_num_);
+    if (in_tensors_[0]->shape() == in_tensors_[1]->shape()) {
+      ElementAdd(input0_data, input1_data, output_data, elements_num_);
+    } else {
+      ArithmeticParameter param;
+      param.in_elements_num0_ = in_tensors_[0]->ElementsNum();
+      param.in_elements_num1_ = in_tensors_[1]->ElementsNum();
+      param.out_elements_num_ = out_tensors_[0]->ElementsNum();
+      param.broadcasting_ = true;
+      ElementOptAdd(input0_data, input1_data, output_data, elements_num_, &param);
+    }
+
     for (size_t i = 2; i < in_tensors_.size(); ++i) {
-      ElementAdd(reinterpret_cast<float *>(in_tensors_[i]->MutableData()), output_data, output_data, elements_num_);
+      if (in_tensors_[i]->shape() == out_tensors_[0]->shape()) {
+        ElementAdd(reinterpret_cast<float *>(in_tensors_[i]->MutableData()), output_data, output_data, elements_num_);
+      } else {
+        ArithmeticParameter param;
+        param.in_elements_num0_ = in_tensors_[i]->ElementsNum();
+        param.in_elements_num1_ = out_tensors_[0]->ElementsNum();
+        param.out_elements_num_ = out_tensors_[0]->ElementsNum();
+        param.broadcasting_ = true;
+        ElementOptAdd(reinterpret_cast<float *>(in_tensors_[i]->MutableData()), output_data, output_data, elements_num_,
+                      &param);
+      }
     }
     return RET_OK;
   }

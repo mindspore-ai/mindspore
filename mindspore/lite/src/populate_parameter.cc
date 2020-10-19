@@ -43,6 +43,7 @@
 #include "src/ops/add.h"
 #include "src/ops/sub.h"
 #include "src/ops/div.h"
+#include "src/ops/real_div.h"
 #include "src/ops/bias_add.h"
 #include "src/ops/expand_dims.h"
 #include "src/ops/full_connection.h"
@@ -1680,6 +1681,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Add] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_Sub] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_Div] = PopulateArithmetic;
+  populate_parameter_funcs_[schema::PrimitiveType_RealDiv] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_LogicalAnd] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_LogicalOr] = PopulateArithmetic;
   populate_parameter_funcs_[schema::PrimitiveType_Equal] = PopulateArithmetic;

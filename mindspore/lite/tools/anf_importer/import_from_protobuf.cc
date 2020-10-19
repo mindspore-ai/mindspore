@@ -678,6 +678,13 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
     outputFuncGraph->set_return(return_node);
     MS_LOG(INFO) << "Construct funcgraph finined, all success.";
   } else {
+#ifdef SUPPORT_TRAIN
+    auto ret_node = outputFuncGraph->get_return();
+    if (ret_node) {
+      ret_node->add_input(cnode_ptr);
+      return true;
+    }
+#endif
     const onnx::ValueInfoProto &output_node = importProto.output(0);
     const onnx::TypeProto &output_typeproto = output_node.type();
     int output_type = output_typeproto.tensor_type().elem_type();
@@ -687,7 +694,6 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
     }
     auto type_ptr = TypeIdToType(kDefaultValueSwitchMap[output_type]);
     auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, output_shape);
-
     inputs.clear();
     auto primReturn = std::make_unique<schema::PrimitiveT>();
     MS_ASSERT(primReturn != nullptr);
@@ -717,6 +723,7 @@ int AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFuncG
   }
   MS_LOG(INFO) << "The CNdoe size : " << importProto.node_size();
   CNodePtr cnode_ptr = nullptr;
+  CNodePtr last_cnode_ptr = nullptr;
   int status = RET_OK;
   NoSupportOp::GetInstance()->SetFmkType("MINDIR");
   for (int i = 0; i < importProto.node_size(); ++i) {
@@ -734,13 +741,35 @@ int AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFuncG
       MS_LOG(ERROR) << "Build CNode for funcgraph fail at index: : " << i;
       status = (status == RET_OK ? RET_NULL_PTR : status);
     }
+
+    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode_ptr->input(0));
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "primitive_c is nullptr";
+      status = RET_ERROR;
+    }
+
+#ifdef SUPPORT_TRAIN
+    if (primitive_c->Type() == schema::PrimitiveType_MakeTuple) {
+      last_cnode_ptr = cnode_ptr;
+      if (!BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr)) {
+        MS_LOG(ERROR) << "Build ReturnNode for funcgraph failed";
+        status = RET_ERROR;
+      }
+    }
+#endif
   }
   if (status != RET_OK) {
     return status;
   }
-  if (!BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr)) {
-    MS_LOG(ERROR) << "Build ReturnNode for funcgraph failed";
-    status = RET_ERROR;
+#ifdef SUPPORT_TRAIN
+  if (last_cnode_ptr != cnode_ptr) {
+#else
+  {
+#endif
+    if (!BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr)) {
+      MS_LOG(ERROR) << "Build ReturnNode for funcgraph failed";
+      status = RET_ERROR;
+    }
   }
   return status;
 }

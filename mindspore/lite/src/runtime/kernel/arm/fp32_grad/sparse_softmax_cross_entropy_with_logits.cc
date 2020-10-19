@@ -178,5 +178,4 @@ kernel::LiteKernel *CpuSparseSoftmaxCrossEntropyFp32KernelCreator(
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SoftmaxCrossEntropy, CpuSparseSoftmaxCrossEntropyFp32KernelCreator)
 }  // namespace mindspore::kernel

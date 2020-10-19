@@ -45,8 +45,8 @@ int BNGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
     }
     attr->momentum = GetValue<float>(prim.GetAttr("momentum"));
     // FusedBatchNormGrad dows not get this attribute
-    if (prim.GetAttr("eps") != nullptr) {
-      attr->eps = GetValue<float>(prim.GetAttr("eps"));
+    if (prim.GetAttr("epsilon") != nullptr) {
+      attr->eps = GetValue<float>(prim.GetAttr("epsilon"));
     }
     this->primitive_->value.value = attr;
     if (this->primitive_->value.value == nullptr) {

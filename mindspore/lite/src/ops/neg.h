@@ -31,6 +31,7 @@ class Neg : public ArithmeticSelf {
   MS_DECLARE_PARENT(Neg, ArithmeticSelf);
   Neg() = default;
   explicit Neg(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   Neg() = default;
 

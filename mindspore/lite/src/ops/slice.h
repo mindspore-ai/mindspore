@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_SLICE_H_
-#define LITE_MINDSPORE_LITE_C_OPS_SLICE_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_SLICE_H_
+#define MINDSPORE_LITE_SRC_OPS_SLICE_H_
 
 #include <vector>
 #include <set>
@@ -35,6 +35,7 @@ class Slice : public PrimitiveC {
   void SetFormat(int format);
   void SetBegin(const std::vector<int> &begin);
   void SetSize(const std::vector<int> &size);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   Slice() = default;
 
@@ -56,4 +57,4 @@ class Slice : public PrimitiveC {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // LITE_MINDSPORE_LITE_C_OPS_SLICE_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_SLICE_H_

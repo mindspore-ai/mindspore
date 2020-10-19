@@ -250,7 +250,7 @@ TEST_F(NetworkTest, tuning_layer) {
     auto label = std::make_unique<schema::TensorT>();
     label->nodeType = schema::NodeType::NodeType_ValueNode;
     label->format = schema::Format_NHWC;
-    label->dataType = TypeId::kNumberTypeInt32;
+    label->dataType = TypeId::kNumberTypeFloat32;
     label->dims = {BATCH_SIZE * NUM_CLASSES};
     label->offset = -1;
     meta_graph->allTensors.emplace_back(std::move(label));
@@ -386,8 +386,10 @@ TEST_F(NetworkTest, tuning_layer) {
   auto labelTensor = inputs.at(1);
   ASSERT_NE(nullptr, labelTensor);
   ASSERT_EQ(BATCH_SIZE * NUM_CLASSES, labelTensor->ElementsNum());
-  auto labels = reinterpret_cast<int *>(labelTensor->MutableData());
-  for (int i = 0; i < BATCH_SIZE; i++) labels[i] = (i * 97) % NUM_CLASSES;
+
+  auto labels = reinterpret_cast<float *>(labelTensor->MutableData());
+  std::fill(labels, labels + labelTensor->ElementsNum(), 0.f);
+  for (int i = 0; i < BATCH_SIZE; i++) labels[i * NUM_CLASSES + (i * 97) % NUM_CLASSES] = 1.0;
 
   ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
@@ -576,12 +578,12 @@ TEST_F(NetworkTest, lenetnet) {
   delete context;
   ASSERT_EQ(res, 0);
 }
-#if 0
+
 TEST_F(NetworkTest, retina_net) {
   char *buf = nullptr;
   size_t net_size = 0;
 
-  std::string net = "./test_data/nets/retinaface1009.ms";
+  std::string net = "./test_data/nets/retinaface1.ms";
   ReadFile(net.c_str(), &net_size, &buf);
   // auto model = lite::TrainModel::Import(buf, net_size);
   auto model = lite::Model::Import(buf, net_size);
@@ -598,26 +600,36 @@ TEST_F(NetworkTest, retina_net) {
   ASSERT_EQ(lite::RET_OK, ret);
   // session->Eval();
 
-  std::string in = "./test_data/nets/retinaface_input.f32";
+  std::string in = "./test_data/nets/test1.hwc_normalized_f32";
   std::cout << "----- Output 0 -----" << std::endl;
-  std::string out = "./test_data/nets/retinaface_out_0.f32";
+  std::string out = "./test_data/nets/test1_loc.f32";
+  int final_res = 0;
   auto res = runNet(session, in, out, "448", true);
-  ASSERT_EQ(res, 0);
+  // ASSERT_EQ(res, 0);
+  if (res != 0) {
+    final_res = res;
+  }
 
   std::cout << "----- Output 1 -----" << std::endl;
-  out = "./test_data/nets/retinaface_out_1.f32";
+  out = "./test_data/nets/test1_conf.f32";
   res = runNet(session, in, out, "435", true);
-  ASSERT_EQ(res, 0);
-
+  // ASSERT_EQ(res, 0);
+  if (res != 0) {
+    final_res |= res;
+  }
   std::cout << "----- Output 2 -----" << std::endl;
-  out = "./test_data/nets/retinaface_out_2.f32";
+  out = "./test_data/nets/test1_landms.f32";
   res = runNet(session, in, out, "421", true);
-  ASSERT_EQ(res, 0);
+  if (res != 0) {
+    final_res |= res;
+  }
+
+  ASSERT_EQ(final_res, 0);
 
   delete session;
   delete context;
 }
-#endif
+
 TEST_F(NetworkTest, mobileface_net) {
   char *buf = nullptr;
   size_t net_size = 0;

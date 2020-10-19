@@ -144,6 +144,7 @@
 #include "src/ops/pooling_grad.h"
 #include "src/ops/conv2d_grad_filter.h"
 #include "src/ops/conv2d_grad_input.h"
+#include "src/ops/group_conv2d_grad_input.h"
 #include "src/ops/power_grad.h"
 #include "src/ops/softmax_cross_entropy.h"
 #include "src/ops/bn_grad.h"
@@ -152,6 +153,8 @@
 #include "src/ops/flatten_grad.h"
 #include "src/ops/log_grad.h"
 #include "src/ops/sgd.h"
+#include "src/ops/adam.h"
+#include "src/ops/assign.h"
 #endif
 
 namespace mindspore {
@@ -367,7 +370,7 @@ std::shared_ptr<PrimitiveC> NewPrimitiveC(const Primitive &prim, const std::vect
 std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
                                                const schema::QuantType &quantType) {
   const auto &op_type = prim.name();
-  if (op_type == "ReLU" || op_type == "ReLU6" || op_type == "Sigmoid") {
+  if (op_type == "ReLU" || op_type == "ReLU6" || op_type == "Sigmoid" || op_type == "HSwish" || op_type == "HSigmoid") {
     return NewPrimitiveC<Activation>(prim, inputs, quantType);
   } else if (op_type == "AddN") {
     return NewPrimitiveC<AddN>(prim, inputs, quantType);
@@ -413,6 +416,10 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Reduce>(prim, inputs, quantType);
   } else if (op_type == "Reshape") {
     return NewPrimitiveC<Reshape>(prim, inputs, quantType);
+  } else if (op_type == "Slice") {
+    return NewPrimitiveC<Slice>(prim, inputs, quantType);
+  } else if (op_type == "Squeeze") {
+    return NewPrimitiveC<Squeeze>(prim, inputs, quantType);
   } else if (op_type == "TensorAdd") {
     return NewPrimitiveC<Add>(prim, inputs, quantType);
   } else if (op_type == "Transpose") {
@@ -421,6 +428,10 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Elu>(prim, inputs, quantType);
   } else if (op_type == "Log") {
     return NewPrimitiveC<Log>(prim, inputs, quantType);
+  } else if (op_type == "Exp") {
+    return NewPrimitiveC<Exp>(prim, inputs, quantType);
+  } else if (op_type == "Neg") {
+    return NewPrimitiveC<Neg>(prim, inputs, quantType);
   } else if (op_type == "DeConv2D") {
     return NewPrimitiveC<DeConv2D>(prim, inputs, quantType);
   } else if (op_type == "tuple_getitem") {
@@ -435,6 +446,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Maximum>(prim, inputs, quantType);
   } else if (op_type == "Split") {
     return NewPrimitiveC<Split>(prim, inputs, quantType);
+  } else if (op_type == "OneHot") {
+    return NewPrimitiveC<OneHot>(prim, inputs, quantType);
 
 #ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
@@ -445,7 +458,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<ApplyMomentum>(prim, inputs, quantType);
   } else if (op_type == "Depend") {
     return NewPrimitiveC<Depend>(prim, inputs, quantType);
-  } else if ((op_type == "ReluGrad" || op_type == "Relu6Grad" || op_type == "SigmoidGrad")) {
+  } else if ((op_type == "ReluGrad" || op_type == "ReLU6Grad" || op_type == "SigmoidGrad" ||
+              op_type == "HSigmoidGrad" || op_type == "HSwishGrad")) {
     return NewPrimitiveC<ActivationGrad>(prim, inputs, quantType);
   } else if ((op_type == "MaxPoolGrad") || (op_type == "MeanPoolGrad")) {
     return NewPrimitiveC<PoolingGrad>(prim, inputs, quantType);
@@ -465,6 +479,10 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<PowerGrad>(prim, inputs, quantType);
   } else if (op_type == "SGD") {
     return NewPrimitiveC<Sgd>(prim, inputs, quantType);
+  } else if (op_type == "Adam") {
+    return NewPrimitiveC<Adam>(prim, inputs, quantType);
+  } else if (op_type == "Assign") {
+    return NewPrimitiveC<Assign>(prim, inputs, quantType);
 #else
   } else if (op_type == "Conv2DBackpropInput") {
     return NewPrimitiveC<DeConv2D>(prim, inputs, quantType);
@@ -686,6 +704,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new Dropout(primitive);
     case schema::PrimitiveType_Neg:
       return new Neg(primitive);
+    case schema::PrimitiveType_RealDiv:
+      return new RealDiv(primitive);
     case schema::PrimitiveType_LshProjection:
       return new LshProjection(primitive);
     case schema::PrimitiveType_HashtableLookup:
@@ -710,6 +730,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new Conv2DGradFilter(primitive);
     case schema::PrimitiveType_Conv2DGradInput:
       return new Conv2DGradInput(primitive);
+    case schema::PrimitiveType_GroupConv2DGradInput:
+      return new GroupConv2DGradInput(primitive);
     case schema::PrimitiveType_BiasGrad:
       return new BiasGrad(primitive);
     case schema::PrimitiveType_ApplyMomentum:
@@ -738,8 +760,11 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new LogGrad(primitive);
     case schema::PrimitiveType_Sgd:
       return new Sgd(primitive);
+    case schema::PrimitiveType_Adam:
+      return new Adam(primitive);
+    case schema::PrimitiveType_Assign:
+      return new Assign(primitive);
 #endif
-
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in Create : " << schema::EnumNamePrimitiveType(op_type);
       break;
@@ -958,6 +983,8 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
       return NewPrimitiveC<DetectionPostProcess>(primitive);
     case schema::PrimitiveType_Dropout:
       return NewPrimitiveC<Dropout>(primitive);
+    case schema::PrimitiveType_RealDiv:
+      return NewPrimitiveC<RealDiv>(primitive);
     case schema::PrimitiveType_LshProjection:
       return NewPrimitiveC<LshProjection>(primitive);
     case schema::PrimitiveType_HashtableLookup:
@@ -982,6 +1009,8 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
       return NewPrimitiveC<Conv2DGradFilter>(primitive);
     case schema::PrimitiveType_Conv2DGradInput:
       return NewPrimitiveC<Conv2DGradInput>(primitive);
+    case schema::PrimitiveType_GroupConv2DGradInput:
+      return NewPrimitiveC<GroupConv2DGradInput>(primitive);
     case schema::PrimitiveType_BiasGrad:
       return NewPrimitiveC<BiasGrad>(primitive);
     case schema::PrimitiveType_ApplyMomentum:
@@ -1004,6 +1033,10 @@ PrimitiveC *PrimitiveC::Create(const schema::Primitive *primitive) {
       return NewPrimitiveC<LogGrad>(primitive);
     case schema::PrimitiveType_Sgd:
       return NewPrimitiveC<Sgd>(primitive);
+    case schema::PrimitiveType_Adam:
+      return NewPrimitiveC<Adam>(primitive);
+    case schema::PrimitiveType_Assign:
+      return NewPrimitiveC<Assign>(primitive);
 #endif
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in Create : " << schema::EnumNamePrimitiveType(op_type);

@@ -27,7 +27,7 @@ class ActivationGradCPUKernel : public LiteKernel {
   explicit ActivationGradCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                    const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(param, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
+      : LiteKernel(param, inputs, outputs, ctx, primitive) {
     param_act_grad_ = reinterpret_cast<ActivationParameter *>(param);
   }
   ~ActivationGradCPUKernel() override = default;
@@ -38,7 +38,6 @@ class ActivationGradCPUKernel : public LiteKernel {
   int DoActivation(int task_id);
 
  private:
-  int thread_count_;
   ActivationParameter *param_act_grad_;
 };
 
