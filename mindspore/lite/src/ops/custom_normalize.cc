@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/custom_normalize.h"
+
 #include "src/common/string_util.h"
 
 namespace mindspore {
@@ -32,21 +33,22 @@ int CustomNormalize::UnPackToFlatBuilder(const schema::Primitive *primitive, fla
 #endif
 int CustomNormalize::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   auto input = inputs_.at(0);
+  auto output = outputs_.at(0);
   MS_ASSERT(input != nullptr);
+  MS_ASSERT(output != nullptr);
+
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+
   if (input->data_c() == nullptr) {
     MS_LOG(INFO) << "Do infer shape in runtime.";
     return RET_INFER_INVALID;
   }
-  int string_num = lite::GetStringCount(input);
-  auto output = outputs_.at(0);
-  MS_ASSERT(output != nullptr);
-
   std::vector<int> shape;
+  int string_num = lite::GetStringCount(input);
   shape.push_back(string_num == 0 ? 1 : string_num);
 
   output->set_shape(shape);
-  output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
   return RET_OK;
 }
 

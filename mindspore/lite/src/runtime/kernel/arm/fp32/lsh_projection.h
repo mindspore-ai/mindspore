@@ -21,7 +21,6 @@
 
 #include "nnacl/lsh_projection_parameter.h"
 #include "src/lite_kernel.h"
-#include "schema/model_generated.h"
 
 namespace mindspore::kernel {
 class LshProjectionCPUKernel : public LiteKernel {
@@ -44,7 +43,6 @@ class LshProjectionCPUKernel : public LiteKernel {
 
  private:
   LshProjectionParameter *lsh_param_ = nullptr;
-  const lite::InnerContext *ctx_;
   int thread_num_;
   int64_t elements_num_;
   int64_t count_unit_;

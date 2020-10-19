@@ -68,7 +68,11 @@ int SkipGram::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> ou
   output->SetFormat(input->GetFormat());
   output->set_data_type(input->data_type());
 
-  return RET_INFER_INVALID;
+  if (input->data_c() == nullptr) {
+    MS_LOG(INFO) << "Do infer shape in runtime.";
+    return RET_INFER_INVALID;
+  }
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore
