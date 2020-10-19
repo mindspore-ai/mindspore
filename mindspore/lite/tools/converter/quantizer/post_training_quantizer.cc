@@ -54,6 +54,21 @@ STATUS DivergInfo::RecordMaxValue(const std::vector<float> &datas) {
   return RET_OK;
 }
 
+STATUS DivergInfo::RecordMaxValueArray(const std::vector<float> &datas) {
+  if (datas.size() == 0) {
+    return RET_ERROR;
+  }
+  float max_num = datas.at(0);
+  float min_num = datas.at(0);
+  for (float data : datas) {
+    max_num = std::max(data, max_num);
+    min_num = std::min(data, min_num);
+  }
+  this->max_datas.emplace_back(max_num);
+  this->min_datas.emplace_back(min_num);
+  return RET_OK;
+}
+
 void DivergInfo::UpdateInterval() {
   auto max_value = std::max(fabs(this->max), fabs(this->min));
   this->interval = max_value / static_cast<float>(bin_num);
@@ -82,6 +97,12 @@ STATUS DivergInfo::ComputeThreshold() {
   if (method_x == kMethodMaxMin) {
     this->best_T = std::max(fabs(this->max), fabs(this->min));
     MS_LOG(DEBUG) << "using MAX_MIN, T: " << this->best_T;
+    return RET_OK;
+  }
+
+  if (method_x == kMethodOutlier) {
+    this->percent_result = PercentMethod(min_datas, max_datas);
+    this->best_T = std::max(std::fabs(percent_result.first), std::fabs(percent_result.second));
     return RET_OK;
   }
 
@@ -195,8 +216,14 @@ std::pair<CNodePtr, float> DivergInfo::GetScale() {
   float max_value = this->best_T;
   float min_value = -max_value;
 
+  if (this->method_x == kMethodOutlier) {
+    min_value = percent_result.first;
+    max_value = percent_result.second;
+  }
+
   MS_ASSERT(quant_max - quant_min != 0);
   float scale = (max_value - min_value) / (quant_max - quant_min);
+  this->scale_tmp = scale;
   MS_ASSERT(scale != 0);
   return std::make_pair(this->cnode, scale);
 }
@@ -209,6 +236,10 @@ std::pair<CNodePtr, int32_t> DivergInfo::GetZeropoint() {
     zero_point = 0;
   } else {
     MS_LOG(WARNING) << "unexpectd quant range, quant_min: " << quant_min << " quant_max: " << quant_max;
+  }
+
+  if (this->method_x == kMethodOutlier) {
+    zero_point = std::round(quant_max - percent_result.second / scale_tmp);
   }
   return std::make_pair(this->cnode, zero_point);
 }
@@ -267,6 +298,7 @@ STATUS Calibrator::RecordMaxValue(const std::string &op_name, const vector<float
   auto got = (*diverg_info).find(op_name);
   if (got != (*diverg_info).end()) {
     ((*got).second)->RecordMaxValue(data);
+    ((*got).second)->RecordMaxValueArray(data);
   }
   return RET_OK;
 }
@@ -445,7 +477,7 @@ STATUS Calibrator::ReadConfig() {
     } else if (key == "thread_num") {
       config_param_.thread_num = std::stoul(value);
     } else if (key == "method_x") {
-      if (value != kMethodKL && value != kMethodMaxMin) {
+      if (value != kMethodKL && value != kMethodMaxMin && value != kMethodOutlier) {
         MS_LOG(WARNING) << "unsupported method_x: " << value << ". Use default value.";
       } else {
         config_param_.method_x = value;
