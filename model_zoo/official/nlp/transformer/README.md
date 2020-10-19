@@ -193,10 +193,10 @@ Parameters for learning rate:
 
 - Set options in `config.py`, including loss_scale, learning rate and network hyperparameters. Click [here](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
 
-- Run `run_standalone_train_ascend.sh` for non-distributed training of Transformer model.
+- Run `run_standalone_train.sh` for non-distributed training of Transformer model.
 
     ``` bash
-    sh scripts/run_standalone_train_ascend.sh DEVICE_ID EPOCH_SIZE DATA_PATH
+    sh scripts/run_standalone_train.sh DEVICE_TARGET DEVICE_ID EPOCH_SIZE DATA_PATH
     ```
 - Run `run_distribute_train_ascend.sh` for distributed training of Transformer model.
 

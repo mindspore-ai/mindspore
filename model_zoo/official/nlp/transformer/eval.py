@@ -100,7 +100,7 @@ def run_transformer_eval():
     parser = argparse.ArgumentParser(description='tranformer')
     parser.add_argument("--device_target", type=str, default="Ascend",
                         help="device where the code will be implemented, default is Ascend")
-    parser.add_argument('--device_id', type=int, default=None, help='device id of GPU or Ascend. (Default: None)')
+    parser.add_argument('--device_id', type=int, default=0, help='device id of GPU or Ascend, default is 0')
     args = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, reserve_class_name_in_scope=False,
