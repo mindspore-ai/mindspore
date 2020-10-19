@@ -381,7 +381,7 @@ void MemReuseUtil::SetSummaryNodesRefCount() {
       total_summary_size += kernel_ref->size_;
       MS_LOG(INFO) << "Set summary node's ref count, node: " << node->fullname_with_scope() << " index: " << index;
     } else {
-      MS_LOG(WARNING) << "Can't find summary node's kernel_def " << node->fullname_with_scope() << " index: " << index;
+      MS_LOG(INFO) << "Can't find summary node's kernel_def " << node->fullname_with_scope() << " index: " << index;
     }
   }
 #ifdef MEM_REUSE_DEBUG
