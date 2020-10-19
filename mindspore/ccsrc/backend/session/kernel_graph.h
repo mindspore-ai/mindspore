@@ -240,7 +240,7 @@ class KernelGraph : public FuncGraph {
   // valid inputs
   std::vector<bool> valid_inputs_;
 
-  // child graph execute order in root graph
+  // child graph execute order in parent graph
   std::vector<std::weak_ptr<KernelGraph>> child_graph_order_;
 
   // input_tensors of control parameter
