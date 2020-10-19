@@ -124,7 +124,6 @@ RawStringFormats:
     CanonicalDelimiter: ''
     BasedOnStyle:    google
 ReflowComments:  true
-SortIncludes:    true
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: false
 SpaceAfterTemplateKeyword: true
@@ -147,5 +146,6 @@ StatementMacros:
   - QT_REQUIRE_VERSION
 TabWidth:        2
 UseTab:          Never
+SortIncludes:    false
 ...
 
