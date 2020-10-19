@@ -329,10 +329,6 @@ void Conv2D::ConvInferShape(int input_h, int input_w, int *output_h, int *output
   int stride_h = GetStrideH();
   int dilate_w = GetDilateW();
   int dilate_h = GetDilateH();
-  pad_l_ = GetPadLeft();
-  pad_u_ = GetPadUp();
-  pad_d_ = GetPadDown();
-  pad_r_ = GetPadRight();
 
   if (GetPadMode() == schema::PadMode_SAME_UPPER) {
     *output_w = std::ceil(static_cast<float>(input_w) / static_cast<float>(stride_w));
@@ -378,6 +374,11 @@ int Conv2D::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
 
   out_tensor->SetFormat(input_tensor->GetFormat());
   out_tensor->set_data_type(input_tensor->data_type());
+  pad_l_ = GetPadLeft();
+  pad_u_ = GetPadUp();
+  pad_d_ = GetPadDown();
+  pad_r_ = GetPadRight();
+
   if (!GetInferFlag()) {
     return RET_OK;
   }

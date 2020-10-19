@@ -210,6 +210,11 @@ int DepthwiseConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector
   MS_ASSERT(output != nullptr);
   output->SetFormat(input->GetFormat());
   output->set_data_type(input->data_type());
+  pad_l_ = GetPadLeft();
+  pad_u_ = GetPadUp();
+  pad_d_ = GetPadDown();
+  pad_r_ = GetPadRight();
+
   if (!GetInferFlag()) {
     return RET_OK;
   }
@@ -218,12 +223,8 @@ int DepthwiseConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector
   int input_w = in_shape.at(2);
   int input_channel = in_shape.at(3);
   int output_w = 0, output_h = 0;
-
   input_channel_ = input_channel;
-  pad_l_ = GetPadLeft();
-  pad_u_ = GetPadUp();
-  pad_d_ = GetPadDown();
-  pad_r_ = GetPadRight();
+
   if (GetPadMode() == schema::PadMode_SAME_UPPER) {
     output_h = std::ceil(static_cast<float>(input_h) / static_cast<float>(GetStrideH()));
     output_w = std::ceil(static_cast<float>(input_w) / static_cast<float>(GetStrideW()));
