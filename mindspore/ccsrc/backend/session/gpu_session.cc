@@ -38,6 +38,7 @@
 #include "backend/optimizer/gpu/remove_format_transform_pair.h"
 #include "backend/optimizer/gpu/remove_redundant_format_transform.h"
 #include "backend/optimizer/gpu/cudnn_inplace_fusion.h"
+#include "backend/optimizer/gpu/reduce_precision_fusion.h"
 #include "backend/optimizer/graph_kernel/value_graph_binder.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
@@ -101,6 +102,7 @@ void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_gra
   pm->AddPass(std::make_shared<opt::RemoveRedundantFormatTransform>());
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::GetitemTuple>());
+  pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

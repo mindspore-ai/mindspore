@@ -372,6 +372,9 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
     result =
       kernel::GpuKernelFactory::GetInstance().SearchRegistered(AnfAlgo::GetCNodeName(kernel_node), builder->Build());
     if (!result) {
+      result = kernel::GpuKernelFactory::GetInstance().ReducePrecision(AnfAlgo::GetCNodeName(kernel_node), builder);
+    }
+    if (!result) {
       result = SelectAkgKernel(kernel_node, builder->Build());
       kernel_type = AKG_KERNEL;
     }

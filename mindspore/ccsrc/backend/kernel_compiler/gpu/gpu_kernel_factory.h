@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <memory>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "runtime/device/gpu/kernel_info_setter.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
@@ -42,6 +43,11 @@ class GpuKernelFactory {
   bool SearchRegistered(const std::string &kernel_name, const KernelBuildInfoPtr &kernel_info);
 
   std::string SupportedTypeList(const std::string &kernel_name);
+
+  bool ReducePrecision(const std::string &kernel_name,
+                       std::shared_ptr<mindspore::kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder);
+
+  std::pair<std::vector<size_t>, TypeId> reduce_flag_{{}, kNumberTypeInt64};
 
  private:
   GpuKernelFactory() = default;
