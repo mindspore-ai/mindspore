@@ -20,7 +20,7 @@ import numpy as np
 import mindspore
 from mindspore import Tensor
 from mindspore import context
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 from mindspore.train.quant import quant
 
 from src.mobilenetV2 import mobilenetV2
@@ -50,5 +50,5 @@ if __name__ == '__main__':
     # export network
     print("============== Starting export ==============")
     inputs = Tensor(np.ones([1, 3, cfg.image_height, cfg.image_width]), mindspore.float32)
-    quant.export(network, inputs, file_name="mobilenet_quant", file_format='MINDIR')
+    export(network, inputs, file_name="mobilenet_quant", file_format='MINDIR', quant_mode='AUTO')
     print("============== End export ==============")

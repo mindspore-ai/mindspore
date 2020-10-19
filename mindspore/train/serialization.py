@@ -29,10 +29,9 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.common.api import _executor
 from mindspore.common import dtype as mstype
-from mindspore._checkparam import check_input_data
+from mindspore._checkparam import check_input_data, Validator
 from mindspore.train.quant import quant
 import mindspore.context as context
-from .._checkparam import Validator
 
 __all__ = ["save_checkpoint", "load_checkpoint", "load_param_into_net", "export", "parse_print",
            "build_searched_strategy", "merge_sliced_parameter"]
