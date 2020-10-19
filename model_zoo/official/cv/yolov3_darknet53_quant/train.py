@@ -27,7 +27,7 @@ from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import ModelCheckpoint, RunContext
 from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
 import mindspore as ms
-from mindspore.train.quant import quant
+from mindspore.compression.quant import QuantizationAwareTraining
 from mindspore.common import set_seed
 
 from src.yolo import YOLOV3DarkNet53, YoloWithLossCell, TrainingWrapper
@@ -168,10 +168,10 @@ def train():
     config = ConfigYOLOV3DarkNet53()
     # convert fusion network to quantization aware network
     if config.quantization_aware:
-        network = quant.convert_quant_network(network,
-                                              bn_fold=True,
+        quantizer = QuantizationAwareTraining(bn_fold=True,
                                               per_channel=[True, False],
                                               symmetric=[True, False])
+        network = quantizer.quantize(network)
 
     network = YoloWithLossCell(network)
     args.logger.info('finish get network')

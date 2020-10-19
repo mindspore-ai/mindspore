@@ -21,7 +21,7 @@ import mindspore
 from mindspore import Tensor
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
-from mindspore.train.quant import quant
+from mindspore.compression.quant import QuantizationAwareTraining
 
 from src.mobilenetV2 import mobilenetV2
 from src.config import config_ascend_quant
@@ -42,7 +42,10 @@ if __name__ == '__main__':
     # define fusion network
     network = mobilenetV2(num_classes=cfg.num_classes)
     # convert fusion network to quantization aware network
-    network = quant.convert_quant_network(network, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
+    quantizer = QuantizationAwareTraining(bn_fold=True,
+                                          per_channel=[True, False],
+                                          symmetric=[True, False])
+    network = quantizer.quantize(network)
     # load checkpoint
     param_dict = load_checkpoint(args_opt.checkpoint_path)
     load_param_into_net(network, param_dict)

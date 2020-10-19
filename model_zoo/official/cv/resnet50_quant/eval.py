@@ -26,7 +26,7 @@ from models.resnet_quant_manual import resnet50_quant #manually construct quanta
 from mindspore import context
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.train.quant import quant
+from mindspore.compression.quant import QuantizationAwareTraining
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
@@ -43,12 +43,13 @@ if args_opt.device_target == "Ascend":
 
 if __name__ == '__main__':
     # define fusion network
-    net = resnet50_quant(class_num=config.class_num)
+    network = resnet50_quant(class_num=config.class_num)
     # convert fusion network to quantization aware network
-    net = quant.convert_quant_network(net,
-                                      bn_fold=True,
-                                      per_channel=[True, False],
-                                      symmetric=[True, False])
+    quantizer = QuantizationAwareTraining(bn_fold=True,
+                                          per_channel=[True, False],
+                                          symmetric=[True, False])
+    network = quantizer.quantize(network)
+
     # define network loss
     if not config.use_label_smooth:
         config.label_smooth_factor = 0.0
@@ -65,13 +66,13 @@ if __name__ == '__main__':
     # load checkpoint
     if args_opt.checkpoint_path:
         param_dict = load_checkpoint(args_opt.checkpoint_path)
-        not_load_param = load_param_into_net(net, param_dict)
+        not_load_param = load_param_into_net(network, param_dict)
         if not_load_param:
-            raise ValueError("Load param into net fail!")
-    net.set_train(False)
+            raise ValueError("Load param into network fail!")
+    network.set_train(False)
 
     # define model
-    model = Model(net, loss_fn=loss, metrics={'acc'})
+    model = Model(network, loss_fn=loss, metrics={'acc'})
 
     print("============== Starting Validation ==============")
     res = model.eval(dataset)

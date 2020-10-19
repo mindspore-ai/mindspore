@@ -25,8 +25,8 @@ from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint
-from mindspore.train.quant import quant
-from mindspore.train.quant.quant_utils import load_nonquant_param_into_quant_net
+from mindspore.compression.quant import QuantizationAwareTraining
+from mindspore.compression.quant.quant_utils import load_nonquant_param_into_quant_net
 from mindspore.communication.management import init
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
@@ -113,7 +113,10 @@ if __name__ == '__main__':
     step_size = dataset.get_dataset_size()
 
     # convert fusion network to quantization aware network
-    net = quant.convert_quant_network(net, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
+    quantizer = QuantizationAwareTraining(bn_fold=True,
+                                          per_channel=[True, False],
+                                          symmetric=[True, False])
+    network = quantizer.quantize(network)
 
     # get learning rate
     lr = get_lr(lr_init=config.lr_init,

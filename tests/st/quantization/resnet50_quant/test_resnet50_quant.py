@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore import Tensor
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model
-from mindspore.train.quant import quant
+from mindspore.compression.quant import QuantizationAwareTraining
 from mindspore import set_seed
 
 from resnet_quant_manual import resnet50_quant
@@ -89,10 +89,10 @@ def test_resnet50_quant():
     step_size = dataset.get_dataset_size()
 
     # convert fusion network to quantization aware network
-    net = quant.convert_quant_network(net,
-                                      bn_fold=True,
-                                      per_channel=[True, False],
-                                      symmetric=[True, False])
+    quantizer = QuantizationAwareTraining(bn_fold=True,
+                                          per_channel=[True, False],
+                                          symmetric=[True, False])
+    net = quantizer.quantize(net)
 
     # get learning rate
     lr = Tensor(get_lr(lr_init=config.lr_init,

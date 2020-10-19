@@ -26,8 +26,8 @@ from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train.serialization import load_checkpoint
 from mindspore.communication.management import init, get_group_size, get_rank
-from mindspore.train.quant import quant
-from mindspore.train.quant.quant_utils import load_nonquant_param_into_quant_net
+from mindspore.compression.quant import QuantizationAwareTraining
+from mindspore.compression.quant.quant_utils import load_nonquant_param_into_quant_net
 from mindspore.common import set_seed
 
 from src.dataset import create_dataset
@@ -99,10 +99,10 @@ def train_on_ascend():
         param_dict = load_checkpoint(args_opt.pre_trained)
         load_nonquant_param_into_quant_net(network, param_dict)
     # convert fusion network to quantization aware network
-    network = quant.convert_quant_network(network,
-                                          bn_fold=True,
+    quantizer = QuantizationAwareTraining(bn_fold=True,
                                           per_channel=[True, False],
                                           symmetric=[True, False])
+    network = quantizer.quantize(network)
 
     # get learning rate
     lr = Tensor(get_lr(global_step=config.start_epoch * step_size,
@@ -162,12 +162,12 @@ def train_on_gpu():
         load_nonquant_param_into_quant_net(network, param_dict)
 
     # convert fusion network to quantization aware network
-    network = quant.convert_quant_network(network,
-                                          bn_fold=True,
+    quantizer = QuantizationAwareTraining(bn_fold=True,
                                           per_channel=[True, False],
                                           symmetric=[True, False],
                                           freeze_bn=1000000,
                                           quant_delay=step_size * 2)
+    network = quantizer.quantize(network)
 
     # get learning rate
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)

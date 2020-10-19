@@ -21,7 +21,7 @@ from mindspore import context
 from mindspore import nn
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.train.quant import quant
+from mindspore.compression.quant import QuantizationAwareTraining
 
 from src.mobilenetV2 import mobilenetV2
 from src.dataset import create_dataset
@@ -51,7 +51,10 @@ if __name__ == '__main__':
     # define fusion network
     network = mobilenetV2(num_classes=config_device_target.num_classes)
     # convert fusion network to quantization aware network
-    network = quant.convert_quant_network(network, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
+    quantizer = QuantizationAwareTraining(bn_fold=True,
+                                          per_channel=[True, False],
+                                          symmetric=[True, False])
+    network = quantizer.quantize(network)
     # define network loss
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
 

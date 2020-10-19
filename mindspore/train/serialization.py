@@ -30,7 +30,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.api import _executor
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import check_input_data, Validator
-from mindspore.train.quant import quant
+from mindspore.compression.export import quant_export
 import mindspore.context as context
 
 __all__ = ["save_checkpoint", "load_checkpoint", "load_param_into_net", "export", "parse_print",
@@ -596,14 +596,14 @@ def _quant_export(network, *inputs, file_format, **kwargs):
     network.set_train(False)
     if file_format == "MINDIR":
         if quant_mode == 'MANUAL':
-            exporter = quant.ExportManualQuantNetwork(network, mean, std_dev, *inputs, is_mindir=True)
+            exporter = quant_export.ExportManualQuantNetwork(network, mean, std_dev, *inputs, is_mindir=True)
         else:
-            exporter = quant.ExportToQuantInferNetwork(network, mean, std_dev, *inputs, is_mindir=True)
+            exporter = quant_export.ExportToQuantInferNetwork(network, mean, std_dev, *inputs, is_mindir=True)
     else:
         if quant_mode == 'MANUAL':
-            exporter = quant.ExportManualQuantNetwork(network, mean, std_dev, *inputs)
+            exporter = quant_export.ExportManualQuantNetwork(network, mean, std_dev, *inputs)
         else:
-            exporter = quant.ExportToQuantInferNetwork(network, mean, std_dev, *inputs)
+            exporter = quant_export.ExportToQuantInferNetwork(network, mean, std_dev, *inputs)
     deploy_net = exporter.run()
     return deploy_net
 
