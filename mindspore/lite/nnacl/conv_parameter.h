@@ -71,4 +71,57 @@ typedef struct SlidingWindowParam {
   int kernel_step_;
 } SlidingWindowParam;
 
+#define DECONV_WINOGRAD_DEFAULT_UNIT 3
+#define DECONV_WINOGRAD_DEFAULT_TILE 8
+#define DECONV_WINOGRAD_BUFFER_COUNT 8
+typedef struct DeConvWg {
+  void *b_buffer_;
+  void *AT_;
+  void *BT_;
+
+  int kh_;
+  int kw_;
+
+  int k_;
+  int i_;
+  int o_;
+} DeConvWg;
+
+typedef struct DeConvWgABuffer {
+  bool buf_init_;
+  bool trans_formed_;
+  void *middle_buffer_;
+  void *dest_buffer_;
+} DeConvWgABuffer;
+
+typedef struct DeConvComputeUnit {
+  void *weight_;
+  void *tmp_buffer_;
+  int w_start_;
+  int h_start_;
+  int w_size_;
+  int h_size_;
+  bool use_winograd_;
+  DeConvWg winograd_;
+} DeConvComputeUnit;
+
+typedef struct DeConvParam {
+  DeConvComputeUnit *compute_units_;
+  int compute_size_;
+  DeConvWgABuffer a_buffer_[DECONV_WINOGRAD_BUFFER_COUNT];
+  int input_plane_;
+  int output_plane_;
+  int kernel_plane_;
+  int ic_div4_;
+  int oc_div4_;
+  int ic_up4_;
+  int oc_up4_;
+  int thread_num_;
+  int in_tile_count_;
+  int in_tile_h_count_;
+  int in_tile_w_count_;
+  int out_tile_h_;
+  int out_tile_w_;
+} DeConvParam;
+
 #endif  // MINDSPORE_LITE_NNACL_CONV_PARAMETER_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_FP32_DECONV_H_
-#define MINDSPORE_LITE_NNACL_FP32_DECONV_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_DECONV_WINOGRAD_H_
+#define MINDSPORE_LITE_NNACL_FP32_DECONV_WINOGRAD_H_
 
 #include <string.h>
 #include "nnacl/pack.h"
@@ -22,17 +22,21 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/fp32/common_func.h"
-#include "nnacl/fp32/conv.h"
 #include "nnacl/minimal_filtering_generator.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void PackDeConvWeightFp32(const float *weight, float *dst, int input_channel, int output_channel, int plane);
-void DeConvPostFp32C8(const float *src, float *tmp_out, const float *bias, float *dst, int output_channel,
-                      ConvParameter *conv_param);
+
+int PackDeConvWgDataFp32(float *nhwc_weight, DeConvComputeUnit *unit, ConvParameter *conv_param,
+                         DeConvParam *deconv_param);
+void DeconvWg(float *nhwc_input_, float *tile_in, float *tile_out, int start_index, int calculate_count,
+              ConvParameter *conv_param, DeConvParam *deconv_param, int task_id);
+void DeconvWgPost(float *tile_out, float *nc4hw4_output, ConvParameter *conv_param, DeConvParam *deconv_param,
+                  int calculate_count, int tile_index);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP32_DECONV_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_DECONV_WINOGRAD_H_

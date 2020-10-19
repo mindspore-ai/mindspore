@@ -20,6 +20,8 @@
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
+#include <stdbool.h>
+#include "nnacl/pack.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,6 +48,9 @@ int CookToomFilter(float *matrix_a, float *matrix_at, float *matrix_b, float *ma
                    float *matrix_gt, float coefficient, int out_unit, int filter_size);
 void MatrixMultiplyWinograd(const float *matix_a, const float *matrix_b, float *matrix_c, int m, int k, int n,
                             int in_channel, int c4_channel);
+
+int WinogradWeightTransform(const float *weight_data, float *winograd_data, float *matrix_g, float *matrix_gt,
+                            int oc_block, int input_unit_, int kernel_unit_, int channel, int batch, bool pack);
 
 #ifdef ENABLE_ARM
 void MatrixMultiplyVec(const float32x4_t *matrix_a, const float32x4_t *matrix_b, float32x4_t *matrix_c,

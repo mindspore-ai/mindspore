@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/deconvolution.h"
+#include "src/runtime/kernel/arm/fp32/deconvolution_winograd.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -125,9 +126,9 @@ int DeConvolutionCPUKernel::DoDeconv(int task_id) {
             matmul_param_->col_, OutType_C8);
 #endif
 
-  DeConvPostFp32C12x8(tmp_buffer, pack_output_ + task_id * thread_stride_ * C8NUM * output_plane_,
-                      reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id * C8NUM,
-                      output_ptr_ + task_id * thread_stride_ * C8NUM, oc_res, conv_param_);
+  DeConvPostFp32C8(tmp_buffer, pack_output_ + task_id * thread_stride_ * C8NUM * output_plane_,
+                   reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id * C8NUM,
+                   output_ptr_ + task_id * thread_stride_ * C8NUM, oc_res, conv_param_);
   return RET_OK;
 }
 
@@ -246,7 +247,17 @@ kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *>
     }
     weight_tensor->SetData(dequant_weight);
   }
-  auto kernel = new (std::nothrow) kernel::DeConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+
+  kernel::LiteKernel *kernel;
+  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&
+      (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1)) {
+    /* DeConvolutionWinogradCPUKernel */
+    kernel = new (std::nothrow) kernel::DeConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  } else {
+    kernel = new (std::nothrow) kernel::DeConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  }
+
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (weight_tensor->data_type() == kNumberTypeInt8) {

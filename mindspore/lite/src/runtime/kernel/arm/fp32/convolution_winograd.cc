@@ -36,89 +36,9 @@ int ConvolutionWinogradCPUKernel::WinogradFilterTransform(const float *weight_da
     MS_LOG(ERROR) << "Divide by zero";
     return RET_ERROR;
   }
-  // original weight format : ohwi
-  auto channel_in = conv_param_->input_channel_;
-  auto channel_out = conv_param_->output_channel_;
-  int oc_block_num = UP_DIV(channel_out, oc_block);
-  int block_stride = channel_in * oc_block;
-  int block_num_stride = block_stride * oc_block_num;
 
-  // trans_filter = G*g*GT (g represents weight_data)
-  // separate into two steps ===> tmp = (g * GT)T ===> trans = (tmp * GT)T   use same function:MatrixMultiplyWinograd
-  auto tmp_data = reinterpret_cast<float *>(malloc(channel_in * input_unit_ * kernel_unit_ * sizeof(float)));
-  if (tmp_data == nullptr) {
-    MS_LOG(ERROR) << "malloc tmp_data failed.";
-    return RET_MEMORY_FAILED;
-  }
-  auto trans_out_data = reinterpret_cast<float *>(malloc(channel_in * input_unit_ * input_unit_ * sizeof(float)));
-  if (trans_out_data == nullptr) {
-    free(tmp_data);
-    MS_LOG(ERROR) << "malloc trans_out_data failed.";
-    return RET_MEMORY_FAILED;
-  }
-
-#ifndef ENABLE_ARM
-  auto tmp_data1 = reinterpret_cast<float *>(malloc(channel_in * input_unit_ * kernel_unit_ * sizeof(float)));
-  if (tmp_data1 == nullptr) {
-    free(tmp_data);
-    free(trans_out_data);
-    MS_LOG(ERROR) << "malloc tmp_data1 failed.";
-    return RET_MEMORY_FAILED;
-  }
-  auto trans_out_data1 = reinterpret_cast<float *>(malloc(channel_in * input_unit_ * input_unit_ * sizeof(float)));
-  if (trans_out_data1 == nullptr) {
-    free(tmp_data);
-    free(tmp_data1);
-    free(trans_out_data);
-    MS_LOG(ERROR) << "malloc trans_out_data1 failed.";
-    return RET_MEMORY_FAILED;
-  }
-#endif
-
-  int input_oz_offset = kernel_unit_ * kernel_unit_ * channel_in;
-  for (int i = 0; i < channel_out; i++) {
-    int out_c_block = i / oc_block;
-    int out_c_res = i % oc_block;
-    int output_oz_offset = out_c_block * block_stride + out_c_res;
-
-#ifndef ENABLE_ARM
-    // tmp_data = g * GT
-    MatrixMultiplyWinograd(weight_data + i * input_oz_offset, matrix_gt, tmp_data, kernel_unit_, kernel_unit_,
-                           input_unit_, channel_in, channel_in * 4);
-    // tmp_data1 = (tmp_data)T
-    PackHWCToWHC(tmp_data, tmp_data1, kernel_unit_, input_unit_, channel_in);
-    // trans_out_data1 = tmp * GT
-    MatrixMultiplyWinograd(tmp_data1, matrix_gt, trans_out_data1, input_unit_, kernel_unit_, input_unit_, channel_in,
-                           channel_in * 4);
-    // trans_out_data = (trans_out_data1)T
-    PackHWCToWHC(trans_out_data1, trans_out_data, input_unit_, input_unit_, channel_in);
-#else
-    // tmp = (g * GT)T
-    MatrixMultiplyWinograd(weight_data + i * input_oz_offset, matrix_gt, tmp_data, kernel_unit_, kernel_unit_,
-                           input_unit_, channel_in, channel_in * 4);
-    // trans = (tmp * GT)T
-    MatrixMultiplyWinograd(tmp_data, matrix_gt, trans_out_data, input_unit_, kernel_unit_, input_unit_, channel_in,
-                           channel_in * 4);
-#endif
-
-    int in_offset = 0;
-    for (int j = 0; j < input_unit_; ++j) {
-      for (int k = 0; k < input_unit_; ++k) {
-        for (int c = 0; c < channel_in; ++c) {
-          *(trans_weight_ + output_oz_offset + c * oc_block) = trans_out_data[in_offset + c];
-        }
-        in_offset += channel_in;
-        output_oz_offset += block_num_stride;
-      }
-    }
-  }
-#ifndef ENABLE_ARM
-  free(tmp_data1);
-  free(trans_out_data1);
-#endif
-  free(tmp_data);
-  free(trans_out_data);
-  return RET_OK;
+  return WinogradWeightTransform(weight_data, trans_weight_, matrix_g, matrix_gt, oc_block, input_unit_, kernel_unit_,
+                                 conv_param_->input_channel_, conv_param_->output_channel_, true);
 }
 
 int ConvolutionWinogradCPUKernel::InitWeightBias() {
