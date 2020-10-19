@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include <algorithm>
 #include "src/runtime/kernel/arm/fp32/resize.h"
-#include "schema/model_generated.h"
-#include "nnacl/fp32/resize.h"
+#include <algorithm>
 #include "include/errorcode.h"
+#include "nnacl/fp32/resize.h"
+#include "schema/model_generated.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -41,7 +41,7 @@ int ResizeCPUKernel::Init() {
 
 int ResizeCPUKernel::ReSize() {
   int ret = RET_OK;
-  if (method_ == static_cast<int>(schema::ResizeMethod_BILINEAR)) {
+  if (method_ == static_cast<int>(schema::ResizeMethod_LINEAR)) {
     FreeTmpBuffer();
     ret = MallocTmpBuffer();
     if (ret != RET_OK) {
@@ -162,7 +162,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
 
   int ret = 0;
   switch (method_) {
-    case static_cast<int>(schema::ResizeMethod_BILINEAR): {
+    case static_cast<int>(schema::ResizeMethod_LINEAR): {
       int n_h_begin, n_h_end;
       int n = out_tensors_.at(0)->shape()[0];
       int h = new_height_;
@@ -178,7 +178,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
 
       break;
     }
-    case static_cast<int>(schema::ResizeMethod_NEAREST_NEIGHBOR): {
+    case static_cast<int>(schema::ResizeMethod_NEAREST): {
       if (in_tensors_.size() == lite::kDoubleNum && !const_shape_) {
         auto out_shape = in_tensors_.at(1);
         auto data = reinterpret_cast<int32_t *>(out_shape->MutableData());

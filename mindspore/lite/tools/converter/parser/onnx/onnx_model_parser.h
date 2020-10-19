@@ -26,6 +26,7 @@
 #include <vector>
 #include <memory>
 #include <set>
+#include <map>
 #include "securec/include/securec.h"
 #include "tools/converter/model_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
@@ -40,6 +41,7 @@ class OnnxModelParser : public ModelParser {
 
   virtual ~OnnxModelParser();
 
+  schema::MetaGraphT *ParseGraph(const onnx::GraphProto &graph, const QuantType &quantType = QuantType_QUANT_NONE);
   schema::MetaGraphT *ParseToFb(const std::string &modelFile, const std::string &weightFile,
                                 const QuantType &quantType = QuantType_QUANT_NONE) override;
 
@@ -62,7 +64,7 @@ class OnnxModelParser : public ModelParser {
 
   STATUS ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                               schema::CNodeT *dst_op, schema::TensorT *dst_tensor, TensorCache *tensor_cache,
-                              const QuantType &quantType);
+                              const QuantType &quantType, schema::MetaGraphT *dst_graph);
 
   void ParseOnnxGemmNode(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                          schema::MetaGraphT *graph, TensorCache *tensor_cache, const QuantType &quant_type);
@@ -86,9 +88,13 @@ class OnnxModelParser : public ModelParser {
 
   void FindGraphInputAndConst(const onnx::GraphProto &onnx_graph);
 
+  STATUS ParseLoopAttr(schema::CNodeT *dst_op, const onnx::NodeProto &onnx_node, const QuantType &quantType,
+                       schema::MetaGraphT *dst_graph);
+
  private:
-  std::vector<string> graphInputNames;
-  std::vector<string> graphConstNames;
+  std::vector<std::string> graphInputNames;
+  std::vector<std::string> graphConstNames;
+  int subGraphNum = 0;
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -15,9 +15,9 @@
  */
 
 #include "tools/converter/parser/tflite/tflite_custom_parser.h"
-#include <vector>
-#include <memory>
 #include <map>
+#include <memory>
+#include <vector>
 #include "flatbuffers/flatbuffers.h"
 #include "flatbuffers/flexbuffers.h"
 
@@ -206,6 +206,8 @@ STATUS TfliteCustomParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
     status = ExtractFeatures(custom_attr, op, tflite_op);
   } else if (custom_type == "AudioSpectrogram") {
     status = AudioSpectrogram(custom_attr, op, tflite_op);
+  } else if (custom_type == "Mfcc") {
+    status = Mfcc(custom_attr, op, tflite_op);
   } else if (custom_type == "FlexRFFT") {
     status = Rfft(custom_attr, op, tflite_op, tflite_model);
   } else if (custom_type == "FlexReal") {

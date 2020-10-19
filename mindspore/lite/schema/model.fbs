@@ -219,6 +219,10 @@ union PrimitiveType {
     Sgd,
     Adam,
     GroupConv2DGradInput,
+    Loop,
+    NonMaxSuppression,
+    InstanceNorm,
+    Identity,
 }
 
 enum QuantType: int {
@@ -250,6 +254,7 @@ table MetaGraph {
     mempoolSize: uint;
     nodes: [CNode];
     allTensors: [Tensor]; // weight + input + output
+    subGraph : [MetaGraph];
 }
 
 root_type MetaGraph;

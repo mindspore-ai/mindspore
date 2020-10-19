@@ -40,7 +40,7 @@ TEST_F(TestTfliteParserResizeNN, AttrValue) {
   ASSERT_EQ(val->newWidth, 100);
   ASSERT_EQ(val->format, schema::Format_NHWC);
   ASSERT_EQ(val->preserveAspectRatio, false);
-  ASSERT_EQ(val->method, schema::ResizeMethod_NEAREST_NEIGHBOR);
+  ASSERT_EQ(val->method, schema::ResizeMethod_NEAREST);
 }
 
 class TestTfliteParserResizeBilinear : public TestTfliteParser {
@@ -64,7 +64,7 @@ TEST_F(TestTfliteParserResizeBilinear, AttrValue) {
   ASSERT_EQ(val->newWidth, 4);
   ASSERT_EQ(val->format, schema::Format_NHWC);
   ASSERT_EQ(val->preserveAspectRatio, false);
-  ASSERT_EQ(val->method, schema::ResizeMethod_BILINEAR);
+  ASSERT_EQ(val->method, schema::ResizeMethod_LINEAR);
 }
 
 }  // namespace mindspore

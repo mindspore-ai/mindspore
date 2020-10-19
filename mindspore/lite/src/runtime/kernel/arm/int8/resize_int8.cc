@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include "src/runtime/kernel/arm/int8/resize_int8.h"
 #include <vector>
-#include "src/kernel_registry.h"
+#include "include/errorcode.h"
 #include "nnacl/int8/resize.h"
 #include "schema/model_generated.h"
-#include "include/errorcode.h"
-#include "src/runtime/kernel/arm/int8/resize_int8.h"
+#include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -84,7 +84,7 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
 
   int ret = 0;
   switch (method_) {
-    case static_cast<int>(schema::ResizeMethod_BILINEAR): {
+    case static_cast<int>(schema::ResizeMethod_LINEAR): {
       if (quant_in_->zp_ == 0) {
         ret = ResizeBilinearInt8(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
                                  align_corners_, quant_in_, quant_out_, multiplier_, task_id, context_->thread_num_);
@@ -95,7 +95,7 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
       }
       break;
     }
-    case static_cast<int>(schema::ResizeMethod_NEAREST_NEIGHBOR): {
+    case static_cast<int>(schema::ResizeMethod_NEAREST): {
       bool same_zp = quant_in_->zp_ == quant_out_->zp_;
       bool same_scale = abs(quant_out_->scale_ - quant_in_->scale_) < 1e-6;
       if (same_zp && same_scale) {

@@ -582,6 +582,94 @@ STATUS OnnxSignParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
   return RET_OK;
 }
 
+STATUS OnnxAndParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+  MS_LOG(DEBUG) << "onnx AndParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  std::unique_ptr<schema::LogicalAndT> attr = std::make_unique<schema::LogicalAndT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+  op->primitive->value.type = schema::PrimitiveType_LogicalAnd;
+  op->primitive->value.value = attr.release();
+  return RET_OK;
+}
+
+STATUS OnnxOrParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+  MS_LOG(DEBUG) << "onnx OrParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  std::unique_ptr<schema::LogicalOrT> attr = std::make_unique<schema::LogicalOrT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+  op->primitive->value.type = schema::PrimitiveType_LogicalOr;
+  op->primitive->value.value = attr.release();
+  return RET_OK;
+}
+
+STATUS OnnxNotParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+  MS_LOG(DEBUG) << "onnx NotParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  std::unique_ptr<schema::LogicalNotT> attr = std::make_unique<schema::LogicalNotT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+  op->primitive->value.type = schema::PrimitiveType_LogicalNot;
+  op->primitive->value.value = attr.release();
+  return RET_OK;
+}
+
+STATUS OnnxRoundParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
+                              schema::CNodeT *op) {
+  MS_LOG(DEBUG) << "onnx RoundParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  std::unique_ptr<schema::RoundT> attr = std::make_unique<schema::RoundT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+  op->primitive->value.type = schema::PrimitiveType_Round;
+  op->primitive->value.value = attr.release();
+  return RET_OK;
+}
 OnnxNodeRegistrar g_onnxAddParser("Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxInt8AddParser("Int8Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxSubParser("Sub", new OnnxSubParser());
@@ -608,5 +696,9 @@ OnnxNodeRegistrar g_onnxAtanParser("Atan", new OnnxAtanParser());
 OnnxNodeRegistrar g_onnxAsinParser("Asin", new OnnxAsinParser());
 OnnxNodeRegistrar g_onnxTanhParser("Tanh", new OnnxTanhParser());
 OnnxNodeRegistrar g_onnxSignParser("Sign", new OnnxTanhParser());
+OnnxNodeRegistrar g_onnxAndParser("And", new OnnxAndParser());
+OnnxNodeRegistrar g_onnxOrParser("Or", new OnnxOrParser());
+OnnxNodeRegistrar g_onnxNotParser("Not", new OnnxNotParser());
+OnnxNodeRegistrar g_onnxRoundParser("Round", new OnnxRoundParser());
 }  // namespace lite
 }  // namespace mindspore

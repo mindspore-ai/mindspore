@@ -18,8 +18,28 @@ namespace mindspore.schema;
 
 enum ResizeMethod: byte {
     UNKNOW = -1,
-    BILINEAR = 0,
-    NEAREST_NEIGHBOR = 1
+    LINEAR = 0,
+    NEAREST = 1,
+    CUBIC = 2
+}
+
+enum CoordinateTransformMode: byte {
+    COMMON = 0,
+    HALF_PIXEL = 1,
+    PYTORCH_HALF_PIXEL = 2,
+    TF_HALF_PIXEL = 3,
+    TF_CROP_AND_RESIZE = 4,
+    ALIGN_CORNERS = 5,
+    ASYMMETRIC = 6,
+    ALIGN_CORNERS_WITH_HALF_PIEXL = 7
+}
+
+enum NearestMode : byte {
+    NORMAL = 0,
+    ROUND_HALF_DOWN = 1,
+    ROUND_HALF_UP = 2,
+    FLOOR = 3,
+    CEIL = 4
 }
 
 enum Format : int {
@@ -376,8 +396,13 @@ table Resize {
     method: ResizeMethod;
     newHeight: long;
     newWidth: long;
-    alignCorners: bool = false;
+    alignCorners: bool = false;  // DEPRECATED IN FUTURE: use 'coordinateTransformMode' instead.
     preserveAspectRatio: bool = false;
+    coordinateTransformMode : CoordinateTransformMode;
+    cubicCoeff : float;
+    excludeOutside : int;
+    extrapolationValue : float = 0;
+    nearestMode : NearestMode;
 }
 
 table DetectionPostProcess {
@@ -1053,4 +1078,22 @@ table FftReal {
 }
 
 table FftImag {
+}
+
+table NonMaxSuppression {
+    maxOutBoxPerClass : int = 0;
+    iouThreshold : float = 0;
+    scoreThreshold : float = 0;
+    centerPointBox : int = 0;
+}
+
+table InstanceNorm {
+    epsilon : float = 0.00001;
+}
+
+table Loop {
+    subGraphIndex : int;
+}
+
+table Identity {
 }

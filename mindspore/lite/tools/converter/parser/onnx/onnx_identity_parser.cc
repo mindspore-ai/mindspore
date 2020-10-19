@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#include "tools/converter/parser/onnx/onnx_upsample_parser.h"
+#include "tools/converter/parser/onnx/onnx_identity_parser.h"
 #include <memory>
+#include <vector>
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
+STATUS OnnxIdentityParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                  schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "onnx UpsampleParser";
+  MS_LOG(DEBUG) << "onnx IdentityParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -32,33 +33,17 @@ STATUS OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph, const onnx:
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::ResizeT> attr = std::make_unique<schema::ResizeT>();
+  std::unique_ptr<schema::IdentityT> attr = std::make_unique<schema::IdentityT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
 
-  for (const auto &onnx_node_attr : onnx_node.attribute()) {
-    const auto &attribute_name = onnx_node_attr.name();
-    if (attribute_name == "mode") {
-      if ("nearest" == onnx_node_attr.s()) {
-        attr->method = schema::ResizeMethod_NEAREST;
-      } else if ("bilinear" == onnx_node_attr.s()) {
-        attr->method = schema::ResizeMethod_LINEAR;
-      } else {
-        MS_LOG(ERROR) << "Resize do not support upsample mode";
-        return RET_ERROR;
-      }
-    }
-  }
-  attr->newWidth = 1;
-  attr->newHeight = 1;
-  attr->alignCorners = false;
-  op->primitive->value.type = schema::PrimitiveType_Upsample;
+  op->primitive->value.type = schema::PrimitiveType_Identity;
   op->primitive->value.value = attr.release();
   return RET_OK;
 }
 
-OnnxNodeRegistrar g_onnxUpsampleParser("Upsample", new OnnxUpsampleParser());
+OnnxNodeRegistrar g_onnxIdentityParser("Identity", new OnnxIdentityParser());
 }  // namespace lite
 }  // namespace mindspore
