@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_LITE_NNACL_FP16_MATMUL_H_
 #define MINDSPORE_LITE_NNACL_FP16_MATMUL_H_
 
-#include <string.h>
 #include <float.h>
+#include <string.h>
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
 #include "nnacl/errorcode.h"
-#include "nnacl/op_base.h"
 #include "nnacl/matmul_parameter.h"
+#include "nnacl/op_base.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,8 +35,8 @@ void MatMul16x8(const float16_t *a, const float16_t *b, float16_t *dst, const fl
 void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, ActType act_type,
                 int depth, int row, int col, int stride, int out_type);
 
-void MatVecMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type, int depth,
-                   int col);
+void MatVecMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, ActType act_type,
+                   int depth, int col);
 
 void ColMajor2Row8MajorFp16(void *src_ptr, float16_t *dst_ptr, size_t row, size_t col, bool src_float16);
 
@@ -48,8 +48,8 @@ void MatmulFp16Neon64(const float16_t *a, const float16_t *b, float16_t *c, cons
 void MatmulFp16Neon64Opt(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
                          size_t depth, size_t row, size_t col, size_t stride, size_t write_nhwc);
 
-void MatmulFp16Neon64_1xN(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
-                          int depth, int col);
+void MatVecMulFp16Neon64(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
+                         int depth, int col);
 
 void RowMajor2Col16MajorFp16(void *src, float16_t *dst, int row, int col, bool is_fp32_src);
 

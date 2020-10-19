@@ -17,17 +17,19 @@
 #ifndef MINDSPORE_LITE_NNACL_FP32_MATMUL_H_
 #define MINDSPORE_LITE_NNACL_FP32_MATMUL_H_
 
-#include <string.h>
 #include <float.h>
+#include <string.h>
 #include "nnacl/errorcode.h"
-#include "nnacl/op_base.h"
 #include "nnacl/matmul_parameter.h"
+#include "nnacl/op_base.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row,
                int col, size_t stride, int out_type);
+void MatVecMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int col);
+void RowMajor2ColMajor(float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row4Major(float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row8Major(float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row12Major(float *src_ptr, float *dst_ptr, int row, int col);
@@ -39,6 +41,7 @@ void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bi
                        int col, size_t stride, size_t writeNhwc, size_t WriteWino);
 void MatmulFloatNeon64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                           int col, size_t stride, size_t write_mode);
+void MatVecMulFp32Neon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col);
 #elif ENABLE_ARM32
 void MatmulFloatNeon32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                        int col, int stride, size_t writeNhwc, size_t WriteWino);

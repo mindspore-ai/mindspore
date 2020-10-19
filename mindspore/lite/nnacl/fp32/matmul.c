@@ -16,6 +16,14 @@
 
 #include "nnacl/fp32/matmul.h"
 
+void RowMajor2ColMajor(float *src_ptr, float *dst_ptr, int row, int col) {
+  for (int r = 0; r < row; ++r) {
+    for (int c = 0; c < col; ++c) {
+      dst_ptr[c * row + r] = src_ptr[r * col + c];
+    }
+  }
+}
+
 void RowMajor2Row4Major(float *src_ptr, float *dst_ptr, int row, int col) {
   for (int r = 0; r < row; r++) {
     float *src = src_ptr + r * col;
@@ -559,6 +567,12 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
   }
 #else
   MatMul12x8(a, b, c, bias, act_type, deep, row, col, stride, out_type);
+#endif
+}
+
+void MatVecMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int col) {
+#ifdef ENABLE_ARM64
+  MatVecMulFp32Neon64(a, b, c, bias, (int)act_type, depth, col);
 #endif
 }
 
