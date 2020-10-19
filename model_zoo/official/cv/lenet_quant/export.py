@@ -23,7 +23,7 @@ import mindspore
 from mindspore import Tensor
 from mindspore import context
 from mindspore.train.quant import quant
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 
 from src.config import mnist_cfg as cfg
 from src.lenet_fusion import LeNet5 as LeNet5Fusion
@@ -52,4 +52,4 @@ if __name__ == "__main__":
 
     # export network
     inputs = Tensor(np.ones([1, 1, cfg.image_height, cfg.image_width]), mindspore.float32)
-    quant.export(network, inputs, file_name="lenet_quant", file_format='AIR')
+    export(network, inputs, file_name="lenet_quant", file_format='MINDIR', quant_mode='AUTO')
