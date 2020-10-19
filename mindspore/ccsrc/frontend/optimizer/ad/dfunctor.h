@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <vector>
 #include <iostream>
+#include <utility>
 
 #include "ir/anf.h"
 #include "ir/meta_func_graph.h"
@@ -100,6 +101,9 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   std::unordered_map<AnfNodePtr, AdjointPtr> anfnode_to_adjoin_;
   // Cache for indirect fv backpropagation, K o K can only do backprop layer by layer.
   std::unordered_map<AnfNodePtr, AdjointPtr> anfnode_to_adjoin_indirect_fv_;
+  // Cache for fv node -> pair<embed<fv_node>, zeros_like<fv_node>>, so EnvGetItemTransform in optimizer
+  // can hit its cache if fv_node is same.
+  std::unordered_map<AnfNodePtr, std::pair<CNodePtr, CNodePtr>> anfnode_to_envitem_;
   FuncGraphPtr primal_graph_;
   // K object for primal_graph_;
   FuncGraphPtr k_graph_;
