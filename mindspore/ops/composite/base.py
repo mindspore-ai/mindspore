@@ -395,6 +395,9 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
                 sig.make_sig('args', sig.sig_rw.RW_READ, sig.sig_kind.KIND_VAR_POSITIONAL),))
 
     def __call__(self, *args):
+        if len(self.entries) == 1:
+            output = self.entries[0][1](*args)
+            return output
         types = tuple(map(mstype.get_py_obj_dtype, args))
         for sigs, fn in self.entries:
             if len(sigs) != len(types):
