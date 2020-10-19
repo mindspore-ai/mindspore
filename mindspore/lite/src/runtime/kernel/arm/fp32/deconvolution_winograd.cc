@@ -334,8 +334,7 @@ int DeConvolutionWinogradCPUKernel::DeDeconvPost(int task_id) {
   PostConvFuncFp32C4(nc4hw4_output_ + task_id * thread_stride_hw_ * C4NUM,
                      nhwc_output_ + task_id * thread_stride_hw_ * conv_param_->output_channel_,
                      reinterpret_cast<float *>(bias_data_), conv_param_->output_channel_, current_plane,
-                     deconv_param_->output_plane_, conv_param_->act_type_ == ActType_Relu,
-                     conv_param_->act_type_ == ActType_Relu6);
+                     deconv_param_->output_plane_, conv_param_->act_type_);
   return RET_OK;
 }
 

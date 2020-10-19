@@ -20,6 +20,7 @@
 #include "src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32/deconvolution.h"
 #include "mindspore/lite/nnacl/fp32/deconv.h"
+#include "mindspore/lite/nnacl/op_base.h"
 
 namespace mindspore {
 class TestDeConvolutionFp32 : public mindspore::CommonTest {
@@ -106,15 +107,15 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test1) {
   float out[8] = {0};
 
   float no[] = {-8.646674, -4.7133026, -0.11849791, -4.530405, -5.419181, 14.387108, 2.8319538, -8.511095};
-  PostConvFuncFp32C8(in, out, bias, 1, 8, 1, false, false);
+  PostConvFuncFp32C8(in, out, bias, 1, 8, 1, ActType_No);
   CompareOutputData(out, no, 8, 0.0001);
 
   float relu[] = {0, 0, 0, 0, 0, 14.387108, 2.8319538, 0};
-  PostConvFuncFp32C8(in, out, bias, 1, 8, 1, true, false);
+  PostConvFuncFp32C8(in, out, bias, 1, 8, 1, ActType_Relu);
   CompareOutputData(out, relu, 8, 0.0001);
 
   float corr_relu6[] = {0, 0, 0, 0, 0, 6, 2.8319538, 0};
-  PostConvFuncFp32C8(in, out, bias, 1, 8, 1, false, true);
+  PostConvFuncFp32C8(in, out, bias, 1, 8, 1, ActType_Relu6);
   CompareOutputData(out, corr_relu6, 8, 0.0001);
 }
 
@@ -132,15 +133,15 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test2) {
 
   float no[] = {-8.646674, 0, -4.7133026, 0, -0.11849791, 0, -4.530405, 0,
                 -5.419181, 0, 14.387108,  0, 2.8319538,   0, -8.511095, 0};
-  PostConvFuncFp32C8(in, out, bias, 1, 8, 2, false, false);
+  PostConvFuncFp32C8(in, out, bias, 1, 8, 2, ActType_No);
   CompareOutputData(out, no, 16, 0.0001);
 
   float relu[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14.387108, 0, 2.8319538, 0, 0, 0};
-  PostConvFuncFp32C8(in, out, bias, 1, 8, 2, true, false);
+  PostConvFuncFp32C8(in, out, bias, 1, 8, 2, ActType_Relu);
   CompareOutputData(out, relu, 16, 0.0001);
 
   float corr_relu6[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 2.8319538, 0, 0, 0};
-  PostConvFuncFp32C8(in, out, bias, 1, 8, 2, false, true);
+  PostConvFuncFp32C8(in, out, bias, 1, 8, 2, ActType_Relu6);
   CompareOutputData(out, corr_relu6, 16, 0.0001);
 }
 
@@ -159,7 +160,7 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test3) {
   float no[] = {-8.646674, -5.3524485, 8.56133,     -4.7133026, 1.2270198, 17.954533,   -0.11849791, -3.9182835,
                 11.90631,  -4.530405,  -0.47735345, -3.7422307, -5.419181, -0.14518678, -8.15199,    14.387108,
                 8.693133,  8.080041,   2.8319538,   7.177942,   -4.409286, -8.511095,   -5.110127,   -4.992582};
-  PostConvFuncFp32C8(in, out, bias, 3, 8, 3, false, false);
+  PostConvFuncFp32C8(in, out, bias, 3, 8, 3, ActType_No);
   CompareOutputData(out, no, 24, 0.0001);
 }
 
@@ -177,12 +178,12 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test4) {
 
   float co32[] = {0, 0, 0, 0, 0,         1.2270198, 0, 0, 0,         0,        0, 0, 0, 0, 0, 0,
                   0, 0, 0, 0, 14.387108, 8.693133,  0, 0, 2.8319538, 7.177942, 0, 0, 0, 0, 0, 0};
-  PostConvFuncFp32C8(in, out, bias, 2, 8, 4, true, false);
+  PostConvFuncFp32C8(in, out, bias, 2, 8, 4, ActType_Relu);
   CompareOutputData(out, co32, 32, 0.0001);
 
   float co32_relu6[] = {0, 0, 6, 0, 0, 1.2270198, 6, 6, 0,         0, 6, 0.3088621, 0, 0, 0, 0,
                         0, 0, 0, 6, 6, 6,         6, 0, 2.8319538, 6, 0, 6,         0, 0, 0, 0};
-  PostConvFuncFp32C8(in, out, bias, 4, 8, 4, false, true);
+  PostConvFuncFp32C8(in, out, bias, 4, 8, 4, ActType_Relu6);
   CompareOutputData(out, co32_relu6, 32, 0.0001);
 }
 
@@ -203,19 +204,19 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test5) {
                 -0.47735345, -3.7422307, -7.379536,   -3.4496975, -5.419181,   -0.14518678, -8.15199,    9.464027,
                 -8.334226,   14.387108,  8.693133,    8.080041,   -0.30434704, -3.782834,   2.8319538,   7.177942,
                 -4.409286,   12.194644,  -7.0295477,  -8.511095,  -5.110127,   -4.992582,   -0.31387085, -2.7594402};
-  PostConvFuncFp32C8(in, out, bias, 5, 8, 5, false, false);
+  PostConvFuncFp32C8(in, out, bias, 5, 8, 5, ActType_No);
   CompareOutputData(out, no, 40, 0.0001);
 
   float relu[] = {0,         0,        8.56133,  0,         0,         0,         1.2270198, 17.954533, 11.086085, 0,
                   0,         0,        11.90631, 0.3088621, 11.196218, 0,         0,         0,         0,         0,
                   0,         0,        0,        9.464027,  0,         14.387108, 8.693133,  8.080041,  0,         0,
                   2.8319538, 7.177942, 0,        12.194644, 0,         0,         0,         0,         0,         0};
-  PostConvFuncFp32C8(in, out, bias, 5, 8, 5, true, false);
+  PostConvFuncFp32C8(in, out, bias, 5, 8, 5, ActType_Relu);
   CompareOutputData(out, relu, 40, 0.0001);
 
   float corr_relu6[] = {0, 0, 6, 0, 0, 0, 1.2270198, 6, 6, 0, 0,         0, 6, 0.3088621, 6, 0, 0, 0, 0, 0,
                         0, 0, 0, 6, 0, 6, 6,         6, 0, 0, 2.8319538, 6, 0, 6,         0, 0, 0, 0, 0, 0};
-  PostConvFuncFp32C8(in, out, bias, 5, 8, 5, false, true);
+  PostConvFuncFp32C8(in, out, bias, 5, 8, 5, ActType_Relu6);
   CompareOutputData(out, corr_relu6, 40, 0.0001);
 }
 
@@ -229,13 +230,13 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test6) {
 
   float no_3[] = {-9.389655,  -5.83877,   7.5724425, 0, 0, 0, -0.8614793, -4.404605, 10.917422,  0, 0, 0,
                   -6.1621623, -0.6315082, -9.140878, 0, 0, 0, 2.0889723,  6.6916203, -5.3981733, 0, 0, 0};
-  PostConvFuncFp32C8(in, out, bias, 3, 4, 6, false, false);
+  PostConvFuncFp32C8(in, out, bias, 3, 4, 6, ActType_No);
   CompareOutputData(out, no_3, 24, 0.0001);
 
   float no_6[] = {-9.389655, -5.83877,   7.5724425,  -1.4675674,  -5.456284,  0.7406984,  -0.8614793, -4.404605,
                   10.917422, 0.11158327, -5.2733865, -0.96367484, -6.1621623, -0.6315082, -9.140878,  9.266748,
                   13.644127, 8.206812,   2.0889723,  6.6916203,   -5.3981733, 11.997365,  -9.254076,  -5.5964484};
-  PostConvFuncFp32C8(in, out, bias, 6, 4, 6, false, false);
+  PostConvFuncFp32C8(in, out, bias, 6, 4, 6, ActType_No);
   CompareOutputData(out, no_6, 24, 0.0001);
 }
 
@@ -251,7 +252,7 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test7) {
                 -0.8614793, -4.404605,  10.917422,  0.11158327, -5.2733865, -0.96367484, -4.731118,
                 -6.1621623, -0.6315082, -9.140878,  9.266748,   13.644127,  8.206812,    7.091153,
                 2.0889723,  6.6916203,  -5.3981733, 11.997365,  -9.254076,  -5.5964484,  -5.981469};
-  PostConvFuncFp32C8(in, out, bias, 7, 4, 7, false, false);
+  PostConvFuncFp32C8(in, out, bias, 7, 4, 7, ActType_No);
   CompareOutputData(out, no, 28, 0.0001);
 }
 
@@ -267,7 +268,7 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test8_2) {
                 -6.1621623, -0.6315082, -9.140878,  9.266748,   13.644127,  8.206812,    7.091153,  -0.50162584,
                 -0.8614793, -4.404605,  10.917422,  0.11158327, -5.2733865, -0.96367484, -4.731118, -7.576815,
                 2.0889723,  6.6916203,  -5.3981733, 11.997365,  -9.254076,  -5.5964484,  -5.981469, -0.51114964};
-  PostConvFuncFp32C8(in, out, bias, 16, 2, 16, false, false);
+  PostConvFuncFp32C8(in, out, bias, 16, 2, 16, ActType_No);
   CompareOutputData(out, no, 28, 0.0001);
 }
 
@@ -291,7 +292,7 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test8_4) {
                 -6.1621623, -0.6315082, -9.140878,  9.266748,   13.644127,  8.206812,    7.091153,  -0.50162584,
                 2.0889723,  6.6916203,  -5.3981733, 11.997365,  -9.254076,  -5.5964484,  -5.981469, -0.51114964,
                 2.0889723,  6.6916203,  -5.3981733, 11.997365,  -9.254076,  -5.5964484,  -5.981469, -0.51114964};
-  PostConvFuncFp32C8(in, out, bias, 16, 4, 16, false, false);
+  PostConvFuncFp32C8(in, out, bias, 16, 4, 16, ActType_No);
   CompareOutputData(out, no, 64, 0.0001);
 }
 
@@ -315,7 +316,7 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test8_8) {
                 -0.8614793, -4.404605,  10.917422,  0.11158327, -5.2733865, -0.96367484, -4.731118, -7.576815,
                 -6.1621623, -0.6315082, -9.140878,  9.266748,   13.644127,  8.206812,    7.091153,  -0.50162584,
                 2.0889723,  6.6916203,  -5.3981733, 11.997365,  -9.254076,  -5.5964484,  -5.981469, -0.51114964};
-  PostConvFuncFp32C8(in, out, bias, 8, 8, 8, false, false);
+  PostConvFuncFp32C8(in, out, bias, 8, 8, 8, ActType_No);
   CompareOutputData(out, no, 64, 0.0001);
 }
 

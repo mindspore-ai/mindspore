@@ -41,7 +41,7 @@ Loop_C8:
   mov w13, w5
   ld1 {v16.4s, v17.4s}, [x2], #32
 
-Loop8x8:
+Loop_8x8:
   cmp w13, #8
   blt Loop_4x8
   sub w13, w13, #8
@@ -67,9 +67,9 @@ Loop8x8:
   fadd v14.4s, v14.4s, v16.4s
   fadd v15.4s, v15.4s, v17.4s
 
-  cmp w7, #3
+  cmp x7, #3
   beq Relu6_8x8
-  cmp w7, #1
+  cmp x7, #1
   beq Relu_8x8
   b Write_8x8
 Relu6_8x8:
@@ -115,7 +115,7 @@ Write_8x8:
   st1 {v10.4s, v11.4s}, [x15], x6
   st1 {v12.4s, v13.4s}, [x15], x6
   st1 {v14.4s, v15.4s}, [x15], x6
-  b Loop8x8
+  b Loop_8x8
 
 Loop_4x8:
   cmp w13, #4
@@ -133,9 +133,9 @@ Loop_4x8:
   fadd v6.4s, v6.4s, v16.4s
   fadd v7.4s, v7.4s, v17.4s
 
-  cmp w7, #2
+  cmp x7, #3
   beq Relu6_4x8
-  cmp w7, #1
+  cmp x7, #1
   beq Relu_4x8
   b Write_4x8
 Relu6_4x8:
@@ -163,9 +163,9 @@ Write_4x8:
   st1 {v6.4s, v7.4s}, [x15], x6
 
 Loop_1x8:
-  cmp w7, #2
+  cmp x7, #3
   beq Relu6_1x8
-  cmp w7, #1
+  cmp x7, #1
   beq Relu_1x8
   b Write_1x8
 Relu6_1x8:
@@ -228,9 +228,9 @@ Loop_C1:
   beq Loop_C1_7
 
 Loop_C1_1:
-  cmp w7, #2
+  cmp x7, #3
   beq Loop_C1_1_Relu6
-  cmp w7, #1
+  cmp x7, #1
   beq Loop_C1_1_Relu
   b Loop_C1_1_Write
 Loop_C1_1_Relu6:
@@ -265,9 +265,9 @@ Loop_C1_1_Write:
   b Loop_C1_1_Write
 
 Loop_C1_2:
-  cmp w7, #2
+  cmp x7, #3
   beq Loop_C1_2_Relu6
-  cmp w7, #1
+  cmp x7, #1
   beq Loop_C1_2_Relu
   b Loop_C1_2_Write
 Loop_C1_2_Relu6:
@@ -307,9 +307,9 @@ Loop_C1_2_Write:
 
 Loop_C1_3:
   add x15, x0, #8
-  cmp w7, #2
+  cmp x7, #3
   beq Loop_C1_3_Relu6
-  cmp w7, #1
+  cmp x7, #1
   beq Loop_C1_3_Relu
   b Loop_C1_3_Write
 Loop_C1_3_Relu6:
@@ -350,9 +350,9 @@ Loop_C1_3_Write:
   b Loop_C1_3_Write
 
 Loop_C1_4:
-  cmp w7, #2
+  cmp x7, #3
   beq Loop_C1_4_Relu6
-  cmp w7, #1
+  cmp x7, #1
   beq Loop_C1_4_Relu
   b Loop_C1_4_Write
 Loop_C1_4_Relu6:
@@ -385,9 +385,9 @@ Loop_C1_4_Write:
 
 Loop_C1_5:
   add x15, x0, #16
-  cmp w7, #2
+  cmp x7, #3
   beq Loop_C1_5_Relu6
-  cmp w7, #1
+  cmp x7, #1
   beq Loop_C1_5_Relu
   b Loop_C1_5_Write
 Loop_C1_5_Relu6:
@@ -432,9 +432,9 @@ Loop_C1_5_Write:
 
 Loop_C1_6:
   add x15, x0, #16
-  cmp w7, #2
+  cmp x7, #3
   beq Loop_C1_6_Relu6
-  cmp w7, #1
+  cmp x7, #1
   beq Loop_C1_6_Relu
   b Loop_C1_6_Write
 Loop_C1_6_Relu6:
@@ -483,9 +483,9 @@ Loop_C1_6_Write:
 Loop_C1_7:
   add x15, x0, #16
   add x14, x0, #24
-  cmp w7, #2
+  cmp x7, #3
   beq Loop_C1_7_Relu6
-  cmp w7, #1
+  cmp x7, #1
   beq Loop_C1_7_Relu
   b Loop_C1_7_Write
 Loop_C1_7_Relu6:
