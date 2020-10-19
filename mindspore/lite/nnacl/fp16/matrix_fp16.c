@@ -81,3 +81,51 @@ void MatrixMultiplyVecFp16(const float16x8_t *matrix_a, const float16x8_t *matri
     }
   }
 }
+
+void WinogradMatrixProductLeftFp16(const float16_t *S, const float16_t *B, float16_t *M, size_t w, size_t h, size_t k,
+                                   size_t length) {
+  int unitStep = 4 * length;
+  for (int y = 0; y < h; ++y) {
+    float16_t *dstY = M + y * w * unitStep;
+    for (int x = 0; x < w; ++x) {
+      float16_t *dstX = dstY + x * unitStep;
+      const float16_t *srcX = S + x * unitStep;
+      memset(dstX, 0, unitStep * sizeof(float16_t));
+      for (int i = 0; i < k; ++i) {
+        float16_t b = B[i * h + y];
+        const float16_t *srcY = srcX + i * w * unitStep;
+        if (0.0f == b) {
+          continue;
+        }
+        for (int j = 0; j < unitStep; ++j) {
+          dstX[j] += srcY[j] * b;
+        }
+      }
+    }
+  }
+}
+
+// M = S * B , M = w*h * l, S = k*h * l, B = w*k
+void WinogradMatrixProductRightFp16(const float16_t *S, const float16_t *B, float16_t *M, size_t w, size_t h, size_t k,
+                                    size_t length) {
+  int unitStep = 4 * length;
+  for (int y = 0; y < h; ++y) {
+    float16_t *dstY = M + y * w * unitStep;
+    const float16_t *srcY = S + y * k * unitStep;
+
+    for (int x = 0; x < w; ++x) {
+      float16_t *dstX = dstY + x * unitStep;
+      memset(dstX, 0, unitStep * sizeof(float16_t));
+      for (int i = 0; i < k; ++i) {
+        const float16_t *srcX = srcY + i * unitStep;
+        float16_t b = B[i * h + x];
+        if (0.0f == b) {
+          continue;
+        }
+        for (int j = 0; j < unitStep; ++j) {
+          dstX[j] += srcX[j] * b;
+        }
+      }
+    }
+  }
+}
