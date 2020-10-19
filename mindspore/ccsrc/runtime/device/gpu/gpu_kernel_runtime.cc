@@ -102,11 +102,11 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
                     bool dump_enabled) {
   // check if we should read the kernel data
   bool read_data = false;
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
   std::string kernel_name = kernel->fullname_with_scope();
   if (debugger) {
     debugger->SetCurNode(kernel_name);
     if (dump_enabled) {
-      auto &dump_json_parser = DumpJsonParser::GetInstance();
       auto dump_mode = dump_json_parser.dump_mode();
       // dump the node if dump_mode is 0, which means all kernels, or if this kernel is in the kernels list
       if ((dump_mode == 0) || ((dump_mode == 1) && dump_json_parser.NeedDump(kernel_name))) {
@@ -120,49 +120,53 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     return;
   }
 
-  // get inputs
-  auto input_size = AnfAlgo::GetInputTensorNum(kernel);
-  for (size_t j = 0; j < input_size; ++j) {
-    auto input_kernel = kernel->input(j + 1);
-    std::string input_kernel_name = input_kernel->fullname_with_scope();
-    auto addr = kernel_inputs[j];
-    auto type = AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
-    auto format = kOpFormat_DEFAULT;
-    auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
-    string input_tensor_name = input_kernel_name + ':' + "0";
-    ShapeVector int_shapes;
-    auto shape = AnfAlgo::GetOutputDeviceShape(input_kernel, PARAMETER_OUTPUT_INDEX);
-    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                         [](size_t inner_item) { return SizeToInt(inner_item); });
-    auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, true);
-    if (!ret) {
-      MS_LOG(ERROR) << "LoadMemToHost:"
-                    << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
+  if (dump_json_parser.InputNeedDump()) {
+    // get inputs
+    auto input_size = AnfAlgo::GetInputTensorNum(kernel);
+    for (size_t j = 0; j < input_size; ++j) {
+      auto input_kernel = kernel->input(j + 1);
+      std::string input_kernel_name = input_kernel->fullname_with_scope();
+      auto addr = kernel_inputs[j];
+      auto type = AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+      auto format = kOpFormat_DEFAULT;
+      auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
+      string input_tensor_name = input_kernel_name + ':' + "0";
+      ShapeVector int_shapes;
+      auto shape = AnfAlgo::GetOutputDeviceShape(input_kernel, PARAMETER_OUTPUT_INDEX);
+      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                           [](size_t inner_item) { return SizeToInt(inner_item); });
+      auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, true);
+      if (!ret) {
+        MS_LOG(ERROR) << "LoadMemToHost:"
+                      << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
+      }
     }
   }
 
-  // get outputs
-  auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
-  auto node_name = AnfAlgo::GetCNodeName(kernel);
+  if (dump_json_parser.OutputNeedDump()) {
+    // get outputs
+    auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
+    auto node_name = AnfAlgo::GetCNodeName(kernel);
 
-  std::vector<int> real_outputs;
-  real_outputs = CheckRealOutput(node_name, output_size);
+    std::vector<int> real_outputs;
+    real_outputs = CheckRealOutput(node_name, output_size);
 
-  for (std::vector<int>::iterator it = real_outputs.begin(); it != real_outputs.end(); ++it) {
-    auto j = *it;
-    auto addr = kernel_outputs[j];
-    auto type = AnfAlgo::GetOutputInferDataType(kernel, j);
-    auto format = kOpFormat_DEFAULT;
-    auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
-    string tensor_name = kernel_name + ':' + std::to_string(j);
-    ShapeVector int_shapes;
-    auto shape = AnfAlgo::GetOutputDeviceShape(kernel, j);
-    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                         [](size_t inner_item) { return SizeToInt(inner_item); });
-    auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false);
-    if (!ret) {
-      MS_LOG(ERROR) << "LoadMemToHost:"
-                    << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
+    for (std::vector<int>::iterator it = real_outputs.begin(); it != real_outputs.end(); ++it) {
+      auto j = *it;
+      auto addr = kernel_outputs[j];
+      auto type = AnfAlgo::GetOutputInferDataType(kernel, j);
+      auto format = kOpFormat_DEFAULT;
+      auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
+      string tensor_name = kernel_name + ':' + std::to_string(j);
+      ShapeVector int_shapes;
+      auto shape = AnfAlgo::GetOutputDeviceShape(kernel, j);
+      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                           [](size_t inner_item) { return SizeToInt(inner_item); });
+      auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false);
+      if (!ret) {
+        MS_LOG(ERROR) << "LoadMemToHost:"
+                      << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
+      }
     }
   }
 

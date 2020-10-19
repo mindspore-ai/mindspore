@@ -307,11 +307,6 @@ void DumpJsonParser::JudgeDumpEnabled() {
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
     async_dump_enabled_ = false;
-    // GPU not support dump kernel inputs
-    if (input_output_ != kDumpOutputOnly) {
-      MS_LOG(WARNING) << "Data dump only support dump kernel output when device target is GPU";
-      input_output_ = kDumpOutputOnly;
-    }
   }
 
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
