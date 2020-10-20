@@ -48,26 +48,21 @@ typedef enum eHttpMethod {
   HM_PATCH = 1 << 8
 } HttpMethod;
 
-typedef u_int16_t HttpMethodsSet;
-
-typedef void(handle_t)(HttpMessageHandler *);
-
 class HttpServer {
  public:
   // Server address only support IPV4 now, and should be in format of "x.x.x.x"
-  explicit HttpServer(const std::string &address, std::int16_t port)
+  explicit HttpServer(const std::string &address, std::uint16_t port)
       : server_address_(address), server_port_(port), event_base_(nullptr), event_http_(nullptr), is_init_(false) {}
 
   ~HttpServer();
 
-  typedef std::function<handle_t> HandlerFunc;
+  using OnRequestReceive = std::function<void(HttpMessageHandler *)>;
 
   bool InitServer();
-  static bool CheckIp(const std::string &ip);
   void SetTimeOut(int seconds = 5);
 
   // Default allowed methods: GET, POST, HEAD, PUT, DELETE
-  void SetAllowedMethod(HttpMethodsSet methods);
+  void SetAllowedMethod(u_int16_t methods);
 
   // Default to ((((unsigned long long)0xffffffffUL) << 32) | 0xffffffffUL)
   void SetMaxHeaderSize(std::size_t num);
@@ -76,7 +71,7 @@ class HttpServer {
   void SetMaxBodySize(std::size_t num);
 
   // Return: true if success, false if failed, check log to find failure reason
-  bool RegisterRoute(const std::string &url, handle_t *func);
+  bool RegisterRoute(const std::string &url, OnRequestReceive *func);
   bool UnRegisterRoute(const std::string &url);
 
   bool Start();
@@ -84,7 +79,7 @@ class HttpServer {
 
  private:
   std::string server_address_;
-  std::int16_t server_port_;
+  std::uint16_t server_port_;
   struct event_base *event_base_;
   struct evhttp *event_http_;
   bool is_init_;

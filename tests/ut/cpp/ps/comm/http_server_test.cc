@@ -31,7 +31,7 @@ namespace comm {
 
 class TestHttpServer : public UT::Common {
  public:
-  TestHttpServer() {}
+  TestHttpServer() = default;
 
   static void testGetHandler(HttpMessageHandler *resp) {
     std::string host = resp->GetRequestHost();
@@ -58,16 +58,44 @@ class TestHttpServer : public UT::Common {
 
   void SetUp() override {
     server_ = new HttpServer("0.0.0.0", 9999);
-    server_->RegisterRoute("/httpget", [](HttpMessageHandler *resp) {
-      EXPECT_STREQ(resp->GetPathParam("key1").c_str(), "value1");
-      EXPECT_STREQ(resp->GetUriQuery().c_str(), "key1=value1");
-      EXPECT_STREQ(resp->GetRequestUri().c_str(), "/httpget?key1=value1");
-      EXPECT_STREQ(resp->GetUriPath().c_str(), "/httpget");
-      resp->QuickResponse(200, "get request success!\n");
-    });
-    server_->RegisterRoute("/handler", TestHttpServer::testGetHandler);
+    std::function<void(HttpMessageHandler *)> http_get_func = std::bind(
+      [](HttpMessageHandler *resp) {
+        EXPECT_STREQ(resp->GetPathParam("key1").c_str(), "value1");
+        EXPECT_STREQ(resp->GetUriQuery().c_str(), "key1=value1");
+        EXPECT_STREQ(resp->GetRequestUri().c_str(), "/httpget?key1=value1");
+        EXPECT_STREQ(resp->GetUriPath().c_str(), "/httpget");
+        resp->QuickResponse(200, "get request success!\n");
+      },
+      std::placeholders::_1);
+
+    std::function<void(HttpMessageHandler *)> http_handler_func = std::bind(
+      [](HttpMessageHandler *resp) {
+        std::string host = resp->GetRequestHost();
+        EXPECT_STREQ(host.c_str(), "127.0.0.1");
+
+        std::string path_param = resp->GetPathParam("key1");
+        std::string header_param = resp->GetHeadParam("headerKey");
+        std::string post_param = resp->GetPostParam("postKey");
+        std::string post_message = resp->GetPostMsg();
+        EXPECT_STREQ(path_param.c_str(), "value1");
+        EXPECT_STREQ(header_param.c_str(), "headerValue");
+        EXPECT_STREQ(post_param.c_str(), "postValue");
+        EXPECT_STREQ(post_message.c_str(), "postKey=postValue");
+
+        const std::string rKey("headKey");
+        const std::string rVal("headValue");
+        const std::string rBody("post request success!\n");
+        resp->AddRespHeadParam(rKey, rVal);
+        resp->AddRespString(rBody);
+
+        resp->SetRespCode(200);
+        resp->SendResponse();
+      },
+      std::placeholders::_1);
+    server_->RegisterRoute("/httpget", &http_get_func);
+    server_->RegisterRoute("/handler", &http_handler_func);
     std::unique_ptr<std::thread> http_server_thread_(nullptr);
-    http_server_thread_.reset(new std::thread([&]() { server_->Start(); }));
+    http_server_thread_ = std::make_unique<std::thread>([&]() { server_->Start(); });
     http_server_thread_->detach();
   }
 
@@ -110,14 +138,18 @@ TEST_F(TestHttpServer, messageHandler) {
   pclose(file);
 }
 
-TEST_F(TestHttpServer, portException) {
+TEST_F(TestHttpServer, portErrorNoException) {
   HttpServer *server_exception = new HttpServer("0.0.0.0", -1);
-  ASSERT_THROW(server_exception->RegisterRoute("/handler", TestHttpServer::testGetHandler), std::exception);
+  std::function<void(HttpMessageHandler *)> http_handler_func =
+    std::bind(TestHttpServer::testGetHandler, std::placeholders::_1);
+  EXPECT_NO_THROW(server_exception->RegisterRoute("/handler", &http_handler_func));
 }
 
 TEST_F(TestHttpServer, addressException) {
   HttpServer *server_exception = new HttpServer("12344.0.0.0", 9998);
-  ASSERT_THROW(server_exception->RegisterRoute("/handler", TestHttpServer::testGetHandler), std::exception);
+  std::function<void(HttpMessageHandler *)> http_handler_func =
+    std::bind(TestHttpServer::testGetHandler, std::placeholders::_1);
+  ASSERT_THROW(server_exception->RegisterRoute("/handler", &http_handler_func), std::exception);
 }
 
 }  // namespace comm
