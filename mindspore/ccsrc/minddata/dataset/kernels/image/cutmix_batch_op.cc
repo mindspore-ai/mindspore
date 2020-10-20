@@ -182,7 +182,7 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
 
 void CutMixBatchOp::Print(std::ostream &out) const {
   out << "CutMixBatchOp: "
-      << "image_batch_format: " << image_batch_format_ << "alpha: " << alpha_ << ", probability: " << prob_ << "\n";
+      << "\n";
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -15,7 +15,11 @@
  */
 #include "minddata/dataset/engine/tdt/tdt_plugin.h"
 #include "utils/ms_utils.h"
+#ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 #include "minddata/dataset/engine/perf/profiling.h"
 
 namespace mindspore {

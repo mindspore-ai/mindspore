@@ -19,7 +19,7 @@
 #include <iostream>
 #include <iterator>
 
-#include "utils/log_adapter.h"
+#include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {

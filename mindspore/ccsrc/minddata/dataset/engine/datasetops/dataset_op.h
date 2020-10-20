@@ -338,8 +338,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return Status error code
   Status FetchRemoveSampler(std::shared_ptr<Sampler> *sampler);
 
+#ifndef ENABLE_ANDROID
   // Computes a CRC value for the operator
   static uint32_t GenerateCRC(const std::shared_ptr<DatasetOp> &op);
+#endif
 
   /// \brief A helper templated function for casting "this" pointer to shared_ptr<derived>
   ///     Similar to shared_from_this, except this one will give you the derived class as shared_ptr

@@ -19,8 +19,12 @@
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/execution_tree.h"
+#ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
 #include "utils/system/crc32c.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 
 namespace mindspore {
 namespace dataset {

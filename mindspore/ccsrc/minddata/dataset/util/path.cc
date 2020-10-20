@@ -22,8 +22,9 @@
 #include <sstream>
 #include <utility>
 
+#include "./securec.h"
 #include "utils/ms_utils.h"
-#include "utils/log_adapter.h"
+#include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {

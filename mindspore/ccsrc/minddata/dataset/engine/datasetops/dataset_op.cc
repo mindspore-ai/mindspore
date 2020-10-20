@@ -30,8 +30,12 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/opt/pass.h"
+#ifndef ENABLE_ANDROID
 #include "utils/system/crc32c.h"
 #include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -385,6 +389,7 @@ Status DatasetOp::FetchRemoveSampler(std::shared_ptr<Sampler> *sampler) {
   return Status::OK();
 }
 
+#ifndef ENABLE_ANDROID
 uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
   std::stringstream ss;
   op->tree_->Print(ss, op);
@@ -431,6 +436,7 @@ uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
   uint32_t cache_crc = system::Crc32c::GetMaskCrc32cValue(ss_str.c_str(), ss_str.length());
   return cache_crc;
 }
+#endif
 
 void DatasetOp::UpdateRepeatAndEpochCounter() {
   op_current_repeats_++;

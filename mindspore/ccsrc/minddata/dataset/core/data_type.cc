@@ -18,7 +18,11 @@
 #include "minddata/dataset/core/pybind_support.h"
 #endif
 
+#ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 
 namespace mindspore {
 namespace dataset {

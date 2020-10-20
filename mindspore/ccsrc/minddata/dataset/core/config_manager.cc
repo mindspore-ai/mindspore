@@ -20,7 +20,11 @@
 #include <string>
 #include <utility>
 
-#include "mindspore/core/utils/log_adapter.h"
+#ifndef ENABLE_ANDROID
+#include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 #include "minddata/dataset/util/system_pool.h"
 
 namespace mindspore {

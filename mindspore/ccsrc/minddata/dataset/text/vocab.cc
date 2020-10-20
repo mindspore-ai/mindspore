@@ -20,7 +20,11 @@
 #include <algorithm>
 
 #include "minddata/dataset/text/vocab.h"
+#ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
