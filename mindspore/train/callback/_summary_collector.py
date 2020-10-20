@@ -26,7 +26,7 @@ from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.train.summary.summary_record import SummaryRecord
-from mindspore.train.summary.enum import PluginEnum, ModeEnum
+from mindspore.train.summary.enums import PluginEnum, ModeEnum
 from mindspore.train.callback import Callback, ModelCheckpoint
 from mindspore.train import lineage_pb2
 from mindspore.train.callback._dataset_graph import DatasetGraph

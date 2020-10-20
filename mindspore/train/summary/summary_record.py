@@ -17,6 +17,7 @@ import atexit
 import os
 import re
 import threading
+from collections import defaultdict
 
 from mindspore import log as logger
 
@@ -24,6 +25,7 @@ from ..._c_expression import Tensor
 from ..._checkparam import Validator
 from .._utils import _check_lineage_value, _check_to_numpy, _make_directory
 from ._summary_adapter import get_event_file_name, package_graph_event
+from ._explain_adapter import check_explain_proto
 from ._writer_pool import WriterPool
 
 # for the moment, this lock is for caution's sake,
@@ -55,7 +57,6 @@ def _get_summary_tensor_data():
 
 
 def _dictlist():
-    from collections import defaultdict
     return defaultdict(list)
 
 
@@ -133,7 +134,8 @@ class SummaryRecord:
         self._event_writer = WriterPool(log_dir,
                                         max_file_size,
                                         summary=self.full_file_name,
-                                        lineage=get_event_file_name(self.prefix, '_lineage'))
+                                        lineage=get_event_file_name(self.prefix, '_lineage'),
+                                        explainer=get_event_file_name(self.prefix, '_explain'))
         _get_summary_tensor_data()
         atexit.register(self.close)
 
@@ -149,10 +151,11 @@ class SummaryRecord:
 
     def set_mode(self, mode):
         """
-        Set the mode for the recorder to be aware. The mode is set to 'train' by default.
+        Sets the training phase. Different training phases affect data recording.
 
         Args:
-            mode (str): The mode to be set, which should be 'train' or 'eval'.
+            mode (str): The mode to be set, which should be 'train' or 'eval'. When the mode is 'eval',
+                summary_record will not record the data of summary operators.
 
         Raises:
             ValueError: When the mode is not recognized.
@@ -170,29 +173,26 @@ class SummaryRecord:
         """
         Add value to be recorded later.
 
-        When the plugin is 'tensor', 'scalar', 'image' or 'histogram',
-        the name should be the tag name, and the value should be a Tensor.
-
-        When the plugin is 'graph', the value should be a GraphProto.
-
-        When the plugin is 'dataset_graph', 'train_lineage', 'eval_lineage',
-        or 'custom_lineage_data', the value should be a proto message.
-
-
         Args:
             plugin (str): The value of the plugin.
             name (str): The value of the name.
             value (Union[Tensor, GraphProto, TrainLineage, EvaluationLineage, DatasetGraph, UserDefinedInfo]): \
                 The value to store.
 
-                - The data type of value should be 'GraphProto' when the plugin is 'graph'.
-                - The data type of value should be 'Tensor' when the plugin is 'scalar', 'image', 'tensor'
+                - The data type of value should be 'GraphProto' (see mindspore/ccsrc/anf_ir.proto) object
+                  when the plugin is 'graph'.
+                - The data type of value should be 'Tensor' object when the plugin is 'scalar', 'image', 'tensor'
                   or 'histogram'.
-                - The data type of value should be 'TrainLineage' when the plugin is 'train_lineage'.
-                - The data type of value should be 'EvaluationLineage' when the plugin is 'eval_lineage'.
-                - The data type of value should be 'DatasetGraph' when the plugin is 'dataset_graph'.
-                - The data type of value should be  'UserDefinedInfo' when the plugin is 'custom_lineage_data'.
-
+                - The data type of value should be a 'TrainLineage' object when the plugin is 'train_lineage',
+                  see mindspore/ccsrc/lineage.proto.
+                - The data type of value should be a 'EvaluationLineage' object when the plugin is 'eval_lineage',
+                  see mindspore/ccsrc/lineage.proto.
+                - The data type of value should be a 'DatasetGraph' object when the plugin is 'dataset_graph',
+                  see mindspore/ccsrc/lineage.proto.
+                - The data type of value should be a 'UserDefinedInfo' object when the plugin is 'custom_lineage_data',
+                  see mindspore/ccsrc/lineage.proto.
+                - The data type of value should be a 'Explain' object when the plugin is 'explainer',
+                  see mindspore/ccsrc/summary.proto.
         Raises:
             ValueError: When the name is not valid.
             TypeError: When the value is not a Tensor.
@@ -218,6 +218,9 @@ class SummaryRecord:
         elif plugin == 'graph':
             package_graph_event(value)
             self._data_pool[plugin].append(dict(value=value))
+        elif plugin == 'explainer':
+            check_explain_proto(value)
+            self._data_pool[plugin].append(dict(value=value.SerializeToString()))
         else:
             raise ValueError(f'No such plugin of {repr(plugin)}')
 
