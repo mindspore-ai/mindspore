@@ -66,6 +66,7 @@ class CsvBase;
 class ImageFolderDataset;
 #ifndef ENABLE_ANDROID
 class ManifestDataset;
+class MindDataDataset;
 #endif
 class MnistDataset;
 class RandomDataset;
@@ -242,6 +243,37 @@ std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const
                                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
                                           const std::map<std::string, int32_t> &class_indexing = {},
                                           bool decode = false);
+#endif
+
+#ifndef ENABLE_ANDROID
+/// \brief Function to create a MindDataDataset
+/// \param[in] dataset_file File name of one component of a mindrecord source. Other files with identical source
+///     in the same path will be found and loaded automatically.
+/// \param[in] columns_list List of columns to be read (default={})
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()),
+///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
+/// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
+/// \param[in] num_padded Number of padding samples. Dataset size plus num_padded should be divisible by num_shards.
+/// \return Shared pointer to the current MindDataDataset
+std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file,
+                                          const std::vector<std::string> &columns_list = {},
+                                          const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                          nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
+
+/// \brief Function to create a MindDataDataset
+/// \param[in] dataset_files List of dataset files to be read directly.
+/// \param[in] columns_list List of columns to be read (default={})
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()),
+///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
+/// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
+/// \param[in] num_padded Number of padding samples. Dataset size plus num_padded should be divisible by num_shards.
+/// \return Shared pointer to the current MindDataDataset
+std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
+                                          const std::vector<std::string> &columns_list = {},
+                                          const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                          nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
 #endif
 
 /// \brief Function to create a MnistDataset
@@ -935,6 +967,50 @@ class ManifestDataset : public Dataset {
   bool decode_;
   std::map<std::string, int32_t> class_index_;
   std::shared_ptr<SamplerObj> sampler_;
+};
+#endif
+
+#ifndef ENABLE_ANDROID
+class MindDataDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  MindDataDataset(const std::vector<std::string> &dataset_files, const std::vector<std::string> &columns_list,
+                  const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded);
+
+  /// \brief Constructor
+  MindDataDataset(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                  const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded);
+
+  /// \brief Destructor
+  ~MindDataDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams() override;
+
+  /// \brief Build sampler chain for minddata dataset
+  /// \return Status Status::OK() if input sampler is valid
+  Status BuildMindDatasetSamplerChain(const std::shared_ptr<SamplerObj> &sampler,
+                                      std::vector<std::shared_ptr<mindrecord::ShardOperator>> *operators_,
+                                      int64_t num_padded);
+
+  /// \brief Set sample_bytes when padded_sample has py::byte value
+  /// \note Pybind will use this function to set sample_bytes into MindDataDataset
+  void SetSampleBytes(std::map<std::string, std::string> *sample_bytes);
+
+ private:
+  std::string dataset_file_;                // search_for_pattern_ will be true in this mode
+  std::vector<std::string> dataset_files_;  // search_for_pattern_ will be false in this mode
+  bool search_for_pattern_;
+  std::vector<std::string> columns_list_;
+  std::shared_ptr<SamplerObj> sampler_;
+  nlohmann::json padded_sample_;
+  std::map<std::string, std::string> sample_bytes_;  // enable in python
+  int64_t num_padded_;
 };
 #endif
 

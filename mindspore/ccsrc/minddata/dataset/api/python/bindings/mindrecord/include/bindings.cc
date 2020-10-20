@@ -69,7 +69,7 @@ PYBIND_REGISTER(ShardSequentialSample, 0, ([](const py::module *m) {
                   (void)py::class_<mindrecord::ShardSequentialSample, mindrecord::ShardSample,
                                    std::shared_ptr<mindrecord::ShardSequentialSample>>(*m,
                                                                                        "MindrecordSequentialSampler")
-                    .def(py::init([](int num_samples, int start_index) {
+                    .def(py::init([](int64_t num_samples, int64_t start_index) {
                       return std::make_shared<mindrecord::ShardSequentialSample>(num_samples, start_index);
                     }));
                 }));
