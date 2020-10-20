@@ -198,16 +198,10 @@ void *LiteMat::AlignMalloc(unsigned int size) {
   }
   return nullptr;
 }
+
 void LiteMat::AlignFree(void *ptr) { (void)free(reinterpret_cast<void **>(ptr)[-1]); }
-inline void LiteMat::InitElemSize(LDataType data_type) {
-  if (data_type == LDataType::UINT8) {
-    elem_size_ = 1;
-  } else if (data_type == LDataType::UINT16) {
-    elem_size_ = 2;
-  } else if (data_type == LDataType::FLOAT32) {
-    elem_size_ = 4;
-  } else {
-  }
-}
+
+inline void LiteMat::InitElemSize(LDataType data_type) { elem_size_ = data_type.SizeInBytes(); }
+
 }  // namespace dataset
 }  // namespace mindspore
