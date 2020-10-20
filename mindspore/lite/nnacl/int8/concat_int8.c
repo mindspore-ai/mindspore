@@ -46,13 +46,9 @@ void Int8Concat(int8_t **inputs, int8_t *output, ConcatParameter *para, int axis
         float bias = -input_quant[i].zp_ * scale;
         for (int j = 0; j < in_copy_size; j++) {
           int32_t output_tmp = round(input_ptr[j] * scale + bias) + output_zp;
-          if (output_tmp > max_int8) {
-            output[j] = max_int8;
-          } else if (output_tmp < min_int8) {
-            output[j] = min_int8;
-          } else {
-            output[j] = (int8_t)output_tmp;
-          }
+          output_tmp = output_tmp > min_int8 ? output_tmp : min_int8;
+          output_tmp = output_tmp < max_int8 ? output_tmp : max_int8;
+          output[j] = (int8_t)output_tmp;
         }
       }
       output += in_copy_size;
