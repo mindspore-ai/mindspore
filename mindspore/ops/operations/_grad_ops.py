@@ -1062,7 +1062,7 @@ class DynamicRNNGrad(PrimitiveWithInfer):
                  keep_prob=-1.0,
                  cell_clip=-1.0,
                  num_proj=0,
-                 time_major=False,
+                 time_major=True,
                  forget_bias=0.0):
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
         self.add_prim_attr("io_format", "ND")

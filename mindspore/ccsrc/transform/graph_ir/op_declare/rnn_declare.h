@@ -19,8 +19,8 @@
 
 #include <string>
 #include <unordered_map>
-#include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/rnn.h"
+#include "transform/graph_ir/op_declare/op_declare_macro.h"
 
 namespace mindspore::transform {
 DECLARE_OP_ADAPTER(BasicLSTMCell)
@@ -34,5 +34,11 @@ DECLARE_OP_USE_OUTPUT(BasicLSTMCellWeightGrad)
 
 DECLARE_OP_ADAPTER(BasicLSTMCellCStateGrad)
 DECLARE_OP_USE_OUTPUT(BasicLSTMCellCStateGrad)
+
+DECLARE_OP_ADAPTER(DynamicRNN)
+DECLARE_OP_USE_OUTPUT(DynamicRNN)
+
+DECLARE_OP_ADAPTER(DynamicRNNGrad)
+DECLARE_OP_USE_OUTPUT(DynamicRNNGrad)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_RNN_DECLARE_H_
