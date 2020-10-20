@@ -27,6 +27,7 @@ from ...common import Tensor
 from ...common import dtype as mstype
 from ...common.api import _executor
 from ...nn.layer import quant
+from ...compression.common import QuantDtype
 from ...ops import functional as F
 from ...ops import operations as P
 from ...ops.operations import _inner_ops as inner
@@ -41,6 +42,46 @@ _ACTIVATION_MAP = {nn.ReLU: quant.ActQuant,
                    nn.HSwish: quant.HSwishQuant}
 
 
+def get_quant_config(quant_observer=(quant.FakeQuantWithMinMaxObserver, quant.FakeQuantWithMinMaxObserver),
+                     quant_delay=(0, 0),
+                     quant_dtype=(QuantDtype.INT8, QuantDtype.INT8),
+                     per_channel=(False, False),
+                     symmetric=(False, False),
+                     narrow_range=(False, False)
+                     ):
+    r"""
+    Configs the oberser type of weights and data flow with quant params.
+
+    Args:
+        quant_observer (Observer, list or tuple): The oberser type to do quantization. The first element represent
+            weights and second element represent data flow.
+            Default: (quant.FakeQuantWithMinMaxObserver, quant.FakeQuantWithMinMaxObserver)
+        quant_delay (int, list or tuple): Number of steps after which weights and activations are quantized during
+            eval. The first element represent weights and second element represent data flow. Default: (0, 0)
+        quant_dtype (QuantDtype, list or tuple): Datatype to use for quantize weights and activations. The first
+            element represent weights and second element represent data flow.
+            Default: (QuantDtype.INT8, QuantDtype.INT8)
+        per_channel (bool, list or tuple):  Quantization granularity based on layer or on channel. If `True`
+            then base on per channel otherwise base on per layer. The first element represent weights
+            and second element represent data flow. Default: (False, False)
+        symmetric (bool, list or tuple): Whether the quantization algorithm is symmetric or not. If `True` then base on
+            symmetric otherwise base on asymmetric. The first element represent weights and second
+            element represent data flow. Default: (False, False)
+        narrow_range (bool, list or tuple): Whether the quantization algorithm uses narrow range or not.
+            The first element represents weights and the second element represents data flow. Default: (False, False)
+
+    Returns:
+        QuantConfig, Contains the oberser type of weight and activation.
+    """
+    weight_observer = quant_observer[0].partial_init(quant_delay=quant_delay[0], quant_dtype=quant_dtype[0],
+                                                     per_channel=per_channel[0], symmetric=symmetric[0],
+                                                     narrow_range=narrow_range[0])
+    act_observer = quant_observer[0].partial_init(quant_delay=quant_delay[-1], quant_dtype=quant_dtype[-1],
+                                                  per_channel=per_channel[-1], symmetric=symmetric[-1],
+                                                  narrow_range=narrow_range[-1])
+    return quant.QuantConfig(weight=weight_observer, activation=act_observer)
+
+
 class _AddFakeQuantInput(nn.Cell):
     """
     Add FakeQuant OP at input of the network. Only support one input case.
@@ -48,7 +89,8 @@ class _AddFakeQuantInput(nn.Cell):
 
     def __init__(self, network, quant_delay=0):
         super(_AddFakeQuantInput, self).__init__(auto_prefix=False)
-        self.fake_quant_input = quant.FakeQuantWithMinMax(min_init=-6, max_init=6, quant_delay=quant_delay, ema=True)
+        self.fake_quant_input = quant.FakeQuantWithMinMaxObserver(min_init=-6, max_init=6,
+                                                                  quant_delay=quant_delay, ema=True)
         self.fake_quant_input.update_parameters_name('fake_quant_input.')
         self.network = network
 
@@ -66,14 +108,14 @@ class _AddFakeQuantAfterSubCell(nn.Cell):
     def __init__(self, subcell, **kwargs):
         super(_AddFakeQuantAfterSubCell, self).__init__(auto_prefix=False)
         self.subcell = subcell
-        self.fake_quant_act = quant.FakeQuantWithMinMax(min_init=-6,
-                                                        max_init=6,
-                                                        ema=True,
-                                                        num_bits=kwargs["num_bits"],
-                                                        quant_delay=kwargs["quant_delay"],
-                                                        per_channel=kwargs["per_channel"],
-                                                        symmetric=kwargs["symmetric"],
-                                                        narrow_range=kwargs["narrow_range"])
+        self.fake_quant_act = quant.FakeQuantWithMinMaxObserver(min_init=-6,
+                                                                max_init=6,
+                                                                ema=True,
+                                                                quant_dtype=kwargs["quant_dtype"],
+                                                                quant_delay=kwargs["quant_delay"],
+                                                                per_channel=kwargs["per_channel"],
+                                                                symmetric=kwargs["symmetric"],
+                                                                narrow_range=kwargs["narrow_range"])
 
     def construct(self, *data):
         output = self.subcell(*data)
@@ -93,8 +135,8 @@ class ConvertToQuantNetwork:
         self.act_qdelay = Validator.check_int(kwargs["quant_delay"][-1], 0, Rel.GE, "quant delay")
         self.bn_fold = Validator.check_bool(kwargs["bn_fold"], "bn fold")
         self.freeze_bn = Validator.check_non_negative_int(kwargs["freeze_bn"], "freeze bn")
-        self.weight_bits = Validator.check_non_negative_int(kwargs["num_bits"][0], "weights bit")
-        self.act_bits = Validator.check_int(kwargs["num_bits"][-1], 0, Rel.GE, "activations bit")
+        self.weight_dtype = Validator.check_isinstance("weights dtype", kwargs["quant_dtype"][0], QuantDtype)
+        self.act_dtype = Validator.check_isinstance("activations dtype", kwargs["quant_dtype"][-1], QuantDtype)
         self.weight_channel = Validator.check_bool(kwargs["per_channel"][0], "per channel")
         self.act_channel = Validator.check_bool(kwargs["per_channel"][-1], "per channel")
         self.weight_symmetric = Validator.check_bool(kwargs["symmetric"][0], "symmetric")
@@ -103,6 +145,11 @@ class ConvertToQuantNetwork:
         self.act_range = Validator.check_bool(kwargs["narrow_range"][-1], "narrow range")
         self._convert_method_map = {quant.Conv2dBnAct: self._convert_conv,
                                     quant.DenseBnAct: self._convert_dense}
+        self.quant_config = get_quant_config(quant_delay=kwargs["quant_delay"],
+                                             quant_dtype=kwargs["quant_dtype"],
+                                             per_channel=kwargs["per_channel"],
+                                             symmetric=kwargs["symmetric"],
+                                             narrow_range=kwargs["narrow_range"])
 
     def _convert_op_name(self, name):
         pattern = re.compile(r'([A-Z]{1})')
@@ -149,7 +196,7 @@ class ConvertToQuantNetwork:
         for name, prim_op in add_list:
             prefix = name
             add_quant = _AddFakeQuantAfterSubCell(prim_op,
-                                                  num_bits=self.act_bits,
+                                                  quant_dtype=self.act_dtype,
                                                   quant_delay=self.act_qdelay,
                                                   per_channel=self.act_channel,
                                                   symmetric=self.act_symmetric,
@@ -180,15 +227,12 @@ class ConvertToQuantNetwork:
                                                      group=conv_inner.group,
                                                      eps=bn_inner.eps,
                                                      momentum=bn_inner.momentum,
-                                                     quant_delay=self.weight_qdelay,
-                                                     freeze_bn=self.freeze_bn,
-                                                     per_channel=self.weight_channel,
-                                                     num_bits=self.weight_bits,
-                                                     fake=True,
-                                                     symmetric=self.weight_symmetric,
-                                                     narrow_range=self.weight_range,
                                                      has_bias=conv_inner.has_bias,
-                                                     bias_init=conv_inner.bias_init)
+                                                     bias_init=conv_inner.bias_init,
+                                                     freeze_bn=self.freeze_bn,
+                                                     quant_config=self.quant_config,
+                                                     quant_dtype=self.weight_dtype,
+                                                     fake=True)
                 # change original network BatchNormal OP parameters to quant network
                 conv_inner.gamma = subcell.batchnorm.gamma
                 conv_inner.beta = subcell.batchnorm.beta
@@ -209,13 +253,10 @@ class ConvertToQuantNetwork:
                                                             group=conv_inner.group,
                                                             eps=bn_inner.eps,
                                                             momentum=bn_inner.momentum,
-                                                            quant_delay=self.weight_qdelay,
-                                                            per_channel=self.weight_channel,
-                                                            num_bits=self.weight_bits,
-                                                            symmetric=self.weight_symmetric,
-                                                            narrow_range=self.weight_range,
                                                             has_bias=conv_inner.has_bias,
-                                                            bias_init=conv_inner.bias_init)
+                                                            bias_init=conv_inner.bias_init,
+                                                            quant_config=self.quant_config,
+                                                            quant_dtype=self.weight_dtype)
                 # change original network BatchNormal OP parameters to quant network
                 conv_inner.batchnorm.gamma = subcell.batchnorm.gamma
                 conv_inner.batchnorm.beta = subcell.batchnorm.beta
@@ -234,11 +275,8 @@ class ConvertToQuantNetwork:
                                            dilation=conv_inner.dilation,
                                            group=conv_inner.group,
                                            has_bias=conv_inner.has_bias,
-                                           quant_delay=self.weight_qdelay,
-                                           per_channel=self.weight_channel,
-                                           num_bits=self.weight_bits,
-                                           symmetric=self.weight_symmetric,
-                                           narrow_range=self.weight_range)
+                                           quant_config=self.quant_config,
+                                           quant_dtype=self.weight_dtype)
         # change original network Conv2D OP parameters to quant network
         conv_inner.weight = subcell.conv.weight
         if subcell.conv.has_bias:
@@ -249,7 +287,7 @@ class ConvertToQuantNetwork:
         elif subcell.after_fake:
             subcell.has_act = True
             subcell.activation = _AddFakeQuantAfterSubCell(F.identity,
-                                                           num_bits=self.act_bits,
+                                                           quant_dtype=self.act_dtype,
                                                            quant_delay=self.act_qdelay,
                                                            per_channel=self.act_channel,
                                                            symmetric=self.act_symmetric,
@@ -264,11 +302,8 @@ class ConvertToQuantNetwork:
         dense_inner = quant.DenseQuant(dense_inner.in_channels,
                                        dense_inner.out_channels,
                                        has_bias=dense_inner.has_bias,
-                                       num_bits=self.weight_bits,
-                                       quant_delay=self.weight_qdelay,
-                                       per_channel=self.weight_channel,
-                                       symmetric=self.weight_symmetric,
-                                       narrow_range=self.weight_range)
+                                       quant_config=self.quant_config,
+                                       quant_dtype=self.weight_dtype)
         # change original network Dense OP parameters to quant network
         dense_inner.weight = subcell.dense.weight
         if subcell.dense.has_bias:
@@ -279,7 +314,7 @@ class ConvertToQuantNetwork:
         elif subcell.after_fake:
             subcell.has_act = True
             subcell.activation = _AddFakeQuantAfterSubCell(F.identity,
-                                                           num_bits=self.act_bits,
+                                                           quant_dtype=self.act_dtype,
                                                            quant_delay=self.act_qdelay,
                                                            per_channel=self.act_channel,
                                                            symmetric=self.act_symmetric,
@@ -291,11 +326,8 @@ class ConvertToQuantNetwork:
         if act_class not in _ACTIVATION_MAP:
             raise ValueError("Unsupported activation in auto quant: ", act_class)
         return _ACTIVATION_MAP[act_class](activation=activation,
-                                          num_bits=self.act_bits,
-                                          quant_delay=self.act_qdelay,
-                                          per_channel=self.act_channel,
-                                          symmetric=self.act_symmetric,
-                                          narrow_range=self.act_range)
+                                          quant_config=self.quant_config,
+                                          quant_dtype=self.act_dtype)
 
 
 class ExportToQuantInferNetwork:
@@ -523,7 +555,7 @@ def convert_quant_network(network,
                           bn_fold=True,
                           freeze_bn=10000000,
                           quant_delay=(0, 0),
-                          num_bits=(8, 8),
+                          quant_dtype=(QuantDtype.INT8, QuantDtype.INT8),
                           per_channel=(False, False),
                           symmetric=(False, False),
                           narrow_range=(False, False)
@@ -537,8 +569,9 @@ def convert_quant_network(network,
         freeze_bn (int): Number of steps after which BatchNorm OP parameters used total mean and variance. Default: 1e7.
         quant_delay (int, list or tuple): Number of steps after which weights and activations are quantized during
             eval. The first element represent weights and second element represent data flow. Default: (0, 0)
-        num_bits (int, list or tuple): Number of bits to use for quantize weights and activations. The first
-            element represent weights and second element represent data flow. Default: (8, 8)
+        quant_dtype (QuantDtype, list or tuple): Datatype to use for quantize weights and activations. The first
+            element represent weights and second element represent data flow.
+            Default: (QuantDtype.INT8, QuantDtype.INT8)
         per_channel (bool, list or tuple):  Quantization granularity based on layer or on channel. If `True`
             then base on per channel otherwise base on per layer. The first element represent weights
             and second element represent data flow. Default: (False, False)
@@ -561,7 +594,7 @@ def convert_quant_network(network,
         return value
 
     quant_delay = convert2list("quant delay", quant_delay)
-    num_bits = convert2list("num bits", num_bits)
+    quant_dtype = convert2list("quant dtype", quant_dtype)
     per_channel = convert2list("per channel", per_channel)
     symmetric = convert2list("symmetric", symmetric)
     narrow_range = convert2list("narrow range", narrow_range)
@@ -573,7 +606,7 @@ def convert_quant_network(network,
                                 quant_delay=quant_delay,
                                 bn_fold=bn_fold,
                                 freeze_bn=freeze_bn,
-                                num_bits=num_bits,
+                                quant_dtype=quant_dtype,
                                 per_channel=per_channel,
                                 symmetric=symmetric,
                                 narrow_range=narrow_range)
