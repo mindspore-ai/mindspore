@@ -218,6 +218,9 @@ void DumpJsonParser::ParseDumpPath(const nlohmann::json &content) {
   if (path_.empty()) {
     MS_LOG(EXCEPTION) << "Dump path is empty";
   }
+  if (path_[0] != '/') {
+    MS_LOG(EXCEPTION) << "Dump path only support absolute path and should start with '/'";
+  }
 }
 
 void DumpJsonParser::ParseNetName(const nlohmann::json &content) {

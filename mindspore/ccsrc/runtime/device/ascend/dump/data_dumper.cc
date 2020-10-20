@@ -138,10 +138,11 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
     MS_LOG(EXCEPTION) << "Dump path invalid";
   }
   auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  dump_info->set_dump_path("/" + dump_path + "_" + std::to_string(device_id) + "/");
+  dump_info->set_dump_path("/" + dump_path + "/device_" + std::to_string(device_id) + "/");
   MS_LOG(INFO) << "[DataDump] dump_path:" << dump_path;
 
-  dump_info->set_model_name(DumpJsonParser::GetInstance().net_name() + "_" + std::to_string(kernel_graph_->graph_id()));
+  dump_info->set_model_name(DumpJsonParser::GetInstance().net_name() + "_graph_" +
+                            std::to_string(kernel_graph_->graph_id()));
   dump_info->set_dump_step(std::to_string(DumpJsonParser::GetInstance().iteration()));
   dump_info->set_model_id(kernel_graph_->graph_id());
   dump_info->set_flag(kAicpuLoadFlag);
