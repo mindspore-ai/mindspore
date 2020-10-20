@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_LITE_NNACL_FP16_DECONV_FP16_H_
 #define MINDSPORE_LITE_NNACL_FP16_DECONV_FP16_H_
 
-#include <string.h>
 #include <arm_neon.h>
+#include <string.h>
 #include "nnacl/conv_parameter.h"
-#include "nnacl/matmul_parameter.h"
-#include "nnacl/fp16/matmul_fp16.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/fp16/common_func_fp16.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, float16_t *dst, int output_channel,
                    ConvParameter *conv_param);
-
-void PostConvFuncFp16C8(const float16_t *c8_out_ptr, float16_t *out_ptr, const float16_t *bias_ptr,
-                        size_t output_channel, size_t plane_size, size_t stride, bool is_relu, bool is_relu6);
-
-void PostFuncBiasReluC8Fp16(float16_t *dst, const float16_t *src, const float16_t *bias, size_t oc8div, size_t oc8mod,
-                            size_t plane_size, size_t stride, size_t relu_type);
 
 #ifdef __cplusplus
 }

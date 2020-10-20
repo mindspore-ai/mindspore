@@ -17,17 +17,11 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_DECONVOLUTION_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_DECONVOLUTION_H_
 
-#include <float.h>
 #include <vector>
-#include "src/lite_kernel.h"
-#include "src/kernel_registry.h"
-#include "include/errorcode.h"
-#include "schema/model_generated.h"
-#include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
 #include "nnacl/fp16/deconv_fp16.h"
 #include "nnacl/fp16/matmul_fp16.h"
-#include "nnacl/fp16/pack_fp16.h"
-#include "nnacl/fp16/cast_fp16.h"
+#include "src/kernel_registry.h"
+#include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
 
 namespace mindspore::kernel {
 class DeConvolutionFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
@@ -65,6 +59,8 @@ class DeConvolutionFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   float16_t *pack_input_;
   float16_t *pack_output_;
   float16_t *tmp_buffer_;
+  float16_t *batch_input_;
+  float16_t *batch_output_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_DECONVOLUTION_H_

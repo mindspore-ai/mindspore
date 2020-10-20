@@ -14,102 +14,39 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/deconvolution_winograd.h"
+#include "src/runtime/kernel/arm/fp16/deconvolution_winograd_fp16.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_DeConv2D;
+using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::kernel {
-DeConvolutionWinogradCPUKernel::~DeConvolutionWinogradCPUKernel() {
+
+DeConvWinogradFp16CPUKernel::~DeConvWinogradFp16CPUKernel() {
   FreeResizeBuf();
   FreeDeconvParam();
   return;
 }
 
-void DeConvolutionWinogradCPUKernel::FreeResizeBuf() {
-  for (int i = 0; i < deconv_param_->compute_size_; i++) {
-    DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
-    if (unit.tmp_buffer_ != nullptr) {
-      free(unit.tmp_buffer_);
-      unit.tmp_buffer_ = nullptr;
-    }
+void DeConvWinogradFp16CPUKernel::FreeResizeBuf() { return; }
 
-    if (unit.use_winograd_) {
-      if (unit.winograd_.b_buffer_ != nullptr) {
-        free(unit.winograd_.b_buffer_);
-        unit.winograd_.b_buffer_ = nullptr;
-      }
-    }
-  }
-
-  for (int i = 0; i < DECONV_WINOGRAD_BUFFER_COUNT; i++) {
-    DeConvWgABuffer &wg = deconv_param_->a_buffer_[i];
-    if (wg.buf_init_) {
-      if (wg.dest_buffer_ != nullptr) {
-        free(wg.dest_buffer_);
-        wg.dest_buffer_ = nullptr;
-      }
-      if (wg.middle_buffer_ != nullptr) {
-        free(wg.middle_buffer_);
-        wg.middle_buffer_ = nullptr;
-      }
-    }
-    wg.buf_init_ = false;
-  }
-
-  if (nc4hw4_output_ != nullptr) {
-    free(nc4hw4_output_);
-    nc4hw4_output_ = nullptr;
-  }
-
-  if (tile_input_ != nullptr) {
-    free(tile_input_);
-    tile_input_ = nullptr;
-  }
-
-  if (tile_output_ != nullptr) {
-    free(tile_output_);
-    tile_output_ = nullptr;
-  }
-  return;
-}
-
-void DeConvolutionWinogradCPUKernel::FreeDeconvParam() {
-  for (int i = 0; i < deconv_param_->compute_size_; i++) {
-    DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
-
-    if (unit.weight_ != nullptr) {
-      free(unit.weight_);
-      unit.weight_ = nullptr;
-    }
-
-    if (unit.use_winograd_) {
-      if (unit.winograd_.AT_ != nullptr) {
-        free(unit.winograd_.AT_);
-        unit.winograd_.AT_ = nullptr;
-      }
-      if (unit.winograd_.BT_ != nullptr) {
-        free(unit.winograd_.BT_);
-        unit.winograd_.BT_ = nullptr;
-      }
-    }
-  }
-
+void DeConvWinogradFp16CPUKernel::FreeDeconvParam() {
   if (deconv_param_ != nullptr) {
-    delete (deconv_param_);
+    delete deconv_param_;
     deconv_param_ = nullptr;
   }
   return;
 }
 
-int DeConvolutionWinogradCPUKernel::InitParameter() {
+int DeConvWinogradFp16CPUKernel::InitParameter() {
   deconv_param_->input_plane_ = conv_param_->input_h_ * conv_param_->input_w_;
   deconv_param_->output_plane_ = conv_param_->output_h_ * conv_param_->output_w_;
 
   nc4hw4_output_ =
-    reinterpret_cast<float *>(malloc(deconv_param_->oc_up4_ * deconv_param_->output_plane_ * sizeof(float)));
+    reinterpret_cast<float16_t *>(malloc(deconv_param_->oc_up4_ * deconv_param_->output_plane_ * sizeof(float16_t)));
 
   deconv_param_->in_tile_w_count_ = UP_DIV(conv_param_->input_w_, DECONV_WINOGRAD_DEFAULT_UNIT);
   deconv_param_->in_tile_h_count_ = UP_DIV(conv_param_->input_h_, DECONV_WINOGRAD_DEFAULT_UNIT);
@@ -124,14 +61,14 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
 
   int size = deconv_param_->thread_num_ * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT *
              DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up4_;
-  tile_input_ = reinterpret_cast<float *>(malloc(size * sizeof(float)));
-  memset(tile_input_, 0, size * sizeof(float));
+  tile_input_ = reinterpret_cast<float16_t *>(malloc(size * sizeof(float16_t)));
+  memset(tile_input_, 0, size * sizeof(float16_t));
 
   deconv_param_->out_tile_w_ = (DECONV_WINOGRAD_DEFAULT_UNIT - 1) * conv_param_->stride_w_ + conv_param_->kernel_w_;
   deconv_param_->out_tile_h_ = (DECONV_WINOGRAD_DEFAULT_UNIT - 1) * conv_param_->stride_h_ + conv_param_->kernel_h_;
   size = deconv_param_->thread_num_ * deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_ *
          DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->oc_up4_;
-  tile_output_ = reinterpret_cast<float *>(malloc(size * sizeof(float)));
+  tile_output_ = reinterpret_cast<float16_t *>(malloc(size * sizeof(float16_t)));
 
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
@@ -142,38 +79,76 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
 
         size = unit.winograd_.kh_ * unit.winograd_.kw_ * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up4_;
         deconv_param_->a_buffer_[unit.winograd_.kh_].middle_buffer_ =
-          malloc(deconv_param_->thread_num_ * size * sizeof(float));
+          malloc(deconv_param_->thread_num_ * size * sizeof(float16_t));
         deconv_param_->a_buffer_[unit.winograd_.kh_].dest_buffer_ =
-          malloc(deconv_param_->thread_num_ * size * sizeof(float));
+          malloc(deconv_param_->thread_num_ * size * sizeof(float16_t));
       }
 
       unit.winograd_.b_buffer_ = malloc(deconv_param_->thread_num_ * unit.winograd_.kh_ * unit.winograd_.kw_ *
-                                        deconv_param_->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE * sizeof(float));
+                                        deconv_param_->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE * sizeof(float16_t));
       unit.tmp_buffer_ = malloc(deconv_param_->thread_num_ * unit.winograd_.kh_ * unit.winograd_.kw_ *
-                                deconv_param_->oc_div4_ * DECONV_WINOGRAD_DEFAULT_TILE * C4NUM * sizeof(float));
+                                deconv_param_->oc_div4_ * DECONV_WINOGRAD_DEFAULT_TILE * C4NUM * sizeof(float16_t));
 
     } else {
       unit.tmp_buffer_ = malloc(deconv_param_->thread_num_ * deconv_param_->oc_div4_ * unit.w_size_ * unit.h_size_ *
-                                DECONV_WINOGRAD_DEFAULT_TILE * C4NUM * sizeof(float));
+                                DECONV_WINOGRAD_DEFAULT_TILE * C4NUM * sizeof(float16_t));
     }
   }
 
   return RET_OK;
 }
 
-int DeConvWgFp32Run(void *cdata, int task_id) {
-  auto deconvWg = reinterpret_cast<DeConvolutionWinogradCPUKernel *>(cdata);
+int DeConvWinogradFp16CPUKernel::DoDeconv(int task_id) {
+  for (int tile_index = task_id; tile_index < deconv_param_->in_tile_count_; tile_index += deconv_param_->thread_num_) {
+    float16_t *tile_in = tile_input_ + task_id * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT *
+                                         DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up4_;
+    int size = deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_ * DECONV_WINOGRAD_DEFAULT_TILE *
+               deconv_param_->oc_div4_ * C4NUM;
+    float16_t *tile_out = tile_output_ + task_id * size;
+    memset(tile_out, 0, size * sizeof(float16_t));
+
+    int start_index = tile_index * DECONV_WINOGRAD_DEFAULT_TILE;
+    int calculate_count = MSMIN(DECONV_WINOGRAD_DEFAULT_TILE,
+                                deconv_param_->in_tile_w_count_ * deconv_param_->in_tile_h_count_ - start_index);
+
+    for (int i = 0; i < DECONV_WINOGRAD_BUFFER_COUNT; i++) {
+      deconv_param_->a_buffer_[i].trans_formed_ = false;
+    }
+    DeconvWgFp16(nhwc_input_, tile_in, tile_out, start_index, calculate_count, conv_param_, deconv_param_, task_id);
+
+    std::unique_lock<std::mutex> merge_lock(lock_);
+    DeconvWgPostFp16(tile_out, nc4hw4_output_, conv_param_, deconv_param_, calculate_count, tile_index);
+  }
+  return RET_OK;
+}
+
+int DeConvWinogradFp16CPUKernel::DeDeconvPost(int task_id) {
+  int rest_plane = deconv_param_->output_plane_ - task_id * thread_stride_hw_;
+  int current_plane = MSMIN(rest_plane, thread_stride_hw_);
+  if (current_plane <= 0) {
+    return RET_OK;
+  }
+
+  PostConvFuncFp16C4(nc4hw4_output_ + task_id * thread_stride_hw_ * C4NUM,
+                     nhwc_output_ + task_id * thread_stride_hw_ * conv_param_->output_channel_,
+                     reinterpret_cast<float16_t *>(bias_data_), conv_param_->output_channel_, current_plane,
+                     deconv_param_->output_plane_, conv_param_->act_type_);
+  return RET_OK;
+}
+
+int DeConvWgFp16Run(void *cdata, int task_id) {
+  auto deconvWg = reinterpret_cast<DeConvWinogradFp16CPUKernel *>(cdata);
   deconvWg->DoDeconv(task_id);
   return RET_OK;
 }
 
-int DeConvWgPostFp32Run(void *cdata, int task_id) {
-  auto deconvWg = reinterpret_cast<DeConvolutionWinogradCPUKernel *>(cdata);
+int DeConvWgPostFp16Run(void *cdata, int task_id) {
+  auto deconvWg = reinterpret_cast<DeConvWinogradFp16CPUKernel *>(cdata);
   deconvWg->DeDeconvPost(task_id);
   return RET_OK;
 }
 
-int DeConvolutionWinogradCPUKernel::InitComputeParam() {
+int DeConvWinogradFp16CPUKernel::InitComputeParam() {
   auto weight_tensor = in_tensors_[1];
 
   conv_param_->input_channel_ = weight_tensor->Batch();
@@ -232,50 +207,63 @@ int DeConvolutionWinogradCPUKernel::InitComputeParam() {
 
         unit.winograd_.b_buffer_ = nullptr;
         unit.weight_ = malloc(unit.winograd_.kh_ * unit.winograd_.kw_ * deconv_param_->oc_up4_ *
-                              deconv_param_->ic_up4_ * sizeof(float));
+                              deconv_param_->ic_up4_ * sizeof(float16_t));
       } else {
         unit.use_winograd_ = false;
-        unit.weight_ = malloc(h_size * w_size * deconv_param_->ic_up4_ * deconv_param_->oc_up4_ * sizeof(float));
+        unit.weight_ = malloc(h_size * w_size * deconv_param_->ic_up4_ * deconv_param_->oc_up4_ * sizeof(float16_t));
       }
       unit.tmp_buffer_ = nullptr;
       deconv_param_->compute_units_[cur_count] = unit;
       cur_count++;
     }
   }
+
   return RET_OK;
 }
 
-int DeConvolutionWinogradCPUKernel::InitDataParam() {
-  auto weight_tensor = in_tensors_.at(kWeightIndex);
-  float *nhwc_weight = reinterpret_cast<float *>(weight_tensor->data_c());
-
+int DeConvWinogradFp16CPUKernel::InitDataParam() {
   /* unit data : weight & winograd data*/
+  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get Execute filter failed.";
+    return ret;
+  }
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit *unit = &deconv_param_->compute_units_[i];
-    int ret = PackDeConvWgDataFp32(nhwc_weight, unit, conv_param_, deconv_param_);
+    ret = PackDeConvWgDataFp16(fp16_weight_, unit, conv_param_, deconv_param_);
     if (ret != RET_OK) {
       return ret;
     }
   }
 
   /* bias */
-  auto bias_tensor = in_tensors_.at(kBiasIndex);
-  bias_data_ = malloc(deconv_param_->oc_up4_ * sizeof(float));
-  memset(bias_data_, 0, deconv_param_->oc_up4_ * sizeof(float));
-  if (in_tensors_.size() == 3) {
-    memcpy(bias_data_, bias_tensor->data_c(), conv_param_->output_channel_ * sizeof(float));
+  bias_data_ = malloc(deconv_param_->oc_up4_ * sizeof(float16_t));
+  if (bias_data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc bias_data_ failed.";
+    return RET_ERROR;
   }
+  memset(bias_data_, 0, deconv_param_->oc_up4_ * sizeof(float16_t));
+  auto fp16_bias_data = reinterpret_cast<float16_t *>(bias_data_);
+  if (in_tensors_.size() == kInputSize2) {
+    auto src_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
+    for (int i = 0; i < conv_param_->output_channel_; ++i) {
+      fp16_bias_data[i] = (float16_t)src_bias[i];
+    }
+  } else {
+    MS_ASSERT(inputs_.size() == kInputSize1);
+  }
+
   return RET_OK;
 }
 
-int DeConvolutionWinogradCPUKernel::ReSize() {
+int DeConvWinogradFp16CPUKernel::ReSize() {
   FreeResizeBuf();
   ConvolutionBaseCPUKernel::Init();
   InitParameter();
   return RET_OK;
 }
 
-int DeConvolutionWinogradCPUKernel::Init() {
+int DeConvWinogradFp16CPUKernel::Init() {
   int error_code = InitComputeParam();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "InitComputeParam error! ret: " << error_code;
@@ -295,65 +283,29 @@ int DeConvolutionWinogradCPUKernel::Init() {
   return ReSize();
 }
 
-int DeConvolutionWinogradCPUKernel::DoDeconv(int task_id) {
-  for (int tile_index = task_id; tile_index < deconv_param_->in_tile_count_; tile_index += deconv_param_->thread_num_) {
-    float *tile_in = tile_input_ + task_id * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT *
-                                     DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up4_;
-    int size = deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_ * DECONV_WINOGRAD_DEFAULT_TILE *
-               deconv_param_->oc_div4_ * C4NUM;
-    float *tile_out = tile_output_ + task_id * size;
-    memset(tile_out, 0, size * sizeof(float));
-
-    int start_index = tile_index * DECONV_WINOGRAD_DEFAULT_TILE;
-    int calculate_count = MSMIN(DECONV_WINOGRAD_DEFAULT_TILE,
-                                deconv_param_->in_tile_w_count_ * deconv_param_->in_tile_h_count_ - start_index);
-
-    for (int i = 0; i < DECONV_WINOGRAD_BUFFER_COUNT; i++) {
-      deconv_param_->a_buffer_[i].trans_formed_ = false;
-    }
-    DeconvWg(nhwc_input_, tile_in, tile_out, start_index, calculate_count, conv_param_, deconv_param_, task_id);
-
-    std::unique_lock<std::mutex> merge_lock(lock_);
-    DeconvWgPost(tile_out, nc4hw4_output_, conv_param_, deconv_param_, calculate_count, tile_index);
-  }
-  return RET_OK;
-}
-
-int DeConvolutionWinogradCPUKernel::DeDeconvPost(int task_id) {
-  int rest_plane = deconv_param_->output_plane_ - task_id * thread_stride_hw_;
-  int current_plane = MSMIN(rest_plane, thread_stride_hw_);
-  if (current_plane <= 0) {
-    return RET_OK;
-  }
-
-  PostConvFuncFp32C4(nc4hw4_output_ + task_id * thread_stride_hw_ * C4NUM,
-                     nhwc_output_ + task_id * thread_stride_hw_ * conv_param_->output_channel_,
-                     reinterpret_cast<float *>(bias_data_), conv_param_->output_channel_, current_plane,
-                     deconv_param_->output_plane_, conv_param_->act_type_);
-  return RET_OK;
-}
-
-int DeConvolutionWinogradCPUKernel::Run() {
+int DeConvWinogradFp16CPUKernel::Run() {
   auto prepare_ret = Prepare();
   if (prepare_ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  float *src_in = reinterpret_cast<float *>(in_tensors_[0]->data_c());
-  float *src_out = reinterpret_cast<float *>(out_tensors_[0]->data_c());
+
+  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
-    nhwc_input_ = src_in + batch_index * deconv_param_->input_plane_ * conv_param_->input_channel_;
-    nhwc_output_ = src_out + batch_index * deconv_param_->output_plane_ * conv_param_->output_channel_;
+    nhwc_input_ = execute_input_ + batch_index * deconv_param_->input_plane_ * conv_param_->input_channel_;
+    nhwc_output_ = execute_output_ + batch_index * deconv_param_->output_plane_ * conv_param_->output_channel_;
 
-    ::memset(nc4hw4_output_, 0, deconv_param_->output_plane_ * deconv_param_->oc_div4_ * C4NUM * sizeof(float));
-    ParallelLaunch(this->context_->thread_pool_, DeConvWgFp32Run, this, deconv_param_->thread_num_);
+    ::memset(nc4hw4_output_, 0, deconv_param_->output_plane_ * deconv_param_->oc_div4_ * C4NUM * sizeof(float16_t));
+    ParallelLaunch(this->context_->thread_pool_, DeConvWgFp16Run, this, deconv_param_->thread_num_);
 
     /*post bias activate and nhwc */
-    ParallelLaunch(this->context_->thread_pool_, DeConvWgPostFp32Run, this, thread_num_hw_);
+    ParallelLaunch(this->context_->thread_pool_, DeConvWgPostFp16Run, this, thread_num_hw_);
   }
+
+  ConvolutionBaseFP16CPUKernel::IfCastOutput();
+  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
 
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

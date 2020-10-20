@@ -13,41 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "nnacl/fp16/deconv_fp16.h"
-
-void PostConvFuncCommFp16(float16_t *out_ptr, const float16_t *src_ptr_, const float16_t *bias_ptr,
-                          size_t output_channel, size_t plane_size, size_t stride, bool is_relu, bool is_relu6,
-                          int size) {
-  if (size == 0) {
-    return;
-  }
-  for (int oc = 0; oc < output_channel; oc++) {
-    int oc_div = oc / size, oc_mod = oc % size;
-    for (int hw = 0; hw < plane_size; hw++) {
-      int src_index = oc_div * size * plane_size + hw * size + oc_mod;
-      int dst_index = hw * stride + oc;
-      float16_t value = src_ptr_[src_index];
-      if (bias_ptr != NULL) {
-        value = value + bias_ptr[oc];
-      }
-      value = (is_relu || is_relu6) ? (MSMAX(0.f, value)) : (value);
-      value = (is_relu6) ? (MSMIN(6.f, value)) : (value);
-      out_ptr[dst_index] = value;
-    }
-  }
-  return;
-}
-
-void PostConvFuncFp16C8(const float16_t *c8_out_ptr, float16_t *out_ptr, const float16_t *bias_ptr,
-                        size_t output_channel, size_t plane_size, size_t stride, bool is_relu, bool is_relu6) {
-  size_t oc8mod = output_channel % C8NUM;
-  size_t oc8div = output_channel - oc8mod;
-  size_t stride_size = stride * sizeof(float16_t);
-  size_t relu_type = is_relu ? 1 : 0;
-  relu_type = is_relu6 ? 3 : relu_type;
-  PostFuncBiasReluC8Fp16(out_ptr, c8_out_ptr, bias_ptr, oc8div, oc8mod, plane_size, stride_size, relu_type);
-  return;
-}
 
 int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, float16_t *dst, int output_channel,
                    ConvParameter *conv_param) {
@@ -112,7 +79,6 @@ int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, 
     }       /*ih*/
   }         /*oc8*/
 
-  PostConvFuncFp16C8(tmp, dst, bias, output_channel, output_plane, conv_param->output_channel_,
-                     conv_param->act_type_ == ActType_Relu, conv_param->act_type_ == ActType_Relu6);
+  PostConvFuncFp16C8(tmp, dst, bias, output_channel, output_plane, conv_param->output_channel_, conv_param->act_type_);
   return NNACL_OK;
 }

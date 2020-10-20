@@ -712,3 +712,102 @@ void WinogradOutputTransformFp16(const float16_t *gemm_out, float16_t *tmp_out_d
     out_tile_index++;
   }
 }
+
+int WinogradWeightTransformFp16(const float16_t *weight_data, float16_t *winograd_data, float *matrix_g,
+                                float *matrix_gt, int oc_block, int input_unit, int kernel_unit, int filter_channel,
+                                int filter_batch, bool pack) {
+  // original weight format : ohwi
+  int oc_block_num = UP_DIV(filter_batch, oc_block);
+  int block_stride = filter_channel * oc_block;
+  int block_num_stride = block_stride * oc_block_num;
+
+  float16_t *matrix_gt_data_fp16 = (float16_t *)(malloc(input_unit * kernel_unit * sizeof(float16_t)));
+  if (matrix_gt_data_fp16 == NULL) {
+    return NNACL_ERRCODE_OP_FP16_WINOGRAD_GENERATOR;
+  }
+  Float32ToFloat16(matrix_gt, matrix_gt_data_fp16, input_unit * kernel_unit);
+
+  // trans_filter = G*g*GT (g represents weight_data) = [(g * (G)T)T * (G)T]T
+  // separate into two steps ===> tmp = (g * (G)T)T ===> out = [tmp * (G)T]T
+  float16_t *tmp_data = (float16_t *)(malloc(filter_channel * input_unit * kernel_unit * sizeof(float16_t)));
+  if (tmp_data == NULL) {
+    free(matrix_gt_data_fp16);
+    return NNACL_ERRCODE_OP_FP16_WINOGRAD_GENERATOR;
+  }
+  float16_t *trans_out_data = (float16_t *)(malloc(filter_channel * input_unit * input_unit * sizeof(float16_t)));
+  if (trans_out_data == NULL) {
+    free(tmp_data);
+    free(matrix_gt_data_fp16);
+    return NNACL_ERRCODE_OP_FP16_WINOGRAD_GENERATOR;
+  }
+
+#ifndef ENABLE_ARM64
+  float16_t *tmp_data1 = (float16_t *)(malloc(filter_channel * input_unit * kernel_unit * sizeof(float16_t)));
+  if (tmp_data1 == NULL) {
+    free(tmp_data);
+    free(matrix_gt_data_fp16);
+    free(trans_out_data);
+    return NNACL_ERRCODE_OP_FP16_WINOGRAD_GENERATOR;
+  }
+  float16_t *trans_out_data1 = (float16_t *)(malloc(filter_channel * input_unit * input_unit * sizeof(float16_t)));
+  if (trans_out_data1 == NULL) {
+    free(tmp_data);
+    free(tmp_data1);
+    free(matrix_gt_data_fp16);
+    free(trans_out_data);
+    return NNACL_ERRCODE_OP_FP16_WINOGRAD_GENERATOR;
+  }
+#endif
+
+  int input_oz_offset = kernel_unit * kernel_unit * filter_channel;
+  for (int i = 0; i < filter_batch; i++) {
+    int out_c_block = i / oc_block;
+    int out_c_res = i % oc_block;
+    int output_oz_offset = out_c_block * block_stride + out_c_res;
+
+#ifndef ENABLE_ARM64
+    // tmp_data = g * GT
+    MatrixMultiplyWinogradFp16(weight_data + i * input_oz_offset, matrix_gt_data_fp16, tmp_data, kernel_unit,
+                               kernel_unit, input_unit, filter_channel);
+    // tmp_data1 = (tmp_data)T
+    PackHWCToWHCFp16(tmp_data, tmp_data1, kernel_unit, input_unit, filter_channel);
+    // trans_out_data1 = tmp * GT
+    MatrixMultiplyWinogradFp16(tmp_data1, matrix_gt_data_fp16, trans_out_data1, input_unit, kernel_unit, input_unit,
+                               filter_channel);
+    // trans_out_data = (trans_out_data1)T
+    PackHWCToWHCFp16(trans_out_data1, trans_out_data, input_unit, input_unit, filter_channel);
+#else
+    // tmp = (g * GT)T
+    MatrixMultiplyWinogradFp16(weight_data + i * input_oz_offset, matrix_gt_data_fp16, tmp_data, kernel_unit,
+                               kernel_unit, input_unit, filter_channel);
+    // trans = (tmp * GT)T
+    MatrixMultiplyWinogradFp16(tmp_data, matrix_gt_data_fp16, trans_out_data, input_unit, kernel_unit, input_unit,
+                               filter_channel);
+#endif
+
+    if (pack) {
+      int in_offset = 0;
+      for (int j = 0; j < input_unit; ++j) {
+        for (int k = 0; k < input_unit; ++k) {
+          for (int c = 0; c < filter_channel; ++c) {
+            *(winograd_data + output_oz_offset + c * oc_block) = trans_out_data[in_offset + c];
+          }
+          in_offset += filter_channel;
+          output_oz_offset += block_num_stride;
+        }
+      }
+    } else {
+      memcpy(winograd_data + i * filter_channel * input_unit * input_unit, trans_out_data,
+             filter_channel * input_unit * input_unit * sizeof(float16_t));
+    }
+  }
+
+#ifndef ENABLE_ARM64
+  free(tmp_data1);
+  free(trans_out_data1);
+#endif
+  free(tmp_data);
+  free(trans_out_data);
+  free(matrix_gt_data_fp16);
+  return NNACL_OK;
+}

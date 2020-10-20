@@ -40,6 +40,7 @@ typedef enum ErrorCodeFp32OpEnum {
 
 typedef enum ErrorCodeFp16OpEnum {
   NNACL_ERRCODE_OP_FP16_START = 20000,
+  NNACL_ERRCODE_OP_FP16_WINOGRAD_GENERATOR,
   NNACL_ERRCODE_OP_FP16_END = 29999
 } ErrorCodeFp16OpEnum;
 
