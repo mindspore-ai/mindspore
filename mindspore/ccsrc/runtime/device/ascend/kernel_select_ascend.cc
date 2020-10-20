@@ -478,16 +478,6 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
     if (real_input_node->isa<Parameter>() && !AnfAlgo::IsParameterWeight(real_input_node->cast<ParameterPtr>())) {
       continue;
     }
-    auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-    if (IsValueNode<tensor::Tensor>(input_kernel_node) &&
-        AnfAlgo::GetOutputDeviceDataType(input_kernel_node, 0) == kTypeUnknown) {
-      std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
-      builder->SetOutputsFormat(output_format);
-      std::vector<TypeId> output_type = {selected_kernel_info.GetInputDeviceType(input_index)};
-      builder->SetOutputsDeviceType(output_type);
-      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), input_kernel_node.get());
-      continue;
-    }
     if (selected_kernel_info.GetInputFormat(input_index) == kOpFormat_FRACTAL_ZN_LSTM) {
       continue;
     }
@@ -498,6 +488,16 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
       is_ref = op_info->is_ref();
     }
     if (AnfAlgo::OutputAddrExist(real_input_node, 0)) {
+      continue;
+    }
+    auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+    if (IsValueNode<tensor::Tensor>(input_kernel_node) &&
+        AnfAlgo::GetOutputDeviceDataType(input_kernel_node, 0) == kTypeUnknown) {
+      std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
+      builder->SetOutputsFormat(output_format);
+      std::vector<TypeId> output_type = {selected_kernel_info.GetInputDeviceType(input_index)};
+      builder->SetOutputsDeviceType(output_type);
+      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), input_kernel_node.get());
       continue;
     }
     if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || is_ref) {
