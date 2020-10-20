@@ -367,21 +367,25 @@ STATUS Calibrator::AddQuantizedOp(CNodePtr node) {
   return RET_OK;
 }
 
-void Calibrator::AddImage(const string file) {
+void Calibrator::AddImage(const string &file, size_t index) {
+  if (index >= images_.size()) {
+    MS_LOG(ERROR) << "images_ size: " << images_.size() << " but index: " << index;
+    return;
+  }
   auto exist = [](const string file) {
     struct stat buf {};
     return stat(file.c_str(), &buf) == 0;
   };
   if (exist(file)) {
     MS_LOG(INFO) << "load image: " << file;
-    this->images_.push_back(file);
+    this->images_[index].push_back(file);
   } else {
     MS_LOG(WARNING) << "invalid image file path: " << file;
   }
 }
 
-STATUS Calibrator::GenerateInputData(int index, mindspore::tensor::MSTensor *tensor) const {
-  string path = images_[index];
+STATUS Calibrator::GenerateInputData(int input_index, int image_index, mindspore::tensor::MSTensor *tensor) const {
+  string path = images_[input_index][image_index];
   MS_LOG(INFO) << "read image: " << path;
   size_t size;
   char *bin_buf = ReadFile(path.c_str(), &size);
@@ -405,30 +409,34 @@ STATUS Calibrator::GenerateInputData(int index, mindspore::tensor::MSTensor *ten
 }
 
 STATUS Calibrator::CollectImages() {
-  // check image file path
-  DIR *root = opendir(config_param_.image_path.c_str());
-  if (root == nullptr) {
-    MS_LOG(ERROR) << "invalid image path: " << config_param_.image_path;
-    return RET_PARAM_INVALID;
-  }
-  struct dirent *image_dir = readdir(root);
-  size_t count = 0;
-  while (image_dir != nullptr) {
-    if (image_dir->d_name[0] != '.') {
-      const std::string file_name = config_param_.image_path + "/" + image_dir->d_name;
-      if (config_param_.batch_count == 0) {
-        this->AddImage(file_name);
-        count++;
-      } else if (count < config_param_.batch_count) {
-        this->AddImage(file_name);
-        count++;
-      } else {
-        break;
-      }
+  this->images_.resize(config_param_.image_paths.size());
+  auto input_i = 0;
+  for (const auto &image_path : config_param_.image_paths) {
+    DIR *root = opendir(image_path.c_str());
+    if (root == nullptr) {
+      MS_LOG(ERROR) << "invalid image path: " << image_path;
+      return RET_PARAM_INVALID;
     }
-    image_dir = readdir(root);
+    struct dirent *image_dir = readdir(root);
+    size_t count = 0;
+    while (image_dir != nullptr) {
+      if (image_dir->d_name[0] != '.') {
+        const std::string file_name = image_path + "/" + image_dir->d_name;
+        if (config_param_.batch_count == 0) {
+          this->AddImage(file_name, input_i);
+          count++;
+        } else if (count < config_param_.batch_count) {
+          this->AddImage(file_name, input_i);
+          count++;
+        } else {
+          break;
+        }
+      }
+      image_dir = readdir(root);
+    }
+    closedir(root);
+    input_i++;
   }
-  closedir(root);
   return RET_OK;
 }
 
@@ -471,7 +479,16 @@ STATUS Calibrator::ReadConfig() {
     Trim(&key);
     Trim(&value);
     if (key == "image_path") {
-      config_param_.image_path = value;
+      auto &raw_image_paths = value;
+      auto ind = raw_image_paths.find(',');
+      while (ind != std::string::npos) {
+        auto image_path = raw_image_paths.substr(0, ind);
+        Trim(&image_path);
+        config_param_.image_paths.push_back(image_path);
+        raw_image_paths = raw_image_paths.substr(ind + 1);
+        Trim(&raw_image_paths);
+      }
+      config_param_.image_paths.push_back(raw_image_paths);
     } else if (key == "batch_count") {
       config_param_.batch_count = std::stoul(value);
     } else if (key == "thread_num") {
@@ -491,8 +508,11 @@ STATUS Calibrator::ReadConfig() {
       MS_LOG(WARNING) << "unsupported parameter";
     }
   }
-  MS_LOG(DEBUG) << "image_path: " << config_param_.image_path << "  "
-                << "batch_count: " << config_param_.batch_count << "  "
+
+  for (const auto &path : config_param_.image_paths) {
+    MS_LOG(DEBUG) << "calibration data_path: " << path;
+  }
+  MS_LOG(DEBUG) << "batch_count: " << config_param_.batch_count << "  "
                 << "method_x: " << config_param_.method_x << "  "
                 << "thread_num: " << config_param_.thread_num << " "
                 << "bias_correction: " << config_param_.bias_correction;
@@ -877,18 +897,23 @@ STATUS PostTrainingQuantizer::CheckFp32TensorVec(const std::string &node_name,
  * 3. run session
  **/
 STATUS PostTrainingQuantizer::DoInference() {
+  // get input tensor
+  vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
+  if (inputs.size() != calibrator_->GetInputNum()) {
+    MS_LOG(ERROR) << "model's input tensor cnt: " << inputs.size() << " != " << calibrator_->GetInputNum();
+    return RET_ERROR;
+  }
+
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
-    // get input tensor
-    vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
-    if (inputs.size() > 1) {
-      MS_LOG(ERROR) << "model's input tensor size: " << inputs.size() << " >1";
-      return RET_ERROR;
+    // set multi-input data
+    for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
+      STATUS status = calibrator_->GenerateInputData(input_index, i, inputs[input_index]);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "generate input data from images failed!";
+        return RET_ERROR;
+      }
     }
-    STATUS status = calibrator_->GenerateInputData(i, inputs.front());
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "generate input data from images failed!";
-      return RET_ERROR;
-    }
+
     mindspore::session::KernelCallBack beforeCallBack =
       [&](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
           const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
@@ -918,7 +943,7 @@ STATUS PostTrainingQuantizer::DoInference() {
       this->calibrator_->RecordMaxValue(callParam.node_name, data, this->calibrator_->GetOutputDivergInfo());
       return true;
     };
-    status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);
+    auto status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
@@ -928,21 +953,19 @@ STATUS PostTrainingQuantizer::DoInference() {
 }
 
 STATUS PostTrainingQuantizer::Int8Inference() {
-  // fp32 inference
+  // int8 inference
   vector<mindspore::tensor::MSTensor *> inputs = int8_session_->GetInputs();
-  // get input tensor
-  if (inputs.size() != 1) {
-    MS_LOG(ERROR) << "model's input tensor size: " << inputs.size();
-    return RET_ERROR;
-  }
-  auto elem_count = inputs.front()->ElementsNum();
-  vector<float> dummy_data(elem_count);
-  std::fill(dummy_data.begin(), dummy_data.end(), 0.1);
-  auto ret = memcpy_s(inputs.front()->MutableData(), inputs.front()->Size(), dummy_data.data(),
-                      sizeof(float) * dummy_data.size());
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memcpy_s error: " << ret;
-    return RET_ERROR;
+  for (auto input_tensor : inputs) {
+    // get input tensor
+    auto elem_count = input_tensor->ElementsNum();
+    vector<float> dummy_data(elem_count);
+    std::fill(dummy_data.begin(), dummy_data.end(), 0.1);
+    auto ret =
+      memcpy_s(input_tensor->MutableData(), input_tensor->Size(), dummy_data.data(), sizeof(float) * dummy_data.size());
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy_s error: " << ret;
+      return RET_ERROR;
+    }
   }
 
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
@@ -1062,7 +1085,7 @@ STATUS PostTrainingQuantizer::Int8Inference() {
       }
       return true;
     };
-    ret = int8_session_->RunGraph(beforeCallBack, afterCallBack);
+    auto ret = int8_session_->RunGraph(beforeCallBack, afterCallBack);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
@@ -1074,19 +1097,20 @@ STATUS PostTrainingQuantizer::Int8Inference() {
 STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
   auto ret = RET_OK;
   std::future<STATUS> int8_inference = std::async(std::launch::async, &PostTrainingQuantizer::Int8Inference, this);
-
+  // get input tensor
+  vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
+  if (inputs.size() != 1) {
+    MS_LOG(ERROR) << "model's input tensor size: " << inputs.size();
+    return RET_ERROR;
+  }
   // fp32 inference
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
-    // get input tensor
-    vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
-    if (inputs.size() != 1) {
-      MS_LOG(ERROR) << "model's input tensor size: " << inputs.size();
-      return RET_ERROR;
-    }
-    STATUS status = calibrator_->GenerateInputData(i, inputs.front());
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "generate input data from images failed!";
-      return RET_ERROR;
+    for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
+      STATUS status = calibrator_->GenerateInputData(input_index, i, inputs[input_index]);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "generate input data from images failed!";
+        return RET_ERROR;
+      }
     }
     mindspore::session::KernelCallBack beforeCallBack =
       [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
@@ -1156,7 +1180,7 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
 
       return true;
     };
-    status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);
+    auto status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
@@ -1279,17 +1303,21 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
 }
 
 STATUS PostTrainingQuantizer::CollectDataFrequency() {
+  // get input tensor
+  vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
+  if (inputs.size() != calibrator_->GetInputNum()) {
+    MS_LOG(ERROR) << "model's input tensor cnt: " << inputs.size() << " != " << calibrator_->GetInputNum();
+    return RET_ERROR;
+  }
+
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
-    // get input tensor
-    vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
-    if (inputs.size() > 1) {
-      MS_LOG(ERROR) << "model's input tensor size: " << inputs.size() << " > 1";
-      return RET_ERROR;
-    }
-    STATUS status = calibrator_->GenerateInputData(i, inputs.front());
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "generate input data from images failed!";
-      return RET_ERROR;
+    // set multi-input data
+    for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
+      STATUS status = calibrator_->GenerateInputData(input_index, i, inputs[input_index]);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "generate input data from images failed!";
+        return RET_ERROR;
+      }
     }
 
     mindspore::session::KernelCallBack beforeCallBack =
@@ -1321,7 +1349,7 @@ STATUS PostTrainingQuantizer::CollectDataFrequency() {
         this->calibrator_->UpdateDataFrequency(call_param.node_name, data, this->calibrator_->GetOutputDivergInfo());
         return true;
       };
-    status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);
+    auto status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;

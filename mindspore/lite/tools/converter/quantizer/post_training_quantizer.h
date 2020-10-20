@@ -46,7 +46,7 @@ const char kMethodOutlier[] = "RemovalOutlier";
 constexpr int kDefaultBinNumber = 2048;
 
 struct ConfigParam {
-  std::string image_path;
+  std::vector<std::string> image_paths;
   uint32_t batch_count{100};
   std::string method_x{kMethodKL};
   uint32_t thread_num{1};
@@ -173,15 +173,17 @@ class Calibrator {
 
   STATUS CollectImages();
 
-  STATUS GenerateInputData(int index, mindspore::tensor::MSTensor *tensor) const;
+  STATUS GenerateInputData(int input_index, int image_index, mindspore::tensor::MSTensor *tensor) const;
 
-  size_t GetBatchNum() const { return images_.size(); }
+  size_t GetBatchNum() const { return config_param_.batch_count; }
 
   uint32_t GetThreadNum() const { return config_param_.thread_num; }
 
   std::string GetMethodX() const { return config_param_.method_x; }
 
   bool GetBiasCorrection() const { return config_param_.bias_correction; }
+
+  size_t GetInputNum() const { return config_param_.image_paths.size(); }
 
   STATUS AddQuantizedOp(CNodePtr node);
 
@@ -209,7 +211,7 @@ class Calibrator {
   std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *GetOutputDivergInfo();
 
  private:
-  std::vector<std::string> images_;
+  std::vector<std::vector<std::string>> images_;  // multi_input, echo input has multi input data
 
   std::string config_path_;
 
@@ -223,7 +225,7 @@ class Calibrator {
   int quant_max_;
   int quant_min_;
 
-  void AddImage(std::string file);
+  void AddImage(const std::string &file, size_t index);
 };
 }  // namespace quant
 }  // namespace lite
