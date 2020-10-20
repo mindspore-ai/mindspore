@@ -105,6 +105,9 @@ std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std:
 /// \brief Calculates the difference between the two images for each element
 bool Subtract(const LiteMat &src1, const LiteMat &src2, LiteMat &dst);
 
+/// \brief Calculates the division between the two images for each element
+bool Divide(const LiteMat &src1, const LiteMat &src2, LiteMat &dst);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // IMAGE_PROCESS_H_
