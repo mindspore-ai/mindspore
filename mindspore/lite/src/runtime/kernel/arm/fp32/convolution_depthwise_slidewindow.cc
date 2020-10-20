@@ -134,17 +134,11 @@ int ConvDwSWRun(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseSWCPUKernel::Run() {
-  if (conv_param_->input_channel_ != conv_param_->output_channel_) {
-    MS_LOG(ERROR) << "Only support input channel equals output channel.";
-    return RET_ERROR;
-  }
-
   auto ret = Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare failed.";
     return ret;
   }
-
   ret = InitBuffer();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp32 InitBuffer failed.";

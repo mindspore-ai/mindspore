@@ -83,6 +83,8 @@ void PackNHWCToNHWC8Int8(const void *src, void *dst, int batch, int plane, int c
 
 void PackNHWC8ToNHWCInt8(const void *src, void *dst, int batch, int plane, int channel);
 
+void PackNCHWToNC8HW8Int8(const void *src, void *dst, int batch, int plane, int channel);
+
 void PackNC4HW4ToNHWCInt8(const void *src, void *dst, int batch, int plane, int channel);
 
 void PackNHWCToC8HWN8Int8(const void *src, void *dst, int batch, int plane, int channel);

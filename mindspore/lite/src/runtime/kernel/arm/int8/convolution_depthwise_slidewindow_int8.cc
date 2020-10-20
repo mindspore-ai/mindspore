@@ -29,9 +29,9 @@ using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
 ConvolutionDepthwiseSWInt8CPUKernel::~ConvolutionDepthwiseSWInt8CPUKernel() {
-  if (sliding != nullptr) {
-    delete sliding;
-    sliding = nullptr;
+  if (sliding_ != nullptr) {
+    delete sliding_;
+    sliding_ = nullptr;
   }
   if (packed_weight_ != nullptr) {
     free(packed_weight_);
@@ -270,8 +270,8 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
 }
 
 int ConvolutionDepthwiseSWInt8CPUKernel::Init() {
-  sliding = new (std::nothrow) SlidingWindowParam;
-  if (sliding == nullptr) {
+  sliding_ = new (std::nothrow) SlidingWindowParam;
+  if (sliding_ == nullptr) {
     MS_LOG(ERROR) << "new sliding window param.";
     return RET_ERROR;
   }
@@ -283,7 +283,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::Init() {
 
 int ConvolutionDepthwiseSWInt8CPUKernel::ReSize() {
   ConvolutionBaseCPUKernel::Init();
-  InitSlidingParamConvDw(sliding, conv_param_, C8NUM);
+  InitSlidingParamConvDw(sliding_, conv_param_, C8NUM);
 
   auto ret = ConvolutionBaseCPUKernel::SetQuantParam();
   if (ret != RET_OK) {
@@ -306,7 +306,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReSize() {
 
 int ConvolutionDepthwiseSWInt8CPUKernel::Execute(int task_id) {
   ConvDwSWInt8(packed_output_, packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), input_zp_,
-               output_zp_, conv_param_, sliding, task_id);
+               output_zp_, conv_param_, sliding_, task_id);
   return RET_OK;
 }
 
@@ -321,10 +321,6 @@ int ConvDwSWInt8Run(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseSWInt8CPUKernel::Run() {
-  if (conv_param_->input_channel_ != conv_param_->output_channel_) {
-    MS_LOG(ERROR) << "Only support input channel equals output channel.";
-    return RET_ERROR;
-  }
   auto ret = Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare failed.";
