@@ -41,6 +41,7 @@ using debugger::TensorProto;
 using debugger::WatchCondition;
 using debugger::WatchCondition_Condition_inf;
 using debugger::WatchCondition_Condition_nan;
+using debugger::WatchCondition_Parameter;
 using debugger::WatchNode;
 using debugger::WatchpointHit;
 
@@ -67,7 +68,8 @@ Debugger::Debugger()
       is_dataset_graph_(false),
       partial_memory_(false),
       last_overflow_bin_(0),
-      overflow_bin_path_("") {
+      overflow_bin_path_(""),
+      initial_suspend_(true) {
   if (CheckDebuggerEnabled()) {
     // configure partial memory reuse
     partial_memory_ = CheckDebuggerPartialMemoryEnabled();
@@ -292,9 +294,9 @@ void Debugger::PostExecute() {
   }
 }
 
-bool Debugger::ReadNodeDataRequired() {
+bool Debugger::ReadNodeDataRequired(const CNodePtr &kernel) {
   if (debugger_enabled_ && !is_dataset_graph_) {
-    auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_);
+    auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_, kernel);
     // if node has a watchpoint on it, is next_to node, or continue_to node then read the kernel tensor data
     if (is_watchpoint || (run_level_ == "node" && (node_name_ == "" || node_name_ == cur_name_))) {
       return true;
@@ -303,19 +305,19 @@ bool Debugger::ReadNodeDataRequired() {
   return false;
 }
 
-void Debugger::PostExecuteNode() {
+void Debugger::PostExecuteNode(const CNodePtr &kernel) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
   if (pipeline::ExecutorPy::GetDebugTerminate()) {
     return;
   }
   if (debugger_enabled_ && !is_dataset_graph_) {
-    auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_);
+    auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_, kernel);
 
     // if kernel is watchpoint,and get hit. suspend.
     bool hit_empty_flag = true;
     if (is_watchpoint) {
-      auto hits = CheckWatchpoints(cur_name_);
+      auto hits = CheckWatchpoints(cur_name_, kernel);
       if (!hits.empty()) {
         SendWatchpoints(hits);
         CommandLoop();
@@ -477,6 +479,8 @@ void Debugger::CommandLoop() {
           MS_LOG(INFO) << "rechecking all watchpoints";
           SendWatchpoints(CheckWatchpoints());
         } else {
+          // no longer the initial suspension.
+          initial_suspend_ = false;
           // print run cmd content
           // get run_level and node_name
           run_level_ = GetRunLevel(reply);
@@ -494,9 +498,16 @@ void Debugger::CommandLoop() {
         {
           // print set cmd content
           ProtoVector<WatchNode> recieved_nodes = GetWatchnodes(reply);
-          for (auto node : recieved_nodes) {
+          for (const auto &node : recieved_nodes) {
             MS_LOG(INFO) << "node name: " << node.node_name();
             MS_LOG(INFO) << "node type: " << node.node_type();
+          }
+
+          ProtoVector<WatchCondition_Parameter> parameters = GetParameters(reply);
+          for (const auto &parameter : parameters) {
+            MS_LOG(INFO) << "parameter name: " << parameter.name();
+            MS_LOG(INFO) << "parameter is disabled: " << parameter.disabled();
+            MS_LOG(INFO) << "parameter value: " << parameter.value();
           }
           MS_LOG(INFO) << "condition: " << GetWatchcondition(reply).condition();
           MS_LOG(INFO) << "id: " << GetWatchpointID(reply);
@@ -506,7 +517,7 @@ void Debugger::CommandLoop() {
         if (GetWatchpointDelete(reply)) {
           RemoveWatchpoint(GetWatchpointID(reply));
         } else {
-          SetWatchpoint(GetWatchnodes(reply), GetWatchcondition(reply), GetWatchpointID(reply));
+          SetWatchpoint(GetWatchnodes(reply), GetWatchcondition(reply), GetWatchpointID(reply), GetParameters(reply));
         }
         break;
       case DebuggerCommand::kViewCMD:
@@ -558,13 +569,25 @@ void AddTensorProtoInfo(TensorProto *tensor_item, TensorProto tensor) {
   tensor_item->clear_dims();
 }
 
-void Debugger::SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id) {
+void Debugger::SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id,
+                             const ProtoVector<WatchCondition_Parameter> &parameters) {
   std::vector<std::tuple<std::string, bool>> check_node_list;
+  std::vector<DebugServices::parameter_t> parameter_list;
+
   std::transform(nodes.begin(), nodes.end(), std::back_inserter(check_node_list),
-                 [](WatchNode node) -> std::tuple<std::string, bool> {
+                 [](const WatchNode &node) -> std::tuple<std::string, bool> {
                    return make_tuple(node.node_name(), node.node_type() == "scope");
                  });
-  debug_services_->AddWatchpoint(id, condition.condition(), condition.value(), check_node_list);
+
+  std::transform(
+    parameters.begin(), parameters.end(), std::back_inserter(parameter_list),
+    [](const WatchCondition_Parameter &parameter) -> DebugServices::parameter_t {
+      return DebugServices::parameter_t{parameter.name(), parameter.disabled(), parameter.value(), parameter.hit()};
+    });
+  debug_services_->AddWatchpoint(id, condition.condition(), condition.value(), check_node_list, parameter_list);
+  if (initial_suspend_ &&
+      static_cast<DebugServices::CONDITION_TYPE>(condition.condition()) == DebugServices::CONDITION_TYPE::INIT)
+    SendWatchpoints(CheckWatchpoints());
 }
 
 void Debugger::RemoveWatchpoint(const int32_t id) { debug_services_->RemoveWatchpoint(id); }
@@ -637,12 +660,13 @@ void Debugger::Exit() {
   }
 }
 
-std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode) {
+std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode, const CNodePtr &kernel) {
   std::vector<std::string> name;
   std::vector<std::string> slot;
   std::vector<int> condition;
   std::vector<unsigned int> watchpoint_id;
   std::vector<std::string> overflow_ops;
+  std::vector<std::vector<DebugServices::parameter_t>> parameters;
 #ifdef ENABLE_D
   overflow_ops = CheckOpOverflow();
 #endif
@@ -652,12 +676,14 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
     tensor_list = tensor_loader->GetTensor();
   } else {
     tensor_list = tensor_loader->GetNodeTensorMap(watchnode);
+    debug_services_->AddWeightsBiasInputs(&tensor_list, kernel);
   }
-
-  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, overflow_ops, tensor_list);
+  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, overflow_ops, tensor_list,
+                                    initial_suspend_);
   std::list<WatchpointHit> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
     WatchpointHit hit;
+    std::vector<DebugServices::parameter_t> &parameter = parameters[i];
     hit.set_id(watchpoint_id[i]);
 
     // here TensorProto act as a tensor indicator, not sending tensor content
@@ -668,7 +694,13 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
 
     WatchCondition *condition_item = hit.mutable_watch_condition();
     condition_item->set_condition(debugger::WatchCondition_Condition(condition[i]));
-
+    for (const auto &p : parameter) {
+      auto x = condition_item->mutable_params()->Add();
+      x->set_name(p.name);
+      x->set_disabled(p.disabled);
+      x->set_value(p.value);
+      x->set_hit(p.hit);
+    }
     hits.push_back(hit);
   }
   return hits;
@@ -708,6 +740,14 @@ DebuggerCommand GetCommand(const EventReply &reply) {
       break;
   }
   return cmd;
+}
+
+ProtoVector<WatchCondition_Parameter> GetParameters(const EventReply &reply) {
+  if (!reply.has_set_cmd() || !reply.set_cmd().has_watch_condition()) {
+    MS_LOG(ERROR) << "Error: Can not get Parameters from command. Returning default value: ProtoVector<Parameter>().";
+    return ProtoVector<WatchCondition_Parameter>();
+  }
+  return reply.set_cmd().watch_condition().params();
 }
 
 ProtoVector<WatchNode> GetWatchnodes(const EventReply &reply) {
@@ -954,7 +994,7 @@ void Debugger::LoadGraphOutputs() {
     std::string kernel_name = node->fullname_with_scope();
     auto output_size = AnfAlgo::GetOutputTensorNum(node);
     if (partial_memory_) {
-      if (!debug_services_->IsWatchPoint(kernel_name)) {
+      if (!debug_services_->IsWatchPoint(kernel_name, node)) {
         continue;
       }
     }

@@ -113,7 +113,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
       read_data = true;
     }
   } else if (debugger->debugger_enabled()) {
-    read_data = debugger->ReadNodeDataRequired();
+    read_data = debugger->ReadNodeDataRequired(kernel);
   }
   if (!read_data) {
     return;
@@ -168,7 +168,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
       }
     }
   }
-  debugger->PostExecuteNode();
+  debugger->PostExecuteNode(kernel);
 }
 }  // namespace
 

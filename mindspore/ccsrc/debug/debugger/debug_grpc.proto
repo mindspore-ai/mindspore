@@ -36,11 +36,11 @@ message Metadata {
   // the full name of current node
   string cur_node = 4;
   // check if training is done.
-  bool training_done = 5; 
+  bool training_done = 5;
 }
 
 message Chunk {
-    bytes buffer = 1;
+  bytes buffer = 1;
 }
 
 message EventReply {
@@ -61,13 +61,13 @@ message EventReply {
 }
 
 message RunCMD {
-    // step level or node level.  "step" or "node"
-    string run_level = 1;
-    oneof cmd {
-        int32 run_steps = 2;
-        // the next node full name
-        string node_name = 3;
-    }
+  // step level or node level.  "step" or "node"
+  string run_level = 1;
+  oneof cmd {
+    int32 run_steps = 2;
+    // the next node full name
+    string node_name = 3;
+  }
 }
 
 message SetCMD {
@@ -96,10 +96,24 @@ message WatchCondition {
     mean_lt = 10;
     sd_gt = 11;
     sd_lt = 12;
+    tensor_general_overflow = 13;
+    tensor_initialization = 14;
+    tensor_too_large = 15;
+    tensor_too_small = 16;
+    tensor_all_zero = 17;
+    tensor_change_too_large = 18;
+    tensor_change_too_small = 19;
+    tensor_not_changed = 20;
   }
   Condition condition = 1;
-  float value = 2;  // for between condition, there will be two values
-  repeated bool include = 3;  // for between condition, define the value is included or not
+  float value = 2;
+  message Parameter {
+    string name = 1;
+    bool disabled = 2;
+    double value = 3;
+    bool hit = 4;  // Whether this parameter is hit when checking tensor.
+  }
+  repeated Parameter params = 4;
 }
 
 message WatchNode {
