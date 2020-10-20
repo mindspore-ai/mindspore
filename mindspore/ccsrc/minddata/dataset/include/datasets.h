@@ -45,6 +45,7 @@ class DatasetOp;
 class DataSchema;
 class Tensor;
 class TensorShape;
+class TreeAdapter;
 #ifndef ENABLE_ANDROID
 class Vocab;
 #endif
@@ -458,7 +459,9 @@ std::shared_ptr<ZipNode> Zip(const std::vector<std::shared_ptr<Dataset>> &datase
 /// \brief A base class to represent a dataset in the data pipeline.
 class Dataset : public std::enable_shared_from_this<Dataset> {
  public:
+  // need friend class so they can access the children_ field
   friend class Iterator;
+  friend class mindspore::dataset::TreeAdapter;
 
   /// \brief Constructor
   Dataset();
