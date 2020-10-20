@@ -22,7 +22,7 @@ from ...common import dtype as mstype
 from ...common.seed import _get_graph_seed
 
 @constexpr
-def get_seed(op_seed, kernel_name):
+def _get_seed(op_seed, kernel_name):
     "Get the graph-level seed."
     return _get_graph_seed(op_seed, kernel_name)
 
@@ -57,7 +57,7 @@ def normal(shape, mean, stddev, seed=None):
     stddev_dtype = F.dtype(stddev)
     const_utils.check_valid_type(mean_dtype, mstype.int_type + (mstype.float16, mstype.float32), 'normal')
     const_utils.check_valid_type(stddev_dtype, mstype.int_type + (mstype.float16, mstype.float32), 'normal')
-    seed1, seed2 = get_seed(seed, "normal")
+    seed1, seed2 = _get_seed(seed, "normal")
     stdnormal = P.StandardNormal(seed1, seed2)
     random_normal = stdnormal(shape)
     value = random_normal * stddev + mean
@@ -94,7 +94,7 @@ def laplace(shape, mean, lambda_param, seed=None):
     lambda_param_dtype = F.dtype(lambda_param)
     const_utils.check_tensors_dtype_same(mean_dtype, mstype.float32, "laplace")
     const_utils.check_tensors_dtype_same(lambda_param_dtype, mstype.float32, "laplace")
-    seed1, seed2 = get_seed(seed, "laplace")
+    seed1, seed2 = _get_seed(seed, "laplace")
     stdlaplace = P.StandardLaplace(seed1, seed2)
     rnd = stdlaplace(shape)
     value = rnd * lambda_param + mean
@@ -144,7 +144,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
     const_utils.check_valid_type(dtype, [mstype.int32, mstype.float32], 'uniform')
     const_utils.check_tensors_dtype_same(minval_dtype, dtype, "uniform")
     const_utils.check_tensors_dtype_same(maxval_dtype, dtype, "uniform")
-    seed1, seed2 = get_seed(seed, "uniform")
+    seed1, seed2 = _get_seed(seed, "uniform")
     if const_utils.is_same_type(dtype, mstype.int32):
         random_uniform = P.UniformInt(seed1, seed2)
         value = random_uniform(shape, minval, maxval)
@@ -176,7 +176,7 @@ def gamma(shape, alpha, beta, seed=None):
         >>> beta = Tensor(1.0, mstype.float32)
         >>> output = C.gamma(shape, alpha, beta, seed=5)
     """
-    seed1, seed2 = get_seed(seed, "gamma")
+    seed1, seed2 = _get_seed(seed, "gamma")
     random_gamma = P.Gamma(seed1, seed2)
     value = random_gamma(shape, alpha, beta)
     return value
@@ -200,7 +200,7 @@ def poisson(shape, mean, seed=None):
         >>> mean = Tensor(1.0, mstype.float32)
         >>> output = C.poisson(shape, mean, seed=5)
     """
-    seed1, seed2 = get_seed(seed, "poisson")
+    seed1, seed2 = _get_seed(seed, "poisson")
     random_poisson = P.Poisson(seed1, seed2)
     value = random_poisson(shape, mean)
     return value
