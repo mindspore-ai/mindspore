@@ -149,6 +149,8 @@ class AscendStreamAssign {
   void InsertEventHcomDependHcom(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventBetweenHcom(const NotNull<KernelGraphPtr> &graph_ptr, const map<uint32_t, vector<size_t>> &hcom_index,
                               uint32_t first_hcom_stream, uint32_t last_hcom_stream);
+
+  void AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr> &graph_ptr);
   CNodePtr GetLastInputCnode(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &cur_cnode_ptr);
   bool IsSatisfiedHcom(const std::map<uint32_t, vector<size_t>> &hcom_index, const CNodePtr &node_ptr, size_t index);
 
