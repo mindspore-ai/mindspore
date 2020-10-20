@@ -17,7 +17,6 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 
 _proximal_ada_grad_opt = C.MultitypeFuncGraph("proximal_ada_grad_opt")
@@ -66,8 +65,8 @@ class ProximalAdagrad(Optimizer):
         To improve parameter groups performance, the customized order of parameters can be supported.
 
         The sparse strategy is applied while the SparseGatherV2 operator being used for forward network.
-        The sparse feature is under continuous development. The sparse
-        behavior is currently performed on the CPU.
+        The sparse feature is under continuous development. If the sparse strategy wants to be executed on the host,
+        set the target to the CPU.
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
@@ -136,14 +135,16 @@ class ProximalAdagrad(Optimizer):
         self.l1 = Tensor(l1, mstype.float32)
         self.l2 = Tensor(l2, mstype.float32)
         self.hyper_map = C.HyperMap()
+        self.use_locking = use_locking
         self.opt = P.ApplyProximalAdagrad(use_locking=use_locking)
-        self.sparse_opt = P.FusedSparseProximalAdagrad(use_locking=use_locking)
+        self.sparse_opt = P.SparseApplyProximalAdagrad(use_locking=use_locking)
 
     def construct(self, grads):
         params = self.parameters
         accum = self.accum
         grads = self.decay_weight(grads)
         grads = self.scale_grad(grads)
+        grads = self._grad_sparse_indices_deduplicate(grads)
         lr = self.get_lr()
         if self.is_group_lr:
             success = self.map_(F.partial(_proximal_ada_grad_opt, self.opt, self.sparse_opt, self.l1, self.l2), lr,
@@ -152,3 +153,18 @@ class ProximalAdagrad(Optimizer):
             success = self.map_(F.partial(_proximal_ada_grad_opt, self.opt, self.sparse_opt, self.l1, self.l2, lr),
                                 grads, params, accum)
         return success
+
+    @Optimizer.target.setter
+    def target(self, value):
+        """If the input value is set to "CPU", the parameters will be updated on the host using the Fused
+           optimizer operation."""
+
+        if value not in ('CPU', 'Ascend'):
+            raise ValueError("The value must be 'CPU' or 'Ascend', but got value {}".format(value))
+
+        if value == 'CPU':
+            self.sparse_opt = P.FusedSparseProximalAdagrad(self.use_locking).add_prim_attr("primitive", "CPU")
+        else:
+            self.sparse_opt = P.SparseApplyProximalAdagrad(self.use_locking)
+
+        self._target = value

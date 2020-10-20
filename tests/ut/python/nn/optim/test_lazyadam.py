@@ -76,6 +76,20 @@ def test_spares_lazy_adam_compile():
     net.set_train()
 
     optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1, weight_decay=0.9, loss_scale=2.0)
+    optimizer.target = 'CPU'
+    train_network = TrainOneStepCell(net, optimizer)
+    _executor.compile(train_network, indices, label)
+
+
+def test_spares_lazy_adam():
+    """ test sparse adam"""
+    indices = Tensor(np.array([0, 1]).astype(np.int32))
+    label = Tensor(np.zeros([2, 1, 2]).astype(np.float32))
+    net = NetWithSparseGatherV2()
+    net.set_train()
+
+    optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1, weight_decay=0.9, loss_scale=2.0)
+    optimizer.target = 'Ascend'
     train_network = TrainOneStepCell(net, optimizer)
     _executor.compile(train_network, indices, label)
 

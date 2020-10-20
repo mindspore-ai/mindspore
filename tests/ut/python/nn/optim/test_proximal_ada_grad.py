@@ -72,5 +72,18 @@ def test_spares_proximal_ada_grad_compile():
     net.set_train()
 
     optimizer = ProximalAdagrad(net.trainable_params(), weight_decay=0.9, loss_scale=1024.0)
+    optimizer.target = 'CPU'
+    train_network = TrainOneStepCell(net, optimizer)
+    _executor.compile(train_network, indices, label)
+
+
+def test_spares_proximal_ada_grad():
+    """ test sparse proximal_ada_grad """
+    indices = Tensor(np.array([0, 1]).astype(np.int32))
+    label = Tensor(np.zeros([2, 1, 2]).astype(np.float32))
+    net = NetWithSparseGatherV2()
+    net.set_train()
+
+    optimizer = ProximalAdagrad(net.trainable_params(), weight_decay=0.9, loss_scale=1024.0)
     train_network = TrainOneStepCell(net, optimizer)
     _executor.compile(train_network, indices, label)

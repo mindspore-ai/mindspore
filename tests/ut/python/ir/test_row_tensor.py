@@ -465,7 +465,7 @@ def test_embedding_lookup_with_mix_precision():
 
     criterion = nn.SoftmaxCrossEntropyWithLogits(reduction='mean')
     optimizer = nn.Adam(params=net.trainable_params(), learning_rate=0.1)
-    optimizer.sparse_opt.add_prim_attr("primitive_target", "CPU")
+    optimizer.target = 'CPU'
     train_network = ms.amp.build_train_network(net, optimizer, criterion, level="O2")
     train_network.set_train()
     for _ in range(2):

@@ -74,7 +74,7 @@ def do_sparse_embedding(ps=False):
         net.embedding.embedding_table.set_param_ps()
 
     optimizer = Adam(filter(lambda x: x.requires_grad, net.get_parameters()))
-    optimizer.sparse_opt.add_prim_attr("primitive_target", "CPU")
+    optimizer.target = 'CPU'
     criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     net_with_criterion = WithLossCell(net, criterion)
     train_network = TrainOneStepCell(net_with_criterion, optimizer)
