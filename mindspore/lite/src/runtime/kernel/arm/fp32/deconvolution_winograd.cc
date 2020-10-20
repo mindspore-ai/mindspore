@@ -18,6 +18,7 @@
 #include "src/runtime/runtime_api.h"
 
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
@@ -59,19 +60,9 @@ void DeConvolutionWinogradCPUKernel::FreeResizeBuf() {
     wg.buf_init_ = false;
   }
 
-  if (nc4hw4_output_ != nullptr) {
-    free(nc4hw4_output_);
-    nc4hw4_output_ = nullptr;
-  }
-
   if (tile_input_ != nullptr) {
     free(tile_input_);
     tile_input_ = nullptr;
-  }
-
-  if (tile_output_ != nullptr) {
-    free(tile_output_);
-    tile_output_ = nullptr;
   }
   return;
 }
@@ -108,9 +99,6 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
   deconv_param_->input_plane_ = conv_param_->input_h_ * conv_param_->input_w_;
   deconv_param_->output_plane_ = conv_param_->output_h_ * conv_param_->output_w_;
 
-  nc4hw4_output_ =
-    reinterpret_cast<float *>(malloc(deconv_param_->oc_up4_ * deconv_param_->output_plane_ * sizeof(float)));
-
   deconv_param_->in_tile_w_count_ = UP_DIV(conv_param_->input_w_, DECONV_WINOGRAD_DEFAULT_UNIT);
   deconv_param_->in_tile_h_count_ = UP_DIV(conv_param_->input_h_, DECONV_WINOGRAD_DEFAULT_UNIT);
 
@@ -129,9 +117,6 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
 
   deconv_param_->out_tile_w_ = (DECONV_WINOGRAD_DEFAULT_UNIT - 1) * conv_param_->stride_w_ + conv_param_->kernel_w_;
   deconv_param_->out_tile_h_ = (DECONV_WINOGRAD_DEFAULT_UNIT - 1) * conv_param_->stride_h_ + conv_param_->kernel_h_;
-  size = deconv_param_->thread_num_ * deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_ *
-         DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->oc_up4_;
-  tile_output_ = reinterpret_cast<float *>(malloc(size * sizeof(float)));
 
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
@@ -329,7 +314,44 @@ int DeConvolutionWinogradCPUKernel::DeDeconvPost(int task_id) {
   return RET_OK;
 }
 
+int DeConvolutionWinogradCPUKernel::InitRunBuf() {
+  int size = deconv_param_->oc_up4_ * deconv_param_->output_plane_;
+  nc4hw4_output_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(size * sizeof(float)));
+  if (nc4hw4_output_ == nullptr) {
+    MS_LOG(ERROR) << "de conv wg Malloc nc4hw4_output_ error!";
+    return RET_MEMORY_FAILED;
+  }
+
+  size = deconv_param_->thread_num_ * deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_ *
+         DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->oc_up4_;
+  tile_output_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(size * sizeof(float)));
+  if (tile_output_ == nullptr) {
+    MS_LOG(ERROR) << "de conv wg Malloc tile_output_ error!";
+    return RET_MEMORY_FAILED;
+  }
+  return RET_OK;
+}
+
+void DeConvolutionWinogradCPUKernel::FreeRunBuf() {
+  if (nc4hw4_output_ != nullptr) {
+    ctx_->allocator->Free(nc4hw4_output_);
+    nc4hw4_output_ = nullptr;
+  }
+
+  if (tile_output_ != nullptr) {
+    ctx_->allocator->Free(tile_output_);
+    tile_output_ = nullptr;
+  }
+  return;
+}
+
 int DeConvolutionWinogradCPUKernel::Run() {
+  auto ret = InitRunBuf();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitRunBuf fail!ret: " << ret;
+    return ret;
+  }
+
   float *src_in = reinterpret_cast<float *>(in_tensors_[0]->data_c());
   float *src_out = reinterpret_cast<float *>(out_tensors_[0]->data_c());
 
@@ -344,6 +366,7 @@ int DeConvolutionWinogradCPUKernel::Run() {
     ParallelLaunch(this->context_->thread_pool_, DeConvWgPostFp32Run, this, thread_num_hw_);
   }
 
+  FreeRunBuf();
   return RET_OK;
 }
 

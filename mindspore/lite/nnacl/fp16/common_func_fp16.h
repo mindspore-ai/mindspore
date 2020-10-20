@@ -32,6 +32,8 @@ void PostFuncBiasReluC8Fp16(float16_t *dst, const float16_t *src, const float16_
 /* deconv winograd */
 void PostConvFuncFp16C4(const float16_t *c4_out, float16_t *nhwc_out, const float16_t *bias, size_t output_channel,
                         size_t plane_size, size_t plane_stride, ActType act_type);
+void PostFuncBiasReluC4Fp16(float16_t *dst, const float16_t *src, const float16_t *bias, size_t oc4div, size_t oc4mod,
+                            size_t plane_size, size_t plane_stride, size_t relu_type);
 
 #ifdef __cplusplus
 }

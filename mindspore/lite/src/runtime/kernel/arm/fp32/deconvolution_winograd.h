@@ -54,6 +54,8 @@ class DeConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   int InitParameter();
   void FreeDeconvParam();
   void FreeResizeBuf();
+  int InitRunBuf();
+  void FreeRunBuf();
 
  private:
   DeConvParam *deconv_param_;
