@@ -46,6 +46,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
     InsertEventForIndependentParallel(graph_ptr);
     GetIndependentMaxTarget(graph_ptr);
     InsertCtrlForIndependentParallel(graph_ptr);
+    AdjustAtomicAddrCleanOrder(graph_ptr);
 
     GetNeedActiveStreams(graph_ptr);
     CheckResourceAssign(graph_ptr);
@@ -320,7 +321,7 @@ void AscendStreamAssign::UpdateAtomicAddrCleanStreamId(const NotNull<KernelGraph
   for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
     CNodePtr cur_cnode_ptr = cnode_ptr_list[i];
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
-    // update AtomicAddrClean stream same witch the next node
+    // update AtomicAddrClean stream same with the next node
     if (i > 0 && AnfAlgo::GetCNodeName(cnode_ptr_list[i - 1]) == kAtomicAddrCleanOpName) {
       AnfAlgo::SetStreamId(AnfAlgo::GetStreamId(cur_cnode_ptr), cnode_ptr_list[i - 1].get());
     }
@@ -1781,6 +1782,36 @@ void AscendStreamAssign::FindEventRelations(const NotNull<KernelGraphPtr> &graph
     MS_LOG(INFO) << "Event_id:" << AnfAlgo::GetNodeAttr<uint32_t>(item.first, kAttrEventId);
   }
 }
+
+// section12
+void AscendStreamAssign::AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr> &graph_ptr) {
+  // Eg:[atomic, recv, memcpy] should be [recv, atomic, memcpy]
+  std::vector<CNodePtr> update_orders;
+  auto &exe_orders = graph_ptr->execution_order();
+  for (size_t i = 0; i < exe_orders.size(); i++) {
+    auto cur_cnode = exe_orders.at(i);
+    if (AnfAlgo::GetCNodeName(cur_cnode) != kAtomicAddrCleanOpName) {
+      update_orders.emplace_back(cur_cnode);
+      continue;
+    }
+
+    for (size_t j = i + 1; j < exe_orders.size(); j++) {
+      auto next_cnode = exe_orders[j];
+      auto next_cnode_name = AnfAlgo::GetCNodeName(next_cnode);
+      if (next_cnode_name == kSendOpName || next_cnode_name == kRecvOpName) {
+        update_orders.emplace_back(next_cnode);
+      } else {
+        update_orders.emplace_back(cur_cnode);
+        // attention:i will be executed later i++;
+        i = j - 1;
+        break;
+      }
+    }
+  }
+
+  graph_ptr->set_execution_order(update_orders);
+}
+
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
