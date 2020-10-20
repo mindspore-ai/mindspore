@@ -269,7 +269,8 @@ void Debugger::PostExecute() {
       if (device_target_ != kGPUDevice) {
         num_step_++;
         MS_LOG(INFO) << "Debugger suspend at end of step; number of steps executed: " << num_step_;
-        SendWatchpointsAndSuspend(CheckWatchpoints());
+        SendWatchpoints(CheckWatchpoints());
+        CommandLoop();
       } else {
         CommandLoop();
       }
@@ -302,7 +303,8 @@ void Debugger::PostExecuteNode() {
     if (is_watchpoint) {
       auto hits = CheckWatchpoints(cur_name_);
       if (!hits.empty()) {
-        SendWatchpointsAndSuspend(hits);
+        SendWatchpoints(hits);
+        CommandLoop();
         hit_empty_flag = false;
       }
     }
@@ -455,7 +457,10 @@ void Debugger::CommandLoop() {
         break;
       case DebuggerCommand::kRunCMD:
         MS_LOG(INFO) << "RunCMD";
-        {
+        if (GetRunLevel(reply) == "recheck") {
+          MS_LOG(INFO) << "rechecking all watchpoints";
+          SendWatchpoints(CheckWatchpoints());
+        } else {
           // print run cmd content
           // get run_level and node_name
           run_level_ = GetRunLevel(reply);
@@ -463,10 +468,10 @@ void Debugger::CommandLoop() {
 
           MS_LOG(INFO) << "run_level: " << run_level_;
           MS_LOG(INFO) << "node_name_: " << node_name_;
-        }
 
-        // exit loop
-        run = true;
+          // exit loop
+          run = true;
+        }
         break;
       case DebuggerCommand::kSetCMD:
         MS_LOG(INFO) << "SetCMD";
@@ -653,7 +658,7 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
   return hits;
 }
 
-void Debugger::SendWatchpointsAndSuspend(const std::list<WatchpointHit> &points) {
+void Debugger::SendWatchpoints(const std::list<WatchpointHit> &points) {
   // send info about watchpoint
   if (!points.empty()) {
     EventReply reply = grpc_client_->SendWatchpointHits(points);
@@ -661,8 +666,6 @@ void Debugger::SendWatchpointsAndSuspend(const std::list<WatchpointHit> &points)
       MS_LOG(ERROR) << "Error: SendWatchpointHits failed";
     }
   }
-  // enter command loop
-  CommandLoop();
 }
 
 DebugServices *Debugger::debug_services() const { return debug_services_.get(); }

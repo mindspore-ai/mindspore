@@ -161,8 +161,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // return names of tensors and what condition they hit
   std::list<WatchpointHit> CheckWatchpoints(const std::string &watchnode = std::string());
 
-  // send watchpoints that hit and enter command wait loop
-  void SendWatchpointsAndSuspend(const std::list<WatchpointHit> &points);
+  // send watchpoints that hit
+  void SendWatchpoints(const std::list<WatchpointHit> &points);
 
   // Find if any operation overflow happened and return their names
   std::vector<std::string> CheckOpOverflow();
