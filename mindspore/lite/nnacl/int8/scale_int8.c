@@ -18,7 +18,7 @@
 #include "nnacl/quantization/fixed_point.h"
 
 void ScaleInnerInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, int outer_start, int outer_end,
-                    int axis_size, int inner_size, const ScaleParameter *scale_param) {
+                    int axis_size, int inner_size, const ScaleParameter *scale_param, int max, int min) {
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size * inner_size;
     for (int i = 0; i < axis_size; i++) {
@@ -34,8 +34,8 @@ void ScaleInnerInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale
                                 scale_param->scale_mul_arg_.multiplier_),
                               scale_param->scale_mul_arg_.right_shift_);
         int tmp = input_mul_scale + scale_param->output_zp_;
-        tmp = tmp > INT8_MAX ? INT8_MAX : tmp;
-        tmp = tmp < INT8_MIN ? INT8_MIN : tmp;
+        tmp = tmp > max ? max : tmp;
+        tmp = tmp < min ? min : tmp;
         out_data[in_offset] = tmp;
       }
     }
@@ -44,7 +44,7 @@ void ScaleInnerInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale
 
 void ScaleInnerWithBiasInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, const int8_t *offset,
                             int outer_start, int outer_end, int axis_size, int inner_size,
-                            const ScaleParameter *scale_param) {
+                            const ScaleParameter *scale_param, int max, int min) {
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size * inner_size;
     for (int i = 0; i < axis_size; i++) {
@@ -63,10 +63,10 @@ void ScaleInnerWithBiasInt8(const int8_t *in_data, int8_t *out_data, const int8_
         int bias = RoundingDivideByPOT(
           SaturatingRoundingDoublingHighMul(tmp_bias * (1 << (unsigned int)scale_param->offset_mul_arg_.left_shift_),
                                             scale_param->offset_mul_arg_.multiplier_),
-          scale_param->scale_mul_arg_.right_shift_);
+          scale_param->offset_mul_arg_.right_shift_);
         int tmp = input_mul_scale + bias + scale_param->output_zp_;
-        tmp = tmp > INT8_MAX ? INT8_MAX : tmp;
-        tmp = tmp < INT8_MIN ? INT8_MIN : tmp;
+        tmp = tmp > max ? max : tmp;
+        tmp = tmp < min ? min : tmp;
         out_data[in_offset] = tmp;
       }
     }
@@ -74,21 +74,21 @@ void ScaleInnerWithBiasInt8(const int8_t *in_data, int8_t *out_data, const int8_
 }
 
 void DoScaleInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, int task_id,
-                 const ScaleParameter *scale_param) {
+                 const ScaleParameter *scale_param, int max, int min) {
   int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
   int outer_start = task_id * outer_step;
   int outer_end = MSMIN(outer_start + outer_step, scale_param->outer_size_);
 
   ScaleInnerInt8(in_data, out_data, scale, outer_start, outer_end, scale_param->axis_size_, scale_param->inner_size_,
-                 scale_param);
+                 scale_param, max, min);
 }
 
 void DoScaleWithBiasInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, const int8_t *offset,
-                         int task_id, const ScaleParameter *scale_param) {
+                         int task_id, const ScaleParameter *scale_param, int max, int min) {
   int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
   int outer_start = task_id * outer_step;
   int outer_end = MSMIN(outer_start + outer_step, scale_param->outer_size_);
 
   ScaleInnerWithBiasInt8(in_data, out_data, scale, offset, outer_start, outer_end, scale_param->axis_size_,
-                         scale_param->inner_size_, scale_param);
+                         scale_param->inner_size_, scale_param, max, min);
 }

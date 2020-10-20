@@ -15,8 +15,9 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_relu_parser.h"
-#include <vector>
+
 #include <memory>
+#include <vector>
 #include "securec/include/securec.h"
 
 namespace mindspore {
@@ -46,6 +47,12 @@ STATUS OnnxReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
   } else if (relu_type == "LeakyRelu") {
     MS_LOG(DEBUG) << "onnx LeakyReluParser";
     attr->type = schema::ActivationType_LEAKY_RELU;
+  }
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    const auto &attribute_name = onnx_node_attr.name();
+    if (attribute_name == "alpha") {
+      attr->alpha = onnx_node_attr.f();
+    }
   }
 
   op->primitive->value.type = schema::PrimitiveType_Activation;
