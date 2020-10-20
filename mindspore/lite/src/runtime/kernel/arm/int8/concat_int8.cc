@@ -67,7 +67,7 @@ int ConcatInt8CPUKernel::ReSize() {
   }
   auto input_num = in_tensors_.size();
   concat_param_->input_num_ = input_num;
-  concat_param_->input_shapes_ = reinterpret_cast<const int **>(malloc(sizeof(int *) * input_num));
+  concat_param_->input_shapes_ = reinterpret_cast<int **>(malloc(sizeof(int *) * input_num));
   if (concat_param_->input_shapes_ == nullptr) {
     MS_LOG(ERROR) << "malloc concat_param_->input_shapes_ failed.";
     return RET_ERROR;
@@ -80,8 +80,7 @@ int ConcatInt8CPUKernel::ReSize() {
                     << " failed.";
       return RET_ERROR;
     }
-    memcpy(reinterpret_cast<void *>(const_cast<int *>(concat_param_->input_shapes_[i])), in_shape.data(),
-           sizeof(int) * in_shape.size());
+    memcpy(reinterpret_cast<void *>(concat_param_->input_shapes_[i]), in_shape.data(), sizeof(int) * in_shape.size());
   }
 
   before_axis_size = 1;
@@ -98,7 +97,7 @@ int ConcatInt8CPUKernel::ReSize() {
     MS_LOG(ERROR) << "malloc concat_param_->output_shapes_ failed.";
     return RET_ERROR;
   }
-  memcpy(reinterpret_cast<void *>(const_cast<int *>(concat_param_->output_shapes_)), output_tensor->shape().data(),
+  memcpy(reinterpret_cast<void *>(concat_param_->output_shapes_), output_tensor->shape().data(),
          sizeof(int) * output_dim);
 
   for (size_t i = axis_ + 1; i < output_dim; i++) {
