@@ -62,7 +62,7 @@ TEST_F(MindDataTestSchema, TestAlbumSchema) {
   } else {
     int32_t num_cols = schema->NumColumns();
     MS_LOG(INFO) << "num_cols: " << num_cols << ".";
-    EXPECT_TRUE(num_cols == 7);
+    EXPECT_TRUE(num_cols == 8);
   }
 }
 

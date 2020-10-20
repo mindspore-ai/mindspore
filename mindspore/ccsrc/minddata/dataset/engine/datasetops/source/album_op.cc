@@ -380,7 +380,7 @@ Status AlbumOp::LoadIDTensor(const std::string &file, uint32_t col_num, TensorRo
 Status AlbumOp::LoadEmptyTensor(uint32_t col_num, TensorRow *row) {
   // hack to get the file name without extension, the 1 is to get rid of the backslash character
   TensorPtr empty_tensor;
-  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({}), data_schema_->column(col_num).type(), &empty_tensor));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({0}), data_schema_->column(col_num).type(), &empty_tensor));
   row->push_back(std::move(empty_tensor));
   return Status::OK();
 }

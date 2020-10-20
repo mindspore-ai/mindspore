@@ -8,6 +8,10 @@
       "type": "string",
       "rank": 1
     },
+    "optional" : {
+      "type": "string",
+      "rank": 1
+    },
     "id" : {
       "type": "int64",
       "rank": 0
