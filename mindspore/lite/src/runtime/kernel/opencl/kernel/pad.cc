@@ -79,7 +79,7 @@ int PadOpenCLKernel::Init() {
 
   const std::string source = pad_source;
   const std::string kernel_name = op_format_ == Format_NHWC4 ? "Pad_NHWC4" : "Pad_NC4HW4";
-  const std::string &program_name = kernel_name;
+  const std::string program_name = "Pad";
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 

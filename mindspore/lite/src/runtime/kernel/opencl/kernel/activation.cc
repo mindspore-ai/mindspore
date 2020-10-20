@@ -61,12 +61,11 @@ int ActivationOpenClKernel::Init() {
     MS_LOG(ERROR) << "Activate fun only support dim=4 or 2, but your dim=" << in_size_;
     return RET_ERROR;
   }
-  std::map<int, std::vector<std::string>> Program_Kernel{
-    {ActivationType_LEAKY_RELU, std::vector<std::string>{"LEAKY_RELU", "LeakyRelu"}},
-    {ActivationType_RELU, std::vector<std::string>{"RELU", "Relu"}},
-    {ActivationType_SIGMOID, std::vector<std::string>{"SIGMOID", "Sigmoid"}},
-    {ActivationType_RELU6, std::vector<std::string>{"RELU6", "Relu6"}},
-    {ActivationType_TANH, std::vector<std::string>{"TANH", "Tanh"}}};
+  std::map<int, std::string> Program_Kernel{{ActivationType_LEAKY_RELU, "LeakyRelu"},
+                                            {ActivationType_RELU, "Relu"},
+                                            {ActivationType_SIGMOID, "Sigmoid"},
+                                            {ActivationType_RELU6, "Relu6"},
+                                            {ActivationType_TANH, "Tanh"}};
   if (Program_Kernel.count(type_) == 0) {
     MS_LOG(ERROR) << "schema::ActivationType:" << type_ << "not found";
     return RET_ERROR;
@@ -74,9 +73,10 @@ int ActivationOpenClKernel::Init() {
 
   std::string source = activation_source;
   std::set<std::string> build_options;
-  ocl_runtime_->LoadSource(Program_Kernel[type_][0], source);
-  std::string kernel_name = Program_Kernel[type_][1];
-  ocl_runtime_->BuildKernel(kernel_, Program_Kernel[type_][0], kernel_name, build_options);
+  std::string program_name = "Activation";
+  ocl_runtime_->LoadSource(program_name, source);
+  std::string kernel_name = Program_Kernel[type_];
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
   in_tensors_[0]->SetFormat(op_format_);

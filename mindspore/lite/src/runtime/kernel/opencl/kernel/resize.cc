@@ -60,8 +60,9 @@ int ResizeOpenCLKernel::Init() {
 #else
   std::set<std::string> build_options;
   std::string source = resize_source;
-  ocl_runtime_->LoadSource(kernel_name, source);
-  ocl_runtime_->BuildKernel(kernel_, kernel_name, kernel_name, build_options);
+  std::string program_name = "Resize";
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();

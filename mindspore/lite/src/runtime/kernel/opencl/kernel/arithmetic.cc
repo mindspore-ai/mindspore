@@ -313,6 +313,7 @@ int ArithmeticOpenCLKernel::Init() {
   out_tensors_[0]->SetFormat(format);
   Image2dGetWorkGroupSize();
   InitBuffer();
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 

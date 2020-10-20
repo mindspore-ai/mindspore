@@ -66,6 +66,7 @@ int GatherOpenCLKernel::Init() {
       return RET_ERROR;
     }
   }
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 

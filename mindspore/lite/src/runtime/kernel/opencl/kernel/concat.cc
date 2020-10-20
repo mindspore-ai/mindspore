@@ -122,7 +122,7 @@ int ConcatOpenCLKernel::Init() {
   std::string program_name = "Concat";
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
-
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 

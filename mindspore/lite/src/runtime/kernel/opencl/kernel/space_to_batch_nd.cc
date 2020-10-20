@@ -76,6 +76,7 @@ int SpaceToBatchNDOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 int SpaceToBatchNDOpenCLKernel::InitBuffer() { return RET_OK; }

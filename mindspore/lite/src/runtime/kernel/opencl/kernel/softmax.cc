@@ -125,11 +125,9 @@ int SoftmaxOpenCLKernel::Init() {
     // support 4d tensor
     onexone_flag_ = true;
     kernel_name += "1x1";
-    program_name += "1x1";
   } else {
     onexone_flag_ = false;
     kernel_name += "Axis" + std::to_string(axis_);
-    program_name += "Axis" + std::to_string(axis_);
   }
   kernel_name += "_" + std::string(EnumNameFormat(op_format_));
 #ifdef PROGRAM_WITH_IL
