@@ -103,7 +103,6 @@ void DeConvPostFp32C8(const float *src, float *tmp, const float *bias, float *ds
     }       /*ih*/
   }         /*oc8*/
 
-  PostConvFuncFp32C8(tmp, dst, bias, output_channel, output_plane, conv_param->output_channel_,
-                     conv_param->act_type_ == ActType_Relu, conv_param->act_type_ == ActType_Relu6);
+  PostConvFuncFp32C8(tmp, dst, bias, output_channel, output_plane, conv_param->output_channel_, conv_param->act_type_);
   return;
 }
