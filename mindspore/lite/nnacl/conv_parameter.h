@@ -89,7 +89,6 @@ typedef struct DeConvWg {
 
 typedef struct DeConvWgABuffer {
   bool buf_init_;
-  bool trans_formed_;
   void *middle_buffer_;
   void *dest_buffer_;
 } DeConvWgABuffer;

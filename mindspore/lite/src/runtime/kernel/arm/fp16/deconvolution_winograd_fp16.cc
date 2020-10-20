@@ -75,7 +75,6 @@ int DeConvWinogradFp16CPUKernel::InitParameter() {
     if (unit.use_winograd_) {
       if (deconv_param_->a_buffer_[unit.winograd_.kh_].buf_init_ == false) {
         deconv_param_->a_buffer_[unit.winograd_.kh_].buf_init_ = true;
-        deconv_param_->a_buffer_[unit.winograd_.kh_].trans_formed_ = false;
 
         size = unit.winograd_.kh_ * unit.winograd_.kw_ * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up4_;
         deconv_param_->a_buffer_[unit.winograd_.kh_].middle_buffer_ =
@@ -111,9 +110,6 @@ int DeConvWinogradFp16CPUKernel::DoDeconv(int task_id) {
     int calculate_count = MSMIN(DECONV_WINOGRAD_DEFAULT_TILE,
                                 deconv_param_->in_tile_w_count_ * deconv_param_->in_tile_h_count_ - start_index);
 
-    for (int i = 0; i < DECONV_WINOGRAD_BUFFER_COUNT; i++) {
-      deconv_param_->a_buffer_[i].trans_formed_ = false;
-    }
     DeconvWgFp16(nhwc_input_, tile_in, tile_out, start_index, calculate_count, conv_param_, deconv_param_, task_id);
 
     std::unique_lock<std::mutex> merge_lock(lock_);

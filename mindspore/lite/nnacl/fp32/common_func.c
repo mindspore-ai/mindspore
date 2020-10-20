@@ -56,8 +56,15 @@ void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bi
 
 void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
                         size_t plane_size, size_t plane_stride, size_t relu_type) {
+#ifdef ENABLE_ARM
+  size_t oc4mod = output_channel % C4NUM;
+  size_t oc4div = output_channel - oc4mod;
+  size_t stride_size = (plane_stride - plane_size) * C4NUM * sizeof(float);
+  PostFuncBiasReluC4(out_ptr, c4_out_ptr, bias_ptr, oc4div, oc4mod, plane_size, stride_size, relu_type);
+#else
   PostConvFuncComm(c4_out_ptr, out_ptr, bias_ptr, output_channel, plane_size, plane_stride, output_channel, relu_type,
                    C4NUM);
+#endif
   return;
 }
 

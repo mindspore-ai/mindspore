@@ -53,6 +53,8 @@ void ConvDwFp32Border(float *dst, const float *src, const float *weight, const f
                       size_t in_kh_step, size_t in_kw_step, size_t kernel_w, size_t relu, size_t relu6);
 void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t oc8div, size_t oc8mod,
                         size_t plane_size, size_t stride, size_t relu_type);
+void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t oc4div, size_t oc4mod,
+                        size_t plane_size, size_t plane_stride, size_t relu_type);
 #endif
 
 #ifdef ENABLE_ARM64
