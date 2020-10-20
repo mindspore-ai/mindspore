@@ -35,6 +35,7 @@ struct QuantArg {
   int32_t zeroPoint;
   double var_corr{1};
   double mean_corr{0};
+  std::vector<float> clusters{};
 };
 
 class Tensor : public mindspore::tensor::MSTensor {

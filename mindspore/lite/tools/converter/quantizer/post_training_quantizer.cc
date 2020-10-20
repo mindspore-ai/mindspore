@@ -101,7 +101,7 @@ STATUS DivergInfo::ComputeThreshold() {
   }
 
   if (method_x == kMethodOutlier) {
-    this->percent_result = PercentMethod(min_datas, max_datas);
+    this->percent_result = OutlierMethod(min_datas, max_datas);
     this->best_T = std::max(std::fabs(percent_result.first), std::fabs(percent_result.second));
     return RET_OK;
   }

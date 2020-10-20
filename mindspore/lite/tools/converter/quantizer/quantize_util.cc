@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include <set>
 #include "src/ops/primitive_c.h"
 #include "mindspore/lite/tools/converter/quantizer/general_bitpacking.h"
 #include "src/common/utils.h"
@@ -305,8 +306,8 @@ STATUS PostBitPack(float *weight, size_t shapeSize, size_t bitNum) {
   return RET_OK;
 }
 
-bool SearchLowerBound(const std::vector<float> &data, const size_t &index, const float &max_tmp, float *min_tmp,
-                      size_t *min_idx) {
+static bool SearchLowerBound(const std::vector<float> &data, const size_t &index, const float &max_tmp, float *min_tmp,
+                             size_t *min_idx) {
   size_t length = data.size();
   if (max_tmp - data.at(index) < delta) {
     return false;
@@ -320,8 +321,8 @@ bool SearchLowerBound(const std::vector<float> &data, const size_t &index, const
   return true;
 }
 
-bool SearchUpperBound(const std::vector<float> &data, const size_t &index, float *max_tmp, const float &min_tmp,
-                      size_t *max_idx) {
+static bool SearchUpperBound(const std::vector<float> &data, const size_t &index, float *max_tmp, const float &min_tmp,
+                             size_t *max_idx) {
   size_t length = data.size();
   if (data.at(index) - min_tmp < delta) {
     return false;
@@ -335,7 +336,7 @@ bool SearchUpperBound(const std::vector<float> &data, const size_t &index, float
   return true;
 }
 
-float CalPercentile(const std::vector<float> &datas, const int &outlier_percent) {
+static float CalPercentile(const std::vector<float> &datas, const int &outlier_percent) {
   const int size = datas.size();
   float val = outlier_percent / 100.0 * size;
   int index = std::ceil(val);
@@ -348,7 +349,7 @@ float CalPercentile(const std::vector<float> &datas, const int &outlier_percent)
   return result;
 }
 
-std::pair<float, float> PercentMethod(std::vector<float> min_datas, std::vector<float> max_datas) {
+std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<float> max_datas) {
   std::sort(max_datas.begin(), max_datas.end());
   std::sort(min_datas.begin(), min_datas.end());
   float min_val = CalPercentile(min_datas, percent);
@@ -371,6 +372,64 @@ std::pair<float, float> PercentMethod(std::vector<float> min_datas, std::vector<
   }
   std::pair<float, float> result{min_tmp, max_tmp};
   return result;
+}
+
+static std::vector<float> InitClusters(float *data, size_t elem_count, size_t k) {
+  std::set<float> set_unique{};
+  for (size_t i = 0; i < elem_count; i++) {
+    set_unique.emplace(data[i]);
+  }
+  std::vector<float> data_unique;
+  data_unique.assign(set_unique.begin(), set_unique.end());
+  std::vector<float> clusters{};
+  if (set_unique.size() < k) {
+    return clusters;
+  }
+  // init cluster
+  float ratio = static_cast<float>(data_unique.size()) / (k - 1);
+  std::sort(data_unique.begin(), data_unique.end());
+  for (size_t i = 0; i < k; i++) {
+    size_t index = std::floor(i * ratio);
+    if (i * ratio - index > 0) {
+      clusters.emplace_back((data_unique[index] + data_unique[index + 1]) / 2);
+    } else {
+      clusters.emplace_back(data_unique[index]);
+    }
+  }
+  return clusters;
+}
+
+std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epochs, schema::QuantParamT *quantParam) {
+  std::vector<float> clusters = InitClusters(data, elem_count, k);
+  std::vector<int8_t> clusters_index{};
+  if (clusters.size() < k) {
+    MS_LOG(WARNING) << "K is less than the size of data so KMeans function is not executed.";
+    return clusters_index;
+  }
+  for (size_t epoch = 0; epoch < epochs; epoch++) {
+    clusters_index.clear();
+    std::vector<std::vector<float>> clusters_data(clusters.size());
+    for (size_t i = 0; i < elem_count; i++) {
+      size_t index = 0;
+      float min_distance = pow(data[i] - clusters[0], 2);
+      for (size_t j = 1; j < clusters.size(); j++) {
+        if (pow(data[i] - clusters[j], 2) < min_distance) {
+          min_distance = pow(data[i] - clusters[j], 2);
+          index = j;
+        }
+      }
+      clusters_index.emplace_back(index + INT8_MIN);
+      clusters_data[index].emplace_back(data[i]);
+    }
+    for (size_t j = 0; j < clusters.size(); j++) {
+      if (clusters_data[j].size() > 0) {
+        clusters[j] = std::accumulate(clusters_data[j].begin(), clusters_data[j].end(), 0.0) / clusters_data[j].size();
+      }
+    }
+  }
+  // update data
+  quantParam->clusters = clusters;
+  return clusters_index;
 }
 }  // namespace quant
 }  // namespace lite
