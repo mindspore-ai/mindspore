@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/transpose.h"
+
 #include <vector>
 #include "nnacl/transpose.h"
 #include "schema/model_generated.h"
@@ -29,6 +30,10 @@ using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int maxDimSize = 5;
+}  // namespace
+
 int TransposeCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -90,8 +95,16 @@ int TransposeCPUKernel::TransposeParallel(int task_id) {
   }
   int thread_offset = task_id * thread_h_stride_;
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
-  auto ret =
-    DoTranspose(in_data_, out_data_, in_shape_, out_shape_, param, thread_offset, thread_offset + num_unit_thread);
+
+  int *size = nullptr;
+  int *position = nullptr;
+  if (this->dim_size_ != nullptr && this->position_ != nullptr) {
+    size = this->dim_size_ + task_id * param->num_axes_;
+    position = this->position_ + task_id * param->num_axes_;
+  }
+
+  auto ret = DoTranspose(in_data_, out_data_, in_shape_, out_shape_, param, thread_offset,
+                         thread_offset + num_unit_thread, size, position);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Transpose error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
@@ -120,8 +133,29 @@ int TransposeCPUKernel::Run() {
   }
   in_data_ = reinterpret_cast<float *>(in_tensor->MutableData());
   out_data_ = reinterpret_cast<float *>(out_tensor->MutableData());
+  int dims = out_tensor->shape().size();
+  if (dims > maxDimSize) {
+    dim_size_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * thread_h_num_ * sizeof(int)));
+    if (dim_size_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc data failed";
+      return RET_ERROR;
+    }
+    position_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * thread_h_num_ * sizeof(int)));
+    if (position_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc data failed";
+      context_->allocator->Free(dim_size_);
+      dim_size_ = nullptr;
+      return RET_ERROR;
+    }
+  }
 
   auto ret = ParallelLaunch(this->context_->thread_pool_, TransposeRun, this, thread_h_num_);
+  if (dims > maxDimSize) {
+    context_->allocator->Free(dim_size_);
+    context_->allocator->Free(position_);
+    dim_size_ = nullptr;
+    position_ = nullptr;
+  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Tranpose error error_code[" << ret << "]";
     return ret;

@@ -127,8 +127,30 @@ void TransposeDim5(float *in_data, float *out_data, int *strides, int *out_strid
   }
 }
 
+void TransposeDims(float *in_data, float *out_data, int *strides, int *out_strides, int *perm, int *output_shape,
+                   int h_start, int h_end, int dims, int *size, int *position) {
+  *(size + dims - 1) = 1;
+  for (int i = dims - 1; i > 0; --i) {
+    *(size + i - 1) = *(size + i) * output_shape[i];
+  }
+
+  for (size_t idx = 0; idx < (*size) * output_shape[0]; ++idx) {
+    int pos = idx;
+    int output_idx = 0;
+    int input_idx = 0;
+    for (int i = 0; i < dims; ++i) {
+      *(position + i) = pos / *(size + i);
+      int out_stride = i < dims - 1 ? out_strides[i] : 1;
+      output_idx += (*(position + i) * out_stride);
+      input_idx += (*(position + i) * strides[perm[i]]);
+      pos -= *(position + i) * (*(size + i));
+    }
+    out_data[output_idx] = in_data[input_idx];
+  }
+}
+
 int DoTranspose(float *in_data, float *out_data, int *input_shape, int *output_shape,
-                TransposeParameter *transpose_param, int h_start, int h_end) {
+                TransposeParameter *transpose_param, int h_start, int h_end, int *size, int *position) {
   if (in_data == NULL || out_data == NULL) {
     return NNACL_ERR;
   }
@@ -138,7 +160,7 @@ int DoTranspose(float *in_data, float *out_data, int *input_shape, int *output_s
   int data_size = transpose_param->data_size_;
   int num_axes = transpose_param->num_axes_;
 
-  if (num_axes < 2 || num_axes > 5) {
+  if (num_axes < 2) {
     return NNACL_ERR;
   }
 
@@ -163,6 +185,9 @@ int DoTranspose(float *in_data, float *out_data, int *input_shape, int *output_s
     TransposeDim4(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
   } else if (num_axes == 5) {
     TransposeDim5(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+  } else {
+    TransposeDims(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end, num_axes, size,
+                  position);
   }
   return NNACL_OK;
 }

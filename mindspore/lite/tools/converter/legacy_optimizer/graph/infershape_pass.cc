@@ -92,7 +92,7 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
     auto input_tensor = graph->allTensors[idx].get();
     for (auto &dim : input_tensor->dims) {
       if (dim == 0) {
-        MS_LOG(WARNING) << "One dimension of the input shape is 0, which would be set to 32 as a default value.";
+        MS_LOG(WARNING) << "One dimension of the input shape is 0, which would be set to -1 as a default value.";
         dim = DEFAULT_DIM_VALUE;
       }
     }
