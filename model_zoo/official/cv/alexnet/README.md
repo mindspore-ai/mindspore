@@ -110,7 +110,7 @@ Major parameters in train.py and config.py as follows:
 - running on Ascend
 
   ```
-  python train.py --data_path cifar-10-batches-bin --ckpt_path ckpt > log.txt 2>&1 &
+  python train.py --data_path cifar-10-batches-bin --ckpt_path ckpt > log 2>&1 &
   # or enter script dir, and run the script
   sh run_standalone_train_ascend.sh cifar-10-batches-bin ckpt
   ```
@@ -118,7 +118,7 @@ Major parameters in train.py and config.py as follows:
   After training, the loss value will be achieved as follows:
 
   ```
-  # grep "loss is " train.log
+  # grep "loss is " log
   epoch: 1 step: 1, loss is 2.2791853
   ...
   epoch: 1 step: 1536, loss is 1.9366643
@@ -132,7 +132,7 @@ Major parameters in train.py and config.py as follows:
 - running on GPU
 
   ```
-  python train.py --device_target "GPU" --data_path cifar-10-batches-bin --ckpt_path ckpt > log.txt 2>&1 &
+  python train.py --device_target "GPU" --data_path cifar-10-batches-bin --ckpt_path ckpt > log 2>&1 &
   # or enter script dir, and run the script
   sh run_standalone_train_for_gpu.sh cifar-10-batches-bin ckpt
   ```
@@ -140,7 +140,7 @@ Major parameters in train.py and config.py as follows:
   After training, the loss value will be achieved as follows:
 
   ```
-  # grep "loss is " train.log
+  # grep "loss is " log
   epoch: 1 step: 1, loss is 2.3125906
   ...
   epoch: 30 step: 1560, loss is 0.6687547
@@ -158,30 +158,30 @@ Before running the command below, please check the checkpoint path used for eval
 - running on Ascend
 
   ```
-  python eval.py --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-1_1562.ckpt > log.txt 2>&1 &
+  python eval.py --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-1_1562.ckpt > eval_log.txt 2>&1 &
   # or enter script dir, and run the script
   sh run_standalone_eval_ascend.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-1_1562.ckpt
   ```
 
-  You can view the results through the file "log.txt". The accuracy of the test dataset will be as follows:
+  You can view the results through the file "eval_log". The accuracy of the test dataset will be as follows:
 
   ```
-  # grep "Accuracy: " log.txt
+  # grep "Accuracy: " eval_log
   'Accuracy': 0.8832
   ```
 
 - running on GPU
 
   ```
-  python eval.py --device_target "GPU" --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-30_1562.ckpt > log.txt 2>&1 &
+  python eval.py --device_target "GPU" --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-30_1562.ckpt > eval_log 2>&1 &
   # or enter script dir, and run the script
   sh run_standalone_eval_for_gpu.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-30_1562.ckpt
   ```
 
-  You can view the results through the file "log.txt". The accuracy of the test dataset will be as follows:
+  You can view the results through the file "eval_log". The accuracy of the test dataset will be as follows:
 
   ```
-  # grep "Accuracy: " log.txt
+  # grep "Accuracy: " eval_log
   'Accuracy': 0.88512
   ```
 
