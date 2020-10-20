@@ -73,11 +73,11 @@ STATUS TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_o
         break;
       default:
         MS_LOG(ERROR) << "paddingmode:" << tflite_attr->mode << " don't support";
-        return RET_INVALID_OP_ATTR;
+        return RET_NOT_SUPPORT;
       }
   } else {
     MS_LOG(ERROR) << "this pad:" << node_name << " hasn't been supported";
-    return RET_NOT_SUPPORT;
+    return RET_NOT_FIND_OP;
   }
 
   op->primitive->value.type = schema::PrimitiveType_Pad;

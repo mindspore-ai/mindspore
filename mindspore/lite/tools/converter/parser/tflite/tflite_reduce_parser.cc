@@ -72,7 +72,7 @@ STATUS TfliteReduceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   } else if (std::strcmp(node_name, "ReduceAny") == 0) {
     // attr->mode;
     MS_LOG(ERROR) << "ms-lite haven't supported REDUCE_ANY now";
-    return RET_NOT_FIND_OP;
+    return RET_NOT_SUPPORT;
   }
 
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->axes)) {
