@@ -87,6 +87,9 @@ void ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std:
 std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std::vector<float> &all_scores, float thres,
                           int max_boxes);
 
+/// \brief Calculates the difference between the two images for each element
+bool Subtract(const LiteMat &src1, const LiteMat &src2, LiteMat &dst);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // IMAGE_PROCESS_H_

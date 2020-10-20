@@ -20,6 +20,7 @@
 #include <cmath>
 #include <vector>
 #include <algorithm>
+#include <limits>
 
 namespace mindspore {
 namespace dataset {
@@ -690,6 +691,88 @@ bool Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsi
 
 bool Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue) {
   return ImplementAffine(src, out_img, M, dsize, borderValue);
+}
+
+template <typename T>
+inline void SubtractImpl(const T *src1_ptr, const T *src2_ptr, T *dst, size_t total_size) {
+  for (size_t i = 0; i < total_size; i++) {
+    dst[i] = src1_ptr[i] - src2_ptr[i];
+  }
+}
+
+template <>
+inline void SubtractImpl(const uint8_t *src1_ptr, const uint8_t *src2_ptr, uint8_t *dst, size_t total_size) {
+  for (size_t i = 0; i < total_size; i++) {
+    int val = static_cast<int>(src1_ptr[i]) - src2_ptr[i];
+    dst[i] =
+      std::max<int>(std::numeric_limits<uint8_t>::min(), std::min<int>(std::numeric_limits<uint8_t>::max(), val));
+  }
+}
+
+template <>
+inline void SubtractImpl(const uint16_t *src1_ptr, const uint16_t *src2_ptr, uint16_t *dst, size_t total_size) {
+  for (size_t i = 0; i < total_size; i++) {
+    int val = static_cast<int>(src1_ptr[i]) - src2_ptr[i];
+    dst[i] =
+      std::max<int>(std::numeric_limits<uint16_t>::min(), std::min<int>(std::numeric_limits<uint16_t>::max(), val));
+  }
+}
+
+template <>
+inline void SubtractImpl(const uint32_t *src1_ptr, const uint32_t *src2_ptr, uint32_t *dst, size_t total_size) {
+  for (size_t i = 0; i < total_size; i++) {
+    int64_t val = static_cast<int64_t>(src1_ptr[i]) - src2_ptr[i];
+    dst[i] = std::max<int64_t>(std::numeric_limits<uint32_t>::min(),
+                               std::min<int64_t>(std::numeric_limits<uint32_t>::max(), val));
+  }
+}
+
+bool Subtract(const LiteMat &src1, const LiteMat &src2, LiteMat &dst) {
+  if (src1.width_ != src2.width_ || src1.height_ != src2.height_ || src1.channel_ != src2.channel_) {
+    return false;
+  }
+
+  if (src1.data_type_ != src2.data_type_) {
+    return false;
+  }
+
+  if (dst.IsEmpty()) {
+    dst.Init(src1.width_, src1.height_, src1.channel_, src1.data_type_);
+  } else if (src1.width_ != dst.width_ || src1.height_ != dst.height_ || src1.channel_ != dst.channel_) {
+    return false;
+  } else if (src1.data_type_ != dst.data_type_) {
+    return false;
+  }
+
+  size_t total_size = src1.height_ * src1.width_ * src1.channel_;
+
+  if (src1.data_type_ == LDataType::BOOL) {
+    SubtractImpl<bool>(src1, src2, dst, total_size);
+  } else if (src1.data_type_ == LDataType::INT8) {
+    SubtractImpl<int8_t>(src1, src2, dst, total_size);
+  } else if (src1.data_type_ == LDataType::UINT8) {
+    SubtractImpl<uint8_t>(src1, src2, dst, total_size);
+  } else if (src1.data_type_ == LDataType::INT16) {
+    SubtractImpl<int16_t>(src1, src2, dst, total_size);
+  } else if (src1.data_type_ == LDataType::UINT16) {
+    SubtractImpl<uint16_t>(src1, src2, dst, total_size);
+  } else if (src1.data_type_ == LDataType::INT32) {
+    SubtractImpl<int32_t>(src1, src2, dst, total_size);
+  } else if (src1.data_type_ == LDataType::UINT32) {
+    SubtractImpl<uint32_t>(src1, src2, dst, total_size);
+  } else if (src1.data_type_ == LDataType::INT64) {
+    SubtractImpl<int64_t>(src1, src2, dst, total_size);
+  } else if (src1.data_type_ == LDataType::UINT64) {
+    SubtractImpl<uint64_t>(src1, src2, dst, total_size);
+  } else if (src1.data_type_ == LDataType::FLOAT32) {
+    SubtractImpl<float>(src1, src2, dst, total_size);
+  } else if (src1.data_type_ == LDataType::FLOAT64) {
+    SubtractImpl<double>(src1, src2, dst, total_size);
+  } else {
+    return false;
+  }
+
+  return true;
 }
 
 }  // namespace dataset

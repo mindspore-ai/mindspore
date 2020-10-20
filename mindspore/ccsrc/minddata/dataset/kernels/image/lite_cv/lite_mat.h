@@ -65,6 +65,16 @@ using INT8_C2 = Chn2<int8_t>;
 using INT8_C3 = Chn3<int8_t>;
 using INT8_C4 = Chn4<int8_t>;
 
+using UINT16_C1 = Chn1<uint16_t>;
+using UINT16_C2 = Chn2<uint16_t>;
+using UINT16_C3 = Chn3<uint16_t>;
+using UINT16_C4 = Chn4<uint16_t>;
+
+using INT16_C1 = Chn1<int16_t>;
+using INT16_C2 = Chn2<int16_t>;
+using INT16_C3 = Chn3<int16_t>;
+using INT16_C4 = Chn4<int16_t>;
+
 using UINT32_C1 = Chn1<uint32_t>;
 using UINT32_C2 = Chn2<uint32_t>;
 using UINT32_C3 = Chn3<uint32_t>;
