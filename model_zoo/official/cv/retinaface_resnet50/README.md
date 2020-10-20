@@ -218,9 +218,9 @@ Parameters for both training and evaluation can be set in config.py
   
   ```
   # grep "Val AP" eval.log
-  Easy   Val AP : 0.9437
-  Medium Val AP : 0.9334
-  Hard   Val AP : 0.8904
+  Easy   Val AP : 0.9413
+  Medium Val AP : 0.9325
+  Hard   Val AP : 0.8900
   ```
 
   OR,
@@ -233,9 +233,9 @@ Parameters for both training and evaluation can be set in config.py
   
   ```
   # grep "Val AP" eval.log
-  Easy   Val AP : 0.9437
-  Medium Val AP : 0.9334
-  Hard   Val AP : 0.8904
+  Easy   Val AP : 0.9413
+  Medium Val AP : 0.9325
+  Hard   Val AP : 0.8900
   ```
 
  
@@ -258,8 +258,8 @@ Parameters for both training and evaluation can be set in config.py
 | Loss Function              | MultiBoxLoss + Softmax Cross Entropy                         |
 | outputs                    | bounding box + confidence + landmark                         |
 | Loss                       | 1.200                                                        |
-| Speed                      | 3pcs: 550 ms/step                                            |
-| Total time                 | 3pcs: 8.2 hours                                              |
+| Speed                      | 3pcs: 566 ms/step                                            |
+| Total time                 | 3pcs: 8.43 hours                                              |
 | Parameters (M)             | 27.29M                                                            |
 | Checkpoint for Fine tuning | 336.3M (.ckpt file)                                          |
 | Scripts                    | [retinaface script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/retinaface) |

@@ -71,7 +71,7 @@ def read_dataset(img_path, annotation):
 
     labels = annotation
     anns = np.zeros((0, 15))
-    if not bool(labels):
+    if labels.shape[0] <= 0:
         return anns
     for _, label in enumerate(labels):
         ann = np.zeros((1, 15))
