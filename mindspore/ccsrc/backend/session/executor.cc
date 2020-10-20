@@ -271,7 +271,7 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
   task->session_ = session;
   task->graph_id_ = graph_id;
   task->input_tensors_ = inputs;
-  task->input_need_lock_tensors_ = session->GetNeedLockInputTensors(graph_id, inputs);
+  task->input_need_lock_tensors_ = session->GetInputNeedLockTensors(graph_id, inputs);
   for (auto &tensor : inputs) {
     if (tensor->NeedWait()) {
       if (tensor->IsGraphOutput()) {

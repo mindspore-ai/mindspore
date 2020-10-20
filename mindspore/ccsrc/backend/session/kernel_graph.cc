@@ -1212,6 +1212,25 @@ void KernelGraph::UpdateGraphDynamicAttr() {
   is_dynamic_shape_ = false;
 }
 
+void KernelGraph::SetInputNodes() {
+  input_nodes_.clear();
+  for (const auto &input_node : inputs()) {
+    auto params = AnfAlgo::GetAllOutput(input_node);
+    std::copy(params.begin(), params.end(), std::back_inserter(input_nodes_));
+  }
+}
+
+void KernelGraph::SetOptimizerFlag() {
+  has_optimizer_ = false;
+  for (const auto &cnode : execution_order_) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (kOptOperatorSet.find(AnfAlgo::GetCNodeName(cnode)) != kOptOperatorSet.end()) {
+      has_optimizer_ = true;
+      return;
+    }
+  }
+}
+
 std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
 
 KernelGraph::~KernelGraph() {

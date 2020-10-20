@@ -187,6 +187,8 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   MemoryAlloc(root_graph.get());
   // generate and load task into device
   Load(root_graph);
+  root_graph->SetInputNodes();
+  root_graph->SetOptimizerFlag();
   DumpAllGraphs(all_graphs);
   // return the root_graph id to backend
   auto graph_id = root_graph->graph_id();
