@@ -15,6 +15,7 @@
  */
 
 #include "utils/system/file_system.h"
+
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -75,8 +76,10 @@ bool PosixFileSystem::CreateDir(const string &dir_name) {
   }
   auto result = mkdir(dir_name.c_str(), DEFAULT_MKDIR_MODE);
   if (result != 0) {
-    MS_LOG(ERROR) << "Create the dir(" << dir_name << ") is falire, error(" << errno << ").";
-    return false;
+    if (errno != EEXIST) {
+      MS_LOG(ERROR) << "Create the dir(" << dir_name << ") is falire, error(" << errno << ").";
+      return false;
+    }
   }
   return true;
 }
