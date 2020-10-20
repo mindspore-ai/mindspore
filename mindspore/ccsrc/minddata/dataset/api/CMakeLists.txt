@@ -23,6 +23,7 @@ if (ENABLE_PYTHON)
 endif ()
 
 add_library(cpp-API OBJECT
+        config.cc
         datasets.cc
         iterator.cc
         transforms.cc
