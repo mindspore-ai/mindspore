@@ -23,6 +23,7 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/pk_sampler.h"
 
+#ifndef ENABLE_ANDROID
 #include "minddata/mindrecord/include/shard_distributed_sample.h"
 #include "minddata/mindrecord/include/shard_operator.h"
 #include "minddata/mindrecord/include/shard_pk_sample.h"
@@ -30,6 +31,7 @@
 #include "minddata/mindrecord/include/shard_sequential_sample.h"
 #include "minddata/mindrecord/include/shard_shuffle.h"
 #include "minddata/dataset/util/random.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -150,12 +152,14 @@ std::shared_ptr<Sampler> DistributedSamplerObj::Build() {
   return sampler;
 }
 
+#ifndef ENABLE_ANDROID
 std::shared_ptr<mindrecord::ShardOperator> DistributedSamplerObj::BuildForMindDataset() {
   // runtime mindrecord sampler object
   auto mind_sampler = std::make_shared<mindrecord::ShardDistributedSample>(num_shards_, shard_id_, shuffle_, seed_,
                                                                            num_samples_, offset_);
   return mind_sampler;
 }
+#endif
 
 // PKSampler
 PKSamplerObj::PKSamplerObj(int64_t num_val, bool shuffle, int64_t num_samples)
@@ -181,6 +185,7 @@ std::shared_ptr<Sampler> PKSamplerObj::Build() {
   return sampler;
 }
 
+#ifndef ENABLE_ANDROID
 std::shared_ptr<mindrecord::ShardOperator> PKSamplerObj::BuildForMindDataset() {
   // runtime mindrecord sampler object
   std::shared_ptr<mindrecord::ShardOperator> mind_sampler;
@@ -193,6 +198,7 @@ std::shared_ptr<mindrecord::ShardOperator> PKSamplerObj::BuildForMindDataset() {
 
   return mind_sampler;
 }
+#endif
 
 // RandomSampler
 RandomSamplerObj::RandomSamplerObj(bool replacement, int64_t num_samples)
@@ -214,6 +220,7 @@ std::shared_ptr<Sampler> RandomSamplerObj::Build() {
   return sampler;
 }
 
+#ifndef ENABLE_ANDROID
 std::shared_ptr<mindrecord::ShardOperator> RandomSamplerObj::BuildForMindDataset() {
   // runtime mindrecord sampler object
   bool reshuffle_each_epoch_ = true;
@@ -222,6 +229,7 @@ std::shared_ptr<mindrecord::ShardOperator> RandomSamplerObj::BuildForMindDataset
 
   return mind_sampler;
 }
+#endif
 
 // SequentialSampler
 SequentialSamplerObj::SequentialSamplerObj(int64_t start_index, int64_t num_samples)
@@ -248,12 +256,14 @@ std::shared_ptr<Sampler> SequentialSamplerObj::Build() {
   return sampler;
 }
 
+#ifndef ENABLE_ANDROID
 std::shared_ptr<mindrecord::ShardOperator> SequentialSamplerObj::BuildForMindDataset() {
   // runtime mindrecord sampler object
   auto mind_sampler = std::make_shared<mindrecord::ShardSequentialSample>(num_samples_, start_index_);
 
   return mind_sampler;
 }
+#endif
 
 // SubsetRandomSampler
 SubsetRandomSamplerObj::SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples)
@@ -275,12 +285,14 @@ std::shared_ptr<Sampler> SubsetRandomSamplerObj::Build() {
   return sampler;
 }
 
+#ifndef ENABLE_ANDROID
 std::shared_ptr<mindrecord::ShardOperator> SubsetRandomSamplerObj::BuildForMindDataset() {
   // runtime mindrecord sampler object
   auto mind_sampler = std::make_shared<mindrecord::ShardSample>(indices_, GetSeed());
 
   return mind_sampler;
 }
+#endif
 
 // WeightedRandomSampler
 WeightedRandomSamplerObj::WeightedRandomSamplerObj(std::vector<double> weights, int64_t num_samples, bool replacement)

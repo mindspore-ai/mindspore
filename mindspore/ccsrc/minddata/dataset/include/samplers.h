@@ -19,7 +19,10 @@
 
 #include <vector>
 #include <memory>
+
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -45,10 +48,12 @@ class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
   /// \return Shared pointers to the newly created Sampler
   virtual std::shared_ptr<Sampler> Build() = 0;
 
+#ifndef ENABLE_ANDROID
   /// \brief Virtual function to convert a SamplerObj class into a runtime mindrecord sampler object,
   ///     only override by SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler
   /// \return Shared pointers to the newly created Sampler
   virtual std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() { return nullptr; }
+#endif
 };
 
 class DistributedSamplerObj;
@@ -123,7 +128,9 @@ class DistributedSamplerObj : public SamplerObj {
 
   std::shared_ptr<Sampler> Build() override;
 
+#ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
+#endif
 
   bool ValidateParams() override;
 
@@ -145,7 +152,9 @@ class PKSamplerObj : public SamplerObj {
 
   std::shared_ptr<Sampler> Build() override;
 
+#ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
+#endif
 
   bool ValidateParams() override;
 
@@ -163,7 +172,9 @@ class RandomSamplerObj : public SamplerObj {
 
   std::shared_ptr<Sampler> Build() override;
 
+#ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
+#endif
 
   bool ValidateParams() override;
 
@@ -180,7 +191,9 @@ class SequentialSamplerObj : public SamplerObj {
 
   std::shared_ptr<Sampler> Build() override;
 
+#ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
+#endif
 
   bool ValidateParams() override;
 
@@ -197,7 +210,9 @@ class SubsetRandomSamplerObj : public SamplerObj {
 
   std::shared_ptr<Sampler> Build() override;
 
+#ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
+#endif
 
   bool ValidateParams() override;
 

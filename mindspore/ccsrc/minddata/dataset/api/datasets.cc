@@ -222,7 +222,6 @@ std::shared_ptr<ManifestNode> Manifest(const std::string &dataset_file, const st
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
-#endif
 
 // Function to create a MindDataNode.
 std::shared_ptr<MindDataNode> MindData(const std::string &dataset_file, const std::vector<std::string> &columns_list,
@@ -244,6 +243,7 @@ std::shared_ptr<MindDataNode> MindData(const std::vector<std::string> &dataset_f
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
+#endif
 
 // Function to create a MnistNode.
 std::shared_ptr<MnistNode> Mnist(const std::string &dataset_dir, const std::string &usage,
@@ -961,7 +961,7 @@ Status CLUENode::ValidateParams() {
   }
 
   if (num_samples_ < 0) {
-    std::string err_msg = "CLUENode: Invalid number of samples: " + num_samples_;
+    std::string err_msg = "CLUENode: Invalid number of samples: " + std::to_string(num_samples_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -1200,7 +1200,7 @@ std::vector<std::shared_ptr<DatasetOp>> CocoNode::Build() {
         schema->AddColumn(ColDescriptor(std::string("area"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
       break;
     default:
-      MS_LOG(ERROR) << "CocoNode::Build : Invalid task type: " << task_type;
+      MS_LOG(ERROR) << "CocoNode::Build : Invalid task type";
       return {};
   }
   std::shared_ptr<CocoOp> op =
@@ -1234,7 +1234,7 @@ Status CSVNode::ValidateParams() {
   }
 
   if (num_samples_ < 0) {
-    std::string err_msg = "CSVNode: Invalid number of samples: " + num_samples_;
+    std::string err_msg = "CSVNode: Invalid number of samples: " + std::to_string(num_samples_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -1560,7 +1560,8 @@ std::vector<std::shared_ptr<DatasetOp>> MnistNode::Build() {
 // ValideParams for RandomNode
 Status RandomNode::ValidateParams() {
   if (total_rows_ < 0) {
-    std::string err_msg = "RandomNode: total_rows must be greater than or equal 0, now get " + total_rows_;
+    std::string err_msg =
+      "RandomNode: total_rows must be greater than or equal 0, now get " + std::to_string(total_rows_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -1638,7 +1639,7 @@ Status TextFileNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetFilesParam("TextFileNode", dataset_files_));
 
   if (num_samples_ < 0) {
-    std::string err_msg = "TextFileNode: Invalid number of samples: " + num_samples_;
+    std::string err_msg = "TextFileNode: Invalid number of samples: " + std::to_string(num_samples_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -1858,7 +1859,7 @@ std::vector<std::shared_ptr<DatasetOp>> BatchNode::Build() {
 
 Status BatchNode::ValidateParams() {
   if (batch_size_ <= 0) {
-    std::string err_msg = "Batch: batch_size should be positive integer, but got: " + batch_size_;
+    std::string err_msg = "Batch: batch_size should be positive integer, but got: " + std::to_string(batch_size_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -2158,7 +2159,7 @@ std::vector<std::shared_ptr<DatasetOp>> RepeatNode::Build() {
 Status RepeatNode::ValidateParams() {
   if (repeat_count_ <= 0 && repeat_count_ != -1) {
     std::string err_msg =
-      "Repeat: repeat_count should be either -1 or positive integer, repeat_count_: " + repeat_count_;
+      "Repeat: repeat_count should be either -1 or positive integer, repeat_count_: " + std::to_string(repeat_count_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -2185,7 +2186,7 @@ std::vector<std::shared_ptr<DatasetOp>> ShuffleNode::Build() {
 // Function to validate the parameters for ShuffleNode
 Status ShuffleNode::ValidateParams() {
   if (shuffle_size_ <= 1) {
-    std::string err_msg = "ShuffleNode: Invalid input, shuffle_size: " + shuffle_size_;
+    std::string err_msg = "ShuffleNode: Invalid input, shuffle_size: " + std::to_string(shuffle_size_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -2210,7 +2211,7 @@ std::vector<std::shared_ptr<DatasetOp>> SkipNode::Build() {
 // Function to validate the parameters for SkipNode
 Status SkipNode::ValidateParams() {
   if (skip_count_ <= -1) {
-    std::string err_msg = "Skip: skip_count should not be negative, skip_count: " + skip_count_;
+    std::string err_msg = "Skip: skip_count should not be negative, skip_count: " + std::to_string(skip_count_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -2234,7 +2235,8 @@ std::vector<std::shared_ptr<DatasetOp>> TakeNode::Build() {
 // Function to validate the parameters for TakeNode
 Status TakeNode::ValidateParams() {
   if (take_count_ <= 0 && take_count_ != -1) {
-    std::string err_msg = "Take: take_count should be either -1 or positive integer, take_count: " + take_count_;
+    std::string err_msg =
+      "Take: take_count should be either -1 or positive integer, take_count: " + std::to_string(take_count_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
