@@ -57,73 +57,73 @@ def set_seed(seed):
         TypeError: If seed isn't a int.
 
     Examples:
-        1. If global seed is not set, numpy.random and initializer will choose a random seed:
+        >>> # 1. If global seed is not set, numpy.random and initializer will choose a random seed:
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A2
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W1
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W2
-        Rerun the program will get diferent results:
+        >>> # Rerun the program will get diferent results:
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A3
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A4
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W3
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W4
-
-        2. If global seed is set, numpy.random and initializer will use it:
+        >>>
+        >>> 2. If global seed is set, numpy.random and initializer will use it:
         >>> set_seed(1234)
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A2
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W1
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W2
-        Rerun the program will get the same results:
+        >>> # Rerun the program will get the same results:
         >>> set_seed(1234)
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A2
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W1
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W2
-
-        3. If neither global seed nor op seed is set, mindspore.ops.composite.random_ops and
-        mindspore.nn.probability.distribution will choose a random seed:
+        >>>
+        >>> # 3. If neither global seed nor op seed is set, mindspore.ops.composite.random_ops and
+        >>> # mindspore.nn.probability.distribution will choose a random seed:
         >>> c1 = C.uniform((1, 4)) # C1
         >>> c2 = C.uniform((1, 4)) # C2
-        Rerun the program will get different results:
+        >>> Rerun the program will get different results:
         >>> c1 = C.uniform((1, 4)) # C3
         >>> c2 = C.uniform((1, 4)) # C4
-
-        4. If global seed is set, but op seed is not set, mindspore.ops.composite.random_ops and
-        mindspore.nn.probability.distribution will caculate a seed according to global seed and
-        default op seed. Each call will change the default op seed, thus each call get different
-        results.
+        >>>
+        >>> # 4. If global seed is set, but op seed is not set, mindspore.ops.composite.random_ops and
+        >>> # mindspore.nn.probability.distribution will caculate a seed according to global seed and
+        >>> # default op seed. Each call will change the default op seed, thus each call get different
+        >>> # results.
         >>> set_seed(1234)
         >>> c1 = C.uniform((1, 4)) # C1
         >>> c2 = C.uniform((1, 4)) # C2
-        Rerun the program will get the same results:
+        >>> # Rerun the program will get the same results:
         >>> set_seed(1234)
         >>> c1 = C.uniform((1, 4)) # C1
         >>> c2 = C.uniform((1, 4)) # C2
-
-        5. If both global seed and op seed are set, mindspore.ops.composite.random_ops and
-        mindspore.nn.probability.distribution will caculate a seed according to global seed and
-        op seed counter. Each call will change the op seed counter, thus each call get different
-        results.
+        >>>
+        >>> # 5. If both global seed and op seed are set, mindspore.ops.composite.random_ops and
+        >>> # mindspore.nn.probability.distribution will caculate a seed according to global seed and
+        >>> # op seed counter. Each call will change the op seed counter, thus each call get different
+        >>> # results.
         >>> set_seed(1234)
         >>> c1 = C.uniform((1, 4), seed=2) # C1
         >>> c2 = C.uniform((1, 4), seed=2) # C2
-        Rerun the program will get the same results:
+        >>> Rerun the program will get the same results:
         >>> set_seed(1234)
         >>> c1 = C.uniform((1, 4), seed=2) # C1
         >>> c2 = C.uniform((1, 4), seed=2) # C2
-
-        6. If op seed is set but global seed is not set, 0 will be used as global seed. Then
-        mindspore.ops.composite.random_ops and mindspore.nn.probability.distribution act as in
-        condition 5.
+        >>>
+        >>> # 6. If op seed is set but global seed is not set, 0 will be used as global seed. Then
+        >>> # mindspore.ops.composite.random_ops and mindspore.nn.probability.distribution act as in
+        >>> # condition 5.
         >>> c1 = C.uniform((1, 4), seed=2) # C1
         >>> c2 = C.uniform((1, 4), seed=2) # C2
-        Rerun the program will get the same results:
+        >>> #Rerun the program will get the same results:
         >>> c1 = C.uniform((1, 4), seed=2) # C1
         >>> c2 = C.uniform((1, 4), seed=2) # C2
-
-        7. Recall set_seed() in the program will reset numpy seed and op seed counter of
-        mindspore.ops.composite.random_ops and mindspore.nn.probability.distribution.
+        >>>
+        >>> # 7. Recall set_seed() in the program will reset numpy seed and op seed counter of
+        >>> # mindspore.ops.composite.random_ops and mindspore.nn.probability.distribution.
         >>> set_seed(1234)
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
         >>> c1 = C.uniform((1, 4), seed=2) # C1
