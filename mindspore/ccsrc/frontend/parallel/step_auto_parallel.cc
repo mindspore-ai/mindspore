@@ -248,9 +248,25 @@ std::vector<TypePtr> ExtractOutputTypeByNode(const CNodePtr &node) {
 }
 
 bool IsElementWiseOperator(const std::string &op_name) {
-  static const std::set<std::string> elementwise_op = {ACTIVATION, GELU,       TANH, SOFTMAX, LOG_SOFTMAX, RELU,
-                                                       SQRT,       CAST,       POW,  EXP,     LOG,         COS,
-                                                       ACOS,       LOGICALNOT, NEG,  SQUARE,  SIGMOID};
+  static const std::set<std::string> elementwise_op = {ACTIVATION, GELU,         TANH,
+                                                       SOFTMAX,    LOG_SOFTMAX,  RELU,
+                                                       SQRT,       CAST,         POW,
+                                                       EXP,        LOG,          COS,
+                                                       ACOS,       LOGICALNOT,   NEG,
+                                                       SQUARE,     SIGMOID,      ABS,
+                                                       ACOSH,      ASIN,         ASINH,
+                                                       ATAN,       ATANH,        CEIL,
+                                                       COSH,       EXPM1,        LOG1P,
+                                                       SIN,        SINH,         TAN,
+                                                       RSQRT,      RECIPROCAL,   INV,
+                                                       ROUND,      FLOOR,        SIGN,
+                                                       ERF,        ERFC,         ZEROSLIKE,
+                                                       ONESLIKE,   BESSELI0E,    MOD,
+                                                       ASSIGN,     ASSIGN_ADD,   ATAN2,
+                                                       DIVNONAN,   LOGICALAND,   ELU,
+                                                       LOGICALOR,  RELU6,        SOFTPLUS,
+                                                       SOFTSIGN,   LESS,         LESSEQUAL,
+                                                       BESSELI1E,  GREATEREQUAL, APPROXIMATEEQUAL};
   auto iter = elementwise_op.find(op_name);
   return (iter != elementwise_op.end());
 }
@@ -265,7 +281,10 @@ bool IsSplittableOperator(const std::string &op_name) {
      LOG, REDUCE_MEAN, REAL_DIV, SIGMOID, POW, MAXIMUM, MINIMUM, EQUAL, NOT_EQUAL, LOGICALNOT, GATHERV2, SQRT, CONCAT,
      STRIDEDSLICE, GET_NEXT, CAST, NEG, SQUARE, BATCH_MATMUL, EXPAND_DIMS, SQUEEZE, SPARSE_GATHERV2, TILE, DROPOUT,
      SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, SIGMOID_CROSS_ENTROPY_WITH_LOGITS, SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS,
-     EMBEDDING_LOOKUP, FUSE_BATCH_NORM_EX, SPLIT, BROADCAST_TO};
+     EMBEDDING_LOOKUP, FUSE_BATCH_NORM_EX, SPLIT, BROADCAST_TO, ABS, ACOSH, ASIN, ASINH, ATAN, ATANH, CEIL, COSH,
+     EXPM1, LOG1P, SIN, SINH, TAN, RSQRT, INV, RECIPROCAL, ROUND, FLOOR, SIGN, ERF, ERFC, ZEROSLIKE, ONESLIKE,
+     BESSELI0E, BESSELI1E, FLOORMOD, ASSIGN, ASSIGN_ADD, ATAN2, DIVNONAN, LOGICALAND, LOGICALOR, ELU, RELU6, RELUV2,
+     SOFTPLUS, SOFTSIGN, GREATEREQUAL, LESSEQUAL, LESS, APPROXIMATEEQUAL, MOD};
   // clang-format on
 
   auto iter = splittable_op.find(op_name);
