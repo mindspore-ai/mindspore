@@ -57,7 +57,7 @@ STATUS CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe:
     attr->newWidth = width;
   }
   attr->alignCorners = true;
-  attr->method = schema::ResizeMethod_BILINEAR;
+  attr->method = schema::ResizeMethod_LINEAR;
 
   op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Resize;

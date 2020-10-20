@@ -16,7 +16,7 @@
 #include <vector>
 #include "common/common_test.h"
 #include "nnacl/resize_parameter.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "src/kernel_registry.h"
 
 namespace mindspore {
 
@@ -57,7 +57,7 @@ void TestResizeNearestNeighborFp32::Prepare(const std::vector<int> &input_shape,
   out_tensor_.SetData(output_data);
 
   ResizeParameter param_ = {
-    {}, static_cast<int>(schema::ResizeMethod_NEAREST_NEIGHBOR), output_shape[1], output_shape[2], align_corners};
+    {}, static_cast<int>(schema::ResizeMethod_NEAREST), output_shape[1], output_shape[2], align_corners};
   desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Resize};
   ctx_ = lite::InnerContext();
   ctx_.thread_num_ = thread_num;

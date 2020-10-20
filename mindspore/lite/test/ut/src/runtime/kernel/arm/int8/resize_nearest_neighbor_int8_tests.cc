@@ -19,7 +19,7 @@
 #include "include/context.h"
 #include "src/tensor.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "src/kernel_registry.h"
 #include "nnacl/int8/resize.h"
 
 namespace mindspore {
@@ -63,7 +63,7 @@ void TestResizeNearestNeighborInt8::Prepare(const std::vector<int> &in_shape, co
   inputs.push_back(&in_tensor);
   outputs.push_back(&out_tensor);
 
-  param_.method_ = static_cast<int>(schema::ResizeMethod_NEAREST_NEIGHBOR);
+  param_.method_ = static_cast<int>(schema::ResizeMethod_NEAREST);
   param_.new_width_ = out_shape[2];
   param_.new_height_ = out_shape[1];
   param_.align_corners_ = align_corners;

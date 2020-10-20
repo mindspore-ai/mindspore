@@ -171,6 +171,30 @@ class OnnxSignParser : public OnnxNodeParser {
   OnnxSignParser() : OnnxNodeParser("Sign") {}
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
+
+class OnnxAndParser : public OnnxNodeParser {
+ public:
+  OnnxAndParser() : OnnxNodeParser("And") {}
+  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
+};
+
+class OnnxOrParser : public OnnxNodeParser {
+ public:
+  OnnxOrParser() : OnnxNodeParser("Or") {}
+  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
+};
+
+class OnnxNotParser : public OnnxNodeParser {
+ public:
+  OnnxNotParser() : OnnxNodeParser("Not") {}
+  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
+};
+
+class OnnxRoundParser : public OnnxNodeParser {
+ public:
+  OnnxRoundParser() : OnnxNodeParser("Round") {}
+  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
+};
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ARITHMETIC_OPREATION_PARSER_H

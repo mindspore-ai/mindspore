@@ -15,13 +15,13 @@
  */
 #include <iostream>
 #include <memory>
-#include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/kernel/resize.h"
-#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
+#include "src/common/file_utils.h"
+#include "src/common/log_adapter.h"
+#include "src/runtime/kernel/opencl/kernel/resize.h"
+#include "src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
+#include "src/runtime/opencl/opencl_runtime.h"
+#include "test/ut/src/runtime/kernel/opencl/utils_tests.h"
 
 namespace mindspore {
 class TestResizeOpenCL : public mindspore::CommonTest {
@@ -119,7 +119,7 @@ TEST_F(TestResizeOpenCL, ResizeBilinearFp32) {
   std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f};
   std::vector<float> output_data = {0.0f, 0.5f, 1.0f, 1.0f, 1.0f, 1.5f, 2.0f, 2.0f,
                                     2.0f, 2.5f, 3.0f, 3.0f, 2.0f, 2.5f, 3.0f, 3.0f};
-  RunTestCaseResize(shape, input_data.data(), output_data.data(), false, schema::ResizeMethod_BILINEAR, align_corners);
+  RunTestCaseResize(shape, input_data.data(), output_data.data(), false, schema::ResizeMethod_LINEAR, align_corners);
 }
 
 TEST_F(TestResizeOpenCL, ResizeBilinearFp16) {
@@ -134,7 +134,7 @@ TEST_F(TestResizeOpenCL, ResizeBilinearFp16) {
   std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f};
   std::vector<float16_t> output_data = {0.0f, 0.5f, 1.0f, 1.0f, 1.0f, 1.5f, 2.0f, 2.0f,
                                         2.0f, 2.5f, 3.0f, 3.0f, 2.0f, 2.5f, 3.0f, 3.0f};
-  RunTestCaseResize(shape, input_data.data(), output_data.data(), true, schema::ResizeMethod_BILINEAR, align_corners);
+  RunTestCaseResize(shape, input_data.data(), output_data.data(), true, schema::ResizeMethod_LINEAR, align_corners);
 }
 
 TEST_F(TestResizeOpenCL, ResizeBilinearAlignFp32) {
@@ -148,7 +148,7 @@ TEST_F(TestResizeOpenCL, ResizeBilinearAlignFp32) {
   std::vector<int> shape = {n, h, w, oh, ow, c};
   std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f};
   std::vector<float> output_data = {0.0f, 0.5f, 1.0f, 1.0f, 1.5f, 2.0f, 2.0f, 2.5f, 3.0f};
-  RunTestCaseResize(shape, input_data.data(), output_data.data(), false, schema::ResizeMethod_BILINEAR, align_corners);
+  RunTestCaseResize(shape, input_data.data(), output_data.data(), false, schema::ResizeMethod_LINEAR, align_corners);
 }
 
 TEST_F(TestResizeOpenCL, ResizeNearestNeighborFp32) {
@@ -163,8 +163,7 @@ TEST_F(TestResizeOpenCL, ResizeNearestNeighborFp32) {
   std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f};
   std::vector<float> output_data = {0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
                                     2.0f, 2.0f, 3.0f, 3.0f, 2.0f, 2.0f, 3.0f, 3.0f};
-  RunTestCaseResize(shape, input_data.data(), output_data.data(), false, schema::ResizeMethod_NEAREST_NEIGHBOR,
-                    align_corners);
+  RunTestCaseResize(shape, input_data.data(), output_data.data(), false, schema::ResizeMethod_NEAREST, align_corners);
 }
 
 TEST_F(TestResizeOpenCL, ResizeNearestNeighborFp16) {
@@ -179,7 +178,6 @@ TEST_F(TestResizeOpenCL, ResizeNearestNeighborFp16) {
   std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f};
   std::vector<float16_t> output_data = {0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
                                         2.0f, 2.0f, 3.0f, 3.0f, 2.0f, 2.0f, 3.0f, 3.0f};
-  RunTestCaseResize(shape, input_data.data(), output_data.data(), true, schema::ResizeMethod_NEAREST_NEIGHBOR,
-                    align_corners);
+  RunTestCaseResize(shape, input_data.data(), output_data.data(), true, schema::ResizeMethod_NEAREST, align_corners);
 }
 }  // namespace mindspore

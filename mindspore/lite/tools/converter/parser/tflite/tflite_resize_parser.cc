@@ -15,10 +15,10 @@
  */
 
 #include "tools/converter/parser/tflite/tflite_resize_parser.h"
-#include <vector>
+#include <map>
 #include <memory>
 #include <string>
-#include <map>
+#include <vector>
 
 namespace mindspore {
 namespace lite {
@@ -39,7 +39,7 @@ STATUS TfliteResizeParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
-
+  attr->coordinateTransformMode = schema::CoordinateTransformMode_COMMON;
   std::vector<std::string> node_name_str;
   Split(op->name.data(), &node_name_str, "-");
   const char *node_name = node_name_str.data()->c_str();
@@ -50,8 +50,16 @@ STATUS TfliteResizeParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
       MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
       return RET_NULL_PTR;
     }
-    attr->alignCorners = tfliteAttr->align_corners;
-    attr->method = schema::ResizeMethod_BILINEAR;
+    if (tfliteAttr->align_corners) {
+      attr->alignCorners = tfliteAttr->align_corners;
+      attr->coordinateTransformMode = schema::CoordinateTransformMode_ALIGN_CORNERS;
+    }
+    if (tfliteAttr->half_pixel_centers) {
+      attr->coordinateTransformMode = (attr->coordinateTransformMode == schema::CoordinateTransformMode_COMMON
+                                         ? schema::CoordinateTransformMode_TF_HALF_PIXEL
+                                         : schema::CoordinateTransformMode_ALIGN_CORNERS_WITH_HALF_PIEXL);
+    }
+    attr->method = schema::ResizeMethod_LINEAR;
   } else if (std::strcmp(node_name, "NearestNeighbor") == 0) {
     MS_LOG(DEBUG) << "parse TfliteResizeNearestNeighborParser";
     const auto &tfliteAttr = tflite_op->builtin_options.AsResizeNearestNeighborOptions();
@@ -59,8 +67,17 @@ STATUS TfliteResizeParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
       MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
       return RET_NULL_PTR;
     }
-    attr->alignCorners = tfliteAttr->align_corners;
-    attr->method = schema::ResizeMethod_NEAREST_NEIGHBOR;
+    if (tfliteAttr->align_corners) {
+      attr->alignCorners = tfliteAttr->align_corners;
+      attr->coordinateTransformMode = schema::CoordinateTransformMode_ALIGN_CORNERS;
+    }
+    if (tfliteAttr->half_pixel_centers) {
+      attr->coordinateTransformMode = (attr->coordinateTransformMode == schema::CoordinateTransformMode_COMMON
+                                         ? schema::CoordinateTransformMode_TF_HALF_PIXEL
+                                         : schema::CoordinateTransformMode_ALIGN_CORNERS_WITH_HALF_PIEXL);
+    }
+    attr->method = schema::ResizeMethod_NEAREST;
+    attr->nearestMode = schema::NearestMode_NORMAL;
   } else {
     MS_LOG(ERROR) << "wrong resize type";
     return RET_ERROR;

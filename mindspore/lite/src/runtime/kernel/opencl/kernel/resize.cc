@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include "src/runtime/kernel/opencl/kernel/resize.h"
+#include <map>
 #include <set>
 #include <string>
-#include <map>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/opencl/kernel/resize.h"
 #include "src/runtime/kernel/opencl/cl/resize.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -46,9 +46,9 @@ int ResizeOpenCLKernel::Init() {
     return RET_PARAM_INVALID;
   }
   std::string kernel_name = "resize";
-  if (resize_param->method_ == schema::ResizeMethod_BILINEAR) {
+  if (resize_param->method_ == schema::ResizeMethod_LINEAR) {
     kernel_name += "_bilinear";
-  } else if (resize_param->method_ == schema::ResizeMethod_NEAREST_NEIGHBOR) {
+  } else if (resize_param->method_ == schema::ResizeMethod_NEAREST) {
     kernel_name += "_nearest_neighbor";
   } else {
     MS_LOG(ERROR) << "unsupported resize method:" << resize_param->method_;

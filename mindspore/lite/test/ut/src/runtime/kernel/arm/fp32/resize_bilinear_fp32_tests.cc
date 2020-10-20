@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 #include <vector>
+#include "common/common_test.h"
+#include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
 #include "mindspore/lite/src/tensor.h"
-#include "common/common_test.h"
 #include "nnacl/resize_parameter.h"
-#include "mindspore/lite/src/kernel_registry.h"
 #include "schema/ops_generated.h"
 using mindspore::schema::Format_NHWC;
 
@@ -62,7 +62,7 @@ void TestResizeBilinearFp32::Prepare(const std::vector<int> &input_shape, const 
   out_tensor_.SetData(output_data);
 
   ResizeParameter param_ = {
-    {}, static_cast<int>(schema::ResizeMethod_BILINEAR), output_shape[1], output_shape[2], align_corners};
+    {}, static_cast<int>(schema::ResizeMethod_LINEAR), output_shape[1], output_shape[2], align_corners};
   desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Resize};
   ctx_ = lite::InnerContext();
   ctx_.thread_num_ = thread_num;

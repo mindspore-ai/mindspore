@@ -41,8 +41,8 @@ int ResizeBaseCPUKernel::CheckParameters() {
     return RET_NULL_PTR;
   }
   method_ = parameter->method_;
-  if (method_ != static_cast<int>(schema::ResizeMethod_BILINEAR) &&
-      method_ != static_cast<int>(schema::ResizeMethod_NEAREST_NEIGHBOR)) {
+  if (method_ != static_cast<int>(schema::ResizeMethod_LINEAR) &&
+      method_ != static_cast<int>(schema::ResizeMethod_NEAREST)) {
     MS_LOG(ERROR) << "Resize method should be bilinear or nearest_neighbor, but got " << method_;
     return RET_INVALID_OP_ATTR;
   }
