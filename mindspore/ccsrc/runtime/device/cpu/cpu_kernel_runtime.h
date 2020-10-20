@@ -36,7 +36,7 @@ class CPUKernelRuntime : public KernelRuntime {
   ~CPUKernelRuntime() override = default;
 
   bool Init() override { return true; }
-  bool Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger = nullptr) override;
+  bool Run(session::KernelGraph *graph, bool is_task_sink) override;
   void AssignKernelAddress(session::KernelGraph *kernel_graph);
   void CreateOutputTensors(session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
                            VectorRef *outputs);

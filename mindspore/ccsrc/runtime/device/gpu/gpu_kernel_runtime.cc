@@ -73,6 +73,7 @@ bool GPUKernelRuntime::Init() {
     (*init_nccl_comm_funcptr)();
   }
   device_init_ = true;
+  SetDebugger();
   return ret;
 }
 
@@ -104,17 +105,15 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
   bool read_data = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   std::string kernel_name = kernel->fullname_with_scope();
-  if (debugger) {
-    debugger->SetCurNode(kernel_name);
-    if (dump_enabled) {
-      auto dump_mode = dump_json_parser.dump_mode();
-      // dump the node if dump_mode is 0, which means all kernels, or if this kernel is in the kernels list
-      if ((dump_mode == 0) || ((dump_mode == 1) && dump_json_parser.NeedDump(kernel_name))) {
-        read_data = true;
-      }
-    } else if (debugger->debugger_enabled()) {
-      read_data = debugger->ReadNodeDataRequired();
+  debugger->SetCurNode(kernel_name);
+  if (dump_enabled) {
+    auto dump_mode = dump_json_parser.dump_mode();
+    // dump the node if dump_mode is 0, which means all kernels, or if this kernel is in the kernels list
+    if ((dump_mode == 0) || ((dump_mode == 1) && dump_json_parser.NeedDump(kernel_name))) {
+      read_data = true;
     }
+  } else if (debugger->debugger_enabled()) {
+    read_data = debugger->ReadNodeDataRequired();
   }
   if (!read_data) {
     return;
@@ -169,24 +168,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
       }
     }
   }
-
   debugger->PostExecuteNode();
-}
-
-void UpdateStepNum(Debugger *debugger, bool dump_enabled) {
-  if (debugger && (debugger->debugger_enabled() || dump_enabled)) {
-    auto cur_step_num = debugger->step_num();
-    cur_step_num = cur_step_num + 1;
-    debugger->SetStepNum(cur_step_num);
-  }
-}
-
-void ClearCurrentData(Debugger *debugger, bool dump_enabled) {
-  if (debugger && (debugger->debugger_enabled() || dump_enabled)) {
-    DebugServices *debug_services = debugger->debug_services();
-    TensorLoader *tensor_loader = debug_services->tensor_loader();
-    tensor_loader->EmptyCurrentTensor();
-  }
 }
 }  // namespace
 
@@ -345,7 +327,7 @@ void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
   }
 }
 
-bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger) {
+bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
   bool ret = true;
@@ -368,7 +350,7 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink, Debug
     mem_reuse_util_ = mem_reuse_iter->second;
     MS_EXCEPTION_IF_NULL(mem_reuse_util_);
 
-    ret = RunOneStep(graph, debugger);
+    ret = RunOneStep(graph);
   } else {
     py::gil_scoped_release gil_release;
     ret = LaunchKernel(graph);
@@ -381,28 +363,28 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink, Debug
   return ret;
 }
 
-bool GPUKernelRuntime::RunOneStep(const session::KernelGraph *graph, Debugger *debugger) {
+bool GPUKernelRuntime::RunOneStep(const session::KernelGraph *graph) {
   bool ret = true;
   auto graph_id = graph->graph_id();
   if (!is_first_step_map_[graph_id]) {
     // Normally run graph
-    ret = LaunchKernelDynamic(graph, debugger);
+    ret = LaunchKernelDynamic(graph);
   } else {
     // Mock run first step
-    ret = LaunchKernelDynamic(graph, debugger, true, false);
+    ret = LaunchKernelDynamic(graph, true, false);
     if (ret) {
       // Normally run graph
-      ret = LaunchKernelDynamic(graph, debugger);
+      ret = LaunchKernelDynamic(graph);
     } else {
       // Trigger memory swap
-      ret = SearchMemSwapScheme(graph, debugger);
+      ret = SearchMemSwapScheme(graph);
     }
     is_first_step_map_[graph_id] = false;
   }
   return ret;
 }
 
-bool GPUKernelRuntime::SearchMemSwapScheme(const session::KernelGraph *graph, Debugger *debugger) {
+bool GPUKernelRuntime::SearchMemSwapScheme(const session::KernelGraph *graph) {
   MS_LOG(WARNING) << "Run out of memory and try memory swapping, it may take some time, please wait a moment.";
   bool ret = false;
   ClearKernelOldOutputAndWorkspace(graph);
@@ -416,7 +398,7 @@ bool GPUKernelRuntime::SearchMemSwapScheme(const session::KernelGraph *graph, De
     if (!mem_swap_manager_->RetreatSwapInfo()) {
       return false;
     }
-    ret = LaunchKernelDynamic(graph, debugger, true, false);
+    ret = LaunchKernelDynamic(graph, true, false);
     if (!ret) {
       ClearKernelOldOutputAndWorkspace(graph);
     }
@@ -424,14 +406,14 @@ bool GPUKernelRuntime::SearchMemSwapScheme(const session::KernelGraph *graph, De
   mem_swap_manager_->AssignHostMemory();
 
   // Time profiling
-  ret = LaunchKernelDynamic(graph, debugger, false, true);
+  ret = LaunchKernelDynamic(graph, false, true);
   if (!ret) {
     return ret;
   }
-  return RefineMemSwapScheme(graph, debugger);
+  return RefineMemSwapScheme(graph);
 }
 
-bool GPUKernelRuntime::RefineMemSwapScheme(const session::KernelGraph *graph, Debugger *debugger) {
+bool GPUKernelRuntime::RefineMemSwapScheme(const session::KernelGraph *graph) {
   MS_LOG(WARNING) << "Refine memory swap scheme, it may take some time, please wait a moment.";
   auto &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
@@ -444,7 +426,7 @@ bool GPUKernelRuntime::RefineMemSwapScheme(const session::KernelGraph *graph, De
       bool ret = false;
       while (!ret) {
         mem_swap_manager_->AdjustSwapInPos(kernel, swap_in_task_idx);
-        ret = LaunchKernelDynamic(graph, debugger, true, false);
+        ret = LaunchKernelDynamic(graph, true, false);
         if (!ret) {
           ClearKernelOldOutputAndWorkspace(graph);
           ClearSwapInfo(true);
@@ -583,8 +565,7 @@ void GPUKernelRuntime::ClearKernelWorkspaceAddress(const session::KernelGraph *g
   }
 }
 
-bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, Debugger *debugger, bool mock,
-                                           bool profiling) {
+bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bool mock, bool profiling) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_reuse_util_);
   // Reset the reference count.
@@ -593,10 +574,9 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
   AllocCommunicationOpDynamicRes(graph);
   AllocInplaceNodeMemory(graph);
 
-  debugger_ = debugger;
   bool dump_enabled = GPUKernelRuntime::DumpDataEnabledIteration();
   if (!mock) {
-    UpdateStepNum(debugger, dump_enabled);
+    debugger_->UpdateStepNum();
   }
   auto &kernels = graph->execution_order();
   int exec_order = 1;
@@ -618,7 +598,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
     if (!ret) {
       if (!mock) {
         // invalidate current data collected by the debugger
-        ClearCurrentData(debugger, dump_enabled);
+        debugger_->ClearCurrentData();
       }
       return false;
     }
@@ -639,7 +619,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
         LaunchKernelWithTimeProfiling(kernel, kernel_inputs, kernel_workspaces, kernel_outputs);
       }
       // called once per kernel to collect the outputs to the kernel (does a SyncDeviceToHost)
-      LoadKernelData(debugger, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, exec_order, stream_,
+      LoadKernelData(debugger_.get(), kernel, kernel_inputs, kernel_workspaces, kernel_outputs, exec_order, stream_,
                      dump_enabled);
     }
     exec_order = exec_order + 1;
@@ -647,14 +627,14 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
     if (!UpdateMemorySwapTask(kernel, mock, profiling)) {
       if (!mock) {
         // invalidate current data collected by the debugger
-        ClearCurrentData(debugger, dump_enabled);
+        debugger_->ClearCurrentData();
       }
       return false;
     }
   }
   if (!mock) {
     // collect weights and bias for dump mode
-    if (debugger) debugger->LoadParametersAndConst();
+    debugger_->LoadParametersAndConst();
     CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
   }
   ClearSwapInfo(mock);

@@ -42,7 +42,7 @@ class GPUKernelRuntime : public KernelRuntime {
                                  const std::unordered_set<ValueNodePtr> &value_nodes,
                                  const std::vector<CNodePtr> &execution_order) override;
   void AssignMemory(session::KernelGraph *graph) override;
-  bool Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger = nullptr) override;
+  bool Run(session::KernelGraph *graph, bool is_task_sink) override;
   bool GenDynamicKernel(const session::KernelGraph *graph) override { return true; }
   bool RunDynamicKernelAsync(const session::KernelGraph *graph) override { return true; }
 
@@ -67,11 +67,10 @@ class GPUKernelRuntime : public KernelRuntime {
   void ClearKernelOutputAddress(const session::KernelGraph *graph);
   void ClearKernelWorkspaceAddress(const session::KernelGraph *graph);
   void ClearKernelOldOutputAndWorkspace(const session::KernelGraph *graph);
-  bool RunOneStep(const session::KernelGraph *graph, Debugger *debugger = nullptr);
-  bool SearchMemSwapScheme(const session::KernelGraph *graph, Debugger *debugger = nullptr);
-  bool RefineMemSwapScheme(const session::KernelGraph *graph, Debugger *debugger = nullptr);
-  bool LaunchKernelDynamic(const session::KernelGraph *graph, Debugger *debugger = nullptr, bool mock = false,
-                           bool profiling = false);
+  bool RunOneStep(const session::KernelGraph *graph);
+  bool SearchMemSwapScheme(const session::KernelGraph *graph);
+  bool RefineMemSwapScheme(const session::KernelGraph *graph);
+  bool LaunchKernelDynamic(const session::KernelGraph *graph, bool mock = false, bool profiling = false);
   void LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, const AddressPtrList &inputs,
                                      const AddressPtrList &workspace, const AddressPtrList &outputs);
   bool AttemptMallocMem(const DeviceAddressPtr &device_address, size_t size, bool mock);

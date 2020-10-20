@@ -56,9 +56,9 @@ class KernelRuntime {
   void RunOpClearMemory(const session::KernelGraph *graph);
   static bool DumpDataEnabled();
   static bool DumpDataEnabledIteration();
-  virtual bool LoadData(session::KernelGraph *graph, Debugger *debugger);
+  virtual bool LoadData(session::KernelGraph *graph);
   virtual bool Load(session::KernelGraph *graph, bool is_task_sink);
-  virtual bool Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger = nullptr) = 0;
+  virtual bool Run(session::KernelGraph *graph, bool is_task_sink) = 0;
   virtual bool GenDynamicKernel(const session::KernelGraph *graph) = 0;
   virtual bool RunDynamicKernelAsync(const session::KernelGraph *graph) = 0;
   bool LaunchKernel(const session::KernelGraph *graph);
@@ -88,6 +88,13 @@ class KernelRuntime {
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
   uint32_t device_id() { return device_id_; }
   DeviceAddressPtr AssignSingleOpLaunchMemory(size_t size, const std::string &format, TypeId type);
+
+  // set debugger
+  void SetDebugger() {
+#if !defined(_WIN32) && !defined(_WIN64)
+    debugger_ = Debugger::GetInstance();
+#endif
+  }
 
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -122,8 +129,8 @@ class KernelRuntime {
 
  protected:
   uint32_t device_id_{0};
-#ifdef ENABLE_DEBUGGER
-  Debugger *debugger_;
+#if !defined(_WIN32) && !defined(_WIN64)
+  std::shared_ptr<Debugger> debugger_;
 #endif
   void *stream_ = nullptr;
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
