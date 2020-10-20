@@ -109,7 +109,11 @@ void DeConvWgInputPack(float *src_ptr, float *dst_ptr, int channel, int stride) 
   float *dst = dst_ptr;
 
   for (int ic = 0; ic < ic4div; ic++) {
+#ifdef ENABLE_ARM
+    vst1q_f32(dst, vld1q_f32(src));
+#else
     memcpy(dst, src, C4NUM * sizeof(float));
+#endif
     dst += stride;
     src += C4NUM;
   }
@@ -159,25 +163,27 @@ void MSGemmFloatUnit_4(float *dstOrigin, const float *src, const float *weight, 
                       weight_depth_offset);
 }
 
-void DeConvWgMerge(const float *source, float *dest, size_t srcStride, size_t dstStride, size_t count) {
+void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_stride, size_t count) {
   for (int i = 0; i < count; ++i) {
-    const float *s = source + i * srcStride;
-    float *d = dest + i * dstStride;
+    const float *s = src + i * src_stride;
+    float *d = dst + i * dst_stride;
     for (int j = 0; j < 4; ++j) {
       d[j] += s[j];
     }
   }
+  return;
 }
 
 void _deConvWinograd(float *tile_in, float *tile_out, float *weight_buf, float *tmp_buf, float *at_buf,
-                     float *a_mid_buf, float *trans_a_buf, bool a_trans, float *bt_buf, float *b_tmp_buf, int unit_size,
-                     int w_start, int h_start, ConvParameter *conv_param, DeConvParam *deconv_param) {
+                     float *a_mid_buf, float *trans_a_buf, bool *transfered, float *bt_buf, float *b_tmp_buf,
+                     int unit_size, int w_start, int h_start, ConvParameter *conv_param, DeConvParam *deconv_param) {
   int winograd_plane = unit_size * unit_size;
-  if (!a_trans) {
+  if (!transfered[unit_size]) {
     WinogradMatrixProductLeft(tile_in, at_buf, a_mid_buf, DECONV_WINOGRAD_DEFAULT_UNIT, unit_size,
                               DECONV_WINOGRAD_DEFAULT_UNIT, deconv_param->ic_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
     WinogradMatrixProductRight(a_mid_buf, at_buf, trans_a_buf, unit_size, unit_size, DECONV_WINOGRAD_DEFAULT_UNIT,
                                deconv_param->ic_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
+    transfered[unit_size] = true;
   }
 
   for (int index = 0; index < winograd_plane; index++) {
@@ -274,6 +280,7 @@ void DeconvWg(float *nhwc_input_, float *tile_in, float *tile_out, int start_ind
   }
 
   /* compute */
+  bool transfered[DECONV_WINOGRAD_BUFFER_COUNT] = {false};
   for (int i = 0; i < deconv_param->compute_size_; i++) {
     DeConvComputeUnit *unit = &deconv_param->compute_units_[i];
     if (unit->use_winograd_) {
@@ -289,9 +296,8 @@ void DeconvWg(float *nhwc_input_, float *tile_in, float *tile_out, int start_ind
       float *tmp_b_buf = (float *)unit->winograd_.b_buffer_ + task_id * unit->winograd_.kh_ * unit->winograd_.kw_ *
                                                                 deconv_param->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
       _deConvWinograd(tile_in, tile_out, (float *)unit->weight_, tmp_buf, unit->winograd_.AT_, wg_mid_a_buf,
-                      wg_dst_a_buf, wg_buf->trans_formed_, unit->winograd_.BT_, tmp_b_buf, unit->winograd_.kh_,
-                      unit->w_start_, unit->h_start_, conv_param, deconv_param);
-      wg_buf->trans_formed_ = true;
+                      wg_dst_a_buf, transfered, unit->winograd_.BT_, tmp_b_buf, unit->winograd_.kh_, unit->w_start_,
+                      unit->h_start_, conv_param, deconv_param);
     } else {
       float *tmp_buf = (float *)unit->tmp_buffer_ + task_id * deconv_param->oc_div4_ * unit->w_size_ * unit->h_size_ *
                                                       DECONV_WINOGRAD_DEFAULT_TILE * C4NUM;
