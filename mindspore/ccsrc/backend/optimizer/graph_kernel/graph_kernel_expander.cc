@@ -16,19 +16,20 @@
 
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
 
-#include <vector>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
-#include "backend/session/anf_runtime_algorithm.h"
-#include "pipeline/jit/parse/python_adapter.h"
-#include "mindspore/core/ir/graph_utils.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
-#include "vm/segment_runner.h"
-#include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/session/anf_runtime_algorithm.h"
+#include "mindspore/core/ir/graph_utils.h"
+#include "pipeline/jit/parse/python_adapter.h"
+#include "pybind_api/ir/primitive_py.h"
+#include "runtime/device/kernel_info.h"
+#include "vm/segment_runner.h"
 
 namespace mindspore {
 namespace opt {
@@ -187,9 +188,31 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
 
     // replace origin node.
     (void)mng->Replace(node, graph_kernel_node);
+
+    ToPrimitive(AnfAlgo::GetCNodeFuncGraphPtr(graph_kernel_node));
     changed = true;
   }
   return changed;
+}
+
+void GraphKernelExpander::ToPrimitive(const FuncGraphPtr &func_graph) const {
+  auto todos = TopoSort(func_graph->get_return());
+  std::reverse(todos.begin(), todos.end());
+  auto mng = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  for (const auto &n : todos) {
+    auto cnode = n->cast<CNodePtr>();
+    if (cnode == nullptr) {
+      continue;
+    }
+
+    auto origin_prim = AnfAlgo::GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(origin_prim);
+    if (!origin_prim->isa<PrimitivePy>()) {
+      continue;
+    }
+    cnode->set_input(0, std::make_shared<ValueNode>(std::make_shared<Primitive>(*origin_prim)));
+  }
 }
 
 bool GraphKernelExpander::Run(const FuncGraphPtr &func_graph) {
