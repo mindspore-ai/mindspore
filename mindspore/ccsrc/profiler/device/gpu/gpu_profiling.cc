@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-#include <cxxabi.h>
-#include <cmath>
-#include <chrono>
 #include "profiler/device/gpu/gpu_profiling.h"
+
+#include <cxxabi.h>
+#include <chrono>
+#include <cmath>
 #include "profiler/device/gpu/cupti_interface.h"
 #include "profiler/device/gpu/data_saver.h"
-#include "utils/log_adapter.h"
 #include "pybind_api/api_register.h"
+#include "utils/log_adapter.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace profiler {
@@ -456,6 +458,13 @@ void GPUProfiler::Stop() {
   ClearInst();
 }
 
+void GPUProfiler::SaveExtraProfileData() {
+  for (auto op : profiling_op_) {
+    op.second->SaveProfilingData();
+  }
+  MS_LOG(INFO) << "Save extra profiling data end.";
+}
+
 void GPUProfiler::SaveProfileData() {
   if (profile_data_path_.empty()) {
     MS_LOG(WARNING) << "Profile data path is empty, skip save profile data.";
@@ -464,6 +473,7 @@ void GPUProfiler::SaveProfileData() {
     dataSaver.ParseOpInfo(op_info_map_);
     dataSaver.ParseEvent(events_);
     dataSaver.WriteFile(profile_data_path_);
+    SaveExtraProfileData();
   }
 }
 
@@ -638,6 +648,13 @@ void GPUProfiler::HandleActivityRecord(CUpti_Activity *record) {
   }
 
   AddEvent(std::move(profilingData));
+}
+void GPUProfiler::RegisterProfilingOp(std::shared_ptr<ProfilingOp> node) {
+  if (profiling_op_.find(node->Name()) != profiling_op_.end()) {
+    return;
+  }
+  node->Init();
+  profiling_op_[node->Name()] = node;
 }
 
 void CUPTIAPI GPUProfiler::AllocBuffer(uint8_t **buffer, size_t *size, size_t *maxNumRecords) {

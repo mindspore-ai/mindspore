@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "backend/kernel_compiler/gpu/data/dataset_iterator_kernel.h"
+
 #include <cuda_runtime_api.h>
+#include <memory>
 #include <string>
 #include <vector>
+#include "backend/kernel_compiler/gpu/data/dataset_utils.h"
+#include "profiler/device/gpu/gpu_profiling.h"
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
 #include "runtime/device/gpu/gpu_common.h"
-#include "backend/kernel_compiler/gpu/data/dataset_utils.h"
 
 namespace mindspore {
 namespace kernel {
 using mindspore::device::GpuBufferMgr;
 using mindspore::device::HandleMgr;
 
-DatasetIteratorKernel::DatasetIteratorKernel() : handle_(HandleMgr::INVALID_HANDLE), total_bytes_(0) {}
+DatasetIteratorKernel::DatasetIteratorKernel()
+    : handle_(HandleMgr::INVALID_HANDLE), total_bytes_(0), profiling_enable_(false), profiling_op_(nullptr) {}
 
 DatasetIteratorKernel::~DatasetIteratorKernel() { GpuBufferMgr::GetInstance().Close(handle_); }
 
@@ -60,6 +63,14 @@ bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Gpu Queue(" << queue_name_ << ") Open Failed";
   }
 
+  auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+  profiling_enable_ = profiler_inst->GetEnableFlag();
+  if (profiling_enable_) {
+    std::string path = profiler_inst->ProfileDataPath();
+    profiling_op_ = std::make_shared<GetNextProfiling>(path);
+    profiler_inst->RegisterProfilingOp(profiling_op_);
+  }
   return true;
 }
 
@@ -69,11 +80,21 @@ bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::v
                                    const std::vector<AddressPtr> &outputs, void *stream) {
   void *addr = nullptr;
   size_t len = 0;
+  uint64_t start_time_stamp = 0;
+  uint32_t queue_size = 0;
 
   int repeat = 0;
   while (true) {
+    if (profiling_enable_) {
+      start_time_stamp = profiling_op_->GetTimeStamp();
+      queue_size = GpuBufferMgr::GetInstance().Size(handle_);
+    }
     auto ret = GpuBufferMgr::GetInstance().Front(handle_, &addr, &len);
     if (ret == device::SUCCESS) {
+      if (profiling_enable_) {
+        uint64_t end_time_stamp = profiling_op_->GetTimeStamp();
+        profiling_op_->RecordData(queue_size, start_time_stamp, end_time_stamp);
+      }
       break;
     }
 
@@ -84,10 +105,18 @@ bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::v
         continue;
       } else {
         MS_LOG(ERROR) << "Get data timeout";
+        if (profiling_enable_) {
+          uint64_t end_time_stamp = profiling_op_->GetTimeStamp();
+          profiling_op_->RecordData(queue_size, start_time_stamp, end_time_stamp);
+        }
         return false;
       }
     }
 
+    if (profiling_enable_) {
+      uint64_t end_time_stamp = profiling_op_->GetTimeStamp();
+      profiling_op_->RecordData(queue_size, start_time_stamp, end_time_stamp);
+    }
     MS_LOG(ERROR) << "Get data failed, errcode " << ret;
     return false;
   }
