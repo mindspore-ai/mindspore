@@ -37,7 +37,7 @@ int OpenCLExecutor::Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &ou
         MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->name();
       }
     }
-    kernel::OpenCLKernel *op_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel);
+    auto *op_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel);
     auto cur_outputs = kernel->out_tensors();
     for (auto i = 0; i < cur_outputs.size(); ++i) {
       auto *output = cur_outputs.at(i);

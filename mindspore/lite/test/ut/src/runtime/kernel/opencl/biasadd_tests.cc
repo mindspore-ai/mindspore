@@ -142,7 +142,6 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
     delete param;
     return;
   }
-  biasadd_kernel->SetFormatType(op_format);
   auto ret = biasadd_kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "biasadd kernel init error.";

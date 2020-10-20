@@ -24,6 +24,8 @@
 #include "nnacl/op_base.h"
 #include "src/lite_kernel.h"
 #include "src/common/utils.h"
+#include "src/runtime/opencl/opencl_runtime.h"
+#include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::lite {
 kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -44,9 +46,11 @@ std::vector<size_t> GetCommonLocalSize(const std::vector<size_t> &global, int ma
 
 std::string CLErrorCode(cl_int error_code);
 
-void Write2File(void *mem, const std::string &file_name, int size);
+int WriteToBin(const std::string &file_path, void *data, size_t size);
 
-void PrintTensor(lite::Tensor *tensor, int num = 10, const std::string &out_file = "");
+void PrintTensor(const lite::Tensor *tensor, OpenCLMemType mem_type, int n = 10, const std::string &out_file = "");
+
+void PrintKernelOutput(OpenCLKernel *kernel, int n = 10, const std::string &out_file = "");
 
 std::vector<int> GetNHWCShape(const std::vector<int> &tensor_shape);
 

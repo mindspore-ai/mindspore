@@ -33,8 +33,7 @@ using mindspore::schema::PrimitiveType_FullConnection;
 namespace mindspore::kernel {
 
 int FullConnectionOpenCLKernel::Init() {
-  std::string kernel_name = "FullConnection";
-  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
+  std::string kernel_name = "FullConnection_NHWC4";
   auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
   transposeA = param->a_transpose_;
   if (transposeA) {
@@ -77,15 +76,9 @@ int FullConnectionOpenCLKernel::Init() {
 #endif
 
   PadWeight();
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
-
-int FullConnectionOpenCLKernel::ReSize() { return RET_OK; }
 
 void FullConnectionOpenCLKernel::PadWeight() {
   // ABMCI @ ABCICO = ABMCO
@@ -175,39 +168,6 @@ void FullConnectionOpenCLKernel::PadWeight() {
     }
   }
   allocator->UnmapBuffer(bias_);
-}
-
-int FullConnectionOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t im_dst_x, im_dst_y;
-  auto out_shape = out_tensors_[0]->shape();
-  int n = 1, h = 1, w = 1, c = 1;
-  if (out_tensors_[0]->shape().size() == 2) {
-    n = out_shape[0];
-    c = out_shape[1];
-  } else {
-    n = out_shape[0];
-    h = out_shape[1];
-    w = out_shape[2];
-    c = out_shape[3];
-  }
-  if (op_format_ == schema::Format_NHWC4) {
-    im_dst_x = w * UP_DIV(c, C4NUM);
-    im_dst_y = n * h;
-  } else if (op_format_ == schema::Format_NC4HW4) {
-    im_dst_x = w;
-    im_dst_y = n * UP_DIV(c, C4NUM) * h;
-  } else {
-    MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
-    return RET_ERROR;
-  }
-  size_t img_dtype = CL_FLOAT;
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  img_size->clear();
-  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
-  *img_size = vec;
-  return RET_OK;
 }
 
 int FullConnectionOpenCLKernel::Run() {

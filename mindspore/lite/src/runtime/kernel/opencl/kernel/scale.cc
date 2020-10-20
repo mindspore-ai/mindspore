@@ -46,77 +46,17 @@ ScaleOpenCLKernel::~ScaleOpenCLKernel() {
   }
 }
 
-std::vector<size_t> ScaleOpenCLKernel::InitGlobalSize() const {
-  const size_t global_x = out_tensors_[0]->Width();
-  const size_t global_y = out_tensors_[0]->Height();
-  const size_t global_z = UP_ROUND_DIV(out_tensors_[0]->Channel(), C4NUM);
-  std::vector<size_t> global = {global_x, global_y, global_z};
-  return global;
-}
-
 void ScaleOpenCLKernel::Image2dGetWorkGroupSize() {
   local_size_ = {16, 16};
   if (out_tensors_[0]->shape().size() == 2) {
     size_t H = out_tensors_[0]->shape()[0];
     size_t W = UP_DIV(out_tensors_[0]->shape()[1], C4NUM);
     global_size_ = {W, H};
-    return;
-  }
-  if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
-    size_t H = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    size_t W = out_tensors_[0]->Width();
-    global_size_ = {W, H};
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+  } else {
     size_t H = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
     size_t W = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
     global_size_ = {W, H};
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
-    size_t H = out_tensors_[0]->Batch();
-    size_t W = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    global_size_ = {W, H};
-  } else {
-    MS_LOG(ERROR) << "Unsupport data format " << out_tensors_[0]->GetFormat();
   }
-}
-
-void ScaleOpenCLKernel::BufferGetWorkGroupSize() {
-  uint32_t element_num = out_tensors_[0]->ElementsC4Num();
-  global_size_ = {element_num};
-}
-
-int ScaleOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t im_dst_x, im_dst_y;
-  if (out_tensors_[0]->shape().size() == 2) {
-    im_dst_x = UP_DIV(out_tensors_[0]->shape()[1], C4NUM);
-    im_dst_y = out_tensors_[0]->shape()[0];
-  } else {
-    if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
-      im_dst_x = out_tensors_[0]->Width();
-      im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
-      im_dst_x = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-      im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
-    } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
-      im_dst_y = out_tensors_[0]->Batch();
-      im_dst_x = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    } else {
-      MS_LOG(ERROR) << "Unsupport data format " << out_tensors_[0]->GetFormat();
-      return RET_ERROR;
-    }
-  }
-
-  size_t img_dtype = CL_FLOAT;
-  if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
-    img_dtype = CL_HALF_FLOAT;
-  } else if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-    img_dtype = CL_FLOAT;
-  } else {
-    MS_LOG(ERROR) << "Unsupport data type " << in_tensors_[0]->data_type();
-  }
-  img_size->clear();
-  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
-  *img_size = vec;
-  return RET_OK;
 }
 
 int ScaleOpenCLKernel::InitBuffer() {
@@ -127,6 +67,7 @@ int ScaleOpenCLKernel::InitBuffer() {
     auto allocator = ocl_runtime_->GetAllocator();
     std::vector<size_t> img_size;
     GetImageSize(0, &img_size);
+    img_size[2] = in_tensors_[1]->data_type() == kNumberTypeFloat16 ? CL_HALF_FLOAT : CL_FLOAT;
     if (scale_C_flag_) {
       img_size[1] = 1;
       img_size[0] = UP_DIV(in_tensors_[1]->shape()[0], C4NUM);
@@ -147,57 +88,7 @@ int ScaleOpenCLKernel::InitBuffer() {
                       << in_tensors_[0]->data_type();
         return RET_ERROR;
       }
-    } else if (in_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
-      if (in_tensors_[1]->GetFormat() == schema::Format_NHWC) {
-        if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-          float *scale = new (std::nothrow) float[pack_weight_size];
-          if (scale == nullptr) {
-            MS_LOG(ERROR) << "Malloc buffer failed!";
-            return RET_ERROR;
-          }
-          float *offset = new (std::nothrow) float[pack_weight_size];
-          if (offset == nullptr) {
-            MS_LOG(ERROR) << "Malloc buffer failed!";
-            delete[] scale;
-            return RET_ERROR;
-          }
-          std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-          PackNHWCToNC4HW4<float, float>(in_tensors_[1]->data_c(), scale, batch, plane, channel, to_dtype);
-          PackNHWCToNC4HW4<float, float>(in_tensors_[2]->data_c(), offset, batch, plane, channel, to_dtype);
-          scale_ptr_ = allocator->CreateImageFromHost(scale, in_tensors_[1]->ElementsNum(), img_size);
-          offset_ptr_ = allocator->CreateImageFromHost(offset, in_tensors_[2]->ElementsNum(), img_size);
-          delete[] scale;
-          delete[] offset;
-        } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
-          float16_t *scale = new (std::nothrow) float16_t[pack_weight_size];
-          if (scale == nullptr) {
-            MS_LOG(ERROR) << "Malloc buffer failed!";
-            return RET_ERROR;
-          }
-          float16_t *offset = new (std::nothrow) float16_t[pack_weight_size];
-          if (offset == nullptr) {
-            MS_LOG(ERROR) << "Malloc buffer failed!";
-            delete[] scale;
-            return RET_ERROR;
-          }
-          std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
-          PackNHWCToNC4HW4<float, float16_t>(in_tensors_[1]->data_c(), scale, batch, plane, channel, to_dtype);
-          PackNHWCToNC4HW4<float, float16_t>(in_tensors_[2]->data_c(), offset, batch, plane, channel, to_dtype);
-          scale_ptr_ = allocator->CreateImageFromHost(scale, in_tensors_[1]->ElementsNum(), img_size);
-          offset_ptr_ = allocator->CreateImageFromHost(offset, in_tensors_[2]->ElementsNum(), img_size);
-          delete[] scale;
-          delete[] offset;
-        } else {
-          MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
-                        << in_tensors_[0]->data_type();
-          return RET_ERROR;
-        }
-      } else {
-        MS_LOG(ERROR) << "Unsupport format transpose from " << in_tensors_[1]->GetFormat() << "to "
-                      << in_tensors_[0]->GetFormat();
-        return RET_ERROR;
-      }
-    } else if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
+    } else if (in_tensors_[0]->GetFormat() == schema::Format_NHWC) {
       if (in_tensors_[1]->GetFormat() == schema::Format_NHWC) {
         if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
           float *scale = new (std::nothrow) float[pack_weight_size];
@@ -298,18 +189,6 @@ int ScaleOpenCLKernel::Init() {
     return error_code;
   }
 
-  auto format = op_format_;
-  if (out_tensors_[0]->shape().size() == 2) {
-    format = schema::Format_NC4;
-  }
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(format);
-  if (element_flag_ && in_tensors_[1]->category() != lite::Tensor::Category::CONST) {
-    in_tensors_[1]->SetFormat(format);
-    in_tensors_[2]->SetFormat(format);
-  }
-  out_tensors_[0]->SetFormat(format);
   Image2dGetWorkGroupSize();
   InitBuffer();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";

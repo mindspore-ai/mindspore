@@ -26,27 +26,26 @@ namespace mindspore::kernel {
 
 class MatMulOpenCLKernel : public OpenCLKernel {
  public:
-  explicit MatMulOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs), inShape(MAX_DIMS, 1), outShape(MAX_DIMS, 1) {}
-  ~MatMulOpenCLKernel() override{};
+  MatMulOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                     const std::vector<lite::Tensor *> &outputs)
+      : OpenCLKernel(parameter, inputs, outputs) {}
+  ~MatMulOpenCLKernel() override = default;
 
   int Init() override;
-  int ReSize() override;
   int Run() override;
-  void PadWeight();
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
+  void PadWeight();
+
   cl::Kernel kernel_;
-  void *padWeight_;
+  void *padWeight_{nullptr};
   bool enable_fp16_{false};
   bool transposeA{false};
   bool transposeB{true};
-  int dims;
-  static constexpr int MAX_DIMS = 4;  // max supported matmul dims
-  std::vector<int> inShape;
-  std::vector<int> outShape;
+  int dims{};
+  static constexpr int MAX_DIMS{4};  // max supported matmul dims
+  std::vector<int> inShape{std::vector<int>(MAX_DIMS, 1)};
+  std::vector<int> outShape{std::vector<int>(MAX_DIMS, 1)};
 };
 }  // namespace mindspore::kernel
 

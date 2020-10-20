@@ -25,19 +25,15 @@ namespace mindspore::kernel {
 
 class BatchNormOpenCLKernel : public OpenCLKernel {
  public:
-  explicit BatchNormOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                 const std::vector<lite::Tensor *> &outputs)
+  BatchNormOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                        const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
 
-  ~BatchNormOpenCLKernel() override{};
+  ~BatchNormOpenCLKernel() override = default;
 
   int Init() override;
 
-  int ReSize() override;
-
   int Run() override;
-
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
   cl::Kernel kernel_;

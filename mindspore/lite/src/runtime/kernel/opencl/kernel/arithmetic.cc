@@ -34,79 +34,35 @@ using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
 
-ArithmeticOpenCLKernel::~ArithmeticOpenCLKernel() {}
-
 std::vector<size_t> ArithmeticOpenCLKernel::InitGlobalSize() const {
-  const size_t global_x = out_tensors_[0]->Width();
-  const size_t global_y = out_tensors_[0]->Height();
-  const size_t global_z = UP_ROUND_DIV(out_tensors_[0]->Channel(), 4);
-  std::vector<size_t> global = {global_x, global_y, global_z};
-  return global;
+  auto out_shape = out_tensors_[0]->shape();
+  if (out_shape.size() == 2) {
+    const size_t global_x = 1;
+    const size_t global_y = 1;
+    const size_t global_z = UP_ROUND_DIV(out_shape[1], C4NUM);
+    std::vector<size_t> global = {global_x, global_y, global_z};
+    return global;
+  } else {
+    const size_t global_x = out_shape[2];
+    const size_t global_y = out_shape[1];
+    const size_t global_z = UP_ROUND_DIV(out_shape[3], C4NUM);
+    std::vector<size_t> global = {global_x, global_y, global_z};
+    return global;
+  }
 }
 
 void ArithmeticOpenCLKernel::Image2dGetWorkGroupSize() {
   local_size_ = {16, 16};
-  if (out_tensors_[0]->shape().size() == 2) {
-    size_t H = out_tensors_[0]->shape()[0];
-    size_t W = UP_DIV(out_tensors_[0]->shape()[1], C4NUM);
-    global_size_ = {W, H};
-    return;
-  }
-  if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
-    size_t H = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    size_t W = out_tensors_[0]->Width();
-    global_size_ = {W, H};
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
-    size_t H = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
-    size_t W = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    global_size_ = {W, H};
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
-    size_t H = out_tensors_[0]->Batch();
-    size_t W = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  auto out_shape = out_tensors_[0]->shape();
+  if (out_shape.size() == 2) {
+    size_t H = out_shape[0];
+    size_t W = UP_DIV(out_shape[1], C4NUM);
     global_size_ = {W, H};
   } else {
-    MS_LOG(ERROR) << "Unsupport data format " << out_tensors_[0]->GetFormat();
+    size_t H = out_shape[0] * out_shape[1];
+    size_t W = out_shape[2] * UP_DIV(out_shape[3], C4NUM);
+    global_size_ = {W, H};
   }
-}
-
-void ArithmeticOpenCLKernel::BufferGetWorkGroupSize() {
-  uint32_t element_num = out_tensors_[0]->ElementsC4Num();
-  global_size_ = {element_num};
-}
-
-int ArithmeticOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t im_dst_x, im_dst_y;
-  if (out_tensors_[0]->shape().size() == 2) {
-    im_dst_x = UP_DIV(out_tensors_[0]->shape()[1], C4NUM);
-    im_dst_y = out_tensors_[0]->shape()[0];
-  } else {
-    if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
-      im_dst_x = out_tensors_[0]->Width();
-      im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
-      im_dst_x = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-      im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
-    } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
-      im_dst_y = out_tensors_[0]->Batch();
-      im_dst_x = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    } else {
-      MS_LOG(ERROR) << "Unsupport data format " << out_tensors_[0]->GetFormat();
-      return RET_ERROR;
-    }
-  }
-
-  size_t img_dtype = CL_FLOAT;
-  if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
-    img_dtype = CL_HALF_FLOAT;
-  } else if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-    img_dtype = CL_FLOAT;
-  } else {
-    MS_LOG(ERROR) << "Unsupport data type " << in_tensors_[0]->data_type();
-  }
-  img_size->clear();
-  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
-  *img_size = vec;
-  return RET_OK;
 }
 
 int ArithmeticOpenCLKernel::InitBuffer() {
@@ -119,7 +75,7 @@ int ArithmeticOpenCLKernel::InitBuffer() {
       inputs_weight_ptrs_.push_back(nullptr);
     } else {
       auto allocator = ocl_runtime_->GetAllocator();
-      std::vector<size_t> img_size = GetImage2dShapeFromNHWC(nhwc_shape, op_format_);
+      std::vector<size_t> img_size = GetImage2dShapeFromNHWC(nhwc_shape, schema::Format_NHWC4);
       int pack_weight_size = img_size[0] * img_size[1] * C4NUM;
       int plane = nhwc_shape[1] * nhwc_shape[2];
       int channel = nhwc_shape[3];
@@ -132,22 +88,12 @@ int ArithmeticOpenCLKernel::InitBuffer() {
           return RET_ERROR;
         }
         memset(weight, 0x00, pack_weight_size * data_size);
-        if (op_format_ == schema::Format_NHWC4) {
-          if (in_tensor_->data_type() == kNumberTypeFloat32) {
-            std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-            PackNHWCToNHWC4<float, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
-          } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
-            std::function<float(float16_t)> to_dtype = [](float16_t x) -> float { return static_cast<float>(x); };
-            PackNHWCToNHWC4<float16_t, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
-          }
-        } else if (op_format_ == schema::Format_NC4HW4) {
-          if (in_tensor_->data_type() == kNumberTypeFloat32) {
-            std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-            PackNHWCToNC4HW4<float, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
-          } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
-            std::function<float(float16_t)> to_dtype = [](float16_t x) -> float { return static_cast<float>(x); };
-            PackNHWCToNC4HW4<float16_t, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
-          }
+        if (in_tensor_->data_type() == kNumberTypeFloat32) {
+          std::function<float(float)> to_dtype = [](float x) -> float { return x; };
+          PackNHWCToNHWC4<float, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
+        } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
+          std::function<float(float16_t)> to_dtype = [](float16_t x) -> float { return static_cast<float>(x); };
+          PackNHWCToNHWC4<float16_t, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
         }
         if (batch * plane * channel == 1) {
           // scalar
@@ -163,22 +109,12 @@ int ArithmeticOpenCLKernel::InitBuffer() {
           return RET_ERROR;
         }
         memset(weight, 0x00, pack_weight_size * data_size);
-        if (op_format_ == schema::Format_NHWC4) {
-          if (in_tensor_->data_type() == kNumberTypeFloat32) {
-            std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
-            PackNHWCToNHWC4<float, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
-          } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
-            std::function<float16_t(float16_t)> to_dtype = [](float16_t x) -> float16_t { return x; };
-            PackNHWCToNHWC4<float16_t, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
-          }
-        } else if (op_format_ == schema::Format_NC4HW4) {
-          if (in_tensor_->data_type() == kNumberTypeFloat32) {
-            std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
-            PackNHWCToNC4HW4<float, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
-          } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
-            std::function<float16_t(float16_t)> to_dtype = [](float16_t x) -> float16_t { return x; };
-            PackNHWCToNC4HW4<float16_t, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
-          }
+        if (in_tensor_->data_type() == kNumberTypeFloat32) {
+          std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
+          PackNHWCToNHWC4<float, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
+        } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
+          std::function<float16_t(float16_t)> to_dtype = [](float16_t x) -> float16_t { return x; };
+          PackNHWCToNHWC4<float16_t, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
         }
         if (batch * plane * channel == 1) {
           // scalar
@@ -195,18 +131,11 @@ int ArithmeticOpenCLKernel::InitBuffer() {
 
 int ArithmeticOpenCLKernel::Init() {
   std::string kernel_name;
-
-  const ArithmeticParameter *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
+  auto *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
 
   if (arithmetic_parameter->broadcasting_) {
     element_flag_ = false;
-    if (op_format_ == schema::Format_NHWC4) {
-      kernel_name = "BroadcastNHWC4";
-    } else {
-      kernel_name = "BroadcastNC4HW4";
-      MS_LOG(ERROR) << "Don't support BroadcastNC4HW4 yet";
-      return RET_ERROR;
-    }
+    kernel_name = "BroadcastNHWC4";
   } else {
     kernel_name = "Element";
   }
@@ -302,17 +231,6 @@ int ArithmeticOpenCLKernel::Init() {
     return error_code;
   }
 
-  auto format = schema::Format::Format_NHWC4;
-  if (arithmetic_parameter->ndim_ == 2) {
-    format = schema::Format::Format_NC4;
-  }
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(format);
-  if (element_flag_ && in_tensors_[1]->category() != lite::Tensor::Category::CONST) {
-    in_tensors_[1]->SetFormat(format);
-  }
-  out_tensors_[0]->SetFormat(format);
   Image2dGetWorkGroupSize();
   InitBuffer();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";

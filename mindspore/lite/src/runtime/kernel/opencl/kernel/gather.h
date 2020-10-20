@@ -25,25 +25,19 @@ namespace mindspore::kernel {
 
 class GatherOpenCLKernel : public OpenCLKernel {
  public:
-  explicit GatherOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs), indices_data_(nullptr) {}
+  GatherOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                     const std::vector<lite::Tensor *> &outputs)
+      : OpenCLKernel(parameter, inputs, outputs) {}
 
-  ~GatherOpenCLKernel() override{};
+  ~GatherOpenCLKernel() override = default;
 
   int Init() override;
-
-  int ReSize() override;
-
   int Run() override;
-
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
-
-  int InitBuffer();
+  int InitBuffer() override;
 
  private:
   cl::Kernel kernel_;
-  int32_t *indices_data_;
+  int32_t *indices_data_{nullptr};
 };
 }  // namespace mindspore::kernel
 #endif

@@ -26,18 +26,13 @@ namespace mindspore::kernel {
 
 class PoolingOpenCLKernel : public OpenCLKernel {
  public:
-  explicit PoolingOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                               const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {
-    parameter_ = reinterpret_cast<PoolingParameter *>(parameter);
-  }
-  ~PoolingOpenCLKernel() override{};
+  PoolingOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                      const std::vector<lite::Tensor *> &outputs)
+      : OpenCLKernel(parameter, inputs, outputs), parameter_(reinterpret_cast<PoolingParameter *>(parameter)) {}
+  ~PoolingOpenCLKernel() override = default;
 
   int Init() override;
-  int ReSize() override;
   int Run() override;
-  int InitBuffer();
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
   std::vector<size_t> InitGlobalSize() const;

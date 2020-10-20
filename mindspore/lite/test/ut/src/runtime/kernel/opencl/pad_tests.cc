@@ -60,7 +60,6 @@ void TEST_MAIN(PadParameter *param, Format input_format, Format output_format, F
   if (kernel == nullptr) {
     return;
   }
-  kernel->SetFormatType(op_format);
   kernel->Init();
 
   MS_LOG(DEBUG) << "create SubGraph";

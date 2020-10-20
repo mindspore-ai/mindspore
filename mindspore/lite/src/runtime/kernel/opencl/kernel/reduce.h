@@ -26,15 +26,13 @@
 namespace mindspore::kernel {
 class ReduceOpenCLKernel : public OpenCLKernel {
  public:
-  explicit ReduceOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs)
+  ReduceOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                     const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
-  ~ReduceOpenCLKernel() override{};
+  ~ReduceOpenCLKernel() override = default;
 
   int Init() override;
-  int ReSize() override;
   int Run() override;
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
   void InitNHWCShape();
 
  private:

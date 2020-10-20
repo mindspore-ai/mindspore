@@ -84,14 +84,6 @@ int ToFormatOpenCLKernel::InitNHWC() {
   return RET_OK;
 }
 
-int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t img_height = N_ * H_;
-  size_t img_width = W_ * UP_DIV(C_, C4NUM);
-  size_t img_dtype = ocl_runtime_->GetFp16Enable() ? CL_HALF_FLOAT : CL_FLOAT;
-  *img_size = {img_width, img_height, img_dtype};
-  return RET_OK;
-}
-
 int ToFormatOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   std::vector<size_t> global = {N_ * H_, W_, UP_DIV(C_, C4NUM)};

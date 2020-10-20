@@ -23,22 +23,22 @@
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "schema/model_generated.h"
 #include "nnacl/conv_parameter.h"
+#include "schema/ops_generated.h"
 
 namespace mindspore::kernel {
 
 class ConvolutionOpenCLKernel : public OpenCLKernel {
  public:
-  explicit ConvolutionOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                   const std::vector<lite::Tensor *> &outputs)
+  ConvolutionOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                          const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
-  ~ConvolutionOpenCLKernel() override{};
+  ~ConvolutionOpenCLKernel() override = default;
 
   int Init() override;
   int Run() override;
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
+  int InitBuffer() override;
 
  private:
-  int InitBuffer();
   int InitWeight();
   int InitBias();
   int GenerateWinogradWeight();
@@ -92,7 +92,8 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
     return code_id;
   }
 
-  bool use_fp16_ = false;
+  bool use_fp16_{false};
+  const schema::Format op_format_{schema::Format_NHWC4};
 
   int batch_size_{};
   int CI_{};
@@ -105,16 +106,16 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
   int CO_SLICES_{};
   int KH_{};
   int KW_{};
-  void *packed_weight_ = nullptr;
-  void *packed_bias_ = nullptr;
-  bool has_bias_ = false;
+  void *packed_weight_{nullptr};
+  void *packed_bias_{nullptr};
+  bool has_bias_{false};
 
-  bool use_winograd_ = false;
+  bool use_winograd_{false};
   int TILES_X_{};
   int TILES_Y_{};
   int TILES_XY_{};
-  void *winograd_mem0_ = nullptr;
-  void *winograd_mem1_ = nullptr;
+  void *winograd_mem0_{nullptr};
+  void *winograd_mem1_{nullptr};
 
   cl::Kernel kernel_4x4to36_;
   cl::Kernel kernel_conv_;

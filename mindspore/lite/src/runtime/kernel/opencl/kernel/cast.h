@@ -26,23 +26,19 @@ namespace mindspore::kernel {
 
 class CastOpenCLKernel : public OpenCLKernel {
  public:
-  explicit CastOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                            const std::vector<lite::Tensor *> &outputs)
+  CastOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                   const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
 
-  ~CastOpenCLKernel() override{};
+  ~CastOpenCLKernel() override = default;
 
   int Init() override;
 
-  int ReSize() override;
-
   int Run() override;
 
+ private:
   int GetKernelName(std::string *kernel_name, CastParameter *param);
 
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
-
- private:
   cl::Kernel kernel_;
 };
 

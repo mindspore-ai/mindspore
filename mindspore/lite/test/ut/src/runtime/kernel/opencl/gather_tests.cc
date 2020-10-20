@@ -55,7 +55,6 @@ void test_main_gather(void *input_data, void *correct_data, const std::vector<in
     MS_LOG(INFO) << "new GatherOpenCLKernel failed ";
     return;
   }
-  pkernel->SetFormatType(schema::Format_NC4HW4);
   pkernel->Init();
 
   // to do allocate memory for inputs and outputs

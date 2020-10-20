@@ -33,7 +33,7 @@ using mindspore::schema::PrimitiveType_PReLU;
 
 namespace mindspore::kernel {
 
-void PReluOpenCLKernel::InitBuffer() {
+int PReluOpenCLKernel::InitBuffer() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto weight_tensor = in_tensors_[1];
   if (weight_is_scalar) {
@@ -71,6 +71,7 @@ void PReluOpenCLKernel::InitBuffer() {
     }
     allocator->UnmapBuffer(weight_vector_);
   }
+  return RET_OK;
 }
 
 int PReluOpenCLKernel::Init() {
@@ -84,10 +85,6 @@ int PReluOpenCLKernel::Init() {
   C_ = input_tensor->Channel();
   H_ = input_tensor->Height();
   W_ = input_tensor->Width();
-  if (input_tensor->GetFormat() != schema::Format_NC4HW4 && input_tensor->GetFormat() != schema::Format_NHWC4) {
-    MS_LOG(ERROR) << "PRelu only support Format_NC4HW4 and Format_NHWC4";
-    return mindspore::lite::RET_ERROR;
-  }
   if (batch_size_ != 1) {
     MS_LOG(ERROR) << "Init PRelu kernel failed: Unsupported multi-batch.";
     return RET_ERROR;
@@ -104,12 +101,7 @@ int PReluOpenCLKernel::Init() {
     MS_LOG(ERROR) << "PRelu weight must be float32 or float16";
     return RET_ERROR;
   }
-
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
-  in_ori_format_ = input_tensor->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  input_tensor->SetFormat(op_format_);
-  out_tensors_[0]->SetFormat(op_format_);
 
   std::set<std::string> build_options;
   std::string source = prelu_source;
@@ -137,11 +129,7 @@ int PReluOpenCLKernel::Run() {
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight_vector_);
   }
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, shape);
-  if (op_format_ == schema::Format_NHWC4) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, 2);
-  } else {  // Format_NC4HW4 = 100
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, 100);
-  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, 2);
 
   std::vector<size_t> local = {4, 4, 1};
   std::vector<size_t> global = {static_cast<size_t>(H_), static_cast<size_t>(W_), static_cast<size_t>(CO_SLICES_)};
@@ -150,31 +138,6 @@ int PReluOpenCLKernel::Run() {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
     return mindspore::lite::RET_ERROR;
   }
-  return mindspore::lite::RET_OK;
-}
-
-int PReluOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t im_dst_x, im_dst_y;
-  auto CO_SLICES_ = UP_DIV(C_, C4NUM);
-  if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
-    if (W_ * CO_SLICES_ <= MAX_IMAGE2D_SIZE) {
-      {
-        im_dst_y = batch_size_ * H_;
-        im_dst_x = W_ * CO_SLICES_;
-      }
-    } else {
-      im_dst_y = W_;
-      im_dst_x = batch_size_ * H_ * CO_SLICES_;
-    }
-  } else {
-    im_dst_y = batch_size_ * CO_SLICES_ * H_;
-    im_dst_x = W_;
-  }
-  size_t img_dtype = enable_fp16_ ? CL_HALF_FLOAT : CL_FLOAT;
-  img_size->clear();
-  img_size->push_back(im_dst_x);
-  img_size->push_back(im_dst_y);
-  img_size->push_back(img_dtype);
   return mindspore::lite::RET_OK;
 }
 

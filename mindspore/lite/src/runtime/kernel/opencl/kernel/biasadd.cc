@@ -35,7 +35,7 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
 
-void BiasAddOpenCLKernel::InitBuffer() {
+int BiasAddOpenCLKernel::InitBuffer() {
   int C = in_tensors_[1]->shape()[0];
   int div_ci = UP_DIV(C, C4NUM);
   auto allocator = ocl_runtime_->GetAllocator();
@@ -49,6 +49,7 @@ void BiasAddOpenCLKernel::InitBuffer() {
   memset(BiasAdd_, 0x00, div_ci * C4NUM * fp_size);
   memcpy(BiasAdd_, in_tensors_[1]->data_c(), C * fp_size);
   allocator->UnmapBuffer(BiasAdd_);
+  return RET_OK;
 }
 
 int BiasAddOpenCLKernel::Init() {
@@ -77,10 +78,6 @@ int BiasAddOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << program_name << " Init Done!";
   return mindspore::lite::RET_OK;
 }
@@ -95,7 +92,7 @@ int BiasAddOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_shape_);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, BiasAdd_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, data_type[op_format_]);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, data_type[schema::Format::Format_NHWC4]);
   std::vector<size_t> local = {1, 1};
   std::vector<size_t> global = {static_cast<size_t>(global_size.s[1]), static_cast<size_t>(global_size.s[2])};
   auto ret = ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
@@ -108,30 +105,8 @@ int BiasAddOpenCLKernel::Run() {
 
 cl_int4 BiasAddOpenCLKernel::GetGlobalshape() {
   cl_int4 global_shape = input_shape_;
-  if (op_format_ == schema::Format::Format_NC4) {
-    global_shape.s[1] = global_shape.s[2];
-    global_shape.s[2] = UP_DIV(global_shape.s[3], C4NUM);
-  }
-  if (op_format_ == schema::Format::Format_NC4HW4) {
-    global_shape.s[1] = UP_DIV(global_shape.s[3], C4NUM) * global_shape.s[1];  // c / 4 * H
-  }
-  if (op_format_ == schema::Format::Format_NHWC4) {
-    global_shape.s[2] = UP_DIV(global_shape.s[3], C4NUM) * global_shape.s[2];
-  }
+  global_shape.s[2] = UP_DIV(global_shape.s[3], C4NUM) * global_shape.s[2];
   return global_shape;
-}
-
-int BiasAddOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  cl_int4 img_shape = GetGlobalshape();
-  size_t img_dtype = CL_FLOAT;
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  img_size->clear();
-  img_size->push_back(img_shape.s[2]);
-  img_size->push_back(img_shape.s[1]);
-  img_size->push_back(img_dtype);
-  return mindspore::lite::RET_OK;
 }
 
 kernel::LiteKernel *OpenCLBiasAddKernelCreator(const std::vector<lite::Tensor *> &inputs,

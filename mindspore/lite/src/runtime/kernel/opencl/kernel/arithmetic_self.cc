@@ -41,38 +41,6 @@ using mindspore::schema::PrimitiveType_Square;
 
 namespace mindspore::kernel {
 
-int ArithmeticSelfOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  auto out_shape = out_tensors_[0]->shape();
-  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  size_t im_dst_x, im_dst_y;
-  if (in_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
-    if (in_tensors_[0]->shape().size() == 4) {
-      im_dst_x = out_tensors_[0]->Width() * CO4;
-      im_dst_y = out_tensors_[0]->Height() * out_tensors_[0]->Batch();
-    } else {
-      im_dst_x = UP_DIV(out_shape[1], C4NUM);
-      im_dst_y = out_tensors_[0]->Batch();
-    }
-  } else {
-    if (in_tensors_[0]->shape().size() == 4) {
-      im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * CO4;
-      im_dst_x = out_tensors_[0]->Width();
-    } else {
-      im_dst_y = out_tensors_[0]->Batch() * UP_DIV(out_shape[1], C4NUM);
-      im_dst_x = 1;
-    }
-  }
-  size_t img_dtype = CL_FLOAT;
-  auto enable_fp16_ = ocl_runtime_->GetFp16Enable();
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  img_size->clear();
-  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
-  *img_size = vec;
-  return mindspore::lite::RET_OK;
-}
-
 void ArithmeticSelfOpenCLKernel::GetKernelName(std::string *kernel_name, ArithmeticSelfParameter *param) {
   switch (param->op_parameter_.type_) {
     case PrimitiveType_Abs:
@@ -126,24 +94,9 @@ int ArithmeticSelfOpenCLKernel::Init() {
   }
   auto param = reinterpret_cast<ArithmeticSelfParameter *>(this->op_parameter_);
 
-  auto in_format = op_format_;
-  if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4 && in_format != schema::Format_NC4) {
-    MS_LOG(ERROR) << "input format(" << in_format << ") "
-                  << "format not support!";
-    return mindspore::lite::RET_ERROR;
-  }
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(op_format_);
-
   std::string kernel_name = "ArithmeticSelf";
   GetKernelName(&kernel_name, param);
-  if (in_format == schema::Format_NC4HW4) {
-    kernel_name += "_NC4HW4";
-  } else if (in_format == schema::Format_NHWC4) {
-    kernel_name += "_NHWC4";
-  }
+  kernel_name += "_NHWC4";
   MS_LOG(DEBUG) << "execute kernel name : " << kernel_name;
   std::set<std::string> build_options;
   std::string source = arithmeticself_source;
@@ -153,8 +106,6 @@ int ArithmeticSelfOpenCLKernel::Init() {
 
   return mindspore::lite::RET_OK;
 }
-
-int ArithmeticSelfOpenCLKernel::ReSize() { return mindspore::lite::RET_OK; }
 
 void ArithmeticSelfGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;

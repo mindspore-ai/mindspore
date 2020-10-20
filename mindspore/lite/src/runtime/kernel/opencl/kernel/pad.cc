@@ -30,10 +30,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PaddingMode_CONSTANT;
 using mindspore::schema::PrimitiveType_Pad;
-using mindspore::schema::Format::Format_NC4HW4;
-using mindspore::schema::Format::Format_NCHW;
-using mindspore::schema::Format::Format_NHWC;
-using mindspore::schema::Format::Format_NHWC4;
 
 namespace mindspore::kernel {
 
@@ -41,9 +37,6 @@ int PadOpenCLKernel::Init() {
   auto param = reinterpret_cast<PadParameter *>(op_parameter_);
   std::set<std::string> build_options;
 
-  if (op_format_ != Format_NHWC4 && op_format_ != Format_NC4HW4) {
-    MS_LOG(ERROR) << "op_format_ " << op_format_ << " not support!";
-  }
   if (in_tensors_.empty()) {
     MS_LOG(ERROR) << "PadOpenCLKernel in_tensors is empty";
     return RET_ERROR;
@@ -63,10 +56,6 @@ int PadOpenCLKernel::Init() {
 
   auto input_tensor = in_tensors_[0];
   auto output_tensor = out_tensors_[0];
-  in_ori_format_ = input_tensor->GetFormat();
-  out_ori_format_ = output_tensor->GetFormat();
-  input_tensor->SetFormat(op_format_);
-  output_tensor->SetFormat(op_format_);
 
   CI_ = input_tensor->Channel();
   IH_ = input_tensor->Height();
@@ -78,36 +67,12 @@ int PadOpenCLKernel::Init() {
   CO_SLICES_ = UP_DIV(CO_, C4NUM);
 
   const std::string source = pad_source;
-  const std::string kernel_name = op_format_ == Format_NHWC4 ? "Pad_NHWC4" : "Pad_NC4HW4";
   const std::string program_name = "Pad";
+  const std::string kernel_name = "Pad_NHWC4";
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 
   MS_LOG(DEBUG) << "Pad Init Done!";
-  return RET_OK;
-}
-
-int PadOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t im_dst_x, im_dst_y;
-  if (in_tensors_[0]->GetFormat() == Format_NHWC4) {
-    if (OW_ * CO_SLICES_ <= MAX_IMAGE2D_SIZE) {
-      {
-        im_dst_x = OW_ * CO_SLICES_;
-        im_dst_y = OH_;
-      }
-    } else {
-      im_dst_x = OH_ * CO_SLICES_;
-      im_dst_y = OW_;
-    }
-  } else {
-    im_dst_y = OH_ * CO_SLICES_;
-    im_dst_x = OW_;
-  }
-  size_t img_dtype = ocl_runtime_->GetFp16Enable() ? CL_HALF_FLOAT : CL_FLOAT;
-  img_size->clear();
-  img_size->push_back(im_dst_x);
-  img_size->push_back(im_dst_y);
-  img_size->push_back(img_dtype);
   return RET_OK;
 }
 

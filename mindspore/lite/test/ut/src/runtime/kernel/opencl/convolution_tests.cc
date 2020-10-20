@@ -170,7 +170,6 @@ void TEST_MAIN(const std::string &attr, Format input_format, Format output_forma
   std::vector<lite::Tensor *> inputs{&input, &weight, &bias};
   std::vector<lite::Tensor *> outputs{&output};
   auto kernel = std::make_unique<ConvolutionOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  kernel->SetFormatType(op_format);
   kernel->Init();
 
   MS_LOG(DEBUG) << "create SubGraph";

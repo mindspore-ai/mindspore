@@ -84,7 +84,6 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
     delete param;
     return;
   }
-  cast_kernel->SetFormatType(schema::Format_NC4HW4);
   cast_kernel->Init();
   // to do allocate memory for inputs and outputs
   for (auto &input_tensor : inputs) {
@@ -171,7 +170,6 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
     delete param;
     return;
   }
-  cast_kernel->SetFormatType(schema::Format_NC4HW4);
   cast_kernel->Init();
   // to do allocate memory for inputs and outputs
   for (auto &input_tensor : inputs) {

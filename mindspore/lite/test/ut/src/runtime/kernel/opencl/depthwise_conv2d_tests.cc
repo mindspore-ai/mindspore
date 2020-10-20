@@ -101,7 +101,6 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
     delete[] packed_input;
     return;
   }
-  pKernel->SetFormatType(format);
   pKernel->Init();
 
   std::vector<kernel::LiteKernel *> kernels{pKernel.release()};
