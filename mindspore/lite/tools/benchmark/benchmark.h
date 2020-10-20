@@ -228,7 +228,7 @@ class MS_API Benchmark {
 
  private:
   BenchmarkFlags *flags_;
-  session::LiteSession *session_;
+  session::LiteSession *session_{nullptr};
   std::vector<mindspore::tensor::MSTensor *> ms_inputs_;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> ms_outputs_;
   std::unordered_map<std::string, CheckTensor *> benchmark_data_;
