@@ -35,6 +35,17 @@ namespace dataset {
 #define B2GRAY 29
 #define GRAYSHIFT 8
 
+#define YSCALE 0x0101
+#define UTOB (-128)
+#define UTOG 25
+#define VTOR (-102)
+#define VTOG 52
+#define YTOG 18997
+#define YTOGB (-1160)
+#define BTOB (UTOB * 128 + YTOGB)
+#define BTOG (UTOG * 128 + VTOG * 128 + YTOGB)
+#define BTOR (VTOR * 128 + YTOGB)
+
 enum PaddBorderType { PADD_BORDER_CONSTANT = 0, PADD_BORDER_REPLICATE = 1 };
 
 struct BoxesConfig {
@@ -69,6 +80,10 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<
 /// \brief padd image, the channel supports is 3 and 1
 bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r);
+
+bool ExtractChannel(const LiteMat &src, LiteMat &dst, int col);
+
+bool Split(const LiteMat &src, std::vector<LiteMat> &mv);
 
 /// \brief Apply affine transformation for 1 channel image
 bool Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue);

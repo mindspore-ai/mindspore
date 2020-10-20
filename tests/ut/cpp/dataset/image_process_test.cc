@@ -19,7 +19,6 @@
 #include "lite_cv/image_process.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/types_c.h>
-#include "utils/log_adapter.h"
 
 #include <fstream>
 
@@ -43,32 +42,22 @@ void CompareMat(cv::Mat cv_mat, LiteMat lite_mat) {
   ASSERT_TRUE(cv_c == lite_c);
 }
 
-LiteMat Lite3CImageProcess(LiteMat &lite_mat_bgr) {
+void Lite3CImageProcess(LiteMat &lite_mat_bgr, LiteMat &lite_norm_mat_cut) {
   bool ret;
   LiteMat lite_mat_resize;
   ret = ResizeBilinear(lite_mat_bgr, lite_mat_resize, 256, 256);
-  if (!ret) {
-    MS_LOG(ERROR) << "ResizeBilinear error";
-  }
+  ASSERT_TRUE(ret == true);
   LiteMat lite_mat_convert_float;
   ret = ConvertTo(lite_mat_resize, lite_mat_convert_float, 1.0);
-  if (!ret) {
-    MS_LOG(ERROR) << "ConvertTo error";
-  }
+  ASSERT_TRUE(ret == true);
 
   LiteMat lite_mat_crop;
   ret = Crop(lite_mat_convert_float, lite_mat_crop, 16, 16, 224, 224);
-  if (!ret) {
-    MS_LOG(ERROR) << "Crop error";
-  }
-
+  ASSERT_TRUE(ret == true);
   std::vector<float> means = {0.485, 0.456, 0.406};
   std::vector<float> stds = {0.229, 0.224, 0.225};
-
-  LiteMat lite_norm_mat_cut;
   SubStractMeanNormalize(lite_mat_crop, lite_norm_mat_cut, means, stds);
-
-  return lite_norm_mat_cut;
+  return;
 }
 
 cv::Mat cv3CImageProcess(cv::Mat &image) {
@@ -103,11 +92,25 @@ cv::Mat cv3CImageProcess(cv::Mat &image) {
   return imgR2;
 }
 
+TEST_F(MindDataImageProcess, testRGB) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+
+  cv::Mat rgba_mat;
+  cv::cvtColor(image, rgba_mat, CV_BGR2RGB);
+
+  bool ret = false;
+  LiteMat lite_mat_rgb;
+  ret = InitFromPixel(rgba_mat.data, LPixelType::RGB, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_rgb);
+  ASSERT_TRUE(ret == true);
+
+  cv::Mat dst_image(lite_mat_rgb.height_, lite_mat_rgb.width_, CV_8UC3, lite_mat_rgb.data_ptr_);
+}
+
 TEST_F(MindDataImageProcess, test3C) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
   cv::Mat cv_image = cv3CImageProcess(image);
-  // cv::imwrite("/home/xlei/test_3cv.jpg", cv_image);
 
   // convert to RGBA for Android bitmap(rgba)
   cv::Mat rgba_mat;
@@ -117,34 +120,142 @@ TEST_F(MindDataImageProcess, test3C) {
   LiteMat lite_mat_bgr;
   ret =
     InitFromPixel(rgba_mat.data, LPixelType::RGBA2BGR, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_bgr);
-  if (!ret) {
-    MS_LOG(ERROR) << "Init From RGBA error";
-  }
-  LiteMat lite_norm_mat_cut = Lite3CImageProcess(lite_mat_bgr);
+  ASSERT_TRUE(ret == true);
+  LiteMat lite_norm_mat_cut;
+  Lite3CImageProcess(lite_mat_bgr, lite_norm_mat_cut);
 
   cv::Mat dst_image(lite_norm_mat_cut.height_, lite_norm_mat_cut.width_, CV_32FC3, lite_norm_mat_cut.data_ptr_);
-  //  cv::imwrite("/home/xlei/test_3clite.jpg", dst_image);
-
   CompareMat(cv_image, lite_norm_mat_cut);
 }
 
-LiteMat Lite1CImageProcess(LiteMat &lite_mat_bgr) {
+bool ReadYUV(const char *filename, int w, int h, uint8_t **data) {
+  FILE *f = fopen(filename, "rb");
+  if (f == nullptr) {
+    return false;
+  }
+  fseek(f, 0, SEEK_END);
+  int size = ftell(f);
+  int expect_size = w * h + 2 * ((w + 1) / 2) * ((h + 1) / 2);
+  if (size != expect_size) {
+    fclose(f);
+    return false;
+  }
+  fseek(f, 0, SEEK_SET);
+  *data = (uint8_t *)malloc(size);
+  size_t re = fread(*data, 1, size, f);
+  if (re != size) {
+    fclose(f);
+    return false;
+  }
+  fclose(f);
+  return true;
+}
+
+TEST_F(MindDataImageProcess, testNV21ToBGR) {
+  //  ffmpeg -i ./data/dataset/apple.jpg  -s 1024*800 -pix_fmt nv21 ./data/dataset/yuv/test_nv21.yuv
+  const char *filename = "data/dataset/yuv/test_nv21.yuv";
+  int w = 1024;
+  int h = 800;
+  uint8_t *yuv_data = nullptr;
+  bool ret = ReadYUV(filename, w, h, &yuv_data);
+  ASSERT_TRUE(ret == true);
+
+  cv::Mat yuvimg(h * 3 / 2, w, CV_8UC1);
+  memcpy(yuvimg.data, yuv_data, w * h * 3 / 2);
+  cv::Mat rgbimage;
+
+  cv::cvtColor(yuvimg, rgbimage, cv::COLOR_YUV2BGR_NV21);
+
+  LiteMat lite_mat_bgr;
+
+  ret = InitFromPixel(yuv_data, LPixelType::NV212BGR, LDataType::UINT8, w, h, lite_mat_bgr);
+  ASSERT_TRUE(ret == true);
+  cv::Mat dst_image(lite_mat_bgr.height_, lite_mat_bgr.width_, CV_8UC3, lite_mat_bgr.data_ptr_);
+}
+
+TEST_F(MindDataImageProcess, testNV12ToBGR) {
+  //  ffmpeg -i ./data/dataset/apple.jpg  -s 1024*800 -pix_fmt nv12 ./data/dataset/yuv/test_nv12.yuv
+  const char *filename = "data/dataset/yuv/test_nv12.yuv";
+  int w = 1024;
+  int h = 800;
+  uint8_t *yuv_data = nullptr;
+  bool ret = ReadYUV(filename, w, h, &yuv_data);
+  ASSERT_TRUE(ret == true);
+
+  cv::Mat yuvimg(h * 3 / 2, w, CV_8UC1);
+  memcpy(yuvimg.data, yuv_data, w * h * 3 / 2);
+  cv::Mat rgbimage;
+
+  cv::cvtColor(yuvimg, rgbimage, cv::COLOR_YUV2BGR_NV12);
+  LiteMat lite_mat_bgr;
+  ret = InitFromPixel(yuv_data, LPixelType::NV122BGR, LDataType::UINT8, w, h, lite_mat_bgr);
+  ASSERT_TRUE(ret == true);
+  cv::Mat dst_image(lite_mat_bgr.height_, lite_mat_bgr.width_, CV_8UC3, lite_mat_bgr.data_ptr_);
+}
+
+TEST_F(MindDataImageProcess, testExtractChannel) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  cv::Mat dst_image;
+  cv::extractChannel(src_image, dst_image, 2);
+  // convert to RGBA for Android bitmap(rgba)
+  cv::Mat rgba_mat;
+  cv::cvtColor(src_image, rgba_mat, CV_BGR2RGBA);
+
+  bool ret = false;
+  LiteMat lite_mat_bgr;
+  ret =
+    InitFromPixel(rgba_mat.data, LPixelType::RGBA2BGR, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_bgr);
+  ASSERT_TRUE(ret == true);
+
+  LiteMat lite_B;
+  ret = ExtractChannel(lite_mat_bgr, lite_B, 0);
+  ASSERT_TRUE(ret == true);
+
+  LiteMat lite_R;
+  ret = ExtractChannel(lite_mat_bgr, lite_R, 2);
+  ASSERT_TRUE(ret == true);
+  cv::Mat dst_imageR(lite_R.height_, lite_R.width_, CV_8UC1, lite_R.data_ptr_);
+  // cv::imwrite("./test_lite_r.jpg", dst_imageR);
+}
+
+TEST_F(MindDataImageProcess, testSplit) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  std::vector<cv::Mat> dst_images;
+  cv::split(src_image, dst_images);
+  // convert to RGBA for Android bitmap(rgba)
+  cv::Mat rgba_mat;
+  cv::cvtColor(src_image, rgba_mat, CV_BGR2RGBA);
+
+  bool ret = false;
+  LiteMat lite_mat_bgr;
+  ret =
+    InitFromPixel(rgba_mat.data, LPixelType::RGBA2BGR, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_bgr);
+  ASSERT_TRUE(ret == true);
+  std::vector<LiteMat> lite_all;
+  ret = Split(lite_mat_bgr, lite_all);
+  ASSERT_TRUE(ret == true);
+  ASSERT_TRUE(lite_all.size() == 3);
+  LiteMat lite_r = lite_all[2];
+  cv::Mat dst_imageR(lite_r.height_, lite_r.width_, CV_8UC1, lite_r.data_ptr_);
+}
+
+void Lite1CImageProcess(LiteMat &lite_mat_bgr, LiteMat &lite_norm_mat_cut) {
   LiteMat lite_mat_resize;
-  ResizeBilinear(lite_mat_bgr, lite_mat_resize, 256, 256);
+  int ret = ResizeBilinear(lite_mat_bgr, lite_mat_resize, 256, 256);
+  ASSERT_TRUE(ret == true);
   LiteMat lite_mat_convert_float;
-  ConvertTo(lite_mat_resize, lite_mat_convert_float);
-
+  ret = ConvertTo(lite_mat_resize, lite_mat_convert_float);
+  ASSERT_TRUE(ret == true);
   LiteMat lite_mat_cut;
-
-  Crop(lite_mat_convert_float, lite_mat_cut, 16, 16, 224, 224);
-
+  ret = Crop(lite_mat_convert_float, lite_mat_cut, 16, 16, 224, 224);
+  ASSERT_TRUE(ret == true);
   std::vector<float> means = {0.485};
   std::vector<float> stds = {0.229};
-
-  LiteMat lite_norm_mat_cut;
-
-  SubStractMeanNormalize(lite_mat_cut, lite_norm_mat_cut, means, stds);
-  return lite_norm_mat_cut;
+  ret = SubStractMeanNormalize(lite_mat_cut, lite_norm_mat_cut, means, stds);
+  ASSERT_TRUE(ret == true);
+  return;
 }
 
 cv::Mat cv1CImageProcess(cv::Mat &image) {
@@ -183,18 +294,17 @@ TEST_F(MindDataImageProcess, test1C) {
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
   cv::Mat cv_image = cv1CImageProcess(image);
 
-  // cv::imwrite("/home/xlei/test_c1v.jpg", cv_image);
-
   // convert to RGBA for Android bitmap(rgba)
   cv::Mat rgba_mat;
   cv::cvtColor(image, rgba_mat, CV_BGR2RGBA);
 
   LiteMat lite_mat_bgr;
-  InitFromPixel(rgba_mat.data, LPixelType::RGBA2GRAY, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_bgr);
-  LiteMat lite_norm_mat_cut = Lite1CImageProcess(lite_mat_bgr);
+  bool ret =
+    InitFromPixel(rgba_mat.data, LPixelType::RGBA2GRAY, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_bgr);
+  ASSERT_TRUE(ret == true);
+  LiteMat lite_norm_mat_cut;
+  Lite1CImageProcess(lite_mat_bgr, lite_norm_mat_cut);
   cv::Mat dst_image(lite_norm_mat_cut.height_, lite_norm_mat_cut.width_, CV_32FC1, lite_norm_mat_cut.data_ptr_);
-  // cv::imwrite("/home/xlei/test_c1lite.jpg", dst_image);
-
   CompareMat(cv_image, lite_norm_mat_cut);
 }
 
@@ -211,22 +321,20 @@ TEST_F(MindDataImageProcess, TestPadd) {
   cv::Mat b_image;
   cv::Scalar color = cv::Scalar(255, 255, 255);
   cv::copyMakeBorder(resize_256_image, b_image, top, bottom, left, right, cv::BORDER_CONSTANT, color);
-  // cv::imwrite("/home/xlei/test_ccc.jpg", b_image);
   cv::Mat rgba_mat;
   cv::cvtColor(image, rgba_mat, CV_BGR2RGBA);
 
   LiteMat lite_mat_bgr;
-  InitFromPixel(rgba_mat.data, LPixelType::RGBA2BGR, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_bgr);
-
+  bool ret =
+    InitFromPixel(rgba_mat.data, LPixelType::RGBA2BGR, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_bgr);
+  ASSERT_TRUE(ret == true);
   LiteMat lite_mat_resize;
-  ResizeBilinear(lite_mat_bgr, lite_mat_resize, 256, 256);
-
+  ret = ResizeBilinear(lite_mat_bgr, lite_mat_resize, 256, 256);
+  ASSERT_TRUE(ret == true);
   LiteMat makeborder;
-  Pad(lite_mat_resize, makeborder, top, bottom, left, right, PaddBorderType::PADD_BORDER_CONSTANT, 255, 255, 255);
-
+  ret = Pad(lite_mat_resize, makeborder, top, bottom, left, right, PaddBorderType::PADD_BORDER_CONSTANT, 255, 255, 255);
+  ASSERT_TRUE(ret == true);
   cv::Mat dst_image(256 + top + bottom, 256 + left + right, CV_8UC3, makeborder.data_ptr_);
-
-  // cv::imwrite("/home/xlei/test_liteccc.jpg", dst_image);
 }
 
 TEST_F(MindDataImageProcess, TestGetDefaultBoxes) {

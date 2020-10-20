@@ -232,6 +232,17 @@ bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h) {
   return true;
 }
 
+static bool ConvertBGR(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {
+  if (data_type == LDataType::UINT8) {
+    mat.Init(w, h, 3, LDataType::UINT8);
+    unsigned char *dst_ptr = mat;
+    (void)memcpy(dst_ptr, data, w * h * 3 * sizeof(unsigned char));
+  } else {
+    return false;
+  }
+  return true;
+}
+
 static bool ConvertRGBAToBGR(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
     mat.Init(w, h, 3, LDataType::UINT8);
@@ -272,6 +283,76 @@ static bool ConvertRGBAToRGB(const unsigned char *data, LDataType data_type, int
   return true;
 }
 
+static bool ConvertYUV420SPToBGR(const uint8_t *data, LDataType data_type, bool flag, int w, int h, LiteMat &mat) {
+  if (data == nullptr || w <= 0 || h <= 0) {
+    return false;
+  }
+  if (data_type == LDataType::UINT8) {
+    mat.Init(w, h, 3, LDataType::UINT8);
+    const uint8_t *y_ptr = data;
+    const uint8_t *uv_ptr = y_ptr + w * h;
+    uint8_t *bgr_ptr = mat;
+    int bgr_stride = 3 * w;
+
+    for (int y = 0; y < h; ++y) {
+      uint8_t *bgr_buf = bgr_ptr;
+      const uint8_t *uv_buf = uv_ptr;
+      const uint8_t *y_buf = y_ptr;
+      uint8_t u;
+      uint8_t v;
+      for (int x = 0; x < w - 1; x += 2) {
+        if (flag) {
+          // NV21
+          u = uv_buf[1];
+          v = uv_buf[0];
+        } else {
+          // NV12
+          u = uv_buf[0];
+          v = uv_buf[1];
+        }
+        uint32_t tmp_y = (uint32_t)(y_buf[0] * YSCALE * YTOG) >> 16;
+        // b
+        bgr_buf[0] = std::clamp((int32_t)(-(u * UTOB) + tmp_y + BTOB) >> 6, 0, 255);
+        // g
+        bgr_buf[1] = std::clamp((int32_t)(-(u * UTOG + v * VTOG) + tmp_y + BTOG) >> 6, 0, 255);
+        // r
+        bgr_buf[2] = std::clamp((int32_t)(-(v * VTOR) + tmp_y + BTOR) >> 6, 0, 255);
+
+        tmp_y = (uint32_t)(y_buf[1] * YSCALE * YTOG) >> 16;
+        bgr_buf[3] = std::clamp((int32_t)(-(u * UTOB) + tmp_y + BTOB) >> 6, 0, 255);
+        bgr_buf[4] = std::clamp((int32_t)(-(u * UTOG + v * VTOG) + tmp_y + BTOG) >> 6, 0, 255);
+        bgr_buf[5] = std::clamp((int32_t)(-(v * VTOR) + tmp_y + BTOR) >> 6, 0, 255);
+
+        y_buf += 2;
+        uv_buf += 2;
+        bgr_buf += 6;
+      }
+      if (w & 1) {
+        if (flag) {
+          // NV21
+          u = uv_buf[1];
+          v = uv_buf[0];
+        } else {
+          // NV12
+          u = uv_buf[0];
+          v = uv_buf[1];
+        }
+        uint32_t tmp_y = (uint32_t)(y_buf[0] * YSCALE * YTOG) >> 16;
+        bgr_buf[0] = std::clamp((int32_t)(-(u * UTOB) + tmp_y + BTOB) >> 6, 0, 255);
+        bgr_buf[1] = std::clamp((int32_t)(-(u * UTOG + v * VTOG) + tmp_y + BTOG) >> 6, 0, 255);
+        bgr_buf[2] = std::clamp((int32_t)(-(v * VTOR) + tmp_y + BTOR) >> 6, 0, 255);
+      }
+
+      bgr_ptr += bgr_stride;
+      y_ptr += w;
+      if (y & 1) {
+        uv_ptr += w;
+      }
+    }
+  }
+  return true;
+}
+
 static bool ConvertRGBAToGRAY(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
     mat.Init(w, h, 1, LDataType::UINT8);
@@ -300,12 +381,24 @@ bool InitFromPixel(const unsigned char *data, LPixelType pixel_type, LDataType d
   if (w <= 0 || h <= 0) {
     return false;
   }
+
+  if (data_type != LDataType::UINT8) {
+    return false;
+  }
   if (pixel_type == LPixelType::RGBA2BGR) {
     return ConvertRGBAToBGR(data, data_type, w, h, m);
   } else if (pixel_type == LPixelType::RGBA2GRAY) {
     return ConvertRGBAToGRAY(data, data_type, w, h, m);
   } else if (pixel_type == LPixelType::RGBA2RGB) {
     return ConvertRGBAToRGB(data, data_type, w, h, m);
+  } else if (pixel_type == LPixelType::NV212BGR) {
+    return ConvertYUV420SPToBGR(data, data_type, true, w, h, m);
+  } else if (pixel_type == LPixelType::NV122BGR) {
+    return ConvertYUV420SPToBGR(data, data_type, false, w, h, m);
+  } else if (pixel_type == LPixelType::BGR) {
+    return ConvertBGR(data, data_type, w, h, m);
+  } else if (pixel_type == LPixelType::RGB) {
+    return ConvertBGR(data, data_type, w, h, m);
   } else {
     return false;
   }
@@ -322,8 +415,8 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
   float *dst_start_p = dst;
   for (int h = 0; h < src.height_; h++) {
     for (int w = 0; w < src.width_; w++) {
+      uint32_t index = (h * src.width_ + w) * src.channel_;
       for (int c = 0; c < src.channel_; c++) {
-        int index = (h * src.width_ + w) * src.channel_;
         dst_start_p[index + c] = (static_cast<float>(src_start_p[index + c] * scale));
       }
     }
@@ -418,8 +511,9 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<
   if ((!mean.empty()) && std.empty()) {
     for (int h = 0; h < src.height_; h++) {
       for (int w = 0; w < src.width_; w++) {
+        uint32_t src_start = (h * src.width_ + w) * src.channel_;
         for (int c = 0; c < src.channel_; c++) {
-          int index = (h * src.width_ + w) * src.channel_ + c;
+          uint32_t index = src_start + c;
           dst_start_p[index] = src_start_p[index] - mean[c];
         }
       }
@@ -427,8 +521,9 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<
   } else if (mean.empty() && (!std.empty())) {
     for (int h = 0; h < src.height_; h++) {
       for (int w = 0; w < src.width_; w++) {
+        uint32_t src_start = (h * src.width_ + w) * src.channel_;
         for (int c = 0; c < src.channel_; c++) {
-          int index = (h * src.width_ + w) * src.channel_ + c;
+          uint32_t index = src_start + c;
           dst_start_p[index] = src_start_p[index] / std[c];
         }
       }
@@ -436,8 +531,9 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<
   } else if ((!mean.empty()) && (!std.empty())) {
     for (int h = 0; h < src.height_; h++) {
       for (int w = 0; w < src.width_; w++) {
+        uint32_t src_start = (h * src.width_ + w) * src.channel_;
         for (int c = 0; c < src.channel_; c++) {
-          int index = (h * src.width_ + w) * src.channel_ + c;
+          uint32_t index = src_start + c;
           dst_start_p[index] = (src_start_p[index] - mean[c]) / std[c];
         }
       }
@@ -458,7 +554,7 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
   // padd top
   for (int h = 0; h < top; h++) {
     for (int w = 0; w < dst.width_; w++) {
-      int index = (h * dst.width_ + w) * dst.channel_;
+      uint32_t index = (h * dst.width_ + w) * dst.channel_;
       if (dst.channel_ == 1) {
         dst_start_p[index] = fill_b_or_gray;
       } else if (dst.channel_ == 3) {
@@ -472,7 +568,7 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
   // padd bottom
   for (int h = dst.height_ - bottom; h < dst.height_; h++) {
     for (int w = 0; w < dst.width_; w++) {
-      int index = (h * dst.width_ + w) * dst.channel_;
+      uint32_t index = (h * dst.width_ + w) * dst.channel_;
       if (dst.channel_ == 1) {
         dst_start_p[index] = fill_b_or_gray;
       } else if (dst.channel_ == 3) {
@@ -487,7 +583,7 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
   // padd left
   for (int h = top; h < dst.height_ - bottom; h++) {
     for (int w = 0; w < left; w++) {
-      int index = (h * dst.width_ + w) * dst.channel_;
+      uint32_t index = (h * dst.width_ + w) * dst.channel_;
       if (dst.channel_ == 1) {
         dst_start_p[index] = fill_b_or_gray;
       } else if (dst.channel_ == 3) {
@@ -502,7 +598,7 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
   // padd right
   for (int h = top; h < dst.height_ - bottom; h++) {
     for (int w = dst.width_ - right; w < dst.width_; w++) {
-      int index = (h * dst.width_ + w) * dst.channel_;
+      uint32_t index = (h * dst.width_ + w) * dst.channel_;
       if (dst.channel_ == 1) {
         dst_start_p[index] = fill_b_or_gray;
       } else if (dst.channel_ == 3) {
@@ -520,6 +616,86 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
     T *dst_index_p = dst_start_p + i_h * dst.width_ * dst.channel_;
     (void)memcpy(dst_index_p, src_index_p, src.width_ * src.channel_ * sizeof(T));
   }
+}
+
+bool ExtractChannel(const LiteMat &src, LiteMat &dst, int col) {
+  if (src.IsEmpty() || col < 0 || col > src.dims_ - 1) {
+    return false;
+  }
+  (void)dst.Init(src.width_, src.height_, 1, src.data_type_);
+  if (src.data_type_ == LDataType::FLOAT32) {
+    const float *src_start_p = src;
+    float *dst_start_p = dst;
+    for (int h = 0; h < src.height_; h++) {
+      uint32_t src_start = h * src.width_ * src.channel_ + col;
+      uint32_t dst_start = h * dst.width_;
+      for (int w = 0; w < src.width_; w++) {
+        uint32_t src_index = src_start + w * src.channel_;
+        uint32_t dst_index = dst_start + w;
+        dst_start_p[dst_index] = src_start_p[src_index];
+      }
+    }
+    return true;
+  } else if (src.data_type_ == LDataType::UINT8) {
+    const uint8_t *src_start_p = src;
+    uint8_t *dst_start_p = dst;
+    for (int h = 0; h < src.height_; h++) {
+      uint32_t src_start = h * src.width_ * src.channel_ + col;
+      uint32_t dst_start = h * dst.width_;
+      for (int w = 0; w < src.width_; w++) {
+        uint32_t src_index = src_start + w * src.channel_;
+        uint32_t dst_index = dst_start + w;
+        dst_start_p[dst_index] = src_start_p[src_index];
+      }
+    }
+    return true;
+  } else {
+    return false;
+  }
+  return false;
+}
+
+bool Split(const LiteMat &src, std::vector<LiteMat> &mv) {
+  if (src.data_type_ == LDataType::FLOAT32) {
+    const float *src_start_p = src;
+    for (int c = 0; c < src.channel_; c++) {
+      LiteMat dst;
+      (void)dst.Init(src.width_, src.height_, 1, src.data_type_);
+      float *dst_start_p = dst;
+      for (int h = 0; h < src.height_; h++) {
+        uint32_t src_start = h * src.width_ * src.channel_;
+        uint32_t dst_start = h * dst.width_;
+        for (int w = 0; w < src.width_; w++) {
+          uint32_t src_index = src_start + w * src.channel_ + c;
+          uint32_t dst_index = dst_start + w;
+          dst_start_p[dst_index] = src_start_p[src_index];
+        }
+      }
+      mv.emplace_back(dst);
+    }
+    return true;
+  } else if (src.data_type_ == LDataType::UINT8) {
+    const uint8_t *src_start_p = src;
+    for (int c = 0; c < src.channel_; c++) {
+      LiteMat dst;
+      (void)dst.Init(src.width_, src.height_, 1, src.data_type_);
+      uint8_t *dst_start_p = dst;
+      for (int h = 0; h < src.height_; h++) {
+        uint32_t src_start = h * src.width_ * src.channel_;
+        uint32_t dst_start = h * dst.width_;
+        for (int w = 0; w < src.width_; w++) {
+          uint32_t src_index = src_start + w * src.channel_ + c;
+          uint32_t dst_index = dst_start + w;
+          dst_start_p[dst_index] = src_start_p[src_index];
+        }
+      }
+      mv.emplace_back(dst);
+    }
+    return true;
+  } else {
+    return false;
+  }
+  return false;
 }
 
 bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,

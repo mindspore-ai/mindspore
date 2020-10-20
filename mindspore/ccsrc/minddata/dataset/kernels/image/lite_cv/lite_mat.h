@@ -92,6 +92,8 @@ enum LPixelType {
   RGBA2GRAY = 3,
   RGBA2BGR = 4,
   RGBA2RGB = 5,
+  NV212BGR = 6,
+  NV122BGR = 7,
 };
 
 class LDataType {
@@ -159,7 +161,6 @@ class LDataType {
 
 class LiteMat {
   // Class that represents a lite Mat of a Image.
-  // -# The pixel type of Lite Mat is RGBRGB...RGB.
  public:
   LiteMat();
 
