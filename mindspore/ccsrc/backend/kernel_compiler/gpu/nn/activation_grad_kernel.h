@@ -91,6 +91,7 @@ class ActivationGradGpuKernel : public GpuKernel {
     }
     std::vector<size_t> shape;
     double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 5.999999 : 0.0;
+    if (mode_ == CUDNN_ACTIVATION_ELU) coef = 1.0;
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_PROPAGATE_NAN, coef),
                                 "SetActivationDescriptor failed");
 
@@ -143,7 +144,7 @@ class ActivationGradGpuKernel : public GpuKernel {
   std::map<std::string, cudnnActivationMode_t> kernel_map = {{"ReluGrad", CUDNN_ACTIVATION_RELU},
                                                              {"ReLU6Grad", CUDNN_ACTIVATION_CLIPPED_RELU},
                                                              {"TanhGrad", CUDNN_ACTIVATION_TANH},
-                                                             {"ELUGrad", CUDNN_ACTIVATION_ELU},
+                                                             {"EluGrad", CUDNN_ACTIVATION_ELU},
                                                              {"SigmoidGrad", CUDNN_ACTIVATION_SIGMOID}};
   cudnnHandle_t cudnn_handle_;
   cudnnActivationDescriptor_t activation_desc_;

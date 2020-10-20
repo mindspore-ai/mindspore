@@ -84,6 +84,10 @@ class ActivationGpuFwdKernel : public GpuKernel {
     }
     std::vector<size_t> shape;
     double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 6.0 : 0.0;
+    if (mode_ == CUDNN_ACTIVATION_ELU) {
+      float alpha = GetAttr<float>(kernel_node, "alpha");
+      coef = static_cast<double>(alpha);
+    }
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_NOT_PROPAGATE_NAN, coef),
                                 "cudnnSetActivationDescriptor failed");
 
@@ -137,7 +141,7 @@ class ActivationGpuFwdKernel : public GpuKernel {
   std::map<std::string, cudnnActivationMode_t> kernel_map = {{"ReLU", CUDNN_ACTIVATION_RELU},
                                                              {"ReLU6", CUDNN_ACTIVATION_CLIPPED_RELU},
                                                              {"Tanh", CUDNN_ACTIVATION_TANH},
-                                                             {"ELU", CUDNN_ACTIVATION_ELU},
+                                                             {"Elu", CUDNN_ACTIVATION_ELU},
                                                              {"Sigmoid", CUDNN_ACTIVATION_SIGMOID}};
 
   cudnnHandle_t cudnn_handle_;
