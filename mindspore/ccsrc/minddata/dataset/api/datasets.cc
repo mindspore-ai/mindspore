@@ -61,6 +61,10 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 
+// IR nodes
+#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
+
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/random.h"
@@ -68,15 +72,6 @@
 namespace mindspore {
 namespace dataset {
 namespace api {
-
-#define RETURN_EMPTY_IF_ERROR(_s) \
-  do {                            \
-    Status __rc = (_s);           \
-    if (__rc.IsError()) {         \
-      MS_LOG(ERROR) << __rc;      \
-      return {};                  \
-    }                             \
-  } while (false)
 
 // Function to create the iterator, which will build and launch the execution tree.
 std::shared_ptr<Iterator> Dataset::CreateIterator(std::vector<std::string> columns) {
@@ -1283,43 +1278,6 @@ std::vector<std::shared_ptr<DatasetOp>> CSVNode::Build() {
   node_ops.push_back(csv_op);
   return node_ops;
 }
-
-ImageFolderNode::ImageFolderNode(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler,
-                                 bool recursive, std::set<std::string> extensions,
-                                 std::map<std::string, int32_t> class_indexing)
-    : dataset_dir_(dataset_dir),
-      decode_(decode),
-      sampler_(sampler),
-      recursive_(recursive),
-      class_indexing_(class_indexing),
-      exts_(extensions) {}
-
-Status ImageFolderNode::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("ImageFolderNode", dataset_dir_));
-
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("ImageFolderNode", sampler_));
-
-  return Status::OK();
-}
-
-std::vector<std::shared_ptr<DatasetOp>> ImageFolderNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  // Do internal Schema generation.
-  // This arg is exist in ImageFolderOp, but not externalized (in Python API).
-  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
-  TensorShape scalar = TensorShape::CreateScalar();
-  RETURN_EMPTY_IF_ERROR(
-    schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
-  RETURN_EMPTY_IF_ERROR(
-    schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_INT32), TensorImpl::kFlexible, 0, &scalar)));
-  node_ops.push_back(std::make_shared<ImageFolderOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
-                                                     recursive_, decode_, exts_, class_indexing_, std::move(schema),
-                                                     std::move(sampler_->Build())));
-  return node_ops;
-}
-
 #ifndef ENABLE_ANDROID
 ManifestNode::ManifestNode(const std::string &dataset_file, const std::string &usage,
                            const std::shared_ptr<SamplerObj> &sampler,
@@ -1800,54 +1758,6 @@ std::vector<std::shared_ptr<DatasetOp>> VOCNode::Build() {
 }
 #endif
 
-// DERIVED DATASET CLASSES LEAF-NODE DATASETS
-// (In alphabetical order)
-
-BatchNode::BatchNode(std::shared_ptr<Dataset> child, int32_t batch_size, bool drop_remainder, bool pad,
-                     std::vector<std::string> cols_to_map,
-                     std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map)
-    : batch_size_(batch_size),
-      drop_remainder_(drop_remainder),
-      pad_(pad),
-      cols_to_map_(cols_to_map),
-      pad_map_(pad_map) {
-  this->children.push_back(child);
-}
-
-std::vector<std::shared_ptr<DatasetOp>> BatchNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-#ifdef ENABLE_PYTHON
-  py::function noop;
-  node_ops.push_back(std::make_shared<BatchOp>(batch_size_, drop_remainder_, pad_, connector_que_size_, num_workers_,
-                                               cols_to_map_, cols_to_map_, noop, noop, pad_map_));
-#else
-  node_ops.push_back(std::make_shared<BatchOp>(batch_size_, drop_remainder_, pad_, connector_que_size_, num_workers_,
-                                               cols_to_map_, pad_map_));
-#endif
-
-  // Until py::function is implemented for C++ API, there is no need for a project op to be inserted after batch
-  // because project is only needed when batch op performs per_batch_map. This per_batch_map is a pyfunc
-  return node_ops;
-}
-
-Status BatchNode::ValidateParams() {
-  if (batch_size_ <= 0) {
-    std::string err_msg = "BatchNode: batch_size should be positive integer, but got: " + std::to_string(batch_size_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  if (!cols_to_map_.empty()) {
-    std::string err_msg = "BatchNode: cols_to_map functionality is not implemented in C++; this should be left empty.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  return Status::OK();
-}
-
 #ifndef ENABLE_ANDROID
 BucketBatchByLengthNode::BucketBatchByLengthNode(
   std::shared_ptr<Dataset> child, const std::vector<std::string> &column_names,
@@ -1884,7 +1794,7 @@ std::vector<std::shared_ptr<DatasetOp>> BucketBatchByLengthNode::Build() {
 Status BucketBatchByLengthNode::ValidateParams() {
   if (element_length_function_ == nullptr && column_names_.size() != 1) {
     std::string err_msg = "BucketBatchByLengthNode: element_length_function not specified, but not one column name: " +
-                          column_names_.size();
+                          std::to_string(column_names_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }

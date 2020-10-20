@@ -20,6 +20,8 @@
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/transforms.h"
 
+#include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
+#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
 using namespace mindspore::dataset;
 using mindspore::dataset::Tensor;
 

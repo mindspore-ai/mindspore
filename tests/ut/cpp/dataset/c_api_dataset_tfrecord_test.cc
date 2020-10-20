@@ -19,12 +19,14 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
 
+#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
+
 using namespace mindspore::dataset;
 using namespace mindspore::dataset::api;
-using mindspore::dataset::Tensor;
-using mindspore::dataset::ShuffleMode;
-using mindspore::dataset::TensorShape;
 using mindspore::dataset::DataType;
+using mindspore::dataset::ShuffleMode;
+using mindspore::dataset::Tensor;
+using mindspore::dataset::TensorShape;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
@@ -355,11 +357,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShard) {
 
   // Create a TFRecord Dataset
   // Each file has two columns("image", "label") and 3 rows
-  std::vector<std::string> files = {
-    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data",
-    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0002.data",
-    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0003.data"
-  };
+  std::vector<std::string> files = {datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data",
+                                    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0002.data",
+                                    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0003.data"};
   std::shared_ptr<Dataset> ds1 = TFRecord({files}, "", {}, 0, ShuffleMode::kFalse, 2, 1, true);
   EXPECT_NE(ds1, nullptr);
   std::shared_ptr<Dataset> ds2 = TFRecord({files}, "", {}, 0, ShuffleMode::kFalse, 2, 1, false);

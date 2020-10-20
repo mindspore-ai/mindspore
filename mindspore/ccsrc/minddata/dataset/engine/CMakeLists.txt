@@ -1,8 +1,10 @@
 add_subdirectory(datasetops)
 add_subdirectory(opt)
 add_subdirectory(gnn)
+add_subdirectory(ir)
 add_subdirectory(perf)
 add_subdirectory(cache)
+
 if (ENABLE_TDTQUE)
   add_subdirectory(tdt)
 endif ()

@@ -16,6 +16,8 @@
 #include "common/common.h"
 #include "minddata/dataset/include/datasets.h"
 
+#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
+
 using namespace mindspore::dataset::api;
 using mindspore::dataset::Tensor;
 using mindspore::dataset::TensorShape;
