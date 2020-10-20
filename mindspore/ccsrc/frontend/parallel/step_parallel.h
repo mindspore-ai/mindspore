@@ -21,10 +21,10 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <set>
 
 #include "frontend/optimizer/opt.h"
 #include "frontend/parallel/strategy.h"

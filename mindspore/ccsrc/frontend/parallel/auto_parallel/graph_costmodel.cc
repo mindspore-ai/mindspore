@@ -40,7 +40,7 @@ bool FULLY_USE_DEVICES = DEFAULT_FULLY_USE_DEVICES;
 bool ELEMENTWISE_OP_STRA_FOLLOW = DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW;
 bool MULTI_SUBGRAPHS = DEFAULT_IS_MULTI_SUBGRAPHS;
 int32_t RUN_PHASE = DEFAULT_RUN_PHASE;
-bool TRIANGLE_STRATEGY_OVERWRITE = DEFAULT_TRIANGLE_STRATEGY_OVERWRITE;
+bool TRIANGLE_STAR_STRATEGY_OVERWRITE = DEFAULT_TRIANGLE_STAR_STRATEGY_OVERWRITE;
 
 void CostGraph::SetDeviceMemoryAndCostParameter() {
   MS_EXCEPTION_IF_NULL(CostModelContext::GetInstance());
@@ -155,12 +155,12 @@ void CostGraph::SetDeviceMemoryAndCostParameter() {
     MS_LOG(INFO) << "multi_subgraphs: false.";
   }
 
-  auto overwrite = CostModelContext::GetInstance()->triangle_strategy_overwrite();
-  TRIANGLE_STRATEGY_OVERWRITE = overwrite;
-  if (TRIANGLE_STRATEGY_OVERWRITE) {
-    MS_LOG(INFO) << "triangle_strategy_overwrite: true.";
+  auto overwrite = CostModelContext::GetInstance()->triangle_star_strategy_overwrite();
+  TRIANGLE_STAR_STRATEGY_OVERWRITE = overwrite;
+  if (TRIANGLE_STAR_STRATEGY_OVERWRITE) {
+    MS_LOG(INFO) << "triangle_star_strategy_overwrite: true.";
   } else {
-    MS_LOG(INFO) << "triangle_strategy_overwrite: false.";
+    MS_LOG(INFO) << "triangle_star_strategy_overwrite: false.";
   }
 
   // RUN_PHASE
@@ -1303,7 +1303,7 @@ void CostGraph::CreateTriangleEliminationSubCostList(StrategyPtr elimi_op_stra, 
           elimi_op_cost->communication_without_parameter_ + left_edge_cost->communication_without_parameter_ +
           left_node_cost->communication_without_parameter_ + right_edge_cost->communication_without_parameter_;
 
-        if (TRIANGLE_STRATEGY_OVERWRITE) {
+        if (TRIANGLE_STAR_STRATEGY_OVERWRITE) {
           new_computation += right_op_cost->computation_cost_;
           new_memory += right_op_cost->memory_with_reuse_;
           new_commu_cost += right_op_cost->communication_cost_;
@@ -1399,7 +1399,9 @@ OperatorInfoPtr CostGraph::EliminationTriangle(const OperatorInfoPtr &elimi_op,
   }
 
   if (!valid) {
-    MS_LOG(EXCEPTION) << "Eliminating triangle: " << elimi_op->name() << " failed.";
+    MS_LOG(EXCEPTION) << "Eliminating triangle: " << elimi_op->name()
+                      << " failed. It may be caused by "
+                         "configuring inconsistent strategies for operators.";
   }
   elimi_op->SetNotAlive();
   MS_LOG(INFO) << "Eliminating triangle: " << elimi_op->name() << " succeeded.";
@@ -1440,6 +1442,13 @@ void CostGraph::CreateStarEliminationSubCostList(const StrategyPtr &first_succ_n
             commu_cost += succ_edges_costs[i]->communication_cost_;
             commu_forward += succ_edges_costs[i]->communication_forward_;
             commu_without += succ_edges_costs[i]->communication_without_parameter_;
+            if (TRIANGLE_STAR_STRATEGY_OVERWRITE) {
+              computation_cost += succ_nodes_costs[i]->computation_cost_;
+              memory_cost += succ_nodes_costs[i]->memory_with_reuse_;
+              commu_cost += succ_nodes_costs[i]->communication_cost_;
+              commu_forward += succ_nodes_costs[i]->communication_forward_;
+              commu_without += succ_nodes_costs[i]->communication_without_parameter_;
+            }
           }
         }
 
@@ -1544,7 +1553,9 @@ std::vector<std::shared_ptr<Edge>> CostGraph::EliminationStar(const OperatorInfo
   }
 
   if (!valid) {
-    MS_LOG(EXCEPTION) << "Eliminating star centered at: " << merged_op->name() << " failed.";
+    MS_LOG(EXCEPTION) << "Eliminating star centered at: " << merged_op->name()
+                      << " failed. It may be caused by "
+                         "configuring inconsistent strategies for operators.";
   }
 
   merged_op->SetNotAlive();

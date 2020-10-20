@@ -201,7 +201,7 @@ Status RecoverStrategy(std::vector<EliminationPtr> eliminations) {
       right_edge->set_selected_cost(decision->right_edge_cost_);
       // 'left_node' recovers the strategy.
       left_node->SetSelectedStrategyAndCost(decision->left_node_strategy_, decision->left_node_cost_);
-      if (TRIANGLE_STRATEGY_OVERWRITE) {
+      if (TRIANGLE_STAR_STRATEGY_OVERWRITE) {
         // 'right_node' recovers the strategy.
         MS_LOG(INFO) << "Overwrite the right-node: " << right_node->name() << " in recovering triangle elimination.";
         right_node->SetSelectedStrategyAndCost(decision->right_node_strategy_, decision->right_node_cost_);
@@ -225,10 +225,16 @@ Status RecoverStrategy(std::vector<EliminationPtr> eliminations) {
       MS_EXCEPTION_IF_NULL(succ_nodes[0]);
       MS_EXCEPTION_IF_NULL(decision->succ_ops_stra_list_[0]);
       MS_EXCEPTION_IF_NULL(decision->succ_ops_cost_list_[0]);
-      // Since Star is eliminated into 'succ_nodes[0]', only 'succ_nodes[0]' is needed to recover the strategy.
+      // Star is eliminated into 'succ_nodes[0]'
       succ_nodes[0]->SetSelectedStrategyAndCost(decision->succ_ops_stra_list_[0], decision->succ_ops_cost_list_[0]);
       for (size_t k = 1; k < succ_nodes.size(); ++k) {
-        succ_nodes[k]->CheckSelectedStrategy(decision->succ_ops_stra_list_[k]);
+        if (TRIANGLE_STAR_STRATEGY_OVERWRITE) {
+          // 'succ_nodes[k]' is overwritten strategy and cost.
+          succ_nodes[k]->SetSelectedStrategyAndCost(decision->succ_ops_stra_list_[k], decision->succ_ops_cost_list_[k]);
+        } else {
+          // In this case, 'succ_nodes[k]' is NOT overwritten strategy and cost, however, it checks the strategy.
+          succ_nodes[k]->CheckSelectedStrategy(decision->succ_ops_stra_list_[k]);
+        }
       }
       MS_LOG(INFO) << "Recover starElimination succeeded.";
     } else {

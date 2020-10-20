@@ -23,8 +23,8 @@
 #include <utility>
 #include <vector>
 
-#include "frontend/parallel/status.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/status.h"
 
 namespace mindspore {
 namespace parallel {

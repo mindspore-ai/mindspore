@@ -19,9 +19,9 @@
 #include <algorithm>
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
 #include <utility>
-#include <map>
 
 #include "frontend/parallel/device_manager.h"
 
