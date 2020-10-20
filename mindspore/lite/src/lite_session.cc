@@ -65,8 +65,12 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       MS_LOG(DEBUG) << "Dims of " << i << "th tensor is nullptr";
     } else {
       if (TensorCategory(srcTensor) == Tensor::Category::CONST) {
-        for (size_t j = 0; j < srcTensor->dims()->size(); j++) {
-          shape.push_back(srcTensor->dims()->data()[j]);
+        if (srcTensor->dataType() == kObjectTypeString && srcTensor->data() != nullptr) {
+          shape.push_back(srcTensor->data()->size());
+        } else {
+          for (size_t j = 0; j < srcTensor->dims()->size(); j++) {
+            shape.push_back(srcTensor->dims()->data()[j]);
+          }
         }
       }
     }

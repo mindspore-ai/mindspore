@@ -88,9 +88,10 @@ int PredictCPUKernel::Run() {
     if (static_cast<size_t>(i) >= label_info_vec.size() || label_info_vec[i].weight < param->weight_threshold) {
       output_label[i] = -1;
       output_weight[i] = 0.0f;
+    } else {
+      output_label[i] = label_info_vec[i].label;
+      output_weight[i] = label_info_vec[i].weight;
     }
-    output_label[i] = label_info_vec[i].label;
-    output_weight[i] = label_info_vec[i].weight;
   }
   return RET_OK;
 }
