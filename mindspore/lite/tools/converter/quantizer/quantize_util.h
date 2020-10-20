@@ -287,6 +287,8 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
 }
 
 STATUS PostBitPack(float *weights, size_t shapeSize, size_t bitNum = UINT8_QUANTIZATION);
+
+schema::PrimitiveType NodePrimitiveType(CNodePtr cnode);
 }  // namespace quant
 }  // namespace lite
 }  // namespace mindspore
