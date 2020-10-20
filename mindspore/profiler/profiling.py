@@ -88,6 +88,9 @@ class Profiler:
             logger.warning("The target dir already exists. "
                            "There may be some old profiling data, and they will be rewrote in the end.")
 
+        os.environ['PROFILING_MODE'] = 'true'
+        os.environ['MINDDATA_PROFILING_DIR'] = self._output_path
+
         if self._device_target and self._device_target == "GPU":
             from mindspore._c_expression import GPUProfiler
             self._gpu_profiler = GPUProfiler.get_instance()
@@ -95,6 +98,7 @@ class Profiler:
             self._gpu_profiler.step_profiling_enable(True)
             init()
             self._dev_id = get_rank()
+            os.environ['DEVICE_ID'] = str(self._dev_id)
 
             if kwargs:
                 logger.warning("Params not be supported yet on GPU.")
@@ -106,8 +110,6 @@ class Profiler:
             if kwargs:
                 logger.warning("There are invalid params which don't work.")
 
-            os.environ['PROFILING_MODE'] = 'true'
-            os.environ['MINDDATA_PROFILING_DIR'] = self._output_path
             os.environ['DEVICE_ID'] = self._dev_id
             os.environ['AICPU_PROFILING_MODE'] = 'true'
 
@@ -144,6 +146,16 @@ class Profiler:
         if self._device_target and self._device_target == "GPU":
             self._gpu_profiler.stop()
             self._generate_timeline()
+
+            # parse minddata pipeline operator and queue for GPU
+            try:
+                pipeline_parser = MinddataPipelineParser(self._output_path, self._dev_id, self._output_path)
+                pipeline_parser.parse()
+            except ProfilerException as err:
+                logger.warning(err.message)
+
+            os.environ['PROFILING_MODE'] = str("false")
+
         elif self._device_target and self._device_target == "Ascend":
             release()
 
