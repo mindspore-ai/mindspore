@@ -53,6 +53,7 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePt
   f->Init(is_top);
   f->MapObject();
   f->MapMorphism();
+  f->Finish();
   auto ret = f->k_graph();
   if (is_top) {
     DFunctor::Clear();

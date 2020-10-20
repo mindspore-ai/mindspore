@@ -64,6 +64,7 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   FuncGraphPtr KUserDefined(const FuncGraphPtr &primal);
   // Register functor objects to form a global view.
   void Init(bool is_top = false);
+  void Finish();
   bool IsInScope(const AnfNodePtr &node);
 
   // Clear resources.
@@ -97,6 +98,8 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   void UpdateAdjoint(const AdjointPtr &adjoint_definition);
   void CallDoutHoleOnTape();
   void ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_morph);
+  // Replace the primal graph with k graph
+  void EliminatePrimalGraph();
 
   std::unordered_map<AnfNodePtr, AdjointPtr> anfnode_to_adjoin_;
   // Cache for indirect fv backpropagation, K o K can only do backprop layer by layer.
