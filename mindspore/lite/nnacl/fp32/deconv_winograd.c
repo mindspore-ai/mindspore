@@ -130,21 +130,21 @@ void DeConvWgInputPack(float *src_ptr, float *dst_ptr, int channel, int stride) 
   return;
 }
 
-void MSGemmFloatCommon_4(float *dst, const float *src, const float *weight, size_t src_depth_quad, size_t dst_step,
-                         size_t dst_depth_quad, size_t width, size_t weight_depth_offset) {
+#ifndef ENABLE_ARM
+void TiledC4MatmulFp32(float *dst, const float *src, const float *weight, size_t cal_num, size_t ic4, size_t oc4) {
   int dx, sz, dz;
-  int src_depth_step = 4 * width;
-  for (dz = 0; dz < dst_depth_quad; ++dz) {
-    float *dst_z = dst + dz * dst_step;
-    const float *weight_dz = weight + dz * (src_depth_quad * 16 + weight_depth_offset);
-    for (dx = 0; dx < width; ++dx) {
+  int src_depth_step = 4 * DECONV_WINOGRAD_DEFAULT_TILE;
+  for (dz = 0; dz < oc4; ++dz) {
+    float *dst_z = dst + dz * cal_num;
+    const float *weight_dz = weight + dz * ic4 * 16;
+    for (dx = 0; dx < DECONV_WINOGRAD_DEFAULT_TILE; ++dx) {
       float *dst_x = dst_z + dx * 4;
       dst_x[0] = 0.0f;
       dst_x[1] = 0.0f;
       dst_x[2] = 0.0f;
       dst_x[3] = 0.0f;
       const float *src_dx = src + 4 * dx;
-      for (sz = 0; sz < src_depth_quad; ++sz) {
+      for (sz = 0; sz < ic4; ++sz) {
         const float *src_z = src_dx + sz * src_depth_step;
         const float *weight_z = weight_dz + sz * 16;
         for (int i = 0; i < 4; ++i) {
@@ -156,12 +156,7 @@ void MSGemmFloatCommon_4(float *dst, const float *src, const float *weight, size
     }
   }
 }
-
-void MSGemmFloatUnit_4(float *dstOrigin, const float *src, const float *weight, size_t src_depth_quad, size_t dst_step,
-                       size_t dst_depth_quad, size_t weight_depth_offset) {
-  MSGemmFloatCommon_4(dstOrigin, src, weight, src_depth_quad, dst_step, dst_depth_quad, DECONV_WINOGRAD_DEFAULT_TILE,
-                      weight_depth_offset);
-}
+#endif
 
 void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_stride, size_t count) {
   for (int i = 0; i < count; ++i) {
@@ -179,10 +174,10 @@ void _deConvWinograd(float *tile_in, float *tile_out, float *weight_buf, float *
                      int unit_size, int w_start, int h_start, ConvParameter *conv_param, DeConvParam *deconv_param) {
   int winograd_plane = unit_size * unit_size;
   if (!transfered[unit_size]) {
-    WinogradMatrixProductLeft(tile_in, at_buf, a_mid_buf, DECONV_WINOGRAD_DEFAULT_UNIT, unit_size,
-                              DECONV_WINOGRAD_DEFAULT_UNIT, deconv_param->ic_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
-    WinogradMatrixProductRight(a_mid_buf, at_buf, trans_a_buf, unit_size, unit_size, DECONV_WINOGRAD_DEFAULT_UNIT,
-                               deconv_param->ic_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
+    WinogradTransLeft(tile_in, at_buf, a_mid_buf, DECONV_WINOGRAD_DEFAULT_UNIT, unit_size, DECONV_WINOGRAD_DEFAULT_UNIT,
+                      deconv_param->ic_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
+    WinogradTransRight(a_mid_buf, at_buf, trans_a_buf, unit_size, unit_size, DECONV_WINOGRAD_DEFAULT_UNIT,
+                       deconv_param->ic_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
     transfered[unit_size] = true;
   }
 
@@ -190,14 +185,14 @@ void _deConvWinograd(float *tile_in, float *tile_out, float *weight_buf, float *
     float *src = trans_a_buf + index * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
     float *dst = tmp_buf + index * deconv_param->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
     float *weight = weight_buf + index * deconv_param->ic_up4_ * deconv_param->oc_up4_;
-    MSGemmFloatUnit_4(dst, src, weight, deconv_param->ic_div4_, DECONV_WINOGRAD_DEFAULT_TILE * C4NUM,
-                      deconv_param->oc_div4_, 0);
+    TiledC4MatmulFp32(dst, src, weight, DECONV_WINOGRAD_DEFAULT_TILE * C4NUM, deconv_param->ic_div4_,
+                      deconv_param->oc_div4_);
   }
 
-  WinogradMatrixProductLeft(tmp_buf, bt_buf, b_tmp_buf, unit_size, unit_size, unit_size,
-                            deconv_param->oc_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
-  WinogradMatrixProductRight(b_tmp_buf, bt_buf, tmp_buf, unit_size, unit_size, unit_size,
-                             deconv_param->oc_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
+  WinogradTransLeft(tmp_buf, bt_buf, b_tmp_buf, unit_size, unit_size, unit_size,
+                    deconv_param->oc_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
+  WinogradTransRight(b_tmp_buf, bt_buf, tmp_buf, unit_size, unit_size, unit_size,
+                     deconv_param->oc_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
 
   // Add to dest
   for (int uhi = 0; uhi < unit_size; uhi++) {
@@ -223,7 +218,7 @@ void _deConvCommon(float *tile_in, float *tile_out, float *weight, float *tmp_bu
   for (int hi = 0; hi < DECONV_WINOGRAD_DEFAULT_UNIT; hi++) {
     for (int wi = 0; wi < DECONV_WINOGRAD_DEFAULT_UNIT; wi++) {
       float *src_in = tile_in + (wi + hi * DECONV_WINOGRAD_DEFAULT_UNIT) * in_stride;
-      MSGemmFloatUnit_4(tmp_buf, src_in, weight, deconv_param->ic_div4_, DECONV_WINOGRAD_DEFAULT_TILE * 4, count, 0);
+      TiledC4MatmulFp32(tmp_buf, src_in, weight, DECONV_WINOGRAD_DEFAULT_TILE * 4, deconv_param->ic_div4_, count);
 
       for (int uhi = 0; uhi < h_size; uhi++) {
         for (int uwi = 0; uwi < w_size; uwi++) {

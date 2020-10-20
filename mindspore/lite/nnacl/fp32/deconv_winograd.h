@@ -34,6 +34,7 @@ void DeconvWg(float *nhwc_input_, float *tile_in, float *tile_out, int start_ind
               ConvParameter *conv_param, DeConvParam *deconv_param, int task_id);
 void DeconvWgPost(float *tile_out, float *nc4hw4_output, ConvParameter *conv_param, DeConvParam *deconv_param,
                   int calculate_count, int tile_index);
+void TiledC4MatmulFp32(float *dst, const float *src, const float *weight, size_t ic4, size_t cal_num, size_t oc4);
 
 #ifdef __cplusplus
 }
