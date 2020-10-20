@@ -20,7 +20,8 @@ from mindspore import Tensor
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
 
-context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+context.set_context(mode=context.GRAPH_MODE,
+                    enable_graph_kernel=True, device_target="GPU")
 
 
 class Net(Cell):
@@ -33,6 +34,8 @@ class Net(Cell):
         self.sqrt = P.Sqrt()
         self.pow = P.Pow()
         self.neg = P.Neg()
+        self.reducemin = P.ReduceMin()
+        self.reshape = P.Reshape()
 
     def construct(self, x, y):
         add_res1 = self.add(x, 4)
@@ -42,7 +45,9 @@ class Net(Cell):
         div_res = self.div(mul_res, self.sqrt(mul_res))
         pow_res = self.pow(y, 2)
         neg_res = self.neg(self.neg(pow_res))
-        return self.add(div_res, neg_res)
+        add_res3 = self.add(neg_res, div_res)
+        resh_res = self.reshape(add_res3, (2, 12, 3))
+        return self.reducemin(resh_res, 1)
 
 
 @pytest.mark.level0
@@ -58,10 +63,12 @@ def test_basic():
     div_res = np.sqrt(mul_res)
     pow_res = input_y * input_y
     neg_res = pow_res
-    expect = div_res + neg_res
+    add_res3 = neg_res + div_res
+    expect = np.min(add_res3, (1, 2))
 
     net = Net()
     result = net(Tensor(input_x), Tensor(input_y))
 
-    res = np.allclose(expect, result.asnumpy(), rtol=1.e-4, atol=1.e-7, equal_nan=True)
+    res = np.allclose(expect, result.asnumpy(), rtol=1.e-4,
+                      atol=1.e-7, equal_nan=True)
     assert res
