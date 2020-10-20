@@ -38,6 +38,8 @@ enum UnaryOptype {
   UNARY_OP_RSQRT,
   UNARY_OP_SIN,
   UNARY_OP_COS,
+  UNARY_OP_ASIN,
+  UNARY_OP_ACOS,
   UNARY_OP_ABS,
   UNARY_OP_FLOOR,
   UNARY_OP_INVALID_TYPE = 255
@@ -52,6 +54,8 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY
                                                                    {"Rsqrt", UNARY_OP_RSQRT},
                                                                    {"Sin", UNARY_OP_SIN},
                                                                    {"Cos", UNARY_OP_COS},
+                                                                   {"Asin", UNARY_OP_ASIN},
+                                                                   {"ACos", UNARY_OP_ACOS},
                                                                    {"Abs", UNARY_OP_ABS},
                                                                    {"Floor", UNARY_OP_FLOOR}};
 template <typename T>
@@ -110,6 +114,14 @@ class UnaryOpGpuKernel : public GpuKernel {
       }
       case UNARY_OP_COS: {
         Cos(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ASIN: {
+        Asin(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ACOS: {
+        ACos(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
       case UNARY_OP_ZEROSLIKE: {
