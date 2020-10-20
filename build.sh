@@ -805,7 +805,7 @@ build_java() {
   gradle wrapper
   ./gradlew build
 
-  gradle publish -PLITE_VERSION=${VERSION_STR}-SNAPSHOT
+  gradle publish -PLITE_VERSION=${VERSION_STR}
 
   cd ${JAVA_PATH}/java/app/build
   zip -r mindspore-lite-maven-${VERSION_STR}.zip mindspore
