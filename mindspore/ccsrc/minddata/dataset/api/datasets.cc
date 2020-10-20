@@ -128,165 +128,165 @@ std::shared_ptr<SchemaObj> Schema(const std::string &schema_file) {
 // FUNCTIONS TO CREATE DATASETS FOR LEAF-NODE DATASETS
 // (In alphabetical order)
 
-// Function to create a AlbumDataset.
-std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
-                                    const std::vector<std::string> &column_names, bool decode,
-                                    const std::shared_ptr<SamplerObj> &sampler) {
-  auto ds = std::make_shared<AlbumDataset>(dataset_dir, data_schema, column_names, decode, sampler);
+// Function to create a AlbumNode.
+std::shared_ptr<AlbumNode> Album(const std::string &dataset_dir, const std::string &data_schema,
+                                 const std::vector<std::string> &column_names, bool decode,
+                                 const std::shared_ptr<SamplerObj> &sampler) {
+  auto ds = std::make_shared<AlbumNode>(dataset_dir, data_schema, column_names, decode, sampler);
 
   return ds->ValidateParams() ? ds : nullptr;
 }
 
-// Function to create a CelebADataset.
-std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &usage,
-                                      const std::shared_ptr<SamplerObj> &sampler, bool decode,
-                                      const std::set<std::string> &extensions) {
-  auto ds = std::make_shared<CelebADataset>(dataset_dir, usage, sampler, decode, extensions);
+// Function to create a CelebANode.
+std::shared_ptr<CelebANode> CelebA(const std::string &dataset_dir, const std::string &usage,
+                                   const std::shared_ptr<SamplerObj> &sampler, bool decode,
+                                   const std::set<std::string> &extensions) {
+  auto ds = std::make_shared<CelebANode>(dataset_dir, usage, sampler, decode, extensions);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
-// Function to create a Cifar10Dataset.
-std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::string &usage,
-                                        const std::shared_ptr<SamplerObj> &sampler) {
-  auto ds = std::make_shared<Cifar10Dataset>(dataset_dir, usage, sampler);
+// Function to create a Cifar10Node.
+std::shared_ptr<Cifar10Node> Cifar10(const std::string &dataset_dir, const std::string &usage,
+                                     const std::shared_ptr<SamplerObj> &sampler) {
+  auto ds = std::make_shared<Cifar10Node>(dataset_dir, usage, sampler);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
-// Function to create a Cifar100Dataset.
-std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::string &usage,
-                                          const std::shared_ptr<SamplerObj> &sampler) {
-  auto ds = std::make_shared<Cifar100Dataset>(dataset_dir, usage, sampler);
+// Function to create a Cifar100Node.
+std::shared_ptr<Cifar100Node> Cifar100(const std::string &dataset_dir, const std::string &usage,
+                                       const std::shared_ptr<SamplerObj> &sampler) {
+  auto ds = std::make_shared<Cifar100Node>(dataset_dir, usage, sampler);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
-// Function to create a CLUEDataset.
-std::shared_ptr<CLUEDataset> CLUE(const std::vector<std::string> &clue_files, const std::string &task,
-                                  const std::string &usage, int64_t num_samples, ShuffleMode shuffle,
-                                  int32_t num_shards, int32_t shard_id) {
-  auto ds = std::make_shared<CLUEDataset>(clue_files, task, usage, num_samples, shuffle, num_shards, shard_id);
+// Function to create a CLUENode.
+std::shared_ptr<CLUENode> CLUE(const std::vector<std::string> &clue_files, const std::string &task,
+                               const std::string &usage, int64_t num_samples, ShuffleMode shuffle, int32_t num_shards,
+                               int32_t shard_id) {
+  auto ds = std::make_shared<CLUENode>(clue_files, task, usage, num_samples, shuffle, num_shards, shard_id);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
-// Function to create a CocoDataset.
-std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
-                                  const std::string &task, const bool &decode,
-                                  const std::shared_ptr<SamplerObj> &sampler) {
-  auto ds = std::make_shared<CocoDataset>(dataset_dir, annotation_file, task, decode, sampler);
+// Function to create a CocoNode.
+std::shared_ptr<CocoNode> Coco(const std::string &dataset_dir, const std::string &annotation_file,
+                               const std::string &task, const bool &decode,
+                               const std::shared_ptr<SamplerObj> &sampler) {
+  auto ds = std::make_shared<CocoNode>(dataset_dir, annotation_file, task, decode, sampler);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
-// Function to create a CSVDataset.
-std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_files, char field_delim,
-                                const std::vector<std::shared_ptr<CsvBase>> &column_defaults,
-                                const std::vector<std::string> &column_names, int64_t num_samples, ShuffleMode shuffle,
-                                int32_t num_shards, int32_t shard_id) {
-  auto ds = std::make_shared<CSVDataset>(dataset_files, field_delim, column_defaults, column_names, num_samples,
-                                         shuffle, num_shards, shard_id);
+// Function to create a CSVNode.
+std::shared_ptr<CSVNode> CSV(const std::vector<std::string> &dataset_files, char field_delim,
+                             const std::vector<std::shared_ptr<CsvBase>> &column_defaults,
+                             const std::vector<std::string> &column_names, int64_t num_samples, ShuffleMode shuffle,
+                             int32_t num_shards, int32_t shard_id) {
+  auto ds = std::make_shared<CSVNode>(dataset_files, field_delim, column_defaults, column_names, num_samples, shuffle,
+                                      num_shards, shard_id);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
-// Function to create a ImageFolderDataset.
-std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, bool decode,
-                                                const std::shared_ptr<SamplerObj> &sampler,
-                                                const std::set<std::string> &extensions,
-                                                const std::map<std::string, int32_t> &class_indexing) {
+// Function to create a ImageFolderNode.
+std::shared_ptr<ImageFolderNode> ImageFolder(const std::string &dataset_dir, bool decode,
+                                             const std::shared_ptr<SamplerObj> &sampler,
+                                             const std::set<std::string> &extensions,
+                                             const std::map<std::string, int32_t> &class_indexing) {
   // This arg exists in ImageFolderOp, but not externalized (in Python API). The default value is false.
   bool recursive = false;
 
-  // Create logical representation of ImageFolderDataset.
-  auto ds = std::make_shared<ImageFolderDataset>(dataset_dir, decode, sampler, recursive, extensions, class_indexing);
+  // Create logical representation of ImageFolderNode.
+  auto ds = std::make_shared<ImageFolderNode>(dataset_dir, decode, sampler, recursive, extensions, class_indexing);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
 #ifndef ENABLE_ANDROID
-// Function to create a ManifestDataset.
-std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const std::string &usage,
-                                          const std::shared_ptr<SamplerObj> &sampler,
-                                          const std::map<std::string, int32_t> &class_indexing, bool decode) {
-  auto ds = std::make_shared<ManifestDataset>(dataset_file, usage, sampler, class_indexing, decode);
+// Function to create a ManifestNode.
+std::shared_ptr<ManifestNode> Manifest(const std::string &dataset_file, const std::string &usage,
+                                       const std::shared_ptr<SamplerObj> &sampler,
+                                       const std::map<std::string, int32_t> &class_indexing, bool decode) {
+  auto ds = std::make_shared<ManifestNode>(dataset_file, usage, sampler, class_indexing, decode);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 #endif
 
-// Function to create a MindDataDataset.
-std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file, const std::vector<std::string> &columns_list,
-                                          const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
-                                          int64_t num_padded) {
-  auto ds = std::make_shared<MindDataDataset>(dataset_file, columns_list, sampler, padded_sample, num_padded);
+// Function to create a MindDataNode.
+std::shared_ptr<MindDataNode> MindData(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                                       const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
+                                       int64_t num_padded) {
+  auto ds = std::make_shared<MindDataNode>(dataset_file, columns_list, sampler, padded_sample, num_padded);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
-// Function to create a MindDataDataset.
-std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
-                                          const std::vector<std::string> &columns_list,
-                                          const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
-                                          int64_t num_padded) {
-  auto ds = std::make_shared<MindDataDataset>(dataset_files, columns_list, sampler, padded_sample, num_padded);
+// Function to create a MindDataNode.
+std::shared_ptr<MindDataNode> MindData(const std::vector<std::string> &dataset_files,
+                                       const std::vector<std::string> &columns_list,
+                                       const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
+                                       int64_t num_padded) {
+  auto ds = std::make_shared<MindDataNode>(dataset_files, columns_list, sampler, padded_sample, num_padded);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
-// Function to create a MnistDataset.
-std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage,
-                                    const std::shared_ptr<SamplerObj> &sampler) {
-  auto ds = std::make_shared<MnistDataset>(dataset_dir, usage, sampler);
+// Function to create a MnistNode.
+std::shared_ptr<MnistNode> Mnist(const std::string &dataset_dir, const std::string &usage,
+                                 const std::shared_ptr<SamplerObj> &sampler) {
+  auto ds = std::make_shared<MnistNode>(dataset_dir, usage, sampler);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
 // Function to overload "+" operator to concat two datasets
-std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &datasets1,
-                                         const std::shared_ptr<Dataset> &datasets2) {
-  std::shared_ptr<ConcatDataset> ds = std::make_shared<ConcatDataset>(std::vector({datasets2, datasets1}));
+std::shared_ptr<ConcatNode> operator+(const std::shared_ptr<Dataset> &datasets1,
+                                      const std::shared_ptr<Dataset> &datasets2) {
+  std::shared_ptr<ConcatNode> ds = std::make_shared<ConcatNode>(std::vector({datasets2, datasets1}));
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
-// Function to create a TextFileDataset.
-std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &dataset_files, int64_t num_samples,
-                                          ShuffleMode shuffle, int32_t num_shards, int32_t shard_id) {
-  auto ds = std::make_shared<TextFileDataset>(dataset_files, num_samples, shuffle, num_shards, shard_id);
+// Function to create a TextFileNode.
+std::shared_ptr<TextFileNode> TextFile(const std::vector<std::string> &dataset_files, int64_t num_samples,
+                                       ShuffleMode shuffle, int32_t num_shards, int32_t shard_id) {
+  auto ds = std::make_shared<TextFileNode>(dataset_files, num_samples, shuffle, num_shards, shard_id);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
 #ifndef ENABLE_ANDROID
-// Function to create a VOCDataset.
-std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task, const std::string &usage,
-                                const std::map<std::string, int32_t> &class_indexing, bool decode,
-                                const std::shared_ptr<SamplerObj> &sampler) {
-  auto ds = std::make_shared<VOCDataset>(dataset_dir, task, usage, class_indexing, decode, sampler);
+// Function to create a VOCNode.
+std::shared_ptr<VOCNode> VOC(const std::string &dataset_dir, const std::string &task, const std::string &usage,
+                             const std::map<std::string, int32_t> &class_indexing, bool decode,
+                             const std::shared_ptr<SamplerObj> &sampler) {
+  auto ds = std::make_shared<VOCNode>(dataset_dir, task, usage, class_indexing, decode, sampler);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 #endif
 
-// Function to create a ZipDataset.
-std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
-  auto ds = std::make_shared<ZipDataset>(datasets);
+// Function to create a ZipNode.
+std::shared_ptr<ZipNode> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
+  auto ds = std::make_shared<ZipNode>(datasets);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
@@ -296,38 +296,34 @@ std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &dat
 // (In alphabetical order)
 
 // Function to create a Batch dataset
-std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remainder) {
+std::shared_ptr<BatchNode> Dataset::Batch(int32_t batch_size, bool drop_remainder) {
   // Default values
   std::vector<std::string> cols_to_map = {};
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map;
   bool pad = false;
-  auto ds = std::make_shared<BatchDataset>(batch_size, drop_remainder, pad, cols_to_map, pad_map);
+  auto ds = std::make_shared<BatchNode>(shared_from_this(), batch_size, drop_remainder, pad, cols_to_map, pad_map);
 
   if (!ds->ValidateParams()) {
     return nullptr;
   }
-
-  ds->children.push_back(shared_from_this());
 
   return ds;
 }
 
 #ifndef ENABLE_ANDROID
 // Function to create a BucketBatchByLength dataset
-std::shared_ptr<BucketBatchByLengthDataset> Dataset::BucketBatchByLength(
+std::shared_ptr<BucketBatchByLengthNode> Dataset::BucketBatchByLength(
   const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
   const std::vector<int32_t> &bucket_batch_sizes, std::function<TensorRow(TensorRow)> element_length_function,
   const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info, bool pad_to_bucket_boundary,
   bool drop_remainder) {
-  auto ds = std::make_shared<BucketBatchByLengthDataset>(column_names, bucket_boundaries, bucket_batch_sizes,
-                                                         element_length_function, pad_info, pad_to_bucket_boundary,
-                                                         drop_remainder);
+  auto ds = std::make_shared<BucketBatchByLengthNode>(shared_from_this(), column_names, bucket_boundaries,
+                                                      bucket_batch_sizes, element_length_function, pad_info,
+                                                      pad_to_bucket_boundary, drop_remainder);
 
   if (!ds->ValidateParams()) {
     return nullptr;
   }
-
-  ds->children.push_back(shared_from_this());
 
   return ds;
 }
@@ -337,13 +333,12 @@ std::shared_ptr<Vocab> Dataset::BuildVocab(const std::vector<std::string> &colum
                                            const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
                                            const std::vector<std::string> &special_tokens, bool special_first) {
   auto vocab = std::make_shared<Vocab>();
-  auto ds = std::make_shared<BuildVocabDataset>(vocab, columns, freq_range, top_k, special_tokens, special_first);
+  auto ds = std::make_shared<BuildVocabNode>(shared_from_this(), vocab, columns, freq_range, top_k, special_tokens,
+                                             special_first);
 
   if (!ds->ValidateParams()) {
     return nullptr;
   }
-
-  ds->children.push_back(shared_from_this());
 
   // Run tree here to starting building vocab
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
@@ -363,52 +358,45 @@ std::shared_ptr<Vocab> Dataset::BuildVocab(const std::vector<std::string> &colum
 #endif
 
 // Function to create a Concat dataset
-std::shared_ptr<ConcatDataset> Dataset::Concat(const std::vector<std::shared_ptr<Dataset>> &datasets) {
-  auto ds = std::make_shared<ConcatDataset>(datasets);
+std::shared_ptr<ConcatNode> Dataset::Concat(const std::vector<std::shared_ptr<Dataset>> &datasets) {
+  auto ds = std::make_shared<ConcatNode>(datasets);
   ds->children.push_back(shared_from_this());
 
   return ds->ValidateParams() ? ds : nullptr;
 }
 
 // Function to create a Map dataset.
-std::shared_ptr<MapDataset> Dataset::Map(std::vector<std::shared_ptr<TensorOperation>> operations,
-                                         std::vector<std::string> input_columns,
-                                         std::vector<std::string> output_columns,
-                                         const std::vector<std::string> &project_columns) {
-  auto ds = std::make_shared<MapDataset>(operations, input_columns, output_columns, project_columns);
+std::shared_ptr<MapNode> Dataset::Map(std::vector<std::shared_ptr<TensorOperation>> operations,
+                                      std::vector<std::string> input_columns, std::vector<std::string> output_columns,
+                                      const std::vector<std::string> &project_columns) {
+  auto ds = std::make_shared<MapNode>(shared_from_this(), operations, input_columns, output_columns, project_columns);
 
   if (!ds->ValidateParams()) {
     return nullptr;
   }
 
-  ds->children.push_back(shared_from_this());
-
   return ds;
 }
 
-// Function to create a ProjectDataset.
-std::shared_ptr<ProjectDataset> Dataset::Project(const std::vector<std::string> &columns) {
-  auto ds = std::make_shared<ProjectDataset>(columns);
+// Function to create a ProjectNode.
+std::shared_ptr<ProjectNode> Dataset::Project(const std::vector<std::string> &columns) {
+  auto ds = std::make_shared<ProjectNode>(shared_from_this(), columns);
   // Call derived class validation method.
   if (!ds->ValidateParams()) {
     return nullptr;
   }
 
-  ds->children.push_back(shared_from_this());
-
   return ds;
 }
 
-// Function to create a RenameDataset.
-std::shared_ptr<RenameDataset> Dataset::Rename(const std::vector<std::string> &input_columns,
-                                               const std::vector<std::string> &output_columns) {
-  auto ds = std::make_shared<RenameDataset>(input_columns, output_columns);
+// Function to create a RenameNode.
+std::shared_ptr<RenameNode> Dataset::Rename(const std::vector<std::string> &input_columns,
+                                            const std::vector<std::string> &output_columns) {
+  auto ds = std::make_shared<RenameNode>(shared_from_this(), input_columns, output_columns);
   // Call derived class validation method.
   if (!ds->ValidateParams()) {
     return nullptr;
   }
-
-  ds->children.push_back(shared_from_this());
 
   return ds;
 }
@@ -420,46 +408,40 @@ std::shared_ptr<Dataset> Dataset::Repeat(int32_t count) {
     return shared_from_this();
   }
 
-  auto ds = std::make_shared<RepeatDataset>(count);
+  auto ds = std::make_shared<RepeatNode>(shared_from_this(), count);
 
   if (!ds->ValidateParams()) {
     return nullptr;
   }
-
-  ds->children.push_back(shared_from_this());
 
   return ds;
 }
 
 // Function to create a ShuffleOp
-std::shared_ptr<ShuffleDataset> Dataset::Shuffle(int32_t buffer_size) {
+std::shared_ptr<ShuffleNode> Dataset::Shuffle(int32_t buffer_size) {
   // Pass in reshuffle_each_epoch with true
-  auto ds = std::make_shared<ShuffleDataset>(buffer_size, true);
+  auto ds = std::make_shared<ShuffleNode>(shared_from_this(), buffer_size, true);
 
   if (!ds->ValidateParams()) {
     return nullptr;
   }
 
-  ds->children.push_back(shared_from_this());
-
   return ds;
 }
 
-// Function to create a SkipDataset.
-std::shared_ptr<SkipDataset> Dataset::Skip(int32_t count) {
-  auto ds = std::make_shared<SkipDataset>(count);
+// Function to create a SkipNode.
+std::shared_ptr<SkipNode> Dataset::Skip(int32_t count) {
+  auto ds = std::make_shared<SkipNode>(shared_from_this(), count);
 
   // Call derived class validation method.
   if (!ds->ValidateParams()) {
     return nullptr;
   }
 
-  ds->children.push_back(shared_from_this());
-
   return ds;
 }
 
-// Function to create a TakeDataset.
+// Function to create a TakeNode.
 std::shared_ptr<Dataset> Dataset::Take(int32_t count) {
   // If count is greater than the number of element in dataset or equal to -1,
   // all the element in dataset will be taken
@@ -467,22 +449,20 @@ std::shared_ptr<Dataset> Dataset::Take(int32_t count) {
     return shared_from_this();
   }
 
-  auto ds = std::make_shared<TakeDataset>(count);
+  auto ds = std::make_shared<TakeNode>(shared_from_this(), count);
 
   // Call derived class validation method.
   if (!ds->ValidateParams()) {
     return nullptr;
   }
 
-  ds->children.push_back(shared_from_this());
-
   return ds;
 }
 
 // Function to create a Zip dataset
-std::shared_ptr<ZipDataset> Dataset::Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
+std::shared_ptr<ZipNode> Dataset::Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
   // Default values
-  auto ds = std::make_shared<ZipDataset>(datasets);
+  auto ds = std::make_shared<ZipNode>(datasets);
   ds->children.push_back(shared_from_this());
 
   return ds->ValidateParams() ? ds : nullptr;
@@ -811,32 +791,32 @@ Status ValidateDatasetColumnParam(const std::string &dataset_name, const std::st
 // DERIVED DATASET CLASSES LEAF-NODE DATASETS
 // (In alphabetical order)
 
-// Constructor for AlbumDataset
-AlbumDataset::AlbumDataset(const std::string &dataset_dir, const std::string &data_schema,
-                           const std::vector<std::string> &column_names, bool decode,
-                           const std::shared_ptr<SamplerObj> &sampler)
+// Constructor for AlbumNode
+AlbumNode::AlbumNode(const std::string &dataset_dir, const std::string &data_schema,
+                     const std::vector<std::string> &column_names, bool decode,
+                     const std::shared_ptr<SamplerObj> &sampler)
     : dataset_dir_(dataset_dir),
       schema_path_(data_schema),
       column_names_(column_names),
       decode_(decode),
       sampler_(sampler) {}
 
-Status AlbumDataset::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("AlbumDataset", dataset_dir_));
+Status AlbumNode::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("AlbumNode", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("AlbumDataset", {schema_path_}));
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("AlbumNode", {schema_path_}));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("AlbumDataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("AlbumNode", sampler_));
 
   if (!column_names_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("AlbumDataset", "column_names", column_names_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("AlbumNode", "column_names", column_names_));
   }
 
   return Status::OK();
 }
 
-// Function to build AlbumDataset
-std::vector<std::shared_ptr<DatasetOp>> AlbumDataset::Build() {
+// Function to build AlbumNode
+std::vector<std::shared_ptr<DatasetOp>> AlbumNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -851,24 +831,24 @@ std::vector<std::shared_ptr<DatasetOp>> AlbumDataset::Build() {
   return node_ops;
 }
 
-// Constructor for CelebADataset
-CelebADataset::CelebADataset(const std::string &dataset_dir, const std::string &usage,
-                             const std::shared_ptr<SamplerObj> &sampler, const bool &decode,
-                             const std::set<std::string> &extensions)
+// Constructor for CelebANode
+CelebANode::CelebANode(const std::string &dataset_dir, const std::string &usage,
+                       const std::shared_ptr<SamplerObj> &sampler, const bool &decode,
+                       const std::set<std::string> &extensions)
     : dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler), decode_(decode), extensions_(extensions) {}
 
-Status CelebADataset::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("CelebADataset", dataset_dir_));
+Status CelebANode::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("CelebANode", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("CelebADataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("CelebANode", sampler_));
 
   RETURN_IF_NOT_OK(ValidateStringValue(usage_, {"all", "train", "valid", "test"}));
 
   return Status::OK();
 }
 
-// Function to build CelebADataset
-std::vector<std::shared_ptr<DatasetOp>> CelebADataset::Build() {
+// Function to build CelebANode
+std::vector<std::shared_ptr<DatasetOp>> CelebANode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -884,15 +864,14 @@ std::vector<std::shared_ptr<DatasetOp>> CelebADataset::Build() {
   return node_ops;
 }
 
-// Constructor for Cifar10Dataset
-Cifar10Dataset::Cifar10Dataset(const std::string &dataset_dir, const std::string &usage,
-                               std::shared_ptr<SamplerObj> sampler)
+// Constructor for Cifar10Node
+Cifar10Node::Cifar10Node(const std::string &dataset_dir, const std::string &usage, std::shared_ptr<SamplerObj> sampler)
     : dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
 
-Status Cifar10Dataset::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("Cifar10Dataset", dataset_dir_));
+Status Cifar10Node::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("Cifar10Node", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("Cifar10Dataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("Cifar10Node", sampler_));
 
   RETURN_IF_NOT_OK(ValidateStringValue(usage_, {"train", "test", "all"}));
 
@@ -900,7 +879,7 @@ Status Cifar10Dataset::ValidateParams() {
 }
 
 // Function to build CifarOp for Cifar10
-std::vector<std::shared_ptr<DatasetOp>> Cifar10Dataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> Cifar10Node::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -917,15 +896,15 @@ std::vector<std::shared_ptr<DatasetOp>> Cifar10Dataset::Build() {
   return node_ops;
 }
 
-// Constructor for Cifar100Dataset
-Cifar100Dataset::Cifar100Dataset(const std::string &dataset_dir, const std::string &usage,
-                                 std::shared_ptr<SamplerObj> sampler)
+// Constructor for Cifar100Node
+Cifar100Node::Cifar100Node(const std::string &dataset_dir, const std::string &usage,
+                           std::shared_ptr<SamplerObj> sampler)
     : dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
 
-Status Cifar100Dataset::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("Cifar100Dataset", dataset_dir_));
+Status Cifar100Node::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("Cifar100Node", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("Cifar100Dataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("Cifar100Node", sampler_));
 
   RETURN_IF_NOT_OK(ValidateStringValue(usage_, {"train", "test", "all"}));
 
@@ -933,7 +912,7 @@ Status Cifar100Dataset::ValidateParams() {
 }
 
 // Function to build CifarOp for Cifar100
-std::vector<std::shared_ptr<DatasetOp>> Cifar100Dataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> Cifar100Node::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -952,9 +931,9 @@ std::vector<std::shared_ptr<DatasetOp>> Cifar100Dataset::Build() {
   return node_ops;
 }
 
-// Constructor for CLUEDataset
-CLUEDataset::CLUEDataset(const std::vector<std::string> clue_files, std::string task, std::string usage,
-                         int64_t num_samples, ShuffleMode shuffle, int32_t num_shards, int32_t shard_id)
+// Constructor for CLUENode
+CLUENode::CLUENode(const std::vector<std::string> clue_files, std::string task, std::string usage, int64_t num_samples,
+                   ShuffleMode shuffle, int32_t num_shards, int32_t shard_id)
     : dataset_files_(clue_files),
       task_(task),
       usage_(usage),
@@ -963,8 +942,8 @@ CLUEDataset::CLUEDataset(const std::vector<std::string> clue_files, std::string 
       num_shards_(num_shards),
       shard_id_(shard_id) {}
 
-Status CLUEDataset::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("CLUEDataset", dataset_files_));
+Status CLUENode::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("CLUENode", dataset_files_));
 
   std::vector<std::string> task_list = {"AFQMC", "TNEWS", "IFLYTEK", "CMNLI", "WSC", "CSL"};
   std::vector<std::string> usage_list = {"train", "test", "eval"};
@@ -982,18 +961,18 @@ Status CLUEDataset::ValidateParams() {
   }
 
   if (num_samples_ < 0) {
-    std::string err_msg = "CLUEDataset: Invalid number of samples: " + num_samples_;
+    std::string err_msg = "CLUENode: Invalid number of samples: " + num_samples_;
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  RETURN_IF_NOT_OK(ValidateDatasetShardParams("CLUEDataset", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateDatasetShardParams("CLUENode", num_shards_, shard_id_));
 
   return Status::OK();
 }
 
 // Function to split string based on a character delimiter
-std::vector<std::string> CLUEDataset::split(const std::string &s, char delim) {
+std::vector<std::string> CLUENode::split(const std::string &s, char delim) {
   std::vector<std::string> res;
   std::stringstream ss(s);
   std::string item;
@@ -1004,8 +983,8 @@ std::vector<std::string> CLUEDataset::split(const std::string &s, char delim) {
   return res;
 }
 
-// Function to build CLUEDataset
-std::vector<std::shared_ptr<DatasetOp>> CLUEDataset::Build() {
+// Function to build CLUENode
+std::vector<std::shared_ptr<DatasetOp>> CLUENode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
   std::map<std::string, std::string> key_map;
@@ -1142,15 +1121,15 @@ std::vector<std::shared_ptr<DatasetOp>> CLUEDataset::Build() {
   return node_ops;
 }
 
-// Constructor for CocoDataset
-CocoDataset::CocoDataset(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
-                         const bool &decode, const std::shared_ptr<SamplerObj> &sampler)
+// Constructor for CocoNode
+CocoNode::CocoNode(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
+                   const bool &decode, const std::shared_ptr<SamplerObj> &sampler)
     : dataset_dir_(dataset_dir), annotation_file_(annotation_file), task_(task), decode_(decode), sampler_(sampler) {}
 
-Status CocoDataset::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("CocoDataset", dataset_dir_));
+Status CocoNode::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("CocoNode", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("CocoDataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("CocoNode", sampler_));
 
   Path annotation_file(annotation_file_);
   if (!annotation_file.Exists()) {
@@ -1170,8 +1149,8 @@ Status CocoDataset::ValidateParams() {
   return Status::OK();
 }
 
-// Function to build CocoDataset
-std::vector<std::shared_ptr<DatasetOp>> CocoDataset::Build() {
+// Function to build CocoNode
+std::vector<std::shared_ptr<DatasetOp>> CocoNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1221,7 +1200,7 @@ std::vector<std::shared_ptr<DatasetOp>> CocoDataset::Build() {
         schema->AddColumn(ColDescriptor(std::string("area"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
       break;
     default:
-      MS_LOG(ERROR) << "CocoDataset::Build : Invalid task type: " << task_type;
+      MS_LOG(ERROR) << "CocoNode::Build : Invalid task type: " << task_type;
       return {};
   }
   std::shared_ptr<CocoOp> op =
@@ -1231,11 +1210,11 @@ std::vector<std::shared_ptr<DatasetOp>> CocoDataset::Build() {
   return node_ops;
 }
 
-// Constructor for CSVDataset
-CSVDataset::CSVDataset(const std::vector<std::string> &csv_files, char field_delim,
-                       const std::vector<std::shared_ptr<CsvBase>> &column_defaults,
-                       const std::vector<std::string> &column_names, int64_t num_samples, ShuffleMode shuffle,
-                       int32_t num_shards, int32_t shard_id)
+// Constructor for CSVNode
+CSVNode::CSVNode(const std::vector<std::string> &csv_files, char field_delim,
+                 const std::vector<std::shared_ptr<CsvBase>> &column_defaults,
+                 const std::vector<std::string> &column_names, int64_t num_samples, ShuffleMode shuffle,
+                 int32_t num_shards, int32_t shard_id)
     : dataset_files_(csv_files),
       field_delim_(field_delim),
       column_defaults_(column_defaults),
@@ -1245,38 +1224,38 @@ CSVDataset::CSVDataset(const std::vector<std::string> &csv_files, char field_del
       num_shards_(num_shards),
       shard_id_(shard_id) {}
 
-Status CSVDataset::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("CSVDataset", dataset_files_));
+Status CSVNode::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("CSVNode", dataset_files_));
 
   if (field_delim_ == '"' || field_delim_ == '\r' || field_delim_ == '\n') {
-    std::string err_msg = "CSVDataset: The field delimiter should not be \", \\r, \\n";
+    std::string err_msg = "CSVNode: The field delimiter should not be \", \\r, \\n";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (num_samples_ < 0) {
-    std::string err_msg = "CSVDataset: Invalid number of samples: " + num_samples_;
+    std::string err_msg = "CSVNode: Invalid number of samples: " + num_samples_;
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  RETURN_IF_NOT_OK(ValidateDatasetShardParams("CSVDataset", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateDatasetShardParams("CSVNode", num_shards_, shard_id_));
 
   if (find(column_defaults_.begin(), column_defaults_.end(), nullptr) != column_defaults_.end()) {
-    std::string err_msg = "CSVDataset: column_default should not be null.";
+    std::string err_msg = "CSVNode: column_default should not be null.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (!column_names_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("CSVDataset", "column_names", column_names_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("CSVNode", "column_names", column_names_));
   }
 
   return Status::OK();
 }
 
-// Function to build CSVDataset
-std::vector<std::shared_ptr<DatasetOp>> CSVDataset::Build() {
+// Function to build CSVNode
+std::vector<std::shared_ptr<DatasetOp>> CSVNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1322,9 +1301,9 @@ std::vector<std::shared_ptr<DatasetOp>> CSVDataset::Build() {
   return node_ops;
 }
 
-ImageFolderDataset::ImageFolderDataset(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler,
-                                       bool recursive, std::set<std::string> extensions,
-                                       std::map<std::string, int32_t> class_indexing)
+ImageFolderNode::ImageFolderNode(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler,
+                                 bool recursive, std::set<std::string> extensions,
+                                 std::map<std::string, int32_t> class_indexing)
     : dataset_dir_(dataset_dir),
       decode_(decode),
       sampler_(sampler),
@@ -1332,15 +1311,15 @@ ImageFolderDataset::ImageFolderDataset(std::string dataset_dir, bool decode, std
       class_indexing_(class_indexing),
       exts_(extensions) {}
 
-Status ImageFolderDataset::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("ImageFolderDataset", dataset_dir_));
+Status ImageFolderNode::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("ImageFolderNode", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("ImageFolderDataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("ImageFolderNode", sampler_));
 
   return Status::OK();
 }
 
-std::vector<std::shared_ptr<DatasetOp>> ImageFolderDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> ImageFolderNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1359,12 +1338,12 @@ std::vector<std::shared_ptr<DatasetOp>> ImageFolderDataset::Build() {
 }
 
 #ifndef ENABLE_ANDROID
-ManifestDataset::ManifestDataset(const std::string &dataset_file, const std::string &usage,
-                                 const std::shared_ptr<SamplerObj> &sampler,
-                                 const std::map<std::string, int32_t> &class_indexing, bool decode)
+ManifestNode::ManifestNode(const std::string &dataset_file, const std::string &usage,
+                           const std::shared_ptr<SamplerObj> &sampler,
+                           const std::map<std::string, int32_t> &class_indexing, bool decode)
     : dataset_file_(dataset_file), usage_(usage), decode_(decode), class_index_(class_indexing), sampler_(sampler) {}
 
-Status ManifestDataset::ValidateParams() {
+Status ManifestNode::ValidateParams() {
   std::vector<char> forbidden_symbols = {':', '*', '?', '"', '<', '>', '|', '`', '&', '\'', ';'};
   for (char c : dataset_file_) {
     auto p = std::find(forbidden_symbols.begin(), forbidden_symbols.end(), c);
@@ -1382,7 +1361,7 @@ Status ManifestDataset::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("ManifestDataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("ManifestNode", sampler_));
 
   std::vector<std::string> usage_list = {"train", "eval", "inference"};
   if (find(usage_list.begin(), usage_list.end(), usage_) == usage_list.end()) {
@@ -1394,7 +1373,7 @@ Status ManifestDataset::ValidateParams() {
   return Status::OK();
 }
 
-std::vector<std::shared_ptr<DatasetOp>> ManifestDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> ManifestNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1416,10 +1395,8 @@ std::vector<std::shared_ptr<DatasetOp>> ManifestDataset::Build() {
 #endif
 
 #ifndef ENABLE_ANDROID
-MindDataDataset::MindDataDataset(const std::vector<std::string> &dataset_files,
-                                 const std::vector<std::string> &columns_list,
-                                 const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
-                                 int64_t num_padded)
+MindDataNode::MindDataNode(const std::vector<std::string> &dataset_files, const std::vector<std::string> &columns_list,
+                           const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded)
     : dataset_file_(std::string()),
       dataset_files_(dataset_files),
       search_for_pattern_(false),
@@ -1429,9 +1406,8 @@ MindDataDataset::MindDataDataset(const std::vector<std::string> &dataset_files,
       sample_bytes_({}),
       num_padded_(num_padded) {}
 
-MindDataDataset::MindDataDataset(const std::string &dataset_file, const std::vector<std::string> &columns_list,
-                                 const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
-                                 int64_t num_padded)
+MindDataNode::MindDataNode(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                           const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded)
     : dataset_file_(dataset_file),
       dataset_files_({}),
       search_for_pattern_(true),
@@ -1441,10 +1417,10 @@ MindDataDataset::MindDataDataset(const std::string &dataset_file, const std::vec
       sample_bytes_({}),
       num_padded_(num_padded) {}
 
-Status MindDataDataset::ValidateParams() {
+Status MindDataNode::ValidateParams() {
   if (!search_for_pattern_ && dataset_files_.size() > 4096) {
     std::string err_msg =
-      "MindDataDataset: length of dataset_file must be less than or equal to 4096, dataset_file length: " +
+      "MindDataNode: length of dataset_file must be less than or equal to 4096, dataset_file length: " +
       std::to_string(dataset_file_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -1452,30 +1428,29 @@ Status MindDataDataset::ValidateParams() {
 
   std::vector<std::string> dataset_file_vec =
     search_for_pattern_ ? std::vector<std::string>{dataset_file_} : dataset_files_;
-  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("MindDataDataset", dataset_file_vec));
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("MindDataNode", dataset_file_vec));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("MindDataDataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("MindDataNode", sampler_));
 
   if (!columns_list_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MindDataDataset", "columns_list", columns_list_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MindDataNode", "columns_list", columns_list_));
   }
 
   if (padded_sample_ != nullptr) {
     if (num_padded_ < 0) {
       std::string err_msg =
-        "MindDataDataset: num_padded must be greater than or equal to zero, num_padded: " + std::to_string(num_padded_);
+        "MindDataNode: num_padded must be greater than or equal to zero, num_padded: " + std::to_string(num_padded_);
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     if (columns_list_.empty()) {
-      std::string err_msg = "MindDataDataset: padded_sample is specified and requires columns_list as well";
+      std::string err_msg = "MindDataNode: padded_sample is specified and requires columns_list as well";
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     for (std::string &column : columns_list_) {
       if (padded_sample_.find(column) == padded_sample_.end()) {
-        std::string err_msg =
-          "MindDataDataset: " + column + " in columns_list does not match any column in padded_sample";
+        std::string err_msg = "MindDataNode: " + column + " in columns_list does not match any column in padded_sample";
         MS_LOG(ERROR) << err_msg << ", padded_sample: " << padded_sample_;
         RETURN_STATUS_SYNTAX_ERROR(err_msg);
       }
@@ -1483,7 +1458,7 @@ Status MindDataDataset::ValidateParams() {
   }
   if (num_padded_ > 0) {
     if (padded_sample_ == nullptr) {
-      std::string err_msg = "MindDataDataset: num_padded is specified but padded_sample is not";
+      std::string err_msg = "MindDataNode: num_padded is specified but padded_sample is not";
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
@@ -1493,13 +1468,13 @@ Status MindDataDataset::ValidateParams() {
 }
 
 // Helper function to create runtime sampler for minddata dataset
-Status MindDataDataset::BuildMindDatasetSamplerChain(
-  const std::shared_ptr<SamplerObj> &sampler, std::vector<std::shared_ptr<mindrecord::ShardOperator>> *operators_,
-  int64_t num_padded) {
+Status MindDataNode::BuildMindDatasetSamplerChain(const std::shared_ptr<SamplerObj> &sampler,
+                                                  std::vector<std::shared_ptr<mindrecord::ShardOperator>> *operators_,
+                                                  int64_t num_padded) {
   std::shared_ptr<mindrecord::ShardOperator> op = sampler->BuildForMindDataset();
   if (op == nullptr) {
     std::string err_msg =
-      "MindDataDataset: Unsupported sampler is supplied for MindDataset. Supported sampler list: "
+      "MindDataNode: Unsupported sampler is supplied for MindDataset. Supported sampler list: "
       "SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler and DistributedSampler";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -1523,11 +1498,9 @@ Status MindDataDataset::BuildMindDatasetSamplerChain(
 }
 
 // Helper function to set sample_bytes from py::byte type
-void MindDataDataset::SetSampleBytes(std::map<std::string, std::string> *sample_bytes) {
-  sample_bytes_ = *sample_bytes;
-}
+void MindDataNode::SetSampleBytes(std::map<std::string, std::string> *sample_bytes) { sample_bytes_ = *sample_bytes; }
 
-std::vector<std::shared_ptr<DatasetOp>> MindDataDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> MindDataNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1555,20 +1528,20 @@ std::vector<std::shared_ptr<DatasetOp>> MindDataDataset::Build() {
 }
 #endif
 
-MnistDataset::MnistDataset(std::string dataset_dir, std::string usage, std::shared_ptr<SamplerObj> sampler)
+MnistNode::MnistNode(std::string dataset_dir, std::string usage, std::shared_ptr<SamplerObj> sampler)
     : dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
 
-Status MnistDataset::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateDatasetDirParam("MnistDataset", dataset_dir_));
+Status MnistNode::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateDatasetDirParam("MnistNode", dataset_dir_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("MnistDataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("MnistNode", sampler_));
 
   RETURN_IF_NOT_OK(ValidateStringValue(usage_, {"train", "test", "all"}));
 
   return Status::OK();
 }
 
-std::vector<std::shared_ptr<DatasetOp>> MnistDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> MnistNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1584,30 +1557,30 @@ std::vector<std::shared_ptr<DatasetOp>> MnistDataset::Build() {
   return node_ops;
 }
 
-// ValideParams for RandomDataset
-Status RandomDataset::ValidateParams() {
+// ValideParams for RandomNode
+Status RandomNode::ValidateParams() {
   if (total_rows_ < 0) {
-    std::string err_msg = "RandomDataset: total_rows must be greater than or equal 0, now get " + total_rows_;
+    std::string err_msg = "RandomNode: total_rows must be greater than or equal 0, now get " + total_rows_;
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("RandomDataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("RandomNode", sampler_));
 
   if (!columns_list_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RandomDataset", "columns_list", columns_list_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RandomNode", "columns_list", columns_list_));
   }
 
   return Status::OK();
 }
 
-int32_t RandomDataset::GenRandomInt(int32_t min, int32_t max) {
+int32_t RandomNode::GenRandomInt(int32_t min, int32_t max) {
   std::uniform_int_distribution<int32_t> uniDist(min, max);
   return uniDist(rand_gen_);
 }
 
-// Build for RandomDataset
-std::vector<std::shared_ptr<DatasetOp>> RandomDataset::Build() {
+// Build for RandomNode
+std::vector<std::shared_ptr<DatasetOp>> RandomNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1652,31 +1625,31 @@ std::vector<std::shared_ptr<DatasetOp>> RandomDataset::Build() {
   return node_ops;
 }
 
-// Constructor for TextFileDataset
-TextFileDataset::TextFileDataset(std::vector<std::string> dataset_files, int32_t num_samples, ShuffleMode shuffle,
-                                 int32_t num_shards, int32_t shard_id)
+// Constructor for TextFileNode
+TextFileNode::TextFileNode(std::vector<std::string> dataset_files, int32_t num_samples, ShuffleMode shuffle,
+                           int32_t num_shards, int32_t shard_id)
     : dataset_files_(dataset_files),
       num_samples_(num_samples),
       shuffle_(shuffle),
       num_shards_(num_shards),
       shard_id_(shard_id) {}
 
-Status TextFileDataset::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("CLUEDataset", dataset_files_));
+Status TextFileNode::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateDatasetFilesParam("TextFileNode", dataset_files_));
 
   if (num_samples_ < 0) {
-    std::string err_msg = "TextFileDataset: Invalid number of samples: " + num_samples_;
+    std::string err_msg = "TextFileNode: Invalid number of samples: " + num_samples_;
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  RETURN_IF_NOT_OK(ValidateDatasetShardParams("TextFileDataset", num_shards_, shard_id_));
+  RETURN_IF_NOT_OK(ValidateDatasetShardParams("TextFileNode", num_shards_, shard_id_));
 
   return Status::OK();
 }
 
-// Function to build TextFileDataset
-std::vector<std::shared_ptr<DatasetOp>> TextFileDataset::Build() {
+// Function to build TextFileNode
+std::vector<std::shared_ptr<DatasetOp>> TextFileNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1717,11 +1690,11 @@ std::vector<std::shared_ptr<DatasetOp>> TextFileDataset::Build() {
 }
 
 #ifndef ENABLE_ANDROID
-// Validator for TFRecordDataset
-Status TFRecordDataset::ValidateParams() { return Status::OK(); }
+// Validator for TFRecordNode
+Status TFRecordNode::ValidateParams() { return Status::OK(); }
 
-// Function to build TFRecordDataset
-std::vector<std::shared_ptr<DatasetOp>> TFRecordDataset::Build() {
+// Function to build TFRecordNode
+std::vector<std::shared_ptr<DatasetOp>> TFRecordNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1767,10 +1740,9 @@ std::vector<std::shared_ptr<DatasetOp>> TFRecordDataset::Build() {
   return node_ops;
 }
 
-// Constructor for VOCDataset
-VOCDataset::VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &usage,
-                       const std::map<std::string, int32_t> &class_indexing, bool decode,
-                       std::shared_ptr<SamplerObj> sampler)
+// Constructor for VOCNode
+VOCNode::VOCNode(const std::string &dataset_dir, const std::string &task, const std::string &usage,
+                 const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<SamplerObj> sampler)
     : dataset_dir_(dataset_dir),
       task_(task),
       usage_(usage),
@@ -1778,7 +1750,7 @@ VOCDataset::VOCDataset(const std::string &dataset_dir, const std::string &task, 
       decode_(decode),
       sampler_(sampler) {}
 
-Status VOCDataset::ValidateParams() {
+Status VOCNode::ValidateParams() {
   Path dir(dataset_dir_);
   if (!dir.IsDirectory()) {
     std::string err_msg = "Invalid dataset path or no dataset path is specified.";
@@ -1786,7 +1758,7 @@ Status VOCDataset::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("VOCDataset", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("VOCNode", sampler_));
 
   if (task_ == "Segmentation") {
     if (!class_index_.empty()) {
@@ -1816,8 +1788,8 @@ Status VOCDataset::ValidateParams() {
   return Status::OK();
 }
 
-// Function to build VOCDataset
-std::vector<std::shared_ptr<DatasetOp>> VOCDataset::Build() {
+// Function to build VOCNode
+std::vector<std::shared_ptr<DatasetOp>> VOCNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1855,15 +1827,18 @@ std::vector<std::shared_ptr<DatasetOp>> VOCDataset::Build() {
 // DERIVED DATASET CLASSES LEAF-NODE DATASETS
 // (In alphabetical order)
 
-BatchDataset::BatchDataset(int32_t batch_size, bool drop_remainder, bool pad, std::vector<std::string> cols_to_map,
-                           std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map)
+BatchNode::BatchNode(std::shared_ptr<Dataset> child, int32_t batch_size, bool drop_remainder, bool pad,
+                     std::vector<std::string> cols_to_map,
+                     std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map)
     : batch_size_(batch_size),
       drop_remainder_(drop_remainder),
       pad_(pad),
       cols_to_map_(cols_to_map),
-      pad_map_(pad_map) {}
+      pad_map_(pad_map) {
+  this->children.push_back(child);
+}
 
-std::vector<std::shared_ptr<DatasetOp>> BatchDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> BatchNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1881,7 +1856,7 @@ std::vector<std::shared_ptr<DatasetOp>> BatchDataset::Build() {
   return node_ops;
 }
 
-Status BatchDataset::ValidateParams() {
+Status BatchNode::ValidateParams() {
   if (batch_size_ <= 0) {
     std::string err_msg = "Batch: batch_size should be positive integer, but got: " + batch_size_;
     MS_LOG(ERROR) << err_msg;
@@ -1896,9 +1871,10 @@ Status BatchDataset::ValidateParams() {
 }
 
 #ifndef ENABLE_ANDROID
-BucketBatchByLengthDataset::BucketBatchByLengthDataset(
-  const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
-  const std::vector<int32_t> &bucket_batch_sizes, std::function<TensorRow(TensorRow)> element_length_function,
+BucketBatchByLengthNode::BucketBatchByLengthNode(
+  std::shared_ptr<Dataset> child, const std::vector<std::string> &column_names,
+  const std::vector<int32_t> &bucket_boundaries, const std::vector<int32_t> &bucket_batch_sizes,
+  std::function<TensorRow(TensorRow)> element_length_function,
   const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info, bool pad_to_bucket_boundary,
   bool drop_remainder)
     : column_names_(column_names),
@@ -1907,9 +1883,11 @@ BucketBatchByLengthDataset::BucketBatchByLengthDataset(
       element_length_function_(element_length_function),
       pad_info_(pad_info),
       pad_to_bucket_boundary_(pad_to_bucket_boundary),
-      drop_remainder_(drop_remainder) {}
+      drop_remainder_(drop_remainder) {
+  this->children.push_back(child);
+}
 
-std::vector<std::shared_ptr<DatasetOp>> BucketBatchByLengthDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> BucketBatchByLengthNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1925,7 +1903,7 @@ std::vector<std::shared_ptr<DatasetOp>> BucketBatchByLengthDataset::Build() {
   return node_ops;
 }
 
-Status BucketBatchByLengthDataset::ValidateParams() {
+Status BucketBatchByLengthNode::ValidateParams() {
   if (element_length_function_ == nullptr && column_names_.size() != 1) {
     std::string err_msg =
       "BucketBatchByLength: element_length_function not specified, but not one column name: " + column_names_.size();
@@ -1976,18 +1954,20 @@ Status BucketBatchByLengthDataset::ValidateParams() {
   return Status::OK();
 }
 
-BuildVocabDataset::BuildVocabDataset(std::shared_ptr<Vocab> vocab, const std::vector<std::string> &columns,
-                                     const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
-                                     const std::vector<std::string> &special_tokens, bool special_first)
+BuildVocabNode::BuildVocabNode(std::shared_ptr<Dataset> child, std::shared_ptr<Vocab> vocab,
+                               const std::vector<std::string> &columns, const std::pair<int64_t, int64_t> &freq_range,
+                               int64_t top_k, const std::vector<std::string> &special_tokens, bool special_first)
     : vocab_(vocab),
       columns_(columns),
       freq_range_(freq_range),
       top_k_(top_k),
       special_tokens_(special_tokens),
-      special_first_(special_first) {}
+      special_first_(special_first) {
+  this->children.push_back(child);
+}
 
-// Function to build BuildVocabDataset
-std::vector<std::shared_ptr<DatasetOp>> BuildVocabDataset::Build() {
+// Function to build BuildVocabNode
+std::vector<std::shared_ptr<DatasetOp>> BuildVocabNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -1998,7 +1978,7 @@ std::vector<std::shared_ptr<DatasetOp>> BuildVocabDataset::Build() {
   return node_ops;
 }
 
-Status BuildVocabDataset::ValidateParams() {
+Status BuildVocabNode::ValidateParams() {
   if (vocab_ == nullptr) {
     std::string err_msg = "BuildVocab: vocab is null.";
     MS_LOG(ERROR) << err_msg;
@@ -2027,11 +2007,11 @@ Status BuildVocabDataset::ValidateParams() {
 #endif
 
 // Function to build ConcatOp
-ConcatDataset::ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datasets) : datasets_(datasets) {
+ConcatNode::ConcatNode(const std::vector<std::shared_ptr<Dataset>> &datasets) : datasets_(datasets) {
   this->children = datasets_;
 }
 
-Status ConcatDataset::ValidateParams() {
+Status ConcatNode::ValidateParams() {
   if (datasets_.empty()) {
     std::string err_msg = "Concat: concatenated datasets are not specified.";
     MS_LOG(ERROR) << err_msg;
@@ -2045,7 +2025,7 @@ Status ConcatDataset::ValidateParams() {
   return Status::OK();
 }
 
-std::vector<std::shared_ptr<DatasetOp>> ConcatDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> ConcatNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -2053,14 +2033,17 @@ std::vector<std::shared_ptr<DatasetOp>> ConcatDataset::Build() {
   return node_ops;
 }
 
-MapDataset::MapDataset(std::vector<std::shared_ptr<TensorOperation>> operations, std::vector<std::string> input_columns,
-                       std::vector<std::string> output_columns, const std::vector<std::string> &project_columns)
+MapNode::MapNode(std::shared_ptr<Dataset> child, std::vector<std::shared_ptr<TensorOperation>> operations,
+                 std::vector<std::string> input_columns, std::vector<std::string> output_columns,
+                 const std::vector<std::string> &project_columns)
     : operations_(operations),
       input_columns_(input_columns),
       output_columns_(output_columns),
-      project_columns_(project_columns) {}
+      project_columns_(project_columns) {
+  this->children.push_back(child);
+}
 
-std::vector<std::shared_ptr<DatasetOp>> MapDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> MapNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -2084,7 +2067,7 @@ std::vector<std::shared_ptr<DatasetOp>> MapDataset::Build() {
   return node_ops;
 }
 
-Status MapDataset::ValidateParams() {
+Status MapNode::ValidateParams() {
   if (operations_.empty()) {
     std::string err_msg = "Map: No operation is specified.";
     MS_LOG(ERROR) << err_msg;
@@ -2092,36 +2075,38 @@ Status MapDataset::ValidateParams() {
   }
 
   if (!input_columns_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MapDataset", "input_columns", input_columns_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MapNode", "input_columns", input_columns_));
   }
 
   if (!output_columns_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MapDataset", "output_columns", output_columns_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MapNode", "output_columns", output_columns_));
   }
 
   if (!project_columns_.empty()) {
-    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MapDataset", "project_columns", project_columns_));
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MapNode", "project_columns", project_columns_));
   }
 
   return Status::OK();
 }
 
 // Function to build ProjectOp
-ProjectDataset::ProjectDataset(const std::vector<std::string> &columns) : columns_(columns) {}
+ProjectNode::ProjectNode(std::shared_ptr<Dataset> child, const std::vector<std::string> &columns) : columns_(columns) {
+  this->children.push_back(child);
+}
 
-Status ProjectDataset::ValidateParams() {
+Status ProjectNode::ValidateParams() {
   if (columns_.empty()) {
-    std::string err_msg = "ProjectDataset: No columns are specified.";
+    std::string err_msg = "ProjectNode: No columns are specified.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  RETURN_IF_NOT_OK(ValidateDatasetColumnParam("ProjectDataset", "columns", columns_));
+  RETURN_IF_NOT_OK(ValidateDatasetColumnParam("ProjectNode", "columns", columns_));
 
   return Status::OK();
 }
 
-std::vector<std::shared_ptr<DatasetOp>> ProjectDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> ProjectNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -2130,25 +2115,27 @@ std::vector<std::shared_ptr<DatasetOp>> ProjectDataset::Build() {
 }
 
 // Function to build RenameOp
-RenameDataset::RenameDataset(const std::vector<std::string> &input_columns,
-                             const std::vector<std::string> &output_columns)
-    : input_columns_(input_columns), output_columns_(output_columns) {}
+RenameNode::RenameNode(std::shared_ptr<Dataset> child, const std::vector<std::string> &input_columns,
+                       const std::vector<std::string> &output_columns)
+    : input_columns_(input_columns), output_columns_(output_columns) {
+  this->children.push_back(child);
+}
 
-Status RenameDataset::ValidateParams() {
+Status RenameNode::ValidateParams() {
   if (input_columns_.size() != output_columns_.size()) {
-    std::string err_msg = "RenameDataset: input and output columns must be the same size";
+    std::string err_msg = "RenameNode: input and output columns must be the same size";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RenameDataset", "input_columns", input_columns_));
+  RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RenameNode", "input_columns", input_columns_));
 
-  RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RenameDataset", "output_columns", output_columns_));
+  RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RenameNode", "output_columns", output_columns_));
 
   return Status::OK();
 }
 
-std::vector<std::shared_ptr<DatasetOp>> RenameDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> RenameNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -2156,9 +2143,11 @@ std::vector<std::shared_ptr<DatasetOp>> RenameDataset::Build() {
   return node_ops;
 }
 
-RepeatDataset::RepeatDataset(int32_t count) : repeat_count_(count) {}
+RepeatNode::RepeatNode(std::shared_ptr<Dataset> child, int32_t count) : repeat_count_(count) {
+  this->children.push_back(child);
+}
 
-std::vector<std::shared_ptr<DatasetOp>> RepeatDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> RepeatNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -2166,7 +2155,7 @@ std::vector<std::shared_ptr<DatasetOp>> RepeatDataset::Build() {
   return node_ops;
 }
 
-Status RepeatDataset::ValidateParams() {
+Status RepeatNode::ValidateParams() {
   if (repeat_count_ <= 0 && repeat_count_ != -1) {
     std::string err_msg =
       "Repeat: repeat_count should be either -1 or positive integer, repeat_count_: " + repeat_count_;
@@ -2177,12 +2166,14 @@ Status RepeatDataset::ValidateParams() {
   return Status::OK();
 }
 
-// Constructor for ShuffleDataset
-ShuffleDataset::ShuffleDataset(int32_t shuffle_size, bool reset_every_epoch)
-    : shuffle_size_(shuffle_size), shuffle_seed_(GetSeed()), reset_every_epoch_(reset_every_epoch) {}
+// Constructor for ShuffleNode
+ShuffleNode::ShuffleNode(std::shared_ptr<Dataset> child, int32_t shuffle_size, bool reset_every_epoch)
+    : shuffle_size_(shuffle_size), shuffle_seed_(GetSeed()), reset_every_epoch_(reset_every_epoch) {
+  this->children.push_back(child);
+}
 
 // Function to build the ShuffleOp
-std::vector<std::shared_ptr<DatasetOp>> ShuffleDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> ShuffleNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -2191,10 +2182,10 @@ std::vector<std::shared_ptr<DatasetOp>> ShuffleDataset::Build() {
   return node_ops;
 }
 
-// Function to validate the parameters for ShuffleDataset
-Status ShuffleDataset::ValidateParams() {
+// Function to validate the parameters for ShuffleNode
+Status ShuffleNode::ValidateParams() {
   if (shuffle_size_ <= 1) {
-    std::string err_msg = "ShuffleDataset: Invalid input, shuffle_size: " + shuffle_size_;
+    std::string err_msg = "ShuffleNode: Invalid input, shuffle_size: " + shuffle_size_;
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -2202,11 +2193,13 @@ Status ShuffleDataset::ValidateParams() {
   return Status::OK();
 }
 
-// Constructor for SkipDataset
-SkipDataset::SkipDataset(int32_t count) : skip_count_(count) {}
+// Constructor for SkipNode
+SkipNode::SkipNode(std::shared_ptr<Dataset> child, int32_t count) : skip_count_(count) {
+  this->children.push_back(child);
+}
 
 // Function to build the SkipOp
-std::vector<std::shared_ptr<DatasetOp>> SkipDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> SkipNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -2214,8 +2207,8 @@ std::vector<std::shared_ptr<DatasetOp>> SkipDataset::Build() {
   return node_ops;
 }
 
-// Function to validate the parameters for SkipDataset
-Status SkipDataset::ValidateParams() {
+// Function to validate the parameters for SkipNode
+Status SkipNode::ValidateParams() {
   if (skip_count_ <= -1) {
     std::string err_msg = "Skip: skip_count should not be negative, skip_count: " + skip_count_;
     MS_LOG(ERROR) << err_msg;
@@ -2224,11 +2217,13 @@ Status SkipDataset::ValidateParams() {
   return Status::OK();
 }
 
-// Constructor for TakeDataset
-TakeDataset::TakeDataset(int32_t count) : take_count_(count) {}
+// Constructor for TakeNode
+TakeNode::TakeNode(std::shared_ptr<Dataset> child, int32_t count) : take_count_(count) {
+  this->children.push_back(child);
+}
 
 // Function to build the TakeOp
-std::vector<std::shared_ptr<DatasetOp>> TakeDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> TakeNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -2236,8 +2231,8 @@ std::vector<std::shared_ptr<DatasetOp>> TakeDataset::Build() {
   return node_ops;
 }
 
-// Function to validate the parameters for TakeDataset
-Status TakeDataset::ValidateParams() {
+// Function to validate the parameters for TakeNode
+Status TakeNode::ValidateParams() {
   if (take_count_ <= 0 && take_count_ != -1) {
     std::string err_msg = "Take: take_count should be either -1 or positive integer, take_count: " + take_count_;
     MS_LOG(ERROR) << err_msg;
@@ -2247,27 +2242,27 @@ Status TakeDataset::ValidateParams() {
 }
 
 // Function to build ZipOp
-ZipDataset::ZipDataset(const std::vector<std::shared_ptr<Dataset>> &datasets) : datasets_(datasets) {
+ZipNode::ZipNode(const std::vector<std::shared_ptr<Dataset>> &datasets) : datasets_(datasets) {
   for (auto dataset : datasets_) {
     this->children.push_back(dataset);
   }
 }
 
-Status ZipDataset::ValidateParams() {
+Status ZipNode::ValidateParams() {
   if (datasets_.empty()) {
     std::string err_msg = "Zip: datasets to zip are not specified.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (find(datasets_.begin(), datasets_.end(), nullptr) != datasets_.end()) {
-    std::string err_msg = "ZipDataset: zip datasets should not be null.";
+    std::string err_msg = "ZipNode: zip datasets should not be null.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
 
-std::vector<std::shared_ptr<DatasetOp>> ZipDataset::Build() {
+std::vector<std::shared_ptr<DatasetOp>> ZipNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
