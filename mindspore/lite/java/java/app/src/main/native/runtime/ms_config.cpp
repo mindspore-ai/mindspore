@@ -29,36 +29,46 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_config_MSConfig_creat
     MS_LOGE("new Context fail!");
     return (jlong)context;
   }
+
+  auto &cpu_device_ctx = context->device_list_[0];
   switch (device_type) {
     case 0:
-      context->device_type_ = mindspore::lite::DT_CPU;
+      context->device_list_[0].device_type_ = mindspore::lite::DT_CPU;
       break;
     case 1:
-      context->device_type_ = mindspore::lite::DT_GPU;
+      context->device_list_[0].device_type_ = mindspore::lite::DT_GPU;
       break;
     case 2:
-      context->device_type_ = mindspore::lite::DT_NPU;
+      context->device_list_[0].device_type_ = mindspore::lite::DT_NPU;
       break;
     default:
       MS_LOGE("Invalid device_type : %d", device_type);
       return (jlong)context;
   }
+
   switch (cpu_bind_mode) {
     case 0:
-      context->cpu_bind_mode_ = mindspore::lite::NO_BIND;
+      cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = mindspore::lite::NO_BIND;
       break;
     case 1:
-      context->cpu_bind_mode_ = mindspore::lite::HIGHER_CPU;
+      cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = mindspore::lite::HIGHER_CPU;
       break;
     case 2:
-      context->cpu_bind_mode_ = mindspore::lite::MID_CPU;
+      cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = mindspore::lite::MID_CPU;
       break;
     default:
       MS_LOGE("Invalid cpu_bind_mode : %d", cpu_bind_mode);
       return (jlong)context;
   }
+
+  cpu_device_ctx.device_info_.cpu_device_info_.enable_float16_ = enable_float16;
+
+  if (device_type == mindspore::lite::DT_GPU) {
+    mindspore::lite::DeviceContext gpu_device_ctx{mindspore::lite::DT_GPU, {false}};
+    gpu_device_ctx.device_info_.gpu_device_info_.enable_float16_ = enable_float16;
+    context->device_list_.push_back(gpu_device_ctx);
+  }
   context->thread_num_ = thread_num;
-  context->enable_float16_ = enable_float16;
   return (jlong)context;
 }
 
