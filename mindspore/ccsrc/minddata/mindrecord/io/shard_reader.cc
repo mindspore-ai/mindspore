@@ -55,11 +55,9 @@ std::pair<MSRStatus, std::vector<std::string>> ShardReader::GetMeta(const std::s
     return {FAILED, {}};
   }
   auto header = ret.second;
-  uint64_t compression_size = header.contains("compression_size") ? header["compression_size"].get<uint64_t>() : 0;
-  meta_data = {{"header_size", header["header_size"]},   {"page_size", header["page_size"]},
-               {"compression_size", compression_size},   {"version", header["version"]},
-               {"index_fields", header["index_fields"]}, {"schema", header["schema"]},
-               {"blob_fields", header["blob_fields"]}};
+  meta_data = {{"header_size", header["header_size"]}, {"page_size", header["page_size"]},
+               {"version", header["version"]},         {"index_fields", header["index_fields"]},
+               {"schema", header["schema"]},           {"blob_fields", header["blob_fields"]}};
   return {SUCCESS, header["shard_addresses"]};
 }
 
