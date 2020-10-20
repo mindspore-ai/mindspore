@@ -91,12 +91,12 @@ T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   const auto numBit = quantParam->numBits;
   const auto narrowRange = quantParam->narrowRange;
   double maxLimitTemp = static_cast<float>((1 << (unsigned int)numBit) - 1);
-  const double maxLimit = static_cast<float>(maxLimitTemp - zeroPoint + std::numeric_limits<int8_t>::min()) * scale;
+  const double maxLimit = static_cast<float>(maxLimitTemp - zeroPoint + std::numeric_limits<T>::min()) * scale;
   double minLimit;
   if (narrowRange) {
-    minLimit = static_cast<float>(std::numeric_limits<int8_t>::min() + 1 - zeroPoint) * scale;
+    minLimit = static_cast<float>(std::numeric_limits<T>::min() + 1 - zeroPoint) * scale;
   } else {
-    minLimit = static_cast<float>(std::numeric_limits<int8_t>::min() - zeroPoint) * scale;
+    minLimit = static_cast<float>(std::numeric_limits<T>::min() - zeroPoint) * scale;
   }
 
   return [maxLimit, minLimit, zeroPoint, scale, narrowRange, originData] {
@@ -244,7 +244,7 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
       }
       quant_params.emplace_back(quant_param);
     }
-    auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(int8_t));
+    auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(T));
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return RET_ERROR;
@@ -273,7 +273,7 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
       auto quant_data = QuantizeData<T>(raw_data, quant_param, quant_max, quant_min);
       quant_datas[i] = quant_data;
     }
-    auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(int8_t));
+    auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(T));
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return RET_ERROR;

@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp16/deconvolution_fp16.h"
 #include "src/runtime/runtime_api.h"
+#include "src/runtime/kernel/arm/base/dequant.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -215,9 +216,10 @@ kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *>
 
   auto *weight_tensor = inputs.at(kWeightIndex);
   auto *restore_data = weight_tensor->MutableData();
-  auto dequant_flag = (weight_tensor->data_type() == kNumberTypeInt8) ? true : false;
+  auto dequant_flag =
+    (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) ? true : false;
   if (dequant_flag) {
-    auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
+    auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
       MS_LOG(ERROR) << "dequant data is nullptr.";
       free(opParameter);
@@ -232,7 +234,6 @@ kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *>
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (dequant_flag) {
       weight_tensor->FreeData();
-      weight_tensor->set_data_type(kNumberTypeInt8);
       weight_tensor->SetData(restore_data);
     }
     free(opParameter);
@@ -245,14 +246,12 @@ kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *>
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     if (dequant_flag) {
       weight_tensor->FreeData();
-      weight_tensor->set_data_type(kNumberTypeInt8);
       weight_tensor->SetData(restore_data);
     }
     return nullptr;
   }
   if (dequant_flag) {
     weight_tensor->FreeData();
-    weight_tensor->set_data_type(kNumberTypeInt8);
     weight_tensor->SetData(restore_data);
   }
   return kernel;

@@ -48,8 +48,8 @@ STATUS WeightQuantizer::WeightQuantInputCheck(const converter::Flags *config) {
     MS_LOG(ERROR) << "quantSize must be valid pos num.";
     return RET_ERROR;
   }
-  if (!WeightQuantizer::IsPosNum(config->bitNum) || config->bitNum != "8") {
-    MS_LOG(ERROR) << "bitNum must be valid pos num, current only support 8 bit weight quant.";
+  if (!WeightQuantizer::IsPosNum(config->bitNum) || (config->bitNum != "8" && config->bitNum != "16")) {
+    MS_LOG(ERROR) << "bitNum must be valid pos num, current only support 8 or 16 bit weight quant.";
     return RET_ERROR;
   }
   return RET_OK;
@@ -61,6 +61,13 @@ WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const string &weightSize,
   this->bitNum = static_cast<size_t>(std::stoull(bitNum));
   auto convQuantWeightChannelThreshold = static_cast<size_t>(std::stoull(convWeightChannelThreshold));
   mStrategy.reset(new QuantStrategy(quantSize, convQuantWeightChannelThreshold));
+  quant_max = (1 << (unsigned int)(this->bitNum - 1)) - 1;
+  quant_min = -(1 << (unsigned int)(this->bitNum - 1));
+  if (this->bitNum == 8) {
+    type_id = kNumberTypeInt8;
+  } else if (this->bitNum == 16) {
+    type_id = kNumberTypeInt16;
+  }
 }
 
 STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
@@ -96,14 +103,19 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
 
     std::vector<schema::QuantParamT> quant_params;
     primitive_c->AddInputQuantParam(quant_params);
-    auto status =
-      QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
+    auto status = RET_ERROR;
+    if (type_id == kNumberTypeInt8) {
+      status = QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
+    } else if (type_id == kNumberTypeInt16) {
+      status =
+        QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
+    }
     if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;
     }
     // set dtype
-    param_value->set_tensor_type(kNumberTypeInt8);
+    param_value->set_tensor_type(type_id);
     auto abstractBase = param_node->abstract();
     if (abstractBase == nullptr) {
       MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << param_node->name();
@@ -114,7 +126,7 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
       return RET_ERROR;
     }
     auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
-    abstractTensor->element()->set_type(TypeIdToType(kNumberTypeInt8));
+    abstractTensor->element()->set_type(TypeIdToType(type_id));
     primitive_c->SetQuantType(schema::QuantType_WeightQuant);
   }
 
@@ -159,13 +171,18 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
 
     std::vector<schema::QuantParamT> quant_params;
     primitive_c->AddInputQuantParam(quant_params);
-    auto status =
-      QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
+    auto status = RET_ERROR;
+    if (type_id == kNumberTypeInt8) {
+      status = QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
+    } else if (type_id == kNumberTypeInt16) {
+      status =
+        QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
+    }
     if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;
     }
-    param_value->set_tensor_type(kNumberTypeInt8);
+    param_value->set_tensor_type(type_id);
     // set dtype
     auto abstractBase = param_node->abstract();
     if (abstractBase == nullptr) {
@@ -177,7 +194,7 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
       return RET_ERROR;
     }
     auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
-    abstractTensor->element()->set_type(TypeIdToType(kNumberTypeInt8));
+    abstractTensor->element()->set_type(TypeIdToType(type_id));
     primitive_c->SetQuantType(schema::QuantType_WeightQuant);
   }
 

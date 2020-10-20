@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_LITE_SRC_LITE_KERNEL_H_
 #define MINDSPORE_LITE_SRC_LITE_KERNEL_H_
-#include <vector>
 #include <string>
+#include <vector>
 #include <memory>
 #include "src/ops/primitive_c.h"
 #include "src/common/utils.h"
@@ -31,7 +31,6 @@
 
 static constexpr int kPerTensor = 1;
 
-// using mindspore::kernel::AddressPtr;
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -212,8 +211,6 @@ class LiteKernelUtil {
   static void InitTensorRefCount(std::vector<kernel::LiteKernel *> &kernels);
 
   static int SetInput(LiteKernel &kernelMod, std::vector<lite::Tensor *> inputs);
-
-  static float *DequantWeight(lite::Tensor *input_tensor);
 };
 }  // namespace mindspore::kernel
 

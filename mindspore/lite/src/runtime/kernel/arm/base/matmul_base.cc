@@ -19,6 +19,7 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "include/context.h"
+#include "src/runtime/kernel/arm/base/dequant.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -35,9 +36,11 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::Tensor *> &in
 
   auto *weight_tensor = inputs.at(kWeightIndex);
   auto *restore_data = weight_tensor->data_c();
-  auto is_const_quant_weight = (restore_data != nullptr) && (weight_tensor->data_type() == kNumberTypeInt8);
+  auto is_const_quant_weight =
+    (restore_data != nullptr) &&
+    ((weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16));
   if (is_const_quant_weight) {
-    auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
+    auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
       MS_LOG(ERROR) << "dequant data is nullptr.";
       free(opParameter);
@@ -49,7 +52,7 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::Tensor *> &in
   auto input_tensor = inputs.at(kInputIndex);
   auto data_type = input_tensor->data_type();
   kernel::LiteKernel *kernel = nullptr;
-  if (data_type == kNumberTypeInt8 || data_type == kNumberTypeUInt8) {
+  if (data_type == kNumberTypeInt8) {
     kernel = new (std::nothrow) MatmulInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else {
     kernel = new (std::nothrow) MatmulCPUKernel(opParameter, inputs, outputs, ctx, primitive);

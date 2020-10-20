@@ -19,6 +19,7 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
+#include "src/runtime/kernel/arm/base/dequant.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -201,8 +202,8 @@ kernel::LiteKernel *CpuDeconvDwFp32KernelCreator(const std::vector<lite::Tensor 
   MS_ASSERT(desc.type == schema::PrimitiveType_DeDepthwiseConv2D);
   auto *weight_tensor = inputs.at(kWeightIndex);
   auto *restore_data = weight_tensor->MutableData();
-  if (weight_tensor->data_type() == kNumberTypeInt8) {
-    auto *dequant_weight = kernel::LiteKernelUtil::DequantWeight(weight_tensor);
+  if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {
+    auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
       MS_LOG(ERROR) << "dequant data is nullptr.";
       free(opParameter);
@@ -214,7 +215,7 @@ kernel::LiteKernel *CpuDeconvDwFp32KernelCreator(const std::vector<lite::Tensor 
     new (std::nothrow) kernel::DeconvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
-    if (weight_tensor->data_type() == kNumberTypeInt8) {
+    if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {
       weight_tensor->FreeData();
       weight_tensor->SetData(restore_data);
     }
@@ -226,13 +227,13 @@ kernel::LiteKernel *CpuDeconvDwFp32KernelCreator(const std::vector<lite::Tensor 
     delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    if (weight_tensor->data_type() == kNumberTypeInt8) {
+    if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {
       weight_tensor->FreeData();
       weight_tensor->SetData(restore_data);
     }
     return nullptr;
   }
-  if (weight_tensor->data_type() == kNumberTypeInt8) {
+  if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {
     weight_tensor->FreeData();
     weight_tensor->SetData(restore_data);
   }
