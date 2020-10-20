@@ -39,7 +39,7 @@ def test_roi_align():
 
     # test case 1
     pooled_height, pooled_width, spatial_scale, sample_num = 3, 3, 0.25, 2
-    roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num)
+    roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num, 0)
     output = roi_align(x, rois)
     print(output)
     expect = [[[[2.75, 4.5, 6.5],
@@ -49,7 +49,7 @@ def test_roi_align():
 
     # test case 2
     pooled_height, pooled_width, spatial_scale, sample_num = 4, 4, 0.2, 3
-    roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num)
+    roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num, 0)
     output = roi_align(x, rois)
     print(output)
     expect = [[[[1.2333, 2.1000, 3.3000, 4.5000],
@@ -63,7 +63,7 @@ def test_roi_align():
     rois = Tensor(np.array([[0, -2.0, -2.0, 22.0, 22.0],
                             [0, 1.0, 0.0, 19.0, 18.0]],
                            np.float32))
-    roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num)
+    roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num, 0)
     output = roi_align(x, rois)
     print(output)
     expect = [[[[3.3333, 5.5000, 7.6667],
@@ -77,7 +77,7 @@ def test_roi_align():
     # test case 4
     pooled_height, pooled_width, spatial_scale, sample_num = 2, 2, 1.0, -1
     rois = Tensor(np.array([[0, -2.0, -2.0, 22.0, 22.0]], np.float32))
-    roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num)
+    roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num, 0)
     output = roi_align(x, rois)
     print(output)
     expect = [[[[8.2222, 0.],
