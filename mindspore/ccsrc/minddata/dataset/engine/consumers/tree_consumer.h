@@ -126,23 +126,27 @@ class SaveToDisk : public TreeConsumer {
 /// Consumer that iterates over the dataset and send it to a device
 class ToDevice : public TreeConsumer {
  public:
-  ToDevice(std::string device_type, bool send_epoch_end, int32_t num_epochs)
+  ToDevice(std::string device_type, bool send_epoch_end, int32_t num_epochs = -1)
       : TreeConsumer(), device_type_(device_type), send_epoch_end_(send_epoch_end), num_epochs_(num_epochs) {}
 
   Status Init(std::shared_ptr<api::Dataset> d) override;
 
-  Status Send() {
-    // TODO(CRC): launch the tree
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
-  Status Stop() {
-    // TODO(CRC): Get root + call StopSend
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
-  Status Continue() {
-    // TODO(CRC): Get root + call StopSend
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
+  /// Send the data to device
+  /// \return  Status error code
+  Status Send();
+
+  /// Stop to send data to device
+  /// \return  Status error code
+  Status Stop();
+
+  /// Continue to send data to device
+  /// \return  Status error code
+  Status Continue();
+
+ protected:
+  /// Method to return the name of the consumer
+  /// \return string
+  std::string Name() override { return "ToDevice"; }
 
  private:
   std::string device_type_;

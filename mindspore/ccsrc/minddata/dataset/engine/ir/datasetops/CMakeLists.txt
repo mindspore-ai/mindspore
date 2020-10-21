@@ -15,6 +15,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SRC_FILES
         skip_node.cc
         sync_wait_node.cc
         take_node.cc
+        transfer_node.cc
         zip_node.cc
         )
 

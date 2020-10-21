@@ -45,6 +45,10 @@ class TextFileNode : public Dataset {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
+  /// \brief Get the shard id of node
+  /// \return Status Status::OK() if get shard id successfully
+  Status GetShardId(int32_t *shard_id) override;
+
  private:
   std::vector<std::string> dataset_files_;
   int32_t num_samples_;

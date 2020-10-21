@@ -65,6 +65,10 @@ class RandomNode : public Dataset {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
+  /// \brief Get the shard id of node
+  /// \return Status Status::OK() if get shard id successfully
+  Status GetShardId(int32_t *shard_id) override;
+
  private:
   /// \brief A quick inline for producing a random number between (and including) min/max
   /// \param[in] min minimum number that can be generated.

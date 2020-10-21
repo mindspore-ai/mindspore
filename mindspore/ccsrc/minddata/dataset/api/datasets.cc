@@ -62,6 +62,7 @@
 #include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
+#include "minddata/dataset/engine/ir/datasetops/transfer_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 
 #ifndef ENABLE_ANDROID
@@ -72,6 +73,7 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/random.h"
+#include "minddata/dataset/util/services.h"
 
 // IR leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/source/album_node.h"
@@ -123,6 +125,56 @@ std::shared_ptr<Iterator> Dataset::CreateIterator(std::vector<std::string> colum
   }
 
   return iter;
+}
+
+// Function to return a transferred Node that transfers data through a device.
+bool Dataset::DeviceQueue(bool send_epoch_end) {
+  Status rc;
+
+  // Build and launch tree
+  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  rc = runtime_context->Init();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Failed to init runtime context. Error status: " << rc;
+    return false;
+  }
+
+  // Get a uuid for queue name
+  std::string queue_name = Services::GetUniqueID();
+
+  // TODO(CRC):
+  // Get device type from ms context
+  std::string device_type = "CPU";
+
+  // Get device ID from children
+  int32_t device_id = 0;
+  rc = TransferNode::get_distribution(shared_from_this(), &device_id);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Failed to get shard id. Error status: " << rc;
+    return false;
+  }
+
+  // Add TransferNode IR on top of dataset d
+  auto ds = std::make_shared<TransferNode>(shared_from_this(), queue_name, device_id, device_type, send_epoch_end);
+
+  // Get ToDevice consumer
+  auto consumer = std::make_unique<ToDevice>(device_type, send_epoch_end, -1);
+  ToDevice *consumer_ = consumer.get();
+  rc = consumer->Init(ds);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "ToDevice: Failed to init. Error status: " << rc;
+    return false;
+  }
+  runtime_context->AssignConsumer(std::move(consumer));
+
+  // Send data to device
+  rc = consumer_->Send();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "ToDevice: Failed to send data to device. Error status: " << rc;
+    return false;
+  }
+
+  return true;
 }
 
 #ifndef ENABLE_ANDROID
@@ -931,6 +983,7 @@ std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint64_t me
   auto cache = std::make_shared<DatasetCacheImpl>(id, mem_sz, spill, hostname, port, num_connections, prefetch_sz);
   return cache->ValidateParams() ? cache : nullptr;
 }
+
 #endif
 
 }  // namespace api
