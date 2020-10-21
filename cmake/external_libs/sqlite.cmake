@@ -1,3 +1,12 @@
+if (ENABLE_GITEE)
+    set(REQ_URL "https://gitee.com/mirrors/sqlite/repository/archive/version-3.32.2.tar.gz")
+    set(MD5 "0e085913eba4a8227924545043a08b28")
+else()
+    set(REQ_URL "https://github.com/sqlite/sqlite/archive/version-3.32.2.tar.gz")
+    set(MD5 "ea6d3b3289b4ac216fb06081a01ef101")
+endif ()
+
+
 if (WIN32)
     mindspore_add_pkg(sqlite
         VER 3.32.2
@@ -20,8 +29,8 @@ else ()
     mindspore_add_pkg(sqlite
         VER 3.32.2
         LIBS sqlite3
-        URL https://github.com/sqlite/sqlite/archive/version-3.32.2.tar.gz
-        MD5 ea6d3b3289b4ac216fb06081a01ef101
+        URL ${REQ_URL}
+        MD5 ${MD5}
         PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/sqlite/sqlite.patch001
         CONFIGURE_COMMAND ./configure --enable-shared=no --disable-tcl --disable-editline --enable-json1)
 endif ()
