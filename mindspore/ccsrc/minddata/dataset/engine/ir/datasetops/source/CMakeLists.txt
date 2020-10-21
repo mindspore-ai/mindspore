@@ -1,4 +1,15 @@
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
-add_library(engine-ir-datasetops-source OBJECT
-        image_folder_node.cc)
+
+set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
+        image_folder_node.cc
+        )
+
+if (ENABLE_PYTHON)
+    set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
+            ${DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES}
+            generator_node.cc
+            )
+endif ()
+
+add_library(engine-ir-datasetops-source OBJECT ${DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES})

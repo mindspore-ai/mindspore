@@ -134,6 +134,8 @@ class GeneratorOp : public PipelineOp {
   // @return Name of the current Op
   std::string Name() const override { return "GeneratorOp"; }
 
+  Status Init();
+
  private:
   py::function generator_function_;
   std::vector<std::string> column_names_;
@@ -145,8 +147,6 @@ class GeneratorOp : public PipelineOp {
   int32_t buffer_id_;
 
   WaitPost wp_;
-
-  Status Init();
 
   void Dealloc() noexcept;
 
