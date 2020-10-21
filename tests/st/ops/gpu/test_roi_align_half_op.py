@@ -39,7 +39,7 @@ def test_roi_align_half():
 
     # test case 1
     pooled_height, pooled_width, spatial_scale, sample_num = 4, 4, 0.2, 3
-    roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num)
+    roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num, 0)
     output = roi_align(x, rois)
     print(output)
     expect = [[[[1.2333, 2.1000, 3.3000, 4.5000],

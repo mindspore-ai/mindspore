@@ -91,7 +91,7 @@ __device__ void bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const 
   }
 
   // Scale and shift ROI
-  T roi_offset = roi_end_mode == 1 ? static_cast<T>(0.5) : static_cast<T>(.0);
+  T roi_offset = roi_end_mode == 0 ? static_cast<T>(0.5) : static_cast<T>(.0);
   *roi_start_w = roi_box[0] * spatial_scale - roi_offset;
   *roi_start_h = roi_box[1] * spatial_scale - roi_offset;
   T roi_end_w = roi_box[2] * spatial_scale - roi_offset;
@@ -121,10 +121,9 @@ __global__ void ROIAlignKernel(size_t size, const T *input, const T *roi_boxes, 
        thread_idx += blockDim.x * gridDim.x) {
     int n = thread_idx / pooled_width / pooled_height / channels;
     const T *roi_box = roi_boxes + n * roi_cols;
-    if (roi_box[0] < static_cast<T>(0.001) && roi_box[1] < static_cast<T>(0.001) &&
-        roi_box[2] < static_cast<T>(0.001) && roi_box[3] < static_cast<T>(0.001) &&
-        roi_box[0] > static_cast<T>(-0.001) && roi_box[1] > static_cast<T>(-0.001) &&
-        roi_box[2] > static_cast<T>(-0.001) && roi_box[3] > static_cast<T>(-0.001)) {
+    // Skip if roi box is a line
+    if (roi_box[1] < static_cast<T>(0.001) && roi_box[3] < static_cast<T>(0.001) &&
+        roi_box[1] > static_cast<T>(-0.001) && roi_box[3] > static_cast<T>(-0.001)) {
       continue;
     }
 
@@ -135,8 +134,6 @@ __global__ void ROIAlignKernel(size_t size, const T *input, const T *roi_boxes, 
     bin_box(thread_idx, roi_boxes, roi_cols, spatial_scale, sample_num, roi_end_mode, channels, height, width,
             pooled_height, pooled_width, &offset, &n, &c, &ph, &pw, &roi_bin_grid_h, &roi_bin_grid_w, &bin_size_h,
             &bin_size_w, &roi_start_h, &roi_start_w);
-
-    if (offset < 0 || offset >= size) continue;
 
     // (n, c, ph, pw) is the base param of pooled map
     const T count_points_in_grid_cell = roi_bin_grid_h * roi_bin_grid_w;
@@ -209,10 +206,8 @@ __global__ void ROIAlignGradKernel(size_t size, const T *dy, const T *roi_boxes,
        thread_idx += blockDim.x * gridDim.x) {
     int n = thread_idx / pooled_width / pooled_height / channels;
     const T *roi_box = roi_boxes + n * roi_cols;
-    if (roi_box[0] < static_cast<T>(0.001) && roi_box[1] < static_cast<T>(0.001) &&
-        roi_box[2] < static_cast<T>(0.001) && roi_box[3] < static_cast<T>(0.001) &&
-        roi_box[0] > static_cast<T>(-0.001) && roi_box[1] > static_cast<T>(-0.001) &&
-        roi_box[2] > static_cast<T>(-0.001) && roi_box[3] > static_cast<T>(-0.001)) {
+    if (roi_box[1] < static_cast<T>(0.001) && roi_box[3] < static_cast<T>(0.001) &&
+        roi_box[1] > static_cast<T>(-0.001) && roi_box[3] > static_cast<T>(-0.001)) {
       continue;
     }
 
@@ -223,8 +218,6 @@ __global__ void ROIAlignGradKernel(size_t size, const T *dy, const T *roi_boxes,
     bin_box(thread_idx, roi_boxes, roi_cols, spatial_scale, sample_num, roi_end_mode, channels, height, width,
             pooled_height, pooled_width, &offset, &n, &c, &ph, &pw, &roi_bin_grid_h, &roi_bin_grid_w, &bin_size_h,
             &bin_size_w, &roi_start_h, &roi_start_w);
-
-    if (offset < 0 || offset >= size) continue;
 
     // (n, c, ph, pw) is the base param of pooled map
     const T count_points_in_grid_cell = roi_bin_grid_h * roi_bin_grid_w;
