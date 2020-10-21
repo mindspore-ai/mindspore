@@ -15,6 +15,7 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_pool_parser.h"
+
 #include <memory>
 
 namespace mindspore {
@@ -77,7 +78,11 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
       }
     }
     if (attribute_name == "auto_pad") {
-      MS_ASSERT(false);
+      if (onnx_node_attr.s() == "SAME_UPPER") {
+        attr->padMode = schema::PadMode_SAME_UPPER;
+      } else if (onnx_node_attr.s() == "SAME_LOWER") {
+        attr->padMode = schema::PadMode_SAME_LOWER;
+      }
     }
     if (attribute_name == "pads") {
       if (onnx_node_attr.ints_size() == 4) {

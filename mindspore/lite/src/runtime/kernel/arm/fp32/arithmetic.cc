@@ -15,12 +15,13 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/arithmetic.h"
-#include "src/runtime/kernel/arm/int8/add_int8.h"
-#include "src/runtime/kernel/arm/int8/mul_int8.h"
+
+#include "include/errorcode.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
+#include "src/runtime/kernel/arm/int8/add_int8.h"
+#include "src/runtime/kernel/arm/int8/mul_int8.h"
 #include "src/runtime/runtime_api.h"
-#include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -48,6 +49,12 @@ int ArithmeticCPUKernel::ReSize() {
   arithmeticParameter_->in_elements_num0_ = in_tensors_[0]->ElementsNum();
   arithmeticParameter_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
   arithmeticParameter_->out_elements_num_ = out_tensors_[0]->ElementsNum();
+  memcpy(arithmeticParameter_->in_shape0_, static_cast<void *>(in_tensors_[0]->shape().data()),
+         in_tensors_[0]->shape().size() * sizeof(int));
+  memcpy(arithmeticParameter_->in_shape1_, static_cast<void *>(in_tensors_[1]->shape().data()),
+         in_tensors_[1]->shape().size() * sizeof(int));
+  memcpy(arithmeticParameter_->out_shape_, static_cast<void *>(out_tensors_[0]->shape().data()),
+         out_tensors_[0]->shape().size() * sizeof(int));
 
   if (arithmeticParameter_->in_elements_num0_ == 1 || arithmeticParameter_->in_elements_num1_ == 1) {
     switch (arithmeticParameter_->op_parameter_.type_) {

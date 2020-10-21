@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/scale_int8.h"
+
 #include <string.h>
 #include <vector>
 #include "nnacl/int8/scale_int8.h"
@@ -195,9 +196,35 @@ int ScaleInt8CPUKernel::ReSize() {
 
 int ScaleInt8CPUKernel::Scale(int task_id) {
   if (has_bias_) {
-    DoScaleWithBiasInt8(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_);
+    switch (scale_param_->activation_type_) {
+      case schema::ActivationType_RELU:
+        DoScaleWithBiasInt8(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_, INT8_MAX, 0);
+        break;
+      case schema::ActivationType_RELU6:
+        DoScaleWithBiasInt8(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_, 6, 0);
+        break;
+      case schema::ActivationType_NO_ACTIVATION:
+        DoScaleWithBiasInt8(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_, INT8_MAX, INT8_MIN);
+        break;
+      default:
+        MS_LOG(ERROR) << "Scale does not support activation type " << scale_param_->activation_type_;
+        return RET_ERROR;
+    }
   } else {
-    DoScaleInt8(input_ptr_, output_ptr_, scale_, task_id, scale_param_);
+    switch (scale_param_->activation_type_) {
+      case schema::ActivationType_RELU:
+        DoScaleInt8(input_ptr_, output_ptr_, scale_, task_id, scale_param_, INT8_MAX, 0);
+        break;
+      case schema::ActivationType_RELU6:
+        DoScaleInt8(input_ptr_, output_ptr_, scale_, task_id, scale_param_, 6, 0);
+        break;
+      case schema::ActivationType_NO_ACTIVATION:
+        DoScaleInt8(input_ptr_, output_ptr_, scale_, task_id, scale_param_, INT8_MAX, INT8_MIN);
+        break;
+      default:
+        MS_LOG(ERROR) << "Scale does not support activation type " << scale_param_->activation_type_;
+        return RET_ERROR;
+    }
   }
 
   return RET_OK;

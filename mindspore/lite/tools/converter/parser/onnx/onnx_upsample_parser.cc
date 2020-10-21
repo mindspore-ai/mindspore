@@ -15,6 +15,7 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_upsample_parser.h"
+
 #include <memory>
 
 namespace mindspore {
@@ -54,7 +55,7 @@ STATUS OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph, const onnx:
   attr->newWidth = 1;
   attr->newHeight = 1;
   attr->alignCorners = false;
-  op->primitive->value.type = schema::PrimitiveType_Upsample;
+  op->primitive->value.type = schema::PrimitiveType_Resize;
   op->primitive->value.value = attr.release();
   return RET_OK;
 }

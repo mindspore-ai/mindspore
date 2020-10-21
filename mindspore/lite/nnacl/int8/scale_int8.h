@@ -23,9 +23,9 @@
 extern "C" {
 #endif
 void DoScaleInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, int task_id,
-                 const ScaleParameter *scale_param);
+                 const ScaleParameter *scale_param, int max, int min);
 void DoScaleWithBiasInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, const int8_t *offset,
-                         int task_id, const ScaleParameter *scale_param);
+                         int task_id, const ScaleParameter *scale_param, int max, int min);
 #ifdef __cplusplus
 }
 #endif
