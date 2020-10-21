@@ -330,11 +330,6 @@ int ConvolutionBaseCPUKernel::SetQuantParam() {
     MS_LOG(ERROR) << "Set if per tensor channel failed.";
     return ret;
   }
-  ret = SetIfAsymmetric();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Set if per asymmetric failed.";
-    return ret;
-  }
 
   ret = SetQuantMultiplier();
   if (ret != RET_OK) {
