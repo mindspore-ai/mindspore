@@ -32,8 +32,8 @@ void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bi
 void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
                         size_t plane_size, size_t plane_stride, size_t relu_type);
 
-void WinogradMatrixProductLeft(const float *S, const float *B, float *M, size_t w, size_t h, size_t k, size_t length);
-void WinogradMatrixProductRight(const float *S, const float *B, float *M, size_t w, size_t h, size_t k, size_t length);
+void WinogradTransLeft(const float *S, const float *B, float *M, size_t w, size_t h, size_t k, size_t length);
+void WinogradTransRight(const float *S, const float *B, float *M, size_t w, size_t h, size_t k, size_t length);
 
 float ShortToFloat32(uint16_t src_value);
 

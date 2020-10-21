@@ -249,7 +249,7 @@ kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *>
   if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&
       (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1)) {
     /* DeConvolutionWinogradCPUKernel */
-    kernel = new (std::nothrow) kernel::DeConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+    kernel = new (std::nothrow) kernel::DeConvolutionWinogradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else {
     kernel = new (std::nothrow) kernel::DeConvolutionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   }
