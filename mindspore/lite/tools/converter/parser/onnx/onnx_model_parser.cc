@@ -270,7 +270,7 @@ STATUS OnnxModelParser::ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph,
     NoSupportOp::GetInstance()->InsertOp(onnx_node.op_type());
     interrupt = true;
     return RET_NOT_FIND_OP;
-    int status = ParseLoopAttr(dst_op, onnx_node, quantType, dst_graph);
+    int status = ParseSubgraph(dst_op, onnx_node, quantType, dst_graph);
     if (status != RET_OK || interrupt) {
       interrupt = true;
       return status;
@@ -496,7 +496,7 @@ void OnnxModelParser::FindGraphInputAndConst(const onnx::GraphProto &onnx_graph)
   }
 }
 
-STATUS OnnxModelParser::ParseLoopAttr(schema::CNodeT *dst_op, const onnx::NodeProto &onnx_node,
+STATUS OnnxModelParser::ParseSubgraph(schema::CNodeT *dst_op, const onnx::NodeProto &onnx_node,
                                       const QuantType &quantType, schema::MetaGraphT *dst_graph) {
   MS_LOG(DEBUG) << "onnx LoopParser";
   if (dst_op == nullptr) {

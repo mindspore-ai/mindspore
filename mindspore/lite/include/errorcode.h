@@ -57,6 +57,11 @@ constexpr int RET_INFER_INVALID = -501; /**< Invalid infer shape before runtime.
 
 /* User input param error code, range: [-600, 700)*/
 constexpr int RET_INPUT_PARAM_INVALID = -600; /**< Invalid input param by user. */
+
+/// \brief Print description of errorcode.
+///
+/// \param[in] error_code define return status of procedure.
+void PrintErrorInfo(STATUS error_code);
 }  // namespace lite
 }  // namespace mindspore
 

@@ -61,7 +61,7 @@ STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::
       }
     }
     if (input_shape.int64_data_size() == 0) {
-      MS_LOG(WARNING) << "shape maybe from another op other than const initializer";
+      MS_LOG(INFO) << "shape maybe from another op other than const initializer";
     } else {
       for (int i = 0; i < input_shape.int64_data_size(); ++i) {
         shape.push_back(input_shape.int64_data(i));
