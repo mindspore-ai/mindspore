@@ -1,0 +1,104 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
+
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "minddata/dataset/engine/datasetops/source/random_data_op.h"
+#include "minddata/dataset/util/random.h"
+#include "minddata/dataset/util/status.h"
+namespace mindspore {
+namespace dataset {
+namespace api {
+// ValidateParams for RandomNode
+Status RandomNode::ValidateParams() {
+  if (total_rows_ < 0) {
+    std::string err_msg =
+      "RandomNode: total_rows must be greater than or equal 0, now get " + std::to_string(total_rows_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("RandomNode", sampler_));
+
+  if (!columns_list_.empty()) {
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RandomNode", "columns_list", columns_list_));
+  }
+
+  return Status::OK();
+}
+
+int32_t RandomNode::GenRandomInt(int32_t min, int32_t max) {
+  std::uniform_int_distribution<int32_t> uniDist(min, max);
+  return uniDist(rand_gen_);
+}
+
+// Build for RandomNode
+std::vector<std::shared_ptr<DatasetOp>> RandomNode::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  rand_gen_.seed(GetSeed());  // seed the random generator
+  // If total rows was not given, then randomly pick a number
+  std::shared_ptr<SchemaObj> schema_obj;
+  if (!schema_path_.empty()) {
+    schema_obj = Schema(schema_path_);
+    if (schema_obj == nullptr) {
+      return {};
+    }
+  }
+
+  std::string schema_json_string, schema_file_path;
+  if (schema_ != nullptr) {
+    schema_->set_dataset_type("Random");
+    if (total_rows_ != 0) {
+      schema_->set_num_rows(total_rows_);
+    }
+    schema_json_string = schema_->to_json();
+  } else {
+    schema_file_path = schema_path_;
+  }
+
+  std::unique_ptr<DataSchema> data_schema;
+  std::vector<std::string> columns_to_load;
+  if (columns_list_.size() > 0) {
+    columns_to_load = columns_list_;
+  }
+  if (!schema_file_path.empty() || !schema_json_string.empty()) {
+    data_schema = std::make_unique<DataSchema>();
+    if (!schema_file_path.empty()) {
+      data_schema->LoadSchemaFile(schema_file_path, columns_to_load);
+    } else if (!schema_json_string.empty()) {
+      data_schema->LoadSchemaString(schema_json_string, columns_to_load);
+    }
+  }
+  std::shared_ptr<RandomDataOp> op;
+  op = std::make_shared<RandomDataOp>(num_workers_, connector_que_size_, rows_per_buffer_, total_rows_,
+                                      std::move(data_schema), std::move(sampler_->Build()));
+  RETURN_EMPTY_IF_ERROR(AddCacheOp(&node_ops));
+
+  node_ops.push_back(op);
+
+  return node_ops;
+}
+
+}  // namespace api
+}  // namespace dataset
+}  // namespace mindspore
