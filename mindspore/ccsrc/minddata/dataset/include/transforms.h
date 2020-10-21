@@ -17,10 +17,11 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TRANSFORMS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TRANSFORMS_H_
 
-#include <vector>
 #include <memory>
 #include <string>
+#include <vector>
 #include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -41,7 +42,7 @@ class TensorOperation : public std::enable_shared_from_this<TensorOperation> {
   /// \return shared pointer to the newly created TensorOp.
   virtual std::shared_ptr<TensorOp> Build() = 0;
 
-  virtual bool ValidateParams() = 0;
+  virtual Status ValidateParams() = 0;
 };
 
 // Transform operations for performing data transformation.
@@ -73,7 +74,7 @@ class OneHotOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   float num_classes_;
@@ -87,7 +88,7 @@ class TypeCastOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::string data_type_;

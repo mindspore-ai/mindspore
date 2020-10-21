@@ -353,11 +353,17 @@ std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<
 }
 
 /* ####################################### Validator Functions ############################################ */
-bool CheckVectorPositive(const std::vector<int32_t> &size) {
+Status ValidateVectorPositive(const std::string &dataset_name, const std::vector<int32_t> &size) {
   for (int i = 0; i < size.size(); ++i) {
-    if (size[i] <= 0) return false;
+    if (size[i] <= 0) {
+      std::string err_msg =
+        dataset_name + ": Non-positive size value: " + std::to_string(size[i]) + " at element: " + std::to_string(i);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
   }
-  return true;
+
+  return Status::OK();
 }
 
 bool CmpFloat(const float &a, const float &b, float epsilon = 0.0000000001f) { return (std::fabs(a - b) < epsilon); }
@@ -369,23 +375,26 @@ bool CmpFloat(const float &a, const float &b, float epsilon = 0.0000000001f) { r
 // CenterCropOperation
 CenterCropOperation::CenterCropOperation(std::vector<int32_t> size) : size_(size) {}
 
-bool CenterCropOperation::ValidateParams() {
+Status CenterCropOperation::ValidateParams() {
   if (size_.empty() || size_.size() > 2) {
-    MS_LOG(ERROR) << "CenterCrop: size vector has incorrect size.";
-    return false;
+    std::string err_msg = "CenterCrop: size vector has incorrect size.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // We have to limit crop size due to library restrictions, optimized to only iterate over size_ once
   for (int i = 0; i < size_.size(); ++i) {
     if (size_[i] <= 0) {
-      MS_LOG(ERROR) << "CenterCrop: invalid size, size must be greater than 0, got: " << size_[i];
-      return false;
+      std::string err_msg = "CenterCrop: invalid size, size must be greater than 0, got: " + std::to_string(size_[i]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     if (size_[i] == INT_MAX) {
-      MS_LOG(ERROR) << "CenterCrop: invalid size, size too large, got: " << size_[i];
-      return false;
+      std::string err_msg = "CenterCrop: invalid size, size too large, got: " + std::to_string(size_[i]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> CenterCropOperation::Build() {
@@ -405,35 +414,41 @@ std::shared_ptr<TensorOp> CenterCropOperation::Build() {
 CropOperation::CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size)
     : coordinates_(coordinates), size_(size) {}
 
-bool CropOperation::ValidateParams() {
+Status CropOperation::ValidateParams() {
   // Do some input validation.
   if (coordinates_.size() != 2) {
-    MS_LOG(ERROR) << "Crop: coordinates must be a vector of two values";
-    return false;
+    std::string err_msg = "Crop: coordinates must be a vector of two values";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // we don't check the coordinates here because we don't have access to image dimensions
   if (size_.empty() || size_.size() > 2) {
-    MS_LOG(ERROR) << "Crop: size must be a vector of one or two values";
-    return false;
+    std::string err_msg = "Crop: size must be a vector of one or two values";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // We have to limit crop size due to library restrictions, optimized to only iterate over size_ once
   for (int i = 0; i < size_.size(); ++i) {
     if (size_[i] <= 0) {
-      MS_LOG(ERROR) << "Crop: invalid size, size must be greater than 0, got: " << size_[i];
-      return false;
+      std::string err_msg = "Crop: invalid size, size must be greater than 0, got: " + std::to_string(size_[i]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     if (size_[i] == INT_MAX) {
-      MS_LOG(ERROR) << "Crop: invalid size, size too large, got: " << size_[i];
-      return false;
+      std::string err_msg = "Crop: invalid size, size too large, got: " + std::to_string(size_[i]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   for (int j = 0; j < coordinates_.size(); ++j) {
     if (coordinates_[j] < 0) {
-      MS_LOG(ERROR) << "Crop: invalid coordinates, coordinates must be greater than 0, got: " << coordinates_[j];
-      return false;
+      std::string err_msg =
+        "Crop: invalid coordinates, coordinates must be greater than 0, got: " + std::to_string(coordinates_[j]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> CropOperation::Build() {
@@ -456,16 +471,19 @@ std::shared_ptr<TensorOp> CropOperation::Build() {
 CutMixBatchOperation::CutMixBatchOperation(ImageBatchFormat image_batch_format, float alpha, float prob)
     : image_batch_format_(image_batch_format), alpha_(alpha), prob_(prob) {}
 
-bool CutMixBatchOperation::ValidateParams() {
+Status CutMixBatchOperation::ValidateParams() {
   if (alpha_ <= 0) {
-    MS_LOG(ERROR) << "CutMixBatch: alpha must be a positive floating value however it is: " << alpha_;
-    return false;
+    std::string err_msg =
+      "CutMixBatch: alpha must be a positive floating value however it is: " + std::to_string(alpha_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (prob_ < 0 || prob_ > 1) {
-    MS_LOG(ERROR) << "CutMixBatch: Probability has to be between 0 and 1.";
-    return false;
+    std::string err_msg = "CutMixBatch: Probability has to be between 0 and 1.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> CutMixBatchOperation::Build() {
@@ -476,16 +494,18 @@ std::shared_ptr<TensorOp> CutMixBatchOperation::Build() {
 // CutOutOperation
 CutOutOperation::CutOutOperation(int32_t length, int32_t num_patches) : length_(length), num_patches_(num_patches) {}
 
-bool CutOutOperation::ValidateParams() {
+Status CutOutOperation::ValidateParams() {
   if (length_ < 0) {
-    MS_LOG(ERROR) << "CutOut: length cannot be negative";
-    return false;
+    std::string err_msg = "CutOut: length cannot be negative";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (num_patches_ < 0) {
-    MS_LOG(ERROR) << "CutOut: number of patches cannot be negative";
-    return false;
+    std::string err_msg = "CutOut: number of patches cannot be negative";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> CutOutOperation::Build() {
@@ -496,25 +516,27 @@ std::shared_ptr<TensorOp> CutOutOperation::Build() {
 // DecodeOperation
 DecodeOperation::DecodeOperation(bool rgb) : rgb_(rgb) {}
 
-bool DecodeOperation::ValidateParams() { return true; }
+Status DecodeOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> DecodeOperation::Build() { return std::make_shared<DecodeOp>(rgb_); }
 
 // HwcToChwOperation
-bool HwcToChwOperation::ValidateParams() { return true; }
+Status HwcToChwOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> HwcToChwOperation::Build() { return std::make_shared<HwcToChwOp>(); }
 
 // MixUpOperation
 MixUpBatchOperation::MixUpBatchOperation(float alpha) : alpha_(alpha) {}
 
-bool MixUpBatchOperation::ValidateParams() {
+Status MixUpBatchOperation::ValidateParams() {
   if (alpha_ <= 0) {
-    MS_LOG(ERROR) << "MixUpBatch: alpha must be a positive floating value however it is: " << alpha_;
-    return false;
+    std::string err_msg =
+      "MixUpBatch: alpha must be a positive floating value however it is: " + std::to_string(alpha_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> MixUpBatchOperation::Build() { return std::make_shared<MixUpBatchOp>(alpha_); }
@@ -522,23 +544,26 @@ std::shared_ptr<TensorOp> MixUpBatchOperation::Build() { return std::make_shared
 // NormalizeOperation
 NormalizeOperation::NormalizeOperation(std::vector<float> mean, std::vector<float> std) : mean_(mean), std_(std) {}
 
-bool NormalizeOperation::ValidateParams() {
+Status NormalizeOperation::ValidateParams() {
   if (mean_.size() != 3) {
-    MS_LOG(ERROR) << "Normalize: mean vector has incorrect size: " << mean_.size();
-    return false;
+    std::string err_msg = "Normalize: mean vector has incorrect size: " + std::to_string(mean_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (std_.size() != 3) {
-    MS_LOG(ERROR) << "Normalize: std vector has incorrect size: " << std_.size();
-    return false;
+    std::string err_msg = "Normalize: std vector has incorrect size: " + std::to_string(std_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // check std value
   for (int i = 0; i < std_.size(); ++i) {
     if (std_[i] < 0.0f || std_[i] > 255.0f || CmpFloat(std_[i], 0.0f)) {
-      MS_LOG(ERROR) << "Normalize: std vector has incorrect value: " << std_[i];
-      return false;
+      std::string err_msg = "Normalize: std vector has incorrect value: " + std::to_string(std_[i]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> NormalizeOperation::Build() {
@@ -549,17 +574,19 @@ std::shared_ptr<TensorOp> NormalizeOperation::Build() {
 PadOperation::PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderType padding_mode)
     : padding_(padding), fill_value_(fill_value), padding_mode_(padding_mode) {}
 
-bool PadOperation::ValidateParams() {
+Status PadOperation::ValidateParams() {
   if (padding_.empty() || padding_.size() == 3 || padding_.size() > 4) {
-    MS_LOG(ERROR) << "Pad: padding vector has incorrect size: padding.size()";
-    return false;
+    std::string err_msg = "Pad: padding vector has incorrect size: padding.size()";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (fill_value_.empty() || (fill_value_.size() != 1 && fill_value_.size() != 3)) {
-    MS_LOG(ERROR) << "Pad: fill_value vector has incorrect size: fill_value.size()";
-    return false;
+    std::string err_msg = "Pad: fill_value vector has incorrect size: fill_value.size()";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> PadOperation::Build() {
@@ -613,88 +640,107 @@ RandomAffineOperation::RandomAffineOperation(const std::vector<float_t> &degrees
       interpolation_(interpolation),
       fill_value_(fill_value) {}
 
-bool RandomAffineOperation::ValidateParams() {
+Status RandomAffineOperation::ValidateParams() {
   // Degrees
   if (degrees_.size() != 2) {
-    MS_LOG(ERROR) << "RandomAffine: degrees expecting size 2, got: degrees.size() = " << degrees_.size();
-    return false;
+    std::string err_msg =
+      "RandomAffine: degrees expecting size 2, got: degrees.size() = " + std::to_string(degrees_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (degrees_[0] > degrees_[1]) {
-    MS_LOG(ERROR) << "RandomAffine: minimum of degrees range is greater than maximum: min = " << degrees_[0]
-                  << ", max = " << degrees_[1];
-    return false;
+    std::string err_msg =
+      "RandomAffine: minimum of degrees range is greater than maximum: min = " + std::to_string(degrees_[0]) +
+      ", max = " + std::to_string(degrees_[1]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // Translate
   if (translate_range_.size() != 2 && translate_range_.size() != 4) {
-    MS_LOG(ERROR) << "RandomAffine: translate_range expecting size 2 or 4, got: translate_range.size() = "
-                  << translate_range_.size();
-    return false;
+    std::string err_msg = "RandomAffine: translate_range expecting size 2 or 4, got: translate_range.size() = " +
+                          std::to_string(translate_range_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (translate_range_[0] > translate_range_[1]) {
-    MS_LOG(ERROR) << "RandomAffine: minimum of translate range on x is greater than maximum: min = "
-                  << translate_range_[0] << ", max = " << translate_range_[1];
-    return false;
+    std::string err_msg = "RandomAffine: minimum of translate range on x is greater than maximum: min = " +
+                          std::to_string(translate_range_[0]) + ", max = " + std::to_string(translate_range_[1]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (translate_range_[0] < -1 || translate_range_[0] > 1) {
-    MS_LOG(ERROR) << "RandomAffine: minimum of translate range on x is out of range of [-1, 1], value = "
-                  << translate_range_[0];
-    return false;
+    std::string err_msg = "RandomAffine: minimum of translate range on x is out of range of [-1, 1], value = " +
+                          std::to_string(translate_range_[0]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (translate_range_[1] < -1 || translate_range_[1] > 1) {
-    MS_LOG(ERROR) << "RandomAffine: maximum of translate range on x is out of range of [-1, 1], value = "
-                  << translate_range_[1];
-    return false;
+    std::string err_msg = "RandomAffine: maximum of translate range on x is out of range of [-1, 1], value = " +
+                          std::to_string(translate_range_[1]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (translate_range_.size() == 4) {
     if (translate_range_[2] > translate_range_[3]) {
-      MS_LOG(ERROR) << "RandomAffine: minimum of translate range on y is greater than maximum: min = "
-                    << translate_range_[2] << ", max = " << translate_range_[3];
-      return false;
+      std::string err_msg = "RandomAffine: minimum of translate range on y is greater than maximum: min = " +
+                            std::to_string(translate_range_[2]) + ", max = " + std::to_string(translate_range_[3]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     if (translate_range_[2] < -1 || translate_range_[2] > 1) {
-      MS_LOG(ERROR) << "RandomAffine: minimum of translate range on y is out of range of [-1, 1], value = "
-                    << translate_range_[2];
-      return false;
+      std::string err_msg = "RandomAffine: minimum of translate range on y is out of range of [-1, 1], value = " +
+                            std::to_string(translate_range_[2]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     if (translate_range_[3] < -1 || translate_range_[3] > 1) {
-      MS_LOG(ERROR) << "RandomAffine: maximum of translate range on y is out of range of [-1, 1], value = "
-                    << translate_range_[3];
-      return false;
+      std::string err_msg = "RandomAffine: maximum of translate range on y is out of range of [-1, 1], value = " +
+                            std::to_string(translate_range_[3]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   // Scale
   if (scale_range_.size() != 2) {
-    MS_LOG(ERROR) << "RandomAffine: scale_range vector has incorrect size: scale_range.size() = "
-                  << scale_range_.size();
-    return false;
+    std::string err_msg = "RandomAffine: scale_range vector has incorrect size: scale_range.size() = " +
+                          std::to_string(scale_range_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (scale_range_[0] > scale_range_[1]) {
-    MS_LOG(ERROR) << "RandomAffine: minimum of scale range is greater than maximum: min = " << scale_range_[0]
-                  << ", max = " << scale_range_[1];
-    return false;
+    std::string err_msg =
+      "RandomAffine: minimum of scale range is greater than maximum: min = " + std::to_string(scale_range_[0]) +
+      ", max = " + std::to_string(scale_range_[1]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // Shear
   if (shear_ranges_.size() != 2 && shear_ranges_.size() != 4) {
-    MS_LOG(ERROR) << "RandomAffine: shear_ranges expecting size 2 or 4, got: shear_ranges.size() = "
-                  << shear_ranges_.size();
-    return false;
+    std::string err_msg = "RandomAffine: shear_ranges expecting size 2 or 4, got: shear_ranges.size() = " +
+                          std::to_string(shear_ranges_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (shear_ranges_[0] > shear_ranges_[1]) {
-    MS_LOG(ERROR) << "RandomAffine: minimum of horizontal shear range is greater than maximum: min = "
-                  << shear_ranges_[0] << ", max = " << shear_ranges_[1];
-    return false;
+    std::string err_msg = "RandomAffine: minimum of horizontal shear range is greater than maximum: min = " +
+                          std::to_string(shear_ranges_[0]) + ", max = " + std::to_string(shear_ranges_[1]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (shear_ranges_.size() == 4 && shear_ranges_[2] > shear_ranges_[3]) {
-    MS_LOG(ERROR) << "RandomAffine: minimum of vertical shear range is greater than maximum: min = " << shear_ranges_[2]
-                  << ", max = " << scale_range_[3];
-    return false;
+    std::string err_msg = "RandomAffine: minimum of vertical shear range is greater than maximum: min = " +
+                          std::to_string(shear_ranges_[2]) + ", max = " + std::to_string(scale_range_[3]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // Fill Value
   if (fill_value_.size() != 3) {
-    MS_LOG(ERROR) << "RandomAffine: fill_value vector has incorrect size: fill_value.size() = " << fill_value_.size();
-    return false;
+    std::string err_msg =
+      "RandomAffine: fill_value vector has incorrect size: fill_value.size() = " + std::to_string(fill_value_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomAffineOperation::Build() {
@@ -712,13 +758,14 @@ std::shared_ptr<TensorOp> RandomAffineOperation::Build() {
 // RandomColorOperation.
 RandomColorOperation::RandomColorOperation(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) {}
 
-bool RandomColorOperation::ValidateParams() {
+Status RandomColorOperation::ValidateParams() {
   // Do some input validation.
   if (t_lb_ > t_ub_) {
-    MS_LOG(ERROR) << "RandomColor: lower bound must be less or equal to upper bound";
-    return false;
+    std::string err_msg = "RandomColor: lower bound must be less or equal to upper bound";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 // RandomColorAdjustOperation.
@@ -726,25 +773,29 @@ RandomColorAdjustOperation::RandomColorAdjustOperation(std::vector<float> bright
                                                        std::vector<float> saturation, std::vector<float> hue)
     : brightness_(brightness), contrast_(contrast), saturation_(saturation), hue_(hue) {}
 
-bool RandomColorAdjustOperation::ValidateParams() {
+Status RandomColorAdjustOperation::ValidateParams() {
   // Do some input validation.
   if (brightness_.empty() || brightness_.size() > 2) {
-    MS_LOG(ERROR) << "RandomColorAdjust: brightness must be a vector of one or two values";
-    return false;
+    std::string err_msg = "RandomColorAdjust: brightness must be a vector of one or two values";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (contrast_.empty() || contrast_.size() > 2) {
-    MS_LOG(ERROR) << "RandomColorAdjust: contrast must be a vector of one or two values";
-    return false;
+    std::string err_msg = "RandomColorAdjust: contrast must be a vector of one or two values";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (saturation_.empty() || saturation_.size() > 2) {
-    MS_LOG(ERROR) << "RandomColorAdjust: saturation must be a vector of one or two values";
-    return false;
+    std::string err_msg = "RandomColorAdjust: saturation must be a vector of one or two values";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (hue_.empty() || hue_.size() > 2) {
-    MS_LOG(ERROR) << "RandomColorAdjust: hue must be a vector of one or two values";
-    return false;
+    std::string err_msg = "RandomColorAdjust: hue must be a vector of one or two values";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomColorAdjustOperation::Build() {
@@ -784,22 +835,25 @@ RandomCropOperation::RandomCropOperation(std::vector<int32_t> size, std::vector<
       fill_value_(fill_value),
       padding_mode_(padding_mode) {}
 
-bool RandomCropOperation::ValidateParams() {
+Status RandomCropOperation::ValidateParams() {
   if (size_.empty() || size_.size() > 2) {
-    MS_LOG(ERROR) << "RandomCrop: size vector has incorrect size: " << size_.size();
-    return false;
+    std::string err_msg = "RandomCrop: size vector has incorrect size: " + std::to_string(size_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (padding_.empty() || padding_.size() != 4) {
-    MS_LOG(ERROR) << "RandomCrop: padding vector has incorrect size: padding.size()";
-    return false;
+    std::string err_msg = "RandomCrop: padding vector has incorrect size: padding.size()";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (fill_value_.empty() || fill_value_.size() != 3) {
-    MS_LOG(ERROR) << "RandomCrop: fill_value vector has incorrect size: fill_value.size()";
-    return false;
+    std::string err_msg = "RandomCrop: fill_value vector has incorrect size: fill_value.size()";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomCropOperation::Build() {
@@ -831,37 +885,43 @@ RandomCropDecodeResizeOperation::RandomCropDecodeResizeOperation(std::vector<int
                                                                  InterpolationMode interpolation, int32_t max_attempts)
     : size_(size), scale_(scale), ratio_(ratio), interpolation_(interpolation), max_attempts_(max_attempts) {}
 
-bool RandomCropDecodeResizeOperation::ValidateParams() {
+Status RandomCropDecodeResizeOperation::ValidateParams() {
   if (size_.empty() || size_.size() > 2) {
-    MS_LOG(ERROR) << "RandomCropDecodeResize: size vector has incorrect size: " << size_.size();
-    return false;
+    std::string err_msg = "RandomCropDecodeResize: size vector has incorrect size: " + std::to_string(size_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (scale_.empty() || scale_.size() != 2) {
-    MS_LOG(ERROR) << "RandomCropDecodeResize: scale vector has incorrect size: " << scale_.size();
-    return false;
+    std::string err_msg = "RandomCropDecodeResize: scale vector has incorrect size: " + std::to_string(scale_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (scale_[0] > scale_[1]) {
-    MS_LOG(ERROR) << "RandomCropDecodeResize: scale should be in (min,max) format. Got (max,min).";
-    return false;
+    std::string err_msg = "RandomCropDecodeResize: scale should be in (min,max) format. Got (max,min).";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (ratio_.empty() || ratio_.size() != 2) {
-    MS_LOG(ERROR) << "RandomCropDecodeResize: ratio vector has incorrect size: " << ratio_.size();
-    return false;
+    std::string err_msg = "RandomCropDecodeResize: ratio vector has incorrect size: " + std::to_string(ratio_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (ratio_[0] > ratio_[1]) {
-    MS_LOG(ERROR) << "RandomCropDecodeResize: ratio should be in (min,max) format. Got (max,min).";
-    return false;
+    std::string err_msg = "RandomCropDecodeResize: ratio should be in (min,max) format. Got (max,min).";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
   if (max_attempts_ < 1) {
-    MS_LOG(ERROR) << "RandomCropDecodeResize: max_attempts must be greater than or equal to 1.";
-    return false;
+    std::string err_msg = "RandomCropDecodeResize: max_attempts must be greater than or equal to 1.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomCropDecodeResizeOperation::Build() {
@@ -888,12 +948,14 @@ std::shared_ptr<TensorOp> RandomCropDecodeResizeOperation::Build() {
 // RandomHorizontalFlipOperation
 RandomHorizontalFlipOperation::RandomHorizontalFlipOperation(float probability) : probability_(probability) {}
 
-bool RandomHorizontalFlipOperation::ValidateParams() {
+Status RandomHorizontalFlipOperation::ValidateParams() {
   if (probability_ < 0.0 || probability_ > 1.0) {
-    MS_LOG(ERROR) << "RandomHorizontalFlip: probability must be between 0.0 and 1.0.";
-    return false;
+    std::string err_msg = "RandomHorizontalFlip: probability must be between 0.0 and 1.0.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomHorizontalFlipOperation::Build() {
@@ -904,25 +966,30 @@ std::shared_ptr<TensorOp> RandomHorizontalFlipOperation::Build() {
 // RandomPosterizeOperation
 RandomPosterizeOperation::RandomPosterizeOperation(const std::vector<uint8_t> &bit_range) : bit_range_(bit_range) {}
 
-bool RandomPosterizeOperation::ValidateParams() {
+Status RandomPosterizeOperation::ValidateParams() {
   if (bit_range_.size() != 2) {
-    MS_LOG(ERROR) << "RandomPosterize: bit_range needs to be of size 2 but is of size: " << bit_range_.size();
-    return false;
+    std::string err_msg =
+      "RandomPosterize: bit_range needs to be of size 2 but is of size: " + std::to_string(bit_range_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (bit_range_[0] < 1 || bit_range_[0] > 8) {
-    MS_LOG(ERROR) << "RandomPosterize: min_bit value is out of range [1-8]: " << bit_range_[0];
-    return false;
+    std::string err_msg = "RandomPosterize: min_bit value is out of range [1-8]: " + std::to_string(bit_range_[0]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (bit_range_[1] < 1 || bit_range_[1] > 8) {
-    MS_LOG(ERROR) << "RandomPosterize: max_bit value is out of range [1-8]: " << bit_range_[1];
-    return false;
+    std::string err_msg = "RandomPosterize: max_bit value is out of range [1-8]: " + std::to_string(bit_range_[1]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (bit_range_[1] < bit_range_[0]) {
-    MS_LOG(ERROR) << "RandomPosterize: max_bit value is less than min_bit: max =" << bit_range_[1]
-                  << ", min = " << bit_range_[0];
-    return false;
+    std::string err_msg = "RandomPosterize: max_bit value is less than min_bit: max =" + std::to_string(bit_range_[1]) +
+                          ", min = " + std::to_string(bit_range_[0]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomPosterizeOperation::Build() {
@@ -935,28 +1002,32 @@ RandomResizedCropOperation::RandomResizedCropOperation(std::vector<int32_t> size
                                                        std::vector<float> ratio, InterpolationMode interpolation,
                                                        int32_t max_attempts)
     : size_(size), scale_(scale), ratio_(ratio), interpolation_(interpolation), max_attempts_(max_attempts) {}
-bool RandomResizedCropOperation::ValidateParams() {
+Status RandomResizedCropOperation::ValidateParams() {
   if (size_.size() != 2 && size_.size() != 1) {
-    MS_LOG(ERROR) << "RandomResizedCrop: size variable must have a length of 1 or 2 but it has a length of: "
-                  << size_.size();
-    return false;
+    std::string err_msg = "RandomResizedCrop: size variable must have a length of 1 or 2 but it has a length of: " +
+                          std::to_string(size_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (size_[0] < 0 || (size_.size() == 2 && size_[1] < 0)) {
+    std::string err_msg = "RandomResizedCrop: size variable must only contain positive integers.";
     MS_LOG(ERROR) << "RandomResizedCrop: size variable must only contain positive integers. However, it is: " << size_;
-    return false;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (scale_.size() != 2 || scale_[1] < scale_[0]) {
+    std::string err_msg = "RandomResizedCrop: scale variable must have a size of two in the format of (min, max).";
     MS_LOG(ERROR)
       << "RandomResizedCrop: scale variable must have a size of two in the format of (min, max). However, it is: "
       << scale_;
-    return false;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (ratio_.size() != 2 || ratio_[1] < ratio_[0]) {
+    std::string err_msg = "RandomResizedCrop: ratio variable must be in the format of (min, max).";
     MS_LOG(ERROR) << "RandomResizedCrop: ratio variable must be in the format of (min, max). However , it is: "
                   << ratio_;
-    return false;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomResizedCropOperation::Build() {
@@ -977,20 +1048,23 @@ RandomRotationOperation::RandomRotationOperation(std::vector<float> degrees, Int
       center_(center),
       fill_value_(fill_value) {}
 
-bool RandomRotationOperation::ValidateParams() {
+Status RandomRotationOperation::ValidateParams() {
   if (degrees_.empty() || degrees_.size() != 2) {
-    MS_LOG(ERROR) << "RandomRotation: degrees vector has incorrect size: degrees.size()";
-    return false;
+    std::string err_msg = "RandomRotation: degrees vector has incorrect size: degrees.size()";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (center_.empty() || center_.size() != 2) {
-    MS_LOG(ERROR) << "RandomRotation: center vector has incorrect size: center.size()";
-    return false;
+    std::string err_msg = "RandomRotation: center vector has incorrect size: center.size()";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (fill_value_.empty() || fill_value_.size() != 3) {
-    MS_LOG(ERROR) << "RandomRotation: fill_value vector has incorrect size: fill_value.size()";
-    return false;
+    std::string err_msg = "RandomRotation: fill_value vector has incorrect size: fill_value.size()";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
@@ -1003,12 +1077,13 @@ std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
 // Function to create RandomSharpness.
 RandomSharpnessOperation::RandomSharpnessOperation(std::vector<float> degrees) : degrees_(degrees) {}
 
-bool RandomSharpnessOperation::ValidateParams() {
+Status RandomSharpnessOperation::ValidateParams() {
   if (degrees_.empty() || degrees_.size() != 2) {
-    MS_LOG(ERROR) << "RandomSharpness: degrees vector has incorrect size: degrees.size()";
-    return false;
+    std::string err_msg = "RandomSharpness: degrees vector has incorrect size: degrees.size()";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomSharpnessOperation::Build() {
@@ -1019,16 +1094,18 @@ std::shared_ptr<TensorOp> RandomSharpnessOperation::Build() {
 // RandomSolarizeOperation.
 RandomSolarizeOperation::RandomSolarizeOperation(std::vector<uint8_t> threshold) : threshold_(threshold) {}
 
-bool RandomSolarizeOperation::ValidateParams() {
+Status RandomSolarizeOperation::ValidateParams() {
   if (threshold_.size() != 2) {
-    MS_LOG(ERROR) << "RandomSolarize: threshold vector has incorrect size: " << threshold_.size();
-    return false;
+    std::string err_msg = "RandomSolarize: threshold vector has incorrect size: " + std::to_string(threshold_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (threshold_.at(0) > threshold_.at(1)) {
-    MS_LOG(ERROR) << "RandomSolarize: threshold must be passed in a min, max format";
-    return false;
+    std::string err_msg = "RandomSolarize: threshold must be passed in a min, max format";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomSolarizeOperation::Build() {
@@ -1039,12 +1116,14 @@ std::shared_ptr<TensorOp> RandomSolarizeOperation::Build() {
 // RandomVerticalFlipOperation
 RandomVerticalFlipOperation::RandomVerticalFlipOperation(float probability) : probability_(probability) {}
 
-bool RandomVerticalFlipOperation::ValidateParams() {
+Status RandomVerticalFlipOperation::ValidateParams() {
   if (probability_ < 0.0 || probability_ > 1.0) {
-    MS_LOG(ERROR) << "RandomVerticalFlip: probability must be between 0.0 and 1.0.";
-    return false;
+    std::string err_msg = "RandomVerticalFlip: probability must be between 0.0 and 1.0.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomVerticalFlipOperation::Build() {
@@ -1055,12 +1134,14 @@ std::shared_ptr<TensorOp> RandomVerticalFlipOperation::Build() {
 // RescaleOperation
 RescaleOperation::RescaleOperation(float rescale, float shift) : rescale_(rescale), shift_(shift) {}
 
-bool RescaleOperation::ValidateParams() {
+Status RescaleOperation::ValidateParams() {
   if (rescale_ < 0) {
-    MS_LOG(ERROR) << "Rescale: rescale must be greater than or equal to 0, got: rescale = " << rescale_;
-    return false;
+    std::string err_msg =
+      "Rescale: rescale must be greater than or equal to 0, got: rescale = " + std::to_string(rescale_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RescaleOperation::Build() {
@@ -1072,15 +1153,16 @@ std::shared_ptr<TensorOp> RescaleOperation::Build() {
 ResizeOperation::ResizeOperation(std::vector<int32_t> size, InterpolationMode interpolation)
     : size_(size), interpolation_(interpolation) {}
 
-bool ResizeOperation::ValidateParams() {
+Status ResizeOperation::ValidateParams() {
   if (size_.empty() || size_.size() > 2) {
-    MS_LOG(ERROR) << "Resize: size vector has incorrect size: " << size_.size();
-    return false;
+    std::string err_msg = "Resize: size vector has incorrect size: " + std::to_string(size_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (!CheckVectorPositive(size_)) {
-    return false;
-  }
-  return true;
+
+  RETURN_IF_NOT_OK(ValidateVectorPositive("Resize", size_));
+
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> ResizeOperation::Build() {
@@ -1098,7 +1180,7 @@ std::shared_ptr<TensorOp> ResizeOperation::Build() {
 // RgbaToBgrOperation.
 RgbaToBgrOperation::RgbaToBgrOperation() {}
 
-bool RgbaToBgrOperation::ValidateParams() { return true; }
+Status RgbaToBgrOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> RgbaToBgrOperation::Build() {
   std::shared_ptr<RgbaToBgrOp> tensor_op = std::make_shared<RgbaToBgrOp>();
@@ -1108,7 +1190,7 @@ std::shared_ptr<TensorOp> RgbaToBgrOperation::Build() {
 // RgbaToRgbOperation.
 RgbaToRgbOperation::RgbaToRgbOperation() {}
 
-bool RgbaToRgbOperation::ValidateParams() { return true; }
+Status RgbaToRgbOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> RgbaToRgbOperation::Build() {
   std::shared_ptr<RgbaToRgbOp> tensor_op = std::make_shared<RgbaToRgbOp>();
@@ -1118,7 +1200,7 @@ std::shared_ptr<TensorOp> RgbaToRgbOperation::Build() {
 // SwapRedBlueOperation.
 SwapRedBlueOperation::SwapRedBlueOperation() {}
 
-bool SwapRedBlueOperation::ValidateParams() { return true; }
+Status SwapRedBlueOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> SwapRedBlueOperation::Build() {
   std::shared_ptr<SwapRedBlueOp> tensor_op = std::make_shared<SwapRedBlueOp>();
@@ -1129,7 +1211,7 @@ std::shared_ptr<TensorOp> SwapRedBlueOperation::Build() {
 UniformAugOperation::UniformAugOperation(std::vector<std::shared_ptr<TensorOperation>> transforms, int32_t num_ops)
     : transforms_(transforms), num_ops_(num_ops) {}
 
-bool UniformAugOperation::ValidateParams() { return true; }
+Status UniformAugOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> UniformAugOperation::Build() {
   std::vector<std::shared_ptr<TensorOp>> tensor_ops;

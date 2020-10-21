@@ -17,13 +17,14 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TEXT_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TEXT_H_
 
-#include <vector>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/text/vocab.h"
+#include "minddata/dataset/util/status.h"
 #include "mindspore/ccsrc/minddata/dataset/core/data_type.h"
 
 namespace mindspore {
@@ -56,7 +57,7 @@ class LookupOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::shared_ptr<Vocab> vocab_;

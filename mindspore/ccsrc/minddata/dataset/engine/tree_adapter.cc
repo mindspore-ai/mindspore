@@ -23,11 +23,11 @@ namespace mindspore {
 namespace dataset {
 
 Status TreeAdapter::BuildAndPrepare(std::shared_ptr<api::Dataset> root_ir, int32_t num_epoch) {
-  // Check whether this function has been called before. If so, return fail
+  // Check whether this function has been called before. If so, return failure
   CHECK_FAIL_RETURN_UNEXPECTED(tree_ == nullptr, "ExecutionTree is already built.");
   RETURN_UNEXPECTED_IF_NULL(root_ir);
 
-  // this will evolve in the long run
+  // This will evolve in the long run
   tree_ = std::make_unique<ExecutionTree>();
 
   std::shared_ptr<DatasetOp> root_op;
@@ -37,7 +37,7 @@ Status TreeAdapter::BuildAndPrepare(std::shared_ptr<api::Dataset> root_ir, int32
   // Prepare the tree
   RETURN_IF_NOT_OK(tree_->Prepare(num_epoch));
 
-  // after the tree is prepared, the col_name_id_map can safely be obtained
+  // After the tree is prepared, the col_name_id_map can safely be obtained
   column_name_map_ = tree_->root()->column_name_id_map();
 
   return Status::OK();
@@ -47,7 +47,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(tree_);
   RETURN_UNEXPECTED_IF_NULL(row);
   row->clear();  // make sure row is empty
-  // cur_db_ being a nullptr means this is the first call to get_next, launch ExecutionTree
+  // When cur_db_ is a nullptr, it means this is the first call to get_next, launch ExecutionTree
   if (cur_db_ == nullptr) {
     RETURN_IF_NOT_OK(tree_->Launch());
     RETURN_IF_NOT_OK(tree_->root()->GetNextBuffer(&cur_db_));  // first buf can't be eof or empty buf with none flag
@@ -77,7 +77,7 @@ Status TreeAdapter::DFSBuildTree(std::shared_ptr<api::Dataset> ir, std::shared_p
     RETURN_IF_NOT_OK(ops[i - 1]->AddChild(ops[i]));
   }
 
-  // build the children of ir, once they return, add the return value to *op
+  // Build the children of ir, once they return, add the return value to *op
   for (std::shared_ptr<api::Dataset> child_ir : ir->children) {
     std::shared_ptr<DatasetOp> child_op;
     RETURN_IF_NOT_OK(DFSBuildTree(child_ir, &child_op));

@@ -62,8 +62,9 @@ std::vector<std::shared_ptr<DatasetOp>> BucketBatchByLengthNode::Build() {
 
 Status BucketBatchByLengthNode::ValidateParams() {
   if (element_length_function_ == nullptr && column_names_.size() != 1) {
-    std::string err_msg = "BucketBatchByLengthNode: element_length_function not specified, but not one column name: " +
-                          std::to_string(column_names_.size());
+    std::string err_msg =
+      "BucketBatchByLengthNode: when element_length_function is not specified, size of column_name must be 1 but is: " +
+      std::to_string(column_names_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }

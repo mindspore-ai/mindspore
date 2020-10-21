@@ -37,7 +37,7 @@ class TreeAdapter {
 
   ~TreeAdapter() = default;
 
-  // This will construct a ExeTree from a Dataset root and Prepare() the ExeTree
+  // This will construct an ExeTree from a Dataset root and Prepare() the ExeTree
   // This function is only meant to be called once and needs to be called before GetNext
   // ExeTree will be launched when the first GetNext is called
   Status BuildAndPrepare(std::shared_ptr<api::Dataset> root, int32_t num_epoch = -1);
@@ -47,15 +47,15 @@ class TreeAdapter {
   // 2. GetNext will return empty row when eoe/eof is obtained
   Status GetNext(TensorRow *);
 
-  // this function will return the column_name_map once BuildAndPrepare() is called
+  // This function will return the column_name_map once BuildAndPrepare() is called
   std::unordered_map<std::string, int32_t> GetColumnNameMap() const { return column_name_map_; }
 
-  // this function returns the TaskGroup associated with ExeTree, this is needed by DeviceQueueConsumer
+  // This function returns the TaskGroup associated with ExeTree. This is needed by DeviceQueueConsumer
   // to be able to launch a thread. BuildAndPrepare needs to be called before this function
   TaskGroup *AllTasks() const { return tree_ != nullptr ? tree_->AllTasks() : nullptr; }
 
  private:
-  // this RECURSIVE function converts IR nodes into DatasetOp in ExecutionTree. ir could build a vector of ops. In
+  // This RECURSIVE function converts IR nodes into DatasetOp in ExecutionTree. IR could build a vector of ops. In
   // such case, the first node is returned. Op is added as child when the current function returns.
   Status DFSBuildTree(std::shared_ptr<api::Dataset> ir, std::shared_ptr<DatasetOp> *op);
 
