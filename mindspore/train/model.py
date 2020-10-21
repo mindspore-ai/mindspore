@@ -680,7 +680,7 @@ class Model:
 
         self._clear_metrics()
 
-        if context.get_context("device_target") == "CPU":
+        if context.get_context("device_target") == "CPU" and dataset_sink_mode:
             dataset_sink_mode = False
             logger.warning("CPU cannot support dataset sink mode currently."
                            "So the evaluating process will be performed with dataset non-sink mode.")
