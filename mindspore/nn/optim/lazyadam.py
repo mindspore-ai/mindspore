@@ -224,7 +224,7 @@ class LazyAdam(Optimizer):
         self.hyper_map = C.HyperMap()
         self.opt = P.Adam(use_locking, use_nesterov)
         self.sparse_opt = P.FusedSparseLazyAdam(use_locking, use_nesterov)
-        self.sparse_opt.add_prim_attr("primitive", "CPU")
+        self.sparse_opt.add_prim_attr("primitive_target", "CPU")
         self._ps_pull = P.Pull()
         self._ps_push = P.Push("Adam", [0, 1, 2])
         self._ps_push.add_prim_attr("use_nesterov", use_nesterov)
