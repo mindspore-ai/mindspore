@@ -232,7 +232,7 @@ def conv2d(x, weight, bias=None, stride=1, pad=0,
            dilation=1, groups=1, padding_mode='zeros'):
     """Convolution 2D."""
     # pylint: disable=unused-argument
-    validator.check_value_type('stride', stride, (int, tuple), None)
+    validator.check_value_type('stride', stride, (int, tuple))
     if isinstance(stride, int):
         stride = (stride, stride)
     elif len(stride) == 4:
@@ -244,7 +244,7 @@ def conv2d(x, weight, bias=None, stride=1, pad=0,
                          f"a tuple of two positive int numbers, but got {stride}")
     stride_h = stride[0]
     stride_w = stride[1]
-    validator.check_value_type('dilation', dilation, (int, tuple), None)
+    validator.check_value_type('dilation', dilation, (int, tuple))
     if isinstance(dilation, int):
         dilation = (dilation, dilation)
     elif len(dilation) == 4:

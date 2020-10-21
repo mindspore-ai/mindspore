@@ -505,7 +505,7 @@ class Validator:
         reduce(_check_types_same, map(_check_argument_type, args.items()))
 
     @staticmethod
-    def check_value_type(arg_name, arg_value, valid_types, prim_name):
+    def check_value_type(arg_name, arg_value, valid_types, prim_name=None):
         """Checks whether a value is instance of some types."""
         valid_types = valid_types if isinstance(valid_types, Iterable) else (valid_types,)
 

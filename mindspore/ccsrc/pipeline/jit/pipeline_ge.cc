@@ -514,8 +514,9 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const
     MS_LOG(EXCEPTION) << "Exec graph failed";
   }
 }
+
 void ExportDFGraph(const std::string &file_name, const std::string &phase) {
-  MS_LOG(DEBUG) << "ExportGraph Begin";
+  MS_LOG(DEBUG) << "Export graph begin.";
   transform::DfGraphWrapperPtr wrap_ptr = DfGraphManager::GetInstance().GetGraphByName(phase);
   if (wrap_ptr == nullptr) {
     MS_LOG(ERROR) << "Get graph form DfGraphManager failed!";
@@ -524,13 +525,12 @@ void ExportDFGraph(const std::string &file_name, const std::string &phase) {
 
   transform::DfGraphPtr ge_graph = wrap_ptr->graph_ptr_;
   if (nullptr == ge_graph) {
-    MS_LOG(ERROR) << "The export graph is null";
+    MS_LOG(ERROR) << "Graph is null!";
     return;
   }
 
   (void)ge_graph->SaveToFile(file_name);
-
-  MS_LOG(DEBUG) << "ExportGraph End";
+  MS_LOG(DEBUG) << "Export graph end.";
 }
 }  // namespace pipeline
 }  // namespace mindspore

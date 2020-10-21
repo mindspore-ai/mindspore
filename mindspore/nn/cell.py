@@ -41,9 +41,9 @@ class Cell(Cell_):
 
     Note:
         In general, the autograd algorithm will automatically generate the implementation of the gradient function,
-        but if bprop method is implemented, the gradient function
-        will be replaced by the bprop. The bprop implementation will receive a Tensor `dout` containing the gradient
-        of the loss w.r.t. the output, and a Tensor `out` containing the forward result. The bprop needs to compute the
+        but if back-propagation(bprop) method is implemented, the gradient function will be replaced by the bprop.
+        The bprop implementation will receive a Tensor `dout` containing the gradient of the loss w.r.t.
+        the output, and a Tensor `out` containing the forward result. The bprop needs to compute the
         gradient of the loss w.r.t. the inputs, gradient of the loss w.r.t. Parameter variables are not supported
         currently.
 
@@ -117,8 +117,7 @@ class Cell(Cell_):
 
     @property
     def _cell_tag(self):
-        # `<class 'xxxxxxx'>`
-        # -> `xxxxxxx`
+        # `<class 'xxxxxxx'>` to `xxxxxxx`
         return str(self.__class__)[8:-2]
 
     @already_run.setter
@@ -449,7 +448,7 @@ class Cell(Cell_):
             for key in params:
                 tensor = params[key].data
                 if key not in self.parameter_layout_dict:
-                    logger.info("layout dict does not contain the key %s", key)
+                    logger.info("layout dict does not contain the key %s.", key)
                     continue
                 if params[key].sliced:
                     logger.debug("Param %s is already sliced.", key)
@@ -458,8 +457,7 @@ class Cell(Cell_):
                 new_tensor = _load_tensor_by_layout(tensor, layout)
                 params[key].set_data(new_tensor, True)
         else:
-            raise TypeError('Parameters need OrderedDict type, but got {}'.
-                            format(type(params)))
+            raise TypeError("Parameters need OrderedDict type, but got {}.".format(type(params)))
 
     def _load_inputs(self, *inputs):
         """
@@ -480,7 +478,7 @@ class Cell(Cell_):
             key = self._construct_inputs_names[i]
             # if input is not used, self.parameter_layout_dict may not contain the key
             if key not in self.parameter_layout_dict:
-                logger.warning("layout dict does not contain the key %s", key)
+                logger.warning("Layout dict does not contain the key %s.", key)
                 parallel_inputs_run.append(tensor)
             else:
                 layout = self.parameter_layout_dict[key]
@@ -739,7 +737,7 @@ class Cell(Cell_):
         """
         Returns all untrainable parameters.
 
-        Returns a list of all untrainable parmeters.
+        Returns a list of all untrainable parameters.
 
         Args:
             recurse (bool): Whether contains the untrainable parameters of subcells. Default: True.

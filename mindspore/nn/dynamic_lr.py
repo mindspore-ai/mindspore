@@ -16,7 +16,6 @@
 import math
 
 from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
 
 
 def piecewise_constant_lr(milestone, learning_rates):
@@ -44,8 +43,8 @@ def piecewise_constant_lr(milestone, learning_rates):
         >>> piecewise_constant_lr(milestone, learning_rates)
         [0.1, 0.1, 0.05, 0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.01]
     """
-    validator.check_value_type('milestone', milestone, (tuple, list), None)
-    validator.check_value_type('learning_rates', learning_rates, (tuple, list), None)
+    validator.check_value_type('milestone', milestone, (tuple, list))
+    validator.check_value_type('learning_rates', learning_rates, (tuple, list))
     if len(milestone) != len(learning_rates):
         raise ValueError('The size of `milestone` must be same with the size of `learning_rates`.')
 
@@ -70,7 +69,7 @@ def _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_e
     validator.check_is_float(learning_rate, 'learning_rate')
     validator.check_positive_float(decay_rate, 'decay_rate')
     validator.check_is_float(decay_rate, 'decay_rate')
-    validator.check_value_type('is_stair', is_stair, [bool], None)
+    validator.check_value_type('is_stair', is_stair, [bool])
 
 
 def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False):
@@ -309,7 +308,7 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
     validator.check_positive_int(total_step, 'total_step')
     validator.check_positive_int(step_per_epoch, 'step_per_epoch')
     validator.check_positive_int(decay_epoch, 'decay_epoch')
-    validator.check_value_type('update_decay_epoch', update_decay_epoch, [bool], None)
+    validator.check_value_type('update_decay_epoch', update_decay_epoch, [bool])
 
     origin_decay_epoch = decay_epoch
     function = lambda x, y: (x, min(x, y))
