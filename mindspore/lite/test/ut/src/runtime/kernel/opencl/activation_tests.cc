@@ -124,7 +124,6 @@ TEST_F(TestActivationOpenCL, ReluFp_dim4) {
   param->type_ = ActivationType_RELU;
   auto *kernel =
     new (std::nothrow) kernel::ActivationOpenClKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  kernel->SetFormatType(op_format);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Kernel:Relu create fail.";
     delete param;
@@ -241,7 +240,6 @@ TEST_F(TestActivationOpenCL, Relu6Fp_dim4) {
     delete output_tensor;
     return;
   }
-  kernel->SetFormatType(op_format);
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete param;
@@ -352,7 +350,6 @@ TEST_F(TestActivationOpenCL, SigmoidFp_dim4) {
     delete output_tensor;
     return;
   }
-  kernel->SetFormatType(op_format);
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete param;
@@ -464,7 +461,6 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
     delete output_tensor;
     return;
   }
-  kernel->SetFormatType(op_format);
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete param;
@@ -573,7 +569,6 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
     delete output_tensor;
     return;
   }
-  kernel->SetFormatType(op_format);
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete param;

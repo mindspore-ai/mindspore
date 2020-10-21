@@ -29,8 +29,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2D;
 using mindspore::schema::Format::Format_NC4HW4;
-using mindspore::schema::Format::Format_NCHW;
-using mindspore::schema::Format::Format_NHWC;
 using mindspore::schema::Format::Format_NHWC4;
 
 namespace mindspore::kernel {
@@ -46,14 +44,6 @@ int ConvolutionOpenCLKernel::Init() {
 
   auto input_tensor = in_tensors_[0];
   auto output_tensor = out_tensors_[0];
-  in_ori_format_ = input_tensor->GetFormat();
-  out_ori_format_ = output_tensor->GetFormat();
-  if (op_format_ != Format_NHWC4 && op_format_ != Format_NC4HW4) {
-    MS_LOG(ERROR) << "op_format_ " << op_format_ << " not support!";
-    return RET_ERROR;
-  }
-  input_tensor->SetFormat(op_format_);
-  output_tensor->SetFormat(op_format_);
 
   batch_size_ = input_tensor->Batch();
   CI_ = input_tensor->Channel();
@@ -112,7 +102,7 @@ int ConvolutionOpenCLKernel::Init() {
     winograd_mem1_ = allocator->Malloc(size, {width, height, img_dtype});
   }
 
-  this->InitBuffer();
+  InitBuffer();
 
   MS_LOG(DEBUG) << "Convolution Init Done!";
   return RET_OK;
@@ -248,30 +238,6 @@ int ConvolutionOpenCLKernel::InitBuffer() {
   if (has_bias_) {
     InitBias();
   }
-  return RET_OK;
-}
-
-int ConvolutionOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t im_dst_x, im_dst_y;
-  if (in_tensors_[0]->GetFormat() == Format_NHWC4) {
-    if (OW_ * CO_SLICES_ <= MAX_IMAGE2D_SIZE) {
-      {
-        im_dst_y = batch_size_ * OH_;
-        im_dst_x = OW_ * CO_SLICES_;
-      }
-    } else {
-      im_dst_y = OW_;
-      im_dst_x = batch_size_ * OH_ * CO_SLICES_;
-    }
-  } else {
-    im_dst_y = batch_size_ * CO_SLICES_ * OH_;
-    im_dst_x = OW_;
-  }
-  size_t img_dtype = use_fp16_ ? CL_HALF_FLOAT : CL_FLOAT;
-  img_size->clear();
-  img_size->push_back(im_dst_x);
-  img_size->push_back(im_dst_y);
-  img_size->push_back(img_dtype);
   return RET_OK;
 }
 

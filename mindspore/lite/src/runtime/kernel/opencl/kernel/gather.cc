@@ -31,25 +31,10 @@ using mindspore::schema::PrimitiveType_Gather;
 namespace mindspore::kernel {
 
 int GatherOpenCLKernel::Init() {
-  std::string kernel_name = "gather";
-  auto in_format = op_format_;
-  if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4) {
-    MS_LOG(ERROR) << "input format(" << in_format << ") "
-                  << "format not support!";
-    return RET_ERROR;
-  }
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_tensors_[0]->SetFormat(op_format_);
+  std::string kernel_name = "gather_NHWC4";
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
-  if (in_format == schema::Format_NC4HW4) {
-    kernel_name += "_NC4HW4";
-  } else {
-    kernel_name += "_NHWC4";
-  }
   std::set<std::string> build_options;
   std::string source = gather_source;
   std::string program_name = "gather";
@@ -96,29 +81,6 @@ int GatherOpenCLKernel::InitBuffer() {
   } else {
     indices_data_ = reinterpret_cast<int32_t *>(indices_tensor->data_c());
   }
-  return RET_OK;
-}
-
-int GatherOpenCLKernel::ReSize() { return RET_OK; }
-
-int GatherOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  size_t im_dst_x, im_dst_y;
-  if (in_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
-    im_dst_x = out_tensors_[0]->Width() * CO4;
-    im_dst_y = out_tensors_[0]->Height() * out_tensors_[0]->Batch();
-  } else {
-    im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * CO4;
-    im_dst_x = out_tensors_[0]->Width();
-  }
-  size_t img_dtype = CL_FLOAT;
-  auto enable_fp16_ = ocl_runtime_->GetFp16Enable();
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  img_size->clear();
-  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
-  *img_size = std::move(vec);
   return RET_OK;
 }
 

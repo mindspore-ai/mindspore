@@ -141,7 +141,6 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
     delete param;
     return;
   }
-  prelu_kernel->SetFormatType(op_format);
   auto ret = prelu_kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init prelu kernel error";

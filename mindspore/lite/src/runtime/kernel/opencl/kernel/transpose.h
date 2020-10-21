@@ -29,15 +29,13 @@ enum class TransposeType { AXIS0312, AXIS0231 };
 
 class TransposeOpenCLKernel : public OpenCLKernel {
  public:
-  explicit TransposeOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                 const std::vector<lite::Tensor *> &outputs)
+  TransposeOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                        const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
-  ~TransposeOpenCLKernel() override{};
+  ~TransposeOpenCLKernel() override = default;
 
   int Init() override;
-  int ReSize() override;
   int Run() override;
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
   cl::Kernel kernel_;

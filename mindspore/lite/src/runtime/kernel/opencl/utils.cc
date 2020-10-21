@@ -20,6 +20,8 @@
 #include <vector>
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
+#include "src/runtime/kernel/opencl/opencl_kernel.h"
+#include "src/common/file_utils.h"
 
 using mindspore::lite::KernelRegistrar;
 
@@ -224,57 +226,77 @@ std::string CLErrorCode(cl_int error_code) {
   }
 }
 
-void Write2File(void *mem, const std::string &file_name, int size) {
-  std::fstream os;
-  os.open(file_name, std::ios::out | std::ios::binary);
-  os.write(static_cast<char *>(mem), size);
-  os.close();
+int WriteToBin(const std::string &file_path, void *data, size_t size) {
+  std::ofstream out_file;
+
+  out_file.open(file_path.c_str(), std::ios::binary);
+  if (!out_file.good()) {
+    MS_LOG(ERROR) << "file is bad";
+    return -1;
+  }
+
+  if (!out_file.is_open()) {
+    MS_LOG(ERROR) << "file open failed";
+    return -1;
+  }
+  out_file.write(reinterpret_cast<char *>(data), size);
+  return 0;
 }
 
-void PrintTensor(lite::Tensor *tensor, int num, const std::string &out_file) {
+void PrintTensor(const lite::Tensor *tensor, OpenCLMemType mem_type, int n, const std::string &out_file) {
   if (tensor->data_c() == nullptr) {
     return;
   }
+
+  Image2DInfo img_info(tensor);
+  auto size = mem_type == OpenCLMemType::BUF ? img_info.OriginSize : img_info.Image2DSize;
+  std::vector<char> data(size);
   auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
   auto runtime = runtime_wrapper.GetInstance();
   auto allocator = runtime->GetAllocator();
-  auto origin_data = tensor->data_c();
   runtime->SyncCommandQueue();
-  allocator->MapBuffer(origin_data, CL_MAP_READ, nullptr, true);
+  allocator->MapBuffer(tensor->data_c(), CL_MAP_READ, nullptr, true);
+  if (mem_type == OpenCLMemType::BUF) {
+    memcpy(data.data(), tensor->data_c(), img_info.OriginSize);
+  } else {
+    auto row_size = img_info.width * img_info.FLT4_size;
+    for (int i = 0; i < img_info.height; ++i) {
+      memcpy(reinterpret_cast<char *>(data.data()) + i * row_size,
+             static_cast<char *>(tensor->data_c()) + i * img_info.row_pitch, row_size);
+    }
+  }
+  allocator->UnmapBuffer(tensor->data_c());
 
+  printf("shape=(");
   auto shape = tensor->shape();
-  auto N = shape.size() > 0 ? shape[0] : 1;
-  auto H = shape.size() > 1 ? shape[1] : 1;
-  auto W = shape.size() > 2 ? shape[2] : 1;
-  auto C = shape.size() > 3 ? shape[3] : 1;
-  auto SLICES = UP_DIV(C, C4NUM);
-  auto ElementsC4Num = N * H * W * UP_ROUND(C, C4NUM);
-  auto alignment = runtime->GetImagePitchAlignment();
-  auto FLT4_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half4) : sizeof(cl_float4);
-  auto row_pitch = (W * SLICES + alignment - 1) / alignment * alignment * FLT4_size;
-  auto row_size = W * SLICES * FLT4_size;
-  std::vector<char> data(N * H * row_size);
-  for (int i = 0; i < N * H; ++i) {
-    memcpy(static_cast<char *>(data.data()) + i * row_size, static_cast<char *>(origin_data) + i * row_pitch, row_size);
+  for (int i = 0; i < shape.size(); ++i) {
+    printf("%4d", shape[i]);
+    if (i + 1 < shape.size()) {
+      printf(",");
+    }
   }
+  printf(") ");
 
-  std::cout << "shape=(";
-  for (auto x : shape) {
-    printf("%3d,", x);
-  }
-  printf("): ");
-  for (size_t i = 0; i < num && i < ElementsC4Num; ++i) {
-    if (tensor->data_type() == kNumberTypeFloat16)
-      printf("%zu %6.3f | ", i, (reinterpret_cast<float16_t *>(data.data()))[i]);
-    else
-      printf("%zu %6.3f | ", i, (reinterpret_cast<float *>(data.data()))[i]);
+  auto num = mem_type == OpenCLMemType::BUF ? img_info.ElementsNum : img_info.ElementsC4Num;
+  for (int i = 0; i < n && i < num; ++i) {
+    if (tensor->data_type() == kNumberTypeFloat16) {
+      printf("%d %7.3f | ", i, reinterpret_cast<float16_t *>(data.data())[i]);
+    } else {
+      printf("%d %7.3f | ", i, reinterpret_cast<float *>(data.data())[i]);
+    }
   }
   printf("\n");
 
   if (!out_file.empty()) {
-    Write2File(data.data(), out_file, data.size());
+    WriteToBin(out_file, data.data(), data.size());
   }
-  allocator->UnmapBuffer(origin_data);
+}
+
+void PrintKernelOutput(OpenCLKernel *kernel, int n, const std::string &out_file) {
+  printf("%-30s", kernel->name().c_str());
+  if (!kernel->out_tensors().empty()) {
+    PrintTensor(kernel->out_tensors()[0], kernel->GetMemType(), n, out_file);
+  }
 }
 
 std::vector<int> GetNHWCShape(const std::vector<int> &tensor_shape) {

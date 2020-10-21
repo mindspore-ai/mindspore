@@ -31,24 +31,10 @@ using mindspore::schema::PrimitiveType_Squeeze;
 namespace mindspore::kernel {
 
 int ReshapeOpenCLKernel::Init() {
-  std::string kernel_name = "reshape";
-  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
-  enable_fp16_ = ocl_runtime_->GetFp16Enable();
+  std::string kernel_name = "reshape_NHWC4";
   if (out_tensors_[0]->shape().size() != 2 && out_tensors_[0]->shape().size() != 4) {
     MS_LOG(ERROR) << "Reshape output size should in 2,4";
     return RET_ERROR;
-  }
-  if (in_tensors_[0]->shape().size() == 2) {
-    inShape = {in_tensors_[0]->shape()[0], 1, 1, in_tensors_[0]->shape()[1]};
-  } else {
-    inShape = {in_tensors_[0]->shape()[0], in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2],
-               in_tensors_[0]->shape()[3]};
-  }
-  if (out_tensors_[0]->shape().size() == 2) {
-    outShape = {out_tensors_[0]->shape()[0], 1, 1, out_tensors_[0]->shape()[1]};
-  } else {
-    outShape = {out_tensors_[0]->shape()[0], out_tensors_[0]->shape()[1], out_tensors_[0]->shape()[2],
-                out_tensors_[0]->shape()[3]};
   }
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
@@ -59,55 +45,20 @@ int ReshapeOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return RET_OK;
-}
-
-int ReshapeOpenCLKernel::ReSize() { return RET_OK; }
-
-int ReshapeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t im_dst_x, im_dst_y;
-  int n = outShape[0];
-  int h = outShape[1];
-  int w = outShape[2];
-  int c = outShape[3];
-  if (img_size_.size() == OpenCLImageSizeIndex::IDX_NUM) {
-    *img_size = img_size_;
-    return RET_OK;
-  }
-  if (op_format_ == schema::Format::Format_NHWC4) {
-    im_dst_x = w * UP_DIV(c, C4NUM);
-    im_dst_y = n * h;
-  } else if (op_format_ == schema::Format::Format_NC4HW4) {
-    im_dst_x = w;
-    im_dst_y = n * UP_DIV(c, C4NUM) * h;
-  } else {
-    MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
-    return RET_ERROR;
-  }
-  size_t img_dtype = CL_FLOAT;
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  img_size->clear();
-  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
-  *img_size = vec;
-  img_size_ = vec;
   return RET_OK;
 }
 
 int ReshapeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
+  auto in = Image2DInfo(in_tensors_.front());
+  auto out = Image2DInfo(out_tensors_.front());
 
   std::vector<size_t> local = {};
-  std::vector<size_t> global{img_size_[0], img_size_[1]};
-  cl_int4 src_size = {inShape[3], inShape[2], inShape[1], inShape[0]};
-  cl_int4 dst_size = {static_cast<cl_int>(img_size_[0]), static_cast<cl_int>(img_size_[1]), outShape[3],
-                      outShape[3] * outShape[2]};
+  std::vector<size_t> global{out.width, out.height};
+  cl_int4 src_size = {cl_int(in.C), cl_int(in.W), cl_int(in.H), cl_int(in.N)};
+  cl_int4 dst_size = {cl_int(out.width), cl_int(out.height), cl_int(out.C), cl_int(out.C * out.W)};
+
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());

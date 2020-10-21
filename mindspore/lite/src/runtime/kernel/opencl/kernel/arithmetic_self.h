@@ -26,23 +26,19 @@ namespace mindspore::kernel {
 
 class ArithmeticSelfOpenCLKernel : public OpenCLKernel {
  public:
-  explicit ArithmeticSelfOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                      const std::vector<lite::Tensor *> &outputs)
+  ArithmeticSelfOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                             const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
 
-  ~ArithmeticSelfOpenCLKernel() override{};
+  ~ArithmeticSelfOpenCLKernel() override = default;
 
   int Init() override;
 
-  int ReSize() override;
-
   int Run() override;
 
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
-
+ private:
   void GetKernelName(std::string *kernel_name, ArithmeticSelfParameter *param);
 
- private:
   cl::Kernel kernel_;
 };
 

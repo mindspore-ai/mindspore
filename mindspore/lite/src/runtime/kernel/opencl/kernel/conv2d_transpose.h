@@ -27,21 +27,20 @@ namespace mindspore::kernel {
 
 class Conv2dTransposeOpenCLKernel : public OpenCLKernel {
  public:
-  explicit Conv2dTransposeOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                       const std::vector<lite::Tensor *> &outputs)
+  Conv2dTransposeOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                              const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
-  ~Conv2dTransposeOpenCLKernel() override{};
+  ~Conv2dTransposeOpenCLKernel() override = default;
 
   int Init() override;
-  int ReSize() override;
   int Run() override;
-  void PadWeight();
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
+  void PadWeight();
+
   cl::Kernel kernel_;
-  void *padWeight_;
-  void *bias_;
+  void *padWeight_{nullptr};
+  void *bias_{nullptr};
   bool enable_fp16_{false};
 };
 }  // namespace mindspore::kernel

@@ -25,20 +25,17 @@ namespace mindspore::kernel {
 
 class ScaleOpenCLKernel : public OpenCLKernel {
  public:
-  explicit ScaleOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+  ScaleOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~ScaleOpenCLKernel() override;
 
   int Init() override;
   int Run() override;
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
+  int InitBuffer() override;
 
  private:
-  std::vector<size_t> InitGlobalSize() const;
   void Image2dGetWorkGroupSize();
-  void BufferGetWorkGroupSize();
-  int InitBuffer();
 
   cl::Kernel kernel_;
   bool element_flag_{true};

@@ -103,7 +103,6 @@ TEST_F(TestConcatOpenCLCI, ConcatFp32_2inputforCI) {
     delete param;
     return;
   }
-  concat_kernel->SetFormatType(schema::Format_NC4HW4);
   concat_kernel->Init();
   // to do allocate memory for inputs
   for (auto &input_tensor : inputs) {
@@ -220,7 +219,6 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_4input_dim4_axis1) {
     delete param;
     return;
   }
-  concat_kernel->SetFormatType(schema::Format_NC4HW4);
   concat_kernel->Init();
   // to do allocate memory for inputs and outputs
   for (auto &input_tensor : inputs) {
@@ -344,7 +342,6 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_3input_dim4_axis1) {
     delete param;
     return;
   }
-  concat_kernel->SetFormatType(schema::Format_NC4HW4);
   concat_kernel->Init();
   // to do allocate memory for inputs
   for (auto &input_tensor : inputs) {
@@ -473,7 +470,6 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_6input_dim4_axis1) {
     delete param;
     return;
   }
-  concat_kernel->SetFormatType(schema::Format_NC4HW4);
   concat_kernel->Init();
   // to do allocate memory for inputs and outputs
   for (auto &input_tensor : inputs) {

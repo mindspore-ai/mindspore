@@ -26,27 +26,25 @@ namespace mindspore::kernel {
 
 class ActivationOpenClKernel : public OpenCLKernel {
  public:
-  explicit ActivationOpenClKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                  const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {
-    type_ = (reinterpret_cast<ActivationParameter *>(parameter))->type_;
-    alpha_ = (reinterpret_cast<ActivationParameter *>(parameter))->alpha_;
-  }
-  ~ActivationOpenClKernel() override{};
+  ActivationOpenClKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                         const std::vector<lite::Tensor *> &outputs)
+      : OpenCLKernel(parameter, inputs, outputs),
+        type_(reinterpret_cast<ActivationParameter *>(parameter)->type_),
+        alpha_(reinterpret_cast<ActivationParameter *>(parameter)->alpha_) {}
+  ~ActivationOpenClKernel() override = default;
 
   int Init() override;
   int Run() override;
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
-  cl_int4 GetImg2dShape();
-  void InitBuffer() {}
 
  private:
+  cl_int4 GetImg2dShape();
+
   cl::Kernel kernel_;
   int type_;
   float alpha_;
-  int in_size_;
-  int out_size_;
-  size_t fp_size;
+  int in_size_{};
+  int out_size_{};
+  size_t fp_size{};
   bool enable_fp16_{false};
   std::vector<size_t> nhwc_shape_;
 };

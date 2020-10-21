@@ -57,7 +57,8 @@ int TransposeOpenCLKernel::Init() {
     // just for input
     kernel_name += "_oversize";
   }
-  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
+  kernel_name += "_NHWC4";
+
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
@@ -67,34 +68,8 @@ int TransposeOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_tensors_[0]->SetFormat(op_format_);
 
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return mindspore::lite::RET_OK;
-}
-
-int TransposeOpenCLKernel::ReSize() { return mindspore::lite::RET_OK; }
-
-int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t im_dst_x = 1, im_dst_y = 1;
-  auto out_shape = out_tensors_[0]->shape();
-  if (op_format_ == schema::Format_NHWC4) {
-    im_dst_x = out_shape[2] * UP_DIV(out_shape[3], C4NUM);  // W * C4
-    im_dst_y = out_shape[0] * out_shape[1];                 // N * H
-  } else if (op_format_ == schema::Format_NC4HW4) {
-    im_dst_x = out_shape[2];                                               // W
-    im_dst_y = out_shape[0] * UP_DIV(out_shape[3], C4NUM) * out_shape[1];  // N * C4 * H
-  }
-  size_t img_dtype = CL_FLOAT;
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  img_size->clear();
-  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
-  *img_size = vec;
   return mindspore::lite::RET_OK;
 }
 
@@ -108,12 +83,11 @@ int TransposeOpenCLKernel::Run() {
   size_t c4 = UP_DIV(c, 4);
   std::vector<size_t> local = {};
   std::vector<size_t> global;
-  if (type == TransposeType::AXIS0312) {
+  if (type == TransposeType::AXIS0312) {  // NHWC -> NCHW
     global = {UP_DIV(h, C4NUM), w, c4};
-  } else if (type == TransposeType::AXIS0231) {
+  } else if (type == TransposeType::AXIS0231) {  // NCHW -> NHWC
     global = {h, UP_DIV(w, C4NUM), c4};
   }
-
   cl_int4 shape = {static_cast<int>(n), static_cast<int>(h), static_cast<int>(w), static_cast<int>(c)};
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());

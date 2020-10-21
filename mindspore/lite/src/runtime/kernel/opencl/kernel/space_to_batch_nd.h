@@ -25,21 +25,15 @@ namespace mindspore::kernel {
 
 class SpaceToBatchNDOpenCLKernel : public OpenCLKernel {
  public:
-  explicit SpaceToBatchNDOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                      const std::vector<lite::Tensor *> &outputs)
+  SpaceToBatchNDOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                             const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
 
-  ~SpaceToBatchNDOpenCLKernel() override{};
+  ~SpaceToBatchNDOpenCLKernel() override = default;
 
   int Init() override;
 
-  int ReSize() override;
-
   int Run() override;
-
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
-
-  int InitBuffer();
 
  private:
   cl::Kernel kernel_;

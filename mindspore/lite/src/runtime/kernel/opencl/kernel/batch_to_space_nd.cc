@@ -32,16 +32,10 @@ using mindspore::schema::PrimitiveType_BatchToSpaceND;
 namespace mindspore::kernel {
 
 int BatchToSpaceNDOpenCLKernel::Init() {
-  std::string kernel_name = "batch_to_space_nd";
-  auto in_format = op_format_;
+  std::string kernel_name = "batch_to_space_nd_NHWC4";
   if (in_tensors_[0]->shape().size() != 4 && out_tensors_[0]->shape().size() != 4) {
     MS_LOG(ERROR) << "input/output shape size must be 4, actual: " << in_tensors_[0]->shape().size() << ", "
                   << out_tensors_[0]->shape().size();
-    return RET_ERROR;
-  }
-  if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4) {
-    MS_LOG(ERROR) << "input format(" << in_format << ") "
-                  << "format not support!";
     return RET_ERROR;
   }
   auto *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
@@ -55,18 +49,10 @@ int BatchToSpaceNDOpenCLKernel::Init() {
     return RET_ERROR;
   }
 
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_tensors_[0]->SetFormat(op_format_);
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
-  if (in_format == schema::Format_NC4HW4) {
-    kernel_name += "_NC4HW4";
-  } else {
-    kernel_name += "_NHWC4";
-  }
+
   std::set<std::string> build_options;
   std::string source = batch_to_space_nd_source;
   std::string program_name = "batch_to_space_nd";
@@ -76,28 +62,7 @@ int BatchToSpaceNDOpenCLKernel::Init() {
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
-int BatchToSpaceNDOpenCLKernel::InitBuffer() { return RET_OK; }
-int BatchToSpaceNDOpenCLKernel::ReSize() { return RET_OK; }
-int BatchToSpaceNDOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  size_t im_dst_x, im_dst_y;
-  if (in_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
-    im_dst_x = out_tensors_[0]->Width() * CO4;
-    im_dst_y = out_tensors_[0]->Height() * out_tensors_[0]->Batch();
-  } else {
-    im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * CO4;
-    im_dst_x = out_tensors_[0]->Width();
-  }
-  size_t img_dtype = CL_FLOAT;
-  auto enable_fp16_ = ocl_runtime_->GetFp16Enable();
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  img_size->clear();
-  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
-  *img_size = std::move(vec);
-  return RET_OK;
-}
+
 int BatchToSpaceNDOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   auto param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);

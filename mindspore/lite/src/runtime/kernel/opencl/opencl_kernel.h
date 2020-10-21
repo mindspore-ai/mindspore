@@ -22,52 +22,120 @@
 #include "include/errorcode.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
+
 namespace mindspore::kernel {
 
 enum class OpenCLMemType { BUF, IMG };
-enum OpenCLImageSizeIndex { IDX_X = 0, IDX_Y, IDX_DTYPE, IDX_NUM };
 
 struct OpenCLToFormatParameter {
-  OpParameter op_parameter;
+  OpParameter op_parameter{};
   schema::Format src_format{schema::Format::Format_NHWC};
   schema::Format dst_format{schema::Format::Format_NHWC4};
   OpenCLMemType out_mem_type{OpenCLMemType::IMG};
 };
 
+struct Image2DInfo {
+  explicit Image2DInfo(const lite::Tensor *tensor) {
+    if (tensor) {
+      auto shape = tensor->shape();
+      if (shape.size() == 1) {
+        N = shape[0];
+      } else if (shape.size() == 2) {
+        N = shape[0];
+        C = shape[1];
+      } else if (shape.size() == 3) {
+        N = shape[0];
+        W = shape[1];
+        C = shape[2];
+      } else if (shape.size() == 4) {
+        N = shape[0];
+        H = shape[1];
+        W = shape[2];
+        C = shape[3];
+      } else if (shape.size() >= 5) {
+        MS_LOG(ERROR) << "GPU dont't support Tensor with dim=" << shape.size();
+      }
+      FLT_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half) : sizeof(cl_float);
+    } else {
+      FLT_size = sizeof(cl_float);
+    }
+
+    FLT4_size = FLT_size * 4;
+    Slice = UP_DIV(C, C4NUM);
+    if (W * Slice <= MAX_IMAGE2D_SIZE) {
+      height = N * H;
+      width = W * Slice;
+    } else {
+      height = W;
+      width = N * H * Slice;
+    }
+
+    auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
+    int alignment = runtime_wrapper.GetInstance()->GetImagePitchAlignment();
+    row_pitch = (width + alignment - 1) / alignment * alignment * FLT4_size;
+
+    ElementsNum = N * H * W * C;
+    ElementsC4Num = N * H * W * Slice * C4NUM;
+    OriginSize = ElementsNum * FLT_size;
+    Image2DSize = height * width * FLT4_size;
+  }
+
+  size_t N{1};
+  size_t H{1};
+  size_t W{1};
+  size_t C{1};
+  size_t Slice{};
+  size_t width{};
+  size_t height{};
+  size_t FLT_size{};
+  size_t FLT4_size{};
+  size_t row_pitch{};
+  size_t ElementsNum{};
+  size_t ElementsC4Num{};
+  size_t OriginSize{};
+  size_t Image2DSize{};
+};
+
 class OpenCLKernel : public LiteKernel {
  public:
-  explicit OpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                        const std::vector<lite::Tensor *> &outputs)
+  OpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+               const std::vector<lite::Tensor *> &outputs)
       : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
   }
+  ~OpenCLKernel() override = default;
 
-  ~OpenCLKernel() {}
+  int Init() override { return RET_ERROR; }
+  int PreProcess() override { return RET_ERROR; }
+  int ReSize() override { return RET_ERROR; }
+  int Run() override { return RET_ERROR; }
 
-  virtual int Init() { return mindspore::lite::RET_ERROR; }
-  virtual int PreProcess() { return mindspore::lite::RET_ERROR; }
-  virtual int InferShape() { return mindspore::lite::RET_ERROR; }
-  virtual int ReSize() { return mindspore::lite::RET_ERROR; }
-  virtual int Run() { return mindspore::lite::RET_ERROR; }
-  virtual int GetImageSize(size_t idx, std::vector<size_t> *img_size) { return mindspore::lite::RET_ERROR; }
-  virtual int GetGlobalSize(size_t idx, std::vector<size_t> *global_size) { return mindspore::lite::RET_ERROR; }
+  virtual int InitBuffer() { return RET_OK; }
+  virtual int GetGlobalSize(size_t idx, std::vector<size_t> *global_size) { return RET_ERROR; }
   virtual int GetLocalSize(size_t idx, const std::vector<size_t> &global_size, std::vector<size_t> *local_size) {
-    return mindspore::lite::RET_ERROR;
+    return RET_ERROR;
   }
+  int GetImageSize(size_t idx, std::vector<size_t> *img_size) {
+    if (idx >= out_tensors_.size()) {
+      return RET_ERROR;
+    }
+    auto img_info = Image2DInfo(out_tensors_[idx]);
+    size_t img_dtype = ocl_runtime_->GetFp16Enable() ? CL_HALF_FLOAT : CL_FLOAT;
+    *img_size = {img_info.width, img_info.height, img_dtype};
+    return RET_OK;
+  }
+
   OpenCLMemType GetMemType() { return out_mem_type_; }
   void SetMemType(OpenCLMemType mem_type) { out_mem_type_ = mem_type; }
-  void SetFormatType(schema::Format format_type) { op_format_ = format_type; }
-  schema::Format GetInOriFormat() { return in_ori_format_; }
-  schema::Format GetOutOriFormat() { return out_ori_format_; }
 
  protected:
-  OpenCLMemType out_mem_type_{OpenCLMemType::IMG};
-  schema::Format in_ori_format_{schema::Format::Format_NHWC};
-  schema::Format out_ori_format_{schema::Format::Format_NHWC4};
-  schema::Format op_format_{schema::Format::Format_NHWC4};
-  lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
   lite::opencl::OpenCLRuntime *ocl_runtime_;
-  std::vector<size_t> img_size_;
+  OpenCLMemType out_mem_type_{OpenCLMemType::IMG};
+
+ private:
+  lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
 };
 }  // namespace mindspore::kernel
 

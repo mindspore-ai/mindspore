@@ -38,8 +38,7 @@ int Conv2dTransposeOpenCLKernel::Init() {
     MS_LOG(ERROR) << "only support kernel - stride == 2 * pad";
     return RET_ERROR;
   }
-  std::string kernel_name = "conv2d_transpose";
-  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
+  std::string kernel_name = "conv2d_transpose_NHWC4";
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
@@ -51,20 +50,14 @@ int Conv2dTransposeOpenCLKernel::Init() {
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   PadWeight();
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return mindspore::lite::RET_OK;
 }
 
-int Conv2dTransposeOpenCLKernel::ReSize() { return mindspore::lite::RET_OK; }
-
 void Conv2dTransposeOpenCLKernel::PadWeight() {
   ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
-  int ci = in_tensors_[0]->Channel();
-  int co = out_tensors_[0]->Channel();
+  int ci = in_tensors_[0]->shape()[3];
+  int co = out_tensors_[0]->shape()[3];
   int kh = param->kernel_h_;
   int kw = param->kernel_w_;
   int div_ci = UP_DIV(ci, C4NUM);
@@ -145,32 +138,6 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
     }
   }
   allocator->UnmapBuffer(bias_);
-}
-
-int Conv2dTransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t im_dst_x, im_dst_y;
-  int n = out_tensors_[0]->shape()[0];
-  int h = out_tensors_[0]->shape()[1];
-  int w = out_tensors_[0]->shape()[2];
-  int c = out_tensors_[0]->shape()[3];
-  if (op_format_ == schema::Format::Format_NHWC4) {
-    im_dst_x = w * UP_DIV(c, C4NUM);
-    im_dst_y = n * h;
-  } else if (op_format_ == schema::Format::Format_NC4HW4) {
-    im_dst_x = w;
-    im_dst_y = n * UP_DIV(c, C4NUM) * h;
-  } else {
-    MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
-    return mindspore::lite::RET_ERROR;
-  }
-  size_t img_dtype = CL_FLOAT;
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  img_size->clear();
-  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
-  *img_size = vec;
-  return mindspore::lite::RET_OK;
 }
 
 int Conv2dTransposeOpenCLKernel::Run() {

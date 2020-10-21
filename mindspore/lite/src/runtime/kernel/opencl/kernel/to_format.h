@@ -25,15 +25,13 @@
 namespace mindspore::kernel {
 class ToFormatOpenCLKernel : public OpenCLKernel {
  public:
-  explicit ToFormatOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                const std::vector<lite::Tensor *> &outputs)
+  ToFormatOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                       const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
-  ~ToFormatOpenCLKernel() override{};
+  ~ToFormatOpenCLKernel() override = default;
 
   int Init() override;
-  int ReSize() override { return mindspore::lite::RET_OK; };
   int Run() override;
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
   int InitNHWC();

@@ -54,7 +54,7 @@ int ResizeOpenCLKernel::Init() {
     MS_LOG(ERROR) << "unsupported resize method:" << resize_param->method_;
     return RET_PARAM_INVALID;
   }
-  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
+  kernel_name += "_NHWC4";
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
@@ -64,36 +64,7 @@ int ResizeOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return RET_OK;
-}
-
-int ResizeOpenCLKernel::ReSize() { return RET_OK; }
-
-int ResizeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t im_dst_x, im_dst_y;
-  auto nhwc_shape_ = out_tensors_[0]->shape();
-  if (op_format_ == schema::Format_NHWC4) {
-    im_dst_x = nhwc_shape_[2] * UP_DIV(nhwc_shape_[3], C4NUM);
-    im_dst_y = nhwc_shape_[0] * nhwc_shape_[1];
-  } else if (op_format_ == schema::Format_NC4HW4) {
-    im_dst_x = nhwc_shape_[2];
-    im_dst_y = nhwc_shape_[0] * UP_DIV(nhwc_shape_[3], C4NUM) * nhwc_shape_[1];
-  } else {
-    MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
-    return RET_ERROR;
-  }
-  size_t img_dtype = CL_FLOAT;
-  if (ocl_runtime_->GetFp16Enable()) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  img_size->clear();
-  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
-  *img_size = vec;
   return RET_OK;
 }
 

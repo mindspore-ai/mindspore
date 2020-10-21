@@ -28,25 +28,25 @@ namespace mindspore::kernel {
 
 class BiasAddOpenCLKernel : public OpenCLKernel {
  public:
-  explicit BiasAddOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                               const std::vector<lite::Tensor *> &outputs)
+  BiasAddOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                      const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
-  ~BiasAddOpenCLKernel() override{};
+  ~BiasAddOpenCLKernel() override = default;
 
   int Init() override;
   int Run() override;
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
-  void InitBuffer();
-  cl_int4 GetGlobalshape();
+  int InitBuffer() override;
 
  private:
+  cl_int4 GetGlobalshape();
+
   cl::Kernel kernel_;
-  void *BiasAdd_;
-  int in_size_;
-  int out_size_;
-  size_t fp_size;
-  cl_int4 input_shape_;
-  bool enable_fp16_{false};
+  void *BiasAdd_{nullptr};
+  int in_size_{};
+  int out_size_{};
+  size_t fp_size{};
+  cl_int4 input_shape_{};
+  bool enable_fp16_{};
 };
 
 }  // namespace mindspore::kernel

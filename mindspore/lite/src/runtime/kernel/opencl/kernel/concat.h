@@ -25,28 +25,24 @@ namespace mindspore::kernel {
 
 class ConcatOpenCLKernel : public OpenCLKernel {
  public:
-  explicit ConcatOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs)
+  ConcatOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                     const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
 
-  ~ConcatOpenCLKernel() override{};
+  ~ConcatOpenCLKernel() override = default;
 
   int Init() override;
 
-  int ReSize() override;
-
   int Run() override;
 
+ private:
   int RunAxis0();
-
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
   int IntegraShapeToXYZ();
 
- private:
   cl::Kernel kernel_;
   std::vector<cl_int3> XYZShape;
-  cl_int4 shape_nhwc;
+  cl_int4 shape_nhwc{};
 };
 
 }  // namespace mindspore::kernel

@@ -72,7 +72,7 @@ int PoolingOpenCLKernel::Init() {
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
-  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
+  kernel_name += "_NHWC4";
   if (out_mem_type_ == OpenCLMemType::BUF) {
     MS_LOG(ERROR) << "buffer output not support yet.";
     return mindspore::lite::RET_ERROR;
@@ -83,10 +83,6 @@ int PoolingOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
 
   return mindspore::lite::RET_OK;
@@ -99,36 +95,6 @@ std::vector<size_t> PoolingOpenCLKernel::InitGlobalSize() const {
   std::vector<size_t> global = {global_x, global_y, global_z};
   return global;
 }
-
-int PoolingOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t im_dst_x, im_dst_y;
-  int n = out_tensors_[0]->shape()[0];
-  int h = out_tensors_[0]->shape()[1];
-  int w = out_tensors_[0]->shape()[2];
-  int c = out_tensors_[0]->shape()[3];
-  if (op_format_ == schema::Format::Format_NHWC4) {
-    im_dst_x = w * UP_DIV(c, C4NUM);
-    im_dst_y = n * h;
-  } else if (op_format_ == schema::Format::Format_NC4HW4) {
-    im_dst_x = w;
-    im_dst_y = n * UP_DIV(c, C4NUM) * h;
-  } else {
-    MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
-    return mindspore::lite::RET_ERROR;
-  }
-  size_t img_dtype = CL_FLOAT;
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  img_size->clear();
-  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
-  *img_size = vec;
-  return mindspore::lite::RET_OK;
-}
-
-int PoolingOpenCLKernel::InitBuffer() { return mindspore::lite::RET_OK; }
-
-int PoolingOpenCLKernel::ReSize() { return mindspore::lite::RET_OK; }
 
 int PoolingOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";

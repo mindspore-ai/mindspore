@@ -31,27 +31,6 @@ using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
 
-int ConcatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  size_t im_dst_x, im_dst_y;
-  if (in_tensors_[0]->GetFormat() == schema::Format::Format_NHWC4) {
-    im_dst_x = out_tensors_[0]->Width() * CO4;
-    im_dst_y = out_tensors_[0]->Height() * out_tensors_[0]->Batch();
-  } else {
-    im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * CO4;
-    im_dst_x = out_tensors_[0]->Width();
-  }
-  size_t img_dtype = CL_FLOAT;
-  auto enable_fp16_ = ocl_runtime_->GetFp16Enable();
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  img_size->clear();
-  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
-  *img_size = vec;
-  return RET_OK;
-}
-
 int ConcatOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   std::vector<size_t> img_size;
@@ -85,39 +64,15 @@ int ConcatOpenCLKernel::Init() {
     MS_LOG(ERROR) << " only support axis >= 0 and axis <= 3 ";
     return RET_ERROR;
   }
-  auto in_format = op_format_;
-  if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4) {
-    MS_LOG(ERROR) << "input format(" << in_format << ") "
-                  << "format not support!";
-    return RET_ERROR;
-  }
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(op_format_);
 
   std::string kernel_name = "Concat";
-  if (in_tensors_.size() == 2) {
-    kernel_name += "2inputaxis";
-    kernel_name += std::to_string(param->axis_);
-  } else if (in_tensors_.size() == 3) {
-    kernel_name += "3inputaxis";
-    kernel_name += std::to_string(param->axis_);
-  } else if (in_tensors_.size() == 4) {
-    kernel_name += "4inputaxis";
-    kernel_name += std::to_string(param->axis_);
-  } else if (in_tensors_.size() == 6) {
-    kernel_name += "6inputaxis";
-    kernel_name += std::to_string(param->axis_);
+  if (in_tensors_.size() == 2 || in_tensors_.size() == 3 || in_tensors_.size() == 4 || in_tensors_.size() == 4) {
+    kernel_name += std::to_string(in_tensors_.size()) + "inputaxis" + std::to_string(param->axis_);
   } else {
     MS_LOG(ERROR) << " input must be 2 , 3 , 4 or 6";
     return RET_ERROR;
   }
-  if (in_format == schema::Format_NC4HW4) {
-    kernel_name += "_NC4HW4";
-  } else if (in_format == schema::Format_NHWC4) {
-    kernel_name += "_NHWC4";
-  }
+  kernel_name += "_NHWC4";
   MS_LOG(DEBUG) << "kernel_name=: " << kernel_name;
   std::set<std::string> build_options;
   std::string source = concat_source;
@@ -128,16 +83,13 @@ int ConcatOpenCLKernel::Init() {
   return RET_OK;
 }
 
-int ConcatOpenCLKernel::ReSize() { return RET_OK; }
-
 int ConcatOpenCLKernel::IntegraShapeToXYZ() {
-  auto in_format = op_format_;
-  if (out_tensors_[0]->shape().size() > 4 || out_tensors_[0]->shape().size() <= 0) {
+  if (out_tensors_[0]->shape().size() > 4 || out_tensors_[0]->shape().empty()) {
     MS_LOG(ERROR) << "in_tensors_.shape() must between 0~4";
     return RET_ERROR;
   }
 
-  if (in_format == schema::Format_NHWC4 || in_format == schema::Format_NC4HW4) {
+  if (out_tensors_[0]->shape().size() == 4) {
     for (int i = 0; i < in_tensors_.size(); ++i) {
       cl_int4 temp_cl;
       auto temp = in_tensors_[i]->shape();

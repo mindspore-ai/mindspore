@@ -26,26 +26,22 @@ namespace mindspore::kernel {
 
 class SoftmaxOpenCLKernel : public OpenCLKernel {
  public:
-  explicit SoftmaxOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                               const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {
-    parameter_ = reinterpret_cast<SoftmaxParameter *>(parameter);
-  }
+  SoftmaxOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                      const std::vector<lite::Tensor *> &outputs)
+      : OpenCLKernel(parameter, inputs, outputs), parameter_(reinterpret_cast<SoftmaxParameter *>(parameter)) {}
 
-  ~SoftmaxOpenCLKernel() override{};
+  ~SoftmaxOpenCLKernel() override = default;
   int Init() override;
   int Run() override;
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
+ private:
   int InitGlobalSize();
   int SetWorkGroupSize1x1();
   int SetWorkGroupSize();
   std::vector<float> GetMaskForLastChannel(int channels);
 
- private:
   cl::Kernel kernel_;
   SoftmaxParameter *parameter_;
-
   bool onexone_flag_{false};
   std::vector<size_t> local_size_;
   std::vector<size_t> global_size_;

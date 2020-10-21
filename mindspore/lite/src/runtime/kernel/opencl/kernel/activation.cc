@@ -61,12 +61,12 @@ int ActivationOpenClKernel::Init() {
     MS_LOG(ERROR) << "Activate fun only support dim=4 or 2, but your dim=" << in_size_;
     return mindspore::lite::RET_ERROR;
   }
-  std::map<int, std::string> Program_Kernel{{ActivationType_LEAKY_RELU, "LeakyRelu"},
-                                            {ActivationType_RELU, "Relu"},
-                                            {ActivationType_SIGMOID, "Sigmoid"},
-                                            {ActivationType_RELU6, "Relu6"},
-                                            {ActivationType_TANH, "Tanh"}};
-  if (Program_Kernel.count(type_) == 0) {
+  std::map<int, std::string> kernel_names{{ActivationType_LEAKY_RELU, "LeakyRelu"},
+                                          {ActivationType_RELU, "Relu"},
+                                          {ActivationType_SIGMOID, "Sigmoid"},
+                                          {ActivationType_RELU6, "Relu6"},
+                                          {ActivationType_TANH, "Tanh"}};
+  if (kernel_names.count(type_) == 0) {
     MS_LOG(ERROR) << "schema::ActivationType:" << type_ << "not found";
     return mindspore::lite::RET_ERROR;
   }
@@ -75,12 +75,8 @@ int ActivationOpenClKernel::Init() {
   std::set<std::string> build_options;
   std::string program_name = "Activation";
   ocl_runtime_->LoadSource(program_name, source);
-  std::string kernel_name = Program_Kernel[type_];
+  std::string kernel_name = kernel_names[type_];
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(op_format_);
-  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << op_parameter_->name_ << " init Done!";
   return mindspore::lite::RET_OK;
 }
@@ -107,30 +103,10 @@ int ActivationOpenClKernel::Run() {
 
 cl_int4 ActivationOpenClKernel::GetImg2dShape() {
   cl_int4 img2d_shape = {1, 1, 1, 1};
-  if (op_format_ == schema::Format_NHWC4) {
-    img2d_shape.s[1] = nhwc_shape_[1];
-    img2d_shape.s[2] = nhwc_shape_[2] * UP_DIV(nhwc_shape_[3], C4NUM);
-    img2d_shape.s[3] = C4NUM;
-  }
-  if (op_format_ == schema::Format_NC4HW4) {
-    img2d_shape.s[1] = UP_DIV(nhwc_shape_[3], C4NUM) * nhwc_shape_[1];
-    img2d_shape.s[2] = nhwc_shape_[2];
-    img2d_shape.s[3] = C4NUM;
-  }
+  img2d_shape.s[1] = nhwc_shape_[1];
+  img2d_shape.s[2] = nhwc_shape_[2] * UP_DIV(nhwc_shape_[3], C4NUM);
+  img2d_shape.s[3] = C4NUM;
   return img2d_shape;
-}
-
-int ActivationOpenClKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  cl_int4 img_shape = GetImg2dShape();
-  size_t img_dtype = CL_FLOAT;
-  if (enable_fp16_) {
-    img_dtype = CL_HALF_FLOAT;
-  }
-  img_size->clear();
-  img_size->push_back(img_shape.s[2]);
-  img_size->push_back(img_shape.s[1]);
-  img_size->push_back(img_dtype);
-  return mindspore::lite::RET_OK;
 }
 
 kernel::LiteKernel *OpenClActivationKernelCreator(const std::vector<lite::Tensor *> &inputs,

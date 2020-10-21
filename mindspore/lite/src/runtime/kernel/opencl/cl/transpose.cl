@@ -123,7 +123,7 @@ __kernel void transpose_0231_NHWC4(__read_only image2d_t src_data, __write_only 
   if (X >= shape.y || 4 * Y >= shape.z || 4 * Z >= shape.w) {
     return;
   }
-  int W4 = UP_DIV(shape.y, 4);
+  int W4 = UP_DIV(shape.z, 4);
   int C4 = UP_DIV(shape.w, 4);
   FLT4 src0 = READ_IMAGE(src_data, smp_zero, (int2)(X * W4 + Y, 4 * Z));
   FLT4 src1 = (FLT4)0.f;

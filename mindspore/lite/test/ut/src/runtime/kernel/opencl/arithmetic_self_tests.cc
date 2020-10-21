@@ -96,7 +96,6 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
     delete param;
     return;
   }
-  arithmeticself_kernel->SetFormatType(schema::Format_NC4HW4);
   arithmeticself_kernel->Init();
   // to do allocate memory for inputs and outputs
   for (auto &input_tensor : inputs) {
@@ -185,7 +184,6 @@ TEST_F(TestArithmeticSelfOpenCLCI, ArithmeticSelfRound) {
     delete param;
     return;
   }
-  arithmeticself_kernel->SetFormatType(schema::Format_NC4HW4);
   arithmeticself_kernel->Init();
   // to do allocate memory for inputs and outputs
   for (auto &input_tensor : inputs) {
@@ -280,7 +278,6 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfdim2Fp16) {
     delete param;
     return;
   }
-  arithmeticself_kernel->SetFormatType(schema::Format_NC4HW4);
   arithmeticself_kernel->Init();
   // to do allocate memory for inputs and outputs
   for (auto &input_tensor : inputs) {

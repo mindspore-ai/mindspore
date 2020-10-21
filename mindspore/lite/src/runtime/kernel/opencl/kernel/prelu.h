@@ -27,15 +27,14 @@ namespace mindspore::kernel {
 
 class PReluOpenCLKernel : public OpenCLKernel {
  public:
-  explicit PReluOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                             const std::vector<lite::Tensor *> &outputs)
+  PReluOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                    const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
-  ~PReluOpenCLKernel() override{};
+  ~PReluOpenCLKernel() override = default;
 
   int Init() override;
   int Run() override;
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
-  void InitBuffer();
+  int InitBuffer() override;
 
  private:
   cl::Kernel kernel_;
