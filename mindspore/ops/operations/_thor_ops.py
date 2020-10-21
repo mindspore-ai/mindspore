@@ -636,3 +636,22 @@ class Cholesky(PrimitiveWithInfer):
     def infer_dtype(self, x1_dtype):
         validator.check_tensor_type_same({'x1_dtype': x1_dtype}, [mstype.float32], self.name)
         return x1_dtype
+
+class DetTriangle(PrimitiveWithInfer):
+    """
+    Calculate the determinant of triangle matrices
+    """
+    @prim_attr_register
+    def __init__(self, fill_mode=0):
+        self.init_prim_io_names(inputs=['x1'], outputs=['y'])
+        self.fill_mode = fill_mode
+        self.add_prim_attr('fill_mode', self.fill_mode)
+
+    def infer_shape(self, x1_shape):
+        out_shape = x1_shape
+        del out_shape[-2:]
+        return out_shape
+
+    def infer_dtype(self, x1_dtype):
+        validator.check_tensor_type_same({'x1_dtype': x1_dtype}, [mstype.float32], self.name)
+        return x1_dtype
