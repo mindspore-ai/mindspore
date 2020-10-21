@@ -267,7 +267,7 @@ class MSSSIM(Cell):
         l(x,y)&=\frac{2\mu_x\mu_y+C_1}{\mu_x^2+\mu_y^2+C_1}, C_1=(K_1L)^2.\\
         c(x,y)&=\frac{2\sigma_x\sigma_y+C_2}{\sigma_x^2+\sigma_y^2+C_2}, C_2=(K_2L)^2.\\
         s(x,y)&=\frac{\sigma_{xy}+C_3}{\sigma_x\sigma_y+C_3}, C_3=C_2/2.\\
-        MSSSIM(x,y)&=l^alpha_M*{\prod_{1\leq j\leq M} (c^beta_j*s^gamma_j)}.
+        MSSSIM(x,y)&=l^\alpha_M*{\prod_{1\leq j\leq M} (c^\beta_j*s^\gamma_j)}.
 
     Args:
         max_val (Union[int, float]): The dynamic range of the pixel values (255 for 8-bit grayscale images).
