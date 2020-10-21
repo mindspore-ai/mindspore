@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/fp32/convolution.h"
 #include "src/runtime/kernel/arm/fp32/convolution_1x1.h"
 #include "src/runtime/kernel/arm/fp32/convolution_winograd.h"
+#include "src/runtime/kernel/arm/fp32/group_convolution.h"
 #include "nnacl/fp32/conv.h"
 #include "nnacl/common_func.h"
 #include "schema/model_generated.h"
@@ -31,6 +32,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2D;
+using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::kernel {
 int ConvolutionCPUKernel::InitWeightBias() {
@@ -157,6 +159,108 @@ int ConvolutionCPUKernel::Run() {
   return RET_OK;
 }
 
+kernel::LiteKernel *CpuConvFp32KernelSelect(const std::vector<lite::Tensor *> &inputs,
+                                            const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                            const InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
+                                            bool use_winograd, int out_unit) {
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
+  if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
+    return new (std::nothrow) kernel::Convolution1x1CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+  } else if (use_winograd) {
+    return new (std::nothrow)
+      kernel::ConvolutionWinogradCPUKernel(op_parameter, inputs, outputs, ctx, primitive, out_unit);
+  } else {
+    return new (std::nothrow) kernel::ConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+  }
+  return nullptr;
+}
+
+kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                                  const InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
+                                                  int group) {
+  std::vector<kernel::LiteKernel *> group_convs;
+  std::vector<int> in_shape;
+  std::vector<int> filter_shape;
+  std::vector<int> bias_shape;
+  std::vector<int> out_shape;
+
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
+  int out_channel = inputs.at(kWeightIndex)->Batch();
+  int new_in_channel = inputs.at(kWeightIndex)->Channel();
+  int new_out_channel = out_channel / group;
+  int kernel_h = conv_param->kernel_h_;
+  int kernel_w = conv_param->kernel_w_;
+  int input_num = inputs.size();
+  int output_num = outputs.size();
+  bool has_bias = input_num == 3;
+  bool use_winograd = false;
+  int out_unit;
+
+  if (primitive != nullptr && primitive->GetInferFlag()) {
+    int batch = inputs.front()->Batch();
+    int in_h = inputs.front()->Height();
+    int in_w = inputs.front()->Width();
+    conv_param->input_channel_ = new_in_channel;
+    conv_param->output_channel_ = new_out_channel;
+    CheckIfUseWinograd(&use_winograd, &out_unit, conv_param);
+    in_shape = {batch, in_h, in_w, new_in_channel};
+    out_shape = {batch, conv_param->output_h_, conv_param->output_w_, new_out_channel};
+  }
+
+  filter_shape = {new_out_channel, kernel_h, kernel_w, new_in_channel};
+  bias_shape = {new_out_channel};
+  auto *origin_weight = reinterpret_cast<float *>(inputs.at(kWeightIndex)->data_c());
+  auto *origin_bias = reinterpret_cast<float *>(inputs.at(kBiasIndex)->data_c());
+
+  for (int i = 0; i < group; ++i) {
+    std::vector<lite::Tensor *> new_inputs;
+    std::vector<lite::Tensor *> new_outputs;
+    // get new input for each group
+    auto in_tensor =
+      new (std::nothrow) lite::Tensor(inputs.front()->data_type(), in_shape, Format_NHWC, lite::Tensor::Category::VAR);
+    if (primitive != nullptr && primitive->GetInferFlag()) {
+      in_tensor->MallocData();
+    }
+    new_inputs.emplace_back(in_tensor);
+
+    // nwe weight
+    auto filter_tensor = new (std::nothrow)
+      lite::Tensor(inputs.at(kWeightIndex)->data_type(), filter_shape, Format_NHWC, lite::Tensor::Category::CONST);
+    filter_tensor->MallocData();
+    int copy_length = kernel_h * kernel_w * new_in_channel * new_out_channel;
+    memcpy(filter_tensor->data_c(), origin_weight + i * copy_length, copy_length * sizeof(float));
+    new_inputs.emplace_back(filter_tensor);
+
+    // if has bias, set new bias
+    if (has_bias) {
+      auto bias_tensor = new (std::nothrow)
+        lite::Tensor(inputs.at(kBiasIndex)->data_type(), bias_shape, Format_NHWC, lite::Tensor::Category::CONST);
+      bias_tensor->MallocData();
+      memcpy(bias_tensor->data_c(), origin_bias + i * new_out_channel, new_out_channel * sizeof(float));
+      new_inputs.emplace_back(bias_tensor);
+    }
+
+    // set new output tensor
+    for (int j = 0; j < output_num; ++j) {
+      auto tmp_out_tensor = new (std::nothrow) lite::Tensor();
+      tmp_out_tensor->set_data_type(outputs.at(j)->data_type());
+      tmp_out_tensor->SetFormat(outputs.at(j)->GetFormat());
+      if (primitive != nullptr && primitive->GetInferFlag()) {
+        tmp_out_tensor->set_shape(out_shape);
+        tmp_out_tensor->MallocData();
+      }
+      new_outputs.emplace_back(tmp_out_tensor);
+    }
+
+    group_convs.emplace_back(
+      CpuConvFp32KernelSelect(new_inputs, new_outputs, op_parameter, ctx, primitive, use_winograd, out_unit));
+  }
+  // sub kernels and group conv kernel share the same op_parameter struct
+  return new (std::nothrow)
+    GroupConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, primitive, group_convs, group);
+}
+
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                              const InnerContext *ctx, const kernel::KernelKey &desc,
@@ -164,8 +268,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-  int kernel_h = conv_param->kernel_h_;
-  int kernel_w = conv_param->kernel_w_;
+  int group = conv_param->group_;
   bool use_winograd = false;
   int out_unit;
   if (primitive != nullptr && primitive->GetInferFlag()) {
@@ -192,14 +295,12 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
   }
 
   kernel::LiteKernel *kernel;
-  if (kernel_h == 1 && kernel_w == 1) {
-    kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
-  } else if (use_winograd) {
-    kernel =
-      new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(op_parameter, inputs, outputs, ctx, primitive, out_unit);
+  if (group == 1) {
+    kernel = CpuConvFp32KernelSelect(inputs, outputs, op_parameter, ctx, primitive, use_winograd, out_unit);
   } else {
-    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+    kernel = CpuGroupConvFp32KernelCreator(inputs, outputs, op_parameter, ctx, primitive, group);
   }
+
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {

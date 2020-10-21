@@ -48,7 +48,6 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override { return 0; }
   int Run() override { return 0; }
-  virtual int CheckLayout(lite::Tensor *input_tensor);
   int SetIfAsymmetric();
   int SetIfPerChannel();
   int MallocQuantParam();
@@ -61,14 +60,12 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   void FreeQuantParam();
 
  protected:
-  int tile_num_;
   void *bias_data_ = nullptr;
-  void *nhwc4_input_ = nullptr;
   const InnerContext *ctx_;
-  int thread_count_;
   ConvParameter *conv_param_;
   ConvQuantArg *conv_quant_arg_;
-  LayoutConvertor convert_func_ = nullptr;
+  int tile_num_;
+  int thread_count_;
 };
 }  // namespace mindspore::kernel
 
