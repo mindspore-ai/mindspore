@@ -32,6 +32,7 @@ from ..ops.functional import cast
 from ..parallel._tensor import _load_tensor_by_layout
 from ..common.tensor import Tensor
 
+
 class Cell(Cell_):
     """
     Base class for all neural networks.
@@ -579,7 +580,7 @@ class Cell(Cell_):
 
     def cast_param(self, param):
         """
-        Cast parameter according to auto mix precison level in pynative mode.
+        Cast parameter according to auto mix precision level in pynative mode.
 
         Args:
             param (Parameter): The parameter to cast.
@@ -594,15 +595,13 @@ class Cell(Cell_):
                 param.set_cast_dtype()
         return param
 
-    def insert_child_to_cell(self, child_name, child):
+    def insert_child_to_cell(self, child_name, child_cell):
         """
-        Adds a child cell to the current cell.
-
-        Inserts a subcell with a given name to the current cell.
+        Adds a child cell to the current cell with a given name.
 
         Args:
             child_name (str): Name of the child cell.
-            child (Cell): The child cell to be inserted.
+            child_cell (Cell): The child cell to be inserted.
 
         Raises:
             KeyError: Child Cell's name is incorrect or duplicated with the other child name.
@@ -612,15 +611,13 @@ class Cell(Cell_):
             raise KeyError("Child cell name is incorrect.")
         if hasattr(self, child_name) and child_name not in self._cells:
             raise KeyError("Duplicate child name '{}'.".format(child_name))
-        if not isinstance(child, Cell) and child is not None:
+        if not isinstance(child_cell, Cell) and child_cell is not None:
             raise TypeError("Child cell type is incorrect.")
-        self._cells[child_name] = child
+        self._cells[child_name] = child_cell
 
     def construct(self, *inputs, **kwargs):
         """
-        Defines the computation to be performed.
-
-        This method must be overridden by all subclasses.
+        Defines the computation to be performed. This method must be overridden by all subclasses.
 
         Note:
             The inputs of the top cell only allow Tensor.

@@ -477,7 +477,7 @@ class Model:
                 len_element = len(next_element)
                 next_element = _transfer_tensor_to_tuple(next_element)
                 if self._loss_fn and len_element != 2:
-                    raise ValueError("when loss_fn is not None, train_dataset should"
+                    raise ValueError("when loss_fn is not None, train_dataset should "
                                      "return two elements, but got {}".format(len_element))
                 cb_params.cur_step_num += 1
 

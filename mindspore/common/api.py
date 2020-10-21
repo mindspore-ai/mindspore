@@ -135,7 +135,7 @@ class _MindSporeFunction:
         _exec_init_graph(self.obj, init_phase)
 
     def compile(self, arguments_dict, method_name):
-        """Returns pipline for the given args."""
+        """Returns pipeline for the given args."""
         args_list = tuple(arguments_dict.values())
         arg_names = tuple(arguments_dict.keys())
 

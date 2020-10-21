@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-export quantization aware training network to infer `AIR` backend.
+export network to infer `AIR` backend.
 """
 
 import argparse
@@ -27,14 +27,17 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net, 
 from src.config import mnist_cfg as cfg
 from src.lenet import LeNet5
 
+
+parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
+parser.add_argument('--device_target', type=str, default="Ascend",
+                    choices=['Ascend', 'GPU'],
+                    help='device where the code will be implemented (default: Ascend)')
+parser.add_argument('--ckpt_path', type=str, default="",
+                    help='if mode is test, must provide path where the trained ckpt file')
+args = parser.parse_args()
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
-    parser.add_argument('--device_target', type=str, default="Ascend",
-                        choices=['Ascend', 'GPU'],
-                        help='device where the code will be implemented (default: Ascend)')
-    parser.add_argument('--ckpt_path', type=str, default="",
-                        help='if mode is test, must provide path where the trained ckpt file')
-    args = parser.parse_args()
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 
     # define fusion network
