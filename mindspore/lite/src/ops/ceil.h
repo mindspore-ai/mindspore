@@ -21,6 +21,7 @@
 #include <set>
 #include <cmath>
 #include "src/ops/arithmetic_self.h"
+#include "src/ops/ops_register.h"
 
 namespace mindspore {
 namespace lite {
@@ -43,6 +44,7 @@ class Ceil : public ArithmeticSelf {
   }
 #endif
 };
+
 }  // namespace lite
 }  // namespace mindspore
 

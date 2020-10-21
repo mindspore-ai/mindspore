@@ -16,6 +16,9 @@
 
 #include "src/ops/exp.h"
 
+#include "src/ops/ops_register.h"
+#include "src/ops/arithmetic_self.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -71,6 +74,10 @@ float Exp::GetBase() const { return this->primitive_->value_as_Exp()->base(); }
 float Exp::GetScale() const { return this->primitive_->value_as_Exp()->scale(); }
 float Exp::GetShift() const { return this->primitive_->value_as_Exp()->shift(); }
 
+PrimitiveC *ExpCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Exp>(primitive); }
+Registry ExpRegistry(schema::PrimitiveType_Exp, ExpCreator);
 #endif
+Registry ExpParameterRegistry(schema::PrimitiveType_Exp, PopulateArithmeticSelf);
+
 }  // namespace lite
 }  // namespace mindspore

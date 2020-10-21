@@ -19,6 +19,9 @@
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/unsqueeze.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -51,7 +54,34 @@ int Unsqueeze::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffe
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *UnsqueezeCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<Unsqueeze>(primitive);
+}
+Registry UnsqueezeRegistry(schema::PrimitiveType_Unsqueeze, UnsqueezeCreator);
+
 #endif
+
+OpParameter *PopulateUnsqueezeParameter(const mindspore::lite::PrimitiveC *primitive) {
+  auto unsqueeze_attr =
+    reinterpret_cast<mindspore::lite::Unsqueeze *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  UnsqueezeParameter *unsqueeze_param = reinterpret_cast<UnsqueezeParameter *>(malloc(sizeof(UnsqueezeParameter)));
+  if (unsqueeze_param == nullptr) {
+    MS_LOG(ERROR) << "malloc UnsqueezeParameter failed.";
+    return nullptr;
+  }
+  memset(unsqueeze_param, 0, sizeof(UnsqueezeParameter));
+  unsqueeze_param->op_parameter_.type_ = primitive->Type();
+  auto flatAxis = unsqueeze_attr->GetAxis();
+  unsqueeze_param->num_dim_ = flatAxis.size();
+  int i = 0;
+  for (auto iter = flatAxis.begin(); iter != flatAxis.end(); iter++) {
+    unsqueeze_param->dims_[i++] = *iter;
+  }
+  return reinterpret_cast<OpParameter *>(unsqueeze_param);
+}
+
+Registry UnsqueezeParameterRegistry(schema::PrimitiveType_Unsqueeze, PopulateUnsqueezeParameter);
 
 int Unsqueeze::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

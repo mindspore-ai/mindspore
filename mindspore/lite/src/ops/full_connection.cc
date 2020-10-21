@@ -16,6 +16,9 @@
 
 #include "src/ops/full_connection.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/matmul_parameter.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -51,7 +54,38 @@ int FullConnection::GetAxis() const { return this->primitive_->value_as_FullConn
 bool FullConnection::GetUseAxis() const { return this->primitive_->value_as_FullConnection()->useAxis(); }
 int FullConnection::GetActivationType() const { return this->primitive_->value_as_FullConnection()->activationType(); }
 
+PrimitiveC *FullConnectionCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<FullConnection>(primitive);
+}
+Registry FullConnectionRegistry(schema::PrimitiveType_FullConnection, FullConnectionCreator);
 #endif
+
+OpParameter *PopulateFullconnectionParameter(const mindspore::lite::PrimitiveC *primitive) {
+  auto param =
+    reinterpret_cast<mindspore::lite::FullConnection *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
+  if (matmul_param == nullptr) {
+    MS_LOG(ERROR) << "malloc MatMulParameter failed.";
+    return nullptr;
+  }
+  memset(matmul_param, 0, sizeof(MatMulParameter));
+  matmul_param->op_parameter_.type_ = primitive->Type();
+  matmul_param->b_transpose_ = true;
+  matmul_param->a_transpose_ = false;
+  matmul_param->has_bias_ = param->GetHasBias();
+  if (param->GetActivationType() == schema::ActivationType_RELU) {
+    matmul_param->act_type_ = ActType_Relu;
+  } else if (param->GetActivationType() == schema::ActivationType_RELU6) {
+    matmul_param->act_type_ = ActType_Relu6;
+  } else {
+    matmul_param->act_type_ = ActType_No;
+  }
+
+  return reinterpret_cast<OpParameter *>(matmul_param);
+}
+
+Registry FullConnectionParameterRegistry(schema::PrimitiveType_FullConnection, PopulateFullconnectionParameter);
+
 int FullConnection::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input0 = inputs_.front();

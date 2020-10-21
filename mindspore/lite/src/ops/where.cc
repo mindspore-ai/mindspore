@@ -16,6 +16,8 @@
 
 #include "src/ops/where.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -50,6 +52,10 @@ int Where::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *WhereCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Where>(primitive); }
+Registry WhereRegistry(schema::PrimitiveType_Where, WhereCreator);
+
 #endif
 
 int Where::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {

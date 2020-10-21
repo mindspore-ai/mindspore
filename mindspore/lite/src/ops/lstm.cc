@@ -16,6 +16,9 @@
 
 #include "src/ops/lstm.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/lstm.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -39,7 +42,30 @@ int Lstm::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *LstmCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Lstm>(primitive); }
+Registry LstmRegistry(schema::PrimitiveType_Lstm, LstmCreator);
+
 #endif
+
+OpParameter *PopulateLstmParameter(const mindspore::lite::PrimitiveC *primitive) {
+  LstmParameter *lstm_param = reinterpret_cast<LstmParameter *>(malloc(sizeof(LstmParameter)));
+  if (lstm_param == nullptr) {
+    MS_LOG(ERROR) << "malloc LstmParameter failed.";
+    return nullptr;
+  }
+  memset(lstm_param, 0, sizeof(LstmParameter));
+  lstm_param->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::Lstm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  if (param == nullptr) {
+    free(lstm_param);
+    MS_LOG(ERROR) << "get Lstm param nullptr.";
+    return nullptr;
+  }
+  lstm_param->bidirectional_ = param->GetBidirection();
+  return reinterpret_cast<OpParameter *>(lstm_param);
+}
+Registry LstmParameterRegistry(schema::PrimitiveType_Lstm, PopulateLstmParameter);
 
 const int kLstmInputNum = 6;
 const int kLstmOutputNum = 3;

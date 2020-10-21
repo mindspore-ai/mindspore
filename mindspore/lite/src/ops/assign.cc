@@ -17,6 +17,8 @@
 #include "src/ops/assign.h"
 #include <memory>
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -56,6 +58,9 @@ int Assign::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *AssignCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Assign>(primitive); }
+Registry AssignRegistry(schema::PrimitiveType_Assign, AssignCreator);
 #endif
 
 int Assign::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {

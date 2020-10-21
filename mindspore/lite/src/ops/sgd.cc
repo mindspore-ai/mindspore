@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "src/ops/sgd.h"
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -70,6 +72,10 @@ int Sgd::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::Fl
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *SgdCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Sgd>(primitive); }
+Registry SgdRegistry(schema::PrimitiveType_Sgd, SgdCreator);
+
 #endif
 
 int Sgd::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {

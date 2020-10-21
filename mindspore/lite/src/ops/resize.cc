@@ -16,6 +16,9 @@
 
 #include "src/ops/resize.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/resize_parameter.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -93,7 +96,30 @@ int Resize::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *ResizeCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Resize>(primitive); }
+Registry ResizeRegistry(schema::PrimitiveType_Resize, ResizeCreator);
 #endif
+
+OpParameter *PopulateResizeParameter(const mindspore::lite::PrimitiveC *primitive) {
+  ResizeParameter *resize_param = reinterpret_cast<ResizeParameter *>(malloc(sizeof(ResizeParameter)));
+  if (resize_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ResizeParameter failed.";
+    return nullptr;
+  }
+  memset(resize_param, 0, sizeof(ResizeParameter));
+  resize_param->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::Resize *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  resize_param->method_ = static_cast<int>(param->GetMethod());
+  resize_param->new_height_ = param->GetNewHeight();
+  resize_param->new_width_ = param->GetNewWidth();
+  resize_param->align_corners_ = param->GetAlignCorners();
+  resize_param->preserve_aspect_ratio_ = param->GetPreserveAspectRatio();
+  return reinterpret_cast<OpParameter *>(resize_param);
+}
+
+Registry ResizeParameterRegistry(schema::PrimitiveType_Resize, PopulateResizeParameter);
+
 namespace {
 constexpr int kInputRank = 4;
 }  // namespace

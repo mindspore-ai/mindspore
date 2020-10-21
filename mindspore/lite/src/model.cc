@@ -19,6 +19,7 @@
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
 #include "include/version.h"
+#include "src/ops/ops_register.h"
 
 namespace mindspore::lite {
 
@@ -31,7 +32,12 @@ bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model) {
     }
     auto c_node = meta_graph->nodes()->GetAs<schema::CNode>(i);
     auto src_prim = c_node->primitive();
+#ifdef PRIMITIVE_WRITEABLE
     node->primitive_ = PrimitiveC::Create(const_cast<schema::Primitive *>(src_prim));
+#else
+    auto primitive = const_cast<schema::Primitive *>(src_prim);
+    node->primitive_ = OpsRegistry::GetInstance()->getPrimitiveCreator(primitive->value_type())(primitive);
+#endif
     if (node->primitive_ == nullptr) {
       MS_LOG(ERROR) << "unpack primitive == nullptr!";
       delete node;

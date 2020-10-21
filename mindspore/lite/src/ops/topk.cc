@@ -16,6 +16,9 @@
 
 #include "src/ops/topk.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/topk.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -42,7 +45,26 @@ int TopK::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *TopKCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<TopK>(primitive); }
+Registry TopKRegistry(schema::PrimitiveType_TopK, TopKCreator);
+
 #endif
+
+OpParameter *PopulateTopKParameter(const mindspore::lite::PrimitiveC *primitive) {
+  TopkParameter *topk_param = reinterpret_cast<TopkParameter *>(malloc(sizeof(TopkParameter)));
+  if (topk_param == nullptr) {
+    MS_LOG(ERROR) << "malloc TopkParameter failed.";
+    return nullptr;
+  }
+  memset(topk_param, 0, sizeof(TopkParameter));
+  topk_param->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::TopK *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  topk_param->k_ = param->GetK();
+  topk_param->sorted_ = param->GetSorted();
+  return reinterpret_cast<OpParameter *>(topk_param);
+}
+Registry TopKParameterRegistry(schema::PrimitiveType_TopK, PopulateTopKParameter);
 
 int TopK::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

@@ -16,6 +16,9 @@
 
 #include "src/ops/roi_pooling.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/roi_pooling.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -47,7 +50,30 @@ int ROIPooling::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuff
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *ROIPoolingCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<ROIPooling>(primitive);
+}
+Registry ROIPoolingRegistry(schema::PrimitiveType_ROIPooling, ROIPoolingCreator);
 #endif
+
+OpParameter *PopulateROIPoolingParameter(const mindspore::lite::PrimitiveC *primitive) {
+  const auto param =
+    reinterpret_cast<mindspore::lite::ROIPooling *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  ROIPoolingParameter *roi_pooling_param = reinterpret_cast<ROIPoolingParameter *>(malloc(sizeof(ROIPoolingParameter)));
+  if (roi_pooling_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ROIPoolingParameter failed.";
+    return nullptr;
+  }
+  memset(roi_pooling_param, 0, sizeof(ROIPoolingParameter));
+  roi_pooling_param->op_parameter_.type_ = primitive->Type();
+  roi_pooling_param->pooledH_ = param->GetPooledW();
+  roi_pooling_param->pooledW_ = param->GetPooledW();
+  roi_pooling_param->scale_ = param->GetScale();
+  return reinterpret_cast<OpParameter *>(roi_pooling_param);
+}
+
+Registry ROIPoolingParameterRegistry(schema::PrimitiveType_ROIPooling, PopulateROIPoolingParameter);
 
 int ROIPooling::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

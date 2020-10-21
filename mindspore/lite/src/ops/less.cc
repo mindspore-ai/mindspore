@@ -16,6 +16,8 @@
 
 #include "src/ops/less.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -29,6 +31,10 @@ int Less::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *LessCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Less>(primitive); }
+Registry LessRegistry(schema::PrimitiveType_Less, LessCreator);
+
 #endif
 int Less::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   auto input = inputs_.front();
@@ -40,5 +46,6 @@ int Less::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
+Registry LessParameterRegistry(schema::PrimitiveType_Less, PopulateArithmetic);
 }  // namespace lite
 }  // namespace mindspore

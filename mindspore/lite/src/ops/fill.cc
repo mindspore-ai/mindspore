@@ -16,6 +16,9 @@
 
 #include "src/ops/fill.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/fill.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -48,7 +51,29 @@ std::vector<int> Fill::GetDims() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
+PrimitiveC *FillCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Fill>(primitive); }
+Registry FillRegistry(schema::PrimitiveType_Fill, FillCreator);
 #endif
+
+OpParameter *PopulateFillParameter(const mindspore::lite::PrimitiveC *primitive) {
+  const auto param = reinterpret_cast<mindspore::lite::Fill *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  FillParameter *fill_param = reinterpret_cast<FillParameter *>(malloc(sizeof(FillParameter)));
+  if (fill_param == nullptr) {
+    MS_LOG(ERROR) << "malloc FillParameter failed.";
+    return nullptr;
+  }
+  memset(fill_param, 0, sizeof(FillParameter));
+  fill_param->op_parameter_.type_ = primitive->Type();
+  auto flatDims = param->GetDims();
+  fill_param->num_dims_ = flatDims.size();
+  int i = 0;
+  for (auto iter = flatDims.begin(); iter != flatDims.end(); iter++) {
+    fill_param->dims_[i++] = *iter;
+  }
+  return reinterpret_cast<OpParameter *>(fill_param);
+}
+
+Registry FillParameterRegistry(schema::PrimitiveType_Fill, PopulateFillParameter);
 
 int Fill::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

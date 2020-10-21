@@ -18,6 +18,8 @@
 #include <vector>
 #include <memory>
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -57,6 +59,10 @@ int TupleGetItem::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbu
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+PrimitiveC *TupleGetItemCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<TupleGetItem>(primitive);
+}
+Registry TupleGetItemRegistry(schema::PrimitiveType_TupleGetItem, TupleGetItemCreator);
 #endif
 }  // namespace lite
 }  // namespace mindspore

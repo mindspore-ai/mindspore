@@ -16,6 +16,8 @@
 
 #include "src/ops/activation.h"
 #include <memory>
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/activation.h"
 
 namespace mindspore {
 namespace lite {
@@ -80,6 +82,30 @@ int Activation::GetType() const { return this->primitive_->value_as_Activation()
 float Activation::GetAlpha() const { return this->primitive_->value_as_Activation()->alpha(); }
 float Activation::GetMinVal() const { return this->primitive_->value_as_Activation()->min_val(); }
 float Activation::GetMaxVal() const { return this->primitive_->value_as_Activation()->max_val(); }
+
+PrimitiveC *ActivationCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<Activation>(primitive);
+}
+Registry ActivationRegistry(schema::PrimitiveType_Activation, ActivationCreator);
 #endif
+OpParameter *PopulateActivationParameter(const mindspore::lite::PrimitiveC *primitive) {
+  ActivationParameter *act_param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
+  if (act_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ActivationParameter failed.";
+    return nullptr;
+  }
+  memset(act_param, 0, sizeof(ActivationParameter));
+  act_param->op_parameter_.type_ = primitive->Type();
+  auto activation =
+    reinterpret_cast<mindspore::lite::Activation *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  act_param->type_ = static_cast<int>(activation->GetType());
+  act_param->alpha_ = activation->GetAlpha();
+  act_param->min_val_ = activation->GetMinVal();
+  act_param->max_val_ = activation->GetMaxVal();
+  return reinterpret_cast<OpParameter *>(act_param);
+}
+
+Registry ActivationParameterRegistry(schema::PrimitiveType_Activation, PopulateActivationParameter);
+
 }  // namespace lite
 }  // namespace mindspore

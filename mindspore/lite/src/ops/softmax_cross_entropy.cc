@@ -16,6 +16,8 @@
 
 #include "src/ops/softmax_cross_entropy.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -78,6 +80,11 @@ int SoftmaxCrossEntropy::UnPackToFlatBuilder(const schema::Primitive *primitive,
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *SoftmaxCrossEntropyCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<SoftmaxCrossEntropy>(primitive);
+}
+Registry SoftmaxCrossEntropyRegistry(schema::PrimitiveType_SoftmaxCrossEntropy, SoftmaxCrossEntropyCreator);
 #endif
 
 int SoftmaxCrossEntropy::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {

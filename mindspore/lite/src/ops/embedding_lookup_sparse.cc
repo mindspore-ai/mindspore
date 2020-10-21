@@ -16,6 +16,8 @@
 
 #include "src/ops/embedding_lookup_sparse.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -76,6 +78,10 @@ float EmbeddingLookupSparse::GetMaxNortm() const {
   return this->primitive_->value_as_EmbeddingLookupSparse()->maxNortm();
 }
 
+PrimitiveC *EmbeddingLookupSparseCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<EmbeddingLookupSparse>(primitive);
+}
+Registry EmbeddingLookupSparseRegistry(schema::PrimitiveType_EmbeddingLookupSparse, EmbeddingLookupSparseCreator);
 #endif
 }  // namespace lite
 }  // namespace mindspore

@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/conv2d_grad_filter.h"
+#include "src/ops/ops_register.h"
 
 namespace mindspore {
 namespace lite {
@@ -176,6 +177,10 @@ int Conv2DGradFilter::GetActivationType() const {
   return this->primitive_->value_as_Conv2DGradFilter()->activationType();
 }
 
+PrimitiveC *Conv2DGradFilterCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<Conv2DGradFilter>(primitive);
+}
+Registry conv2DGradFilterRegistry(schema::PrimitiveType_Conv2DGradFilter, Conv2DGradFilterCreator);
 #endif
 
 int Conv2DGradFilter::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {

@@ -16,6 +16,8 @@
 
 #include "src/ops/greater.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifndef PRIMITIVE_WRITEABLE
@@ -28,6 +30,9 @@ int Greater::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *GreaterCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Greater>(primitive); }
+Registry GreaterRegistry(schema::PrimitiveType_Greater, GreaterCreator);
 #endif
 int Greater::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   auto input = inputs_.front();
@@ -39,5 +44,6 @@ int Greater::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
+Registry GreaterParameterRegistry(schema::PrimitiveType_Greater, PopulateArithmetic);
 }  // namespace lite
 }  // namespace mindspore

@@ -16,6 +16,9 @@
 
 #include "src/ops/gather_nd.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/gatherNd.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -40,7 +43,27 @@ int GatherNd::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffer
 }
 int GatherNd::GetBatchDims() const { return this->primitive_->value_as_GatherNd()->batchDims(); }
 
+PrimitiveC *GatherNdCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<GatherNd>(primitive);
+}
+Registry GatherNdRegistry(schema::PrimitiveType_GatherNd, GatherNdCreator);
 #endif
+
+OpParameter *PopulateGatherNdParameter(const mindspore::lite::PrimitiveC *primitive) {
+  GatherNdParameter *gather_nd_param = reinterpret_cast<GatherNdParameter *>(malloc(sizeof(GatherNdParameter)));
+  if (gather_nd_param == nullptr) {
+    MS_LOG(ERROR) << "malloc GatherNdParameter failed.";
+    return nullptr;
+  }
+  memset(gather_nd_param, 0, sizeof(GatherNdParameter));
+  gather_nd_param->op_parameter_.type_ = primitive->Type();
+  auto gatherNd_attr =
+    reinterpret_cast<mindspore::lite::GatherNd *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  gather_nd_param->batchDims_ = gatherNd_attr->GetBatchDims();
+  return reinterpret_cast<OpParameter *>(gather_nd_param);
+}
+
+Registry GatherNdParameterRegistry(schema::PrimitiveType_GatherNd, PopulateGatherNdParameter);
 
 int GatherNd::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

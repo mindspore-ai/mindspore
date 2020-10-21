@@ -27,6 +27,7 @@
 #else
 #include "schema/model_generated.h"
 #endif
+#include "nnacl/op_base.h"
 #include "src/tensor.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
@@ -160,7 +161,6 @@ class PrimitiveC {
   void SetQuantType(schema::QuantType quant_type);
   schema::QuantType GetQuantType() const;
 
- protected:
   template <typename T, typename = std::enable_if<std::is_base_of<PrimitiveC, T>::value>>
   static PrimitiveC *NewPrimitiveC(const schema::Primitive *primitive) {
     auto primc = new T();
@@ -177,6 +177,7 @@ class PrimitiveC {
     return primc;
   }
 
+ protected:
   int UnPackSchemaPrimitive(const schema::Primitive *primitive) {
     flatbuffers::FlatBufferBuilder fbb(1024);
     if (UnPackToFlatBuilder(primitive, &fbb) != RET_OK) {
@@ -212,7 +213,11 @@ class PrimitiveC {
   bool infer_flag_ = true;
   schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
 };
+
 #endif
+typedef PrimitiveC *(*PrimitiveCCreator)(const schema::Primitive *primitive);
+typedef OpParameter *(*ParameterCreator)(const PrimitiveC *primitive);
+
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_OPS_PRIMITIVE_C_H_

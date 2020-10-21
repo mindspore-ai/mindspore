@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/abs.h"
+#include "src/ops/ops_register.h"
 
 namespace mindspore {
 namespace lite {
@@ -27,6 +28,9 @@ int Abs::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::Fl
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+PrimitiveC *AbsCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Abs>(primitive); }
+Registry AbsRegistry(schema::PrimitiveType_Abs, AbsCreator);
 #endif
+Registry AbsParameterRegistry(schema::PrimitiveType_Abs, PopulateArithmeticSelf);
 }  // namespace lite
 }  // namespace mindspore

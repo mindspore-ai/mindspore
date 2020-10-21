@@ -16,6 +16,8 @@
 
 #include "src/ops/less_equal.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -28,6 +30,10 @@ int LessEqual::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffe
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+PrimitiveC *LessEqualCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<LessEqual>(primitive);
+}
+Registry LessEqualRegistry(schema::PrimitiveType_LessEqual, LessEqualCreator);
 #endif
 int LessEqual::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   auto input = inputs_.front();
@@ -39,5 +45,6 @@ int LessEqual::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> o
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
+Registry LessEqualParameterRegistry(schema::PrimitiveType_LessEqual, PopulateArithmetic);
 }  // namespace lite
 }  // namespace mindspore

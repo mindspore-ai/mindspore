@@ -17,6 +17,9 @@
 #include "src/ops/nhwc2nchw.h"
 #include "src/common/common.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/transpose.h"
+
 namespace mindspore {
 namespace lite {
 
@@ -30,7 +33,29 @@ int Nhwc2Nchw::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffe
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+PrimitiveC *Nhwc2NchwCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<Nhwc2Nchw>(primitive);
+}
+Registry Nhwc2NchwRegistry(schema::PrimitiveType_Nhwc2Nchw, Nhwc2NchwCreator);
 #endif
+
+OpParameter *PopulateNhwc2NchwParameter(const mindspore::lite::PrimitiveC *primitive) {
+  TransposeParameter *parameter = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "malloc OpParameter failed.";
+    return nullptr;
+  }
+  memset(parameter, 0, sizeof(OpParameter));
+  parameter->op_parameter_.type_ = primitive->Type();
+  parameter->num_axes_ = 4;
+  parameter->perm_[0] = 0;
+  parameter->perm_[1] = 3;
+  parameter->perm_[2] = 1;
+  parameter->perm_[3] = 2;
+  return reinterpret_cast<OpParameter *>(parameter);
+}
+
+Registry Nhwc2NchwParameterRegistry(schema::PrimitiveType_Nhwc2Nchw, PopulateNhwc2NchwParameter);
 
 int Nhwc2Nchw::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

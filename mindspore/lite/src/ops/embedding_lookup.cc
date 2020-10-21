@@ -16,6 +16,9 @@
 
 #include "src/ops/embedding_lookup.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/embedding_lookup.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -41,7 +44,34 @@ int EmbeddingLookup::UnPackToFlatBuilder(const schema::Primitive *primitive, fla
 }
 float EmbeddingLookup::GetMaxNorm() const { return this->primitive_->value_as_EmbeddingLookup()->maxNorm(); }
 
+PrimitiveC *EmbeddingLookupCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<EmbeddingLookup>(primitive);
+}
+Registry EmbeddingLookupRegistry(schema::PrimitiveType_EmbeddingLookup, EmbeddingLookupCreator);
 #endif
+
+OpParameter *PopulateEmbeddingLookupParameter(const mindspore::lite::PrimitiveC *primitive) {
+  EmbeddingLookupParameter *embedding_lookup_parameter =
+    reinterpret_cast<EmbeddingLookupParameter *>(malloc(sizeof(EmbeddingLookupParameter)));
+  if (embedding_lookup_parameter == nullptr) {
+    MS_LOG(ERROR) << "malloc EmbeddingLookupParameter failed.";
+    return nullptr;
+  }
+  memset(embedding_lookup_parameter, 0, sizeof(EmbeddingLookupParameter));
+  embedding_lookup_parameter->op_parameter_.type_ = primitive->Type();
+  auto param =
+    reinterpret_cast<mindspore::lite::EmbeddingLookup *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  embedding_lookup_parameter->max_norm_ = param->GetMaxNorm();
+  if (embedding_lookup_parameter->max_norm_ < 0) {
+    MS_LOG(ERROR) << "Embedding lookup max norm should be positive number, got "
+                  << embedding_lookup_parameter->max_norm_;
+    free(embedding_lookup_parameter);
+    return nullptr;
+  }
+  return reinterpret_cast<OpParameter *>(embedding_lookup_parameter);
+}
+
+Registry EmbeddingLookupParameterRegistry(schema::PrimitiveType_EmbeddingLookup, PopulateEmbeddingLookupParameter);
 
 int EmbeddingLookup::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

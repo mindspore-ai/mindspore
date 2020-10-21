@@ -17,6 +17,8 @@
 #include "src/ops/flatten_grad.h"
 #include <memory>
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 int FlattenGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
@@ -85,6 +87,10 @@ int FlattenGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuf
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+PrimitiveC *FlattenGradCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<FlattenGrad>(primitive);
+}
+Registry FlattenGradRegistry(schema::PrimitiveType_FlattenGrad, FlattenGradCreator);
 #endif
 }  // namespace lite
 }  // namespace mindspore

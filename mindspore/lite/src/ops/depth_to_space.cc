@@ -16,6 +16,9 @@
 
 #include "src/ops/depth_to_space.h"
 #include "src/common/common.h"
+#include "src/ops/ops_register.h"
+#include "nnacl/depth_to_space_parameter.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -42,7 +45,29 @@ int DepthToSpace::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbu
 int DepthToSpace::GetBlockSize() const { return this->primitive_->value_as_DepthToSpace()->blockSize(); }
 int DepthToSpace::GetFormat() const { return this->primitive_->value_as_DepthToSpace()->format(); }
 
+PrimitiveC *DepthToSpaceCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<DepthToSpace>(primitive);
+}
+Registry DepthToSpaceRegistry(schema::PrimitiveType_DepthToSpace, DepthToSpaceCreator);
+
 #endif
+
+OpParameter *PopulateDepthToSpaceParameter(const mindspore::lite::PrimitiveC *primitive) {
+  DepthToSpaceParameter *depth_space_param =
+    reinterpret_cast<DepthToSpaceParameter *>(malloc(sizeof(DepthToSpaceParameter)));
+  if (depth_space_param == nullptr) {
+    MS_LOG(ERROR) << "malloc DepthToSpaceParameter failed.";
+    return nullptr;
+  }
+  memset(depth_space_param, 0, sizeof(DepthToSpaceParameter));
+  auto param = reinterpret_cast<mindspore::lite::DepthToSpace *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  depth_space_param->op_parameter_.type_ = primitive->Type();
+  depth_space_param->block_size_ = param->GetBlockSize();
+  return reinterpret_cast<OpParameter *>(depth_space_param);
+}
+
+Registry DepthToSpaceParameterRegistry(schema::PrimitiveType_DepthToSpace, PopulateDepthToSpaceParameter);
+
 namespace {
 constexpr int kDepthToSpaceOutputNum = 1;
 constexpr int kDepthToSpaceInputNum = 1;

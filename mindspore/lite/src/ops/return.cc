@@ -17,6 +17,8 @@
 #include "src/ops/return.h"
 #include <memory>
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -47,6 +49,9 @@ int Return::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
   }
   return RET_OK;
 }
+#else
+PrimitiveC *ReturnCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Return>(primitive); }
+Registry ReturnRegistry(schema::PrimitiveType_Return, ReturnCreator);
 #endif
 
 namespace {

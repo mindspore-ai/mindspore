@@ -18,6 +18,8 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/constant_of_shape.h"
 
 namespace mindspore::lite {
 namespace {
@@ -45,7 +47,28 @@ int ConstantOfShape::UnPackToFlatBuilder(const schema::Primitive *primitive, fla
 }
 float ConstantOfShape::GetValue() const { return this->primitive_->value_as_ConstantOfShape()->value(); }
 
+PrimitiveC *ConstantOfShapeCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<ConstantOfShape>(primitive);
+}
+Registry ConstantOfShapeRegistry(schema::PrimitiveType_ConstantOfShape, ConstantOfShapeCreator);
+
 #endif
+
+OpParameter *PopulateConstantOfShapeParameter(const mindspore::lite::PrimitiveC *primitive) {
+  auto attr =
+    reinterpret_cast<mindspore::lite::ConstantOfShape *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  ConstantOfShapeParameter *param =
+    reinterpret_cast<ConstantOfShapeParameter *>(malloc(sizeof(ConstantOfShapeParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc ConstantOfShapeParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(ConstantOfShapeParameter));
+  param->op_parameter_.type_ = primitive->Type();
+  param->value_ = attr->GetValue();
+  return reinterpret_cast<OpParameter *>(param);
+}
+Registry ConstantOfShapeParameterRegistry(schema::PrimitiveType_ConstantOfShape, PopulateConstantOfShapeParameter);
 
 int ConstantOfShape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   if (inputs_.size() != kShapeInputNum) {

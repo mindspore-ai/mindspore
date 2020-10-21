@@ -16,6 +16,9 @@
 
 #include "src/ops/batch_norm.h"
 #include <memory>
+#include "src/ops/ops_register.h"
+#include "nnacl/batchnorm_parameter.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -60,6 +63,28 @@ int BatchNorm::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffe
 }
 float BatchNorm::GetEpsilon() const { return this->primitive_->value_as_BatchNorm()->epsilon(); }
 
+PrimitiveC *BatchNormCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<BatchNorm>(primitive);
+}
+Registry BatchNormRegistry(schema::PrimitiveType_BatchNorm, BatchNormCreator);
 #endif
+
+OpParameter *PopulateBatchNorm(const mindspore::lite::PrimitiveC *primitive) {
+  const auto param =
+    reinterpret_cast<mindspore::lite::BatchNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  BatchNormParameter *batch_norm_param = reinterpret_cast<BatchNormParameter *>(malloc(sizeof(BatchNormParameter)));
+  if (batch_norm_param == nullptr) {
+    MS_LOG(ERROR) << "malloc BatchNormParameter failed.";
+    return nullptr;
+  }
+  memset(batch_norm_param, 0, sizeof(BatchNormParameter));
+  batch_norm_param->op_parameter_.type_ = primitive->Type();
+  batch_norm_param->epsilon_ = param->GetEpsilon();
+  batch_norm_param->fused_ = false;
+  return reinterpret_cast<OpParameter *>(batch_norm_param);
+}
+
+Registry BatchNormParameterRegistry(schema::PrimitiveType_BatchNorm, PopulateBatchNorm);
+
 }  // namespace lite
 }  // namespace mindspore

@@ -16,6 +16,9 @@
 
 #include "src/ops/clip.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/clip.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -42,6 +45,24 @@ int Clip::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
 float Clip::GetMax() const { return this->primitive_->value_as_Clip()->max(); }
 float Clip::GetMin() const { return this->primitive_->value_as_Clip()->min(); }
 
+PrimitiveC *ClipCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Clip>(primitive); }
+Registry ClipRegistry(schema::PrimitiveType_Clip, ClipCreator);
 #endif
+OpParameter *PopulateClipParameter(const mindspore::lite::PrimitiveC *primitive) {
+  ClipParameter *act_param = reinterpret_cast<ClipParameter *>(malloc(sizeof(ClipParameter)));
+  if (act_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ClipParameter failed.";
+    return nullptr;
+  }
+  memset(act_param, 0, sizeof(ClipParameter));
+  act_param->op_parameter_.type_ = primitive->Type();
+  auto activation = reinterpret_cast<mindspore::lite::Clip *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  act_param->min_val_ = activation->GetMin();
+  act_param->max_val_ = activation->GetMax();
+  return reinterpret_cast<OpParameter *>(act_param);
+}
+
+Registry ClipParameterRegistry(schema::PrimitiveType_Clip, PopulateClipParameter);
+
 }  // namespace lite
 }  // namespace mindspore
