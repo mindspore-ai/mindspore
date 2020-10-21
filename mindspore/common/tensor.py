@@ -404,7 +404,7 @@ class MetaTensor(MetaTensor_):
     Returns:
         Array, an array after being initialized.
     """
-    def __init__(self, init, dtype, shape):
+    def __init__(self, dtype, shape, init=None):
         #check param
         self.init = init
         MetaTensor_.__init__(self, dtype, shape)
@@ -419,6 +419,9 @@ class MetaTensor(MetaTensor_):
                 using the same slice can generate the same tensor.
             shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter.
         """
+        if self.init is None:
+            raise TypeError("to_dense must be set MetaTensor.init, init can't be None")
+
         if shape is None:
             shape = self.shape
 
@@ -428,15 +431,28 @@ class MetaTensor(MetaTensor_):
             msg = "Error shape={}".format(shape)
             logger.error(msg)
             raise ValueError(msg)
-        from .seed import get_seed
-        global_seed = get_seed()
-        need_set_seed = ((slice_index is not None) and (global_seed is None))
-        seed_saved = np.random.get_state()[1][0]
-        if need_set_seed:
-            np.random.seed(slice_index)
-        self.init(arr)
-        if need_set_seed:
-            np.random.seed(seed_saved)
+        class seed_context:
+            '''set and restore seed'''
+            def __init__(self, init):
+                self.init = init
+                from .seed import get_seed
+                global_seed = get_seed()
+                self._np_seed = np.random.get_state()[1][0]
+                self.need_set_seed = ((slice_index is not None) and (global_seed is None))
+                self.seed = self.init.seed
+
+            def __enter__(self):
+                if self.need_set_seed:
+                    np.random.seed(slice_index)
+                    self.init.seed = slice_index
+
+            def __exit__(self, ptype, value, trace):
+                if self.need_set_seed:
+                    np.random.seed(self._np_seed)
+                    self.init.seed = self.seed
+
+        with seed_context(self.init):
+            self.init(arr)
         return Tensor(arr, dtype=self.dtype)
 
 

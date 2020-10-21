@@ -24,6 +24,7 @@ from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Adam
+from mindspore.common import set_seed
 from mindspore.ops import operations as P
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_worker
@@ -95,12 +96,12 @@ def do_sparse_embedding(ps=False):
 
 envs = os.environ
 if __name__ == "__main__":
-    np.random.seed(0)
+    set_seed(0)
     ps_loss = do_sparse_embedding(True)
 
     if _is_role_worker():
         context.reset_ps_context()
-        np.random.seed(0)
+        set_seed(0)
         no_ps_loss = do_sparse_embedding()
         context.set_ps_context(enable_ps=True)
 
