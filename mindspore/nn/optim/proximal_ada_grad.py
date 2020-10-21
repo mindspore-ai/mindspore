@@ -163,7 +163,7 @@ class ProximalAdagrad(Optimizer):
             raise ValueError("The value must be 'CPU' or 'Ascend', but got value {}".format(value))
 
         if value == 'CPU':
-            self.sparse_opt = P.FusedSparseProximalAdagrad(self.use_locking).add_prim_attr("primitive", "CPU")
+            self.sparse_opt = P.FusedSparseProximalAdagrad(self.use_locking).add_prim_attr("primitive_target", "CPU")
         else:
             self.sparse_opt = P.SparseApplyProximalAdagrad(self.use_locking)
 
