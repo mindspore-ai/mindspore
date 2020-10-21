@@ -28,6 +28,9 @@
 
 namespace mindspore {
 namespace dataset {
+namespace api {
+class Dataset;
+}
 class TreeAdapter {
  public:
   TreeAdapter() = default;

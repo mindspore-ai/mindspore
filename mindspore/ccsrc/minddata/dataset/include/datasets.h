@@ -52,6 +52,8 @@ class Vocab;
 #endif
 
 namespace api {
+class Dataset;
+class Iterator;
 
 class TensorOperation;
 class SchemaObj;
