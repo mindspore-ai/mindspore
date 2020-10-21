@@ -519,7 +519,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
 
-    net = _quant_export(net, *inputs, file_format='AIR', **kwargs)
+    net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
     _export(net, file_name, file_format, *inputs)
 
 
@@ -566,7 +566,7 @@ def _export(net, file_name, file_format, *inputs):
         net.set_train(mode=True)
 
 
-def _quant_export(network, *inputs, file_format='AIR', **kwargs):
+def _quant_export(network, *inputs, file_format, **kwargs):
     """
     Exports MindSpore quantization predict model to deploy with AIR and MINDIR.
     """

@@ -391,14 +391,16 @@ class ExportToQuantInferNetwork:
 
         scale_w, zp_w, param_dict["filter_maxq"], param_dict["filter_minq"] = \
             quant_utils.scale_zp_max_min_from_fake_quant_cell(cell_core.fake_quant_weight, np_type)
-        _, _, param_dict["output_maxq"], param_dict["output_minq"] = \
-            quant_utils.scale_zp_max_min_from_fake_quant_cell(fake_quant_a_out, np_type)
+        if fake_quant_a_out is not None:
+            _, _, param_dict["output_maxq"], param_dict["output_minq"] = \
+                quant_utils.scale_zp_max_min_from_fake_quant_cell(fake_quant_a_out, np_type)
 
         info = self.quant_info_table.get(w_minq_name, None)
         if info:
             fake_quant_a_in_op, minq_name = info
             if minq_name == 'input':
-                scale_a_in, zp_a_in = self.input_scale, self.input_zero_point
+                scale_a_in, zp_a_in, param_dict["input_maxq"], param_dict["input_minq"] = \
+                    self.input_scale, self.input_zero_point, 'None', 'None'
             else:
                 maxq = self.all_parameters[minq_name[:-4] + "maxq"]
                 minq = self.all_parameters[minq_name]
@@ -483,11 +485,11 @@ class ExportToQuantInferNetwork:
             if isinstance(subcell, quant.Conv2dBnAct):
                 cell_core = subcell.conv
                 activation = subcell.activation
-                fake_quant_act = activation.fake_quant_act
+                fake_quant_act = activation.fake_quant_act if hasattr(activation, "fake_quant_act") else None
             elif isinstance(subcell, quant.DenseBnAct):
                 cell_core = subcell.dense
                 activation = subcell.activation
-                fake_quant_act = activation.fake_quant_act
+                fake_quant_act = activation.fake_quant_act if hasattr(activation, "fake_quant_act") else None
             if cell_core is not None:
                 new_subcell = self._get_quant_block(cell_core, activation, fake_quant_act)
                 if new_subcell:
