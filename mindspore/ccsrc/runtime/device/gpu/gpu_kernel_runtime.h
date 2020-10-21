@@ -100,6 +100,8 @@ class GPUKernelRuntime : public KernelRuntime {
   std::unordered_map<uint32_t, MemSwapManagerPtr> mem_swap_map_;
   std::unordered_map<uint32_t, bool> is_first_step_map_;
   std::unordered_map<uint32_t, std::set<AnfNodePtr>> graph_output_map_;
+  std::unordered_map<uint32_t, bool> is_alloc_communication_res_;
+  std::unordered_map<uint32_t, bool> is_alloc_inplace_res_;
 
   MemReuseUtilPtr mem_reuse_util_{nullptr};
   MemSwapManagerPtr mem_swap_manager_{nullptr};
