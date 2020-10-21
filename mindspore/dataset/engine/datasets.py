@@ -2623,6 +2623,8 @@ class TransferDataset(DatasetOp):
         args["device_type"] = self._device_type
         args["device_id"] = self._device_id
         args["send_epoch_end"] = self._send_epoch_end
+        if hasattr(self.children[0], "__total_batch__"):
+            args["total_batch"] = self.children[0].__total_batch__
         return args
 
     def create_dict_iterator(self, num_epochs=-1, output_numpy=False):

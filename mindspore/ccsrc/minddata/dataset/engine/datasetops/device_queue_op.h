@@ -86,13 +86,18 @@ class DeviceQueueOp : public PipelineOp {
       return *this;
     }
 
+    Builder &SetTotalBatch(int total_batch) {
+      builder_total_batch_ = total_batch;
+      return *this;
+    }
+
     //  Name: Build()
     //  Description: The final step for building a DeviceQueueOp via the Builder is
     //              to call this Build() method.  It will instantiate the DeviceQueueOp
     //              and return it to caller as a shared pointer.
     Status Build(std::shared_ptr<DeviceQueueOp> *ptr) {
       *ptr = std::make_shared<DeviceQueueOp>(builder_channel_name_, builder_device_type_, builder_device_id_,
-                                             builder_prefetch_size_, builder_send_epoch_end_);
+                                             builder_prefetch_size_, builder_send_epoch_end_, builder_total_batch_);
       return Status::OK();
     }
 
@@ -102,12 +107,13 @@ class DeviceQueueOp : public PipelineOp {
     DeviceType builder_device_type_;
     std::string builder_channel_name_;
     bool builder_send_epoch_end_;
+    int builder_total_batch_;
   };
 
   //  Name: constructor
   //  Description
   DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, int32_t prefetch_size,
-                bool send_epoch_end);
+                bool send_epoch_end, int total_batch);
 
   //  Name: destructor
   //  Description
@@ -183,6 +189,7 @@ class DeviceQueueOp : public PipelineOp {
   const int32_t prefetch_size_;
   const bool send_epoch_end_;
   bool stop_send_;
+  int total_batch_;
 
 #ifdef ENABLE_TDTQUE
   std::shared_ptr<TdtPlugin> tdtInstancePtr;
