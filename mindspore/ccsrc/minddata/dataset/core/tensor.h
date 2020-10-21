@@ -301,7 +301,7 @@ class Tensor {
   const TensorShape &shape() const { return shape_; }
 
   /// Check if tensor has data
-  /// \return bool - true if tensor is empty
+  /// \return bool - true if tensor is not empty
   bool HasData() const { return data_ != nullptr; }
 
   /// Reshape the tensor. The given shape should have the same number of elements in the Tensor

@@ -117,6 +117,17 @@ TEST_F(MindDataTestStringTensorDE, Empty) {
   }
 }
 
+TEST_F(MindDataTestStringTensorDE, EmptyData) {
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateScalar<std::string>("", &t);
+  // empty string has 1 element 
+  ASSERT_TRUE(t->HasData());
+
+  std::shared_ptr<Tensor> t1;
+  Tensor::CreateEmpty(TensorShape({0}), DataType(DataType::DE_STRING), &t1);
+  ASSERT_TRUE(!t1->HasData());
+}
+
 TEST_F(MindDataTestStringTensorDE, SetItem) {
   std::vector<std::string> strings{"abc", "defg", "hi", "klmno", "123", "789"};
   std::shared_ptr<Tensor> t3;
