@@ -271,6 +271,11 @@ int ConvolutionInt8CPUKernel::Init() {
       return RET_ERROR;
     }
   } else {
+    ret = SetIfAsymmetric();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Set if per asymmetric failed.";
+      return ret;
+    }
     // init for situation that not support sdot
     ret = InitWeightBias();
     if (ret != RET_OK) {
