@@ -15,19 +15,20 @@
  */
 
 #include "runtime/device/gpu/kernel_info_setter.h"
-#include <string>
+#include <algorithm>
 #include <memory>
-#include "backend/kernel_compiler/kernel.h"
-#include "utils/utils.h"
-#include "utils/ms_context.h"
-#include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
-#include "backend/kernel_compiler/kernel_build_info.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include <string>
 #include "backend/kernel_compiler/common_utils.h"
-#include "utils/ms_utils.h"
-#include "backend/kernel_compiler/oplib/oplib.h"
+#include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
+#include "backend/kernel_compiler/kernel.h"
+#include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/kernel_compiler/oplib/opinfo.h"
+#include "backend/kernel_compiler/oplib/oplib.h"
+#include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/gpu/cuda_common.h"
+#include "utils/ms_context.h"
+#include "utils/ms_utils.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace device {
@@ -153,7 +154,13 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
         (AnfAlgo::GetCNodeName(kernel_node) == "ApplyMomentum")) {
       std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
       builder->SetOutputsFormat(output_format);
-      std::vector<TypeId> output_type = {selected_kernel_info.GetInputDeviceType(input_index)};
+      auto reduce_flag = kernel::GpuKernelFactory::GetInstance().reduce_flag_;
+      std::vector<TypeId> output_type;
+      if (std::find(reduce_flag.first.begin(), reduce_flag.first.end(), input_index) != reduce_flag.first.end()) {
+        output_type = {reduce_flag.second};
+      } else {
+        output_type = {selected_kernel_info.GetInputDeviceType(input_index)};
+      }
       builder->SetOutputsDeviceType(output_type);
       AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), input_kernel_node.get());
     }
@@ -372,7 +379,11 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
     result =
       kernel::GpuKernelFactory::GetInstance().SearchRegistered(AnfAlgo::GetCNodeName(kernel_node), builder->Build());
     if (!result) {
-      result = kernel::GpuKernelFactory::GetInstance().ReducePrecision(AnfAlgo::GetCNodeName(kernel_node), builder);
+      auto ms_context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(ms_context);
+      if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+        result = kernel::GpuKernelFactory::GetInstance().ReducePrecision(AnfAlgo::GetCNodeName(kernel_node), builder);
+      }
     }
     if (!result) {
       result = SelectAkgKernel(kernel_node, builder->Build());
