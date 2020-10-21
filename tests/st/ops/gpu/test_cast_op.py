@@ -478,3 +478,37 @@ def test_cast25():
     assert type0 == 'int16'
     type1 = output[1].asnumpy().dtype
     assert type1 == 'int8'
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cast26():
+    x0 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.int32))
+    t0 = mstype.int64
+    x1 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.int32))
+    t1 = mstype.float64
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = Net(t0, t1)
+    output = net(x0, x1)
+    type0 = output[0].asnumpy().dtype
+    assert type0 == 'int64'
+    type1 = output[1].asnumpy().dtype
+    assert type1 == 'float64'
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cast27():
+    x0 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float32))
+    t0 = mstype.float64
+    x1 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float64))
+    t1 = mstype.float32
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = Net(t0, t1)
+    output = net(x0, x1)
+    type0 = output[0].asnumpy().dtype
+    assert type0 == 'float64'
+    type1 = output[1].asnumpy().dtype
+    assert type1 == 'float32'
