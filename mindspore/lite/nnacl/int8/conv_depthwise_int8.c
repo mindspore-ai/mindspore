@@ -208,8 +208,13 @@ void ConvDw3x3Int8Block(int8_t *output, const int8_t *buffer, const int16_t *wei
                         int32_t out_zp, int out_multiplier, int left_shift, int right_shift, int32_t acc_min,
                         int32_t acc_max, int stride) {
   for (; start_c <= end_c - 8; start_c += 8) {
+#ifdef ENABLE_ARM64
+    ConvDw3x3Int8Neon64(output, buffer, weight, bias, col_size, row_size, channel, output_h, output_w, in_zp, out_zp,
+                        out_multiplier, left_shift, right_shift, acc_min, acc_max);
+#else
     ConvDw3x3Int8Window(output, buffer, weight, bias, col_size, row_size, channel, output_h, output_w, in_zp, out_zp,
                         out_multiplier, left_shift, right_shift, acc_min, acc_max, stride);
+#endif
     output += 8;
     buffer += 8;
     weight += 8;
