@@ -66,7 +66,7 @@ default_boxes_ltrb = GeneratDefaultBoxes().default_boxes_ltrb
 default_boxes = GeneratDefaultBoxes().default_boxes
 y1, x1, y2, x2 = np.split(default_boxes_ltrb[:, :4], 4, axis=-1)
 vol_anchors = (x2 - x1) * (y2 - y1)
-matching_threshold = config.match_thershold
+matching_threshold = config.match_threshold
 
 
 def ssd_bboxes_encode(boxes):

@@ -228,7 +228,7 @@ class SSD300(nn.Cell):
         in_channels = config.extras_in_channels
         out_channels = config.extras_out_channels
         ratios = config.extras_ratio
-        strides = config.extras_srides
+        strides = config.extras_strides
         residual_list = []
         for i in range(2, len(in_channels)):
             residual = InvertedResidual(in_channels[i], out_channels[i], stride=strides[i],
