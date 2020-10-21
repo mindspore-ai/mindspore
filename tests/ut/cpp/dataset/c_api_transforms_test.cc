@@ -19,6 +19,11 @@
 #include "minddata/dataset/include/vision.h"
 
 #include "minddata/dataset/engine/ir/datasetops/batch_node.h"
+#include "minddata/dataset/engine/ir/datasetops/bucket_batch_by_length_node.h"
+#include "minddata/dataset/engine/ir/datasetops/concat_node.h"
+#include "minddata/dataset/engine/ir/datasetops/project_node.h"
+#include "minddata/dataset/engine/ir/datasetops/rename_node.h"
+#include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
 
 using namespace mindspore::dataset::api;
 using mindspore::dataset::BorderType;

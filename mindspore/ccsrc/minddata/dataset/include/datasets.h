@@ -1201,85 +1201,6 @@ class VOCNode : public Dataset {
 // DERIVED DATASET CLASSES FOR DATASET OPS
 // (In alphabetical order)
 
-#ifndef ENABLE_ANDROID
-class BucketBatchByLengthNode : public Dataset {
- public:
-  /// \brief Constructor
-  BucketBatchByLengthNode(std::shared_ptr<Dataset> child, const std::vector<std::string> &column_names,
-                          const std::vector<int32_t> &bucket_boundaries, const std::vector<int32_t> &bucket_batch_sizes,
-                          std::function<TensorRow(TensorRow)> element_length_function = nullptr,
-                          const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info = {},
-                          bool pad_to_bucket_boundary = false, bool drop_remainder = false);
-
-  /// \brief Destructor
-  ~BucketBatchByLengthNode() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return Status Status::OK() if all the parameters are valid
-  Status ValidateParams() override;
-
- private:
-  std::vector<std::string> column_names_;
-  std::vector<int32_t> bucket_boundaries_;
-  std::vector<int32_t> bucket_batch_sizes_;
-  std::function<TensorRow(TensorRow)> element_length_function_;
-  std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_info_;
-  bool pad_to_bucket_boundary_;
-  bool drop_remainder_;
-};
-
-class BuildVocabNode : public Dataset {
- public:
-  /// \brief Constructor
-  BuildVocabNode(std::shared_ptr<Dataset> child, std::shared_ptr<Vocab> vocab, const std::vector<std::string> &columns,
-                 const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
-                 const std::vector<std::string> &special_tokens, bool special_first);
-
-  /// \brief Destructor
-  ~BuildVocabNode() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return Status Status::OK() if all the parameters are valid
-  Status ValidateParams() override;
-
- private:
-  std::shared_ptr<Vocab> vocab_;
-  std::vector<std::string> columns_;
-  std::pair<int64_t, int64_t> freq_range_;
-  int64_t top_k_;
-  std::vector<std::string> special_tokens_;
-  bool special_first_;
-};
-#endif
-
-class ConcatNode : public Dataset {
- public:
-  /// \brief Constructor
-  explicit ConcatNode(const std::vector<std::shared_ptr<Dataset>> &datasets);
-
-  /// \brief Destructor
-  ~ConcatNode() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return Status Status::OK() if all the parameters are valid
-  Status ValidateParams() override;
-
- private:
-  std::vector<std::shared_ptr<Dataset>> datasets_;
-};
-
 class MapNode : public Dataset {
  public:
   /// \brief Constructor
@@ -1305,84 +1226,6 @@ class MapNode : public Dataset {
   std::vector<std::string> project_columns_;
 };
 
-class ProjectNode : public Dataset {
- public:
-  /// \brief Constructor
-  explicit ProjectNode(std::shared_ptr<Dataset> child, const std::vector<std::string> &columns);
-
-  /// \brief Destructor
-  ~ProjectNode() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return Status Status::OK() if all the parameters are valid
-  Status ValidateParams() override;
-
- private:
-  std::vector<std::string> columns_;
-};
-
-class RenameNode : public Dataset {
- public:
-  /// \brief Constructor
-  explicit RenameNode(std::shared_ptr<Dataset> child, const std::vector<std::string> &input_columns,
-                      const std::vector<std::string> &output_columns);
-
-  /// \brief Destructor
-  ~RenameNode() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return Status Status::OK() if all the parameters are valid
-  Status ValidateParams() override;
-
- private:
-  std::vector<std::string> input_columns_;
-  std::vector<std::string> output_columns_;
-};
-
-class RepeatNode : public Dataset {
- public:
-  /// \brief Constructor
-  explicit RepeatNode(std::shared_ptr<Dataset> child, int32_t count);
-
-  /// \brief Destructor
-  ~RepeatNode() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return Status Status::OK() if all the parameters are valid
-  Status ValidateParams() override;
-
- private:
-  int32_t repeat_count_;
-};
-
-class ShuffleNode : public Dataset {
- public:
-  ShuffleNode(std::shared_ptr<Dataset> child, int32_t shuffle_size, bool reset_every_epoch);
-
-  ~ShuffleNode() = default;
-
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  Status ValidateParams() override;
-
- private:
-  int32_t shuffle_size_;
-  uint32_t shuffle_seed_;
-  bool reset_every_epoch_;
-};
-
 class SkipNode : public Dataset {
  public:
   /// \brief Constructor
@@ -1401,26 +1244,6 @@ class SkipNode : public Dataset {
 
  private:
   int32_t skip_count_;
-};
-
-class TakeNode : public Dataset {
- public:
-  /// \brief Constructor
-  explicit TakeNode(std::shared_ptr<Dataset> child, int32_t count);
-
-  /// \brief Destructor
-  ~TakeNode() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return Status Status::OK() if all the parameters are valid
-  Status ValidateParams() override;
-
- private:
-  int32_t take_count_;
 };
 
 class ZipNode : public Dataset {
