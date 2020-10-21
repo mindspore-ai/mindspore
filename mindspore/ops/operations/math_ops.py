@@ -2938,6 +2938,7 @@ class Sin(PrimitiveWithInfer):
         >>> sin = P.Sin()
         >>> input_x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
         >>> output = sin(input_x)
+        [0.5810352 0.27635565 0.41687083 0.5810352]
     """
 
     @prim_attr_register

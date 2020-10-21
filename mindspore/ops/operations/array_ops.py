@@ -826,6 +826,7 @@ class Rank(PrimitiveWithInfer):
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> rank = P.Rank()
         >>> rank(input_tensor)
+        2
     """
 
     @prim_attr_register
@@ -896,6 +897,7 @@ class Size(PrimitiveWithInfer):
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> size = P.Size()
         >>> output = size(input_tensor)
+        4
     """
 
     @prim_attr_register
