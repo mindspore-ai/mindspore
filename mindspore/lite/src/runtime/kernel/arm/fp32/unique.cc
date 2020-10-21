@@ -28,11 +28,6 @@ int UniqueCPUKernel::Init() { return RET_OK; }
 int UniqueCPUKernel::ReSize() { return RET_OK; }
 
 int UniqueCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   auto input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto output0 = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   auto output1 = reinterpret_cast<int *>(out_tensors_.at(1)->MutableData());

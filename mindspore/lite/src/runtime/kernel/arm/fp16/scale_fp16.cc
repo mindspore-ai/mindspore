@@ -103,12 +103,7 @@ int ScaleFp16Run(void *cdata, int task_id) {
 }
 
 int ScaleFp16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
-  ret = InitScaleOffset();
+  auto ret = InitScaleOffset();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale fp16 InitScaleOffset failed.";
     return RET_ERROR;

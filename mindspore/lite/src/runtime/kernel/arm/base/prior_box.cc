@@ -163,11 +163,6 @@ int RunPriorBox(void *cdata, int task_id) {
 }
 
 int PriorBoxCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail! Ret error code[" << prepare_ret << "]";
-    return prepare_ret;
-  }
   int error_code = ParallelLaunch(this->context_->thread_pool_, RunPriorBox, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "PriorBox run error, error_code[" << error_code << "]";

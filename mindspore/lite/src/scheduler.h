@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_SCHEDULER_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/sub_graph_kernel.h"
 #include "src/inner_context.h"
 #include "include/model.h"
 #include "src/ops/primitive_c.h"
@@ -27,25 +27,30 @@ namespace mindspore::lite {
 class Scheduler {
  public:
   explicit Scheduler(const InnerContext *ctx) { context_ = const_cast<InnerContext *>(ctx); }
+
   int Schedule(const lite::Model *model, std::vector<Tensor *> *tensors, std::vector<kernel::LiteKernel *> *kernels);
 
-  int ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels);
+  static int ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels);
 
  protected:
   kernel::LiteKernel *ScheduleNode(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                    const mindspore::lite::PrimitiveC *primitive, const Model::Node *cnode);
 
- private:
   int InitOp2Kernel(const lite::Model *model, std::vector<Tensor *> *tensors,
                     std::vector<kernel::LiteKernel *> *kernels);
-  int InferShape(const lite::Model *model, std::vector<Tensor *> *tensors);
 
-  // construct SubGraphKernel for each kernel-group in markedKernelGroup
-  void ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels);
+  static int InferShape(const lite::Model *model, std::vector<Tensor *> *tensors);
 
-  kernel::LiteKernel *CreateSubKernel(const std::vector<kernel::LiteKernel *> &kernels, kernel::KERNEL_ARCH arch);
-  TypeId GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_tensors);
-  void SetKernelTensorDataType(kernel::LiteKernel *kernel);
+  int ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels);
+
+  kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
+                                               kernel::SubGraphType type);
+
+  static TypeId GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_tensors);
+
+  static void SetKernelTensorDataType(kernel::LiteKernel *kernel);
+
+  static kernel::SubGraphType GetKernelSubGraphType(kernel::LiteKernel *kernel);
 
  protected:
   InnerContext *context_ = nullptr;

@@ -27,16 +27,6 @@
 
 namespace mindspore {
 namespace session {
-/// \brief CallBackParam defined input arguments for callBack function.
-struct CallBackParam {
-  std::string node_name; /**< node name argument */
-  std::string node_type; /**< node type argument */
-};
-
-/// \brief KernelCallBack defined the function pointer for callBack.
-using KernelCallBack = std::function<bool(std::vector<tensor::MSTensor *> inputs,
-                                          std::vector<tensor::MSTensor *> outputs, const CallBackParam &opInfo)>;
-
 /// \brief LiteSession defined session in MindSpore Lite for compiling Model and forwarding model.
 class MS_API LiteSession {
  public:

@@ -454,12 +454,6 @@ void Convolution1x1Int8CPUKernel::FreeRunBuf() {
 }
 
 int Convolution1x1Int8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-
   int error_code = InitRunBuf();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv1x1 int8 InitRunBuf error_code[" << error_code << "]";
@@ -473,7 +467,12 @@ int Convolution1x1Int8CPUKernel::Run() {
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     Pre1x1Trans(src_in + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_,
                 src_out + batch_index * matmul_param_->row_ * matmul_param_->col_);
-    ParallelLaunch(this->context_->thread_pool_, Convolution1x1Int8Impl, this, thread_count_);
+    auto ret = ParallelLaunch(this->context_->thread_pool_, Convolution1x1Int8Impl, this, thread_count_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ParallelLaunch run error error_code[" << ret << "]";
+      FreeRunBuf();
+      return ret;
+    }
   }
 
   FreeRunBuf();

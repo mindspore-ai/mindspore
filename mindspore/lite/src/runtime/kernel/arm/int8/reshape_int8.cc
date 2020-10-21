@@ -47,11 +47,6 @@ int ReshapeInt8CPUKernel::Init() {
 int ReshapeInt8CPUKernel::ReSize() { return 0; }
 
 int ReshapeInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   MS_ASSERT(in_tensors_.size() == 1);
   MS_ASSERT(out_tensors_.size() == 1);
   input_data_ = static_cast<int8_t *>(in_tensors_.at(kInputIndex)->MutableData());
@@ -60,7 +55,7 @@ int ReshapeInt8CPUKernel::Run() {
   elements_num_ = in_tensors_.at(kInputIndex)->ElementsNum();
   count_unit_ = op_parameter_->thread_num_ > 1 ? UP_DIV(elements_num_, op_parameter_->thread_num_) : elements_num_;
 
-  ret = ParallelLaunch(this->context_->thread_pool_, ReshapeInt8Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, ReshapeInt8Run, this, op_parameter_->thread_num_);
   return ret;
 }
 

@@ -102,11 +102,6 @@ int MulInt8CPUKernel::ReSize() {
 }
 
 int MulInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->MutableData());
   input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->MutableData());
   output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->MutableData());
@@ -122,13 +117,13 @@ int MulInt8CPUKernel::Run() {
     }
     TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->MutableData()),
                        static_cast<int8_t *>(in_tensors_.at(1)->MutableData()), input0_data_, input1_data_, tile_para);
-    ret = ParallelLaunch(this->context_->thread_pool_, MulInt8Run, this, thread_count_);
+    auto ret = ParallelLaunch(this->context_->thread_pool_, MulInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
     return ret;
   }
 
-  ret = ParallelLaunch(this->context_->thread_pool_, MulInt8Run, this, thread_count_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, MulInt8Run, this, thread_count_);
   return ret;
 }
 

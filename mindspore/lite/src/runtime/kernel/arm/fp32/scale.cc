@@ -174,11 +174,6 @@ int ScaleRun(void *cdata, int task_id) {
 }
 
 int ScaleCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   auto in_tensor = in_tensors_.front();
   input_ptr_ = reinterpret_cast<float *>(in_tensor->data_c());
   if (!scale_param_->const_scale_) {
@@ -193,7 +188,7 @@ int ScaleCPUKernel::Run() {
   auto out_tensor = out_tensors_.front();
   output_ptr_ = reinterpret_cast<float *>(out_tensor->MutableData());
 
-  ret = ParallelLaunch(this->context_->thread_pool_, ScaleRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, ScaleRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

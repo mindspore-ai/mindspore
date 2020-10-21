@@ -82,11 +82,6 @@ int SplitInt8Run(void *cdata, int task_id) {
 }
 
 int SplitInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return ret;
-  }
   auto in_tensor = in_tensors_.at(kInputIndex);
   input_ptr_ = reinterpret_cast<int8_t *>(in_tensor->MutableData());
   MS_ASSERT(param->num_split_ == outputs_.size());
@@ -94,7 +89,7 @@ int SplitInt8CPUKernel::Run() {
     output_ptr_.push_back(reinterpret_cast<int8_t *>(out_tensors_.at(i)->MutableData()));
   }
 
-  ret = ParallelLaunch(this->context_->thread_pool_, SplitInt8Run, this, thread_n_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, SplitInt8Run, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

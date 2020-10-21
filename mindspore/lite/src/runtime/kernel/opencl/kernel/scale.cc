@@ -28,6 +28,8 @@
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Scale;
 
 namespace mindspore::kernel {
@@ -277,7 +279,7 @@ int ScaleOpenCLKernel::Init() {
     element_flag_ = true;
     kernel_name = "Scale";
   }
-  lite::STATUS error_code = RET_OK;
+  lite::STATUS error_code;
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else

@@ -185,15 +185,10 @@ int BatchNormInt8Run(void *cdata, int task_id) {
 }
 
 int BatchnormInt8CPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail! Ret error code: " << prepare_ret;
-    return prepare_ret;
-  }
   in_addr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
   out_addr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
-  int ret =
+  auto ret =
     ParallelLaunch(this->context_->thread_pool_, BatchNormInt8Run, this, batchnorm_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";

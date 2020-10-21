@@ -20,6 +20,8 @@
 #include "src/common/string_util.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_HashtableLookup;
 
 namespace mindspore::kernel {
@@ -37,11 +39,6 @@ static int CmpKeyFunc(const void *lhs, const void *rhs) {
 }
 
 int HashtableLookupCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail! Ret error code: " << ret;
-    return ret;
-  }
   auto input_tensor = in_tensors_.at(0);
   auto keys_tensor = in_tensors_.at(1);
   auto values_tensor = in_tensors_.at(2);

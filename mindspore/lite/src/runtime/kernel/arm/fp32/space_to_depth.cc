@@ -85,15 +85,10 @@ int SpaceToDepthRun(void *cdata, int task_id) {
 }
 
 int SpaceToDepthCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   input_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   output_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   if (in_tensors_[0]->GetFormat() == schema::Format::Format_NHWC) {
-    ret = ParallelLaunch(this->context_->thread_pool_, SpaceToDepthRun, this, thread_h_num_);
+    auto ret = ParallelLaunch(this->context_->thread_pool_, SpaceToDepthRun, this, thread_h_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SpaceToDepth error error_code[" << ret << "]";
       return ret;

@@ -84,12 +84,6 @@ static int PoolingFp16Impl(void *cdata, int task_id) {
 }
 
 int PoolingFp16CPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto in_data_type_ = input_tensor->data_type();
   MS_ASSERT(in_data_type_ == kNumberTypeFloat32 || in_data_type_ == kNumberTypeFloat16);

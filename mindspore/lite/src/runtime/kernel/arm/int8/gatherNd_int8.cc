@@ -125,11 +125,6 @@ int GatherNdInt8Run(void *cdata, int task_id) {
 }
 
 int GatherNdInt8CPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   in_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.front()->MutableData());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.front()->MutableData());
   auto ret = ParallelLaunch(this->context_->thread_pool_, GatherNdInt8Run, this, thread_sz_count_);

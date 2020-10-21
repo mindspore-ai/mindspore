@@ -103,11 +103,6 @@ int SoftmaxRun(void *cdata, int task_id) {
 }
 
 int SoftmaxInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return RET_ERROR;
-  }
   exp_data_ = reinterpret_cast<int *>(context_->allocator->Malloc(softmax_param_->element_size_ * sizeof(int)));
   int inner_size = 1;
   for (int i = softmax_param_->axis_ + 1; i < softmax_param_->n_dim_; i++) {
@@ -120,7 +115,7 @@ int SoftmaxInt8CPUKernel::Run() {
     context_->allocator->Free(sum_data_);
     return RET_ERROR;
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, SoftmaxRun, this, thread_count_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, SoftmaxRun, this, thread_count_);
   context_->allocator->Free(exp_data_);
   context_->allocator->Free(sum_data_);
   if (ret != RET_OK) {

@@ -241,11 +241,6 @@ int ScaleRunInt8(void *cdata, int task_id) {
 }
 
 int ScaleInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   auto in_tensor = in_tensors_.front();
   input_ptr_ = reinterpret_cast<int8_t *>(in_tensor->data_c());
   if (scale_ == nullptr) {
@@ -258,7 +253,7 @@ int ScaleInt8CPUKernel::Run() {
   auto out_tensor = out_tensors_.front();
   output_ptr_ = reinterpret_cast<int8_t *>(out_tensor->data_c());
 
-  ret = ParallelLaunch(this->context_->thread_pool_, ScaleRunInt8, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, ScaleRunInt8, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

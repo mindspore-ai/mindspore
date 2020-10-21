@@ -29,6 +29,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/inner_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_registry.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/populate_parameter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc

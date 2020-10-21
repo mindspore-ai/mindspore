@@ -17,9 +17,11 @@
 #ifndef MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_
 #define MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_
 
+#include <functional>
+#include <memory>
+#include <string>
 #include <utility>
 #include <vector>
-#include <memory>
 #include "ir/dtype/type_id.h"
 
 namespace mindspore {
@@ -74,5 +76,14 @@ class MS_API MSTensor {
   virtual void *MutableData() = 0;
 };
 }  // namespace tensor
+/// \brief CallBackParam defined input arguments for callBack function.
+struct CallBackParam {
+  std::string node_name; /**< node name argument */
+  std::string node_type; /**< node type argument */
+};
+
+/// \brief KernelCallBack defined the function pointer for callBack.
+using KernelCallBack = std::function<bool(std::vector<tensor::MSTensor *> inputs,
+                                          std::vector<tensor::MSTensor *> outputs, const CallBackParam &opInfo)>;
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_

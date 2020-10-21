@@ -22,7 +22,8 @@
 #include "src/common/utils.h"
 
 namespace mindspore::kernel {
-
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 SubGraphOpenCLKernel::~SubGraphOpenCLKernel() { UnInit(); }
 
 int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
@@ -200,7 +201,7 @@ int SubGraphOpenCLKernel::MallocTensorWithReuse() {
   for (auto *kernel : nodes_) {
     MS_ASSERT(nullptr != kernel);
     kernel::OpenCLKernel *op_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel);
-    auto &outputs = kernel->out_tensors();
+    auto outputs = kernel->out_tensors();
     for (auto i = 0; i < outputs.size(); ++i) {
       auto *output = outputs.at(i);
       MS_ASSERT(nullptr != output);
@@ -298,6 +299,10 @@ int SubGraphOpenCLKernel::InferShape() { return RET_OK; }
 int SubGraphOpenCLKernel::ReSize() { return RET_OK; }
 
 int SubGraphOpenCLKernel::Run() {
+  if (executor_ == nullptr) {
+    MS_LOG(ERROR) << "executor is nullptr";
+    return RET_ERROR;
+  }
   for (auto &tensor : in_tensors_) {
     if (tensor->data_c() == nullptr) {
       MS_LOG(ERROR) << "OpenCL subgraph input tensor data is null";
@@ -306,8 +311,7 @@ int SubGraphOpenCLKernel::Run() {
     allocator_->UnmapBuffer(tensor->data_c());
   }
 
-  lite::opencl::OpenCLExecutor executor;
-  executor.Run(in_tensors_, out_tensors_, nodes_, allocator_);
+  executor_->Run(in_tensors_, out_tensors_, nodes_, allocator_);
   ocl_runtime_->SyncCommandQueue();
 
   return RET_OK;

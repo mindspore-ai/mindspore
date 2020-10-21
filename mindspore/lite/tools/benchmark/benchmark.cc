@@ -505,7 +505,7 @@ int Benchmark::InitCallbackParameter() {
   // before callback
   before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
                           const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                          const session::CallBackParam &callParam) {
+                          const CallBackParam &callParam) {
     if (before_inputs.empty()) {
       MS_LOG(INFO) << "The num of beforeInputs is empty";
     }
@@ -527,7 +527,7 @@ int Benchmark::InitCallbackParameter() {
   // after callback
   after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
                          const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                         const session::CallBackParam &call_param) {
+                         const CallBackParam &call_param) {
     uint64_t opEnd = GetTimeUs();
 
     if (after_inputs.empty()) {

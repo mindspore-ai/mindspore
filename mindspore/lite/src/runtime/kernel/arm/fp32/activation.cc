@@ -83,11 +83,6 @@ int ActivationRun(void *cdata, int task_id) {
 }
 
 int ActivationCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return ret;
-  }
   int error_code = ParallelLaunch(this->context_->thread_pool_, ActivationRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Activation function error error_code[" << error_code << "]";

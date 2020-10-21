@@ -107,11 +107,6 @@ int PReluCPUKernel::ProcessShareChannelInput() {
 }
 
 int PReluCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   MS_ASSERT(in_shape.size() >= 2);
   auto input_tensor = in_tensors_[0];
   ori_input_ = reinterpret_cast<float *>(input_tensor->MutableData());

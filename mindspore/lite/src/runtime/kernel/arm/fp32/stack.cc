@@ -43,11 +43,6 @@ int StackCPUKernel::Init() {
 }
 
 int StackCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   size_t inputs_num = in_tensors_.size();
   auto input0 = in_tensors_[0];
   if (inputs_num == 1) {

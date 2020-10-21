@@ -48,11 +48,6 @@ int WhereRun(void *cdata, int task_id) {
   return RET_OK;
 }
 int WhereCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   auto input = in_tensors_.at(0);
   auto input1 = in_tensors_.at(1);
   auto input2 = in_tensors_.at(2);
@@ -79,7 +74,7 @@ int WhereCPUKernel::Run() {
     MS_LOG(ERROR) << "Error, inputs' length are zero !!!";
     return RET_ERROR;
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, WhereRun, this, where_param_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, WhereRun, this, where_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "WhereDwRun error: error_code[" << ret << "]";
     return RET_ERROR;

@@ -64,11 +64,6 @@ int UnstackCPUKernel::ReSize() {
 }
 
 int UnstackCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   float *input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   size_t out_num = out_tensors_.size();
   for (size_t i = 0; i < out_num; i++) {

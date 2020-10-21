@@ -113,11 +113,6 @@ int ReduceImpl(void *cdata, int task_id) {
 }
 
 int ReduceCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   if (in_tensors().at(0)->data_type() == kNumberTypeFloat32) {
     data_type_ = kDataTypeFloat;
   } else {
@@ -129,8 +124,8 @@ int ReduceCPUKernel::Run() {
     return ret;
   }
 
-  src_data_ = in_tensors_.at(0)->MutableData();
-  PreProcess();
+  src_data_ = in_tensors_.at(0)->data_c();
+  HandleASumAndSumSquare();
   for (size_t i = 0; i < static_cast<size_t>(num_axes_); ++i) {
     if (i != static_cast<size_t>(num_axes_ - 1)) {
       dst_data_ = data_buffers_[i];
@@ -159,12 +154,12 @@ int ReduceCPUKernel::Run() {
   return RET_OK;
 }
 
-void ReduceCPUKernel::PreProcess() {
+void ReduceCPUKernel::HandleASumAndSumSquare() {
   if (data_type_ == kDataTypeInt) {
     return;
   }
   int num = in_tensors_.at(0)->ElementsNum();
-  float *data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  float *data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   if (data == nullptr) {
     return;
   }

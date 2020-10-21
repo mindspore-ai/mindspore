@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
+#include "src/common/file_utils.h"
 #include <fcntl.h>
+#include <stdlib.h>
 #include <climits>
 #include <cmath>
-#include "src/common/file_utils.h"
 #include "securec/include/securec.h"
 
 namespace mindspore {
@@ -78,7 +78,7 @@ std::string RealPath(const char *path) {
   char *real_path = realpath(path, resolvedPath.get());
 #endif
   if (real_path == nullptr || strlen(real_path) == 0) {
-    MS_LOG(ERROR) << "Proto file path is not valid";
+    MS_LOG(ERROR) << "file path is not valid : " << path;
     return "";
   }
   std::string res = resolvedPath.get();

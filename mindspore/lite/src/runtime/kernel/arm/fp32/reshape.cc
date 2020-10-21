@@ -36,11 +36,6 @@ int ReshapeCPUKernel::Init() {
 int ReshapeCPUKernel::ReSize() { return RET_OK; }
 
 int ReshapeCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   auto input_ptr = in_tensors_.at(kInputIndex)->MutableData();
   auto output_ptr = out_tensors_.at(kOutputIndex)->MutableData();
   size_t data_size = in_tensors_.at(kInputIndex)->Size();

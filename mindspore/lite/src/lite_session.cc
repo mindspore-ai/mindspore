@@ -295,13 +295,13 @@ int LiteSession::CompileGraph(Model *model) {
 
 std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const { return this->input_vec_; }
 
-int LiteSession::RunGraph(const session::KernelCallBack &before, const session::KernelCallBack &after) {
+int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &after) {
   bool expected = false;
   if (!is_running_.compare_exchange_strong(expected, true)) {
     MS_LOG(ERROR) << "Not support multi-threading";
     return RET_ERROR;
   }
-  STATUS ret = RET_ERROR;
+  STATUS ret;
   MS_ASSERT(this->context_);
   if (before == nullptr && after == nullptr) {
     ret = executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());
@@ -325,38 +325,11 @@ int LiteSession::Init(Context *context) {
     return RET_NULL_PTR;
   }
 
-  if (context->device_list_.empty()) {
-    MS_LOG(ERROR) << "Device list is empty.";
-    is_running_.store(false);
-    return RET_NOT_SUPPORT;
-  }
-
-  auto &device_type = context->device_list_[0].device_type_;
-
-  if (device_type == DT_NPU) {
-    MS_LOG(ERROR) << "NPU is not supported.";
-    is_running_.store(false);
-    return RET_NOT_SUPPORT;
-  }
-#ifndef SUPPORT_GPU
-  if (device_type == DT_GPU) {
-    MS_LOG(ERROR) << "GPU is not supported.";
-    is_running_.store(false);
-    return RET_NOT_SUPPORT;
-  }
-#endif
-
-  this->context_ = new (std::nothrow) InnerContext();
+  this->context_ = new (std::nothrow) InnerContext(context);
   if (this->context_ == nullptr) {
     MS_LOG(ERROR) << "New Context failed";
     is_running_.store(false);
     return RET_MEMORY_FAILED;
-  }
-  this->context_->allocator = context->allocator;
-  this->context_->thread_num_ = context->thread_num_;
-  this->context_->device_list_.clear();
-  for (auto &device_ctx : context->device_list_) {
-    this->context_->device_list_.push_back(device_ctx);
   }
   auto ret = this->context_->Init();
   if (ret != RET_OK) {
@@ -371,12 +344,11 @@ int LiteSession::Init(Context *context) {
     return ret;
   }
 #if SUPPORT_GPU
-  if (device_type == DT_GPU) {
-    auto gpu_device_info = this->context_->device_list_[0].device_info_.gpu_device_info_;
+  if (this->context_->IsGpuEnabled()) {
+    auto gpu_device_info = this->context_->GetGpuInfo();
     auto opencl_runtime = ocl_runtime_wrap_.GetInstance();
     opencl_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
     if (opencl_runtime->Init() != RET_OK) {
-      device_type = DT_CPU;
       MS_LOG(WARNING) << "Init OpenCL runtime failed, change to CPU mode.";
     } else {
       MS_LOG(INFO) << "Init OpenCL runtime success.";
@@ -398,14 +370,13 @@ void LiteSession::BindThread(bool if_bind) {
     MS_LOG(ERROR) << "Device list is empty.";
     return;
   }
-  auto &device_ctx = this->context_->device_list_[0];
-  if (device_ctx.device_type_ != DT_CPU) {
-    MS_LOG(ERROR) << "Device is not CPU.";
+  if (this->context_->IsCpuEnabled()) {
     return;
   }
-  if (device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ != NO_BIND) {
+  auto cpu_device_info = this->context_->GetCpuInfo();
+  if (cpu_device_info.cpu_bind_mode_ != NO_BIND) {
     MS_ASSERT(this->context_->thread_pool_ != NULL);
-    BindThreads(this->context_->thread_pool_, if_bind, device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_);
+    BindThreads(this->context_->thread_pool_, if_bind, cpu_device_info.cpu_bind_mode_);
   }
 }
 

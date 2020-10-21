@@ -178,7 +178,6 @@ class Tensor : public mindspore::tensor::MSTensor {
       allocator_->Free(this->data_);
       this->data_ = nullptr;
     }
-
     return 0;
   }
 

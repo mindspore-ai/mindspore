@@ -16,8 +16,11 @@
 
 #include "src/lite_kernel.h"
 #include <algorithm>
+#include "src/tensor.h"
 
 namespace mindspore::kernel {
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 
 void *LiteKernel::workspace_ = nullptr;
 
@@ -54,7 +57,21 @@ int LiteKernel::DecOutTensorRefCount() {
   return 0;
 }
 
-int LiteKernel::Prepare() {
+int LiteKernel::FreeWorkTensor() const {
+  for (auto input_kernel : this->in_kernels()) {
+    MS_ASSERT(input_kernel != nullptr);
+    if (input_kernel->is_model_output()) {
+      continue;
+    }
+    auto ret = input_kernel->DecOutTensorRefCount();
+    if (0 != ret) {
+      MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << this->name() << " failed";
+    }
+  }
+  return RET_OK;
+}
+
+int LiteKernel::PreProcess() {
   if (!InferShapeDone()) {
     (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->SetInferFlag(true);
     auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
@@ -70,12 +87,56 @@ int LiteKernel::Prepare() {
     }
   }
 
-  auto &outputs = this->out_tensors();
+  auto outputs = this->out_tensors();
   for (auto *output : outputs) {
     MS_ASSERT(output != nullptr);
     output->MallocData();
   }
   return RET_OK;
+}
+
+int LiteKernel::Run(const KernelCallBack &before, const KernelCallBack &after) {
+  if (before != nullptr) {
+    if (!before(TensorVectorCast(this->in_tensors_), TensorVectorCast(this->out_tensors_),
+                {this->name_, this->type_str()})) {
+      MS_LOG(WARNING) << "run kernel before_callback failed, name: " << this->name_;
+    }
+  }
+  auto ret = Run();
+  if (RET_OK != ret) {
+    MS_LOG(ERROR) << "run kernel failed, name: " << this->name_;
+    return ret;
+  }
+  if (after != nullptr) {
+    if (!after(TensorVectorCast(this->in_tensors_), TensorVectorCast(this->out_tensors_),
+               {this->name_, this->type_str()})) {
+      MS_LOG(ERROR) << "run kernel after_callback failed, name: " << this->name_;
+    }
+  }
+  return RET_OK;
+}
+
+std::string LiteKernel::ToString() const {
+  std::ostringstream oss;
+  oss << "LiteKernel: " << this->name_;
+  oss << ", Type: " << this->type_str();
+  oss << std::endl << this->in_tensors_.size() << " InputTensors:";
+  for (auto tensor : in_tensors_) {
+    oss << " " << tensor << ":" << tensor->ToString();
+  }
+  oss << std::endl << this->out_tensors_.size() << " OutputTensors:";
+  for (auto tensor : out_tensors_) {
+    oss << " " << tensor << ":" << tensor->ToString();
+  }
+  oss << std::endl << this->in_kernels_.size() << " InputKernels:";
+  for (auto in_kernel : in_kernels_) {
+    oss << " " << in_kernel->name_;
+  }
+  oss << std::endl << this->out_kernels_.size() << " OutputKernels:";
+  for (auto out_kernel : out_kernels_) {
+    oss << " " << out_kernel->name_;
+  }
+  return oss.str();
 }
 
 std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputKernels(
@@ -87,10 +148,11 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputKernels(
       continue;
     }
     for (const auto &input : kernel->in_kernels()) {
-      auto iter = std::find(kernels.begin(), kernels.end(), input);
-      auto item = std::find(input_kernels.begin(), input_kernels.end(), kernel);
-      if (iter == kernels.end() && item == input_kernels.end()) {
+      auto in_kernel_in_graph = std::find(kernels.begin(), kernels.end(), input);
+      auto in_kernel_in_ret = std::find(input_kernels.begin(), input_kernels.end(), kernel);
+      if (in_kernel_in_graph == kernels.end() && in_kernel_in_ret == input_kernels.end()) {
         input_kernels.emplace_back(kernel);
+        break;
       }
     }
   }
@@ -106,10 +168,11 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphOutputKernels(
       continue;
     }
     for (const auto &output : kernel->out_kernels()) {
-      auto iter = std::find(kernels.begin(), kernels.end(), output);
-      auto item = std::find(output_kernels.begin(), output_kernels.end(), kernel);
-      if (iter == kernels.end() && item == output_kernels.end()) {
+      auto out_kernel_in_graph = std::find(kernels.begin(), kernels.end(), output);
+      auto out_kernel_in_ret = std::find(output_kernels.begin(), output_kernels.end(), kernel);
+      if (out_kernel_in_graph == kernels.end() && out_kernel_in_ret == output_kernels.end()) {
         output_kernels.emplace_back(kernel);
+        break;
       }
     }
   }
@@ -120,7 +183,8 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphInputTensors(const std::vect
   std::vector<lite::Tensor *> input_tensors;
   std::vector<lite::Tensor *> all_output_tensors;
   for (const auto &kernel : kernels) {
-    all_output_tensors.insert(all_output_tensors.end(), kernel->out_tensors().begin(), kernel->out_tensors().end());
+    auto kernel_out_tensors = kernel->out_tensors();
+    all_output_tensors.insert(all_output_tensors.end(), kernel_out_tensors.begin(), kernel_out_tensors.end());
   }
   std::vector<kernel::LiteKernel *> input_kernels = SubgraphInputKernels(kernels);
   for (const auto &kernel : input_kernels) {
@@ -139,7 +203,8 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vec
   std::vector<lite::Tensor *> output_tensors;
   std::vector<lite::Tensor *> all_input_tensors;
   for (const auto &kernel : kernels) {
-    all_input_tensors.insert(all_input_tensors.end(), kernel->in_tensors().begin(), kernel->in_tensors().end());
+    auto kernel_in_tensors = kernel->in_tensors();
+    all_input_tensors.insert(all_input_tensors.end(), kernel_in_tensors.begin(), kernel_in_tensors.end());
   }
   std::vector<kernel::LiteKernel *> output_kernels = SubgraphOutputKernels(kernels);
   for (const auto &kernel : output_kernels) {
@@ -153,8 +218,12 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vec
   return output_tensors;
 }
 
-void LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> &kernels) {
+void LiteKernelUtil::InitIOKernels(std::vector<kernel::LiteKernel *> &kernels) {
   for (auto *kernel : kernels) {
+    // clean io kernels
+    kernel->SetInKernel({});
+    kernel->SetOutKernel({});
+    // find io kernels
     for (auto *search_kernel : kernels) {
       if (search_kernel == kernel) {
         continue;

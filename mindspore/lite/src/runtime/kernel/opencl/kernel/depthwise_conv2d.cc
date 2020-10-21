@@ -48,7 +48,7 @@ int DepthwiseConv2dOpenCLKernel::Init() {
   if (in_format != schema::Format::Format_NHWC4 && in_format != schema::Format::Format_NC4HW4) {
     MS_LOG(ERROR) << "input format(" << in_format << ") "
                   << "format not support!";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   in_tensors_[0]->SetFormat(in_format);
   out_tensors_[0]->SetFormat(in_format);
@@ -77,7 +77,7 @@ int DepthwiseConv2dOpenCLKernel::Init() {
 #endif
   this->InitBuffer();
   MS_LOG(DEBUG) << kernel_name << " Init Done! mem type=" << static_cast<int>(out_mem_type_);
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int DepthwiseConv2dOpenCLKernel::InitBuffer() {
@@ -102,7 +102,7 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
       PackNCHWToNC4HW4<float, float16_t>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
     } else {
       MS_LOG(ERROR) << "Only support float16/float32, actual data type " << in_tensors_.at(kWeightIndex)->data_type();
-      return RET_ERROR;
+      return mindspore::lite::RET_ERROR;
     }
   } else {
     packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(float));
@@ -115,7 +115,7 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
       PackNCHWToNC4HW4<float16_t, float>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
     } else {
       MS_LOG(ERROR) << "Only support float16/float32, actual data type " << in_tensors_.at(kWeightIndex)->data_type();
-      return RET_ERROR;
+      return mindspore::lite::RET_ERROR;
     }
   }
 
@@ -143,10 +143,10 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
-int DepthwiseConv2dOpenCLKernel::ReSize() { return RET_OK; }
+int DepthwiseConv2dOpenCLKernel::ReSize() { return mindspore::lite::RET_OK; }
 
 int DepthwiseConv2dOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
@@ -165,14 +165,14 @@ int DepthwiseConv2dOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *i
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int DepthwiseConv2dOpenCLKernel::GetGlobalSize(size_t idx, std::vector<size_t> *global_size) {
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   std::vector<size_t> global = {(size_t)out_tensors_[0]->Width(), (size_t)out_tensors_[0]->Height(), CO4};
   *global_size = std::move(global);
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int DepthwiseConv2dOpenCLKernel::GetLocalSize(size_t idx, const std::vector<size_t> &global_size,
@@ -180,7 +180,7 @@ int DepthwiseConv2dOpenCLKernel::GetLocalSize(size_t idx, const std::vector<size
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   std::vector<size_t> local = {1, 1, CO4};
   *local_size = std::move(local);
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int DepthwiseConv2dOpenCLKernel::Run() {
@@ -216,7 +216,7 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].first);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].second);
   ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 kernel::LiteKernel *OpenCLDepthwiseConv2dKernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -232,7 +232,7 @@ kernel::LiteKernel *OpenCLDepthwiseConv2dKernelCreator(const std::vector<lite::T
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     delete kernel;
     MS_LOG(ERROR) << "Init DepthwiseConv2dOpenCLKernel failed!";
     return nullptr;

@@ -20,6 +20,8 @@
 #include "src/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_FusedBatchNorm;
 
 namespace mindspore::kernel {
@@ -70,11 +72,11 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
     context_->allocator->Free(mean_fp16);
     context_->allocator->Free(variance_fp16);
     context_->allocator->Free(output_fp16);
-    return mindspore::lite::RET_OK;
+    return RET_OK;
   }
   FusedBatchNormFp16(in_tensors_.at(0)->MutableData(), scale_, offset_, mean_, variance_, param, task_id,
                      out_tensors_.at(0)->MutableData());
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 kernel::LiteKernel *CpuFusedBatchnormFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,

@@ -42,11 +42,6 @@ int BiasCPUKernel::ReSize() {
 }
 
 int BiasCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto bias = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());

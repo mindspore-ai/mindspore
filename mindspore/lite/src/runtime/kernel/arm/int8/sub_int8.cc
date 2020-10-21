@@ -24,6 +24,7 @@
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Sub;
 
@@ -119,12 +120,6 @@ int SubInt8Run(void *cdata, int task_id) {
 }
 
 int SubInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-
   if (broadcast_) {
     ArithmeticParameter tile_para;
     tile_para.ndim_ = out_tensors_.at(0)->shape().size();
@@ -145,7 +140,7 @@ int SubInt8CPUKernel::Run() {
                         static_cast<uint8_t *>(in_tensors_.at(1)->MutableData()),
                         reinterpret_cast<uint8_t *>(tile0_data_), reinterpret_cast<uint8_t *>(tile1_data_), &tile_para);
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, SubInt8Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, SubInt8Run, this, op_parameter_->thread_num_);
   if (broadcast_) {
     context_->allocator->Free(tile0_data_);
     context_->allocator->Free(tile1_data_);

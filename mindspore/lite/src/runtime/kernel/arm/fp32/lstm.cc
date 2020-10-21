@@ -147,11 +147,6 @@ int LstmCPUKernel::ReSize() {
 }
 
 int LstmCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto input = in_tensors_.at(kInputIndex);
   MS_ASSERT(input != nullptr);
   auto hidden_state = in_tensors_.at(4);

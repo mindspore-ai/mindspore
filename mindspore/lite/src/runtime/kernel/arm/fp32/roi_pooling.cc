@@ -93,15 +93,10 @@ int ROIPoolingRun(void *cdata, int task_id) {
 }
 
 int ROIPoolingCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail! ret: " << ret;
-    return ret;
-  }
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   roi_ptr_ = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  ret = ParallelLaunch(this->context_->thread_pool_, ROIPoolingRun, this, param_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, ROIPoolingRun, this, param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ROIPooling error: error_code[" << ret << "]";
     return ret;

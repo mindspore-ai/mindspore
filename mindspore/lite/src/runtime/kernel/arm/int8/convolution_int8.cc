@@ -15,13 +15,13 @@
  */
 
 #include "src/runtime/kernel/arm/int8/convolution_int8.h"
-#include "src/runtime/kernel/arm/int8/convolution_3x3_int8.h"
-#include "src/runtime/kernel/arm/int8/convolution_1x1_int8.h"
+#include "include/errorcode.h"
 #include "nnacl/int8/conv_int8.h"
-#include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "include/errorcode.h"
+#include "src/runtime/kernel/arm/base/layout_transform.h"
+#include "src/runtime/kernel/arm/int8/convolution_1x1_int8.h"
+#include "src/runtime/kernel/arm/int8/convolution_3x3_int8.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -325,20 +325,14 @@ int ConvolutionInt8Impl(void *cdata, int task_id) {
 }
 
 int ConvolutionInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-
   if (support_optimize_) {
-    ret = InitTmpBufferOpt();
+    auto ret = InitTmpBufferOpt();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Init tmp buffer failed.";
       return RET_ERROR;
     }
   } else {
-    ret = InitTmpBuffer();
+    auto ret = InitTmpBuffer();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Init tmp buffer failed.";
       return RET_ERROR;

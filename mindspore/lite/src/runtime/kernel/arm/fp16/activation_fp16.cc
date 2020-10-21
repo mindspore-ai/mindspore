@@ -103,9 +103,9 @@ int ActivationFp16Run(void *cdata, int task_id) {
 }
 
 int ActivationFp16CPUKernel::Run() {
-  auto ret = Prepare();
+  auto ret = MallocTmpBuffer();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+    MS_LOG(ERROR) << "MallocTmpBuffer failed.";
     return ret;
   }
 

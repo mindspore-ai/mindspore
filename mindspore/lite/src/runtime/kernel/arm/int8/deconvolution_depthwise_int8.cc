@@ -175,11 +175,6 @@ int DeconvDwInt8Run(void *cdata, int task_id) {
 }
 
 int DeconvolutionDepthwiseInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   if (conv_param_->input_channel_ != conv_param_->output_channel_) {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
@@ -196,7 +191,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
     packed_output_ = output_addr;
   }
 
-  ret = ParallelLaunch(this->context_->thread_pool_, DeconvDwInt8Run, this, conv_param_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, DeconvDwInt8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvDwInt8Run error: error_code[" << ret << "]";
     return RET_ERROR;

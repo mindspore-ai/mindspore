@@ -81,14 +81,9 @@ int UnsqueezeIn8Run(void *cdata, int task_id) {
 }
 
 int Unsqueezeint8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  ret = ParallelLaunch(this->context_->thread_pool_, UnsqueezeIn8Run, this, thread_sz_count_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, UnsqueezeIn8Run, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error error_code[" << ret << "]";
     return ret;

@@ -118,6 +118,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/kernel_registry.cc
         ${LITE_DIR}/src/lite_kernel.cc
         ${LITE_DIR}/src/lite_session.cc
+        ${LITE_DIR}/src/sub_graph_kernel.cc
         ${LITE_DIR}/src/model.cc
         ${LITE_DIR}/src/populate_parameter.cc
         ${LITE_DIR}/src/scheduler.cc
@@ -166,12 +167,6 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/converter/graphdef_transform.cc
             ${LITE_DIR}/tools/converter/converter_flags.cc
             ${LITE_DIR}/tools/converter/converter.cc
-            ${LITE_DIR}/test/st/converter_test.cc
-            ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_activation_fusion_test.cc
-            ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
-            ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_bn_fusion_test.cc
-            ${LITE_DIR}/test/ut/tools/optimizer/fusion/conv_scale_fusion_test.cc
-            ${LITE_DIR}/test/ut/tools/optimizer/fusion/constant_folding_fusion_test.cc
             ${LITE_DIR}/tools/optimizer/common/node_pass_extends.cc
             ${LITE_DIR}/tools/optimizer/common/pass_manager_extends.cc
             ${LITE_DIR}/tools/optimizer/common/gllo_utils.cc
@@ -218,16 +213,27 @@ file(GLOB_RECURSE TEST_CASE_KERNEL_TRAIN_SRC
 )
 
 set(TEST_SRC
-    ${TEST_LITE_SRC}
-    ${TEST_MINDDATA_SRC}
-    ${TEST_CASE_KERNEL_SRC}
-    ${TEST_DIR}/common/common_test.cc
-    ${TEST_DIR}/main.cc
-    ${TEST_DIR}/ut/src/runtime/kernel/arm/common/pack_tests.cc
-    ${TEST_DIR}/ut/src/infer_test.cc
-    ${TEST_DIR}/ut/src/utils_test.cc
-    #${TEST_DIR}/ut/internal/infer_test.cc
+        ${TEST_LITE_SRC}
+        ${TEST_MINDDATA_SRC}
+        ${TEST_CASE_KERNEL_SRC}
+        ${TEST_DIR}/main.cc
+        ${TEST_DIR}/common/common_test.cc
+        ${TEST_DIR}/ut/src/infer_test.cc
+        ${TEST_DIR}/ut/src/utils_test.cc
+        ${TEST_DIR}/ut/src/scheduler_test.cc
 )
+
+if (ENABLE_CONVERTER)
+    set(TEST_SRC
+            ${TEST_SRC}
+            ${TEST_DIR}/st/converter_test.cc
+            ${TEST_DIR}/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
+            ${TEST_DIR}/ut/tools/optimizer/fusion/conv_bn_fusion_test.cc
+            ${TEST_DIR}/ut/tools/optimizer/fusion/conv_scale_fusion_test.cc
+            ${TEST_DIR}/ut/tools/optimizer/fusion/conv_activation_fusion_test.cc
+            ${TEST_DIR}/ut/tools/optimizer/fusion/constant_folding_fusion_test.cc
+            )
+endif()
 
 if (SUPPORT_TRAIN)
     set(TEST_SRC
@@ -266,7 +272,7 @@ if (PLATFORM_ARM64)
     target_link_libraries(lite-test mslite_internal)
 endif()
 
-if (PLATFORM_ARM32 OR PLATFORM_ARM64)
+if (PLATFORM_ARM)
     target_link_libraries(lite-test log)
 endif()
 

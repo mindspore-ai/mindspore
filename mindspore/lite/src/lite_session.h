@@ -52,8 +52,7 @@ class LiteSession : public session::LiteSession {
 
   mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &name) const override;
 
-  int RunGraph(const session::KernelCallBack &before = nullptr,
-               const session::KernelCallBack &after = nullptr) override;
+  int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 
   std::vector<mindspore::tensor::MSTensor *> GetOutputsByNodeName(const std::string &node_name) const override;
 

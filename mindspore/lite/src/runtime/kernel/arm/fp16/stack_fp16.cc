@@ -76,11 +76,6 @@ void StackFp16CPUKernel::FreeBuffer() {
 }
 
 int StackFp16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   size_t inputs_num = in_tensors_.size();
   auto input0 = in_tensors_[0];
   if (inputs_num == 1) {
@@ -88,7 +83,7 @@ int StackFp16CPUKernel::Run() {
     return RET_OK;
   }
   InitMallocFlags();
-  ret = MallocAssignBuffer();
+  auto ret = MallocAssignBuffer();
   if (ret != RET_OK) {
     FreeBuffer();
     return ret;

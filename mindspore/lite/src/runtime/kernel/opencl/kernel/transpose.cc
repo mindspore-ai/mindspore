@@ -39,7 +39,7 @@ int TransposeOpenCLKernel::Init() {
   auto param = reinterpret_cast<TransposeParameter *>(op_parameter_);
   if (in_tensors_[0]->shape().size() != 4 || in_tensors_[0]->shape()[0] > 1) {
     MS_LOG(ERROR) << "Transpose only support 4d tensor and n = 1 yet.";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   if (param->num_axes_ == 4 && param->perm_[0] == 0 && param->perm_[1] == 3 && param->perm_[2] == 1 &&
       param->perm_[3] == 2) {
@@ -51,7 +51,7 @@ int TransposeOpenCLKernel::Init() {
     type = TransposeType::AXIS0231;
   } else {
     MS_LOG(ERROR) << "unsupported transpose axes.";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   if (in_tensors_[0]->shape()[2] * UP_DIV(in_tensors_[0]->shape()[3], C4NUM) > MAX_IMAGE2D_SIZE) {
     // just for input
@@ -73,10 +73,10 @@ int TransposeOpenCLKernel::Init() {
   out_tensors_[0]->SetFormat(op_format_);
 
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
-int TransposeOpenCLKernel::ReSize() { return RET_OK; }
+int TransposeOpenCLKernel::ReSize() { return mindspore::lite::RET_OK; }
 
 int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x = 1, im_dst_y = 1;
@@ -95,7 +95,7 @@ int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_siz
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int TransposeOpenCLKernel::Run() {
@@ -120,7 +120,7 @@ int TransposeOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, shape);
   ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 kernel::LiteKernel *OpenCLTransposeKernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -135,7 +135,7 @@ kernel::LiteKernel *OpenCLTransposeKernelCreator(const std::vector<lite::Tensor 
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     delete kernel;
     return nullptr;
   }

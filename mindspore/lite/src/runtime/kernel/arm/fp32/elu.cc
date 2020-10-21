@@ -57,11 +57,6 @@ int EluRun(void *cdata, int task_id) {
 }
 
 int EluCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   input_addr = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
   output_addr = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
 

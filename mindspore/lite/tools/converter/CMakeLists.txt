@@ -68,6 +68,7 @@ set(LITE_SRC
         ${SRC_DIR}/lite_kernel.cc
         ${SRC_DIR}/populate_parameter.cc
         ${SRC_DIR}/scheduler.cc
+        ${SRC_DIR}/sub_graph_kernel.cc
         ${SRC_DIR}/lite_session.cc
         ${SRC_DIR}/executor.cc
         ${SRC_DIR}/model.cc
@@ -121,6 +122,7 @@ add_executable(converter_lite
         ${LITE_SRC}
         )
 add_dependencies(converter_lite tflite_fbs_src)
+add_dependencies(converter_lite fbs_src)
 add_dependencies(converter_lite fbs_inner_src)
 
 target_link_libraries(converter_lite PRIVATE

@@ -46,11 +46,6 @@ int BiasAddInt8CPUKernel::ReSize() {
 }
 
 int BiasAddInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   auto in = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
   auto bias = reinterpret_cast<int8_t *>(in_tensors_.at(1)->MutableData());
   auto out = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());

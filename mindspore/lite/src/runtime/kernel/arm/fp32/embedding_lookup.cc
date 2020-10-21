@@ -72,12 +72,6 @@ int EmbeddingLookupRun(void *cdata, int task_id) {
 }
 
 int EmbeddingLookupCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
   MS_ASSERT(context_->allocator != nullptr);
   input_addr_ = reinterpret_cast<float *>(context_->allocator->Malloc(
     sizeof(float) * embedding_lookup_parameter_->layer_size_ * embedding_lookup_parameter_->layer_num_));

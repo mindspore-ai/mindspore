@@ -140,12 +140,6 @@ int QuantDTypeCastRun(void *cdata, int task_id) {
 }
 
 int QuantDTypeCastCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
   if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
       out_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32) {
     int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());

@@ -76,12 +76,6 @@ static int ReduceFp16Impl(void *cdata, int task_id) {
 }
 
 int ReduceFp16CPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
   auto ret = MallocTmpBuffer();
   if (ret != RET_OK) {
     FreeTmpBuffer();

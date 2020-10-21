@@ -196,11 +196,6 @@ int DeConvolutionCPUKernel::InitRunBuf() {
 }
 
 int DeConvolutionCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   float *src_in = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   float *src_out = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
 

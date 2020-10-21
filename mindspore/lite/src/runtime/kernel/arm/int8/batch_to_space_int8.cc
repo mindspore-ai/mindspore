@@ -47,11 +47,6 @@ int BatchToSpaceInt8CPUKernel::Init() {
 int BatchToSpaceInt8CPUKernel::ReSize() { return BatchToSpaceBaseCPUKernel::ReSize(); }
 
 int BatchToSpaceInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
   const int8_t *input_data = reinterpret_cast<const int8_t *>(input->MutableData());

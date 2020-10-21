@@ -27,6 +27,8 @@
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SoftMax;
 
 namespace mindspore::kernel {
@@ -87,7 +89,7 @@ int SoftmaxOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
     im_dst_y = n * UP_DIV(c, C4NUM) * h;
   } else {
     MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
@@ -96,7 +98,7 @@ int SoftmaxOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int SoftmaxOpenCLKernel::Init() {
@@ -186,7 +188,7 @@ kernel::LiteKernel *OpenCLSoftMaxKernelCreator(const std::vector<lite::Tensor *>
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Init `Softmax` kernel failed!";
     delete kernel;
     return nullptr;

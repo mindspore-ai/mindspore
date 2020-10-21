@@ -24,6 +24,8 @@
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SpaceToBatch;
 using mindspore::schema::PrimitiveType_SpaceToBatchND;
 

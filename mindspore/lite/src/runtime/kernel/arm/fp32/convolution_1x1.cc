@@ -194,11 +194,6 @@ int Convolution1x1RunHw(void *cdata, int task_id) {
 }
 
 int Convolution1x1CPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto src_in = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto src_out = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
 

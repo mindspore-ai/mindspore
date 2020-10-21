@@ -218,13 +218,7 @@ static int Convolution1x1Fp16RunHw(void *cdata, int task_id) {
 }
 
 int Convolution1x1FP16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-
-  ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get executor tensor failed.";
     return ret;
@@ -248,10 +242,14 @@ int Convolution1x1FP16CPUKernel::Run() {
     }
 
     if (multi_thread_by_hw_) {
-      ParallelLaunch(this->context_->thread_pool_, Convolution1x1Fp16RunHw, this, thread_count_);
+      ret = ParallelLaunch(this->context_->thread_pool_, Convolution1x1Fp16RunHw, this, thread_count_);
     } else {
       RowMajor2Col16MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
-      ParallelLaunch(this->context_->thread_pool_, Convolution1x1Fp16RunOc, this, thread_count_);
+      ret = ParallelLaunch(this->context_->thread_pool_, Convolution1x1Fp16RunOc, this, thread_count_);
+    }
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ParallelLaunch failed.";
+      return ret;
     }
   }
 

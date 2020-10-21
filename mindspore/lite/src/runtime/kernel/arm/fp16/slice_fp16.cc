@@ -20,6 +20,8 @@
 #include "nnacl/fp16/slice_fp16.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Slice;
 
 namespace mindspore::kernel {
@@ -29,11 +31,6 @@ int SliceFp16CPUKernel::SliceParallelRun(int thread_id) {
 }
 
 int SliceFp16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   input_fp16_ = ConvertInputFp32toFp16(in_tensors_.at(0), context_);
   output_fp16_ = MallocOutputFp16(out_tensors_.at(0), context_);
   if (input_fp16_ == nullptr || output_fp16_ == nullptr) {
@@ -45,7 +42,7 @@ int SliceFp16CPUKernel::Run() {
     DoSliceFp16NoParallel(input_fp16_, output_fp16_, param_);
     return RET_OK;
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, SliceLaunch, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, SliceLaunch, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "slice launch fail!ret: " << ret;
   }

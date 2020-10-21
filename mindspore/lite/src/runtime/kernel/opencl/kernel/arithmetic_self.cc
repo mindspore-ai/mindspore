@@ -23,6 +23,8 @@
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Abs;
 using mindspore::schema::PrimitiveType_Ceil;
 using mindspore::schema::PrimitiveType_Cos;
@@ -68,7 +70,7 @@ int ArithmeticSelfOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *im
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 void ArithmeticSelfOpenCLKernel::GetKernelName(std::string *kernel_name, ArithmeticSelfParameter *param) {
@@ -128,7 +130,7 @@ int ArithmeticSelfOpenCLKernel::Init() {
   if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4 && in_format != schema::Format_NC4) {
     MS_LOG(ERROR) << "input format(" << in_format << ") "
                   << "format not support!";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   in_ori_format_ = in_tensors_[0]->GetFormat();
   in_tensors_[0]->SetFormat(op_format_);
@@ -149,10 +151,10 @@ int ArithmeticSelfOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
-int ArithmeticSelfOpenCLKernel::ReSize() { return RET_OK; }
+int ArithmeticSelfOpenCLKernel::ReSize() { return mindspore::lite::RET_OK; }
 
 void ArithmeticSelfGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;
@@ -197,7 +199,7 @@ int ArithmeticSelfOpenCLKernel::Run() {
 
   ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
 
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 kernel::LiteKernel *OpenCLArithmeticSelfKernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -212,7 +214,7 @@ kernel::LiteKernel *OpenCLArithmeticSelfKernelCreator(const std::vector<lite::Te
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << " Init kernel failed, name: ArithmeticSelf ";
     delete kernel;
     return nullptr;

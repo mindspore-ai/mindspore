@@ -249,11 +249,6 @@ int PadInt8CPUKernel::CopyPaddingFromInput() {
 }
 
 int PadInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   in_data_ = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
   out_data_ = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
 

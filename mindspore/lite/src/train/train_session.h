@@ -49,8 +49,7 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   TrainSession();
   ~TrainSession();
 
-  int RunGraph(const session::KernelCallBack &before = nullptr,
-               const session::KernelCallBack &after = nullptr) override;
+  int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 
   int CompileGraph(lite::Model *model) override;
   int CompileTrainGraph(lite::TrainModel *model) override;
@@ -80,9 +79,12 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
     return lite::LiteSession::Resize(inputs, dims);
   }
 
+  void UpdateOutputMapByInKernel(const kernel::LiteKernel *kernel);
+  void UpdateOutputMapByLossKernel(const kernel::LiteKernel *kernel);
+
  protected:
   void AllocWorkSpace();
-  bool IsLossKernel(kernel::LiteKernel *kernel);
+  bool IsLossKernel(const kernel::LiteKernel *kernel);
   virtual std::vector<CreatorOp> ReplaceOps();
   virtual void RestoreOps(const std::vector<CreatorOp> &restore);
   virtual void BuildInferenceKernelsMap();

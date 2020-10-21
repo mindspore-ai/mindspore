@@ -65,11 +65,6 @@ int SpaceToBatchCPUKernel::ReSize() {
 }
 
 int SpaceToBatchCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
   auto input_ptr = reinterpret_cast<const float *>(input_tensor->MutableData());

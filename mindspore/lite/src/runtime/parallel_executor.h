@@ -30,11 +30,11 @@ class ParallelExecutor : public Executor {
   ParallelExecutor() = default;
   virtual ~ParallelExecutor();
 
-  int Prepare(std::vector<kernel::LiteKernel *> &kernels) override;
+  int Prepare(const std::vector<kernel::LiteKernel *> &kernels) override;
 
   int Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
           std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
-          const session::KernelCallBack &before = nullptr, const session::KernelCallBack &after = nullptr) override;
+          const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
   inline kernel::LiteKernel *GetReadyKernel(const int index) { return readyKernels.at(index); }
   inline void SetResult(const int index, const int result) { results.at(index) = result; }
 

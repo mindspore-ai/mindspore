@@ -914,10 +914,9 @@ STATUS PostTrainingQuantizer::DoInference() {
       }
     }
 
-    mindspore::session::KernelCallBack beforeCallBack =
-      [&](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
-          const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
-          const mindspore::session::CallBackParam &callParam) -> bool {
+    KernelCallBack beforeCallBack = [&](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
+                                        const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
+                                        const CallBackParam &callParam) -> bool {
       if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
         return false;
       }
@@ -929,10 +928,9 @@ STATUS PostTrainingQuantizer::DoInference() {
       return true;
     };
     // func
-    mindspore::session::KernelCallBack afterCallBack = [&](
-                                                         const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
-                                                         const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
-                                                         const mindspore::session::CallBackParam &callParam) -> bool {
+    KernelCallBack afterCallBack = [&](const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
+                                       const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
+                                       const CallBackParam &callParam) -> bool {
       if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, afterOutputs) != RET_OK) {
         return false;
       }
@@ -969,10 +967,9 @@ STATUS PostTrainingQuantizer::Int8Inference() {
   }
 
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
-    mindspore::session::KernelCallBack beforeCallBack =
-      [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
-             const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
-             const mindspore::session::CallBackParam &callParam) -> bool {
+    KernelCallBack beforeCallBack = [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
+                                           const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
+                                           const CallBackParam &callParam) -> bool {
       if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
         vector<float> fp32_op_input;
         while (!OpInputDataHandle(FETCH, callParam.node_name, &fp32_op_input)) {
@@ -1017,10 +1014,9 @@ STATUS PostTrainingQuantizer::Int8Inference() {
       return true;
     };
     // func
-    mindspore::session::KernelCallBack afterCallBack = [this](
-                                                         const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
-                                                         const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
-                                                         const mindspore::session::CallBackParam &callParam) -> bool {
+    KernelCallBack afterCallBack = [this](const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
+                                          const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
+                                          const CallBackParam &callParam) -> bool {
       if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
         vector<float> fp32_op_output_ch_mean;
         while (!OpOutputChMeanDataHandle(FETCH, callParam.node_name, &fp32_op_output_ch_mean)) {
@@ -1112,10 +1108,9 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
         return RET_ERROR;
       }
     }
-    mindspore::session::KernelCallBack beforeCallBack =
-      [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
-             const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
-             const mindspore::session::CallBackParam &callParam) -> bool {
+    KernelCallBack beforeCallBack = [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
+                                           const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
+                                           const CallBackParam &callParam) -> bool {
       if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
         if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
           return false;
@@ -1136,10 +1131,9 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
       return true;
     };
     // func
-    mindspore::session::KernelCallBack afterCallBack = [this](
-                                                         const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
-                                                         const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
-                                                         const mindspore::session::CallBackParam &callParam) -> bool {
+    KernelCallBack afterCallBack = [this](const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
+                                          const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
+                                          const CallBackParam &callParam) -> bool {
       if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
         if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, afterOutputs) != RET_OK) {
           return false;
@@ -1320,35 +1314,33 @@ STATUS PostTrainingQuantizer::CollectDataFrequency() {
       }
     }
 
-    mindspore::session::KernelCallBack beforeCallBack =
-      [&](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
-          const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
-          const mindspore::session::CallBackParam &callParam) {
-        if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
-          return false;
-        }
-        auto tensor = beforeInputs[0];
-        const float *tensor_data = static_cast<const float *>(tensor->MutableData());
-        size_t shape_size = tensor->ElementsNum();
-        vector<float> data(tensor_data, tensor_data + shape_size);
-        this->calibrator_->UpdateDataFrequency(callParam.node_name, data, this->calibrator_->GetInputDivergInfo());
-        return true;
-      };
+    KernelCallBack beforeCallBack = [&](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
+                                        const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
+                                        const CallBackParam &callParam) {
+      if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
+        return false;
+      }
+      auto tensor = beforeInputs[0];
+      const float *tensor_data = static_cast<const float *>(tensor->MutableData());
+      size_t shape_size = tensor->ElementsNum();
+      vector<float> data(tensor_data, tensor_data + shape_size);
+      this->calibrator_->UpdateDataFrequency(callParam.node_name, data, this->calibrator_->GetInputDivergInfo());
+      return true;
+    };
 
-    mindspore::session::KernelCallBack afterCallBack =
-      [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-          const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-          const mindspore::session::CallBackParam &call_param) {
-        if (PostTrainingQuantizer::CheckFp32TensorVec(call_param.node_name, after_outputs) != RET_OK) {
-          return false;
-        }
-        auto tensor = after_outputs[0];
-        const float *tenosr_data = static_cast<const float *>(tensor->MutableData());
-        size_t shape_size = tensor->ElementsNum();
-        vector<float> data(tenosr_data, tenosr_data + shape_size);
-        this->calibrator_->UpdateDataFrequency(call_param.node_name, data, this->calibrator_->GetOutputDivergInfo());
-        return true;
-      };
+    KernelCallBack afterCallBack = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
+                                       const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
+                                       const CallBackParam &call_param) {
+      if (PostTrainingQuantizer::CheckFp32TensorVec(call_param.node_name, after_outputs) != RET_OK) {
+        return false;
+      }
+      auto tensor = after_outputs[0];
+      const float *tenosr_data = static_cast<const float *>(tensor->MutableData());
+      size_t shape_size = tensor->ElementsNum();
+      vector<float> data(tenosr_data, tenosr_data + shape_size);
+      this->calibrator_->UpdateDataFrequency(call_param.node_name, data, this->calibrator_->GetOutputDivergInfo());
+      return true;
+    };
     auto status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";

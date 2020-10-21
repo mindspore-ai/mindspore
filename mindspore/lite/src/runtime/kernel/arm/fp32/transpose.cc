@@ -110,11 +110,6 @@ int TransposeRun(void *cdata, int task_id) {
 }
 
 int TransposeCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   MS_ASSERT(in_tensors_.size() == TransposeInputNum);
   MS_ASSERT(out_tensors_.size() == TransposeOutputNum);
   auto &in_tensor = in_tensors_.front();
@@ -126,7 +121,7 @@ int TransposeCPUKernel::Run() {
   in_data_ = reinterpret_cast<float *>(in_tensor->MutableData());
   out_data_ = reinterpret_cast<float *>(out_tensor->MutableData());
 
-  ret = ParallelLaunch(this->context_->thread_pool_, TransposeRun, this, thread_h_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, TransposeRun, this, thread_h_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Tranpose error error_code[" << ret << "]";
     return ret;

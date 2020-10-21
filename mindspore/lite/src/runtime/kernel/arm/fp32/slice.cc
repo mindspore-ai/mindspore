@@ -19,6 +19,8 @@
 #include "src/ops/slice.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Slice;
 
 namespace mindspore::kernel {
@@ -68,9 +70,9 @@ int SliceCPUKernel::SliceParallelRun(int thread_id) {
 }
 
 int SliceCPUKernel::Run() {
-  auto ret = Prepare();
+  auto ret = PreProcess();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    MS_LOG(ERROR) << "PreProcess fail!ret: " << ret;
     return ret;
   }
   const float *input_data = reinterpret_cast<const float *>(in_tensors_[0]->MutableData());

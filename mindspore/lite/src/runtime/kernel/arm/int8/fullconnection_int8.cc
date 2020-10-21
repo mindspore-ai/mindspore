@@ -134,11 +134,6 @@ int FcInt8Run(void *cdata, int task_id) {
 }
 
 int FullconnectionInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
   RowMajor2Row16x4MajorInt8(input_ptr, a_r4x16_ptr_, fc_param_->row_, fc_param_->deep_);
   CalcInputSums(input_ptr, fc_param_->row_, fc_param_->deep_, quant_params_.weight.zp_, input_sums_, RowMajor);
@@ -148,7 +143,11 @@ int FullconnectionInt8CPUKernel::Run() {
     CalcWeightBiasSums(weight_data, fc_param_->deep_, fc_param_->col_, quant_params_.input.zp_,
                        quant_params_.weight.zp_, bias_ptr_, weight_bias_sums_, ColMajor);
   }
-  ParallelLaunch(this->context_->thread_pool_, FcInt8Run, this, thread_count_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, FcInt8Run, this, thread_count_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParallelLaunch failed";
+    return ret;
+  }
   return RET_OK;
 }
 
