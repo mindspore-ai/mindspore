@@ -19,8 +19,8 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/base/fullconnection_base.h"
-#include "include/errorcode.h"
 #include "include/context.h"
+#include "include/errorcode.h"
 #include "nnacl/fp32/matmul.h"
 
 using mindspore::lite::InnerContext;
@@ -47,10 +47,13 @@ class FullconnectionCPUKernel : public FullconnectionBaseCPUKernel {
   void InitMatrixB(float *src_ptr, float *dst_ptr);
 
  private:
-  float *a_c12_ptr_ = nullptr;
-  float *b_r8_ptr_ = nullptr;
-  float *c_r_ptr = nullptr;
+  float *a_pack_ptr_ = nullptr;
+  float *b_pack_ptr_ = nullptr;
+  float *c_ptr_ = nullptr;
   float *bias_ptr_ = nullptr;
+  float *a_ptr_ = nullptr;
+  float *b_ptr_ = nullptr;
+  bool is_vector_input_ = false;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FULLCONNECTION_H_

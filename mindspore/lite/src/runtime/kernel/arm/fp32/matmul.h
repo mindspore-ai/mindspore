@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
 #include "nnacl/matmul_parameter.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/matmul_base.h"
 
 namespace mindspore::kernel {
@@ -45,12 +45,15 @@ class MatmulCPUKernel : public MatmulBaseCPUKernel {
   void FreeTmpBuffer();
 
  private:
-  float *a_c12_ptr_ = nullptr;
-  float *b_r8_ptr_ = nullptr;
+  float *a_pack_ptr_ = nullptr;
+  float *b_pack_ptr_ = nullptr;
   float *bias_ptr_ = nullptr;
   float *a_ptr_ = nullptr;
   float *b_ptr_ = nullptr;
-  float *c_ptr_ = nullptr;
+  float *cur_a_ptr_ = nullptr;
+  float *cur_b_ptr_ = nullptr;
+  float *cur_c_ptr_ = nullptr;
+  bool is_vector_a_ = false;
 };
 }  // namespace mindspore::kernel
 

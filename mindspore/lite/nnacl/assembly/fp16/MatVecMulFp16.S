@@ -1,12 +1,12 @@
 #ifdef __aarch64__
     .text
     .align 5
-    .global MatmulFp16Neon64_1xN
+    .global MatVecMulFp16Neon64
 #ifndef __APPLE__
-    .type MatmulFp16Neon64_1xN, %function
+    .type MatVecMulFp16Neon64, %function
 #endif
 
-// void MatmulFp16Neon64_1xN(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type, int depth, int col)
+// void MatVecMulFp16Neon64(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type, int depth, int col)
 // x0: a
 // x1: b
 // x2: c
@@ -15,7 +15,7 @@
 // w5: depth
 // w6: col
 
-MatmulFp16Neon64_1xN:
+MatVecMulFp16Neon64:
   sub sp, sp, #128
   st1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
   st1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64

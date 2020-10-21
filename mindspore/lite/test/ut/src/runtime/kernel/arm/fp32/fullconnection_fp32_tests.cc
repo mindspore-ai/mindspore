@@ -17,11 +17,11 @@
 #include <sys/time.h>
 #include <iostream>
 #include <memory>
-#include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "src/common/file_utils.h"
-#include "src/runtime/kernel/arm/fp32/fullconnection.h"
 #include "nnacl/fp32/matmul.h"
+#include "src/common/file_utils.h"
+#include "src/common/log_adapter.h"
+#include "src/runtime/kernel/arm/fp32/fullconnection.h"
 
 namespace mindspore {
 using mindspore::lite::Tensor;
@@ -144,4 +144,59 @@ TEST_F(TestFcFp32, FcTest2) {
   fc->Run();
   CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
 }
+
+int FcTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
+                MatMulParameter *matmal_param, float **correct) {
+  Tensor *in_t = new Tensor(kNumberTypeFloat, {1, 1, 1, 20}, schema::Format_NHWC, lite::Tensor::Category::CONST);
+  in_t->MallocData();
+  float in[] = {1, 0, 3, 0, 4, 5, 2, 5, 2, 5, 1, 5, 0, 1, 2, 0, 2, 1, 0, 5};
+  memcpy(in_t->MutableData(), in, sizeof(float) * in_t->ElementsNum());
+  inputs_->push_back(in_t);
+
+  Tensor *weight_t = new Tensor(kNumberTypeFloat, {16, 20}, schema::Format_NHWC, lite::Tensor::Category::CONST);
+  weight_t->MallocData();
+  float weight[] = {0, 5, 5, 3, 0, 5, 3, 1, 0, 1, 3, 0, 5, 5, 2, 4, 0, 1, 1, 2, 3, 0, 5, 5, 4, 4, 1, 4, 1, 1, 5, 3,
+                    3, 1, 0, 3, 1, 2, 4, 5, 3, 4, 4, 0, 3, 5, 0, 3, 4, 1, 0, 1, 3, 4, 0, 5, 2, 5, 0, 4, 2, 2, 2, 2,
+                    4, 4, 5, 2, 1, 1, 5, 1, 4, 4, 5, 1, 2, 4, 0, 3, 1, 1, 0, 2, 1, 5, 2, 0, 1, 1, 5, 5, 4, 0, 0, 4,
+                    2, 3, 2, 1, 4, 0, 5, 0, 2, 3, 1, 2, 1, 2, 1, 4, 2, 3, 5, 5, 4, 5, 2, 0, 3, 0, 2, 0, 1, 3, 0, 4,
+                    1, 5, 2, 5, 4, 2, 5, 1, 4, 5, 3, 1, 0, 4, 4, 4, 1, 3, 4, 2, 2, 4, 1, 4, 0, 1, 0, 2, 4, 5, 2, 1,
+                    0, 3, 5, 2, 4, 2, 1, 4, 2, 0, 1, 0, 2, 3, 0, 3, 2, 5, 5, 4, 3, 0, 0, 2, 0, 1, 5, 2, 2, 1, 3, 0,
+                    3, 0, 5, 3, 3, 3, 5, 5, 3, 4, 0, 1, 2, 1, 2, 4, 3, 5, 4, 3, 0, 0, 4, 4, 2, 3, 5, 4, 3, 5, 1, 2,
+                    1, 5, 0, 5, 1, 1, 5, 5, 0, 0, 1, 3, 2, 2, 2, 3, 4, 2, 2, 3, 2, 4, 3, 0, 2, 0, 3, 2, 1, 5, 2, 4,
+                    4, 5, 2, 5, 0, 5, 3, 3, 0, 3, 2, 5, 5, 1, 1, 0, 2, 3, 0, 1, 1, 2, 4, 1, 3, 3, 5, 5, 0, 1, 0, 0,
+                    1, 2, 3, 3, 5, 2, 2, 5, 1, 4, 3, 3, 0, 2, 5, 4, 3, 1, 2, 4, 0, 2, 1, 3, 1, 2, 1, 0, 5, 5, 4, 5};
+  memcpy(weight_t->MutableData(), weight, sizeof(float) * weight_t->ElementsNum());
+  inputs_->push_back(weight_t);
+
+  Tensor *out_t = new Tensor(kNumberTypeFloat, {1, 16}, schema::Format_NHWC, lite::Tensor::Category::CONST);
+  out_t->MallocData();
+  outputs_->push_back(out_t);
+
+  matmal_param->b_transpose_ = true;
+  matmal_param->a_transpose_ = false;
+  matmal_param->has_bias_ = false;
+  matmal_param->act_type_ = ActType_No;
+  return out_t->ElementsNum();
+}
+
+TEST_F(TestFcFp32, FcTest3) {
+  std::vector<lite::Tensor *> inputs_;
+  std::vector<lite::Tensor *> outputs_;
+  auto matmul_param = new MatMulParameter();
+  float *correct;
+  int total_size = FcTestInit3(&inputs_, &outputs_, matmul_param, &correct);
+  lite::InnerContext *ctx = new lite::InnerContext;
+  ctx->thread_num_ = 1;
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
+  kernel::FullconnectionCPUKernel *fc =
+    new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
+
+  fc->Init();
+  struct timeval start, end;
+  gettimeofday(&start, NULL);
+  for (int i = 0; i < 100000; ++i) fc->Run();
+  gettimeofday(&end, NULL);
+  // printf("## elapsed: %llu\n", 1000000 * (end.tv_sec - start.tv_sec) + end.tv_usec - end.tv_usec);
+}
+
 }  // namespace mindspore

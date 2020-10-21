@@ -289,9 +289,9 @@ void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const floa
   return;
 }
 
-void MatVecMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type, int depth,
-                   int col) {
-  MatmulFp16Neon64_1xN(a, b, c, bias, act_type, depth, col);
+void MatVecMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, ActType act_type,
+                   int depth, int col) {
+  MatVecMulFp16Neon64(a, b, c, bias, (int)act_type, depth, col);
 }
 
 void RowMajor2Col16MajorFp16Opt(float16_t *src_ptr, float16_t *dst_ptr, size_t row, size_t col) {
