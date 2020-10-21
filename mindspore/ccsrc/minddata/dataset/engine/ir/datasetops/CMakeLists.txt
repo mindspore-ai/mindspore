@@ -13,6 +13,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SRC_FILES
         repeat_node.cc
         shuffle_node.cc
         skip_node.cc
+        sync_wait_node.cc
         take_node.cc
         zip_node.cc
         )
