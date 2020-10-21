@@ -45,7 +45,7 @@ def op_info_register(op_info):
             op_info_real = json.dumps(op_info)
         else:
             op_info_real = op_info
-        validator.check_value_type("op_info", op_info_real, [str], None)
+        validator.check_value_type("op_info", op_info_real, [str])
         op_lib = Oplib()
         file_path = os.path.realpath(inspect.getfile(func))
         # keep the path custom ops implementation.

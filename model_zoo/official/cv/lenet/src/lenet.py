@@ -46,8 +46,12 @@ class LeNet5(nn.Cell):
 
 
     def construct(self, x):
-        x = self.max_pool2d(self.relu(self.conv1(x)))
-        x = self.max_pool2d(self.relu(self.conv2(x)))
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.max_pool2d(x)
+        x = self.conv2(x)
+        x = self.relu(x)
+        x = self.max_pool2d(x)
         if not self.include_top:
             return x
         x = self.flatten(x)

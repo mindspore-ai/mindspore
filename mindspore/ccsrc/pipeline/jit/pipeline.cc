@@ -972,7 +972,7 @@ void ExportGraph(const std::string &file_name, const std::string &, const std::s
 #if (ENABLE_GE || ENABLE_D)
   ExportDFGraph(file_name, phase);
 #else
-  MS_EXCEPTION(ValueError) << "Only MindSpore with Ascend backend support exporting file in 'AIR' format.";
+  MS_EXCEPTION(ValueError) << "Only support export file in 'AIR' format with Ascend backend.";
 #endif
 }
 
