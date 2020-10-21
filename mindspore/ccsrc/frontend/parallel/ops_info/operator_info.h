@@ -214,7 +214,7 @@ class OperatorInfo {
   StrategyPtr strategy_;
   std::vector<TensorInfo> inputs_tensor_info_;
   std::vector<TensorInfo> outputs_tensor_info_;
-  Shape dev_matrix_shape_;  // if repeated calculation, it contains the repeated_calc_num as the first dimension
+  Shape dev_matrix_shape_;  // if repeated calculation, it contains the repeated_calc_num_
   int32_t repeated_calc_num_ = 1;
   int32_t as_loss_divisor_ = 1;
   TensorMaps inputs_tensor_map_;
@@ -263,6 +263,8 @@ class OperatorInfo {
   std::string refkey_parameter_name_;
   CNodePtr cnode_;
   int32_t used_devices_ = -1;
+  // the repeated_calc_num_ will be inserted to the last dimension of dev matrix in default
+  bool repeated_num_in_dev_matrix_right_ = true;
 
  private:
   OperatorCostPtr operator_cost_;

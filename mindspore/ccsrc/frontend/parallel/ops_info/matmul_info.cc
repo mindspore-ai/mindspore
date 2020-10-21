@@ -205,6 +205,7 @@ Status MatMulBase::InferDevMatrixShape() {
   Dimensions mat_b_strategy = stra.at(1);
 
   SetDevMatrixShape(mat_a_strategy, mat_b_strategy, transpose_b_, &dev_matrix_shape_);
+  origin_dev_matrix_shape_ = dev_matrix_shape_;
   return SUCCESS;
 }
 
@@ -236,10 +237,11 @@ Status MatMulBase::InferMirrorOps() {
 
 Status MatMulBase::InferForwardCommunication() {
   forward_op_.clear();
-  size_t dimension = dev_matrix_shape_.size();
+  size_t dimension = origin_dev_matrix_shape_.size();
   size_t relevant_dimension_index = SECOND_FROM_END(dimension);
-  // Relevant dimension is not split and all reduce is not required
-  if (dev_matrix_shape_.at(relevant_dimension_index) == MIN_SLICE_NUM) {
+  // Relevant dimension is not split and all reduce is not required,
+  // need to use origin_dev_matrix_shape_ here, since the dev_matrix_shape_ will be changed if repeated calculation.
+  if (origin_dev_matrix_shape_.at(relevant_dimension_index) == MIN_SLICE_NUM) {
     MS_LOG(INFO) << name_ << " : Forward all reduce is not required.";
     return SUCCESS;
   }
