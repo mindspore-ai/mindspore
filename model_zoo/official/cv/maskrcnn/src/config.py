@@ -126,7 +126,6 @@ config = ed({
     "warmup_step": 500,
     "warmup_mode": "linear",
     "warmup_ratio": 1/3.0,
-    "sgd_step": [8, 11],
     "sgd_momentum": 0.9,
 
     # train
