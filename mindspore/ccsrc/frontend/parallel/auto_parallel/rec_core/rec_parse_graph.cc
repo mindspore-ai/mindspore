@@ -53,6 +53,10 @@ Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>>
     NewOp.apply.op_type = DictOpType.at(op_type);
   }
 
+  if (ops[iter_ops]->outputs_tensor_info().size() == 0) {
+    MS_LOG(EXCEPTION) << ops[iter_ops]->name() << " output tensor info is empty.";
+  }
+
   if (ops[iter_ops]->outputs_tensor_info()[0].shape().size() == 4) {
     NewOp.tensor_parm = MakeTensor(
       ops[iter_ops]->outputs_tensor_info()[0].shape()[0], ops[iter_ops]->outputs_tensor_info()[0].shape()[1],
@@ -74,6 +78,10 @@ Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>>
 
 OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                    Graph::NodeType NewTensor) {
+  if (ops[iter_ops]->inputs_tensor_info().size() > MAX_INPUT_NUM) {
+    MS_LOG(EXCEPTION) << ops[iter_ops]->name() << " input tensor num exceeds limit.";
+  }
+
   for (size_t iter_input_tensors = 0; iter_input_tensors < ops[iter_ops]->inputs_tensor_info().size();
        iter_input_tensors++) {
     if (ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape().size() == 4) {
