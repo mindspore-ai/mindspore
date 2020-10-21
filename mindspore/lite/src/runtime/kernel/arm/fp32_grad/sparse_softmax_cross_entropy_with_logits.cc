@@ -118,11 +118,6 @@ int SparseSoftmaxCrossEntropyRun(void *cdata, int task_id) {
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "SparseSoftmaxCrossEntropyWithLogitsCPUKernel Prepare failed.";
-    return ret;
-  }
   int error_code = ParallelLaunch(this->context_->thread_pool_, SparseSoftmaxCrossEntropyRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SparseSoftmaxCrossEntropy function error error_code[" << error_code << "]";

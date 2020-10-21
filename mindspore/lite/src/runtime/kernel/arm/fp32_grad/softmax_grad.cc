@@ -79,12 +79,6 @@ int SoftmaxGradRun(void *cdata, int task_id) {
 }
 
 int SoftmaxGradCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "SoftmaxGradCPUKernel Prepare failed.";
-    return ret;
-  }
-
   int error_code = ParallelLaunch(this->context_->thread_pool_, SoftmaxGradRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SoftmaxGradRun function error error_code[" << error_code << "]";

@@ -88,12 +88,6 @@ int PoolingGradImpl(void *cdata, int task_id) {
 }
 
 int PoolingGradCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "PoolingGradCPUKernel Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
   // clear output buffer before parallel run
   PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());

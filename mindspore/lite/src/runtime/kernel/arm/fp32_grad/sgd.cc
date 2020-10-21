@@ -65,12 +65,6 @@ int SgdRun(void *cdata, int task_id) {
 }
 
 int SgdCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "SgdCPUKernel Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
   int error_code = ParallelLaunch(this->context_->thread_pool_, SgdRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SGD function error error_code[" << error_code << "]";

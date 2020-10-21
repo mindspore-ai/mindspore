@@ -100,11 +100,6 @@ void NormalizeCPUKernel::FreeBuffer() {
 }
 
 int NormalizeCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail! Ret error code: " << ret;
-    return ret;
-  }
   auto input_tensor = in_tensors_.at(0);
   int string_num = lite::GetStringCount(input_tensor);
   std::vector<lite::StringPack> all_string_pack = ParseTensorBuffer(input_tensor);

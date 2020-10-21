@@ -72,6 +72,7 @@ set(LITE_SRC
         ${SRC_DIR}/lite_session.cc
         ${SRC_DIR}/executor.cc
         ${SRC_DIR}/model.cc
+        ${SRC_DIR}/model_common.cc
         )
 if (SUPPORT_TRAIN)
 set(LITE_SRC

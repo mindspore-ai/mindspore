@@ -38,12 +38,6 @@ int LshProjectionCPUKernel::Init() {
 int LshProjectionCPUKernel::ReSize() { return RET_OK; }
 
 int LshProjectionCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
-
   auto input_tensor0 = in_tensors_.at(0);
   auto input_tensor1 = in_tensors_.at(1);
   auto out_tensor0 = out_tensors_.at(0);
@@ -65,7 +59,7 @@ int LshProjectionCPUKernel::Run() {
 
   elements_num_ = input_tensor0->DimensionSize(0);
   count_unit_ = thread_num_ > 1 ? UP_DIV(elements_num_, thread_num_) : elements_num_;
-  ret = ParallelLaunch(this->context_->thread_pool_, LshProjectionRun, this, thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, LshProjectionRun, this, thread_num_);
   return ret;
 }
 

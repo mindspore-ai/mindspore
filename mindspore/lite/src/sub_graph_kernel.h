@@ -68,6 +68,7 @@ class CpuFp32SubGraph : public SubGraphKernel {
                            const std::vector<LiteKernel *> &nodes, const lite::InnerContext *ctx)
       : SubGraphKernel(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
     subgraph_type_ = kCpuFP32SubGraph;
+    this->name_ = "CpuFP32SubGraph";
     this->executor_ = new mindspore::lite::Executor;
   }
 
@@ -88,6 +89,7 @@ class CpuFp16SubGraph : public SubGraphKernel {
                            const std::vector<LiteKernel *> &nodes, const lite::InnerContext *ctx)
       : SubGraphKernel(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
     subgraph_type_ = kCpuFP16SubGraph;
+    this->name_ = "CpuFP16SubGraph";
     this->executor_ = new mindspore::lite::Executor;
   }
 

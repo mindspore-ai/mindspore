@@ -27,6 +27,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/inner_context.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/model_common.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_registry.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_kernel.cc

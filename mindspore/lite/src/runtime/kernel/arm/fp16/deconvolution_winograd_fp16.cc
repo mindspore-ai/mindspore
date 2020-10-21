@@ -280,12 +280,6 @@ int DeConvWinogradFp16CPUKernel::Init() {
 }
 
 int DeConvWinogradFp16CPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
   ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {

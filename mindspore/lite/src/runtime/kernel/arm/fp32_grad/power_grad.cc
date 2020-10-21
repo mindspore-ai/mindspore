@@ -69,11 +69,6 @@ int PowerGradRun(void *cdata, int task_id) {
 }
 
 int PowerGradCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "PowerGradCPUKernel Prepare failed.";
-    return RET_ERROR;
-  }
   int error_code = ParallelLaunch(this->context_->thread_pool_, PowerGradRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "power grad function error error_code[" << error_code << "]";

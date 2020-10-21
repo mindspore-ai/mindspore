@@ -91,12 +91,6 @@ int SoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id) {
 }
 
 int SoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "SoftmaxCrossEntropyWithLogitsCPUKernel Prepare failed.";
-    return ret;
-  }
-
   int error_code = ParallelLaunch(this->context_->thread_pool_, SoftmaxCrossEntropyWithLogitsRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SoftmaxCrossEntropy function error error_code[" << error_code << "]";

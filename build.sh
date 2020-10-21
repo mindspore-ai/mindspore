@@ -266,12 +266,15 @@ checkopts()
         COMPILE_LITE="on"
         if [[ "$OPTARG" == "arm64" ]]; then
           ENABLE_CONVERTER="off"
+          RUN_TESTCASES="on"
           LITE_PLATFORM="arm64"
         elif [[ "$OPTARG" == "arm32" ]]; then
           ENABLE_CONVERTER="off"
+          RUN_TESTCASES="on"
           LITE_PLATFORM="arm32"
         elif [[ "$OPTARG" == "x86_64" ]]; then
           ENABLE_CONVERTER="on"
+          RUN_TESTCASES="on"
           LITE_PLATFORM="x86_64"
         else
           echo "-I parameter must be arm64、arm32 or x86_64"
@@ -315,7 +318,7 @@ checkopts()
         elif [[ "$OPTARG" == "object-c" ]]; then
           LITE_LANGUAGE="object-c"
         else
-          echo "-A parameter must be cpp、java or object-c"
+          echo "-A parameter must be cpp, java or object-c"
           exit 1
         fi
         ;;
@@ -628,9 +631,9 @@ build_minddata_lite_deps()
 }
 
 get_version() {
-    VERSION_MAJOR=`grep "const int ms_version_major =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]"`
-    VERSION_MINOR=`grep "const int ms_version_minor =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]"`
-    VERSION_REVISION=`grep "const int ms_version_revision =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]"`
+    VERSION_MAJOR=$(grep "const int ms_version_major =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]")
+    VERSION_MINOR=$(grep "const int ms_version_minor =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]")
+    VERSION_REVISION=$(grep "const int ms_version_revision =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]")
     VERSION_STR=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}
 }
 
@@ -642,7 +645,9 @@ build_lite()
       echo "start build opencl"
       build_opencl
     fi
-    build_gtest
+    if [ "${RUN_TESTCASES}" == "on" ]; then
+        build_gtest
+    fi
 
     if [ "${COMPILE_MINDDATA_LITE}" == "lite" ] || [ "${COMPILE_MINDDATA_LITE}" == "full" ]; then
         build_minddata_lite_deps
@@ -665,7 +670,7 @@ build_lite()
               -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
               -DANDROID_STL="c++_static" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}                     \
               -DPLATFORM_ARM64=on -DENABLE_NEON=on -DENABLE_FP16="off"      \
-              -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=on \
+              -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
               -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
@@ -676,14 +681,14 @@ build_lite()
               -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="clang"                      \
               -DANDROID_STL="c++_static" -DCMAKE_BUILD_TYPE=${BUILD_TYPE}                                                      \
               -DPLATFORM_ARM32=on -DENABLE_NEON=on -DSUPPORT_TRAIN=${SUPPORT_TRAIN}  \
-              -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=on \
+              -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
               -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
                "${BASEPATH}/mindspore/lite"
     else
         cmake -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=${SUPPORT_TRAIN}   \
-        -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=on \
+        -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${ENABLE_GPU} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
         -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp  \
         -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
@@ -718,8 +723,8 @@ build_lite_java_arm64() {
     cd ${BASEPATH}/output/
     rm -rf mindspore-lite-${VERSION_STR}-runtime-arm64-cpu
     tar -zxvf mindspore-lite-${VERSION_STR}-runtime-arm64-cpu.tar.gz
+    [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/arm64-v8a/
     mkdir -p ${JAVA_PATH}/java/app/libs/arm64-v8a/
-    [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/arm64-v8a/*
     cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
     cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite-fp16.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
     cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite-optimize.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
@@ -738,10 +743,10 @@ build_lite_java_arm32() {
     fi
     # copy arm32 so
     cd ${BASEPATH}/output/
-    rm -rf mindspore-lite-${VERSION_STR}runtime-arm32-cpu
+    rm -rf mindspore-lite-${VERSION_STR}-runtime-arm32-cpu
     tar -zxvf mindspore-lite-${VERSION_STR}-runtime-arm32-cpu.tar.gz
+    [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/armeabi-v7a/
     mkdir -p ${JAVA_PATH}/java/app/libs/armeabi-v7a/
-    [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/armeabi-v7a/*
     cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm32-cpu/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
     [ -n "${VERSION_STR}" ] && rm -rf mindspore-lite-${VERSION_STR}-runtime-arm32-cpu
 }
