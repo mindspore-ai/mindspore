@@ -14,31 +14,45 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONCAT_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONCAT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_STACK_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_STACK_H_
 
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "src/runtime/kernel/arm/base/concat_base.h"
+#include "nnacl/stack_parameter.h"
 
 namespace mindspore::kernel {
 
-class ConcatOpenCLKernel : public OpenCLKernel {
+class StackOpenCLKernel : public OpenCLKernel {
  public:
-  ConcatOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs)
+  explicit StackOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                             const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
 
-  ~ConcatOpenCLKernel() override = default;
+  ~StackOpenCLKernel() override{};
 
   int Init() override;
+
+  int ReSize() override;
 
   int Run() override;
 
  private:
   int RunAxis0();
 
+  int InferInTensorShapeTo4D(int *arg_cn);
+
+  int InferOutTensorShapeTo4D(cl_int4 *output_shape);
+
   cl::Kernel kernel_;
+  int axis_{0};
+  size_t N_{1};
+  size_t H_{1};
+  size_t W_{1};
+  size_t C_{1};
+  size_t OH_{1};
+  size_t OW_{1};
+  size_t OC_{1};
 };
 
 }  // namespace mindspore::kernel

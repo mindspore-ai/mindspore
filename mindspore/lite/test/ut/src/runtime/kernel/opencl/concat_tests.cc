@@ -37,14 +37,6 @@ class TestConcatOpenCLCI : public mindspore::CommonTest {
   TestConcatOpenCLCI() {}
 };
 
-template <typename T>
-void CompareOutputData1(T *output_data, T *correct_data, int size, float err_bound) {
-  for (size_t i = 0; i < size; i++) {
-    T abs = fabs(output_data[i] - correct_data[i]);
-    ASSERT_LE(abs, err_bound);
-  }
-}
-
 TEST_F(TestConcatOpenCLCI, ConcatFp32_2inputforCI) {
   MS_LOG(INFO) << " begin test ";
   auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
@@ -132,7 +124,7 @@ TEST_F(TestConcatOpenCLCI, ConcatFp32_2inputforCI) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
-  CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001);
+  CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001);
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
     delete tensor;
@@ -260,7 +252,7 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_4input_dim4_axis1) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
-  CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
+  CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
     delete tensor;
@@ -379,7 +371,7 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_3input_dim4_axis1) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
-  CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001);
+  CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001);
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
     delete tensor;
@@ -518,7 +510,7 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_6input_dim4_axis1) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
-  CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
+  CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
     tensor->SetData(nullptr);
     delete tensor;
