@@ -29,5 +29,14 @@ MS_REG_GPU_KERNEL_ONE(
   SliceGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   SliceGradGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  SliceGrad, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+  SliceGradGpuKernel, int16_t)
+MS_REG_GPU_KERNEL_ONE(
+  SliceGrad, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+  SliceGradGpuKernel, uchar)
+MS_REG_GPU_KERNEL_ONE(
+  SliceGrad, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+  SliceGradGpuKernel, bool)
 }  // namespace kernel
 }  // namespace mindspore
