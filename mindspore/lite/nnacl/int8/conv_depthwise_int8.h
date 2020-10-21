@@ -33,7 +33,8 @@ void ConvDw3x3PadInt8(int8_t *output_data, const int8_t *input_data, const int16
                       const int32_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding);
 
 void ConvDw3x3Int8(int8_t *output_data, int8_t *buffer, const int8_t *input_data, const int16_t *weight_data,
-                   const int32_t *bias_data, const ConvParameter *conv_param, int task_id);
+                   const int32_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
+                   int task_id);
 
 void ConvDwSWInt8(int8_t *output_data, const int8_t *input_data, const int16_t *weight_data, const int32_t *bias_data,
                   int8_t *input_zp, int32_t *output_zp, const ConvParameter *conv_param,

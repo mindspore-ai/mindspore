@@ -125,7 +125,7 @@ int ConvolutionDepthwise3x3Int8CPUKernel::ReSize() {
 int ConvolutionDepthwise3x3Int8CPUKernel::Execute(int task_id) {
   auto buffer = buffer_ + 64 * 10 * 10 * task_id;
   ConvDw3x3Int8(output_ptr_, buffer, input_ptr_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), conv_param_,
-                task_id);
+                sliding_, task_id);
   return RET_OK;
 }
 
@@ -167,7 +167,8 @@ int ConvolutionDepthwise3x3Int8CPUKernel::Run() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<int8_t *>(output_tensor->MutableData());
 
-  if (conv_param_->pad_l_ == 1 && conv_param_->pad_u_ == 1) {
+  if (sliding_->top_ > 0 || sliding_->bottom_ < conv_param_->output_h_ || sliding_->left_ > 0 ||
+      sliding_->right_ < conv_param_->output_w_) {
     ConvDw3x3PadInt8(output_ptr_, input_ptr_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), conv_param_,
                      sliding_);
   }

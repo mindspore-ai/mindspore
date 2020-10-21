@@ -67,8 +67,11 @@ void IndirectGemmInt8_4x4(int8_t *output, const int8_t *input, const int8_t *wei
 void DeconvDwInt8Center(int32_t *dst, const int16_t *src, const int16_t *weight, size_t height, size_t width,
                         size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,
                         size_t in_sw_step, size_t in_kh_step, size_t in_kw_step);
+void ConvDw3x3BorderPixelInt8(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, size_t height,
+                              size_t width, size_t in_kh_step, size_t in_kw_step, size_t channel, size_t in_zp,
+                              size_t out_zp, size_t out_multiplier, size_t left_shift, size_t right_shift,
+                              size_t acc_min, size_t acc_max);
 #endif
-
 #ifdef __cplusplus
 }
 #endif

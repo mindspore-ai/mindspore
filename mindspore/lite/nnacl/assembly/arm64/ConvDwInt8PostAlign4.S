@@ -27,7 +27,7 @@ ConvDwInt8PostAlign4:
     dup v30.4s, w7
     dup v31.4s, w8
 
-    cmp x2, 16
+    cmp x2, #16
     blt LoopDepth8
 
     LoopDepth16:
