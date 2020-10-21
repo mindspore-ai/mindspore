@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import identity
 from mindspore.ops.operations import _inner_ops as inner
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, Primitive
 from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
 from mindspore._checkparam import Rel, Validator
@@ -175,8 +175,8 @@ class Dense(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
             same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
-        activation (str): activate function applied to the output of the fully connected layer, eg. 'ReLU'.
-            Default: None.
+        activation (Union[str, Cell, Primitive]): activate function applied to the output of the fully connected layer,
+            eg. 'ReLU'.Default: None.
 
     Raises:
         ValueError: If weight_init or bias_init shape is incorrect.
@@ -222,7 +222,9 @@ class Dense(Cell):
             self.bias_add = P.BiasAdd()
 
         self.matmul = P.MatMul(transpose_b=True)
-        self.activation = get_activation(activation)
+        self.activation = get_activation(activation) if isinstance(activation, str) else activation
+        if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
+            raise TypeError("The activation must be str or Cell or Primitive,"" but got {}.".format(activation))
         self.activation_flag = self.activation is not None
 
     def construct(self, x):
