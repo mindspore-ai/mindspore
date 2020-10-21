@@ -15,6 +15,8 @@
  */
 
 #include "src/common/string_util.h"
+#include <algorithm>
+#include "include/ms_tensor.h"
 
 namespace mindspore {
 namespace lite {
@@ -28,9 +30,13 @@ std::vector<StringPack> ParseTensorBuffer(Tensor *tensor) {
 }
 
 std::vector<StringPack> ParseStringBuffer(const void *data) {
+  std::vector<StringPack> buffer;
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "data is nullptr";
+    return buffer;
+  }
   const int32_t *offset = reinterpret_cast<const int32_t *>(data);
   int32_t num = *offset;
-  std::vector<StringPack> buffer;
   for (int i = 0; i < num; i++) {
     offset += 1;
     buffer.push_back(StringPack{(*(offset + 1)) - (*offset), reinterpret_cast<const char *>(data) + (*offset)});
@@ -107,6 +113,26 @@ int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<
 int GetStringCount(const void *data) { return *(static_cast<const int32_t *>(data)); }
 
 int GetStringCount(Tensor *tensor) { return GetStringCount(tensor->MutableData()); }
+
+int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *tensor) {
+  std::vector<StringPack> all_pack;
+  for (auto &input : inputs) {
+    StringPack pack = {static_cast<int>(input.length()), input.data()};
+    all_pack.push_back(pack);
+  }
+  return WriteStringsToTensor(static_cast<Tensor *>(tensor), all_pack);
+}
+
+std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor) {
+  const void *ptr = static_cast<const Tensor *>(tensor)->data_c();
+  std::vector<StringPack> all_pack = ParseStringBuffer(ptr);
+  std::vector<std::string> result(all_pack.size());
+  std::transform(all_pack.begin(), all_pack.end(), result.begin(), [](StringPack &pack) {
+    std::string str(pack.data, pack.len);
+    return str;
+  });
+  return result;
+}
 
 // Some primes between 2^63 and 2^64
 static uint64_t k0 = 0xc3a5c85c97cb3127ULL;
