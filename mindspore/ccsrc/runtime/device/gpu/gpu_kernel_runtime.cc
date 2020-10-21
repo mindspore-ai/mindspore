@@ -281,6 +281,11 @@ void GPUKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::v
 }
 
 void GPUKernelRuntime::AllocInplaceNodeMemory(const session::KernelGraph *graph) {
+  if (is_alloc_inplace_res_[graph->graph_id()]) {
+    return;
+  }
+  is_alloc_inplace_res_[graph->graph_id()] = true;
+
   std::map<uint32_t, std::vector<CNodePtr>> inplace_groups;
   auto kernel_cnodes = graph->execution_order();
   for (auto &kernel : kernel_cnodes) {
@@ -921,6 +926,11 @@ bool GPUKernelRuntime::AllocKernelWorkspaceDynamicRes(const mindspore::kernel::K
 }
 
 void GPUKernelRuntime::AllocCommunicationOpDynamicRes(const session::KernelGraph *graph) {
+  if (is_alloc_communication_res_[graph->graph_id()]) {
+    return;
+  }
+  is_alloc_communication_res_[graph->graph_id()] = true;
+
   MS_EXCEPTION_IF_NULL(graph);
   auto &kernels = graph->execution_order();
   for (auto &kernel : kernels) {
@@ -1029,6 +1039,11 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
       if (i == index) {
         continue;
       }
+    }
+
+    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(kernel, i);
+    if (AnfAlgo::IsCommunicationOp(kernel_with_index.first)) {
+      continue;
     }
 
     auto kernel_ref_count_ptr = mem_reuse_util_->GetKernelInputRef(cnode, i);
