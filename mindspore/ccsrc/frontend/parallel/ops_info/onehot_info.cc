@@ -74,7 +74,7 @@ Status OneHotInfo::InferDevMatrixShape() {
     dev_matrix_shape_.push_back(input_strategy[1]);  // the depth is un-splittable
   }
   old_dev_matrix_back_ = dev_matrix_shape_.back();
-
+  repeated_num_in_dev_matrix_right_ = false;
   return SUCCESS;
 }
 

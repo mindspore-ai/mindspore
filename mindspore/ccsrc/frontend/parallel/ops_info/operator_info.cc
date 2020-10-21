@@ -164,21 +164,24 @@ Status OperatorInfo::InferRepeatedCalcInfo() {
   return SUCCESS;
 }
 
-// If repeated calculation, need to set the repeated_calc_num as the last dimension of dev-matrix,
-// only use for infer tensor layout. Because if the previous shard is (a, b), and the next shard is
-// (a, 1), adding the repeated_calc_num to the last dimension of dev-matrix, there is no need to redistribution.
+// If repeated calculation, set the repeated_calc_num as the last dimension of dev-matrix in default,
+// because if the previous shard is (a, b), and the next shard is (a, 1), adding the repeated_calc_num
+// to the last dimension of dev-matrix, there is no need to redistribution.
 void OperatorInfo::SetRepeatedCalcDevMatrix() {
   if (repeated_calc_num_ <= 1) {
     return;
   }
-
-  (void)dev_matrix_shape_.push_back(repeated_calc_num_);
+  if (repeated_num_in_dev_matrix_right_) {
+    dev_matrix_shape_.push_back(repeated_calc_num_);
+  } else {
+    (void)dev_matrix_shape_.insert(dev_matrix_shape_.begin(), repeated_calc_num_);
+  }
 }
 
-// If repeated calculation, since the repeated_calc_num is added to the last dimension of the dev-matrix,
+// If repeated calculation, and the repeated_calc_num is inserted to the last dimension of the dev-matrix,
 // the index value of tensor map needs to be increased by 1.
 void OperatorInfo::ResetTensorMapIfRepeatedCalc() {
-  if (repeated_calc_num_ <= 1) {
+  if ((repeated_calc_num_ <= 1) || !repeated_num_in_dev_matrix_right_) {
     return;
   }
 

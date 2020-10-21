@@ -65,6 +65,7 @@ class MatMulBase : public OperatorInfo {
   int32_t field_size_ = 0;
   size_t mat_a_dimension_ = 0;
   size_t mat_b_dimension_ = 0;
+  Shape origin_dev_matrix_shape_;
 };
 
 class MatMul : public MatMulBase {
