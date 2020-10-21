@@ -22,6 +22,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include "minddata/dataset/core/constants.h"
@@ -65,6 +66,7 @@ class CocoNode;
 class CSVNode;
 class CsvBase;
 class ImageFolderNode;
+class BatchNode;
 #ifndef ENABLE_ANDROID
 class ManifestNode;
 class MindDataNode;
@@ -77,7 +79,6 @@ class TFRecordNode;
 class VOCNode;
 #endif
 // Dataset Op classes (in alphabetical order)
-class BatchNode;
 #ifndef ENABLE_ANDROID
 class BucketBatchByLengthNode;
 class BuildVocabNode;
@@ -91,6 +92,30 @@ class ShuffleNode;
 class SkipNode;
 class TakeNode;
 class ZipNode;
+
+#define RETURN_EMPTY_IF_ERROR(_s) \
+  do {                            \
+    Status __rc = (_s);           \
+    if (__rc.IsError()) {         \
+      MS_LOG(ERROR) << __rc;      \
+      return {};                  \
+    }                             \
+  } while (false)
+
+// Helper function to validate dataset num_shards and shard_id parameters
+Status ValidateDatasetShardParams(const std::string &dataset_name, int32_t num_shards, int32_t shard_id);
+
+// Helper function to validate dataset sampler parameter
+Status ValidateDatasetSampler(const std::string &dataset_name, const std::shared_ptr<SamplerObj> &sampler);
+
+Status ValidateStringValue(const std::string &str, const std::unordered_set<std::string> &valid_strings);
+
+// Helper function to validate dataset input/output column parameterCD -
+Status ValidateDatasetColumnParam(const std::string &dataset_name, const std::string &column_param,
+                                  const std::vector<std::string> &columns);
+
+// Helper function to validate dataset directory parameter
+Status ValidateDatasetDirParam(const std::string &dataset_name, std::string dataset_dir);
 
 /// \brief Function to create a SchemaObj
 /// \param[in] schema_file Path of schema file
@@ -915,34 +940,6 @@ class CSVNode : public Dataset {
   int32_t shard_id_;
 };
 
-/// \class ImageFolderNode
-/// \brief A Dataset derived class to represent ImageFolder dataset
-class ImageFolderNode : public Dataset {
- public:
-  /// \brief Constructor
-  ImageFolderNode(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler, bool recursive,
-                  std::set<std::string> extensions, std::map<std::string, int32_t> class_indexing);
-
-  /// \brief Destructor
-  ~ImageFolderNode() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return Status Status::OK() if all the parameters are valid
-  Status ValidateParams() override;
-
- private:
-  std::string dataset_dir_;
-  bool decode_;
-  bool recursive_;
-  std::shared_ptr<SamplerObj> sampler_;
-  std::map<std::string, int32_t> class_indexing_;
-  std::set<std::string> exts_;
-};
-
 #ifndef ENABLE_ANDROID
 class ManifestNode : public Dataset {
  public:
@@ -1201,32 +1198,6 @@ class VOCNode : public Dataset {
 
 // DERIVED DATASET CLASSES FOR DATASET OPS
 // (In alphabetical order)
-
-class BatchNode : public Dataset {
- public:
-  /// \brief Constructor
-  BatchNode(std::shared_ptr<Dataset> child, int32_t batch_size, bool drop_remainder, bool pad,
-            std::vector<std::string> cols_to_map,
-            std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map);
-
-  /// \brief Destructor
-  ~BatchNode() = default;
-
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
-
-  /// \brief Parameters validation
-  /// \return Status Status::OK() if all the parameters are valid
-  Status ValidateParams() override;
-
- private:
-  int32_t batch_size_;
-  bool drop_remainder_;
-  bool pad_;
-  std::vector<std::string> cols_to_map_;
-  std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map_;
-};
 
 #ifndef ENABLE_ANDROID
 class BucketBatchByLengthNode : public Dataset {

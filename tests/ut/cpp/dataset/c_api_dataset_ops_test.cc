@@ -18,6 +18,8 @@
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/vision.h"
 
+#include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
+#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
 using namespace mindspore::dataset::api;
 using mindspore::dataset::Tensor;
 

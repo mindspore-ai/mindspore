@@ -16,6 +16,8 @@
 #include "common/common.h"
 #include "minddata/dataset/include/datasets.h"
 
+#include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
+#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
 using namespace mindspore::dataset::api;
 using mindspore::dataset::Tensor;
 using mindspore::dataset::TensorShape;
@@ -183,19 +185,19 @@ TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongSampler) {
 }
 
 TEST_F(MindDataTestPipeline, TestMnistFailWithWrongDatasetDir) {
-MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithWrongDatasetDir.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithWrongDatasetDir.";
 
-// Create a Mnist Dataset
-std::shared_ptr<Dataset> ds = Mnist("", "all", RandomSampler(false, 10));
-EXPECT_EQ(ds, nullptr);
+  // Create a Mnist Dataset
+  std::shared_ptr<Dataset> ds = Mnist("", "all", RandomSampler(false, 10));
+  EXPECT_EQ(ds, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestMnistFailWithNullSampler) {
-MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithNullSampler.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithNullSampler.";
 
-// Create a Mnist Dataset
-std::string folder_path = datasets_root_path_ + "/testMnistData/";
-std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", nullptr);
-// Expect failure: sampler can not be nullptr
-EXPECT_EQ(ds, nullptr);
+  // Create a Mnist Dataset
+  std::string folder_path = datasets_root_path_ + "/testMnistData/";
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", nullptr);
+  // Expect failure: sampler can not be nullptr
+  EXPECT_EQ(ds, nullptr);
 }
