@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/int8/convolution_depthwise_int8.h"
 #include "src/runtime/kernel/arm/int8/convolution_depthwise_3x3_int8.h"
-#include "src/runtime/kernel/arm/int8/convolution_depthwise_slidewindow_int8.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -30,7 +28,11 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
-ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() {
+ConvolutionDepthwise3x3Int8CPUKernel::~ConvolutionDepthwise3x3Int8CPUKernel() {
+  if (sliding_ != nullptr) {
+    delete sliding_;
+    sliding_ = nullptr;
+  }
   if (packed_weight_ != nullptr) {
     free(packed_weight_);
     packed_weight_ = nullptr;
@@ -38,11 +40,15 @@ ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() {
   FreeQuantParam();
 }
 
-int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
+int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
   // init weight, int8 -> int16
   auto weight_tensor = in_tensors_[kWeightIndex];
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
   int channel = weight_tensor->Batch();
+  if (channel % 8 != 0) {
+    MS_LOG(ERROR) << "ConvolutionDepthwise3x3Int8CPUKernel dosen't support channel " << channel;
+    return RET_ERROR;
+  }
   int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
   auto tmp_weight = reinterpret_cast<int8_t *>(malloc(pack_weight_size * sizeof(int8_t)));
   if (tmp_weight == nullptr) {
@@ -57,7 +63,6 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-
   bool filter_per_channel = conv_param_->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
   if (filter_per_channel) {
     for (int i = 0; i < weight_tensor->Height() * weight_tensor->Width(); i++) {
@@ -85,19 +90,24 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
     auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->MutableData());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(int32_t));
   }
-
   return RET_OK;
 }
 
-int ConvolutionDepthwiseInt8CPUKernel::Init() {
+int ConvolutionDepthwise3x3Int8CPUKernel::Init() {
+  sliding_ = new (std::nothrow) SlidingWindowParam;
+  if (sliding_ == nullptr) {
+    MS_LOG(ERROR) << "new sliding window param.";
+    return RET_ERROR;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
 
-int ConvolutionDepthwiseInt8CPUKernel::ReSize() {
+int ConvolutionDepthwise3x3Int8CPUKernel::ReSize() {
   ConvolutionBaseCPUKernel::Init();
+  InitSlidingParamConvDw(sliding_, conv_param_, conv_param_->input_channel_);
   auto ret = ConvolutionBaseCPUKernel::SetQuantParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set quant param failed.";
@@ -112,34 +122,34 @@ int ConvolutionDepthwiseInt8CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ConvolutionDepthwiseInt8CPUKernel::Execute(int task_id) {
-  auto buffer = row_buffer_ + conv_param_->output_w_ * conv_param_->output_channel_ * task_id;
-  ConvDwInt8(output_ptr_, buffer, input_ptr_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), conv_param_,
-             task_id);
+int ConvolutionDepthwise3x3Int8CPUKernel::Execute(int task_id) {
+  auto buffer = buffer_ + 64 * 10 * 10 * task_id;
+  ConvDw3x3Int8(output_ptr_, buffer, input_ptr_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), conv_param_,
+                task_id);
   return RET_OK;
 }
 
-int ConvDwInt8Run(void *cdata, int task_id) {
-  auto conv_dw_int8 = reinterpret_cast<ConvolutionDepthwiseInt8CPUKernel *>(cdata);
+int ConvDw3x3Int8Run(void *cdata, int task_id) {
+  auto conv_dw_int8 = reinterpret_cast<ConvolutionDepthwise3x3Int8CPUKernel *>(cdata);
   auto ret = conv_dw_int8->Execute(task_id);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionDepthwiseInt8Run error task_id[" << task_id << "] error_code[" << ret << "]";
+    MS_LOG(ERROR) << "ConvolutionDepthwise3x3Int8Run error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int ConvolutionDepthwiseInt8CPUKernel::InitBuffer() {
-  int output_row_size = conv_param_->thread_num_ * conv_param_->output_w_ * conv_param_->output_channel_;
-  row_buffer_ = reinterpret_cast<int32_t *>(context_->allocator->Malloc(output_row_size * sizeof(int)));
-  if (row_buffer_ == nullptr) {
+int ConvolutionDepthwise3x3Int8CPUKernel::InitBuffer() {
+  int buffer_size = 64 * 10 * 10 * conv_param_->thread_num_;
+  buffer_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(buffer_size * sizeof(int8_t)));
+  if (buffer_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int ConvolutionDepthwiseInt8CPUKernel::Run() {
+int ConvolutionDepthwise3x3Int8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare failed.";
@@ -157,46 +167,17 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<int8_t *>(output_tensor->MutableData());
 
-  ret = ParallelLaunch(this->context_->thread_pool_, ConvDwInt8Run, this, conv_param_->thread_num_);
+  if (conv_param_->pad_l_ == 1 && conv_param_->pad_u_ == 1) {
+    ConvDw3x3PadInt8(output_ptr_, input_ptr_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), conv_param_,
+                     sliding_);
+  }
+  ret = ParallelLaunch(this->context_->thread_pool_, ConvDw3x3Int8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
+    context_->allocator->Free(buffer_);
     MS_LOG(ERROR) << "ConvDwInt8Run error: error_code[" << ret << "]";
     return RET_ERROR;
   }
-
-  context_->allocator->Free(row_buffer_);
+  context_->allocator->Free(buffer_);
   return RET_OK;
 }
-
-kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const InnerContext *ctx, const kernel::KernelKey &desc,
-                                               const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
-  kernel::LiteKernel *kernel;
-  auto act_quant_size =
-    MSMAX(inputs[kInputIndex]->GetQuantParams().size(), outputs[kOutputIndex]->GetQuantParams().size());
-  if (act_quant_size == 1) {  // per tensor
-    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  } else {  // per channel
-    kernel =
-      new (std::nothrow) kernel::ConvolutionDepthwiseSWInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  }
-
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DepthwiseConv2D, CpuConvDwInt8KernelCreator)
 }  // namespace mindspore::kernel

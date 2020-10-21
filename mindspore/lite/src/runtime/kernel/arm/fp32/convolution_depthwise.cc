@@ -101,10 +101,6 @@ int ConvDwRun(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseCPUKernel::Run() {
-  if (conv_param_->input_channel_ != conv_param_->output_channel_) {
-    MS_LOG(ERROR) << "Only support input channel equals output channel.";
-    return RET_ERROR;
-  }
   auto ret = Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare failed.";

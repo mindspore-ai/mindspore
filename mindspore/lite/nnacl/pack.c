@@ -733,6 +733,25 @@ void PackNHWC8ToNHWCInt8(const void *src, void *dst, int batch, int plane, int c
   }
 }
 
+void PackNCHWToNC8HW8Int8(const void *src, void *dst, int batch, int plane, int channel) {
+  int c8 = UP_DIV(channel, C8NUM);
+  for (int b = 0; b < batch; b++) {
+    int src_offset = b * plane * channel;
+    int dst_offset = b * plane * c8 * C8NUM;
+    for (int c = 0; c < channel; c++) {
+      int c8_block_num = c / C8NUM;
+      int c8_block_rem = c % C8NUM;
+      int src_c_offset = src_offset + c * plane;
+      int dst_c_offset = dst_offset + c8_block_num * plane * C8NUM;
+      for (int k = 0; k < plane; k++) {
+        int src_kernel_offset = src_c_offset + k;
+        int dst_kernel_offset = dst_c_offset + C8NUM * k + c8_block_rem;
+        ((int8_t *)dst + dst_kernel_offset)[0] = ((int8_t *)src + src_kernel_offset)[0];
+      }
+    }
+  }
+}
+
 void PackNC4HW4ToNHWCInt8(const void *src, void *dst, int batch, int plane, int channel) {
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {
