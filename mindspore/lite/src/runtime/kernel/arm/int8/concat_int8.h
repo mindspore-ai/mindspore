@@ -36,6 +36,16 @@ class ConcatInt8CPUKernel : public ConcatBaseCPUKernel {
     if (input_data_ != nullptr) {
       free(input_data_);
     }
+    int *output_shape = concat_param_->output_shapes_;
+    if (output_shape != nullptr) {
+      free(output_shape);
+    }
+    for (std::size_t i = 0; i < in_tensors().size(); i++) {
+      int *input_shape = concat_param_->input_shapes_[i];
+      if (input_shape != nullptr) {
+        free(input_shape);
+      }
+    }
     if (concat_param_->input_shapes_ != nullptr) {
       free(concat_param_->input_shapes_);
     }

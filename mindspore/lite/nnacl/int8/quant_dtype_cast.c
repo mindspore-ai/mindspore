@@ -35,7 +35,7 @@ int DoQuantizeToInt8FromFp32(float *real_values, int8_t *quant_values, float sca
   }
 
   for (int i = 0; i < size; ++i) {
-    float temp = round(real_values[i] / scale + zp);
+    float temp = round(real_values[i] * 1.0 / scale + zp);
     if (temp > 127) {
       quant_values[i] = 127;
     } else if (temp < -128) {

@@ -26,8 +26,8 @@ typedef struct ConcatParameter {
   int axis_;
   int thread_count_;
   int input_num_;
-  const int **input_shapes_;
-  const int *output_shapes_;
+  int **input_shapes_;
+  int *output_shapes_;
   int64_t after_axis_size;
   int64_t count_unit_;
 } ConcatParameter;
