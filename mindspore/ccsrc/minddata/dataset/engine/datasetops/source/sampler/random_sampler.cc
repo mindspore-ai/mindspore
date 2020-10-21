@@ -59,7 +59,7 @@ Status RandomSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
         RETURN_IF_NOT_OK(GetAssociatedChildId(&sampled_id, sampled_id));
       }
 
-      *(id_ptr + i) = sampled_id;
+      *(id_ptr + static_cast<ptrdiff_t>(i)) = sampled_id;
     }
     next_id_ = last_id;
     TensorRow row(1, sampleIds);
