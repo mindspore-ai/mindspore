@@ -699,6 +699,56 @@ bool Split(const LiteMat &src, std::vector<LiteMat> &mv) {
   return false;
 }
 
+template <typename T>
+inline void MergeImpl(const std::vector<LiteMat> &mv, T *dst_ptr, int height, int width, int channel) {
+  T *mv_ptr[4];
+  int area = height * width;
+  for (int c = 0; c < channel; c++) {
+    mv_ptr[c] = reinterpret_cast<T *>(mv[c].data_ptr_);
+  }
+  for (int i = 0; i < area; i++) {
+    for (int c = 0; c < channel; c++) {
+      dst_ptr[c] = *mv_ptr[c];
+      mv_ptr[c]++;
+    }
+    dst_ptr += channel;
+  }
+}
+
+bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
+  if (mv.empty() || mv.size() > 4) return false;
+
+  int width = mv[0].width_;
+  int height = mv[0].height_;
+  int channel = mv.size();
+  LDataType data_type = mv[0].data_type_;
+
+  // The arrays in list must be single-channel
+  for (int i = 0; i < mv.size(); i++) {
+    if (mv[i].channel_ != 1) return false;
+  }
+
+  for (int i = 1; i < mv.size(); i++) {
+    if (width != mv[i].width_ || height != mv[i].height_ || data_type != mv[i].data_type_) {
+      return false;
+    }
+  }
+
+  if (dst.IsEmpty() || dst.width_ != width || dst.height_ != height || dst.channel_ != channel ||
+      dst.data_type_ != data_type) {
+    dst.Init(width, height, channel, data_type);
+  }
+
+  if (dst.data_type_ == LDataType::FLOAT32) {
+    MergeImpl<float>(mv, dst, height, width, channel);
+  } else if (dst.data_type_ == LDataType::UINT8) {
+    MergeImpl<uint8_t>(mv, dst, height, width, channel);
+  } else {
+    return false;
+  }
+  return true;
+}
+
 bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r) {
   if (top <= 0 || bottom <= 0 || left <= 0 || right <= 0) {
