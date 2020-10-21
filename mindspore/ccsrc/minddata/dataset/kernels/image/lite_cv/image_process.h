@@ -81,8 +81,10 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<
 bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r);
 
+/// \brief extract image channel by index
 bool ExtractChannel(const LiteMat &src, LiteMat &dst, int col);
 
+/// \brief split image channels to single channel
 bool Split(const LiteMat &src, std::vector<LiteMat> &mv);
 
 /// \brief Apply affine transformation for 1 channel image
