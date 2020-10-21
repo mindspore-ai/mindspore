@@ -179,7 +179,7 @@ class DetectionEngine:
         for event in self.results:
             for name in self.results[event].keys():
                 bbox = np.array(self.results[event][name]['bboxes']).astype(np.float)
-                if not bool(bbox):
+                if bbox.shape[0] <= 0:
                     continue
                 max_score = max(max_score, np.max(bbox[:, -1]))
                 min_score = min(min_score, np.min(bbox[:, -1]))
@@ -188,7 +188,7 @@ class DetectionEngine:
         for event in self.results:
             for name in self.results[event].keys():
                 bbox = np.array(self.results[event][name]['bboxes']).astype(np.float)
-                if not bool(bbox):
+                if bbox.shape[0] <= 0:
                     continue
                 bbox[:, -1] -= min_score
                 bbox[:, -1] /= length
@@ -227,7 +227,7 @@ class DetectionEngine:
         for section in range(section_num):
             _thresh = 1 - (section + 1)/section_num
             over_score_index = np.where(predict[:, 4] >= _thresh)[0]
-            if not bool(over_score_index):
+            if over_score_index.shape[0] <= 0:
                 image_pr[section, 0] = 0
                 image_pr[section, 1] = 0
             else:
@@ -264,10 +264,10 @@ class DetectionEngine:
                     keep_index = event_gt_index_list[j][0]
                     count_gt += len(keep_index)
 
-                    if not bool(gt_boxes) or not bool(predict):
+                    if gt_boxes.shape[0] <= 0 or predict.shape[0] <= 0:
                         continue
                     keep = np.zeros(gt_boxes.shape[0])
-                    if bool(keep_index):
+                    if keep_index.shape[0] > 0:
                         keep[keep_index-1] = 1
 
                     image_pr = self._image_eval(predict, gt_boxes, keep,

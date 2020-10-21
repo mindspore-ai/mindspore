@@ -55,7 +55,7 @@ def _choose_candidate(max_trial, image_w, image_h, boxes):
         dx = int(_rand(0, image_w - nw))
         dy = int(_rand(0, image_h - nh))
 
-        if bool(boxes):
+        if boxes.shape[0] > 0:
             crop_box = np.array((dx, dy, dx + nw, dy + nh))
             if not _is_iof_satisfied_constraint(boxes, crop_box[np.newaxis]):
                 continue
