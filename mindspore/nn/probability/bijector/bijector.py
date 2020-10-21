@@ -17,7 +17,7 @@ from mindspore import context
 from mindspore.nn.cell import Cell
 from mindspore.ops import operations as P
 from mindspore._checkparam import Validator as validator
-from ..distribution._utils.utils import CheckTensor
+from ..distribution._utils.utils import CheckTensor, cast_to_tensor
 from ..distribution import Distribution
 from ..distribution import TransformedDistribution
 
@@ -66,6 +66,8 @@ class Bijector(Cell):
         # ops needed for the base class
         self.cast_base = P.Cast()
         self.dtype_base = P.DType()
+        self.shape_base = P.Shape()
+        self.fill_base = P.Fill()
 
     @property
     def name(self):
@@ -86,6 +88,36 @@ class Bijector(Cell):
     @property
     def is_injective(self):
         return self._is_injective
+
+    def _add_parameter(self, value, name):
+        """
+        Cast `value` to a tensor and add it to `self.default_parameters`.
+        Add `name` into  and `self.parameter_names`.
+        """
+        # initialize the attributes if they do not exist yet
+        if not hasattr(self, 'default_parameters'):
+            self.default_parameters = []
+            self.parameter_names = []
+        # cast value to a tensor if it is not None
+        value_t = None if value is None else cast_to_tensor(value, self.parameter_type)
+        self.default_parameters += [value_t,]
+        self.parameter_names += [name,]
+        return value_t
+
+    def _calc_event_shape(self):
+        """
+        Calculate event_shape based on parameters.
+        """
+        broadcast_shape = None
+        for param in self.default_parameters:
+            if broadcast_shape is None:
+                broadcast_shape = self.shape_base(param)
+                broadcast_shape_tensor = self.fill_base(self.parameter_type, broadcast_shape, 0.0)
+            else:
+                broadcast_shape = self.shape_base(param + broadcast_shape_tensor)
+                broadcast_shape_tensor = self.fill_base(self.parameter_type, broadcast_shape, 0.0)
+        return broadcast_shape
+
 
     def _check_value(self, value, name):
         """

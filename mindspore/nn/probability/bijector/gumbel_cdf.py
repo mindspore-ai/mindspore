@@ -14,7 +14,9 @@
 # ============================================================================
 """GumbelCDF Bijector"""
 from mindspore.common import dtype as mstype
-from ..distribution._utils.utils import cast_to_tensor, check_greater_zero, set_param_type
+from mindspore._checkparam import Validator
+from mindspore.ops import operations as P
+from ..distribution._utils.utils import check_greater_zero, set_param_type
 from ..distribution._utils.custom_ops import exp_generic, log_generic
 from .bijector import Bijector
 
@@ -33,6 +35,7 @@ class GumbelCDF(Bijector):
     Args:
         loc (int, float, list, numpy.ndarray, Tensor): The location. Default: 0..
         scale (int, float, list, numpy.ndarray, Tensor): The scale. Default: 1.0.
+        dtype (mindspore.dtype): Type of the distribution which the bijector operates on. Default: float32.
         name (str): The name of the Bijector. Default: 'Gumbel_CDF'.
 
     Examples:
@@ -58,17 +61,24 @@ class GumbelCDF(Bijector):
     def __init__(self,
                  loc=0.0,
                  scale=1.0,
+                 dtype=mstype.float32,
                  name='GumbelCDF'):
         """
         Constructor of GumbelCDF Bijector.
         """
         param = dict(locals())
-        parameter_type = set_param_type({'loc': loc, "scale": scale}, mstype.float32)
-        super(GumbelCDF, self).__init__(name=name, dtype=parameter_type, param=param)
-        self._loc = cast_to_tensor(loc, parameter_type)
-        self._scale = cast_to_tensor(scale, parameter_type)
-        check_greater_zero(self._scale, "scale")
+        valid_dtype = mstype.float_type + mstype.int_type + mstype.uint_type
+        Validator.check_type(type(self).__name__, dtype, valid_dtype)
+        parameter_type = set_param_type({'loc': loc, "scale": scale}, dtype)
+        super(GumbelCDF, self).__init__(name=name, dtype=dtype, param=param)
 
+        self._parameter_type = parameter_type
+        self._loc = self._add_parameter(loc, 'loc')
+        self._scale = self._add_parameter(scale, 'scale')
+        check_greater_zero(self._scale, "scale")
+        self._event_shape = self._calc_event_shape()
+
+        self.cast = P.Cast()
         self.exp = exp_generic
         self.log = log_generic
 
@@ -81,6 +91,14 @@ class GumbelCDF(Bijector):
     def scale(self):
         return self._scale
 
+    @property
+    def event_shape(self):
+        return self._event_shape
+
+    @property
+    def parameter_type(self):
+        return self._parameter_type
+
     def extend_repr(self):
         str_info = f'loc = {self.loc}, scale = {self.scale}'
         return str_info
@@ -90,18 +108,22 @@ class GumbelCDF(Bijector):
 
     def _forward(self, x):
         x = self._check_value(x, 'value')
+        x = self.cast(x, self.parameter_type)
         z = (x - self.loc) / self.scale
         return self.exp(-self.exp(-z))
 
     def _inverse(self, y):
         y = self._check_value(y, 'value')
+        y = self.cast(y, self.parameter_type)
         return self.loc - self.scale * self.log(-self.log(y))
 
     def _forward_log_jacobian(self, x):
         x = self._check_value(x, 'value')
+        x = self.cast(x, self.parameter_type)
         z = (x - self.loc) / self.scale
         return -z - self.exp(-z) - self.log(self.scale)
 
     def _inverse_log_jacobian(self, y):
         y = self._check_value(y, 'value')
-        return self.log(self.scale / (-y * self.log(y)))
+        y = self.cast(y, self.parameter_type)
+        return self.log(self.scale / (-1. * y * self.log(y)))

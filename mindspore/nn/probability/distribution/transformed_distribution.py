@@ -82,11 +82,21 @@ class TransformedDistribution(Distribution):
         self._is_linear_transformation = bijector.is_constant_jacobian
         self.default_parameters = distribution.default_parameters
         self.parameter_names = distribution.parameter_names
+
         self.exp = exp_generic
         self.log = log_generic
         self.isnan = P.IsNan()
         self.equal_base = P.Equal()
         self.select_base = P.Select()
+        self.fill = P.Fill()
+
+        # check if batch shape of the distribution and event shape is broadcastable
+        if hasattr(self.bijector, 'event_shape'):
+            event_shape_tensor = self.fill(self.dtype, self.bijector.event_shape, 0.0)
+            broadcast_shape_tensor = self.fill(self.dtype, self.broadcast_shape, 0.0)
+            self._batch_event = (event_shape_tensor + broadcast_shape_tensor).shape
+        else:
+            self._batch_event = self.broadcast_shape
 
     @property
     def bijector(self):
