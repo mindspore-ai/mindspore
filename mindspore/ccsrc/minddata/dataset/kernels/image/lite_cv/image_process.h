@@ -85,6 +85,9 @@ bool ExtractChannel(const LiteMat &src, LiteMat &dst, int col);
 
 bool Split(const LiteMat &src, std::vector<LiteMat> &mv);
 
+/// \brief Create a multi-channel image out of several single-channel arrays.
+bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst);
+
 /// \brief Apply affine transformation for 1 channel image
 bool Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue);
 

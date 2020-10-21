@@ -241,6 +241,34 @@ TEST_F(MindDataImageProcess, testSplit) {
   cv::Mat dst_imageR(lite_r.height_, lite_r.width_, CV_8UC1, lite_r.data_ptr_);
 }
 
+TEST_F(MindDataImageProcess, testMerge) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  std::vector<cv::Mat> dst_images;
+  cv::split(src_image, dst_images);
+  // convert to RGBA for Android bitmap(rgba)
+  cv::Mat rgba_mat;
+  cv::cvtColor(src_image, rgba_mat, CV_BGR2RGBA);
+
+  bool ret = false;
+  LiteMat lite_mat_bgr;
+  ret =
+    InitFromPixel(rgba_mat.data, LPixelType::RGBA2BGR, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_bgr);
+  ASSERT_TRUE(ret == true);
+  std::vector<LiteMat> lite_all;
+  ret = Split(lite_mat_bgr, lite_all);
+  ASSERT_TRUE(ret == true);
+  ASSERT_TRUE(lite_all.size() == 3);
+  LiteMat lite_r = lite_all[2];
+  cv::Mat dst_imageR(lite_r.height_, lite_r.width_, CV_8UC1, lite_r.data_ptr_);
+
+  LiteMat merge_mat;
+  EXPECT_TRUE(Merge(lite_all, merge_mat));
+  EXPECT_EQ(merge_mat.height_, lite_mat_bgr.height_);
+  EXPECT_EQ(merge_mat.width_, lite_mat_bgr.width_);
+  EXPECT_EQ(merge_mat.channel_, lite_mat_bgr.channel_);
+}
+
 void Lite1CImageProcess(LiteMat &lite_mat_bgr, LiteMat &lite_norm_mat_cut) {
   LiteMat lite_mat_resize;
   int ret = ResizeBilinear(lite_mat_bgr, lite_mat_resize, 256, 256);
