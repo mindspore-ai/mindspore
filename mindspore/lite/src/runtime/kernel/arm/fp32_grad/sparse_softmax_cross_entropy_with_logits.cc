@@ -82,9 +82,9 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *lab
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
-  auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  auto labels = reinterpret_cast<int *>(in_tensors_.at(1)->MutableData());
-  float *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  auto labels = reinterpret_cast<int *>(in_tensors_.at(1)->data_c());
+  float *out = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
   float *grads = NULL;
   if (is_train() && out_tensors_.size() > 1) {
     grads = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());

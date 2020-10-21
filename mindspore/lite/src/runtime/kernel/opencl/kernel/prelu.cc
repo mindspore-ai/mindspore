@@ -78,7 +78,7 @@ int PReluOpenCLKernel::Init() {
   auto weight_tensor = in_tensors_[1];
   if (input_tensor->shape().size() != 4) {
     MS_LOG(ERROR) << "PRelu only support dim=4, but your dim=" << input_tensor->shape().size();
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   batch_size_ = input_tensor->Batch();
   C_ = input_tensor->Channel();
@@ -86,7 +86,7 @@ int PReluOpenCLKernel::Init() {
   W_ = input_tensor->Width();
   if (input_tensor->GetFormat() != schema::Format_NC4HW4 && input_tensor->GetFormat() != schema::Format_NHWC4) {
     MS_LOG(ERROR) << "PRelu only support Format_NC4HW4 and Format_NHWC4";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   if (batch_size_ != 1) {
     MS_LOG(ERROR) << "Init PRelu kernel failed: Unsupported multi-batch.";
@@ -97,7 +97,7 @@ int PReluOpenCLKernel::Init() {
     MS_LOG(ERROR)
       << "PRelu weight channel size must be 1 or must be equal with in_teneors channel size, but your weight size is "
       << weight_channel << " and your input channel size is " << C_;
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   weight_is_scalar = weight_channel == 1;
   if (weight_tensor->data_type() != kNumberTypeFloat16 && weight_tensor->data_type() != kNumberTypeFloat32) {
@@ -120,7 +120,7 @@ int PReluOpenCLKernel::Init() {
 
   InitBuffer();
   MS_LOG(DEBUG) << program_name << " init Done!";
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int PReluOpenCLKernel::Run() {
@@ -146,11 +146,11 @@ int PReluOpenCLKernel::Run() {
   std::vector<size_t> local = {4, 4, 1};
   std::vector<size_t> global = {static_cast<size_t>(H_), static_cast<size_t>(W_), static_cast<size_t>(CO_SLICES_)};
   auto ret = ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int PReluOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
@@ -175,7 +175,7 @@ int PReluOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   img_size->push_back(im_dst_x);
   img_size->push_back(im_dst_y);
   img_size->push_back(img_dtype);
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 kernel::LiteKernel *OpenCLPReluKernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -194,7 +194,7 @@ kernel::LiteKernel *OpenCLPReluKernelCreator(const std::vector<lite::Tensor *> &
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Init PRelu kernel failed!";
     delete kernel;
     return nullptr;

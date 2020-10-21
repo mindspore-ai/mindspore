@@ -104,12 +104,7 @@ void SoftmaxFp16CPUKernel::FreeTmpBuffer() {
 }
 
 int SoftmaxFp16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return RET_ERROR;
-  }
-  ret = MallocTmpBuffer();
+  auto ret = MallocTmpBuffer();
   if (ret != RET_OK) {
     FreeTmpBuffer();
     MS_LOG(ERROR) << "MallocTmpBuffer failed";

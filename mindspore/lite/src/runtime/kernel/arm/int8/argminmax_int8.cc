@@ -49,11 +49,6 @@ int ArgMinMaxInt8CPUKernel::Init() {
 int ArgMinMaxInt8CPUKernel::ReSize() { return ArgMinMaxBaseCPUKernel::ReSize(); }
 
 int ArgMinMaxInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   auto input = in_tensors_.at(0);
 
   const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_.at(0)->MutableData());

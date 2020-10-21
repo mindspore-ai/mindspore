@@ -19,12 +19,21 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore::lite {
+InnerContext::InnerContext(const Context *context) {
+  this->allocator = context->allocator;
+  this->thread_num_ = context->thread_num_;
+  this->device_list_.clear();
+  for (auto &device_ctx : context->device_list_) {
+    this->device_list_.push_back(device_ctx);
+  }
+}
+
 int InnerContext::Init() {
-  if (this->device_list_.empty()) {
-    MS_LOG(ERROR) << "Device list is empty.";
+  if (RET_OK != this->IsValid()) {
+    MS_LOG(ERROR) << "Context is not valid";
     return RET_NOT_SUPPORT;
   }
-  if (this->thread_pool_ == nullptr && this->device_list_[0].device_type_ == DT_CPU) {
+  if (this->thread_pool_ == nullptr && this->IsCpuEnabled()) {
     this->thread_pool_ =
       CreateLiteThreadPool(this->thread_num_, this->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);
     if (this->thread_pool_ == nullptr) {
@@ -47,6 +56,76 @@ InnerContext::~InnerContext() {
     DestroyThreadPool(this->thread_pool_);
     free(this->thread_pool_);
     this->thread_pool_ = NULL;
+  }
+}
+
+int InnerContext::IsValid() {
+  if (this->device_list_.empty()) {
+    MS_LOG(ERROR) << "Device list is empty.";
+    return RET_NOT_SUPPORT;
+  }
+#ifndef SUPPORT_GPU
+  if (IsGpuEnabled()) {
+    MS_LOG(ERROR) << "GPU is not supported.";
+    return RET_NOT_SUPPORT;
+  }
+#endif
+  if (IsNpuEnabled()) {
+    MS_LOG(ERROR) << "NPU is not supported.";
+    return RET_NOT_SUPPORT;
+  }
+  return RET_OK;
+}
+
+bool InnerContext::IsCpuFloat16Enabled() {
+  if (!IsCpuEnabled()) {
+    return false;
+  }
+  return GetCpuInfo().enable_float16_;
+}
+
+bool InnerContext::IsGpuFloat16Enabled() {
+  if (!IsGpuEnabled()) {
+    return false;
+  }
+  return GetGpuInfo().enable_float16_;
+}
+
+bool InnerContext::IsCpuEnabled() {
+  return this->device_list_.end() !=
+         std::find_if(this->device_list_.begin(), this->device_list_.end(),
+                      [](const DeviceContext &device) { return device.device_type_ == DT_CPU; });
+}
+
+bool InnerContext::IsGpuEnabled() {
+  return this->device_list_.end() !=
+         std::find_if(this->device_list_.begin(), this->device_list_.end(),
+                      [](const DeviceContext &device) { return device.device_type_ == DT_GPU; });
+}
+
+bool InnerContext::IsNpuEnabled() {
+  return this->device_list_.end() !=
+         std::find_if(this->device_list_.begin(), this->device_list_.end(),
+                      [](const DeviceContext &device) { return device.device_type_ == DT_NPU; });
+}
+
+CpuDeviceInfo InnerContext::GetCpuInfo() {
+  auto iter = std::find_if(this->device_list_.begin(), this->device_list_.end(),
+                           [](const DeviceContext &device) { return device.device_type_ == DT_CPU; });
+  if (iter == this->device_list_.end()) {
+    return {};
+  } else {
+    return iter->device_info_.cpu_device_info_;
+  }
+}
+
+GpuDeviceInfo InnerContext::GetGpuInfo() {
+  auto iter = std::find_if(this->device_list_.begin(), this->device_list_.end(),
+                           [](const DeviceContext &device) { return device.device_type_ == DT_GPU; });
+  if (iter == this->device_list_.end()) {
+    return {};
+  } else {
+    return iter->device_info_.gpu_device_info_;
   }
 }
 }  // namespace mindspore::lite

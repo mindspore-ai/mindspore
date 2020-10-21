@@ -20,9 +20,10 @@
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "src/runtime/opencl/opencl_allocator.h"
+#include "src/runtime/opencl/opencl_executor.h"
+#include "src/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
-
 struct SubGraphOpenCLParameter {
   OpParameter op_parameter;
   int input_size;
@@ -34,17 +35,21 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
   explicit SubGraphOpenCLKernel(const std::vector<lite::Tensor *> inputs, const std::vector<lite::Tensor *> outputs,
                                 const std::vector<kernel::LiteKernel *> inKernels,
                                 const std::vector<kernel::LiteKernel *> outKernels,
-                                const std::vector<kernel::LiteKernel *> nodes, const lite::InnerContext *ctx = nullptr,
-                                const mindspore::lite::PrimitiveC *primitive = nullptr)
-      : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx, primitive) {
+                                const std::vector<kernel::LiteKernel *> nodes, const lite::InnerContext *ctx = nullptr)
+      : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
+    subgraph_type_ = kGpuSubGraph;
+    this->executor_ = new lite::opencl::OpenCLExecutor();
   }
   ~SubGraphOpenCLKernel() override;
 
+  int PreProcess() override { return mindspore::lite::RET_OK; }
+  int PostProcess() override { return mindspore::lite::RET_OK; }
   int Init() override;
-  int InferShape() override;
+  int InferShape();
   int ReSize() override;
   int Run() override;
+  int Run(const KernelCallBack &before, const KernelCallBack &after) override { return this->Run(); };
   int UnInit();
 
  protected:

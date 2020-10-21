@@ -128,11 +128,6 @@ static int TransposeFp16Run(void *cdata, int task_id) {
 }
 
 int TransposeFp16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   MS_ASSERT(in_tensors_.size() == TransposeInputNum);
   MS_ASSERT(out_tensors_.size() == TransposeOutputNum);
   auto &in_tensor = in_tensors_.front();
@@ -143,7 +138,7 @@ int TransposeFp16CPUKernel::Run() {
   }
 
   // malloc when Run
-  ret = MallocFp16Buffer();
+  auto ret = MallocFp16Buffer();
   if (ret != RET_OK) {
     FreeFp16Buffer();
     return ret;

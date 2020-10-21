@@ -179,11 +179,6 @@ int DeConvolutionFp16CPUKernel::Init() {
 }
 
 int DeConvolutionFp16CPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
 
   int error_code = InitRunBuf();

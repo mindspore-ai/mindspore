@@ -162,11 +162,6 @@ int FullconnectionCPUKernel::DoMatmul(int task_id) {
 }
 
 int FullconnectionCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto a_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   auto b_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
   c_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());

@@ -87,11 +87,6 @@ int SigmoidInt8Run(void *cdata, int task_id) {
 }
 
 int SigmoidInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   int error_code = ParallelLaunch(this->context_->thread_pool_, SigmoidInt8Run, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SigmoidInt8Run function error error_code[" << error_code << "]";

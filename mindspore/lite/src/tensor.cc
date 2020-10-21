@@ -238,10 +238,30 @@ std::string Tensor::ToString() const {
         }
       }
     } break;
+    case kNumberTypeFloat16: {
+      auto data = static_cast<int16_t *>(this->data_);
+      if (data == nullptr) {
+        oss << " Data of tensor is nullptr";
+      } else {
+        for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
+          oss << " " << data[i];
+        }
+      }
+    } break;
     case kNumberTypeInt32: {
       auto data = static_cast<int32_t *>(this->data_);
       if (data == nullptr) {
-        return "Data of tensor is nullptr";
+        oss << " Data of tensor is nullptr";
+      } else {
+        for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
+          oss << " " << data[i];
+        }
+      }
+    } break;
+    case kNumberTypeInt16: {
+      auto data = static_cast<int16_t *>(this->data_);
+      if (data == nullptr) {
+        oss << " Data of tensor is nullptr";
       } else {
         for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
           oss << " " << data[i];
@@ -251,7 +271,7 @@ std::string Tensor::ToString() const {
     case kNumberTypeInt8: {
       auto data = static_cast<int8_t *>(this->data_);
       if (data == nullptr) {
-        return "Data of tensor is nullptr";
+        oss << " Data of tensor is nullptr";
       } else {
         for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
           oss << " " << static_cast<int32_t>(data[i]);

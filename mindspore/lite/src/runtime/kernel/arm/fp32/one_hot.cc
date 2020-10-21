@@ -161,11 +161,6 @@ int OneHotCPUKernel::GetParams() {
 }
 
 int OneHotCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   int error_code = ParallelLaunch(this->context_->thread_pool_, RunOneHot, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "OneHot function error error_code[" << error_code << "]";

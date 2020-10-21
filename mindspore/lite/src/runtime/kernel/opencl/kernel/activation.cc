@@ -59,7 +59,7 @@ int ActivationOpenClKernel::Init() {
   fp_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   if (in_size_ != 2 && in_size_ != 4) {
     MS_LOG(ERROR) << "Activate fun only support dim=4 or 2, but your dim=" << in_size_;
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   std::map<int, std::string> Program_Kernel{{ActivationType_LEAKY_RELU, "LeakyRelu"},
                                             {ActivationType_RELU, "Relu"},
@@ -68,7 +68,7 @@ int ActivationOpenClKernel::Init() {
                                             {ActivationType_TANH, "Tanh"}};
   if (Program_Kernel.count(type_) == 0) {
     MS_LOG(ERROR) << "schema::ActivationType:" << type_ << "not found";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
 
   std::string source = activation_source;
@@ -82,7 +82,7 @@ int ActivationOpenClKernel::Init() {
   in_tensors_[0]->SetFormat(op_format_);
   out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << op_parameter_->name_ << " init Done!";
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int ActivationOpenClKernel::Run() {
@@ -98,11 +98,11 @@ int ActivationOpenClKernel::Run() {
   std::vector<size_t> local = {};
   std::vector<size_t> global = {static_cast<size_t>(img2d_shape.s[1]), static_cast<size_t>(img2d_shape.s[2])};
   auto ret = ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Run kernel:" << op_parameter_->name_ << " fail.";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 cl_int4 ActivationOpenClKernel::GetImg2dShape() {
@@ -130,7 +130,7 @@ int ActivationOpenClKernel::GetImageSize(size_t idx, std::vector<size_t> *img_si
   img_size->push_back(img_shape.s[2]);
   img_size->push_back(img_shape.s[1]);
   img_size->push_back(img_dtype);
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 kernel::LiteKernel *OpenClActivationKernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -154,7 +154,7 @@ kernel::LiteKernel *OpenClActivationKernelCreator(const std::vector<lite::Tensor
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Init activation kernel:" << opParameter->name_ << " failed!";
     delete kernel;
     return nullptr;

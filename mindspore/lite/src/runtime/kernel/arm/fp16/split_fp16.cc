@@ -76,11 +76,6 @@ static int SplitFp16Run(void *cdata, int task_id) {
 }
 
 int SplitFp16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   input_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(0), context_);
   if (input_ptr_ == nullptr) {
     MS_LOG(ERROR) << "input or output is nullptr";
@@ -94,7 +89,7 @@ int SplitFp16CPUKernel::Run() {
       return RET_ERROR;
     }
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, SplitFp16Run, this, thread_n_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, SplitFp16Run, this, thread_n_num_);
   for (int i = 0; i < param->num_split_; i++) {
     if (out_tensors_.at(i)->data_type() == kNumberTypeFloat32) {
       Float16ToFloat32(output_ptr_[i], reinterpret_cast<float *>(out_tensors_.at(i)->MutableData()),

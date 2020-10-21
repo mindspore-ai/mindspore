@@ -140,12 +140,7 @@ int ConvolutionDepthwiseInt8CPUKernel::InitBuffer() {
 }
 
 int ConvolutionDepthwiseInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-  ret = InitBuffer();
+  auto ret = InitBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Depthwise int8 ReSize error!";
     return ret;

@@ -25,6 +25,8 @@
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DeConv2D;
 
 namespace mindspore::kernel {
@@ -54,10 +56,10 @@ int Conv2dTransposeOpenCLKernel::Init() {
   out_ori_format_ = out_tensors_[0]->GetFormat();
   out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
-int Conv2dTransposeOpenCLKernel::ReSize() { return RET_OK; }
+int Conv2dTransposeOpenCLKernel::ReSize() { return mindspore::lite::RET_OK; }
 
 void Conv2dTransposeOpenCLKernel::PadWeight() {
   ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
@@ -159,7 +161,7 @@ int Conv2dTransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *i
     im_dst_y = n * UP_DIV(c, C4NUM) * h;
   } else {
     MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
@@ -168,7 +170,7 @@ int Conv2dTransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *i
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int Conv2dTransposeOpenCLKernel::Run() {
@@ -207,7 +209,7 @@ int Conv2dTransposeOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size);
   ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 kernel::LiteKernel *OpenCLConv2dTransposeKernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -223,7 +225,7 @@ kernel::LiteKernel *OpenCLConv2dTransposeKernelCreator(const std::vector<lite::T
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     delete kernel;
     return nullptr;
   }

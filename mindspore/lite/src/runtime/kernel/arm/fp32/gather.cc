@@ -91,12 +91,6 @@ int GatherRun(void *cdata, int task_id) {
 }
 
 int GatherCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
   auto indices_tensor = in_tensors_.at(1);
   int indices_num = indices_tensor->ElementsNum();
   bool isIndicesInt32 = indices_tensor->data_type() == kNumberTypeInt32;

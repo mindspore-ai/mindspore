@@ -53,11 +53,6 @@ int CropCPUKernel::CropParallelRun(int thread_id) {
 }
 
 int CropCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
   auto param = reinterpret_cast<CropParameter *>(op_parameter_);

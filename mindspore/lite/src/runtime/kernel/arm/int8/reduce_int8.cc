@@ -247,11 +247,6 @@ void ReduceInt8CPUKernel::GetQuantArgs(size_t i) {
 }
 
 int ReduceInt8CPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   if (!this->valid_shape_) {
     auto ret = CalculateQuantArgs();
     if (ret != RET_OK) {

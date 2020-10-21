@@ -44,15 +44,15 @@ class OpenCLKernel : public LiteKernel {
 
   ~OpenCLKernel() {}
 
-  virtual int Init() { return RET_ERROR; }
-  virtual int Prepare() { return RET_ERROR; }
-  virtual int InferShape() { return RET_ERROR; }
-  virtual int ReSize() { return RET_ERROR; }
-  virtual int Run() { return RET_ERROR; }
-  virtual int GetImageSize(size_t idx, std::vector<size_t> *img_size) { return RET_ERROR; }
-  virtual int GetGlobalSize(size_t idx, std::vector<size_t> *global_size) { return RET_ERROR; }
+  virtual int Init() { return mindspore::lite::RET_ERROR; }
+  virtual int PreProcess() { return mindspore::lite::RET_ERROR; }
+  virtual int InferShape() { return mindspore::lite::RET_ERROR; }
+  virtual int ReSize() { return mindspore::lite::RET_ERROR; }
+  virtual int Run() { return mindspore::lite::RET_ERROR; }
+  virtual int GetImageSize(size_t idx, std::vector<size_t> *img_size) { return mindspore::lite::RET_ERROR; }
+  virtual int GetGlobalSize(size_t idx, std::vector<size_t> *global_size) { return mindspore::lite::RET_ERROR; }
   virtual int GetLocalSize(size_t idx, const std::vector<size_t> &global_size, std::vector<size_t> *local_size) {
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   OpenCLMemType GetMemType() { return out_mem_type_; }
   void SetMemType(OpenCLMemType mem_type) { out_mem_type_ = mem_type; }

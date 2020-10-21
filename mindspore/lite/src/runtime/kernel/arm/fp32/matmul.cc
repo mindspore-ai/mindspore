@@ -281,11 +281,6 @@ int MatmulFloatRun(void *cdata, int task_id) {
 }
 
 int MatmulCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto a_src = reinterpret_cast<float *>(in_tensors_[0]->data_c());
   auto b_src = reinterpret_cast<float *>(in_tensors_[1]->data_c());
   auto c_src = reinterpret_cast<float *>(out_tensors_[0]->data_c());

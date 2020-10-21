@@ -28,11 +28,6 @@ int Nchw2NhwcCPUKernel::Init() { return RET_OK; }
 int Nchw2NhwcCPUKernel::ReSize() { return RET_OK; }
 
 int Nchw2NhwcCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
 

@@ -18,6 +18,8 @@
 #include "src/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BatchNorm;
 
 namespace mindspore::kernel {
@@ -70,12 +72,7 @@ int BatchnormCPUKernel::InitConstTensor() {
 }
 
 int BatchnormCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail! Ret error code: " << ret;
-    return ret;
-  }
-  ret = ParallelLaunch(this->context_->thread_pool_, BatchNormRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, BatchNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }
@@ -85,7 +82,7 @@ int BatchnormCPUKernel::Run() {
 int BatchnormCPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
   BatchNormFp32(in_tensors_.at(0)->MutableData(), mean_, variance_, param, task_id, out_tensors_.at(0)->MutableData());
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 int BatchNormRun(void *cdata, int task_id) {

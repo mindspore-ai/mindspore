@@ -134,12 +134,7 @@ int ConvDwSWRun(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseSWCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return ret;
-  }
-  ret = InitBuffer();
+  auto ret = InitBuffer();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp32 InitBuffer failed.";
     return RET_ERROR;

@@ -61,13 +61,13 @@ int BiasAddOpenCLKernel::Init() {
   fp_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   if (in_size_ != 4 && in_size_ != 2) {
     MS_LOG(ERROR) << "BiasAdd only support dim=4 or 2, but your dim=" << in_size_;
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   int C = in_tensors_[0]->shape()[3];
   int Bias_Size = in_tensors_[1]->shape()[0];
   if (UP_DIV(Bias_Size, C4NUM) != UP_DIV(C, C4NUM)) {
     MS_LOG(ERROR) << "BiasAdd weight channel size:" << Bias_Size << " must be equal with in_teneors channel size:" << C;
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   InitBuffer();
   std::set<std::string> build_options;
@@ -82,7 +82,7 @@ int BiasAddOpenCLKernel::Init() {
   in_tensors_[0]->SetFormat(op_format_);
   out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << program_name << " Init Done!";
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int BiasAddOpenCLKernel::Run() {
@@ -99,11 +99,11 @@ int BiasAddOpenCLKernel::Run() {
   std::vector<size_t> local = {1, 1};
   std::vector<size_t> global = {static_cast<size_t>(global_size.s[1]), static_cast<size_t>(global_size.s[2])};
   auto ret = ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 cl_int4 BiasAddOpenCLKernel::GetGlobalshape() {
@@ -131,7 +131,7 @@ int BiasAddOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
   img_size->push_back(img_shape.s[2]);
   img_size->push_back(img_shape.s[1]);
   img_size->push_back(img_dtype);
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 kernel::LiteKernel *OpenCLBiasAddKernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -156,7 +156,7 @@ kernel::LiteKernel *OpenCLBiasAddKernelCreator(const std::vector<lite::Tensor *>
   }
 
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Init BiasAdd kernel failed!";
     delete kernel;
     return nullptr;

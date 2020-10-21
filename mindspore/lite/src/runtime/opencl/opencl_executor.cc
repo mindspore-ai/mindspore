@@ -24,12 +24,12 @@ namespace mindspore::lite::opencl {
 int OpenCLExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) { return RET_OK; }
 
 int OpenCLExecutor::Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &outputs,
-                        std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
-                        const session::KernelCallBack &before, const session::KernelCallBack &after) {
+                        std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator, const KernelCallBack &before,
+                        const KernelCallBack &after) {
   kernel::LiteKernelUtil::InitTensorRefCount(kernels);
   for (auto *kernel : kernels) {
     MS_ASSERT(nullptr != kernel);
-    session::CallBackParam callbackParam;
+    CallBackParam callbackParam;
     callbackParam.node_name = kernel->name();
 
     if (before != nullptr) {
@@ -38,7 +38,7 @@ int OpenCLExecutor::Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &ou
       }
     }
     kernel::OpenCLKernel *op_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel);
-    auto &cur_outputs = kernel->out_tensors();
+    auto cur_outputs = kernel->out_tensors();
     for (auto i = 0; i < cur_outputs.size(); ++i) {
       auto *output = cur_outputs.at(i);
       MS_ASSERT(nullptr != output);

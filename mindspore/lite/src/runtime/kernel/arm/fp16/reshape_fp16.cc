@@ -31,11 +31,6 @@ using mindspore::schema::PrimitiveType_Reshape;
 namespace mindspore::kernel {
 
 int ReshapeFp16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   auto in_tensor = in_tensors_.at(kInputIndex);
   auto out_tensor = out_tensors_.at(kOutputIndex);
   auto input_ptr = in_tensor->MutableData();

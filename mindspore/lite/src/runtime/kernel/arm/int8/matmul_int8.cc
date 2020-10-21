@@ -149,11 +149,6 @@ int MatmulInt8Run(void *cdata, int task_id) {
 }
 
 int MatmulInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   auto a_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
   auto c_ptr = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
   auto a_stride = params_->row_ * params_->deep_;
@@ -190,7 +185,7 @@ int MatmulInt8CPUKernel::Run() {
     b_c16x4_ptr_ = b_c16x4_batch_ + i * params_->col_4_ * params_->deep_16_;
     weight_bias_sums_ = weight_bias_sums_batch_ + i * params_->col_4_;
     c_ptr_ = c_ptr + i * c_stride;
-    ret = ParallelLaunch(this->context_->thread_pool_, MatmulInt8Run, this, thread_count_);
+    auto ret = ParallelLaunch(this->context_->thread_pool_, MatmulInt8Run, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulInt8Run error: [" << ret << "]";
       return ret;

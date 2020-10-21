@@ -65,7 +65,7 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
   int MallocTmpBuffer();
   void FreeTmpBuffer();
   int CalculateCoeffOutput();
-  void PreProcess();
+  void HandleASumAndSumSquare();
 };
 }  // namespace mindspore::kernel
 

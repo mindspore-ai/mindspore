@@ -38,11 +38,6 @@ int BatchToSpaceCPUKernel::Init() {
 int BatchToSpaceCPUKernel::ReSize() { return BatchToSpaceBaseCPUKernel::ReSize(); }
 
 int BatchToSpaceCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
   const float *input_data = reinterpret_cast<const float *>(input->MutableData());

@@ -321,13 +321,7 @@ int ConvDwSWInt8Run(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseSWInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-
-  ret = InitBuffer();
+  auto ret = InitBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Depthwise int8 ReSize error!";
     return ret;

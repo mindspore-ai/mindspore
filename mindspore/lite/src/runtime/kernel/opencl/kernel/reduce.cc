@@ -63,7 +63,7 @@ int ReduceOpenCLKernel::Init() {
   if (in_tensors_[0]->shape().back() != out_tensors_[0]->shape().back()) {
     MS_LOG(ERROR) << "Reduce input channel " << in_tensors_[0]->shape().back() << " should equal output channel"
                   << out_tensors_[0]->shape().back();
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
@@ -79,7 +79,7 @@ int ReduceOpenCLKernel::Init() {
   in_tensors_[0]->SetFormat(op_format_);
   out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 void ReduceOpenCLKernel::InitNHWCShape() {
@@ -97,7 +97,7 @@ void ReduceOpenCLKernel::InitNHWCShape() {
   nhwc_shape_ = {n, h, w, c};
 }
 
-int ReduceOpenCLKernel::ReSize() { return RET_OK; }
+int ReduceOpenCLKernel::ReSize() { return mindspore::lite::RET_OK; }
 
 int ReduceOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
@@ -110,7 +110,7 @@ int ReduceOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
     im_dst_y = nhwc_shape_[0] * UP_DIV(nhwc_shape_[3], C4NUM) * nhwc_shape_[1];
   } else {
     MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
@@ -119,7 +119,7 @@ int ReduceOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int ReduceOpenCLKernel::Run() {
@@ -137,7 +137,7 @@ int ReduceOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size);
   ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 kernel::LiteKernel *OpenCLReduceKernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -151,7 +151,7 @@ kernel::LiteKernel *OpenCLReduceKernelCreator(const std::vector<lite::Tensor *> 
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     delete kernel;
     return nullptr;
   }

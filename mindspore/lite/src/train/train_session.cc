@@ -23,6 +23,7 @@
 #include "src/common/utils.h"
 #include "src/tensor.h"
 #include "src/train/loss_kernel.h"
+#include "src/sub_graph_kernel.h"
 #include "src/train/train_populate_parameter.h"
 #include "src/runtime/runtime_api.h"
 #include "src/executor.h"
@@ -68,9 +69,18 @@ void TrainSession::RestoreOps(const std::vector<CreatorOp> &restore) {
 
 void TrainSession::AllocWorkSpace() {
   size_t workspace_size = 0;
-  for (auto k : kernels_) {
-    if (workspace_size < k->GetWorkspaceSize()) {
-      workspace_size = k->GetWorkspaceSize();
+  for (auto ori_kernel : kernels_) {
+    if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
+      if (workspace_size < ori_kernel->GetWorkspaceSize()) {
+        workspace_size = ori_kernel->GetWorkspaceSize();
+      }
+    } else {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(ori_kernel);
+      for (auto kernel : sub_graph->nodes()) {
+        if (workspace_size < kernel->GetWorkspaceSize()) {
+          workspace_size = kernel->GetWorkspaceSize();
+        }
+      }
     }
   }
   mindspore::kernel::LiteKernel::AllocWorkspace(workspace_size);
@@ -98,7 +108,7 @@ TrainSession::~TrainSession() {
 
 void *TrainSession::ExportToBuf(char *buf, size_t *len) const { return model_->ExportBuf(buf, len); }
 
-int TrainSession::RunGraph(const session::KernelCallBack &before, const session::KernelCallBack &after) {
+int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &after) {
   this->outputs_.clear();
   for (auto ms_tensors : output_node_map_)
     for (auto ms_tensor : ms_tensors.second) this->outputs_.push_back((static_cast<lite::Tensor *>(ms_tensor)));
@@ -118,22 +128,62 @@ int TrainSession::RunGraph(const session::KernelCallBack &before, const session:
 }
 
 void TrainSession::Train() {
-  for (auto *kernel : kernels_) {
-    MS_ASSERT(nullptr != kernel);
-    kernel->train();
+  for (auto ori_kernel : kernels_) {
+    MS_ASSERT(nullptr != ori_kernel);
+    if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
+      ori_kernel->train();
+    } else {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(ori_kernel);
+      MS_ASSERT(nullptr != sub_graph);
+      for (auto kernel : sub_graph->nodes()) {
+        MS_ASSERT(nullptr != kernel);
+        kernel->train();
+      }
+    }
   }
   output_node_map_.clear();
   output_tensor_map_.clear();
   train_mode_ = true;
-  for (auto kernel : this->kernels_) {
-    if (IsLossKernel(kernel)) {
-      auto *ms_tensor = kernel->out_tensors().at(0);
-      if (ms_tensor != nullptr) {
-        ms_tensor->MutableData();
-        output_node_map_[kernel->name()].emplace_back(ms_tensor);
-        auto index = TSFindTensor(tensors_, ms_tensor);
-        if (index != tensors_.size()) {
-          output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
+  for (auto ori_kernel : kernels_) {
+    MS_ASSERT(nullptr != ori_kernel);
+    if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
+      UpdateOutputMapByLossKernel(ori_kernel);
+    } else {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(ori_kernel);
+      MS_ASSERT(nullptr != sub_graph);
+      for (auto kernel : sub_graph->nodes()) {
+        MS_ASSERT(nullptr != kernel);
+        UpdateOutputMapByLossKernel(kernel);
+      }
+    }
+  }
+}
+
+void TrainSession::UpdateOutputMapByLossKernel(const kernel::LiteKernel *kernel) {
+  if (IsLossKernel(kernel)) {
+    auto *ms_tensor = kernel->out_tensors().at(0);
+    if (ms_tensor != nullptr) {
+      (void)ms_tensor->MutableData();
+      output_node_map_[kernel->name()].emplace_back(ms_tensor);
+      auto index = TSFindTensor(tensors_, ms_tensor);
+      if (index != tensors_.size()) {
+        output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
+      }
+    }
+  }
+}
+
+void TrainSession::UpdateOutputMapByInKernel(const kernel::LiteKernel *kernel) {
+  if (IsLossKernel(kernel)) {
+    for (auto in_kernel : kernel->in_kernels()) {
+      if (output_node_map_.find(in_kernel->name()) == output_node_map_.end()) {
+        auto *ms_tensor = in_kernel->out_tensors().at(0);
+        if (ms_tensor != nullptr) {
+          output_node_map_[in_kernel->name()].emplace_back(ms_tensor);
+          auto index = TSFindTensor(tensors_, ms_tensor);
+          if (index != tensors_.size()) {
+            output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
+          }
         }
       }
     }
@@ -141,27 +191,30 @@ void TrainSession::Train() {
 }
 
 void TrainSession::Eval() {
-  for (auto *kernel : this->kernels_) {
-    MS_ASSERT(nullptr != kernel);
-    kernel->eval();
+  for (auto ori_kernel : kernels_) {
+    MS_ASSERT(nullptr != ori_kernel);
+    if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
+      ori_kernel->eval();
+    } else {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(ori_kernel);
+      MS_ASSERT(nullptr != sub_graph);
+      for (auto kernel : sub_graph->nodes()) {
+        MS_ASSERT(nullptr != kernel);
+        kernel->eval();
+      }
+    }
   }
   output_node_map_ = orig_output_map_;
   output_tensor_map_ = orig_output_tensor_map_;
 
   train_mode_ = false;
-  for (auto kernel : this->kernels_) {
-    if (IsLossKernel(kernel)) {
-      for (auto in_kernel : kernel->in_kernels()) {
-        if (output_node_map_.find(in_kernel->name()) == output_node_map_.end()) {
-          auto *ms_tensor = in_kernel->out_tensors().at(0);
-          if (ms_tensor != nullptr) {
-            output_node_map_[in_kernel->name()].emplace_back(ms_tensor);
-            auto index = TSFindTensor(tensors_, ms_tensor);
-            if (index != tensors_.size()) {
-              output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
-            }
-          }
-        }
+  for (auto ori_kernel : kernels_) {
+    if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
+      UpdateOutputMapByInKernel(ori_kernel);
+    } else {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(ori_kernel);
+      for (auto kernel : sub_graph->nodes()) {
+        UpdateOutputMapByInKernel(kernel);
       }
     }
   }
@@ -181,17 +234,37 @@ void TrainSession::BuildInferenceKernelsRecursive(kernel::LiteKernel *kernel, st
 
 void TrainSession::BuildInferenceKernelsMap() {
   std::vector<kernel::LiteKernel *> req_kernels;
-  for (auto kernel : this->kernels_) {
-    if (IsLossKernel(kernel)) {  // For each loss in the system add backward tree
-      for (auto in_node : kernel->in_kernels()) {
-        BuildInferenceKernelsRecursive(in_node, &req_kernels);
+  for (auto ori_kernel : kernels_) {
+    if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
+      if (IsLossKernel(ori_kernel)) {  // For each loss in the system add backward tree
+        for (auto in_node : ori_kernel->in_kernels()) {
+          BuildInferenceKernelsRecursive(in_node, &req_kernels);
+        }
+      }
+    } else {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(ori_kernel);
+      for (auto kernel : sub_graph->nodes()) {
+        if (IsLossKernel(kernel)) {  // For each loss in the system add backward tree
+          for (auto in_node : kernel->in_kernels()) {
+            BuildInferenceKernelsRecursive(in_node, &req_kernels);
+          }
+        }
       }
     }
   }
   inference_kernels_.clear();
-  for (auto kernel : this->kernels_) {
-    if (std::find(req_kernels.begin(), req_kernels.end(), kernel) != req_kernels.end()) {
-      inference_kernels_.push_back(kernel);
+  for (auto ori_kernel : kernels_) {
+    if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
+      if (std::find(req_kernels.begin(), req_kernels.end(), ori_kernel) != req_kernels.end()) {
+        inference_kernels_.push_back(ori_kernel);
+      }
+    } else {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(ori_kernel);
+      for (auto kernel : sub_graph->nodes()) {
+        if (std::find(req_kernels.begin(), req_kernels.end(), kernel) != req_kernels.end()) {
+          inference_kernels_.push_back(kernel);
+        }
+      }
     }
   }
   if (inference_kernels_.size() == 0) {
@@ -199,7 +272,7 @@ void TrainSession::BuildInferenceKernelsMap() {
   }
 }
 
-bool TrainSession::IsLossKernel(kernel::LiteKernel *kernel) {
+bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) {
   return (kernel->Type() == schema::PrimitiveType_SoftmaxCrossEntropy);
 }
 

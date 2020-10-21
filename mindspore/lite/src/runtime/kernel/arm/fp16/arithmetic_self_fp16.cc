@@ -20,6 +20,8 @@
 #include "nnacl/fp16/arithmetic_self_fp16.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 namespace {
@@ -81,11 +83,6 @@ void ArithmeticSelfFp16CPUKernel::FreeInputAndOutput() {
 }
 
 int ArithmeticSelfFp16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail! ret: " << ret;
-    return ret;
-  }
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
   input_fp16_ptr_ = ConvertInputFp32toFp16(input_tensor, context_);
@@ -95,7 +92,7 @@ int ArithmeticSelfFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "input or output is nullptr";
     return RET_ERROR;
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
   }

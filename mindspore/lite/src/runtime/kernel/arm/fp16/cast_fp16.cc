@@ -83,11 +83,6 @@ int CastFp16CPUKernel::DoCast(int thread_id) {
 }
 
 int CastFp16CPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   if (data_num_ == 0) {
     return RET_OK;
   }

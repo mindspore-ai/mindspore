@@ -31,11 +31,6 @@ int ShapeCPUKernel::Init() { return RET_OK; }
 int ShapeCPUKernel::ReSize() { return RET_OK; }
 
 int ShapeCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return RET_ERROR;
-  }
   auto out_tensor = out_tensors_.front();
   auto in_tensor = in_tensors_.front();
   if (in_tensor == nullptr || out_tensor == nullptr) {

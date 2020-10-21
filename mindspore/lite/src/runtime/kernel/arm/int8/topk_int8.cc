@@ -47,11 +47,6 @@ int TopKInt8CPUKernel::ReSize() {
 }
 
 int TopKInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return ret;
-  }
   int8_t *input_data = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   int32_t *output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->MutableData());

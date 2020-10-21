@@ -77,11 +77,6 @@ int ExpandDimsRun(void *cdata, int task_id) {
 }
 
 int ExpandDimsCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   in_ptr_ = in_tensors_.at(0)->MutableData();
   out_ptr_ = out_tensors_.at(0)->MutableData();
   auto ret = ParallelLaunch(this->context_->thread_pool_, ExpandDimsRun, this, thread_sz_count_);

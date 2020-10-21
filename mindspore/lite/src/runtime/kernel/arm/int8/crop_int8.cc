@@ -65,12 +65,7 @@ CropInt8CPUKernel::~CropInt8CPUKernel() {
 int CropInt8CPUKernel::ReSize() { return CropBaseCPUKernel::ReSize(); }
 
 int CropInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
-  ret = ParallelLaunch(this->context_->thread_pool_, CropInt8Run, this, thread_count_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, CropInt8Run, this, thread_count_);
   return ret;
 }
 

@@ -75,11 +75,6 @@ int ConcatsRun(void *cdata, int task_id) {
 }
 
 int ConcatCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   int error_code = ParallelLaunch(this->context_->thread_pool_, ConcatsRun, this, thread_count_);
   return error_code;
 }

@@ -31,7 +31,7 @@ class ToFormatOpenCLKernel : public OpenCLKernel {
   ~ToFormatOpenCLKernel() override{};
 
   int Init() override;
-  int ReSize() override { return RET_OK; };
+  int ReSize() override { return mindspore::lite::RET_OK; };
   int Run() override;
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 

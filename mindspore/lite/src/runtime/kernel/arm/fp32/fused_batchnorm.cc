@@ -18,6 +18,8 @@
 #include "src/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_FusedBatchNorm;
 
 namespace mindspore::kernel {
@@ -84,11 +86,6 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
 }
 
 int FusedBatchnormCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail! Ret error code: " << ret;
-    return ret;
-  }
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
   if (is_train() && in_tensors_.size() >= 5) {
     float *in = static_cast<float *>(in_tensors_[0]->MutableData());
@@ -108,7 +105,7 @@ int FusedBatchnormCPUKernel::Run() {
     memcpy(offset_, bias, in_tensors_[2]->Size());
     trained_ = true;  // trained at least once
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, BatchNormRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, BatchNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }
@@ -137,7 +134,7 @@ int FusedBatchnormCPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
   FusedBatchNormFp32(in_tensors_.at(0)->MutableData(), scale_, offset_, mean_, variance_, param, task_id,
                      out_tensors_.at(0)->MutableData());
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 kernel::LiteKernel *CpuFusedBatchnormKernelCreator(const std::vector<lite::Tensor *> &inputs,

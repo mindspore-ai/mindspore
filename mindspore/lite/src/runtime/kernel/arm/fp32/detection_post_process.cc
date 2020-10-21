@@ -66,11 +66,6 @@ DetectionPostProcessCPUKernel::~DetectionPostProcessCPUKernel() {
 int DetectionPostProcessCPUKernel::ReSize() { return RET_OK; }
 
 int DetectionPostProcessCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto input_boxes = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto input_scores = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
 

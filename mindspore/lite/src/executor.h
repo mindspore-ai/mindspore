@@ -28,13 +28,15 @@ class Executor {
   Executor() = default;
   virtual ~Executor() = default;
 
-  virtual int Prepare(std::vector<kernel::LiteKernel *> &kernels) { return 0; }
+  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels) { return 0; }
 
   virtual int Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
                   std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
-                  const session::KernelCallBack &before = nullptr, const session::KernelCallBack &after = nullptr);
+                  const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
 
  protected:
+  int CheckInputs(std::vector<Tensor *> &in_tensors);
+
   int TransformTensorLayoutFp32(Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
 
   int TransformTensorLayoutUint8(Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);

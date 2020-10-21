@@ -210,11 +210,6 @@ int MatmulFP16Run(void *cdata, int task_id) {
 }
 
 int MatmulFP16CPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto out_tensor = out_tensors_[0];
   float16_t *c_ptr = nullptr;
   if (out_tensor->data_type() == kNumberTypeFloat32) {

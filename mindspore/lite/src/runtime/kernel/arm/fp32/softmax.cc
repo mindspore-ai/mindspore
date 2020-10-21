@@ -71,11 +71,6 @@ int SoftmaxCPUKernel::ReSize() {
 }
 
 int SoftmaxCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return RET_ERROR;
-  }
   memset(sum_data_, 0, in_plane_size_ * out_plane_size_ * sizeof(float));
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());

@@ -45,11 +45,6 @@ int TopKCPUKernel::ReSize() {
 }
 
 int TopKCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   auto output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->MutableData());

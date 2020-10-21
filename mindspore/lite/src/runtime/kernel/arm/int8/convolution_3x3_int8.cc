@@ -213,13 +213,8 @@ int Convolution3x3Int8Impl(void *cdata, int task_id) {
 }
 
 int Convolution3x3Int8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   // malloc tmp buffer
-  ret = InitTmpBuffer();
+  auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
     return RET_ERROR;

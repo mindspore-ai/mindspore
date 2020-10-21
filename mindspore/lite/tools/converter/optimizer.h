@@ -38,9 +38,6 @@ class GraphPass : public Pass<schema::MetaGraphT> {
   ~GraphPass() override = default;
 
   STATUS Run(schema::MetaGraphT *graph) override = 0;
-
-  // protected:
-  //  GraphDefT *graphDefT = nullptr;
 };
 
 struct GraphNode {

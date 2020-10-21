@@ -25,19 +25,19 @@
 #include "include/lite_session.h"
 
 namespace mindspore::lite::opencl {
-class OpenCLExecutor : Executor {
+class OpenCLExecutor : public Executor {
  public:
   OpenCLExecutor() : Executor() { allocator_ = ocl_runtime.GetInstance()->GetAllocator(); }
 
-  int Prepare(const std::vector<kernel::LiteKernel *> &kernels);
+  int Prepare(const std::vector<kernel::LiteKernel *> &kernels) override;
 
   int Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &outputs, std::vector<kernel::LiteKernel *> &kernels,
-          Allocator *allocator = nullptr, const session::KernelCallBack &before = nullptr,
-          const session::KernelCallBack &after = nullptr);
+          Allocator *allocator = nullptr, const KernelCallBack &before = nullptr,
+          const KernelCallBack &after = nullptr) override;
 
  protected:
   InnerContext *context = nullptr;
-  OpenCLAllocator *allocator_;
+  OpenCLAllocator *allocator_ = nullptr;
   OpenCLRuntimeWrapper ocl_runtime;
 };
 }  // namespace mindspore::lite::opencl

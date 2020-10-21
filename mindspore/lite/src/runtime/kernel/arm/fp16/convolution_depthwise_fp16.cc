@@ -110,12 +110,7 @@ static int ConvDwFp16Run(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-  ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get Execute tensor failed.";
     return ret;

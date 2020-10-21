@@ -101,19 +101,13 @@ int ConvDwRun(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return ret;
-  }
-
   auto input_tensor = in_tensors_.at(kInputIndex);
   input_ptr_ = reinterpret_cast<float *>(input_tensor->MutableData());
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<float *>(output_tensor->MutableData());
 
-  ret = ParallelLaunch(this->context_->thread_pool_, ConvDwRun, this, conv_param_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, ConvDwRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwRun error: error_code[" << ret << "]";
     return RET_ERROR;

@@ -258,11 +258,6 @@ int DeConvInt8CPUKernel::DoDeconv(int task_id) {
 }
 
 int DeConvInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   int8_t *src_in = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
   int8_t *src_out = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
 

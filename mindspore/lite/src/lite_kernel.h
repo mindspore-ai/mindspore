@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <utility>
 #include "src/ops/primitive_c.h"
 #include "src/common/utils.h"
 #ifdef ENABLE_ARM
@@ -32,9 +33,7 @@
 static constexpr int kPerTensor = 1;
 
 namespace mindspore::kernel {
-using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_OK;
-enum KERNEL_ARCH { kCPU, kGPU, kNPU, kKernelArch_MIN = kCPU, kKernelArch_MAX = kNPU };
+enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kKernelArch_MIN = kCPU, kKernelArch_MAX = kNPU };
 struct KernelKey {
   KERNEL_ARCH arch;
   TypeId data_type;
@@ -51,16 +50,17 @@ struct KernelKey {
   }
 };
 
+enum SubGraphType { kNotSubGraph = 0, kCpuFP32SubGraph, kCpuFP16SubGraph, kGpuSubGraph, kNpuSubGraph, kApuSubGraph };
+
 class LiteKernel {
  public:
   LiteKernel() = default;
   // parameter should be deleted or freed by caller, and should be deleted or freed after LiteKernel is deleted
-  LiteKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &in_tensors,
-             const std::vector<lite::Tensor *> &out_tensors, const lite::InnerContext *ctx,
-             const mindspore::lite::PrimitiveC *primitive)
+  LiteKernel(OpParameter *parameter, std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
+             const lite::InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive)
       : op_parameter_(parameter),
-        in_tensors_(in_tensors),
-        out_tensors_(out_tensors),
+        in_tensors_(std::move(in_tensors)),
+        out_tensors_(std::move(out_tensors)),
         primitive_(primitive),
         context_(ctx) {
     if (op_parameter_ != nullptr && ctx != nullptr) {
@@ -77,15 +77,22 @@ class LiteKernel {
     }
   }
 
-  virtual int Prepare();
+  // called while compiling graph
+  virtual int Prepare() { return mindspore::lite::RET_OK; }
+  // called before Run
+  virtual int PreProcess();
 
-  virtual int Init() { return -1; }
+  virtual int Run() { return mindspore::lite::RET_ERROR; }
 
-  virtual int ReSize() { return -1; }
+  virtual int Run(const KernelCallBack &before, const KernelCallBack &after);
+  // called after Run
+  virtual int PostProcess() { return FreeWorkTensor(); }
 
-  virtual int Run() { return -1; }
+  virtual int ReSize() { return mindspore::lite::RET_ERROR; }
 
-  std::string name() { return this->name_; }
+  virtual int Init() { return mindspore::lite::RET_ERROR; }
+
+  std::string name() const { return this->name_; }
 
   virtual void train() { train_mode_ = true; }
 
@@ -101,20 +108,20 @@ class LiteKernel {
 
   bool is_model_output() const { return this->is_model_output_; }
 
-  schema::PrimitiveType Type() {
+  schema::PrimitiveType Type() const {
     return (this->op_parameter_ != nullptr) ? schema::PrimitiveType(this->op_parameter_->type_)
                                             : schema::PrimitiveType_NONE;
   }
 
-  std::string type_str() { return schema::EnumNamePrimitiveType(this->Type()); }
+  std::string type_str() const { return schema::EnumNamePrimitiveType(this->Type()); }
 
   void set_in_tensors(const std::vector<lite::Tensor *> &in_tensors) { this->in_tensors_ = in_tensors; }
 
   void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) { this->out_tensors_ = out_tensors; }
 
-  std::vector<lite::Tensor *> &in_tensors() { return this->in_tensors_; }
+  std::vector<lite::Tensor *> in_tensors() const { return this->in_tensors_; }
 
-  std::vector<lite::Tensor *> &out_tensors() { return this->out_tensors_; }
+  std::vector<lite::Tensor *> out_tensors() const { return this->out_tensors_; }
 
   void AddInKernel(LiteKernel *kernel) {
     if (!lite::IsContain(this->in_kernels_, kernel)) {
@@ -132,13 +139,15 @@ class LiteKernel {
 
   void SetOutKernel(const std::vector<LiteKernel *> &kernel) { this->out_kernels_ = kernel; }
 
-  std::vector<LiteKernel *> &in_kernels() { return this->in_kernels_; }
+  std::vector<LiteKernel *> in_kernels() const { return this->in_kernels_; }
 
-  std::vector<LiteKernel *> &out_kernels() { return this->out_kernels_; }
+  std::vector<LiteKernel *> out_kernels() const { return this->out_kernels_; }
 
   void InitOutTensorRefCount();
 
   int DecOutTensorRefCount();
+
+  int FreeWorkTensor() const;
 
   KernelKey desc() const { return desc_; }
 
@@ -151,10 +160,14 @@ class LiteKernel {
   static void FreeWorkspace();
   void *GetWorkspace() { return workspace_; }
 
- protected:
-  bool InferShapeDone() { return !(primitive_ != nullptr && !primitive_->GetInferFlag()) && true; }
+  SubGraphType subgraph_type() const { return this->subgraph_type_; }
 
-  KernelKey desc_;
+  virtual std::string ToString() const;
+
+ protected:
+  bool InferShapeDone() { return !(primitive_ != nullptr && !primitive_->GetInferFlag()); }
+
+  KernelKey desc_{};
   std::string name_;
   OpParameter *op_parameter_ = nullptr;
   // tensor will free in ~lite_session()
@@ -168,27 +181,7 @@ class LiteKernel {
   bool is_model_output_ = false;
   size_t workspace_size_ = 0;
   static void *workspace_;
-};
-
-class SubGraphKernel : public LiteKernel {
- public:
-  explicit SubGraphKernel(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                          const std::vector<kernel::LiteKernel *> &in_kernels,
-                          const std::vector<kernel::LiteKernel *> &out_kernels,
-                          const std::vector<kernel::LiteKernel *> &nodes, const lite::InnerContext *ctx,
-                          const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(nullptr, inputs, outputs, ctx, primitive), nodes_(nodes) {
-    in_kernels_ = in_kernels;
-    out_kernels_ = out_kernels;
-  }
-
-  virtual int Init() { return -1; }
-  virtual int InferShape() { return -1; }
-  virtual int ReSize() { return -1; }
-  virtual int Run() { return -1; }
-
- protected:
-  std::vector<LiteKernel *> nodes_;
+  SubGraphType subgraph_type_ = kNotSubGraph;
 };
 
 typedef LiteKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
@@ -198,7 +191,7 @@ typedef LiteKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
 
 class LiteKernelUtil {
  public:
-  static void TopologicalSortKernels(std::vector<kernel::LiteKernel *> &kernels);
+  static void InitIOKernels(std::vector<kernel::LiteKernel *> &kernels);
 
   static std::vector<kernel::LiteKernel *> SubgraphInputKernels(const std::vector<kernel::LiteKernel *> &kernels);
 

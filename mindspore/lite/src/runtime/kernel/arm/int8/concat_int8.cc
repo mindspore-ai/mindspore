@@ -108,12 +108,6 @@ int ConcatInt8CPUKernel::ReSize() {
 }
 
 int ConcatInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
-
   auto input_num = concat_param_->input_num_;
   count_unit_ = thread_count_ > 1 ? UP_DIV(before_axis_size, thread_count_) : before_axis_size;
   concat_param_->count_unit_ = count_unit_;
@@ -123,7 +117,7 @@ int ConcatInt8CPUKernel::Run() {
   }
   output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
-  ret = ParallelLaunch(this->context_->thread_pool_, ConcatInt8Run, this, thread_count_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, ConcatInt8Run, this, thread_count_);
 
   return ret;
 }

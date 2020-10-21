@@ -145,13 +145,7 @@ static int ConvolutionFp16Impl(void *cdata, int task_id) {
 }
 
 int ConvolutionFP16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-
-  ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get Execute tensor failed.";
     return ret;

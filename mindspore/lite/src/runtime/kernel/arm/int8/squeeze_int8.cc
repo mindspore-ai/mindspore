@@ -128,11 +128,6 @@ int SqueezeInt8CPUKernel::ReSize() {
 }
 
 int SqueezeInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   auto input_dim = quant_Squeeze_parm_->input_num_;
   int8_t **inputs_array = reinterpret_cast<int8_t **>(malloc(sizeof(int8_t *) * input_dim));
   if (inputs_array == nullptr) {
@@ -175,7 +170,7 @@ int SqueezeInt8CPUKernel::Run() {
     free(*(inputs_array + i));
   }
 
-  ret = ParallelLaunch(this->context_->thread_pool_, SqueezeInt8Run, this, thread_count_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, SqueezeInt8Run, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunSqueezeParam failed. errorcode: ";
   }

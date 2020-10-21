@@ -25,6 +25,7 @@
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2D;
 using mindspore::schema::Format::Format_NC4HW4;
@@ -892,7 +893,7 @@ int ConvolutionOpenCLKernel::SetGlobalLocalConv(std::vector<size_t> *global, std
   size_t local_c = GetMaxDivisor(global_c, max_z_size);
   if (local_c == 0) {
     MS_LOG(ERROR) << "Divide by zero";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   size_t local_hw_size = std::min<size_t>(256, max_work_group_size) / local_c;
   size_t local_w = std::min(global_w, local_hw_size);
@@ -938,7 +939,7 @@ kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::Tenso
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: Convolution";
     delete kernel;
     return nullptr;

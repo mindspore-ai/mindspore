@@ -125,14 +125,9 @@ int ReverseCPUKernel::DoReverse(int task_id) {
 }
 
 int ReverseCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   in_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
-  ret = ParallelLaunch(this->context_->thread_pool_, ReverseRun, this, thread_sz_count_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, ReverseRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Reverse run error error_code[" << ret << "]";
     return ret;

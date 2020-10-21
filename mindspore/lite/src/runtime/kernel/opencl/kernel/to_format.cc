@@ -120,7 +120,7 @@ kernel::LiteKernel *OpenCLToFormatKernelCreator(const std::vector<lite::Tensor *
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     delete kernel;
     return nullptr;
   }

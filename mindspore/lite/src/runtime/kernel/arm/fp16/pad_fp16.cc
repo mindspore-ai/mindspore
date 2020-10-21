@@ -33,11 +33,6 @@ int PadFp16CPUKernel::RunImpl(int task_id) {
 }
 
 int PadFp16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
   is_input_fp32_ = input_tensor->data_type() == kNumberTypeFloat32;
@@ -58,7 +53,7 @@ int PadFp16CPUKernel::Run() {
       output_[i] = pad_param_->constant_value_;
     }
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, PadImpl, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, PadImpl, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }

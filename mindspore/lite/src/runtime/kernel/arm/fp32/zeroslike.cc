@@ -30,11 +30,6 @@ namespace mindspore::kernel {
 int ZerosLikeCPUKernel::Init() { return RET_OK; }
 
 int ZerosLikeCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   auto input = in_tensors_.at(0);
   auto input_data = reinterpret_cast<float *>(input->MutableData());
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());

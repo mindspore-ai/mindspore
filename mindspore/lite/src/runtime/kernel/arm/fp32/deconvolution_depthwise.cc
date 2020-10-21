@@ -151,13 +151,7 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
-
-  ret = InitBuffer();
+  auto ret = InitBuffer();
   if (ret != 0) {
     MS_LOG(ERROR) << "Deconvolution depthwise fp32 InitBuffer failed.ret: " << ret;
     return ret;

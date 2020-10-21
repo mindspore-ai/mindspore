@@ -156,12 +156,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
   }
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-  ret = InitBuffer();
+  auto ret = InitBuffer();
   if (ret != 0) {
     MS_LOG(ERROR) << "Deconvolution depthwise fp16 InitBuffer failed.";
     return RET_ERROR;

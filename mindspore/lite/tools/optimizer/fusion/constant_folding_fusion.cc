@@ -245,6 +245,14 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       FreeTensors(&input_tensors, &output_tensors);
       return nullptr;
     }
+    for (auto output_tensor : output_tensors) {
+      auto ret = output_tensor->MallocData();
+      if (RET_OK != ret) {
+        MS_LOG(ERROR) << "MallocData failed";
+        FreeTensors(&input_tensors, &output_tensors);
+        return nullptr;
+      }
+    }
     auto ret = lite_kernel->Run();
     if (0 != ret) {
       FreeTensors(&input_tensors, &output_tensors);

@@ -140,12 +140,7 @@ static int ConvDwSWFp16Run(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-  ret = InitBuffer();
+  auto ret = InitBuffer();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp16 InitBuffer failed.";
     return RET_ERROR;

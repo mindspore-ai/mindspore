@@ -52,11 +52,6 @@ int ConstantOfShapeRun(void *cdata, int task_id) {
 }
 
 int ConstantOfShapeCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   param_->element_sz_ = out_tensors_.front()->ElementsNum();
   int thread_num = MSMIN(param_->op_parameter_.thread_num_, param_->element_sz_);
   param_->unit_ = UP_DIV(param_->element_sz_, thread_num);

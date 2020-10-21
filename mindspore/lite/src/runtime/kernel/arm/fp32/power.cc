@@ -41,11 +41,6 @@ int PowerImpl(void *cdata, int task_id) {
 }
 
 int PowerCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto ret = ParallelLaunch(this->context_->thread_pool_, PowerImpl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PowerCPUKernel error: " << ret;

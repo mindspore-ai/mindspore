@@ -28,6 +28,7 @@
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INVALID_OP_NAME;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
@@ -74,7 +75,7 @@ int PoolingOpenCLKernel::Init() {
   kernel_name += "_" + std::string(EnumNameFormat(op_format_));
   if (out_mem_type_ == OpenCLMemType::BUF) {
     MS_LOG(ERROR) << "buffer output not support yet.";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   } else {
     kernel_name += "_IMG";
   }
@@ -88,7 +89,7 @@ int PoolingOpenCLKernel::Init() {
   out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
 
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 std::vector<size_t> PoolingOpenCLKernel::InitGlobalSize() const {
@@ -113,7 +114,7 @@ int PoolingOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
     im_dst_y = n * UP_DIV(c, C4NUM) * h;
   } else {
     MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
@@ -122,12 +123,12 @@ int PoolingOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
-int PoolingOpenCLKernel::InitBuffer() { return RET_OK; }
+int PoolingOpenCLKernel::InitBuffer() { return mindspore::lite::RET_OK; }
 
-int PoolingOpenCLKernel::ReSize() { return RET_OK; }
+int PoolingOpenCLKernel::ReSize() { return mindspore::lite::RET_OK; }
 
 int PoolingOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
@@ -156,7 +157,7 @@ int PoolingOpenCLKernel::Run() {
   global_size = GetCommonGlobalSize(local_size, global_size);
 
   ocl_runtime_->RunKernel(kernel_, global_size, local_size, nullptr);
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 kernel::LiteKernel *OpenCLPooling2dKernelCreator(const std::vector<lite::Tensor *> &inputs,

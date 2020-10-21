@@ -117,8 +117,9 @@ kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<Tensor *> &in_te
   if (creator != nullptr) {
     auto kernel = creator(in_tensors, out_tensors, parameter, ctx, key, primitive);
     if (kernel != nullptr) {
-      return kernel;
+      kernel->set_desc(key);
     }
+    return kernel;
   }
   return nullptr;
 }

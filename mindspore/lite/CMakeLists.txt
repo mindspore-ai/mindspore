@@ -81,7 +81,6 @@ include_directories(${CCSRC_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/runtime/kernel/arm)
 include_directories(${TOP_DIR}/third_party)
-include_directories(${TOP_DIR}/third_party/flatbuffers/include)
 include_directories(${CMAKE_BINARY_DIR})
 
 include(${TOP_DIR}/cmake/utils.cmake)

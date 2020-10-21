@@ -44,11 +44,6 @@ int FlattenCPUKernel::ReSize() {
 }
 
 int FlattenCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto input = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto output = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
   Flatten(input, output, flatten_param_);

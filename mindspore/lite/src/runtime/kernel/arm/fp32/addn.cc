@@ -55,11 +55,6 @@ int AddNCPUKernel::AddNParallelRun(int thread_id) {
 }
 
 int AddNCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   elements_num_ = out_tensors_[0]->ElementsNum();
   auto input0_data = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto input1_data = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
@@ -94,7 +89,7 @@ int AddNCPUKernel::Run() {
   in1_addr_ = input0_data;
   in2_addr_ = input1_data;
   out_addr_ = output_data;
-  ret = ParallelLaunch(this->context_->thread_pool_, AddNLaunch, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, AddNLaunch, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "addn launch fail!ret: " << ret;
     return RET_ERROR;

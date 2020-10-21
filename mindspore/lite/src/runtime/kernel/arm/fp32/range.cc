@@ -32,11 +32,6 @@ int RangeCPUKernel::Init() { return RET_OK; }
 int RangeCPUKernel::ReSize() { return RET_OK; }
 
 int RangeCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   size_t start = (reinterpret_cast<RangeParameter *>(op_parameter_))->start_;
   size_t limit = (reinterpret_cast<RangeParameter *>(op_parameter_))->limit_;
   size_t delta = (reinterpret_cast<RangeParameter *>(op_parameter_))->delta_;

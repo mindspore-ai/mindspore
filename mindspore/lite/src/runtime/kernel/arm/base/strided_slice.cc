@@ -91,24 +91,18 @@ int StridedSliceCPUKernel::HandleMultiInputs() {
 }
 
 int StridedSliceCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
-
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
   MS_ASSERT(input);
   MS_ASSERT(output);
   if (in_tensors().size() == kMultiInputsSize) {
-    ret = HandleMultiInputs();
+    auto ret = HandleMultiInputs();
     if (ret != RET_OK) {
       return ret;
     }
   }
-  ret = DoStridedSlice(input->MutableData(), output->MutableData(),
-                       reinterpret_cast<StridedSliceParameter *>(op_parameter_));
+  auto ret = DoStridedSlice(input->MutableData(), output->MutableData(),
+                            reinterpret_cast<StridedSliceParameter *>(op_parameter_));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StridedSlice error error_code[" << ret << "]";
     return RET_ERROR;

@@ -66,14 +66,9 @@ int UnsqueezeRun(void *cdata, int task_id) {
 }
 
 int UnsqueezeCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
   in_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
-  ret = ParallelLaunch(this->context_->thread_pool_, UnsqueezeRun, this, thread_sz_count_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, UnsqueezeRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error error_code[" << ret << "]";
     return ret;

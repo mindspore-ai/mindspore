@@ -18,6 +18,8 @@
 #include "src/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_CustomExtractFeatures;
 
 namespace mindspore::kernel {
@@ -44,11 +46,6 @@ bool ExtractFeatureCPUKernel::IsInBlacklist(const lite::StringPack &str) {
 }
 
 int ExtractFeatureCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail! Ret error code: " << ret;
-    return ret;
-  }
   const int kMaxDimension = 1000000;
   auto input_tensor = in_tensors_.at(0);
   auto label_data = reinterpret_cast<int32_t *>(out_tensors_.at(0)->MutableData());

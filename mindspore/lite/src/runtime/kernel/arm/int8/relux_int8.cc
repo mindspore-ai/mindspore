@@ -69,11 +69,6 @@ int ReluXInt8Run(void *cdata, int task_id) {
 }
 
 int ReluXInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   int error_code = ParallelLaunch(this->context_->thread_pool_, ReluXInt8Run, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ReluXInt8Run function error error_code[" << error_code << "]";

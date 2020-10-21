@@ -37,14 +37,14 @@ int MatMulOpenCLKernel::Init() {
   transposeA = param->a_transpose_;
   if (transposeA) {
     MS_LOG(ERROR) << "matmul only support a_transpose_=false yet.";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   transposeB = param->b_transpose_;
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if (in_tensors_[0]->shape().size() != out_tensors_[0]->shape().size() ||
       (in_tensors_[0]->shape().size() != 2 && in_tensors_[0]->shape().size() != 4)) {
     MS_LOG(ERROR) << "matmul only support input shape size=2 or 4.";
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   dims = in_tensors_[0]->shape().size();
   for (int i = 0; i < dims; i++) {
@@ -69,10 +69,10 @@ int MatMulOpenCLKernel::Init() {
   in_tensors_[0]->SetFormat(op_format_);
   out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
-int MatMulOpenCLKernel::ReSize() { return RET_OK; }
+int MatMulOpenCLKernel::ReSize() { return mindspore::lite::RET_OK; }
 
 void MatMulOpenCLKernel::PadWeight() {
   // ABMCI @ ABCICO = ABMCO
@@ -158,7 +158,7 @@ int MatMulOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
     im_dst_y = n * UP_DIV(c, C4NUM) * h;
   } else {
     MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
-    return RET_ERROR;
+    return mindspore::lite::RET_ERROR;
   }
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
@@ -167,7 +167,7 @@ int MatMulOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 int MatMulOpenCLKernel::Run() {
@@ -186,7 +186,7 @@ int MatMulOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape);
   ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
-  return RET_OK;
+  return mindspore::lite::RET_OK;
 }
 
 kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -200,7 +200,7 @@ kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> 
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (ret != RET_OK) {
+  if (ret != mindspore::lite::RET_OK) {
     delete kernel;
     return nullptr;
   }

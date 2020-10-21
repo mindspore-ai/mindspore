@@ -185,11 +185,6 @@ static int ArithmeticsRunFp16(void *cdata, int task_id) {
 }
 
 int ArithmeticFP16CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   auto output_tensor = out_tensors_.at(0);
   is_input0_fp32_ = in_tensors_.at(0)->data_type() == kNumberTypeFloat32;
   is_input1_fp32_ = in_tensors_.at(1)->data_type() == kNumberTypeFloat32;
@@ -203,7 +198,7 @@ int ArithmeticFP16CPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticsRunFp16, this, context_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticsRunFp16, this, context_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticsRunFp16 run error error_code[" << ret << "]";
   }

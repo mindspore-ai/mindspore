@@ -245,8 +245,8 @@ class MS_API Benchmark {
   std::map<std::string, std::pair<int, float>> op_times_by_type_;
   std::map<std::string, std::pair<int, float>> op_times_by_name_;
 
-  session::KernelCallBack before_call_back_;
-  session::KernelCallBack after_call_back_;
+  KernelCallBack before_call_back_;
+  KernelCallBack after_call_back_;
 };
 
 int MS_API RunBenchmark(int argc, const char **argv);

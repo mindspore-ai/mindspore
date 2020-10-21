@@ -19,10 +19,7 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite {
-int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
-                  std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
-                  const session::KernelCallBack &before, const session::KernelCallBack &after) {
-  MS_ASSERT(nullptr != allocator);
+int Executor::CheckInputs(std::vector<Tensor *> &in_tensors) {
   for (auto &inTensor : in_tensors) {
     if (inTensor == nullptr) {
       MS_LOG(ERROR) << "Graph input tensor is nullptr";
@@ -32,10 +29,18 @@ int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_
       MS_LOG(ERROR) << "Graph input tensor data is nullptr";
       return RET_ERROR;
     }
-    if (inTensor->GetFormat() != schema::Format::Format_NHWC) {
-      MS_LOG(ERROR) << "Model input tensor should be NHWC";
-      return RET_ERROR;
-    }
+  }
+  return RET_OK;
+}
+
+int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
+                  std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator, const KernelCallBack &before,
+                  const KernelCallBack &after) {
+  MS_ASSERT(nullptr != allocator);
+  auto ret = this->CheckInputs(in_tensors);
+  if (RET_OK != ret) {
+    MS_LOG(ERROR) << "CheckInputs failed";
+    return ret;
   }
   kernel::LiteKernelUtil::InitTensorRefCount(kernels);
   for (auto out_tensor : out_tensors) {  // increase RefCount of output tensors, such that Run will not free them
@@ -44,34 +49,20 @@ int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_
 
   for (auto *kernel : kernels) {
     MS_ASSERT(nullptr != kernel);
-
-    if (before != nullptr) {
-      if (!before(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()),
-                  {kernel->name(), kernel->type_str()})) {
-        MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->name();
-      }
+    ret = kernel->PreProcess();
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "PreProcess kernel failed, name: " << kernel->name();
+      return ret;
     }
-
-    auto ret = kernel->Run();
-    if (0 != ret) {
+    ret = kernel->Run(before, after);
+    if (RET_OK != ret) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
       return ret;
     }
-    if (after != nullptr) {
-      if (!after(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()),
-                 {kernel->name(), kernel->type_str()})) {
-        MS_LOG(ERROR) << "run kernel after_callback failed, name: " << kernel->name();
-      }
-    }
-    for (auto input_kernel : kernel->in_kernels()) {
-      MS_ASSERT(input_kernel != nullptr);
-      if (input_kernel->is_model_output()) {
-        continue;
-      }
-      ret = input_kernel->DecOutTensorRefCount();
-      if (0 != ret) {
-        MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
-      }
+    ret = kernel->PostProcess();
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "PostProcess kernel failed, name: " << kernel->name();
+      return ret;
     }
   }
   return RET_OK;
@@ -99,9 +90,9 @@ int Executor::TransformTensorLayoutFp32(Tensor *tensor, schema::Format dst_forma
   MS_ASSERT(4 == tensor->shape().size());
   auto src_format = tensor->GetFormat();
   if (src_format == schema::Format::Format_NC4HW4 && dst_format == schema::Format::Format_NHWC) {
-    auto *src_data = tensor->MutableData();
+    auto *src_data = tensor->data_c();
     if (src_data == nullptr) {
-      MS_LOG(ERROR) << "MutableData return nullptr";
+      MS_LOG(ERROR) << "data of tensor is nullptr";
       return RET_ERROR;
     }
     auto *dst_data = allocator->Malloc(tensor->Size());

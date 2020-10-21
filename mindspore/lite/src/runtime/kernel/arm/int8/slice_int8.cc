@@ -71,15 +71,10 @@ int SliceInt8Run(void *cdata, int task_id) {
 }
 
 int SliceInt8CPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return ret;
-  }
-
   const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_[0]->MutableData());
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
 
+  mindspore::lite::STATUS ret = RET_ERROR;
   if (param_->size_[1] < param_->op_parameter_.thread_num_) {
     ret = SliceInt8NoParallel(input_data, output_data, param_);
   } else {

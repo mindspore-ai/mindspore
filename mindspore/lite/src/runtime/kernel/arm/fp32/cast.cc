@@ -66,15 +66,16 @@ int CastCPUKernel::DoCast(int thread_id) {
 
   auto offset = thread_id * stride_;
   auto output = out_tensors_.at(0);
-  auto output_data = output->MutableData();
+  auto output_data = output->data_c();
+  MS_ASSERT(output_data != nullptr);
   auto input_data_type = input->data_type();
   auto output_data_type = output->data_type();
   if (output_data_type != kNumberTypeFloat32) {
     if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt32) {
-      Float32ToInt32(reinterpret_cast<float *>(input->MutableData()) + offset,
+      Float32ToInt32(reinterpret_cast<float *>(input->data_c()) + offset,
                      reinterpret_cast<int32_t *>(output_data) + offset, data_num);
     } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeFloat16) {
-      Float32ToFp16(reinterpret_cast<float *>(input->MutableData()) + offset,
+      Float32ToFp16(reinterpret_cast<float *>(input->data_c()) + offset,
                     reinterpret_cast<uint16_t *>(output_data) + offset, data_num);
     } else {
       MS_LOG(ERROR) << "Unsupported datatype from " << input_data_type << " to " << output_data_type;
@@ -106,11 +107,6 @@ int CastCPUKernel::DoCast(int thread_id) {
 }
 
 int CastCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   if (data_num_ == 0) {
     return RET_OK;
   }

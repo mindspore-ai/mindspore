@@ -45,12 +45,7 @@ int ArgMinMaxCPUKernel::Init() {
 int ArgMinMaxCPUKernel::ReSize() { return ArgMinMaxBaseCPUKernel::ReSize(); }
 
 int ArgMinMaxCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
-  ret = ArgMinMaxBaseCPUKernel::Run();
+  auto ret = ArgMinMaxBaseCPUKernel::Run();
   return ret;
 }
 }  // namespace mindspore::kernel

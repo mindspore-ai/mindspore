@@ -152,13 +152,8 @@ int SparseToDenseCPUKernel::IndicesValidCheck() {
 }
 
 int SparseToDenseCPUKernel::Run() {
-  auto ret = Prepare();
+  auto ret = GenerateIndices();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-  auto ret1 = GenerateIndices();
-  if (ret1 != RET_OK) {
     MS_LOG(ERROR) << "Generate Indices failed.";
     return RET_ERROR;
   }

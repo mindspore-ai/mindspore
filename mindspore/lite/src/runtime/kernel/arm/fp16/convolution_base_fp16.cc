@@ -23,7 +23,8 @@
 #include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {
-
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 ConvolutionBaseFP16CPUKernel::~ConvolutionBaseFP16CPUKernel() {
   if (fp16_weight_ != nullptr) {
     free(fp16_weight_);

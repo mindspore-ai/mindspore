@@ -51,11 +51,6 @@ int TileCPUKernel::ReSize() {
 }
 
 int TileCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
-    return ret;
-  }
   auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 

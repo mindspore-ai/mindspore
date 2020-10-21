@@ -32,11 +32,6 @@ int RankCPUKernel::Init() { return RET_OK; }
 int RankCPUKernel::ReSize() { return RET_OK; }
 
 int RankCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   auto in_shape = in_tensors_[0]->shape();
   auto rank = in_shape.size();
