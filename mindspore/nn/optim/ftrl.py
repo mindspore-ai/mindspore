@@ -195,7 +195,7 @@ class FTRL(Optimizer):
 
         if value == 'CPU':
             self.sparse_opt = P.FusedSparseFtrl(self.lr, self.l1, self.l2, self.lr_power, self.use_locking)
-            self.sparse_opt.add_prim_attr("primitive", "CPU")
+            self.sparse_opt.add_prim_attr("primitive_target", "CPU")
         else:
             self.sparse_opt = P.SparseApplyFtrl(self.lr, self.l1, self.l2, self.lr_power, self.use_locking)
 
