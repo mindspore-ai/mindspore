@@ -17,21 +17,12 @@
 #include "src/ops/arithmetic_self.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateArithmeticSelf(const mindspore::lite::PrimitiveC *primitive) {
-  ArithmeticSelfParameter *arithmetic_self_param =
-    reinterpret_cast<ArithmeticSelfParameter *>(malloc(sizeof(ArithmeticSelfParameter)));
-  if (arithmetic_self_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ArithmeticSelfParameter failed.";
-    return nullptr;
-  }
-  memset(arithmetic_self_param, 0, sizeof(ArithmeticSelfParameter));
-  arithmetic_self_param->op_parameter_.type_ = primitive->Type();
-  return reinterpret_cast<OpParameter *>(arithmetic_self_param);
-}
 
 int ArithmeticSelf::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

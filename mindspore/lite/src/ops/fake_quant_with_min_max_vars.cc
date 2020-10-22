@@ -16,7 +16,9 @@
 
 #include "src/ops/fake_quant_with_min_max_vars.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {

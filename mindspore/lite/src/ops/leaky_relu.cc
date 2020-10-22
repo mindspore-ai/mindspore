@@ -16,7 +16,9 @@
 
 #include "src/ops/leaky_relu.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {

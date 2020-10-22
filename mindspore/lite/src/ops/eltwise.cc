@@ -16,8 +16,9 @@
 
 #include "src/ops/eltwise.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/arithmetic_common.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -45,32 +46,6 @@ int Eltwise::GetMode() const { return this->primitive_->value_as_Eltwise()->mode
 PrimitiveC *EltwiseCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Eltwise>(primitive); }
 Registry EltwiseRegistry(schema::PrimitiveType_Eltwise, EltwiseCreator);
 #endif
-
-OpParameter *PopulateEltwiseParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
-  if (arithmetic_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
-    return nullptr;
-  }
-  memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
-  auto eltwise = reinterpret_cast<mindspore::lite::Eltwise *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  switch (eltwise->GetMode()) {
-    case schema::EltwiseMode_PROD:
-      arithmetic_param->op_parameter_.type_ = schema::PrimitiveType_Mul;
-      break;
-    case schema::EltwiseMode_SUM:
-      arithmetic_param->op_parameter_.type_ = schema::PrimitiveType_Add;
-      break;
-    case schema::EltwiseMode_MAXIMUM:
-      arithmetic_param->op_parameter_.type_ = schema::PrimitiveType_Maximum;
-      break;
-    default:
-      free(arithmetic_param);
-      return nullptr;
-  }
-  return reinterpret_cast<OpParameter *>(arithmetic_param);
-}
-Registry EltwiseParameterRegistry(schema::PrimitiveType_Eltwise, PopulateEltwiseParameter);
 
 }  // namespace lite
 }  // namespace mindspore

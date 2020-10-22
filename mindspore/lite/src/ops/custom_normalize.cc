@@ -17,7 +17,9 @@
 
 #include "src/common/string_util.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -38,18 +40,6 @@ PrimitiveC *CustomNormalizeCreator(const schema::Primitive *primitive) {
 }
 Registry CustomNormalizeRegistry(schema::PrimitiveType_CustomNormalize, CustomNormalizeCreator);
 #endif
-
-OpParameter *PopulateCustomNormalizeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  OpParameter *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "new OpParameter failed.";
-    return nullptr;
-  }
-  memset(param, 0, sizeof(OpParameter));
-  param->type_ = primitive->Type();
-  return param;
-}
-Registry CustomNormalizeParameterRegistry(schema::PrimitiveType_CustomNormalize, PopulateCustomNormalizeParameter);
 
 int CustomNormalize::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   auto input = inputs_.at(0);

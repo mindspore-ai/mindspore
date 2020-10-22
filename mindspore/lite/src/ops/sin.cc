@@ -16,7 +16,9 @@
 
 #include "src/ops/sin.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -36,7 +38,6 @@ PrimitiveC *SinCreator(const schema::Primitive *primitive) { return PrimitiveC::
 Registry SinRegistry(schema::PrimitiveType_Sin, SinCreator);
 
 #endif
-Registry SinParameterRegistry(schema::PrimitiveType_Sin, PopulateArithmeticSelf);
 
 }  // namespace lite
 }  // namespace mindspore

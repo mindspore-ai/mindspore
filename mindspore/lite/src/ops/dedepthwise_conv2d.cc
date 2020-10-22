@@ -16,8 +16,9 @@
 
 #include "src/ops/dedepthwise_conv2d.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/conv_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -117,45 +118,6 @@ PrimitiveC *DeDepthwiseConv2DCreator(const schema::Primitive *primitive) {
 }
 Registry DeDepthwiseConv2DRegistry(schema::PrimitiveType_DeDepthwiseConv2D, DeDepthwiseConv2DCreator);
 #endif
-
-OpParameter *PopulateDeconvDwParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
-  if (conv_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ConvParameter failed.";
-    return nullptr;
-  }
-  memset(conv_param, 0, sizeof(ConvParameter));
-  conv_param->op_parameter_.type_ = primitive->Type();
-  auto conv_primitive =
-    reinterpret_cast<mindspore::lite::DeDepthwiseConv2D *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  conv_param->kernel_h_ = conv_primitive->GetKernelH();
-  conv_param->kernel_w_ = conv_primitive->GetKernelW();
-  conv_param->stride_h_ = conv_primitive->GetStrideH();
-  conv_param->stride_w_ = conv_primitive->GetStrideW();
-
-  auto deconvdw_lite_primitive = (mindspore::lite::DeDepthwiseConv2D *)primitive;
-  conv_param->pad_u_ = deconvdw_lite_primitive->PadUp();
-  conv_param->pad_d_ = deconvdw_lite_primitive->PadDown();
-  conv_param->pad_l_ = deconvdw_lite_primitive->PadLeft();
-  conv_param->pad_r_ = deconvdw_lite_primitive->PadRight();
-  conv_param->dilation_h_ = conv_primitive->GetDilateH();
-  conv_param->dilation_w_ = conv_primitive->GetDilateW();
-  auto act_type = conv_primitive->GetActivationType();
-  switch (act_type) {
-    case schema::ActivationType_RELU:
-      conv_param->act_type_ = ActType_Relu;
-      break;
-    case schema::ActivationType_RELU6:
-      conv_param->act_type_ = ActType_Relu6;
-      break;
-    default:
-      conv_param->act_type_ = ActType_No;
-      break;
-  }
-  return reinterpret_cast<OpParameter *>(conv_param);
-}
-
-Registry DeDepthwiseConv2DParameterRegistry(schema::PrimitiveType_DeDepthwiseConv2D, PopulateDeconvDwParameter);
 
 int DeDepthwiseConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   if (inputs_.size() != kDoubleNum && inputs_.size() != kMultiNum) {

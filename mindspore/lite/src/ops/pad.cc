@@ -16,8 +16,9 @@
 
 #include "src/ops/pad.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/pad_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -64,37 +65,6 @@ int Pad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::Fl
 PrimitiveC *PadCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Pad>(primitive); }
 Registry PadRegistry(schema::PrimitiveType_Pad, PadCreator);
 #endif
-OpParameter *PopulatePadParameter(const mindspore::lite::PrimitiveC *primitive) {
-  PadParameter *pad_param = reinterpret_cast<PadParameter *>(malloc(sizeof(PadParameter)));
-  if (pad_param == nullptr) {
-    MS_LOG(ERROR) << "malloc PadParameter failed.";
-    return nullptr;
-  }
-  memset(pad_param, 0, sizeof(PadParameter));
-  pad_param->op_parameter_.type_ = primitive->Type();
-  auto pad_node = reinterpret_cast<mindspore::lite::Pad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  pad_param->pad_mode_ = pad_node->GetPaddingMode();
-  if (pad_param->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
-    pad_param->constant_value_ = pad_node->GetConstantValue();
-    auto size = pad_node->GetPaddings().size();
-    if (size > MAX_PAD_SIZE) {
-      MS_LOG(ERROR) << "Invalid padding size: " << size;
-      free(pad_param);
-      return nullptr;
-    }
-
-    for (size_t i = 0; i < MAX_PAD_SIZE - size; ++i) {
-      pad_param->paddings_[i] = 0;
-    }
-    for (size_t i = 0; i < size; i++) {
-      pad_param->paddings_[MAX_PAD_SIZE - size + i] = pad_node->GetPaddings()[i];
-    }
-    pad_param->padding_length = MAX_PAD_SIZE;
-  }
-
-  return reinterpret_cast<OpParameter *>(pad_param);
-}
-Registry PadParameterRegistry(schema::PrimitiveType_Pad, PopulatePadParameter);
 
 int Pad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);

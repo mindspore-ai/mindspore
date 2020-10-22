@@ -16,7 +16,9 @@
 
 #include "src/ops/neg_grad.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -34,7 +36,6 @@ PrimitiveC *NegGradCreator(const schema::Primitive *primitive) { return Primitiv
 Registry NegGradRegistry(schema::PrimitiveType_NegGrad, NegGradCreator);
 
 #endif
-Registry NegGradParameterRegistry(schema::PrimitiveType_NegGrad, PopulateArithmeticSelf);
 
 }  // namespace lite
 }  // namespace mindspore

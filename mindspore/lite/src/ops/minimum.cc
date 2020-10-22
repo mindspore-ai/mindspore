@@ -16,7 +16,9 @@
 
 #include "src/ops/minimum.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -34,6 +36,5 @@ PrimitiveC *MinimumCreator(const schema::Primitive *primitive) { return Primitiv
 Registry MinimumRegistry(schema::PrimitiveType_Minimum, MinimumCreator);
 #endif
 
-Registry MinimumParameterRegistry(schema::PrimitiveType_Minimum, PopulateArithmetic);
 }  // namespace lite
 }  // namespace mindspore

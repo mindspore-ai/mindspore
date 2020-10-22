@@ -16,8 +16,10 @@
 
 #include "src/ops/bias_add.h"
 #include <memory>
-#include "nnacl/arithmetic_common.h"
+
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -83,19 +85,6 @@ std::vector<int> BiasAdd::GetAxis() const {
 PrimitiveC *BiasAddCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<BiasAdd>(primitive); }
 Registry BiasAddRegistry(schema::PrimitiveType_BiasAdd, BiasAddCreator);
 #endif
-
-OpParameter *PopulateBiasAddParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
-  if (arithmetic_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
-    return nullptr;
-  }
-  memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
-  arithmetic_param->op_parameter_.type_ = primitive->Type();
-
-  return reinterpret_cast<OpParameter *>(arithmetic_param);
-}
-Registry BiasAddParameterRegistry(schema::PrimitiveType_BiasAdd, PopulateBiasAddParameter);
 
 }  // namespace lite
 }  // namespace mindspore

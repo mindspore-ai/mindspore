@@ -19,8 +19,9 @@
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/gather_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -52,21 +53,6 @@ int Gather::GetBatchDims() const { return this->primitive_->value_as_Gather()->b
 PrimitiveC *GatherCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Gather>(primitive); }
 Registry GatherRegistry(schema::PrimitiveType_Gather, GatherCreator);
 #endif
-
-OpParameter *PopulateGatherParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto gather_attr = reinterpret_cast<mindspore::lite::Gather *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  GatherParameter *gather_param = reinterpret_cast<GatherParameter *>(malloc(sizeof(GatherParameter)));
-  if (gather_param == nullptr) {
-    MS_LOG(ERROR) << "malloc GatherParameter failed.";
-    return nullptr;
-  }
-  memset(gather_param, 0, sizeof(GatherParameter));
-  gather_param->op_parameter_.type_ = primitive->Type();
-  gather_param->axis_ = gather_attr->GetAxis();
-  gather_param->batchDims_ = gather_attr->GetBatchDims();
-  return reinterpret_cast<OpParameter *>(gather_param);
-}
-Registry GatherParameterRegistry(schema::PrimitiveType_Gather, PopulateGatherParameter);
 
 int Gather::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

@@ -16,7 +16,9 @@
 
 #include "src/ops/logical_and.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -37,6 +39,5 @@ PrimitiveC *LogicalAndCreator(const schema::Primitive *primitive) {
 Registry LogicalAndRegistry(schema::PrimitiveType_LogicalAnd, LogicalAndCreator);
 #endif
 
-Registry LogicalAndParameterRegistry(schema::PrimitiveType_LogicalAnd, PopulateArithmetic);
 }  // namespace lite
 }  // namespace mindspore

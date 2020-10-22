@@ -20,8 +20,9 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/reshape_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -106,19 +107,6 @@ int Reshape::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
 PrimitiveC *ReshapeCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Reshape>(primitive); }
 Registry ReshapeRegistry(schema::PrimitiveType_Reshape, ReshapeCreator);
 #endif
-
-OpParameter *PopulateReshapeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ReshapeParameter *reshape_param = reinterpret_cast<ReshapeParameter *>(malloc(sizeof(ReshapeParameter)));
-  if (reshape_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ReshapeParameter failed.";
-    return nullptr;
-  }
-  memset(reshape_param, 0, sizeof(ReshapeParameter));
-  reshape_param->op_parameter_.type_ = primitive->Type();
-  return reinterpret_cast<OpParameter *>(reshape_param);
-}
-
-Registry ReshapeParameterRegistry(schema::PrimitiveType_Reshape, PopulateReshapeParameter);
 
 int Reshape::CalNewShape(const Tensor *in_tensor, std::vector<int> *out_shape) const {
   size_t in_shape_size = 1;

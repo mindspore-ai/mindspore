@@ -16,7 +16,9 @@
 
 #include "src/model_common.h"
 #include "include/version.h"
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore::lite {
 bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model) {

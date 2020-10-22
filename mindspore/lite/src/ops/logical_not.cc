@@ -16,7 +16,9 @@
 
 #include "src/ops/logical_not.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -35,7 +37,6 @@ PrimitiveC *LogicalNotCreator(const schema::Primitive *primitive) {
 }
 Registry LogicalNotRegistry(schema::PrimitiveType_LogicalNot, LogicalNotCreator);
 #endif
-Registry LogicalNotParameterRegistry(schema::PrimitiveType_LogicalNot, PopulateArithmeticSelf);
 
 }  // namespace lite
 }  // namespace mindspore

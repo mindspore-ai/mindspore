@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/populate_parameter.h"
 #include "src/train/train_populate_parameter.h"
+#include "src/ops/populate/populate_register.h"
 #include "src/ops/pooling_grad.h"
 #include "nnacl/pooling_parameter.h"
 #include "src/ops/softmax_cross_entropy.h"
@@ -377,23 +377,25 @@ OpParameter *PopulateBNGradParameter(const mindspore::lite::PrimitiveC *primitiv
 }
 
 void PopulateTrainParameters() {
-  auto ppr = PopulateParameterRegistry::GetInstance();
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_ApplyMomentum, PopulateApplyMomentumParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_BiasGrad, PopulateBiasGradParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_SoftmaxCrossEntropy, PopulateSoftmaxCrossEntropyParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_ActivationGrad, PopulateActivationGradParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_TupleGetItem, DefaultPopulateParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_Depend, DefaultPopulateParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_BNGrad, DefaultPopulateParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_Conv2DGradFilter, PopulateConvolutionGradFilterParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_Conv2DGradInput, PopulateConvolutionGradInputParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_GroupConv2DGradInput, PopulateGroupConvolutionGradInputParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_PoolingGrad, PopulatePoolingGradParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_PowerGrad, PopulatePowerGradParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_Sgd, PopulateSgdParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_BNGrad, PopulateBNGradParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_Adam, PopulateAdamParameter);
-  ppr->AddPopulateParameterFunc(schema::PrimitiveType_Assign, DefaultPopulateParameter);
+  lite::Registry ApplyMomentumParameterRegistry(schema::PrimitiveType_ApplyMomentum, PopulateApplyMomentumParameter);
+  lite::Registry BiasGradParameterRegistry(schema::PrimitiveType_BiasGrad, PopulateBiasGradParameter);
+  lite::Registry SoftmaxCrossEntropyParameterRegistry(schema::PrimitiveType_SoftmaxCrossEntropy,
+                                                      PopulateSoftmaxCrossEntropyParameter);
+  lite::Registry ActivationParameterRegistry(schema::PrimitiveType_ActivationGrad, PopulateActivationGradParameter);
+  lite::Registry TupleGetItemParameterRegistry(schema::PrimitiveType_TupleGetItem, DefaultPopulateParameter);
+  lite::Registry DependParameterRegistry(schema::PrimitiveType_Depend, DefaultPopulateParameter);
+  lite::Registry Conv2DGradFilterParameterRegistry(schema::PrimitiveType_Conv2DGradFilter,
+                                                   PopulateConvolutionGradFilterParameter);
+  lite::Registry Conv2DGradInputParameterRegistry(schema::PrimitiveType_Conv2DGradInput,
+                                                  PopulateConvolutionGradInputParameter);
+  lite::Registry GroupConv2DGradInputParameterRegistry(schema::PrimitiveType_GroupConv2DGradInput,
+                                                       PopulateGroupConvolutionGradInputParameter);
+  lite::Registry PoolingParameterRegistry(schema::PrimitiveType_PoolingGrad, PopulatePoolingGradParameter);
+  lite::Registry PowerGradParameterRegistry(schema::PrimitiveType_PowerGrad, PopulatePowerGradParameter);
+  lite::Registry SgdParameterRegistry(schema::PrimitiveType_Sgd, PopulateSgdParameter);
+  lite::Registry BNGradParameterRegistry(schema::PrimitiveType_BNGrad, PopulateBNGradParameter);
+  lite::Registry AdamParameterRegistry(schema::PrimitiveType_Adam, PopulateAdamParameter);
+  lite::Registry AssignParameterRegistry(schema::PrimitiveType_Assign, DefaultPopulateParameter);
 }
 
 }  // namespace mindspore::kernel

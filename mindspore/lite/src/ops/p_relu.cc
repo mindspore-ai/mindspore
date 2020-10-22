@@ -16,8 +16,9 @@
 
 #include "src/ops/p_relu.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/prelu_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -53,20 +54,6 @@ PrimitiveC *PReLUCreator(const schema::Primitive *primitive) { return PrimitiveC
 Registry PReLURegistry(schema::PrimitiveType_PReLU, PReLUCreator);
 
 #endif
-
-OpParameter *PopulatePReLUParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = reinterpret_cast<mindspore::lite::PReLU *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  PReluParameter *prelu_param = reinterpret_cast<PReluParameter *>(malloc(sizeof(PReluParameter)));
-  if (prelu_param == nullptr) {
-    MS_LOG(ERROR) << "malloc PReluParameter failed.";
-    return nullptr;
-  }
-  memset(prelu_param, 0, sizeof(PReluParameter));
-  prelu_param->op_parameter_.type_ = primitive->Type();
-  prelu_param->channelShared = param->GetChannelShared();
-  return reinterpret_cast<OpParameter *>(prelu_param);
-}
-Registry PReLUParameterRegistry(schema::PrimitiveType_PReLU, PopulatePReLUParameter);
 
 }  // namespace lite
 }  // namespace mindspore

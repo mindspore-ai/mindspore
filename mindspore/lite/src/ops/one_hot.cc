@@ -16,8 +16,9 @@
 
 #include "src/ops/one_hot.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/fp32/one_hot.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -78,25 +79,6 @@ int OneHot::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
 PrimitiveC *OneHotCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<OneHot>(primitive); }
 Registry OneHotRegistry(schema::PrimitiveType_OneHot, OneHotCreator);
 #endif
-
-OpParameter *PopulateOneHotParameter(const mindspore::lite::PrimitiveC *primitive) {
-  OneHotParameter *one_hot_param = reinterpret_cast<OneHotParameter *>(malloc(sizeof(OneHotParameter)));
-  if (one_hot_param == nullptr) {
-    MS_LOG(ERROR) << "malloc OneHotParameter failed.";
-    return nullptr;
-  }
-  memset(one_hot_param, 0, sizeof(OneHotParameter));
-  one_hot_param->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::OneHot *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  if (param == nullptr) {
-    free(one_hot_param);
-    MS_LOG(ERROR) << "get OneHot param nullptr.";
-    return nullptr;
-  }
-  one_hot_param->axis_ = param->GetAxis();
-  return reinterpret_cast<OpParameter *>(one_hot_param);
-}
-Registry OneHotParameterRegistry(schema::PrimitiveType_OneHot, PopulateOneHotParameter);
 
 namespace {
 constexpr size_t kOneHotInputNum = 4;

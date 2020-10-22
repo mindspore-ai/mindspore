@@ -14,14 +14,22 @@
  * limitations under the License.
  */
 
-#include "src/ops/ceil.h"
-
-#include "src/ops/ops_register.h"
+#include "src/ops/primitive_c.h"
+#include "src/ops/populate/populate_register.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
-
-Registry CeilParameterRegistry(schema::PrimitiveType_Ceil, PopulateArithmeticSelf);
-
+OpParameter *PopulateAddNParameter(const mindspore::lite::PrimitiveC *primitive) {
+  OpParameter *addn_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (addn_param == nullptr) {
+    MS_LOG(ERROR) << "malloc OpParameter failed.";
+    return nullptr;
+  }
+  memset(addn_param, 0, sizeof(OpParameter));
+  addn_param->type_ = primitive->Type();
+  return reinterpret_cast<OpParameter *>(addn_param);
+}
+Registry AddNParameterRegistry(schema::PrimitiveType_AddN, PopulateAddNParameter);
 }  // namespace lite
 }  // namespace mindspore

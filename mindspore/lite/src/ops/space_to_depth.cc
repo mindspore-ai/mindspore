@@ -17,8 +17,9 @@
 #include "src/ops/space_to_depth.h"
 #include "src/common/common.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/fp32/space_to_depth.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -52,26 +53,6 @@ PrimitiveC *SpaceToDepthCreator(const schema::Primitive *primitive) {
 }
 Registry SpaceToDepthRegistry(schema::PrimitiveType_SpaceToDepth, SpaceToDepthCreator);
 #endif
-OpParameter *PopulateSpaceToDepthParameter(const mindspore::lite::PrimitiveC *primitive) {
-  SpaceToDepthParameter *space_depth_param =
-    reinterpret_cast<SpaceToDepthParameter *>(malloc(sizeof(SpaceToDepthParameter)));
-  if (space_depth_param == nullptr) {
-    MS_LOG(ERROR) << "malloc SpaceToDepthParameter failed.";
-    return nullptr;
-  }
-  memset(space_depth_param, 0, sizeof(SpaceToDepthParameter));
-  space_depth_param->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::SpaceToDepth *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  space_depth_param->op_parameter_.type_ = primitive->Type();
-  space_depth_param->block_size_ = param->GetBlockSize();
-  if (param->GetFormat() != schema::Format::Format_NHWC) {
-    MS_LOG(ERROR) << "Currently only NHWC format is supported.";
-    free(space_depth_param);
-    return nullptr;
-  }
-  return reinterpret_cast<OpParameter *>(space_depth_param);
-}
-Registry SpaceToDepthParameterRegistry(schema::PrimitiveType_SpaceToDepth, PopulateSpaceToDepthParameter);
 
 namespace {
 constexpr int kSpaceToDepthOutputNum = 1;

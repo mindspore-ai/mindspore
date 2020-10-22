@@ -17,8 +17,9 @@
 #include "src/ops/space_to_batch_nd.h"
 #include "src/common/common.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/fp32/space_to_batch.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -85,22 +86,6 @@ PrimitiveC *SpaceToBatchNDCreator(const schema::Primitive *primitive) {
 Registry SpaceToBatchNDRegistry(schema::PrimitiveType_SpaceToBatchND, SpaceToBatchNDCreator);
 
 #endif  // PRIMITIVE_WRITEABLE
-
-OpParameter *PopulateSpaceToBatchNDParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *space_batch_param_nd = new (std::nothrow) SpaceToBatchParameter();
-  if (space_batch_param_nd == nullptr) {
-    MS_LOG(ERROR) << "new SpaceToBatchParameter failed.";
-    return nullptr;
-  }
-
-  space_batch_param_nd->op_parameter_.type_ = primitive->Type();
-  auto block_sizes = ((mindspore::lite::SpaceToBatchND *)primitive)->GetBlockShape();
-  memcpy(space_batch_param_nd->block_sizes_, (block_sizes.data()), block_sizes.size() * sizeof(int));
-  auto paddings = ((mindspore::lite::SpaceToBatchND *)primitive)->GetPaddings();
-  memcpy(space_batch_param_nd->paddings_, (paddings.data()), paddings.size() * sizeof(int));
-  return reinterpret_cast<OpParameter *>(space_batch_param_nd);
-}
-Registry SpaceToBatchNDParameterRegistry(schema::PrimitiveType_SpaceToBatchND, PopulateSpaceToBatchNDParameter);
 
 int SpaceToBatchND::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   if (outputs.size() != kSpaceToBatchNDOutputNum || inputs.size() != kSpaceToBatchNDInputNum) {

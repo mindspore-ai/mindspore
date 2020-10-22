@@ -15,8 +15,9 @@
  */
 
 #include "src/ops/real_div.h"
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/arithmetic_common.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -44,8 +45,6 @@ int RealDiv::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
   }
   return RET_OK;
 }
-
-Registry RealDivParameterRegistry(schema::PrimitiveType_RealDiv, PopulateArithmetic);
 
 #else
 int RealDiv::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {

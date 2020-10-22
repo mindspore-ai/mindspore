@@ -15,8 +15,9 @@
  */
 
 #include "src/ops/unstack.h"
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/unstack.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -48,21 +49,6 @@ int Unstack::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
 PrimitiveC *UnstackCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Unstack>(primitive); }
 Registry UnstackRegistry(schema::PrimitiveType_Unstack, UnstackCreator);
 #endif
-
-OpParameter *PopulateUnstackParameter(const mindspore::lite::PrimitiveC *primitive) {
-  UnstackParameter *unstack_param = reinterpret_cast<UnstackParameter *>(malloc(sizeof(UnstackParameter)));
-  if (unstack_param == nullptr) {
-    MS_LOG(ERROR) << "malloc UnstackParameter failed.";
-    return nullptr;
-  }
-  memset(unstack_param, 0, sizeof(UnstackParameter));
-  auto param = reinterpret_cast<mindspore::lite::Unstack *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  unstack_param->op_parameter_.type_ = primitive->Type();
-  unstack_param->num_ = param->GetNum();
-  unstack_param->axis_ = param->GetAxis();
-  return reinterpret_cast<OpParameter *>(unstack_param);
-}
-Registry UnstackParameterRegistry(schema::PrimitiveType_Unstack, PopulateUnstackParameter);
 
 int Unstack::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   auto input = inputs.at(0);

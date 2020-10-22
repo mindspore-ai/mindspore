@@ -16,7 +16,9 @@
 
 #include "src/ops/equal.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -43,6 +45,6 @@ int Equal::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
-Registry EqualParameterRegistry(schema::PrimitiveType_Equal, PopulateArithmetic);
+
 }  // namespace lite
 }  // namespace mindspore

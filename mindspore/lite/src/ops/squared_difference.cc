@@ -16,7 +16,9 @@
 
 #include "src/ops/squared_difference.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -38,6 +40,6 @@ PrimitiveC *SquaredDifferenceCreator(const schema::Primitive *primitive) {
 Registry SquaredDifferenceRegistry(schema::PrimitiveType_SquaredDifference, SquaredDifferenceCreator);
 
 #endif
-Registry SquaredDifferenceParameterRegistry(schema::PrimitiveType_SquaredDifference, PopulateArithmetic);
+
 }  // namespace lite
 }  // namespace mindspore

@@ -16,8 +16,9 @@
 
 #include "src/ops/power.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/power_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -52,23 +53,6 @@ int Power::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
 PrimitiveC *PowerCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Power>(primitive); }
 Registry PowerRegistry(schema::PrimitiveType_Power, PowerCreator);
 #endif
-
-OpParameter *PopulatePowerParameter(const mindspore::lite::PrimitiveC *primitive) {
-  PowerParameter *power_param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
-  if (power_param == nullptr) {
-    MS_LOG(ERROR) << "malloc PowerParameter failed.";
-    return nullptr;
-  }
-  memset(power_param, 0, sizeof(PowerParameter));
-  power_param->op_parameter_.type_ = primitive->Type();
-  auto power = reinterpret_cast<mindspore::lite::Power *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  power_param->power_ = power->GetPower();
-  power_param->scale_ = power->GetScale();
-  power_param->shift_ = power->GetShift();
-  return reinterpret_cast<OpParameter *>(power_param);
-}
-
-Registry PowerParameterRegistry(schema::PrimitiveType_Power, PopulatePowerParameter);
 
 int Power::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);

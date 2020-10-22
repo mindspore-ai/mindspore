@@ -16,7 +16,9 @@
 
 #include "src/ops/floor_div.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -36,6 +38,6 @@ PrimitiveC *FloorDivCreator(const schema::Primitive *primitive) {
 }
 Registry FloorDivRegistry(schema::PrimitiveType_FloorDiv, FloorDivCreator);
 #endif
-Registry FloorDivParameterRegistry(schema::PrimitiveType_FloorDiv, PopulateArithmetic);
+
 }  // namespace lite
 }  // namespace mindspore

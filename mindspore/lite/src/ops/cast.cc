@@ -16,8 +16,9 @@
 
 #include "src/ops/cast.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/fp32/cast.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -81,22 +82,6 @@ int Cast::GetDstT() const { return this->primitive_->value_as_Cast()->dstT(); }
 PrimitiveC *CastCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Cast>(primitive); }
 Registry CastRegistry(schema::PrimitiveType_Cast, CastCreator);
 #endif
-
-OpParameter *PopulateCastParameter(const mindspore::lite::PrimitiveC *primitive) {
-  CastParameter *cast_param = reinterpret_cast<CastParameter *>(malloc(sizeof(CastParameter)));
-  if (cast_param == nullptr) {
-    MS_LOG(ERROR) << "malloc CastParameter failed.";
-    return nullptr;
-  }
-  memset(cast_param, 0, sizeof(CastParameter));
-  cast_param->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::Cast *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  cast_param->src_type_ = param->GetSrcT();
-  cast_param->dst_type_ = param->GetDstT();
-  return reinterpret_cast<OpParameter *>(cast_param);
-}
-
-Registry CastParameterRegistry(schema::PrimitiveType_Cast, PopulateCastParameter);
 
 int Cast::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

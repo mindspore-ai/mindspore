@@ -40,29 +40,14 @@ class OpsRegistry {
     }
   }
 
-  void insertParameterMap(schema::PrimitiveType type, ParameterCreator creator) { parameter_creators[type] = creator; }
-
-  ParameterCreator getParameterCreator(schema::PrimitiveType type) {
-    if (parameter_creators.find(type) != parameter_creators.end()) {
-      return parameter_creators[type];
-    } else {
-      MS_LOG(ERROR) << "Unsupported parameter type in Create : " << schema::EnumNamePrimitiveType(type);
-      return nullptr;
-    }
-  }
-
  protected:
   std::map<schema::PrimitiveType, PrimitiveCCreator> primitive_creators;
-  std::map<schema::PrimitiveType, ParameterCreator> parameter_creators;
 };
 
 class Registry {
  public:
   Registry(schema::PrimitiveType primitive_type, PrimitiveCCreator creator) {
     OpsRegistry::GetInstance()->insertPrimitiveCMap(primitive_type, creator);
-  }
-  Registry(schema::PrimitiveType primitive_type, ParameterCreator creator) {
-    OpsRegistry::GetInstance()->insertParameterMap(primitive_type, creator);
   }
 };
 

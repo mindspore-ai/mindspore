@@ -19,8 +19,9 @@
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/shape.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -64,19 +65,6 @@ int Shape::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
 PrimitiveC *ShapeCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Shape>(primitive); }
 Registry ShapeRegistry(schema::PrimitiveType_Shape, ShapeCreator);
 #endif
-
-OpParameter *PopulateShapeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ShapeParameter *shape_param = reinterpret_cast<ShapeParameter *>(malloc(sizeof(ShapeParameter)));
-  if (shape_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ShapeParameter failed.";
-    return nullptr;
-  }
-  memset(shape_param, 0, sizeof(ShapeParameter));
-  shape_param->op_parameter_.type_ = primitive->Type();
-  return reinterpret_cast<OpParameter *>(shape_param);
-}
-
-Registry ShapeParameterRegistry(schema::PrimitiveType_Shape, PopulateShapeParameter);
 
 }  // namespace lite
 }  // namespace mindspore

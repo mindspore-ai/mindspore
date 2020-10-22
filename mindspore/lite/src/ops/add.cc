@@ -16,8 +16,9 @@
 
 #include "src/ops/add.h"
 #include <memory>
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/arithmetic_common.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -76,28 +77,6 @@ int Add::GetActivationType() const { return this->primitive_->value_as_Add()->ac
 PrimitiveC *AddCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Add>(primitive); }
 Registry AddRegistry(schema::PrimitiveType_Add, AddCreator);
 #endif
-
-OpParameter *PopulateAddParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
-  if (arithmetic_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
-    return nullptr;
-  }
-  memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
-  arithmetic_param->op_parameter_.type_ = primitive->Type();
-  arithmetic_param->broadcasting_ = ((lite::Arithmetic *)primitive)->Broadcasting();
-  arithmetic_param->ndim_ = ((lite::Arithmetic *)primitive)->NDims();
-  arithmetic_param->activation_type_ =
-    reinterpret_cast<mindspore::lite::Add *>(const_cast<mindspore::lite::PrimitiveC *>(primitive))->GetActivationType();
-  auto tmp_shape = ((lite::Arithmetic *)primitive)->InShape0();
-  memcpy(arithmetic_param->in_shape0_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
-  tmp_shape = ((lite::Arithmetic *)primitive)->InShape1();
-  memcpy(arithmetic_param->in_shape1_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
-  tmp_shape = ((lite::Arithmetic *)primitive)->OutputShape();
-  memcpy(arithmetic_param->out_shape_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
-  return reinterpret_cast<OpParameter *>(arithmetic_param);
-}
-Registry AddParameterRegistry(schema::PrimitiveType_Add, PopulateAddParameter);
 
 }  // namespace lite
 }  // namespace mindspore

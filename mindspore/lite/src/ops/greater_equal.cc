@@ -16,7 +16,9 @@
 
 #include "src/ops/greater_equal.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -46,6 +48,6 @@ int GreaterEqual::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
-Registry GreaterEqualParameterRegistry(schema::PrimitiveType_GreaterEqual, PopulateArithmetic);
+
 }  // namespace lite
 }  // namespace mindspore

@@ -17,7 +17,9 @@
 #include "src/ops/log.h"
 #include <memory>
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -56,7 +58,6 @@ PrimitiveC *LogCreator(const schema::Primitive *primitive) { return PrimitiveC::
 Registry LogRegistry(schema::PrimitiveType_Log, LogCreator);
 
 #endif
-Registry LogParameterRegistry(schema::PrimitiveType_Log, PopulateArithmeticSelf);
 
 }  // namespace lite
 }  // namespace mindspore
