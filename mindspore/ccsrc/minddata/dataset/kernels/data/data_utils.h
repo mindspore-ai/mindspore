@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/data_type.h"
@@ -175,6 +176,27 @@ Status BatchTensorToTensorVector(const std::shared_ptr<Tensor> &input, std::vect
 /// \param output[out] output tensor
 /// \return Status ok/error
 Status TensorVectorToBatchTensor(const std::vector<std::shared_ptr<Tensor>> &input, std::shared_ptr<Tensor> *output);
+
+/// Helper method that uniques the input tensor
+/// @tparam T type of the tensor
+/// \param input[in] input 1d tensor
+/// \param output[out] output tensor
+/// \param output[out] output tensor of item index
+/// \param output[out] output tensor of item count
+/// \return Status ok/error
+template <typename T>
+Status UniqueHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                    std::shared_ptr<Tensor> *output_idx, std::shared_ptr<Tensor> *output_cnt);
+
+/// Unique the input tensor
+/// @tparam T type of the tensor
+/// \param input[in] input 1d tensor
+/// \param output[out] output tensor
+/// \param output[out] output tensor of item index
+/// \param output[out] output tensor of item count
+/// \return Status ok/error
+Status Unique(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+              std::shared_ptr<Tensor> *output_idx, std::shared_ptr<Tensor> *output_cnt);
 
 }  // namespace dataset
 }  // namespace mindspore

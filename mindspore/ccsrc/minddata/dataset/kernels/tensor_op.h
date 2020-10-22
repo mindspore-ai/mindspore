@@ -125,6 +125,7 @@ constexpr char kPadEndOp[] = "PadEndOp";
 constexpr char kSliceOp[] = "SliceOp";
 constexpr char kToFloat16Op[] = "ToFloat16Op";
 constexpr char kTypeCastOp[] = "TypeCastOp";
+constexpr char kUniqueOp[] = "UniqueOp";
 
 // other
 constexpr char kCFuncOp[] = "CFuncOp";

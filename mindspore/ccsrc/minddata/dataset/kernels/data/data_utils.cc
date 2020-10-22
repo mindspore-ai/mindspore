@@ -706,6 +706,78 @@ Status TensorVectorToBatchTensor(const std::vector<std::shared_ptr<Tensor>> &inp
   }
   return Status::OK();
 }
+template <typename T>
+struct UniqueOpHashMap {
+  using map_type = std::unordered_map<T, int32_t>;
+};
+
+template <typename T>
+Status UniqueHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                    std::shared_ptr<Tensor> *output_idx, std::shared_ptr<Tensor> *output_cnt) {
+  const dsize_t N = input->Size();
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_INT32), output_idx));
+
+  typename UniqueOpHashMap<T>::map_type uniq;
+  uniq.reserve(2 * N);
+  auto in_iter = input->begin<T>();
+  auto out_idx_iter = (*output_idx)->begin<int32_t>();
+  int32_t i = 0;
+  for (; in_iter != input->end<T>(); ++in_iter, ++out_idx_iter) {
+    auto it = uniq.emplace(*in_iter, i);
+    *out_idx_iter = it.first->second;
+    if (it.second) {
+      ++i;
+    }
+  }
+  auto uniq_size = uniq.size();
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({static_cast<int32_t>(uniq_size)}), input->type(), output));
+  auto out_iter = (*output)->begin<T>();
+  for (const auto &it : uniq) {
+    *(out_iter + static_cast<ptrdiff_t>(it.second)) = it.first;
+  }
+  RETURN_IF_NOT_OK(
+    Tensor::CreateEmpty(TensorShape({static_cast<int32_t>(uniq_size)}), DataType(DataType::DE_INT32), output_cnt));
+  RETURN_IF_NOT_OK((*output_cnt)->Zero());
+
+  auto out_cnt_iter = (*output_cnt)->begin<int32_t>();
+  out_idx_iter = (*output_idx)->begin<int32_t>();
+  for (int32_t j = 0; j < N; ++j) {
+    auto idx = *(out_idx_iter + static_cast<ptrdiff_t>(j));
+    ++*(out_cnt_iter + static_cast<ptrdiff_t>(idx));
+  }
+  return Status::OK();
+}
+
+Status Unique(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+              std::shared_ptr<Tensor> *output_idx, std::shared_ptr<Tensor> *output_cnt) {
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Rank() == 1, "Only 1D tensors supported.");
+  if (input->type() == DataType::DE_INT64) {
+    RETURN_IF_NOT_OK(UniqueHelper<int64_t>(input, output, output_idx, output_cnt));
+  } else if (input->type() == DataType::DE_INT32) {
+    RETURN_IF_NOT_OK(UniqueHelper<int32_t>(input, output, output_idx, output_cnt));
+  } else if (input->type() == DataType::DE_INT16) {
+    RETURN_IF_NOT_OK(UniqueHelper<int16_t>(input, output, output_idx, output_cnt));
+  } else if (input->type() == DataType::DE_INT8) {
+    RETURN_IF_NOT_OK(UniqueHelper<int8_t>(input, output, output_idx, output_cnt));
+  } else if (input->type() == DataType::DE_UINT64) {
+    RETURN_IF_NOT_OK(UniqueHelper<uint64_t>(input, output, output_idx, output_cnt));
+  } else if (input->type() == DataType::DE_UINT32) {
+    RETURN_IF_NOT_OK(UniqueHelper<uint32_t>(input, output, output_idx, output_cnt));
+  } else if (input->type() == DataType::DE_UINT16) {
+    RETURN_IF_NOT_OK(UniqueHelper<uint16_t>(input, output, output_idx, output_cnt));
+  } else if (input->type() == DataType::DE_UINT8) {
+    RETURN_IF_NOT_OK(UniqueHelper<uint8_t>(input, output, output_idx, output_cnt));
+  } else if (input->type() == DataType::DE_FLOAT16) {
+    RETURN_IF_NOT_OK(UniqueHelper<float16>(input, output, output_idx, output_cnt));
+  } else if (input->type() == DataType::DE_FLOAT32) {
+    RETURN_IF_NOT_OK(UniqueHelper<float>(input, output, output_idx, output_cnt));
+  } else if (input->type() == DataType::DE_FLOAT64) {
+    RETURN_IF_NOT_OK(UniqueHelper<double>(input, output, output_idx, output_cnt));
+  } else {
+    RETURN_STATUS_UNEXPECTED("Unique op only supports numeric input.");
+  }
+  return Status::OK();
+}
 
 }  // namespace dataset
 }  // namespace mindspore
