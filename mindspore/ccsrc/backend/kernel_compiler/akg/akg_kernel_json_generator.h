@@ -16,14 +16,14 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_JSON_GENERATOR_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_JSON_GENERATOR_H_
-#include <unordered_map>
-#include <string>
-#include <memory>
 #include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <nlohmann/json.hpp>
 #include "backend/kernel_compiler/oplib/oplib.h"
+#include "nlohmann/json.hpp"
 
 namespace mindspore {
 namespace kernel {
@@ -55,6 +55,7 @@ constexpr auto kAttrInputNames = "input_names";
 struct DumpOption {
   bool is_before_select_kernel = false;
   bool save_ptr_address = false;
+  bool extract_opinfo_from_anfnode = false;
 };
 
 class AkgKernelJsonGenerator {
@@ -63,13 +64,13 @@ class AkgKernelJsonGenerator {
   explicit AkgKernelJsonGenerator(DumpOption dump_option) : dump_option_(dump_option) { Clear(); }
   ~AkgKernelJsonGenerator() = default;
 
-  bool CollectJson(const AnfNodePtr &anf_node, nlohmann::json *const kernel_json);
+  bool CollectJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json);
   bool CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
-                        const std::vector<AnfNodePtr> &output_list, nlohmann::json *const kernel_json);
+                        const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json);
   bool CollectJson(const AnfNodePtr &anf_node);
   bool CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
                         const std::vector<AnfNodePtr> &output_list);
-  bool GenerateSingleKernelJson(const AnfNodePtr &anf_node, nlohmann::json *const node_json);
+  bool GenerateSingleKernelJson(const AnfNodePtr &anf_node, nlohmann::json *node_json);
   std::string kernel_name() const { return kernel_name_; }
   nlohmann::json kernel_json() const { return kernel_json_; }
   std::string kernel_json_str() const { return kernel_json_.dump(); }
@@ -84,16 +85,12 @@ class AkgKernelJsonGenerator {
   std::map<std::string, AnfNodePtr> address_node_map() { return address_node_map_; }
 
  private:
-  bool CreateInputDescJson(const AnfNodePtr &anf_node, const std::shared_ptr<OpInfo> &op_info,
-                           nlohmann::json *const inputs_json);
-  bool CreateOutputDescJson(const AnfNodePtr &anf_node, const std::shared_ptr<OpInfo> &op_info,
-                            nlohmann::json *const outputs_json);
-  void GetJson(const AnfNodePtr &anf_node, const std::vector<int> &dyn_input_sizes,
-               const std::shared_ptr<OpAttr> &op_attr, nlohmann::json *const attr_json, const ValuePtr &attr_value);
-  bool CreateAttrDescJson(const AnfNodePtr &anf_node, const std::shared_ptr<OpInfo> &op_info,
-                          nlohmann::json *const attrs_json);
-  bool GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *const input_size,
-                 std::vector<size_t> *const output_size);
+  bool CreateInputDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *inputs_json);
+  bool CreateOutputDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *outputs_json);
+  void GetAttrJson(const AnfNodePtr &anf_node, const std::vector<int> &dyn_input_sizes, const OpAttrPtr &op_attr,
+                   nlohmann::json *attr_json, const ValuePtr &attr_value);
+  bool CreateAttrDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *attrs_json);
+  bool GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size, std::vector<size_t> *output_size);
   bool GenSingleJsons(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map);
   void UpdateTensorName(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map);
   nlohmann::json CreateInputsJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
@@ -106,7 +103,7 @@ class AkgKernelJsonGenerator {
   size_t GetInputTensorIdxInc(const AnfNodePtr &anf_node, size_t input_idx);
   size_t GetOutputTensorIdxInc();
   void SetTensorName(const std::string &tag, const std::string &new_name, const std::pair<size_t, size_t> &position,
-                     nlohmann::json *const node_json);
+                     nlohmann::json *node_json);
   std::string GetTensorName(const nlohmann::json &node_json, const std::string &tag,
                             const std::pair<size_t, size_t> &position);
   TypeId GetInputDataType(const AnfNodePtr &anf_node, size_t real_index);
@@ -115,6 +112,8 @@ class AkgKernelJsonGenerator {
   TypeId GetOutputDataType(const AnfNodePtr &anf_node, size_t index);
   std::vector<size_t> GetOutputShape(const AnfNodePtr &anf_node, size_t index);
   std::string GetOutputFormat(const AnfNodePtr &anf_node, size_t index);
+  void SaveNodeAddress(const AnfNodePtr &anf_node, nlohmann::json *node_json);
+  OpInfoPtr ExtractOpInfo(const AnfNodePtr &anf_node);
 
   DumpOption dump_option_;
   static int op_cnt_;
