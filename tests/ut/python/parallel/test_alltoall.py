@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 import numpy as np
 
 import mindspore as ms
@@ -96,15 +97,15 @@ def test_all_to_all():
     _reset_op_id()
     strategys = all_to_all_common(strategy1)
     print(strategys)
-    expect_dict = {'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits'
-                   '/SoftmaxCrossEntropyWithLogits-op3': [[8, 1], [8, 1]],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits/'
-                   'OneHot-op4': [[8, 1], [], []],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/Transpose-op1': [
-                       [8, 1]],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/MatMul-op0': [
-                       [1, 1], [1, 8]]}
-    assert strategys == expect_dict
+    for (k, v) in strategys.items():
+        if re.search('SoftmaxCrossEntropyWithLogits-op', k) is not None:
+            assert v == [[8, 1], [8, 1]]
+        elif re.search('OneHot-op', k) is not None:
+            assert v == [[8, 1], [], []]
+        elif re.search('Transpose-op', k) is not None:
+            assert v == [[8, 1]]
+        elif re.search('MatMul-op', k) is not None:
+            assert v == [[1, 1], [1, 8]]
     context.set_context(save_graphs=False)
 
 
