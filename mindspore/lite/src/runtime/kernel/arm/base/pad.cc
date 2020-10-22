@@ -15,7 +15,6 @@
  */
 #include <vector>
 #include "src/runtime/kernel/arm/fp32/pad.h"
-#include "src/runtime/kernel/arm/int8/pad_int8.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -27,28 +26,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Pad;
 
 namespace mindspore::kernel {
-
-kernel::LiteKernel *CpuPadInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                            const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                            const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                            const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Pad);
-  auto *kernel = new (std::nothrow) PadInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new PadCPUKernel failed.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    return nullptr;
-  }
-  return kernel;
-}
 
 kernel::LiteKernel *CpuPadFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
@@ -72,6 +49,5 @@ kernel::LiteKernel *CpuPadFp32KernelCreator(const std::vector<lite::Tensor *> &i
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Pad, CpuPadInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Pad, CpuPadFp32KernelCreator)
 }  // namespace mindspore::kernel

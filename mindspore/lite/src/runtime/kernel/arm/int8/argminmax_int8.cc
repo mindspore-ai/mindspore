@@ -23,6 +23,12 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
+using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_FORMAT_ERR;
+using mindspore::lite::RET_PARAM_INVALID;
+using mindspore::schema::PrimitiveType_ArgMax;
+using mindspore::schema::PrimitiveType_ArgMin;
+
 namespace mindspore::kernel {
 int ArgMinMaxInt8CPUKernel::Init() {
   auto ret = ArgMinMaxBaseCPUKernel::Init();
@@ -77,4 +83,32 @@ int ArgMinMaxInt8CPUKernel::Run() {
   }
   return RET_OK;
 }
+
+kernel::LiteKernel *CpuArgMinMaxInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
+                                                  const mindspore::lite::PrimitiveC *primitive) {
+  if (op_parameter == nullptr) {
+    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
+    return nullptr;
+  }
+  auto kernel = new (std::nothrow) ArgMinMaxInt8CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new ArgMinMaxInt8CPUKernel fail!";
+    return nullptr;
+  }
+
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ArgMax, CpuArgMinMaxInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ArgMin, CpuArgMinMaxInt8KernelCreator)
+
 }  // namespace mindspore::kernel

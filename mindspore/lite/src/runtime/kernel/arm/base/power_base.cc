@@ -15,7 +15,6 @@
  */
 #include "src/runtime/kernel/arm/base/power_base.h"
 #include <vector>
-#include "src/runtime/kernel/arm/int8/power_int8.h"
 #include "src/runtime/kernel/arm/fp32/power.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -30,31 +29,6 @@ namespace mindspore::kernel {
 int PowerBaseCPUKernel::Init() { return RET_OK; }
 
 int PowerBaseCPUKernel::ReSize() { return RET_OK; }
-
-kernel::LiteKernel *CpuPowerInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                              const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Power);
-  auto *kernel = new (std::nothrow) PowerInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new PowerInt8CPUKernel fail!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    return nullptr;
-  }
-  return kernel;
-}
 
 kernel::LiteKernel *CpuPowerFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
@@ -78,6 +52,5 @@ kernel::LiteKernel *CpuPowerFp32KernelCreator(const std::vector<lite::Tensor *> 
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Power, CpuPowerInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Power, CpuPowerFp32KernelCreator)
 }  // namespace mindspore::kernel

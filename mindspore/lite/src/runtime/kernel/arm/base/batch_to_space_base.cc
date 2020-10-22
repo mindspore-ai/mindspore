@@ -16,7 +16,6 @@
 #include "src/runtime/kernel/arm/base/batch_to_space_base.h"
 #include "nnacl/batch_to_space.h"
 #include "src/runtime/kernel/arm/fp32/batch_to_space.h"
-#include "src/runtime/kernel/arm/int8/batch_to_space_int8.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -53,31 +52,6 @@ int BatchToSpaceBaseCPUKernel::ReSize() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuBatchToSpaceInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                     const std::vector<lite::Tensor *> &outputs,
-                                                     OpParameter *op_parameter, const lite::InnerContext *ctx,
-                                                     const kernel::KernelKey &desc,
-                                                     const mindspore::lite::PrimitiveC *primitive) {
-  if (op_parameter == nullptr) {
-    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
-    return nullptr;
-  }
-  auto *kernel = new (std::nothrow) BatchToSpaceInt8CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new BatchToSpaceInt8CPUKernel fail!";
-    return nullptr;
-  }
-
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
-    return nullptr;
-  }
-  return kernel;
-}
-
 kernel::LiteKernel *CpuBatchToSpaceFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                      const std::vector<lite::Tensor *> &outputs,
                                                      OpParameter *op_parameter, const lite::InnerContext *ctx,
@@ -104,8 +78,6 @@ kernel::LiteKernel *CpuBatchToSpaceFp32KernelCreator(const std::vector<lite::Ten
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BatchToSpace, CpuBatchToSpaceInt8KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BatchToSpaceND, CpuBatchToSpaceInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchToSpace, CpuBatchToSpaceFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchToSpaceND, CpuBatchToSpaceFp32KernelCreator)
 }  // namespace mindspore::kernel

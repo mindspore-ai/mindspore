@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/arm/base/softmax_base.h"
 #include <vector>
-#include "src/runtime/kernel/arm/int8/softmax_int8.h"
 #include "src/runtime/kernel/arm/fp32/softmax.h"
 #include "nnacl/fp32/softmax.h"
 #include "schema/model_generated.h"
@@ -56,31 +55,6 @@ int SoftmaxBaseCPUKernel::ReSize() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuSoftmaxInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                                const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_SoftMax);
-  auto *kernel = new (std::nothrow) SoftmaxInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new SoftmaxCPUKernel fail!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    return nullptr;
-  }
-  return kernel;
-}
-
 kernel::LiteKernel *CpuSoftmaxFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                 const lite::InnerContext *ctx, const kernel::KernelKey &desc,
@@ -106,6 +80,5 @@ kernel::LiteKernel *CpuSoftmaxFp32KernelCreator(const std::vector<lite::Tensor *
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_SoftMax, CpuSoftmaxInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SoftMax, CpuSoftmaxFp32KernelCreator)
 }  // namespace mindspore::kernel

@@ -15,7 +15,6 @@
  */
 #include "src/runtime/kernel/arm/base/crop_base.h"
 #include <vector>
-#include "src/runtime/kernel/arm/int8/crop_int8.h"
 #include "src/runtime/kernel/arm/fp32/crop.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -29,30 +28,6 @@ using mindspore::schema::PrimitiveType_Crop;
 
 namespace mindspore::kernel {
 int CropBaseCPUKernel::Init() { return RET_OK; }
-
-kernel::LiteKernel *CpuCropInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const InnerContext *ctx, const kernel::KernelKey &desc,
-                                             const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Crop);
-  auto *kernel = new (std::nothrow) CropInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new CropCPUKernel fail!";
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    return nullptr;
-  }
-  return kernel;
-}
 
 int CropBaseCPUKernel::ReSize() {
   auto *input_tensor = in_tensors_.at(kInputIndex);
@@ -155,7 +130,6 @@ kernel::LiteKernel *CpuCropFp32KernelCreator(const std::vector<lite::Tensor *> &
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Crop, CpuCropInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Crop, CpuCropInt32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Crop, CpuCropFp32KernelCreator)
 }  // namespace mindspore::kernel

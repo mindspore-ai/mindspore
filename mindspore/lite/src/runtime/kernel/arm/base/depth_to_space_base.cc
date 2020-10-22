@@ -16,7 +16,6 @@
 #include "src/runtime/kernel/arm/base/depth_to_space_base.h"
 #include "nnacl/depth_to_space.h"
 #include "src/runtime/kernel/arm/fp32/depth_to_space.h"
-#include "src/runtime/kernel/arm/int8/depth_to_space_int8.h"
 #include "nnacl/arithmetic_common.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -61,32 +60,6 @@ int DepthToSpaceBaseCPUKernel::ReSize() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuDepthToSpaceInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                     const std::vector<lite::Tensor *> &outputs,
-                                                     OpParameter *op_parameter, const lite::InnerContext *ctx,
-                                                     const kernel::KernelKey &desc,
-                                                     const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(desc.type == schema::PrimitiveType_DepthToSpace);
-  if (op_parameter == nullptr) {
-    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
-    return nullptr;
-  }
-  auto *kernel = new (std::nothrow) DepthToSpaceInt8CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new BatchToSpaceInt8CPUKernel fail!";
-    return nullptr;
-  }
-
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
-    return nullptr;
-  }
-  return kernel;
-}
-
 kernel::LiteKernel *CpuDepthToSpaceFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                      const std::vector<lite::Tensor *> &outputs,
                                                      OpParameter *op_parameter, const lite::InnerContext *ctx,
@@ -115,5 +88,4 @@ kernel::LiteKernel *CpuDepthToSpaceFp32KernelCreator(const std::vector<lite::Ten
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_DepthToSpace, CpuDepthToSpaceFp32KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DepthToSpace, CpuDepthToSpaceInt8KernelCreator)
 }  // namespace mindspore::kernel
