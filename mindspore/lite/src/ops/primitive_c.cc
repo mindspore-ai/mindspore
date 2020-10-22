@@ -135,6 +135,7 @@
 #include "src/ops/custom_normalize.h"
 #include "src/ops/custom_extract_features.h"
 #include "src/ops/upsample.h"
+#include "src/ops/layer_norm.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -723,6 +724,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new CustomExtractFeatures(primitive);
     case schema::PrimitiveType_Upsample:
       return new Upsample(primitive);
+    case schema::PrimitiveType_LayerNorm:
+      return new LayerNorm(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
