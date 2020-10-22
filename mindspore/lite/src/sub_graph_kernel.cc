@@ -63,7 +63,7 @@ int SubGraphKernel::Prepare() {
       return mindspore::lite::RET_NULL_PTR;
     }
     auto ret = node->Prepare();
-    if (ret == RET_OK) {
+    if (ret != RET_OK) {
       MS_LOG(ERROR) << "prepare node " << node->name() << " failed";
       return ret;
     }
@@ -175,6 +175,20 @@ int SubGraphKernel::ReSize(bool is_interrupt) {
         MS_LOG(ERROR) << "kernel " << kernel->name() << " resize fail!ret = " << ret;
         return ret;
       }
+    }
+  }
+  return RET_OK;
+}
+
+int CpuSubGraph::Prepare() {
+  auto ret = SubGraphKernel::Prepare();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  for (auto node : nodes_) {
+    for (auto tensor : node->out_tensors()) {
+      MS_ASSERT(tensor != nullptr);
+      tensor->set_allocator(this->context_->allocator.get());
     }
   }
   return RET_OK;

@@ -285,6 +285,51 @@ std::string Tensor::ToString() const {
   return oss.str();
 }
 
+int Tensor::MallocData(mindspore::lite::Allocator *allocator) {
+  if (nullptr != this->data_) {
+    return 0;
+  }
+  if (allocator != nullptr) {
+    allocator_ = allocator;
+  }
+  if (allocator_ == nullptr) {
+    this->data_ = malloc(this->Size());
+  } else {
+    this->data_ = allocator_->Malloc(this->Size());
+  }
+  if (nullptr == this->data_) {
+    MS_LOG(ERROR) << "Malloc tensor data failed, size=" << this->Size();
+    return -1;
+  }
+
+  return 0;
+}
+
+int Tensor::FreeData() {
+  if (nullptr == this->data_) {
+    return 0;
+  }
+  if (nullptr == allocator_) {
+    free(this->data_);
+    this->data_ = nullptr;
+  } else {
+    allocator_->Free(this->data_);
+    this->data_ = nullptr;
+  }
+  return 0;
+}
+
+void *Tensor::MutableData() {
+  if (this->data_ == nullptr) {
+    auto ret = this->MallocData();
+    if (ret != 0) {
+      MS_LOG(WARNING) << "Malloc data failed";
+    }
+  }
+  Prepare();
+  return this->data_;
+}
+
 void Tensor::AddQuantParam(const QuantArg &quant_arg) { this->quant_params_.push_back(quant_arg); }
 
 std::vector<QuantArg> Tensor::GetQuantParams() const { return this->quant_params_; }

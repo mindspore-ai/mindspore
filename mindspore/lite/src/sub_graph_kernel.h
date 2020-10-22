@@ -61,12 +61,34 @@ class SubGraphKernel : public LiteKernel {
   mindspore::lite::Executor *executor_ = nullptr;
 };
 
-class CpuFp32SubGraph : public SubGraphKernel {
+class CpuSubGraph : public SubGraphKernel {
+ public:
+  explicit CpuSubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                       const std::vector<LiteKernel *> &in_kernels, const std::vector<LiteKernel *> &out_kernels,
+                       const std::vector<LiteKernel *> &nodes, const lite::InnerContext *ctx)
+      : SubGraphKernel(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
+    subgraph_type_ = kCpuFP32SubGraph;
+    this->executor_ = new mindspore::lite::Executor;
+  }
+
+  ~CpuSubGraph() override = default;
+
+  int Prepare() override;
+  int Init() override { return SubGraphKernel::Init(); }
+  int PreProcess() override { return SubGraphKernel::PreProcess(); }
+  int Run() override { return SubGraphKernel::Run(); }
+  int Run(const KernelCallBack &before, const KernelCallBack &after) override {
+    return SubGraphKernel::Run(before, after);
+  };
+  int PostProcess() override { return mindspore::lite::RET_OK; }
+};
+
+class CpuFp32SubGraph : public CpuSubGraph {
  public:
   explicit CpuFp32SubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                            const std::vector<LiteKernel *> &in_kernels, const std::vector<LiteKernel *> &out_kernels,
                            const std::vector<LiteKernel *> &nodes, const lite::InnerContext *ctx)
-      : SubGraphKernel(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
+      : CpuSubGraph(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
     subgraph_type_ = kCpuFP32SubGraph;
     this->name_ = "CpuFP32SubGraph";
     this->executor_ = new mindspore::lite::Executor;
@@ -82,12 +104,12 @@ class CpuFp32SubGraph : public SubGraphKernel {
   int PostProcess() override { return mindspore::lite::RET_OK; }
 };
 
-class CpuFp16SubGraph : public SubGraphKernel {
+class CpuFp16SubGraph : public CpuSubGraph {
  public:
   explicit CpuFp16SubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                            const std::vector<LiteKernel *> &in_kernels, const std::vector<LiteKernel *> &out_kernels,
                            const std::vector<LiteKernel *> &nodes, const lite::InnerContext *ctx)
-      : SubGraphKernel(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
+      : CpuSubGraph(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
     subgraph_type_ = kCpuFP16SubGraph;
     this->name_ = "CpuFP16SubGraph";
     this->executor_ = new mindspore::lite::Executor;
