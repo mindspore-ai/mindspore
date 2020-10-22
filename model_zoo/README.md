@@ -15,7 +15,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
  
 # Table of Contents
 
-- [Models](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official)
+- [Official](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official)
     - [Computer Vision](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
         - [Image Classification](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
             - [GoogleNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/googlenet/README.md)
@@ -54,11 +54,26 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
         - [GAT](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gat/README.md)
         - [GCN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gcn//README.md)
 
+- [Research](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research)    
+    - [Computer Vision](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv)    
+        - [GhostNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ghostnet/README.md)
+        - [GhostNet_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ghostnet_quant/README.md)             
+        - [ResNet50-0.65x](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/resnet50_adv_pruning/README.md)     
+        - [SSD_GhostNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ssd_ghostnet/README.md) 
+    - [Natural Language Processing](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/nlp)       
+        - [DS-CNN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/nlp/dscnn/README.md)     
+    - [Audio](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/audio)
+        - [FCN-4](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/audio/music_auto_tagging/README.md)    
+
+- [Community](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/community) 
+
+
 
 
 # Announcements
 | Date         | News                                                         |
 | ------------ | ------------------------------------------------------------ |
+| September 25, 2020 | Support [MindSpore v1.0.0](https://www.mindspore.cn/news/newschildren/en?id=262) |
 | September 01, 2020 | Support [MindSpore v0.7.0-beta](https://www.mindspore.cn/news/newschildren/en?id=246) |
 | July 31, 2020 | Support [MindSpore v0.6.0-beta](https://www.mindspore.cn/news/newschildren/en?id=237) |
 
@@ -66,7 +81,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
 
 # Disclaimers
 
-Mindspore only provides scripts that downloads and preprocesses public datasets. We do not own these datasets and are not responsible for their quality or maintenance. Please make sure you have permission to use the dataset under the dataset’s license. 
+Mindspore only provides scripts that downloads and preprocesses public datasets. We do not own these datasets and are not responsible for their quality or maintenance. Please make sure you have permission to use the dataset under the dataset’s license. The models trained on these dataset are for non-commercial research and educational purpose only. 
 
 To dataset owners: we will remove or update all public content upon request if you don’t want your dataset included on Mindspore, or wish to update it in any way. Please contact us through a Github/Gitee issue. Your understanding and contribution to this community is greatly appreciated.
 
