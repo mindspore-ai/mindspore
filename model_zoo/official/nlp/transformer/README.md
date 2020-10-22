@@ -233,7 +233,7 @@ Parameters for learning rate:
 
 ### Training Performance 
 
-| Parameters                 | Transformer                                                    |
+| Parameters                 | Ascend                                                         |
 | -------------------------- | -------------------------------------------------------------- |
 | Resource                   | Ascend 910                                                     |
 | uploaded Date              | 06/09/2020 (month/day/year)                                    |
@@ -252,7 +252,7 @@ Parameters for learning rate:
 
 ### Evaluation Performance
 
-| Parameters          | GoogleNet                   |
+| Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 06/09/2020 (month/day/year) |
