@@ -260,93 +260,9 @@ void Im2ColPackUnitFp32(const float *input_data, ConvParameter *conv_param, floa
   }  // tile num loop
 }
 
-void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real_cal_num, int block_index,
-                        int32_t *input_sum, ConvParameter *conv_param) {
-  // input format : nhwc
-  int tile_num = conv_param->tile_num_;
-  QuantArg *filter_arg = conv_param->conv_quant_arg_.filter_quant_args_;
-  int kernel_h = conv_param->kernel_h_;
-  int kernel_w = conv_param->kernel_w_;
-  int stride_h = conv_param->stride_h_;
-  int stride_w = conv_param->stride_w_;
-  int pad_h = conv_param->pad_u_;
-  int pad_w = conv_param->pad_l_;
-  int dilation_h = conv_param->dilation_h_;
-  int dilation_w = conv_param->dilation_w_;
-  int in_channel = conv_param->input_channel_;
-  int in_h = conv_param->input_h_;
-  int in_w = conv_param->input_w_;
-  int ic4_minus = in_channel / C4NUM;
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int oc4 = UP_DIV(conv_param->output_channel_, C4NUM);
-  int out_w = conv_param->output_w_;
-
-  for (int i = 0; i < real_cal_num; i++) {
-    int block_start = block_index + i;
-    int input_h = block_start / out_w * stride_h - pad_h;
-    int input_w = block_start % out_w * stride_w - pad_w;
-    int input_cal_num_offset = i * C4NUM * C4NUM;
-    int32_t input_accumulator = 0;
-    for (int j = 0; j < kernel_h; j++) {
-      int input_y = input_h + j * dilation_h;
-      if (input_y < 0 || input_y >= in_h) {
-        input_accumulator += ic4 * C4NUM * conv_param->conv_quant_arg_.input_quant_args_[0].zp_ * kernel_w;
-        continue;
-      }
-      int input_y_stride = input_y * in_w * in_channel;
-      for (int n = 0; n < kernel_w; n++) {
-        int input_x = input_w + n * dilation_w;
-        if (input_x < 0 || input_x >= in_w) {
-          input_accumulator += ic4 * C4NUM * conv_param->conv_quant_arg_.input_quant_args_[0].zp_;
-          continue;
-        }
-        int input_x_stride = input_y_stride + input_x * in_channel;
-        int plane_c4_block = (j * kernel_w + n) / C4NUM;
-        int plane_c4_res = (j * kernel_w + n) % C4NUM;
-        int input_plane_offset =
-          plane_c4_block * tile_num * C4NUM * C4NUM * ic4 + plane_c4_res * C4NUM + input_cal_num_offset;
-        for (int m = 0; m < ic4_minus; m++) {
-          int channel_block_stride = input_x_stride + m * C4NUM;
-          int channel_block_offset = input_plane_offset + m * tile_num * C4NUM * C4NUM;
-          (packed_input + channel_block_offset)[0] = (input_data + channel_block_stride)[0];
-          (packed_input + channel_block_offset)[1] = (input_data + channel_block_stride)[1];
-          (packed_input + channel_block_offset)[2] = (input_data + channel_block_stride)[2];
-          (packed_input + channel_block_offset)[3] = (input_data + channel_block_stride)[3];
-          input_accumulator += (packed_input + channel_block_offset)[0];
-          input_accumulator += (packed_input + channel_block_offset)[1];
-          input_accumulator += (packed_input + channel_block_offset)[2];
-          input_accumulator += (packed_input + channel_block_offset)[3];
-        }  // channel_block loop
-        int ic_res = conv_param->input_channel_ - ic4_minus * C4NUM;
-        for (int l = 0; l < ic_res; ++l) {
-          int channel_block_stride = input_x_stride + ic4_minus * C4NUM + l;
-          int channel_block_offset = input_plane_offset + ic4_minus * tile_num * C4NUM + l;
-          packed_input[channel_block_offset] = input_data[channel_block_stride];
-          input_accumulator += (packed_input + channel_block_offset)[0];
-        }
-        for (int l = 0; l < (C4NUM - ic_res); l++) {
-          input_accumulator += conv_param->conv_quant_arg_.input_quant_args_[0].zp_;
-        }
-      }  // kernel_w loop
-    }    // kernel_h loop
-    if (!(conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC)) {
-      continue;
-    } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
-               (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-      int cal_num_offset = i * oc4 * C4NUM;
-      for (int l = 0; l < conv_param->output_channel_; ++l) {
-        input_sum[cal_num_offset + l] = input_accumulator * filter_arg[l].zp_;
-      }
-    } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
-               !(conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-      input_sum[i] = input_accumulator * filter_arg[0].zp_;
-    }
-  }  // tile num loop
-}
-
 void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, int real_cal_num,
                            int block_index, int32_t *filter_zp, int32_t *input_sum, ConvParameter *conv_param,
-                           bool per_channel) {
+                           bool per_channel, bool is_optimize) {
   // input format : nhwc
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
@@ -389,11 +305,29 @@ void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int8_
       }  // kernel_h loop
     }
   }  // tile num loop
-  if (per_channel) {
-    Conv1x1PreOptPeroc(matmul_input, packed_input, input_sum, kernel_plane * in_channel, conv_param->output_channel_,
-                       real_cal_num, filter_zp, C8NUM * C8NUM);
+  int deep = kernel_plane * in_channel;
+  if (is_optimize) {
+    if (per_channel) {
+      Conv1x1PreOptPeroc(matmul_input, packed_input, input_sum, deep, conv_param->output_channel_, real_cal_num,
+                         filter_zp, C8NUM * C8NUM);
+    } else {
+      Conv1x1PreOptPert(matmul_input, packed_input, input_sum, deep, real_cal_num, conv_param);
+    }
   } else {
-    Conv1x1PreOptPert(matmul_input, packed_input, input_sum, kernel_plane * in_channel, real_cal_num, conv_param);
+    RowMajor2Row16x4MajorInt8(matmul_input, packed_input, real_cal_num, deep);
+    if (per_channel) {
+#ifdef ENABLE_ARM32
+      PackInputSum16x4PerChannelArm32(packed_input, input_sum, filter_zp, real_cal_num, deep,
+                                      conv_param->output_channel_);
+#else
+      PackInputSum16x4PerChannel(packed_input, input_sum, filter_zp, real_cal_num, deep, conv_param->output_channel_);
+#endif
+    } else {
+      size_t hw4 = UP_ROUND(real_cal_num, C4NUM);
+      size_t ic16 = UP_ROUND(deep, C16NUM);
+      PackInputSum16x4PerLayer(packed_input, input_sum, conv_param->conv_quant_arg_.filter_quant_args_[0].zp_, hw4,
+                               ic16);
+    }
   }
 }
 

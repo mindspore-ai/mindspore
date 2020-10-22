@@ -169,68 +169,6 @@ TEST_F(TestPack, PackInputFp16) {
 }
 #endif
 
-TEST_F(TestPack, PackInputUint8) {
-  auto conv_param = new ConvParameter;
-  InitConvParamPack(conv_param);
-  int kernel_h = conv_param->kernel_h_;
-  int kernel_w = conv_param->kernel_w_;
-  int in_batch = conv_param->input_batch_;
-  int in_channel = conv_param->input_channel_;
-  int in_h = conv_param->input_h_;
-  int in_w = conv_param->input_w_;
-  int out_h = conv_param->output_h_;
-  int out_w = conv_param->output_w_;
-
-  int thread_count = 1;
-  int tile_n = 8;
-  int output_count = out_h * out_w;
-  int output_tile_count = UP_DIV(output_count, tile_n);
-
-  int inchannel_block = 4;
-  int channel_block = UP_DIV(in_channel, inchannel_block);
-  int kernel_plane = kernel_h * kernel_w;
-  int unit_size = kernel_plane * channel_block * inchannel_block;
-  int packed_input_size = output_tile_count * tile_n * unit_size;
-
-  // input
-  size_t input_size;
-  std::string input_path = "./test_data/conv/convuint8_input_1_28_28_3.bin";
-  auto input_data = reinterpret_cast<uint8_t *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
-  auto int8_input = reinterpret_cast<int8_t *>(malloc(input_size));
-  for (int i = 0; i < input_size; i++) {
-    int8_input[i] = (int8_t)(input_data[i] - 128);
-  }
-  auto packed_input = reinterpret_cast<int8_t *>(malloc(in_batch * packed_input_size));
-  memset(packed_input, 0, in_batch * packed_input_size);
-  int32_t *input_sum = reinterpret_cast<int32_t *>(malloc(tile_n * thread_count * sizeof(int32_t)));
-
-  for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * in_channel * in_h * in_w;
-    int gemm_in_batch_offset = b * packed_input_size;
-    for (int thread_id = 0; thread_id < output_tile_count; thread_id += thread_count) {
-      int start_index = thread_id * tile_n;
-      int real_cal_num = (output_count - start_index) < tile_n ? (output_count - tile_n) : tile_n;
-      int8_t *gemm_input =
-        reinterpret_cast<int8_t *>(packed_input) + thread_id * unit_size * tile_n + gemm_in_batch_offset;
-      memset(input_sum, 0, tile_n * thread_count * sizeof(int32_t));
-      Im2ColPackUnitInt8(int8_input + in_batch_offset, gemm_input, real_cal_num, start_index, input_sum, conv_param);
-    }
-  }
-
-  printf("==================output data=================\n");
-  for (int i = 0; i < 20; i++) {
-    std::cout << static_cast<int>(packed_input[i]) << " ,";
-  }
-  std::cout << std::endl;
-
-  delete input_data;
-  delete conv_param;
-  free(int8_input);
-  free(packed_input);
-  free(input_sum);
-  MS_LOG(INFO) << "TestPackInputUint8 passed";
-}
-
 TEST_F(TestPack, PackWeightUint8) {
   auto conv_param = new ConvParameter;
   InitConvParamPack(conv_param);
