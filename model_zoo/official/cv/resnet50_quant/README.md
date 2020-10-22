@@ -1,6 +1,6 @@
 # Contents
 
-- [resnet50 Description](#resnet50-description)
+- [ResNet50 Description](#resnet50-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
@@ -18,15 +18,15 @@
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-# [resnet50 Description](#contents)
+# [ResNet50 Description](#contents)
 
 ResNet-50 is a convolutional neural network that is 50 layers deep, which can classify ImageNet image to 1000 object categories with 76% accuracy.
 
-[Paper](https://arxiv.org/abs/1512.03385) Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun."Deep Residual Learning for Image Recognition." He, Kaiming , et al. "Deep Residual Learning for Image Recognition." IEEE Conference on Computer Vision & Pattern Recognition IEEE Computer Society, 2016.
+[Paper](https://arxiv.org/abs/1512.03385): Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun."Deep Residual Learning for Image Recognition." He, Kaiming , et al. "Deep Residual Learning for Image Recognition." IEEE Conference on Computer Vision & Pattern Recognition IEEE Computer Society, 2016.
 
-This is the quantitative network of Resnet50.
+This is the quantitative network of ResNet50.
 
-# [Model architecture](#contents)
+# [Model Architecture](#contents)
 
 The overall network architecture of Resnet50 is show below:
 
@@ -34,13 +34,20 @@ The overall network architecture of Resnet50 is show below:
 
 # [Dataset](#contents)
 
-Dataset used: [imagenet](http://www.image-net.org/)
+Dataset used: [ImageNet2012](http://www.image-net.org/)
 
-- Dataset size: ~125G, 1.2W colorful images in 1000 classes
-	- Train: 120G, 1.2W images
-	- Test: 5G, 50000 images
-- Data format: RGB images.
-	- Note: Data will be processed in src/dataset.py
+- Dataset size 224*224 colorful images in 1000 classes
+  - Train：1,281,167 images  
+  - Test： 50,000 images   
+- Data format：jpeg
+  - Note：Data will be processed in dataset.py
+- Download the dataset, the directory structure is as follows:
+
+ ```
+└─dataset
+    ├─ilsvrc                # train dataset
+    └─validation_preprocess # evaluate dataset
+```
 
 
 # [Features](#contents)
@@ -70,9 +77,10 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   ├── Readme.md     # descriptions about Resnet50-Quant
   ├── scripts
   │   ├──run_train.sh   # shell script for train on Ascend
-  │   ├──run_infer.sh    # shell script for evaluation on Ascend
-  ├── model
-  │   ├──resnet_quant.py      # define the network model of resnet50-quant
+  │   ├──run_infer.sh   # shell script for evaluation on Ascend
+  ├── models
+  │   ├──resnet_quant.py           # define the network model of resnet50-quant
+  │   ├──resnet_quant_manual.py    # define the manually quantized network model of resnet50-quant
   ├── src
   │   ├──config.py      # parameter configuration
   │   ├──dataset.py     # creating dataset
@@ -91,24 +99,24 @@ Parameters for both training and evaluation can be set in config.py
 - config for Resnet50-quant, ImageNet2012 dataset
 
   ```python
-  'class_num': 10           # the number of classes in the dataset
-  'batch_size': 32          # training batch size
-  'loss_scale': 1024        # the initial loss_scale value
-  'momentum': 0.9           # momentum
-  'weight_decay': 1e-4      # weight decay value
-  'epoch_size': 120         # total training epochs
+  'class_num': 10               # the number of classes in the dataset
+  'batch_size': 32              # training batch size
+  'loss_scale': 1024            # the initial loss_scale value
+  'momentum': 0.9               # momentum
+  'weight_decay': 1e-4          # weight decay value
+  'epoch_size': 120             # total training epochs
   'pretrained_epoch_size': 90   # pretraining epochs of resnet50, which is unquantative network of resnet50_quant
-  'data_load_mode': 'mindata' # the style of loading data into device
-  'save_checkpoint':True    # whether save checkpoint file after training finish
-  'save_checkpoint_epochs': 1 # the step from which start to save checkpoint file.
-  'keep_checkpoint_max': 50  #  only keep the last keep_checkpoint_max checkpoint
+  'data_load_mode': 'mindata'   # the style of loading data into device
+  'save_checkpoint':True        # whether save checkpoint file after training finish
+  'save_checkpoint_epochs': 1   # the step from which start to save checkpoint file.
+  'keep_checkpoint_max': 50     # only keep the last keep_checkpoint_max checkpoint
   'save_checkpoint_path': './'  # the absolute full path to save the checkpoint file
-  "warmup_epochs": 0        # number of warmup epochs
-  'lr_decay_mode': "cosine" #learning rate decay mode, including steps, steps_decay, cosine or liner
-  'use_label_smooth': True  #whether use label smooth
-  'label_smooth_factor': 0.1 #label smooth factor
-  'lr_init': 0              # initial learning rate
-  'lr_max': 0.005           # the max learning rate
+  "warmup_epochs": 0            # number of warmup epochs
+  'lr_decay_mode': "cosine"     # learning rate decay mode, including steps, steps_decay, cosine or liner
+  'use_label_smooth': True      # whether use label smooth
+  'label_smooth_factor': 0.1    # label smooth factor
+  'lr_init': 0                  # initial learning rate
+  'lr_max': 0.005               # the max learning rate
   ```
 
 ## [Training process](#contents)
@@ -120,7 +128,7 @@ Parameters for both training and evaluation can be set in config.py
 
 ```
   # training example
-  Ascend: bash run_train.sh Ascend ~/hccl_4p_0123_x.x.x.x.json ~/imagenet/train/ 
+  Ascend: bash run_train.sh Ascend ~/hccl.json ~/imagenet/train/ ~/pretrained_ckeckpoint
 ```
 
 ### Result
@@ -165,41 +173,39 @@ result: {'acc': 0.76576314102564111}
 
 ## [Performance](#contents)
 
-### Training Performance
+### Evaluation Performance
 
-| Parameters                 | Resnet50                                                   |
-| -------------------------- | ---------------------------------------------------------- |
-| Model Version              | V1                                                         |
-| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               |
-| uploaded Date              | 06/06/2020                                                 |
-| MindSpore Version          | 0.3.0                                                      |
-| Dataset                    | ImageNet                                                   |
-| Training Parameters        | src/config.py                                              |
-| Optimizer                  | Momentum                                                   |
-| Loss Function              | SoftmaxCrossEntropy                                        |
-| outputs                    | ckpt file                                                  |
-| Loss                       | 1.8                                                        |
-| Accuracy                   |                                                            |
-| Total time                 | 16h                                                        |
-| Params (M)                 | batch_size=32, epoch=30                                    |
-| Checkpoint for Fine tuning |                                                            |
-| Model for inference        |                                                            |
+| Parameters                 | Ascend                                                      |
+| -------------------------- | ----------------------------------------------------------- |
+| Model Version              | ResNet50 V1.5                                               |
+| Resource                   | Ascend 910, CPU 2.60GHz, 56cores, Memory 314G               |
+| uploaded Date              | 06/06/2020 (month/day/year)                                 |
+| MindSpore Version          | 0.3.0-alpha                                                 |
+| Dataset                    | ImageNet                                                    |
+| Training Parameters        | epoch=30(with pretrained) or 120, steps per epoch=5004, batch_size=32    |
+| Optimizer                  | Momentum                                                    |
+| Loss Function              | Softmax Cross Entropy                                       |
+| outputs                    | probability                                                 |
+| Loss                       | 1.8                                                         |
+| Speed                      | 8pcs: 407 ms/step                                           |
+| Total time                 | 8pcs: 17 hours(30 epochs with pretrained)                   |
+| Parameters (M)             | 25.5                                                        |
+| Checkpoint for Fine tuning | 197M (.ckpt file)                                           |
+| Scripts                    | [resnet50-quant script](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/resnet50_quant) | 
 
-#### Evaluation Performance
+#### Inference Performance
 
-| Parameters                 | Resnet50                      |
-| -------------------------- | ----------------------------- |
-| Model Version              | V1                            |
-| Resource                   | Ascend 910                    |
-| uploaded Date              | 06/06/2020                    |
-| MindSpore Version          | 0.3.0                         |
-| Dataset                    | ImageNet, 1.2W                |
-| batch_size                 | 130(8P)                       |
-| outputs                    | probability                   |
-| Accuracy                   | ACC1[76.57%] ACC5[92.90%]     |
-| Speed                      | 5ms/step                    |
-| Total time                 | 5min                          |
-| Model for inference        |                               |
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | ResNet50 V1.5               |
+| Resource            | Ascend 910, CPU 2.60GHz, 56cores, Memory 314G    |
+| Uploaded Date       | 06/06/2020 (month/day/year) |
+| MindSpore Version   | 0.3.0-alpha                 |
+| Dataset             | ImageNet                    |
+| batch_size          | 32                          |
+| outputs             | probability                 |
+| Accuracy            | ACC1[76.57%] ACC5[92.90%]   |
+| Model for inference | 197M (.ckpt file)           |
 
 # [Description of Random Situation](#contents)
 
