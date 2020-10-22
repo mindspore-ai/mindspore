@@ -1761,6 +1761,7 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, is_grad=False):
+        validator.check_value_type('is_grad', is_grad, [bool], self.name)
         self.init_prim_io_names(inputs=['features', 'labels'], outputs=['output'])
         self.is_grad = is_grad
         self.add_prim_attr('sens', 1.0)
