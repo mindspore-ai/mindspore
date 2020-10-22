@@ -174,8 +174,9 @@ void KernelGraph::VisitNodeDescendants(const AnfNodePtr &node, std::queue<AnfNod
     MS_LOG(DEBUG) << "Decrease input:" << next_node->DebugString() << ",node:" << node->DebugString()
                   << ",num: " << node_input_num_[next_node] << ",decrease num:" << output_edge.second;
     if (node_input_num_[next_node] < output_edge.second) {
-      MS_LOG(EXCEPTION) << "Input node:" << next_node->DebugString() << ",node_output_num" << node_input_num_[next_node]
-                        << ",depend edge:" << output_edge.second;
+      MS_LOG(DEBUG) << "Input node:" << next_node->DebugString() << ",node_output_num" << node_input_num_[next_node]
+                    << ",depend edge:" << output_edge.second;
+      continue;
     }
     node_input_num_[next_node] = node_input_num_[next_node] - output_edge.second;
     // allreduce first
