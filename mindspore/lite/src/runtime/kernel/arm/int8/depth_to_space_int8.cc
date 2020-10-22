@@ -24,6 +24,11 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
+using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_FORMAT_ERR;
+using mindspore::lite::RET_PARAM_INVALID;
+using mindspore::schema::PrimitiveType_DepthToSpace;
+
 namespace mindspore::kernel {
 int DepthToSpaceInt8CPUKernel::Init() {
   auto ret = DepthToSpaceBaseCPUKernel::Init();
@@ -64,4 +69,32 @@ int DepthToSpaceInt8CPUKernel::Run() {
   }
   return RET_OK;
 }
+
+kernel::LiteKernel *CpuDepthToSpaceInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                     const std::vector<lite::Tensor *> &outputs,
+                                                     OpParameter *op_parameter, const lite::InnerContext *ctx,
+                                                     const kernel::KernelKey &desc,
+                                                     const mindspore::lite::PrimitiveC *primitive) {
+  MS_ASSERT(desc.type == schema::PrimitiveType_DepthToSpace);
+  if (op_parameter == nullptr) {
+    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
+    return nullptr;
+  }
+  auto *kernel = new (std::nothrow) DepthToSpaceInt8CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new BatchToSpaceInt8CPUKernel fail!";
+    return nullptr;
+  }
+
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DepthToSpace, CpuDepthToSpaceInt8KernelCreator)
+
 }  // namespace mindspore::kernel

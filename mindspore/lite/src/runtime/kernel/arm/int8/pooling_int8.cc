@@ -19,10 +19,15 @@
 #include "nnacl/fp32/cast.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
+#include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+
+using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_MEMORY_FAILED;
+using mindspore::schema::PrimitiveType_Pooling;
 
 namespace mindspore::kernel {
 int PoolingInt8CPUKernel::Init() {
@@ -95,4 +100,30 @@ int PoolingInt8CPUKernel::Run() {
   }
   return RET_OK;
 }
+kernel::LiteKernel *CpuPoolingInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                const InnerContext *ctx, const kernel::KernelKey &desc,
+                                                const mindspore::lite::PrimitiveC *primitive) {
+  if (opParameter == nullptr) {
+    MS_LOG(ERROR) << "Input opParameter is nullptr!";
+    return nullptr;
+  }
+  MS_ASSERT(desc.type == schema::PrimitiveType_Pooling);
+  auto *kernel = new (std::nothrow) PoolingInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new PoolingInt8CPUKernel fail!";
+    free(opParameter);
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Pooling, CpuPoolingInt8KernelCreator)
+
 }  // namespace mindspore::kernel

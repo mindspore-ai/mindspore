@@ -15,7 +15,6 @@
  */
 #include "src/runtime/kernel/arm/base/pooling_base.h"
 #include <vector>
-#include "src/runtime/kernel/arm/int8/pooling_int8.h"
 #include "src/runtime/kernel/arm/fp32/pooling.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -103,31 +102,6 @@ int PoolingBaseCPUKernel::ReSize() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuPoolingInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                const InnerContext *ctx, const kernel::KernelKey &desc,
-                                                const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Pooling);
-  auto *kernel = new (std::nothrow) PoolingInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new PoolingInt8CPUKernel fail!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    return nullptr;
-  }
-  return kernel;
-}
-
 kernel::LiteKernel *CpuPoolingFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                 const InnerContext *ctx, const kernel::KernelKey &desc,
@@ -153,6 +127,5 @@ kernel::LiteKernel *CpuPoolingFp32KernelCreator(const std::vector<lite::Tensor *
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Pooling, CpuPoolingInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Pooling, CpuPoolingFp32KernelCreator)
 }  // namespace mindspore::kernel

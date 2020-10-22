@@ -15,7 +15,6 @@
  */
 #include "src/runtime/kernel/arm/base/reshape_base.h"
 #include <vector>
-#include "src/runtime/kernel/arm/int8/reshape_int8.h"
 #include "src/runtime/kernel/arm/fp32/reshape.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -29,31 +28,6 @@ using mindspore::schema::PrimitiveType_Reshape;
 
 namespace mindspore::kernel {
 int ReshapeBaseCPUKernel::Init() { return RET_OK; }
-
-kernel::LiteKernel *CpuReshapeInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                const InnerContext *ctx, const kernel::KernelKey &desc,
-                                                const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Reshape);
-  auto *kernel = new (std::nothrow) ReshapeInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new ReshapeInt8CPUKernel fail!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    return nullptr;
-  }
-  return kernel;
-}
 
 kernel::LiteKernel *CpuReshapeInt32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
@@ -105,7 +79,6 @@ kernel::LiteKernel *CpuReshapeFp32KernelCreator(const std::vector<lite::Tensor *
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Reshape, CpuReshapeInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Reshape, CpuReshapeInt32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reshape, CpuReshapeFp32KernelCreator)
 }  // namespace mindspore::kernel
