@@ -85,7 +85,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 # [Quick Start](#contents)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
-- Runing on Ascend
+- Running on Ascend
 
 Based on original DeepLabV3 paper, we reproduce two training experiments on vocaug (also as trainaug) dataset and evaluate on voc val dataset.
 
@@ -130,7 +130,7 @@ run_eval_s8_multiscale_flip.sh
 .
 └──deeplabv3
   ├── README.md
-  ├── script
+  ├── scripts
     ├── build_data.sh                             # convert raw data to mindrecord dataset
     ├── run_distribute_train_s16_r1.sh            # launch ascend distributed training(8 pcs) with vocaug dataset in s16 structure
     ├── run_distribute_train_s8_r1.sh             # launch ascend distributed training(8 pcs) with vocaug dataset in s8 structure
@@ -161,7 +161,7 @@ run_eval_s8_multiscale_flip.sh
 
 ## [Script Parameters](#contents)
 
-Default Configuration
+Default configuration
 ```
 "data_file":"/PATH/TO/MINDRECORD_NAME"            # dataset path
 "train_epochs":300                                # total epochs
@@ -177,7 +177,6 @@ Default Configuration
 "ckpt_pre_trained":"/PATH/TO/PRETRAIN_MODEL"      # path to load pretrain checkpoint
 "is_distributed":                                 # distributed training, it will be True if the parameter is set
 "save_steps":410                                  # steps interval for saving
-"freeze_bn":                                      # freeze_bn, it will be True if the parameter is set
 "keep_checkpoint_max":200                         # max checkpoint for saving
 ```
 
@@ -214,11 +213,11 @@ For 8 devices training, training steps are as follows:
 # run_distribute_train_s16_r1.sh
 for((i=0;i<=$RANK_SIZE-1;i++));
 do
-    export RANK_ID=$i
-    export DEVICE_ID=`expr $i + $RANK_START_ID` 
-    echo 'start rank='$i', device id='$DEVICE_ID'...'
-    mkdir ${train_path}/device$DEVICE_ID
-    cd ${train_path}/device$DEVICE_ID
+    export RANK_ID=${i}
+    export DEVICE_ID=$((i + RANK_START_ID))
+    echo 'start rank='${i}', device id='${DEVICE_ID}'...'
+    mkdir ${train_path}/device${DEVICE_ID}
+    cd ${train_path}/device${DEVICE_ID} || exit
     python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
                                                --data_file=/PATH/TO/MINDRECORD_NAME  \
                                                --train_epochs=300  \
@@ -242,11 +241,11 @@ done
 # run_distribute_train_s8_r1.sh
 for((i=0;i<=$RANK_SIZE-1;i++));
 do
-    export RANK_ID=$i
-    export DEVICE_ID=`expr $i + $RANK_START_ID` 
-    echo 'start rank='$i', device id='$DEVICE_ID'...'
-    mkdir ${train_path}/device$DEVICE_ID
-    cd ${train_path}/device$DEVICE_ID
+    export RANK_ID=${i}
+    export DEVICE_ID=$((i + RANK_START_ID))
+    echo 'start rank='${i}', device id='${DEVICE_ID}'...'
+    mkdir ${train_path}/device${DEVICE_ID}
+    cd ${train_path}/device${DEVICE_ID} || exit
     python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
                                                --data_file=/PATH/TO/MINDRECORD_NAME  \
                                                --train_epochs=800  \
@@ -271,11 +270,11 @@ done
 # run_distribute_train_s8_r2.sh
 for((i=0;i<=$RANK_SIZE-1;i++));
 do
-    export RANK_ID=$i
-    export DEVICE_ID=`expr $i + $RANK_START_ID` 
-    echo 'start rank='$i', device id='$DEVICE_ID'...'
-    mkdir ${train_path}/device$DEVICE_ID
-    cd ${train_path}/device$DEVICE_ID
+    export RANK_ID=${i}
+    export DEVICE_ID=$((i + RANK_START_ID))
+    echo 'start rank='${i}', device id='${DEVICE_ID}'...'
+    mkdir ${train_path}/device${DEVICE_ID}
+    cd ${train_path}/device${DEVICE_ID} || exit
     python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
                                                --data_file=/PATH/TO/MINDRECORD_NAME  \
                                                --train_epochs=300  \
@@ -353,7 +352,7 @@ Epoch time: 5962.164, per step time: 542.015
 ## [Evaluation Process](#contents)
 ### Usage
 #### Running on Ascend
-Config checkpoint with --ckpt_path, run script, mIOU with print in eval_path/eval_log.
+Configure checkpoint with --ckpt_path and dataset path. Then run script, mIOU will be printed in eval_path/eval_log.
 ```
 ./run_eval_s16.sh                     # test s16
 ./run_eval_s8.sh                      # test s8
@@ -409,9 +408,27 @@ Note: There OS is output stride, and MS is multiscale.
 | Loss Function              | Softmax Cross Entropy                                  |    
 | Outputs                    | probability                                       |          
 | Loss                       | 0.0065883575                                       |            
-| Speed                      | 31ms/step（1pc, s8）<br> 234ms/step（8pcs, s8）                   |  
-| Checkpoint for Fine tuning | 443M (.ckpt file)                                         |
-| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeplabv3) | 
+| Speed                      | 60 ms/step（1pc, s16）<br> 480 ms/step（8pcs, s16） <br> 244 ms/step (8pcs, s8)      |  
+| Total time                 | 8pcs: 706 mins                     |
+| Parameters (M)             | 58.2                                       |
+| Checkpoint for Fine tuning | 443M (.ckpt file)                       |
+| Model for inference        | 223M (.air file)                     |
+| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/deeplabv3) | 
+
+### Inference Performance
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | DeepLabV3 V1                |
+| Resource            | Ascend 910                  |
+| Uploaded Date       | 09/04/2020 (month/day/year) |
+| MindSpore Version   | 0.7.0-alpha                 |
+| Dataset             | VOC datasets    |
+| batch_size          | 32 (s16); 16 (s8)                         |
+| outputs             | probability                 |
+| Accuracy            | 8pcs: <br> s16: 77.37 <br>  s8: 78.84% <br>  s8_multiscale: 79.70% <br> s8_Flip: 79.89%  |
+| Model for inference | 443M (.ckpt file)         |
+
 
 # [Description of Random Situation](#contents)
 In dataset.py, we set the seed inside "create_dataset" function. We also use random seed in train.py. 
