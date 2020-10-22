@@ -5763,3 +5763,56 @@ class LRN(PrimitiveWithInfer):
     def infer_shape(self, x_shape):
         validator.check_int(len(x_shape), 4, Rel.EQ, "x_shape", self.name)
         return x_shape
+
+
+class UniformSampler(PrimitiveWithInfer):
+    r"""
+    Uniform candidate sampler.
+
+    This function samples a set of classes(sampled_candidates) from [0, range_max-1] based on uniform distribution.
+    If unique=True, candidates are drawn without replacement, else unique=False with replacement.
+
+    Args:
+        num_true (int): The number of target classes in each training example.
+        num_sampled (int): The number of classes to randomly sample. The **sampled_candidates** will have a shape
+        of num_sampled. If unique=True, num_sampled must be less than or equal to range_max.
+        unique (bool): Whether all sampled classes in a batch are unique.
+        range_max (int): The number of possible classes.
+        seed (int): Random seed, must be non-negative. Default: 0.
+
+    Inputs:
+        true_classes (int): A tensor. The target classes with a tensor shape of (batch_size, num_true).
+
+    Outputs:
+        A tuple of 3 tensors.
+        sampled_candidates: (int): The sampled_candidates is independent of the true classes. Shape: (num_sampled, ).
+        true_expected_count: (float): The expected counts under the sampling distribution of each of true_classes.
+        Shape: (batch_size, num_true).
+        sampled_expected_count: (float): The expected counts under the sampling distribution of each of
+        sampled_candidates. Shape: (num_sampled, ).
+
+    Examples:
+        >>> sampler = P.UniformSampler(1, 3, False, 4)
+        >>> SampledCandidates, TrueExpectedCount, SampledExpectedCount = sampler(Tensor(np.array([[1],[3],[4],[6],
+        [3]], dtype=np.int32)))
+        [1, 1, 3], [[0.75], [0.75], [0.75], [0.75], [0.75]], [0.75, 0.75, 0.75]
+    """
+    @prim_attr_register
+    def __init__(self, num_true, num_sampled, unique, range_max, seed=0):
+        """Initialize UniformSampler"""
+        validator.check_value_type("num_true", num_true, [int], self.name)
+        validator.check_value_type("num_sampled", num_sampled, [int], self.name)
+        validator.check_value_type("unique", unique, [bool], self.name)
+        validator.check_value_type("range_max", range_max, [int], self.name)
+        validator.check_value_type("seed", seed, [int], self.name)
+        validator.check("value of num_sampled", num_sampled, '', 0, Rel.GT, self.name)
+        if unique:
+            validator.check('value of num_sampled', num_sampled, "value of range_max", range_max, Rel.LE, self.name)
+        validator.check("value of seed", seed, '', 0, Rel.GE, self.name)
+        self.num_sampled = num_sampled
+
+    def infer_dtype(self, true_classes_type):
+        return (true_classes_type, mstype.float32, mstype.float32)
+
+    def infer_shape(self, true_classes_shape):
+        return ([self.num_sampled], true_classes_shape, [self.num_sampled])
