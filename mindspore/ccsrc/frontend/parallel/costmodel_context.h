@@ -44,7 +44,7 @@ namespace parallel {
 #define DEFAULT_RUN_PHASE 0
 #define TRAINING_PHASE 0
 #define INFERENCE_PHASE 1
-#define DEFAULT_TRIANGLE_STRATEGY_OVERWRITE true;
+#define DEFAULT_TRIANGLE_STAR_STRATEGY_OVERWRITE true;
 
 class CostModelContext {
  public:
@@ -135,8 +135,8 @@ class CostModelContext {
   void set_elementwise_stra_follow(bool);
   bool elementwise_stra_follow() const { return elementwise_stra_follow_; }
 
-  void set_triangle_strategy_overwrite(bool);
-  bool triangle_strategy_overwrite() const { return triangle_strategy_overwrite_; }
+  void set_triangle_star_strategy_overwrite(bool);
+  bool triangle_star_strategy_overwrite() const { return triangle_star_strategy_overwrite_; }
 
   void set_run_phase(int32_t);
   int32_t run_phase() const { return run_phase_; }
@@ -172,9 +172,9 @@ class CostModelContext {
   // MULTI_SUBGRAPHS
   bool is_multi_subgraphs_;
 
-  // In the recovery phase of DP algorithm, when encountering triangle structure,
+  // In the recovery phase of DP algorithm, when encountering triangle structure and star structure,
   // whether overwrite the right-node strategy
-  bool triangle_strategy_overwrite_;
+  bool triangle_star_strategy_overwrite_;
 
   int32_t run_phase_;  // 0: 'training', 1: 'inference'
 

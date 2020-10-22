@@ -26,10 +26,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <unordered_set>
 
-#include "ir/anf.h"
-#include "ir/param_info.h"
-#include "ir/tensor.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/auto_parallel/dp_algo_costmodel.h"
@@ -39,11 +37,14 @@
 #include "frontend/parallel/auto_parallel/rec_core/rec_parse_graph.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
 #include "frontend/parallel/context.h"
-#include "frontend/parallel/ops_info/tmp_identity_info.h"
-#include "frontend/parallel/ops_info/reshape_info.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/ops_info/reshape_info.h"
+#include "frontend/parallel/ops_info/tmp_identity_info.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
+#include "ir/anf.h"
+#include "ir/param_info.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 namespace parallel {

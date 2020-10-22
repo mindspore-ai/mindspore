@@ -17,8 +17,8 @@
 #include "frontend/parallel/group_manager.h"
 #include <algorithm>
 #include <vector>
-#include "frontend/parallel/device_manager.h"
 #include "backend/session/executor_manager.h"
+#include "frontend/parallel/device_manager.h"
 #include "utils/comm_manager.h"
 #include "utils/ms_context.h"
 

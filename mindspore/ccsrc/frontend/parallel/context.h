@@ -18,18 +18,18 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_CONTEXT_H_
 
 #include <cstdint>
-#include <memory>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "abstract/abstract_value.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/status.h"
-#include "utils/convert_utils.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "utils/convert_utils.h"
 #include "utils/info.h"
-#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace parallel {

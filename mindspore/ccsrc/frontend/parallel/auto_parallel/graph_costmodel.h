@@ -22,11 +22,11 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "utils/ms_utils.h"
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/ops_info/tmp_identity_info.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -46,7 +46,7 @@ extern bool FULLY_USE_DEVICES;
 extern bool ELEMENTWISE_OP_STRA_FOLLOW;
 extern bool MULTI_SUBGRAPHS;
 extern int32_t RUN_PHASE;
-extern bool TRIANGLE_STRATEGY_OVERWRITE;
+extern bool TRIANGLE_STAR_STRATEGY_OVERWRITE;
 
 class CostGraph {
   // 'CostGraph' consists of Operators and edges between them. An edge is created between two Operators if they have

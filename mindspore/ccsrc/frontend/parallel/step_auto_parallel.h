@@ -21,9 +21,9 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "ir/anf.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/parallel/status.h"
+#include "ir/anf.h"
 #include "pipeline/jit/pipeline.h"
 
 namespace mindspore {

@@ -16,8 +16,8 @@
 
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 
-#include <random>
 #include <algorithm>
+#include <random>
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 

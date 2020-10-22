@@ -64,7 +64,7 @@ void CostModelContext::ResetAlgoParameters() {
   tensor_slice_alignment_size_ = DEFAULT_TENSOR_SLICE_ALIGNMENT_SIZE;
   fully_use_device_ = DEFAULT_FULLY_USE_DEVICES;
   elementwise_stra_follow_ = DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW;
-  triangle_strategy_overwrite_ = DEFAULT_TRIANGLE_STRATEGY_OVERWRITE;
+  triangle_star_strategy_overwrite_ = DEFAULT_TRIANGLE_STAR_STRATEGY_OVERWRITE;
 }
 
 void CostModelContext::set_costmodel_context_for_device(const std::string &device_target) {
@@ -134,7 +134,9 @@ void CostModelContext::set_elementwise_stra_follow(bool elementwise_follow) {
   elementwise_stra_follow_ = elementwise_follow;
 }
 
-void CostModelContext::set_triangle_strategy_overwrite(bool overwrite) { triangle_strategy_overwrite_ = overwrite; }
+void CostModelContext::set_triangle_star_strategy_overwrite(bool overwrite) {
+  triangle_star_strategy_overwrite_ = overwrite;
+}
 
 void CostModelContext::set_run_phase(int32_t phase) { run_phase_ = phase; }
 
