@@ -31,6 +31,7 @@
 #include "src/ops/batch_to_space.h"
 #include "src/ops/prior_box.h"
 #include "src/ops/lstm.h"
+#include "src/ops/instance_norm.h"
 #include "src/ops/softmax.h"
 #include "src/ops/activation.h"
 #include "src/ops/deconv2d.h"
@@ -140,6 +141,7 @@
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/fp32/roi_pooling.h"
 #include "nnacl/softmax_parameter.h"
+#include "nnacl/instance_norm_parameter.h"
 #include "nnacl/fp32/tile.h"
 #include "nnacl/fp32/topk.h"
 #include "nnacl/reduce_parameter.h"
@@ -217,6 +219,22 @@ OpParameter *PopulateBatchNorm(const mindspore::lite::PrimitiveC *primitive) {
   batch_norm_param->epsilon_ = param->GetEpsilon();
   batch_norm_param->fused_ = false;
   return reinterpret_cast<OpParameter *>(batch_norm_param);
+}
+
+OpParameter *PopulateInstanceNorm(const mindspore::lite::PrimitiveC *primitive) {
+  const auto param =
+    reinterpret_cast<mindspore::lite::InstanceNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  InstanceNormParameter *instance_norm_param =
+    reinterpret_cast<InstanceNormParameter *>(malloc(sizeof(InstanceNormParameter)));
+  if (instance_norm_param == nullptr) {
+    MS_LOG(ERROR) << "malloc InstanceNormParameter failed.";
+    return nullptr;
+  }
+  memset(instance_norm_param, 0, sizeof(InstanceNormParameter));
+  instance_norm_param->op_parameter_.type_ = primitive->Type();
+  instance_norm_param->epsilon_ = param->GetEpsilon();
+  instance_norm_param->fused_ = false;
+  return reinterpret_cast<OpParameter *>(instance_norm_param);
 }
 
 OpParameter *PopulateFillParameter(const mindspore::lite::PrimitiveC *primitive) {
