@@ -103,7 +103,7 @@ First set the config for data, train, eval in src/config.py
 ## [Script and Sample Code](#contents)
 
 ```
-├── MODELZOO_DSCNN_MS_MTI        
+├── dscnn        
     ├── README.md                         // descriptions about ds-cnn
     ├── scripts 
     │   ├──run_download_process_data.sh   // shell script for download dataset and prepare feature and label 
