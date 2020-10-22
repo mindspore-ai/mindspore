@@ -39,7 +39,21 @@ class DequantUtil {
       MS_LOG(ERROR) << "Malloc failed.";
       return nullptr;
     }
-    if (input_tensor->GetQuantParams().size() != kPerTensor) {
+    if (input_tensor->shape().size() == kPerBatch &&
+        input_tensor->GetQuantParams().size() == static_cast<size_t>(input_tensor->shape()[0])) {  // per batch matmul
+      auto per_batch_size = input_tensor->shape()[0];
+      auto quant_param = input_tensor->GetQuantParams();
+      for (int i = 0; i < per_batch_size; i++) {
+        auto param = quant_param.at(i);
+        auto scale = param.scale;
+        auto zero_point = param.zeroPoint;
+        auto matrix_size = input_tensor->ElementsNum() / per_batch_size;
+        for (int64_t j = 0; j < matrix_size; j++) {
+          dequant_datas[i * matrix_size + j] =
+            static_cast<float>((quant_datas[i * matrix_size + j] - zero_point) * scale);
+        }
+      }
+    } else if (input_tensor->GetQuantParams().size() != kPerTensor) {
       size_t channels = static_cast<size_t>(input_tensor->Batch());
       if (input_tensor->GetQuantParams().size() != channels) {
         MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->GetQuantParams().size() << channels;

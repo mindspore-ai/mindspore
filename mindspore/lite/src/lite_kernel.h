@@ -31,6 +31,7 @@
 #include "include/errorcode.h"
 
 static constexpr int kPerTensor = 1;
+static constexpr size_t kPerBatch = 3;
 
 namespace mindspore::kernel {
 enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kKernelArch_MIN = kCPU, kKernelArch_MAX = kNPU };

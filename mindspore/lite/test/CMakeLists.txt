@@ -180,6 +180,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/constant_folding_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/quant_dtype_cast_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/layer_norm_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/batchmatmul_fusion.cc
             ${LITE_DIR}/tools/optimizer/graph/weight_format_transform_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/weight_format_hardcode_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/clip_convert_activation_pass.cc
