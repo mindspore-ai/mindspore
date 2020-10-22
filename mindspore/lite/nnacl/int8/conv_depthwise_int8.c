@@ -140,11 +140,8 @@ void ConvDwInt8(int8_t *output_data, int32_t *row_buffer, const int8_t *input_da
 
 /*conv depthwise 3x3 int8 begin*/
 bool CheckIfUse3X3(const ConvParameter *conv_param, int channel) {
-  bool use_3x3 = conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3 &&
-                 (conv_param->stride_h_ == 1 || conv_param->stride_h_ == 2) &&
-                 (conv_param->stride_w_ == 1 || conv_param->stride_w_ == 2) &&
-                 conv_param->stride_h_ == conv_param->stride_w_ &&
-                 (conv_param->pad_u_ == 0 || conv_param->pad_u_ == 1) &&
+  bool use_3x3 = conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3 && conv_param->stride_h_ == 1 &&
+                 conv_param->stride_w_ == 1 && (conv_param->pad_u_ == 0 || conv_param->pad_u_ == 1) &&
                  (conv_param->pad_l_ == 0 || conv_param->pad_l_ == 1) && conv_param->pad_u_ == conv_param->pad_l_ &&
                  conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 && (channel % 8 == 0);
   return use_3x3;
@@ -303,7 +300,7 @@ void ConvDw3x3Int8(int8_t *output_data, int8_t *buffer, const int8_t *input_data
   }
 }
 
-#ifndef ENABLE_ARM64
+#ifndef ENABLE_ARM
 void ConvDw3x3BorderPixelInt8(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height,
                               int width, int in_kh_step, int in_kw_step, int channel, int8_t in_zp, int32_t out_zp,
                               int out_multiplier, int left_shift, int right_shift, int32_t acc_min, int32_t acc_max) {
