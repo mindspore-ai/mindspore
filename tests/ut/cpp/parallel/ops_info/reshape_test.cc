@@ -74,7 +74,7 @@ TEST_F(TestReshapeInfo, InferDevMatrixShape1) {
   reshape->Init(strategy);
   Shape dev_matrix_shape = reshape->dev_matrix_shape();
 
-  Shape expect = {4, 8};
+  Shape expect = {4, 1, 1, 1, 8};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
@@ -85,7 +85,7 @@ TEST_F(TestReshapeInfo, InferDevMatrixShape2) {
   reshape->Init(strategy);
   Shape dev_matrix_shape = reshape->dev_matrix_shape();
 
-  Shape expect = {32};
+  Shape expect = {32, 1, 1, 1};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
@@ -98,7 +98,7 @@ TEST_F(TestReshapeInfo, InferSliceShape1) {
   std::vector<TensorInfo> outputs = reshape->outputs_tensor_info();
 
   Shape input_slice_shape_expect = {8, 512, 7, 7};
-  Shape output_slice_shape_expect = {8, 25088};
+  Shape output_slice_shape_expect = {32, 25088};
 
   TensorInfo input_tensor_info = inputs.at(0);
   TensorInfo output_tensor_info = outputs.at(0);
@@ -119,7 +119,7 @@ TEST_F(TestReshapeInfo, InferSliceShape2) {
   std::vector<TensorInfo> outputs = reshape->outputs_tensor_info();
 
   Shape input_slice_shape_expect = {1, 512, 7, 7};
-  Shape output_slice_shape_expect = {1, 25088};
+  Shape output_slice_shape_expect = {32, 25088};
 
   TensorInfo input_tensor_info = inputs.at(0);
   TensorInfo output_tensor_info = outputs.at(0);
@@ -139,8 +139,8 @@ TEST_F(TestReshapeInfo, GetTensorLayout1) {
   std::vector<TensorInfo> inputs = reshape->inputs_tensor_info();
   std::vector<TensorInfo> outputs = reshape->outputs_tensor_info();
 
-  TensorMap input_expect = {1, -1, -1, -1};
-  TensorMap output_expect = {1, -1};
+  TensorMap input_expect = {4, 3, 2, 1};
+  TensorMap output_expect = {-1, -1};
 
   TensorInfo input_tensor_info = inputs.at(0);
   TensorInfo output_tensor_info = outputs.at(0);
@@ -160,8 +160,8 @@ TEST_F(TestReshapeInfo, GetTensorLayout2) {
   std::vector<TensorInfo> inputs = reshape->inputs_tensor_info();
   std::vector<TensorInfo> outputs = reshape->outputs_tensor_info();
 
-  TensorMap input_expect = {0, -1, -1, -1};
-  TensorMap output_expect = {0, -1};
+  TensorMap input_expect = {3, 2, 1, 0};
+  TensorMap output_expect = {-1, -1};
 
   TensorInfo input_tensor_info = inputs.at(0);
   TensorInfo output_tensor_info = outputs.at(0);

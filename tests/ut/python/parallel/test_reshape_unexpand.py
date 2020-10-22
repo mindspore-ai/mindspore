@@ -74,12 +74,12 @@ def test_reshape_unexpand_1():
         def __init__(self):
             super().__init__()
             self.reshape = P.Reshape()
-            self.mul = P.Mul().shard(((1, 8), (1, 1, 8)))
-            self.mul_weight = Parameter(Tensor(np.ones([96, 128]), dtype=ms.float32), name="weight")
+            self.mul = P.Mul().shard(((1, 1, 8), (1, 8)))
+            self.mul_weight = Parameter(Tensor(np.ones([128, 96]), dtype=ms.float32), name="weight")
 
-        def construct(self, x):
-            weight = self.reshape(self.mul_weight, (1, 128, 96))
-            out = self.mul(x, weight)
+        def construct(self, data):
+            x = self.reshape(self.mul_weight, (1, 128, 96))
+            out = self.mul(x, self.mul_weight)
             return out
 
     size = 8
@@ -234,5 +234,27 @@ def test_reshape_unexpand_7():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     x = Tensor(np.ones([32, 3, 224, 224]), dtype=ms.float32)
     net = GradWrap(NetWithLoss(Net()))
+    net.set_auto_parallel()
+    _executor.compile(net, x)
+
+def test_reshape_unexpand_8():
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.reshape = P.Reshape()
+            self.mul = P.Mul().shard(((1, 4, 2), (4, 2)))
+            self.mul_weight = Parameter(Tensor(np.ones([128, 96]), dtype=ms.float32), name="weight")
+
+        def construct(self, data):
+            x = self.reshape(self.mul_weight, (1, 128, 96))
+            out = self.mul(x, self.mul_weight)
+            return out
+
+    size = 8
+    context.set_auto_parallel_context(device_num=size, global_rank=0)
+    x = Tensor(np.ones([128, 96]), dtype=ms.float32)
+
+    net = GradWrap(NetWithLoss(Net()))
+    context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     _executor.compile(net, x)

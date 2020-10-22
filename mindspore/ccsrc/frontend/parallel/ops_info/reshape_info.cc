@@ -39,7 +39,7 @@ Status ReshapeInfo::CheckStrategy(const StrategyPtr &strategy) { return CheckStr
 Status ReshapeInfo::InferDevMatrixShape() {
   Strategys stra = strategy_->GetInputDim();
   input_strategy_ = stra.at(0);
-  dev_matrix_shape_.push_back(input_strategy_[0]);
+  dev_matrix_shape_ = stra.at(0);
   return SUCCESS;
 }
 
@@ -162,17 +162,13 @@ Status ReshapeInfo::InferTensorMap() {
   }
 
   Shape tensor_map_index_input;
-  tensor_map_index_input.push_back(0);
-
-  for (size_t j = 1; j < inputs_shape_[0].size(); ++j) {
-    tensor_map_index_input.push_back(MAP_NONE);
+  for (size_t j = 0; j < inputs_shape_[0].size(); ++j) {
+    tensor_map_index_input.push_back((int64_t)(inputs_shape_[0].size() - j - 1));
   }
   inputs_tensor_map_.push_back(tensor_map_index_input);
 
   Shape tensor_map_index_output;
-  tensor_map_index_output.push_back(0);
-
-  for (size_t j = 1; j < outputs_shape_[0].size(); ++j) {
+  for (size_t j = 0; j < outputs_shape_[0].size(); ++j) {
     tensor_map_index_output.push_back(MAP_NONE);
   }
   outputs_tensor_map_.push_back(tensor_map_index_output);
@@ -186,8 +182,7 @@ Status ReshapeInfo::InferTensorMap() {
 Strategys ReshapeInfo::GetOutputsStrategy() {
   Strategys outputs_strategy;
   Dimensions strategy;
-  strategy.push_back(input_strategy_[0]);
-  for (size_t j = 1; j < outputs_shape_[0].size(); ++j) {
+  for (size_t j = 0; j < outputs_shape_[0].size(); ++j) {
     strategy.push_back(1);
   }
   outputs_strategy.push_back(strategy);
