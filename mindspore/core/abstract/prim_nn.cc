@@ -416,7 +416,7 @@ AbstractBasePtr InferImplDropoutGenMask(const AnalysisEnginePtr &, const Primiti
   }
 
   auto x_shape_data = x_shape->elements();
-  int count = 1;
+  int64_t count = 1;
   for (std::size_t i = 0; i < x_shape->size(); ++i) {
     auto value_track = x_shape_data[i]->GetValueTrack();
     MS_EXCEPTION_IF_NULL(value_track);
