@@ -33,12 +33,11 @@ typedef struct {
 } StringPack;
 
 // example of string tensor:
-// 3, 0, 0, 0    # int32, num of strings
-// 20, 0, 0, 0   # int32, offset of 0-th string
-// 23, 0, 0, 0   # int32, offset of 0-th string
-// 26, 0, 0, 0   # int32, offset of 0-th string
-// 29, 0, 0, 0   # int32, total length of tensor data
-// 'h', 'o', 'w', 'a', 'r', 'e', 'y', 'o', 'u'  # char, how are you
+// 2, 0, 0, 0    # int32, num of strings
+// 16, 0, 0, 0   # int32, offset of 0-th string
+// 21, 0, 0, 0   # int32, offset of 1-th string
+// 30, 0, 0, 0   # int32, total length of tensor data
+// 'h', 'e', 'l', 'l', 'o', 'h', 'o', 'w', 'a', 'r', 'e', 'y', 'o', 'u'  # char, "hello", "how are you"
 std::vector<StringPack> ParseTensorBuffer(Tensor *tensor);
 std::vector<StringPack> ParseStringBuffer(const void *data);
 

@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 #include "schema/model_generated.h"
+#include "include/ms_tensor.h"
 
 namespace mindspore::lite {
 /// \brief Allocator defined a memory pool for malloc memory and free memory dynamically.
@@ -36,5 +37,18 @@ using Uint32Vector = std::vector<uint32_t>;
 using String = std::string;
 using NodeType = schema::NodeType;
 using AllocatorPtr = std::shared_ptr<Allocator>;
+
+/// \brief Set data of MSTensor from string vector.
+///
+/// \param[in] input string vector.
+/// \param[out] MSTensor.
+///
+/// \return STATUS as an error code of this interface, STATUS is defined in errorcode.h.
+int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *tensor);
+
+/// \brief Get string vector from MSTensor.
+/// \param[in] MSTensor.
+/// \return string vector.
+std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_
