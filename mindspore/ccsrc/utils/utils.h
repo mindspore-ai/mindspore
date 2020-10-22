@@ -174,6 +174,7 @@ constexpr auto kStridedReadOpName = "StridedRead";
 constexpr auto kStridedWriteOpName = "StridedWrite";
 constexpr auto kFusedAdamWeightDecayName = "FusedAdamWeightDecay";
 constexpr auto kFusedAdamName = "FusedAdam";
+constexpr auto kFusedSparseAdamName = "FusedSparseAdam";
 constexpr auto kApplyAdagradV2OpName = "ApplyAdagradV2";
 constexpr auto kSparseApplyAdagradV2OpName = "SparseApplyAdagradV2";
 constexpr auto kSparseApplyFtrlOpName = "SparseApplyFtrl";
@@ -385,6 +386,7 @@ const std::set<std::string> kOptOperatorSet = {
   kApplyRMSPropOpName,
   kFusedAdamWeightDecayName,
   kFusedAdamName,
+  kFusedSparseAdamName,
   kFusedWeightScaleApplyMomentum,
   kFusedScaleApplyMomentum,
   kPullOpName,

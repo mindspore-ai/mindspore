@@ -15,8 +15,8 @@
  */
 #include "backend/session/executor.h"
 #include <exception>
-#include "runtime/device/kernel_runtime_manager.h"
 #include "backend/session/executor_manager.h"
+#include "runtime/device/kernel_runtime_manager.h"
 #include "utils/comm_manager.h"
 #include "utils/scoped_long_running.h"
 
@@ -52,6 +52,19 @@ void UpdateOutputTensors(const VectorRef *outputs,
         tensor->set_device_address(nullptr);
         tensor->set_sync_status(kNeedSyncHostToDevice);
       }
+    }
+  }
+}
+
+void NotifyOutputTensors(const VectorRef *outputs) {
+  MS_EXCEPTION_IF_NULL(outputs);
+  for (auto item : *outputs) {
+    if (utils::isa<VectorRefPtr>(item)) {
+      auto vector_ref = utils::cast<VectorRef>(item);
+      NotifyOutputTensors(&vector_ref);
+    } else if (utils::isa<tensor::TensorPtr>(item)) {
+      auto tensor = utils::cast<tensor::TensorPtr>(item);
+      MS_EXCEPTION_IF_NULL(tensor);
       tensor->SetNeedWait(false);
     }
   }
@@ -92,10 +105,12 @@ void RunGraphTask::Run() {
   MS_EXCEPTION_IF_NULL(session_);
   try {
     session_->RunGraphImpl(graph_id_, input_tensors_, &outputs_);
+    UpdateOutputTensors(&outputs_, tensor_to_node_);
   } catch (const std::exception &e) {
     MsException::GetInstance().SetException();
   }
-  UpdateOutputTensors(&outputs_, tensor_to_node_);
+
+  NotifyOutputTensors(&outputs_);
   for (auto &tensor : input_need_lock_tensors_) {
     tensor->SetNeedWait(false);
   }
@@ -252,19 +267,19 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
                              const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(session);
   MS_EXCEPTION_IF_NULL(outputs);
-  if (session != nullptr) {
-    RunGraph(session, graph_id, inputs, outputs);
-    return;
-  }
   auto task = std::make_shared<RunGraphTask>();
   task->session_ = session;
   task->graph_id_ = graph_id;
   task->input_tensors_ = inputs;
   task->input_need_lock_tensors_ = session->GetNeedLockInputTensors(graph_id, inputs);
-  // lock inputs
   for (auto &tensor : inputs) {
     if (tensor->NeedWait()) {
-      task->input_need_wait_tensors_.emplace_back(tensor);
+      if (tensor->IsGraphOutput()) {
+        task->input_need_wait_tensors_.emplace_back(tensor);
+      } else {
+        mindspore::ScopedLongRunning long_running;
+        tensor->Wait();
+      }
     }
   }
   for (auto &tensor : task->input_need_lock_tensors_) {
