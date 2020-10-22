@@ -61,4 +61,14 @@ def eval_parse_args():
     eval_args = eval_parser.parse_args()
     eval_args.is_training = False
     return eval_args
-    
+
+def export_parse_args():
+    export_parser = argparse.ArgumentParser(description='Image classification export')
+    export_parser.add_argument('--platform', type=str, default="Ascend", choices=("Ascend", "GPU", "CPU"), \
+        help='run platform, only support GPU, CPU and Ascend')
+    export_parser.add_argument('--pretrain_ckpt', type=str, required=True, help='Pretrained checkpoint path \
+        for fine tune or incremental learning')
+    export_args = export_parser.parse_args()
+    export_args.is_training = False
+    export_args.run_distribute = False
+    return export_args

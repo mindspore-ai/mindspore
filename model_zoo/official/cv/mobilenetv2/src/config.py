@@ -19,6 +19,8 @@ import os
 from easydict import EasyDict as ed
 
 def set_config(args):
+    if not args.run_distribute:
+        args.run_distribute = False
     config_cpu = ed({
         "num_classes": 26,
         "image_height": 224,
@@ -38,8 +40,9 @@ def set_config(args):
         "keep_checkpoint_max": 20,
         "save_checkpoint_path": "./",
         "platform": args.platform,
-        "run_distribute": False,
-        "activation": "Softmax"
+        "activation": "Softmax",
+        "export_format": "MINDIR",
+        "export_file": "mobilenetv2.mindir"
     })
     config_gpu = ed({
         "num_classes": 1000,
@@ -62,7 +65,9 @@ def set_config(args):
         "platform": args.platform,
         "ccl": "nccl",
         "run_distribute": args.run_distribute,
-        "activation": "Softmax"
+        "activation": "Softmax",
+        "export_format": "MINDIR",
+        "export_file": "mobilenetv2.mindir"
     })
     config_ascend = ed({
         "num_classes": 1000,
@@ -88,7 +93,9 @@ def set_config(args):
         "rank_id": int(os.getenv('RANK_ID', '0')),
         "rank_size": int(os.getenv('RANK_SIZE', '1')),
         "run_distribute": int(os.getenv('RANK_SIZE', '1')) > 1.,
-        "activation": "Softmax"
+        "activation": "Softmax",
+        "export_format": "MINDIR",
+        "export_file": "mobilenetv2.mindir"
     })
     config = ed({"CPU": config_cpu,
                  "GPU": config_gpu,
