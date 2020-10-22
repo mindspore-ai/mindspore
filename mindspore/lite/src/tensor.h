@@ -147,50 +147,11 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_allocator(mindspore::lite::Allocator *allocator) { allocator_ = allocator; }
 
-  int MallocData(mindspore::lite::Allocator *allocator = nullptr) {
-    if (nullptr != this->data_) {
-      return 0;
-    }
-    if (allocator != nullptr) {
-      allocator_ = allocator;
-    }
-    if (allocator_ == nullptr) {
-      this->data_ = malloc(this->Size());
-    } else {
-      this->data_ = allocator_->Malloc(this->Size());
-    }
-    if (nullptr == this->data_) {
-      MS_LOG(ERROR) << "Malloc tensor data failed, size=" << this->Size();
-      return -1;
-    }
+  int MallocData(mindspore::lite::Allocator *allocator = nullptr);
 
-    return 0;
-  }
+  int FreeData();
 
-  int FreeData() {
-    if (nullptr == this->data_) {
-      return 0;
-    }
-    if (nullptr == allocator_) {
-      free(this->data_);
-      this->data_ = nullptr;
-    } else {
-      allocator_->Free(this->data_);
-      this->data_ = nullptr;
-    }
-    return 0;
-  }
-
-  void *MutableData() override {
-    if (this->data_ == nullptr) {
-      auto ret = this->MallocData();
-      if (ret != 0) {
-        MS_LOG(WARNING) << "Malloc data failed";
-      }
-    }
-    Prepare();
-    return this->data_;
-  }
+  void *MutableData() override;
 
   void *data_c() const { return data_; }
 

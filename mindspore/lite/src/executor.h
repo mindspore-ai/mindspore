@@ -28,7 +28,7 @@ class Executor {
   Executor() = default;
   virtual ~Executor() = default;
 
-  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels) { return 0; }
+  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels) { return RET_OK; }
 
   virtual int Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
                   std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
