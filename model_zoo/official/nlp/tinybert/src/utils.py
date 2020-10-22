@@ -100,7 +100,7 @@ class EvalCallBack(Callback):
                 input_ids, input_mask, token_type_id, label_ids = input_data
                 self.network.set_train(False)
                 logits = self.network(input_ids, token_type_id, input_mask)
-                callback.update(logits[3], label_ids)
+                callback.update(logits, label_ids)
             acc = callback.acc_num / callback.total_num
             with open("./eval.log", "a+") as f:
                 f.write("acc_num {}, total_num{}, accuracy{:.6f}".format(callback.acc_num, callback.total_num,
