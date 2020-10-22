@@ -35,7 +35,16 @@ class MS_API LiteSession {
   /// \param[in] context Define the context of session to be created.
   ///
   /// \return Pointer of MindSpore Lite LiteSession.
-  static LiteSession *CreateSession(lite::Context *context);
+  static LiteSession *CreateSession(const lite::Context *context);
+
+  /// \brief Static method to create a LiteSession pointer which has already compiled a model.
+  ///
+  /// \param[in] model_buf Define the buffer read from a model file.
+  /// \param[in] size Define bytes number of model buffer.
+  /// \param[in] context Define the context of session to be created.
+  ///
+  /// \return Pointer of MindSpore Lite LiteSession.
+  static LiteSession *CreateSession(const char *model_buf, size_t size, const lite::Context *context);
 
   /// \brief Destructor of MindSpore Lite LiteSession.
   virtual ~LiteSession() = default;

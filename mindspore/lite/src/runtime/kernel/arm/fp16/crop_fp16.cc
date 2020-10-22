@@ -77,6 +77,7 @@ int CropFp16CPUKernel::Run() {
   auto ret = ParallelLaunch(this->context_->thread_pool_, CropFp16Run, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch failed: " << ret;
+    FreeInputAndOutput();
     return ret;
   }
   if (out_tensors_.at(kOutputIndex)->data_type() == kNumberTypeFloat32) {

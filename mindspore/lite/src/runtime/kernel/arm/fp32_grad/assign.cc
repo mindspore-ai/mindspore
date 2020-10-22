@@ -52,12 +52,6 @@ int AssignRun(void *cdata, int task_id) {
 }
 
 int AssignCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "AssignCPUKernel Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
   int error_code = ParallelLaunch(this->context_->thread_pool_, AssignRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Assign function error error_code[" << error_code << "]";

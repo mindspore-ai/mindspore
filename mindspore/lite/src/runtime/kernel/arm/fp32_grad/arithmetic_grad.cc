@@ -202,11 +202,6 @@ int ArithmeticGradRun(void *cdata, int task_id) {
 }
 
 int ArithmeticGradCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ArithmeticGradCPUKernel Prepare failed.";
-    return ret;
-  }
   int error_code = ParallelLaunch(this->context_->thread_pool_, ArithmeticGradRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Arithmetic Grad function error error_code[" << error_code << "]";

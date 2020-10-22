@@ -120,6 +120,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/lite_session.cc
         ${LITE_DIR}/src/sub_graph_kernel.cc
         ${LITE_DIR}/src/model.cc
+        ${LITE_DIR}/src/model_common.cc
         ${LITE_DIR}/src/populate_parameter.cc
         ${LITE_DIR}/src/scheduler.cc
         ${LITE_DIR}/src/common/graph_util.cc

@@ -39,6 +39,7 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
       : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
     subgraph_type_ = kGpuSubGraph;
+    this->name_ = "GpuSubGraph";
     this->executor_ = new lite::opencl::OpenCLExecutor();
   }
   ~SubGraphOpenCLKernel() override;

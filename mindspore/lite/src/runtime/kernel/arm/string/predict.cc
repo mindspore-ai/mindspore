@@ -73,11 +73,6 @@ std::vector<LabelInfo> PredictCPUKernel::GetLabelInfo() {
 static bool LabelInfoCmp(const LabelInfo &lhs, const LabelInfo &rhs) { return lhs.weight > rhs.weight; }
 
 int PredictCPUKernel::Run() {
-  auto ret = Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail! Ret error code: " << ret;
-    return ret;
-  }
   std::vector<LabelInfo> label_info_vec = GetLabelInfo();
   std::sort(label_info_vec.begin(), label_info_vec.end(), LabelInfoCmp);
 

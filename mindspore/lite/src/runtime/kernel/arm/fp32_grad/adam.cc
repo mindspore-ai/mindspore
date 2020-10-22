@@ -79,12 +79,6 @@ int AdamRun(void *cdata, int task_id) {
 }
 
 int AdamCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "AdamCPUKernel Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
   int error_code = ParallelLaunch(this->context_->thread_pool_, AdamRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Adam function error error_code[" << error_code << "]";

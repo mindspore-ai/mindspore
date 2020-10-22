@@ -13,34 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef MINDSPORE_LITE_SRC_MODEL_COMMON_H_
+#define MINDSPORE_LITE_SRC_MODEL_COMMON_H_
 #include "src/ops/primitive_c.h"
 #include "include/model.h"
-#include "src/common/log_adapter.h"
-#include "src/model_common.h"
 
 namespace mindspore::lite {
-Model *Model::Import(const char *model_buf, size_t size) { return ImportFromBuffer(model_buf, size, false); }
+bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model);
 
-void Model::Free() {
-  if (this->buf != nullptr) {
-    free(this->buf);
-    this->buf = nullptr;
-  }
-}
+bool ConvertTensors(const schema::MetaGraph *meta_graph, Model *model);
 
-void Model::Destroy() {
-  Free();
-  auto nodes_size = this->nodes_.size();
-  for (size_t i = 0; i < nodes_size; ++i) {
-    auto node = this->nodes_[i];
-    MS_ASSERT(node != nullptr);
-    MS_ASSERT(node->primitive_ != nullptr);
-    delete node->primitive_;
-    node->primitive_ = nullptr;
-    delete node;
-  }
-  this->nodes_.clear();
-}
-
-Model::~Model() { Destroy(); }
+Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf);
 }  // namespace mindspore::lite
+#endif  // MINDSPORE_LITE_SRC_MODEL_COMMON_H_

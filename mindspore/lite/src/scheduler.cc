@@ -35,9 +35,6 @@ using kernel::KERNEL_ARCH::kGPU;
 
 int Scheduler::Schedule(const lite::Model *model, std::vector<Tensor *> *tensors,
                         std::vector<kernel::LiteKernel *> *kernels) {
-  // 1. op ---> kernel
-  // 2. sub graph
-  // 3. kernels (kernels --> subGraph)
   int ret = InferShape(model, tensors);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "op infer shape failed.";

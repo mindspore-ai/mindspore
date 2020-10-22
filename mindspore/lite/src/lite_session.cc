@@ -26,6 +26,7 @@
 #include "src/common/utils.h"
 #include "src/common/graph_util.h"
 #include "src/kernel_registry.h"
+#include "src/model_common.h"
 
 namespace mindspore {
 namespace lite {
@@ -285,11 +286,28 @@ int LiteSession::CompileGraph(Model *model) {
   }
   ret = executor->Prepare(this->kernels_);
   if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare executor failed: " << ret;
+    is_running_.store(false);
+    return ret;
+  }
+  ret = PrepareKernels();
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare kernels failed: " << ret;
     is_running_.store(false);
     return ret;
   }
   is_running_.store(false);
+  return RET_OK;
+}
+
+int LiteSession::PrepareKernels() {
+  for (auto kernel : this->kernels_) {
+    auto ret = kernel->Prepare();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Prepare kernel " << kernel->name() << " failed: " << ret;
+      return ret;
+    }
+  }
   return RET_OK;
 }
 
@@ -312,7 +330,7 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
   return ret;
 }
 
-int LiteSession::Init(Context *context) {
+int LiteSession::Init(const Context *context) {
   bool expected = false;
   if (!is_running_.compare_exchange_strong(expected, true)) {
     MS_LOG(ERROR) << "Not support multi-threading";
@@ -508,7 +526,7 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 }
 }  // namespace lite
 
-session::LiteSession *session::LiteSession::CreateSession(lite::Context *context) {
+session::LiteSession *session::LiteSession::CreateSession(const lite::Context *context) {
   auto session = new lite::LiteSession();
   auto ret = session->Init(context);
   if (ret != mindspore::lite::RET_OK) {
@@ -516,6 +534,28 @@ session::LiteSession *session::LiteSession::CreateSession(lite::Context *context
     delete session;
     return nullptr;
   }
+  return session;
+}
+
+session::LiteSession *session::LiteSession::CreateSession(const char *model_buf, size_t size,
+                                                          const lite::Context *context) {
+  auto *session = LiteSession::CreateSession(context);
+  if (session == nullptr) {
+    MS_LOG(ERROR) << "Create sesssion failed";
+    return nullptr;
+  }
+  auto *model = lite::ImportFromBuffer(model_buf, size, true);
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Import model failed";
+    return nullptr;
+  }
+  auto ret = session->CompileGraph(model);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Compile model failed";
+    return nullptr;
+  }
+  model->buf = nullptr;
+  delete (model);
   return session;
 }
 }  // namespace mindspore
