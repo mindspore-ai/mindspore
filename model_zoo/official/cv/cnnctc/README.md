@@ -212,23 +212,23 @@ Training result will be stored in the example path, whose folder name begins wit
  
 ```
 # distribute training result(8p)
-epoch: 1 step: 1 , loss is 76.25, average time per step is 0.335177839748392712
-epoch: 1 step: 2 , loss is 73.46875, average time per step is 0.36798572540283203
-epoch: 1 step: 3 , loss is 69.46875, average time per step is 0.3429678678512573
-epoch: 1 step: 4 , loss is 64.3125, average time per step is 0.33512671788533527
-epoch: 1 step: 5 , loss is 58.375, average time per step is 0.33149147033691406
-epoch: 1 step: 6 , loss is 52.7265625, average time per step is 0.3292975425720215
+epoch: 1 step: 1 , loss is 76.25, average time per step is 0.235177839748392712
+epoch: 1 step: 2 , loss is 73.46875, average time per step is 0.25798572540283203
+epoch: 1 step: 3 , loss is 69.46875, average time per step is 0.229678678512573
+epoch: 1 step: 4 , loss is 64.3125, average time per step is 0.23512671788533527
+epoch: 1 step: 5 , loss is 58.375, average time per step is 0.23149147033691406
+epoch: 1 step: 6 , loss is 52.7265625, average time per step is 0.2292975425720215
 ...
-epoch: 1 step: 8689 , loss is 9.706798802612482, average time per step is 0.3184656601312549
-epoch: 1 step: 8690 , loss is 9.70612545289855, average time per step is 0.3184725407765116
-epoch: 1 step: 8691 , loss is 9.70695776049204, average time per step is 0.31847309686135555
-epoch: 1 step: 8692 , loss is 9.707279624277456, average time per step is 0.31847339290613375
-epoch: 1 step: 8693 , loss is 9.70763437950938, average time per step is 0.3184720295013031
-epoch: 1 step: 8694 , loss is 9.707695425072046, average time per step is 0.31847410284595573
-epoch: 1 step: 8695 , loss is 9.708408273381295, average time per step is 0.31847338271072345
-epoch: 1 step: 8696 , loss is 9.708703753591953, average time per step is 0.3184726025560777
-epoch: 1 step: 8697 , loss is 9.709536406025824, average time per step is 0.31847212061114694
-epoch: 1 step: 8698 , loss is 9.708542263610315, average time per step is 0.3184715309307257
+epoch: 1 step: 8689 , loss is 9.706798802612482, average time per step is 0.2184656601312549
+epoch: 1 step: 8690 , loss is 9.70612545289855, average time per step is 0.2184725407765116
+epoch: 1 step: 8691 , loss is 9.70695776049204, average time per step is 0.21847309686135555
+epoch: 1 step: 8692 , loss is 9.707279624277456, average time per step is 0.21847339290613375
+epoch: 1 step: 8693 , loss is 9.70763437950938, average time per step is 0.2184720295013031
+epoch: 1 step: 8694 , loss is 9.707695425072046, average time per step is 0.21847410284595573
+epoch: 1 step: 8695 , loss is 9.708408273381295, average time per step is 0.21847338271072345
+epoch: 1 step: 8696 , loss is 9.708703753591953, average time per step is 0.2184726025560777
+epoch: 1 step: 8697 , loss is 9.709536406025824, average time per step is 0.21847212061114694
+epoch: 1 step: 8698 , loss is 9.708542263610315, average time per step is 0.2184715309307257
 ```
 
 ## [Evaluation Process](#contents)
@@ -257,8 +257,8 @@ The model will be evaluated on the IIIT dataset, sample results and overall accu
 | Training Parameters        | epoch=3,  batch_size=192          |
 | Optimizer                  | RMSProp                                                         |
 | Loss Function              | CTCLoss                                      |
-| Speed                      | 1pc: 300 ms/step;  8pcs: 310 ms/step                          |
-| Total time                 | 1pc: 18 hours;  8pcs: 2.3 hours                          |
+| Speed                      | 1pc: 250 ms/step;  8pcs: 260 ms/step                          |
+| Total time                 | 1pc: 15 hours;  8pcs: 1.92 hours                          |
 | Parameters (M)             | 177                                                         |
 | Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/cnnctc |
 
