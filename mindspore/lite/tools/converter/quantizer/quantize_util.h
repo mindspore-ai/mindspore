@@ -72,15 +72,9 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange = false,
                              int numBits = UINT8_QUANTIZATION);
 
-bool SearchLowerBound(const std::vector<float> &data, const size_t &index, const float &max_tmp, float *min_tmp,
-                      size_t *min_idx);
+std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<float> max_datas);
 
-bool SearchUpperBound(const std::vector<float> &data, const size_t &index, float *max_tmp, const float &min_tmp,
-                      size_t *max_idx);
-
-float CalPercentile(const std::vector<float> &datas, const int &percent);
-
-std::pair<float, float> PercentMethod(std::vector<float> min_datas, std::vector<float> max_datas);
+std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epochs, schema::QuantParamT *quantParam);
 
 template <typename T>
 T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
@@ -213,7 +207,7 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
           average_raw += raw_data;
         }
       }
-      if (quantType == QuantType_WeightQuant) {
+      if (quantType == QuantType_WeightQuant && quant_param.clusters.size() == 0) {
         // mean
         average_dequant = average_dequant / one_filter_size;
         average_raw = average_raw / one_filter_size;
@@ -261,17 +255,21 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
     }
 
     schema::QuantParamT quant_param;
-    STATUS status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bitNum);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
-      return status;
+    if (quant_param.clusters.size() == 0) {
+      STATUS status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bitNum);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
+        return status;
+      }
     }
     quant_params.emplace_back(quant_param);
     // update data and datatype
     for (uint32_t i = 0; i < elem_count; i++) {
       float raw_data = raw_datas[i];
-      auto quant_data = QuantizeData<T>(raw_data, quant_param, quant_max, quant_min);
-      quant_datas[i] = quant_data;
+      if (quant_param.clusters.size() == 0) {
+        auto quant_data = QuantizeData<T>(raw_data, quant_param, quant_max, quant_min);
+        quant_datas[i] = quant_data;
+      }
     }
     auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(T));
     if (ret != EOK) {

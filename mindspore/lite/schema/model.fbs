@@ -34,6 +34,7 @@ table QuantParam {
     inited: bool = false;
     var_corr: double = 1;
     mean_corr: double = 0;
+    clusters: [float];
 }
 
 table Tensor {

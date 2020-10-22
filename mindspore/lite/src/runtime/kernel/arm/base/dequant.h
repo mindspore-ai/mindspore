@@ -83,7 +83,17 @@ class DequantUtil {
       auto scale = param.scale;
       auto zero_point = param.zeroPoint;
       for (int64_t j = 0; j < input_tensor->ElementsNum(); j++) {
-        dequant_datas[j] = static_cast<float>((quant_datas[j] - zero_point) * scale);
+        if (param.clusters.size() != 0) {
+          int8_t index = quant_datas[j];
+          if (index > INT8_MAX || index < INT8_MIN) {
+            MS_LOG(ERROR) << "KMeans param quant is error.";
+            free(dequant_datas);
+            return nullptr;
+          }
+          dequant_datas[j] = static_cast<float>(param.clusters[index - INT8_MIN]);
+        } else {
+          dequant_datas[j] = static_cast<float>((quant_datas[j] - zero_point) * scale);
+        }
       }
     }
     return dequant_datas;

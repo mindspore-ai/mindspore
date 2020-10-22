@@ -110,6 +110,12 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
         quant_arg.zeroPoint = quant_params->Get(j)->zeroPoint();
         quant_arg.var_corr = quant_params->Get(j)->var_corr();
         quant_arg.mean_corr = quant_params->Get(j)->mean_corr();
+        auto quant_clusters = quant_params->Get(j)->clusters();
+        if (quant_clusters != nullptr) {
+          for (size_t k = 0; k < quant_clusters->size(); k++) {
+            quant_arg.clusters.emplace_back(quant_clusters->Get(k));
+          }
+        }
         dstTensor->AddQuantParam(quant_arg);
       }
     }
