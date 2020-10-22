@@ -32,13 +32,15 @@ namespace api {
 
 ImageFolderNode::ImageFolderNode(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler,
                                  bool recursive, std::set<std::string> extensions,
-                                 std::map<std::string, int32_t> class_indexing)
+                                 std::map<std::string, int32_t> class_indexing,
+                                 std::shared_ptr<DatasetCache> cache = nullptr)
     : dataset_dir_(dataset_dir),
       decode_(decode),
       sampler_(sampler),
       recursive_(recursive),
       class_indexing_(class_indexing),
-      exts_(extensions) {}
+      exts_(extensions),
+      Dataset(std::move(cache)) {}
 
 Status ImageFolderNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("ImageFolderNode", dataset_dir_));
@@ -60,6 +62,9 @@ std::vector<std::shared_ptr<DatasetOp>> ImageFolderNode::Build() {
     schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
   RETURN_EMPTY_IF_ERROR(
     schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_INT32), TensorImpl::kFlexible, 0, &scalar)));
+
+  RETURN_EMPTY_IF_ERROR(AddCacheOp(&node_ops));
+
   node_ops.push_back(std::make_shared<ImageFolderOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
                                                      recursive_, decode_, exts_, class_indexing_, std::move(schema),
                                                      std::move(sampler_->Build())));

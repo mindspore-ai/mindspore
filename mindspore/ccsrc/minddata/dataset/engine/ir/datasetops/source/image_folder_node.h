@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 
+#include "mindspore/ccsrc/minddata/dataset/engine/ir/cache/dataset_cache.h"
 #include "minddata/dataset/include/datasets.h"
 
 namespace mindspore {
@@ -36,7 +37,8 @@ class ImageFolderNode : public Dataset {
  public:
   /// \brief Constructor
   ImageFolderNode(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler, bool recursive,
-                  std::set<std::string> extensions, std::map<std::string, int32_t> class_indexing);
+                  std::set<std::string> extensions, std::map<std::string, int32_t> class_indexing,
+                  std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
   ~ImageFolderNode() = default;
