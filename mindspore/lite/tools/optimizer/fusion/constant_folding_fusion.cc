@@ -22,9 +22,9 @@
 #include "tools/anf_exporter/anf_exporter.h"
 #include "src/kernel_registry.h"
 #include "src/inner_context.h"
-#include "src/populate_parameter.h"
 #include "src/ops/primitive_c.h"
 #include "src/tensor.h"
+#include "src/ops/populate/populate_register.h"
 
 using mindspore::lite::KernelRegistry;
 using mindspore::lite::PrimitiveC;
@@ -233,7 +233,10 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       }
     }
     lite_primitive->InferShape(input_tensors, output_tensors);
-    auto parameter = kernel::PopulateParameter(lite_primitive.get());
+    auto primitive = lite_primitive.get();
+    auto parameter =
+      lite::PopulateRegistry::GetInstance()->getParameterCreator(schema::PrimitiveType(primitive->Type()))(primitive);
+
     if (parameter == nullptr) {
       MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "
                     << schema::EnumNamePrimitiveType((schema::PrimitiveType)(lite_primitive->Type()));

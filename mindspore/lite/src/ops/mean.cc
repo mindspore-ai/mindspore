@@ -16,8 +16,9 @@
 
 #include "src/ops/mean.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/reduce_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -59,32 +60,6 @@ int Mean::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
 PrimitiveC *MeanCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Mean>(primitive); }
 Registry MeanRegistry(schema::PrimitiveType_Mean, MeanCreator);
 #endif
-
-OpParameter *PopulateMeanParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ReduceParameter *mean_param = reinterpret_cast<ReduceParameter *>(malloc(sizeof(ReduceParameter)));
-  if (mean_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ReduceParameter failed.";
-    return nullptr;
-  }
-  memset(mean_param, 0, sizeof(ReduceParameter));
-  mean_param->op_parameter_.type_ = primitive->Type();
-  auto mean = reinterpret_cast<mindspore::lite::Mean *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  mean_param->keep_dims_ = mean->GetKeepDims();
-  auto axisVector = mean->GetAxis();
-  if (axisVector.size() > REDUCE_MAX_AXES_NUM) {
-    MS_LOG(ERROR) << "Reduce axes size " << axisVector.size() << " exceed limit " << REDUCE_MAX_AXES_NUM;
-    free(mean_param);
-    return nullptr;
-  }
-  mean_param->num_axes_ = static_cast<int>(axisVector.size());
-  int i = 0;
-  for (auto iter = axisVector.begin(); iter != axisVector.end(); iter++) {
-    mean_param->axes_[i++] = *iter;
-  }
-  mean_param->mode_ = static_cast<int>(schema::ReduceMode_ReduceMean);
-  return reinterpret_cast<OpParameter *>(mean_param);
-}
-Registry MeanParameterRegistry(schema::PrimitiveType_Mean, PopulateMeanParameter);
 
 namespace {
 constexpr size_t kInputSize = 1;

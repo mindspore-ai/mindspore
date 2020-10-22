@@ -16,7 +16,9 @@
 
 #include "src/ops/div.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -46,27 +48,6 @@ int Div::GetActivationType() const { return this->primitive_->value_as_Div()->ac
 PrimitiveC *DivCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Div>(primitive); }
 Registry DivRegistry(schema::PrimitiveType_Div, DivCreator);
 #endif
-OpParameter *PopulateDivParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
-  if (arithmetic_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
-    return nullptr;
-  }
-  memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
-  arithmetic_param->op_parameter_.type_ = primitive->Type();
-  arithmetic_param->broadcasting_ = ((lite::Arithmetic *)primitive)->Broadcasting();
-  arithmetic_param->ndim_ = ((lite::Arithmetic *)primitive)->NDims();
-  arithmetic_param->activation_type_ =
-    reinterpret_cast<mindspore::lite::Div *>(const_cast<mindspore::lite::PrimitiveC *>(primitive))->GetActivationType();
-  auto tmp_shape = ((lite::Arithmetic *)primitive)->InShape0();
-  memcpy(arithmetic_param->in_shape0_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
-  tmp_shape = ((lite::Arithmetic *)primitive)->InShape1();
-  memcpy(arithmetic_param->in_shape1_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
-  tmp_shape = ((lite::Arithmetic *)primitive)->OutputShape();
-  memcpy(arithmetic_param->out_shape_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
-  return reinterpret_cast<OpParameter *>(arithmetic_param);
-}
-Registry DivParameterRegistry(schema::PrimitiveType_Div, PopulateDivParameter);
 
 }  // namespace lite
 }  // namespace mindspore

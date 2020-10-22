@@ -19,8 +19,9 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/transpose.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -111,27 +112,6 @@ PrimitiveC *TransposeCreator(const schema::Primitive *primitive) {
 Registry TransposeRegistry(schema::PrimitiveType_Transpose, TransposeCreator);
 
 #endif
-
-OpParameter *PopulateTransposeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  TransposeParameter *transpose_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
-  if (transpose_param == nullptr) {
-    MS_LOG(ERROR) << "malloc TransposeParameter failed.";
-    return nullptr;
-  }
-  memset(transpose_param, 0, sizeof(TransposeParameter));
-  auto param = reinterpret_cast<mindspore::lite::Transpose *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  transpose_param->op_parameter_.type_ = primitive->Type();
-  auto perm_vector_ = param->GetPerm();
-  int i = 0;
-  for (auto iter = perm_vector_.begin(); iter != perm_vector_.end(); iter++) {
-    transpose_param->perm_[i++] = *iter;
-  }
-  transpose_param->num_axes_ = i;
-  transpose_param->conjugate_ = param->GetConjugate();
-  return reinterpret_cast<OpParameter *>(transpose_param);
-}
-
-Registry TransposeParameterRegistry(schema::PrimitiveType_Transpose, PopulateTransposeParameter);
 
 int Transpose::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

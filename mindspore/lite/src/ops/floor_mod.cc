@@ -16,7 +16,9 @@
 
 #include "src/ops/floor_mod.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -35,6 +37,6 @@ PrimitiveC *FloorModCreator(const schema::Primitive *primitive) {
 }
 Registry FloorModRegistry(schema::PrimitiveType_FloorMod, FloorModCreator);
 #endif
-Registry FloorModParameterRegistry(schema::PrimitiveType_FloorMod, PopulateArithmetic);
+
 }  // namespace lite
 }  // namespace mindspore

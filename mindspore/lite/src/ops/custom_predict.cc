@@ -15,8 +15,9 @@
  */
 #include "src/ops/custom_predict.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/predict_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -54,20 +55,6 @@ PrimitiveC *CustomPredictCreator(const schema::Primitive *primitive) {
 }
 Registry CustomPredictRegistry(schema::PrimitiveType_CustomPredict, CustomPredictCreator);
 #endif
-OpParameter *PopulateCustomPredictParameter(const mindspore::lite::PrimitiveC *primitive) {
-  PredictParameter *param = reinterpret_cast<PredictParameter *>(malloc(sizeof(PredictParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc param failed.";
-    return nullptr;
-  }
-  memset(param, 0, sizeof(PredictParameter));
-  param->op_parameter_.type_ = primitive->Type();
-  auto prim = reinterpret_cast<mindspore::lite::CustomPredict *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  param->output_num = prim->GetOutputNum();
-  param->weight_threshold = prim->GetWeightThreshold();
-  return reinterpret_cast<OpParameter *>(param);
-}
-Registry CustomPredictParameterRegistry(schema::PrimitiveType_CustomPredict, PopulateCustomPredictParameter);
 
 int CustomPredict::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   auto input = inputs_.at(0);

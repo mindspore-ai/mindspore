@@ -21,8 +21,9 @@
 #include "tools/converter/quantizer/quantize_util.h"
 #endif
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/matmul_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -92,23 +93,6 @@ int MatMul::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
 PrimitiveC *MatMulCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<MatMul>(primitive); }
 Registry MatMulRegistry(schema::PrimitiveType_MatMul, MatMulCreator);
 #endif
-
-OpParameter *PopulateMatMulParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = reinterpret_cast<mindspore::lite::MatMul *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
-  if (matmul_param == nullptr) {
-    MS_LOG(ERROR) << "malloc MatMulParameter failed.";
-    return nullptr;
-  }
-  memset(matmul_param, 0, sizeof(MatMulParameter));
-  matmul_param->op_parameter_.type_ = primitive->Type();
-  matmul_param->b_transpose_ = param->GetTransposeB();
-  matmul_param->a_transpose_ = param->GetTransposeA();
-  matmul_param->has_bias_ = false;
-  matmul_param->act_type_ = ActType_No;
-  return reinterpret_cast<OpParameter *>(matmul_param);
-}
-Registry MatMulParameterRegistry(schema::PrimitiveType_MatMul, PopulateMatMulParameter);
 
 int MatMul::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

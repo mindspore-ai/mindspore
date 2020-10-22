@@ -213,9 +213,8 @@ class PrimitiveC {
   bool infer_flag_ = true;
   schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
 };
-
-#endif
 typedef PrimitiveC *(*PrimitiveCCreator)(const schema::Primitive *primitive);
+#endif
 typedef OpParameter *(*ParameterCreator)(const PrimitiveC *primitive);
 
 }  // namespace lite

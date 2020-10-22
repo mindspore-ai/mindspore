@@ -15,7 +15,9 @@
  */
 
 #include "src/ops/conv2d_grad_filter.h"
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {

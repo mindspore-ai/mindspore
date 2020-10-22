@@ -16,8 +16,9 @@
 
 #include "src/ops/stack.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/stack_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -62,20 +63,6 @@ PrimitiveC *StackCreator(const schema::Primitive *primitive) { return PrimitiveC
 Registry StackRegistry(schema::PrimitiveType_Stack, StackCreator);
 
 #endif
-
-OpParameter *PopulateStackParameter(const mindspore::lite::PrimitiveC *primitive) {
-  StackParameter *stack_param = reinterpret_cast<StackParameter *>(malloc(sizeof(StackParameter)));
-  if (stack_param == nullptr) {
-    MS_LOG(ERROR) << "malloc StackParameter failed.";
-    return nullptr;
-  }
-  memset(stack_param, 0, sizeof(StackParameter));
-  auto param = reinterpret_cast<mindspore::lite::Stack *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  stack_param->op_parameter_.type_ = primitive->Type();
-  stack_param->axis_ = param->GetAxis();
-  return reinterpret_cast<OpParameter *>(stack_param);
-}
-Registry StackParameterRegistry(schema::PrimitiveType_Stack, PopulateStackParameter);
 
 namespace {
 constexpr int kStackOutputNum = 1;

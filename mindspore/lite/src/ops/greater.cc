@@ -16,7 +16,9 @@
 
 #include "src/ops/greater.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -44,6 +46,6 @@ int Greater::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
-Registry GreaterParameterRegistry(schema::PrimitiveType_Greater, PopulateArithmetic);
+
 }  // namespace lite
 }  // namespace mindspore

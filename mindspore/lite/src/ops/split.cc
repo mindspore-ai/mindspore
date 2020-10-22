@@ -16,8 +16,9 @@
 
 #include "src/ops/split.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/split_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -95,27 +96,6 @@ int Split::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
 PrimitiveC *SplitCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Split>(primitive); }
 Registry SplitRegistry(schema::PrimitiveType_Split, SplitCreator);
 #endif
-
-OpParameter *PopulateSplitParameter(const mindspore::lite::PrimitiveC *primitive) {
-  SplitParameter *split_param = reinterpret_cast<SplitParameter *>(malloc(sizeof(SplitParameter)));
-  if (split_param == nullptr) {
-    MS_LOG(ERROR) << "malloc SplitParameter failed.";
-    return nullptr;
-  }
-  memset(split_param, 0, sizeof(SplitParameter));
-  auto param = reinterpret_cast<mindspore::lite::Split *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  split_param->op_parameter_.type_ = primitive->Type();
-  split_param->num_split_ = param->GetNumberSplit();
-  auto split_sizes_vector_ = param->GetSizeSplits();
-  int i = 0;
-  for (auto iter = split_sizes_vector_.begin(); iter != split_sizes_vector_.end(); iter++) {
-    split_param->split_sizes_[i++] = *iter;
-  }
-  split_param->split_dim_ = param->GetSplitDim();
-  split_param->num_split_ = param->GetNumberSplit();
-  return reinterpret_cast<OpParameter *>(split_param);
-}
-Registry SplitParameterRegistry(schema::PrimitiveType_Split, PopulateSplitParameter);
 
 namespace {
 constexpr int kSplitInputNum = 1;

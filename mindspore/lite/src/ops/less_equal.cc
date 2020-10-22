@@ -16,7 +16,9 @@
 
 #include "src/ops/less_equal.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -45,6 +47,6 @@ int LessEqual::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> o
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
-Registry LessEqualParameterRegistry(schema::PrimitiveType_LessEqual, PopulateArithmetic);
+
 }  // namespace lite
 }  // namespace mindspore

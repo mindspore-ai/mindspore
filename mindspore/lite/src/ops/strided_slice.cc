@@ -16,8 +16,9 @@
 
 #include "src/ops/strided_slice.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/strided_slice.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -167,30 +168,6 @@ PrimitiveC *StridedSliceCreator(const schema::Primitive *primitive) {
 }
 Registry StridedSliceRegistry(schema::PrimitiveType_StridedSlice, StridedSliceCreator);
 #endif
-
-OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *primitive) {
-  StridedSliceParameter *strided_slice_param =
-    reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
-  if (strided_slice_param == nullptr) {
-    MS_LOG(ERROR) << "malloc StridedSliceParameter failed.";
-    return nullptr;
-  }
-  memset(strided_slice_param, 0, sizeof(StridedSliceParameter));
-  strided_slice_param->op_parameter_.type_ = primitive->Type();
-  auto n_dims = ((lite::StridedSlice *)primitive)->NDims();
-  strided_slice_param->num_axes_ = n_dims;
-  auto begin = ((lite::StridedSlice *)primitive)->GetBegins();
-  memcpy(strided_slice_param->begins_, (begin.data()), begin.size() * sizeof(int));
-  auto end = ((lite::StridedSlice *)primitive)->GetEnds();
-  memcpy(strided_slice_param->ends_, (end.data()), end.size() * sizeof(int));
-  auto stride = ((lite::StridedSlice *)primitive)->GetStrides();
-  memcpy(strided_slice_param->strides_, (stride.data()), stride.size() * sizeof(int));
-  auto in_shape = ((lite::StridedSlice *)primitive)->GetInShape();
-  memcpy(strided_slice_param->in_shape_, (in_shape.data()), in_shape.size() * sizeof(int));
-  return reinterpret_cast<OpParameter *>(strided_slice_param);
-}
-
-Registry StridedSliceParameterRegistry(schema::PrimitiveType_StridedSlice, PopulateStridedSliceParameter);
 
 namespace {
 constexpr size_t kStridedSliceOutputNum = 1;

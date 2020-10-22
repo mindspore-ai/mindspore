@@ -16,7 +16,9 @@
 
 #include "src/ops/addn.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -67,18 +69,6 @@ int AddN::GetN() const { return this->primitive_->value_as_AddN()->N(); }
 PrimitiveC *AddNCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<AddN>(primitive); }
 Registry AddNRegistry(schema::PrimitiveType_AddN, AddNCreator);
 #endif
-
-OpParameter *PopulateAddNParameter(const mindspore::lite::PrimitiveC *primitive) {
-  OpParameter *addn_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (addn_param == nullptr) {
-    MS_LOG(ERROR) << "malloc OpParameter failed.";
-    return nullptr;
-  }
-  memset(addn_param, 0, sizeof(OpParameter));
-  addn_param->type_ = primitive->Type();
-  return reinterpret_cast<OpParameter *>(addn_param);
-}
-Registry AddNParameterRegistry(schema::PrimitiveType_AddN, PopulateAddNParameter);
 
 namespace {
 constexpr int kLeastInputNum = 2;

@@ -16,7 +16,9 @@
 
 #include "src/ops/neg.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -57,6 +59,6 @@ int Neg::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::Fl
 PrimitiveC *NegCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Neg>(primitive); }
 Registry NegRegistry(schema::PrimitiveType_Neg, NegCreator);
 #endif
-Registry NegParameterRegistry(schema::PrimitiveType_Neg, PopulateArithmeticSelf);
+
 }  // namespace lite
 }  // namespace mindspore

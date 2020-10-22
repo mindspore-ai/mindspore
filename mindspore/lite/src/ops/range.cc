@@ -16,8 +16,9 @@
 
 #include "src/ops/range.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/fp32/range.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -55,23 +56,6 @@ int Range::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
 PrimitiveC *RangeCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Range>(primitive); }
 Registry RangeRegistry(schema::PrimitiveType_Range, RangeCreator);
 #endif
-
-OpParameter *PopulateRangeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto range_attr = reinterpret_cast<mindspore::lite::Range *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  RangeParameter *range_param = reinterpret_cast<RangeParameter *>(malloc(sizeof(RangeParameter)));
-  if (range_param == nullptr) {
-    MS_LOG(ERROR) << "malloc RangeParameter failed.";
-    return nullptr;
-  }
-  memset(range_param, 0, sizeof(RangeParameter));
-  range_param->op_parameter_.type_ = primitive->Type();
-  range_param->start_ = range_attr->GetStart();
-  range_param->limit_ = range_attr->GetLimit();
-  range_param->delta_ = range_attr->GetDelta();
-  range_param->dType_ = range_attr->GetDType();
-  return reinterpret_cast<OpParameter *>(range_param);
-}
-Registry RangeParameterRegistry(schema::PrimitiveType_Range, PopulateRangeParameter);
 
 int Range::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

@@ -15,8 +15,7 @@
  */
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-
-#include "src/populate_parameter.h"
+#include "src/ops/populate/populate_register.h"
 #ifdef ENABLE_ARM64
 #include <asm/hwcap.h>
 #include "common/utils.h"
@@ -107,7 +106,8 @@ kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<Tensor *> &in_te
                                               const InnerContext *ctx, const kernel::KernelKey &key) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != ctx);
-  auto parameter = kernel::PopulateParameter(primitive);
+  auto parameter =
+    PopulateRegistry::GetInstance()->getParameterCreator(schema::PrimitiveType(primitive->Type()))(primitive);
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "
                   << schema::EnumNamePrimitiveType((schema::PrimitiveType)primitive->Type());

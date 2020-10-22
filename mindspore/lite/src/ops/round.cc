@@ -16,7 +16,9 @@
 
 #include "src/ops/round.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -35,7 +37,6 @@ PrimitiveC *RoundCreator(const schema::Primitive *primitive) { return PrimitiveC
 Registry RoundRegistry(schema::PrimitiveType_Round, RoundCreator);
 
 #endif
-Registry RoundParameterRegistry(schema::PrimitiveType_Round, PopulateArithmeticSelf);
 
 }  // namespace lite
 }  // namespace mindspore

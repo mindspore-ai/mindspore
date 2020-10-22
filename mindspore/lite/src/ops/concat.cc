@@ -19,8 +19,9 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/concat_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -82,21 +83,6 @@ PrimitiveC *ConcatCreator(const schema::Primitive *primitive) { return Primitive
 Registry ConcatRegistry(schema::PrimitiveType_Concat, ConcatCreator);
 
 #endif
-
-OpParameter *PopulateConcatParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ConcatParameter *concat_param = reinterpret_cast<ConcatParameter *>(malloc(sizeof(ConcatParameter)));
-  if (concat_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ConcatParameter failed.";
-    return nullptr;
-  }
-  memset(concat_param, 0, sizeof(ConcatParameter));
-  concat_param->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::Concat *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  concat_param->axis_ = param->GetAxis();
-  return reinterpret_cast<OpParameter *>(concat_param);
-}
-
-Registry ConcatParameterRegistry(schema::PrimitiveType_Concat, PopulateConcatParameter);
 
 namespace {
 constexpr int kConcatOutputNum = 1;

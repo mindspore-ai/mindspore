@@ -101,7 +101,7 @@ if (BUILD_MINDDATA STREQUAL "lite")
 elseif (BUILD_MINDDATA STREQUAL "full")
 endif()
 ### runtime framework
-file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
+file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc ${LITE_DIR}/src/ops/populate/*.cc)
 set(TEST_LITE_SRC
         ${TEST_LITE_SRC}
         ${CCSRC_SRC}
@@ -121,7 +121,6 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/sub_graph_kernel.cc
         ${LITE_DIR}/src/model.cc
         ${LITE_DIR}/src/model_common.cc
-        ${LITE_DIR}/src/populate_parameter.cc
         ${LITE_DIR}/src/scheduler.cc
         ${LITE_DIR}/src/common/graph_util.cc
         ${LITE_DIR}/src/common/file_utils.cc

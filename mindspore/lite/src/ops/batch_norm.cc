@@ -16,8 +16,9 @@
 
 #include "src/ops/batch_norm.h"
 #include <memory>
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/batchnorm_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -68,23 +69,6 @@ PrimitiveC *BatchNormCreator(const schema::Primitive *primitive) {
 }
 Registry BatchNormRegistry(schema::PrimitiveType_BatchNorm, BatchNormCreator);
 #endif
-
-OpParameter *PopulateBatchNorm(const mindspore::lite::PrimitiveC *primitive) {
-  const auto param =
-    reinterpret_cast<mindspore::lite::BatchNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  BatchNormParameter *batch_norm_param = reinterpret_cast<BatchNormParameter *>(malloc(sizeof(BatchNormParameter)));
-  if (batch_norm_param == nullptr) {
-    MS_LOG(ERROR) << "malloc BatchNormParameter failed.";
-    return nullptr;
-  }
-  memset(batch_norm_param, 0, sizeof(BatchNormParameter));
-  batch_norm_param->op_parameter_.type_ = primitive->Type();
-  batch_norm_param->epsilon_ = param->GetEpsilon();
-  batch_norm_param->fused_ = false;
-  return reinterpret_cast<OpParameter *>(batch_norm_param);
-}
-
-Registry BatchNormParameterRegistry(schema::PrimitiveType_BatchNorm, PopulateBatchNorm);
 
 }  // namespace lite
 }  // namespace mindspore

@@ -31,7 +31,6 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_registry.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_kernel.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/populate_parameter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/model.cc
@@ -65,7 +64,7 @@ if (SUPPORT_TRAIN)
             )
 endif ()
 
-file(GLOB_RECURSE C_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc)
+file(GLOB_RECURSE C_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc ${CMAKE_CURRENT_SOURCE_DIR}/ops/populate/*.cc)
 add_subdirectory(runtime/kernel/arm)
 
 add_library(mindspore-lite SHARED ${LITE_SRC} ${C_OPS_SRC})

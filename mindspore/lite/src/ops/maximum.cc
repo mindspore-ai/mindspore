@@ -23,7 +23,9 @@
 #include "tools/converter/quantizer/quantize_util.h"
 #endif
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -68,6 +70,6 @@ int Maximum::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
 PrimitiveC *MaximumCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Maximum>(primitive); }
 Registry MaximumRegistry(schema::PrimitiveType_Maximum, MaximumCreator);
 #endif
-Registry MaximumParameterRegistry(schema::PrimitiveType_Maximum, PopulateArithmetic);
+
 }  // namespace lite
 }  // namespace mindspore

@@ -16,7 +16,9 @@
 
 #include "src/ops/less.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -46,6 +48,6 @@ int Less::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
-Registry LessParameterRegistry(schema::PrimitiveType_Less, PopulateArithmetic);
+
 }  // namespace lite
 }  // namespace mindspore

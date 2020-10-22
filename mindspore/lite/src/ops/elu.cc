@@ -16,8 +16,10 @@
 
 #include "src/ops/elu.h"
 #include <memory>
-#include "nnacl/fp32/elu.h"
+
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -67,18 +69,5 @@ PrimitiveC *EluCreator(const schema::Primitive *primitive) { return PrimitiveC::
 Registry EluRegistry(schema::PrimitiveType_Elu, EluCreator);
 #endif
 
-OpParameter *PopulateEluParameter(const mindspore::lite::PrimitiveC *primitive) {
-  EluParameter *elu_parameter = reinterpret_cast<EluParameter *>(malloc(sizeof(EluParameter)));
-  if (elu_parameter == nullptr) {
-    MS_LOG(ERROR) << "malloc EluParameter failed.";
-    return nullptr;
-  }
-  memset(elu_parameter, 0, sizeof(EluParameter));
-  elu_parameter->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::Elu *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  elu_parameter->alpha_ = param->GetAlpha();
-  return reinterpret_cast<OpParameter *>(elu_parameter);
-}
-Registry EluParameterRegistry(schema::PrimitiveType_Elu, PopulateEluParameter);
 }  // namespace lite
 }  // namespace mindspore

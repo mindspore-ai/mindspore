@@ -17,7 +17,9 @@
 #include "src/ops/assign.h"
 #include <memory>
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {

@@ -15,14 +15,12 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/arithmetic.h"
-
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/int8/add_int8.h"
-#include "src/runtime/kernel/arm/int8/mul_int8.h"
 #include "src/runtime/runtime_api.h"
-#include "src/populate_parameter.h"
+#include "src/ops/populate/populate_register.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -50,7 +48,7 @@ int ArithmeticCPUKernel::PreProcess() {
       MS_LOG(ERROR) << "InferShape fail!";
       return ret;
     }
-    arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(kernel::PopulateArithmetic(primitive_));
+    arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(PopulateArithmetic(primitive_));
     ret = ReSize();
     if (ret != 0) {
       MS_LOG(ERROR) << "ReSize fail!ret: " << ret;

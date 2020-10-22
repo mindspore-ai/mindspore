@@ -16,8 +16,9 @@
 
 #include "src/ops/argmin.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/arg_min_max_parameter.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -58,25 +59,6 @@ int ArgMin::GetAxisType() const { return this->primitive_->value_as_ArgMin()->ax
 PrimitiveC *ArgMinCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<ArgMin>(primitive); }
 Registry ArgMinRegistry(schema::PrimitiveType_ArgMin, ArgMinCreator);
 #endif
-
-OpParameter *PopulateArgMinParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ArgMinMaxParameter *arg_param = reinterpret_cast<ArgMinMaxParameter *>(malloc(sizeof(ArgMinMaxParameter)));
-  if (arg_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ArgMinMaxParameter failed.";
-    return nullptr;
-  }
-  memset(arg_param, 0, sizeof(ArgMinMaxParameter));
-  arg_param->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::ArgMin *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  arg_param->axis_ = param->GetAxis();
-  arg_param->topk_ = param->GetTopK();
-  arg_param->axis_type_ = param->GetAxisType();
-  arg_param->out_value_ = param->GetOutMaxValue();
-  arg_param->keep_dims_ = param->GetKeepDims();
-  return reinterpret_cast<OpParameter *>(arg_param);
-}
-
-Registry ArgMinParameterRegistry(schema::PrimitiveType_ArgMin, PopulateArgMinParameter);
 
 int ArgMin::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

@@ -16,8 +16,9 @@
 
 #include "src/ops/scale.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/scale.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -50,25 +51,6 @@ int Scale::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
 PrimitiveC *ScaleCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Scale>(primitive); }
 Registry ScaleRegistry(schema::PrimitiveType_Scale, ScaleCreator);
 #endif
-
-OpParameter *PopulateScaleParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "input primitive is nullptr";
-    return nullptr;
-  }
-  ScaleParameter *scale_param = reinterpret_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
-  if (scale_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ScaleParameter failed.";
-    return nullptr;
-  }
-  memset(scale_param, 0, sizeof(ScaleParameter));
-  scale_param->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::Scale *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  scale_param->axis_ = param->GetAxis();
-  scale_param->activation_type_ = param->GetActivationType();
-  return reinterpret_cast<OpParameter *>(scale_param);
-}
-Registry ScaleParameterRegistry(schema::PrimitiveType_Scale, PopulateScaleParameter);
 
 }  // namespace lite
 }  // namespace mindspore

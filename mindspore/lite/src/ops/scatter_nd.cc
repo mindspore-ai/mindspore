@@ -16,8 +16,9 @@
 
 #include "src/ops/scatter_nd.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
-#include "nnacl/scatter_nd.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -76,18 +77,6 @@ int ScatterND::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffe
   return RET_OK;
 }
 #endif
-
-OpParameter *PopulateScatterNDParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ScatterNDParameter *scatter_nd_param = reinterpret_cast<ScatterNDParameter *>(malloc(sizeof(ScatterNDParameter)));
-  if (scatter_nd_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ScatterNDParameter failed.";
-    return nullptr;
-  }
-  memset(scatter_nd_param, 0, sizeof(ScatterNDParameter));
-  scatter_nd_param->op_parameter_.type_ = primitive->Type();
-  return reinterpret_cast<OpParameter *>(scatter_nd_param);
-}
-Registry ScatterNDParameterRegistry(schema::PrimitiveType_ScatterND, PopulateScatterNDParameter);
 
 }  // namespace lite
 }  // namespace mindspore

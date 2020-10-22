@@ -16,7 +16,9 @@
 
 #include "src/ops/not_equal.h"
 
+#ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -46,6 +48,6 @@ int NotEqual::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> ou
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
-Registry NotEqualParameterRegistry(schema::PrimitiveType_NotEqual, PopulateArithmetic);
+
 }  // namespace lite
 }  // namespace mindspore

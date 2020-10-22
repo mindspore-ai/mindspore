@@ -5,11 +5,12 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
-)
+        )
 
 include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 
-file(GLOB_RECURSE OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/*.cc)
+file(GLOB_RECURSE OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/populate/*.cc)
 
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../flag/flag_parser.cc
@@ -68,7 +69,6 @@ set(LITE_SRC
         ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/kernel_registry.cc
         ${SRC_DIR}/lite_kernel.cc
-        ${SRC_DIR}/populate_parameter.cc
         ${SRC_DIR}/scheduler.cc
         ${SRC_DIR}/sub_graph_kernel.cc
         ${SRC_DIR}/lite_session.cc
@@ -77,9 +77,9 @@ set(LITE_SRC
         ${SRC_DIR}/model_common.cc
         )
 if (SUPPORT_TRAIN)
-set(LITE_SRC
-        ${LITE_SRC}
- )
+    set(LITE_SRC
+            ${LITE_SRC}
+            )
 
 endif ()
 set(ARM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/kernel/arm)
@@ -153,17 +153,17 @@ if (NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
             RUNTIME DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
     if (WIN32)
         get_filename_component(CXX_DIR ${CMAKE_CXX_COMPILER} PATH)
-        file(GLOB LIB_LIST  ${CXX_DIR}/libstdc++-6.dll ${CXX_DIR}/libwinpthread-1.dll ${CXX_DIR}/libssp-0.dll ${CXX_DIR}/libgcc_s_seh-1.dll)
+        file(GLOB LIB_LIST ${CXX_DIR}/libstdc++-6.dll ${CXX_DIR}/libwinpthread-1.dll ${CXX_DIR}/libssp-0.dll ${CXX_DIR}/libgcc_s_seh-1.dll)
         install(FILES ${LIB_LIST} DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
         install(FILES ${TOP_DIR}/build/mindspore/tools/converter/mindspore_core/gvar/libmindspore_gvar.dll
                 DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/../bin/libglog.dll
                 DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
-    else()
+    else ()
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/gvar/libmindspore_gvar.so
                 DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/lib COMPONENT ${COMPONENT_NAME})
 
         install(FILES ${glog_LIBPATH}/libglog.so.0.4.0
                 DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/third_party/glog/lib RENAME libglog.so.0 COMPONENT ${COMPONENT_NAME})
     endif ()
-endif()
+endif ()
