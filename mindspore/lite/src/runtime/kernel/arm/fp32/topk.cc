@@ -51,6 +51,14 @@ int TopKCPUKernel::Run() {
 
   MS_ASSERT(context_->allocator != nullptr);
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
+  if (in_tensors_.size() == lite::kDoubleNum) {
+    auto input_k = reinterpret_cast<int *>(in_tensors_.at(1)->MutableData());
+    parameter->k_ = input_k[0];
+  }
+  if (parameter->k_ > in_tensors_.at(0)->ElementsNum()) {
+    MS_LOG(ERROR) << "The k value is out of the data size range.";
+    return RET_ERROR;
+  }
   parameter->topk_node_list_ = context_->allocator->Malloc(sizeof(TopkNode) * parameter->last_dim_size_);
   if (parameter->topk_node_list_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";

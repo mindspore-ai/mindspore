@@ -35,6 +35,8 @@ class OnnxNodeParser {
 
   virtual STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) = 0;
 
+  STATUS GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, int *type);
+
  protected:
   schema::PadMode GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr);
 

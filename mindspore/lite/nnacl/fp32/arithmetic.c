@@ -657,6 +657,22 @@ int ElementAddRelu6(float *input0, float *input1, float *output, int element_siz
   return NNACL_OK;
 }
 
+int ElementAddInt(int *input0, int *input1, int *output, int element_size) {
+  int index = 0;
+#ifdef ENABLE_NEON
+  for (; index <= element_size - 4; index += C4NUM) {
+    int32x4_t vin0 = vld1q_s32(input0 + index);
+    int32x4_t vin1 = vld1q_s32(input1 + index);
+    int32x4_t vout = vaddq_s32(vin0, vin1);
+    vst1q_s32(output + index, vout);
+  }
+#endif
+  for (; index < element_size; index++) {
+    output[index] = input0[index] + input1[index];
+  }
+  return NNACL_OK;
+}
+
 int ElementAddInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = input0[i] + input1[i];

@@ -34,7 +34,13 @@ OpParameter *PopulateConstantOfShapeParameter(const mindspore::lite::PrimitiveC 
   }
   memset(param, 0, sizeof(ConstantOfShapeParameter));
   param->op_parameter_.type_ = primitive->Type();
-  param->value_ = attr->GetValue();
+  auto value = attr->GetValue();
+  if (value.empty() || value.size() > 1) {
+    MS_LOG(ERROR) << "The value of constant of shape is empty or more than 1.";
+  } else {
+    param->value_ = attr->GetValue()[0];
+  }
+  param->data_type_ = attr->GetDataType();
   return reinterpret_cast<OpParameter *>(param);
 }
 Registry ConstantOfShapeParameterRegistry(schema::PrimitiveType_ConstantOfShape, PopulateConstantOfShapeParameter);

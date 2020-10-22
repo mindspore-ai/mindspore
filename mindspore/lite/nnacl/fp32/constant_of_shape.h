@@ -25,6 +25,7 @@
 typedef struct ConstantOfShapeParameter {
   OpParameter op_parameter_;
   float value_;
+  int data_type_;
   int unit_;
   int element_sz_;
 } ConstantOfShapeParameter;
@@ -33,6 +34,7 @@ typedef struct ConstantOfShapeParameter {
 extern "C" {
 #endif
 int ConstantOfShape(float *output, int tid, ConstantOfShapeParameter *param);
+int ConstantOfShapeInt(int32_t *output, int tid, ConstantOfShapeParameter *param);
 #ifdef __cplusplus
 }
 #endif
