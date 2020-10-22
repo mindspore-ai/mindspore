@@ -113,6 +113,26 @@ class _BitwiseBinaryOp(_MathBinaryOp):
         return _BitwiseBinaryOp._check_bitwise_op_input_type(x1_type, x2_type, self.name)
 
 
+class TensorAddV2(PrimitiveWithInfer):
+    """
+     add two input tensors
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init tensoraddv2"""
+        self.init_prim_io_names(inputs=["x1","x2"],outputs=["y"])
+
+    def infer_shape(self, x1_shape, x2_shape):
+        validator.check_integer("input dims", len(x1_shape), len(x2_shape), Rel.EQ, self.name)
+        for i in range(len(x1_shape)):
+            validator.check_integer("input_shape", x1_shape[i], x2_shape[i], Rel.EQ, self.name)
+        return x1_shape
+
+    def infer_dtype(self, x1_dtype, x2_dtype):
+        validator.check_tensor_type_same({"x1_dtype":x1_dtype}, [mstype.float32], self.name)
+        validator.check_tensor_type_same({"x2_dtype":x2_dtype}, [mstype.float32], self.name)
+        return x1_dtype
+
 class TensorAdd(_MathBinaryOp):
     """
     Adds two input tensors element-wise.
