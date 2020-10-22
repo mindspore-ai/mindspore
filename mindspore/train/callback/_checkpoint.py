@@ -96,30 +96,35 @@ class CheckpointConfig:
         ValueError: If the input_param is None or 0.
 
     Examples:
-        >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.conv = nn.Conv2d(3, 64, 3, has_bias=False, weight_init='normal')
-        >>>         self.bn = nn.BatchNorm2d(64)
+        >>> class LeNet5(nn.Cell):
+        >>>     def __init__(self, num_class=10, num_channel=1):
+        >>>         super(LeNet5, self).__init__()
+        >>>         self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
+        >>>         self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
+        >>>         self.fc1 = nn.Dense(16 * 5 * 5, 120, weight_init=Normal(0.02))
+        >>>         self.fc2 = nn.Dense(120, 84, weight_init=Normal(0.02))
+        >>>         self.fc3 = nn.Dense(84, num_class, weight_init=Normal(0.02))
         >>>         self.relu = nn.ReLU()
+        >>>         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
         >>>         self.flatten = nn.Flatten()
-        >>>         self.fc = nn.Dense(64*224*224, 12)
         >>>
         >>>     def construct(self, x):
-        >>>         x = self.conv(x)
-        >>>         x = self.bn(x)
-        >>>         x = self.relu(x)
+        >>>         x = self.max_pool2d(self.relu(self.conv1(x)))
+        >>>         x = self.max_pool2d(self.relu(self.conv2(x)))
         >>>         x = self.flatten(x)
-        >>>         out = self.fc(x)
-        >>>         return out
+        >>>         x = self.relu(self.fc1(x))
+        >>>         x = self.relu(self.fc2(x))
+        >>>         x = self.fc3(x)
+        >>>         return x
         >>>
-        >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+        >>> net = LeNet5()
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
-        >>> dataset = get_dataset()
+        >>> data_path = './MNIST_Data'
+        >>> dataset = create_dataset(data_path)
         >>> config = CheckpointConfig(saved_network=net)
-        >>> ckpoint_cb = ModelCheckpoint(prefix="ck_prefix", directory='./', config=config)
+        >>> ckpoint_cb = ModelCheckpoint(prefix='LeNet5', directory='./checkpoint', config=config)
         >>> model.train(10, dataset, callbacks=ckpoint_cb)
     """
     def __init__(self,

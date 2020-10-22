@@ -251,6 +251,10 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
 
     Raises:
         ValueError: Checkpoint file is incorrect.
+
+    Examples:
+        >>> ckpt_file_name = "./checkpoint/LeNet5-2_1875.ckpt"
+        >>> param_dict = load_checkpoint(ckpt_file_name, filter_prefix="conv1")
     """
     if not isinstance(ckpt_file_name, str):
         raise ValueError("The ckpt_file_name must be string.")
