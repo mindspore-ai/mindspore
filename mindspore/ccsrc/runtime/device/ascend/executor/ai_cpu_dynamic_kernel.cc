@@ -194,6 +194,10 @@ bool AiCpuDynamicKernel::UpdateOutputShapeFromExtInfo() {
 
 void AiCpuDynamicKernel::PostExecute() {
   MS_LOG(INFO) << "Aicpu " << cnode_ptr_->fullname_with_scope() << " PostExecute";
+  if (RT_ERROR_NONE != rtStreamSynchronize(stream_)) {
+    MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
+    return;
+  }
   if (AnfAlgo::IsDynamicShape(cnode_ptr_) && unknow_type_ == DEPEND_COMPUTE) {
     MS_LOG(INFO) << "Update aicpu kernel output shape from ext_info";
     UpdateOutputShapeFromExtInfo();
