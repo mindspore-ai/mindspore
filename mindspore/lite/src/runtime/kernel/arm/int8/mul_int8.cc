@@ -106,7 +106,7 @@ int MulInt8CPUKernel::Run() {
   input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->MutableData());
   output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
-  elements_num_ = in_tensors_.at(0)->ElementsNum();
+  elements_num_ = out_tensors_.at(0)->ElementsNum();
   count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
   if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
     input0_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));

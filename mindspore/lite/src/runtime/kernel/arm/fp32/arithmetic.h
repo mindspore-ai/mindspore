@@ -163,6 +163,7 @@ class ArithmeticCPUKernel : public LiteKernel {
   ~ArithmeticCPUKernel() override;
 
   int Init() override;
+  int PreProcess() override;
   int ReSize() override;
   int Run() override;
   int DoArithmetic(int task_id);
