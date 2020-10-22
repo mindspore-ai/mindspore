@@ -22,6 +22,7 @@
 #include "src/runtime/kernel/arm/int8/add_int8.h"
 #include "src/runtime/kernel/arm/int8/mul_int8.h"
 #include "src/runtime/runtime_api.h"
+#include "src/populate_parameter.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -38,6 +39,31 @@ int ArithmeticCPUKernel::Init() {
     return RET_OK;
   }
   return ReSize();
+}
+
+int ArithmeticCPUKernel::PreProcess() {
+  if (!InferShapeDone()) {
+    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->SetInferFlag(true);
+    auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
+    if (ret != 0) {
+      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->SetInferFlag(false);
+      MS_LOG(ERROR) << "InferShape fail!";
+      return ret;
+    }
+    arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(kernel::PopulateArithmetic(primitive_));
+    ret = ReSize();
+    if (ret != 0) {
+      MS_LOG(ERROR) << "ReSize fail!ret: " << ret;
+      return ret;
+    }
+  }
+
+  auto outputs = this->out_tensors();
+  for (auto *output : outputs) {
+    MS_ASSERT(output != nullptr);
+    output->MallocData();
+  }
+  return RET_OK;
 }
 
 int ArithmeticCPUKernel::ReSize() {

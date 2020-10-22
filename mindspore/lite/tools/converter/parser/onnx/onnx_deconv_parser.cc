@@ -87,8 +87,8 @@ STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
         MS_LOG(ERROR) << "dilations size " << onnx_node_attr.ints().size() << " is not 2";
         return RET_ERROR;
       }
-      attr->dilateW = static_cast<int32_t>(onnx_node_attr.ints(0));
-      attr->dilateH = static_cast<int32_t>(onnx_node_attr.ints(1));
+      attr->dilateH = static_cast<int32_t>(onnx_node_attr.ints(0));
+      attr->dilateW = static_cast<int32_t>(onnx_node_attr.ints(1));
     } else if (onnx_node_attr.name() == "kernels") {
       if (onnx_node_attr.ints().size() != 2) {
         MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 2";
@@ -101,8 +101,8 @@ STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
         MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 2";
         return RET_ERROR;
       }
-      attr->kernelW = static_cast<int32_t>(onnx_node_attr.ints(0));
-      attr->kernelH = static_cast<int32_t>(onnx_node_attr.ints(1));
+      attr->kernelH = static_cast<int32_t>(onnx_node_attr.ints(0));
+      attr->kernelW = static_cast<int32_t>(onnx_node_attr.ints(1));
     } else if (onnx_node_attr.name() == "auto_pad") {
       attr->padMode = GetOnnxPadMode(onnx_node_attr);
     } else if (onnx_node_attr.name() == "pads") {
@@ -119,8 +119,8 @@ STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
         MS_LOG(ERROR) << "strides size " << onnx_node_attr.ints().size() << " is not 2";
         return RET_ERROR;
       }
-      attr->strideW = static_cast<int32_t>(onnx_node_attr.ints(0));
-      attr->strideH = static_cast<int32_t>(onnx_node_attr.ints(1));
+      attr->strideH = static_cast<int32_t>(onnx_node_attr.ints(0));
+      attr->strideW = static_cast<int32_t>(onnx_node_attr.ints(1));
     } else if (onnx_node_attr.name() == "order") {
       if (onnx_node_attr.s() == "NHWC") {
         attr->format = schema::Format::Format_NHWC;
