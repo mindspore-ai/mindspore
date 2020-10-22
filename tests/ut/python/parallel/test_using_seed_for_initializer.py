@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 from numpy import allclose
 from mindspore.common import set_seed
 import mindspore.common.initializer as init
@@ -54,10 +53,10 @@ def test_using_same_seed_for_initializer():
 
 
 def test_using_diffserent_seed_for_initializer():
-    np.random.seed(0)
+    set_seed(0)
     net1 = ParameterNet()
     net1.init_parameters_data()
-    np.random.seed(1)
+    set_seed(1)
     net2 = ParameterNet()
     net2.init_parameters_data()
     for key in net1.parameters_dict():
