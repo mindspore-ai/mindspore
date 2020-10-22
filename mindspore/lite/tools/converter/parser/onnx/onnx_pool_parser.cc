@@ -94,7 +94,11 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
       }
     }
     if (attribute_name == "ceil_mode") {
-      attr->roundMode = schema::RoundMode_CEIL;
+      if (onnx_node_attr.f() == 0) {
+        attr->roundMode = schema::RoundMode_FLOOR;
+      } else {
+        attr->roundMode = schema::RoundMode_CEIL;
+      }
     }
     if (attribute_name == "dilations") {
       MS_LOG(ERROR) << "pooling op not support dilations now";
