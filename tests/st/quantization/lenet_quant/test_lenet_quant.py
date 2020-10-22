@@ -26,8 +26,8 @@ from mindspore.nn.metrics import Accuracy
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 from mindspore.train import Model
-from mindspore.train.quant import quant
-from mindspore.train.quant.quant_utils import load_nonquant_param_into_quant_net
+from mindspore.compression.quant import QuantizationAwareTraining
+from mindspore.compression.quant.quant_utils import load_nonquant_param_into_quant_net
 from dataset import create_dataset
 from config import nonquant_cfg, quant_cfg
 from lenet import LeNet5
@@ -73,8 +73,11 @@ def train_lenet_quant():
     load_nonquant_param_into_quant_net(network, param_dict)
 
     # convert fusion network to quantization aware network
-    network = quant.convert_quant_network(network, quant_delay=900, bn_fold=False, per_channel=[True, False],
-                                          symmetric=[False, False])
+    quantizer = QuantizationAwareTraining(quant_delay=900,
+                                          bn_fold=False,
+                                          per_channel=[True, False],
+                                          symmetric=[True, False])
+    network = quantizer.quantize(network)
 
     # define network loss
     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
@@ -103,8 +106,12 @@ def eval_quant():
     # define fusion network
     network = LeNet5Fusion(cfg.num_classes)
     # convert fusion network to quantization aware network
-    network = quant.convert_quant_network(network, quant_delay=0, bn_fold=False, freeze_bn=10000,
-                                          per_channel=[True, False])
+    quantizer = QuantizationAwareTraining(quant_delay=0,
+                                          bn_fold=False,
+                                          freeze_bn=10000,
+                                          per_channel=[True, False],
+                                          symmetric=[True, False])
+    network = quantizer.quantize(network)
 
     # define loss
     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
@@ -131,8 +138,12 @@ def export_lenet():
     # define fusion network
     network = LeNet5Fusion(cfg.num_classes)
     # convert fusion network to quantization aware network
-    network = quant.convert_quant_network(network, quant_delay=0, bn_fold=False, freeze_bn=10000,
-                                          per_channel=[True, False], symmetric=[True, False])
+    quantizer = QuantizationAwareTraining(quant_delay=0,
+                                          bn_fold=False,
+                                          freeze_bn=10000,
+                                          per_channel=[True, False],
+                                          symmetric=[True, False])
+    network = quantizer.quantize(network)
 
     # export network
     inputs = Tensor(np.ones([1, 1, cfg.image_height, cfg.image_width]), mstype.float32)

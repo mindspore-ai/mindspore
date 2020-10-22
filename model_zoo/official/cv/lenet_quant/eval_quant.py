@@ -25,7 +25,7 @@ from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
-from mindspore.train.quant import quant
+from mindspore.compression.quant import QuantizationAwareTraining
 from src.dataset import create_dataset
 from src.config import mnist_cfg as cfg
 from src.lenet_fusion import LeNet5 as LeNet5Fusion
@@ -47,8 +47,12 @@ if __name__ == "__main__":
     # define fusion network
     network = LeNet5Fusion(cfg.num_classes)
     # convert fusion network to quantization aware network
-    network = quant.convert_quant_network(network, quant_delay=0, bn_fold=False, freeze_bn=10000,
-                                          per_channel=[True, False], symmetric=[True, False])
+    quantizer = QuantizationAwareTraining(quant_delay=0,
+                                          bn_fold=False,
+                                          freeze_bn=10000,
+                                          per_channel=[True, False],
+                                          symmetric=[True, False])
+    network = quantizer.quantize(network)
 
     # define loss
     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")

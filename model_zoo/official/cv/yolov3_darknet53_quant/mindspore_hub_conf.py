@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from mindspore.train.quant import quant
+from mindspore.compression.quant import QuantizationAwareTraining
 from src.yolo import YOLOV3DarkNet53
 from src.config import ConfigYOLOV3DarkNet53
 
@@ -24,9 +24,9 @@ def create_network(name, *args, **kwargs):
         config = ConfigYOLOV3DarkNet53()
         # convert fusion network to quantization aware network
         if config.quantization_aware:
-            yolov3_darknet53_quant = quant.convert_quant_network(yolov3_darknet53_quant,
-                                                                 bn_fold=True,
-                                                                 per_channel=[True, False],
-                                                                 symmetric=[True, False])
+            quantizer = QuantizationAwareTraining(bn_fold=True,
+                                                  per_channel=[True, False],
+                                                  symmetric=[True, False])
+            yolov3_darknet53_quant = quantizer.quantize(yolov3_darknet53_quant)
         return yolov3_darknet53_quant
     raise NotImplementedError(f"{name} is not implemented in the repo")

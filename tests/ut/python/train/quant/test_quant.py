@@ -19,7 +19,8 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore import nn
-from mindspore.train.quant import quant as qat
+from mindspore.compression.quant import QuantizationAwareTraining
+from mindspore.compression.export import quant_export
 from model_zoo.official.cv.mobilenetv2_quant.src.mobilenetV2 import mobilenetV2
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -66,27 +67,35 @@ class LeNet5(nn.Cell):
 def test_qat_lenet():
     img = Tensor(np.ones((32, 1, 32, 32)).astype(np.float32))
     net = LeNet5()
-    net = qat.convert_quant_network(
-        net, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
+    quantizer = QuantizationAwareTraining(bn_fold=True,
+                                          per_channel=[True, False],
+                                          symmetric=[True, False])
+    net = quantizer.quantize(net)
     # should load the checkpoint. mock here
     net.init_parameters_data()
-    qat.export(net, img, file_name="quant.pb")
+    quant_export.export(net, img, file_name="quant.pb")
 
 
 @pytest.mark.skip(reason="no `te.lang.cce` in ut env")
 def test_qat_mobile_per_channel_tf():
     network = mobilenetV2(num_classes=1000)
     img = Tensor(np.ones((1, 3, 224, 224)).astype(np.float32))
-    network = qat.convert_quant_network(network, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
+    quantizer = QuantizationAwareTraining(bn_fold=True,
+                                          per_channel=[True, False],
+                                          symmetric=[True, False])
+    network = quantizer.quantize(network)
     # should load the checkpoint. mock here
     network.init_parameters_data()
-    qat.export(network, img, file_name="quant.pb")
+    quant_export.export(network, img, file_name="quant.pb")
 
 @pytest.mark.skip(reason="no `te.lang.cce` in ut env")
 def test_qat_mobile_per_channel_ff():
     network = mobilenetV2(num_classes=1000)
     img = Tensor(np.ones((1, 3, 224, 224)).astype(np.float32))
-    network = qat.convert_quant_network(network, bn_fold=True, per_channel=[False, False], symmetric=[True, False])
+    quantizer = QuantizationAwareTraining(bn_fold=True,
+                                          per_channel=[False, False],
+                                          symmetric=[True, False])
+    network = quantizer.quantize(network)
     # should load the checkpoint. mock here
     network.init_parameters_data()
-    qat.export(network, img, file_name="quant.pb")
+    quant_export.export(network, img, file_name="quant.pb")

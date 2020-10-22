@@ -23,7 +23,7 @@ from mindspore import context
 from mindspore import Tensor
 from mindspore import nn
 from mindspore.train.model import Model
-from mindspore.train.quant import quant
+from mindspore.compression.quant import QuantizationAwareTraining
 from mindspore.common import set_seed
 
 from dataset import create_dataset
@@ -84,10 +84,10 @@ def test_mobilenetv2_quant():
     step_size = dataset.get_dataset_size()
 
     # convert fusion network to quantization aware network
-    network = quant.convert_quant_network(network,
-                                          bn_fold=True,
+    quantizer = QuantizationAwareTraining(bn_fold=True,
                                           per_channel=[True, False],
                                           symmetric=[True, False])
+    network = quantizer.quantize(network)
 
     # get learning rate
     lr = Tensor(get_lr(global_step=config.start_epoch * step_size,

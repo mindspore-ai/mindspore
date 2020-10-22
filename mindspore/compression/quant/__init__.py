@@ -13,14 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """
-Quantization.
-
-User can use quantization aware to train a model. MindSpore supports quantization aware training,
-which models quantization errors in both the forward and backward passes using fake-quantization
-operations. Note that the entire computation is carried out in floating point. At the end of quantization
-aware training, MindSpore provides conversion functions to convert the trained model into lower precision.
+Compression quant module.
 """
 
-from .quant import convert_quant_network, export, manual_export
-
-__all__ = ["convert_quant_network", "export", "manual_export"]
+from .quantizer import *
+from .qat import *
+from .quant_utils import *

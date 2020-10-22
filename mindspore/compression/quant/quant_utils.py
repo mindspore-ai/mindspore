@@ -17,6 +17,9 @@
 import numpy as np
 
 
+__all__ = ["load_nonquant_param_into_quant_net"]
+
+
 def cal_quantization_params(input_min,
                             input_max,
                             data_type,

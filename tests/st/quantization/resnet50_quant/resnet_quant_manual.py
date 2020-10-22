@@ -18,14 +18,14 @@ import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 from mindspore.ops import operations as P
 from mindspore import Tensor
-from mindspore.nn import FakeQuantWithMinMaxObserver, Conv2dBnFoldQuant as Conv2dBatchNormQuant
-from mindspore.train.quant import quant
+from mindspore.nn import FakeQuantWithMinMaxObserver, Conv2dBnFoldQuant
+from mindspore.compression.quant import qat
 
 _ema_decay = 0.999
 _symmetric = True
 _fake = True
 _per_channel = True
-_quant_config = quant.get_quant_config(per_channel=(_per_channel, False), symmetric=(_symmetric, False))
+_quant_config = qat.get_quant_config(per_channel=(_per_channel, False), symmetric=(_symmetric, False))
 
 
 def _weight_variable(shape, factor=0.01):
@@ -91,8 +91,8 @@ class ConvBNReLU(nn.Cell):
     def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
         super(ConvBNReLU, self).__init__()
         padding = (kernel_size - 1) // 2
-        conv = Conv2dBatchNormQuant(in_planes, out_planes, kernel_size, stride, pad_mode='pad', padding=padding,
-                                    group=groups, fake=_fake, quant_config=_quant_config)
+        conv = Conv2dBnFoldQuant(in_planes, out_planes, kernel_size, stride, pad_mode='pad', padding=padding,
+                                 group=groups, fake=_fake, quant_config=_quant_config)
         layers = [conv, nn.ActQuant(nn.ReLU())] if _fake else [conv, nn.ReLU()]
         self.features = nn.SequentialCell(layers)
 
@@ -127,14 +127,14 @@ class ResidualBlock(nn.Cell):
         channel = out_channel // self.expansion
         self.conv1 = ConvBNReLU(in_channel, channel, kernel_size=1, stride=1)
         self.conv2 = ConvBNReLU(channel, channel, kernel_size=3, stride=stride)
-        self.conv3 = nn.SequentialCell([Conv2dBatchNormQuant(channel, out_channel, fake=_fake,
-                                                             quant_config=_quant_config,
-                                                             kernel_size=1, stride=1, pad_mode='same', padding=0),
+        self.conv3 = nn.SequentialCell([Conv2dBnFoldQuant(channel, out_channel, fake=_fake,
+                                                          quant_config=_quant_config,
+                                                          kernel_size=1, stride=1, pad_mode='same', padding=0),
                                         FakeQuantWithMinMaxObserver(ema=True, ema_decay=_ema_decay, symmetric=False)
-                                        ]) if _fake else Conv2dBatchNormQuant(channel, out_channel, fake=_fake,
-                                                                              quant_config=_quant_config,
-                                                                              kernel_size=1, stride=1,
-                                                                              pad_mode='same', padding=0)
+                                        ]) if _fake else Conv2dBnFoldQuant(channel, out_channel, fake=_fake,
+                                                                           quant_config=_quant_config,
+                                                                           kernel_size=1, stride=1,
+                                                                           pad_mode='same', padding=0)
 
         self.down_sample = False
 
@@ -143,20 +143,19 @@ class ResidualBlock(nn.Cell):
         self.down_sample_layer = None
 
         if self.down_sample:
-            self.down_sample_layer = nn.SequentialCell([Conv2dBatchNormQuant(in_channel, out_channel,
-                                                                             quant_config=_quant_config,
-                                                                             kernel_size=1, stride=stride,
-                                                                             pad_mode='same', padding=0),
+            self.down_sample_layer = nn.SequentialCell([Conv2dBnFoldQuant(in_channel, out_channel,
+                                                                          quant_config=_quant_config,
+                                                                          kernel_size=1, stride=stride,
+                                                                          pad_mode='same', padding=0),
                                                         FakeQuantWithMinMaxObserver(ema=True, ema_decay=_ema_decay,
                                                                                     symmetric=False)
-                                                        ]) if _fake else Conv2dBatchNormQuant(in_channel, out_channel,
-                                                                                              fake=_fake,
-                                                                                              quant_config=\
-                                                                                                  _quant_config,
-                                                                                              kernel_size=1,
-                                                                                              stride=stride,
-                                                                                              pad_mode='same',
-                                                                                              padding=0)
+                                                        ]) if _fake else Conv2dBnFoldQuant(in_channel, out_channel,
+                                                                                           fake=_fake,
+                                                                                           quant_config=_quant_config,
+                                                                                           kernel_size=1,
+                                                                                           stride=stride,
+                                                                                           pad_mode='same',
+                                                                                           padding=0)
         self.add = nn.TensorAddQuant()
         self.relu = P.ReLU()
 

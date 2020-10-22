@@ -29,7 +29,7 @@ from mindspore.context import ParallelMode
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore as ms
-from mindspore.train.quant import quant
+from mindspore.compression.quant import QuantizationAwareTraining
 
 from src.yolo import YOLOV3DarkNet53
 from src.logger import get_logger
@@ -265,10 +265,10 @@ def test():
 
     # convert fusion network to quantization aware network
     if config.quantization_aware:
-        network = quant.convert_quant_network(network,
-                                              bn_fold=True,
+        quantizer = QuantizationAwareTraining(bn_fold=True,
                                               per_channel=[True, False],
                                               symmetric=[True, False])
+        network = quantizer.quantize(network)
 
     args.logger.info(args.pretrained)
     if os.path.isfile(args.pretrained):
