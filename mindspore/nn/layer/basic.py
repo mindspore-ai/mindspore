@@ -260,6 +260,7 @@ def _is_float_dtype(dtype):
         return True
     return False
 
+
 class ClipByNorm(Cell):
     r"""
     Clips tensor values to a maximum :math:`L_2`-norm.
@@ -271,6 +272,9 @@ class ClipByNorm(Cell):
         \text{output}(X) = \frac{\text{clip_norm} * X}{L_2(X)},
 
     where :math:`L_2(X)` is the :math:`L_2`-norm of :math:`X`.
+    Args:
+        axis (Union[None, int, tuple(int)): Compute the L2-norm along the Specific dimension.
+                                            Default: None, all dimensions to calculate.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape N-D. The type must be float32 or float16.
@@ -287,8 +291,14 @@ class ClipByNorm(Cell):
 
     """
 
-    def __init__(self):
+    def __init__(self, axis=None):
         super(ClipByNorm, self).__init__()
+        if axis is None:
+            axis = ()
+        if isinstance(axis, tuple):
+            for idx, item in enumerate(axis):
+                Validator.check_value_type("axis[%d]" % idx, item, [int], self.cls_name)
+        self.axis = Validator.check_value_type('axis', axis, [int, tuple], self.cls_name)
         self.reduce_sum = P.ReduceSum(keep_dims=True)
         self.select_ = P.Select()
         self.greater_ = P.Greater()
@@ -305,7 +315,7 @@ class ClipByNorm(Cell):
     def construct(self, x, clip_norm):
         """add ms_function decorator for pynative mode"""
         mul_x = F.square(x)
-        l2sum = self.cast(self.reduce_sum(mul_x), mstype.float32)
+        l2sum = self.cast(self.reduce_sum(mul_x, self.axis), mstype.float32)
         cond = self.greater_(l2sum, 0)
         ones_ = self.fill(self.dtype(cond), self.shape(cond), 1.0)
         l2sum_safe = self.select_(cond, l2sum, self.cast(ones_, self.dtype(l2sum)))
@@ -318,7 +328,9 @@ class ClipByNorm(Cell):
             intermediate = x * clip_norm
 
         max_norm = self.max_op(l2norm, clip_norm)
-        values_clip = self.cast(intermediate, mstype.float32) / self.expand_dims(max_norm, -1)
+        if self.axis is None:
+            max_norm = self.expand_dims(max_norm, -1)
+        values_clip = self.cast(intermediate, mstype.float32) / max_norm
         values_clip = self.reshape(values_clip, self.shape(x))
         values_clip = identity(values_clip)
         return values_clip

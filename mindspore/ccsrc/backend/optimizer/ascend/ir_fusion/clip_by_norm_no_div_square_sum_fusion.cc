@@ -59,7 +59,7 @@ const AnfNodePtr ClipByNormNoDivSquareSumFusion::Process(const FuncGraphPtr &gra
 
   auto prim = std::make_shared<Primitive>(kClipByNormNoDivSumOpName);
   MS_EXCEPTION_IF_NULL(prim);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), input, constant_select, constant_greater, constant_maximum};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), input, constant_greater, constant_select, constant_maximum};
   auto fusion_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(fusion_node);
   auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};
