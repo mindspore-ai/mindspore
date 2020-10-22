@@ -31,7 +31,10 @@ namespace pipeline {
 struct ExecutorInfo {
   FuncGraphPtr func_graph;
   ResourcePtr resource;
+  // The num of input data.
   std::size_t arg_list_size;
+  // The all args of graph,including input data and weight.
+  VectorRef arg_list;
 };
 using ExecutorInfoPtr = std::shared_ptr<ExecutorInfo>;
 

@@ -82,7 +82,6 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   ResourcePtr GetResource(const std::string &phase);
   FuncGraphPtr GetFuncGraph(const std::string &phase);
   py::bytes GetFuncGraphProto(const std::string &phase, const std::string &type);
-  std::size_t ArgListSize(const std::string &phase);
   compile::VmEvalFuncPtr GetVmEvalFunc(const std::string &phase);
   bool HasCompiled(const std::string &phase) const;
 
