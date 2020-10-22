@@ -16,6 +16,8 @@
 
 #include "src/ops/power_grad.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -77,6 +79,11 @@ int PowerGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffe
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *PowerGradCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<PowerGrad>(primitive);
+}
+Registry PowerGradRegistry(schema::PrimitiveType_PowerGrad, PowerGradCreator);
 #endif
 }  // namespace lite
 }  // namespace mindspore

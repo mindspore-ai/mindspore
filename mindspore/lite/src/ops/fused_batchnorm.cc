@@ -16,6 +16,9 @@
 
 #include "src/ops/fused_batchnorm.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/batchnorm_parameter.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -72,7 +75,29 @@ float FusedBatchNorm::GetEpsilon() const { return this->primitive_->value_as_Fus
 float FusedBatchNorm::GetMomentum() const { return this->primitive_->value_as_FusedBatchNorm()->momentum(); }
 int FusedBatchNorm::GetSpatial() const { return this->primitive_->value_as_FusedBatchNorm()->spatial(); }
 
+PrimitiveC *FusedBatchNormCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<FusedBatchNorm>(primitive);
+}
+Registry FusedBatchNormRegistry(schema::PrimitiveType_FusedBatchNorm, FusedBatchNormCreator);
 #endif
+OpParameter *PopulateFusedBatchNorm(const mindspore::lite::PrimitiveC *primitive) {
+  BatchNormParameter *batch_norm_param = reinterpret_cast<BatchNormParameter *>(malloc(sizeof(BatchNormParameter)));
+  if (batch_norm_param == nullptr) {
+    MS_LOG(ERROR) << "malloc BatchNormParameter failed.";
+    return nullptr;
+  }
+  memset(batch_norm_param, 0, sizeof(BatchNormParameter));
+  batch_norm_param->op_parameter_.type_ = primitive->Type();
+  auto param =
+    reinterpret_cast<mindspore::lite::FusedBatchNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  batch_norm_param->epsilon_ = param->GetEpsilon();
+  batch_norm_param->momentum_ = param->GetMomentum();
+  batch_norm_param->fused_ = true;
+  return reinterpret_cast<OpParameter *>(batch_norm_param);
+}
+
+Registry FusedBatchNormParameterRegistry(schema::PrimitiveType_FusedBatchNorm, PopulateFusedBatchNorm);
+
 int FusedBatchNorm::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   for (size_t i = 0; i < inputs_.size(); i++) {
     if (outputs_.size() <= i) break;

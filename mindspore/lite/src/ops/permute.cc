@@ -16,6 +16,8 @@
 
 #include "src/ops/permute.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -50,6 +52,9 @@ int Permute::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *PermuteCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Permute>(primitive); }
+Registry PermuteRegistry(schema::PrimitiveType_Permute, PermuteCreator);
 #endif
 }  // namespace lite
 }  // namespace mindspore

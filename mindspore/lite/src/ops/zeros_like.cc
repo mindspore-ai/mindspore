@@ -16,6 +16,8 @@
 
 #include "src/ops/zeros_like.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 
@@ -30,6 +32,12 @@ int ZerosLike::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffe
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *ZerosLikeCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<ZerosLike>(primitive);
+}
+Registry ZerosLikeRegistry(schema::PrimitiveType_ZerosLike, ZerosLikeCreator);
+
 #endif
 
 int ZerosLike::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {

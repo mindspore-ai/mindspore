@@ -19,6 +19,9 @@
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/slice_parameter.h"
+
 namespace mindspore {
 namespace lite {
 namespace {
@@ -146,7 +149,35 @@ int Slice::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *SliceCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Slice>(primitive); }
+Registry SliceRegistry(schema::PrimitiveType_Slice, SliceCreator);
+
 #endif
+
+OpParameter *PopulateSliceParameter(const mindspore::lite::PrimitiveC *primitive) {
+  SliceParameter *slice_param = reinterpret_cast<SliceParameter *>(malloc(sizeof(SliceParameter)));
+  if (slice_param == nullptr) {
+    MS_LOG(ERROR) << "malloc SliceParameter failed.";
+    return nullptr;
+  }
+  memset(slice_param, 0, sizeof(SliceParameter));
+  auto param = reinterpret_cast<mindspore::lite::Slice *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  slice_param->op_parameter_.type_ = primitive->Type();
+  auto param_begin = param->GetPostProcessBegin();
+  auto param_size = param->GetPostProcessSize();
+  if (param_begin.size() != param_size.size()) {
+    free(slice_param);
+    return nullptr;
+  }
+  slice_param->param_length_ = static_cast<int32_t>(param_begin.size());
+  for (int32_t i = 0; i < slice_param->param_length_; ++i) {
+    slice_param->begin_[i] = param_begin[i];
+    slice_param->size_[i] = param_size[i];
+  }
+  return reinterpret_cast<OpParameter *>(slice_param);
+}
+Registry SliceParameterRegistry(schema::PrimitiveType_Slice, PopulateSliceParameter);
 
 std::vector<int> Slice::GetPostProcessBegin() const { return this->begin; }
 std::vector<int> Slice::GetPostProcessSize() const { return this->size; }

@@ -16,6 +16,9 @@
 
 #include "src/ops/expand_dims.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/expandDims.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -40,7 +43,26 @@ int ExpandDims::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuff
 }
 int ExpandDims::GetDim() const { return this->primitive_->value_as_ExpandDims()->dim(); }
 
+PrimitiveC *ExpandDimsCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<ExpandDims>(primitive);
+}
+Registry ExpandDimsRegistry(schema::PrimitiveType_ExpandDims, ExpandDimsCreator);
 #endif
+
+OpParameter *PopulateExpandDimsParameter(const mindspore::lite::PrimitiveC *primitive) {
+  auto param = reinterpret_cast<mindspore::lite::ExpandDims *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  ExpandDimsParameter *expand_dims_param = reinterpret_cast<ExpandDimsParameter *>(malloc(sizeof(ExpandDimsParameter)));
+  if (expand_dims_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ExpandDimsParameter failed.";
+    return nullptr;
+  }
+  memset(expand_dims_param, 0, sizeof(ExpandDimsParameter));
+  expand_dims_param->op_parameter_.type_ = primitive->Type();
+  expand_dims_param->dim_ = param->GetDim();
+  return reinterpret_cast<OpParameter *>(expand_dims_param);
+}
+
+Registry ExpandDimsParameterRegistry(schema::PrimitiveType_ExpandDims, PopulateExpandDimsParameter);
 
 int ExpandDims::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

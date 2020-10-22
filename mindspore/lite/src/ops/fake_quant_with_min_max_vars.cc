@@ -16,6 +16,8 @@
 
 #include "src/ops/fake_quant_with_min_max_vars.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -54,6 +56,10 @@ int FakeQuantWithMinMaxVars::GetNumBits() const {
   return this->primitive_->value_as_FakeQuantWithMinMaxVars()->numBits();
 }
 
+PrimitiveC *FakeQuantWithMinMaxVarsCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<FakeQuantWithMinMaxVars>(primitive);
+}
+Registry FakeQuantWithMinMaxVarsRegistry(schema::PrimitiveType_FakeQuantWithMinMaxVars, FakeQuantWithMinMaxVarsCreator);
 #endif
 }  // namespace lite
 }  // namespace mindspore

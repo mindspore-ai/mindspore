@@ -16,6 +16,9 @@
 
 #include "src/ops/quant_dtype_cast.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/int8/quant_dtype_cast.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -42,7 +45,29 @@ int QuantDTypeCast::UnPackToFlatBuilder(const schema::Primitive *primitive, flat
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *QuantDTypeCastCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<QuantDTypeCast>(primitive);
+}
+Registry QuantDTypeCastRegistry(schema::PrimitiveType_QuantDTypeCast, QuantDTypeCastCreator);
 #endif
+
+OpParameter *PopulateQuantDTypeCastParameter(const mindspore::lite::PrimitiveC *primitive) {
+  QuantDTypeCastParameter *parameter =
+    reinterpret_cast<QuantDTypeCastParameter *>(malloc(sizeof(QuantDTypeCastParameter)));
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "malloc QuantDTypeCastParameter failed.";
+    return nullptr;
+  }
+  memset(parameter, 0, sizeof(QuantDTypeCastParameter));
+  parameter->op_parameter_.type_ = primitive->Type();
+  auto quant_dtype_cast_param =
+    reinterpret_cast<mindspore::lite::QuantDTypeCast *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  parameter->srcT = quant_dtype_cast_param->GetSrcT();
+  parameter->dstT = quant_dtype_cast_param->GetDstT();
+  return reinterpret_cast<OpParameter *>(parameter);
+}
+Registry QuantDTypeCastParameterRegistry(schema::PrimitiveType_QuantDTypeCast, PopulateQuantDTypeCastParameter);
 
 int QuantDTypeCast::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

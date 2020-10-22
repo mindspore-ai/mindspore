@@ -17,6 +17,8 @@
 
 #include "src/common/string_util.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -30,7 +32,24 @@ int HashtableLookup::UnPackToFlatBuilder(const schema::Primitive *primitive, fla
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+PrimitiveC *HashtableLookupCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<HashtableLookup>(primitive);
+}
+Registry HashtableLookupRegistry(schema::PrimitiveType_HashtableLookup, HashtableLookupCreator);
 #endif
+
+OpParameter *PopulateHashtableLookupParameter(const mindspore::lite::PrimitiveC *primitive) {
+  OpParameter *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "new OpParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(OpParameter));
+  param->type_ = primitive->Type();
+  return param;
+}
+Registry HashtableLookupParameterRegistry(schema::PrimitiveType_HashtableLookup, PopulateHashtableLookupParameter);
+
 int HashtableLookup::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   auto input = inputs_.at(0);
   auto values = inputs_.at(2);

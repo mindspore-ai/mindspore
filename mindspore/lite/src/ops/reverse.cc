@@ -16,6 +16,9 @@
 
 #include "src/ops/reverse.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/reverse.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -48,6 +51,31 @@ int Reverse::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *ReverseCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Reverse>(primitive); }
+Registry ReverseRegistry(schema::PrimitiveType_Reverse, ReverseCreator);
+
 #endif
+OpParameter *PopulateReverseParameter(const mindspore::lite::PrimitiveC *primitive) {
+  auto reverse_attr =
+    reinterpret_cast<mindspore::lite::Reverse *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  ReverseParameter *reverse_param = reinterpret_cast<ReverseParameter *>(malloc(sizeof(ReverseParameter)));
+  if (reverse_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ReverseParameter failed.";
+    return nullptr;
+  }
+  memset(reverse_param, 0, sizeof(ReverseParameter));
+  reverse_param->op_parameter_.type_ = primitive->Type();
+  auto flatAxis = reverse_attr->GetAxis();
+  reverse_param->num_axis_ = flatAxis.size();
+  int i = 0;
+  for (auto iter = flatAxis.begin(); iter != flatAxis.end(); iter++) {
+    reverse_param->axis_[i++] = *iter;
+  }
+  return reinterpret_cast<OpParameter *>(reverse_param);
+}
+
+Registry ReverseParameterRegistry(schema::PrimitiveType_Reverse, PopulateReverseParameter);
+
 }  // namespace lite
 }  // namespace mindspore

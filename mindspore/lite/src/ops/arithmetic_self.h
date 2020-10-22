@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "src/ops/primitive_c.h"
+#include "nnacl/arithmetic_self_parameter.h"
 
 namespace mindspore {
 namespace lite {
@@ -37,6 +38,7 @@ class ArithmeticSelf : public PrimitiveC {
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
 };
+OpParameter *PopulateArithmeticSelf(const mindspore::lite::PrimitiveC *primitive);
 }  // namespace lite
 }  // namespace mindspore
 

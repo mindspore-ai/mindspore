@@ -21,6 +21,7 @@
 #include <set>
 #include <cmath>
 #include "src/ops/primitive_c.h"
+#include "nnacl/arithmetic_self_parameter.h"
 
 namespace mindspore {
 namespace lite {

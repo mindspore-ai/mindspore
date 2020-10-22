@@ -16,6 +16,9 @@
 
 #include "src/ops/squeeze.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/squeeze.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -77,7 +80,22 @@ int Squeeze::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *SqueezeCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Squeeze>(primitive); }
+Registry SqueezeRegistry(schema::PrimitiveType_Squeeze, SqueezeCreator);
 #endif
+
+OpParameter *PopulateSqueezeParameter(const mindspore::lite::PrimitiveC *primitive) {
+  SqueezeParameter *squeeze_param = reinterpret_cast<SqueezeParameter *>(malloc(sizeof(SqueezeParameter)));
+  if (squeeze_param == nullptr) {
+    MS_LOG(ERROR) << "malloc SqueezeParameter failed.";
+    return nullptr;
+  }
+  memset(squeeze_param, 0, sizeof(SqueezeParameter));
+  squeeze_param->op_parameter_.type_ = primitive->Type();
+  return reinterpret_cast<OpParameter *>(squeeze_param);
+}
+Registry SqueezeParameterRegistry(schema::PrimitiveType_Squeeze, PopulateSqueezeParameter);
 
 namespace {
 constexpr int kSqueezeInputNum = 1;

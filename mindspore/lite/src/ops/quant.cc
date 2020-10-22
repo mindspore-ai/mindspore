@@ -18,6 +18,8 @@
 #include <vector>
 #include <memory>
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE

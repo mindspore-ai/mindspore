@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "src/ops/adam.h"
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -62,6 +64,9 @@ int Adam::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *AdamCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Adam>(primitive); }
+Registry AdamRegistry(schema::PrimitiveType_Adam, AdamCreator);
 #endif
 
 int Adam::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {

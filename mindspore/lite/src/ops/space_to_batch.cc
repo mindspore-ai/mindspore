@@ -17,6 +17,9 @@
 #include "src/ops/space_to_batch.h"
 #include "src/common/common.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/space_to_batch.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -65,7 +68,30 @@ int SpaceToBatch::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbu
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *SpaceToBatchCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<SpaceToBatch>(primitive);
+}
+Registry SpaceToBatchRegistry(schema::PrimitiveType_SpaceToBatch, SpaceToBatchCreator);
+
 #endif
+OpParameter *PopulateSpaceToBatchParameter(const mindspore::lite::PrimitiveC *primitive) {
+  SpaceToBatchParameter *space_batch_param =
+    reinterpret_cast<SpaceToBatchParameter *>(malloc(sizeof(SpaceToBatchParameter)));
+  if (space_batch_param == nullptr) {
+    MS_LOG(ERROR) << "malloc SpaceToBatchParameter failed.";
+    return nullptr;
+  }
+  memset(space_batch_param, 0, sizeof(SpaceToBatchParameter));
+  space_batch_param->op_parameter_.type_ = primitive->Type();
+  auto block_sizes = ((mindspore::lite::SpaceToBatch *)primitive)->BlockSizes();
+  memcpy(space_batch_param->block_sizes_, (block_sizes.data()), block_sizes.size() * sizeof(int));
+  auto paddings = ((mindspore::lite::SpaceToBatch *)primitive)->Paddings();
+  memcpy(space_batch_param->paddings_, (paddings.data()), paddings.size() * sizeof(int));
+  return reinterpret_cast<OpParameter *>(space_batch_param);
+}
+Registry SpaceToBatchParameterRegistry(schema::PrimitiveType_SpaceToBatch, PopulateSpaceToBatchParameter);
+
 namespace {
 constexpr int kSpaceToBatchNDOutputNum = 1;
 constexpr int kSpaceToBatchNDInputNum = 1;

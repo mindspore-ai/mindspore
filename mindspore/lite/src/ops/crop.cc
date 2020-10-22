@@ -16,6 +16,9 @@
 
 #include "src/ops/crop.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/crop_parameter.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -51,7 +54,33 @@ std::vector<int64_t> Crop::GetOffsets() const {
   return std::vector<int64_t>(fb_vector->begin(), fb_vector->end());
 }
 
+PrimitiveC *CropCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Crop>(primitive); }
+Registry CropRegistry(schema::PrimitiveType_Crop, CropCreator);
 #endif
+
+OpParameter *PopulateCropParameter(const mindspore::lite::PrimitiveC *primitive) {
+  auto param = reinterpret_cast<mindspore::lite::Crop *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  auto param_offset = param->GetOffsets();
+  if (param_offset.size() > CROP_OFFSET_MAX_SIZE) {
+    MS_LOG(ERROR) << "crop_param offset size(" << param_offset.size() << ") should <= " << CROP_OFFSET_MAX_SIZE;
+    return nullptr;
+  }
+  CropParameter *crop_param = reinterpret_cast<CropParameter *>(malloc(sizeof(CropParameter)));
+  if (crop_param == nullptr) {
+    MS_LOG(ERROR) << "malloc CropParameter failed.";
+    return nullptr;
+  }
+  memset(crop_param, 0, sizeof(CropParameter));
+  crop_param->op_parameter_.type_ = primitive->Type();
+  crop_param->axis_ = param->GetAxis();
+  crop_param->offset_size_ = param_offset.size();
+  for (size_t i = 0; i < param_offset.size(); ++i) {
+    crop_param->offset_[i] = param_offset[i];
+  }
+  return reinterpret_cast<OpParameter *>(crop_param);
+}
+Registry CropParameterRegistry(schema::PrimitiveType_Crop, PopulateCropParameter);
+
 namespace {
 constexpr int kCropOutputNum = 1;
 constexpr int kCropInputNum = 2;

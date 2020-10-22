@@ -16,6 +16,8 @@
 
 #include "src/ops/matrix_diag.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -51,6 +53,11 @@ int MatrixDiag::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuff
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *MatrixDiagCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<MatrixDiag>(primitive);
+}
+Registry MatrixDiagRegistry(schema::PrimitiveType_MatrixDiag, MatrixDiagCreator);
 
 #endif
 }  // namespace lite

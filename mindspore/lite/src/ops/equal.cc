@@ -16,6 +16,8 @@
 
 #include "src/ops/equal.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifndef PRIMITIVE_WRITEABLE
@@ -28,6 +30,8 @@ int Equal::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
   return RET_OK;
 }
 
+PrimitiveC *EqualCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Equal>(primitive); }
+Registry EqualRegistry(schema::PrimitiveType_Equal, EqualCreator);
 #endif
 int Equal::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   auto input = inputs_.front();
@@ -39,5 +43,6 @@ int Equal::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
+Registry EqualParameterRegistry(schema::PrimitiveType_Equal, PopulateArithmetic);
 }  // namespace lite
 }  // namespace mindspore

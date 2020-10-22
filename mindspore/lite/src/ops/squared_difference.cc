@@ -16,6 +16,8 @@
 
 #include "src/ops/squared_difference.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -29,6 +31,13 @@ int SquaredDifference::UnPackToFlatBuilder(const schema::Primitive *primitive, f
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *SquaredDifferenceCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<SquaredDifference>(primitive);
+}
+Registry SquaredDifferenceRegistry(schema::PrimitiveType_SquaredDifference, SquaredDifferenceCreator);
+
 #endif
+Registry SquaredDifferenceParameterRegistry(schema::PrimitiveType_SquaredDifference, PopulateArithmetic);
 }  // namespace lite
 }  // namespace mindspore

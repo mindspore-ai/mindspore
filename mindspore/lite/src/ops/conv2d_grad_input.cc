@@ -16,6 +16,8 @@
 
 #include "src/ops/conv2d_grad_input.h"
 #include "src/ops/group_conv2d_grad_input.h"
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -178,6 +180,10 @@ int Conv2DGradInput::GetActivationType() const {
   return this->primitive_->value_as_Conv2DGradInput()->activationType();
 }
 
+PrimitiveC *Conv2DGradInputCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<Conv2DGradInput>(primitive);
+}
+Registry Conv2DGradInputRegistry(schema::PrimitiveType_Conv2DGradInput, Conv2DGradInputCreator);
 #endif
 
 int Conv2DGradInput::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {

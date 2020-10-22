@@ -25,6 +25,9 @@
 #include "tools/converter/quantizer/quantize_util.h"
 #endif
 
+#include "src/ops/ops_register.h"
+#include "nnacl/conv_parameter.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -295,7 +298,51 @@ int DeConv2D::GetDilateH() const { return this->primitive_->value_as_DeConv2D()-
 bool DeConv2D::GetHasBias() const { return this->primitive_->value_as_DeConv2D()->hasBias(); }
 int DeConv2D::GetActivationType() const { return this->primitive_->value_as_DeConv2D()->activationType(); }
 
+PrimitiveC *DeConv2DCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<DeConv2D>(primitive);
+}
+Registry DeConv2DRegistry(schema::PrimitiveType_DeConv2D, DeConv2DCreator);
 #endif
+
+OpParameter *PopulateDeconvParameter(const mindspore::lite::PrimitiveC *primitive) {
+  ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  if (conv_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ConvParameter failed.";
+    return nullptr;
+  }
+  memset(conv_param, 0, sizeof(ConvParameter));
+  conv_param->op_parameter_.type_ = primitive->Type();
+  auto conv_primitive =
+    reinterpret_cast<mindspore::lite::DeConv2D *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  conv_param->kernel_h_ = conv_primitive->GetKernelH();
+  conv_param->kernel_w_ = conv_primitive->GetKernelW();
+  conv_param->stride_h_ = conv_primitive->GetStrideH();
+  conv_param->stride_w_ = conv_primitive->GetStrideW();
+
+  auto deconv_lite_primitive = (lite::DeConv2D *)primitive;
+  conv_param->pad_u_ = deconv_lite_primitive->PadUp();
+  conv_param->pad_d_ = deconv_lite_primitive->PadDown();
+  conv_param->pad_l_ = deconv_lite_primitive->PadLeft();
+  conv_param->pad_r_ = deconv_lite_primitive->PadRight();
+  conv_param->dilation_h_ = conv_primitive->GetDilateH();
+  conv_param->dilation_w_ = conv_primitive->GetDilateW();
+  auto act_type = conv_primitive->GetActivationType();
+  switch (act_type) {
+    case schema::ActivationType_RELU:
+      conv_param->act_type_ = ActType_Relu;
+      break;
+    case schema::ActivationType_RELU6:
+      conv_param->act_type_ = ActType_Relu6;
+      break;
+    default:
+      conv_param->act_type_ = ActType_No;
+      break;
+  }
+  return reinterpret_cast<OpParameter *>(conv_param);
+}
+
+Registry DeConv2DParameterRegistry(schema::PrimitiveType_DeConv2D, PopulateDeconvParameter);
+
 int DeConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();

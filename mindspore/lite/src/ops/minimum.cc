@@ -16,6 +16,8 @@
 
 #include "src/ops/minimum.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -28,6 +30,10 @@ int Minimum::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+PrimitiveC *MinimumCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Minimum>(primitive); }
+Registry MinimumRegistry(schema::PrimitiveType_Minimum, MinimumCreator);
 #endif
+
+Registry MinimumParameterRegistry(schema::PrimitiveType_Minimum, PopulateArithmetic);
 }  // namespace lite
 }  // namespace mindspore

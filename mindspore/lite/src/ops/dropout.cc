@@ -16,6 +16,8 @@
 
 #include "src/ops/dropout.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -39,6 +41,8 @@ int Dropout::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
 }
 float Dropout::GetRatio() const { return this->primitive_->value_as_Dropout()->ratio(); }
 
+PrimitiveC *DropoutCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Dropout>(primitive); }
+Registry DropoutRegistry(schema::PrimitiveType_Dropout, DropoutCreator);
 #endif
 }  // namespace lite
 }  // namespace mindspore

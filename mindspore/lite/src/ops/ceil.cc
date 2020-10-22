@@ -14,28 +14,14 @@
  * limitations under the License.
  */
 
-#include "src/ops/sqrt.h"
+#include "src/ops/ceil.h"
 
 #include "src/ops/ops_register.h"
 
 namespace mindspore {
 namespace lite {
-#ifdef PRIMITIVE_WRITEABLE
-#else
-int Sqrt::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
-  MS_ASSERT(nullptr != primitive);
-  MS_ASSERT(nullptr != fbb);
 
-  auto val_offset = schema::CreateSqrt(*fbb);
-  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Sqrt, val_offset.o);
-  fbb->Finish(prim_offset);
-  return RET_OK;
-}
-
-PrimitiveC *SqrtCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Sqrt>(primitive); }
-Registry SqrtRegistry(schema::PrimitiveType_Sqrt, SqrtCreator);
-#endif
-Registry SqrtParameterRegistry(schema::PrimitiveType_Sqrt, PopulateArithmeticSelf);
+Registry CeilParameterRegistry(schema::PrimitiveType_Ceil, PopulateArithmeticSelf);
 
 }  // namespace lite
 }  // namespace mindspore

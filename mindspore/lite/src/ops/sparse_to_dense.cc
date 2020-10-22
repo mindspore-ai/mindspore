@@ -16,6 +16,9 @@
 
 #include "src/ops/sparse_to_dense.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/sparse_to_dense_parameter.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -41,7 +44,28 @@ int SparseToDense::UnPackToFlatBuilder(const schema::Primitive *primitive, flatb
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *SparseToDenseCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<SparseToDense>(primitive);
+}
+Registry SparseToDenseRegistry(schema::PrimitiveType_SparseToDense, SparseToDenseCreator);
 #endif
+
+OpParameter *PopulateSparseToDenseParameter(const mindspore::lite::PrimitiveC *primitive) {
+  SparseToDenseParameter *sparse_to_dense_param =
+    reinterpret_cast<SparseToDenseParameter *>(malloc(sizeof(SparseToDenseParameter)));
+  if (sparse_to_dense_param == nullptr) {
+    MS_LOG(ERROR) << "malloc SparseToDenseParameter failed.";
+    return nullptr;
+  }
+  memset(sparse_to_dense_param, 0, sizeof(SparseToDenseParameter));
+  sparse_to_dense_param->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::SparseToDense *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  sparse_to_dense_param->validate_indices_ = param->GetValidateIndices();
+  return reinterpret_cast<OpParameter *>(sparse_to_dense_param);
+}
+
+Registry SparseToDenseParameterRegistry(schema::PrimitiveType_SparseToDense, PopulateSparseToDenseParameter);
 
 int SparseToDense::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

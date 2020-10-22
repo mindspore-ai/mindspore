@@ -16,6 +16,8 @@
 
 #include "src/ops/pooling_grad.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -142,6 +144,11 @@ int PoolingGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuf
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *PoolingGradCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<PoolingGrad>(primitive);
+}
+Registry PoolingGradRegistry(schema::PrimitiveType_PoolingGrad, PoolingGradCreator);
 #endif
 
 int PoolingGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {

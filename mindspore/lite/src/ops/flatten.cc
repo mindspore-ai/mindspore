@@ -17,6 +17,9 @@
 #include "src/ops/flatten.h"
 #include <memory>
 
+#include "src/ops/ops_register.h"
+#include "nnacl/flatten.h"
+
 namespace mindspore {
 namespace lite {
 
@@ -86,6 +89,22 @@ int Flatten::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+PrimitiveC *FlattenCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Flatten>(primitive); }
+Registry FlattenRegistry(schema::PrimitiveType_Flatten, FlattenCreator);
 #endif
+
+OpParameter *PopulateFlattenParameter(const mindspore::lite::PrimitiveC *primitive) {
+  FlattenParameter *flatten_param = reinterpret_cast<FlattenParameter *>(malloc(sizeof(FlattenParameter)));
+  if (flatten_param == nullptr) {
+    MS_LOG(ERROR) << "malloc FlattenParameter failed.";
+    return nullptr;
+  }
+  memset(flatten_param, 0, sizeof(FlattenParameter));
+  flatten_param->op_parameter_.type_ = primitive->Type();
+  return reinterpret_cast<OpParameter *>(flatten_param);
+}
+
+Registry FlattenParameterRegistry(schema::PrimitiveType_Flatten, PopulateFlattenParameter);
+
 }  // namespace lite
 }  // namespace mindspore

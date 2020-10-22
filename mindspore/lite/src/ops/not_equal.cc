@@ -16,6 +16,8 @@
 
 #include "src/ops/not_equal.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -28,6 +30,11 @@ int NotEqual::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffer
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+PrimitiveC *NotEqualCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<NotEqual>(primitive);
+}
+Registry NotEqualRegistry(schema::PrimitiveType_NotEqual, NotEqualCreator);
+
 #endif
 int NotEqual::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   auto input = inputs_.front();
@@ -39,5 +46,6 @@ int NotEqual::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> ou
   output->SetFormat(input->GetFormat());
   return RET_OK;
 }
+Registry NotEqualParameterRegistry(schema::PrimitiveType_NotEqual, PopulateArithmetic);
 }  // namespace lite
 }  // namespace mindspore

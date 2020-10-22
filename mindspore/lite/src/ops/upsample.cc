@@ -17,6 +17,8 @@
 #include "src/ops/upsample.h"
 #include <string>
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -52,6 +54,11 @@ int Upsample::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffer
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+PrimitiveC *UpsampleCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<Upsample>(primitive);
+}
+Registry UpsampleRegistry(schema::PrimitiveType_Upsample, UpsampleCreator);
+
 #endif
 }  // namespace lite
 }  // namespace mindspore

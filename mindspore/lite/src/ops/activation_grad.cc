@@ -16,6 +16,8 @@
 
 #include "src/ops/activation_grad.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -74,6 +76,11 @@ int ActivationGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flat
 }
 int ActivationGrad::GetType() const { return this->primitive_->value_as_ActivationGrad()->type(); }
 float ActivationGrad::GetAlpha() const { return this->primitive_->value_as_ActivationGrad()->alpha(); }
+
+PrimitiveC *ActivationGradCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<ActivationGrad>(primitive);
+}
+Registry ActivationGradRegistry(schema::PrimitiveType_ActivationGrad, ActivationGradCreator);
 #endif
 }  // namespace lite
 }  // namespace mindspore

@@ -17,6 +17,9 @@
 #include "src/ops/reduce.h"
 #include <memory>
 
+#include "src/ops/ops_register.h"
+#include "nnacl/reduce_parameter.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -124,7 +127,39 @@ int Reduce::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *ReduceCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Reduce>(primitive); }
+Registry ReduceRegistry(schema::PrimitiveType_Reduce, ReduceCreator);
 #endif
+
+OpParameter *PopulateReduceParameter(const mindspore::lite::PrimitiveC *primitive) {
+  ReduceParameter *reduce_param = reinterpret_cast<ReduceParameter *>(malloc(sizeof(ReduceParameter)));
+  if (reduce_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ReduceParameter failed.";
+    return nullptr;
+  }
+  memset(reduce_param, 0, sizeof(ReduceParameter));
+  reduce_param->op_parameter_.type_ = primitive->Type();
+  auto reduce = reinterpret_cast<mindspore::lite::Reduce *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  reduce_param->keep_dims_ = reduce->GetKeepDims();
+  reduce_param->reduce_to_end_ = reduce->GetReduceToEnd();
+  reduce_param->coeff = reduce->GetCoeff();
+  auto axisVector = reduce->GetAxes();
+  if (axisVector.size() > REDUCE_MAX_AXES_NUM) {
+    MS_LOG(ERROR) << "Reduce axes size " << axisVector.size() << " exceed limit " << REDUCE_MAX_AXES_NUM;
+    free(reduce_param);
+    return nullptr;
+  }
+  reduce_param->num_axes_ = static_cast<int>(axisVector.size());
+  int i = 0;
+  for (auto iter = axisVector.begin(); iter != axisVector.end(); iter++) {
+    reduce_param->axes_[i++] = *iter;
+  }
+  reduce_param->mode_ = static_cast<int>(reduce->GetMode());
+  return reinterpret_cast<OpParameter *>(reduce_param);
+}
+
+Registry ReduceParameterRegistry(schema::PrimitiveType_Reduce, PopulateReduceParameter);
 
 namespace {
 constexpr size_t kInputSize = 1;

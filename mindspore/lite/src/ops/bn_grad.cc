@@ -16,6 +16,8 @@
 
 #include "src/ops/bn_grad.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE

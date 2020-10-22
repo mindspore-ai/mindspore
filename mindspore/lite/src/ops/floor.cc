@@ -16,6 +16,8 @@
 
 #include "src/ops/floor.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifndef PRIMITIVE_WRITEABLE
@@ -28,7 +30,10 @@ int Floor::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
   fbb->Finish(prim_offset);
   return RET_OK;
 }
-
+PrimitiveC *FloorCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Floor>(primitive); }
+Registry FloorRegistry(schema::PrimitiveType_Floor, FloorCreator);
 #endif
+Registry FloorParameterRegistry(schema::PrimitiveType_Floor, PopulateArithmeticSelf);
+
 }  // namespace lite
 }  // namespace mindspore

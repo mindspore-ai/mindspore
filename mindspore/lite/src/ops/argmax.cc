@@ -16,6 +16,9 @@
 
 #include "src/ops/argmax.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/arg_min_max_parameter.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -52,7 +55,28 @@ int ArgMax::GetTopK() const { return this->primitive_->value_as_ArgMax()->topK()
 bool ArgMax::GetKeepDims() const { return this->primitive_->value_as_ArgMax()->keepDims(); }
 int ArgMax::GetAxisType() const { return this->primitive_->value_as_ArgMax()->axisType(); }
 
+PrimitiveC *ArgMaxCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<ArgMax>(primitive); }
+Registry ArgMaxRegistry(schema::PrimitiveType_ArgMax, ArgMaxCreator);
 #endif
+
+OpParameter *PopulateArgMaxParameter(const mindspore::lite::PrimitiveC *primitive) {
+  ArgMinMaxParameter *arg_param = reinterpret_cast<ArgMinMaxParameter *>(malloc(sizeof(ArgMinMaxParameter)));
+  if (arg_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ArgMinMaxParameter failed.";
+    return nullptr;
+  }
+  memset(arg_param, 0, sizeof(ArgMinMaxParameter));
+  arg_param->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::ArgMax *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  arg_param->axis_ = param->GetAxis();
+  arg_param->topk_ = param->GetTopK();
+  arg_param->axis_type_ = param->GetAxisType();
+  arg_param->out_value_ = param->GetOutMaxValue();
+  arg_param->keep_dims_ = param->GetKeepDims();
+  return reinterpret_cast<OpParameter *>(arg_param);
+}
+
+Registry ArgMaxParameterRegistry(schema::PrimitiveType_ArgMax, PopulateArgMaxParameter);
 
 int ArgMax::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

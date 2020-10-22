@@ -16,6 +16,9 @@
 
 #include "src/ops/reverse_sequence.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/reverse_sequence.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -45,7 +48,30 @@ int ReverseSequence::UnPackToFlatBuilder(const schema::Primitive *primitive, fla
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *ReverseSequenceCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<ReverseSequence>(primitive);
+}
+Registry ReverseSequenceRegistry(schema::PrimitiveType_ReverseSequence, ReverseSequenceCreator);
+
 #endif
+
+OpParameter *PopulateReverseSequenceParameter(const mindspore::lite::PrimitiveC *primitive) {
+  ReverseSequenceParameter *reverse_sequence_param =
+    reinterpret_cast<ReverseSequenceParameter *>(malloc(sizeof(ReverseSequenceParameter)));
+  if (reverse_sequence_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ReverseSequenceParameter failed.";
+    return nullptr;
+  }
+  memset(reverse_sequence_param, 0, sizeof(ReverseSequenceParameter));
+  auto param =
+    reinterpret_cast<mindspore::lite::ReverseSequence *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  reverse_sequence_param->op_parameter_.type_ = primitive->Type();
+  reverse_sequence_param->seq_axis_ = param->GetSeqAxis();
+  reverse_sequence_param->batch_axis_ = param->GetBatchAxis();
+  return reinterpret_cast<OpParameter *>(reverse_sequence_param);
+}
+Registry ReverseSequenceParameterRegistry(schema::PrimitiveType_ReverseSequence, PopulateReverseSequenceParameter);
 
 int ReverseSequence::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   auto input = inputs.front();

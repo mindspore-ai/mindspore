@@ -15,6 +15,8 @@
  */
 
 #include "src/ops/softmax.h"
+#include "src/ops/ops_register.h"
+#include "nnacl/softmax_parameter.h"
 
 namespace mindspore {
 namespace lite {
@@ -69,7 +71,26 @@ int SoftMax::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *SoftMaxCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<SoftMax>(primitive); }
+Registry SoftMaxRegistry(schema::PrimitiveType_SoftMax, SoftMaxCreator);
 #endif
+
+OpParameter *PopulateSoftmaxParameter(const mindspore::lite::PrimitiveC *primitive) {
+  auto softmax_primitive =
+    reinterpret_cast<mindspore::lite::SoftMax *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  SoftmaxParameter *softmax_param = reinterpret_cast<SoftmaxParameter *>(malloc(sizeof(SoftmaxParameter)));
+  if (softmax_param == nullptr) {
+    MS_LOG(ERROR) << "malloc SoftmaxParameter failed.";
+    return nullptr;
+  }
+  memset(softmax_param, 0, sizeof(SoftmaxParameter));
+  softmax_param->op_parameter_.type_ = primitive->Type();
+  softmax_param->axis_ = softmax_primitive->GetAxis();
+  return reinterpret_cast<OpParameter *>(softmax_param);
+}
+
+Registry SoftMaxParameterRegistry(schema::PrimitiveType_SoftMax, PopulateSoftmaxParameter);
 
 int SoftMax::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

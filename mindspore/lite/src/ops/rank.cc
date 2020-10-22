@@ -16,6 +16,8 @@
 
 #include "src/ops/rank.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -28,6 +30,9 @@ int Rank::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *RankCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Rank>(primitive); }
+Registry RankRegistry(schema::PrimitiveType_Rank, RankCreator);
 #endif
 int Rank::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

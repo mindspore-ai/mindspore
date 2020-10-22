@@ -16,6 +16,9 @@
 
 #include "src/ops/skip_gram.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/skip_gram.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -50,7 +53,26 @@ int SkipGram::GetNgramSize() const { return this->primitive_->value_as_SkipGram(
 int SkipGram::GetMaxSkipSize() const { return this->primitive_->value_as_SkipGram()->maxSkipSize(); }
 bool SkipGram::GetIncludeAllNgrams() const { return this->primitive_->value_as_SkipGram()->includeAllGrams(); }
 
+PrimitiveC *SkipGramCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<SkipGram>(primitive);
+}
+Registry SkipGramRegistry(schema::PrimitiveType_SkipGram, SkipGramCreator);
 #endif
+OpParameter *PopulateSkipGramParameter(const mindspore::lite::PrimitiveC *primitive) {
+  SkipGramParameter *skipGramParameter = reinterpret_cast<SkipGramParameter *>(malloc(sizeof(SkipGramParameter)));
+  if (skipGramParameter == nullptr) {
+    MS_LOG(ERROR) << "malloc SkipGramParameter failed.";
+    return nullptr;
+  }
+  memset(skipGramParameter, 0, sizeof(SkipGramParameter));
+  skipGramParameter->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::SkipGram *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  skipGramParameter->ngram_size = param->GetNgramSize();
+  skipGramParameter->max_skip_size = param->GetMaxSkipSize();
+  skipGramParameter->include_all_ngrams = param->GetIncludeAllNgrams();
+  return reinterpret_cast<OpParameter *>(skipGramParameter);
+}
+Registry SkipGramParameterRegistry(schema::PrimitiveType_SkipGram, PopulateSkipGramParameter);
 
 int SkipGram::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

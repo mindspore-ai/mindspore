@@ -16,6 +16,8 @@
 
 #include "src/ops/bias_grad.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -74,6 +76,11 @@ std::vector<int> BiasGrad::GetAxis() const {
   auto fb_vector = this->primitive_->value_as_BiasGrad()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
+
+PrimitiveC *BiasGradCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<BiasGrad>(primitive);
+}
+Registry BiasGradRegistry(schema::PrimitiveType_BiasGrad, BiasGradCreator);
 #endif
 
 int BiasGrad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {

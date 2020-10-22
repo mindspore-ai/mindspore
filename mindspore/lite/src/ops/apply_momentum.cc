@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "src/ops/apply_momentum.h"
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -67,6 +69,11 @@ int ApplyMomentum::UnPackToFlatBuilder(const schema::Primitive *primitive, flatb
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *ApplyMomentumCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<ApplyMomentum>(primitive);
+}
+Registry ApplyMomentumRegistry(schema::PrimitiveType_ApplyMomentum, ApplyMomentumCreator);
 #endif
 
 int ApplyMomentum::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {

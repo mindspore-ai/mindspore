@@ -17,6 +17,8 @@
 
 #include "nnacl/lsh_projection_parameter.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -38,7 +40,29 @@ int LshProjection::UnPackToFlatBuilder(const schema::Primitive *primitive, flatb
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *LshProjectionCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<LshProjection>(primitive);
+}
+Registry LshProjectionRegistry(schema::PrimitiveType_LshProjection, LshProjectionCreator);
+
 #endif
+
+OpParameter *PopulateLshProjectionParameter(const mindspore::lite::PrimitiveC *primitive) {
+  LshProjectionParameter *lsh_project_param =
+    reinterpret_cast<LshProjectionParameter *>(malloc(sizeof(LshProjectionParameter)));
+  if (lsh_project_param == nullptr) {
+    MS_LOG(ERROR) << "malloc LshProjectionParameter failed.";
+    return nullptr;
+  }
+  memset(lsh_project_param, 0, sizeof(LshProjectionParameter));
+  lsh_project_param->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::LshProjection *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  lsh_project_param->lsh_type_ = param->GetLshType();
+  return reinterpret_cast<OpParameter *>(lsh_project_param);
+}
+Registry LshProjectionParameterRegistry(schema::PrimitiveType_LshProjection, PopulateLshProjectionParameter);
+
 int LshProjection::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   if (inputs_.size() != kDoubleNum && inputs_.size() != kMultiNum) {
     MS_LOG(ERROR) << "inputs to LshProjection operator should be 2 or 3, but " << inputs_.size() << " is given.";

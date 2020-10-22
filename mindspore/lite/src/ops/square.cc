@@ -16,6 +16,8 @@
 
 #include "src/ops/square.h"
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -29,6 +31,11 @@ int Square::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *SquareCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Square>(primitive); }
+Registry SquareRegistry(schema::PrimitiveType_Square, SquareCreator);
 #endif
+Registry SquareGradParameterRegistry(schema::PrimitiveType_Square, PopulateArithmeticSelf);
+
 }  // namespace lite
 }  // namespace mindspore

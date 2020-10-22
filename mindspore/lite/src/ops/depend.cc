@@ -17,6 +17,8 @@
 #include <vector>
 #include <memory>
 
+#include "src/ops/ops_register.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -52,6 +54,9 @@ int Depend::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *DependCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Depend>(primitive); }
+Registry DependRegistry(schema::PrimitiveType_Depend, DependCreator);
 #endif
 }  // namespace lite
 }  // namespace mindspore

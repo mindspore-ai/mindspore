@@ -16,6 +16,9 @@
 
 #include "src/ops/unique.h"
 
+#include "src/ops/ops_register.h"
+#include "nnacl/fp32/unique.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -39,7 +42,23 @@ int Unique::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *UniqueCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Unique>(primitive); }
+Registry UniqueRegistry(schema::PrimitiveType_Unique, UniqueCreator);
 #endif
+
+OpParameter *PopulateUniqueParameter(const mindspore::lite::PrimitiveC *primitive) {
+  UniqueParameter *unique_param = reinterpret_cast<UniqueParameter *>(malloc(sizeof(UniqueParameter)));
+  if (unique_param == nullptr) {
+    MS_LOG(ERROR) << "malloc UniqueParameter failed.";
+    return nullptr;
+  }
+  memset(unique_param, 0, sizeof(UniqueParameter));
+  unique_param->op_parameter_.type_ = primitive->Type();
+  return reinterpret_cast<OpParameter *>(unique_param);
+}
+
+Registry UniqueParameterRegistry(schema::PrimitiveType_Unique, PopulateUniqueParameter);
 
 int Unique::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
