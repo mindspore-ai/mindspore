@@ -156,6 +156,48 @@ def bprop_batchmatmul(self):
     return bprop
 
 
+@bprop_getters.register(P.TensorDot)
+def bprop_tensordot(self):
+    """Grad definition for `TensorDot` operation."""
+    mul_op_x1 = P.MatMul(transpose_a=False, transpose_b=True)
+    mul_op_x2 = P.MatMul(transpose_a=True, transpose_b=False)
+    invert_permutation_op = P.InvertPermutation()
+    transpose_op = P.Transpose()
+    reshape_op = P.Reshape()
+
+    # pull transformation specifics from P.TensorDot class
+    x1_transpose_fwd = tuple(self.x1_transpose_fwd)
+    x2_transpose_fwd = tuple(self.x2_transpose_fwd)
+    x1_reshape_fwd = tuple(self.x1_reshape_fwd)
+    x2_reshape_fwd = tuple(self.x2_reshape_fwd)
+    dout_reshape = (self.x1_reshape_fwd[0], self.x2_reshape_fwd[1])
+
+    # precalculated in fwd pass due to easier computation
+    x1_reshape_back = tuple(self.x1_reshape_back)
+    x2_reshape_back = tuple(self.x2_reshape_back)
+
+    def bprop(x1, x2, out, dout):
+        # reshape dy values to 2D for MatMul
+        dout_reshaped = reshape_op(dout, dout_reshape)
+        # transform inputs to forward pass equivalents
+        x1_transpose = transpose_op(x1, x1_transpose_fwd)
+        x2_transpose = transpose_op(x2, x2_transpose_fwd)
+        x1_reshape = reshape_op(x1_transpose, x1_reshape_fwd)
+        x2_reshape = reshape_op(x2_transpose, x2_reshape_fwd)
+        # calculate dx values for x1 and x2
+        dx1_interim = mul_op_x1(dout_reshaped, x2_reshape)
+        dx2_interim = mul_op_x2(x1_reshape, dout_reshaped)
+        # reverse transformations on dx values for both inputs
+        dx1_reshape = reshape_op(dx1_interim, x1_reshape_back)
+        dx2_reshape = reshape_op(dx2_interim, x2_reshape_back)
+        dx1_retranspose_axes = invert_permutation_op(x1_transpose_fwd)
+        dx2_retranspose_axes = invert_permutation_op(x2_transpose_fwd)
+        dx1_transpose = transpose_op(dx1_reshape, dx1_retranspose_axes)
+        dx2_transpose = transpose_op(dx2_reshape, dx2_retranspose_axes)
+        return dx1_transpose, dx2_transpose
+    return bprop
+
+
 @bprop_getters.register(P.TensorAdd)
 def get_bprop_tensor_add(self):
     """Grad definition for `TensorAdd` operation."""
