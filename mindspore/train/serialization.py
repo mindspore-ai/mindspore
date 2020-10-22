@@ -570,8 +570,8 @@ def _quant_export(network, *inputs, file_format, **kwargs):
     supported_formats = ['AIR', 'MINDIR']
     quant_mode_formats = ['AUTO', 'MANUAL']
 
-    mean = kwargs['mean'] if kwargs.get('mean', None) else 127.5
-    std_dev = kwargs['std_dev'] if kwargs.get('std_dev', None) else 127.5
+    mean = 127.5 if kwargs.get('mean', None) is None else kwargs['mean']
+    std_dev = 127.5 if kwargs.get('std_dev', None) is None else kwargs['std_dev']
 
     quant_mode = kwargs['quant_mode']
     if quant_mode not in quant_mode_formats:
