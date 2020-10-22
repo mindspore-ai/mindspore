@@ -31,7 +31,7 @@ class TensorAddV2GpuKernel : public GpuKernel {
  public:
   TensorAddV2GpuKernel()
       : element_num_(1) {}
-  ~AddNGpuFwdKernel() override  = default
+  ~TensorAddV2GpuKernel() override  = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
