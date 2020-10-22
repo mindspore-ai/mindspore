@@ -98,17 +98,27 @@ int Benchmark::ReadInputFile() {
         MS_LOG(ERROR) << "ReadFile return nullptr";
         return RET_ERROR;
       }
-      auto tensor_data_size = cur_tensor->Size();
-      if (size != tensor_data_size) {
-        std::cerr << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size
-                  << std::endl;
-        MS_LOG(ERROR) << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size;
-        delete bin_buf;
-        return RET_ERROR;
+      if (cur_tensor->data_type() == kObjectTypeString) {
+        std::string str(bin_buf, size);
+        auto ret = StringsToMSTensor({str}, cur_tensor);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "write strings to tensor failed";
+          delete[] bin_buf;
+          return RET_ERROR;
+        }
+      } else {
+        auto tensor_data_size = cur_tensor->Size();
+        if (size != tensor_data_size) {
+          std::cerr << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size
+                    << std::endl;
+          MS_LOG(ERROR) << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size;
+          delete[] bin_buf;
+          return RET_ERROR;
+        }
+        auto input_data = cur_tensor->MutableData();
+        memcpy(input_data, bin_buf, tensor_data_size);
       }
-      auto input_data = cur_tensor->MutableData();
-      memcpy(input_data, bin_buf, tensor_data_size);
-      delete[](bin_buf);
+      delete[] bin_buf;
     }
   }
   return RET_OK;

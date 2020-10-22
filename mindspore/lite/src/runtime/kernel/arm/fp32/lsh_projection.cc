@@ -23,7 +23,6 @@
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LshProjection;
 
@@ -37,53 +36,77 @@ int LshProjectionCPUKernel::Init() {
 
 int LshProjectionCPUKernel::ReSize() { return RET_OK; }
 
+int LshProjectionRun(void *cdata, int task_id) {
+  auto kernel = reinterpret_cast<LshProjectionCPUKernel *>(cdata);
+  return kernel->DoExecute(task_id);
+}
+
 int LshProjectionCPUKernel::Run() {
-  auto input_tensor0 = in_tensors_.at(0);
-  auto input_tensor1 = in_tensors_.at(1);
-  auto out_tensor0 = out_tensors_.at(0);
+  auto input0_tensor = in_tensors_.at(0);
+  auto input1_tensor = in_tensors_.at(1);
+  auto out_tensor = out_tensors_.at(0);
 
-  hash = reinterpret_cast<float *>(input_tensor0->MutableData());
-  in_data = reinterpret_cast<char *>(input_tensor1->MutableData());
-  weight = in_tensors_.size() == 2 ? nullptr : reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
-  output = reinterpret_cast<int32_t *>(out_tensor0->MutableData());
+  hash_seed_ = reinterpret_cast<float *>(input0_tensor->MutableData());
+  feature_ = reinterpret_cast<int32_t *>(input1_tensor->MutableData());
+  weight_ = in_tensors_.size() == 2 ? nullptr : reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+  output_ = reinterpret_cast<int32_t *>(out_tensor->MutableData());
 
-  const size_t seed_size = sizeof(float);
-  const size_t input_item_size =
-    input_tensor1->ElementsNum() * sizeof(input_tensor1->data_type()) / input_tensor1->DimensionSize(0);
-  const size_t key_size = seed_size + input_item_size;
-  lsh_param_->seed_size_ = seed_size;
-  lsh_param_->in_item_size_ = input_item_size;
-  lsh_param_->key_size_ = key_size;
-  lsh_param_->in_item_num_ = input_tensor1->DimensionSize(0);
-  memcpy(lsh_param_->hash_shape_, input_tensor0->shape().data(), sizeof(int) * input_tensor0->shape().size());
-
-  elements_num_ = input_tensor0->DimensionSize(0);
-  count_unit_ = thread_num_ > 1 ? UP_DIV(elements_num_, thread_num_) : elements_num_;
-  auto ret = ParallelLaunch(this->context_->thread_pool_, LshProjectionRun, this, thread_num_);
+  param_->hash_buff_size_ = sizeof(float) + sizeof(int32_t);
+  param_->feature_num_ = input1_tensor->ElementsNum();
+  param_->hash_shape_[0] = input0_tensor->DimensionSize(0);
+  param_->hash_shape_[1] = input0_tensor->DimensionSize(1);
+  param_->thread_stride_ = op_parameter_->thread_num_ > 1 ? UP_DIV(param_->hash_shape_[0], op_parameter_->thread_num_)
+                                                          : param_->hash_shape_[0];
+  auto ret = MallocKeys();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  ret = ParallelLaunch(this->context_->thread_pool_, LshProjectionRun, this, op_parameter_->thread_num_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LshProjection kernel parallel launch failed";
+  }
+  FreeKeys();
   return ret;
 }
 
-int LshProjectionRun(void *cdata, int task_id) {
-  auto lsh_projection = reinterpret_cast<LshProjectionCPUKernel *>(cdata);
-  lsh_projection->DoExecute(task_id);
+int LshProjectionCPUKernel::MallocKeys() {
+  param_->hash_buffs_ = static_cast<char **>(context_->allocator->Malloc(op_parameter_->thread_num_ * sizeof(char *)));
+  if (param_->hash_buffs_ == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    return RET_ERROR;
+  }
+  for (int i = 0; i < op_parameter_->thread_num_; i++) {
+    param_->hash_buffs_[i] = static_cast<char *>(context_->allocator->Malloc(param_->hash_buff_size_));
+    if (param_->hash_buffs_[i] == nullptr) {
+      FreeKeys();
+      MS_LOG(ERROR) << "Memory allocation failed";
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 
-int LshProjectionCPUKernel::DoExecute(int task_id) {
-  int64_t real_dst_count = MSMIN(elements_num_ - task_id * count_unit_, count_unit_);
-  lsh_param_->real_dst_count = real_dst_count;
-  lsh_param_->task_id_ = task_id;
-  lsh_param_->count_unit_ = count_unit_;
-  if (real_dst_count <= 0) {
-    return lite::RET_OK;
+void LshProjectionCPUKernel::FreeKeys() {
+  if (param_->hash_buffs_ != nullptr) {
+    for (int i = 0; i < op_parameter_->thread_num_; i++) {
+      context_->allocator->Free(param_->hash_buffs_[i]);
+    }
+    context_->allocator->Free(param_->hash_buffs_);
   }
+}
 
-  switch (lsh_param_->lsh_type_) {
+int LshProjectionCPUKernel::DoExecute(int task_id) {
+  int cur_group_num = MSMIN(param_->hash_shape_[0] - task_id * param_->thread_stride_, param_->thread_stride_);
+  int start = task_id * param_->thread_stride_;
+  int end = start + cur_group_num;
+  char *hash_buff = param_->hash_buffs_[task_id];
+
+  switch (param_->lsh_type_) {
     case schema::LshProjectionType_SPARSE:
-      LshProjectionSparse(hash, in_data, weight, output, lsh_param_);
+      LshProjectionSparse(hash_seed_, feature_, weight_, output_, param_, start, end, hash_buff);
       break;
     case schema::LshProjectionType_DENSE:
-      LshProjectionDense(hash, in_data, weight, output, lsh_param_);
+      LshProjectionDense(hash_seed_, feature_, weight_, output_, param_, start, end, hash_buff);
       break;
     default:
       return RET_ERROR;
@@ -91,50 +114,43 @@ int LshProjectionCPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int LshProjectionCPUKernel::GetSignBit(char *in_data, float *weight, float seed, LshProjectionParameter *para) {
+int LshProjectionCPUKernel::GetSignBit(int32_t *feature_, float *weight_, float seed, LshProjectionParameter *para,
+                                       char *hash_buff) {
   double score = 0.0;
-  for (int i = 0; i < para->in_item_num_; i++) {
-    char *key = static_cast<char *>(context_->allocator->Malloc(lsh_param_->key_size_));
-    if (key == nullptr) {
-      MS_LOG(ERROR) << "malloc key failed.";
-      return RET_ERROR;
-    }
-    memcpy(key, &seed, para->seed_size_);
-    memcpy(key + para->seed_size_, in_data, para->in_item_size_);
-    in_data += para->in_item_size_;
-    int64_t hash_i = static_cast<int64_t>(mindspore::lite::StringHash64(key, para->key_size_));
+  for (int i = 0; i < para->feature_num_; i++) {
+    memcpy(hash_buff, &seed, sizeof(float));
+    memcpy(hash_buff + sizeof(float), &(feature_[i]), sizeof(int32_t));
+    int64_t hash_i = static_cast<int64_t>(lite::StringHash64(hash_buff, para->hash_buff_size_));
     double hash_d = static_cast<double>(hash_i);
-    if (weight == nullptr) {
+    if (weight_ == nullptr) {
       score += hash_d;
     } else {
-      score += weight[i] * hash_d;
+      score += weight_[i] * hash_d;
     }
-    context_->allocator->Free(key);
   }
   return (score > 0) ? 1 : 0;
 }
 
-void LshProjectionCPUKernel::LshProjectionSparse(float *hash, char *in_data, float *weight, int32_t *output,
-                                                 LshProjectionParameter *para) {
-  int start = para->task_id_ * para->count_unit_;
-  int end = start + para->real_dst_count;
+void LshProjectionCPUKernel::LshProjectionSparse(float *hash_seed_, int32_t *feature_, float *weight_, int32_t *output_,
+                                                 LshProjectionParameter *para, int32_t start, int32_t end,
+                                                 char *hash_buff) {
   for (int i = start; i < end; i++) {
     int32_t hash_sign = 0;
     for (int j = 0; j < para->hash_shape_[1]; j++) {
-      int bit = GetSignBit(in_data, weight, hash[i * para->hash_shape_[1] + j], para);
+      int bit = GetSignBit(feature_, weight_, hash_seed_[i * para->hash_shape_[1] + j], para, hash_buff);
       hash_sign = (hash_sign << 1) | bit;
     }
-    output[i] = hash_sign + i * (1 << para->hash_shape_[1]);
+    output_[i] = hash_sign + i * (1 << para->hash_shape_[1]);
   }
 }
 
-void LshProjectionCPUKernel::LshProjectionDense(float *hash, char *in_data, float *weight, int32_t *output,
-                                                LshProjectionParameter *para) {
-  int start = para->task_id_ * para->count_unit_;
-  int end = start + para->real_dst_count;
+void LshProjectionCPUKernel::LshProjectionDense(float *hash_seed_, int32_t *feature_, float *weight_, int32_t *output_,
+                                                LshProjectionParameter *para, int32_t start, int32_t end,
+                                                char *hash_buff) {
   for (int i = start; i < end; i++) {
     for (int j = 0; j < para->hash_shape_[1]; j++) {
-      output[i * para->hash_shape_[1] + j] = GetSignBit(in_data, weight, hash[i * para->hash_shape_[1] + j], para);
+      output_[i * para->hash_shape_[1] + j] =
+        GetSignBit(feature_, weight_, hash_seed_[i * para->hash_shape_[1] + j], para, hash_buff);
     }
   }
 }
@@ -144,16 +160,6 @@ kernel::LiteKernel *CpuLshProjectionFp32KernelCreator(const std::vector<lite::Te
                                                       OpParameter *op_parameter, const lite::InnerContext *ctx,
                                                       const kernel::KernelKey &desc,
                                                       const mindspore::lite::PrimitiveC *primitive) {
-  if (op_parameter == nullptr) {
-    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
-    return nullptr;
-  }
-  if (ctx == nullptr) {
-    MS_LOG(ERROR) << "Input context is nullptr!";
-    free(op_parameter);
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_LshProjection);
   auto *kernel = new (std::nothrow) LshProjectionCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new LshProjectionCPUKernel fail!";
@@ -171,5 +177,4 @@ kernel::LiteKernel *CpuLshProjectionFp32KernelCreator(const std::vector<lite::Te
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LshProjection, CpuLshProjectionFp32KernelCreator)
-
 }  // namespace mindspore::kernel
