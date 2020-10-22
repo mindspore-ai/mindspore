@@ -129,6 +129,24 @@ STATUS OnnxPowParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
     return RET_NULL_PTR;
   }
 
+  const auto &onnx_pow_power = onnx_node.input(1);
+  auto nodeIter =
+    std::find_if(onnx_graph.node().begin(), onnx_graph.node().end(),
+                 [onnx_pow_power](const onnx::NodeProto &proto) { return proto.output(0) == onnx_pow_power; });
+  if (nodeIter == onnx_graph.node().end()) {
+    MS_LOG(ERROR) << "can not find node: " << onnx_pow_power;
+    return RET_ERROR;
+  }
+  const float *pW = nullptr;
+  for (const auto &attrPower : nodeIter->attribute()) {
+    if (attrPower.name() == "value") {
+      const auto &t = attrPower.t();
+      pW = reinterpret_cast<const float *>(t.raw_data().data());
+    }
+  }
+  attr->power = *pW;
+  attr->scale = 1.0f;
+  attr->shift = 0.0f;
   op->primitive->value.type = schema::PrimitiveType_Power;
   op->primitive->value.value = attr.release();
   return RET_OK;
@@ -675,7 +693,7 @@ OnnxNodeRegistrar g_onnxInt8AddParser("Int8Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxSubParser("Sub", new OnnxSubParser());
 OnnxNodeRegistrar g_onnxMulParser("Mul", new OnnxMulParser());
 OnnxNodeRegistrar g_onnxDivParser("Div", new OnnxDivParser());
-OnnxNodeRegistrar g_onnxPowParser("Power", new OnnxPowParser());
+OnnxNodeRegistrar g_onnxPowParser("Pow", new OnnxPowParser());
 OnnxNodeRegistrar g_onnxEqualParser("Equal", new OnnxEqualParser());
 OnnxNodeRegistrar g_onnxLessParser("Less", new OnnxLessParser());
 OnnxNodeRegistrar g_onnxGreaterParser("Greater", new OnnxGreaterParser());
