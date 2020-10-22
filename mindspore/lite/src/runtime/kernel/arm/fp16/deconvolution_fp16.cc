@@ -233,8 +233,7 @@ kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *>
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&
       (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1)) {
-    /* DeConvWinogradFp16CPUKernel */
-    kernel = new (std::nothrow) kernel::DeConvolutionFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+    kernel = new (std::nothrow) kernel::DeConvWinogradFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else {
     kernel = new (std::nothrow) kernel::DeConvolutionFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   }
@@ -266,5 +265,4 @@ kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *>
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_DeConv2D, CpuDeConvFp16KernelCreator)
 }  // namespace mindspore::kernel

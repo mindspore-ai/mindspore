@@ -85,23 +85,6 @@ std::string RealPath(const char *path) {
   return res;
 }
 
-int WriteToBin(const std::string &file_path, void *data, size_t size) {
-  std::ofstream out_file;
-
-  out_file.open(file_path.c_str(), std::ios::binary);
-  if (!out_file.good()) {
-    MS_LOG(ERROR) << "file is bad";
-    return -1;
-  }
-
-  if (!out_file.is_open()) {
-    MS_LOG(ERROR) << "file open failed";
-    return -1;
-  }
-  out_file.write(reinterpret_cast<char *>(data), size);
-  return 0;
-}
-
 int CompareOutputData(float *output_data, size_t output_size, float *correct_data, size_t data_size) {
   if (output_size != data_size) {
     printf("compare failed, output_size %zu isn't equal to data_size %zu.\n", output_size, data_size);

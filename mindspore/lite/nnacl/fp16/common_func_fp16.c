@@ -50,5 +50,9 @@ void PostConvFuncFp16C8(const float16_t *c8_out, float16_t *nhwc_out, const floa
 
 void PostConvFuncFp16C4(const float16_t *c4_out, float16_t *nhwc_out, const float16_t *bias, size_t oc, size_t plane,
                         size_t plane_stride, ActType act_type) {
-  PostConvFuncCommFp16(nhwc_out, c4_out, bias, oc, plane, oc, plane_stride, act_type, C4NUM);
+  size_t oc4mod = oc % C4NUM;
+  size_t oc4div = oc - oc4mod;
+  size_t stride_size = (plane_stride - plane) * C4NUM * sizeof(float16_t);
+  PostFuncBiasReluC4Fp16(nhwc_out, c4_out, bias, oc4div, oc4mod, plane, stride_size, act_type);
+  return;
 }

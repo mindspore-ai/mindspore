@@ -48,7 +48,15 @@ void WriteToTxt(const std::string &file_path, void *data, size_t element_size) {
   out_file.close();
 }
 
-int WriteToBin(const std::string &file_path, void *data, size_t size);
+inline int WriteToBin(const std::string &file_path, void *data, size_t size) {
+  std::ofstream out_file;
+  out_file.open(file_path.c_str(), std::ios::binary);
+  if (!out_file.good() || !out_file.is_open()) {
+    return -1;
+  }
+  out_file.write(reinterpret_cast<char *>(data), size);
+  return 0;
+}
 
 int CompareOutputData(float *output_data, size_t output_num, float *correct_data, size_t data_size);
 int CompareOutput(float *output_data, size_t output_num, std::string file_path);

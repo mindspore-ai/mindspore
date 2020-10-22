@@ -24,7 +24,7 @@ void DeConvWgInputPackFp16(float16_t *src_ptr, float16_t *dst_ptr, int channel, 
   float16_t *dst = dst_ptr;
 
   for (int ic = 0; ic < ic4div; ic++) {
-    memcpy(dst, src, C4NUM * sizeof(float16_t));
+    vst1_f16(dst, vld1_f16(src));
     dst += stride;
     src += C4NUM;
   }
