@@ -16,6 +16,7 @@
 """Implementation for internal polymorphism `in` operations."""
 
 from . import _constexpr_utils as const_utils
+from . import _compile_utils as compile_utils
 from ... import functional as F
 from ...composite import base
 
@@ -99,3 +100,33 @@ def _str_in_dict(x, y):
        bool, if x in y return true, x not in y return false.
    """
     return F.in_dict(x, y)
+
+
+@in_.register("Tensor", "List")
+def _tensor_in_list(x, y):
+    """
+    Determine if a tensor in a list.
+
+    Args:
+       x: Tensor
+       y: List
+
+    Returns:
+       bool, if x in y return true, x not in y return false.
+   """
+    return compile_utils.tensor_in_sequence(x, y)
+
+
+@in_.register("Tensor", "Tuple")
+def _tensor_in_tuple(x, y):
+    """
+    Determine if a tensor in a tuple.
+
+    Args:
+       x: Tensor
+       y: Tuple
+
+    Returns:
+       bool, if x in y return true, x not in y return false.
+   """
+    return compile_utils.tensor_in_sequence(x, y)

@@ -39,13 +39,16 @@ TENSOR_GETITEM = "tensor getitem"
 SET_ITEM_BY_ONE_TENSOR = 0
 SET_ITEM_BY_TUPLE_OF_TENSOR = 1
 
+
 @constexpr
 def raise_value_error(msg):
     raise ValueError(msg)
 
+
 @constexpr
 def raise_index_error(msg):
     raise IndexError(msg)
+
 
 @constexpr
 def raise_type_error(msg):
@@ -704,7 +707,7 @@ def get_stride_info_from_slice(data_shape, slice_index):
 def get_stride_info_from_integer(data_shape, number):
     """Get stride info from a integer"""
     begin_strides = [number]
-    end_strides = [number+1]
+    end_strides = [number + 1]
     step_strides = [1]
     for end in data_shape[1:]:
         begin_strides.append(0)
@@ -720,7 +723,7 @@ def get_slice_stride(dim_size, index_slice):
     stop_default = dim_size
     if step < 0:
         start_default = -1
-        stop_default = -(dim_size+1)
+        stop_default = -(dim_size + 1)
     start = start_default if index_slice.start is None else index_slice.start
     stop = stop_default if index_slice.stop is None else index_slice.stop
     return start, stop, step
@@ -775,3 +778,9 @@ def mstype_eq(x, y):
     if x == y:
         return True
     return False
+
+
+@constexpr
+def scalar_to_tensor(x):
+    """Convert a scalar to a tensor"""
+    return Tensor(x)
