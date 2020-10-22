@@ -241,9 +241,9 @@ class FakeQuantWithMinMaxVarsGradient(PrimitiveWithInfer):
         - **max** (Tensor) - Value of the max range of the input data x.
 
     Outputs:
-        - **backprops_wrt_x** (Tensor) - The gradient of input x, with the same shape date type as input x.
-        - **backprops_wrt_min** (Tensor) - The gradient of input min, with the same shape date type as input min.
-        - **backprops_wrt_max** (Tensor) - The gradient of input max, with the same shape date type as input max.
+        - **backprops_wrt_x** (Tensor) - The gradient of input x, with the same shape and date type as input x.
+        - **backprops_wrt_min** (Tensor) - The gradient of input min, with the same shape and date type as input min.
+        - **backprops_wrt_max** (Tensor) - The gradient of input max, with the same shape and date type as input max.
 
     Examples:
         >>> gradients = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
@@ -356,9 +356,9 @@ class FakeQuantWithMinMaxVarsPerChannelGradient(PrimitiveWithInfer):
         - **max** (Tensor) - Value of the max range of the input data x.
 
     Outputs:
-        - **backprops_wrt_x** (Tensor) - The gradient of input x, with the same shape date type as input x.
-        - **backprops_wrt_min** (Tensor) - The gradient of input min, with the same shape date type as input min.
-        - **backprops_wrt_max** (Tensor) - The gradient of input max, with the same shape date type as input max.
+        - **backprops_wrt_x** (Tensor) - The gradient of input x, with the same shape and date type as input x.
+        - **backprops_wrt_min** (Tensor) - The gradient of input min, with the same shape and date type as input min.
+        - **backprops_wrt_max** (Tensor) - The gradient of input max, with the same shape and date type as input max.
 
     Examples:
         >>> gradients = Tensor(np.random.rand(3, 16, 3, 4), mstype.float32)

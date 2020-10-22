@@ -489,6 +489,7 @@ class DynamicShape(Primitive):
         self.add_prim_attr('is_dynamic_shape', True)
         self.add_prim_attr("dynamic_shape_depends", [0])
 
+
 class Squeeze(PrimitiveWithInfer):
     """
     Returns a tensor with the same type but dimensions of 1 are removed based on `axis`.
