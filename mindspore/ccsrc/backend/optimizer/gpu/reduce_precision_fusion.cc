@@ -16,13 +16,13 @@
 #include "backend/optimizer/gpu/reduce_precision_fusion.h"
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
+#include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"
-#include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -47,7 +47,18 @@ void ReducePrecision(const FuncGraphPtr &graph, const AnfNodePtr &node, size_t i
   builder.SetProcessor(kernel::Processor::CUDA);
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
 }
-
+void ProcessTupleGetItem(const FuncGraphPtr &graph, const AnfNodePtr &node, size_t node_index, const TypeId &src_type,
+                         const TypeId &cast_type) {
+  auto used_node_list = GetRealNodeUsedListByOutputIdx(graph, node, node_index);
+  for (size_t i = 0; i < used_node_list->size(); i++) {
+    auto used_node = used_node_list->at(i).first;
+    auto used_node_index = used_node_list->at(i).second - 1;
+    if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
+      MS_LOG(EXCEPTION) << "TupleGetItem connect with TupleGetItem.";
+    }
+    ReducePrecision(graph, used_node, used_node_index, src_type, cast_type);
+  }
+}
 }  // namespace
 bool ReducePrecisionFusion::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -73,6 +84,9 @@ bool ReducePrecisionFusion::Run(const FuncGraphPtr &graph) {
           for (size_t j = 0; j < used_node_list->size(); j++) {
             auto used_node = used_node_list->at(j).first;
             auto used_node_index = used_node_list->at(j).second - 1;
+            if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
+              ProcessTupleGetItem(graph, used_node, used_node_index, deviceType, inferType);
+            }
             ReducePrecision(graph, used_node, used_node_index, deviceType, inferType);
           }
         }
