@@ -706,6 +706,8 @@ Status TensorVectorToBatchTensor(const std::vector<std::shared_ptr<Tensor>> &inp
   }
   return Status::OK();
 }
+
+#ifndef ENABLE_ANDROID
 template <typename T>
 struct UniqueOpHashMap {
   using map_type = std::unordered_map<T, int32_t>;
@@ -778,6 +780,7 @@ Status Unique(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
   return Status::OK();
 }
+#endif
 
 }  // namespace dataset
 }  // namespace mindspore
