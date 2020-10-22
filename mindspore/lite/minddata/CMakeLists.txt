@@ -52,6 +52,7 @@ AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/datasetops MINDDATA_ENGINE_DATASETOP
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/datasetops/map_op MINDDATA_ENGINE_DATASETOPS_MAPOP_SRC_FILES)
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/datasetops/source MINDDATA_ENGINE_DATASETOPS_SOURCE_SRC_FILES)
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/datasetops/source/sampler MINDDATA_ENGINE_DATASETOPS_SOURCE_SAMPLER_SRC_FILES)
+AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/ir/cache MINDDATA_ENGINE_IR_CACHE_SRC_FILES)
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/ir/datasetops MINDDATA_ENGINE_IR_DATASETOPS_SRC_FILES)
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/ir/datasetops/source MINDDATA_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES)
 
@@ -124,10 +125,9 @@ if (BUILD_MINDDATA STREQUAL "full")
         "${MINDDATA_DIR}/engine/opt/pre/cache_error_pass.cc"
         )
 
-    #list(REMOVE_ITEM MINDDATA_KERNELS_IMAGE_SRC_FILES
-        #"${MINDDATA_DIR}/kernels/image/affine_op.cc"
-        #"${MINDDATA_DIR}/kernels/image/cutmix_batch_op.cc"
-        #"${MINDDATA_DIR}/kernels/image/random_affine_op.cc"
+    list(REMOVE_ITEM MINDDATA_ENGINE_IR_CACHE_SRC_FILES
+        "${MINDDATA_DIR}/engine/ir/cache/dataset_cache_impl.cc"
+        )
 
     list(REMOVE_ITEM MINDDATA_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         "${MINDDATA_DIR}/engine/ir/datasetops/source/generator_node.cc"
@@ -137,7 +137,9 @@ if (BUILD_MINDDATA STREQUAL "full")
         "${MINDDATA_DIR}/engine/ir/datasetops/bucket_batch_by_length_node.cc"
         "${MINDDATA_DIR}/engine/ir/datasetops/build_vocab_node.cc"
         )
-
+    list(REMOVE_ITEM MINDDATA_KERNELS_DATA_SRC_FILES
+        "${MINDDATA_DIR}/kernels/data/unique_op.cc"
+	)
     include_directories("${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
 
     if (BUILD_MINDDATA_EXAMPLE AND (PLATFORM_ARM32 OR PLATFORM_ARM64))
@@ -156,6 +158,7 @@ if (BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_ENGINE_DATASETOPS_SOURCE_SRC_FILES}
         ${MINDDATA_ENGINE_DATASETOPS_SOURCE_SAMPLER_SRC_FILES}
         ${MINDDATA_ENGINE_IR_DATASETOPS_SRC_FILES}
+	${MINDDATA_ENGINE_IR_CACHE_SRC_FILES}
         ${MINDDATA_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES}
         ${MINDDATA_ENGINE_OPT_SRC_FILES}
         ${MINDDATA_ENGINE_OPT_OPTIONAL_SRC_FILES}
