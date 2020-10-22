@@ -46,6 +46,8 @@ class TransposeCPUKernel : public LiteKernel {
   float *out_data_;
   int *in_shape_ = nullptr;
   int *out_shape_ = nullptr;
+  int *dim_size_ = nullptr;
+  int *position_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
