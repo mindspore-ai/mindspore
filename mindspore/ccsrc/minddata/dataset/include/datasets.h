@@ -530,6 +530,22 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return Shared pointer to the Iterator
   std::shared_ptr<Iterator> CreateIterator(std::vector<std::string> columns = {});
 
+#ifndef ENABLE_ANDROID
+  /// \brief Function to create a Saver to save the dynamic data processed by the dataset pipeline
+  /// \note Usage restrictions:
+  ///     1. Supported dataset formats: 'mindrecord' only
+  ///     2. To save the samples in order, set dataset's shuffle to false and num_files to 1.
+  ///     3. Before calling the function, do not use batch operator, repeat operator or data augmentation operators
+  ///        with random attribute in map operator.
+  ///     4. Mindrecord does not support bool, uint64, multi-dimensional uint8(drop dimension) nor
+  ///        multi-dimensional string.
+  /// \param[in] file_name Path to dataset file
+  /// \param[in] num_files Number of dataset files (default=1)
+  /// \param[in] file_type Dataset format (default="mindrecord")
+  /// \return Returns true if no error encountered else false
+  bool Save(std::string dataset_path, int32_t num_files = 1, std::string dataset_type = "mindrecord");
+#endif
+
   /// \brief Function to create a BatchNode
   /// \notes Combines batch_size number of consecutive rows into batches
   /// \param[in] batch_size Path to the root directory that contains the dataset
