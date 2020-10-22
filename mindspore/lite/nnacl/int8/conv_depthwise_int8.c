@@ -140,9 +140,13 @@ void ConvDwInt8(int8_t *output_data, int32_t *row_buffer, const int8_t *input_da
 
 /*conv depthwise 3x3 int8 begin*/
 bool CheckIfUse3X3(const ConvParameter *conv_param, int channel) {
-  bool use_3x3 = conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3 && conv_param->stride_h_ == 1 &&
-                 conv_param->stride_w_ == 1 && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 &&
-                 (channel % 8 == 0);
+  bool use_3x3 = conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3 &&
+                 (conv_param->stride_h_ == 1 || conv_param->stride_h_ == 2) &&
+                 (conv_param->stride_w_ == 1 || conv_param->stride_w_ == 2) &&
+                 conv_param->stride_h_ == conv_param->stride_w_ &&
+                 (conv_param->pad_u_ == 0 || conv_param->pad_u_ == 1) &&
+                 (conv_param->pad_l_ == 0 || conv_param->pad_l_ == 1) && conv_param->pad_u_ == conv_param->pad_l_ &&
+                 conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 && (channel % 8 == 0);
   return use_3x3;
 }
 
@@ -159,10 +163,10 @@ void InitInputBuffer(int8_t *buffer, const int8_t *input, const ConvParameter *c
   }
 }
 
-// stride 1
 void ConvDw3x3Int8Window(int8_t *output, const int8_t *buffer, const int16_t *weight, const int32_t *bias, int col_size,
                          int row_size, int channel, int output_h, int output_w, int8_t in_zp, int32_t out_zp,
-                         int out_multiplier, int left_shift, int right_shift, int32_t acc_min, int32_t acc_max) {
+                         int out_multiplier, int left_shift, int right_shift, int32_t acc_min, int32_t acc_max,
+                         int stride) {
   for (int w = 0; w < output_w; w++) {
     int tmp_buffer[C8NUM];
     for (int i = 0; i < C8NUM; i++) {
@@ -195,17 +199,17 @@ void ConvDw3x3Int8Window(int8_t *output, const int8_t *buffer, const int16_t *we
       *output_tmp++ = (tmp_buffer[c]);
     }
     output += channel;
-    buffer += col_size;
+    buffer += col_size * stride;
   }
 }
 
 void ConvDw3x3Int8Block(int8_t *output, const int8_t *buffer, const int16_t *weight, const int32_t *bias, int start_c,
                         int end_c, int col_size, int row_size, int channel, int output_h, int output_w, int8_t in_zp,
                         int32_t out_zp, int out_multiplier, int left_shift, int right_shift, int32_t acc_min,
-                        int32_t acc_max) {
+                        int32_t acc_max, int stride) {
   for (; start_c <= end_c - 8; start_c += 8) {
     ConvDw3x3Int8Window(output, buffer, weight, bias, col_size, row_size, channel, output_h, output_w, in_zp, out_zp,
-                        out_multiplier, left_shift, right_shift, acc_min, acc_max);
+                        out_multiplier, left_shift, right_shift, acc_min, acc_max, stride);
     output += 8;
     buffer += 8;
     weight += 8;
@@ -236,7 +240,7 @@ void ConvDw3x3Int8Row(int8_t *output, int8_t *buffer, const int8_t *input, const
       InitInputBuffer(buffer, input_ptr, conv_param, block_input_h, block_input_w);
       ConvDw3x3Int8Block(output_ptr, buffer, weight_ptr, bias_ptr, 0, 64, 64, ih_offset, conv_param->input_channel_,
                          block_output_h, block_output_w, in_zp, out_zp, out_multiplier, left_shift, right_shift,
-                         acc_min, acc_max);
+                         acc_min, acc_max, conv_param->stride_h_);
       output_ptr += 64;
       input_ptr += 64;
       weight_ptr += 64;
@@ -246,7 +250,7 @@ void ConvDw3x3Int8Row(int8_t *output, int8_t *buffer, const int8_t *input, const
     ConvDw3x3Int8Block(output_ptr, input_ptr, weight_ptr, bias_ptr, c, conv_param->input_channel_,
                        conv_param->input_channel_, conv_param->input_w_ * conv_param->input_channel_,
                        conv_param->input_channel_, block_output_h, block_output_w, in_zp, out_zp, out_multiplier,
-                       left_shift, right_shift, acc_min, acc_max);
+                       left_shift, right_shift, acc_min, acc_max, conv_param->stride_h_);
     output += block_output_w * conv_param->input_channel_;
     input += conv_param->stride_w_ * block_output_w * conv_param->input_channel_;
   }
@@ -255,19 +259,20 @@ void ConvDw3x3Int8Row(int8_t *output, int8_t *buffer, const int8_t *input, const
   if (left_width > 0) {
     ConvDw3x3Int8Block(output, input, weight, bias, 0, conv_param->input_channel_, conv_param->input_channel_,
                        conv_param->input_w_ * conv_param->input_channel_, conv_param->input_channel_, block_output_h,
-                       left_width, in_zp, out_zp, out_multiplier, left_shift, right_shift, acc_min, acc_max);
+                       left_width, in_zp, out_zp, out_multiplier, left_shift, right_shift, acc_min, acc_max,
+                       conv_param->stride_h_);
   }
 }
 
 void ConvDw3x3Int8(int8_t *output_data, int8_t *buffer, const int8_t *input_data, const int16_t *weight_data,
-                   const int32_t *bias_data, const ConvParameter *conv_param, int task_id) {
-  int step_oh = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
-  int start_oh = step_oh * task_id;
-  int end_oh = MSMIN(start_oh + step_oh, conv_param->output_h_);
-  int start_ow = MSMAX(0, conv_param->pad_l_);
-  int end_ow = conv_param->output_w_ - conv_param->pad_l_;
-  start_oh = MSMAX(start_oh, conv_param->pad_u_);
-  end_oh = MSMIN(conv_param->output_h_ - conv_param->pad_u_, end_oh);
+                   const int32_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
+                   int task_id) {
+  int output_h = sliding->bottom_ - sliding->top_;
+  int step_oh = UP_DIV(output_h, conv_param->thread_num_);
+  int start_oh = step_oh * task_id + sliding->top_;
+  int end_oh = MSMIN(start_oh + step_oh, sliding->bottom_);
+  int start_ow = sliding->left_;
+  int end_ow = sliding->right_;
 
   int block_output_h = 1;
   int block_output_w = conv_param->stride_w_ == 1 ? 30 : 14;
@@ -293,6 +298,7 @@ void ConvDw3x3Int8(int8_t *output_data, int8_t *buffer, const int8_t *input_data
   }
 }
 
+#ifndef ENABLE_ARM64
 void ConvDw3x3BorderPixelInt8(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height,
                               int width, int in_kh_step, int in_kw_step, int channel, int8_t in_zp, int32_t out_zp,
                               int out_multiplier, int left_shift, int right_shift, int32_t acc_min, int32_t acc_max) {
@@ -329,6 +335,7 @@ void ConvDw3x3BorderPixelInt8(int8_t *dst, const int8_t *src, const int16_t *wei
     }
   }
 }
+#endif
 
 void ConvDw3x3BorderInt8(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int top,
                          int bottom, int left, int right, const ConvParameter *conv_param,
