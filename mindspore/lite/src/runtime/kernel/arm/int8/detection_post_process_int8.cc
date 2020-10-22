@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/fp32/detection_post_process.h"
+#include "src/runtime/kernel/arm/int8/detection_post_process_int8.h"
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -27,7 +27,38 @@ using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
 namespace mindspore::kernel {
 
-kernel::LiteKernel *CpuDetectionPostProcessFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+int DetectionPostProcessInt8CPUKernel::Dequantize(lite::Tensor *tensor, float **data) {
+  auto data_int8 = reinterpret_cast<int8_t *>(tensor->MutableData());
+  *data = reinterpret_cast<float *>(context_->allocator->Malloc(tensor->ElementsNum() * sizeof(float)));
+  if (*data == nullptr) {
+    MS_LOG(ERROR) << "Malloc data failed.";
+    return RET_ERROR;
+  }
+  if (tensor->GetQuantParams().empty()) {
+    MS_LOG(ERROR) << "null quant param";
+    return RET_ERROR;
+  }
+  auto quant_param = tensor->GetQuantParams().front();
+  DoDequantizeInt8ToFp32(data_int8, *data, quant_param.scale, quant_param.zeroPoint, tensor->ElementsNum());
+  return RET_OK;
+}
+int DetectionPostProcessInt8CPUKernel::GetInputData() {
+  if (in_tensors_.at(0)->data_type() != kNumberTypeInt8 || in_tensors_.at(1)->data_type() != kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Input data type error";
+    return RET_ERROR;
+  }
+  int status = Dequantize(in_tensors_.at(0), &input_boxes);
+  if (status != RET_OK) {
+    return status;
+  }
+  status = Dequantize(in_tensors_.at(1), &input_scores);
+  if (status != RET_OK) {
+    return status;
+  }
+  return RET_OK;
+}
+
+kernel::LiteKernel *CpuDetectionPostProcessInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                              const std::vector<lite::Tensor *> &outputs,
                                                              OpParameter *opParameter, const lite::InnerContext *ctx,
                                                              const kernel::KernelKey &desc,
@@ -37,9 +68,9 @@ kernel::LiteKernel *CpuDetectionPostProcessFp32KernelCreator(const std::vector<l
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_DetectionPostProcess);
-  auto *kernel = new (std::nothrow) DetectionPostProcessCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) DetectionPostProcessInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new DetectionPostProcessCPUKernel fail!";
+    MS_LOG(ERROR) << "new DetectionPostProcessInt8CPUKernel fail!";
     free(opParameter);
     return nullptr;
   }
@@ -53,5 +84,5 @@ kernel::LiteKernel *CpuDetectionPostProcessFp32KernelCreator(const std::vector<l
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_DetectionPostProcess, CpuDetectionPostProcessFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DetectionPostProcess, CpuDetectionPostProcessInt8KernelCreator)
 }  // namespace mindspore::kernel

@@ -15,6 +15,10 @@
  */
 #include "src/ops/layer_norm.h"
 
+#ifndef PRIMITIVE_WRITEABLE
+#include "src/ops/ops_register.h"
+#endif
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -59,6 +63,10 @@ std::vector<int> LayerNorm::GetNormalizedShape() const {
 }
 float LayerNorm::GetEpsilon() const { return this->primitive_->value_as_LayerNorm()->epsilon(); }
 bool LayerNorm::GetElementwiseAffine() const { return this->primitive_->value_as_LayerNorm()->elementwiseAffine(); }
+PrimitiveC *LayerNormCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<LayerNorm>(primitive);
+}
+Registry LayerNormRegistry(schema::PrimitiveType_LayerNorm, LayerNormCreator);
 
 #endif
 int LayerNorm::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {

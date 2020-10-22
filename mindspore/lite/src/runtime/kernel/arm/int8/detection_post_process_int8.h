@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DETECTION_POST_PROCESS_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DETECTION_POST_PROCESS_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_DETECTION_POST_PROCESS_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_DETECTION_POST_PROCESS_INT8_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
@@ -26,13 +26,17 @@
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class DetectionPostProcessCPUKernel : public DetectionPostProcessBaseCPUKernel {
+class DetectionPostProcessInt8CPUKernel : public DetectionPostProcessBaseCPUKernel {
  public:
-  DetectionPostProcessCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                const mindspore::lite::PrimitiveC *primitive)
+  DetectionPostProcessInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                                    const mindspore::lite::PrimitiveC *primitive)
       : DetectionPostProcessBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~DetectionPostProcessCPUKernel() = default;
+  ~DetectionPostProcessInt8CPUKernel() = default;
+
+ private:
+  int GetInputData();
+  int Dequantize(lite::Tensor *tensor, float **data);
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DETECTION_POST_PROCESS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_DETECTION_POST_PROCESS_INT8_H_
