@@ -14,8 +14,6 @@
 # ============================================================================
 """Scalar Affine Bijector"""
 from mindspore.ops import operations as P
-from mindspore._checkparam import Validator as validator
-from ..distribution._utils.utils import cast_to_tensor
 from ..distribution._utils.custom_ops import log_generic
 from .bijector import Bijector
 
@@ -30,9 +28,13 @@ class ScalarAffine(Bijector):
     where a is the scale factor and b is the shift factor.
 
     Args:
-        scale (float): The scale factor. Default: 1.0.
-        shift (float): The shift factor. Default: 0.0.
+        scale (float, list, numpy.ndarray, Tensor): The scale factor. Default: 1.0.
+        shift (float, list, numpy.ndarray, Tensor): The shift factor. Default: 0.0.
         name (str): The name of the bijector. Default: 'ScalarAffine'.
+
+    Note:
+        If `shift`, `scale` are passed in as numpy.ndarray or tensor, they have to have
+        the same dtype otherwise an error will be raised.
 
     Examples:
         >>> # To initialize a ScalarAffine bijector of scale 1 and shift 2.
@@ -61,10 +63,7 @@ class ScalarAffine(Bijector):
         Constructor of ScalarAffine Bijector.
         """
         param = dict(locals())
-        validator.check_value_type(
-            'scale', scale, [int, float], type(self).__name__)
-        validator.check_value_type(
-            'shift', shift, [int, float], type(self).__name__)
+        param['param_dict'] = {'scale': scale, 'shift': shift}
         super(ScalarAffine, self).__init__(
             is_constant_jacobian=True,
             is_injective=True,
@@ -72,8 +71,8 @@ class ScalarAffine(Bijector):
             dtype=None,
             param=param)
 
-        self._scale = cast_to_tensor(scale)
-        self._shift = cast_to_tensor(shift)
+        self._scale = self._add_parameter(scale, 'scale')
+        self._shift = self._add_parameter(shift, 'shift')
 
         self.abs = P.Abs()
         self.oneslike = P.OnesLike()
@@ -90,17 +89,18 @@ class ScalarAffine(Bijector):
         return self._shift
 
     def extend_repr(self):
-        return f'scale = {self.scale}, shift = {self.shift}'
-
-    def shape_mapping(self, shape):
-        return shape
+        if self.is_scalar_batch:
+            str_info = f'scale = {self.scale}, shift = {self.shift}'
+        else:
+            str_info = f'batch_shape = {self.batch_shape}'
+        return str_info
 
     def _forward(self, x):
         r"""
         .. math::
             f(x) = a * x + b
         """
-        x = self._check_value(x, 'value')
+        x = self._check_value_dtype(x)
         scale_local = self.cast_param_by_value(x, self.scale)
         shift_local = self.cast_param_by_value(x, self.shift)
         forward_v = scale_local * x + shift_local * self.oneslike(x)
@@ -111,7 +111,7 @@ class ScalarAffine(Bijector):
         .. math::
             f(y) = \frac{y - b}{a}
         """
-        y = self._check_value(y, 'value')
+        y = self._check_value_dtype(y)
         scale_local = self.cast_param_by_value(y, self.scale)
         shift_local = self.cast_param_by_value(y, self.shift)
         inverse_v = (y - shift_local) / scale_local
@@ -124,7 +124,7 @@ class ScalarAffine(Bijector):
             f'(x) = a
             \log(f'(x)) = \log(a)
         """
-        x = self._check_value(x, 'value')
+        x = self._check_value_dtype(x)
         scale_local = self.cast_param_by_value(x, self.scale)
         forward_log_j = self.log(self.abs(scale_local))
         return forward_log_j
@@ -136,7 +136,7 @@ class ScalarAffine(Bijector):
             f'(x) = \frac{1.0}{a}
             \log(f'(x)) = - \log(a)
         """
-        y = self._check_value(y, 'value')
+        y = self._check_value_dtype(y)
         scale_local = self.cast_param_by_value(y, self.scale)
         inverse_log_j = -1. * self.log(self.abs(scale_local))
         return inverse_log_j

@@ -14,8 +14,7 @@
 # ============================================================================
 """Power Bijector"""
 from mindspore.ops import operations as P
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from ..distribution._utils.utils import check_greater_equal_zero
 from ..distribution._utils.custom_ops import exp_generic, expm1_generic, log_generic, log1p_generic
 from .bijector import Bijector
 
@@ -37,7 +36,7 @@ class PowerTransform(Bijector):
         ValueError: When the power is less than 0 or is not known statically.
 
     Args:
-        power (int or float): The scale factor. Default: 0.
+        power (float, list, numpy.ndarray, Tensor): The scale factor. Default: 0.
         name (str): The name of the bijector. Default: 'PowerTransform'.
 
     Examples:
@@ -64,10 +63,11 @@ class PowerTransform(Bijector):
                  power=0,
                  name='PowerTransform'):
         param = dict(locals())
+        param['param_dict'] = {'power': power}
         super(PowerTransform, self).__init__(name=name, param=param)
-        validator.check_value_type('power', power, [int, float], self.name)
-        validator.check_number("power", power, 0, Rel.GE, self.name)
-        self._power = power
+        self._power = self._add_parameter(power, 'power')
+        check_greater_equal_zero(self._power, 'Power')
+
         self.pow = P.Pow()
         self.dtypeop = P.DType()
         self.cast = P.Cast()
@@ -81,13 +81,15 @@ class PowerTransform(Bijector):
         return self._power
 
     def extend_repr(self):
-        return f'power = {self.power}'
+        if self.is_scalar_batch:
+            str_info = f'power = {self.power}'
+        else:
+            str_info = f'batch_shape = {self.batch_shape}'
+        return str_info
 
-    def shape_mapping(self, shape):
-        return shape
 
     def _forward(self, x):
-        x = self._check_value(x, 'value')
+        x = self._check_value_dtype(x)
         power_local = self.cast_param_by_value(x, self.power)
         if power_local == 0:
             forward_v = self.exp(x)
@@ -96,7 +98,7 @@ class PowerTransform(Bijector):
         return forward_v
 
     def _inverse(self, y):
-        y = self._check_value(y, 'value')
+        y = self._check_value_dtype(y)
         power_local = self.cast_param_by_value(y, self.power)
         if power_local == 0:
             inverse_v = self.log(y)
@@ -116,7 +118,7 @@ class PowerTransform(Bijector):
                 f'(x) = e^\frac{\log(xc + 1)}{c} * \frac{1}{xc + 1}
                 \log(f'(x)) =  (\frac{1}{c} - 1) * \log(xc + 1)
         """
-        x = self._check_value(x, 'value')
+        x = self._check_value_dtype(x)
         power_local = self.cast_param_by_value(x, self.power)
         if power_local == 0:
             forward_log_j = x
@@ -136,7 +138,7 @@ class PowerTransform(Bijector):
                 f'(x) = \frac{e^c\log(y)}{y}
                 \log(f'(x)) =  \log(\frac{e^c\log(y)}{y}) = (c-1) * \log(y)
         """
-        y = self._check_value(y, 'value')
+        y = self._check_value_dtype(y)
         power_local = self.cast_param_by_value(y, self.power)
         inverse_log_j = (power_local - 1) * self.log(y)
         return inverse_log_j
