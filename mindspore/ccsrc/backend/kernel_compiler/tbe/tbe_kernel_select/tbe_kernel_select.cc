@@ -277,7 +277,7 @@ bool TbeKernelSelect::IsShapeMatchFormat(const std::vector<size_t> &shape, const
     MS_LOG(INFO) << "Warning: Server not support format with C04 suffix.";
     return false;
   }
-  if (format == kOpFormat_FRAC_NZ && shape.size() < kShape2dDims) {
+  if (format == kOpFormat_FRAC_NZ && shape.size() > kShape2dDims) {
     return true;
   }
   // not support format:
