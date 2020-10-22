@@ -80,6 +80,8 @@ add_dependencies(text-kernels core)
 add_dependencies(cpp-API core)
 add_dependencies(engine-ir-datasetops core)
 add_dependencies(engine-ir-datasetops-source core)
+add_dependencies(engine-ir-cache core)
+
 if (ENABLE_PYTHON)
     add_dependencies(APItoPython core)
 endif()
@@ -102,8 +104,9 @@ set(submodules
     $<TARGET_OBJECTS:kernels-data>
     $<TARGET_OBJECTS:cpp-API>
     $<TARGET_OBJECTS:engine-ir-datasetops>
-    $<TARGET_OBJECTS:engine-ir-datasetops-source>
-    $<TARGET_OBJECTS:kernels-soft-dvpp-image>
+        $<TARGET_OBJECTS:engine-ir-datasetops-source>
+        $<TARGET_OBJECTS:engine-ir-cache>
+        $<TARGET_OBJECTS:kernels-soft-dvpp-image>
     $<TARGET_OBJECTS:soft-dvpp-utils>
     $<TARGET_OBJECTS:engine-datasetops-source>
     $<TARGET_OBJECTS:engine-datasetops-source-sampler>

@@ -25,7 +25,9 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include "mindspore/ccsrc/minddata/dataset/engine/ir/cache/dataset_cache.h"
 #include "minddata/dataset/core/constants.h"
+
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
@@ -147,10 +149,13 @@ std::shared_ptr<AlbumNode> Album(const std::string &dataset_dir, const std::stri
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] decode Decode the images after reading (default=false).
 /// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CelebANode> CelebA(const std::string &dataset_dir, const std::string &usage = "all",
                                    const std::shared_ptr<SamplerObj> &sampler = RandomSampler(), bool decode = false,
-                                   const std::set<std::string> &extensions = {});
+                                   const std::set<std::string> &extensions = {},
+                                   const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 /// \brief Function to create a Cifar10 Dataset
 /// \notes The generated dataset has two columns ["image", "label"]
@@ -158,9 +163,12 @@ std::shared_ptr<CelebANode> CelebA(const std::string &dataset_dir, const std::st
 /// \param[in] usage of CIFAR10, can be "train", "test" or "all" (default = "all").
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<Cifar10Node> Cifar10(const std::string &dataset_dir, const std::string &usage = "all",
-                                     const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
+                                     const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                     const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 /// \brief Function to create a Cifar100 Dataset
 /// \notes The generated dataset has three columns ["image", "coarse_label", "fine_label"]
@@ -168,9 +176,12 @@ std::shared_ptr<Cifar10Node> Cifar10(const std::string &dataset_dir, const std::
 /// \param[in] usage of CIFAR100, can be "train", "test" or "all" (default = "all").
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<Cifar100Node> Cifar100(const std::string &dataset_dir, const std::string &usage = "all",
-                                       const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
+                                       const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                       const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 /// \brief Function to create a CLUENode
 /// \notes The generated dataset has a variable number of columns depending on the task and usage
@@ -188,11 +199,13 @@ std::shared_ptr<Cifar100Node> Cifar100(const std::string &dataset_dir, const std
 /// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1)
 /// \param[in] shard_id The shard ID within num_shards. This argument should be
 ///     specified only when num_shards is also specified. (Default = 0)
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current CLUENode
 std::shared_ptr<CLUENode> CLUE(const std::vector<std::string> &dataset_files, const std::string &task = "AFQMC",
                                const std::string &usage = "train", int64_t num_samples = 0,
-                               ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
-                               int32_t shard_id = 0);
+                               ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1, int32_t shard_id = 0,
+                               const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 /// \brief Function to create a CocoNode
 /// \notes The generated dataset has multi-columns :
@@ -209,10 +222,13 @@ std::shared_ptr<CLUENode> CLUE(const std::vector<std::string> &dataset_files, co
 /// \param[in] decode Decode the images after reading
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CocoNode> Coco(const std::string &dataset_dir, const std::string &annotation_file,
                                const std::string &task = "Detection", const bool &decode = false,
-                               const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
+                               const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                               const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 /// \brief Function to create a CSVNode
 /// \notes The generated dataset has a variable number of columns
@@ -233,11 +249,14 @@ std::shared_ptr<CocoNode> Coco(const std::string &dataset_dir, const std::string
 /// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1)
 /// \param[in] shard_id The shard ID within num_shards. This argument should be
 ///    specified only when num_shards is also specified. (Default = 0)
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CSVNode> CSV(const std::vector<std::string> &dataset_files, char field_delim = ',',
                              const std::vector<std::shared_ptr<CsvBase>> &column_defaults = {},
                              const std::vector<std::string> &column_names = {}, int64_t num_samples = 0,
-                             ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1, int32_t shard_id = 0);
+                             ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1, int32_t shard_id = 0,
+                             const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 /// \brief Function to create an ImageFolderNode
 /// \notes A source dataset that reads images from a tree of directories
@@ -249,11 +268,14 @@ std::shared_ptr<CSVNode> CSV(const std::vector<std::string> &dataset_files, char
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] extensions File extensions to be read
 /// \param[in] class_indexing a class name to label map
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current ImageFolderNode
 std::shared_ptr<ImageFolderNode> ImageFolder(const std::string &dataset_dir, bool decode = false,
                                              const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
                                              const std::set<std::string> &extensions = {},
-                                             const std::map<std::string, int32_t> &class_indexing = {});
+                                             const std::map<std::string, int32_t> &class_indexing = {},
+                                             const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 #ifndef ENABLE_ANDROID
 /// \brief Function to create a ManifestNode
@@ -265,10 +287,13 @@ std::shared_ptr<ImageFolderNode> ImageFolder(const std::string &dataset_dir, boo
 /// \param[in] class_indexing A str-to-int mapping from label name to index (default={}, the folder
 ///     names will be sorted alphabetically and each class will be given a unique index starting from 0).
 /// \param[in] decode Decode the images after reading (default=false).
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current ManifestNode
 std::shared_ptr<ManifestNode> Manifest(const std::string &dataset_file, const std::string &usage = "train",
                                        const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
-                                       const std::map<std::string, int32_t> &class_indexing = {}, bool decode = false);
+                                       const std::map<std::string, int32_t> &class_indexing = {}, bool decode = false,
+                                       const std::shared_ptr<DatasetCache> &cache = nullptr);
 #endif
 
 #ifndef ENABLE_ANDROID
@@ -308,9 +333,12 @@ std::shared_ptr<MindDataNode> MindData(const std::vector<std::string> &dataset_f
 /// \param[in] usage of MNIST, can be "train", "test" or "all" (default = "all").
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current MnistNode
 std::shared_ptr<MnistNode> Mnist(const std::string &dataset_dir, const std::string &usage = "all",
-                                 const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
+                                 const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                 const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 /// \brief Function to create a ConcatNode
 /// \notes Reload "+" operator to concat two datasets
@@ -326,11 +354,14 @@ std::shared_ptr<ConcatNode> operator+(const std::shared_ptr<Dataset> &datasets1,
 /// \param[in] columns_list List of columns to be read (default={}, read all columns)
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 template <typename T = std::shared_ptr<SchemaObj>>
 std::shared_ptr<RandomNode> RandomData(const int32_t &total_rows = 0, const T &schema = nullptr,
                                        const std::vector<std::string> &columns_list = {},
-                                       const std::shared_ptr<SamplerObj> &sampler = RandomSampler()) {
+                                       const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                       const std::shared_ptr<DatasetCache> &cache = nullptr) {
   if (total_rows < 0) {
     MS_LOG(ERROR) << "RandomNode: total_rows must be greater than or equal 0, now get " << total_rows;
     return nullptr;
@@ -356,9 +387,11 @@ std::shared_ptr<RandomNode> RandomData(const int32_t &total_rows = 0, const T &s
   std::shared_ptr<RandomNode> ds;
   if constexpr (std::is_same<T, std::nullptr_t>::value || std::is_same<T, std::shared_ptr<SchemaObj>>::value) {
     std::shared_ptr<SchemaObj> schema_obj = schema;
-    ds = std::make_shared<RandomNode>(total_rows, std::move(schema_obj), std::move(columns_list), std::move(sampler));
+    ds = std::make_shared<RandomNode>(total_rows, std::move(schema_obj), std::move(columns_list), std::move(sampler),
+                                      cache);
   } else {
-    ds = std::make_shared<RandomNode>(total_rows, std::move(schema), std::move(columns_list), std::move(sampler));
+    ds =
+      std::make_shared<RandomNode>(total_rows, std::move(schema), std::move(columns_list), std::move(sampler), cache);
   }
   return ds;
 }
@@ -377,10 +410,12 @@ std::shared_ptr<RandomNode> RandomData(const int32_t &total_rows = 0, const T &s
 /// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1)
 /// \param[in] shard_id The shard ID within num_shards. This argument should be
 ///     specified only when num_shards is also specified. (Default = 0)
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current TextFileNode
 std::shared_ptr<TextFileNode> TextFile(const std::vector<std::string> &dataset_files, int64_t num_samples = 0,
                                        ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
-                                       int32_t shard_id = 0);
+                                       int32_t shard_id = 0, const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 #ifndef ENABLE_ANDROID
 /// \brief Function to create a TFRecordNode
@@ -404,12 +439,15 @@ std::shared_ptr<TextFileNode> TextFile(const std::vector<std::string> &dataset_f
 ///     when num_shards is also specified. (Default = 0)
 /// \param[in] shard_equal_rows Get equal rows for all shards. (Default = False, number of rows of
 ///     each shard may be not equal)
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current TFRecordNode
 template <typename T = std::shared_ptr<SchemaObj>>
 std::shared_ptr<TFRecordNode> TFRecord(const std::vector<std::string> &dataset_files, const T &schema = nullptr,
                                        const std::vector<std::string> &columns_list = {}, int64_t num_samples = 0,
                                        ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
-                                       int32_t shard_id = 0, bool shard_equal_rows = false) {
+                                       int32_t shard_id = 0, bool shard_equal_rows = false,
+                                       const std::shared_ptr<DatasetCache> &cache = nullptr) {
   if (dataset_files.empty()) {
     MS_LOG(ERROR) << "TFRecordNode: dataset_files is not specified.";
     return nullptr;
@@ -441,7 +479,7 @@ std::shared_ptr<TFRecordNode> TFRecord(const std::vector<std::string> &dataset_f
   if constexpr (std::is_same<T, std::nullptr_t>::value || std::is_same<T, std::shared_ptr<SchemaObj>>::value) {
     std::shared_ptr<SchemaObj> schema_obj = schema;
     ds = std::make_shared<TFRecordNode>(dataset_files, schema_obj, columns_list, num_samples, shuffle, num_shards,
-                                        shard_id, shard_equal_rows);
+                                        shard_id, shard_equal_rows, cache);
   } else {
     std::string schema_path = schema;
     if (!schema_path.empty()) {
@@ -452,7 +490,7 @@ std::shared_ptr<TFRecordNode> TFRecord(const std::vector<std::string> &dataset_f
       }
     }
     ds = std::make_shared<TFRecordNode>(dataset_files, schema_path, columns_list, num_samples, shuffle, num_shards,
-                                        shard_id, shard_equal_rows);
+                                        shard_id, shard_equal_rows, cache);
   }
   return ds;
 }
@@ -469,11 +507,28 @@ std::shared_ptr<TFRecordNode> TFRecord(const std::vector<std::string> &dataset_f
 /// \param[in] decode Decode the images after reading
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<VOCNode> VOC(const std::string &dataset_dir, const std::string &task = "Segmentation",
                              const std::string &usage = "train",
                              const std::map<std::string, int32_t> &class_indexing = {}, bool decode = false,
-                             const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
+                             const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                             const std::shared_ptr<DatasetCache> &cache = nullptr);
+
+/// \brief Function the create a cache to be attached to a dataset
+/// \param id A user assigned session id for the current pipeline
+/// \param mem_sz Size of the memory set aside for the row caching. 0 for unlimited
+/// \param spill Spill to disk if out of memory
+/// \param hostname optional host name
+/// \param port optional port
+/// \param num_connections optional number of connections
+/// \param prefetch_sz optional prefetch size
+/// \return Shared pointer to DatasetCache. If error, nullptr is returned.
+std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint64_t mem_sz, bool spill,
+                                                 std::optional<std::string> hostname, std::optional<int32_t> port,
+                                                 std::optional<int32_t> num_connections,
+                                                 std::optional<int32_t> prefetch_sz);
 #endif
 
 /// \brief Function to create a ZipNode
@@ -492,6 +547,10 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 
   /// \brief Constructor
   Dataset();
+
+  /// \brief Constructor that initializes the cache
+  /// \param dataset_cache DatasetCache
+  explicit Dataset(const std::shared_ptr<DatasetCache> &dataset_cache);
 
   /// \brief Destructor
   ~Dataset() = default;
@@ -610,11 +669,14 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///     last operation. The default output_columns will have the same
   ///     name as the input columns, i.e., the columns will be replaced
   /// \param[in] project_columns A list of column names to project
+  /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+  ///     The cache feature is under development and is not recommended.
   /// \return Shared pointer to the current MapNode
   std::shared_ptr<MapNode> Map(std::vector<std::shared_ptr<TensorOperation>> operations,
                                std::vector<std::string> input_columns = {},
                                std::vector<std::string> output_columns = {},
-                               const std::vector<std::string> &project_columns = {});
+                               const std::vector<std::string> &project_columns = {},
+                               const std::shared_ptr<DatasetCache> &cache = nullptr);
 
   /// \brief Function to create a Project Dataset
   /// \notes Applies project to the dataset
@@ -670,6 +732,9 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   int32_t rows_per_buffer_;
   int32_t connector_que_size_;
   int32_t worker_connector_size_;
+
+  std::shared_ptr<DatasetCache> cache_;
+  Status AddCacheOp(std::vector<std::shared_ptr<DatasetOp>> *node_ops);
 };
 
 class SchemaObj {
@@ -766,7 +831,7 @@ class CelebANode : public Dataset {
  public:
   /// \brief Constructor
   CelebANode(const std::string &dataset_dir, const std::string &usage, const std::shared_ptr<SamplerObj> &sampler,
-             const bool &decode, const std::set<std::string> &extensions);
+             const bool &decode, const std::set<std::string> &extensions, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor
   ~CelebANode() = default;
@@ -792,7 +857,8 @@ class CelebANode : public Dataset {
 class Cifar10Node : public Dataset {
  public:
   /// \brief Constructor
-  Cifar10Node(const std::string &dataset_dir, const std::string &usage, std::shared_ptr<SamplerObj> sampler);
+  Cifar10Node(const std::string &dataset_dir, const std::string &usage, std::shared_ptr<SamplerObj> sampler,
+              std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
   ~Cifar10Node() = default;
@@ -814,7 +880,8 @@ class Cifar10Node : public Dataset {
 class Cifar100Node : public Dataset {
  public:
   /// \brief Constructor
-  Cifar100Node(const std::string &dataset_dir, const std::string &usage, std::shared_ptr<SamplerObj> sampler);
+  Cifar100Node(const std::string &dataset_dir, const std::string &usage, std::shared_ptr<SamplerObj> sampler,
+               std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
   ~Cifar100Node() = default;
@@ -839,7 +906,7 @@ class CLUENode : public Dataset {
  public:
   /// \brief Constructor
   CLUENode(const std::vector<std::string> dataset_files, std::string task, std::string usage, int64_t num_samples,
-           ShuffleMode shuffle, int32_t num_shards, int32_t shard_id);
+           ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
   ~CLUENode() = default;
@@ -870,7 +937,7 @@ class CocoNode : public Dataset {
  public:
   /// \brief Constructor
   CocoNode(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
-           const bool &decode, const std::shared_ptr<SamplerObj> &sampler);
+           const bool &decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
   ~CocoNode() = default;
@@ -918,7 +985,8 @@ class CSVNode : public Dataset {
   /// \brief Constructor
   CSVNode(const std::vector<std::string> &dataset_files, char field_delim,
           const std::vector<std::shared_ptr<CsvBase>> &column_defaults, const std::vector<std::string> &column_names,
-          int64_t num_samples, ShuffleMode shuffle, int32_t num_shards, int32_t shard_id);
+          int64_t num_samples, ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+          std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
   ~CSVNode() = default;
@@ -947,7 +1015,7 @@ class ManifestNode : public Dataset {
  public:
   /// \brief Constructor
   ManifestNode(const std::string &dataset_file, const std::string &usage, const std::shared_ptr<SamplerObj> &sampler,
-               const std::map<std::string, int32_t> &class_indexing, bool decode);
+               const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
   ~ManifestNode() = default;
@@ -1016,7 +1084,8 @@ class MindDataNode : public Dataset {
 class MnistNode : public Dataset {
  public:
   /// \brief Constructor
-  MnistNode(std::string dataset_dir, std::string usage, std::shared_ptr<SamplerObj> sampler);
+  MnistNode(std::string dataset_dir, std::string usage, std::shared_ptr<SamplerObj> sampler,
+            std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
   ~MnistNode() = default;
@@ -1044,8 +1113,9 @@ class RandomNode : public Dataset {
 
   /// \brief Constructor
   RandomNode(const int32_t &total_rows, std::shared_ptr<SchemaObj> schema, const std::vector<std::string> &columns_list,
-             const std::shared_ptr<SamplerObj> &sampler)
-      : total_rows_(total_rows),
+             const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache)
+      : Dataset(std::move(cache)),
+        total_rows_(total_rows),
         schema_path_(""),
         schema_(std::move(schema)),
         columns_list_(columns_list),
@@ -1053,8 +1123,12 @@ class RandomNode : public Dataset {
 
   /// \brief Constructor
   RandomNode(const int32_t &total_rows, std::string schema_path, const std::vector<std::string> &columns_list,
-             const std::shared_ptr<SamplerObj> &sampler)
-      : total_rows_(total_rows), schema_path_(schema_path), columns_list_(columns_list), sampler_(std::move(sampler)) {}
+             const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache)
+      : Dataset(std::move(cache)),
+        total_rows_(total_rows),
+        schema_path_(schema_path),
+        columns_list_(columns_list),
+        sampler_(std::move(sampler)) {}
 
   /// \brief Destructor
   ~RandomNode() = default;
@@ -1088,7 +1162,7 @@ class TextFileNode : public Dataset {
  public:
   /// \brief Constructor
   TextFileNode(std::vector<std::string> dataset_files, int32_t num_samples, ShuffleMode shuffle, int32_t num_shards,
-               int32_t shard_id);
+               int32_t shard_id, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
   ~TextFileNode() = default;
@@ -1117,8 +1191,9 @@ class TFRecordNode : public Dataset {
   /// \note Parameter 'schema' is the path to the schema file
   TFRecordNode(const std::vector<std::string> &dataset_files, std::string schema,
                const std::vector<std::string> &columns_list, int64_t num_samples, ShuffleMode shuffle,
-               int32_t num_shards, int32_t shard_id, bool shard_equal_rows)
-      : dataset_files_(dataset_files),
+               int32_t num_shards, int32_t shard_id, bool shard_equal_rows, std::shared_ptr<DatasetCache> cache)
+      : Dataset(std::move(cache)),
+        dataset_files_(dataset_files),
         schema_path_(schema),
         columns_list_(columns_list),
         num_samples_(num_samples),
@@ -1131,8 +1206,9 @@ class TFRecordNode : public Dataset {
   /// \note Parameter 'schema' is shared pointer to Schema object
   TFRecordNode(const std::vector<std::string> &dataset_files, std::shared_ptr<SchemaObj> schema,
                const std::vector<std::string> &columns_list, int64_t num_samples, ShuffleMode shuffle,
-               int32_t num_shards, int32_t shard_id, bool shard_equal_rows)
-      : dataset_files_(dataset_files),
+               int32_t num_shards, int32_t shard_id, bool shard_equal_rows, std::shared_ptr<DatasetCache> cache)
+      : Dataset(std::move(cache)),
+        dataset_files_(dataset_files),
         schema_obj_(schema),
         columns_list_(columns_list),
         num_samples_(num_samples),
@@ -1169,7 +1245,8 @@ class VOCNode : public Dataset {
  public:
   /// \brief Constructor
   VOCNode(const std::string &dataset_dir, const std::string &task, const std::string &usage,
-          const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<SamplerObj> sampler);
+          const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<SamplerObj> sampler,
+          std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
   ~VOCNode() = default;
@@ -1206,7 +1283,7 @@ class MapNode : public Dataset {
   /// \brief Constructor
   MapNode(std::shared_ptr<Dataset> child, std::vector<std::shared_ptr<TensorOperation>> operations,
           std::vector<std::string> input_columns = {}, std::vector<std::string> output_columns = {},
-          const std::vector<std::string> &columns = {});
+          const std::vector<std::string> &columns = {}, std::shared_ptr<DatasetCache> cache = nullptr);
 
   /// \brief Destructor
   ~MapNode() = default;
