@@ -12,6 +12,7 @@
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
+    - [Export MindIR](#export-mindir)
 - [Model Description](#model-description)
     - [Performance](#performance)  
         - [Training Performance](#evaluation-performance)
@@ -97,6 +98,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     ├─warmup_step_lr.py               # warmup step learning rate
   ├─eval.py                           # eval net
   ├──train.py                         # train net
+  ├──export.py                        # export mindir script
   ├──mindspore_hub_conf.py            #  mindspore hub interface
   
 ```
@@ -204,6 +206,14 @@ Evaluation result will be stored in the scripts path. Under this, you can find r
 ```
 acc=78.16%(TOP1)
 acc=93.88%(TOP5)
+```
+
+## [Export MindIR](#contents)
+
+Change the export mode and export file in `src/config.py`, and run `export.py`.
+
+```
+python export.py --platform PLATFORM --pretrained CKPT_PATH
 ```
 
 # [Model description](#contents)

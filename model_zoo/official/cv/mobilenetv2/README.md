@@ -10,6 +10,7 @@
   - [Script and Sample Code](#script-and-sample-code)
     - [Training Process](#training-process)
     - [Evaluation Process](#eval-process)
+    - [Export MindIR](#export-mindir)
 - [Model Description](#model-description)
   - [Performance](#performance)  
     - [Training Performance](#training-performance)
@@ -62,21 +63,22 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 ```python
 ├── MobileNetV2
-  ├── README.md     # descriptions about MobileNetV2
+  ├── README.md              # descriptions about MobileNetV2
   ├── scripts
-  │   ├──run_train.sh   # shell script for train, fine_tune or incremental  learn with CPU, GPU or Ascend
-  │   ├──run_eval.sh    # shell script for evaluation with CPU, GPU or Ascend
+  │   ├──run_train.sh        # shell script for train, fine_tune or incremental  learn with CPU, GPU or Ascend
+  │   ├──run_eval.sh         # shell script for evaluation with CPU, GPU or Ascend
   ├── src
-  │   ├──args.py        # parse args
-  │   ├──config.py      # parameter configuration
-  │   ├──dataset.py     # creating dataset
+  │   ├──args.py             # parse args
+  │   ├──config.py           # parameter configuration
+  │   ├──dataset.py          # creating dataset
   │   ├──lr_generator.py     # learning rate config
   │   ├──mobilenetV2.py      # MobileNetV2 architecture
-  │   ├──models.py      # contain define_net and Loss, Monitor
-  │   ├──utils.py       # utils to load ckpt_file for fine tune or incremental learn
-  ├── train.py      # training script
-  ├── eval.py       # evaluation script
-  ├── mindspore_hub_conf.py       #  mindspore hub interface
+  │   ├──models.py           # contain define_net and Loss, Monitor
+  │   ├──utils.py            # utils to load ckpt_file for fine tune or incremental learn
+  ├── train.py               # training script
+  ├── eval.py                # evaluation script
+  ├── export.py              # export mindir script
+  ├── mindspore_hub_conf.py  #  mindspore hub interface
 ```
 
 ## [Training process](#contents)
@@ -170,6 +172,14 @@ Inference result will be stored in the example path, you can find result like th
 
 ```shell
 result: {'acc': 0.71976314102564111} ckpt=./ckpt_0/mobilenet-200_625.ckpt
+```
+
+## [Export MindIR](#contents)
+
+Change the export mode and export file in `src/config.py`, and run `export.py`.
+
+```
+python export.py --platform [PLATFORM] --pretrain_ckpt [CKPT_PATH]
 ```
 
 # [Model description](#contents)

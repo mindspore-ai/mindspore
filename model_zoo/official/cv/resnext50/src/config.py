@@ -42,5 +42,7 @@ config = ed({
     "is_save_on_master": 1,
 
     "rank": 0,
-    "group_size": 1
+    "group_size": 1,
+    "export_format": "MINDIR",
+    "export_file": "resnext50.mindir"
 })

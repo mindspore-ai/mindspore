@@ -31,14 +31,14 @@ run_ascend()
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
     export RANK_TABLE_FILE=$4
-    DEVICE_NUM=$2
+    export RANK_SIZE=$2
     if [ -d "../train" ];
     then
         rm -rf ../train
     fi
     mkdir ../train
     cd ../train || exit
-    for((i=0; i<${DEVICE_NUM}; i++))
+    for((i=0; i<${RANK_SIZE}; i++))
     do
         export DEVICE_ID=$i
         export RANK_ID=$i

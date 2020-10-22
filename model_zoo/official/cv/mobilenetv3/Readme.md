@@ -9,6 +9,7 @@
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
+    - [Export MindIR](#export-mindir)
 - [Model Description](#model-description)
     - [Performance](#performance)  
         - [Training Performance](#evaluation-performance)
@@ -57,18 +58,19 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 ```python
 ├── MobileNetV3        
-  ├── Readme.md     # descriptions about MobileNetV3                 
+  ├── Readme.md              # descriptions about MobileNetV3                 
   ├── scripts 
-  │   ├──run_train.sh   # shell script for train               
-  │   ├──run_eval.sh    # shell script for evaluation                
+  │   ├──run_train.sh        # shell script for train               
+  │   ├──run_eval.sh         # shell script for evaluation                
   ├── src                              
-  │   ├──config.py      # parameter configuration               
-  │   ├──dataset.py     # creating dataset
+  │   ├──config.py           # parameter configuration               
+  │   ├──dataset.py          # creating dataset
   │   ├──lr_generator.py     # learning rate config                            
   │   ├──mobilenetV3.py      # MobileNetV3 architecture
-  ├── train.py      # training script
-  ├── eval.py       #  evaluation script
-  ├── mindspore_hub_conf.py       #  mindspore hub interface
+  ├── train.py               # training script
+  ├── eval.py                #  evaluation script
+  ├── export.py              # export mindir script
+  ├── mindspore_hub_conf.py  #  mindspore hub interface
 ```
 
 ## [Training process](#contents)
@@ -127,6 +129,14 @@ Inference result will be stored in the example path, you can find result like th
 
 ``` 
 result: {'acc': 0.71976314102564111} ckpt=/path/to/checkpoint/mobilenet-200_625.ckpt
+```
+
+## [Export MindIR](#contents)
+
+Change the export mode and export file in `src/config.py`, and run `export.py`.
+
+```
+python export.py --device_target [PLATFORM] --checkpoint_path [CKPT_PATH]
 ```
 
 # [Model description](#contents)
