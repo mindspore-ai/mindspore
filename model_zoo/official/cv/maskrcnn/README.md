@@ -19,8 +19,8 @@
       - [Evaluation Result](#evaluation-result)
 - [Model Description](#model-description)
     - [Performance](#performance)
-        - [Training Performance](#training-performance)
         - [Evaluation Performance](#evaluation-performance)
+        - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -279,7 +279,7 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 "save_checkpoint": True,                                                       # whether save checkpoint or not
 "save_checkpoint_epochs": 1,                                                   # save checkpoint interval
 "keep_checkpoint_max": 12,                                                     # max number of saved checkpoint
-"save_checkpoint_path": "./checkpoint",                                        # path of checkpoint
+"save_checkpoint_path": "./",                                                  # path of checkpoint
 
 "mindrecord_dir": "/home/maskrcnn/MindRecord_COCO2017_Train",                  # path of mindrecord
 "coco_root": "/home/maskrcnn/",                                                # path of coco root dateset
@@ -335,13 +335,13 @@ Training result will be stored in the example path, whose folder name begins wit
  
 ```
 # distribute training result(8p)
-epoch: 1 step: 7393 ,rpn_loss: 0.10626, rcnn_loss: 0.81592, rpn_cls_loss: 0.05862, rpn_reg_loss: 0.04761, rcnn_cls_loss: 0.32642, rcnn_reg_loss: 0.15503, rcnn_mask_loss: 0.33447, total_loss: 0.92218
-epoch: 2 step: 7393 ,rpn_loss: 0.00911, rcnn_loss: 0.34082, rpn_cls_loss: 0.00341, rpn_reg_loss: 0.00571, rcnn_cls_loss: 0.07440, rcnn_reg_loss: 0.05872, rcnn_mask_loss: 0.20764, total_loss: 0.34993
-epoch: 3 step: 7393 ,rpn_loss: 0.02087, rcnn_loss: 0.98633, rpn_cls_loss: 0.00665, rpn_reg_loss: 0.01422, rcnn_cls_loss: 0.35913, rcnn_reg_loss: 0.21375, rcnn_mask_loss: 0.41382, total_loss: 1.00720
+epoch: 1 step: 7393 ,rpn_loss: 0.05716, rcnn_loss: 0.81152, rpn_cls_loss: 0.04828, rpn_reg_loss: 0.00889, rcnn_cls_loss: 0.28784, rcnn_reg_loss: 0.17590, rcnn_mask_loss: 0.34790, total_loss: 0.86868
+epoch: 2 step: 7393 ,rpn_loss: 0.00434, rcnn_loss: 0.36572, rpn_cls_loss: 0.00339, rpn_reg_loss: 0.00095, rcnn_cls_loss: 0.08240, rcnn_reg_loss: 0.05554, rcnn_mask_loss: 0.22778, total_loss: 0.37006
+epoch: 3 step: 7393 ,rpn_loss: 0.00996, rcnn_loss: 0.83789, rpn_cls_loss: 0.00701, rpn_reg_loss: 0.00294, rcnn_cls_loss: 0.39478, rcnn_reg_loss: 0.14917, rcnn_mask_loss: 0.29370, total_loss: 0.84785
 ...
-epoch: 10 step: 7393 ,rpn_loss: 0.02122, rcnn_loss: 0.55176, rpn_cls_loss: 0.00620, rpn_reg_loss: 0.01503, rcnn_cls_loss: 0.12708, rcnn_reg_loss: 0.10254, rcnn_mask_loss: 0.32227, total_loss: 0.57298
-epoch: 11 step: 7393 ,rpn_loss: 0.03772, rcnn_loss: 0.60791, rpn_cls_loss: 0.03058, rpn_reg_loss: 0.00713, rcnn_cls_loss: 0.23987, rcnn_reg_loss: 0.11743, rcnn_mask_loss: 0.25049, total_loss: 0.64563
-epoch: 12 step: 7393 ,rpn_loss: 0.06482, rcnn_loss: 0.47681, rpn_cls_loss: 0.04770, rpn_reg_loss: 0.01709, rcnn_cls_loss: 0.16492, rcnn_reg_loss: 0.04990, rcnn_mask_loss: 0.26196, total_loss: 0.54163
+epoch: 10 step: 7393 ,rpn_loss: 0.00667, rcnn_loss: 0.65625, rpn_cls_loss: 0.00536, rpn_reg_loss: 0.00131, rcnn_cls_loss: 0.17590, rcnn_reg_loss: 0.16199, rcnn_mask_loss: 0.31812, total_loss: 0.66292
+epoch: 11 step: 7393 ,rpn_loss: 0.02003, rcnn_loss: 0.52051, rpn_cls_loss: 0.01761, rpn_reg_loss: 0.00241, rcnn_cls_loss: 0.16028, rcnn_reg_loss: 0.08411, rcnn_mask_loss: 0.27588, total_loss: 0.54054
+epoch: 12 step: 7393 ,rpn_loss: 0.00547, rcnn_loss: 0.39258, rpn_cls_loss: 0.00285, rpn_reg_loss: 0.00262, rcnn_cls_loss: 0.08002, rcnn_reg_loss: 0.04990, rcnn_mask_loss: 0.26245, total_loss: 0.39804
 ```
 
 ## [Evaluation Process](#contents)
@@ -363,39 +363,39 @@ Inference result will be stored in the example path, whose folder name is "eval"
 ```
 Evaluate annotation type *bbox*
 Accumulating evaluation results...
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.376
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.598
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.405
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.239
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.414
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.475
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.378
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.602
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.407
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.242
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.417
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.480
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.311
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.500
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.528
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.371
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.572
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.653
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.497
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.524
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.363
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.567
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.647
 
 Evaluate annotation type *segm*
 Accumulating evaluation results...
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.326
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.553
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.344
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.335
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.557
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.351
  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.169
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.356
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.462
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.278
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.426
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.445
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.294
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.484
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.365
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.480
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.284
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.433
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.451
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.285
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.490
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.586
 ```
 
 # Model Description
 ## Performance
 
-### Training Performance 
+### Evaluation Performance
 
 | Parameters                 | MaskRCNN                                                  |
 | -------------------------- | ----------------------------------------------------------- |
@@ -406,14 +406,18 @@ Accumulating evaluation results...
 | Dataset                    | COCO2017                                                    |
 | Training Parameters        | epoch=12,  batch_size = 2                                   |
 | Optimizer                  | SGD                                                         |
-| Loss Function              | Softmax Cross Entropy ,Sigmoid Cross Entropy,SmoothL1Loss   |
-| Speed                      | 1pc: 250 ms/step;  8pcs: 260 ms/step                        |
-| Total time                 | 1pc: 52 hours;  8pcs: 6.6 hours                             |
-| Parameters (M)             | 280                                                         |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/maskrcnn |
+| Loss Function              | Softmax Cross Entropy, Sigmoid Cross Entropy, SmoothL1Loss  |
+| Output                     | Probability                                                 |
+| Loss                       | 0.39804                                                     |
+| Speed                      | 1pc: 193 ms/step;  8pcs: 207 ms/step                        |
+| Total time                 | 1pc: 46 hours;  8pcs: 5.38 hours                            |
+| Parameters (M)             | 84.8                                                        |
+| Checkpoint for Fine tuning | 85M(.ckpt file)                                             |
+| Model for inference        | 571M(.air file)                                                            |
+| Scripts                    | [maskrcnn script](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/maskrcnn) |
 
 
-### Evaluation Performance
+### Inference Performance
 
 | Parameters          | MaskRCNN                    |
 | ------------------- | --------------------------- |
@@ -424,12 +428,12 @@ Accumulating evaluation results...
 | Dataset             | COCO2017                    |
 | batch_size          | 2                           |
 | outputs             | mAP                         |
-| Accuracy            | IoU=0.50:0.95 32.4%         |
-| Model for inference | 254M (.ckpt file)           |
+| Accuracy            | IoU=0.50:0.95 (BoundingBox 37.0%, Mask 33.5) |
+| Model for inference | 170M (.ckpt file)           |
 
 
 # [Description of Random Situation](#contents)
 In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in train.py for weight initialization.
 
 # [ModelZoo Homepage](#contents)
-Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo).

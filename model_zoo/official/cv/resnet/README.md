@@ -15,6 +15,7 @@
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
+        - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -136,9 +137,11 @@ sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [C
   ├── src
     ├── config.py                          # parameter configuration
     ├── dataset.py                         # data preprocessing
-    ├── CrossEntropySmooth.py                    # loss definition for ImageNet2012 dataset
+    ├── CrossEntropySmooth.py              # loss definition for ImageNet2012 dataset
     ├── lr_generator.py                    # generate learning rate for each step
     └── resnet.py                          # resnet backbone, including resnet50 and resnet101 and se-resnet50
+  ├── export.py                            # export model for inference
+  ├── mindspore_hub_conf.py                # mindspore hub interface  
   ├── eval.py                              # eval net
   └── train.py                             # train net
 ```
@@ -172,7 +175,7 @@ Parameters for both training and evaluation can be set in config.py.
 
 ```
 "class_num": 1001,                # dataset class number
-"batch_size": 256,                 # batch size of input tensor
+"batch_size": 256,                # batch size of input tensor
 "loss_scale": 1024,               # loss scale
 "momentum": 0.9,                  # momentum optimizer
 "weight_decay": 1e-4,             # weight decay 
@@ -184,7 +187,7 @@ Parameters for both training and evaluation can be set in config.py.
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 0,               # number of warmup epoch
 "lr_decay_mode": "Linear",        # decay mode for generating learning rate
-"use_label_smooth": True,             # label smooth
+"use_label_smooth": True,         # label smooth
 "label_smooth_factor": 0.1,       # label smooth factor
 "lr_init": 0,                     # initial learning rate
 "lr_max": 0.8,                    # maximum learning rate
@@ -207,7 +210,7 @@ Parameters for both training and evaluation can be set in config.py.
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 0,               # number of warmup epoch
 "lr_decay_mode": "cosine"         # decay mode for generating learning rate
-"use_label_smooth": True,                # label_smooth
+"use_label_smooth": True,         # label_smooth
 "label_smooth_factor": 0.1,       # label_smooth_factor
 "lr": 0.1                         # base learning rate
 ```
@@ -229,7 +232,7 @@ Parameters for both training and evaluation can be set in config.py.
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 3,               # number of warmup epoch
 "lr_decay_mode": "cosine"         # decay mode for generating learning rate
-"use_label_smooth": True,             # label_smooth
+"use_label_smooth": True,         # label_smooth
 "label_smooth_factor": 0.1,       # label_smooth_factor
 "lr_init": 0.0,                   # initial learning rate
 "lr_max": 0.3,                    # maximum learning rate
@@ -254,7 +257,7 @@ Usage: sh run_eval.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [D
 ```
 For distributed training, a hccl configuration file with JSON format needs to be created in advance.
 
-Please follow the instructions in the link [hccn_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
+Please follow the instructions in the link [hccn_tools](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/utils/hccl_tools).
 
 Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". Under this, you can find checkpoint file together with result like the followings in log.
 
@@ -313,17 +316,12 @@ epoch: 5 step: 5004, loss is 3.1978393
 - Training ResNet101 with ImageNet2012 dataset
 
 ```
-# distribute training result(8p)
+# distribute training result(8 pcs)
 epoch: 1 step: 5004, loss is 4.805483
 epoch: 2 step: 5004, loss is 3.2121816
 epoch: 3 step: 5004, loss is 3.429647
 epoch: 4 step: 5004, loss is 3.3667371
 epoch: 5 step: 5004, loss is 3.1718972
-...
-epoch: 67 step: 5004, loss is 2.2768745
-epoch: 68 step: 5004, loss is 1.7223864
-epoch: 69 step: 5004, loss is 2.0665488
-epoch: 70 step: 5004, loss is 1.8717369
 ...
 ```
 - Training SE-ResNet50 with ImageNet2012 dataset
@@ -411,14 +409,14 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Total time                 | 6 mins                          | 20.2 mins|
 | Parameters (M)             | 25.5                                                         | 25.5 |
 | Checkpoint for Fine tuning | 179.7M (.ckpt file)                                         |179.7M (.ckpt file)|
-| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
+| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/resnet) |
 
 #### ResNet50 on ImageNet2012
 | Parameters                 | Ascend 910                                                   |   GPU |
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                                |ResNet50-v1.5|
 | Resource                   | Ascend 910，CPU 2.60GHz 56cores，Memory 314G  |  GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
-| uploaded Date              | 04/01/2020 (month/day/year)  ；                        | 08/01/2020 (month/day/year)
+| uploaded Date              | 04/01/2020 (month/day/year)                         | 08/01/2020 (month/day/year)
 | MindSpore Version          | 0.1.0-alpha                                                       |0.6.0-alpha   |
 | Dataset                    | ImageNet2012                                                    | ImageNet2012|
 | Training Parameters        | epoch=90, steps per epoch=626, batch_size = 256             |epoch=90, steps per epoch=5004, batch_size = 32  |
@@ -430,7 +428,7 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Total time                 | 114 mins                          | 500 mins|
 | Parameters (M)             | 25.5                                                         | 25.5 |
 | Checkpoint for Fine tuning | 197M (.ckpt file)                                         |197M (.ckpt file)     |
-| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
+| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/resnet) |
 
 #### ResNet101 on ImageNet2012
 | Parameters                 | Ascend 910                                                   |   GPU |
@@ -449,15 +447,14 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Total time                 | 301 mins                          | 1100 mins|
 | Parameters (M)             | 44.6                                                        | 44.6 |
 | Checkpoint for Fine tuning | 343M (.ckpt file)                                         |343M (.ckpt file)     |
-| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
+| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/resnet) |
 
 #### SE-ResNet50 on ImageNet2012
-
 | Parameters                 | Ascend 910
 | -------------------------- | ------------------------------------------------------------------------ |
 | Model Version              | SE-ResNet50                                               |
 | Resource                   | Ascend 910，CPU 2.60GHz 56cores，Memory 314G  |
-| uploaded Date              | 08/16/2020 (month/day/year)  ；                        |
+| uploaded Date              | 08/16/2020 (month/day/year)                       |
 | MindSpore Version          | 0.7.0-alpha                                                 |
 | Dataset                    | ImageNet2012                                                |
 | Training Parameters        | epoch=24, steps per epoch=5004, batch_size = 32             |
@@ -469,7 +466,62 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Total time                 | 49.3 mins                                                  |
 | Parameters (M)             | 25.5                                                         |
 | Checkpoint for Fine tuning | 215.9M (.ckpt file)                                         |
-| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
+| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/resnet) |
+
+### Inference Performance
+
+#### ResNet50 on CIFAR-10
+| Parameters          | Ascend                      | GPU                         |
+| ------------------- | --------------------------- | --------------------------- |
+| Model Version       | ResNet50-v1.5               | ResNet50-v1.5               |
+| Resource            | Ascend 910                  | GPU                         |
+| Uploaded Date       | 04/01/2020 (month/day/year) | 08/01/2020 (month/day/year) |
+| MindSpore Version   | 0.1.0-alpha                 | 0.6.0-alpha                 |
+| Dataset             | CIFAR-10                    | CIFAR-10                    |
+| batch_size          | 32                          | 32                          |
+| outputs             | probability                 | probability                 |
+| Accuracy            | 91.44%                      | 91.37%                      |
+| Model for inference | 91M (.air file)         |  |
+
+#### ResNet50 on ImageNet2012
+| Parameters          | Ascend                      | GPU                         |
+| ------------------- | --------------------------- | --------------------------- |
+| Model Version       | ResNet50-v1.5               | ResNet50-v1.5               |
+| Resource            | Ascend 910                  | GPU                         |
+| Uploaded Date       | 04/01/2020 (month/day/year) | 08/01/2020 (month/day/year) |
+| MindSpore Version   | 0.1.0-alpha                 | 0.6.0-alpha                 |
+| Dataset             | ImageNet2012                | ImageNet2012                |
+| batch_size          | 256                         | 32                          |
+| outputs             | probability                 | probability                 |
+| Accuracy            | 76.70%                      | 76.74%                      |
+| Model for inference | 98M (.air file)         |  |
+
+#### ResNet101 on ImageNet2012
+| Parameters          | Ascend                      | GPU                         |
+| ------------------- | --------------------------- | --------------------------- |
+| Model Version       | ResNet101                   | ResNet101                    |
+| Resource            | Ascend 910                  | GPU                         |
+| Uploaded Date       | 04/01/2020 (month/day/year) | 08/01/2020 (month/day/year) |
+| MindSpore Version   | 0.1.0-alpha                 | 0.6.0-alpha                 |
+| Dataset             | ImageNet2012                | ImageNet2012                |
+| batch_size          | 32                          | 32                          |
+| outputs             | probability                 | probability                 |
+| Accuracy            | 78.53%                      | 78.64%                      |
+| Model for inference | 171M (.air file)         |  |
+
+#### SE-ResNet50 on ImageNet2012
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | SE-ResNet50                 |
+| Resource            | Ascend 910                  |
+| Uploaded Date       | 08/16/2020 (month/day/year) |
+| MindSpore Version   | 0.7.0-alpha                 |
+| Dataset             | ImageNet2012                |
+| batch_size          | 32                          |
+| outputs             | probability                 |
+| Accuracy            | 76.80%                      |
+| Model for inference | 109M (.air file)            |
+
 
 # [Description of Random Situation](#contents)
 
@@ -477,4 +529,4 @@ In dataset.py, we set the seed inside “create_dataset" function. We also use r
 
 
 # [ModelZoo Homepage](#contents)
- Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
+ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo).
