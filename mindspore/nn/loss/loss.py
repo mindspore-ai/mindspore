@@ -284,6 +284,9 @@ class BCELoss(_Loss):
             \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
             \end{cases}
 
+        Note that the predicted labels should always be the output of sigmoid and the true labels should be numbers
+        between 0 and 1.
+
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             And it must have same shape and data type as `inputs`. Default: None
@@ -296,7 +299,7 @@ class BCELoss(_Loss):
 
     Outputs:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `inputs`.
-        Otherwise, the output is a scalar. default: 'none'
+        Otherwise, the output is a scalar.
 
     Examples:
         >>> weight = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 3.3, 2.2]]), mindspore.float32)
