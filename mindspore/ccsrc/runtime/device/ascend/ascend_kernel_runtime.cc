@@ -557,7 +557,6 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *grap
     }
 
     if (dynamic_kernel->is_dynamic_shape()) {
-      ExecutorCallback::GetInstance().Consume();
       dynamic_kernel->InferShape();
       dynamic_kernel->UpdateArgs();
     }
@@ -571,15 +570,13 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *grap
     // Enable profiling trace point end
     rt_callback.RegisterCallback(
       [&]() { RECORD_CALLBACK_EVENT(&async_profiler, dynamic_kernel->GetKernelName().c_str(), "[Callback] end"); });
-
-    ExecutorCallback::GetInstance().RegistCallback([&dynamic_kernel] { dynamic_kernel->PostExecute(); });
+    dynamic_kernel->PostExecute();
   }
 
   if (!SyncStream()) {
     MS_LOG(ERROR) << "SyncStream failed";
     return false;
   }
-  ExecutorCallback::GetInstance().Consume();
 
   rt_callback.Destroy();
   async_profiler.Dump(std::cout);
