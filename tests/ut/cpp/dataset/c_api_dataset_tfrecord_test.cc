@@ -98,6 +98,36 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasicGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetBasicGetDatasetSize.";
+
+  // Create a TFRecord Dataset
+  std::string file_path = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
+  std::string schema_path = datasets_root_path_ + "/test_tf_file_3_images2/datasetSchema.json";
+  std::shared_ptr<Dataset> ds = TFRecord({file_path}, schema_path, {"image"}, 0);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_horizontal_flip_op = vision::RandomHorizontalFlip(0.5);
+  EXPECT_NE(random_horizontal_flip_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_horizontal_flip_op}, {}, {}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 6);
+}
+
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetShuffle) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetShuffle.";
   // This case is to verify if the list of datafiles are sorted in lexicographical order.

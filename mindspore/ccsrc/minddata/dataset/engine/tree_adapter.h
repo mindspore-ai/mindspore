@@ -47,6 +47,9 @@ class TreeAdapter {
   // 2. GetNext will return empty row when eoe/eof is obtained
   Status GetNext(TensorRow *);
 
+  // This function will return the root of the execution tree.
+  std::weak_ptr<DatasetOp> GetRoot() { return tree_ != nullptr ? tree_->root() : nullptr; }
+
   // This function will return the column_name_map once BuildAndPrepare() is called
   std::unordered_map<std::string, int32_t> GetColumnNameMap() const { return column_name_map_; }
 

@@ -679,5 +679,36 @@ Status CocoOp::ComputeColMap() {
   }
   return Status::OK();
 }
+
+// Get Dataset size
+Status CocoOp::GetDatasetSize(int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows = 0, sample_size;
+  std::string task_type;
+  switch (task_type_) {
+    case TaskType::Detection:
+      task_type = "Detection";
+      break;
+    case TaskType::Keypoint:
+      task_type = "Keypoint";
+      break;
+    case TaskType::Panoptic:
+      task_type = "Panoptic";
+      break;
+    case TaskType::Stuff:
+      task_type = "Stuff";
+      break;
+  }
+  if (image_ids_.size() == 0) {
+    RETURN_IF_NOT_OK(CountTotalRows(image_folder_path_, annotation_path_, task_type, &num_rows));
+  }
+  sample_size = sampler_->GetNumSamples();
+  *dataset_size = sample_size != 0 ? std::min(num_rows, sample_size) : num_rows;
+  dataset_size_ = *dataset_size;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

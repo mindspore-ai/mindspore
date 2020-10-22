@@ -125,6 +125,17 @@ TEST_F(MindDataTestPipeline, TestCelebADefault) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestCelebAGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebAGetDatasetSize.";
+
+  // Create a CelebA Dataset
+  std::string folder_path = datasets_root_path_ + "/testCelebAData/";
+  std::shared_ptr<Dataset> ds = CelebA(folder_path, "valid");
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 1);
+}
+
 TEST_F(MindDataTestPipeline, TestCelebAException) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebAException.";
 
@@ -179,6 +190,17 @@ TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongExtension) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestImageFolderGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderGetDatasetSize.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 44);
+}
+
 TEST_F(MindDataTestPipeline, TestImageFolderFailWithNullSampler) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFailWithNullSampler.";
 
@@ -197,6 +219,16 @@ TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongSampler) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, SequentialSampler(-2, 5));
   // Expect failure: sampler is not construnced correctly
   EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestMnistGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistGetDatasetSize.";
+
+  // Create a Mnist Dataset
+  std::string folder_path = datasets_root_path_ + "/testMnistData/";
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 20));
+  EXPECT_NE(ds, nullptr);
+  EXPECT_EQ(ds->GetDatasetSize(), 20);
 }
 
 TEST_F(MindDataTestPipeline, TestMnistFailWithWrongDatasetDir) {

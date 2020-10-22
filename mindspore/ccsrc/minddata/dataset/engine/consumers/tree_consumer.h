@@ -152,9 +152,10 @@ class ToDevice : public TreeConsumer {
 
 /// Consumer that is used to get some pipeline information
 class TreeGetters : public TreeConsumer {
-  Status GetDatasetSize(int32_t *size) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
+ public:
+  TreeGetters();
+  Status Init(std::shared_ptr<api::Dataset> d) override;
+  Status GetDatasetSize(int64_t *size);
   Status GetBatchSize(int32_t *batch_size) {
     return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
   }
@@ -173,6 +174,11 @@ class TreeGetters : public TreeConsumer {
   Status GetOutputNames(std::vector<std::string> *names) {
     return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
   }
+
+  std::string Name() override { return "TreeGetters"; }
+
+ private:
+  int64_t dataset_size_;
 };
 
 }  // namespace mindspore::dataset

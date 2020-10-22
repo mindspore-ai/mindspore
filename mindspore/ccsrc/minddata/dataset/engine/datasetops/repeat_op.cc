@@ -191,5 +191,21 @@ Status RepeatOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<RepeatOp>(), modified);
 }
+
+// Get Dataset size
+Status RepeatOp::GetDatasetSize(int64_t *dataset_size) {
+  if (dataset_size_ > 0 || num_repeats_ == -1) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows;
+  RETURN_IF_NOT_OK(child_[0]->GetDatasetSize(&num_rows));
+  if (num_rows > 0 && num_repeats_ > 0) {
+    num_rows = num_rows * num_repeats_;
+  }
+  *dataset_size = num_rows;
+  dataset_size_ = num_rows;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

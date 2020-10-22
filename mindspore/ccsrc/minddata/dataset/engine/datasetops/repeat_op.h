@@ -133,6 +133,11 @@ class RepeatOp : public PipelineOp {
   /// \@return Status - The error code return
   Status Reset() override;
 
+  /// \brief Base-class override for GetDatasetSize
+  /// \param[out] dataset_size the size of the dataset
+  /// \return Status of the function
+  Status GetDatasetSize(int64_t *dataset_size) override;
+
   // \brief Adds an operator to the repeat ops list of tracked leaf/eoe nodes
   // \param[in] eoe_op The input leaf/eoe operator to add to the list
   void AddToEoeList(std::shared_ptr<DatasetOp> eoe_op) { eoe_ops_.push_back(std::move(eoe_op)); }

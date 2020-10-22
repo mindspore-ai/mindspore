@@ -96,6 +96,32 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetBasic) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+TEST_F(MindDataTestPipeline, TestTextFileGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileGetDatasetSize.";
+  // Test TextFile Dataset with single text file and many default inputs
+
+  // Set configuration
+  uint32_t original_seed = GlobalContext::config_manager()->seed();
+  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
+  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
+  GlobalContext::config_manager()->set_seed(987);
+  GlobalContext::config_manager()->set_num_parallel_workers(4);
+
+  // Create a TextFile Dataset, with single text file
+  // Note: 1.txt has 3 rows
+  // Use 2 samples
+  // Use defaults for other input parameters
+  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({tf_file1}, 2);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 2);
+
+  // Restore configuration
+  GlobalContext::config_manager()->set_seed(original_seed);
+  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
+}
+
 TEST_F(MindDataTestPipeline, TestTextFileDatasetFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail1.";
 

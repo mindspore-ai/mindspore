@@ -28,6 +28,7 @@
 #include "mindspore/ccsrc/minddata/dataset/engine/ir/cache/dataset_cache.h"
 #include "minddata/dataset/core/constants.h"
 
+#include "minddata/dataset/engine/consumers/tree_consumer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
@@ -49,6 +50,7 @@ class DataSchema;
 class Tensor;
 class TensorShape;
 class TreeAdapter;
+class TreeGetters;
 #ifndef ENABLE_ANDROID
 class Vocab;
 #endif
@@ -570,6 +572,10 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return Status Status::OK() if all the parameters are valid
   virtual Status ValidateParams() = 0;
 
+  /// \brief Gets the dataset size
+  /// \return status code
+  int64_t GetDatasetSize();
+
   /// \brief Setter function for runtime number of workers
   /// \param[in] num_workers The number of threads in this operator
   /// \return Shared pointer to the original object
@@ -750,6 +756,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
  protected:
   std::vector<std::shared_ptr<Dataset>> children;
   std::shared_ptr<Dataset> parent;
+  std::shared_ptr<TreeGetters> tree_getters_;
 
   int32_t num_workers_;
   int32_t rows_per_buffer_;

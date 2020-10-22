@@ -67,6 +67,17 @@ TEST_F(MindDataTestPipeline, TestManifestBasic) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestManifestGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestGetDatasetSize.";
+
+  std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
+  // Create a Manifest Dataset
+  std::shared_ptr<Dataset> ds = Manifest(file_path);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 2);
+}
+
 TEST_F(MindDataTestPipeline, TestManifestDecode) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestDecode.";
 
@@ -91,7 +102,7 @@ TEST_F(MindDataTestPipeline, TestManifestDecode) {
     auto shape = image->shape();
     MS_LOG(INFO) << "Tensor image shape size: " << shape.Size();
     MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    EXPECT_GT(shape.Size(), 1); // Verify decode=true took effect
+    EXPECT_GT(shape.Size(), 1);  // Verify decode=true took effect
     iter->GetNextRow(&row);
   }
 

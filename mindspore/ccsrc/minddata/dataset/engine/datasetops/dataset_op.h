@@ -179,6 +179,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return Status - The error code return
   Status GetNextInput(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id = 0, int32_t child_index = 0);
 
+  /// \brief Gets the dataset size
+  /// \return Status - The status code return
+  virtual Status GetDatasetSize(int64_t *dataset_size);
+
   /// \brief Performs handling for when an eoe message is received.
   /// The base class implementation simply flows the eoe message to output. Derived classes
   /// may override if they need to perform special eoe handling.
@@ -406,6 +410,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   std::unordered_map<std::string, int32_t> column_name_id_map_;  // Mapping between col index and col name
   std::mutex column_name_map_mutex_;                             // For protecting shared access to the column map
   CallbackManager callback_manager_;                             // Manages callbacks associated with a DatasetOp
+  int64_t dataset_size_;                                         // Size of the dataset
 
  private:
   /// Sets the operator id.

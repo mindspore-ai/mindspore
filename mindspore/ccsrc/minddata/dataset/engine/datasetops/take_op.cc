@@ -16,6 +16,7 @@
 #include <iomanip>
 #include <utility>
 
+#include <algorithm>
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/data_buffer.h"
@@ -130,6 +131,19 @@ Status TakeOp::FillBuffer(std::unique_ptr<DataBuffer> *buffer, std::unique_ptr<D
 Status TakeOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<TakeOp>(), modified);
+}
+
+// Get Dataset size
+Status TakeOp::GetDatasetSize(int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows;
+  RETURN_IF_NOT_OK(child_[0]->GetDatasetSize(&num_rows));
+  *dataset_size = std::min(static_cast<int64_t>(max_takes_), num_rows);
+  dataset_size_ = *dataset_size;
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

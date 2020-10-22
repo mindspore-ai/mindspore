@@ -1062,5 +1062,27 @@ Status TFReaderOp::PrepareNodePostAction() {
 
   return Status::OK();
 }
+
+// Get Dataset size
+Status TFReaderOp::GetDatasetSize(int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows, sample_size;
+  num_rows = num_rows_;
+  if (num_rows_ <= 0) {
+    if (equal_rows_per_shard_) {
+      RETURN_IF_NOT_OK(CalculateNumRowsPerShard());
+      num_rows = num_rows_per_shard_;
+    } else {
+      RETURN_IF_NOT_OK(CountTotalRows(&num_rows, dataset_files_list_));
+    }
+  }
+  sample_size = total_rows_ != 0 ? total_rows_ : data_schema_->num_rows();
+  *dataset_size = sample_size > 0 ? std::min(num_rows, sample_size) : num_rows;
+  dataset_size_ = *dataset_size;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

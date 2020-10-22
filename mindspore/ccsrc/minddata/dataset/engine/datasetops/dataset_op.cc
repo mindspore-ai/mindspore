@@ -50,7 +50,8 @@ DatasetOp::DatasetOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler
       op_num_repeats_per_epoch_(kInfiniteRepeat),
       op_current_repeats_(0),
       op_current_epochs_(0),
-      out_connector_(nullptr) {
+      out_connector_(nullptr),
+      dataset_size_(-1) {
   // The operator starts out with an invalid operator id.  The only way to
   // get it out of invalid state is to assign the operator to an execution tree.
 }
@@ -288,6 +289,17 @@ Status DatasetOp::GetNextInput(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
   }
   *p_buffer = std::move(buf);
   return Status::OK();
+}
+
+// Gets the dataset size
+Status DatasetOp::GetDatasetSize(int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(child_.size() == 1, "Can't get the dataset size for the current tree.");
+
+  return child_[0]->GetDatasetSize(dataset_size);
 }
 
 // Performs handling for when an eoe message is received.

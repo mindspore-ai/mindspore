@@ -15,6 +15,8 @@
  */
 
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
+
+#include <algorithm>
 #include <iomanip>
 #include <random>
 #include "minddata/dataset/engine/execution_tree.h"
@@ -416,6 +418,20 @@ Status RandomDataOp::ComputeColMap() {
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
+  return Status::OK();
+}
+
+// Get Dataset size
+Status RandomDataOp::GetDatasetSize(int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows, sample_size = 0;
+  num_rows = total_rows_ != 0 ? total_rows_ : data_schema_->num_rows();
+  if (sampler_ != nullptr) sample_size = sampler_->GetNumSamples();
+  *dataset_size = sample_size != 0 ? std::min(num_rows, sample_size) : num_rows;
+  dataset_size_ = *dataset_size;
   return Status::OK();
 }
 }  // namespace dataset
