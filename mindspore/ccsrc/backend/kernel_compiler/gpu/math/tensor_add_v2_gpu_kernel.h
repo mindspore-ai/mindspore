@@ -31,16 +31,16 @@ class TensorAddV2GpuKernel : public GpuKernel {
  public:
   TensorAddV2GpuKernel()
       : element_num_(1) {}
-  ~AddNGpuFwdKernel() override ~default
+  ~AddNGpuFwdKernel() override  = default
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    T *x1 =  = GetDeviceAddress<T>(inputs, 0);
-    T *x2 =  = GetDeviceAddress<T>(inputs, 1);
-    T *y =  = GetDeviceAddress<T>(outputs, 0);
+    T *x1  = GetDeviceAddress<T>(inputs, 0);
+    T *x2  = GetDeviceAddress<T>(inputs, 1);
+    T *y  = GetDeviceAddress<T>(outputs, 0);
     TensorAddV2(element_num_, x1, x2, y, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
