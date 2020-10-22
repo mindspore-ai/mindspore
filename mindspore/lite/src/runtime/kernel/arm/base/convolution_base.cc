@@ -34,10 +34,6 @@ ConvolutionBaseCPUKernel::~ConvolutionBaseCPUKernel() {
     free(bias_data_);
     bias_data_ = nullptr;
   }
-  if (nhwc4_input_ != nullptr) {
-    free(nhwc4_input_);
-    nhwc4_input_ = nullptr;
-  }
 }
 
 void ConvolutionBaseCPUKernel::FreeQuantParam() {
@@ -107,18 +103,6 @@ int ConvolutionBaseCPUKernel::CheckResizeValid() {
   int resize_in_channel = in_tensors_.at(kInputIndex)->Channel();
   if (filter_in_channel != resize_in_channel) {
     MS_LOG(ERROR) << "Channel of resized input should be equal to in channel of filter.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int ConvolutionBaseCPUKernel::CheckLayout(lite::Tensor *input_tensor) {
-  auto data_type = input_tensor->data_type();
-  auto input_format = input_tensor->GetFormat();
-  schema::Format execute_format = schema::Format::Format_NHWC4;
-  convert_func_ = LayoutTransform(data_type, input_format, execute_format);
-  if (convert_func_ == nullptr) {
-    MS_LOG(ERROR) << "layout convert func is nullptr.";
     return RET_ERROR;
   }
   return RET_OK;

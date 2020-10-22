@@ -61,6 +61,10 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   }
   memset(packed_weight_, 0, pack_weight_size * sizeof(float16_t));
   RowMajor2Col8MajorFp16(execute_weight_, packed_weight_, out_channel, in_channel * kernel_plane, false);
+  if (fp16_weight_ != nullptr) {
+    free(fp16_weight_);
+    fp16_weight_ = nullptr;
+  }
 
   // init bias
   bias_data_ = malloc(oc8 * C8NUM * sizeof(float16_t));
