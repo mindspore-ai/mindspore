@@ -1067,6 +1067,8 @@ Status DEPipeline::ParseDeviceQueueOp(const py::dict &args, std::shared_ptr<Data
         (void)builder->SetDeviceId(ToInt(value));
       } else if (key == "send_epoch_end") {
         (void)builder->SetSendEpochEnd(ToBool(value));
+      } else if (key == "total_batch") {
+        (void)builder->SetTotalBatch(ToInt(value));
       }
     }
   }

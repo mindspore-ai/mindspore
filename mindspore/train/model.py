@@ -403,6 +403,7 @@ class Model:
             epoch_num = epoch
         else:
             epoch_num = math.ceil(epoch * sink_size / train_dataset.get_dataset_size())
+            train_dataset.__total_batch__ = epoch * sink_size
 
         dataset_helper, train_network = self._exec_preprocess(self._train_network,
                                                               is_train=True,
