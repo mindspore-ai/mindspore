@@ -28,8 +28,8 @@ class LshProjectionCPUKernel : public LiteKernel {
   LshProjectionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_) {
-    lsh_param_ = reinterpret_cast<LshProjectionParameter *>(op_parameter_);
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    param_ = reinterpret_cast<LshProjectionParameter *>(op_parameter_);
   }
   ~LshProjectionCPUKernel() = default;
 
@@ -37,23 +37,21 @@ class LshProjectionCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int DoExecute(int task_id);
-  int GetSignBit(char *in_data, float *weight, float seed, LshProjectionParameter *para);
-  void LshProjectionSparse(float *hash, char *in_data, float *weight, int32_t *output, LshProjectionParameter *param);
-  void LshProjectionDense(float *hash, char *in_data, float *weight, int32_t *output, LshProjectionParameter *param);
 
  private:
-  LshProjectionParameter *lsh_param_ = nullptr;
-  int thread_num_;
-  int64_t elements_num_;
-  int64_t count_unit_;
-  float *hash = nullptr;
-  char *in_data = nullptr;
-  float *weight = nullptr;
-  int32_t *output = nullptr;
+  int MallocKeys();
+  void FreeKeys();
+  int GetSignBit(int32_t *feature_, float *weight_, float seed, LshProjectionParameter *para, char *hash_buff);
+  void LshProjectionSparse(float *hash_seed_, int32_t *feature_, float *weight_, int32_t *output_,
+                           LshProjectionParameter *param, int32_t start, int32_t end, char *hash_buff);
+  void LshProjectionDense(float *hash_seed_, int32_t *feature_, float *weight_, int32_t *output_,
+                          LshProjectionParameter *param, int32_t start, int32_t end, char *hash_buff);
+  LshProjectionParameter *param_ = nullptr;
+  float *hash_seed_ = nullptr;
+  int32_t *feature_ = nullptr;
+  float *weight_ = nullptr;
+  int32_t *output_ = nullptr;
 };
-
-int LshProjectionRun(void *cdata, int task_id);
-
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSH_PROJECTION_H_

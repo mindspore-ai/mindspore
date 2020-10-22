@@ -23,13 +23,10 @@ typedef struct LshProjectionParameter {
   OpParameter op_parameter_;
   int lsh_type_;
   int hash_shape_[2];
-  int in_item_num_;
-  size_t in_item_size_;
-  size_t seed_size_;
-  size_t key_size_;
-  int64_t real_dst_count;
-  int task_id_;
-  int64_t count_unit_;
+  int feature_num_;
+  char **hash_buffs_;
+  size_t hash_buff_size_;
+  int64_t thread_stride_;
 } LshProjectionParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_LSH_PROJECTION_PARAMETER_H_
