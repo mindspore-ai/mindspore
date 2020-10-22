@@ -343,6 +343,34 @@ function Run_arm64() {
 
     adb -s ${device_id} shell < adb_cmd.txt
 
+    # Run compatibility test models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_arm64_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+        # run benchmark test without clib data
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_compatibility_config}
+
     # Run tflite converted models:
     while read line; do
         model_name=${line}
@@ -741,6 +769,7 @@ models_mindspore_train_config=${basepath}/models_mindspore_train.cfg
 models_tflite_gpu_config=${basepath}/models_tflite_gpu.cfg
 models_fp16_gpu_config=${basepath}/models_fp16_gpu.cfg
 models_arm32_config=${basepath}/models_arm32.cfg
+models_compatibility_config=${basepath}/models_compatibility.cfg
 
 ms_models_path=${basepath}/ms_models
 
@@ -800,6 +829,8 @@ benchmark_test_path=${basepath}/benchmark_test
 rm -rf ${benchmark_test_path}
 mkdir -p ${benchmark_test_path}
 cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1
+# Copy models converted using old release of mslite converter for compatibility test
+cp -a ${models_path}/compatibility_test/*.ms ${benchmark_test_path} || exit 1
 
 # Run on x86
 echo "start Run x86 ..."
