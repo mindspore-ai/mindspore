@@ -29,7 +29,7 @@ template <typename T>
 void TensorAddV2(const size_t &element_num, const T* x1, const T* x2, T* y, cudaStream_t cuda_stream) {
   size_t thread_per_block = 256;
   size_t block_per_grid = (element_num + thread_per_block -1)/thread_per_block;.
-  TensorAddV2Kernel<<<bolck_per_grid, thread_per_block, 0, cuda_stream>>>(element_num,x1,x2,y);
+  TensorAddV2Kernel<<<block_per_grid, thread_per_block, 0, cuda_stream>>>(element_num,x1,x2,y);
   return;
 }
 
