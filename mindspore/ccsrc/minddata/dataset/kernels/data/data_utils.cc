@@ -649,6 +649,7 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
   return Status::OK();
 }
 
+#ifndef ENABLE_ANDROID
 Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
                                    std::vector<std::shared_ptr<CVTensor>> *output) {
   std::vector<int64_t> tensor_shape = input->shape().AsVector();
@@ -673,6 +674,7 @@ Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
   }
   return Status::OK();
 }
+#endif
 
 Status BatchTensorToTensorVector(const std::shared_ptr<Tensor> &input, std::vector<std::shared_ptr<Tensor>> *output) {
   std::vector<int64_t> tensor_shape = input->shape().AsVector();

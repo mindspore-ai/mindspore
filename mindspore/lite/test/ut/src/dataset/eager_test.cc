@@ -23,6 +23,7 @@
 #include "minddata/dataset/include/vision.h"
 #include "minddata/dataset/include/execute.h"
 #include "minddata/dataset/util/path.h"
+#include "mindspore/lite/src/common/log_adapter.h"
 
 using MSTensor = mindspore::tensor::MSTensor;
 using DETensor = mindspore::tensor::DETensor;
@@ -56,7 +57,7 @@ TEST_F(MindDataTestEager, Test1) {
   auto dir_it = Path::DirIterator::OpenDirectory(&base_dir);
   while (dir_it->hasNext()) {
     Path v = dir_it->next();
-    MS_LOG(WARNING) << v.toString() << ".";
+    // MS_LOG(WARNING) << v.toString() << ".";
     std::shared_ptr<MSTensor> image = std::shared_ptr<MSTensor>(DETensor::CreateTensor(v.toString()));
 
     image = Execute(Decode())(image);

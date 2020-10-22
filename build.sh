@@ -636,7 +636,6 @@ build_minddata_lite_deps()
   else
       CMAKE_MINDDATA_ARGS="-DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
   fi
-  build_opencv
   build_eigen
   build_jpeg_turbo
 }

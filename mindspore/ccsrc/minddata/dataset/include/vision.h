@@ -31,14 +31,21 @@ namespace api {
 namespace vision {
 
 // Transform Op classes (in alphabetical order)
+#ifndef ENABLE_ANDROID
 class CenterCropOperation;
+#endif
 class CropOperation;
+#ifndef ENABLE_ANDROID
 class CutMixBatchOperation;
 class CutOutOperation;
+#endif
 class DecodeOperation;
+#ifndef ENABLE_ANDROID
 class HwcToChwOperation;
 class MixUpBatchOperation;
+#endif
 class NormalizeOperation;
+#ifndef ENABLE_ANDROID
 class PadOperation;
 class RandomAffineOperation;
 class RandomColorOperation;
@@ -53,7 +60,9 @@ class RandomSharpnessOperation;
 class RandomSolarizeOperation;
 class RandomVerticalFlipOperation;
 class RescaleOperation;
+#endif
 class ResizeOperation;
+#ifndef ENABLE_ANDROID
 class RgbaToBgrOperation;
 class RgbaToRgbOperation;
 class SwapRedBlueOperation;
@@ -66,14 +75,14 @@ class UniformAugOperation;
 ///     If size has 2 values, it should be (height, width).
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size);
-
+#endif
 /// \brief Function to create a Crop TensorOp
 /// \notes Crop an image based on location and crop size
 /// \param[in] coordinates Starting location of crop. Must be a vector of two values, in the form of {x_coor, y_coor}
 /// \param[in] size Size of the cropped area. Must be a vector of two values, in the form of {height, width}
 /// \return Shared pointer to the current TensorOp
 std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size);
-
+#ifndef ENABLE_ANDROID
 /// \brief Function to apply CutMix on a batch of images
 /// \notes Masks a random section of each image with the corresponding part of another randomly
 ///     selected image in that batch
@@ -91,12 +100,14 @@ std::shared_ptr<CutMixBatchOperation> CutMixBatch(ImageBatchFormat image_batch_f
 /// \return Shared pointer to the current TensorOp
 std::shared_ptr<CutOutOperation> CutOut(int32_t length, int32_t num_patches = 1);
 
+#endif
 /// \brief Function to create a Decode TensorOperation.
 /// \notes Decode the input image in RGB mode.
 /// \param[in] rgb A boolean of whether to decode in RGB mode or not.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<DecodeOperation> Decode(bool rgb = true);
 
+#ifndef ENABLE_ANDROID
 /// \brief Function to create a HwcToChw TensorOperation.
 /// \notes Transpose the input image; shape (H, W, C) to shape (C, H, W).
 /// \return Shared pointer to the current TensorOperation.
@@ -109,6 +120,7 @@ std::shared_ptr<HwcToChwOperation> HWC2CHW();
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<MixUpBatchOperation> MixUpBatch(float alpha = 1);
 
+#endif
 /// \brief Function to create a Normalize TensorOperation.
 /// \notes Normalize the input image with respect to mean and standard deviation.
 /// \param[in] mean A vector of mean values for each channel, w.r.t channel order.
@@ -118,6 +130,7 @@ std::shared_ptr<MixUpBatchOperation> MixUpBatch(float alpha = 1);
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vector<float> std);
 
+#ifndef ENABLE_ANDROID
 /// \brief Function to create a Pad TensorOp
 /// \notes Pads the image according to padding parameters
 /// \param[in] padding A vector representing the number of pixels to pad the image
@@ -287,6 +300,7 @@ std::shared_ptr<RandomVerticalFlipOperation> RandomVerticalFlip(float prob = 0.5
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RescaleOperation> Rescale(float rescale, float shift);
 
+#endif
 /// \brief Function to create a Resize TensorOperation.
 /// \notes Resize the input image to the given size.
 /// \param[in] size A vector representing the output size of the resized image.
@@ -297,6 +311,7 @@ std::shared_ptr<RescaleOperation> Rescale(float rescale, float shift);
 std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size,
                                         InterpolationMode interpolation = InterpolationMode::kLinear);
 
+#ifndef ENABLE_ANDROID
 /// \brief Function to create a RgbaToBgr TensorOperation.
 /// \notes Changes the input 4 channel RGBA tensor to 3 channel BGR.
 /// \return Shared pointer to the current TensorOperation.
@@ -335,7 +350,7 @@ class CenterCropOperation : public TensorOperation {
  private:
   std::vector<int32_t> size_;
 };
-
+#endif
 class CropOperation : public TensorOperation {
  public:
   CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size);
@@ -350,7 +365,7 @@ class CropOperation : public TensorOperation {
   std::vector<int32_t> coordinates_;
   std::vector<int32_t> size_;
 };
-
+#ifndef ENABLE_ANDROID
 class CutMixBatchOperation : public TensorOperation {
  public:
   explicit CutMixBatchOperation(ImageBatchFormat image_batch_format, float alpha = 1.0, float prob = 1.0);
@@ -383,6 +398,7 @@ class CutOutOperation : public TensorOperation {
   ImageBatchFormat image_batch_format_;
 };
 
+#endif
 class DecodeOperation : public TensorOperation {
  public:
   explicit DecodeOperation(bool rgb = true);
@@ -397,6 +413,7 @@ class DecodeOperation : public TensorOperation {
   bool rgb_;
 };
 
+#ifndef ENABLE_ANDROID
 class HwcToChwOperation : public TensorOperation {
  public:
   ~HwcToChwOperation() = default;
@@ -420,6 +437,7 @@ class MixUpBatchOperation : public TensorOperation {
   float alpha_;
 };
 
+#endif
 class NormalizeOperation : public TensorOperation {
  public:
   NormalizeOperation(std::vector<float> mean, std::vector<float> std);
@@ -435,6 +453,7 @@ class NormalizeOperation : public TensorOperation {
   std::vector<float> std_;
 };
 
+#ifndef ENABLE_ANDROID
 class PadOperation : public TensorOperation {
  public:
   PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value = {0},
@@ -672,6 +691,7 @@ class RescaleOperation : public TensorOperation {
   float shift_;
 };
 
+#endif
 class ResizeOperation : public TensorOperation {
  public:
   explicit ResizeOperation(std::vector<int32_t> size,
@@ -688,6 +708,7 @@ class ResizeOperation : public TensorOperation {
   InterpolationMode interpolation_;
 };
 
+#ifndef ENABLE_ANDROID
 class RgbaToBgrOperation : public TensorOperation {
  public:
   RgbaToBgrOperation();
@@ -735,6 +756,8 @@ class UniformAugOperation : public TensorOperation {
   std::vector<std::shared_ptr<TensorOperation>> transforms_;
   int32_t num_ops_;
 };
+#endif
+
 }  // namespace vision
 }  // namespace api
 }  // namespace dataset

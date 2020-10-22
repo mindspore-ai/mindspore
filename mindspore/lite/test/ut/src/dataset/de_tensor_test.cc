@@ -15,12 +15,15 @@
  */
 #include <memory>
 #include <string>
+#include "./securec.h"
 #include "common/common_test.h"
 #include "gtest/gtest.h"
-#include "./securec.h"
-#include "dataset/core/tensor.h"
-#include "dataset/core/cv_tensor.h"
-#include "dataset/core/data_type.h"
+
+#include "mindspore/ccsrc/minddata/dataset/core/data_type.h"
+#include "mindspore/ccsrc/minddata/dataset/core/tensor.h"
+#include "mindspore/ccsrc/minddata/dataset/core/tensor_shape.h"
+#include "mindspore/ccsrc/minddata/dataset/include/de_tensor.h"
+#include "mindspore/lite/src/common/log_adapter.h"
 #include "mindspore/lite/src/tensor.h"
 
 using MSTensor = mindspore::tensor::MSTensor;
