@@ -533,9 +533,10 @@ std::shared_ptr<VOCNode> VOC(const std::string &dataset_dir, const std::string &
 /// \param prefetch_sz optional prefetch size
 /// \return Shared pointer to DatasetCache. If error, nullptr is returned.
 std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint64_t mem_sz, bool spill,
-                                                 std::optional<std::string> hostname, std::optional<int32_t> port,
-                                                 std::optional<int32_t> num_connections,
-                                                 std::optional<int32_t> prefetch_sz);
+                                                 std::optional<std::string> hostname = std::nullopt,
+                                                 std::optional<int32_t> port = std::nullopt,
+                                                 std::optional<int32_t> num_connections = std::nullopt,
+                                                 std::optional<int32_t> prefetch_sz = std::nullopt);
 #endif
 
 /// \brief Function to create a ZipNode
