@@ -611,3 +611,136 @@ TEST_F(MindDataImageProcess, TestSubtractFloat) {
                     static_cast<FLOAT32_C1 *>(dst_float.data_ptr_)[i].c1);
   }
 }
+
+TEST_F(MindDataImageProcess, TestDivideUint8) {
+  const size_t cols = 4;
+  // Test uint8
+  LiteMat src1_uint8(1, cols);
+  LiteMat src2_uint8(1, cols);
+  LiteMat expect_uint8(1, cols);
+  for (size_t i = 0; i < cols; i++) {
+    static_cast<UINT8_C1 *>(src1_uint8.data_ptr_)[i] = 8;
+    static_cast<UINT8_C1 *>(src2_uint8.data_ptr_)[i] = 4;
+    static_cast<UINT8_C1 *>(expect_uint8.data_ptr_)[i] = 2;
+  }
+  LiteMat dst_uint8;
+  EXPECT_TRUE(Divide(src1_uint8, src2_uint8, dst_uint8));
+  for (size_t i = 0; i < cols; i++) {
+    EXPECT_EQ(static_cast<UINT8_C1 *>(expect_uint8.data_ptr_)[i].c1,
+              static_cast<UINT8_C1 *>(dst_uint8.data_ptr_)[i].c1);
+  }
+}
+
+TEST_F(MindDataImageProcess, TestDivideInt8) {
+  const size_t cols = 4;
+  // Test int8
+  LiteMat src1_int8(1, cols, LDataType(LDataType::INT8));
+  LiteMat src2_int8(1, cols, LDataType(LDataType::INT8));
+  LiteMat expect_int8(1, cols, LDataType(LDataType::INT8));
+  for (size_t i = 0; i < cols; i++) {
+    static_cast<INT8_C1 *>(src1_int8.data_ptr_)[i] = 8;
+    static_cast<INT8_C1 *>(src2_int8.data_ptr_)[i] = -4;
+    static_cast<INT8_C1 *>(expect_int8.data_ptr_)[i] = -2;
+  }
+  LiteMat dst_int8;
+  EXPECT_TRUE(Divide(src1_int8, src2_int8, dst_int8));
+  for (size_t i = 0; i < cols; i++) {
+    EXPECT_EQ(static_cast<INT8_C1 *>(expect_int8.data_ptr_)[i].c1,
+              static_cast<INT8_C1 *>(dst_int8.data_ptr_)[i].c1);
+  }
+}
+
+TEST_F(MindDataImageProcess, TestDivideUInt16) {
+  const size_t cols = 4;
+  // Test uint16
+  LiteMat src1_uint16(1, cols, LDataType(LDataType::UINT16));
+  LiteMat src2_uint16(1, cols, LDataType(LDataType::UINT16));
+  LiteMat expect_uint16(1, cols, LDataType(LDataType::UINT16));
+  for (size_t i = 0; i < cols; i++) {
+    static_cast<UINT16_C1 *>(src1_uint16.data_ptr_)[i] = 40000;
+    static_cast<UINT16_C1 *>(src2_uint16.data_ptr_)[i] = 20000;
+    static_cast<UINT16_C1 *>(expect_uint16.data_ptr_)[i] = 2;
+  }
+  LiteMat dst_uint16;
+  EXPECT_TRUE(Divide(src1_uint16, src2_uint16, dst_uint16));
+  for (size_t i = 0; i < cols; i++) {
+    EXPECT_EQ(static_cast<UINT16_C1 *>(expect_uint16.data_ptr_)[i].c1,
+              static_cast<UINT16_C1 *>(dst_uint16.data_ptr_)[i].c1);
+  }
+}
+
+TEST_F(MindDataImageProcess, TestDivideInt16) {
+  const size_t cols = 4;
+  // Test int16
+  LiteMat src1_int16(1, cols, LDataType(LDataType::INT16));
+  LiteMat src2_int16(1, cols, LDataType(LDataType::INT16));
+  LiteMat expect_int16(1, cols, LDataType(LDataType::INT16));
+  for (size_t i = 0; i < cols; i++) {
+    static_cast<INT16_C1 *>(src1_int16.data_ptr_)[i] = 30000;
+    static_cast<INT16_C1 *>(src2_int16.data_ptr_)[i] = -3;
+    static_cast<INT16_C1 *>(expect_int16.data_ptr_)[i] = -10000;
+  }
+  LiteMat dst_int16;
+  EXPECT_TRUE(Divide(src1_int16, src2_int16, dst_int16));
+  for (size_t i = 0; i < cols; i++) {
+    EXPECT_EQ(static_cast<INT16_C1 *>(expect_int16.data_ptr_)[i].c1,
+              static_cast<INT16_C1 *>(dst_int16.data_ptr_)[i].c1);
+  }
+}
+
+TEST_F(MindDataImageProcess, TestDivideUInt32) {
+  const size_t cols = 4;
+  // Test uint16
+  LiteMat src1_uint32(1, cols, LDataType(LDataType::UINT32));
+  LiteMat src2_uint32(1, cols, LDataType(LDataType::UINT32));
+  LiteMat expect_uint32(1, cols, LDataType(LDataType::UINT32));
+  for (size_t i = 0; i < cols; i++) {
+    static_cast<UINT32_C1 *>(src1_uint32.data_ptr_)[i] = 4000000000;
+    static_cast<UINT32_C1 *>(src2_uint32.data_ptr_)[i] = 4;
+    static_cast<UINT32_C1 *>(expect_uint32.data_ptr_)[i] = 1000000000;
+  }
+  LiteMat dst_uint32;
+  EXPECT_TRUE(Divide(src1_uint32, src2_uint32, dst_uint32));
+  for (size_t i = 0; i < cols; i++) {
+    EXPECT_EQ(static_cast<UINT32_C1 *>(expect_uint32.data_ptr_)[i].c1,
+              static_cast<UINT32_C1 *>(dst_uint32.data_ptr_)[i].c1);
+  }
+}
+
+TEST_F(MindDataImageProcess, TestDivideInt32) {
+  const size_t cols = 4;
+  // Test int32
+  LiteMat src1_int32(1, cols, LDataType(LDataType::INT32));
+  LiteMat src2_int32(1, cols, LDataType(LDataType::INT32));
+  LiteMat expect_int32(1, cols, LDataType(LDataType::INT32));
+  for (size_t i = 0; i < cols; i++) {
+    static_cast<INT32_C1 *>(src1_int32.data_ptr_)[i] = 2000000000;
+    static_cast<INT32_C1 *>(src2_int32.data_ptr_)[i] = -2;
+    static_cast<INT32_C1 *>(expect_int32.data_ptr_)[i] = -1000000000;
+  }
+  LiteMat dst_int32;
+  EXPECT_TRUE(Divide(src1_int32, src2_int32, dst_int32));
+  for (size_t i = 0; i < cols; i++) {
+    EXPECT_EQ(static_cast<INT32_C1 *>(expect_int32.data_ptr_)[i].c1,
+              static_cast<INT32_C1 *>(dst_int32.data_ptr_)[i].c1);
+  }
+}
+
+TEST_F(MindDataImageProcess, TestDivideFloat) {
+  const size_t cols = 4;
+  // Test float
+  LiteMat src1_float(1, cols, LDataType(LDataType::FLOAT32));
+  LiteMat src2_float(1, cols, LDataType(LDataType::FLOAT32));
+  LiteMat expect_float(1, cols, LDataType(LDataType::FLOAT32));
+  for (size_t i = 0; i < cols; i++) {
+    static_cast<FLOAT32_C1 *>(src1_float.data_ptr_)[i] = 12.34f;
+    static_cast<FLOAT32_C1 *>(src2_float.data_ptr_)[i] = -2.0f;
+    static_cast<FLOAT32_C1 *>(expect_float.data_ptr_)[i] = -6.17f;
+  }
+  LiteMat dst_float;
+  EXPECT_TRUE(Divide(src1_float, src2_float, dst_float));
+  for (size_t i = 0; i < cols; i++) {
+    EXPECT_FLOAT_EQ(static_cast<FLOAT32_C1 *>(expect_float.data_ptr_)[i].c1,
+                    static_cast<FLOAT32_C1 *>(dst_float.data_ptr_)[i].c1);
+  }
+}
