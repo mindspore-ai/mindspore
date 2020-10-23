@@ -66,7 +66,7 @@ int SigmoidFp16(const float16_t *src, float16_t *dst, int ele_num) {
   return NNACL_OK;
 }
 
-float16_t TanhOpt(float16_t src) {
+float16_t TanhOptFp16(float16_t src) {
   if (src > 5.0) {
     return 1.0f;
   } else if (src < -5.0) {
@@ -81,7 +81,7 @@ float16_t TanhOpt(float16_t src) {
 
 int TanhFp16(const float16_t *src, float16_t *dst, int ele_num) {
   for (int i = 0; i < ele_num; ++i) {
-    dst[i] = TanhOpt(src[i]);
+    dst[i] = TanhOptFp16(src[i]);
   }
   return NNACL_OK;
 }

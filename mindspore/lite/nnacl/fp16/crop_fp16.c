@@ -20,25 +20,25 @@
 
 #include "nnacl/crop_parameter.h"
 
-void Crop(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
+void Fp16Crop(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
   int input_dim = para->input_dim_;
   switch (input_dim) {
     case 1:
-      Crop1D(input, output, task_id, para);
+      Fp16Crop1D(input, output, task_id, para);
       break;
     case 2:
-      Crop2D(input, output, task_id, para);
+      Fp16Crop2D(input, output, task_id, para);
       break;
     case 3:
-      Crop3D(input, output, task_id, para);
+      Fp16Crop3D(input, output, task_id, para);
       break;
     case 4:
-      Crop4D(input, output, task_id, para);
+      Fp16Crop4D(input, output, task_id, para);
       break;
   }
 }
 
-void Crop1D(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
+void Fp16Crop1D(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
   const int out_batch = para->out_shape_[0];
   const int thread_count = para->thread_count_;
   int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_batch, thread_count) : out_batch;
@@ -55,7 +55,7 @@ void Crop1D(const float16_t *input, float16_t *output, int task_id, CropParamete
   memcpy(out_ptr, in_ptr, sizeof(float16_t) * out_dist_stride);
 }
 
-void Crop2D(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
+void Fp16Crop2D(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
   const int in_height = para->in_shape_[1];
   const int out_batch = para->out_shape_[0];
   const int out_height = para->out_shape_[1];
@@ -77,7 +77,7 @@ void Crop2D(const float16_t *input, float16_t *output, int task_id, CropParamete
   }
 }
 
-void Crop3D(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
+void Fp16Crop3D(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
   const int in_height = para->in_shape_[1];
   const int in_width = para->in_shape_[2];
 
@@ -111,7 +111,7 @@ void Crop3D(const float16_t *input, float16_t *output, int task_id, CropParamete
   }
 }
 
-void Crop4D(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
+void Fp16Crop4D(const float16_t *input, float16_t *output, int task_id, CropParameter *para) {
   const int in_height = para->in_shape_[1];
   const int in_width = para->in_shape_[2];
   const int in_channel = para->in_shape_[3];

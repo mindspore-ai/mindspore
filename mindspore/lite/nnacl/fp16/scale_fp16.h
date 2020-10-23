@@ -27,7 +27,7 @@ extern "C" {
 #endif
 void DoScaleFp16(float16_t *in_data, float16_t *out_data, float16_t *scale, float16_t *offset, int task_id,
                  ScaleParameter *scale_param);
-void DoScaleReluFp16(float16_t *in_data, float16_t *out_data, float16_t *scale, float16_t *offset, int task_id,
+void Fp16DoScaleRelu(float16_t *in_data, float16_t *out_data, float16_t *scale, float16_t *offset, int task_id,
                      ScaleParameter *scale_param);
 void DoScaleRelu6Fp16(float16_t *in_data, float16_t *out_data, float16_t *scale, float16_t *offset, int task_id,
                       ScaleParameter *scale_param);

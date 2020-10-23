@@ -17,7 +17,7 @@
 #include "nnacl/fp16/stack_fp16.h"
 #include "nnacl/arithmetic_common.h"
 
-size_t GetStackCopyNum(int axis, int *in_shape, size_t shape_size) {
+size_t Fp16GetStackCopyNum(int axis, int *in_shape, size_t shape_size) {
   size_t one_input_size = 1;
   for (size_t i = 0; i < shape_size; ++i) {
     one_input_size *= in_shape[i];
@@ -29,7 +29,7 @@ size_t GetStackCopyNum(int axis, int *in_shape, size_t shape_size) {
   return copy_num;
 }
 
-size_t GetStackPreAxisCount(const int *in_shape, int axis) {
+size_t Fp16GetStackPreAxisCount2(const int *in_shape, int axis) {
   size_t pre_axis_count = 1;
   for (size_t i = 0; i < axis; ++i) {
     pre_axis_count *= in_shape[i];
@@ -39,9 +39,9 @@ size_t GetStackPreAxisCount(const int *in_shape, int axis) {
 
 void DoStackFp16(const float16_t *const *inputs, size_t input_num, int *in_shape, size_t shape_size, int axis,
                  float16_t *output) {
-  size_t copy_num = GetStackCopyNum(axis, in_shape, shape_size);
+  size_t copy_num = Fp16GetStackCopyNum(axis, in_shape, shape_size);
   size_t copy_size = copy_num * sizeof(float16_t);
-  size_t pre_axis_count = GetStackPreAxisCount(in_shape, axis);
+  size_t pre_axis_count = Fp16GetStackPreAxisCount2(in_shape, axis);
   size_t in_offset = 0;
   size_t out_offset = 0;
   for (size_t i = 0; i < pre_axis_count; ++i) {

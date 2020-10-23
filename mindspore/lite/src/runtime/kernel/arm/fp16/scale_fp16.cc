@@ -80,7 +80,7 @@ int ScaleFp16CPUKernel::Scale(int task_id) {
       DoScaleRelu6Fp16(input_, output_, scale_, offset_, task_id, scale_param_);
       break;
     case schema::ActivationType_RELU:
-      DoScaleReluFp16(input_, output_, scale_, offset_, task_id, scale_param_);
+      Fp16DoScaleRelu(input_, output_, scale_, offset_, task_id, scale_param_);
       break;
     case schema::ActivationType_NO_ACTIVATION:
       DoScaleFp16(input_, output_, scale_, offset_, task_id, scale_param_);

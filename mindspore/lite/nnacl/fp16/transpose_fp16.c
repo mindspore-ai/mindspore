@@ -18,8 +18,8 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-void TransposeDim2(float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
-                   int *output_shape, int h_start, int h_end) {
+void Fp16TransposeDim2(float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
+                       int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int output0 = output_shape[0];
@@ -33,8 +33,8 @@ void TransposeDim2(float16_t *in_data, float16_t *out_data, int *strides, int *o
   }
 }
 
-void TransposeDim3(float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
-                   int *output_shape, int h_start, int h_end) {
+void Fp16TransposeDim3(float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
+                       int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -56,8 +56,8 @@ void TransposeDim3(float16_t *in_data, float16_t *out_data, int *strides, int *o
   }
 }
 
-void TransposeDim4(float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
-                   int *output_shape, int h_start, int h_end) {
+void Fp16TransposeDim4(float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
+                       int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -88,8 +88,8 @@ void TransposeDim4(float16_t *in_data, float16_t *out_data, int *strides, int *o
   }
 }
 
-void TransposeDim5(float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
-                   int *output_shape, int h_start, int h_end) {
+void Fp16TransposeDim5(float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
+                       int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -127,8 +127,8 @@ void TransposeDim5(float16_t *in_data, float16_t *out_data, int *strides, int *o
   }
 }
 
-int DoTranspose(float16_t *in_data, float16_t *out_data, int *input_shape, int *output_shape,
-                TransposeParameter *transpose_param, int h_start, int h_end) {
+int Fp16DoTranspose(float16_t *in_data, float16_t *out_data, int *input_shape, int *output_shape,
+                    TransposeParameter *transpose_param, int h_start, int h_end) {
   if (in_data == NULL || out_data == NULL) {
     return NNACL_ERR;
   }
@@ -156,13 +156,13 @@ int DoTranspose(float16_t *in_data, float16_t *out_data, int *input_shape, int *
     return NNACL_OK;
   }
   if (num_axes == 2) {
-    TransposeDim2(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+    Fp16TransposeDim2(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
   } else if (num_axes == 3) {
-    TransposeDim3(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+    Fp16TransposeDim3(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
   } else if (num_axes == 4) {
-    TransposeDim4(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+    Fp16TransposeDim4(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
   } else if (num_axes == 5) {
-    TransposeDim5(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+    Fp16TransposeDim5(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
   }
   return NNACL_OK;
 }

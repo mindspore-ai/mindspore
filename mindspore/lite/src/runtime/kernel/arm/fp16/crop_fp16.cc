@@ -46,7 +46,7 @@ int CropFp16CPUKernel::Init() {
 int CropFp16CPUKernel::ReSize() { return CropBaseCPUKernel::ReSize(); }
 
 int CropFp16CPUKernel::DoExecute(int task_id) {
-  Crop(input_ptr_, output_ptr_, task_id, crop_para_);
+  Fp16Crop(input_ptr_, output_ptr_, task_id, crop_para_);
   return RET_OK;
 }
 

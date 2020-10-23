@@ -107,8 +107,8 @@ int TransposeFp16CPUKernel::TransposeParallel(int task_id) {
   int thread_offset = task_id * thread_h_stride_;
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
 
-  auto ret = DoTranspose(fp16_in_data_, fp16_out_data_, in_shape_, out_shape_, param, thread_offset,
-                         thread_offset + num_unit_thread);
+  auto ret = Fp16DoTranspose(fp16_in_data_, fp16_out_data_, in_shape_, out_shape_, param, thread_offset,
+                             thread_offset + num_unit_thread);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Transpose error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
