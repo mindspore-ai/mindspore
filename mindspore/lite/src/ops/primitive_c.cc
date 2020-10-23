@@ -137,6 +137,7 @@
 #include "src/ops/upsample.h"
 #include "src/ops/layer_norm.h"
 #include "src/ops/non_max_suppression.h"
+#include "src/ops/identity.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -729,6 +730,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new LayerNorm(primitive);
     case schema::PrimitiveType_NonMaxSuppression:
       return new NonMaxSuppression(primitive);
+    case schema::PrimitiveType_Identity:
+      return new Identity(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:

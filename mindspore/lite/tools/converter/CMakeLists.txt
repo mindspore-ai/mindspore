@@ -46,6 +46,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/weight_format_hardcode_pass.cc
         ../optimizer/graph/clip_convert_activation_pass.cc
         ../optimizer/graph/unused_cast_node_remove_pass.cc
+        ../optimizer/graph/identity_remove_pass.cc
         )
 
 add_subdirectory(../anf_importer anf_importer)
@@ -75,6 +76,7 @@ set(LITE_SRC
         ${SRC_DIR}/executor.cc
         ${SRC_DIR}/model.cc
         ${SRC_DIR}/model_common.cc
+        ${SRC_DIR}/errorcode.cc
         )
 if (SUPPORT_TRAIN)
     set(LITE_SRC

@@ -134,6 +134,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/tools/common/storage.cc
         ${LITE_DIR}/tools/benchmark/benchmark.cc
         ${LITE_DIR}/test/st/benchmark_test.cc
+        ${LITE_DIR}/src/errorcode.cc
         )
 ### gpu runtime
 if (SUPPORT_GPU)
@@ -184,6 +185,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/weight_format_hardcode_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/clip_convert_activation_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unused_cast_node_remove_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/identity_remove_pass.cc
             )
 endif()
 ### train

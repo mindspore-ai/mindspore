@@ -27,6 +27,7 @@
 #include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
 #include "tools/optimizer/fusion/layer_norm_fusion.h"
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
+#include "tools/optimizer/graph/identity_remove_pass.h"
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
@@ -53,6 +54,11 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   // for now - trainning is not supporting fuse operations
   if (config != nullptr && config->trainModel == false) {
     // remove quantdtype when awaretraining
+    if (config->fmk == lite::converter::FmkType_ONNX) {
+      auto remove_identity_pass = std::make_shared<opt::RemoveIdentityOpPass>();
+      remove_identity_pass->SetFmkType(config->fmk);
+      pm->AddPass(remove_identity_pass);
+    }
     if (config->quantType == QuantType_AwareTraining) {
       pm->AddPass(std::make_shared<opt::QuantDtypeCastFusion>());
     }

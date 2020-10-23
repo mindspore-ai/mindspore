@@ -109,6 +109,7 @@ int RunConverter(int argc, const char **argv) {
   if (flags == nullptr) {
     MS_LOG(ERROR) << "new flags error ";
     std::cout << "NEW FLAGS ERROR:" << RET_MEMORY_FAILED << std::endl;
+    PrintErrorInfo(RET_MEMORY_FAILED);
     return RET_MEMORY_FAILED;
   }
   auto status = flags->Init(argc, argv);
@@ -117,6 +118,7 @@ int RunConverter(int argc, const char **argv) {
       MS_LOG(ERROR) << "converter::Flags Init failed: " << status;
       std::cout << "CONVERTER::FLAGS INIT FAILED:" << status << std::endl;
     }
+    PrintErrorInfo(status);
     return status;
   }
   // Load graph
@@ -148,6 +150,7 @@ int RunConverter(int argc, const char **argv) {
     default: {
       MS_LOG(ERROR) << "Unsupported fmkType: " << flags->fmk;
       std::cout << "UNSUPPORTED FMKTYPE " << flags->fmk << ":" << RET_INPUT_PARAM_INVALID << std::endl;
+      PrintErrorInfo(RET_INPUT_PARAM_INVALID);
       return RET_INPUT_PARAM_INVALID;
     }
   }
@@ -156,6 +159,7 @@ int RunConverter(int argc, const char **argv) {
   if (fb_graph == nullptr) {
     MS_LOG(ERROR) << "Convert model return nullptr";
     std::cout << "CONVERT RESULT FAILED:" << status << std::endl;
+    PrintErrorInfo(status);
     return status;
   }
 
@@ -163,15 +167,17 @@ int RunConverter(int argc, const char **argv) {
   Storage storage;
   fb_graph->version = Version();
   status = storage.Save(*fb_graph, flags->outputFile);
-  if (status != 0) {
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Save graph to file failed";
     std::cout << "SAVE GRAPH FAILED:" << status << std::endl;
+    PrintErrorInfo(status);
     return status;
   }
 
   delete fb_graph;
   MS_LOG(INFO) << "CONVERT RESULT: SUCCESS!";
   std::cout << "CONVERT RESULT SUCCESS:" << status << std::endl;
+  PrintErrorInfo(status);
   return status;
 }
 }  // namespace lite

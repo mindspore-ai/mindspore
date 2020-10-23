@@ -70,13 +70,13 @@ STATUS AwareQuantizer::GenerateQuantParam() {
     }
     auto quantParamCalcer = quantParamRegister->GetQuantParamCalcer(GetCNodeTType(*node));
     if (quantParamCalcer == nullptr) {
-      MS_LOG(WARNING) << "Can not find QuantParamCalcer for " << node->name.c_str()
-                      << ", type: " << GetCNodeTTypeName(*node).c_str() << " set node to QuantNone and skip";
+      MS_LOG(INFO) << "Can not find QuantParamCalcer for " << node->name.c_str()
+                   << ", type: " << GetCNodeTTypeName(*node).c_str() << " set node to QuantNone and skip";
       node->quantType = static_cast<schema::QuantType>(QuantType_QUANT_NONE);
     } else {
       auto status = quantParamCalcer->Calc(graph, *node);
       if (status != RET_OK) {
-        MS_LOG(WARNING) << "quantParamCalcer failed: " << status << " node: " << node->name.c_str();
+        MS_LOG(INFO) << "quantParamCalcer failed: " << status << " node: " << node->name.c_str();
         node->quantType = schema::QuantType_QUANT_NONE;
       } else {
         node->quantType = schema::QuantType_AwareTraining;
@@ -103,7 +103,7 @@ STATUS AwareQuantizer::DoQuantize() {
         GetCNodeTType(*node) == schema::PrimitiveType_MatMul) {
       auto inputIndexes = node->inputIndex;
       if (inputIndexes.size() < 2) {
-        MS_LOG(WARNING) << node->name.c_str() << " node input has invalid inputs tensor count";
+        MS_LOG(ERROR) << node->name.c_str() << " node input has invalid inputs tensor count";
         return RET_ERROR;
       }
       // quant weight
@@ -111,7 +111,7 @@ STATUS AwareQuantizer::DoQuantize() {
       if (!weightTensor->quantParams.empty() && weightTensor->quantParams.at(0)->inited) {
         status = QuantConvWeight(graph, node.get());
         if (status != RET_OK) {
-          MS_LOG(WARNING) << "QuantConvWeight failed!";
+          MS_LOG(ERROR) << "QuantConvWeight failed!";
           return RET_ERROR;
         }
       }
@@ -121,7 +121,7 @@ STATUS AwareQuantizer::DoQuantize() {
         if (!biasTensor->quantParams.empty() && biasTensor->quantParams.at(0)->inited) {
           status = QuantConvBias(graph, node.get());
           if (status != RET_OK) {
-            MS_LOG(WARNING) << "QuantConvBias failed!";
+            MS_LOG(ERROR) << "QuantConvBias failed!";
             return RET_ERROR;
           }
         }
@@ -129,7 +129,7 @@ STATUS AwareQuantizer::DoQuantize() {
     } else if (GetCNodeTType(*node) == schema::PrimitiveType_DetectionPostProcess) {
       status = QuantDetectionPostProcessConstTensor(graph, node.get());
       if (status != RET_OK) {
-        MS_LOG(WARNING) << "QuantDetectionPostProcessConstTensor failed!";
+        MS_LOG(ERROR) << "QuantDetectionPostProcessConstTensor failed!";
         return RET_ERROR;
       }
     } else if (GetCNodeTType(*node) == schema::PrimitiveType_Add ||
@@ -137,7 +137,7 @@ STATUS AwareQuantizer::DoQuantize() {
                GetCNodeTType(*node) == schema::PrimitiveType_Mul) {
       status = QuantArithmeticConstTensor(graph, node.get());
       if (status != RET_OK) {
-        MS_LOG(WARNING) << "QuantArithmeticConstTensor failed!";
+        MS_LOG(ERROR) << "QuantArithmeticConstTensor failed!";
         return RET_ERROR;
       }
     }
@@ -168,7 +168,7 @@ STATUS AwareQuantizer::QuantArithmeticConstTensor(const schema::MetaGraphT *grap
       }
       if (inTensor->dataType != TypeId::kNumberTypeFloat32 && inTensor->dataType != TypeId::kNumberTypeFloat &&
           inTensor->dataType != TypeId::kNumberTypeUInt8) {
-        MS_LOG(WARNING) << node->name.c_str() << "'s weight data is not float or uint8";
+        MS_LOG(ERROR) << node->name.c_str() << "'s weight data is not float or uint8";
         return RET_ERROR;
       }
 
@@ -303,7 +303,7 @@ STATUS AwareQuantizer::QuantConvWeight(const schema::MetaGraphT *subGraph, schem
   }
   if (weightTensor->dataType != TypeId::kNumberTypeFloat32 && weightTensor->dataType != TypeId::kNumberTypeFloat &&
       weightTensor->dataType != TypeId::kNumberTypeUInt8) {
-    MS_LOG(WARNING) << "conv " << node->name.c_str() << "'s weight data is not float or uint8";
+    MS_LOG(ERROR) << "conv " << node->name.c_str() << "'s weight data is not float or uint8";
     return RET_ERROR;
   }
   size_t wShapeSize = GetShapeSize(*(weightTensor.get()));

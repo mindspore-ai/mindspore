@@ -34,6 +34,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/model.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
         )
 
 if (SUPPORT_GPU)

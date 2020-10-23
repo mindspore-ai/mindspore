@@ -88,7 +88,7 @@ class OnnxModelParser : public ModelParser {
 
   void FindGraphInputAndConst(const onnx::GraphProto &onnx_graph);
 
-  STATUS ParseLoopAttr(schema::CNodeT *dst_op, const onnx::NodeProto &onnx_node, const QuantType &quantType,
+  STATUS ParseSubgraph(schema::CNodeT *dst_op, const onnx::NodeProto &onnx_node, const QuantType &quantType,
                        schema::MetaGraphT *dst_graph);
 
  private:
