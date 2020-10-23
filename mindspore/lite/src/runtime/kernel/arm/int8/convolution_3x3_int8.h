@@ -38,7 +38,6 @@ class Convolution3x3Int8CPUKernel : public ConvolutionBaseCPUKernel {
   int RunImpl(int task_id);
   int InitWeightBias();
   int InitTmpBuffer();
-  void ConfigInputOutput();
 
  private:
   void FreeTmpBuffer();

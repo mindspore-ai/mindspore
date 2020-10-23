@@ -149,12 +149,6 @@ int DeconvolutionDepthwiseInt8CPUKernel::Init() {
 int DeconvolutionDepthwiseInt8CPUKernel::ReSize() {
   InitSlideParam();
   ConvolutionBaseCPUKernel::Init();
-
-  auto ret = InitBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Deconv Depthwise int8 InitBuffer error!";
-    return ret;
-  }
   return RET_OK;
 }
 
@@ -179,6 +173,11 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
   }
+  auto ret = InitBuffer();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Deconv Depthwise int8 InitBuffer error!";
+    return ret;
+  }
 
   // pack input, assume input format: NHWC -> NHWC4
   auto input_tensor = in_tensors_.at(kInputIndex);
@@ -191,7 +190,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
     packed_output_ = output_addr;
   }
 
-  auto ret = ParallelLaunch(this->context_->thread_pool_, DeconvDwInt8Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, DeconvDwInt8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvDwInt8Run error: error_code[" << ret << "]";
     return RET_ERROR;

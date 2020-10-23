@@ -141,34 +141,6 @@ int ConvolutionBaseCPUKernel::SetIfPerChannel() {
   return RET_OK;
 }
 
-int ConvolutionBaseCPUKernel::SetIfAsymmetric() {
-  uint8_t asymmetric = 0b0;
-  auto filter_tensor = in_tensors_.at(kWeightIndex);
-  auto filter_ele_num = filter_tensor->ElementsNum();
-  auto filter_data = reinterpret_cast<int8_t *>(filter_tensor->MutableData());
-  int min_value = INT8_MAX;
-  int max_value = INT8_MIN;
-  for (int i = 0; i < filter_ele_num; ++i) {
-    min_value = min_value < filter_data[i] ? min_value : filter_data[i];
-    max_value = max_value > filter_data[i] ? max_value : filter_data[i];
-  }
-  if (conv_quant_arg_->filter_arg_num_ == kPerTensor) {
-    auto filter_zp = conv_quant_arg_->filter_quant_args_[0].zp_;
-    if (filter_zp != 0 && min_value >= -128 && max_value <= 127) {
-      asymmetric = asymmetric | FILTER_ASYMMETRIC;
-    }
-  } else {
-    auto filter_arg = conv_quant_arg_->filter_quant_args_;
-    for (int i = 0; i < conv_param_->output_channel_; ++i) {
-      if (filter_arg[i].zp_ != 0 && min_value >= -128 && max_value <= 127) {
-        asymmetric = asymmetric | FILTER_ASYMMETRIC;
-      }
-    }
-  }
-  conv_quant_arg_->asymmetric_ = asymmetric;
-  return RET_OK;
-}
-
 int ConvolutionBaseCPUKernel::MallocQuantParam() {
   conv_quant_arg_ = &conv_param_->conv_quant_arg_;
   auto input_tensor = in_tensors_.at(kInputIndex);

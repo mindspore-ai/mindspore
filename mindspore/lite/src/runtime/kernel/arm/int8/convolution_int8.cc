@@ -59,7 +59,7 @@ void ConvolutionInt8CPUKernel::CheckSupportOptimize() {
   conv_param_->tile_num_ = tile_num_;
 }
 
-int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
+int ConvolutionInt8CPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = filter_tensor->Channel();
   auto output_channel = filter_tensor->Batch();
@@ -83,7 +83,7 @@ int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
   }
 #endif
   int pack_weight_size = up_round_oc * up_round_deep;
-  int bias_size = up_round_oc * sizeof(int32_t);
+  size_t bias_size = up_round_oc * sizeof(int32_t);
   int32_t input_zp = conv_param_->conv_quant_arg_.input_quant_args_[0].zp_;
 
   // init weight
@@ -150,7 +150,7 @@ int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
   return RET_OK;
 }
 
-int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
+int ConvolutionInt8CPUKernel::InitTmpBuffer() {
   MS_ASSERT(ctx_->allocator != nullptr);
   int kernel_plane = conv_param_->kernel_h_ * conv_param_->kernel_w_;
   int tmp_size;
@@ -181,7 +181,7 @@ int ConvolutionInt8CPUKernel::Init() {
     return ret;
   }
 
-  ret = InitWeightBiasOpt();
+  ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Initialization for optimized int8 conv failed.";
     return RET_ERROR;
@@ -212,9 +212,8 @@ int ConvolutionInt8CPUKernel::RunImpl(int task_id) {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = reinterpret_cast<int8_t *>(input_tensor->MutableData());
   auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->MutableData());
-  ConvInt8Opt(ori_input_data, packed_input_, matmul_packed_input_, packed_weight_,
-              reinterpret_cast<int32_t *>(bias_data_), output_addr, filter_zp_ptr_, input_sum_, task_id, conv_param_,
-              matmul_func_, support_optimize_);
+  ConvInt8(ori_input_data, packed_input_, matmul_packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_),
+           output_addr, filter_zp_ptr_, input_sum_, task_id, conv_param_, matmul_func_, support_optimize_);
   return RET_OK;
 }
 
@@ -229,7 +228,7 @@ int ConvolutionInt8Impl(void *cdata, int task_id) {
 }
 
 int ConvolutionInt8CPUKernel::Run() {
-  auto ret = InitTmpBufferOpt();
+  auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
     return RET_ERROR;
