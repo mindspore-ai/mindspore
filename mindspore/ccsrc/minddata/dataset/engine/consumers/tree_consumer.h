@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include <map>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -77,26 +78,50 @@ class IteratorConsumer : public TreeConsumer {
   int32_t num_epochs_;
 };
 
-/// Consumer that iterates over the dataset and writes it to desk
-class SaveToDesk : public TreeConsumer {
+#ifndef ENABLE_ANDROID
+/// Consumer that iterates over the dataset and writes it to disk
+class SaveToDisk : public TreeConsumer {
  public:
   /// Constructor which will call the base class default constructor.
   /// \param dataset_path path the the dataset
   /// \param num_files number of files. Default to 1
   /// \param dataset_type The format of the dataset. Default to "mindrecod".
-  explicit SaveToDesk(std::string dataset_path, int32_t num_files = 1, std::string dataset_type = "mindrecord")
+  explicit SaveToDisk(std::string dataset_path, int32_t num_files = 1, std::string dataset_type = "mindrecord")
       : TreeConsumer(), dataset_path_(dataset_path), num_files_(num_files), dataset_type_(dataset_type) {}
 
-  /// Save the given dataset to MindRecord format on desk. This is a blocking method (i.e., after returning, all rows
-  /// would be written to desk)
+  /// \brief Parameters validation
+  /// \return Status Status::OK() if all the parameters are valid
+  Status ValidateParams();
+
+  /// Save the given dataset to MindRecord format on disk. This is a blocking method (i.e., after returning, all rows
+  /// would be written to disk)
   /// \return  Status error code
-  Status Save() { return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet."); }
+  Status Save();
+
+ protected:
+  /// Method to return the name of the consumer
+  /// \return string
+  std::string Name() override { return "SaveToDisk"; }
 
  private:
+  template <typename T, typename S>
+  Status TransfromTensor(const unsigned char *src, const TensorShape &shape, const int64_t num_of_elements,
+                         std::unique_ptr<T> *data, std::unique_ptr<std::vector<uint8_t>> *data_ptr,
+                         std::unique_ptr<S> *s, bool need_convert = false);
+
+  Status FetchMetaFromTensorRow(const std::unordered_map<std::string, int32_t> &column_name_id_map,
+                                const TensorRow &row, nlohmann::json *schema, std::vector<std::string> *index_fields);
+
+  Status FetchDataFromTensorRow(const TensorRow &row,
+                                const std::unordered_map<std::string, int32_t> &column_name_id_map,
+                                nlohmann::json *row_raw_data,
+                                std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> *row_bin_data);
+
   std::string dataset_path_;
   int32_t num_files_;
   std::string dataset_type_;
 };
+#endif
 
 /// Consumer that iterates over the dataset and send it to a device
 class ToDevice : public TreeConsumer {

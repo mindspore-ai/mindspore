@@ -105,6 +105,52 @@ std::shared_ptr<Iterator> Dataset::CreateIterator(std::vector<std::string> colum
   return iter;
 }
 
+#ifndef ENABLE_ANDROID
+// Function to create the saver, which will build and launch the execution tree and save data
+bool Dataset::Save(std::string dataset_path, int32_t num_files, std::string dataset_type) {
+  Status rc;
+  // Build and launch tree
+  auto ds = shared_from_this();
+  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  rc = runtime_context->Init();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "CreateSaver failed." << rc;
+    return false;
+  }
+
+  // Get SaveToDisk consumer
+  auto consumer = std::make_unique<SaveToDisk>(dataset_path, num_files, dataset_type);
+  rc = consumer->ValidateParams();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "CreateSaver failed." << rc;
+    return false;
+  }
+  SaveToDisk *consumer_ = consumer.get();
+  rc = consumer->Init(ds);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "CreateSaver failed." << rc;
+    return false;
+  }
+  runtime_context->AssignConsumer(std::move(consumer));
+
+  // Save data into file
+  rc = consumer_->Save();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Saver: Failed to save data into file. Error status: " << rc;
+    return false;
+  }
+
+  // Shut down the data pipeline
+  rc = runtime_context->Terminate();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Saver: Failed to shut down pipeline. Error status: " << rc;
+    return false;
+  }
+
+  return true;
+}
+#endif
+
 // Constructor
 Dataset::Dataset() {
   // Fetch some default value from config manager
