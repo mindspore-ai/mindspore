@@ -107,21 +107,18 @@ void PRelu(float *input, float *output, PReluParameter *prelu_param_, int task_i
 void PReluShareChannel(float *input, float *output, PReluParameter *prelu_param_, int task_id) {
   for (int j = task_id; j < prelu_param_->tile_block_; j += prelu_param_->op_parameter_.thread_num_) {
     int cal_index;
-    int cal_per_time;
 #ifdef ENABLE_NEON
     float32x4_t slope_value = vdupq_n_f32(prelu_param_->slope_[0]);
     float32x4_t zero_value = vdupq_n_f32(0);
 #endif
 #ifdef ENABLE_ARM64
     cal_index = j * 64;
-    cal_per_time = 64;
 
 #elif ENABLE_ARM32
     cal_index = j * 32;
-    cal_per_time = 32;
 #else
     cal_index = j * 32;
-    cal_per_time = 32;
+    int cal_per_time = 32;
 #endif
     float *input_ptr = input + cal_index;
     float *output_ptr = input + cal_index;

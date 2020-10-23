@@ -91,7 +91,7 @@ int ReduceFp16CPUKernel::Run() {
   }
 
   fp16_src_data_ = fp16_input_;
-  for (int i = 0; i < data_buffers_.size(); ++i) {
+  for (size_t i = 0; i < data_buffers_.size(); ++i) {
     fp16_dst_data_ = data_buffers_[i];
     outer_size_ = outer_sizes_[i];
     inner_size_ = inner_sizes_[i];
