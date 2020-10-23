@@ -116,7 +116,7 @@ class ResNet(nn.Cell):
                                 pad_mode='pad')
         self.bn2 = ms_fused_bn(self.output_channel_block[1])
 
-        self.pad = P.Pad(((0, 0), (0, 0), (0, 0), (1, 1)))
+        self.pad = P.Pad(((0, 0), (0, 0), (0, 0), (2, 2)))
         self.maxpool3 = nn.MaxPool2d(kernel_size=2, stride=(2, 1), pad_mode='valid')
         self.layer3 = self._make_layer(block, self.output_channel_block[2], layers[2])
         self.conv3 = ms_conv3x3(self.output_channel_block[2], self.output_channel_block[2], stride=1, padding=1,
@@ -168,7 +168,6 @@ class ResNet(nn.Cell):
         x = self.bn2(x)
         x = self.relu(x)
 
-        x = self.pad(x)
         x = self.maxpool3(x)
         x = self.layer3(x)
         x = self.conv3(x)
