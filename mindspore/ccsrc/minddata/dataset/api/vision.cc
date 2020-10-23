@@ -427,6 +427,12 @@ bool CropOperation::ValidateParams() {
       return false;
     }
   }
+  for (int j = 0; j < coordinates_.size(); ++j) {
+    if (coordinates_[j] < 0) {
+      MS_LOG(ERROR) << "Crop: invalid coordinates, coordinates must be greater than 0, got: " << coordinates_[j];
+      return false;
+    }
+  }
   return true;
 }
 
@@ -437,7 +443,10 @@ std::shared_ptr<TensorOp> CropOperation::Build() {
   y = coordinates_[1];
 
   height = size_[0];
-  width = size_[1];
+  width = size_[0];
+  if (size_.size() == 2) {
+    width = size_[1];
+  }
 
   std::shared_ptr<CropOp> tensor_op = std::make_shared<CropOp>(x, y, height, width);
   return tensor_op;
@@ -879,7 +888,13 @@ std::shared_ptr<TensorOp> RandomCropDecodeResizeOperation::Build() {
 // RandomHorizontalFlipOperation
 RandomHorizontalFlipOperation::RandomHorizontalFlipOperation(float probability) : probability_(probability) {}
 
-bool RandomHorizontalFlipOperation::ValidateParams() { return true; }
+bool RandomHorizontalFlipOperation::ValidateParams() {
+  if (probability_ < 0.0 || probability_ > 1.0) {
+    MS_LOG(ERROR) << "RandomHorizontalFlip: probability must be between 0.0 and 1.0.";
+    return false;
+  }
+  return true;
+}
 
 std::shared_ptr<TensorOp> RandomHorizontalFlipOperation::Build() {
   std::shared_ptr<RandomHorizontalFlipOp> tensor_op = std::make_shared<RandomHorizontalFlipOp>(probability_);
@@ -1024,7 +1039,13 @@ std::shared_ptr<TensorOp> RandomSolarizeOperation::Build() {
 // RandomVerticalFlipOperation
 RandomVerticalFlipOperation::RandomVerticalFlipOperation(float probability) : probability_(probability) {}
 
-bool RandomVerticalFlipOperation::ValidateParams() { return true; }
+bool RandomVerticalFlipOperation::ValidateParams() {
+  if (probability_ < 0.0 || probability_ > 1.0) {
+    MS_LOG(ERROR) << "RandomVerticalFlip: probability must be between 0.0 and 1.0.";
+    return false;
+  }
+  return true;
+}
 
 std::shared_ptr<TensorOp> RandomVerticalFlipOperation::Build() {
   std::shared_ptr<RandomVerticalFlipOp> tensor_op = std::make_shared<RandomVerticalFlipOp>(probability_);
