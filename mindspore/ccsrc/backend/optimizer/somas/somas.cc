@@ -455,10 +455,8 @@ void Somas::UnReuseNodeProcess(const session::KernelGraph *graph) {
 SomasTensorPtr Somas::CreateGapTensor(size_t gap_tensor_id) {
   // real size 512 and lifelong_
   const size_t gap_size = 512;
-  auto gap_tensor = std::make_shared<SomasTensor>(gap_tensor_id++, nullptr, nullptr, gap_size, kLifeLongGraphAll);
+  auto gap_tensor = std::make_shared<SomasTensor>(gap_tensor_id++, nullptr, nullptr, gap_size, kLifeLongNone);
   gap_tensor->type_ = kGap;
-  gap_tensor->lifetime_.start_ = 0;
-  gap_tensor->lifetime_.end_ = 0xffff;
   gap_tensor->aligned_size_ = gap_size;
   tensors_map_[gap_tensor->GetId()] = gap_tensor;
   tensors_list_.push_back(gap_tensor);
@@ -944,7 +942,45 @@ bool Somas::Assign(const session::KernelGraph *graph) {
     tensor1->num_constraints_ = count_constraints;
   }
 
-  // Solver info -- moved here because we set sizes to zero in ref node preprocessing (was before in GetSomasTensors())
+  // Preprocessing contiguous gaps
+  MS_LOG(INFO) << "Start Contiguous Gaps Preprocessing";
+  for (auto contiguous_list : contiguous_tensors_list_) {
+    if (contiguous_list.size() < 3) {
+      MS_LOG(ERROR) << "contiguous_list should has at least one input and two gap, now it is "
+                    << contiguous_list.size();
+    }
+    size_t front_gap_id = contiguous_list[0];
+    size_t back_gap_id = contiguous_list[contiguous_list.size() - 1];
+
+    SomasTensorPtr front_gap = tensors_map_[front_gap_id];
+    SomasTensorPtr back_gap = tensors_map_[back_gap_id];
+    MS_EXCEPTION_IF_NULL(front_gap);
+    MS_EXCEPTION_IF_NULL(back_gap);
+
+    // Update conflicts to conflicts of neighbour
+    size_t front_neighbour_id = contiguous_list[1];
+    size_t back_neighbour_id = contiguous_list[contiguous_list.size() - 2];
+    for (SomasTensorPtr tensor : tensors_list_) {
+      MS_EXCEPTION_IF_NULL(tensor);
+      (*cannot_reuse_)(tensor->GetId(), front_gap_id) = (*cannot_reuse_)(tensor->GetId(), front_neighbour_id);
+      (*cannot_reuse_)(front_gap_id, tensor->GetId()) = (*cannot_reuse_)(front_neighbour_id, tensor->GetId());
+      (*cannot_reuse_)(tensor->GetId(), back_gap_id) = (*cannot_reuse_)(tensor->GetId(), back_neighbour_id);
+      (*cannot_reuse_)(back_gap_id, tensor->GetId()) = (*cannot_reuse_)(back_neighbour_id, tensor->GetId());
+    }
+    SomasTensorPtr front_neighbour = tensors_map_[front_neighbour_id];
+    SomasTensorPtr back_neighbour = tensors_map_[back_neighbour_id];
+    MS_EXCEPTION_IF_NULL(front_neighbour);
+    MS_EXCEPTION_IF_NULL(back_neighbour);
+    front_gap->num_constraints_ = front_neighbour->num_constraints_;
+    front_gap->lifetime_.start_ = front_neighbour->lifetime_.end_;
+    front_gap->lifetime_.end_ = front_neighbour->lifetime_.end_;
+    back_gap->num_constraints_ = back_neighbour->num_constraints_;
+    back_gap->lifetime_.start_ = back_neighbour->lifetime_.end_;
+    back_gap->lifetime_.end_ = back_neighbour->lifetime_.end_;
+  }
+  MS_LOG(INFO) << "End Contiguous Gaps Preprocessing";
+
+  // Prepare solver info
   MS_LOG(INFO) << "Start Loop to create solver info";
   for (auto tensor : tensors_list_) {
     if (tensor->GetSolverTensorDesc() != nullptr && tensor->type_ != kGetNextOutput) {
