@@ -94,6 +94,10 @@ Status BucketBatchByLengthNode::ValidateParams() {
     }
   }
 
+  if (!column_names_.empty()) {
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("BucketBatchByLengthNode", "column_names", column_names_));
+  }
+
   // Check bucket_batch_sizes: must be positive
   if (bucket_batch_sizes_.empty()) {
     std::string err_msg = "BucketBatchByLengthNode: bucket_batch_sizes must be non-empty";
