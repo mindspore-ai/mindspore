@@ -16,6 +16,7 @@
 
 #include "ps/comm/http_server.h"
 #include "ps/comm/http_message_handler.h"
+#include "ps/comm/comm_util.h"
 
 #ifdef WIN32
 #include <WinSock2.h>
@@ -41,28 +42,10 @@ namespace mindspore {
 namespace ps {
 namespace comm {
 
-HttpServer::~HttpServer() {
-  if (event_http_) {
-    evhttp_free(event_http_);
-    event_http_ = nullptr;
-  }
-  if (event_base_) {
-    event_base_free(event_base_);
-    event_base_ = nullptr;
-  }
-}
+HttpServer::~HttpServer() { Stop(); }
 
 bool HttpServer::InitServer() {
-  if (!CheckIp(server_address_)) {
-    MS_LOG(EXCEPTION) << "Server address" << server_address_ << " illegal!";
-  }
-  int64_t uAddr = inet_addr(server_address_.c_str());
-  if (INADDR_NONE == uAddr) {
-    MS_LOG(EXCEPTION) << "Server address illegal, inet_addr converting failed!";
-  }
-  if (server_port_ <= 0) {
-    MS_LOG(EXCEPTION) << "Server port:" << server_port_ << " illegal!";
-  }
+  CommUtil::CheckIp(server_address_);
 
   event_base_ = event_base_new();
   MS_EXCEPTION_IF_NULL(event_base_);
@@ -76,15 +59,6 @@ bool HttpServer::InitServer() {
   return true;
 }
 
-bool HttpServer::CheckIp(const std::string &ip) {
-  std::regex pattern("((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
-  std::smatch res;
-  if (regex_match(ip, res, pattern)) {
-    return true;
-  }
-  return false;
-}
-
 void HttpServer::SetTimeOut(int seconds) {
   MS_EXCEPTION_IF_NULL(event_http_);
   if (seconds < 0) {
@@ -93,7 +67,7 @@ void HttpServer::SetTimeOut(int seconds) {
   evhttp_set_timeout(event_http_, seconds);
 }
 
-void HttpServer::SetAllowedMethod(HttpMethodsSet methods) {
+void HttpServer::SetAllowedMethod(u_int16_t methods) {
   MS_EXCEPTION_IF_NULL(event_http_);
   evhttp_set_allowed_methods(event_http_, methods);
 }
@@ -114,12 +88,11 @@ void HttpServer::SetMaxBodySize(size_t num) {
   evhttp_set_max_body_size(event_http_, num);
 }
 
-bool HttpServer::RegisterRoute(const std::string &url, handle_t *function) {
+bool HttpServer::RegisterRoute(const std::string &url, OnRequestReceive *function) {
   if ((!is_init_) && (!InitServer())) {
     MS_LOG(EXCEPTION) << "Init http server failed!";
   }
-  HandlerFunc func = function;
-  if (!func) {
+  if (!function) {
     return false;
   }
 
@@ -128,15 +101,13 @@ bool HttpServer::RegisterRoute(const std::string &url, handle_t *function) {
     MS_EXCEPTION_IF_NULL(arg);
     HttpMessageHandler httpReq(req);
     httpReq.InitHttpMessage();
-    handle_t *f = reinterpret_cast<handle_t *>(arg);
-    f(&httpReq);
+    OnRequestReceive *func = reinterpret_cast<OnRequestReceive *>(arg);
+    (*func)(&httpReq);
   };
-  handle_t **pph = func.target<handle_t *>();
-  MS_EXCEPTION_IF_NULL(pph);
   MS_EXCEPTION_IF_NULL(event_http_);
 
   // O SUCCESS,-1 ALREADY_EXIST,-2 FAILURE
-  int ret = evhttp_set_cb(event_http_, url.c_str(), TransFunc, reinterpret_cast<void *>(*pph));
+  int ret = evhttp_set_cb(event_http_, url.c_str(), TransFunc, reinterpret_cast<void *>(function));
   if (ret == 0) {
     MS_LOG(INFO) << "Ev http register handle of:" << url.c_str() << " success.";
   } else if (ret == -1) {
