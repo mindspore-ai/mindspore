@@ -84,7 +84,7 @@ int CropInt8CPUKernel::DoExecute(int task_id) {
   auto out_tensor = out_tensors_.at(kOutputIndex);
   int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->MutableData());
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->MutableData());
-  Crop(input_data, output_data, task_id, crop_para_);
+  Int8Crop(input_data, output_data, task_id, crop_para_);
   return RET_OK;
 }
 

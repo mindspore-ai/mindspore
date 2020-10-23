@@ -18,17 +18,17 @@
 #include "nnacl/int8/crop_int8.h"
 #include <string.h>
 
-void Crop(const int8_t *input, int8_t *output, int task_id, CropParameter *para) {
+void Int8Crop(const int8_t *input, int8_t *output, int task_id, CropParameter *para) {
   int input_dim = para->input_dim_;
   switch (input_dim) {
     case 1:
-      Crop1D(input, output, task_id, para);
+      Int8Crop1D(input, output, task_id, para);
       break;
     case 2:
-      Crop2D(input, output, task_id, para);
+      Int8Crop2D(input, output, task_id, para);
       break;
     case 3:
-      Crop3D(input, output, task_id, para);
+      Int8Crop3D(input, output, task_id, para);
       break;
     case 4:
       Int8Crop4D(input, output, task_id, para);
@@ -36,7 +36,7 @@ void Crop(const int8_t *input, int8_t *output, int task_id, CropParameter *para)
   }
 }
 
-void Crop1D(const int8_t *input, int8_t *output, int task_id, CropParameter *para) {
+void Int8Crop1D(const int8_t *input, int8_t *output, int task_id, CropParameter *para) {
   const int out_batch = para->out_shape_[0];
   const int thread_count = para->thread_count_;
   int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_batch, thread_count) : out_batch;
@@ -75,7 +75,7 @@ void Crop1D(const int8_t *input, int8_t *output, int task_id, CropParameter *par
   return;
 }
 
-void Crop2D(const int8_t *input, int8_t *output, int task_id, CropParameter *para) {
+void Int8Crop2D(const int8_t *input, int8_t *output, int task_id, CropParameter *para) {
   const int in_height = para->in_shape_[1];
   const int out_batch = para->out_shape_[0];
   const int out_height = para->out_shape_[1];
@@ -118,7 +118,7 @@ void Crop2D(const int8_t *input, int8_t *output, int task_id, CropParameter *par
   return;
 }
 
-void Crop3D(const int8_t *input, int8_t *output, int task_id, CropParameter *para) {
+void Int8Crop3D(const int8_t *input, int8_t *output, int task_id, CropParameter *para) {
   const int in_height = para->in_shape_[1];
   const int in_width = para->in_shape_[2];
 

@@ -35,8 +35,8 @@ typedef struct TransposeParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoTranspose(float16_t *in_data, float16_t *out_data, int *input_shape, int *output_shape,
-                TransposeParameter *transpose_param, int h_start, int h_end);
+int Fp16DoTranspose(float16_t *in_data, float16_t *out_data, int *input_shape, int *output_shape,
+                    TransposeParameter *transpose_param, int h_start, int h_end);
 void TransposeDim2(float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
                    int *output_shape, int h_start, int h_end);
 void TransposeDim3(float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
