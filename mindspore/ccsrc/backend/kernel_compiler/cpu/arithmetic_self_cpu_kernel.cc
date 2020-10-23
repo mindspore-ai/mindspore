@@ -51,9 +51,9 @@ void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool ArithmeticSelfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> & /*workspace*/,
                                      const std::vector<kernel::AddressPtr> &outputs) {
-  if (dtype_ == kNumberTypeFloat32) {
+  if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat16 || dtype_ == kNumberTypeFloat64) {
     LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt32) {
+  } else if (dtype_ == kNumberTypeInt32 || dtype_ == kNumberTypeInt16 || dtype_ == kNumberTypeInt64) {
     LaunchKernel<int>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "Only support float32, int32, but actual data type is " << TypeIdLabel(dtype_);

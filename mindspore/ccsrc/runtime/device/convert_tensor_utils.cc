@@ -49,5 +49,37 @@ void FloatToDouble(void *dst, const void *src, size_t elem_num) {
     double_data[i] = static_cast<double>(float_data[i]);
   }
 }
+
+void ShortToInt(void *dst, const void *src, size_t elem_num) {
+  auto half_data = static_cast<const int16_t *>(src);
+  auto int_data = static_cast<int *>(dst);
+  for (size_t i = 0; i < elem_num; ++i) {
+    int_data[i] = static_cast<int>(half_data[i]);
+  }
+}
+
+void IntToShort(void *dst, const void *src, size_t elem_num) {
+  auto int_data = static_cast<const int *>(src);
+  auto half_data = static_cast<int16_t *>(dst);
+  for (size_t i = 0; i < elem_num; ++i) {
+    half_data[i] = static_cast<int16_t>(int_data[i]);
+  }
+}
+
+void LongToInt(void *dst, const void *src, size_t elem_num) {
+  auto long_data = static_cast<const int64_t *>(src);
+  auto int_data = static_cast<int *>(dst);
+  for (size_t i = 0; i < elem_num; ++i) {
+    int_data[i] = static_cast<int>(long_data[i]);
+  }
+}
+
+void IntToLong(void *dst, const void *src, size_t elem_num) {
+  auto int_data = static_cast<const int *>(src);
+  auto long_data = static_cast<int64_t *>(dst);
+  for (size_t i = 0; i < elem_num; ++i) {
+    long_data[i] = static_cast<int64_t>(int_data[i]);
+  }
+}
 }  // namespace device
 }  // namespace mindspore
