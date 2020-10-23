@@ -66,7 +66,7 @@ int ConvolutionBaseFP16CPUKernel::GetExecuteFilter() {
       MS_LOG(ERROR) << "malloc fp16_weight_ failed.";
       return RET_ERROR;
     }
-    for (int i = 0; i < fp16_weight_size / sizeof(float16_t); ++i) {
+    for (size_t i = 0; i < fp16_weight_size / sizeof(float16_t); ++i) {
       fp16_weight_[i] = (float16_t)origin_weight[i];
     }
     execute_weight_ = fp16_weight_;

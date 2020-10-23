@@ -69,7 +69,7 @@ int ConcatFp16CPUKernel::MallocTmpBuffer() {
 }
 
 void ConcatFp16CPUKernel::FreeTmpBuffer() {
-  for (auto i = 0; i < fp16_inputs_.size(); i++) {
+  for (size_t i = 0; i < fp16_inputs_.size(); i++) {
     auto &in_tensor = in_tensors_.at(i);
     auto in_ptr = fp16_inputs_.at(i);
     if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
