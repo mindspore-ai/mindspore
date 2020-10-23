@@ -642,7 +642,7 @@ Status TFReaderOp::LoadExample(const dataengine::Example *tf_file, std::unique_p
     const google::protobuf::Map<std::string, dataengine::Feature> &feature_map = example_features.feature();
     auto iter_column = feature_map.find(current_col.name());
     if (iter_column == feature_map.end()) {
-      RETURN_STATUS_UNEXPECTED("Invalid parameter, column name: " + current_col.name() + "does not exist.");
+      RETURN_STATUS_UNEXPECTED("Invalid parameter, column name: " + current_col.name() + " does not exist.");
     }
     const dataengine::Feature &column_values_list = iter_column->second;
     RETURN_IF_NOT_OK(LoadFeature(tensor_table, column_values_list, current_col, row, col));

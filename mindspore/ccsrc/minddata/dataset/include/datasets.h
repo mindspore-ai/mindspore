@@ -484,6 +484,14 @@ std::shared_ptr<TFRecordNode> TFRecord(const std::vector<std::string> &dataset_f
     MS_LOG(ERROR) << "TFRecordNode: Invalid input, shard_id: " << shard_id << ", num_shards: " << num_shards;
     return nullptr;
   }
+
+  if (cache == nullptr && !shard_equal_rows && dataset_files.size() < num_shards) {
+    // This check only makes sense in a non-cache path. We should make sure there is at least one file per
+    // shard in file-based sharding
+    MS_LOG(ERROR) << "TFRecordNode: Invalid number of dataset files, should at least be " << std::to_string(num_shards);
+    return nullptr;
+  }
+
   std::shared_ptr<TFRecordNode> ds = nullptr;
   if constexpr (std::is_same<T, std::nullptr_t>::value || std::is_same<T, std::shared_ptr<SchemaObj>>::value) {
     std::shared_ptr<SchemaObj> schema_obj = schema;
