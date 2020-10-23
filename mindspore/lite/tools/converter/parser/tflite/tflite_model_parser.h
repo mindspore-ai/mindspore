@@ -64,6 +64,9 @@ class TfliteModelParser : public ModelParser {
 
   STATUS ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph);
 
+  std::unique_ptr<schema::MetaGraphT> ConstructMainGraph(const std::unique_ptr<tflite::ModelT> &tflite_model,
+                                                         const QuantType &quant_type);
+
  private:
   TfliteTensorsInfo tensorsInfo;
   std::vector<schema::TensorT *> tensors;

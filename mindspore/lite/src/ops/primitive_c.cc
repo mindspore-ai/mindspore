@@ -144,6 +144,7 @@
 #include "src/ops/mfcc.h"
 #include "src/ops/identity.h"
 #include "src/ops/instance_norm.h"
+#include "src/ops/while.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -499,6 +500,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Maximum>(prim, inputs, quantType);
   } else if (op_type == "Split") {
     return NewPrimitiveC<Split>(prim, inputs, quantType);
+  } else if (op_type == "While") {
+    return NewPrimitiveC<While>(prim, inputs, quantType);
   } else if (op_type == "OneHot") {
     return NewPrimitiveC<OneHot>(prim, inputs, quantType);
 
@@ -793,6 +796,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new Mfcc(primitive);
     case schema::PrimitiveType_InstanceNorm:
       return new InstanceNorm(primitive);
+    case schema::PrimitiveType_While:
+      return new While(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:

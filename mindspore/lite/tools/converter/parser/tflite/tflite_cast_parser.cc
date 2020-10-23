@@ -22,7 +22,8 @@
 namespace mindspore {
 namespace lite {
 STATUS TfliteCastParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                               const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
+                               const std::unique_ptr<tflite::ModelT> &tflite_model,
+                               const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteCastParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -40,13 +41,13 @@ STATUS TfliteCastParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniqu
     return RET_NULL_PTR;
   }
 
-  const auto &in_tensor = tflite_model->subgraphs[0]->tensors[tflite_op->inputs[0]];
+  const auto &in_tensor = tflite_subgraph->tensors[tflite_op->inputs[0]];
   if (in_tensor == nullptr) {
     MS_LOG(ERROR) << "tensor is null";
     return RET_NULL_PTR;
   }
   attr->srcT = GetTfliteDataType(in_tensor->type);
-  const auto &out_tensor = tflite_model->subgraphs[0]->tensors[tflite_op->outputs[0]];
+  const auto &out_tensor = tflite_subgraph->tensors[tflite_op->outputs[0]];
   if (out_tensor == nullptr) {
     MS_LOG(ERROR) << "tensor is null";
     return RET_NULL_PTR;
@@ -56,10 +57,8 @@ STATUS TfliteCastParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniqu
   op->primitive->value.type = schema::PrimitiveType_Cast;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors.size(),
-             schema::Format::Format_NHWC);
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
-              schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 

@@ -22,7 +22,8 @@
 namespace mindspore {
 namespace lite {
 STATUS TfliteArgmaxParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
+                                 const std::unique_ptr<tflite::ModelT> &tflite_model,
+                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteArgmaxParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -47,7 +48,7 @@ STATUS TfliteArgmaxParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
 
   // get axis attr
   auto axis_idx = tflite_op->inputs[1];
-  auto buffer_idx = tflite_model->subgraphs[0]->tensors[axis_idx]->buffer;
+  auto buffer_idx = tflite_subgraph->tensors[axis_idx]->buffer;
   auto &buf_data = tflite_model->buffers[buffer_idx];
   if (buf_data == nullptr) {
     MS_LOG(ERROR) << "the buf data is null";
@@ -63,10 +64,8 @@ STATUS TfliteArgmaxParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   op->primitive->value.type = schema::PrimitiveType_ArgMax;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors.size(),
-             schema::Format::Format_NHWC);
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
-              schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 

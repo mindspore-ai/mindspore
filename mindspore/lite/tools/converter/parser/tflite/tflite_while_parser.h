@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_SPLIT_V_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_SPLIT_V_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_WHILE_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_WHILE_PARSER_H
 
 #include <memory>
 #include <vector>
@@ -25,9 +25,9 @@
 
 namespace mindspore {
 namespace lite {
-class TfliteSplitVParser : public TfliteNodeParser {
+class TfliteWhileParser : public TfliteNodeParser {
  public:
-  TfliteSplitVParser() : TfliteNodeParser("SplitV") {}
+  TfliteWhileParser() : TfliteNodeParser("While") {}
 
   STATUS Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
                const std::unique_ptr<tflite::ModelT> &tflite_model,
@@ -36,4 +36,4 @@ class TfliteSplitVParser : public TfliteNodeParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_SPLIT_V_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_WHERE_PARSER_H

@@ -123,6 +123,7 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_HASHTABLE_LOOKUP, "HashtableLookup"},
   {tflite::BuiltinOperator_LSH_PROJECTION, "LshProjection"},
   {tflite::BuiltinOperator_SKIP_GRAM, "SKipGram"},
+  {tflite::BuiltinOperator_WHILE, "While"},
 };
 
 std::map<tflite::ActivationFunctionType, schema::ActivationType> tfMsActivationFunctionMap{

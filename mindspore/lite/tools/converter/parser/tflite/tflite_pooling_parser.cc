@@ -23,7 +23,8 @@
 namespace mindspore {
 namespace lite {
 STATUS TflitePoolingParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                  const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
+                                  const std::unique_ptr<tflite::ModelT> &tflite_model,
+                                  const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -69,7 +70,7 @@ STATUS TflitePoolingParser::Parse(TfliteTensorsInfo *tensors_info, const std::un
 
   // calculate pad params
   auto data_index = tflite_op->inputs[0];
-  const auto &data_tensor = tflite_model->subgraphs[0]->tensors[data_index];
+  const auto &data_tensor = tflite_subgraph->tensors[data_index];
   std::vector<int> params;
   int status =
     getPaddingParam(data_tensor, attr->padMode, attr->strideH, attr->strideW, attr->windowH, attr->windowW, &params);
@@ -86,10 +87,8 @@ STATUS TflitePoolingParser::Parse(TfliteTensorsInfo *tensors_info, const std::un
   op->primitive->value.type = schema::PrimitiveType_Pooling;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors.size(),
-             schema::Format::Format_NHWC);
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
-              schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 

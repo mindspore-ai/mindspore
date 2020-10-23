@@ -139,14 +139,15 @@ STATUS TfliteCustomParser::ExtractFeatures(const std::vector<uint8_t> &custom_at
 
 STATUS TfliteCustomParser::Rfft(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
                                 const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
+                                const std::unique_ptr<tflite::ModelT> &tflite_model,
+                                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph) {
   std::unique_ptr<schema::RfftT> attr = std::make_unique<schema::RfftT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
   std::vector<int> fft_length;
-  if (GetTfliteData(tflite_op->inputs[1], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, fft_length)) {
+  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, fft_length)) {
     MS_LOG(ERROR) << "rfft -> fftLength get failed";
     return RET_ERROR;
   }
@@ -181,7 +182,8 @@ STATUS TfliteCustomParser::FftImag(const std::vector<uint8_t> &custom_attr, sche
 }
 
 STATUS TfliteCustomParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
+                                 const std::unique_ptr<tflite::ModelT> &tflite_model,
+                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteCustomParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -209,7 +211,7 @@ STATUS TfliteCustomParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   } else if (custom_type == "Mfcc") {
     status = Mfcc(custom_attr, op, tflite_op);
   } else if (custom_type == "FlexRFFT") {
-    status = Rfft(custom_attr, op, tflite_op, tflite_model);
+    status = Rfft(custom_attr, op, tflite_op, tflite_model, tflite_subgraph);
   } else if (custom_type == "FlexReal") {
     status = FftReal(custom_attr, op, tflite_op);
   } else if (custom_type == "FlexImag") {
@@ -222,12 +224,10 @@ STATUS TfliteCustomParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
     return status;
   }
   for (size_t i = 0; i < tflite_op->inputs.size(); ++i) {
-    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_model->subgraphs[0]->tensors.size(),
-               schema::Format::Format_NHWC);
+    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
   for (size_t i = 0; i < tflite_op->outputs.size(); ++i) {
-    AddOpOutput(op, tensors_info, tflite_op->outputs[i], tflite_model->subgraphs[0]->tensors.size(),
-                schema::Format::Format_NHWC);
+    AddOpOutput(op, tensors_info, tflite_op->outputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
   return status;
 }
