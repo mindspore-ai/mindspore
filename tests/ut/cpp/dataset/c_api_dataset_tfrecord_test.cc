@@ -368,12 +368,14 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShard) {
 
   // Create a TFRecord Dataset
   // Each file has two columns("image", "label") and 3 rows
-  std::vector<std::string> files = {datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data",
-                                    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0002.data",
-                                    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0003.data"};
-  std::shared_ptr<Dataset> ds1 = TFRecord({files}, "", {}, 0, ShuffleMode::kFalse, 2, 1, true);
+  std::vector<std::string> files = {
+    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data",
+    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0002.data",
+    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0003.data"
+  };
+  std::shared_ptr<Dataset> ds1 = TFRecord(files, "", {}, 0, ShuffleMode::kFalse, 2, 1, true);
   EXPECT_NE(ds1, nullptr);
-  std::shared_ptr<Dataset> ds2 = TFRecord({files}, "", {}, 0, ShuffleMode::kFalse, 2, 1, false);
+  std::shared_ptr<Dataset> ds2 = TFRecord(files, "", {}, 0, ShuffleMode::kFalse, 2, 1, false);
   EXPECT_NE(ds2, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -435,6 +437,12 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetExeception) {
   // This case expected to fail because shard_id is out_of_bound.
   std::shared_ptr<Dataset> ds7 = TFRecord({file_path}, "", {}, 10, ShuffleMode::kFalse, 3, 3);
   EXPECT_EQ(ds7, nullptr);
+
+  // This case expected to fail because the provided number of files < num_shards in file-based sharding.
+  std::string file_path1 = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
+  std::string file_path2 = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0002.data";
+  std::shared_ptr<Dataset> ds8 = TFRecord({file_path1, file_path2}, "", {}, 0, ShuffleMode::kFalse, 3);
+  EXPECT_EQ(ds8, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetExeception2) {
