@@ -29,13 +29,6 @@ void MatrixMultiplyVecFp16(const float16x8_t *matrix_a, const float16x8_t *matri
                            const float16_t *bias, int m, int k, int n);
 void MatrixMultiplyWinogradFp16(const float16_t *matix_a, const float16_t *matrix_b, float16_t *matrix_c, int m, int k,
                                 int n, int in_channel);
-
-void WinogradMatrixProductLeftFp16(const float16_t *S, const float16_t *B, float16_t *M, size_t w, size_t h, size_t k,
-                                   size_t length);
-
-void WinogradMatrixProductRightFp16(const float16_t *S, const float16_t *B, float16_t *M, size_t w, size_t h, size_t k,
-                                    size_t length);
-
 #ifdef __cplusplus
 }
 #endif
