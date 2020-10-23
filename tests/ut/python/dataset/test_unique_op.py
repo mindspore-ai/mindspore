@@ -31,8 +31,7 @@ def compare(array, res, idx, cnt):
         np.testing.assert_array_equal(idx, d["y"])
         np.testing.assert_array_equal(cnt, d["z"])
 
-# the test function name code will be start with 'test' later
-def duplicate_basics():
+def test_duplicate_basics():
     compare([0, 1, 2, 1, 2, 3], np.array([0, 1, 2, 3]),
             np.array([0, 1, 2, 1, 2, 3]), np.array([1, 2, 2, 1]))
     compare([0.0, 1.0, 2.0, 1.0, 2.0, 3.0], np.array([0.0, 1.0, 2.0, 3.0]),
