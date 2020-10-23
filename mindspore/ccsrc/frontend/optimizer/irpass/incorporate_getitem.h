@@ -130,7 +130,7 @@ class IncorporateGetitem : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
     AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsValueNode<Int32Imm>})(node);
-    if (node->func_graph() == nullptr || idx_ == -1 || fg_ == nullptr) {
+    if (node->func_graph() == nullptr || idx_ == -1 || fg_ == nullptr || fg_->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE)) {
       return nullptr;
     }
 
@@ -361,7 +361,7 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     is_in_get_ = false;
 
     auto fg = node->func_graph();
-    if (idx_ == -1 || switch_ == nullptr || fg == nullptr) {
+    if (idx_ == -1 || switch_ == nullptr || fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE)) {
       return nullptr;
     }
 
