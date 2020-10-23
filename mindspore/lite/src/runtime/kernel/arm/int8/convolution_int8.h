@@ -51,8 +51,8 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
   int RunImpl(int task_id);
   void CheckSupportOptimize();
-  int InitWeightBiasOpt();
-  int InitTmpBufferOpt();
+  int InitWeightBias();
+  int InitTmpBuffer();
 
  private:
   void FreeTmpBuffer() {

@@ -62,9 +62,9 @@ void Conv3x3Int8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, in
 #endif
 }
 
-void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, int8_t *packed_weight,
-                 const int32_t *bias_data, int8_t *output_data, int32_t *filter_zp, int32_t *input_sum, int task_id,
-                 ConvParameter *conv_param, MATMUL_OPT_R_FUNC matmul_func, bool is_optimize) {
+void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, int8_t *packed_weight,
+              const int32_t *bias_data, int8_t *output_data, int32_t *filter_zp, int32_t *input_sum, int task_id,
+              ConvParameter *conv_param, MATMUL_OPT_R_FUNC matmul_func, bool is_optimize) {
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int in_batch = conv_param->input_batch_;

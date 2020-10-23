@@ -48,7 +48,6 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override { return 0; }
   int Run() override { return 0; }
-  int SetIfAsymmetric();
   int SetIfPerChannel();
   int MallocQuantParam();
   int SetQuantParam();

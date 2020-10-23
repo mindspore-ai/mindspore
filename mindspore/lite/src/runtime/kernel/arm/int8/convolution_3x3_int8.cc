@@ -156,14 +156,7 @@ int Convolution3x3Int8CPUKernel::InitTmpBuffer() {
   return RET_OK;
 }
 
-void Convolution3x3Int8CPUKernel::ConfigInputOutput() {
-  auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_tensor->SetFormat(schema::Format::Format_NHWC);
-}
-
 int Convolution3x3Int8CPUKernel::Init() {
-  // config input output
-  ConfigInputOutput();
   auto ret = SetQuantParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set quant param failed.";
