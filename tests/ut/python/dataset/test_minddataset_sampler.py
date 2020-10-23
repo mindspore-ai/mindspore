@@ -412,6 +412,46 @@ def test_cv_minddataset_random_sampler_replacement(add_and_remove_cv_file):
         num_iter += 1
     assert num_iter == 5
 
+def test_cv_minddataset_random_sampler_replacement_false_1(add_and_remove_cv_file):
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    sampler = ds.RandomSampler(replacement=False, num_samples=2)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                              sampler=sampler)
+    assert data_set.get_dataset_size() == 2
+    num_iter = 0
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        logger.info(
+            "-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info(
+            "-------------- item[data]: {}  -----------------------------".format(item["data"]))
+        logger.info(
+            "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
+        logger.info(
+            "-------------- item[label]: {} ----------------------------".format(item["label"]))
+        num_iter += 1
+    assert num_iter == 2
+
+def test_cv_minddataset_random_sampler_replacement_false_2(add_and_remove_cv_file):
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    sampler = ds.RandomSampler(replacement=False, num_samples=20)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                              sampler=sampler)
+    assert data_set.get_dataset_size() == 10
+    num_iter = 0
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        logger.info(
+            "-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info(
+            "-------------- item[data]: {}  -----------------------------".format(item["data"]))
+        logger.info(
+            "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
+        logger.info(
+            "-------------- item[label]: {} ----------------------------".format(item["label"]))
+        num_iter += 1
+    assert num_iter == 10
+
 
 def test_cv_minddataset_sequential_sampler_basic(add_and_remove_cv_file):
     data = get_data(CV_DIR_NAME, True)
@@ -437,11 +477,35 @@ def test_cv_minddataset_sequential_sampler_basic(add_and_remove_cv_file):
     assert num_iter == 4
 
 
-def test_cv_minddataset_sequential_sampler_exceed_size(add_and_remove_cv_file):
+def test_cv_minddataset_sequential_sampler_offeset(add_and_remove_cv_file):
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.SequentialSampler(2, 10)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                              sampler=sampler)
+    dataset_size = data_set.get_dataset_size()
+    assert dataset_size == 10
+    num_iter = 0
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        logger.info(
+            "-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info(
+            "-------------- item[data]: {}  -----------------------------".format(item["data"]))
+        logger.info(
+            "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
+        logger.info(
+            "-------------- item[label]: {} ----------------------------".format(item["label"]))
+        assert item['file_name'] == np.array(
+            data[(num_iter + 2) % dataset_size]['file_name'], dtype='S')
+        num_iter += 1
+    assert num_iter == 10
+
+def test_cv_minddataset_sequential_sampler_exceed_size(add_and_remove_cv_file):
+    data = get_data(CV_DIR_NAME, True)
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    sampler = ds.SequentialSampler(2, 20)
     data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
                               sampler=sampler)
     dataset_size = data_set.get_dataset_size()

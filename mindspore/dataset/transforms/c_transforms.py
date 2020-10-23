@@ -311,7 +311,7 @@ class Unique(cde.UniqueOp):
         Call batch op before calling this function.
 
     Examples:
-    >>> import mindspore.dataset.transforms.c_transforms as c_transforms
+        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
         >>>
         >>> # Data before
         >>> # |  x                 |
