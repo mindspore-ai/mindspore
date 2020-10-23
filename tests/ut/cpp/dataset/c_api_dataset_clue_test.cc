@@ -18,10 +18,24 @@
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/include/datasets.h"
 
+// IR non-leaf nodes
+#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
+#include "minddata/dataset/engine/ir/datasetops/bucket_batch_by_length_node.h"
+#include "minddata/dataset/engine/ir/datasetops/concat_node.h"
+#include "minddata/dataset/engine/ir/datasetops/map_node.h"
+#include "minddata/dataset/engine/ir/datasetops/project_node.h"
+#include "minddata/dataset/engine/ir/datasetops/rename_node.h"
+#include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
+#include "minddata/dataset/engine/ir/datasetops/skip_node.h"
+#include "minddata/dataset/engine/ir/datasetops/zip_node.h"
+
+// IR leaf nodes
+#include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
+
 using namespace mindspore::dataset::api;
+using mindspore::dataset::GlobalContext;
 using mindspore::dataset::ShuffleMode;
 using mindspore::dataset::Tensor;
-using mindspore::dataset::GlobalContext;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
@@ -49,11 +63,8 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence1"), row.end());
-  std::vector<std::string> expected_result = {
-    "蚂蚁借呗等额还款能否换成先息后本",
-    "蚂蚁花呗说我违约了",
-    "帮我看看本月花呗账单结清了没"
-  };
+  std::vector<std::string> expected_result = {"蚂蚁借呗等额还款能否换成先息后本", "蚂蚁花呗说我违约了",
+                                              "帮我看看本月花呗账单结清了没"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -75,11 +86,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
 
   // test
   usage = "test";
-  expected_result = {
-    "借呗取消的时间",
-    "网商贷用什么方法转变成借呗",
-    "我的借呗为什么开通不了"
-  };
+  expected_result = {"借呗取消的时间", "网商贷用什么方法转变成借呗", "我的借呗为什么开通不了"};
   ds = CLUE({test_file}, task, usage, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
   iter = ds->CreateIterator();
@@ -100,11 +107,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
 
   // eval
   usage = "eval";
-  expected_result = {
-    "你有花呗吗",
-    "吃饭能用花呗吗",
-    "蚂蚁花呗支付金额有什么限制"
-  };
+  expected_result = {"你有花呗吗", "吃饭能用花呗吗", "蚂蚁花呗支付金额有什么限制"};
   ds = CLUE({eval_file}, task, usage, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
   iter = ds->CreateIterator();
@@ -179,11 +182,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetCMNLI) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence1"), row.end());
-  std::vector<std::string> expected_result = {
-    "你应该给这件衣服定一个价格。",
-    "我怎么知道他要说什么",
-    "向左。"
-  };
+  std::vector<std::string> expected_result = {"你应该给这件衣服定一个价格。", "我怎么知道他要说什么", "向左。"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -224,11 +223,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetCSL) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("abst"), row.end());
-  std::vector<std::string> expected_result = {
-    "这是一段长文本",
-    "这是一段长文本",
-    "这是一段长文本"
-  };
+  std::vector<std::string> expected_result = {"这是一段长文本", "这是一段长文本", "这是一段长文本"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -337,11 +332,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetIFLYTEK) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence"), row.end());
-  std::vector<std::string> expected_result = {
-    "第一个文本",
-    "第二个文本",
-    "第三个文本"
-  };
+  std::vector<std::string> expected_result = {"第一个文本", "第二个文本", "第三个文本"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -396,14 +387,12 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFilesA) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence1"), row.end());
-  std::vector<std::string> expected_result = {
-    "你有花呗吗",
-    "吃饭能用花呗吗",
-    "蚂蚁花呗支付金额有什么限制",
-    "蚂蚁借呗等额还款能否换成先息后本",
-    "蚂蚁花呗说我违约了",
-    "帮我看看本月花呗账单结清了没"
-  };
+  std::vector<std::string> expected_result = {"你有花呗吗",
+                                              "吃饭能用花呗吗",
+                                              "蚂蚁花呗支付金额有什么限制",
+                                              "蚂蚁借呗等额还款能否换成先息后本",
+                                              "蚂蚁花呗说我违约了",
+                                              "帮我看看本月花呗账单结清了没"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -463,14 +452,12 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFilesB) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence1"), row.end());
-  std::vector<std::string> expected_result = {
-    "你有花呗吗",
-    "吃饭能用花呗吗",
-    "蚂蚁花呗支付金额有什么限制",
-    "蚂蚁借呗等额还款能否换成先息后本",
-    "蚂蚁花呗说我违约了",
-    "帮我看看本月花呗账单结清了没"
-  };
+  std::vector<std::string> expected_result = {"你有花呗吗",
+                                              "吃饭能用花呗吗",
+                                              "蚂蚁花呗支付金额有什么限制",
+                                              "蚂蚁借呗等额还款能否换成先息后本",
+                                              "蚂蚁花呗说我违约了",
+                                              "帮我看看本月花呗账单结清了没"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -523,11 +510,8 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleGlobal) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence1"), row.end());
-  std::vector<std::string> expected_result = {
-    "蚂蚁花呗说我违约了",
-    "帮我看看本月花呗账单结清了没",
-    "蚂蚁借呗等额还款能否换成先息后本"
-  };
+  std::vector<std::string> expected_result = {"蚂蚁花呗说我违约了", "帮我看看本月花呗账单结清了没",
+                                              "蚂蚁借呗等额还款能否换成先息后本"};
   uint64_t i = 0;
   while (row.size() != 0) {
     auto text = row["sentence1"];
@@ -572,11 +556,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetTNEWS) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence"), row.end());
-  std::vector<std::string> expected_result = {
-    "新闻1",
-    "新闻2",
-    "新闻3"
-  };
+  std::vector<std::string> expected_result = {"新闻1", "新闻2", "新闻3"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -617,11 +597,8 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetWSC) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("text"), row.end());
-  std::vector<std::string> expected_result = {
-    "小明呢，他在哪？",
-    "小红刚刚看到小明，他在操场",
-    "等小明回来，小张你叫他交作业"
-  };
+  std::vector<std::string> expected_result = {"小明呢，他在哪？", "小红刚刚看到小明，他在操场",
+                                              "等小明回来，小张你叫他交作业"};
 
   uint64_t i = 0;
   while (row.size() != 0) {

@@ -16,10 +16,40 @@
 #include "common/common.h"
 #include "minddata/dataset/include/datasets.h"
 
+// IR non-leaf nodes
+#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
+#include "minddata/dataset/engine/ir/datasetops/bucket_batch_by_length_node.h"
+#include "minddata/dataset/engine/ir/datasetops/build_vocab_node.h"
+#include "minddata/dataset/engine/ir/datasetops/concat_node.h"
+#include "minddata/dataset/engine/ir/datasetops/map_node.h"
+#include "minddata/dataset/engine/ir/datasetops/project_node.h"
+#include "minddata/dataset/engine/ir/datasetops/rename_node.h"
+#include "minddata/dataset/engine/ir/datasetops/repeat_node.h"
+#include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
+#include "minddata/dataset/engine/ir/datasetops/skip_node.h"
+#include "minddata/dataset/engine/ir/datasetops/take_node.h"
+#include "minddata/dataset/engine/ir/datasetops/zip_node.h"
+
+// IR leaf nodes
+#include "minddata/dataset/engine/ir/datasetops/source/album_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/celeba_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
+
 using namespace mindspore::dataset::api;
+using mindspore::dataset::dsize_t;
 using mindspore::dataset::Tensor;
 using mindspore::dataset::TensorShape;
-using mindspore::dataset::dsize_t;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
@@ -79,12 +109,14 @@ TEST_F(MindDataTestPipeline, TestCocoDetection) {
   std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
   iter->GetNextRow(&row);
 
-  std::string expect_file[] = {"000000391895", "000000318219", "000000554625", "000000574769", "000000060623",
-                               "000000309022"};
+  std::string expect_file[] = {"000000391895", "000000318219", "000000554625",
+                               "000000574769", "000000060623", "000000309022"};
   std::vector<std::vector<float>> expect_bbox_vector = {{10.0, 10.0, 10.0, 10.0, 70.0, 70.0, 70.0, 70.0},
                                                         {20.0, 20.0, 20.0, 20.0, 80.0, 80.0, 80.0, 80.0},
-                                                        {30.0, 30.0, 30.0, 30.0}, {40.0, 40.0, 40.0, 40.0},
-                                                        {50.0, 50.0, 50.0, 50.0}, {60.0, 60.0, 60.0, 60.0}};
+                                                        {30.0, 30.0, 30.0, 30.0},
+                                                        {40.0, 40.0, 40.0, 40.0},
+                                                        {50.0, 50.0, 50.0, 50.0},
+                                                        {60.0, 60.0, 60.0, 60.0}};
   std::vector<std::vector<uint32_t>> expect_catagoryid_list = {{1, 7}, {2, 8}, {3}, {4}, {5}, {6}};
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -148,13 +180,13 @@ TEST_F(MindDataTestPipeline, TestCocoKeypoint) {
   iter->GetNextRow(&row);
 
   std::string expect_file[] = {"000000391895", "000000318219"};
-  std::vector<std::vector<float>> expect_keypoint_vector =
-    {{368.0, 61.0, 1.0, 369.0, 52.0, 2.0, 0.0, 0.0, 0.0, 382.0, 48.0, 2.0, 0.0, 0.0, 0.0, 368.0, 84.0, 2.0, 435.0,
-       81.0, 2.0, 362.0, 125.0, 2.0, 446.0, 125.0, 2.0, 360.0, 153.0, 2.0, 0.0, 0.0, 0.0, 397.0, 167.0, 1.0, 439.0,
-       166.0, 1.0, 369.0, 193.0, 2.0, 461.0, 234.0, 2.0, 361.0, 246.0, 2.0, 474.0, 287.0, 2.0},
-     {244.0, 139.0, 2.0, 0.0, 0.0, 0.0, 226.0, 118.0, 2.0, 0.0, 0.0, 0.0, 154.0, 159.0, 2.0, 143.0, 261.0, 2.0, 135.0,
-       312.0, 2.0, 271.0, 423.0, 2.0, 184.0, 530.0, 2.0, 261.0, 280.0, 2.0, 347.0, 592.0, 2.0, 0.0, 0.0, 0.0, 123.0,
-       596.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}};
+  std::vector<std::vector<float>> expect_keypoint_vector = {
+    {368.0, 61.0,  1.0, 369.0, 52.0,  2.0, 0.0,   0.0,   0.0, 382.0, 48.0,  2.0, 0.0,   0.0,   0.0, 368.0, 84.0,  2.0,
+     435.0, 81.0,  2.0, 362.0, 125.0, 2.0, 446.0, 125.0, 2.0, 360.0, 153.0, 2.0, 0.0,   0.0,   0.0, 397.0, 167.0, 1.0,
+     439.0, 166.0, 1.0, 369.0, 193.0, 2.0, 461.0, 234.0, 2.0, 361.0, 246.0, 2.0, 474.0, 287.0, 2.0},
+    {244.0, 139.0, 2.0, 0.0,   0.0,   0.0, 226.0, 118.0, 2.0, 0.0,   0.0,   0.0, 154.0, 159.0, 2.0, 143.0, 261.0, 2.0,
+     135.0, 312.0, 2.0, 271.0, 423.0, 2.0, 184.0, 530.0, 2.0, 261.0, 280.0, 2.0, 347.0, 592.0, 2.0, 0.0,   0.0,   0.0,
+     123.0, 596.0, 2.0, 0.0,   0.0,   0.0, 0.0,   0.0,   0.0, 0.0,   0.0,   0.0, 0.0,   0.0,   0.0}};
   std::vector<std::vector<dsize_t>> expect_size = {{1, 51}, {1, 51}};
   std::vector<std::vector<uint32_t>> expect_num_keypoints_list = {{14}, {10}};
   uint64_t i = 0;
@@ -258,17 +290,17 @@ TEST_F(MindDataTestPipeline, TestCocoStuff) {
   std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
   iter->GetNextRow(&row);
 
-  std::string expect_file[] = {"000000391895", "000000318219", "000000554625", "000000574769", "000000060623",
-                               "000000309022"};
-  std::vector<std::vector<float>> expect_segmentation_vector =
-    {{10.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0,
-      70.0, 72.0, 73.0, 74.0, 75.0, -1.0, -1.0, -1.0, -1.0, -1.0},
-     {20.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0,
-      10.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, -1.0},
-     {40.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0, 48.0, 49.0, 40.0, 41.0, 42.0},
-     {50.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0, 59.0, 60.0, 61.0, 62.0, 63.0},
-     {60.0, 62.0, 63.0, 64.0, 65.0, 66.0, 67.0, 68.0, 69.0, 70.0, 71.0, 72.0, 73.0, 74.0},
-     {60.0, 62.0, 63.0, 64.0, 65.0, 66.0, 67.0, 68.0, 69.0, 70.0, 71.0, 72.0, 73.0, 74.0}};
+  std::string expect_file[] = {"000000391895", "000000318219", "000000554625",
+                               "000000574769", "000000060623", "000000309022"};
+  std::vector<std::vector<float>> expect_segmentation_vector = {
+    {10.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0,
+     70.0, 72.0, 73.0, 74.0, 75.0, -1.0, -1.0, -1.0, -1.0, -1.0},
+    {20.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0,
+     10.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, -1.0},
+    {40.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0, 48.0, 49.0, 40.0, 41.0, 42.0},
+    {50.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0, 59.0, 60.0, 61.0, 62.0, 63.0},
+    {60.0, 62.0, 63.0, 64.0, 65.0, 66.0, 67.0, 68.0, 69.0, 70.0, 71.0, 72.0, 73.0, 74.0},
+    {60.0, 62.0, 63.0, 64.0, 65.0, 66.0, 67.0, 68.0, 69.0, 70.0, 71.0, 72.0, 73.0, 74.0}};
   std::vector<std::vector<dsize_t>> expect_size = {{2, 10}, {2, 11}, {1, 12}, {1, 13}, {1, 14}, {2, 7}};
   uint64_t i = 0;
   while (row.size() != 0) {

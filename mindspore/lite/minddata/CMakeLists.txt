@@ -81,18 +81,18 @@ AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/kernels/image/lite_cv  MINDDATA_KERNELS_IMA
 
 
 if (BUILD_MINDDATA STREQUAL "full")
-    list(REMOVE_ITEM MINDDATA_API_SRC_FILES 
-        "${MINDDATA_DIR}/api/text.cc" 
+    list(REMOVE_ITEM MINDDATA_API_SRC_FILES
+        "${MINDDATA_DIR}/api/text.cc"
         "${MINDDATA_DIR}/api/de_tensor.cc"
         "${MINDDATA_DIR}/api/execute.cc"
         )
-    
-    list(REMOVE_ITEM MINDDATA_CALLBACK_SRC_FILES 
-        "${MINDDATA_DIR}/callback/py_ds_callback.cc" 
+
+    list(REMOVE_ITEM MINDDATA_CALLBACK_SRC_FILES
+        "${MINDDATA_DIR}/callback/py_ds_callback.cc"
         )
-    
+
     list(REMOVE_ITEM MINDDATA_KERNELS_SRC_FILES "${MINDDATA_DIR}/kernels/py_func_op.cc")
-    list(REMOVE_ITEM MINDDATA_ENGINE_DATASETOPS_SRC_FILES 
+    list(REMOVE_ITEM MINDDATA_ENGINE_DATASETOPS_SRC_FILES
         "${MINDDATA_DIR}/engine/datasetops/build_sentence_piece_vocab_op.cc"
         "${MINDDATA_DIR}/engine/datasetops/filter_op.cc"
         "${MINDDATA_DIR}/engine/datasetops/barrier_op.cc"
@@ -104,7 +104,7 @@ if (BUILD_MINDDATA STREQUAL "full")
         "${MINDDATA_DIR}/engine/datasetops/cache_op.cc"
         )
 
-    list(REMOVE_ITEM MINDDATA_ENGINE_DATASETOPS_SOURCE_SRC_FILES 
+    list(REMOVE_ITEM MINDDATA_ENGINE_DATASETOPS_SOURCE_SRC_FILES
         "${MINDDATA_DIR}/engine/datasetops/source/generator_op.cc"
         "${MINDDATA_DIR}/engine/datasetops/source/voc_op.cc"
         "${MINDDATA_DIR}/engine/datasetops/source/manifest_op.cc"
@@ -131,6 +131,10 @@ if (BUILD_MINDDATA STREQUAL "full")
 
     list(REMOVE_ITEM MINDDATA_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         "${MINDDATA_DIR}/engine/ir/datasetops/source/generator_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/manifest_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/minddata_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/tf_record_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/voc_node.cc"
         )
 
     list(REMOVE_ITEM MINDDATA_ENGINE_IR_DATASETOPS_SRC_FILES
@@ -184,7 +188,7 @@ if (BUILD_MINDDATA STREQUAL "full")
         opencv_imgproc
         mindspore::json
         )
-    
+
     # ref: https://github.com/android/ndk/issues/1202
     if (PLATFORM_ARM32)
         file(GLOB_RECURSE LIBCLANG_RT_LIB $ENV{ANDROID_NDK}/libclang_rt.builtins-arm-android.a)
@@ -206,7 +210,7 @@ if (BUILD_MINDDATA STREQUAL "full")
 elseif (BUILD_MINDDATA STREQUAL "lite")
     list(REMOVE_ITEM MINDDATA_CORE_SRC_FILES "${MINDDATA_DIR}/core/client.cc")
     list(REMOVE_ITEM MINDDATA_KERNELS_SRC_FILES "${MINDDATA_DIR}/kernels/py_func_op.cc")
-    add_library(minddata_eager_mid OBJECT 
+    add_library(minddata_eager_mid OBJECT
         ${MINDDATA_DIR}/api/de_tensor.cc
         ${MINDDATA_DIR}/api/execute.cc
         )

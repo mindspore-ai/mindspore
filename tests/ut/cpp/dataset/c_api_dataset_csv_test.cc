@@ -18,10 +18,40 @@
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/include/datasets.h"
 
+// IR non-leaf nodes
+#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
+#include "minddata/dataset/engine/ir/datasetops/bucket_batch_by_length_node.h"
+#include "minddata/dataset/engine/ir/datasetops/build_vocab_node.h"
+#include "minddata/dataset/engine/ir/datasetops/concat_node.h"
+#include "minddata/dataset/engine/ir/datasetops/map_node.h"
+#include "minddata/dataset/engine/ir/datasetops/project_node.h"
+#include "minddata/dataset/engine/ir/datasetops/rename_node.h"
+#include "minddata/dataset/engine/ir/datasetops/repeat_node.h"
+#include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
+#include "minddata/dataset/engine/ir/datasetops/skip_node.h"
+#include "minddata/dataset/engine/ir/datasetops/take_node.h"
+#include "minddata/dataset/engine/ir/datasetops/zip_node.h"
+
+// IR leaf nodes
+#include "minddata/dataset/engine/ir/datasetops/source/album_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/celeba_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
+
 using namespace mindspore::dataset::api;
+using mindspore::dataset::GlobalContext;
 using mindspore::dataset::ShuffleMode;
 using mindspore::dataset::Tensor;
-using mindspore::dataset::GlobalContext;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
@@ -98,12 +128,8 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetMultiFiles) {
   iter->GetNextRow(&row);
   EXPECT_NE(row.find("col1"), row.end());
   std::vector<std::vector<std::string>> expected_result = {
-    {"17", "18", "19", "20"},
-    {"1", "2", "3", "4"},
-    {"5", "6", "7", "8"},
-    {"13", "14", "15", "16"},
-    {"21", "22", "23", "24"},
-    {"9", "10", "11", "12"},
+    {"17", "18", "19", "20"}, {"1", "2", "3", "4"},     {"5", "6", "7", "8"},
+    {"13", "14", "15", "16"}, {"21", "22", "23", "24"}, {"9", "10", "11", "12"},
   };
 
   uint64_t i = 0;
@@ -148,10 +174,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetNumSamples) {
   std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
   iter->GetNextRow(&row);
   EXPECT_NE(row.find("col1"), row.end());
-  std::vector<std::vector<std::string>> expected_result = {
-    {"1", "2", "3", "4"},
-    {"5", "6", "7", "8"}
-  };
+  std::vector<std::vector<std::string>> expected_result = {{"1", "2", "3", "4"}, {"5", "6", "7", "8"}};
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -191,10 +214,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetDistribution) {
   std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
   iter->GetNextRow(&row);
   EXPECT_NE(row.find("col1"), row.end());
-  std::vector<std::vector<std::string>> expected_result = {
-    {"1", "2", "3", "4"},
-    {"5", "6", "7", "8"}
-  };
+  std::vector<std::vector<std::string>> expected_result = {{"1", "2", "3", "4"}, {"5", "6", "7", "8"}};
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -386,12 +406,8 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesA) {
   iter->GetNextRow(&row);
   EXPECT_NE(row.find("col1"), row.end());
   std::vector<std::vector<std::string>> expected_result = {
-    {"13", "14", "15", "16"},
-    {"1", "2", "3", "4"},
-    {"17", "18", "19", "20"},
-    {"5", "6", "7", "8"},
-    {"21", "22", "23", "24"},
-    {"9", "10", "11", "12"},
+    {"13", "14", "15", "16"}, {"1", "2", "3", "4"},     {"17", "18", "19", "20"},
+    {"5", "6", "7", "8"},     {"21", "22", "23", "24"}, {"9", "10", "11", "12"},
   };
 
   uint64_t i = 0;
@@ -445,12 +461,8 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesB) {
   iter->GetNextRow(&row);
   EXPECT_NE(row.find("col1"), row.end());
   std::vector<std::vector<std::string>> expected_result = {
-    {"13", "14", "15", "16"},
-    {"1", "2", "3", "4"},
-    {"17", "18", "19", "20"},
-    {"5", "6", "7", "8"},
-    {"21", "22", "23", "24"},
-    {"9", "10", "11", "12"},
+    {"13", "14", "15", "16"}, {"1", "2", "3", "4"},     {"17", "18", "19", "20"},
+    {"5", "6", "7", "8"},     {"21", "22", "23", "24"}, {"9", "10", "11", "12"},
   };
 
   uint64_t i = 0;
@@ -505,10 +517,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleGlobal) {
   iter->GetNextRow(&row);
   EXPECT_NE(row.find("col1"), row.end());
   std::vector<std::vector<std::string>> expected_result = {
-    {"5", "6", "7", "8"},
-    {"9", "10", "11", "12"},
-    {"1", "2", "3", "4"}
-  };
+    {"5", "6", "7", "8"}, {"9", "10", "11", "12"}, {"1", "2", "3", "4"}};
 
   uint64_t i = 0;
   while (row.size() != 0) {

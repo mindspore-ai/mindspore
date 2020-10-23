@@ -4,19 +4,17 @@ add_subdirectory(source)
 
 set(DATASET_ENGINE_IR_DATASETOPS_SRC_FILES
         batch_node.cc
+        bucket_batch_by_length_node.cc
+        build_vocab_node.cc
         concat_node.cc
+        map_node.cc
         project_node.cc
         rename_node.cc
         repeat_node.cc
         shuffle_node.cc
+        skip_node.cc
         take_node.cc
+        zip_node.cc
         )
-
-if (NOT ENABLE_ANDROID)
-    set(DATASET_ENGINE_IR_DATASETOPS_SRC_FILES
-            ${DATASET_ENGINE_IR_DATASETOPS_SRC_FILES}
-            bucket_batch_by_length_node.cc
-            build_vocab_node.cc)
-endif ()
 
 add_library(engine-ir-datasetops OBJECT ${DATASET_ENGINE_IR_DATASETOPS_SRC_FILES})

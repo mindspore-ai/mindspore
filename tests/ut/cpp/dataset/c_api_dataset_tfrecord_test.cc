@@ -18,12 +18,19 @@
 #include "minddata/dataset/include/vision.h"
 #include "minddata/dataset/core/global_context.h"
 
+// IR non-leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/batch_node.h"
 #include "minddata/dataset/engine/ir/datasetops/bucket_batch_by_length_node.h"
 #include "minddata/dataset/engine/ir/datasetops/concat_node.h"
+#include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/engine/ir/datasetops/project_node.h"
 #include "minddata/dataset/engine/ir/datasetops/rename_node.h"
 #include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
+#include "minddata/dataset/engine/ir/datasetops/skip_node.h"
+#include "minddata/dataset/engine/ir/datasetops/zip_node.h"
+
+// IR leaf nodes
+#include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
 
 using namespace mindspore::dataset;
 using namespace mindspore::dataset::api;
