@@ -13,8 +13,8 @@
     - [Evaluation Process](#evaluation-process)
 - [Model Description](#model-description)
     - [Performance](#performance)
-        - [Training Performance](#training-performance)
         - [Evaluation Performance](#evaluation-performance)
+        - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -74,7 +74,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 ```python
 ├── resnet50_quant
-  ├── Readme.md     # descriptions about Resnet50-Quant
+  ├── README.md     # descriptions about Resnet50-Quant
   ├── scripts
   │   ├──run_train.sh   # shell script for train on Ascend
   │   ├──run_infer.sh   # shell script for evaluation on Ascend
@@ -193,7 +193,7 @@ result: {'acc': 0.76576314102564111}
 | Checkpoint for Fine tuning | 197M (.ckpt file)                                           |
 | Scripts                    | [resnet50-quant script](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/resnet50_quant) | 
 
-#### Inference Performance
+### Inference Performance
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
