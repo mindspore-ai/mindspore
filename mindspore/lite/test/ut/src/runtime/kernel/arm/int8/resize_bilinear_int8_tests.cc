@@ -47,8 +47,8 @@ class TestResizeBilinearInt8 : public mindspore::CommonTest {
 };
 
 void TestResizeBilinearInt8::TearDown() {
-  in_tensor.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 
 void TestResizeBilinearInt8::Prepare(const std::vector<int> &in_shape, const std::vector<int> &out_shape,
@@ -57,12 +57,12 @@ void TestResizeBilinearInt8::Prepare(const std::vector<int> &in_shape, const std
                                      const int thread_num) {
   in_tensor.set_data_type(kNumberTypeInt8);
   in_tensor.set_shape(in_shape);
-  in_tensor.SetData(input_data);
+  in_tensor.set_data(input_data);
   in_tensor.AddQuantParam(quant_in);
 
   out_tensor.set_data_type(kNumberTypeInt8);
   out_tensor.set_shape(out_shape);
-  out_tensor.SetData(output_data);
+  out_tensor.set_data(output_data);
   out_tensor.AddQuantParam(quant_out);
 
   inputs.push_back(&in_tensor);

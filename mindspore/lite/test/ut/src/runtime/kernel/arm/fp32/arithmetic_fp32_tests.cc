@@ -67,11 +67,11 @@ void TestArithmeticTestFp32::PrepareInt(const std::vector<int> &input0_shape, co
   }
 
   in_tensor_0_.set_data_type(kNumberTypeInt);
-  in_tensor_0_.SetData(input0_data);
+  in_tensor_0_.set_data(input0_data);
   in_tensor_0_.set_shape(input0_shape);
-  in_tensor_1_.SetData(input1_data);
+  in_tensor_1_.set_data(input1_data);
   in_tensor_1_.set_shape(input1_shape);
-  out_tensor_.SetData(output_data);
+  out_tensor_.set_data(output_data);
   out_tensor_.set_shape(output_shape);
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc_);
@@ -83,9 +83,9 @@ void TestArithmeticTestFp32::PrepareInt(const std::vector<int> &input0_shape, co
 }
 
 void TestArithmeticTestFp32::TearDown() {
-  in_tensor_0_.SetData(nullptr);
-  in_tensor_1_.SetData(nullptr);
-  out_tensor_.SetData(nullptr);
+  in_tensor_0_.set_data(nullptr);
+  in_tensor_1_.set_data(nullptr);
+  out_tensor_.set_data(nullptr);
 }
 
 TEST_F(TestArithmeticTestFp32, AddTest) {
@@ -548,8 +548,8 @@ TEST_F(TestArithmeticTestFp32, MulFp32) {
   lite::Tensor input0_tensor;
   lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
-  input0_tensor.SetData(input0.data());
-  input1_tensor.SetData(input1.data());
+  input0_tensor.set_data(input0.data());
+  input1_tensor.set_data(input1.data());
   input0_tensor.set_shape(input0_shape);
   input1_tensor.set_shape(input1_shape);
   inputs_tensor.push_back(&input0_tensor);
@@ -560,7 +560,7 @@ TEST_F(TestArithmeticTestFp32, MulFp32) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.set_shape(output_shape);
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
@@ -583,9 +583,9 @@ TEST_F(TestArithmeticTestFp32, MulFp32) {
 
   CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 TEST_F(TestArithmeticTestFp32, MulReluFp32) {
@@ -622,8 +622,8 @@ TEST_F(TestArithmeticTestFp32, MulReluFp32) {
   lite::Tensor input0_tensor;
   lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
-  input0_tensor.SetData(input0.data());
-  input1_tensor.SetData(input1.data());
+  input0_tensor.set_data(input0.data());
+  input1_tensor.set_data(input1.data());
   input0_tensor.set_shape(input0_shape);
   input1_tensor.set_shape(input1_shape);
   inputs_tensor.push_back(&input0_tensor);
@@ -634,7 +634,7 @@ TEST_F(TestArithmeticTestFp32, MulReluFp32) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.set_shape(output_shape);
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
@@ -657,9 +657,9 @@ TEST_F(TestArithmeticTestFp32, MulReluFp32) {
 
   CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
@@ -696,8 +696,8 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
   lite::Tensor input0_tensor;
   lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
-  input0_tensor.SetData(input0.data());
-  input1_tensor.SetData(input1.data());
+  input0_tensor.set_data(input0.data());
+  input1_tensor.set_data(input1.data());
   input0_tensor.set_shape(input0_shape);
   input1_tensor.set_shape(input1_shape);
   inputs_tensor.push_back(&input0_tensor);
@@ -708,7 +708,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.set_shape(output_shape);
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
@@ -730,9 +730,9 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
 
   CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 TEST_F(TestArithmeticTestFp32, MulInt0) {
@@ -1021,8 +1021,8 @@ TEST_F(TestArithmeticTestFp32, AddReluFp32) {
   lite::Tensor input0_tensor;
   lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
-  input0_tensor.SetData(input0.data());
-  input1_tensor.SetData(input1.data());
+  input0_tensor.set_data(input0.data());
+  input1_tensor.set_data(input1.data());
   input0_tensor.set_shape(input0_shape);
   input1_tensor.set_shape(input1_shape);
   inputs_tensor.push_back(&input0_tensor);
@@ -1033,7 +1033,7 @@ TEST_F(TestArithmeticTestFp32, AddReluFp32) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.set_shape(output_shape);
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
@@ -1055,9 +1055,9 @@ TEST_F(TestArithmeticTestFp32, AddReluFp32) {
 
   CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 TEST_F(TestArithmeticTestFp32, AddRelu6Fp32) {
@@ -1094,8 +1094,8 @@ TEST_F(TestArithmeticTestFp32, AddRelu6Fp32) {
   lite::Tensor input0_tensor;
   lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
-  input0_tensor.SetData(input0.data());
-  input1_tensor.SetData(input1.data());
+  input0_tensor.set_data(input0.data());
+  input1_tensor.set_data(input1.data());
   input0_tensor.set_shape(input0_shape);
   input1_tensor.set_shape(input1_shape);
   inputs_tensor.push_back(&input0_tensor);
@@ -1106,7 +1106,7 @@ TEST_F(TestArithmeticTestFp32, AddRelu6Fp32) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.set_shape(output_shape);
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
@@ -1127,9 +1127,9 @@ TEST_F(TestArithmeticTestFp32, AddRelu6Fp32) {
 
   CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 TEST_F(TestArithmeticTestFp32, DivReluFp32) {
@@ -1166,8 +1166,8 @@ TEST_F(TestArithmeticTestFp32, DivReluFp32) {
   lite::Tensor input0_tensor;
   lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
-  input0_tensor.SetData(input0.data());
-  input1_tensor.SetData(input1.data());
+  input0_tensor.set_data(input0.data());
+  input1_tensor.set_data(input1.data());
   input0_tensor.set_shape(input0_shape);
   input1_tensor.set_shape(input1_shape);
   inputs_tensor.push_back(&input0_tensor);
@@ -1178,7 +1178,7 @@ TEST_F(TestArithmeticTestFp32, DivReluFp32) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.set_shape(output_shape);
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
@@ -1201,9 +1201,9 @@ TEST_F(TestArithmeticTestFp32, DivReluFp32) {
 
   CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 TEST_F(TestArithmeticTestFp32, DivRelu6Fp32) {
@@ -1240,8 +1240,8 @@ TEST_F(TestArithmeticTestFp32, DivRelu6Fp32) {
   lite::Tensor input0_tensor;
   lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
-  input0_tensor.SetData(input0.data());
-  input1_tensor.SetData(input1.data());
+  input0_tensor.set_data(input0.data());
+  input1_tensor.set_data(input1.data());
   input0_tensor.set_shape(input0_shape);
   input1_tensor.set_shape(input1_shape);
   inputs_tensor.push_back(&input0_tensor);
@@ -1252,7 +1252,7 @@ TEST_F(TestArithmeticTestFp32, DivRelu6Fp32) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.set_shape(output_shape);
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
@@ -1273,9 +1273,9 @@ TEST_F(TestArithmeticTestFp32, DivRelu6Fp32) {
 
   CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 TEST_F(TestArithmeticTestFp32, EqualFp32) {
@@ -1311,8 +1311,8 @@ TEST_F(TestArithmeticTestFp32, EqualFp32) {
   lite::Tensor input0_tensor;
   lite::Tensor input1_tensor;
   input0_tensor.set_data_type(kNumberTypeFloat32);
-  input0_tensor.SetData(input0.data());
-  input1_tensor.SetData(input1.data());
+  input0_tensor.set_data(input0.data());
+  input1_tensor.set_data(input1.data());
   input0_tensor.set_shape(input0_shape);
   input1_tensor.set_shape(input1_shape);
   inputs_tensor.push_back(&input0_tensor);
@@ -1323,7 +1323,7 @@ TEST_F(TestArithmeticTestFp32, EqualFp32) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.set_shape(output_shape);
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Eltwise};
@@ -1343,8 +1343,8 @@ TEST_F(TestArithmeticTestFp32, EqualFp32) {
 
   CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 }  // namespace mindspore

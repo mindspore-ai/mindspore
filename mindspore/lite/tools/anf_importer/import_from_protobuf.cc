@@ -248,7 +248,7 @@ int AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &node
     if (tensor_data_buf == nullptr) {
       return RET_MEMORY_FAILED;
     }
-    tensor_info->SetData(nullptr);
+    tensor_info->set_data(nullptr);
     auto ret = memcpy_s(tensor_data_buf, tensor_info->Size(), initial_data.data(), initial_data.size());
     if (EOK != ret) {
       MS_LOG(ERROR) << "memcpy_s error";

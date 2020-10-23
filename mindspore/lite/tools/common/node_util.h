@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include <unordered_map>
 #include "schema/inner/model_generated.h"
 #include "src/common/common.h"
@@ -30,6 +31,16 @@ namespace mindspore {
 namespace lite {
 using STATUS = int;
 STATUS BroadCastQuantParam(schema::MetaGraphT *graphT, const std::unique_ptr<schema::CNodeT> &node);
+
+inline schema::PrimitiveType GetCNodeTType(const schema::CNodeT &cNodeT) { return cNodeT.primitive->value.type; }
+
+inline std::string GetCNodeTTypeName(const schema::CNodeT &cNodeT) {
+  return schema::EnumNamePrimitiveType(GetCNodeTType(cNodeT));
+}
+
+inline schema::PrimitiveType GetOpType(const schema::CNode &opDef) { return opDef.primitive()->value_type(); }
+
+inline std::string GetOpTypeName(const schema::CNode &opDef) { return schema::EnumNamePrimitiveType(GetOpType(opDef)); }
 
 std::unordered_map<int, int> GetNc2NhAxisMap();
 

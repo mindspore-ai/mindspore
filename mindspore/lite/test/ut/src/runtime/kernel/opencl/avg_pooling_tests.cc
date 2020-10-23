@@ -118,10 +118,10 @@ void RunTestCaseAvgPooling(const std::vector<int> &shape, void *input_data, void
   }
 
   for (auto t : inputs) {
-    t->SetData(nullptr);
+    t->set_data(nullptr);
   }
   for (auto t : outputs) {
-    t->SetData(nullptr);
+    t->set_data(nullptr);
   }
 
   MS_LOG(INFO) << "Test AvgPool2d passed";

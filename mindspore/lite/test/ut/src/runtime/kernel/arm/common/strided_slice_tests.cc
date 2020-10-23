@@ -49,8 +49,8 @@ TEST_F(TestStridedSlice, StridedSlice) {
   lite::Tensor out_tensor(kNumberTypeFloat32, {1, 1, 2});
   float input_data[] = {0.2390374, 0.92039955, 0.05051243, 0.49574447, 0.8355223, 0.02647042, 0.08811307, 0.4566604};
   float output_data[2] = {0};
-  in_tensor.SetData(input_data);
-  out_tensor.SetData(output_data);
+  in_tensor.set_data(input_data);
+  out_tensor.set_data(output_data);
   std::vector<lite::Tensor *> inputs = {&in_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
@@ -73,8 +73,8 @@ TEST_F(TestStridedSlice, StridedSlice) {
   float expect[2] = {0.2390374, 0.05051243};
   CompareOutputData(output_data, expect, 2, 0.000001);
 
-  in_tensor.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 
 TEST_F(TestStridedSlice, StridedSliceInt8) {
@@ -82,8 +82,8 @@ TEST_F(TestStridedSlice, StridedSliceInt8) {
   lite::Tensor out_tensor(kNumberTypeInt8, {2, 3, 4});
   int8_t input_data[] = {-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   int8_t output_data[4] = {0};
-  in_tensor.SetData(input_data);
-  out_tensor.SetData(output_data);
+  in_tensor.set_data(input_data);
+  out_tensor.set_data(output_data);
   std::vector<lite::Tensor *> inputs = {&in_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
@@ -121,7 +121,7 @@ TEST_F(TestStridedSlice, StridedSliceInt8) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 
-  in_tensor.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 }  // namespace mindspore

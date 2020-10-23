@@ -71,7 +71,7 @@ int ArithmeticOpenCLKernel::InitBuffer() {
   for (auto in_tensor_ : in_tensors_) {
     auto nhwc_shape = GetNHWCShape(in_tensor_->shape());
     inputs_nhwc_shapes_.push_back(nhwc_shape);
-    if (in_tensor_->category() != lite::Tensor::Category::CONST || in_tensor_->data_c() == nullptr) {
+    if (!in_tensor_->IsConst()) {
       inputs_weight_ptrs_.push_back(nullptr);
     } else {
       auto allocator = ocl_runtime_->GetAllocator();

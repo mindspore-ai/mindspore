@@ -17,7 +17,6 @@
 #include "tools/converter/legacy_optimizer/graph/dtype_trans_pass.h"
 #include <string>
 #include <set>
-#include "tools/common/converter_op_utils.h"
 #include "tools/common/node_util.h"
 #include "src/common/common.h"
 #include "src/common/utils.h"

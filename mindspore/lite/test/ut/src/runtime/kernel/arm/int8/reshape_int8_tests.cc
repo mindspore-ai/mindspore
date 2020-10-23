@@ -47,7 +47,7 @@ TEST_F(TestReshapeInt8, reshape_quant0) {
 
   lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
@@ -57,7 +57,7 @@ TEST_F(TestReshapeInt8, reshape_quant0) {
 
   std::vector<lite::Tensor *> outputs_tensor(1);
   lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->SetData(output);
+  output0_tensor->set_data(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
@@ -83,8 +83,8 @@ TEST_F(TestReshapeInt8, reshape_quant0) {
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
   CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
 
-  input_tensor1->SetData(nullptr);
-  output0_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  output0_tensor->set_data(nullptr);
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
@@ -107,7 +107,7 @@ TEST_F(TestReshapeInt8, reshape_quant1_thread2) {
 
   lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
@@ -117,7 +117,7 @@ TEST_F(TestReshapeInt8, reshape_quant1_thread2) {
 
   std::vector<lite::Tensor *> outputs_tensor(1);
   lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->SetData(output);
+  output0_tensor->set_data(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
@@ -143,8 +143,8 @@ TEST_F(TestReshapeInt8, reshape_quant1_thread2) {
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
   CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
 
-  input_tensor1->SetData(nullptr);
-  output0_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  output0_tensor->set_data(nullptr);
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;

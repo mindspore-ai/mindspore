@@ -63,7 +63,7 @@ int ScaleOpenCLKernel::InitBuffer() {
   if (!element_flag_) {
     return RET_OK;
   }
-  if (in_tensors_[1]->category() == lite::Tensor::Category::CONST && in_tensors_[1]->data_c() != nullptr) {
+  if (in_tensors_[1]->IsConst()) {
     auto allocator = ocl_runtime_->GetAllocator();
     std::vector<size_t> img_size;
     GetImageSize(0, &img_size);

@@ -26,7 +26,6 @@
 #include "tools/common/tensor_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
-#include "src/common/op_utils.h"
 
 namespace mindspore {
 namespace lite {

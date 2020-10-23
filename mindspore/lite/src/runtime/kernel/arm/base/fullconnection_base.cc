@@ -50,14 +50,14 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::T
       MS_LOG(ERROR) << "dequant data is nullptr.";
       return nullptr;
     }
-    weight_tensor->SetData(dequant_weight);
+    weight_tensor->set_data(dequant_weight);
   }
   auto kernel = new (std::nothrow) FullconnectionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (!kernel) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (dequant_flag) {
       weight_tensor->FreeData();
-      weight_tensor->SetData(restore_data);
+      weight_tensor->set_data(restore_data);
     }
     free(opParameter);
     return nullptr;
@@ -69,13 +69,13 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::T
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     if (dequant_flag) {
       weight_tensor->FreeData();
-      weight_tensor->SetData(restore_data);
+      weight_tensor->set_data(restore_data);
     }
     return nullptr;
   }
   if (dequant_flag) {
     weight_tensor->FreeData();
-    weight_tensor->SetData(restore_data);
+    weight_tensor->set_data(restore_data);
   }
   return kernel;
 }

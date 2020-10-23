@@ -36,13 +36,13 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_dy({10, 28, 28, 7});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
-  dy_tensor.SetData(input_data);
+  dy_tensor.set_data(input_data);
 
   std::vector<lite::Tensor *> inputs = {&dy_tensor};
   auto output_data = new float[7];
   std::vector<int> dim_dw = {7};
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
-  dw_tensor.SetData(output_data);
+  dw_tensor.set_data(output_data);
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
   lite::InnerContext ctx;
@@ -66,8 +66,8 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   delete[] input_data;
   delete[] output_data;
   // delete bias_param;
-  dy_tensor.SetData(nullptr);
-  dw_tensor.SetData(nullptr);
+  dy_tensor.set_data(nullptr);
+  dw_tensor.set_data(nullptr);
   delete kernel_obj;
   MS_LOG(INFO) << "BiasGradFp32 passed";
 }

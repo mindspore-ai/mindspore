@@ -96,10 +96,10 @@ void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *out
   }
 
   for (auto t : inputs) {
-    t->SetData(nullptr);
+    t->set_data(nullptr);
   }
   for (auto t : outputs) {
-    t->SetData(nullptr);
+    t->set_data(nullptr);
   }
 
   MS_LOG(INFO) << "Test TransposeFp32 passed";

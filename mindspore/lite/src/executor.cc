@@ -44,7 +44,7 @@ int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_
   }
   kernel::LiteKernelUtil::InitTensorRefCount(kernels);
   for (auto out_tensor : out_tensors) {  // increase RefCount of output tensors, such that Run will not free them
-    out_tensor->SetRefCount(out_tensor->RefCount() + 1);
+    out_tensor->set_ref_count(out_tensor->ref_count() + 1);
   }
 
   for (auto *kernel : kernels) {
@@ -101,7 +101,7 @@ int Executor::TransformTensorLayoutFp32(Tensor *tensor, schema::Format dst_forma
       return RET_ERROR;
     }
     PackNC4HW4ToNHWCFp32(src_data, dst_data, tensor->Batch(), tensor->Height() * tensor->Width(), tensor->Channel());
-    tensor->SetData(dst_data);
+    tensor->set_data(dst_data);
     tensor->SetFormat(dst_format);
     allocator->Free(src_data);
     return RET_OK;

@@ -137,7 +137,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice3) {
   std::vector<int> output_shape = {1, 1, 2};
 
   lite::Tensor input_tensor;
-  input_tensor.SetData(input_data);
+  input_tensor.set_data(input_data);
   input_tensor.set_shape(input_shape);
   std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = &input_tensor;
@@ -145,7 +145,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice3) {
   std::vector<lite::Tensor *> outputs_tensor;
   lite::Tensor output_tensor;
   outputs_tensor.push_back(&output_tensor);
-  output_tensor.SetData(output_data);
+  output_tensor.set_data(output_data);
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
@@ -163,8 +163,8 @@ TEST_F(TestStridedSliceFp32, StridedSlice3) {
   delete ctx;
 
   CompareOutputData(output_data, correct, 2, 0.000001);
-  input_tensor.SetData(nullptr);
-  output_tensor.SetData(nullptr);
+  input_tensor.set_data(nullptr);
+  output_tensor.set_data(nullptr);
 }
 
 TEST_F(TestStridedSliceFp32, StridedSlice4) {
@@ -187,7 +187,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice4) {
   std::vector<int> output_shape = {2, 2};
 
   lite::Tensor input_tensor;
-  input_tensor.SetData(input_data);
+  input_tensor.set_data(input_data);
   input_tensor.set_shape(input_shape);
   std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = &input_tensor;
@@ -195,7 +195,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice4) {
   std::vector<lite::Tensor *> outputs_tensor;
   lite::Tensor output_tensor;
   outputs_tensor.push_back(&output_tensor);
-  output_tensor.SetData(output_data);
+  output_tensor.set_data(output_data);
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
@@ -213,8 +213,8 @@ TEST_F(TestStridedSliceFp32, StridedSlice4) {
   delete ctx;
 
   CompareOutputData(output_data, correct, 4, 0.000001);
-  input_tensor.SetData(nullptr);
-  output_tensor.SetData(nullptr);
+  input_tensor.set_data(nullptr);
+  output_tensor.set_data(nullptr);
 }
 
 TEST_F(TestStridedSliceFp32, StridedSlice5) {
@@ -244,7 +244,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice5) {
   std::vector<int> output_shape = {3, 2, 2};
 
   lite::Tensor input_tensor;
-  input_tensor.SetData(input_data);
+  input_tensor.set_data(input_data);
   input_tensor.set_shape(input_shape);
   std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = &input_tensor;
@@ -252,7 +252,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice5) {
   std::vector<lite::Tensor *> outputs_tensor;
   lite::Tensor output_tensor;
   outputs_tensor.push_back(&output_tensor);
-  output_tensor.SetData(output_data);
+  output_tensor.set_data(output_data);
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
@@ -270,8 +270,8 @@ TEST_F(TestStridedSliceFp32, StridedSlice5) {
   delete ctx;
 
   CompareOutputData(output_data, correct, 12, 0.000001);
-  input_tensor.SetData(nullptr);
-  output_tensor.SetData(nullptr);
+  input_tensor.set_data(nullptr);
+  output_tensor.set_data(nullptr);
 }
 
 TEST_F(TestStridedSliceFp32, StridedSlice6) {
@@ -301,7 +301,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice6) {
   std::vector<int> output_shape = {2, 2, 2};
 
   lite::Tensor input_tensor;
-  input_tensor.SetData(input_data);
+  input_tensor.set_data(input_data);
   input_tensor.set_shape(input_shape);
   std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = &input_tensor;
@@ -309,7 +309,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice6) {
   std::vector<lite::Tensor *> outputs_tensor;
   lite::Tensor output_tensor;
   outputs_tensor.push_back(&output_tensor);
-  output_tensor.SetData(output_data);
+  output_tensor.set_data(output_data);
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
@@ -327,8 +327,8 @@ TEST_F(TestStridedSliceFp32, StridedSlice6) {
   delete ctx;
 
   CompareOutputData(output_data, correct, 8, 0.000001);
-  input_tensor.SetData(nullptr);
-  output_tensor.SetData(nullptr);
+  input_tensor.set_data(nullptr);
+  output_tensor.set_data(nullptr);
 }
 
 TEST_F(TestStridedSliceFp32, StridedSlice7) {
@@ -350,7 +350,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice7) {
   std::vector<int> output_shape = {1, 1};
 
   lite::Tensor input_tensor;
-  input_tensor.SetData(input_data);
+  input_tensor.set_data(input_data);
   input_tensor.set_shape(input_shape);
   std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = &input_tensor;
@@ -358,7 +358,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice7) {
   std::vector<lite::Tensor *> outputs_tensor;
   lite::Tensor output_tensor;
   outputs_tensor.push_back(&output_tensor);
-  output_tensor.SetData(output_data);
+  output_tensor.set_data(output_data);
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
@@ -376,8 +376,8 @@ TEST_F(TestStridedSliceFp32, StridedSlice7) {
   delete ctx;
 
   CompareOutputData(output_data, correct, 1, 0.000001);
-  input_tensor.SetData(nullptr);
-  output_tensor.SetData(nullptr);
+  input_tensor.set_data(nullptr);
+  output_tensor.set_data(nullptr);
 }
 
 TEST_F(TestStridedSliceFp32, StridedSlice8) {
@@ -407,7 +407,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice8) {
   std::vector<int> output_shape = {1, 1, 5};
 
   lite::Tensor input_tensor;
-  input_tensor.SetData(input_data);
+  input_tensor.set_data(input_data);
   input_tensor.set_shape(input_shape);
   std::vector<lite::Tensor *> inputs_tensor(1);
   inputs_tensor[0] = &input_tensor;
@@ -415,7 +415,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice8) {
   std::vector<lite::Tensor *> outputs_tensor;
   lite::Tensor output_tensor;
   outputs_tensor.push_back(&output_tensor);
-  output_tensor.SetData(output_data);
+  output_tensor.set_data(output_data);
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
@@ -433,8 +433,8 @@ TEST_F(TestStridedSliceFp32, StridedSlice8) {
   delete ctx;
 
   CompareOutputData(output_data, correct, 5, 0.000001);
-  input_tensor.SetData(nullptr);
-  output_tensor.SetData(nullptr);
+  input_tensor.set_data(nullptr);
+  output_tensor.set_data(nullptr);
 }
 
 // 5d input, multi inputs
@@ -549,16 +549,16 @@ TEST_F(TestStridedSliceFp32, StridedSlice9) {
   std::vector<int> output_shape = {1, 1, 10, 7, 7};
 
   lite::Tensor input_tensor;
-  input_tensor.SetData(input_data);
+  input_tensor.set_data(input_data);
   input_tensor.set_shape(in_shape);
   lite::Tensor begins_tensor;
-  begins_tensor.SetData(begins.data());
+  begins_tensor.set_data(begins.data());
   begins_tensor.set_shape({1});
   lite::Tensor ends_tensor;
-  ends_tensor.SetData(ends.data());
+  ends_tensor.set_data(ends.data());
   ends_tensor.set_shape({1});
   lite::Tensor strides_tensor;
-  strides_tensor.SetData(strides.data());
+  strides_tensor.set_data(strides.data());
   strides_tensor.set_shape({1});
 
   std::vector<lite::Tensor *> inputs_tensor{&input_tensor, &begins_tensor, &ends_tensor, &strides_tensor};
@@ -566,7 +566,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice9) {
   std::vector<lite::Tensor *> outputs_tensor;
   lite::Tensor output_tensor;
   outputs_tensor.push_back(&output_tensor);
-  output_tensor.SetData(output_data);
+  output_tensor.set_data(output_data);
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
@@ -583,8 +583,8 @@ TEST_F(TestStridedSliceFp32, StridedSlice9) {
   delete ctx;
 
   CompareOutputData(output_data, correct, 490, 0.000001);
-  input_tensor.SetData(nullptr);
-  output_tensor.SetData(nullptr);
+  input_tensor.set_data(nullptr);
+  output_tensor.set_data(nullptr);
 }
 
 }  // namespace mindspore

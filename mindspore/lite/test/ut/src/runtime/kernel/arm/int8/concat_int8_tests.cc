@@ -51,13 +51,13 @@ TEST_F(TestConcatInt8, Concat1_axis0) {
 
   lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
   lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->SetData(input2.data());
+  input_tensor2->set_data(input2.data());
   input_tensor2->set_shape(shape2);
   input_tensor2->AddQuantParam(input_quant_arg);
   input_tensor2->set_data_type(tid_int8);
@@ -68,7 +68,7 @@ TEST_F(TestConcatInt8, Concat1_axis0) {
 
   std::vector<lite::Tensor *> outputs_tensor(1);
   lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->SetData(output);
+  output0_tensor->set_data(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
@@ -93,9 +93,9 @@ TEST_F(TestConcatInt8, Concat1_axis0) {
   std::vector<int8_t> except_result = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   PrintData("output data", output, input1.size() + input2.size());
   CompareOutputData(output, except_result.data(), input1.size() + input2.size(), 0.000001);
-  input_tensor1->SetData(nullptr);
-  input_tensor2->SetData(nullptr);
-  output0_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  input_tensor2->set_data(nullptr);
+  output0_tensor->set_data(nullptr);
   delete input_tensor1;
   delete input_tensor2;
   delete output0_tensor;
@@ -123,13 +123,13 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2) {
 
   lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
   lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->SetData(input2.data());
+  input_tensor2->set_data(input2.data());
   input_tensor2->set_shape(shape2);
   input_tensor2->AddQuantParam(input_quant_arg);
   input_tensor2->set_data_type(tid_int8);
@@ -140,7 +140,7 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2) {
 
   std::vector<lite::Tensor *> outputs_tensor(1);
   lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->SetData(output);
+  output0_tensor->set_data(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
@@ -166,9 +166,9 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2) {
   PrintData("output data", output, input1.size() + input2.size());
   CompareOutputData(output, except_result.data(), input1.size() + input2.size(), 0.000001);
 
-  input_tensor1->SetData(nullptr);
-  input_tensor2->SetData(nullptr);
-  output0_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  input_tensor2->set_data(nullptr);
+  output0_tensor->set_data(nullptr);
   delete input_tensor1;
   delete input_tensor2;
   delete output0_tensor;
@@ -196,13 +196,13 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2_quant1) {
 
   lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
   lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->SetData(input2.data());
+  input_tensor2->set_data(input2.data());
   input_tensor2->set_shape(shape2);
   input_tensor2->AddQuantParam(input_quant_arg);
   input_tensor2->set_data_type(tid_int8);
@@ -213,7 +213,7 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2_quant1) {
 
   std::vector<lite::Tensor *> outputs_tensor(1);
   lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->SetData(output);
+  output0_tensor->set_data(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
@@ -239,9 +239,9 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2_quant1) {
   PrintData("output data", output, input1.size() + input2.size());
   CompareOutputData(output, except_result.data(), input1.size() + input2.size(), 0.000001);
 
-  input_tensor1->SetData(nullptr);
-  input_tensor2->SetData(nullptr);
-  output0_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  input_tensor2->set_data(nullptr);
+  output0_tensor->set_data(nullptr);
   delete input_tensor1;
   delete input_tensor2;
   delete output0_tensor;

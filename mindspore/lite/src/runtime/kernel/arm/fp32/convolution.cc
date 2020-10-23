@@ -225,8 +225,8 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
     new_inputs.emplace_back(in_tensor);
 
     // nwe weight
-    auto filter_tensor = new (std::nothrow)
-      lite::Tensor(inputs.at(kWeightIndex)->data_type(), filter_shape, Format_NHWC, lite::Tensor::Category::CONST);
+    auto filter_tensor = new (std::nothrow) lite::Tensor(inputs.at(kWeightIndex)->data_type(), filter_shape,
+                                                         Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
     filter_tensor->MallocData();
     int copy_length = kernel_h * kernel_w * new_in_channel * new_out_channel;
     memcpy(filter_tensor->data_c(), origin_weight + i * copy_length, copy_length * sizeof(float));
@@ -235,7 +235,7 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
     // if has bias, set new bias
     if (has_bias) {
       auto bias_tensor = new (std::nothrow)
-        lite::Tensor(inputs.at(kBiasIndex)->data_type(), bias_shape, Format_NHWC, lite::Tensor::Category::CONST);
+        lite::Tensor(inputs.at(kBiasIndex)->data_type(), bias_shape, Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
       bias_tensor->MallocData();
       memcpy(bias_tensor->data_c(), origin_bias + i * new_out_channel, new_out_channel * sizeof(float));
       new_inputs.emplace_back(bias_tensor);
@@ -293,7 +293,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
       free(op_parameter);
       return nullptr;
     }
-    weight_tensor->SetData(dequant_weight);
+    weight_tensor->set_data(dequant_weight);
   }
 
   kernel::LiteKernel *kernel;
@@ -307,7 +307,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (dequant_flag) {
       weight_tensor->FreeData();
-      weight_tensor->SetData(restore_data);
+      weight_tensor->set_data(restore_data);
     }
     free(op_parameter);
     return nullptr;
@@ -319,14 +319,14 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
     if (dequant_flag) {
       weight_tensor->FreeData();
-      weight_tensor->SetData(restore_data);
+      weight_tensor->set_data(restore_data);
     }
     return nullptr;
   }
 
   if (dequant_flag) {
     weight_tensor->FreeData();
-    weight_tensor->SetData(restore_data);
+    weight_tensor->set_data(restore_data);
   }
 
   return kernel;

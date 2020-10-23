@@ -217,7 +217,7 @@ kernel::LiteKernel *CpuMatmulInt8KernelCreator(const std::vector<lite::Tensor *>
       free(opParameter);
       return nullptr;
     }
-    weight_tensor->SetData(dequant_weight);
+    weight_tensor->set_data(dequant_weight);
   }
 
   auto input_tensor = inputs.at(kInputIndex);
@@ -230,7 +230,7 @@ kernel::LiteKernel *CpuMatmulInt8KernelCreator(const std::vector<lite::Tensor *>
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (is_const_quant_weight) {
       weight_tensor->FreeData();
-      weight_tensor->SetData(restore_data);
+      weight_tensor->set_data(restore_data);
     }
     free(opParameter);
     return nullptr;
@@ -242,14 +242,14 @@ kernel::LiteKernel *CpuMatmulInt8KernelCreator(const std::vector<lite::Tensor *>
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     if (is_const_quant_weight) {
       weight_tensor->FreeData();
-      weight_tensor->SetData(restore_data);
+      weight_tensor->set_data(restore_data);
     }
     return nullptr;
   }
 
   if (is_const_quant_weight) {
     weight_tensor->FreeData();
-    weight_tensor->SetData(restore_data);
+    weight_tensor->set_data(restore_data);
   }
 
   return kernel;

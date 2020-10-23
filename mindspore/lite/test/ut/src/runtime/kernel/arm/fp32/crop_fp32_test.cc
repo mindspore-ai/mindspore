@@ -257,12 +257,12 @@ TEST_F(CropTestFp32, CropTest11) {
   std::vector<int> out_shape = {1, 4, 2, 2};
   std::vector<lite::Tensor *> inputs;
   std::vector<lite::Tensor *> outputs;
-  auto in_t = new lite::Tensor(kNumberTypeFloat, in_shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
+  auto in_t = new lite::Tensor(kNumberTypeFloat, in_shape, schema::Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
   in_t->MallocData();
   memcpy(in_t->MutableData(), input, sizeof(float) * in_t->ElementsNum());
   inputs.push_back(in_t);
 
-  auto out_t = new lite::Tensor(kNumberTypeFloat, out_shape, schema::Format_NHWC, lite::Tensor::Category::CONST);
+  auto out_t = new lite::Tensor(kNumberTypeFloat, out_shape, schema::Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
   out_t->MallocData();
   outputs.push_back(out_t);
 

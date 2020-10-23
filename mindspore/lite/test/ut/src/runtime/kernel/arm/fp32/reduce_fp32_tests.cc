@@ -61,8 +61,8 @@ class TestReduceFp32 : public mindspore::CommonTest {
 
 void TestReduceFp32::TearDown() {
   delete ctx_;
-  in_tensor_.SetData(nullptr);
-  out_tensor_.SetData(nullptr);
+  in_tensor_.set_data(nullptr);
+  out_tensor_.set_data(nullptr);
 }
 
 void TestReduceFp32::Prepare(const std::vector<int> &in_shape, const std::vector<int> &out_shape, float *input_data,
@@ -70,11 +70,11 @@ void TestReduceFp32::Prepare(const std::vector<int> &in_shape, const std::vector
                              bool reduce_to_end, float coeff) {
   in_tensor_.set_data_type(kNumberTypeFloat32);
   in_tensor_.set_shape(in_shape);
-  in_tensor_.SetData(input_data);
+  in_tensor_.set_data(input_data);
 
   out_tensor_.set_data_type(kNumberTypeFloat32);
   out_tensor_.set_shape(out_shape);
-  out_tensor_.SetData(output_data);
+  out_tensor_.set_data(output_data);
 
   param_.mode_ = static_cast<int>(mode);
   param_.num_axes_ = num_axes;

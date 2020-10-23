@@ -61,7 +61,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
 
   MS_LOG(INFO) << " init tensors ";
   std::vector<int> shape = {1, 23, 39, 47};
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(kNumberTypeFloat32, shape, schema::Format_NHWC, tensor_type);
   auto *output_tensor = new (std::nothrow) lite::Tensor(kNumberTypeFloat16, shape, schema::Format_NHWC, tensor_type);
   if (input_tensor == nullptr || output_tensor == nullptr) {
@@ -113,11 +113,11 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;
@@ -147,7 +147,7 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
 
   MS_LOG(INFO) << " init tensors ";
   std::vector<int> shape = {1, 23, 39, 47};
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(kNumberTypeFloat16, shape, schema::Format_NHWC, tensor_type);
   auto *output_tensor = new (std::nothrow) lite::Tensor(kNumberTypeFloat32, shape, schema::Format_NHWC, tensor_type);
   if (input_tensor == nullptr || output_tensor == nullptr) {
@@ -199,11 +199,11 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;

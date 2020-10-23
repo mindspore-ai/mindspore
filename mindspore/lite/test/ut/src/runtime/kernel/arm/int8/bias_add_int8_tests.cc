@@ -36,9 +36,9 @@ TEST_F(TestBiasAddInt8, BiasAdd) {
   int8_t input_data0[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   int8_t input_data1[] = {1, 1};
   int8_t output_data[12] = {0};
-  in_tensor0.SetData(input_data0);
-  in_tensor1.SetData(input_data1);
-  out_tensor.SetData(output_data);
+  in_tensor0.set_data(input_data0);
+  in_tensor1.set_data(input_data1);
+  out_tensor.set_data(output_data);
   std::vector<lite::Tensor *> inputs = {&in_tensor0, &in_tensor1};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
@@ -70,8 +70,8 @@ TEST_F(TestBiasAddInt8, BiasAdd) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 
-  in_tensor0.SetData(nullptr);
-  in_tensor1.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor0.set_data(nullptr);
+  in_tensor1.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 }  // namespace mindspore

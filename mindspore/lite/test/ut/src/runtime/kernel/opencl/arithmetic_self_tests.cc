@@ -60,7 +60,7 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
 
   std::vector<int> shape = {1, 2, 2, 144};
   auto data_type = kNumberTypeFloat16;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
   auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
   if (input_tensor == nullptr || output_tensor == nullptr) {
@@ -125,11 +125,11 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData1(input_data1, output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;
@@ -148,7 +148,7 @@ TEST_F(TestArithmeticSelfOpenCLCI, ArithmeticSelfRound) {
   MS_LOG(INFO) << " init tensors ";
   std::vector<int> shape = {1, 1, 4, 4};
   auto data_type = kNumberTypeFloat32;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
   auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
   if (input_tensor == nullptr || output_tensor == nullptr) {
@@ -214,11 +214,11 @@ TEST_F(TestArithmeticSelfOpenCLCI, ArithmeticSelfRound) {
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData1(input_data1, output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;
@@ -243,7 +243,7 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfdim2Fp16) {
 
   std::vector<int> shape = {1, 512};
   auto data_type = kNumberTypeFloat16;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NC, tensor_type);
   auto *output_tensor = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NC, tensor_type);
   if (input_tensor == nullptr || output_tensor == nullptr) {
@@ -307,11 +307,11 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfdim2Fp16) {
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData1(input_data1, output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;

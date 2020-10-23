@@ -37,7 +37,7 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_y({6, 4});
   lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
-  y_tensor.SetData(input_data);
+  y_tensor.set_data(input_data);
 
   std::string label_path = "./test_data/operators/sce_fp32_1_l_6.bin";
   auto ll_labels = reinterpret_cast<int64_t *>(mindspore::lite::ReadFile(label_path.c_str(), &input_size));
@@ -47,17 +47,17 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
 
   std::vector<int> dim_l({6, 4});
   lite::Tensor l_tensor(TypeId::kNumberTypeInt32, dim_l);
-  l_tensor.SetData(labels);
+  l_tensor.set_data(labels);
 
   std::vector<lite::Tensor *> inputs = {&y_tensor, &l_tensor};
 
   auto loss = new float[1];
   std::vector<int> dim_dw({1});
   lite::Tensor loss_tensor(TypeId::kNumberTypeFloat32, dim_dw);
-  loss_tensor.SetData(loss);
+  loss_tensor.set_data(loss);
   auto grad = new float[24];
   lite::Tensor grad_tensor(TypeId::kNumberTypeFloat32, dim_y);
-  grad_tensor.SetData(grad);
+  grad_tensor.set_data(grad);
   std::vector<lite::Tensor *> outputs = {&loss_tensor, &grad_tensor};
 
   lite::InnerContext context;
@@ -94,10 +94,10 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   delete[] input_data;
   delete[] loss;
   delete[] grad;
-  l_tensor.SetData(nullptr);
-  y_tensor.SetData(nullptr);
-  loss_tensor.SetData(nullptr);
-  grad_tensor.SetData(nullptr);
+  l_tensor.set_data(nullptr);
+  y_tensor.set_data(nullptr);
+  loss_tensor.set_data(nullptr);
+  grad_tensor.set_data(nullptr);
   mindspore::kernel::LiteKernel::FreeWorkspace();
   delete kernel_obj;
   MS_LOG(INFO) << "SoftmaxCrossEntropyFp32 passed";

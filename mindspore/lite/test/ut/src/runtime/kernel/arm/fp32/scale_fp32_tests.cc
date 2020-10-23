@@ -55,10 +55,10 @@ class TestScaleFp32 : public mindspore::CommonTest {
 };
 
 void TestScaleFp32::TearDown() {
-  in_tensor_.SetData(nullptr);
-  scale_tensor_.SetData(nullptr);
-  offset_tensor_.SetData(nullptr);
-  out_tensor_.SetData(nullptr);
+  in_tensor_.set_data(nullptr);
+  scale_tensor_.set_data(nullptr);
+  offset_tensor_.set_data(nullptr);
+  out_tensor_.set_data(nullptr);
 }
 
 void TestScaleFp32::Prepare(const std::vector<int> &input_shape, const std::vector<int> &scale_shape,
@@ -77,10 +77,10 @@ void TestScaleFp32::Prepare(const std::vector<int> &input_shape, const std::vect
   out_tensor_.set_data_type(kNumberTypeFloat32);
   out_tensor_.set_shape(output_shape);
 
-  in_tensor_.SetData(input_data);
-  scale_tensor_.SetData(scale_data);
-  offset_tensor_.SetData(offset_data);
-  out_tensor_.SetData(output_data);
+  in_tensor_.set_data(input_data);
+  scale_tensor_.set_data(scale_data);
+  offset_tensor_.set_data(offset_data);
+  out_tensor_.set_data(output_data);
 
   param_.activation_type_ = act_type;
   param_.axis_ = axis;

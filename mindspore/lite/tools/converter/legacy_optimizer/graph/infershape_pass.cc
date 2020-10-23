@@ -35,8 +35,9 @@ std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::ve
   for (size_t i = 0; i < tensor_indexs.size(); i++) {
     auto &tensorT = graph->allTensors.at(tensor_indexs[i]);
     auto tensor_shape = tensorT->dims;
-    auto lite_tensor = std::make_unique<Tensor>(TypeId(tensorT->dataType), tensor_shape, tensorT->format,
-                                                TensorCategory(tensorT->nodeType));
+    auto lite_tensor = std::make_unique<Tensor>(
+      TypeId(tensorT->dataType), tensor_shape, tensorT->format,
+      TensorCategory(tensorT->nodeType, tensorT->dims.size(), TypeId(tensorT->dataType), tensorT->data.size()));
     if (lite_tensor == nullptr) {
       MS_LOG(ERROR) << "lite tensor is nullptr";
       return std::vector<Tensor *>();

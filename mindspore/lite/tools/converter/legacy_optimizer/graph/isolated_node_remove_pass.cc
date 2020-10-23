@@ -20,8 +20,6 @@
 
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
 #include "src/common/log_adapter.h"
-#include "tools/common/converter_op_utils.h"
-#include "src/common/utils.h"
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"

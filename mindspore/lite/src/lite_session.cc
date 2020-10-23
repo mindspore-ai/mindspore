@@ -61,11 +61,12 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       MS_LOG(ERROR) << i << "th tensor in model is nullptr";
       return RET_NULL_PTR;
     }
+    auto src_category = TensorCategory(srcTensor);
     std::vector<int> shape;
     if (srcTensor->dims() == nullptr) {
       MS_LOG(DEBUG) << "Dims of " << i << "th tensor is nullptr";
     } else {
-      if (TensorCategory(srcTensor) == Tensor::Category::CONST) {
+      if (src_category == Tensor::Category::CONST_TENSOR) {
         if (srcTensor->dataType() == kObjectTypeString && srcTensor->data() != nullptr) {
           shape.push_back(srcTensor->data()->size());
         } else {
@@ -76,18 +77,13 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       }
     }
     int dataType = srcTensor->dataType();
-    auto *dstTensor =
-      new (std::nothrow) Tensor(TypeId(dataType), shape, srcTensor->format(), TensorCategory(srcTensor));
+    auto *dstTensor = new (std::nothrow) Tensor(TypeId(dataType), shape, srcTensor->format(), src_category);
     if (dstTensor == nullptr) {
       MS_LOG(ERROR) << "new " << i << "th tensor failed";
       return RET_NULL_PTR;
     }
-    if (TensorCategory(srcTensor) == Tensor::Category::CONST && srcTensor->data() != nullptr &&
-        srcTensor->data()->size() > 0) {
-      if (shape.empty()) {
-        shape.push_back(1);
-        dstTensor->set_shape(shape);
-      }
+    if ((src_category == Tensor::Category::CONST_TENSOR || src_category == Tensor::Category::CONST_SCALAR) &&
+        srcTensor->data() != nullptr && srcTensor->data()->size() > 0) {
       MS_ASSERT(dstTensor->Size() == srcTensor->data()->size());
       if (WeightTensorNeedCopy(model, i)) {
         auto dst_data = dstTensor->MutableData();
@@ -99,7 +95,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
         memcpy(dst_data, srcTensor->data()->data(), dstTensor->Size());
         copyed_tensor_idxes_.emplace_back(i);
       } else {
-        dstTensor->SetData(const_cast<unsigned char *>(srcTensor->data()->data()));
+        dstTensor->set_data(const_cast<unsigned char *>(srcTensor->data()->data()));
       }
     }
     auto quant_params = srcTensor->quantParams();
@@ -395,7 +391,7 @@ void LiteSession::BindThread(bool if_bind) {
     MS_LOG(ERROR) << "Device list is empty.";
     return;
   }
-  if (this->context_->IsCpuEnabled()) {
+  if (!this->context_->IsCpuEnabled()) {
     return;
   }
   auto cpu_device_info = this->context_->GetCpuInfo();
@@ -415,9 +411,8 @@ LiteSession::~LiteSession() {
     auto *tensor = tensors_.at(i);
     MS_ASSERT(tensor != nullptr);
     // data of weight tensor of node in packed_op can not be to free, we will free weight data when freeing meta_graph
-    if (tensor->category() == Tensor::Category::CONST && !IsContain(this->inputs_, tensor) &&
-        !IsContain(copyed_tensor_idxes_, i)) {
-      tensor->SetData(nullptr);
+    if (tensor->IsConst() && !IsContain(this->inputs_, tensor) && !IsContain(copyed_tensor_idxes_, i)) {
+      tensor->set_data(nullptr);
     }
     delete tensor;
   }

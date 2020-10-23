@@ -57,20 +57,20 @@ class TestReduceInt8 : public mindspore::CommonTest {
 };
 
 void TestReduceInt8::TearDown() {
-  in_tensor_.SetData(nullptr);
-  out_tensor_.SetData(nullptr);
+  in_tensor_.set_data(nullptr);
+  out_tensor_.set_data(nullptr);
 }
 
 void TestReduceInt8::Prepare(const std::vector<int> &in_shape, const std::vector<int> &out_shape, int8_t *input_data,
                              int8_t *output_data, ReduceMode mode, const int *axes, const int num_axes) {
   in_tensor_.set_data_type(kNumberTypeInt8);
   in_tensor_.set_shape(in_shape);
-  in_tensor_.SetData(input_data);
+  in_tensor_.set_data(input_data);
   in_tensor_.AddQuantParam(quant_in_);
 
   out_tensor_.set_data_type(kNumberTypeInt8);
   out_tensor_.set_shape(out_shape);
-  out_tensor_.SetData(output_data);
+  out_tensor_.set_data(output_data);
   out_tensor_.AddQuantParam(quant_out_);
 
   param_.mode_ = static_cast<int>(mode);

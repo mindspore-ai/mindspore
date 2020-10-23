@@ -33,8 +33,8 @@ TEST_F(TestSigmoidInt8, Sigmoid) {
 
   int8_t input_data[] = {0, 0, 0, 0, 1, 1, 1, 1};  // -3.5f, -3.0f, -2.5f, 0.f, 2.5f, 3.0f, 3.5f, 6.0f
   int8_t output_data[8] = {0};
-  in_tensor.SetData(input_data);
-  out_tensor.SetData(output_data);
+  in_tensor.set_data(input_data);
+  out_tensor.set_data(output_data);
 
   const lite::QuantArg quant_in = {1.0, 0};   // -4.0 -- 7.0
   const lite::QuantArg quant_out = {1.0, 0};  // -3.0 -- 7.0
@@ -66,7 +66,7 @@ TEST_F(TestSigmoidInt8, Sigmoid) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 
-  in_tensor.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 }  // namespace mindspore

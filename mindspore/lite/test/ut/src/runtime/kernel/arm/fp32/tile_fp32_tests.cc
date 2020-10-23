@@ -31,8 +31,8 @@ TEST_F(TestTileFp32, Tile) {
   lite::Tensor out_tensor(kNumberTypeFloat32, {4, 6});
   float input_data[] = {1, 2, 3, 4};
   float output_data[24] = {0};
-  in_tensor.SetData(input_data);
-  out_tensor.SetData(output_data);
+  in_tensor.set_data(input_data);
+  out_tensor.set_data(output_data);
   std::vector<lite::Tensor *> inputs = {&in_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
@@ -65,7 +65,7 @@ TEST_F(TestTileFp32, Tile) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 
-  in_tensor.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 }  // namespace mindspore

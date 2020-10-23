@@ -120,10 +120,10 @@ void TEST_MAIN(const std::string &attr, const TypeId data_type, const float atol
   std::vector<int> weight_shape = {param->output_channel_, param->kernel_h_, param->kernel_w_, param->input_channel_};
   std::vector<int> bias_shape = {param->output_channel_};
   std::vector<int> output_shape = {param->output_batch_, param->output_h_, param->output_w_, param->output_channel_};
-  auto input = Tensor(data_type, input_shape, Format_NHWC, lite::TensorCategory(NodeType_ValueNode));
-  auto weight = Tensor(data_type, weight_shape, Format_KHWC, lite::TensorCategory(NodeType_ValueNode));
-  auto bias = Tensor(data_type, bias_shape, Format_KHWC, lite::TensorCategory(NodeType_ValueNode));
-  auto output = Tensor(data_type, output_shape, Format_NHWC, lite::TensorCategory(NodeType_ValueNode));
+  auto input = Tensor(data_type, input_shape, Format_NHWC, lite::Tensor::CONST_TENSOR);
+  auto weight = Tensor(data_type, weight_shape, Format_KHWC, lite::Tensor::CONST_TENSOR);
+  auto bias = Tensor(data_type, bias_shape, Format_KHWC, lite::Tensor::CONST_TENSOR);
+  auto output = Tensor(data_type, output_shape, Format_NHWC, lite::Tensor::CONST_TENSOR);
 
   MS_LOG(DEBUG) << "allocate memory and initialize weight/bias";
   weight.MallocData();

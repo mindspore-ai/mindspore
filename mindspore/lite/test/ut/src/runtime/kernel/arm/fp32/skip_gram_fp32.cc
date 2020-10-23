@@ -33,14 +33,14 @@ class TestSkipGramFp32 : public mindspore::CommonTest {
 
 void SkipGramTestInit(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outputs_,
                       SkipGramParameter *skip_gram_param) {
-  Tensor *in_t_first = new Tensor(kObjectTypeString, {}, schema::Format_NHWC, lite::Tensor::Category::CONST);
+  Tensor *in_t_first = new Tensor(kObjectTypeString, {}, schema::Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
   char sentence[] = "The quick brown fox jumps over the lazy dog";
   std::vector<StringPack> str;
   str.push_back({43, sentence});
   mindspore::lite::WriteStringsToTensor(in_t_first, str);
   inputs_->push_back(in_t_first);
 
-  Tensor *output = new Tensor(kObjectTypeString, {}, schema::Format_NHWC, lite::Tensor::Category::CONST);
+  Tensor *output = new Tensor(kObjectTypeString, {}, schema::Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
   outputs_->push_back(output);
 
   skip_gram_param->ngram_size = 3;

@@ -73,11 +73,11 @@ TEST_F(TestBatchnormInt8, FusedTest) {
   inputs_tensor.push_back(&input2_tensor);
   inputs_tensor.push_back(&input3_tensor);
   inputs_tensor.push_back(&input4_tensor);
-  input0_tensor.SetData(in_data.data());
-  input1_tensor.SetData(in_data1.data());
-  input2_tensor.SetData(in_data2.data());
-  input3_tensor.SetData(in_data3.data());
-  input4_tensor.SetData(in_data4.data());
+  input0_tensor.set_data(in_data.data());
+  input1_tensor.set_data(in_data1.data());
+  input2_tensor.set_data(in_data2.data());
+  input3_tensor.set_data(in_data3.data());
+  input4_tensor.set_data(in_data4.data());
   input0_tensor.set_shape(shape);
   input1_tensor.set_shape({2});
   input2_tensor.set_shape({2});
@@ -94,7 +94,7 @@ TEST_F(TestBatchnormInt8, FusedTest) {
   std::vector<int8_t> corr_out = {-22, -28, -20, -26, -17, -24, -28, -42, -30, -44, -33, -46};
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.set_shape(shape);
   output0_tensor.AddQuantParam(output_quant_arg);
 
@@ -118,12 +118,12 @@ TEST_F(TestBatchnormInt8, FusedTest) {
   std::cout << std::endl;
   CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  input2_tensor.SetData(nullptr);
-  input3_tensor.SetData(nullptr);
-  input4_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  input2_tensor.set_data(nullptr);
+  input3_tensor.set_data(nullptr);
+  input4_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
   MS_LOG(INFO) << "TestBathNormFp32 accuracy passed";
 }
 
@@ -160,9 +160,9 @@ TEST_F(TestBatchnormInt8, BNTest) {
   inputs_tensor.push_back(&input0_tensor);
   inputs_tensor.push_back(&input1_tensor);
   inputs_tensor.push_back(&input2_tensor);
-  input0_tensor.SetData(in_data.data());
-  input1_tensor.SetData(in_data1.data());
-  input2_tensor.SetData(in_data2.data());
+  input0_tensor.set_data(in_data.data());
+  input1_tensor.set_data(in_data1.data());
+  input2_tensor.set_data(in_data2.data());
   input0_tensor.set_shape(shape);
   input1_tensor.set_shape({2});
   input2_tensor.set_shape({2});
@@ -175,7 +175,7 @@ TEST_F(TestBatchnormInt8, BNTest) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.set_shape(shape);
   output0_tensor.AddQuantParam(output_quant_arg);
 
@@ -199,10 +199,10 @@ TEST_F(TestBatchnormInt8, BNTest) {
   std::cout << std::endl;
   CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  input2_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  input2_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
   MS_LOG(INFO) << "TestBathNormFp32 accuracy passed";
 }
 

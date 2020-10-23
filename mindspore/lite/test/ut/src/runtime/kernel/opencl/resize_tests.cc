@@ -98,10 +98,10 @@ void RunTestCaseResize(const std::vector<int> &shape, void *input_data, void *ou
     CompareOutput(outputs[0]->MutableData(), output_data, outputs[0]->ElementsNum(), static_cast<float>(1e-5));
   }
   for (auto t : inputs) {
-    t->SetData(nullptr);
+    t->set_data(nullptr);
   }
   for (auto t : outputs) {
-    t->SetData(nullptr);
+    t->set_data(nullptr);
   }
 
   MS_LOG(INFO) << "Test Resize passed";

@@ -80,8 +80,8 @@ TEST_F(TestNormalize, TestSentence) {
     printf("\n");
   }
 
-  input_tensor_.SetData(nullptr);
-  output_tensor_.SetData(nullptr);
+  input_tensor_.set_data(nullptr);
+  output_tensor_.set_data(nullptr);
 }
 
 }  // namespace mindspore

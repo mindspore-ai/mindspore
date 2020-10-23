@@ -36,9 +36,9 @@ TEST_F(TestDivInt8, DivInt8) {
   int8_t input_data0[] = {105, 35, -27, 0, -63, 99, 16, 45, 67, -49};
   int8_t input_data1[] = {126, -38, -115, 106, -98, 119, 103, 81, -114, 68};
   int8_t output_data[10] = {0};
-  in_tensor0.SetData(input_data0);
-  in_tensor1.SetData(input_data1);
-  out_tensor.SetData(output_data);
+  in_tensor0.set_data(input_data0);
+  in_tensor1.set_data(input_data1);
+  out_tensor.set_data(output_data);
 
   const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
   const lite::QuantArg quant_in1 = {0.00784314f, 0};
@@ -69,8 +69,8 @@ TEST_F(TestDivInt8, DivInt8) {
     EXPECT_EQ(output_data[i], expect0[i]);
   }
 
-  in_tensor0.SetData(nullptr);
-  in_tensor1.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor0.set_data(nullptr);
+  in_tensor1.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 }  // namespace mindspore

@@ -51,11 +51,11 @@ class TestNMSFp32 : public mindspore::CommonTest {
 };
 
 void TestNMSFp32::TearDown() {
-  box_tensor_.SetData(nullptr);
-  score_tensor_.SetData(nullptr);
-  max_output_box_per_class_tensor_.SetData(nullptr);
-  iou_threshold_tensor_.SetData(nullptr);
-  score_threshold_tensor_.SetData(nullptr);
+  box_tensor_.set_data(nullptr);
+  score_tensor_.set_data(nullptr);
+  max_output_box_per_class_tensor_.set_data(nullptr);
+  iou_threshold_tensor_.set_data(nullptr);
+  score_threshold_tensor_.set_data(nullptr);
   out_tensor_.FreeData();
 }
 
@@ -65,19 +65,19 @@ void TestNMSFp32::Init(const std::vector<int> &box_tensor_shape, float *box_data
   box_tensor_.set_data_type(kNumberTypeFloat32);
   box_tensor_.SetFormat(Format_NHWC);
   box_tensor_.set_shape(box_tensor_shape);
-  box_tensor_.SetData(box_data);
+  box_tensor_.set_data(box_data);
 
   score_tensor_.set_data_type(kNumberTypeFloat32);
   score_tensor_.SetFormat(Format_NHWC);
   score_tensor_.set_shape(score_tensor_shape);
-  score_tensor_.SetData(score_data);
+  score_tensor_.set_data(score_data);
 
   max_output_ = max_output;
-  max_output_box_per_class_tensor_.SetData(&max_output_);
+  max_output_box_per_class_tensor_.set_data(&max_output_);
   iou_threshold_ = iou_threshold;
-  iou_threshold_tensor_.SetData(&iou_threshold_);
+  iou_threshold_tensor_.set_data(&iou_threshold_);
   score_threshold_ = score_threshold;
-  score_threshold_tensor_.SetData(&score_threshold_);
+  score_threshold_tensor_.set_data(&score_threshold_);
 
   out_tensor_.set_data_type(kNumberTypeInt32);
 

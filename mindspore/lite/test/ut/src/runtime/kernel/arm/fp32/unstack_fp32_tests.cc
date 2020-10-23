@@ -37,11 +37,11 @@ TEST_F(TestUnstackFp32, Unstack) {
   float output_data1[6] = {0};
   float output_data2[6] = {0};
   float output_data3[6] = {0};
-  in_tensor.SetData(input_data);
-  out_tensor0.SetData(output_data0);
-  out_tensor1.SetData(output_data1);
-  out_tensor2.SetData(output_data2);
-  out_tensor3.SetData(output_data3);
+  in_tensor.set_data(input_data);
+  out_tensor0.set_data(output_data0);
+  out_tensor1.set_data(output_data1);
+  out_tensor2.set_data(output_data2);
+  out_tensor3.set_data(output_data3);
   std::vector<lite::Tensor *> inputs = {&in_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1, &out_tensor2, &out_tensor3};
 
@@ -70,11 +70,11 @@ TEST_F(TestUnstackFp32, Unstack) {
     EXPECT_EQ(output_data3[i], expect3[i]);
   }
 
-  in_tensor.SetData(nullptr);
-  out_tensor0.SetData(nullptr);
-  out_tensor1.SetData(nullptr);
-  out_tensor2.SetData(nullptr);
-  out_tensor3.SetData(nullptr);
+  in_tensor.set_data(nullptr);
+  out_tensor0.set_data(nullptr);
+  out_tensor1.set_data(nullptr);
+  out_tensor2.set_data(nullptr);
+  out_tensor3.set_data(nullptr);
 }
 
 TEST_F(TestUnstackFp32, Unstack2) {
@@ -86,10 +86,10 @@ TEST_F(TestUnstackFp32, Unstack2) {
   float output_data0[8] = {0};
   float output_data1[8] = {0};
   float output_data2[8] = {0};
-  in_tensor.SetData(input_data);
-  out_tensor0.SetData(output_data0);
-  out_tensor1.SetData(output_data1);
-  out_tensor2.SetData(output_data2);
+  in_tensor.set_data(input_data);
+  out_tensor0.set_data(output_data0);
+  out_tensor1.set_data(output_data1);
+  out_tensor2.set_data(output_data2);
   std::vector<lite::Tensor *> inputs = {&in_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1, &out_tensor2};
 
@@ -116,9 +116,9 @@ TEST_F(TestUnstackFp32, Unstack2) {
     EXPECT_EQ(output_data2[i], expect2[i]);
   }
 
-  in_tensor.SetData(nullptr);
-  out_tensor0.SetData(nullptr);
-  out_tensor1.SetData(nullptr);
-  out_tensor2.SetData(nullptr);
+  in_tensor.set_data(nullptr);
+  out_tensor0.set_data(nullptr);
+  out_tensor1.set_data(nullptr);
+  out_tensor2.set_data(nullptr);
 }
 }  // namespace mindspore

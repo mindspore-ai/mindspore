@@ -98,7 +98,7 @@ TEST_F(TestActivationFp32, HSwishFp32) {
 
   lite::Tensor input0_tensor;
   inputs_tensor.push_back(&input0_tensor);
-  input0_tensor.SetData(input.data());
+  input0_tensor.set_data(input.data());
   input0_tensor.set_shape(in_shape);
 
   std::vector<float> output(8);
@@ -106,7 +106,7 @@ TEST_F(TestActivationFp32, HSwishFp32) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Activation};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -123,8 +123,8 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   std::vector<float> expect_output = {-0, -0.33333334, -0.33333334, 0, 0.6666667, 5, 6, 7};
   CompareOutputData(output.data(), expect_output.data(), 8, 0.00001);
 
-  input0_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 TEST_F(TestActivationFp32, HardTanh1) {
@@ -142,7 +142,7 @@ TEST_F(TestActivationFp32, HardTanh1) {
 
   lite::Tensor input0_tensor;
   inputs_tensor.push_back(&input0_tensor);
-  input0_tensor.SetData(input.data());
+  input0_tensor.set_data(input.data());
   input0_tensor.set_shape(in_shape);
 
   std::vector<float> output(8);
@@ -150,7 +150,7 @@ TEST_F(TestActivationFp32, HardTanh1) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Activation};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -167,8 +167,8 @@ TEST_F(TestActivationFp32, HardTanh1) {
   std::vector<float> expect_output = {-1.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.0, 1.0};
   CompareOutputData(output.data(), expect_output.data(), 8, 0.00001);
 
-  input0_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 TEST_F(TestActivationFp32, HardTanh2) {
@@ -186,7 +186,7 @@ TEST_F(TestActivationFp32, HardTanh2) {
 
   lite::Tensor input0_tensor;
   inputs_tensor.push_back(&input0_tensor);
-  input0_tensor.SetData(input.data());
+  input0_tensor.set_data(input.data());
   input0_tensor.set_shape(in_shape);
 
   std::vector<float> output(8);
@@ -194,7 +194,7 @@ TEST_F(TestActivationFp32, HardTanh2) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Activation};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -211,8 +211,8 @@ TEST_F(TestActivationFp32, HardTanh2) {
   std::vector<float> expect_output = {-2.0, -2.0, -1.0, 0.0, 1.0, 2.0, 2.0, 2.0};
   CompareOutputData(output.data(), expect_output.data(), 8, 0.00001);
 
-  input0_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 }  // namespace mindspore
