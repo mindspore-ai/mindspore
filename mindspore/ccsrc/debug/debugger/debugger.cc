@@ -428,10 +428,12 @@ void Debugger::CommandLoop() {
         MS_LOG(ERROR) << "Failed to connect to MindInsight debugger server. Please check the config "
                          "of debugger host and port.";
         Exit();
+        run = true;
+      } else {
+        MS_LOG(ERROR) << "Number of consecutive WaitForCommand fail:" << num_wait_fail << "; Retry after "
+                      << num_wait_fail << "s";
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 * num_wait_fail));
       }
-      MS_LOG(ERROR) << "Number of consecutive WaitForCommand fail:" << num_wait_fail << "; Retry after "
-                    << num_wait_fail << "s";
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000 * num_wait_fail));
       continue;
     }
 
