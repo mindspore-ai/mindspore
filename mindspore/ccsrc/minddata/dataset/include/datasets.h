@@ -27,7 +27,6 @@
 #include <vector>
 #include "mindspore/ccsrc/minddata/dataset/engine/ir/cache/dataset_cache.h"
 #include "minddata/dataset/core/constants.h"
-
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/include/iterator.h"
@@ -575,6 +574,14 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \brief Gets the dataset size
   /// \return status code
   int64_t GetDatasetSize();
+
+  /// \brief Gets the output type
+  /// \return status code
+  std::vector<DataType> GetOutputTypes();
+
+  /// \brief Gets the output shape
+  /// \return status code
+  std::vector<TensorShape> GetOutputShapes();
 
   /// \brief Setter function for runtime number of workers
   /// \param[in] num_workers The number of threads in this operator

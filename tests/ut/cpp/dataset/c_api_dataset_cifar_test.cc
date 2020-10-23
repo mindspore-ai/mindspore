@@ -34,6 +34,8 @@
 
 using namespace mindspore::dataset::api;
 using mindspore::dataset::Tensor;
+using mindspore::dataset::DataType;
+using mindspore::dataset::TensorShape;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
@@ -81,6 +83,33 @@ TEST_F(MindDataTestPipeline, TestCifar10GetDatasetSize) {
   std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all");
   EXPECT_NE(ds, nullptr);
 
+  EXPECT_EQ(ds->GetDatasetSize(), 10000);
+}
+
+TEST_F(MindDataTestPipeline, TestCifar10MixGetter) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10MixGetter.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all");
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 10000);
+  std::vector<DataType> types = ds->GetOutputTypes();
+  std::vector<TensorShape> shapes = ds->GetOutputShapes();
+  EXPECT_EQ(types.size(), 2);
+  EXPECT_EQ(types[0].ToString(), "uint8");
+  EXPECT_EQ(types[1].ToString(), "uint32");
+  EXPECT_EQ(shapes.size(), 2);
+  EXPECT_EQ(shapes[0].ToString(), "<32,32,3>");
+  EXPECT_EQ(shapes[1].ToString(), "<>");
+
+  EXPECT_EQ(ds->GetDatasetSize(), 10000);
+  EXPECT_EQ(ds->GetOutputTypes(), types);
+  EXPECT_EQ(ds->GetOutputShapes(), shapes);
+  EXPECT_EQ(ds->GetDatasetSize(), 10000);
+  EXPECT_EQ(ds->GetOutputTypes(), types);
+  EXPECT_EQ(ds->GetOutputShapes(), shapes);
   EXPECT_EQ(ds->GetDatasetSize(), 10000);
 }
 
