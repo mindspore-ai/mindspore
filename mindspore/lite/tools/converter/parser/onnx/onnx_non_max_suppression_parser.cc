@@ -37,29 +37,6 @@ STATUS OnnxNonMaxSuppressionParser::Parse(const onnx::GraphProto &onnx_graph, co
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
-  if (onnx_node.input_size() > 2) {
-    auto it = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
-                           [&](const onnx::TensorProto &it) { return it.name() == onnx_node.input(2); });
-    if (it != onnx_graph.initializer().end()) {
-      attr->maxOutBoxPerClass = it->int64_data(0);
-    }
-  }
-
-  if (onnx_node.input_size() > 3) {
-    auto it = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
-                           [&](const onnx::TensorProto &it) { return it.name() == onnx_node.input(3); });
-    if (it != onnx_graph.initializer().end()) {
-      attr->iouThreshold = it->float_data(0);
-    }
-  }
-
-  if (onnx_node.input_size() > 4) {
-    auto it = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
-                           [&](const onnx::TensorProto &it) { return it.name() == onnx_node.input(4); });
-    if (it != onnx_graph.initializer().end()) {
-      attr->scoreThreshold = it->float_data(0);
-    }
-  }
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
@@ -70,7 +47,7 @@ STATUS OnnxNonMaxSuppressionParser::Parse(const onnx::GraphProto &onnx_graph, co
     }
   }
 
-  op->primitive->value.type = schema::PrimitiveType_Elu;
+  op->primitive->value.type = schema::PrimitiveType_NonMaxSuppression;
   op->primitive->value.value = attr.release();
   return RET_OK;
 }

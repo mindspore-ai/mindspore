@@ -1081,9 +1081,6 @@ table FftImag {
 }
 
 table NonMaxSuppression {
-    maxOutBoxPerClass : int = 0;
-    iouThreshold : float = 0;
-    scoreThreshold : float = 0;
     centerPointBox : int = 0;
 }
 
