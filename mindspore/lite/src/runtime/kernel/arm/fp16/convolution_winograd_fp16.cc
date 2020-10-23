@@ -78,6 +78,10 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "winograd filter transfrom failed.";
     return ret;
   }
+  if (fp16_weight_ != nullptr) {
+    free(fp16_weight_);
+    fp16_weight_ = nullptr;
+  }
 
   // init bias
   bias_data_ = malloc(oc_block_num * oc_block * sizeof(float16_t));

@@ -53,8 +53,6 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
   void CheckSupportOptimize();
   int InitWeightBiasOpt();
   int InitTmpBufferOpt();
-  int InitWeightBias();
-  int InitTmpBuffer();
 
  private:
   void FreeTmpBuffer() {

@@ -28,30 +28,13 @@
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/int8/matmul_int8.h"
 
-typedef void (*GEMM_FUNC)(int8_t *dst, const int8_t *src, const int8_t *weight, const int32_t *bias, size_t ksize,
-                          size_t ic4, size_t output_channel, size_t offset, const int32_t *input_sum, size_t act_min,
-                          size_t act_max, size_t out_zp, int32_t *out_multiplier, int32_t *shift_before,
-                          int32_t *shift_after, size_t asymmetric, size_t per_channel, size_t per_channel_offset);
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
-                      int ic4, size_t kernel_plane, size_t output_channel, const int32_t *input_sum,
-                      ConvParameter *conv_param);
-
-void IndirectGemmInt8Opt(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
-                         int ic4, size_t kernel_plane, size_t output_channel, const int32_t *input_sum,
-                         ConvParameter *conv_param, GEMM_FUNC gemm_func);
-
 // int8 conv common
-void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight, const int32_t *bias_data,
-              int32_t *tmp_dst, int8_t *tmp_out, int8_t *output_data, int32_t *input_sum, int task_id,
-              ConvParameter *conv_param);
-
 void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, int8_t *packed_weight,
                  const int32_t *bias_data, int8_t *output_data, int32_t *filter_zp, int32_t *input_sum, int task_id,
-                 ConvParameter *conv_param, MATMUL_OPT_R_FUNC matmul_func);
+                 ConvParameter *conv_param, MATMUL_OPT_R_FUNC matmul_func, bool is_optimize);
 
 // int8 convolution 1x1
 void Conv1x1PreOptPeroc(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum, size_t input_channel,

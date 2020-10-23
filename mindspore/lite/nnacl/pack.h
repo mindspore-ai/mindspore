@@ -32,12 +32,9 @@ void Im2ColPackUnitFp32(const float *input_data, ConvParameter *conv_param, floa
 
 void PackHWCToWHC(const float *src, float *dst, int height, int width, int channel);
 
-void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real_cal_num, int block_index,
-                        int32_t *input_sum, ConvParameter *conv_param);
-
 void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, int real_cal_num,
                            int block_index, int32_t *filter_zp, int32_t *input_sum, ConvParameter *conv_param,
-                           bool per_channel);
+                           bool per_channel, bool is_optimize);
 
 void PackInputSum16x4PerLayer(const int8_t *src, int32_t *dst, int32_t filter_zp, size_t row4, size_t col16);
 

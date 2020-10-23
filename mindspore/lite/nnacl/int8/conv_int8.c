@@ -19,193 +19,6 @@
 #include "nnacl/winograd_transform.h"
 #include "nnacl/int8/common_func.h"
 
-void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
-                      int ic4, size_t kernel_plane, size_t output_channel, const int32_t *input_sum,
-                      ConvParameter *conv_param) {
-  int32_t *shift_before = conv_param->conv_quant_arg_.left_shift_;
-  int32_t *shift_after = conv_param->conv_quant_arg_.right_shift_;
-  int32_t *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
-  int32_t out_zp = conv_param->conv_quant_arg_.output_quant_args_[0].zp_;
-  int32_t act_min = conv_param->conv_quant_arg_.out_act_min_[0];
-  int32_t act_max = conv_param->conv_quant_arg_.out_act_max_[0];
-  int oc4 = UP_DIV(output_channel, C4NUM);
-
-#ifdef ENABLE_ARM64
-  size_t asymmetric = conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC;
-  size_t per_channel = conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
-  IndirectGemmInt8_4x4(dst, src, weight, bias, UP_DIV(kernel_plane, C4NUM), ic4, output_channel,
-                       output_channel * sizeof(int8_t), input_sum, act_min, act_max, out_zp, out_multiplier,
-                       shift_before, shift_after, asymmetric, per_channel, oc4 * C4NUM * sizeof(int32_t));
-#elif ENABLE_ARM32
-  size_t asymmetric = conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC;
-  size_t per_channel = conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
-  IndirectGemmInt8_2x4(dst, src, weight, bias, UP_DIV(kernel_plane, C4NUM), ic4, output_channel,
-                       output_channel * sizeof(int8_t), input_sum, act_min, act_max, out_zp, out_multiplier,
-                       shift_before, shift_after, asymmetric, per_channel, oc4 * C4NUM * sizeof(int32_t));
-#else
-  int tile_num = conv_param->tile_num_;
-  int plane_c4 = UP_DIV(kernel_plane, C4NUM);
-  for (int oc = 0; oc < output_channel; oc++) {
-    int oc4_block = oc / C4NUM;
-    int oc4_res = oc % C4NUM;
-    int weight_oc4_offset = oc4_block * C4NUM * plane_c4 * C4NUM * ic4 * C4NUM + oc4_res * C4NUM * C4NUM;
-    int dst_oc_offset = oc;
-    for (int n = 0; n < tile_num; n++) {
-      int src_tile_offset = n * C4NUM * C4NUM;
-      int dst_tile_offset = dst_oc_offset + n * output_channel;
-
-      for (int b = 0; b < kernel_plane; b++) {
-        int plane_c4_block = b / C4NUM;
-        int plane_c4_res = b % C4NUM;
-        int src_plane_offset = src_tile_offset + plane_c4_block * tile_num * C4NUM * ic4 * C4NUM + plane_c4_res * C4NUM;
-        int weight_plane_offset =
-          weight_oc4_offset + plane_c4_block * C4NUM * C4NUM * ic4 * C4NUM + plane_c4_res * C4NUM;
-        for (int i = 0; i < ic4; i++) {
-          int src_ic4_offset = src_plane_offset + i * tile_num * C4NUM * C4NUM;
-          int weight_ic4_offset = weight_plane_offset + i * C4NUM * C4NUM * C4NUM;
-          for (int j = 0; j < C4NUM; j++) {
-            int weight_ic_offset = weight_ic4_offset + j;
-            tmp_dst[dst_tile_offset] += weight[weight_ic_offset] * src[src_ic4_offset + j];
-          }  // in c4num loop
-        }    // ic4 loop
-      }      // kernel_plane loop
-      if (!(conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
-          (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-        int result = tmp_dst[dst_tile_offset] + bias[oc];
-        result = RoundingDivideByPOT(
-          SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[oc]), out_multiplier[oc]),
-          -shift_after[oc]);
-        result += out_zp;
-        result = result > act_min ? result : act_min;
-        result = result < act_max ? result : act_max;
-        dst[dst_tile_offset] = (int8_t)result;
-      } else if (!(conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
-                 !(conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-        int result = tmp_dst[dst_tile_offset] + bias[oc];
-        result = RoundingDivideByPOT(
-          SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[0]), out_multiplier[0]),
-          -shift_after[0]);
-        result += out_zp;
-        result = result > act_min ? result : act_min;
-        result = result < act_max ? result : act_max;
-        dst[dst_tile_offset] = (int8_t)result;
-      } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
-                 !(conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-        tmp_dst[dst_tile_offset] -= input_sum[n];
-        int result = tmp_dst[dst_tile_offset] + bias[oc];
-        result = RoundingDivideByPOT(
-          SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[0]), out_multiplier[0]),
-          -shift_after[0]);
-        result += out_zp;
-        result = result > act_min ? result : act_min;
-        result = result < act_max ? result : act_max;
-        dst[dst_tile_offset] = (int8_t)result;
-      } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
-                 (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-        tmp_dst[dst_tile_offset] -= input_sum[n * oc4 * C4NUM + oc];
-        int result = tmp_dst[dst_tile_offset] + bias[oc];
-        result = RoundingDivideByPOT(
-          SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[oc]), out_multiplier[oc]),
-          -shift_after[oc]);
-        result += out_zp;
-        result = result > act_min ? result : act_min;
-        result = result < act_max ? result : act_max;
-        dst[dst_tile_offset] = (int8_t)result;
-      }
-    }  // tile_num loop
-  }    // output_channel loop
-#endif
-}
-
-void IndirectGemmInt8Opt(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
-                         int ic4, size_t kernel_plane, size_t output_channel, const int32_t *input_sum,
-                         ConvParameter *conv_param, GEMM_FUNC gemm_func) {
-  int32_t *shift_before = conv_param->conv_quant_arg_.left_shift_;
-  int32_t *shift_after = conv_param->conv_quant_arg_.right_shift_;
-  int32_t *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
-  int32_t out_zp = conv_param->conv_quant_arg_.output_quant_args_[0].zp_;
-  int32_t act_min = conv_param->conv_quant_arg_.out_act_min_[0];
-  int32_t act_max = conv_param->conv_quant_arg_.out_act_max_[0];
-  int oc4 = UP_DIV(output_channel, C4NUM);
-  if (gemm_func != NULL) {
-#ifdef __aarch64__
-    size_t asymmetric = conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC;
-    size_t per_channel = conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
-    gemm_func(dst, src, weight, bias, kernel_plane, ic4, output_channel, output_channel * sizeof(int8_t), input_sum,
-              act_min, act_max, out_zp, out_multiplier, shift_before, shift_after, asymmetric, per_channel,
-              oc4 * C4NUM * sizeof(int32_t));
-#endif
-  } else {
-    int tile_num = conv_param->tile_num_;
-    for (int oc = 0; oc < output_channel; oc++) {
-      int oc4_block = oc / C4NUM;
-      int oc4_res = oc % C4NUM;
-      int weight_oc4_offset = oc4_block * C4NUM * kernel_plane * ic4 * C4NUM + oc4_res * C4NUM;
-      int dst_oc_offset = oc;
-      for (int n = 0; n < tile_num; n++) {
-        int src_tile_offset = n * C4NUM;
-        int dst_tile_offset = dst_oc_offset + n * output_channel;
-
-        for (int b = 0; b < kernel_plane; b++) {
-          int src_plane_offset = src_tile_offset + b * tile_num * ic4 * C4NUM;
-          int weight_plane_offset = weight_oc4_offset + b * C4NUM * ic4 * C4NUM;
-          for (int i = 0; i < ic4; i++) {
-            int src_ic4_offset = src_plane_offset + i * tile_num * C4NUM;
-            int weight_ic4_offset = weight_plane_offset + i * C4NUM * C4NUM;
-            for (int j = 0; j < C4NUM; j++) {
-              int weight_ic_offset = weight_ic4_offset + j;
-              tmp_dst[dst_tile_offset] += weight[weight_ic_offset] * src[src_ic4_offset + j];
-            }  // in c4num loop
-          }    // ic4 loop
-        }      // kernel_plane loop
-        if (!(conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
-            (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-          int result = tmp_dst[dst_tile_offset] + bias[oc];
-          result = RoundingDivideByPOT(
-            SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[oc]), out_multiplier[oc]),
-            -shift_after[oc]);
-          result += out_zp;
-          result = result > act_min ? result : act_min;
-          result = result < act_max ? result : act_max;
-          dst[dst_tile_offset] = (int8_t)result;
-        } else if (!(conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
-                   !(conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-          int result = tmp_dst[dst_tile_offset] + bias[oc];
-          result = RoundingDivideByPOT(
-            SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[0]), out_multiplier[0]),
-            -shift_after[0]);
-          result += out_zp;
-          result = result > act_min ? result : act_min;
-          result = result < act_max ? result : act_max;
-          dst[dst_tile_offset] = (int8_t)result;
-        } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
-                   !(conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-          tmp_dst[dst_tile_offset] -= input_sum[n];
-          int result = tmp_dst[dst_tile_offset] + bias[oc];
-          result = RoundingDivideByPOT(
-            SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[0]), out_multiplier[0]),
-            -shift_after[0]);
-          result += out_zp;
-          result = result > act_min ? result : act_min;
-          result = result < act_max ? result : act_max;
-          dst[dst_tile_offset] = (int8_t)result;
-        } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
-                   (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-          tmp_dst[dst_tile_offset] -= input_sum[n * oc4 * C4NUM + oc];
-          int result = tmp_dst[dst_tile_offset] + bias[oc];
-          result = RoundingDivideByPOT(
-            SaturatingRoundingDoublingHighMul(result * (1 << (unsigned int)shift_before[oc]), out_multiplier[oc]),
-            -shift_after[oc]);
-          result += out_zp;
-          result = result > act_min ? result : act_min;
-          result = result < act_max ? result : act_max;
-          dst[dst_tile_offset] = (int8_t)result;
-        }
-      }  // tile_num loop
-    }    // output_channel loop
-  }
-}
-
 void Conv3x3Int8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, int oc, int ic8, size_t real_cal_num) {
   int oc4 = UP_DIV(oc, C4NUM);
 #ifdef ENABLE_ARM
@@ -249,73 +62,9 @@ void Conv3x3Int8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, in
 #endif
 }
 
-// int8 conv common
-void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight, const int32_t *bias_data,
-              int32_t *tmp_dst, int8_t *tmp_out, int8_t *output_data, int32_t *input_sum, int task_id,
-              ConvParameter *conv_param) {
-  int kernel_h = conv_param->kernel_h_;
-  int kernel_w = conv_param->kernel_w_;
-  int in_batch = conv_param->input_batch_;
-  int in_channel = conv_param->input_channel_;
-  int in_h = conv_param->input_h_;
-  int in_w = conv_param->input_w_;
-  int out_h = conv_param->output_h_;
-  int out_w = conv_param->output_w_;
-  int out_channel = conv_param->output_channel_;
-  int oc4 = UP_DIV(out_channel, C4NUM);
-  int32_t input_zp = conv_param->conv_quant_arg_.input_quant_args_[0].zp_;
-
-  int tile_n = conv_param->tile_num_;
-  int thread_count = conv_param->thread_num_;
-  int output_count = out_h * out_w;
-  int output_tile_count = UP_DIV(output_count, tile_n);
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int kernel_plane = kernel_h * kernel_w;
-  int plane_block = UP_DIV(kernel_plane, C4NUM);
-  int unit_size = plane_block * C4NUM * ic4 * C4NUM;
-  int input_sum_offset;
-  if (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL) {
-    input_sum_offset = tile_n * oc4 * C4NUM;
-  } else {
-    input_sum_offset = tile_n;
-  }
-
-  for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * ic4 * C4NUM * in_h * in_w;
-    int out_batch_offset = b * out_channel * out_h * out_w;
-    for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
-      int start_index = thread_id * tile_n;
-      int real_cal_num = (output_count - start_index) < tile_n ? (output_count - start_index) : tile_n;
-      int32_t *tmp_input_sum = input_sum + task_id * input_sum_offset;
-      int8_t *gemm_input = packed_input + task_id * unit_size * tile_n;
-      // clear tmp buffer before compute
-      memset(gemm_input, (int8_t)input_zp, unit_size * tile_n);
-      int out_offset = thread_id * tile_n * out_channel + out_batch_offset;
-
-      size_t tmp_dst_size = tile_n * conv_param->output_channel_ * sizeof(int32_t);
-      int tmp_dst_offset = task_id * tile_n * conv_param->output_channel_;
-      memset(tmp_dst + tmp_dst_offset, 0, tmp_dst_size);
-
-      Im2ColPackUnitInt8(input_data + in_batch_offset, gemm_input, real_cal_num, start_index, tmp_input_sum,
-                         conv_param);
-      if (real_cal_num == tile_n) {
-        int8_t *gemm_output = output_data + out_offset;
-        IndirectGemmInt8(gemm_output, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4, kernel_plane,
-                         out_channel, tmp_input_sum, conv_param);
-      } else {
-        // res part
-        int8_t *tmp_out_ptr = tmp_out + task_id * tile_n * out_channel;
-        IndirectGemmInt8(tmp_out_ptr, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4, kernel_plane,
-                         out_channel, tmp_input_sum, conv_param);
-        memcpy(output_data + out_offset, tmp_out_ptr, real_cal_num * out_channel);
-      }
-    }
-  }
-}
-
 void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, int8_t *packed_weight,
                  const int32_t *bias_data, int8_t *output_data, int32_t *filter_zp, int32_t *input_sum, int task_id,
-                 ConvParameter *conv_param, MATMUL_OPT_R_FUNC matmul_func) {
+                 ConvParameter *conv_param, MATMUL_OPT_R_FUNC matmul_func, bool is_optimize) {
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int in_batch = conv_param->input_batch_;
@@ -325,18 +74,29 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *matmul_input,
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
   int out_channel = conv_param->output_channel_;
-  int oc8 = UP_DIV(out_channel, C8NUM);
   int tile_n = conv_param->tile_num_;
   int thread_count = conv_param->thread_num_;
   int output_count = out_h * out_w;
   int output_tile_count = UP_DIV(output_count, tile_n);
-  int ic4 = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
-  int unit_size = UP_ROUND(kernel_plane * in_channel, C4NUM);
+  int unit_size;
   int input_sum_offset;
+  int up_round_oc;
+#ifdef ENABLE_ARM32
+  up_round_oc = UP_ROUND(out_channel, C2NUM);
+  unit_size = UP_ROUND(kernel_plane * in_channel, C16NUM);
+#else
+  if (is_optimize) {
+    up_round_oc = UP_ROUND(out_channel, C8NUM);
+    unit_size = UP_ROUND(kernel_plane * in_channel, C4NUM);
+  } else {
+    up_round_oc = UP_ROUND(out_channel, C4NUM);
+    unit_size = UP_ROUND(kernel_plane * in_channel, C16NUM);
+  }
+#endif
   bool per_channel;
   if (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL) {
-    input_sum_offset = tile_n * oc8 * C8NUM;
+    input_sum_offset = tile_n * up_round_oc;
     per_channel = true;
   } else {
     input_sum_offset = tile_n;
@@ -344,7 +104,7 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *matmul_input,
   }
 
   for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * ic4 * C4NUM * in_h * in_w;
+    int in_batch_offset = b * in_channel * in_h * in_w;
     int out_batch_offset = b * out_channel * out_h * out_w;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * tile_n;
@@ -354,15 +114,38 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *matmul_input,
       int8_t *matmul = matmul_input + task_id * kernel_plane * in_channel * tile_n;
       memset(matmul, conv_param->conv_quant_arg_.input_quant_args_[0].zp_, kernel_plane * in_channel * tile_n);
       Im2ColPackUnitInt8Opt(input_data + in_batch_offset, gemm_input, matmul, real_cal_num, start_index, filter_zp,
-                            tmp_input_sum, conv_param, per_channel);
+                            tmp_input_sum, conv_param, per_channel, is_optimize);
 
       int out_offset = thread_id * tile_n * out_channel + out_batch_offset;
       int8_t *gemm_output = output_data + out_offset;
-      matmul_func(gemm_input, packed_weight, gemm_output, real_cal_num, out_channel, unit_size, out_channel,
-                  tmp_input_sum, bias_data, conv_param->conv_quant_arg_.left_shift_,
-                  conv_param->conv_quant_arg_.right_shift_, conv_param->conv_quant_arg_.quant_multiplier_,
-                  conv_param->conv_quant_arg_.output_quant_args_[0].zp_, conv_param->conv_quant_arg_.out_act_min_[0],
-                  conv_param->conv_quant_arg_.out_act_max_[0], per_channel);
+#ifdef ENABLE_ARM32
+      MatmulInt8Neon32(
+        gemm_input, packed_weight, gemm_output, real_cal_num, out_channel, unit_size, tmp_input_sum, bias_data,
+        conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0],
+        conv_param->conv_quant_arg_.output_quant_args_[0].zp_, conv_param->conv_quant_arg_.quant_multiplier_,
+        conv_param->conv_quant_arg_.left_shift_, conv_param->conv_quant_arg_.right_shift_, out_channel, per_channel);
+#elif ENABLE_ARM64
+      if (is_optimize) {
+        matmul_func(gemm_input, packed_weight, gemm_output, real_cal_num, out_channel, unit_size, out_channel,
+                    tmp_input_sum, bias_data, conv_param->conv_quant_arg_.left_shift_,
+                    conv_param->conv_quant_arg_.right_shift_, conv_param->conv_quant_arg_.quant_multiplier_,
+                    conv_param->conv_quant_arg_.output_quant_args_[0].zp_, conv_param->conv_quant_arg_.out_act_min_[0],
+                    conv_param->conv_quant_arg_.out_act_max_[0], per_channel);
+      } else {
+        MatmulInt8Neon64(gemm_input, packed_weight, gemm_output, UP_ROUND(real_cal_num, C4NUM),
+                         UP_ROUND(out_channel, C4NUM), unit_size, tmp_input_sum, bias_data,
+                         conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0],
+                         conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
+                         conv_param->conv_quant_arg_.quant_multiplier_, conv_param->conv_quant_arg_.left_shift_,
+                         conv_param->conv_quant_arg_.right_shift_, real_cal_num, out_channel, out_channel, per_channel);
+      }
+#else
+      MatMulInt8_8x8_r(
+        gemm_input, packed_weight, gemm_output, real_cal_num, out_channel, unit_size, out_channel, tmp_input_sum,
+        bias_data, conv_param->conv_quant_arg_.left_shift_, conv_param->conv_quant_arg_.right_shift_,
+        conv_param->conv_quant_arg_.quant_multiplier_, conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
+        conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0], per_channel);
+#endif
     }
   }
 }
