@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <memory>
 #include <string>
 
 namespace mindspore {
@@ -48,6 +49,8 @@ typedef enum eHttpMethod {
   HM_PATCH = 1 << 8
 } HttpMethod;
 
+using OnRequestReceive = std::function<void(std::shared_ptr<HttpMessageHandler>)>;
+
 class HttpServer {
  public:
   // Server address only support IPV4 now, and should be in format of "x.x.x.x"
@@ -55,8 +58,6 @@ class HttpServer {
       : server_address_(address), server_port_(port), event_base_(nullptr), event_http_(nullptr), is_init_(false) {}
 
   ~HttpServer();
-
-  using OnRequestReceive = std::function<void(HttpMessageHandler *)>;
 
   bool InitServer();
   void SetTimeOut(int seconds = 5);

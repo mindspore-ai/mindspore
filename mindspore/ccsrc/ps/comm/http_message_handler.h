@@ -54,7 +54,7 @@ class HttpMessageHandler {
         resp_buf_(nullptr),
         resp_code_(HTTP_OK) {}
 
-  ~HttpMessageHandler();
+  virtual ~HttpMessageHandler() = default;
 
   void InitHttpMessage();
   std::string GetRequestUri();

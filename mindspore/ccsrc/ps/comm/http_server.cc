@@ -99,10 +99,10 @@ bool HttpServer::RegisterRoute(const std::string &url, OnRequestReceive *functio
   auto TransFunc = [](struct evhttp_request *req, void *arg) {
     MS_EXCEPTION_IF_NULL(req);
     MS_EXCEPTION_IF_NULL(arg);
-    HttpMessageHandler httpReq(req);
-    httpReq.InitHttpMessage();
+    auto httpReq = std::make_shared<HttpMessageHandler>(req);
+    httpReq->InitHttpMessage();
     OnRequestReceive *func = reinterpret_cast<OnRequestReceive *>(arg);
-    (*func)(&httpReq);
+    (*func)(httpReq);
   };
   MS_EXCEPTION_IF_NULL(event_http_);
 
@@ -125,6 +125,7 @@ bool HttpServer::UnRegisterRoute(const std::string &url) {
 }
 
 bool HttpServer::Start() {
+  MS_LOG(INFO) << "Start http server!";
   MS_EXCEPTION_IF_NULL(event_base_);
   int ret = event_base_dispatch(event_base_);
   if (ret == 0) {
@@ -142,6 +143,7 @@ bool HttpServer::Start() {
 }
 
 void HttpServer::Stop() {
+  MS_LOG(INFO) << "Stop http server!";
   if (event_http_) {
     evhttp_free(event_http_);
     event_http_ = nullptr;

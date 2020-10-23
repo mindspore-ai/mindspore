@@ -38,7 +38,7 @@ class TestTcpServer : public UT::Common {
       server_->Start();
     });
     http_server_thread_->detach();
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
   }
   void TearDown() override {
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
