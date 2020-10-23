@@ -42,11 +42,6 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
   int InitWeight();
   int InitBias();
   int GenerateWinogradWeight();
-  std::string CodeGenConvolutionNHWC4();
-  std::string CodeGenConvolutionNC4HW4();
-  std::string CodeGenWinograd4x4To36();
-  std::string CodeGenWinogradConvolution();
-  std::string CodeGenWinograd36To4x4();
   int SetGlobalLocalConv(std::vector<size_t> *global, std::vector<size_t> *local);
 
   size_t sizeof_FLT() const { return use_fp16_ ? sizeof(float16_t) : sizeof(float); }
@@ -62,38 +57,7 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
     return attr_valid && channel_good && hw_good;
   }
 
-  std::string get_code_id() {
-    auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
-    std::vector<int> vpara{batch_size_,
-                           CI_,
-                           IH_,
-                           IW_,
-                           CO_,
-                           OH_,
-                           OW_,
-                           KH_,
-                           KW_,
-                           param->stride_h_,
-                           param->stride_w_,
-                           param->pad_u_,
-                           param->pad_l_,
-                           param->pad_d_,
-                           param->pad_r_,
-                           param->dilation_h_,
-                           param->dilation_w_,
-                           has_bias_,
-                           use_fp16_,
-                           op_format_,
-                           param->act_type_};
-    std::string code_id;
-    for (auto &iv : vpara) {
-      code_id += "_" + std::to_string(iv);
-    }
-    return code_id;
-  }
-
   bool use_fp16_{false};
-  const schema::Format op_format_{schema::Format_NHWC4};
 
   int batch_size_{};
   int CI_{};

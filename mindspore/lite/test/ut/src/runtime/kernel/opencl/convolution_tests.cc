@@ -16,7 +16,6 @@
 #include <memory>
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/convolution.h"
@@ -29,10 +28,7 @@ using mindspore::lite::Tensor;
 using mindspore::schema::Format;
 using mindspore::schema::NodeType_ValueNode;
 using mindspore::schema::Format::Format_KHWC;
-using mindspore::schema::Format::Format_NC4HW4;
-using mindspore::schema::Format::Format_NCHW;
 using mindspore::schema::Format::Format_NHWC;
-using mindspore::schema::Format::Format_NHWC4;
 
 namespace mindspore {
 
@@ -67,70 +63,38 @@ void CompareOutput(Tensor *output, const float *expect_data, const float atol) {
   }
   printf("\n");
 
-  float max_err = -1.0f;
-  std::array<int, 5> idx_5d{};
-  int max_err_idx = -1, first_err_idx = -1;
-  auto SLICES = UP_DIV(output->Channel(), 4);
-  int I = 1, J = 1, K = 1, L = 1, M = 1;
-  switch (output->GetFormat()) {
-    case Format_NHWC:
-      I = output->Batch(), J = output->Height(), K = output->Width(), L = output->Channel();
-      break;
-    case Format_NCHW:
-      I = output->Batch(), J = output->Channel(), K = output->Height(), L = output->Width();
-      break;
-    case Format_NHWC4:
-      I = output->Batch(), J = output->Height(), K = output->Width(), L = SLICES, M = 4;
-      break;
-    case Format_NC4HW4:
-      I = output->Batch(), J = SLICES, K = output->Height(), L = output->Width(), M = 4;
-      break;
-    default:
-      break;
-  }
-
-  int cn = 0;
-  for (int i = 0; i < I; ++i) {
-    for (int j = 0; j < J; ++j) {
-      for (int k = 0; k < K; ++k) {
-        for (int l = 0; l < L; ++l) {
-          for (int m = 0; m < M; ++m) {
-            auto err = std::fabs(output_data[cn] - expect_data[cn]);
-            if (first_err_idx == -1 && err > atol) {
-              first_err_idx = cn;
-            }
-            if (err > max_err) {
-              max_err = err;
-              idx_5d = {i, j, k, l, m};
-              max_err_idx = cn;
-            }
-            cn++;
+  bool not_equal = false;
+  int idx = 0;
+  std::array<int, 4> idx_4d{};
+  auto N = output->Batch(), H = output->Height(), W = output->Width(), C = output->Channel();
+  for (int i = 0, cn = 0; i < N; ++i) {
+    for (int j = 0; j < H; ++j) {
+      for (int k = 0; k < W; ++k) {
+        for (int l = 0; l < C; ++l) {
+          auto err = std::fabs(output_data[cn] - expect_data[cn]);
+          if (err > atol) {
+            not_equal = true;
+            idx_4d = {i, j, k, l};
+            goto End;
           }
+          cn++;
         }
       }
     }
   }
 
-  if (max_err > atol) {
-    printf("first error at %d expect=%.3f output=%.3f\n", first_err_idx, expect_data[first_err_idx],
-           output_data[first_err_idx]);
+End:
+  if (not_equal) {
+    printf("first error at [%d %d %d %d] expect=%.3f output=%.3f\n", idx_4d[0], idx_4d[1], idx_4d[2], idx_4d[3],
+           expect_data[idx], output_data[idx]);
     FAIL();
   } else {
-    float relative_err = max_err / std::fabs(std::max(expect_data[max_err_idx], output_data[max_err_idx]));
-    if (output->GetFormat() == Format_NHWC || output->GetFormat() == Format_NCHW) {
-      printf("max relative error at [%d,%d,%d,%d]", idx_5d[0], idx_5d[1], idx_5d[2], idx_5d[3]);
-    } else {
-      printf("max relative error at [%d,%d,%d,%d,%d]", idx_5d[0], idx_5d[1], idx_5d[2], idx_5d[3], idx_5d[4]);
-    }
-    printf(" expect=%.3f output=%.3f absolute_err=%.2e relative_err=%.2f%%\n", expect_data[max_err_idx],
-           output_data[max_err_idx], max_err, relative_err * 100);
     printf("COMPARE SUCCESS!\n\n");
   }
 }
 
-void TEST_MAIN(const std::string &attr, Format input_format, Format output_format, Format op_format,
-               const TypeId data_type, const float atol, const float *input_data, const float *weight_data,
-               const float *bias_data, const float *expect_data) {
+void TEST_MAIN(const std::string &attr, const TypeId data_type, const float atol, const float *input_data,
+               const float *weight_data, const float *bias_data, const float *expect_data) {
   auto param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "ConvParameter create error.";
@@ -145,7 +109,8 @@ void TEST_MAIN(const std::string &attr, Format input_format, Format output_forma
          &param->dilation_h_, &param->dilation_w_);
 
   MS_LOG(DEBUG) << "initialize OpenCLRuntime and OpenCLAllocator";
-  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
+  auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
+  auto ocl_runtime = runtime_wrapper.GetInstance();
   ocl_runtime->Init();
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   auto allocator = ocl_runtime->GetAllocator();
@@ -155,19 +120,24 @@ void TEST_MAIN(const std::string &attr, Format input_format, Format output_forma
   std::vector<int> weight_shape = {param->output_channel_, param->kernel_h_, param->kernel_w_, param->input_channel_};
   std::vector<int> bias_shape = {param->output_channel_};
   std::vector<int> output_shape = {param->output_batch_, param->output_h_, param->output_w_, param->output_channel_};
-  auto input = Tensor(data_type, input_shape, input_format, lite::TensorCategory(NodeType_ValueNode));
+  auto input = Tensor(data_type, input_shape, Format_NHWC, lite::TensorCategory(NodeType_ValueNode));
   auto weight = Tensor(data_type, weight_shape, Format_KHWC, lite::TensorCategory(NodeType_ValueNode));
   auto bias = Tensor(data_type, bias_shape, Format_KHWC, lite::TensorCategory(NodeType_ValueNode));
-  auto output = Tensor(data_type, output_shape, output_format, lite::TensorCategory(NodeType_ValueNode));
+  auto output = Tensor(data_type, output_shape, Format_NHWC, lite::TensorCategory(NodeType_ValueNode));
 
   MS_LOG(DEBUG) << "allocate memory and initialize weight/bias";
   weight.MallocData();
-  bias.MallocData();
   LoadData(&weight, weight_data);
-  LoadData(&bias, bias_data);
+  if (bias_data) {
+    bias.MallocData();
+    LoadData(&bias, bias_data);
+  }
 
   MS_LOG(DEBUG) << "create OpenCL Kernel";
-  std::vector<lite::Tensor *> inputs{&input, &weight, &bias};
+  std::vector<lite::Tensor *> inputs{&input, &weight};
+  if (bias_data) {
+    inputs.push_back(&bias);
+  }
   std::vector<lite::Tensor *> outputs{&output};
   auto kernel = std::make_unique<ConvolutionOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   kernel->Init();
@@ -186,132 +156,56 @@ void TEST_MAIN(const std::string &attr, Format input_format, Format output_forma
 
   MS_LOG(DEBUG) << "release resources";
   weight.FreeData();
-  bias.FreeData();
-  input.SetData(nullptr);
-  output.SetData(nullptr);
+  if (bias_data) {
+    bias.FreeData();
+  }
   delete sub_graph;
 }
 
-void TEST_MAIN(const std::string &attr, Format input_format, Format output_format, Format op_format,
-               const TypeId data_type, const float atol, const std::string &data_path) {
-  auto testcase_path = data_path + "/" + attr + "/";
-  std::map<Format, std::string> format_str{
-    {Format_NCHW, "NCHW"}, {Format_NHWC, "NHWC"}, {Format_NHWC4, "NHWC4"}, {Format_NC4HW4, "NC4HW4"}};
-  auto input_file = testcase_path + "input_" + format_str[input_format] + ".bin";
-  auto weight_file = testcase_path + "weight_OHWI.bin";
-  auto bias_file = testcase_path + "bias_C.bin";
-  auto expect_file = testcase_path + "expect_" + format_str[output_format] + ".bin";
-  MS_LOG(DEBUG) << "input_file  :" << input_file;
-  MS_LOG(DEBUG) << "weight_file :" << weight_file;
-  MS_LOG(DEBUG) << "bias_file   :" << bias_file;
-  MS_LOG(DEBUG) << "expect_file :" << expect_file;
-
-  size_t dst_size;
-  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_file.c_str(), &dst_size));
-  auto weight_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_file.c_str(), &dst_size));
-  auto bias_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(bias_file.c_str(), &dst_size));
-  auto expect_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(expect_file.c_str(), &dst_size));
-  printf("input [0-3]: %7.3f  %7.3f  %7.3f\n", input_data[0], input_data[1], input_data[2]);
-  printf("weight[0-3]: %7.3f  %7.3f  %7.3f\n", weight_data[0], weight_data[1], weight_data[2]);
-  printf("bias  [0-3]: %7.3f  %7.3f  %7.3f\n", bias_data[0], bias_data[1], bias_data[2]);
-  printf("expect[0-3]: %7.3f  %7.3f  %7.3f\n", expect_data[0], expect_data[1], expect_data[2]);
-
-  TEST_MAIN(attr, input_format, output_format, op_format, data_type, atol, input_data, weight_data, bias_data,
-            expect_data);
-}
-
-TEST_F(TestConvolutionOpenCL, in1x224x224x3_out1x112x112x32_k33_s22_p0101) {
-  std::string attr =
-    "inputNHWC_1x224x224x3_outputNHWC_1x112x112x32_kernelHW_3x3_strideHW_2x2_padTopBottomLeftRight_0x1x0x1_dilationHW_"
-    "1x1";
-  //  TEST_MAIN(attr, Format_NC4HW4, Format_NC4HW4, Format_NHWC4, kNumberTypeFloat32, 2e-6f,
-  //  "testcases/mobilenetv2_fp32/"); TEST_MAIN(attr, Format_NC4HW4, Format_NC4HW4, Format_NHWC4, kNumberTypeFloat16,
-  //  2e-2f, "testcases/mobilenetv2_fp32/");
-  TEST_MAIN(attr, Format_NHWC4, Format_NHWC4, Format_NHWC4, kNumberTypeFloat32, 2e-6f, "testcases/mobilenetv2_fp32/");
-  TEST_MAIN(attr, Format_NHWC4, Format_NHWC4, Format_NHWC4, kNumberTypeFloat16, 2e-2f, "testcases/mobilenetv2_fp32/");
-}
-
-TEST_F(TestConvolutionOpenCL, winograd_inputNHWC_1x16x256x96_outputNHWC_1x16x256x80) {
-  std::string attr =
-    "inputNHWC_1x16x256x96_outputNHWC_1x16x256x80_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_dilationHW_"
-    "1x1";
-  //  TEST_MAIN(attr, Format_NC4HW4, Format_NC4HW4, Format_NHWC4, kNumberTypeFloat32, 1e-4f, "testcases/test_fp32/");
-  //  TEST_MAIN(attr, Format_NC4HW4, Format_NC4HW4, Format_NHWC4, kNumberTypeFloat16, 0.6f, "testcases/test_fp32/");
-  TEST_MAIN(attr, Format_NHWC4, Format_NHWC4, Format_NHWC4, kNumberTypeFloat32, 1e-4f, "testcases/test_fp32/");
-  TEST_MAIN(attr, Format_NHWC4, Format_NHWC4, Format_NHWC4, kNumberTypeFloat16, 0.6f, "testcases/test_fp32/");
-}
-
-TEST_F(TestConvolutionOpenCL, simple_test0_NHWC) {
+TEST_F(TestConvolutionOpenCL, test0) {
   std::string attr =
     "inputNHWC_1x2x2x2_outputNHWC_1x2x2x2_kernelHW_1x1_strideHW_1x1_padTopBottomLeftRight_0x0x0x0_dilationHW_1x1";
   float input_data[] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
   float weight_data[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
   float bias_data[] = {0.0f, 0.0f};
   float expect_data[] = {1.0f, 1.0f, 5.0f, 5.0f, 9.0f, 9.0f, 13.0f, 13.0f};
-  TEST_MAIN(attr, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data,
-            expect_data);
-  TEST_MAIN(attr, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data,
-            expect_data);
+  TEST_MAIN(attr, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data, expect_data);
+  TEST_MAIN(attr, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data, expect_data);
 }
 
-TEST_F(TestConvolutionOpenCL, simple_test0_NCHW) {
+TEST_F(TestConvolutionOpenCL, test0_no_bias) {
   std::string attr =
     "inputNHWC_1x2x2x2_outputNHWC_1x2x2x2_kernelHW_1x1_strideHW_1x1_padTopBottomLeftRight_0x0x0x0_dilationHW_1x1";
-  float input_data[] = {0.0f, 2.0f, 4.0f, 6.0f, 1.0f, 3.0f, 5.0f, 7.0f};
+  float input_data[] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
   float weight_data[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
-  float bias_data[] = {0.0f, 0.0f};
-  float expect_data[] = {1.0f, 5.0f, 9.0f, 13.0f, 1.0f, 5.0f, 9.0f, 13.0f};
-  TEST_MAIN(attr, Format_NCHW, Format_NCHW, Format_NHWC4, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data,
-            expect_data);
-  TEST_MAIN(attr, Format_NCHW, Format_NCHW, Format_NHWC4, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data,
-            expect_data);
+  float expect_data[] = {1.0f, 1.0f, 5.0f, 5.0f, 9.0f, 9.0f, 13.0f, 13.0f};
+  TEST_MAIN(attr, kNumberTypeFloat32, 1e-3f, input_data, weight_data, nullptr, expect_data);
+  TEST_MAIN(attr, kNumberTypeFloat16, 1e-6f, input_data, weight_data, nullptr, expect_data);
 }
 
-TEST_F(TestConvolutionOpenCL, simple_test0_NHWC4_and_NC4HW4) {
-  std::string attr =
-    "inputNHWC_1x2x2x2_outputNHWC_1x2x2x2_kernelHW_1x1_strideHW_1x1_padTopBottomLeftRight_0x0x0x0_dilationHW_1x1";
-  float input_data[] = {0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 3.0f, 0.0f, 0.0f, 4.0f, 5.0f, 0.0f, 0.0f, 6.0f, 7.0f, 0.0f, 0.0f};
-  float weight_data[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
-  float bias_data[] = {0.0f, 0.0f};
-  float expect_data[] = {1.0f, 1.0f, 0.0f, 0.0f, 5.0f,  5.0f,  0.0f, 0.0f,
-                         9.0f, 9.0f, 0.0f, 0.0f, 13.0f, 13.0f, 0.0f, 0.0f};
-  TEST_MAIN(attr, Format_NHWC4, Format_NHWC4, Format_NHWC4, kNumberTypeFloat32, 1e-3f, input_data, weight_data,
-            bias_data, expect_data);
-  TEST_MAIN(attr, Format_NHWC4, Format_NHWC4, Format_NHWC4, kNumberTypeFloat16, 1e-6f, input_data, weight_data,
-            bias_data, expect_data);
-  TEST_MAIN(attr, Format_NC4HW4, Format_NC4HW4, Format_NHWC4, kNumberTypeFloat32, 1e-3f, input_data, weight_data,
-            bias_data, expect_data);
-  TEST_MAIN(attr, Format_NC4HW4, Format_NC4HW4, Format_NHWC4, kNumberTypeFloat16, 1e-6f, input_data, weight_data,
-            bias_data, expect_data);
-}
-
-TEST_F(TestConvolutionOpenCL, simple_test1) {
+TEST_F(TestConvolutionOpenCL, test1) {
   std::string attr =
     "inputNHWC_1x2x2x2_outputNHWC_1x2x2x2_kernelHW_1x1_strideHW_1x1_padTopBottomLeftRight_0x0x0x0_dilationHW_1x1";
   float input_data[] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
   float weight_data[] = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f};
   float bias_data[] = {0.5f, -0.5f};
   float expect_data[] = {2.5f, 3.5f, 8.5f, 17.5f, 14.5f, 31.5f, 20.5f, 45.5f};
-  TEST_MAIN(attr, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data,
-            expect_data);
-  TEST_MAIN(attr, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data,
-            expect_data);
+  TEST_MAIN(attr, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data, expect_data);
+  TEST_MAIN(attr, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data, expect_data);
 }
 
-TEST_F(TestConvolutionOpenCL, simple_test2) {
+TEST_F(TestConvolutionOpenCL, test2) {
   std::string attr =
     "inputNHWC_1x2x2x2_outputNHWC_1x2x2x1_kernelHW_2x2_strideHW_1x1_padTopBottomLeftRight_0x1x0x1_dilationHW_1x1";
   float input_data[] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
   float weight_data[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
   float bias_data[] = {0.0f};
   float expect_data[] = {28.0f, 18.0f, 22.0f, 13.0f};
-  TEST_MAIN(attr, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data,
-            expect_data);
-  TEST_MAIN(attr, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data,
-            expect_data);
+  TEST_MAIN(attr, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data, expect_data);
+  TEST_MAIN(attr, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data, expect_data);
 }
 
-TEST_F(TestConvolutionOpenCL, simple_test3) {
+TEST_F(TestConvolutionOpenCL, test3) {
   std::string attr =
     "inputNHWC_1x2x2x2_outputNHWC_1x2x2x2_kernelHW_2x2_strideHW_1x1_padTopBottomLeftRight_0x1x0x1_dilationHW_1x1";
   float input_data[] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
@@ -319,13 +213,11 @@ TEST_F(TestConvolutionOpenCL, simple_test3) {
                          9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f};
   float bias_data[] = {0.5f, -0.5f};
   float expect_data[] = {168.5f, 391.5f, 80.5f, 223.5f, 60.5f, 235.5f, 20.5f, 123.5f};
-  TEST_MAIN(attr, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data,
-            expect_data);
-  TEST_MAIN(attr, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data,
-            expect_data);
+  TEST_MAIN(attr, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data, expect_data);
+  TEST_MAIN(attr, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data, expect_data);
 }
 
-TEST_F(TestConvolutionOpenCL, simple_test3_batch2) {
+TEST_F(TestConvolutionOpenCL, test3_batch2) {
   std::string attr =
     "inputNHWC_2x2x2x2_outputNHWC_2x2x2x2_kernelHW_2x2_strideHW_1x1_padTopBottomLeftRight_0x1x0x1_dilationHW_1x1";
   float input_data[] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
@@ -334,14 +226,8 @@ TEST_F(TestConvolutionOpenCL, simple_test3_batch2) {
   float bias_data[] = {0.5f, -0.5f};
   float expect_data[] = {168.5f, 391.5f, 80.5f, 223.5f, 60.5f, 235.5f, 20.5f, 123.5f,
                          168.5f, 391.5f, 80.5f, 223.5f, 60.5f, 235.5f, 20.5f, 123.5f};
-  TEST_MAIN(attr, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data,
-            expect_data);
-  TEST_MAIN(attr, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data,
-            expect_data);
-  TEST_MAIN(attr, Format_NHWC, Format_NHWC, Format_NC4HW4, kNumberTypeFloat32, 1e-3f, input_data, weight_data,
-            bias_data, expect_data);
-  TEST_MAIN(attr, Format_NHWC, Format_NHWC, Format_NC4HW4, kNumberTypeFloat16, 1e-6f, input_data, weight_data,
-            bias_data, expect_data);
+  TEST_MAIN(attr, kNumberTypeFloat32, 1e-3f, input_data, weight_data, bias_data, expect_data);
+  TEST_MAIN(attr, kNumberTypeFloat16, 1e-6f, input_data, weight_data, bias_data, expect_data);
 }
 
 }  // namespace mindspore
