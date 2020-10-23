@@ -16,6 +16,10 @@
 
 #include "src/ops/non_max_suppression.h"
 
+#ifndef PRIMITIVE_WRITEABLE
+#include "src/ops/ops_register.h"
+#endif
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -44,6 +48,13 @@ int NonMaxSuppression::UnPackToFlatBuilder(const schema::Primitive *primitive, f
 int NonMaxSuppression::GetCenterPointBox() const {
   return this->primitive_->value_as_NonMaxSuppression()->centerPointBox();
 }
+
+PrimitiveC *NonMaxSuppressionCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<NonMaxSuppression>(primitive);
+}
+
+Registry NonMaxSuppressionRegistry(schema::PrimitiveType_NonMaxSuppression, NonMaxSuppressionCreator);
+
 #endif
 int NonMaxSuppression::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   auto input = inputs_.front();

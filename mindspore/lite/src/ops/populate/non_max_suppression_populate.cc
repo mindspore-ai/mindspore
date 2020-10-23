@@ -35,7 +35,8 @@ OpParameter *PopulateNonMaxSuppressionParameter(const mindspore::lite::Primitive
   param->center_point_box_ = prim->GetCenterPointBox();
   return reinterpret_cast<OpParameter *>(param);
 }
-Registry NonMaxSuppressionParameterRegistry(schema::PrimitiveType_OneHot, PopulateNonMaxSuppressionParameter);
+Registry NonMaxSuppressionParameterRegistry(schema::PrimitiveType_NonMaxSuppression,
+                                            PopulateNonMaxSuppressionParameter);
 
 }  // namespace lite
 }  // namespace mindspore
