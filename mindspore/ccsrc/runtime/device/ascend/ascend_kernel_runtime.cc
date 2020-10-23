@@ -316,6 +316,7 @@ bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
   if (!is_task_sink) {
     return true;
   }
+  rtCtxSetCurrent(rt_context_hccl_);
   // Do HcomExecutorInitialize
   if (graph->is_dynamic_shape() && !HcclExecutorManager::GetInstance().Initialize()) {
     MS_LOG(ERROR) << "Init Hccl Executor Failed";
@@ -649,6 +650,11 @@ bool AscendKernelRuntime::InitDevice() {
       MS_LOG(ERROR) << "HcclInit init failed";
       return false;
     }
+  }
+
+  ret = rtCtxGetCurrent(&rt_context_hccl_);
+  if (ret != RT_ERROR_NONE || rt_context_hccl_ == nullptr) {
+    MS_LOG(ERROR) << "Call rtCtxGetCurrent failed, ret[" << ret << "]";
   }
 
   ret = rtCtxCreate(&rt_context_, 0, device_id_);
