@@ -49,7 +49,7 @@ usage()
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
-  echo "    -n Compile minddata with mindspore lite, available: off, lite, full, default is lite"
+  echo "    -n Compile minddata with mindspore lite, available: off, lite, full, lite_cv, full mode in lite train and lite_cv mode in lite predict"
   echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 10.1"
   echo "    -I Enable compiling mindspore lite for arm64, arm32 or x86_64, default disable mindspore lite compilation"
