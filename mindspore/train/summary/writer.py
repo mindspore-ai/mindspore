@@ -94,3 +94,12 @@ class LineageWriter(BaseWriter):
         """Write data to file."""
         if plugin in ('dataset_graph', 'train_lineage', 'eval_lineage', 'custom_lineage_data'):
             super().write(plugin, data)
+
+
+class ExplainWriter(BaseWriter):
+    """ExplainWriter for write explain data."""
+
+    def write(self, plugin, data):
+        """Write data to file."""
+        if plugin == 'explainer':
+            super().write(plugin, data)

@@ -40,6 +40,8 @@ message Event {
 
     // Summary data
     Summary summary = 5;
+
+    Explain explain = 6;
   }
 }
 
@@ -100,4 +102,51 @@ message Summary {
 
     // Set of values for the summary.
     repeated Value value = 1;
+}
+
+message Explain {
+    message Inference{
+        repeated float ground_truth_prob = 1;
+        repeated int32 predicted_label = 2;
+        repeated float predicted_prob = 3;
+    }
+
+    message Explanation{
+        optional string explain_method = 1;
+        optional int32 label = 2;
+        optional bytes heatmap = 3;
+	}
+
+    message Benchmark{
+        message TotalScore{
+            optional string benchmark_method = 1;
+            optional float score = 2;
+		}
+        message LabelScore{
+            repeated float score = 1;
+            optional string benchmark_method = 2;
+		}
+
+        optional string explain_method = 1;
+        repeated TotalScore total_score = 2;
+        repeated LabelScore label_score = 3;
+	}
+
+    message Metadata{
+		repeated string label = 1;
+		repeated string explain_method = 2;
+		repeated string benchmark_method = 3;
+	}
+
+    optional string image_id = 1;  // The Metadata and image id must have one fill in
+    optional bytes image_data = 2;
+    repeated int32 ground_truth_label = 3;
+
+
+    optional Inference inference = 4;
+    repeated Explanation explanation = 5;
+    repeated Benchmark benchmark = 6;
+
+    optional Metadata metadata = 7;
+    optional string status = 8;  // enum value: run, end
 }

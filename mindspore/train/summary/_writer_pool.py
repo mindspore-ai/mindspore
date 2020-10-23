@@ -21,7 +21,8 @@ import mindspore.log as logger
 
 from ._lineage_adapter import serialize_to_lineage_event
 from ._summary_adapter import package_graph_event, package_summary_event
-from ._summary_writer import LineageWriter, SummaryWriter
+from ._explain_adapter import package_explain_event
+from .writer import LineageWriter, SummaryWriter, ExplainWriter
 
 try:
     from multiprocessing import get_context
@@ -42,6 +43,8 @@ def _pack_data(datadict, wall_time):
             elif plugin in ('scalar', 'tensor', 'histogram', 'image'):
                 summaries.append({'_type': plugin.title(), 'name': data.get('tag'), 'data': data.get('value')})
                 step = data.get('step')
+            elif plugin == 'explainer':
+                result.append([plugin, package_explain_event(data.get('value'))])
     if summaries:
         result.append(['summary', package_summary_event(summaries, step, wall_time).SerializeToString()])
     return result
@@ -98,6 +101,8 @@ class WriterPool(ctx.Process):
                 self._writers_.append(SummaryWriter(filepath, self._max_file_size))
             elif plugin == 'lineage':
                 self._writers_.append(LineageWriter(filepath, self._max_file_size))
+            elif plugin == 'explainer':
+                self._writers_.append(ExplainWriter(filepath, self._max_file_size))
         return self._writers_
 
     def _write(self, plugin, data):
@@ -125,7 +130,6 @@ class WriterPool(ctx.Process):
         Write the event to file.
 
         Args:
-            name (str): The key of a specified file.
             data (Optional[str, Tuple[list, int]]): The data to write.
         """
         self._queue.put(('WRITE', data))
