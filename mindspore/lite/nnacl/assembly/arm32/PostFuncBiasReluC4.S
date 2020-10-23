@@ -1,24 +1,11 @@
 
-  .text
-  .align 5
-  //.p2align 5,,15
-  .global PostFuncBiasReluC4
-  #ifndef __APPLE__
-  .type PostFuncBiasReluC4, %function
-  #endif
-
-//void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t oc4div, size_t oc4mod,
-//                        size_t plane_size, size_t plane_stride, size_t relu_type);
-// r0 dst           r1 srx           r2 bias
-// r3 oc4div        r4 oc4mod        r5 plane_size
-// r6 plane_stride  r7 relu_type
-
-// v0 ~ v15 value
-// v16  v17 bias data
-// r10  r11  weite loop tmp buf
-// r16  relu6  #6;    r17 relu #0
-// lr  oc8 loop control
-// r8  hw  loop control
+.text
+.align 5
+//.p2align 5,,15
+.global PostFuncBiasReluC4
+#ifndef __APPLE__
+.type PostFuncBiasReluC4, %function
+#endif
 
 PostFuncBiasReluC4:
   push {r4-r8, r10, r11, lr}
@@ -220,7 +207,7 @@ Loop_C1_3_Relu6:
   vadd.f32 q0, q0, q12
   vmin.f32 q0, q0, q14
   vmax.f32 q0, q0, q15
-  vst1.32 {d0}, [r0], r6
+  vst1.32 {d0}, [r0], r12
   vst1.32 {d1[0]}, [r11], r12
   b Loop_C1_3_Relu6
 Loop_C1_3_Relu:
@@ -230,7 +217,7 @@ Loop_C1_3_Relu:
   vld1.32 {q0}, [r1]!
   vadd.f32 q0, q0, q12
   vmax.f32 q0, q0, q15
-  vst1.32 {d0}, [r0], r6
+  vst1.32 {d0}, [r0], r12
   vst1.32 {d1[0]}, [r11], r12
   b Loop_C1_3_Relu
 Loop_C1_3_Write:
@@ -239,7 +226,7 @@ Loop_C1_3_Write:
   sub r8, r8, #1
   vld1.32 {q0}, [r1]!
   vadd.f32 q0, q0, q12
-  vst1.32 {d0}, [r0], r6
+  vst1.32 {d0}, [r0], r12
   vst1.32 {d1[0]}, [r11], r12
   b Loop_C1_3_Write
 
