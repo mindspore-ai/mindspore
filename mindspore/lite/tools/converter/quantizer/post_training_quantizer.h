@@ -132,7 +132,7 @@ struct DivergInfo {
   std::vector<float> max_datas;
   std::pair<float, float> percent_result{0.0, 0.0};
   float scale_tmp = 0;
-
+  DivergInfo() = default;
   DivergInfo(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min, const std::string &method_x) {
     this->method_x = method_x;
     this->cnode = cnode;
@@ -187,13 +187,14 @@ class Calibrator {
 
   STATUS AddQuantizedOp(CNodePtr node);
 
-  STATUS RecordMaxValue(const std::string &op_name, const std::vector<float> &data,
-                        std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
+  STATUS RecordMaxValue(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
 
   STATUS UpdateDivergInverval(std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
-  STATUS UpdateDataFrequency(const std::string &op_name, const std::vector<float> &data,
-                             std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
+  STATUS UpdateOutputDivergInverval(
+    std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *diverg_info);
+
+  STATUS UpdateDataFrequency(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
   void Dump();
 
   STATUS ComputeThreshold();
@@ -208,7 +209,7 @@ class Calibrator {
 
   std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *GetInputDivergInfo();
 
-  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *GetOutputDivergInfo();
+  std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *GetOutputDivergInfo();
 
  private:
   std::vector<std::vector<std::string>> images_;  // multi_input, echo input has multi input data
@@ -219,7 +220,7 @@ class Calibrator {
 
   std::unordered_map<std::string, std::unique_ptr<DivergInfo>> input_diverg_info_;
 
-  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> output_diverg_info_;
+  std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> outputs_diverg_info_;
 
   size_t bit_num_;
   int quant_max_;
