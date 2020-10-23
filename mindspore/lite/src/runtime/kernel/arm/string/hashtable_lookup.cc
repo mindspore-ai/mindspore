@@ -62,7 +62,7 @@ int HashtableLookupCPUKernel::Run() {
       output_string_pack[i] = null_string_pack;
       hits_data[i] = 0;
     } else {
-      output_string_pack[i] = all_string_pack[i];
+      output_string_pack[i] = all_string_pack[index];
       hits_data[i] = 1;
     }
   }
