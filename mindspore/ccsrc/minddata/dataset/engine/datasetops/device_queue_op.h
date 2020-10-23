@@ -86,7 +86,7 @@ class DeviceQueueOp : public PipelineOp {
       return *this;
     }
 
-    Builder &SetTotalBatch(int total_batch) {
+    Builder &SetTotalBatch(int32_t total_batch) {
       builder_total_batch_ = total_batch;
       return *this;
     }
@@ -107,13 +107,13 @@ class DeviceQueueOp : public PipelineOp {
     DeviceType builder_device_type_;
     std::string builder_channel_name_;
     bool builder_send_epoch_end_;
-    int builder_total_batch_;
+    int32_t builder_total_batch_;
   };
 
   //  Name: constructor
   //  Description
   DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, int32_t prefetch_size,
-                bool send_epoch_end, int total_batch);
+                bool send_epoch_end, int32_t total_batch);
 
   //  Name: destructor
   //  Description
@@ -189,7 +189,7 @@ class DeviceQueueOp : public PipelineOp {
   const int32_t prefetch_size_;
   const bool send_epoch_end_;
   bool stop_send_;
-  int total_batch_;
+  int32_t total_batch_;
 
 #ifdef ENABLE_TDTQUE
   std::shared_ptr<TdtPlugin> tdtInstancePtr;

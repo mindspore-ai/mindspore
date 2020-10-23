@@ -33,7 +33,7 @@
 namespace mindspore {
 namespace dataset {
 DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, int32_t prefetch_size,
-                             bool send_epoch_end, int total_batch)
+                             bool send_epoch_end, int32_t total_batch)
     : PipelineOp(1),
       channel_name_(channel_name),
       device_type_(device_type),
