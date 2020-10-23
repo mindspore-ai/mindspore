@@ -68,12 +68,12 @@ TEST_F(TestNormalize, TestSentence) {
   kernel_ = creator_(inputs_, outputs_, &parameter_, &ctx_, desc_, nullptr);
   ASSERT_NE(kernel_, nullptr);
   auto ret = kernel_->Init();
-  MS_ASSERT(ret == 0);
+  ASSERT_EQ(ret, 0);
   ret = kernel_->Run();
-  MS_ASSERT(ret == 0);
+  ASSERT_EQ(ret, 0);
 
   std::vector<StringPack> output = mindspore::lite::ParseTensorBuffer(outputs_[0]);
-  for (int i = 0; i < output.size(); i++) {
+  for (unsigned int i = 0; i < output.size(); i++) {
     for (int j = 0; j < output[i].len; j++) {
       printf("%c", output[i].data[j]);
     }

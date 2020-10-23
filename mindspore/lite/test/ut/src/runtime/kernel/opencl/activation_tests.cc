@@ -91,7 +91,6 @@ TEST_F(TestActivationOpenCL, ReluFp_dim4) {
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 9};
   schema::Format format = schema::Format_NC;
-  schema::Format op_format = schema::Format_NC4;
   auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
@@ -198,7 +197,6 @@ TEST_F(TestActivationOpenCL, Relu6Fp_dim4) {
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 9};
   schema::Format format = schema::Format_NC;
-  schema::Format op_format = schema::Format_NC4;
   auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
@@ -308,7 +306,6 @@ TEST_F(TestActivationOpenCL, SigmoidFp_dim4) {
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 9};
   schema::Format format = schema::Format_NC;
-  schema::Format op_format = schema::Format_NC4;
   auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
@@ -411,15 +408,14 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
   MS_LOG(INFO) << "Leaky relu Begin test!";
   auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
-  auto data_type = kNumberTypeFloat16;  // need modify
+  auto data_type = kNumberTypeFloat16;
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   bool enable_fp16 = ocl_runtime->GetFp16Enable();
 
   MS_LOG(INFO) << "Init tensors.";
-  std::vector<int> input_shape = {1, 9};  // need modify
+  std::vector<int> input_shape = {1, 9};
   auto tensor_type = lite::Tensor::CONST_TENSOR;
-  schema::Format format = schema::Format_NC;        // need modify
-  schema::Format op_format = schema::Format_NHWC4;  // need modify
+  schema::Format format = schema::Format_NC;
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
@@ -527,7 +523,6 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 2, 3, 9};
   schema::Format format = schema::Format_NHWC;
-  schema::Format op_format = schema::Format_NC4HW4;
   auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {

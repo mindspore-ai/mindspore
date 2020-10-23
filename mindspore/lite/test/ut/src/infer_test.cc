@@ -149,7 +149,7 @@ TEST_F(InferTest, TestConvNode) {
   ASSERT_NE(nullptr, output_data);
   //===================================================
   ASSERT_EQ(output_size, outTensor->Size());
-  for (size_t i = 0; i < outTensor->ElementsNum(); i++) {
+  for (int i = 0; i < outTensor->ElementsNum(); i++) {
     ASSERT_LE((output_data[i] - outData[i]), 0.001);
   }
   MS_LOG(INFO) << "Passed";

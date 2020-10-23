@@ -75,7 +75,7 @@ TEST_F(TestEmbeddingLookupFp32, ElTest) {
   el->Run();
 
   std::cout << "output shape:" << std::endl;
-  for (int i = 0; i < outputs_.front()->shape().size(); ++i) {
+  for (unsigned int i = 0; i < outputs_.front()->shape().size(); ++i) {
     std::cout << outputs_.front()->shape()[i] << ' ';
   }
   std::cout << std::endl;

@@ -117,7 +117,7 @@ TEST_F(TestStridedSlice, StridedSliceInt8) {
   EXPECT_EQ(0, ret);
 
   int8_t expect[4] = {-6, -5, 7, 8};
-  for (int i = 0; i < sizeof(expect); ++i) {
+  for (unsigned int i = 0; i < sizeof(expect); ++i) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 

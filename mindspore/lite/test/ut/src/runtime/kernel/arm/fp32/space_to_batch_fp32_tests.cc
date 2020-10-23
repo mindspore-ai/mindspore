@@ -39,7 +39,7 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest4) {
   param.block_sizes_[0] = 2;
   param.block_sizes_[1] = 1;
   DoSpaceToBatchNHWC(input.data(), out, param.block_sizes_, in_shape.data(), out_shape.data());
-  for (int i = 0; i < kOutSize; ++i) {
+  for (unsigned int i = 0; i < kOutSize; ++i) {
     std::cout << out[i] << " ";
   }
   std::cout << "\n";
@@ -57,7 +57,7 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest5) {
   param.block_sizes_[0] = 1;
   param.block_sizes_[1] = 2;
   DoSpaceToBatchNHWC(input.data(), out, param.block_sizes_, in_shape.data(), out_shape.data());
-  for (int i = 0; i < kOutSize; ++i) {
+  for (unsigned int i = 0; i < kOutSize; ++i) {
     std::cout << out[i] << " ";
   }
   std::cout << "\n";
@@ -75,7 +75,7 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest6) {
   param.block_sizes_[0] = 2;
   param.block_sizes_[1] = 2;
   DoSpaceToBatchNHWC(input.data(), out, param.block_sizes_, in_shape.data(), out_shape.data());
-  for (int i = 0; i < kOutSize; ++i) {
+  for (unsigned int i = 0; i < kOutSize; ++i) {
     std::cout << out[i] << " ";
   }
   std::cout << "\n";
@@ -97,7 +97,7 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest7) {
   param.block_sizes_[0] = 2;
   param.block_sizes_[1] = 2;
   DoSpaceToBatchNHWC(input.data(), out, param.block_sizes_, in_shape.data(), out_shape.data());
-  for (int i = 0; i < kOutSize; ++i) {
+  for (unsigned int i = 0; i < kOutSize; ++i) {
     std::cout << out[i] << " ";
   }
   std::cout << "\n";
@@ -116,7 +116,7 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest8) {
   std::vector<int> out_shape = {1, 5, 5, 2};
   std::vector<int> padding = {0, 1, 0, 1};
   DoSpaceToBatchPaddingNHWC(input.data(), out, in_shape.data(), padding.data(), out_shape.data());
-  for (int i = 0; i < kOutSize; ++i) {
+  for (unsigned int i = 0; i < kOutSize; ++i) {
     std::cout << out[i] << " ";
   }
   std::cout << "\n";
@@ -136,7 +136,7 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest9) {
   std::vector<int> out_shape = {1, 6, 6, 2};
   std::vector<int> padding = {1, 1, 1, 1};
   DoSpaceToBatchPaddingNHWC(input.data(), out, in_shape.data(), padding.data(), out_shape.data());
-  for (int i = 0; i < kOutSize; ++i) {
+  for (unsigned int i = 0; i < kOutSize; ++i) {
     std::cout << out[i] << " ";
   }
   std::cout << "\n";
@@ -162,7 +162,7 @@ TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest10) {
   param.block_sizes_[0] = 2;
   param.block_sizes_[1] = 2;
   DoSpaceToBatchNHWC(pedding_out, out, param.block_sizes_, pedding_out_shape.data(), out_shape.data());
-  for (int i = 0; i < kOutSize; ++i) {
+  for (unsigned int i = 0; i < kOutSize; ++i) {
     std::cout << out[i] << " ";
   }
   std::cout << "\n";

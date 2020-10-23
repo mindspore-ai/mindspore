@@ -50,7 +50,7 @@ class CommonTest : public testing::Test {
 
   template <typename T>
   static void CompareOutputData(T *output_data, T *correct_data, int size, float err_bound) {
-    for (size_t i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++) {
       T abs = fabs(output_data[i] - correct_data[i]);
       ASSERT_LE(abs, err_bound);
     }

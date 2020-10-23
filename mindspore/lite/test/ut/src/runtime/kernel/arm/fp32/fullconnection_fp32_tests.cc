@@ -146,8 +146,8 @@ TEST_F(TestFcFp32, FcTest2) {
   CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
 }
 
-int FcTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
-                MatMulParameter *matmal_param, float **correct) {
+void FcTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
+                 MatMulParameter *matmal_param, float **correct) {
   Tensor *in_t = new Tensor(kNumberTypeFloat, {1, 1, 1, 20}, schema::Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
   in_t->MallocData();
   float in[] = {1, 0, 3, 0, 4, 5, 2, 5, 2, 5, 1, 5, 0, 1, 2, 0, 2, 1, 0, 5};
@@ -177,7 +177,6 @@ int FcTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *
   matmal_param->a_transpose_ = false;
   matmal_param->has_bias_ = false;
   matmal_param->act_type_ = ActType_No;
-  return out_t->ElementsNum();
 }
 
 TEST_F(TestFcFp32, FcTest3) {
@@ -185,7 +184,7 @@ TEST_F(TestFcFp32, FcTest3) {
   std::vector<lite::Tensor *> outputs_;
   auto matmul_param = new MatMulParameter();
   float *correct;
-  int total_size = FcTestInit3(&inputs_, &outputs_, matmul_param, &correct);
+  FcTestInit3(&inputs_, &outputs_, matmul_param, &correct);
   lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());

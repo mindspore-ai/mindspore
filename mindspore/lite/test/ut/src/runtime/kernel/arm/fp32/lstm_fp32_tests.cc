@@ -171,10 +171,10 @@ TEST_F(LstmFp32, LstmForwardFp32Accuracy) {
   CompareOutput(outputs[2], output2_data);
 
   delete lstm_param;
-  for (int i = 0; i < inputs.size() - 1; i++) {
+  for (unsigned int i = 0; i < inputs.size() - 1; i++) {
     delete inputs[i];
   }
-  for (int i = 0; i < outputs.size(); i++) {
+  for (unsigned int i = 0; i < outputs.size(); i++) {
     delete outputs[i];
   }
   delete kernel;
@@ -321,10 +321,10 @@ TEST_F(LstmFp32, LstmBackwardFp32Accuracy) {
   CompareOutput(outputs[2], output2_data);
 
   delete lstm_param;
-  for (int i = 0; i < inputs.size() - 1; i++) {
+  for (unsigned int i = 0; i < inputs.size() - 1; i++) {
     delete inputs[i];
   }
-  for (int i = 0; i < outputs.size(); i++) {
+  for (unsigned int i = 0; i < outputs.size(); i++) {
     delete outputs[i];
   }
   delete kernel;

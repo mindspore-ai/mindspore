@@ -227,17 +227,17 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
     size_t src_step = src_stride * sizeof(float);
     size_t dst_step = dst_stride * sizeof(float);
     asm volatile(
-      "mov r7, %[src_ptr]\n"
+      "mov r11, %[src_ptr]\n"
       "mov r8, %[dst_ptr]\n"
       "mov r10, r8\n"
 
-      "vld1.32 {q0}, [r7], %[src_step]\n"
+      "vld1.32 {q0}, [r11], %[src_step]\n"
       "vld1.32 {q1}, [r8], %[dst_step]\n"
-      "vld1.32 {q2}, [r7], %[src_step]\n"
+      "vld1.32 {q2}, [r11], %[src_step]\n"
       "vld1.32 {q3}, [r8], %[dst_step]\n"
 
       "vadd.f32 q0, q0, q1\n"
-      "vld1.32 {q8}, [r7], %[src_step]\n"
+      "vld1.32 {q8}, [r11], %[src_step]\n"
       "vadd.f32 q2, q2, q3\n"
 
       "vst1.32 {q0}, [r10], %[dst_step]\n"
@@ -245,19 +245,19 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
 
       "vld1.32 {q9}, [r8], %[dst_step]\n"
 
-      "vld1.32 {q10}, [r7], %[src_step]\n"
+      "vld1.32 {q10}, [r11], %[src_step]\n"
 
       "vadd.f32 q8, q8, q9\n"
       "vld1.32 {q11}, [r8], %[dst_step]\n"
       "vadd.f32 q10, q10, q11\n"
 
-      "vld1.32 {q0}, [r7], %[src_step]\n"
+      "vld1.32 {q0}, [r11], %[src_step]\n"
       "vst1.32 {q8}, [r10], %[dst_step]\n"
       "vst1.32 {q10}, [r10], %[dst_step]\n"
 
       "vld1.32 {q1}, [r8], %[dst_step]\n"
 
-      "vld1.32 {q2}, [r7], %[src_step]\n"
+      "vld1.32 {q2}, [r11], %[src_step]\n"
       "vld1.32 {q3}, [r8], %[dst_step]\n"
 
       "vadd.f32 q0, q0, q1\n"
@@ -266,10 +266,10 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
       "vst1.32 {q0}, [r10], %[dst_step]\n"
       "vst1.32 {q2}, [r10], %[dst_step]\n"
 
-      "vld1.32 {q8}, [r7], %[src_step]\n"
+      "vld1.32 {q8}, [r11], %[src_step]\n"
       "vld1.32 {q9}, [r8], %[dst_step]\n"
 
-      "vld1.32 {q10}, [r7], %[src_step]\n"
+      "vld1.32 {q10}, [r11], %[src_step]\n"
       "vld1.32 {q11}, [r8], %[dst_step]\n"
 
       "vadd.f32 q8, q8, q9\n"
@@ -280,7 +280,7 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
 
       :
       : [ src_ptr ] "r"(src_ptr), [ dst_ptr ] "r"(dst_ptr), [ src_step ] "r"(src_step), [ dst_step ] "r"(dst_step)
-      : "r7", "r8", "r10", "q0", "q1", "q2", "q3", "q8", "q9", "q10", "q11");
+      : "r8", "r10", "r11", "q0", "q1", "q2", "q3", "q8", "q9", "q10", "q11");
 #else
     for (int j = 0; j < 8; j++) {
       const float *s = src_ptr + j * src_stride;

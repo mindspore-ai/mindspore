@@ -138,10 +138,10 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Accuracy) {
   CompareOutputData(output_ptr, correct_data, outputs[0]->ElementsNum(), 0.0001);
 
   delete conv_param;
-  for (int i = 0; i < inputs.size(); i++) {
+  for (unsigned int i = 0; i < inputs.size(); i++) {
     delete inputs[i];
   }
-  for (int i = 0; i < outputs.size(); i++) {
+  for (unsigned int i = 0; i < outputs.size(); i++) {
     delete outputs[i];
   }
   delete kernel;
@@ -189,10 +189,10 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Performance) {
   printf("Convolution_depthwise fp32 average time : %f ms\n", time_avg / 1000.0f);
 
   delete conv_param;
-  for (int i = 0; i < inputs.size(); i++) {
+  for (unsigned int i = 0; i < inputs.size(); i++) {
     delete inputs[i];
   }
-  for (int i = 0; i < outputs.size(); i++) {
+  for (unsigned int i = 0; i < outputs.size(); i++) {
     delete outputs[i];
   }
   delete kernel;

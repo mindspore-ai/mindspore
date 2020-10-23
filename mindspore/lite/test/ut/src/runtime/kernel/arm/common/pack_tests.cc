@@ -184,7 +184,7 @@ TEST_F(TestPack, PackWeightUint8) {
   std::string weight_path = "./test_data/conv/convuint8_weight_32_3_3_3.bin";
   auto weight_data = reinterpret_cast<uint8_t *>(mindspore::lite::ReadFile(weight_path.c_str(), &weight_size));
   auto int8_weight = reinterpret_cast<int8_t *>(malloc(weight_size));
-  for (int i = 0; i < weight_size; i++) {
+  for (unsigned int i = 0; i < weight_size; i++) {
     int8_weight[i] = (int8_t)(weight_data[i] - 128);
   }
   int32_t filter_zp = 20;
