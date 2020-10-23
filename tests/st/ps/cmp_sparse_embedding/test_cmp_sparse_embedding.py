@@ -26,7 +26,6 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Adam
 from mindspore.common import set_seed
 from mindspore.ops import operations as P
-from mindspore.common.initializer import TruncatedNormal
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_worker
 
 parser = argparse.ArgumentParser(description="test_sparse_embedding")
@@ -39,18 +38,6 @@ context.set_context(
 context.set_ps_context(enable_ps=True)
 
 
-def fc_with_initialize(input_channels, out_channels):
-    """weight initial for fc layer"""
-    weight = weight_variable()
-    bias = weight_variable()
-    return nn.Dense(input_channels, out_channels, weight, bias)
-
-
-def weight_variable():
-    """weight initial"""
-    return TruncatedNormal(0.02)
-
-
 class LeNet5(nn.Cell):
     def __init__(self, num_class=10):
         super(LeNet5, self).__init__()
@@ -58,7 +45,7 @@ class LeNet5(nn.Cell):
         self.flatten = nn.Flatten()
         self.embedding = nn.EmbeddingLookup(16, 4)
         self.relu = nn.ReLU()
-        self.fc = fc_with_initialize(12, num_class)
+        self.fc = nn.Dense(12, num_class)
 
     def construct(self, x):
         x = self.cast(x, mstype.int32)

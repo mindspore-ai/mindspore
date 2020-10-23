@@ -52,7 +52,7 @@ class Worker {
   void SetOptimInputShapes(size_t key, const ShapeVector &shape);
   void AddEmbeddingTable(const ::ps::Key &key, const size_t &row_count);
   void InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vector<size_t> shapes, const ShapeVector &sizes);
-  void InitPSParamAndOptim(const std::string &param_name, const tensor::TensorPtr &tensor);
+  void InitPSParamAndOptim(const AnfNodePtr &input_node, const tensor::TensorPtr &tensor);
   void DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
                            const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int cmd);
   void Finalize();
@@ -321,14 +321,17 @@ void Worker<T>::InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vecto
 }
 
 template <typename T>
-void Worker<T>::InitPSParamAndOptim(const std::string &param_name, const tensor::TensorPtr &tensor) {
+void Worker<T>::InitPSParamAndOptim(const AnfNodePtr &input_node, const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(input_node);
+  auto pk_node = input_node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(pk_node);
+  const std::string &param_name = pk_node->fullname_with_scope();
   void *param_data = tensor->data_c();
   size_t param_size = LongToSize(tensor->data().nbytes());
   if (param_size > INT_MAX) {
     MS_LOG(EXCEPTION) << "PS mode max weight size is " << INT_MAX << ", " << param_name << " size is " << param_size;
   }
-  ShapeVector param_shape = tensor->shape_c();
 
   size_t param_key = GetParamKey(param_name);
   if (param_key == kInvalidKey) {
@@ -336,8 +339,8 @@ void Worker<T>::InitPSParamAndOptim(const std::string &param_name, const tensor:
     return;
   }
   bool init_in_server = false;
-  ShapeVector shape_init_in_server = {1};
-  if (param_shape == shape_init_in_server) {
+  auto param_info_ptr = pk_node->param_info();
+  if (param_info_ptr != nullptr && param_info_ptr->init_in_server()) {
     init_in_server = true;
   }
   SetParamInitInServer(param_name, init_in_server);
