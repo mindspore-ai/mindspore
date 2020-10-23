@@ -19,3 +19,8 @@ Compression quant module.
 from .quantizer import *
 from .qat import *
 from .quant_utils import *
+
+__all__ = []
+__all__.extend(qat.__all__)
+__all__.extend(quantizer.__all__)
+__all__.extend(quant_utils.__all__)
