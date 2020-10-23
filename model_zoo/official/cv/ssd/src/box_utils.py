@@ -25,7 +25,7 @@ class GeneratDefaultBoxes():
     """
     Generate Default boxes for SSD, follows the order of (W, H, archor_sizes).
     `self.default_boxes` has a shape of [archor_sizes, H, W, 4], the last dimension is [y, x, h, w].
-    `self.default_boxes_ltrb` has a shape as `self.default_boxes`, the last dimension is [y1, x1, y2, x2].
+    `self.default_boxes_tlbr` has a shape as `self.default_boxes`, the last dimension is [y1, x1, y2, x2].
     """
     def __init__(self):
         fk = config.img_shape[0] / np.array(config.steps)
@@ -54,17 +54,17 @@ class GeneratDefaultBoxes():
                     cx, cy = (j + 0.5) / fk[idex], (i + 0.5) / fk[idex]
                     self.default_boxes.append([cy, cx, h, w])
 
-        def to_ltrb(cy, cx, h, w):
+        def to_tlbr(cy, cx, h, w):
             return cy - h / 2, cx - w / 2, cy + h / 2, cx + w / 2
 
         # For IoU calculation
-        self.default_boxes_ltrb = np.array(tuple(to_ltrb(*i) for i in self.default_boxes), dtype='float32')
+        self.default_boxes_tlbr = np.array(tuple(to_tlbr(*i) for i in self.default_boxes), dtype='float32')
         self.default_boxes = np.array(self.default_boxes, dtype='float32')
 
 
-default_boxes_ltrb = GeneratDefaultBoxes().default_boxes_ltrb
+default_boxes_tlbr = GeneratDefaultBoxes().default_boxes_tlbr
 default_boxes = GeneratDefaultBoxes().default_boxes
-y1, x1, y2, x2 = np.split(default_boxes_ltrb[:, :4], 4, axis=-1)
+y1, x1, y2, x2 = np.split(default_boxes_tlbr[:, :4], 4, axis=-1)
 vol_anchors = (x2 - x1) * (y2 - y1)
 matching_threshold = config.match_threshold
 
@@ -115,7 +115,7 @@ def ssd_bboxes_encode(boxes):
 
     index = np.nonzero(t_label)
 
-    # Transform to ltrb.
+    # Transform to tlbr.
     bboxes = np.zeros((config.num_ssd_boxes, 4), dtype=np.float32)
     bboxes[:, [0, 1]] = (t_boxes[:, [0, 1]] + t_boxes[:, [2, 3]]) / 2
     bboxes[:, [2, 3]] = t_boxes[:, [2, 3]] - t_boxes[:, [0, 1]]

@@ -12,6 +12,7 @@
         - [Training](#training)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
+    - [Export MindIR](#export-mindir)
 - [Model Description](#model-description)
     - [Performance](#performance)  
         - [Evaluation Performance](#evaluation-performance)
@@ -49,21 +50,23 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 - Download the dataset COCO2017.
 
 - We use COCO2017 as training dataset in this example by default, and you can also use your own datasets.
+  First, install Cython ,pycocotool and opencv to process data and to get evaluation result.
 
+    ```
+    pip install Cython
+
+    pip install pycocotools
+
+    pip install opencv-python
+
+    ```
     1. If coco dataset is used. **Select dataset to coco when run script.**
-        Install Cython and pycocotool, and you can also install mmcv to process data.
 
-        ```
-        pip install Cython
-
-        pip install pycocotools
-
-        ```
-        And change the COCO_ROOT and other settings you need in `config.py`. The directory structure is as follows:
+        Change the `coco_root` and other settings you need in `src/config.py`. The directory structure is as follows:
         
         ```
         .
-        └─cocodataset
+        └─coco_dataset
           ├─annotations
             ├─instance_train2017.json
             └─instance_val2017.json
@@ -72,7 +75,27 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 
         ```
 
-    2. If your own dataset is used. **Select dataset to other when run script.**
+    2. If VOC dataset is used. **Select dataset to voc when run script.**
+        Change `classes`, `num_classes`, `voc_json` and `voc_root` in `src/config.py`. `voc_json` is the path of json file with coco format for evalution, `voc_root` is the path of VOC dataset, the directory structure is as follows:
+        ```
+        .
+        └─voc_dataset
+          └─train
+            ├─0001.jpg
+            └─0001.xml
+            ...
+            ├─xxxx.jpg
+            └─xxxx.xml
+          └─eval
+            ├─0001.jpg
+            └─0001.xml
+            ...
+            ├─xxxx.jpg
+            └─xxxx.xml
+
+        ```
+
+    3. If your own dataset is used. **Select dataset to other when run script.**
         Organize the dataset infomation into a TXT file, each row in the file is as follows:
 
         ```
@@ -80,7 +103,7 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 
         ```
 
-        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class infomations of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), `IMAGE_DIR` and `ANNO_PATH` are setting in `config.py`. 
+        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class infomations of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `image_dir`(dataset directory) and the relative path in `anno_path`(the TXT file path), `image_dir` and `anno_path` are setting in `src/config.py`. 
 
 # [Quick Start](#contents)
 
@@ -103,7 +126,19 @@ sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET]
 sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
 
-# [Script Description](#contents)
+- runing on CPU(support Windows and Ubuntu)
+
+**CPU is usually used for fine-tuning, which needs pre_trained checkpoint.**
+
+```
+# training on CPU
+python train.py --run_platform=CPU --lr=[LR] --dataset=[DATASET] --epoch_size=[EPOCH_SIZE] --batch_size=[BATCH_SIZE] --pre_trained=[PRETRAINED_CKPT] --filter_weight=True --save_checkpoint_epochs=1
+
+# run eval on GPU
+python eval.py --run_platform=CPU --dataset=[DATASET] --checkpoint_path=[PRETRAINED_CKPT]
+```
+
+# [Script Description](#contents) 
 
 ## [Script and Sample Code](#contents)
 
@@ -111,24 +146,25 @@ sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 .
 └─ cv
   └─ ssd      
-    ├─ README.md                      ## descriptions about SSD
+    ├─ README.md                      # descriptions about SSD
     ├─ scripts
-      ├─ run_distribute_train.sh      ## shell script for distributed on ascend
-      ├─ run_distribute_train_gpu.sh  ## shell script for distributed on gpu
-      ├─ run_eval.sh                  ## shell script for eval on ascend
-      └─ run_eval_gpu.sh              ## shell script for eval on gpu
+      ├─ run_distribute_train.sh      # shell script for distributed on ascend
+      ├─ run_distribute_train_gpu.sh  # shell script for distributed on gpu
+      ├─ run_eval.sh                  # shell script for eval on ascend
+      └─ run_eval_gpu.sh              # shell script for eval on gpu
     ├─ src
-      ├─ __init__.py                  ## init file
-      ├─ box_util.py                  ## bbox utils
-      ├─ coco_eval.py                 ## coco metrics utils
-      ├─ config.py                    ## total config
-      ├─ dataset.py                   ## create dataset and process dataset
-      ├─ init_params.py               ## parameters utils
-      ├─ lr_schedule.py               ## learning ratio generator
-      └─ ssd.py                       ## ssd architecture
-    ├─ eval.py                        ## eval scripts
-    ├─ train.py                       ## train scripts
-    └─ mindspore_hub_conf.py          ## mindspore hub interface
+      ├─ __init__.py                  # init file
+      ├─ box_utils.py                 # bbox utils
+      ├─ eval_utils.py                # metrics utils
+      ├─ config.py                    # total config
+      ├─ dataset.py                   # create dataset and process dataset
+      ├─ init_params.py               # parameters utils
+      ├─ lr_schedule.py               # learning ratio generator
+      └─ ssd.py                       # ssd architecture
+    ├─ eval.py                        # eval scripts
+    ├─ train.py                       # train scripts
+    ├─ export.py                      # export mindir script
+    └─ mindspore_hub_conf.py          # mindspore hub interface
 ```
 
 ## [Script Parameters](#contents)
@@ -136,30 +172,33 @@ sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
   ```
   Major parameters in train.py and config.py as follows:
 
-    "device_num": 1                            # Use device nums
-    "lr": 0.05                                 # Learning rate init value
-    "dataset": coco                            # Dataset name
-    "epoch_size": 500                          # Epoch size
-    "batch_size": 32                           # Batch size of input tensor
-    "pre_trained": None                        # Pretrained checkpoint file path
-    "pre_trained_epoch_size": 0                # Pretrained epoch size
-    "save_checkpoint_epochs": 10               # The epoch interval between two checkpoints. By default, the checkpoint will be saved per 10 epochs
-    "loss_scale": 1024                         # Loss scale
+    "device_num": 1                                  # Use device nums
+    "lr": 0.05                                       # Learning rate init value
+    "dataset": coco                                  # Dataset name
+    "epoch_size": 500                                # Epoch size
+    "batch_size": 32                                 # Batch size of input tensor
+    "pre_trained": None                              # Pretrained checkpoint file path
+    "pre_trained_epoch_size": 0                      # Pretrained epoch size
+    "save_checkpoint_epochs": 10                     # The epoch interval between two checkpoints. By default, the checkpoint will be saved per 10 epochs
+    "loss_scale": 1024                               # Loss scale
+    "filter_weight": False                           # Load paramters in head layer or not. If the class numbers of train dataset is different from the class numbers in pre_trained checkpoint, please set True.
+    "freeze_layer": "none"                           # Freeze the backbone paramters or not, support none and backbone.
 
-    "class_num": 81                            # Dataset class number
-    "image_shape": [300, 300]                  # Image height and width used as input to the model
-    "mindrecord_dir": "/data/MindRecord_COCO"  # MindRecord path
-    "coco_root": "/data/coco2017"              # COCO2017 dataset path
-    "voc_root": ""                             # VOC original dataset path
-    "image_dir": ""                            # Other dataset image path, if coco or voc used, it will be useless
-    "anno_path": ""                            # Other dataset annotation path, if coco or voc used, it will be useless
+    "class_num": 81                                  # Dataset class number
+    "image_shape": [300, 300]                        # Image height and width used as input to the model
+    "mindrecord_dir": "/data/MindRecord_COCO"        # MindRecord path
+    "coco_root": "/data/coco2017"                    # COCO2017 dataset path
+    "voc_root": "/data/voc_dataset"                  # VOC original dataset path
+    "voc_json": "annotations/voc_instances_val.json" # is the path of json file with coco format for evalution
+    "image_dir": ""                                  # Other dataset image path, if coco or voc used, it will be useless
+    "anno_path": ""                                  # Other dataset annotation path, if coco or voc used, it will be useless
 
   ```
 
 
 ## [Training Process](#contents)
 
-To train the model, run `train.py`. If the `mindrecord_dir` is empty, it will generate [mindrecord](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/convert_dataset.html) files by `coco_root`(coco dataset) or `iamge_dir` and `anno_path`(own dataset). **Note if mindrecord_dir isn't empty, it will use mindrecord_dir instead of raw images.**
+To train the model, run `train.py`. If the `mindrecord_dir` is empty, it will generate [mindrecord](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/convert_dataset.html) files by `coco_root`(coco dataset), `voc_root`(voc dataset) or `image_dir` and `anno_path`(own dataset). **Note if mindrecord_dir isn't empty, it will use mindrecord_dir instead of raw images.**
 
 ### Training on Ascend
 
@@ -290,6 +329,14 @@ Average Recall (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.686
 ========================================
 
 mAP: 0.2244936111705981
+```
+
+## [Export MindIR](#contents)
+
+Change the export mode and export file in `src/config.py`, and run `export.py`.
+
+```
+python export.py --run_platform [PLATFORM] --checkpoint_path [CKPT_PATH]
 ```
 
 # [Model Description](#contents)

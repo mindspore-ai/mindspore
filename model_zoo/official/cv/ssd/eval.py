@@ -22,14 +22,15 @@ import numpy as np
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.ssd import SSD300, ssd_mobilenet_v2
-from src.dataset import create_ssd_dataset, data_to_mindrecord_byte_image, voc_data_to_mindrecord
+from src.dataset import create_ssd_dataset, create_mindrecord
 from src.config import config
-from src.coco_eval import metrics
+from src.eval_utils import metrics
 
-def ssd_eval(dataset_path, ckpt_path):
+def ssd_eval(dataset_path, ckpt_path, anno_json):
     """SSD evaluation."""
     batch_size = 1
-    ds = create_ssd_dataset(dataset_path, batch_size=batch_size, repeat_num=1, is_training=False)
+    ds = create_ssd_dataset(dataset_path, batch_size=batch_size, repeat_num=1,
+                            is_training=False, use_multiprocessing=False)
     net = SSD300(ssd_mobilenet_v2(), config, is_training=False)
     print("Load Checkpoint!")
     param_dict = load_checkpoint(ckpt_path)
@@ -61,51 +62,31 @@ def ssd_eval(dataset_path, ckpt_path):
         i += batch_size
     cost_time = int((time.time() - start) * 1000)
     print(f'    100% [{total}/{total}] cost {cost_time} ms')
-    mAP = metrics(pred_data)
+    mAP = metrics(pred_data, anno_json)
     print("\n========================================\n")
     print(f"mAP: {mAP}")
 
-
-if __name__ == '__main__':
+def get_eval_args():
     parser = argparse.ArgumentParser(description='SSD evaluation')
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--dataset", type=str, default="coco", help="Dataset, default is coco.")
     parser.add_argument("--checkpoint_path", type=str, required=True, help="Checkpoint file path.")
-    parser.add_argument("--run_platform", type=str, default="Ascend", choices=("Ascend", "GPU"),
-                        help="run platform, only support Ascend and GPU.")
-    args_opt = parser.parse_args()
+    parser.add_argument("--run_platform", type=str, default="Ascend", choices=("Ascend", "GPU", "CPU"),
+                        help="run platform, support Ascend ,GPU and CPU.")
+    return parser.parse_args()
+
+if __name__ == '__main__':
+    args_opt = get_eval_args()
+    if args_opt.dataset == "coco":
+        json_path = os.path.join(config.coco_root, config.instances_set.format(config.val_data_type))
+    elif args_opt.dataset == "voc":
+        json_path = os.path.join(config.voc_root, config.voc_json)
+    else:
+        raise ValueError('SSD eval only supprt dataset mode is coco and voc!')
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.run_platform, device_id=args_opt.device_id)
 
-    prefix = "ssd_eval.mindrecord"
-    mindrecord_dir = config.mindrecord_dir
-    mindrecord_file = os.path.join(mindrecord_dir, prefix + "0")
-    if args_opt.dataset == "voc":
-        config.coco_root = config.voc_root
-    if not os.path.exists(mindrecord_file):
-        if not os.path.isdir(mindrecord_dir):
-            os.makedirs(mindrecord_dir)
-        if args_opt.dataset == "coco":
-            if os.path.isdir(config.coco_root):
-                print("Create Mindrecord.")
-                data_to_mindrecord_byte_image("coco", False, prefix)
-                print("Create Mindrecord Done, at {}".format(mindrecord_dir))
-            else:
-                print("coco_root not exits.")
-        elif args_opt.dataset == "voc":
-            if os.path.isdir(config.voc_dir) and os.path.isdir(config.voc_root):
-                print("Create Mindrecord.")
-                voc_data_to_mindrecord(mindrecord_dir, False, prefix)
-                print("Create Mindrecord Done, at {}".format(mindrecord_dir))
-            else:
-                print("voc_root or voc_dir not exits.")
-        else:
-            if os.path.isdir(config.image_dir) and os.path.exists(config.anno_path):
-                print("Create Mindrecord.")
-                data_to_mindrecord_byte_image("other", False, prefix)
-                print("Create Mindrecord Done, at {}".format(mindrecord_dir))
-            else:
-                print("IMAGE_DIR or ANNO_PATH not exits.")
+    mindrecord_file = create_mindrecord(args_opt.dataset, "ssd_eval.mindrecord", False)
 
     print("Start Eval!")
-    ssd_eval(mindrecord_file, args_opt.checkpoint_path)
+    ssd_eval(mindrecord_file, args_opt.checkpoint_path, json_path)
