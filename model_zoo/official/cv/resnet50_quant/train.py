@@ -116,7 +116,7 @@ if __name__ == '__main__':
     quantizer = QuantizationAwareTraining(bn_fold=True,
                                           per_channel=[True, False],
                                           symmetric=[True, False])
-    network = quantizer.quantize(network)
+    net = quantizer.quantize(net)
 
     # get learning rate
     lr = get_lr(lr_init=config.lr_init,

@@ -22,76 +22,6 @@ get_real_path(){
     fi
 }
 
-# check_and_get_Ascend_device(){
-
-#     #device_list=(${1//,/ })
-#     IFS=',' read -ra device_list <<<"$1"
-#     last_device_id=0
-#     first_device_id=8
-#     device_used=(0 0 0 0 0 0 0 0)
-
-#     for var in "${device_list[@]}"
-#     do  
-        
-#         if [ $((var)) -lt 0 ] || [ $((var)) -ge 8 ]
-#         then 
-#             echo "error: device id=${var} is incorrect, device id must be in range [0,8), please check your device id list!"
-#             exit 1
-#         fi
-
-#         if [  ${device_used[$((var))]} -eq 0 ]
-#         then 
-#             device_used[ $((var)) ]=1
-#         else
-#             echo "error: device id is duplicate, please check your device id list!"
-#             exit 1
-#         fi
-
-#         if [ ${last_device_id} \< $((var)) ]
-#         then 
-#             last_device_id=$((var))
-#         fi
-#         if [ ${first_device_id} \> $((var)) ]
-#         then
-#             first_device_id=$((var))
-#         fi
-#     done
-
-#     device_num=`expr ${last_device_id} - ${first_device_id} + 1`
-#     if [ ${device_num} != ${#device_list[*]} ]
-#     then 
-#         echo "error: the Ascend chips used must be continuous, please check your device id list!"
-#         exit 1
-#     fi
-
-#     if [ ${first_device_id} -lt 4 ] && [ ${last_device_id} -ge 4 ]
-#     then
-#         if [ ${first_device_id} != 0 ] || [ ${last_device_id} != 7 ]
-#         then
-#             echo "error: device id list must be in the same group of [0,4) or [4,8) when using Ascend chips."
-#             exit 1
-#         fi
-#     fi
-
-#     echo "${first_device_id},`expr ${last_device_id} + 1`"
-# }
-
-# get_hccl_name(){
-
-#     server_ip=$(ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addr:")
-#     device_num=`expr $2 - $1`
-#     device_id_list=""
-
-#     for(( i=$1 ; i < $2 ; i++ ))
-#     do 
-#         device_id_list=${device_id_list}$i
-#     done
-#     hccl_name="hccl_${device_num}p_${device_id_list}_${server_ip}.json"
-
-#     echo ${hccl_name}
-# }
-
-
 run_ascend(){
 
     if [ $# != 3 ] && [ $# != 4 ]
@@ -99,47 +29,6 @@ run_ascend(){
         echo "Usage: bash run_train.sh [Ascend] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)\n"
         exit 1
     fi
-
-    # first_last_device=$(check_and_get_Ascend_device $2)
-    # #devices=(${first_last_device//,/ })
-    # #IFS=',' read -ra devices <<<"${first_last_device}"
-    # first_device=${first_last_device:0:1}
-    # last_device=${first_last_device:2:1}
-    # device_num=`expr $((last_device)) - $((first_device))`
-    
-
-    # #single ascend or multiple ascend 
-    # if [ ${device_num} -gt 1 ]
-    # then
-    #     ori_path=$(dirname "$(readlink -f "$0")")
-    #     #generate hccl config file
-    #     cd ../../../../utils/hccl_tools/  || exit
-    #     device_num_arg="[${first_device},${last_device})" 
-
-    #     python hccl_tools.py --device_num=${device_num_arg}
-
-    #     hccl_name=$(get_hccl_name ${first_device} ${last_device})
-
-    #     if [ ! -e ${hccl_name} ]
-    #     then
-    #         echo "error: failed to generate the hccl config file!"
-    #         exit 1
-    #     fi
-
-    #     mv ${hccl_name} ${ori_path}
-    #     cd ${ori_path} || exit
-
-    #     PATH1=$(get_real_path ${hccl_name})
-
-    #     if [ ! -f $PATH1 ]
-    #     then 
-    #         echo "error: RANK_TABLE_FILE=$PATH1 is not a file"
-    #         exit 1
-    #     fi 
-
-    #     export RANK_TABLE_FILE=$PATH1
-    # fi
-
 
     PATH1=$(get_real_path $2)
     PATH2=$(get_real_path $3)
@@ -167,12 +56,12 @@ run_ascend(){
         exit 1
     fi
 
-    rank_file_name=${2##*/}
-    IFS='_' read -ra array <<<"${rank_file_name}"
-    device_id_list=${array[2]}
-    first_device=${device_id_list:0:1}
-    device_num=${#device_id_list}
-
+    cat $2 | grep device_id >temp.log
+    array=$(cat temp.log | awk -F "[:]" '{print$2}')
+    IFS=" " read -ra device_list <<<$array
+    first_device=${device_list[0]:1:1}
+    device_num=$(cat temp.log | wc -l)
+    rm temp.log
 
     ulimit -u unlimited
     export DEVICE_NUM=${device_num}
