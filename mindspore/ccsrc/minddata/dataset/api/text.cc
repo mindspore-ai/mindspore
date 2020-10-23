@@ -48,17 +48,21 @@ LookupOperation::LookupOperation(const std::shared_ptr<Vocab> &vocab, const std:
                                  const DataType &data_type)
     : vocab_(vocab), unknown_token_(unknown_token), default_id_(Vocab::kNoTokenExists), data_type_(data_type) {}
 
-bool LookupOperation::ValidateParams() {
+Status LookupOperation::ValidateParams() {
   if (vocab_ == nullptr) {
-    MS_LOG(ERROR) << "Lookup: vocab object type is incorrect or null.";
-    return false;
+    std::string err_msg = "Lookup: vocab object type is incorrect or null.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
+
   default_id_ = vocab_->Lookup(unknown_token_);
   if (default_id_ == Vocab::kNoTokenExists) {
-    MS_LOG(ERROR) << "Lookup: " << unknown_token_ << " doesn't exist in vocab.";
-    return false;
+    std::string err_msg = "Lookup: " + unknown_token_ + " doesn't exist in vocab.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  return true;
+
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> LookupOperation::Build() {

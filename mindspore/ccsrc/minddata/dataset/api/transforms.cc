@@ -62,13 +62,15 @@ std::shared_ptr<TypeCastOperation> TypeCast(std::string data_type) {
 // OneHotOperation
 OneHotOperation::OneHotOperation(int32_t num_classes) : num_classes_(num_classes) {}
 
-bool OneHotOperation::ValidateParams() {
+Status OneHotOperation::ValidateParams() {
   if (num_classes_ < 0) {
-    MS_LOG(ERROR) << "OneHot: Number of classes cannot be negative. Number of classes: " << num_classes_;
-    return false;
+    std::string err_msg =
+      "OneHot: Number of classes cannot be negative. Number of classes: " + std::to_string(num_classes_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> OneHotOperation::Build() { return std::make_shared<OneHotOp>(num_classes_); }
@@ -76,17 +78,18 @@ std::shared_ptr<TensorOp> OneHotOperation::Build() { return std::make_shared<One
 // TypeCastOperation
 TypeCastOperation::TypeCastOperation(std::string data_type) : data_type_(data_type) {}
 
-bool TypeCastOperation::ValidateParams() {
+Status TypeCastOperation::ValidateParams() {
   std::vector<std::string> predefine_type = {"bool",  "int8",   "uint8",   "int16",   "uint16",  "int32", "uint32",
                                              "int64", "uint64", "float16", "float32", "float64", "string"};
   auto itr = std::find(predefine_type.begin(), predefine_type.end(), data_type_);
   if (itr == predefine_type.end()) {
-    MS_LOG(ERROR) << "TypeCast: Only support type bool, int8, uint8, int16, uint16, int32, uint32, "
+    std::string err_msg = "TypeCast: Invalid data type: " + data_type_;
+    MS_LOG(ERROR) << "TypeCast: Only supports data type bool, int8, uint8, int16, uint16, int32, uint32, "
                   << "int64, uint64, float16, float32, float64, string, but got " << data_type_;
-    return false;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<TensorOp> TypeCastOperation::Build() { return std::make_shared<TypeCastOp>(data_type_); }

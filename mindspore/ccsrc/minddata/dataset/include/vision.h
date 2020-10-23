@@ -17,10 +17,11 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_H_
 
-#include <vector>
 #include <memory>
+#include <vector>
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -326,7 +327,7 @@ class CenterCropOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<int32_t> size_;
@@ -340,7 +341,7 @@ class CropOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<int32_t> coordinates_;
@@ -355,7 +356,7 @@ class CutMixBatchOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   float alpha_;
@@ -371,7 +372,7 @@ class CutOutOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   int32_t length_;
@@ -387,7 +388,7 @@ class DecodeOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   bool rgb_;
@@ -399,7 +400,7 @@ class HwcToChwOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 };
 
 class MixUpBatchOperation : public TensorOperation {
@@ -410,7 +411,7 @@ class MixUpBatchOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   float alpha_;
@@ -424,7 +425,7 @@ class NormalizeOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<float> mean_;
@@ -440,7 +441,7 @@ class PadOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<int32_t> padding_;
@@ -460,7 +461,7 @@ class RandomAffineOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<float_t> degrees_;          // min_degree, max_degree
@@ -479,7 +480,7 @@ class RandomColorOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   float t_lb_;
@@ -495,7 +496,7 @@ class RandomColorAdjustOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<float> brightness_;
@@ -514,7 +515,7 @@ class RandomCropOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<int32_t> size_;
@@ -533,7 +534,7 @@ class RandomCropDecodeResizeOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<int32_t> size_;
@@ -551,7 +552,7 @@ class RandomHorizontalFlipOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   float probability_;
@@ -565,7 +566,7 @@ class RandomPosterizeOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<uint8_t> bit_range_;
@@ -582,7 +583,7 @@ class RandomResizedCropOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<int32_t> size_;
@@ -601,7 +602,7 @@ class RandomRotationOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<float> degrees_;
@@ -619,7 +620,7 @@ class RandomSharpnessOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<float> degrees_;
@@ -633,7 +634,7 @@ class RandomSolarizeOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<uint8_t> threshold_;
@@ -647,7 +648,7 @@ class RandomVerticalFlipOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   float probability_;
@@ -661,7 +662,7 @@ class RescaleOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   float rescale_;
@@ -677,7 +678,7 @@ class ResizeOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<int32_t> size_;
@@ -692,7 +693,7 @@ class RgbaToBgrOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 };
 
 class RgbaToRgbOperation : public TensorOperation {
@@ -703,7 +704,7 @@ class RgbaToRgbOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 };
 
 class SwapRedBlueOperation : public TensorOperation {
@@ -714,7 +715,7 @@ class SwapRedBlueOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 };
 
 class UniformAugOperation : public TensorOperation {
@@ -725,7 +726,7 @@ class UniformAugOperation : public TensorOperation {
 
   std::shared_ptr<TensorOp> Build() override;
 
-  bool ValidateParams() override;
+  Status ValidateParams() override;
 
  private:
   std::vector<std::shared_ptr<TensorOperation>> transforms_;

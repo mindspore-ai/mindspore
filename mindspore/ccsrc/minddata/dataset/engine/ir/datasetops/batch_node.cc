@@ -41,12 +41,12 @@ BatchNode::BatchNode(std::shared_ptr<Dataset> child, int32_t batch_size, bool dr
 
 Status BatchNode::ValidateParams() {
   if (batch_size_ <= 0) {
-    std::string err_msg = "Batch: batch_size should be positive integer, but got: " + std::to_string(batch_size_);
+    std::string err_msg = "BatchNode: batch_size should be positive integer, but got: " + std::to_string(batch_size_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (!cols_to_map_.empty()) {
-    std::string err_msg = "cols_to_map functionality is not implemented in C++; this should be left empty.";
+    std::string err_msg = "BatchNode: cols_to_map functionality is not implemented in C++; this should be left empty.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
