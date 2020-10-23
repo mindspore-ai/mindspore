@@ -176,7 +176,7 @@ class Optimizer(Cell):
 
     @property
     def unique(self):
-        """This method is to see whether to make unique，This method is read-only."""
+        """The method is to see whether to make unique. The input type is bool. The method is read-only."""
         return self._unique
 
     @unique.setter
@@ -188,8 +188,9 @@ class Optimizer(Cell):
 
     @property
     def target(self):
-        """This method is used to determine the value of target and whether the parameter update is performed on
-            the host or device. This method is read-only."""
+        """The method is used to determine whether the parameter is updated on host or device. The input type is str
+           and can only be 'CPU' and 'Ascend'. In GPU environment, users can only configure value as 'CPU'.
+           The method is read-only."""
         return self._target
 
     @target.setter
