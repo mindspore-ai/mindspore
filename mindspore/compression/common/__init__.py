@@ -17,3 +17,6 @@ Compression common module.
 """
 
 from .constant import *
+
+__all__ = []
+__all__.extend(constant.__all__)

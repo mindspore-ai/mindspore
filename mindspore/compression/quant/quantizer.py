@@ -19,12 +19,12 @@ from enum import Enum
 
 from ..._checkparam import Validator
 
-__all__ = ["OptimizeOption", "Quantizer"]
+__all__ = ["OptimizeOption"]
 
 
 class OptimizeOption(Enum):
-    """
-    An enum for the model quantization optimize option.
+    r"""
+    An enum for the model quantization optimize option, currently only support `QAT`.
     """
     # using quantization aware training
     QAT = "QAT"

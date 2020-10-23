@@ -24,7 +24,7 @@ __all__ = ["QuantDtype"]
 @enum.unique
 class QuantDtype(enum.Enum):
     """
-    For type switch
+    An enum for quant datatype, contains `INT2`~`INT8`, `UINT2`~`UINT8`.
     """
     INT2 = "INT2"
     INT3 = "INT3"
@@ -42,20 +42,42 @@ class QuantDtype(enum.Enum):
     UINT7 = "UINT7"
     UINT8 = "UINT8"
 
-    FLOAT16 = "FLOAT16"
-    FLOAT32 = "FLOAT32"
-
     def __str__(self):
         return f"{self.name}"
 
     @staticmethod
     def is_signed(dtype):
+        """
+        Get whether the quant datatype is signed.
+
+        Args:
+            dtype (QuantDtype): quant datatype.
+
+        Returns:
+            bool, whether the input quant datatype is signed.
+
+        Examples:
+            >>> quant_dtype = QuantDtype.INT8
+            >>> is_signed = QuantDtype.is_signed(quant_dtype)
+        """
         return dtype in [QuantDtype.INT2, QuantDtype.INT3, QuantDtype.INT4, QuantDtype.INT5,
                          QuantDtype.INT6, QuantDtype.INT7, QuantDtype.INT8]
 
     @staticmethod
     def switch_signed(dtype):
-        """switch signed"""
+        """
+        Swicth the signed state of the input quant datatype.
+
+        Args:
+            dtype (QuantDtype): quant datatype.
+
+        Returns:
+            QuantDtype, quant datatype with opposite signed state as the input.
+
+        Examples:
+            >>> quant_dtype = QuantDtype.INT8
+            >>> quant_dtype = QuantDtype.switch_signed(quant_dtype)
+        """
         type_map = {
             QuantDtype.INT2: QuantDtype.UINT2,
             QuantDtype.INT3: QuantDtype.UINT3,
@@ -75,11 +97,20 @@ class QuantDtype(enum.Enum):
         return type_map[dtype]
 
     @DynamicClassAttribute
-    def value(self):
+    def _value(self):
         """The value of the Enum member."""
         return int(re.search(r"(\d+)", self._value_).group(1))
 
     @DynamicClassAttribute
     def num_bits(self):
-        """The num_bits of the Enum member."""
-        return self.value
+        """
+        Get the num bits of the QuantDtype member.
+
+        Returns:
+            int, the num bits of the QuantDtype member
+
+        Examples:
+            >>> quant_dtype = QuantDtype.INT8
+            >>> num_bits = quant_dtype.num_bits
+        """
+        return self._value

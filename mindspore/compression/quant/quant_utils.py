@@ -267,13 +267,13 @@ def without_fold_batchnorm(weight, cell_quant):
 
 
 def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_params=None):
-    """
-    load fp32 model parameters to quantization model.
+    r"""
+    Load fp32 model parameters into quantization model.
 
     Args:
         quant_model: quantization model.
-        params_dict: f32 param.
-        quant_new_params:parameters that exist in quantative network but not in unquantative network.
+        params_dict: parameter dict that stores fp32 parameters.
+        quant_new_params: parameters that exist in quantative network but not in unquantative network.
 
     Returns:
         None
