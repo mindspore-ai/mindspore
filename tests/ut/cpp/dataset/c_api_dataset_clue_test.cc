@@ -162,6 +162,19 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetBasic) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestCLUEGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEGetDatasetSize.";
+
+  // Create a CLUEFile Dataset, with single CLUE file
+  std::string clue_file = datasets_root_path_ + "/testCLUE/afqmc/train.json";
+  std::string task = "AFQMC";
+  std::string usage = "train";
+  std::shared_ptr<Dataset> ds = CLUE({clue_file}, task, usage, 2);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 2);
+}
+
 TEST_F(MindDataTestPipeline, TestCLUEDatasetCMNLI) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetCMNLI.";
 

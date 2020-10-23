@@ -87,6 +87,19 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic1) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestRandomDatasetGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetGetDatasetSize.";
+
+  // Create a RandomDataset
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2});
+  schema->add_column("label", mindspore::TypeId::kNumberTypeUInt8, {1});
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 50);
+}
+
 TEST_F(MindDataTestPipeline, TestRandomDatasetBasic2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic2.";
 

@@ -531,5 +531,30 @@ Status BatchOp::ComputeColMap() {
   return Status::OK();
 }
 
+Status BatchOp::GetDatasetSize(int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+#ifdef ENABLE_PYTHON
+  if (batch_size_func_) {
+    *dataset_size = -1;
+    return Status::OK();
+  }
+#endif
+  int64_t num_rows;
+  RETURN_IF_NOT_OK(child_[0]->GetDatasetSize(&num_rows));
+  if (num_rows > 0 && start_batch_size_ > 0) {
+    if (drop_) {
+      num_rows = floor(num_rows / start_batch_size_);
+    } else {
+      num_rows = ceil(num_rows / start_batch_size_);
+    }
+  }
+  *dataset_size = num_rows;
+  dataset_size_ = num_rows;
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

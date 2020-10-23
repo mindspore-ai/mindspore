@@ -98,6 +98,11 @@ class Sampler {
   // @return status error code
   Status SetNumSamples(int64_t num_samples);
 
+  // getter for num samples
+  // @param num_samples - the number of samples to return.
+  // @return status error code
+  int64_t GetNumSamples();
+
   // setter for num or records in the dataset
   // @param num_rows - the number of records
   // @return status error code

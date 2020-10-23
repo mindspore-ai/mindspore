@@ -91,6 +91,18 @@ TEST_F(MindDataTestPipeline, TestCocoDefault) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestCocoGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoGetDatasetSize.";
+  // Create a Coco Dataset
+  std::string folder_path = datasets_root_path_ + "/testCOCO/train";
+  std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
+
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 6);
+}
+
 TEST_F(MindDataTestPipeline, TestCocoDetection) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDetection.";
   // Create a Coco Dataset

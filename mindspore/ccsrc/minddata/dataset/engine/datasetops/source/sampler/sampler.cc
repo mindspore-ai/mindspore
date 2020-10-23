@@ -129,6 +129,8 @@ Status Sampler::SetNumSamples(int64_t num_samples) {
   return Status::OK();
 }
 
+int64_t Sampler::GetNumSamples() { return num_samples_; }
+
 Status Sampler::SetNumRowsInDataset(int64_t num_rows) {
   CHECK_FAIL_RETURN_UNEXPECTED(num_rows > 0, "Invalid parameter, num_rows must be greater than 0.");
   num_rows_ = num_rows;

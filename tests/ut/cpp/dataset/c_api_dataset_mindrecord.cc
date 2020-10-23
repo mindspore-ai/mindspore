@@ -71,6 +71,19 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess1) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestMindDataGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataGetDatasetSize with string file pattern.";
+
+  // Create a MindData Dataset
+  // Pass one mindrecord shard file to parse dataset info, and search for other mindrecord files with same dataset info,
+  // thus all records in imagenet.mindrecord0 ~ imagenet.mindrecord3 will be read
+  std::string file_path = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
+  std::shared_ptr<Dataset> ds = MindData(file_path);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 20);
+}
+
 TEST_F(MindDataTestPipeline, TestMindDataSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess2 with a vector of single mindrecord file.";
 

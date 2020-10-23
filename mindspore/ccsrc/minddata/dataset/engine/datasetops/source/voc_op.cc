@@ -513,5 +513,33 @@ Status VOCOp::ComputeColMap() {
   }
   return Status::OK();
 }
+
+// Get Dataset size
+Status VOCOp::GetDatasetSize(int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows = 0, sample_size;
+  if (image_ids_.size() == 0) {
+    if (task_type_ == TaskType::Detection) {
+      std::shared_ptr<VOCOp> op;
+      RETURN_IF_NOT_OK(
+        Builder().SetDir(folder_path_).SetTask("Detection").SetUsage(usage_).SetClassIndex(class_index_).Build(&op));
+      RETURN_IF_NOT_OK(op->ParseImageIds());
+      RETURN_IF_NOT_OK(op->ParseAnnotationIds());
+      num_rows = static_cast<int64_t>(op->image_ids_.size());
+    } else if (task_type_ == TaskType::Segmentation) {
+      std::shared_ptr<VOCOp> op;
+      RETURN_IF_NOT_OK(Builder().SetDir(folder_path_).SetTask("Segmentation").SetUsage(usage_).Build(&op));
+      RETURN_IF_NOT_OK(op->ParseImageIds());
+      num_rows = static_cast<int64_t>(op->image_ids_.size());
+    }
+  }
+  sample_size = sampler_->GetNumSamples();
+  *dataset_size = sample_size > 0 ? std::min(num_rows, sample_size) : num_rows;
+  dataset_size_ = *dataset_size;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

@@ -368,6 +368,34 @@ TEST_F(MindDataTestPipeline, TestConcatSuccess) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestConcatGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatGetDatasetSize.";
+
+  // Create an ImageFolder Dataset
+  // Column names: {"image", "label"}
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Cifar10 Dataset
+  // Column names: {"image", "label"}
+  folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", RandomSampler(false, 9));
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Project operation on ds
+  ds = ds->Project({"image"});
+  EXPECT_NE(ds, nullptr);
+  ds2 = ds2->Project({"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Concat operation on the ds
+  ds = ds->Concat({ds2});
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 19);
+}
+
 TEST_F(MindDataTestPipeline, TestConcatSuccess2) {
   // Test "+" operator to concat two datasets
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatSuccess2.";
@@ -459,6 +487,27 @@ TEST_F(MindDataTestPipeline, TestImageFolderBatchAndRepeat) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestPipelineGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPipelineGetDatasetSize.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 2;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
 TEST_F(MindDataTestPipeline, TestProjectMap) {
@@ -914,6 +963,22 @@ TEST_F(MindDataTestPipeline, TestSkipDataset) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestSkipGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSkipGetDatasetSize.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Skip operation on ds
+  int32_t count = 3;
+  ds = ds->Skip(count);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 7);
+}
+
 TEST_F(MindDataTestPipeline, TestSkipDatasetError1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSkipDatasetError1.";
 
@@ -964,6 +1029,21 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetDefault) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestTakeGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTakeGetDatasetSize.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 7));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Take operation on ds, dafault count = -1
+  ds = ds->Take(2);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 2);
 }
 
 TEST_F(MindDataTestPipeline, TestTakeDatasetError1) {
@@ -1188,6 +1268,44 @@ TEST_F(MindDataTestPipeline, TestZipSuccess) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestZipGetDatasetSize) {
+  // Testing the member zip() function
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestZipGetDatasetSize.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Project operation on ds
+  std::vector<std::string> column_project = {"image"};
+  ds = ds->Project(column_project);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an ImageFolder Dataset
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, RandomSampler(false, 3));
+  EXPECT_NE(ds1, nullptr);
+
+  // Create a Rename operation on ds (so that the 3 datasets we are going to zip have distinct column names)
+  ds1 = ds1->Rename({"image", "label"}, {"col1", "col2"});
+  EXPECT_NE(ds1, nullptr);
+
+  folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", RandomSampler(false, 5));
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Project operation on ds
+  column_project = {"label"};
+  ds2 = ds2->Project(column_project);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Zip operation on the datasets
+  ds = ds->Zip({ds1, ds2});
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 2);
 }
 
 TEST_F(MindDataTestPipeline, TestZipSuccess2) {

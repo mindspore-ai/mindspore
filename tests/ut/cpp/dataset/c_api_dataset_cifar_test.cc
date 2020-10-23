@@ -73,6 +73,17 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestCifar10GetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10GetDatasetSize.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all");
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 10000);
+}
+
 TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100Dataset.";
 
@@ -106,6 +117,17 @@ TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCifar100GetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100GetDatasetSize.";
+
+  // Create a Cifar100 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
+  std::shared_ptr<Dataset> ds = Cifar100(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
 TEST_F(MindDataTestPipeline, TestCifar100DatasetFail1) {

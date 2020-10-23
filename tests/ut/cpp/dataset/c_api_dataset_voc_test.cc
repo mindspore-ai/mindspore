@@ -86,6 +86,22 @@ TEST_F(MindDataTestPipeline, TestVOCClassIndex) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestVOCGetDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCGetDatasetSize.";
+
+  // Create a VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::map<std::string, int32_t> class_index;
+  class_index["car"] = 0;
+  class_index["cat"] = 1;
+  class_index["train"] = 9;
+
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", class_index, false, SequentialSampler(0, 6));
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 6);
+}
+
 TEST_F(MindDataTestPipeline, TestVOCDetection) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCDetection.";
 

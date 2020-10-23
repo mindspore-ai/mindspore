@@ -351,4 +351,32 @@ Status SaveToDisk::TransfromTensor(const unsigned char *src, const TensorShape &
 }
 #endif
 
+TreeGetters::TreeGetters() {
+  tree_adapter_ = std::make_unique<TreeAdapter>();
+  dataset_size_ = -1;
+}
+
+Status TreeGetters::Init(std::shared_ptr<api::Dataset> d) { return tree_adapter_->BuildAndPrepare(std::move(d), 1); }
+
+Status TreeGetters::GetDatasetSize(int64_t *dataset_size) {
+  if (dataset_size_ == -1) {
+    std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+    CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+    RETURN_IF_NOT_OK(root->GetDatasetSize(dataset_size));
+    dataset_size_ = *dataset_size;
+    TensorRow row;
+    if (*dataset_size == -1) {
+      int64_t num_rows = 0;
+      RETURN_IF_NOT_OK(tree_adapter_->GetNext(&row));
+      while (row.size() != 0) {
+        num_rows++;
+        RETURN_IF_NOT_OK(tree_adapter_->GetNext(&row));
+      }
+      dataset_size_ = num_rows;
+    }
+  }
+
+  *dataset_size = dataset_size_;
+  return Status::OK();
+}
 }  // namespace mindspore::dataset

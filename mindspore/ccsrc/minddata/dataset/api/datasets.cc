@@ -179,6 +179,26 @@ Dataset::Dataset() {
   rows_per_buffer_ = cfg->rows_per_buffer();
   connector_que_size_ = cfg->op_connector_size();
   worker_connector_size_ = cfg->worker_connector_size();
+  tree_getters_ = std::make_shared<TreeGetters>();
+}
+
+int64_t Dataset::GetDatasetSize() {
+  int64_t dataset_size;
+  auto ds = shared_from_this();
+  Status rc;
+  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  rc = runtime_context->Init();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetDatasetSize: Initializing RuntimeContext failed.";
+    return -1;
+  }
+  rc = tree_getters_->Init(ds);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetDatasetSize: Initializing TreeGetters failed.";
+    return -1;
+  }
+  rc = tree_getters_->GetDatasetSize(&dataset_size);
+  return rc.IsError() ? -1 : dataset_size;
 }
 
 // Constructor to initialize the cache
