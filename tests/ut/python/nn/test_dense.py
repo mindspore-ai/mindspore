@@ -19,6 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.ops import operations as P
 from mindspore.common.api import _executor
 from ..ut_filter import non_graph_engine
 
@@ -32,6 +33,24 @@ def test_dense_none():
 def test_dense_str_activation():
     dense = nn.Dense(1, 1, activation='relu')
     assert isinstance(dense.activation, nn.ReLU)
+
+    input_data = Tensor(np.random.randint(0, 255, [1, 1]).astype(np.float32))
+    dense(input_data)
+
+
+@non_graph_engine
+def test_dense_nn_activation_():
+    dense = nn.Dense(1, 1, activation=nn.ReLU())
+    assert isinstance(dense.activation, nn.ReLU)
+
+    input_data = Tensor(np.random.randint(0, 255, [1, 1]).astype(np.float32))
+    dense(input_data)
+
+
+@non_graph_engine
+def test_dense_ops_activation_():
+    dense = nn.Dense(1, 1, activation=P.ReLU())
+    assert isinstance(dense.activation, P.ReLU)
 
     input_data = Tensor(np.random.randint(0, 255, [1, 1]).astype(np.float32))
     dense(input_data)
