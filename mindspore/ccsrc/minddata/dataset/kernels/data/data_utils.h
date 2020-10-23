@@ -19,7 +19,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#ifndef ENABLE_ANDROID
 #include <unordered_map>
+#endif
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/data_type.h"
@@ -177,6 +179,7 @@ Status BatchTensorToTensorVector(const std::shared_ptr<Tensor> &input, std::vect
 /// \return Status ok/error
 Status TensorVectorToBatchTensor(const std::vector<std::shared_ptr<Tensor>> &input, std::shared_ptr<Tensor> *output);
 
+#ifndef ENABLE_ANDROID
 /// Helper method that uniques the input tensor
 /// @tparam T type of the tensor
 /// \param input[in] input 1d tensor
@@ -197,7 +200,7 @@ Status UniqueHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 /// \return Status ok/error
 Status Unique(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
               std::shared_ptr<Tensor> *output_idx, std::shared_ptr<Tensor> *output_cnt);
-
+#endif
 }  // namespace dataset
 }  // namespace mindspore
 

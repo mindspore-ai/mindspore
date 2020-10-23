@@ -23,6 +23,7 @@ namespace mindspore {
 namespace dataset {
 
 Status UniqueOp::Compute(const TensorRow &input, TensorRow *output) {
+#ifndef ENABLE_ANDROID
   IO_CHECK_VECTOR(input, output);
   CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor");
 
@@ -43,10 +44,10 @@ Status UniqueOp::Compute(const TensorRow &input, TensorRow *output) {
   std::shared_ptr<Tensor> out_cnt;
 
   RETURN_IF_NOT_OK(Unique(in_tensor, &out, &out_idx, &out_cnt));
-
   output->push_back(out);
   output->push_back(out_idx);
   output->push_back(out_cnt);
+#endif
   return Status::OK();
 }
 }  // namespace dataset
