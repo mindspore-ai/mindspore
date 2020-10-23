@@ -164,7 +164,7 @@ int ConvolutionDepthwise3x3Int8CPUKernel::Run() {
 
   if (sliding_->top_ > 0 || sliding_->bottom_ < conv_param_->output_h_ || sliding_->left_ > 0 ||
       sliding_->right_ < conv_param_->output_w_) {
-    ConvDw3x3PadInt8(output_ptr_, input_ptr_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), conv_param_,
+    ConvDw3x3Int8Pad(output_ptr_, input_ptr_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), conv_param_,
                      sliding_);
   }
   ret = ParallelLaunch(this->context_->thread_pool_, ConvDw3x3Int8Run, this, conv_param_->thread_num_);
