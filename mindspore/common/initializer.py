@@ -19,7 +19,7 @@ import math
 from functools import reduce
 import numpy as np
 from scipy.stats import truncnorm
-from .seed import _get_graph_seed
+from .seed import get_seed, _get_graph_seed
 from . import dtype as mstype
 from .tensor import Tensor, MetaTensor
 from .._c_expression import random_normal
@@ -44,7 +44,9 @@ class Initializer:
 
     @property
     def seed(self):
-        seed_ = self._seed if self._seed is not None else 1
+        seed_ = self._seed if self._seed is not None else get_seed()
+        if seed_ is None:
+            seed_ = 1
         _, seed = _get_graph_seed(seed_, "init")
         return seed
 
@@ -410,7 +412,7 @@ def initializer(init, shape=None, dtype=mstype.float32):
         dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: mindspore.float32.
 
     Returns:
-        Union[Tensor, Initializer], When `init` is Tensor, the return is Tensor object,
+        Union[Tensor, MetaTensor], When `init` is Tensor, the return is Tensor object,
         otherwise the return is Initialize object.
 
     Examples:
