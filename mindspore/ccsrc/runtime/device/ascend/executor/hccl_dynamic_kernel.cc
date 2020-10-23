@@ -87,11 +87,7 @@ void HcclDynamicKernel::StaticShapeExecute() {
 
 void HcclDynamicKernel::Execute() {
   MS_LOG(INFO) << "Start Execute";
-  if (!is_dynamic_shape_) {
-    MS_LOG(INFO) << "Not Dynamic, call hcom api";
-    StaticShapeExecute();
-    return;
-  }
+
   auto handle = HcclExecutorManager::GetInstance().handle();
   auto EnqueueHcomOperation =
     (HcclResult(*)(ge::HcomOpertion, std::function<void(HcclResult status)>))dlsym(handle, "EnqueueHcomOpertion");

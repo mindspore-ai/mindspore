@@ -76,6 +76,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void LaunchDataDump(GraphId graph_id);
 
   rtContext_t rt_context_{nullptr};
+  rtContext_t rt_context_hccl_{nullptr};
   bool initialized_{false};
   unordered_map<GraphId, vector<std::shared_ptr<TaskInfo>>> task_map_;
   unordered_map<GraphId, std::shared_ptr<ge::model_runner::DavinciModel>> graph_model_map_;
