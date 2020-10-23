@@ -30,23 +30,21 @@ from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
 from mindspore.common import set_seed
 
+
+parser = argparse.ArgumentParser(description='MindSpore Lenet Example')
+parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU', 'CPU'],
+                    help='device where the code will be implemented (default: Ascend)')
+parser.add_argument('--data_path', type=str, default="./Data",
+                    help='path where the dataset is saved')
+parser.add_argument('--ckpt_path', type=str, default="./ckpt", help='if is test, must provide\
+                    path where the trained ckpt file')
+args = parser.parse_args()
 set_seed(1)
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='MindSpore Lenet Example')
-    parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU', 'CPU'],
-                        help='device where the code will be implemented (default: Ascend)')
-    parser.add_argument('--data_path', type=str, default="./Data",
-                        help='path where the dataset is saved')
-    parser.add_argument('--ckpt_path', type=str, default="./ckpt", help='if is test, must provide\
-                        path where the trained ckpt file')
-
-    args = parser.parse_args()
-
-
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-    ds_train = create_dataset(os.path.join(args.data_path, "train"),
-                              cfg.batch_size)
+    ds_train = create_dataset(os.path.join(args.data_path, "train"), cfg.batch_size)
     if ds_train.get_dataset_size() == 0:
         raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
 

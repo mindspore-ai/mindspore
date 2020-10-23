@@ -109,7 +109,7 @@ def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=N
         raise ValueError(f'{arg_name} {prim_name} must be legal value, but got `{arg_value}`.')
     if type_mismatch or not rel_fn(arg_value, value):
         rel_str = Rel.get_strs(rel).format(value)
-        raise type_except(f'{arg_name} {prim_name} should be an {type(arg_type).__name__} and must {rel_str}, '
+        raise type_except(f'{arg_name} {prim_name} should be an {arg_type.__name__} and must {rel_str}, '
                           f'but got `{arg_value}` with type `{type(arg_value).__name__}`.')
 
     return arg_value
@@ -130,7 +130,7 @@ def check_is_number(arg_value, arg_type, arg_name=None, prim_name=None):
         if math.isinf(arg_value) or math.isnan(arg_value) or np.isinf(arg_value) or np.isnan(arg_value):
             raise ValueError(f'{arg_name} {prim_name} must be legal float, but got `{arg_value}`.')
         return arg_value
-    raise TypeError(f'{arg_name} {prim_name} must be float, but got `{type(arg_value).__name__}`')
+    raise TypeError(f'{arg_name} {prim_name} must be {arg_type.__name__}, but got `{type(arg_value).__name__}`')
 
 
 def check_number_range(arg_value, lower_limit, upper_limit, rel, value_type, arg_name=None, prim_name=None):
@@ -146,7 +146,8 @@ def check_number_range(arg_value, lower_limit, upper_limit, rel, value_type, arg
     arg_name = f'`{arg_name}`' if arg_name else ''
     type_mismatch = not isinstance(arg_value, (np.ndarray, np.generic, value_type)) or isinstance(arg_value, bool)
     if type_mismatch:
-        raise TypeError(f'{arg_name} {prim_name} must be `{value_type}`, but got `{type(arg_value).__name__}`.')
+        raise TypeError("{} {} must be `{}`,  but got `{}`.".format(
+            arg_name, prim_name, value_type.__name__, type(arg_value).__name__))
     if not rel_fn(arg_value, lower_limit, upper_limit):
         rel_str = Rel.get_strs(rel).format(lower_limit, upper_limit)
         raise ValueError("{} {} should be in range of {}, but got {:.3e} with type `{}`.".format(
