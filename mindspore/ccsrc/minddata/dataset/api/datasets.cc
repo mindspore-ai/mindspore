@@ -880,13 +880,14 @@ Status ValidateDatasetColumnParam(const std::string &dataset_name, const std::st
   for (uint32_t i = 0; i < columns.size(); ++i) {
     if (columns[i].empty()) {
       std::string err_msg = dataset_name + ":" + column_param + "[" + std::to_string(i) + "] must not be empty";
+      MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   std::set<std::string> columns_set(columns.begin(), columns.end());
   if (columns_set.size() != columns.size()) {
-    // others";
     std::string err_msg = dataset_name + ":" + column_param + ": Every column name should not be same with others";
+    MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
