@@ -65,7 +65,7 @@ class PostTrainingQuantizer : public Quantizer {
   int quant_min{INT8_MIN};
 
  private:
-  bool per_channel_;
+  bool per_channel_{true};
 
   TypeId target_type_{kNumberTypeInt8};
 

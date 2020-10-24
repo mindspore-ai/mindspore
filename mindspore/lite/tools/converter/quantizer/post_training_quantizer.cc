@@ -798,6 +798,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
       primitive_c->SetQuantType(schema::QuantType_PostTraining);
       continue;
     } else if (op_type != PrimitiveType_Conv2D && op_type != PrimitiveType_DepthwiseConv2D &&
+               op_type != PrimitiveType_DeConv2D && op_type != PrimitiveType_DeDepthwiseConv2D &&
                op_type != PrimitiveType_FullConnection) {
       for (size_t i = 1; i < cnode->inputs().size(); i++) {
         auto input_node = cnode->input(i);
@@ -847,7 +848,8 @@ STATUS PostTrainingQuantizer::QuantNode() {
       // do weight quant
       auto weight = cnode->input(2);
       bool perchannel = per_channel_;
-      if (op_type == PrimitiveType_FullConnection) {
+      if (op_type == PrimitiveType_FullConnection || op_type == PrimitiveType_DeConv2D ||
+          op_type == PrimitiveType_DeDepthwiseConv2D) {
         perchannel = false;
       }
       DoWeightQuant(weight, primitive_c, perchannel);
