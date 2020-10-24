@@ -467,7 +467,6 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const AbstractFunctionPtr &func) {
   } else {
     MS_LOG(EXCEPTION) << "Cannot GetEvaluator from AbstractFunction";
   }
-  return nullptr;
 }
 
 EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {

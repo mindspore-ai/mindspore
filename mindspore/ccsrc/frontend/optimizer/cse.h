@@ -46,7 +46,7 @@ class CSE {
                  std::unordered_map<std::size_t, std::vector<AnfNodePtr>> *groups) const;
 };
 
-BasePtr AbsOf(const AnfNodePtr &node);
+BasePtr AbsOf(const AnfNodePtr &node, bool ignore_fg_abs_tracking_id = false);
 }  // namespace opt
 }  // namespace mindspore
 

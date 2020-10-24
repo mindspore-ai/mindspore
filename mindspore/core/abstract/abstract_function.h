@@ -113,6 +113,8 @@ class FuncGraphAbstractClosure : public AbstractFuncAtom {
 
   AnfNodePtr tracking_id() const override { return tracking_id_.lock(); }
 
+  void set_tracking_id(AnfNodePtr node) override { tracking_id_ = AnfNodeWeakPtr(node); }
+
   AbstractFunctionPtr Copy() const override {
     return std::make_shared<FuncGraphAbstractClosure>(func_graph_, context_, tracking_id());
   }

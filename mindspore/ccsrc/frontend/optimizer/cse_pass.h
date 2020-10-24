@@ -44,8 +44,6 @@ class CSEPass : public CSE {
  private:
   bool report_changes_;
 };
-
-BasePtr AbsOf(const AnfNodePtr &node);
 }  // namespace opt
 }  // namespace mindspore
 
