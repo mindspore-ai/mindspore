@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/arm/int8/resize_int8.h"
 #include <vector>
 #include "include/errorcode.h"
-#include "nnacl/int8/resize.h"
+#include "nnacl/int8/resize_int8.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"

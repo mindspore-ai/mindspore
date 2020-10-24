@@ -17,7 +17,7 @@
 #include "src/ops/quant_dtype_cast.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/int8/quant_dtype_cast.h"
+#include "nnacl/int8/quant_dtype_cast_int8.h"
 
 namespace mindspore {
 namespace lite {

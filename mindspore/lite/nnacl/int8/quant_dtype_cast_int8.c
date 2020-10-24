@@ -15,7 +15,7 @@
  */
 
 #include <math.h>
-#include "nnacl/int8/quant_dtype_cast.h"
+#include "nnacl/int8/quant_dtype_cast_int8.h"
 #include "nnacl/errorcode.h"
 
 int DoDequantizeInt8ToFp32(int8_t *quant_values, float *real_values, float scale, int32_t zp, int size) {

@@ -18,7 +18,7 @@
 #include <string>
 #include "include/errorcode.h"
 #include "nnacl/errorcode.h"
-#include "nnacl/int8/pad.h"
+#include "nnacl/int8/pad_int8.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 

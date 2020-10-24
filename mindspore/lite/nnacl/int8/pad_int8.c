@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/int8/pad.h"
+#include "nnacl/int8/pad_int8.h"
 #include "nnacl/common_func.h"
 #include "nnacl/errorcode.h"
 
