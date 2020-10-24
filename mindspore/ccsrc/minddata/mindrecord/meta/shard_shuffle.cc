@@ -39,7 +39,7 @@ int64_t ShardShuffle::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
   if (replacement_) {
     return no_of_samples_ == 0 ? dataset_size : no_of_samples_;
   }
-  return dataset_size;
+  return no_of_samples_ == 0 ? dataset_size : std::min(dataset_size, no_of_samples_);
 }
 
 MSRStatus ShardShuffle::Execute(ShardTask &tasks) {
@@ -67,6 +67,14 @@ MSRStatus ShardShuffle::Execute(ShardTask &tasks) {
       std::swap(tasks, new_tasks);
     } else {
       std::shuffle(tasks.permutation_.begin(), tasks.permutation_.end(), std::default_random_engine(shuffle_seed_));
+      auto total_no = static_cast<int64_t>(tasks.Size());
+      if (no_of_samples_ > 0 && no_of_samples_ < total_no) {
+        ShardTask new_tasks;
+        for (size_t i = 0; i < no_of_samples_; ++i) {
+          new_tasks.InsertTask(tasks.GetTaskByID(i));
+        }
+        std::swap(tasks, new_tasks);
+      }
     }
   } else {  // shuffle unit like: (a1, b1, c1),(a2, b2, c2),..., (an, bn, cn)
     uint32_t individual_size = tasks.Size() / tasks.categories;

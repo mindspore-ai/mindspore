@@ -35,33 +35,33 @@ int64_t ShardSequentialSample::GetNumSamples(int64_t dataset_size, int64_t num_c
   if (per_ > kEpsilon && per_ <= 1.0f) {
     return dataset_size * kEpsilon;
   }
-  return no_of_samples_;
+  return std::min(static_cast<int64_t>(no_of_samples_), dataset_size);
 }
 
 MSRStatus ShardSequentialSample::Execute(ShardTask &tasks) {
-  int total_no = static_cast<int>(tasks.Size());
-  int taking;
+  int64_t total_no = static_cast<int64_t>(tasks.Size());
+  int64_t taking;
   if (no_of_samples_ == 0 && (per_ >= -kEpsilon && per_ <= kEpsilon)) {
     taking = total_no;
   } else if (per_ > kEpsilon && per_ <= 1.0f) {
     taking = total_no * kEpsilon;
   } else {
-    taking = no_of_samples_;
+    taking = std::min(static_cast<int64_t>(no_of_samples_), total_no);
   }
 
   if (tasks.permutation_.empty()) {
     ShardTask new_tasks;
-    total_no = static_cast<int>(tasks.Size());
-    for (int i = offset_; i < taking + offset_; ++i) {
+    total_no = static_cast<int64_t>(tasks.Size());
+    for (size_t i = offset_; i < taking + offset_; ++i) {
       new_tasks.InsertTask(tasks.GetTaskByID(i % total_no));
     }
     std::swap(tasks, new_tasks);
   } else {  // shuffled
     ShardTask new_tasks;
-    if (taking > static_cast<int>(tasks.permutation_.size())) {
+    if (taking > static_cast<int64_t>(tasks.permutation_.size())) {
       return FAILED;
     }
-    total_no = static_cast<int>(tasks.permutation_.size());
+    total_no = static_cast<int64_t>(tasks.permutation_.size());
     for (size_t i = offset_; i < taking + offset_; ++i) {
       new_tasks.InsertTask(tasks.GetTaskByID(tasks.permutation_[i % total_no]));
     }

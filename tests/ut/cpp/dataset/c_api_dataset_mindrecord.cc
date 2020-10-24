@@ -234,7 +234,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess6) {
   std::string file_path1 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
   std::vector<std::string> file_list = {file_path1};
 
-  // Check sequential sampler, output number is 10, with duplicate samples(a little weird, wait to fix)
+  // Check sequential sampler, output number is 5
   std::shared_ptr<Dataset> ds1 = MindData(file_list, {}, SequentialSampler(0, 10));
   EXPECT_NE(ds1, nullptr);
 
@@ -255,7 +255,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess6) {
   EXPECT_NE(ds5, nullptr);
 
   std::vector<std::shared_ptr<Dataset>> ds = {ds1, ds2, ds3, ds4, ds5};
-  std::vector<int32_t> expected_samples = {10, 5, 2, 3, 3};
+  std::vector<int32_t> expected_samples = {5, 5, 2, 3, 3};
 
   for (int32_t i = 0; i < ds.size(); i++) {
     // Create an iterator over the result of the above dataset
