@@ -70,5 +70,6 @@ PrimitiveC *InstanceNormCreator(const schema::Primitive *primitive) {
 }
 Registry InstanceNormRegistry(schema::PrimitiveType_InstanceNorm, InstanceNormCreator);
 #endif
+
 }  // namespace lite
 }  // namespace mindspore

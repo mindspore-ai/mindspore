@@ -92,14 +92,17 @@ int SubInt8CPUKernel::DoExecute(int task_id) {
   MS_ASSERT(op_parameter_->thread_num_ != 0);
   int stride = UP_DIV(element_num, op_parameter_->thread_num_);
   int count = MSMIN(stride, element_num - stride * task_id);
+  if (count <= 0) {
+    return RET_OK;
+  }
 
   auto ret = RET_OK;
   if (broadcast_) {
-    ret = SubInt8(tile0_data_ + task_id * count, tile1_data_ + task_id * count, output_data_ + task_id * count, count,
-                  &param_);
+    ret = SubInt8(tile0_data_ + task_id * stride, tile1_data_ + task_id * stride, output_data_ + task_id * stride,
+                  count, &param_);
   } else {
-    ret = SubInt8(input0_data_ + task_id * count, input1_data_ + task_id * count, output_data_ + task_id * count, count,
-                  &param_);
+    ret = SubInt8(input0_data_ + task_id * stride, input1_data_ + task_id * stride, output_data_ + task_id * stride,
+                  count, &param_);
   }
 
   if (ret != RET_OK) {
