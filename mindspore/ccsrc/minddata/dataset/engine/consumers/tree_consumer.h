@@ -156,29 +156,17 @@ class TreeGetters : public TreeConsumer {
   TreeGetters();
   Status Init(std::shared_ptr<api::Dataset> d) override;
   Status GetDatasetSize(int64_t *size);
-  Status GetBatchSize(int32_t *batch_size) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
-  Status GetRepeatCount(int32_t *repeat_count) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
-  Status GetNumClasses(int32_t *num_classes) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
-  Status GetOutputShapes(std::vector<TensorShape> *shapes) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
-  Status GetOutputTypes(std::vector<DataType> *types) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
-  Status GetOutputNames(std::vector<std::string> *names) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
-
+  Status GetOutputTypes(std::vector<DataType> *types);
+  Status GetOutputShapes(std::vector<TensorShape> *shapes);
+  bool isInitialized();
   std::string Name() override { return "TreeGetters"; }
+  Status GetRow(TensorRow *r);
 
  private:
   int64_t dataset_size_;
+  TensorRow row_;
+  bool init_flag_;  // indicate whether the tree has initialized
+  bool row_flag_;   // indicate whether the first row has been stored in row_
 };
 
 }  // namespace mindspore::dataset

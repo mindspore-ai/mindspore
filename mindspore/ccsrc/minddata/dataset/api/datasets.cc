@@ -192,13 +192,43 @@ int64_t Dataset::GetDatasetSize() {
     MS_LOG(ERROR) << "GetDatasetSize: Initializing RuntimeContext failed.";
     return -1;
   }
-  rc = tree_getters_->Init(ds);
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetDatasetSize: Initializing TreeGetters failed.";
-    return -1;
+  if (!tree_getters_->isInitialized()) {
+    rc = tree_getters_->Init(ds);
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "GetDatasetSize: Initializing TreeGetters failed.";
+      return -1;
+    }
   }
   rc = tree_getters_->GetDatasetSize(&dataset_size);
   return rc.IsError() ? -1 : dataset_size;
+}
+
+std::vector<DataType> Dataset::GetOutputTypes() {
+  std::vector<DataType> types;
+  Status s;
+  if (!tree_getters_->isInitialized()) {
+    s = tree_getters_->Init(shared_from_this());
+    if (s.IsError()) {
+      MS_LOG(ERROR) << "GetDatasetSize: Initializing RuntimeContext failed.";
+      return types;
+    }
+  }
+  tree_getters_->GetOutputTypes(&types);
+  return types;
+}
+
+std::vector<TensorShape> Dataset::GetOutputShapes() {
+  std::vector<TensorShape> shapes;
+  Status s;
+  if (!tree_getters_->isInitialized()) {
+    s = tree_getters_->Init(shared_from_this());
+    if (s.IsError()) {
+      MS_LOG(ERROR) << "GetDatasetSize: Initializing RuntimeContext failed.";
+      return shapes;
+    }
+  }
+  tree_getters_->GetOutputShapes(&shapes);
+  return shapes;
 }
 
 // Constructor to initialize the cache

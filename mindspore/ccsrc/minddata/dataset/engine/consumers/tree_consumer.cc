@@ -351,12 +351,27 @@ Status SaveToDisk::TransfromTensor(const unsigned char *src, const TensorShape &
 }
 #endif
 
-TreeGetters::TreeGetters() {
+TreeGetters::TreeGetters() : dataset_size_(-1), init_flag_(false), row_flag_(false) {
   tree_adapter_ = std::make_unique<TreeAdapter>();
-  dataset_size_ = -1;
 }
 
-Status TreeGetters::Init(std::shared_ptr<api::Dataset> d) { return tree_adapter_->BuildAndPrepare(std::move(d), 1); }
+Status TreeGetters::Init(std::shared_ptr<api::Dataset> d) {
+  Status s = tree_adapter_->BuildAndPrepare(std::move(d));
+  if (!s.IsError()) {
+    init_flag_ = true;
+  }
+  return s;
+}
+
+bool TreeGetters::isInitialized() { return init_flag_; }
+
+Status TreeGetters::GetRow(TensorRow *row) {
+  if (row_flag_ == false) {
+    RETURN_IF_NOT_OK(tree_adapter_->GetNext(row));
+    row_flag_ = true;
+  }
+  return Status::OK();
+}
 
 Status TreeGetters::GetDatasetSize(int64_t *dataset_size) {
   if (dataset_size_ == -1) {
@@ -364,10 +379,10 @@ Status TreeGetters::GetDatasetSize(int64_t *dataset_size) {
     CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
     RETURN_IF_NOT_OK(root->GetDatasetSize(dataset_size));
     dataset_size_ = *dataset_size;
-    TensorRow row;
     if (*dataset_size == -1) {
+      RETURN_IF_NOT_OK(GetRow(&row_));
       int64_t num_rows = 0;
-      RETURN_IF_NOT_OK(tree_adapter_->GetNext(&row));
+      TensorRow row = row_;
       while (row.size() != 0) {
         num_rows++;
         RETURN_IF_NOT_OK(tree_adapter_->GetNext(&row));
@@ -377,6 +392,24 @@ Status TreeGetters::GetDatasetSize(int64_t *dataset_size) {
   }
 
   *dataset_size = dataset_size_;
+  return Status::OK();
+}
+
+Status TreeGetters::GetOutputTypes(std::vector<DataType> *types) {
+  RETURN_IF_NOT_OK(GetRow(&row_));
+  for (auto ts : row_) {
+    DataType dt = ts->type();
+    types->push_back(dt);
+  }
+  return Status::OK();
+}
+
+Status TreeGetters::GetOutputShapes(std::vector<TensorShape> *shapes) {
+  RETURN_IF_NOT_OK(GetRow(&row_));
+  for (auto ts : row_) {
+    TensorShape t = ts->shape();
+    shapes->push_back(t);
+  }
   return Status::OK();
 }
 }  // namespace mindspore::dataset
