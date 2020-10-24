@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/int8/common_func.h"
+#include "nnacl/int8/common_func_int8.h"
 #include "nnacl/quantization/fixed_point.h"
 
 void PostConvFuncCommInt8(const int32_t *in, int8_t *out, const int32_t *bias, size_t oc, size_t plane,

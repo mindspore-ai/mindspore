@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "nnacl/int8/deconv.h"
+#include "nnacl/int8/deconv_int8.h"
 #include "nnacl/int8/matmul_int8.h"
-#include "nnacl/int8/common_func.h"
+#include "nnacl/int8/common_func_int8.h"
 int DeConvPostInt8C8(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t *out, int output_channel,
                      ConvParameter *conv_param) {
   /* row8x8-major(ih*iw x oc*kh*kw)  ->  row8-major(oh*ow x oc) */

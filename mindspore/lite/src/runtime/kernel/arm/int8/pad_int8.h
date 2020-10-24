@@ -21,7 +21,7 @@
 #include "src/lite_kernel.h"
 #include "src/runtime/runtime_api.h"
 #include "nnacl/pad_parameter.h"
-#include "nnacl/int8/pad.h"
+#include "nnacl/int8/pad_int8.h"
 
 namespace mindspore::kernel {
 class PadInt8CPUKernel : public LiteKernel {

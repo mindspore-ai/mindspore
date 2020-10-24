@@ -21,7 +21,7 @@
 #include "src/runtime/kernel/arm/base/fullconnection_base.h"
 #include "include/context.h"
 #include "nnacl/quantization/quantize.h"
-#include "nnacl/int8/common_func.h"
+#include "nnacl/int8/common_func_int8.h"
 
 using mindspore::lite::InnerContext;
 

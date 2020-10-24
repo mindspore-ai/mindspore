@@ -17,7 +17,7 @@
 #include "nnacl/int8/conv_int8.h"
 #include <string.h>
 #include "nnacl/winograd_transform.h"
-#include "nnacl/int8/common_func.h"
+#include "nnacl/int8/common_func_int8.h"
 
 void Conv3x3Int8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, int oc, int ic8, size_t real_cal_num) {
   int oc4 = UP_DIV(oc, C4NUM);

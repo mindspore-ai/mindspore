@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <math.h>
-#include "nnacl/int8/resize.h"
+#include "nnacl/int8/resize_int8.h"
 #include "nnacl/common_func.h"
 #include "nnacl/quantization/fixed_point.h"
 #include "nnacl/errorcode.h"
