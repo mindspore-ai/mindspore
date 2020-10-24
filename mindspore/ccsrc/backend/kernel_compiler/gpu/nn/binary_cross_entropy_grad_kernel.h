@@ -67,14 +67,13 @@ class BinaryCrossEntropyGradGpuKernel : public GpuKernel {
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_ * sizeof(T));
     input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(input_size_ * sizeof(T));
     if (reduction_ == 0) {
       input_size_list_.push_back(input_size_ * sizeof(T));
-      output_size_list_.push_back(input_size_ * sizeof(T));
     } else {
       input_size_list_.push_back(sizeof(T));
-      output_size_list_.push_back(sizeof(T));
     }
+    input_size_list_.push_back(input_size_ * sizeof(T));
+    output_size_list_.push_back(input_size_ * sizeof(T));
   }
 
  private:

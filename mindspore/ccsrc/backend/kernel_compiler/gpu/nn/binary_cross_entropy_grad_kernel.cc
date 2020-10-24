@@ -26,5 +26,13 @@ MS_REG_GPU_KERNEL_ONE(BinaryCrossEntropyGrad,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       BinaryCrossEntropyGradGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(BinaryCrossEntropyGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      BinaryCrossEntropyGradGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore
