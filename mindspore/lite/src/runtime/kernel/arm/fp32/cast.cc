@@ -77,6 +77,9 @@ int CastCPUKernel::DoCast(int thread_id) {
     } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeFloat16) {
       Float32ToFp16(reinterpret_cast<float *>(input->data_c()) + offset,
                     reinterpret_cast<uint16_t *>(output_data) + offset, data_num);
+    } else if (input_data_type == kNumberTypeInt32 &&
+               (output_data_type == kNumberTypeInt32 || output_data_type == kNumberTypeInt64)) {
+      memcpy(output_data, input->data_c(), data_num * sizeof(int32_t));
     } else {
       MS_LOG(ERROR) << "Unsupported datatype from " << input_data_type << " to " << output_data_type;
       return RET_ERROR;

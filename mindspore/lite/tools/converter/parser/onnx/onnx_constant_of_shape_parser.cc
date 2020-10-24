@@ -16,6 +16,7 @@
 
 #include "tools/converter/parser/onnx/onnx_constant_of_shape_parser.h"
 #include <memory>
+#include "tools/converter/parser/onnx/onnx_model_parser.h"
 
 namespace mindspore {
 namespace lite {
@@ -41,13 +42,25 @@ STATUS OnnxConstantOfShapeParser::Parse(const onnx::GraphProto &onnx_graph, cons
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "value") {
-      if (onnx_node_attr.type() == onnx::AttributeProto_AttributeType_TENSOR) {
-        auto tensor = onnx_node_attr.t();
-        if (tensor.data_type() == onnx::AttributeProto_AttributeType_FLOAT) {
-          attr->value = onnx_node_attr.f();
-        } else if (tensor.data_type() == onnx::AttributeProto_AttributeType_INT) {
-          attr->value = static_cast<int32_t>(onnx_node_attr.i());
-        }
+      switch (onnx_node_attr.type()) {
+        case onnx::AttributeProto_AttributeType_FLOAT:
+          attr->dataType = OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType_FLOAT);
+          attr->value.push_back(onnx_node_attr.f());
+          break;
+        case onnx::AttributeProto_AttributeType_INT:
+          attr->dataType = OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType_INT32);
+          attr->value.push_back(static_cast<float>(onnx_node_attr.i()));
+          break;
+        case onnx::AttributeProto_AttributeType_TENSOR: {
+          auto tensor = onnx_node_attr.t();
+          auto ret = GetTensorDataFromOnnx(tensor, &attr->value, &attr->dataType);
+          if (ret != RET_OK) {
+            return ret;
+          }
+        } break;
+        default:
+          MS_LOG(ERROR) << "The data type is not supported.";
+          return RET_ERROR;
       }
     }
   }

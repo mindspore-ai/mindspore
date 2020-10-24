@@ -26,3 +26,14 @@ int ConstantOfShape(float *output, int tid, ConstantOfShapeParameter *param) {
   }
   return NNACL_OK;
 }
+
+int ConstantOfShapeInt(int32_t *output, int tid, ConstantOfShapeParameter *param) {
+  int size = param->unit_;
+  float data = param->value_;
+  int ind_st = MSMIN(tid * size, param->element_sz_);
+  int ind_end = MSMIN(param->element_sz_, (tid + 1) * size);
+  for (int i = ind_st; i < ind_end; ++i) {
+    output[i] = data;
+  }
+  return NNACL_OK;
+}

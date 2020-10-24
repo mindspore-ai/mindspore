@@ -28,6 +28,7 @@ namespace lite {
 namespace {
 constexpr int kSliceInputNum = 1;
 constexpr int kSliceOutputNum = 1;
+constexpr int kSliceMaxInputNum = 5;
 }  // namespace
 #ifdef PRIMITIVE_WRITEABLE
 int Slice::GetFormat() const { return this->primitive_->value.AsSlice()->format; }
@@ -175,6 +176,29 @@ int Slice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tens
   std::vector<int32_t> slice_size(GetSize());
   std::vector<int32_t> slice_axes(GetAxes());
   std::vector<int32_t> output_shape(input_shape.size());
+  if (inputs.size() == kSliceMaxInputNum) {
+    if (slice_begin.empty() && inputs.at(1)->data_c() != nullptr) {
+      for (int i = 0; i < inputs.at(1)->ElementsNum(); i++) {
+        slice_begin.emplace_back(static_cast<int *>(inputs.at(1)->data_c())[i]);
+      }
+    }
+    if (slice_size.empty() && inputs.at(2)->data_c() != nullptr) {
+      for (int i = 0; i < inputs.at(2)->ElementsNum(); i++) {
+        auto end = static_cast<int *>(inputs.at(2)->data_c())[i];
+        auto size = end < 0 ? end : (end == INT32_MAX ? -1 : end - slice_begin[i]);
+        slice_size.emplace_back(size);
+      }
+    }
+    if (slice_axes.empty() && inputs.at(3)->data_c() != nullptr) {
+      for (int i = 0; i < inputs.at(3)->ElementsNum(); i++) {
+        slice_axes.emplace_back(static_cast<int *>(inputs.at(3)->data_c())[i]);
+      }
+    }
+  }
+  if (slice_begin.empty() || slice_size.empty() || slice_axes.empty()) {
+    MS_LOG(ERROR) << "Infershape failed.";
+    return RET_INFER_INVALID;
+  }
   begin.assign(input_shape.size(), 0);
   size.assign(input_shape.size(), -1);
   for (size_t i = 0; i < slice_axes.size(); ++i) {

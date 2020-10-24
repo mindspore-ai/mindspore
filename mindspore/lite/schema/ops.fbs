@@ -308,7 +308,8 @@ table Shape {
 }
 
 table ConstantOfShape{
-    value: float = 0;
+    dataType: int;
+    value: [float];
 }
 
 table Nchw2Nhwc {

@@ -41,7 +41,7 @@ class ConstantOfShapeCPUKernel : public LiteKernel {
 
  private:
   ConstantOfShapeParameter *param_;
-  float *out_ptr_;
+  void *out_ptr_;
 };
 }  // namespace mindspore::kernel
 

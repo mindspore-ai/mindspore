@@ -74,8 +74,8 @@ int NonMaxSuppressionCPUKernel::GetParams() {
   max_output_per_class_ = 0;
   if (in_tensors_.size() >= 3) {
     auto max_output_tensor = in_tensors_.at(kMaxOutputNumTensorIndex);
-    if (max_output_tensor != nullptr && reinterpret_cast<int64_t *>(max_output_tensor->data_c()) != nullptr) {
-      max_output_per_class_ = *(reinterpret_cast<int64_t *>(max_output_tensor->data_c()));
+    if (max_output_tensor != nullptr && reinterpret_cast<int32_t *>(max_output_tensor->data_c()) != nullptr) {
+      max_output_per_class_ = *(reinterpret_cast<int32_t *>(max_output_tensor->data_c()));
     }
   }
   iou_threshold_ = 0.0f;

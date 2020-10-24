@@ -54,7 +54,7 @@ Registry TopKRegistry(schema::PrimitiveType_TopK, TopKCreator);
 
 int TopK::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
-  if (inputs_.size() != kSingleNum || outputs_.size() != kDoubleNum) {
+  if ((inputs_.size() != kSingleNum && inputs_.size() != kDoubleNum) || outputs_.size() != kDoubleNum) {
     MS_LOG(ERROR) << "input size: " << inputs_.size() << ", output size: " << outputs_.size();
     return RET_INPUT_TENSOR_ERROR;
   }
@@ -74,6 +74,9 @@ int TopK::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   MS_ASSERT(topk_prim != nullptr);
   auto out_shape = input->shape();
   out_shape[out_shape.size() - 1] = GetK();
+  if (inputs_.size() == kDoubleNum && inputs_.at(1)->data_c() != nullptr) {
+    out_shape[out_shape.size() - 1] = reinterpret_cast<int *>(inputs_.at(1)->data_c())[0];
+  }
   output0->set_shape(out_shape);
   output1->set_shape(out_shape);
   return RET_OK;

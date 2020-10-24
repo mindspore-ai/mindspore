@@ -16,6 +16,7 @@
 
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include <vector>
+#include "tools/converter/parser/onnx/onnx_model_parser.h"
 
 namespace mindspore {
 namespace lite {
@@ -32,6 +33,36 @@ schema::PadMode OnnxNodeParser::GetOnnxPadMode(const onnx::AttributeProto &onnx_
     MS_LOG(ERROR) << "unsupported padMode";
     return schema::PadMode_NOTSET;
   }
+}
+
+STATUS OnnxNodeParser::GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value,
+                                             int *type) {
+  size_t data_count = 1;
+  std::for_each(onnx_tensor.dims().begin(), onnx_tensor.dims().end(), [&data_count](int dim) { data_count *= dim; });
+  switch (onnx_tensor.data_type()) {
+    case onnx::TensorProto_DataType_FLOAT:
+      *type = OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType_FLOAT);
+      for (size_t i = 0; i < data_count; i++) {
+        value->push_back(reinterpret_cast<const float *>(onnx_tensor.raw_data().data())[i]);
+      }
+      break;
+    case onnx::TensorProto_DataType_INT32:
+      *type = OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType_INT32);
+      for (size_t i = 0; i < data_count; i++) {
+        value->push_back(static_cast<float>(reinterpret_cast<const int32_t *>(onnx_tensor.raw_data().data())[i]));
+      }
+      break;
+    case onnx::TensorProto_DataType_INT64:
+      *type = OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType_INT32);
+      for (size_t i = 0; i < data_count; i++) {
+        value->push_back(static_cast<float>(reinterpret_cast<const int64_t *>(onnx_tensor.raw_data().data())[i]));
+      }
+      break;
+    default:
+      MS_LOG(ERROR) << "The data type is not supported.";
+      return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void OnnxNodeParser::Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr) {

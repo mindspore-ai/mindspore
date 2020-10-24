@@ -33,7 +33,18 @@ int ConstantOfShapeCPUKernel::Init() { return RET_OK; }
 int ConstantOfShapeCPUKernel::ReSize() { return RET_OK; }
 
 int ConstantOfShapeCPUKernel::DoExecute(int task_id) {
-  int ret = ConstantOfShape(out_ptr_, task_id, param_);
+  int ret = RET_ERROR;
+  switch (param_->data_type_) {
+    case kNumberTypeFloat32:
+      ret = ConstantOfShape(reinterpret_cast<float *>(out_ptr_), task_id, param_);
+      break;
+    case kNumberTypeInt32:
+      ret = ConstantOfShapeInt(reinterpret_cast<int32_t *>(out_ptr_), task_id, param_);
+      break;
+    default:
+      MS_LOG(ERROR) << "Constant of shape does not support the output data type.";
+      return RET_ERROR;
+  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConstantOfShapeRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return ret;
@@ -56,7 +67,17 @@ int ConstantOfShapeCPUKernel::Run() {
   int thread_num = MSMIN(param_->op_parameter_.thread_num_, param_->element_sz_);
   param_->unit_ = UP_DIV(param_->element_sz_, thread_num);
   param_->op_parameter_.thread_num_ = thread_num;
-  out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
+  switch (param_->data_type_) {
+    case kNumberTypeFloat32:
+      out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
+      break;
+    case kNumberTypeInt32:
+      out_ptr_ = reinterpret_cast<int32_t *>(out_tensors_.front()->MutableData());
+      break;
+    default:
+      MS_LOG(ERROR) << "Constant of shape does not support the output data type.";
+      return RET_ERROR;
+  }
   auto ret = ParallelLaunch(this->context_->thread_pool_, ConstantOfShapeRun, this, thread_num);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConstantOfShapeRun error error_code[" << ret << "]";
@@ -93,4 +114,5 @@ kernel::LiteKernel *CpuConstantOfShapeFp32KernelCreator(const std::vector<lite::
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ConstantOfShape, CpuConstantOfShapeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_ConstantOfShape, CpuConstantOfShapeFp32KernelCreator)
 }  // namespace mindspore::kernel

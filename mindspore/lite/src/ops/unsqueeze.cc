@@ -104,9 +104,7 @@ int Unsqueeze::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> o
         out_shape.emplace_back(1);
         ax_itr++;
       } else {
-        if (in_shape[in_itr] > 1) {
-          out_shape.emplace_back(in_shape[in_itr]);
-        }
+        out_shape.emplace_back(in_shape[in_itr]);
         in_itr++;
       }
     }

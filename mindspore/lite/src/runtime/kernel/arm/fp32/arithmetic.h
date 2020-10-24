@@ -83,6 +83,7 @@ class ArithmeticCPUKernel : public LiteKernel {
             break;
           default:
             arithmetic_run_ = ElementAdd;
+            arithmetic_run_int_ = ElementAddInt;
             break;
         }
         break;
