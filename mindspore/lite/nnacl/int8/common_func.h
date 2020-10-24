@@ -47,10 +47,6 @@ void ConvDwInt8Center(int8_t *dst, const int8_t *src, const int16_t *weight, con
                       size_t in_sh_step, size_t in_sw_step, size_t in_kh_step, size_t in_kw_step, int8_t *in_zp,
                       int32_t *out_zp, int32_t *out_multiplier, int32_t *left_shift, int32_t *right_shift,
                       int32_t *acc_min, int32_t *acc_max);
-void ConvDw3x3BorderPixelInt8(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, size_t height,
-                              size_t width, size_t in_kh_step, size_t in_kw_step, size_t channel, size_t in_zp,
-                              size_t out_zp, size_t out_multiplier, size_t left_shift, size_t right_shift,
-                              size_t acc_min, size_t acc_max);
 #endif
 
 #ifdef ENABLE_ARM32
@@ -71,6 +67,21 @@ void IndirectGemmInt8_4x4(int8_t *output, const int8_t *input, const int8_t *wei
 void DeconvDwInt8Center(int32_t *dst, const int16_t *src, const int16_t *weight, size_t height, size_t width,
                         size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,
                         size_t in_sw_step, size_t in_kh_step, size_t in_kw_step);
+void ConvDw3x3Int8Neon64(int8_t *output, const int8_t *input, const int16_t *weight, const int32_t *bias,
+                         int input_col_size, int input_row_size, int channel, int output_h, int output_w, int8_t in_zp,
+                         int32_t out_zp, int out_multiplier, int left_shift, int right_shift, int32_t acc_min,
+                         int32_t acc_max);
+void ConvDw3x3Int8Corner(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, size_t in_kh_step,
+                         size_t in_kw_step, size_t channel, size_t in_zp, size_t out_zp, size_t out_multiplier,
+                         size_t left_shift, size_t right_shift, size_t acc_min, size_t acc_max);
+void ConvDw3x3Int8Vertical(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias,
+                           size_t in_kh_step, size_t in_kw_step, size_t channel, size_t in_zp, size_t out_zp,
+                           size_t out_multiplier, size_t left_shift, size_t right_shift, size_t acc_min,
+                           size_t acc_max);
+void ConvDw3x3Int8Horizontal(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias,
+                             size_t in_kh_step, size_t in_kw_step, size_t channel, size_t in_zp, size_t out_zp,
+                             size_t out_multiplier, size_t left_shift, size_t right_shift, size_t acc_min,
+                             size_t acc_max);
 #endif
 #ifdef __cplusplus
 }

@@ -29,7 +29,7 @@ bool CheckIfUse3X3(const ConvParameter *conv_param, int channel);
 void ConvDwInt8(int8_t *output_data, int32_t *output_row, const int8_t *input_data, const int16_t *weight_data,
                 const int32_t *bias_data, const ConvParameter *conv_param, int task_id);
 
-void ConvDw3x3PadInt8(int8_t *output_data, const int8_t *input_data, const int16_t *weight_data,
+void ConvDw3x3Int8Pad(int8_t *output_data, const int8_t *input_data, const int16_t *weight_data,
                       const int32_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding);
 
 void ConvDw3x3Int8(int8_t *output_data, int8_t *buffer, const int8_t *input_data, const int16_t *weight_data,
@@ -43,13 +43,6 @@ void ConvDwSWInt8(int8_t *output_data, const int8_t *input_data, const int16_t *
 void DeconvDwInt8(int8_t *output_data, int32_t *output_buffer, const int16_t *input_data, const int16_t *weight_data,
                   const int32_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
                   int task_id);
-
-#ifdef ENABLE_ARM64
-void ConvDw3x3Int8Neon64(int8_t *output, const int8_t *input, const int16_t *weight, const int32_t *bias,
-                         int input_col_size, int input_row_size, int channel, int output_h, int output_w, int8_t in_zp,
-                         int32_t out_zp, int out_multiplier, int left_shift, int right_shift, int32_t acc_min,
-                         int32_t acc_max);
-#endif
 
 #ifdef __cplusplus
 }
