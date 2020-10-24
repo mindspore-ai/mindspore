@@ -224,6 +224,8 @@ class BatchOp : public ParallelOp {
   /// \return Status of the function
   Status GetDatasetSize(int64_t *dataset_size) override;
 
+  int64_t GetTreeBatchSize() override;
+
  protected:
   Status ComputeColMap() override;
 
