@@ -18,6 +18,7 @@
 #include <string>
 #include <set>
 #include "tools/common/node_util.h"
+#include "tools/converter/converter_context.h"
 #include "src/common/common.h"
 #include "src/common/utils.h"
 
@@ -52,12 +53,8 @@ STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
 STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   auto &graphInIdxes = graph->inputIndex;
-
-  if (this->inputDataDType == TypeId::kTypeUnknown) {
-    return RET_OK;
-  }
   if (this->inputDataDType != TypeId::kNumberTypeFloat32 && this->inputDataDType != TypeId::kNumberTypeUInt8 &&
-      this->inputDataDType != TypeId::kNumberTypeInt8) {
+      this->inputDataDType != TypeId::kNumberTypeInt8 && this->inputDataDType != TypeId::kTypeUnknown) {
     MS_LOG(ERROR) << "Invalid inputDataType: " << this->inputDataDType;
     return RET_ERROR;
   }
@@ -67,7 +64,9 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
     if (tensor->quantParams.empty() || !tensor->quantParams.front()->inited) {
       continue;
     }
-
+    int32_t tensorDataType = this->inputDataDType != TypeId::kTypeUnknown
+                               ? this->inputDataDType
+                               : TensorDataType::GetInstance()->GetTensorType(graphInIdx);
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
       auto nodeName = (*iter)->name;
       for (size_t inputIndexIdx = 0; inputIndexIdx < (*iter)->inputIndex.size(); inputIndexIdx++) {
@@ -75,9 +74,8 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
           STATUS status = RET_OK;
 
           // insert dtype cast node between input tensor and input node
-          if (this->inputDataDType != tensor->dataType) {
-            iter = InsertDTypeTransNode(graph, iter, kBefore, inputIndexIdx, this->inputDataDType, tensor->dataType,
-                                        &status);
+          if (tensorDataType != tensor->dataType && tensorDataType != kTypeUnknown) {
+            iter = InsertDTypeTransNode(graph, iter, kBefore, inputIndexIdx, tensorDataType, tensor->dataType, &status);
           }
 
           if (status != RET_OK) {
@@ -93,11 +91,8 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
 
 STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
-  if (outputDataDType == TypeId::kTypeUnknown) {
-    return RET_OK;
-  }
   if (this->outputDataDType != TypeId::kNumberTypeFloat32 && this->outputDataDType != TypeId::kNumberTypeUInt8 &&
-      this->outputDataDType != TypeId::kNumberTypeInt8) {
+      this->outputDataDType != TypeId::kNumberTypeInt8 && this->outputDataDType != TypeId::kTypeUnknown) {
     MS_LOG(ERROR) << "Invalid outputDataType: " << this->outputDataDType;
     return RET_ERROR;
   }
@@ -108,6 +103,9 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
     if (tensor->quantParams.empty() || !tensor->quantParams.front()->inited) {
       continue;
     }
+    int32_t tensorDataType = this->outputDataDType != TypeId::kTypeUnknown
+                               ? this->inputDataDType
+                               : TensorDataType::GetInstance()->GetTensorType(graphOutIdx);
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
       auto nodeName = (*iter)->name;
       MS_ASSERT(node != nullptr);
@@ -115,9 +113,8 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
         if ((*iter)->outputIndex.at(outputIndexIdx) == graphOutIdx) {
           // insert transNode
           STATUS status = RET_OK;
-          if (this->outputDataDType != tensor->dataType) {
-            iter = InsertDTypeTransNode(graph, iter, kAfter, outputIndexIdx, tensor->dataType, this->outputDataDType,
-                                        &status);
+          if (tensorDataType != tensor->dataType && tensorDataType != kTypeUnknown) {
+            iter = InsertDTypeTransNode(graph, iter, kAfter, outputIndexIdx, tensor->dataType, tensorDataType, &status);
           }
           if (status != RET_OK) {
             MS_LOG(ERROR) << "InsertDTypeTransNode after " << nodeName.c_str() << " failed";

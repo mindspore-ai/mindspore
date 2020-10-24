@@ -17,23 +17,42 @@
 #include <vector>
 #include <cmath>
 #include "tools/converter/legacy_optimizer/graph/tensor_quant_pass.h"
+#include "tools/converter/converter_context.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/common/tensor_util.h"
 
 namespace mindspore::lite {
 STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
+  for (auto &node : graph->nodes) {
+    if (node->primitive->value.type == PrimitiveType_QuantDTypeCast) {
+      auto attr = node->primitive->value.AsQuantDTypeCast();
+      auto &inputTensor = graph->allTensors.at(node->inputIndex.front());
+      inputTensor->dataType = attr->srcT;
+      auto &outputTensor = graph->allTensors.at(node->outputIndex.front());
+      outputTensor->dataType = attr->dstT;
+
+      if (attr->srcT == TypeId::kNumberTypeUInt8) {
+        attr->srcT = TypeId::kNumberTypeInt8;
+      }
+      if (attr->dstT == TypeId::kNumberTypeUInt8) {
+        attr->dstT = TypeId::kNumberTypeInt8;
+      }
+    }
+  }
+  int index = -1;
   for (auto &tensor : graph->allTensors) {
-    if (tensor->quantParams.empty() || !tensor->quantParams.front()->inited || tensor->data.empty()) {
+    index++;
+    if (tensor->quantParams.empty() || !tensor->quantParams.front()->inited) {
       continue;
     }
     if (tensor->dataType != TypeId::kNumberTypeFloat32 && tensor->dataType != TypeId::kNumberTypeFloat &&
-        tensor->dataType != TypeId::kNumberTypeUInt8) {
+        tensor->dataType != TypeId::kNumberTypeUInt8 && tensor->dataType != TypeId::kTypeUnknown) {
       continue;
     }
     // perlayer
     if (tensor->quantParams.size() == 1) {
       auto &quantParam = tensor->quantParams.front();
-      size_t wShapeSize = GetShapeSize(*(tensor.get()));
+      size_t wShapeSize = tensor->data.empty() ? 0 : GetShapeSize(*(tensor.get()));
       void *oriWeightData = tensor->data.data();
       if (quantParam->dstDtype == TypeId::kNumberTypeInt8) {
         std::vector<int8_t> qDatas(wShapeSize);
@@ -41,6 +60,9 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
         if (tensor->dataType == TypeId::kNumberTypeFloat ||
             tensor->dataType == TypeId::kNumberTypeFloat32) {  // normal awareing quant
           auto *weightData = static_cast<float *>(oriWeightData);
+          if (weightData == nullptr) {
+            continue;
+          }
           for (size_t j = 0; j < wShapeSize; j++) {
             qDatas[j] = quant::QuantizeData<int8_t>(weightData[j], weightQauntParam.get());
           }
@@ -52,15 +74,18 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
           weightQauntParam->zeroPoint -= 128;
           tensor->quantParams.clear();
           tensor->quantParams.emplace_back(weightQauntParam.release());
+          TensorDataType::GetInstance()->UpdateTensorType(index, TypeId::kNumberTypeUInt8);
         }
         tensor->dataType = TypeId::kNumberTypeInt8;
-        tensor->data.clear();
-        tensor->data.resize(wShapeSize * sizeof(int8_t));
-        auto ret =
-          memcpy_s(tensor->data.data(), wShapeSize * sizeof(int8_t), qDatas.data(), wShapeSize * sizeof(int8_t));
-        if (ret != EOK) {
-          MS_LOG(ERROR) << "memcpy_s failed: " << ret;
-          return RET_ERROR;
+        if (!tensor->data.empty()) {
+          tensor->data.clear();
+          tensor->data.resize(wShapeSize * sizeof(int8_t));
+          auto ret =
+            memcpy_s(tensor->data.data(), wShapeSize * sizeof(int8_t), qDatas.data(), wShapeSize * sizeof(int8_t));
+          if (ret != EOK) {
+            MS_LOG(ERROR) << "memcpy_s failed: " << ret;
+            return RET_ERROR;
+          }
         }
       } else if (quantParam->dstDtype == TypeId::kNumberTypeInt32) {
         // quant bias data

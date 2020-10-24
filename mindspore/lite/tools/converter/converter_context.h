@@ -19,8 +19,10 @@
 
 #include <string>
 #include <set>
+#include <map>
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
+#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace lite {
@@ -67,6 +69,26 @@ class NoSupportOp {
   NoSupportOp() { noSupportOps.clear(); }
   std::set<std::string> noSupportOps;
   std::string fmkType;
+};
+
+class TensorDataType {
+ public:
+  ~TensorDataType() = default;
+  static TensorDataType *GetInstance() {
+    static TensorDataType tensorDataType;
+    return &tensorDataType;
+  }
+  void UpdateTensorType(int32_t index, int32_t type) { tensorDataTypeMap[index] = type; }
+  int32_t GetTensorType(int32_t index) const {
+    if (tensorDataTypeMap.find(index) == tensorDataTypeMap.end()) {
+      return TypeId::kTypeUnknown;
+    }
+    return tensorDataTypeMap.at(index);
+  }
+
+ private:
+  TensorDataType() {}
+  std::map<int32_t, int32_t> tensorDataTypeMap;
 };
 }  // namespace lite
 }  // namespace mindspore

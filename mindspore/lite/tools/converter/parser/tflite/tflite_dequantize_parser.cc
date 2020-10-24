@@ -53,7 +53,7 @@ STATUS TfliteDequantizeParser::Parse(TfliteTensorsInfo *tensors_info,
       MS_LOG(ERROR) << "new op failed";
       return RET_NULL_PTR;
     }
-    attr->srcT = kNumberTypeInt8;
+    attr->srcT = GetTfliteDataType(in_tensor->type);
     attr->dstT = GetTfliteDataType(out_tensor->type);
     op->primitive->value.value = attr.release();
     op->primitive->value.type = schema::PrimitiveType_QuantDTypeCast;
