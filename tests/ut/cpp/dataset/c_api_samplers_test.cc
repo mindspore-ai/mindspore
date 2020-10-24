@@ -99,3 +99,20 @@ TEST_F(MindDataTestPipeline, TestSamplersMoveParameters) {
   EXPECT_TRUE(indices.empty());
   EXPECT_NE(sampl2->Build(), nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestWeightedRandomSamplerFail) {
+  // weights is empty
+  std::vector<double> weights1 = {};
+  std::shared_ptr<SamplerObj> sampl1 = WeightedRandomSampler(weights1);
+  EXPECT_EQ(sampl1, nullptr);
+
+  // weights has negative number
+  std::vector<double> weights2 = {0.5, 0.2, -0.4};
+  std::shared_ptr<SamplerObj> sampl2 = WeightedRandomSampler(weights2);
+  EXPECT_EQ(sampl2, nullptr);
+
+  // weights elements are all zero
+  std::vector<double> weights3 = {0, 0, 0};
+  std::shared_ptr<SamplerObj> sampl3 = WeightedRandomSampler(weights3);
+  EXPECT_EQ(sampl3, nullptr);
+}

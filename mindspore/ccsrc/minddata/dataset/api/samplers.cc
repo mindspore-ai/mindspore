@@ -299,6 +299,24 @@ WeightedRandomSamplerObj::WeightedRandomSamplerObj(std::vector<double> weights, 
     : weights_(std::move(weights)), num_samples_(num_samples), replacement_(replacement) {}
 
 bool WeightedRandomSamplerObj::ValidateParams() {
+  if (weights_.empty()) {
+    MS_LOG(ERROR) << "WeightedRandomSampler: weights vector must not be empty";
+    return false;
+  }
+  int32_t zero_elem = 0;
+  for (int32_t i = 0; i < weights_.size(); ++i) {
+    if (weights_[i] < 0) {
+      MS_LOG(ERROR) << "WeightedRandomSampler: weights vector must not contain negative number, got: " << weights_[i];
+      return false;
+    }
+    if (weights_[i] == 0.0) {
+      zero_elem++;
+    }
+  }
+  if (zero_elem == weights_.size()) {
+    MS_LOG(ERROR) << "WeightedRandomSampler: elements of weights vector must not be all zero";
+    return false;
+  }
   if (num_samples_ < 0) {
     MS_LOG(ERROR) << "WeightedRandomSampler: invalid num_samples: " << num_samples_;
     return false;
