@@ -91,12 +91,12 @@ int ScaleOpenCLKernel::InitBuffer() {
     } else if (in_tensors_[0]->GetFormat() == schema::Format_NHWC) {
       if (in_tensors_[1]->GetFormat() == schema::Format_NHWC) {
         if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-          float *scale = new (std::nothrow) float[pack_weight_size];
+          auto *scale = new (std::nothrow) float[pack_weight_size];
           if (scale == nullptr) {
             MS_LOG(ERROR) << "Malloc buffer failed!";
             return RET_ERROR;
           }
-          float *offset = new (std::nothrow) float[pack_weight_size];
+          auto *offset = new (std::nothrow) float[pack_weight_size];
           if (offset == nullptr) {
             MS_LOG(ERROR) << "Malloc buffer failed!";
             delete[] scale;
@@ -110,12 +110,12 @@ int ScaleOpenCLKernel::InitBuffer() {
           delete[] scale;
           delete[] offset;
         } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
-          float16_t *scale = new (std::nothrow) float16_t[pack_weight_size];
+          auto *scale = new (std::nothrow) float16_t[pack_weight_size];
           if (scale == nullptr) {
             MS_LOG(ERROR) << "Malloc buffer failed!";
             return RET_ERROR;
           }
-          float16_t *offset = new (std::nothrow) float16_t[pack_weight_size];
+          auto *offset = new (std::nothrow) float16_t[pack_weight_size];
           if (offset == nullptr) {
             MS_LOG(ERROR) << "Malloc buffer failed!";
             delete[] scale;
@@ -146,15 +146,14 @@ int ScaleOpenCLKernel::InitBuffer() {
 
 int ScaleOpenCLKernel::Init() {
   std::string kernel_name;
-
-  const ScaleParameter *scale_param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
+  auto *scale_param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
   auto in_tensor = in_tensors_.at(0);
   auto in_shape = in_tensor->shape();
   auto scale_tensor = in_tensors_.at(1);
   auto scale_shape = scale_tensor->shape();
   axis_ = scale_param->axis_;
   if (axis_ < 0) {
-    axis_ = axis_ + in_shape.size();
+    axis_ += in_shape.size();
   }
   if (scale_shape.size() != in_shape.size()) {
     if (scale_tensor->ElementsNum() == 1) {
@@ -197,6 +196,13 @@ int ScaleOpenCLKernel::Init() {
 
 int ScaleOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
+  auto *param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
+  cl_int act_type = 0;
+  if (param->activation_type_ == ActType_Relu) {
+    act_type = 1;
+  } else if (param->activation_type_ == ActType_Relu6) {
+    act_type = 3;
+  }
 
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
@@ -227,6 +233,7 @@ int ScaleOpenCLKernel::Run() {
   if (element_flag_ && scale_C_flag_) {
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, UP_DIV(in_tensors_[1]->shape()[0], C4NUM));
   }
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, act_type);
   ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
   return RET_OK;
 }
