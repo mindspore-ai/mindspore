@@ -50,7 +50,6 @@ DeconvDwInt8Center:
                 subs x20, x20, #1
                 bne LoopKh
             add x15, x15, x10
-            add x16, x16, x8
             subs x17, x17, #1
             bne LoopW
         add x0, x0, x9
