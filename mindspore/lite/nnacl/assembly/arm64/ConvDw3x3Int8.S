@@ -67,7 +67,6 @@ ConvDw3x3Int8Neon64:
   ld1 {v7.8h}, [x2], x20
   ld1 {v8.8h}, [x2], x20
 
-Loop:
   mov x16, x1
   add x17, x16, x5
   add x18, x17, x5
@@ -83,6 +82,8 @@ Loop:
 
   ld1 {v21.4s}, [x3]
   ld1 {v22.4s}, [x19]
+  ld1 {v23.4s}, [x3]
+  ld1 {v24.4s}, [x19]
 
   // subtract input zp
   ssubl v9.8h, v9.8b, v25.8b
@@ -95,31 +96,160 @@ Loop:
   ssubl v18.8h, v18.8b, v25.8b
   ssubl v19.8h, v19.8b, v25.8b
 
+  cmp w8, #2
+  beq WIDTH2_LEFT
   cmp w8, #1
-  beq Width1
+  beq WIDTH1_LEFT
 
-Width2:
+HEIGHT1_LOOP:
+  smlal v21.4s, v0.4h, v9.4h
   ld1 {v12.8b}, [x16]
+  smlal2 v22.4s, v0.8h, v9.8h
   ld1 {v16.8b}, [x17]
+  smlal v23.4s, v0.4h, v10.4h
+  smlal2 v24.4s, v0.8h, v10.8h
   ld1 {v20.8b}, [x18]
-  
-  ld1 {v23.4s}, [x3]
-  ld1 {v24.4s}, [x19]
-
+  add x1, x1, x21  
   ssubl v12.8h, v12.8b, v25.8b
+  smlal v21.4s, v1.4h, v10.4h
+  mov x16, x1
+  add x17, x16, x5
+  add x18, x17, x5
+  smlal2 v22.4s, v1.8h, v10.8h
+  ld1 {v9.8b}, [x16], x4
   ssubl v16.8h, v16.8b, v25.8b
+  smlal v23.4s, v1.4h, v11.4h
+  ld1 {v10.8b}, [x16], x4
   ssubl v20.8h, v20.8b, v25.8b
+  smlal2 v24.4s, v1.8h, v11.8h
+  smlal v21.4s, v2.4h, v11.4h
+  smlal2 v22.4s, v2.8h, v11.8h
+  ld1 {v11.8b}, [x16], x4
+  smlal v23.4s, v2.4h, v12.4h
+  smlal2 v24.4s, v2.8h, v12.8h
+  smlal v21.4s, v3.4h, v13.4h
+  smlal2 v22.4s, v3.8h, v13.8h
+  ld1 {v13.8b}, [x17], x4
+  smlal v23.4s, v3.4h, v14.4h
+  smlal2 v24.4s, v3.8h, v14.8h
+  smlal v21.4s, v4.4h, v14.4h
+  smlal2 v22.4s, v4.8h, v14.8h
+  ld1 {v14.8b}, [x17], x4
+  smlal v23.4s, v4.4h, v15.4h
+  smlal2 v24.4s, v4.8h, v15.8h
+  smlal v21.4s, v5.4h, v15.4h
+  smlal2 v22.4s, v5.8h, v15.8h
+  ld1 {v15.8b}, [x17], x4
+  smlal v23.4s, v5.4h, v16.4h
+  smlal2 v24.4s, v5.8h, v16.8h
+  smlal v21.4s, v6.4h, v17.4h
+  smlal2 v22.4s, v6.8h, v17.8h
+  ld1 {v17.8b}, [x18], x4
+  smlal v23.4s, v6.4h, v18.4h
+  smlal2 v24.4s, v6.8h, v18.8h
+  smlal v21.4s, v7.4h, v18.4h
+  smlal2 v22.4s, v7.8h, v18.8h
+  ld1 {v18.8b}, [x18], x4
+  smlal v23.4s, v7.4h, v19.4h
+  smlal2 v24.4s, v7.8h, v19.8h
+  smlal v21.4s, v8.4h, v19.4h
+  smlal2 v22.4s, v8.8h, v19.8h
+  ld1 {v19.8b}, [x18], x4
+  smlal v23.4s, v8.4h, v20.4h
+  smlal2 v24.4s, v8.8h, v20.8h
 
+  // Apply left shfit
+  sqshl v21.4s, v21.4s, v26.4s
+  sqshl v22.4s, v22.4s, v26.4s
+  sqshl v23.4s, v23.4s, v26.4s
+  sqshl v24.4s, v24.4s, v26.4s
+
+  // Apply the fixed-point part of the multiplier.
+  sqrdmulh v21.4s, v21.4s, v27.4s
+  sqrdmulh v22.4s, v22.4s, v27.4s
+  sqrdmulh v23.4s, v23.4s, v27.4s
+  sqrdmulh v24.4s, v24.4s, v27.4s
+
+  // Apply right shfit
+  and v12.16b, v28.16b, v21.16b
+  sshr v12.4s, v12.4s, #31
+  sqadd v21.4s, v21.4s, v12.4s
+  srshl v21.4s, v21.4s, v28.4s
+  and v16.16b, v28.16b, v22.16b
+  sshr v16.4s, v16.4s, #31
+  sqadd v22.4s, v22.4s, v16.4s
+  srshl v22.4s, v22.4s, v28.4s  
+  and v20.16b, v28.16b, v23.16b
+  sshr v20.4s, v20.4s, #31
+  sqadd v23.4s, v23.4s, v20.4s
+  srshl v23.4s, v23.4s, v28.4s
+  and v12.16b, v28.16b, v24.16b
+  sshr v12.4s, v12.4s, #31
+  sqadd v24.4s, v24.4s, v12.4s
+  srshl v24.4s, v24.4s, v28.4s
+
+  // Add output zero point
+  sqadd v21.4s, v21.4s, v29.4s
+  sqadd v22.4s, v22.4s, v29.4s
+  sqadd v23.4s, v23.4s, v29.4s
+  sqadd v24.4s, v24.4s, v29.4s
+
+  // Apply min bound
+  smax v21.4s, v21.4s, v30.4s
+  smax v22.4s, v22.4s, v30.4s
+  smax v23.4s, v23.4s, v30.4s
+  smax v24.4s, v24.4s, v30.4s
+
+  // Apply max bound
+  smin v21.4s, v21.4s, v31.4s
+  smin v22.4s, v22.4s, v31.4s
+  smin v23.4s, v23.4s, v31.4s
+  smin v24.4s, v24.4s, v31.4s
+
+  sqxtn v21.4h, v21.4s
+  sqxtn2 v21.8h, v22.4s
+  ld1 {v22.4s}, [x19]
+  ssubl v9.8h, v9.8b, v25.8b
+  ssubl v10.8h, v10.8b, v25.8b
+  sqxtn v23.4h, v23.4s
+  sqxtn2 v23.8h, v24.4s
+  ld1 {v24.4s}, [x19]
+  sqxtn v21.8b, v21.8h
+  sqxtn2 v21.16b, v23.8h
+  st1 {v21.8b}, [x0], x6
+  mov v23.d[0], v21.d[1]
+  ld1 {v21.4s}, [x3]
+  st1 {v23.8b}, [x0], x6
+  ssubl v11.8h, v11.8b, v25.8b
+  ssubl v13.8h, v13.8b, v25.8b
+  ld1 {v23.4s}, [x3]
+  ssubl v14.8h, v14.8b, v25.8b
+  ssubl v15.8h, v15.8b, v25.8b
+  ssubl v17.8h, v17.8b, v25.8b
+  ssubl v18.8h, v18.8b, v25.8b
+  ssubl v19.8h, v19.8b, v25.8b
+  sub w8, w8, #2
+  cmp w8, #2
+  bgt HEIGHT1_LOOP
+
+  cmp w8, #2
+  blt WIDTH1_LEFT
+
+WIDTH2_LEFT:
   smlal v21.4s, v0.4h, v9.4h
   smlal2 v22.4s, v0.8h, v9.8h
+  ld1 {v12.8b}, [x16]
+  ssubl v12.8h, v12.8b, v25.8b
   smlal v23.4s, v0.4h, v10.4h
   smlal2 v24.4s, v0.8h, v10.8h
   smlal v21.4s, v1.4h, v10.4h
   smlal2 v22.4s, v1.8h, v10.8h
+  ld1 {v16.8b}, [x17]
   smlal v23.4s, v1.4h, v11.4h
   smlal2 v24.4s, v1.8h, v11.8h
   smlal v21.4s, v2.4h, v11.4h
   smlal2 v22.4s, v2.8h, v11.8h
+  ld1 {v20.8b}, [x18]
   smlal v23.4s, v2.4h, v12.4h
   smlal2 v24.4s, v2.8h, v12.8h
   smlal v21.4s, v3.4h, v13.4h
@@ -128,10 +258,12 @@ Width2:
   smlal2 v24.4s, v3.8h, v14.8h
   smlal v21.4s, v4.4h, v14.4h
   smlal2 v22.4s, v4.8h, v14.8h
+  ssubl v16.8h, v16.8b, v25.8b
   smlal v23.4s, v4.4h, v15.4h
   smlal2 v24.4s, v4.8h, v15.8h
   smlal v21.4s, v5.4h, v15.4h
   smlal2 v22.4s, v5.8h, v15.8h
+  ssubl v20.8h, v20.8b, v25.8b
   smlal v23.4s, v5.4h, v16.4h
   smlal2 v24.4s, v5.8h, v16.8h
   smlal v21.4s, v6.4h, v17.4h
@@ -201,16 +333,12 @@ Width2:
   sqxtn2 v23.8h, v24.4s
   sqxtn v21.8b, v21.8h
   sqxtn2 v21.16b, v23.8h
-
   st1 {v21.8b}, [x0], x6
   mov v23.d[0], v21.d[1]
   st1 {v23.8b}, [x0], x6
-  sub w8, w8, #2
-  cbz w8, End
-  add x1, x1, x21  
-  b Loop
+  b End
 
-Width1:
+WIDTH1_LEFT:
   smlal v21.4s, v0.4h, v9.4h
   smlal2 v22.4s, v0.8h, v9.8h
   smlal v21.4s, v1.4h, v10.4h
@@ -263,12 +391,7 @@ Width1:
   sqxtn v21.4h, v21.4s
   sqxtn2 v21.8h, v22.4s
   sqxtn v21.8b, v21.8h
-
   st1 {v21.8b}, [x0], x6
-  sub w8, w8, #1
-  cbz w8, End
-  add x1, x1, x4
-  b Loop
 
 End:
   sub sp, sp, #160
