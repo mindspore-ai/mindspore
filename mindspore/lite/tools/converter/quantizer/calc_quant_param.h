@@ -46,6 +46,20 @@ class CommonCalcer : public QuantParamCalcer {
   int Calc(schema::MetaGraphT *subGraph, const schema::CNodeT &node) override;
 };
 
+class ConvCalcer : public CommonCalcer {
+ public:
+  ConvCalcer() = default;
+  ~ConvCalcer() override = default;
+  int Calc(schema::MetaGraphT *subGraph, const schema::CNodeT &node) override;
+};
+
+class BiasAddCalcer : public CommonCalcer {
+ public:
+  BiasAddCalcer() = default;
+  ~BiasAddCalcer() override = default;
+  int Calc(schema::MetaGraphT *subGraph, const schema::CNodeT &node) override;
+};
+
 class LinearCalcer : public QuantParamCalcer {
  public:
   LinearCalcer() = default;

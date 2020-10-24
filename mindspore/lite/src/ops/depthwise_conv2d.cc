@@ -146,14 +146,7 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
 
   this->primitive_->value.type = schema::PrimitiveType_DepthwiseConv2D;
   this->primitive_->value.value = attr.release();
-
-  if (GetQuantType() == schema::QuantType_AwareTraining) {
-    std::vector<std::vector<schema::QuantParamT>> vecInputQuantParam;
-    std::vector<std::vector<schema::QuantParamT>> vecOutputQuantParam;
-    PopulaterQuantParam(prim, &vecInputQuantParam, &vecOutputQuantParam, inputs);
-    SetInputQuantParam(vecInputQuantParam);
-    SetOutputQuantParam(vecOutputQuantParam);
-  }
+  PopulaterQuantParam(prim, inputs);
   return RET_OK;
 }
 

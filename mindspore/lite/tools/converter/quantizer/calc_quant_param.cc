@@ -26,6 +26,9 @@
 #include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite {
+static constexpr size_t BIAS_SIZE = 3;
+static constexpr size_t BIAS_ADD_SIZE = 2;
+
 STATUS QuantParamCalcer::ComputeConstQuantParam(const schema::TensorT &tensor, QuantParamT *quantParam) {
   MS_ASSERT(quantParam != nullptr);
   // int32 weight no need to quant
@@ -122,6 +125,36 @@ int CommonCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
   if (outputParamDone != node.outputIndex.size()) {
     MS_LOG(ERROR) << "Can not determine outputTensor quantParam, node " << node.name;
     return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ConvCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
+  auto status = CommonCalcer::Calc(subGraph, node);
+  if (status != RET_OK) {
+    MS_LOG(WARNING) << "Call CommonCalcer::Calc failed: " << status;
+    return status;
+  }
+  if (node.inputIndex.size() == BIAS_SIZE) {
+    auto &biasTensor = subGraph->allTensors.at(node.inputIndex.at(BIAS_SIZE - 1));
+    for (auto &quantParam : biasTensor->quantParams) {
+      quantParam->dstDtype = TypeId::kNumberTypeInt32;
+    }
+  }
+  return RET_OK;
+}
+
+int BiasAddCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
+  auto status = CommonCalcer::Calc(subGraph, node);
+  if (status != RET_OK) {
+    MS_LOG(WARNING) << "Call CommonCalcer::Calc failed: " << status;
+    return status;
+  }
+  if (node.inputIndex.size() == BIAS_ADD_SIZE) {
+    auto &biasTensor = subGraph->allTensors.at(node.inputIndex.at(BIAS_ADD_SIZE - 1));
+    for (auto &quantParam : biasTensor->quantParams) {
+      quantParam->dstDtype = TypeId::kNumberTypeInt32;
+    }
   }
   return RET_OK;
 }
@@ -474,10 +507,10 @@ QuantParamCalcRegister::QuantParamCalcRegister() {
     _registerMap[schema::PrimitiveType_Activation] = std::make_shared<CalcActivation>();
     _registerMap[schema::PrimitiveType_Add] = std::make_shared<CalcAdd>();
     _registerMap[schema::PrimitiveType_Mul] = commonCalcer;
-    _registerMap[schema::PrimitiveType_Scale] = commonCalcer;
-    _registerMap[schema::PrimitiveType_Conv2D] = commonCalcer;
-    _registerMap[schema::PrimitiveType_DeConv2D] = commonCalcer;
-    _registerMap[schema::PrimitiveType_DepthwiseConv2D] = commonCalcer;
+    _registerMap[schema::PrimitiveType_Scale] = std::make_shared<ConvCalcer>();
+    _registerMap[schema::PrimitiveType_Conv2D] = std::make_shared<ConvCalcer>();
+    _registerMap[schema::PrimitiveType_DeConv2D] = std::make_shared<ConvCalcer>();
+    _registerMap[schema::PrimitiveType_DepthwiseConv2D] = std::make_shared<ConvCalcer>();
     _registerMap[schema::PrimitiveType_Pooling] = linearCalcer;
     _registerMap[schema::PrimitiveType_Resize] = linearCalcer;
     _registerMap[schema::PrimitiveType_Reshape] = linearCalcer;
@@ -487,11 +520,11 @@ QuantParamCalcRegister::QuantParamCalcRegister() {
     _registerMap[schema::PrimitiveType_Squeeze] = linearCalcer;
     _registerMap[schema::PrimitiveType_RealDiv] = std::make_shared<CalcRealDiv>();
     _registerMap[schema::PrimitiveType_Reduce] = commonCalcer;
-    _registerMap[schema::PrimitiveType_BiasAdd] = commonCalcer;
+    _registerMap[schema::PrimitiveType_BiasAdd] = std::make_shared<BiasAddCalcer>();
     _registerMap[schema::PrimitiveType_Mean] = linearCalcer;
     _registerMap[schema::PrimitiveType_Transpose] = linearCalcer;
-    _registerMap[schema::PrimitiveType_MatMul] = commonCalcer;
-    _registerMap[schema::PrimitiveType_FullConnection] = commonCalcer;
+    _registerMap[schema::PrimitiveType_MatMul] = std::make_shared<ConvCalcer>();
+    _registerMap[schema::PrimitiveType_FullConnection] = std::make_shared<ConvCalcer>();
     _registerMap[schema::PrimitiveType_Nchw2Nhwc] = linearCalcer;
     _registerMap[schema::PrimitiveType_Nhwc2Nchw] = linearCalcer;
     // detection_postprocess op's quant param will not infer only fetch from preNode or postNode

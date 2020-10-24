@@ -52,7 +52,7 @@ STATUS TfliteQuantizeParser::Parse(TfliteTensorsInfo *tensors_info, const std::u
       return RET_NULL_PTR;
     }
     attr->srcT = GetTfliteDataType(in_tensor->type);
-    attr->dstT = GetTfliteDataType(out_tensor->type);
+    attr->dstT = kNumberTypeInt8;
     op->primitive->value.type = schema::PrimitiveType_QuantDTypeCast;
     op->primitive->value.value = attr.release();
   } else {

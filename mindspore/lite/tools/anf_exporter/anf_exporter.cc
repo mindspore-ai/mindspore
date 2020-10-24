@@ -544,6 +544,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
   } else {
     auto ms_tensor = new schema::TensorT();
     ms_tensor->nodeType = schema::NodeType_CNode;
+    ms_tensor->dataType = TypeId::kNumberTypeFloat32;
     fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());
     node_id_map_[cnode_name] = meta_graphT->allTensors.size();
     meta_graphT->allTensors.emplace_back(ms_tensor);

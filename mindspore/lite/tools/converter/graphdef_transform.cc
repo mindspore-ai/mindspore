@@ -34,6 +34,8 @@
 #include "tools/converter/legacy_optimizer/graph/unused_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
+#include "tools/converter/legacy_optimizer/graph/tensor_quant_pass.h"
+#include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
 #include "tools/converter/quantizer/aware_quantizer.h"
 
 using std::string;
@@ -43,20 +45,6 @@ GraphDefTransform::GraphDefTransform() = default;
 GraphDefTransform::~GraphDefTransform() = default;
 
 void GraphDefTransform::SetGraphDef(schema::MetaGraphT *_dstDef) { graphDefT = _dstDef; }
-
-void GraphDefTransform::CreateQuantizer(const converter::Flags *flags) {
-  auto type = flags->quantType;
-  switch (type) {
-    case QuantType::QuantType_AwareTraining: {
-      MS_LOG(INFO) << "create AwareTrainingQuantizer!";
-      fbQuantizer = std::make_unique<quant::AwareQuantizer>(graphDefT, flags->inferenceType);
-      break;
-    }
-    default:
-      MS_LOG(INFO) << "will support quantizer type " << flags->quantTypeIn << " in the future";
-      break;
-  }
-}
 
 int GraphDefTransform::Transform(const converter::Flags &ctx) {
   STATUS status;
@@ -84,26 +72,13 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
 
   // generate and infer quant parameters
   {
-    if (fbQuantizer != nullptr) {
-      Optimizer topologicalOptimizer;
-      topologicalOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
-      status = topologicalOptimizer.Run(graphDefT);
-      if (status != RET_OK && status != RET_NO_CHANGE) {
-        MS_LOG(ERROR) << "Run topologicalOptimizer graphPasses Failed";
-        return status;
-      }
-      if (ctx.quantType == QuantType_AwareTraining) {
-        status = fbQuantizer->GenerateQuantParam();
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "GenerateQuantParam failed";
-          return status;
-        }
-        status = fbQuantizer->DetermineNodeQuantType();
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "DetermineNodeQuant failed";
-          return status;
-        }
-      }
+    Optimizer inferQuantParamPass;
+    inferQuantParamPass.AddPass(new (std::nothrow) TopologicalSortPass());
+    inferQuantParamPass.AddPass(new (std::nothrow) InferQuantParamPass());
+    status = inferQuantParamPass.Run(graphDefT);
+    if (status != RET_OK && status != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Run topologicalOptimizer graphPasses Failed";
+      return status;
     }
   }
 
@@ -146,12 +121,11 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     }
   }
   {
-    Optimizer fusionOptimizer;
-    fusionOptimizer.AddPass(new (std::nothrow) FormatTransPermuteFusionPass());
-    fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-    status = fusionOptimizer.Run(graphDefT);
+    Optimizer inferQuantParamOtimizer;
+    inferQuantParamOtimizer.AddPass(new (std::nothrow) InferQuantParamPass());
+    status = inferQuantParamOtimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Run fusionOptimizer graphPasses Failed";
+      MS_LOG(ERROR) << "Run tensorQuantOptimizer graphPasses Failed";
       return status;
     }
   }
@@ -168,8 +142,10 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   }
 
   // do quantization
-  if (fbQuantizer != nullptr) {
-    status = fbQuantizer->DoQuantize();
+  {
+    Optimizer fusionOptimizer;
+    fusionOptimizer.AddPass(new (std::nothrow) TensorQuantPass());
+    status = fusionOptimizer.Run(graphDefT);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "DoQuantize failed!";
       return status;
@@ -177,11 +153,11 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   }
 
   // insert quantNode and deQuantNode
-  if (ctx.quantType == QuantType_AwareTraining) {
+  {
     Optimizer quantNodeOptimizer;
     auto dTypeTransPass = new (std::nothrow) DTypeTransPass();
-    dTypeTransPass->SetInputDataDType(ctx.inferenceType);
-    dTypeTransPass->SetOutputDataDType(ctx.inferenceType);
+    dTypeTransPass->SetInputDataDType(ctx.inputDataType);
+    dTypeTransPass->SetOutputDataDType(ctx.outputDataType);
     quantNodeOptimizer.AddPass(dTypeTransPass);
     quantNodeOptimizer.AddPass(new (std::nothrow) QuantCastFusionPass());
     quantNodeOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());

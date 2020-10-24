@@ -164,32 +164,29 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-void PrimitiveC::CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax) {
+void PrimitiveC::CalFloatScopeByMeanAndStddev(const double &mean, const double &stdDev, float *mMin, float *mMax) {
   const float qmin = 0;
   const float qmax = 255;
   *mMin = static_cast<float>((qmin - mean) / stdDev);
   *mMax = static_cast<float>((qmax - mean) / stdDev);
 }
 
-void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
-                                     std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
-                                     std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam,
-                                     const std::vector<AnfNodePtr> &inputs) {
+void PrimitiveC::PopulaterQuantParam(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   auto narrow_range = prim.GetAttr("narrow_range");
-  bool narrowRangeQuantParam = GetValue<bool>(narrow_range);
+  bool narrowRangeQuantParam = narrow_range != nullptr ? GetValue<bool>(narrow_range) : false;
   auto num_bits = prim.GetAttr("num_bits");
-  int32_t numbitsRangeQuantParam = GetValue<int32_t>(num_bits);
+  int32_t numbitsRangeQuantParam = num_bits != nullptr ? GetValue<int32_t>(num_bits) : 8;
 
   std::vector<schema::QuantParamT> quants;
   schema::QuantParamT quantParam;
   auto mean = prim.GetAttr("mean");
   auto std_dev = prim.GetAttr("std_dev");
   if (mean != nullptr && std_dev != nullptr) {
-    auto meanQuantOaram = GetValue<double>(mean);
-    double stddevQuantOaram = GetValue<double>(std_dev);
+    auto meanValue = GetValue<double>(mean);
+    auto stddevValue = GetValue<double>(std_dev);
     float mMin = 0.0;
     float mMax = 0.0;
-    CalQuantParam(meanQuantOaram, stddevQuantOaram, &mMin, &mMax);
+    CalFloatScopeByMeanAndStddev(meanValue, stddevValue, &mMin, &mMax);
     quantParam.min = mMin;
     quantParam.max = mMax;
   } else {
@@ -198,8 +195,8 @@ void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
     if (inputMin != nullptr && inputMax != nullptr) {
       auto inputMinPtr = inputMin->cast<TensorPtr>();
       auto inputMaxPtr = inputMax->cast<TensorPtr>();
-      float *minBuf = static_cast<float *>(inputMinPtr->data_c());
-      float *maxBuf = static_cast<float *>(inputMaxPtr->data_c());
+      auto *minBuf = static_cast<float *>(inputMinPtr->data_c());
+      auto *maxBuf = static_cast<float *>(inputMaxPtr->data_c());
       quantParam.min = *minBuf;
       quantParam.max = *maxBuf;
     }
@@ -207,7 +204,7 @@ void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
   quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
                                numbitsRangeQuantParam);
   quants.emplace_back(quantParam);
-  vecInputQuantParam->emplace_back(quants);
+  input_quant_param_.emplace_back(quants);
 
   quants.clear();
   auto filterMin = prim.GetAttr("filter_minq");
@@ -227,17 +224,25 @@ void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
     }
     quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, true, numbitsRangeQuantParam);
     quants.emplace_back(quantParam);
-    vecInputQuantParam->emplace_back(quants);
+    input_quant_param_.emplace_back(quants);
   }
 
-  if (vecInputQuantParam->size() == kDoubleNum) {
+  if (input_quant_param_.size() == kDoubleNum) {
     quants.clear();
     quantParam.min = 0.0;
     quantParam.max = 0.0;
     quantParam.zeroPoint = 0;
-    quantParam.scale = vecInputQuantParam->at(0).at(0).scale * vecInputQuantParam->at(1).at(0).scale;
+    quantParam.scale = input_quant_param_.at(0).at(0).scale * input_quant_param_.at(1).at(0).scale;
     quants.emplace_back(quantParam);
-    vecInputQuantParam->emplace_back(quants);
+    input_quant_param_.emplace_back(quants);
+  }
+
+  // fill input_quant_param_ by not inited quant_parm
+  if (input_quant_param_.size() < inputs.size()) {
+    quants.clear();
+    schema::QuantParamT tmpQuantParam;
+    quants.emplace_back(tmpQuantParam);
+    input_quant_param_.insert(input_quant_param_.end(), inputs.size() - 1 - input_quant_param_.size(), quants);
   }
 
   quants.clear();
@@ -253,7 +258,11 @@ void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
     quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
                                  numbitsRangeQuantParam);
     quants.emplace_back(quantParam);
-    vecOutputQuantParam->emplace_back(quants);
+    output_quant_param_.emplace_back(quants);
+  } else {
+    schema::QuantParamT tmpQuantParam;
+    quants.emplace_back(tmpQuantParam);
+    output_quant_param_.emplace_back(quants);
   }
 }
 
@@ -279,12 +288,46 @@ schema::PrimitiveT *PrimitiveC::GetPrimitiveT() const { return this->primitive_;
 
 void PrimitiveC::ClearPrimitiveT() { this->primitive_ = nullptr; }
 
-void PrimitiveC::SetInputQuantParam(const std::vector<std::vector<schema::QuantParamT>> &input_quant_param) {
+void PrimitiveC::SetInputQuantParams(const std::vector<std::vector<schema::QuantParamT>> &input_quant_param) {
   this->input_quant_param_ = input_quant_param;
 }
 
-void PrimitiveC::SetOutputQuantParam(const std::vector<std::vector<schema::QuantParamT>> &output_quant_param) {
+void PrimitiveC::SetInputQuantParam(const size_t &index, const std::vector<schema::QuantParamT> &input_quant_param) {
+  MS_ASSERT(index < this->input_quant_param_.size());
+  this->input_quant_param_[index] = input_quant_param;
+}
+
+void PrimitiveC::SetOutputQuantParams(const std::vector<std::vector<schema::QuantParamT>> &output_quant_param) {
   this->output_quant_param_ = output_quant_param;
+}
+
+void PrimitiveC::SetOutputQuantParam(const size_t &index, const std::vector<schema::QuantParamT> &output_quant_param) {
+  MS_ASSERT(index < this->output_quant_param_.size());
+  this->output_quant_param_[index] = output_quant_param;
+}
+
+bool PrimitiveC::IsInputQuantParamsInited() {
+  if (this->input_quant_param_.empty()) {
+    return false;
+  }
+  for (auto &quant_param : this->input_quant_param_) {
+    if (!quant_param.front().inited) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool PrimitiveC::IsOutputQuantParamsInited() {
+  if (this->output_quant_param_.empty()) {
+    return false;
+  }
+  for (auto &quant_param : this->output_quant_param_) {
+    if (!quant_param.front().inited) {
+      return false;
+    }
+  }
+  return true;
 }
 
 void PrimitiveC::ClearInputOutputQuantParam() {

@@ -52,15 +52,12 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
 
   // for now - trainning is not supporting fuse operations
-  if (config != nullptr && config->trainModel == false) {
+  if (config != nullptr && !config->trainModel) {
     // remove quantdtype when awaretraining
     if (config->fmk == lite::converter::FmkType_ONNX) {
       auto remove_identity_pass = std::make_shared<opt::RemoveIdentityOpPass>();
       remove_identity_pass->SetFmkType(config->fmk);
       pm->AddPass(remove_identity_pass);
-    }
-    if (config->quantType == QuantType_AwareTraining) {
-      pm->AddPass(std::make_shared<opt::QuantDtypeCastFusion>());
     }
     pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
     pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>());
@@ -101,27 +98,25 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
     return nullptr;
   }
   // quant
-  if (config != nullptr) {
-    if (config->quantType == schema::QuantType_PostTraining) {
-      this->mQuantizer = std::make_unique<quant::PostTrainingQuantizer>(new_graph, config->configFile, 8);
-      if (mQuantizer == nullptr) {
-        MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
-        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
-        return nullptr;
-      }
-    } else if (config->quantType == schema::QuantType_WeightQuant) {
-      if (quant::WeightQuantizer::WeightQuantInputCheck(config) != RET_OK) {
-        MS_LOG(ERROR) << "weight quant input param error";
-        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-        return nullptr;
-      }
-      this->mQuantizer = std::make_unique<quant::WeightQuantizer>(new_graph, config->quantWeightSize,
-                                                                  config->quantWeightChannel, config->bitNum);
-      if (mQuantizer == nullptr) {
-        MS_LOG(ERROR) << "New WeightQuantizer failed";
-        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
-        return nullptr;
-      }
+  if (config->quantType == schema::QuantType_PostTraining) {
+    this->mQuantizer = std::make_unique<quant::PostTrainingQuantizer>(new_graph, config->configFile, 8);
+    if (mQuantizer == nullptr) {
+      MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
+      return nullptr;
+    }
+  } else if (config->quantType == schema::QuantType_WeightQuant) {
+    if (quant::WeightQuantizer::WeightQuantInputCheck(config) != RET_OK) {
+      MS_LOG(ERROR) << "weight quant input param error";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return nullptr;
+    }
+    this->mQuantizer = std::make_unique<quant::WeightQuantizer>(new_graph, config->quantWeightSize,
+                                                                config->quantWeightChannel, config->bitNum);
+    if (mQuantizer == nullptr) {
+      MS_LOG(ERROR) << "New WeightQuantizer failed";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
+      return nullptr;
     }
   }
   if (mQuantizer != nullptr) {

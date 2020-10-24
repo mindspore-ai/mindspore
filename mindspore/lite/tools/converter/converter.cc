@@ -93,7 +93,6 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   }
   // transform
   transform->SetGraphDef(meta_graph);
-  transform->CreateQuantizer(flag);
   auto status = transform->Transform(*flag);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Transform meta graph failed " << status;

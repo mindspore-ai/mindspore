@@ -564,11 +564,8 @@ PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, in
   }
 }
 
-STATUS PostTrainingQuantizer::DoQuantInput(double scale, int zeropoint, struct MaxMin *max_min,
-                                           std::shared_ptr<PrimitiveC> lite_primitive) {
-  if (!lite_primitive->GetInputQuantParams().empty()) {
-    MS_LOG(DEBUG) << "input quant params not empty";  // multi-input op: like concat
-  }
+STATUS PostTrainingQuantizer::DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min,
+                                           std::shared_ptr<PrimitiveC> lite_primitive, const size_t &index) {
   schema::QuantParamT quant_param;
   quant_param.scale = scale;
   quant_param.zeroPoint = zeropoint;
@@ -577,15 +574,12 @@ STATUS PostTrainingQuantizer::DoQuantInput(double scale, int zeropoint, struct M
   quant_param.numBits = bit_num;
   quant_param.narrowRange = false;
   std::vector<schema::QuantParamT> quant_params = {quant_param};
-  lite_primitive->AddInputQuantParam(quant_params);
+  lite_primitive->SetInputQuantParam(index, quant_params);
   return RET_OK;
 }
 
 STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct MaxMin *max_min,
                                             std::shared_ptr<PrimitiveC> lite_primitive) {
-  if (!lite_primitive->GetOutputQuantParams().empty()) {
-    MS_LOG(DEBUG) << "output quant params not empty";  // multi-output op: like split
-  }
   schema::QuantParamT quant_param;
   quant_param.scale = scale;
   quant_param.zeroPoint = zeropoint;
@@ -593,8 +587,9 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
   quant_param.min = max_min->min;
   quant_param.numBits = bit_num;
   quant_param.narrowRange = false;
+  quant_param.inited = true;
   std::vector<schema::QuantParamT> quant_params = {quant_param};
-  lite_primitive->AddOutputQuantParam(quant_params);
+  lite_primitive->SetOutputQuantParam(0, quant_params);
   return RET_OK;
 }
 
@@ -647,7 +642,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<Primi
   auto bias_param = std::dynamic_pointer_cast<ParamValueLite>(bias_default_param);
 
   auto active_weight_quant_params = primitive_c->GetInputQuantParams();
-  if (active_weight_quant_params.size() != 2) {
+  if (active_weight_quant_params.size() != 3) {
     MS_LOG(ERROR) << "unexpected active_weight_quant_params size: " << active_weight_quant_params.size();
     return RET_ERROR;
   }
@@ -714,7 +709,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<Primi
         double filter_scale = std::abs(raw_datas[i]) / (activate_scale * quanted_bias_abs_limit);
         active_weight_quant_params[1][i].scale = filter_scale;
         active_weight_quant_params[1][i].zeroPoint = 0;
-        primitive_c->SetInputQuantParam(active_weight_quant_params);
+        primitive_c->SetInputQuantParams(active_weight_quant_params);
         bias_scale_tmp = std::abs(raw_datas[i]) / quanted_bias_abs_limit;
         quant_params[i].scale = bias_scale_tmp;
         MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
@@ -726,7 +721,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<Primi
     auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
     quant_datas[i] = quant_data;
   }
-  primitive_c->AddInputQuantParam(quant_params);
+  primitive_c->SetInputQuantParam(2, quant_params);
   auto ret = memcpy_s(bias_param->tensor_addr(), bias_param->tensor_size(), quant_datas, shape_size * sizeof(int32_t));
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed.";
@@ -834,22 +829,21 @@ STATUS PostTrainingQuantizer::QuantNode() {
                         << " PrimitiveC is null";
           continue;
         }
-        if (!input_cnode_primitive_c->GetOutputQuantParams().empty()) {
-          for (auto &quant_param : input_cnode_primitive_c->GetOutputQuantParams()) {
-            primitive_c->AddInputQuantParam(quant_param);
-          }
+        if (input_cnode_primitive_c->IsOutputQuantParamsInited()) {
+          auto quant_param = input_cnode_primitive_c->GetOutputQuantParams().front();
+          primitive_c->SetInputQuantParam(i - 1, quant_param);
         } else {
           // do input quant
           double scale = input_scale[cnode];
           int32_t zp = input_zero_point[cnode];
-          DoQuantInput(scale, zp, &input_min_max[cnode], primitive_c);
+          DoQuantInput(scale, zp, &input_min_max[cnode], primitive_c, i - 1);
         }
       }
     } else {
       // do input quant
       double scale = input_scale[cnode];
       int32_t convInputzeropoint = input_zero_point[cnode];
-      DoQuantInput(scale, convInputzeropoint, &input_min_max[cnode], primitive_c);
+      DoQuantInput(scale, convInputzeropoint, &input_min_max[cnode], primitive_c, 0);
       // do weight quant
       auto weight = cnode->input(2);
       bool perchannel = per_channel_;

@@ -73,30 +73,30 @@ ValueNodePtr AnfImporterFromMetaGraphT::ConvertPrimitive(const std::unique_ptr<s
   auto primitiveCValue = PrimitiveC::Create(cNode->primitive.release());
   cNode->primitive = nullptr;
   // add quant parameter
-  if (cNode->quantType != schema::QuantType_PostTraining && cNode->quantType != schema::QuantType_WeightQuant) {
-    primitiveCValue->SetQuantType(cNode->quantType);
-    for (int index : cNode->inputIndex) {
-      if (!meta_graph_->allTensors[index]->quantParams.empty()) {
-        std::vector<schema::QuantParamT> quant_params(meta_graph_->allTensors[index]->quantParams.size());
-        std::transform(
-          meta_graph_->allTensors[index]->quantParams.begin(), meta_graph_->allTensors[index]->quantParams.end(),
-          quant_params.begin(),
-          [](std::unique_ptr<schema::QuantParamT> &quant_param) -> schema::QuantParamT { return *quant_param; });
-        primitiveCValue->AddInputQuantParam(quant_params);
-      } else {
-        std::vector<schema::QuantParamT> empty_quant_params;
-        primitiveCValue->AddInputQuantParam(empty_quant_params);
-      }
+  for (auto index : cNode->inputIndex) {
+    if (!meta_graph_->allTensors[index]->quantParams.empty()) {
+      std::vector<schema::QuantParamT> quant_params(meta_graph_->allTensors[index]->quantParams.size());
+      std::transform(
+        meta_graph_->allTensors[index]->quantParams.begin(), meta_graph_->allTensors[index]->quantParams.end(),
+        quant_params.begin(),
+        [](std::unique_ptr<schema::QuantParamT> &quant_param) -> schema::QuantParamT { return *quant_param; });
+      primitiveCValue->AddInputQuantParam(quant_params);
+    } else {
+      std::vector<schema::QuantParamT> notinited_quant_params(1);
+      primitiveCValue->AddInputQuantParam(notinited_quant_params);
     }
-    for (int index : cNode->outputIndex) {
-      if (!meta_graph_->allTensors[index]->quantParams.empty()) {
-        std::vector<schema::QuantParamT> quant_params(meta_graph_->allTensors[index]->quantParams.size());
-        std::transform(
-          meta_graph_->allTensors[index]->quantParams.begin(), meta_graph_->allTensors[index]->quantParams.end(),
-          quant_params.begin(),
-          [](std::unique_ptr<schema::QuantParamT> &quant_param) -> schema::QuantParamT { return *quant_param; });
-        primitiveCValue->AddOutputQuantParam(quant_params);
-      }
+  }
+  for (auto index : cNode->outputIndex) {
+    if (!meta_graph_->allTensors[index]->quantParams.empty()) {
+      std::vector<schema::QuantParamT> quant_params(meta_graph_->allTensors[index]->quantParams.size());
+      std::transform(
+        meta_graph_->allTensors[index]->quantParams.begin(), meta_graph_->allTensors[index]->quantParams.end(),
+        quant_params.begin(),
+        [](std::unique_ptr<schema::QuantParamT> &quant_param) -> schema::QuantParamT { return *quant_param; });
+      primitiveCValue->AddOutputQuantParam(quant_params);
+    } else {
+      std::vector<schema::QuantParamT> notinited_quant_params(1);
+      primitiveCValue->AddOutputQuantParam(notinited_quant_params);
     }
   }
   auto value_node = NewValueNode(std::shared_ptr<PrimitiveC>(primitiveCValue));

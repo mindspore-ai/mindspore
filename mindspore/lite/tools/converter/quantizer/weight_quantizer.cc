@@ -101,8 +101,6 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
       return RET_ERROR;
     }
 
-    std::vector<schema::QuantParamT> quant_params;
-    primitive_c->AddInputQuantParam(quant_params);
     auto status = RET_ERROR;
     if (type_id == kNumberTypeInt8) {
       status = QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
@@ -143,9 +141,9 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
     ParameterPtr param_node = nullptr;
     for (size_t i = 1; i < node->size(); i++) {
       auto inputNode = node->input(i);
-      if (inputNode->isa<Parameter>() == true) {
+      if (inputNode->isa<Parameter>()) {
         param_node = inputNode->cast<ParameterPtr>();
-        if ((param_node != nullptr) && (param_node->has_default() == true)) {
+        if ((param_node != nullptr) && param_node->has_default()) {
           param_value = std::static_pointer_cast<ParamValueLite>(param_node->default_param());
           if ((param_value == nullptr) || (param_value->tensor_size() == 0) ||
               (param_value->tensor_addr() == nullptr) ||
@@ -169,8 +167,6 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
       return RET_ERROR;
     }
 
-    std::vector<schema::QuantParamT> quant_params;
-    primitive_c->AddInputQuantParam(quant_params);
     auto status = RET_ERROR;
     if (type_id == kNumberTypeInt8) {
       status = QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);

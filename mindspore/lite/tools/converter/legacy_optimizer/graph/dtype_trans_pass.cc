@@ -27,9 +27,6 @@ namespace lite {
 #define kMinInputNum 1
 #define kOutputNum 1
 
-static const std::set<schema::PrimitiveType> NoNeedDtypeTransList = {
-  PrimitiveType_QuantDTypeCast, PrimitiveType_Nchw2Nhwc, PrimitiveType_Nhwc2Nchw};
-
 STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
 
@@ -44,12 +41,6 @@ STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
     MS_LOG(ERROR) << "DoModelOutputDTypeTrans error: " << status;
     return status;
   }
-
-  status = DoNodeInoutDTypeTrans(graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "DoNodeInoutDTypeTrans error: " << status;
-    return status;
-  }
   return RET_OK;
 }
 
@@ -57,7 +48,7 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   auto &graphInIdxes = graph->inputIndex;
 
-  if (this->inputDataDType == TypeId::kNumberTypeInt8) {
+  if (this->inputDataDType == TypeId::kNumberTypeInt8 || this->inputDataDType == TypeId::kTypeUnknown) {
     return RET_OK;
   }
   if (this->inputDataDType != TypeId::kNumberTypeFloat && this->inputDataDType != TypeId::kNumberTypeUInt8) {
@@ -68,7 +59,7 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
   for (auto graphInIdx : graphInIdxes) {
     MS_ASSERT(graphInIdx < graph->allTensors.size());
     auto &tensor = graph->allTensors.at(graphInIdx);
-    if (tensor->dims.size() != kNHWCDimNumber || tensor->dataType != kNumberTypeInt8) {
+    if (tensor->dataType != kNumberTypeInt8 || tensor->quantParams.empty() || !tensor->quantParams.front()->inited) {
       continue;
     }
 
@@ -98,7 +89,7 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
 
 STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
-  if (outputDataDType == TypeId::kNumberTypeInt8) {
+  if (outputDataDType == TypeId::kNumberTypeInt8 || outputDataDType == TypeId::kTypeUnknown) {
     return RET_OK;
   }
   if (this->outputDataDType != TypeId::kNumberTypeFloat && this->outputDataDType != TypeId::kNumberTypeUInt8) {
@@ -107,6 +98,11 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
   }
   auto &graphOutIdxes = graph->outputIndex;
   for (auto graphOutIdx : graphOutIdxes) {
+    MS_ASSERT(graphOutIdx < graph->allTensors.size());
+    auto &tensor = graph->allTensors.at(graphOutIdx);
+    if (tensor->dataType != kNumberTypeInt8 || tensor->quantParams.empty() || !tensor->quantParams.front()->inited) {
+      continue;
+    }
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
       auto nodeName = (*iter)->name;
       MS_ASSERT(node != nullptr);
@@ -128,67 +124,6 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
       }
     }
   }
-  return RET_OK;
-}
-
-STATUS DTypeTransPass::DoNodeInoutDTypeTrans(schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
-  // insert transNode before and after existNode
-  for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
-    if (IsContain(GetInt8OpList(), GetCNodeTType(**iter)) && (*iter)->quantType == QuantType_AwareTraining) {
-      continue;
-    }
-    auto iterType = GetCNodeTType(**iter);
-    if (NoNeedDtypeTransList.find(iterType) != NoNeedDtypeTransList.end()) {
-      continue;
-    }
-    bool needInsertPost = true;
-    if (GetCNodeTType(**iter) == PrimitiveType_Shape) {
-      needInsertPost = false;
-    }
-    auto nodeName = (*iter)->name;
-    if ((*iter)->inputIndex.size() < kMinInputNum) {
-      MS_LOG(ERROR) << "Op " << nodeName.c_str() << " should have " << kMinInputNum << " input tensor at least";
-      return RET_ERROR;
-    }
-    STATUS status;
-    // insert pre
-    for (size_t i = 0; i < (*iter)->inputIndex.size(); i++) {
-      MS_ASSERT(graph->allTensors.size() > (*iter)->inputIndex.at(i));
-      auto &preTensor = graph->allTensors.at((*iter)->inputIndex.at(i));
-      if (preTensor->dataType == TypeId::kNumberTypeInt || preTensor->dataType == TypeId::kNumberTypeInt32) {
-        continue;
-      }
-      auto &graphInIdxes = graph->inputIndex;
-      if (!preTensor->data.empty() && !IsContain(graphInIdxes, (*iter)->inputIndex.at(i))) {
-        continue;
-      }
-      if ((preTensor->dataType != TypeId::kNumberTypeInt8) && (IsContain(graphInIdxes, (*iter)->inputIndex.at(i)))) {
-        continue;
-      }
-      iter = InsertDTypeTransNode(graph, iter, kBefore, i, kInt8ToFP32, &status);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "InsertInt8ToFloat32Node before " << nodeName.c_str() << " failed";
-        return RET_ERROR;
-      }
-    }
-
-    if (needInsertPost) {
-      for (size_t i = 0; i < (*iter)->outputIndex.size(); i++) {
-        auto &postTensor = graph->allTensors.at((*iter)->outputIndex.at(i));
-        if (postTensor->dataType == TypeId::kNumberTypeInt || postTensor->dataType == TypeId::kNumberTypeInt32) {
-          continue;
-        }
-        iter = InsertDTypeTransNode(graph, iter, kAfter, i, kFP32ToInt8, &status);
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "InsertFloat32ToUint8Node after " << nodeName.c_str() << " failed";
-          return RET_ERROR;
-        }
-      }
-    }
-    (*iter)->quantType = QuantType_QUANT_NONE;
-  }
-
   return RET_OK;
 }
 
