@@ -57,6 +57,10 @@ int ReduceOpenCLKernel::Init() {
     return RET_PARAM_INVALID;
   }
   std::string kernel_name = reduce_type2str.at(reduce_param->mode_);
+  if (in_tensors_[0]->shape()[1] >= LOCAL_CACHE_THREAD || in_tensors_[0]->shape()[2] >= LOCAL_CACHE_THREAD) {
+    use_local_ = true;
+    kernel_name += "_local";
+  }
   kernel_name += "_NHWC4";
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
 
@@ -101,7 +105,10 @@ int ReduceOpenCLKernel::Run() {
   int c = shapex[3];
   int c4 = UP_DIV(c, C4NUM);
   std::vector<size_t> local = {};
-  std::vector<size_t> global = {static_cast<size_t>(c4)};
+  if (use_local_) {
+    local = {1, LOCAL_CACHE_THREAD, LOCAL_CACHE_THREAD};
+  }
+  std::vector<size_t> global = {static_cast<size_t>(c4), 1, 1};
   cl_int4 size = {h, w, c4, 1};
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
