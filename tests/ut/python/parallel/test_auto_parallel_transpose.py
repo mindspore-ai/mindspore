@@ -78,8 +78,8 @@ def test_two_matmul_transpose():
 
     _executor.compile(net, x, y, b, phase='train')
     strategies = _executor._get_shard_strategy(net)
-    expected_strategies = {'Default/network-Net/Transpose-op0': [[1, 16]],
-                           'Default/network-Net/Transpose-op1': [[16, 1]],
-                           'Default/network-Net/MatMul-op2': [[16, 1], [1, 1]],
-                           'Default/network-Net/MatMul-op3': [[16, 1], [1, 1]]}
+    expected_strategies = {'Default/network-Net/Transpose-op3': [[1, 16]],
+                           'Default/network-Net/Transpose-op2': [[16, 1]],
+                           'Default/network-Net/MatMul-op0': [[16, 1], [1, 1]],
+                           'Default/network-Net/MatMul-op1': [[16, 1], [1, 1]]}
     assert strategies == expected_strategies

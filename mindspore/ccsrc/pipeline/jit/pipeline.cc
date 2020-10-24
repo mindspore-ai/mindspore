@@ -243,9 +243,12 @@ py::dict ExecutorPy::GetParameterLayout(const std::string &phase) {
 
 py::dict ExecutorPy::GetCNodeStrategy(const std::string &phase) {
   MS_LOG(DEBUG) << "GetCNodeStrategy!";
-  std::string layout_graph = phase + kStepParallelGraph;
-  auto graph = GetFuncGraph(layout_graph);
-  return mindspore::parallel::GetCNodeStrategy(graph);
+  return stra_dict_[phase];
+}
+
+void ExecutorPy::SetCNodeStrategy(const std::string &name, const parallel::Strategys &strategy) {
+  MS_LOG(DEBUG) << "SetCNodeStrategy!";
+  stra_dict_[phase_][py::str(name)] = strategy;
 }
 
 py::dict ExecutorPy::GetAllreduceFusion(const std::string &phase) {
@@ -449,6 +452,7 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
 #endif
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
   auto phase_s = py::cast<std::string>(phase);
+  phase_ = phase_s;
   MS_LOG(INFO) << "ExecutorPy compile phase:" << phase_s << "!";
   ResourcePtr resource = std::make_shared<Resource>(obj);
 

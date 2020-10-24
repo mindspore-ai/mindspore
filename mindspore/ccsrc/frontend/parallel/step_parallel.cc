@@ -1524,7 +1524,6 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
   // Get global rank after the checkpoint?
   int32_t global_rank = ParallelContext::GetInstance()->global_rank();
   std::vector<int32_t> stages = ParallelContext::GetInstance()->stage();
-
   for (auto &node : all_nodes) {
     auto cnode = node->cast<CNodePtr>();
     if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
@@ -2478,17 +2477,32 @@ void InsertShapeOp(const CNodePtr &node, const AnfNodePtr &pre_node, const FuncG
   InsertNode(op, node, 2, pre_node, root, "shape");
 }
 
-void HandleRootReshape(const std::vector<AnfNodePtr> &all_nodes) {
+void HandleRootReshapeAndSaveStrategy(const std::vector<AnfNodePtr> &all_nodes) {
   // If root graph has reshape op. Find the corresponding parameter.
   // Reshape's shape is the shape of the parameter.
+  auto executor = pipeline::ExecutorPy::GetInstance();
   for (auto &node : all_nodes) {
     if (!node->isa<CNode>()) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    if (!IsValueNode<Primitive>(cnode->input(0)) || cnode->in_forward_flag()) {
+    if (!IsValueNode<Primitive>(cnode->input(0)) || cnode == nullptr) {
       continue;
     }
+    if (cnode->in_forward_flag()) {
+      // Save strategy in executor
+      OperatorInfoPtr op_info = cnode->user_data<OperatorInfo>();
+      if (op_info) {
+        auto stra_ptr = op_info->strategy();
+        if (stra_ptr) {
+          auto strategy = stra_ptr->GetInputDim();
+          // fullname with scope should be found in step parallel end ir
+          executor->SetCNodeStrategy(cnode->fullname_with_scope(), strategy);
+        }
+      }
+      continue;
+    }
+
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     if (prim->name() != RESHAPE) {
       continue;
@@ -2844,7 +2858,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
     ReshapeInit(all_nodes);
   }
 
-  HandleRootReshape(all_nodes);
+  HandleRootReshapeAndSaveStrategy(all_nodes);
 
   HandleForwardMakeTupleAndMakeList(all_nodes);
 

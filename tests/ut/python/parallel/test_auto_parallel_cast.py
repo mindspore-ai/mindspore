@@ -86,6 +86,6 @@ def test_double_star_graph():
     expected_strategies = {'Default/network-Net/Cast-op0': [[8, 1]],
                            'Default/network-Net/Cast-op1': [[1, 8]],
                            'Default/network-Net/MatMul-op3': [[8, 1], [1, 1]],
-                           'Default/network-Net/MatMul-op4': [[1, 1], [1, 8]],
-                           'Default/network-Net/MatMul-op2': [[1, 8], [8, 1]]}
+                           'Default/network-Net/MatMul-op2': [[1, 1], [1, 8]],
+                           'Default/network-Net/MatMul-op4': [[1, 8], [8, 1]]}
     assert strategies == expected_strategies

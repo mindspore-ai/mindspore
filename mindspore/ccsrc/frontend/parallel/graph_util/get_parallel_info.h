@@ -25,7 +25,6 @@ namespace py = pybind11;
 namespace mindspore {
 namespace parallel {
 py::dict GetParameterLayout(const FuncGraphPtr &graph);
-py::dict GetCNodeStrategy(const FuncGraphPtr &graph);
 py::dict GetAllreduceFusion(const FuncGraphPtr &graph);
 }  // namespace parallel
 }  // namespace mindspore

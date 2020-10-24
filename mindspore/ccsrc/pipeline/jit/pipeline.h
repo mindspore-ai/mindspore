@@ -92,6 +92,7 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   void RunInitGraph(const py::dict &init_params, const std::string &phase);
   py::dict GetParameterLayout(const std::string &phase);
   py::dict GetCNodeStrategy(const std::string &phase);
+  void SetCNodeStrategy(const std::string &name, const parallel::Strategys &strategy);
   py::dict GetAllreduceFusion(const std::string &phase);
   void DelNetRes(const std::string &id);
   void ReleaseResource(const py::object &phase);
@@ -114,6 +115,8 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   static std::shared_ptr<ExecutorPy> executor_;
   static std::mutex instance_lock_;
   static bool debugger_terminate_;
+  std::map<std::string, py::dict> stra_dict_;
+  std::string phase_ = "";
 };
 using ExecutorPyPtr = std::shared_ptr<ExecutorPy>;
 
