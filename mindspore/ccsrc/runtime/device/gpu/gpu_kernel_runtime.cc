@@ -123,18 +123,23 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     // get inputs
     auto input_size = AnfAlgo::GetInputTensorNum(kernel);
     for (size_t j = 0; j < input_size; ++j) {
-      auto input_kernel = kernel->input(j + 1);
+      auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(kernel, j);
+      auto input_kernel = kernel_with_index.first;
+      auto index = kernel_with_index.second;
+
       std::string input_kernel_name = input_kernel->fullname_with_scope();
       auto addr = kernel_inputs[j];
       auto type = AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
       auto format = kOpFormat_DEFAULT;
       auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
-      string input_tensor_name = input_kernel_name + ':' + "0";
+      string input_tensor_name = input_kernel_name + "_output:" + std::to_string(index);
       ShapeVector int_shapes;
       auto shape = AnfAlgo::GetOutputDeviceShape(input_kernel, PARAMETER_OUTPUT_INDEX);
       (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
                            [](size_t inner_item) { return SizeToInt(inner_item); });
-      auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, true);
+      auto cur_node_name = kernel->fullname_with_scope();
+      auto ret = gpu_addr->LoadMemToHost(cur_node_name + "_input:" + std::to_string(j), exec_order, format, int_shapes,
+                                         type, 0, true);
       if (!ret) {
         MS_LOG(ERROR) << "LoadMemToHost:"
                       << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
@@ -156,7 +161,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
       auto type = AnfAlgo::GetOutputInferDataType(kernel, j);
       auto format = kOpFormat_DEFAULT;
       auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
-      string tensor_name = kernel_name + ':' + std::to_string(j);
+      string tensor_name = kernel_name + "_output:" + "0";
       ShapeVector int_shapes;
       auto shape = AnfAlgo::GetOutputDeviceShape(kernel, j);
       (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
