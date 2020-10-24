@@ -86,7 +86,7 @@ int QuantParamCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
     if (!tensor->data.empty() && !IsContain(graph->inputIndex, node.inputIndex.at(i))) {
       auto status = ComputeConstQuantParam((*tensor), quantParam.get());
       if (status != RET_OK) {
-        MS_LOG(INFO) << "ComputeConstQuantParam failed: " << status;
+        MS_LOG(DEBUG) << "ComputeConstQuantParam failed: " << status;
         return status;
       }
       tensor->quantParams.front() = std::move(quantParam);

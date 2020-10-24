@@ -18,7 +18,7 @@
 #include "nnacl/int8/quant_dtype_cast_int8.h"
 #include "nnacl/errorcode.h"
 
-int DoDequantizeInt8ToFp32(int8_t *quant_values, float *real_values, float scale, int32_t zp, int size) {
+int DoDequantizeInt8ToFp32(const int8_t *quant_values, float *real_values, float scale, int32_t zp, int size) {
   if (quant_values == NULL || real_values == NULL) {
     return NNACL_PARAM_INVALID;
   }
@@ -29,13 +29,13 @@ int DoDequantizeInt8ToFp32(int8_t *quant_values, float *real_values, float scale
   return NNACL_OK;
 }
 
-int DoQuantizeToInt8FromFp32(float *real_values, int8_t *quant_values, float scale, int32_t zp, int size) {
+int DoQuantizeFp32ToInt8(const float *real_values, int8_t *quant_values, float scale, int32_t zp, int size) {
   if (quant_values == NULL || real_values == NULL) {
     return NNACL_PARAM_INVALID;
   }
 
   for (int i = 0; i < size; ++i) {
-    float temp = round(real_values[i] * 1.0 / scale + zp);
+    float temp = (float)round(real_values[i] * 1.0 / scale + zp);
     if (temp > 127) {
       quant_values[i] = 127;
     } else if (temp < -128) {
@@ -47,7 +47,36 @@ int DoQuantizeToInt8FromFp32(float *real_values, int8_t *quant_values, float sca
   return NNACL_OK;
 }
 
-int DoDequantizeInt8ToUInt8(int8_t *quant_values, uint8_t *real_values, int size) {
+int DoDequantizeUInt8ToFp32(const uint8_t *quant_values, float *real_values, float scale, int32_t zp, int size) {
+  if (quant_values == NULL || real_values == NULL) {
+    return NNACL_PARAM_INVALID;
+  }
+
+  for (int i = 0; i < size; ++i) {
+    real_values[i] = (float)((int)quant_values[i] - zp) * scale;
+  }
+  return NNACL_OK;
+}
+
+int DoQuantizeFp32ToUInt8(const float *real_values, uint8_t *quant_values, float scale, int32_t zp, int size) {
+  if (quant_values == NULL || real_values == NULL) {
+    return NNACL_PARAM_INVALID;
+  }
+
+  for (int i = 0; i < size; ++i) {
+    float temp = (float)round(real_values[i] * 1.0 / scale + zp);
+    if (temp > 255) {
+      quant_values[i] = 255;
+    } else if (temp < 0) {
+      quant_values[i] = 0;
+    } else {
+      quant_values[i] = (uint8_t)temp;
+    }
+  }
+  return NNACL_OK;
+}
+
+int Int8ToUInt8(const int8_t *quant_values, uint8_t *real_values, int size) {
   if (quant_values == NULL || real_values == NULL) {
     return NNACL_PARAM_INVALID;
   }
@@ -65,7 +94,7 @@ int DoDequantizeInt8ToUInt8(int8_t *quant_values, uint8_t *real_values, int size
   return NNACL_OK;
 }
 
-int DoQuantizeToInt8FromUint8(uint8_t *real_values, int8_t *quant_values, int size) {
+int UInt8ToInt8(const uint8_t *real_values, int8_t *quant_values, int size) {
   if (quant_values == NULL || real_values == NULL) {
     return NNACL_PARAM_INVALID;
   }

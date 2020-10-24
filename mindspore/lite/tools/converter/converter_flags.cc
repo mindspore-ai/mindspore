@@ -84,7 +84,7 @@ int Flags::Init(int argc, const char **argv) {
   }
 
   if (this->inputDataTypeIn == "FLOAT") {
-    this->inputDataType = TypeId::kNumberTypeFloat;
+    this->inputDataType = TypeId::kNumberTypeFloat32;
   } else if (this->inputDataTypeIn == "INT8") {
     this->inputDataType = TypeId::kNumberTypeInt8;
   } else if (this->inputDataTypeIn == "UINT8") {
@@ -98,7 +98,7 @@ int Flags::Init(int argc, const char **argv) {
   }
 
   if (this->outputDataTypeIn == "FLOAT") {
-    this->outputDataType = TypeId::kNumberTypeFloat;
+    this->outputDataType = TypeId::kNumberTypeFloat32;
   } else if (this->outputDataTypeIn == "INT8") {
     this->outputDataType = TypeId::kNumberTypeInt8;
   } else if (this->outputDataTypeIn == "UINT8") {

@@ -87,6 +87,7 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
       }
     } else {  // perchannel
       MS_LOG(ERROR) << "perchannel doquant is not supported yet";
+      return RET_ERROR;
     }
   }
   return RET_OK;

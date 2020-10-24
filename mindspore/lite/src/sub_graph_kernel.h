@@ -22,8 +22,42 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/executor.h"
+#ifdef ENABLE_ARM64
+#include "nnacl/optimized_kernel.h"
+#endif
 
 namespace mindspore::kernel {
+using Float16CastFunc = void (*)(const void *, void *, int);
+
+class Float16CastUtil {
+ public:
+  static Float16CastUtil *GetInstance() {
+    static Float16CastUtil float16_cast_util;
+    return &float16_cast_util;
+  }
+
+ private:
+  Float16CastUtil() {
+#ifdef ENABLE_ARM64
+    void *fp16_op_handler = Float16Module::GetInstance()->float16_op_handler_;
+    if (fp16_op_handler != nullptr) {
+      dlerror();
+      *(reinterpret_cast<void **>(&float16_to_float32_func_)) = dlsym(fp16_op_handler, "Float16ToFloat32_fp16_handler");
+      *(reinterpret_cast<void **>(&float32_to_float16_func_)) = dlsym(fp16_op_handler, "Float32ToFloat16_fp16_handler");
+      auto dlopen_error = dlerror();
+      if (dlopen_error != nullptr) {
+        MS_LOG(ERROR) << "load float16 cast func failed! " << dlopen_error << ".";
+      }
+    }
+#endif
+  }
+  ~Float16CastUtil() = default;
+
+ public:
+  Float16CastFunc float16_to_float32_func_ = nullptr;
+  Float16CastFunc float32_to_float16_func_ = nullptr;
+};
+
 class SubGraphKernel : public LiteKernel {
  public:
   explicit SubGraphKernel(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,

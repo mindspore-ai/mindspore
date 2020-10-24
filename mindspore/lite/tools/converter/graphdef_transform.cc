@@ -22,7 +22,6 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/legacy_optimizer/graph/dtype_trans_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/format_trans_fusion_pass.h"
-#include "tools/converter/legacy_optimizer/fusion/format_trans_transpose_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/mul_add_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/graph/trans_format_remove_pass.h"
@@ -36,7 +35,6 @@
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
 #include "tools/converter/legacy_optimizer/graph/tensor_quant_pass.h"
 #include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
-#include "tools/converter/quantizer/aware_quantizer.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -120,15 +118,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
       return status;
     }
   }
-  {
-    Optimizer inferQuantParamOtimizer;
-    inferQuantParamOtimizer.AddPass(new (std::nothrow) InferQuantParamPass());
-    status = inferQuantParamOtimizer.Run(graphDefT);
-    if (status != RET_OK && status != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Run tensorQuantOptimizer graphPasses Failed";
-      return status;
-    }
-  }
 
   {
     Optimizer fusionOptimizer;
@@ -158,6 +147,8 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     auto dTypeTransPass = new (std::nothrow) DTypeTransPass();
     dTypeTransPass->SetInputDataDType(ctx.inputDataType);
     dTypeTransPass->SetOutputDataDType(ctx.outputDataType);
+    quantNodeOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
+    quantNodeOptimizer.AddPass(new (std::nothrow) InferShapePass());
     quantNodeOptimizer.AddPass(dTypeTransPass);
     quantNodeOptimizer.AddPass(new (std::nothrow) QuantCastFusionPass());
     quantNodeOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
