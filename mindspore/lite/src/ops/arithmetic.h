@@ -39,11 +39,11 @@ class Arithmetic : public PrimitiveC {
   }
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
-  bool Broadcasting() { return this->broadcasting_; }
-  int NDims() { return this->ndim_; }
-  std::vector<int> InShape0() { return this->in_shape0_; }
-  std::vector<int> InShape1() { return this->in_shape1_; }
-  std::vector<int> OutputShape() { return this->out_shape_; }
+  bool Broadcasting() const { return this->broadcasting_; }
+  int NDims() const { return this->ndim_; }
+  std::vector<int> InShape0() const { return this->in_shape0_; }
+  std::vector<int> InShape1() const { return this->in_shape1_; }
+  std::vector<int> OutputShape() const { return this->out_shape_; }
 
  protected:
   bool broadcasting_ = false;

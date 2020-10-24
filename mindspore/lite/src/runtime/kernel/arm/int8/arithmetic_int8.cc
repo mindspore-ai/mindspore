@@ -15,6 +15,8 @@
  */
 
 #include "src/runtime/kernel/arm/int8/arithmetic_int8.h"
+#include "src/runtime/kernel/arm/int8/add_int8.h"
+#include "src/runtime/kernel/arm/int8/mul_int8.h"
 #include "nnacl/arithmetic_common.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -27,11 +29,14 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::RET_PARAM_INVALID;
 
+using mindspore::schema::PrimitiveType_Add;
+using mindspore::schema::PrimitiveType_Eltwise;
 using mindspore::schema::PrimitiveType_Equal;
 using mindspore::schema::PrimitiveType_Greater;
 using mindspore::schema::PrimitiveType_GreaterEqual;
 using mindspore::schema::PrimitiveType_Less;
 using mindspore::schema::PrimitiveType_LessEqual;
+using mindspore::schema::PrimitiveType_Mul;
 using mindspore::schema::PrimitiveType_NotEqual;
 
 namespace mindspore::kernel {
@@ -159,11 +164,15 @@ kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::Tenso
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                                    const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "Input parameter is null!";
-    return nullptr;
+  kernel::LiteKernel *kernel = nullptr;
+  if (desc.type == PrimitiveType_Eltwise && static_cast<schema::PrimitiveType>(parameter->type_) == PrimitiveType_Add) {
+    kernel = new (std::nothrow) QuantizedAddCPUKernel(parameter, inputs, outputs, ctx, primitive);
+  } else if (desc.type == PrimitiveType_Eltwise &&
+             static_cast<schema::PrimitiveType>(parameter->type_) == PrimitiveType_Mul) {
+    kernel = new (std::nothrow) MulInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
+  } else {
+    kernel = new (std::nothrow) ArithmeticInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
   }
-  auto kernel = new (std::nothrow) ArithmeticInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create ArithmeticInt8CPUKernel failed, name: " << parameter->name_;
     free(parameter);
@@ -185,5 +194,5 @@ REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Less, CpuArithmeticInt8KernelCre
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LessEqual, CpuArithmeticInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Greater, CpuArithmeticInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_GreaterEqual, CpuArithmeticInt8KernelCreator)
-
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Eltwise, CpuArithmeticInt8KernelCreator)
 }  // namespace mindspore::kernel
