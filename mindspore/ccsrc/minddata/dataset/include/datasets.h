@@ -96,6 +96,7 @@ class RepeatNode;
 class ShuffleNode;
 class SkipNode;
 class TakeNode;
+class TransferNode;
 class ZipNode;
 
 #define RETURN_EMPTY_IF_ERROR(_s) \
@@ -559,6 +560,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
  public:
   // need friend class so they can access the children_ field
   friend class Iterator;
+  friend class TransferNode;
   friend class mindspore::dataset::TreeAdapter;
 
   /// \brief Constructor
@@ -578,6 +580,12 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \brief Pure virtual function for derived class to implement parameters validation
   /// \return Status Status::OK() if all the parameters are valid
   virtual Status ValidateParams() = 0;
+
+  /// \brief Pure virtual function for derived class to get the shard id of specific node
+  /// \return Status Status::OK() if get shard id successfully
+  virtual Status GetShardId(int32_t *shard_id) {
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
+  }
 
   /// \brief Gets the dataset size
   /// \return status code
@@ -616,6 +624,13 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] columns List of columns to be used to specify the order of columns
   /// \return Shared pointer to the Iterator
   std::shared_ptr<Iterator> CreateIterator(std::vector<std::string> columns = {});
+
+  /// \brief Function to transfer data through a device.
+  /// \notes If device is Ascend, features of data will be transferred one by one. The limitation
+  ///            of data transmission per time is 256M.
+  /// \param[in] send_epoch_end Whether to send end of sequence to device or not (default=True).
+  /// \return Returns true if no error encountered else false.
+  bool DeviceQueue(bool send_epoch_end = true);
 
 #ifndef ENABLE_ANDROID
   /// \brief Function to create a Saver to save the dynamic data processed by the dataset pipeline

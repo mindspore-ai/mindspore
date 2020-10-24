@@ -122,6 +122,14 @@ std::vector<std::shared_ptr<DatasetOp>> CSVNode::Build() {
 
   return node_ops;
 }
+
+// Get the shard id of node
+Status CSVNode::GetShardId(int32_t *shard_id) {
+  *shard_id = shard_id_;
+
+  return Status::OK();
+}
+
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

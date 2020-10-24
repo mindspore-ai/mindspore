@@ -17,8 +17,9 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_SAMPLERS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_SAMPLERS_H_
 
-#include <vector>
 #include <memory>
+#include <string>
+#include <vector>
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
@@ -47,6 +48,10 @@ class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
   /// \brief Pure virtual function to convert a SamplerObj class into a runtime sampler object
   /// \return Shared pointers to the newly created Sampler
   virtual std::shared_ptr<Sampler> Build() = 0;
+
+  /// \brief Function for derived class to get the shard id of sampler
+  /// \return The shard id of the derived sampler
+  virtual int64_t ShardId() { return 0; }
 
 #ifndef ENABLE_ANDROID
   /// \brief Virtual function to convert a SamplerObj class into a runtime mindrecord sampler object,
@@ -133,6 +138,10 @@ class DistributedSamplerObj : public SamplerObj {
 #endif
 
   bool ValidateParams() override;
+
+  /// \brief Function to get the shard id of sampler
+  /// \return The shard id of sampler
+  int64_t ShardId() override { return shard_id_; }
 
  private:
   int64_t num_shards_;

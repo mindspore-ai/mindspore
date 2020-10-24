@@ -74,11 +74,29 @@ Status IteratorConsumer::GetNextAsMap(std::unordered_map<std::string, TensorPtr>
 
 // ToDevice
 Status ToDevice::Init(std::shared_ptr<api::Dataset> d) {
-  // TODO(CRC):
-  // Get device ID from children look at get_distribution in python
-  // Add DeviceQue IR on top of dataset d
-
   return tree_adapter_->BuildAndPrepare(std::move(d), num_epochs_);
+}
+
+Status ToDevice::Send() {
+  std::unique_ptr<DataBuffer> db;
+  RETURN_IF_NOT_OK(tree_adapter_->Launch());
+  RETURN_IF_NOT_OK(tree_adapter_->root()->GetNextBuffer(&db));
+  return Status::OK();
+}
+
+Status ToDevice::Continue() {
+  // tree_.root() must be DeviceQueueOp
+  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(tree_adapter_->root().get());
+  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "ContinueSend only supported by DeviceQueueOp");
+  op->ContinueSend();
+  return Status::OK();
+}
+
+Status ToDevice::Stop() {
+  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(tree_adapter_->root().get());
+  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "StopSend only supported by DeviceQueueOp");
+  op->StopSend();
+  return Status::OK();
 }
 
 #ifndef ENABLE_ANDROID

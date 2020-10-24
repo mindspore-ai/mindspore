@@ -14,29 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_CELEBA_NODE_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_CELEBA_NODE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_TRANSFER_NODE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_TRANSFER_NODE_H_
 
 #include <memory>
-#include <set>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "minddata/dataset/include/datasets.h"
 
 namespace mindspore {
 namespace dataset {
+
 namespace api {
 
-class CelebANode : public Dataset {
+class TransferNode : public Dataset {
  public:
   /// \brief Constructor
-  CelebANode(const std::string &dataset_dir, const std::string &usage, const std::shared_ptr<SamplerObj> &sampler,
-             const bool &decode, const std::set<std::string> &extensions, const std::shared_ptr<DatasetCache> &cache);
+  TransferNode(std::shared_ptr<Dataset> child, const std::string &queue_name, int32_t device_id,
+               const std::string &device_type, bool send_epoch_end);
 
   /// \brief Destructor
-  ~CelebANode() = default;
+  ~TransferNode() = default;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \return shared pointer to the list of newly created DatasetOps
@@ -46,19 +45,18 @@ class CelebANode : public Dataset {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
-  /// \brief Get the shard id of node
-  /// \return Status Status::OK() if get shard id successfully
-  Status GetShardId(int32_t *shard_id) override;
+  static Status get_distribution(std::shared_ptr<Dataset> ds, int32_t *device_id);
 
  private:
-  std::string dataset_dir_;
-  std::string usage_;
-  bool decode_;
-  std::set<std::string> extensions_;
-  std::shared_ptr<SamplerObj> sampler_;
+  std::string queue_name_;
+  int32_t device_id_;
+  std::string device_type_;
+  int32_t prefetch_size_;
+  bool send_epoch_end_;
+  int32_t total_batch_;
 };
 
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_CELEBA_NODE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_TRANSFER_NODE_H_
