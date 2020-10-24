@@ -48,6 +48,7 @@ class GradWrap(nn.Cell):
 
 def compile_net(net, x, y, b):
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x, y, b)
 
 
@@ -649,6 +650,7 @@ def test_assign_sub():
 
     def compile_sub_net(net, x):
         net.set_auto_parallel()
+        net.set_train()
         _executor.compile(net, x)
 
     context.set_auto_parallel_context(device_num=64, global_rank=15)
@@ -696,6 +698,7 @@ def test_assign_add():
 
     def compile_sub_net(net, x):
         net.set_auto_parallel()
+        net.set_train()
         _executor.compile(net, x)
 
     context.set_auto_parallel_context(device_num=64, global_rank=15)
@@ -743,6 +746,7 @@ def test_assign():
 
     def compile_sub_net(net, x):
         net.set_auto_parallel()
+        net.set_train()
         _executor.compile(net, x)
 
     context.set_auto_parallel_context(device_num=64, global_rank=15)

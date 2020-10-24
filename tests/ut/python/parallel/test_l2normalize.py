@@ -75,4 +75,5 @@ def test_l2normalize_matmul():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y, b)

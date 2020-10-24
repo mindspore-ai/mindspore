@@ -87,6 +87,7 @@ def test_six_matmul_save():
     net.set_auto_parallel()
     x1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x1, x6)
 
 
@@ -149,6 +150,7 @@ def test_six_matmul_load():
     x1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
     x7 = Tensor(np.ones([32, 32]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x1, x6, x7)
 
 
@@ -205,6 +207,7 @@ def test_six_matmul_save_auto():
     net.set_auto_parallel()
     x1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x1, x6)
 
 
@@ -265,4 +268,5 @@ def test_six_matmul_load_auto():
     x1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
     x7 = Tensor(np.ones([32, 32]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x1, x6, x7)

@@ -74,6 +74,7 @@ def test_gatherv2_semi_samestage1():
 
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 def test_gatherv2_semi_samestage2():
@@ -86,4 +87,5 @@ def test_gatherv2_semi_samestage2():
 
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)

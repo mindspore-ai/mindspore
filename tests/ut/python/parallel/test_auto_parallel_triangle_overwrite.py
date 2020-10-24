@@ -70,4 +70,5 @@ def test_triangle_strategy_consistency():
     net.set_auto_parallel()
     reset_op_id()
 
+    net.set_train()
     _executor.compile(net, x, phase='train')

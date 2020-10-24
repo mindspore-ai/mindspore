@@ -118,7 +118,7 @@ void CoverSliceShape(const FuncGraphPtr &root);
 void SetVirtualDatasetStrategy(const CNodePtr &node);
 
 // Creat parallel operator for primitive node(has strategy)
-void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes);
+void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_training = true);
 
 TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int> &node_pair);
 

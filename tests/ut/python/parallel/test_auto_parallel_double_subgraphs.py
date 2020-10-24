@@ -113,6 +113,7 @@ def test_double_subgraphs():
 
     x = Tensor(np.ones([8, 8, 8, 8]), dtype=ms.float32)
     reset_op_id()
+    net.set_train()
     _executor.compile(net, x, phase='train')
     strategies = _executor._get_shard_strategy(net)
     for (k, v) in strategies.items():

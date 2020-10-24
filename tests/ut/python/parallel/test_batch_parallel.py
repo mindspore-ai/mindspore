@@ -108,6 +108,7 @@ def test_batch():
     x = Tensor(np.ones([128, 16, 34, 34]), dtype=ms.float32)
     w1 = Tensor(np.ones([128, 8, 32, 32]), dtype=ms.float32)
     w2 = Tensor(np.ones([128, 64, 24, 24]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, w1, w2)
 
 

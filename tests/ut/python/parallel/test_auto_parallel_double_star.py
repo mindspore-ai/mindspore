@@ -83,4 +83,5 @@ def test_double_star_graph():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x, y, z, w, a, b, c)

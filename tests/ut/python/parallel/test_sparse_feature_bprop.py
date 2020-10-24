@@ -60,6 +60,7 @@ def test_bprop_with_sparse_feature_allreduce():
     net = GradWrap(Net())
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
+    net.set_train()
     _executor.compile(net, x)
 
 
@@ -87,6 +88,7 @@ def test_bprop_with_sparse_feature_mirror():
     def compile_net(net):
         optimizer = Adam(net.trainable_params(), learning_rate=0.1, loss_scale=1024.0, weight_decay=0.9)
         train_net = TrainOneStepCell(net, optimizer)
+        train_net.set_train()
         _executor.compile(train_net, _x, _b)
 
     net = Net()
@@ -119,6 +121,7 @@ def test_bprop_with_sparse_feature_dataparallel():
     def compile_net(net):
         optimizer = Adam(net.trainable_params(), learning_rate=0.1, loss_scale=1024.0, weight_decay=0.9)
         train_net = TrainOneStepCell(net, optimizer)
+        train_net.set_train()
         _executor.compile(train_net, _x, _b)
 
     net = Net()

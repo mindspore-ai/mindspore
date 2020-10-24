@@ -34,7 +34,7 @@ class Net(Cell):
         return out
 
 
-class   EvalNet(Cell):
+class EvalNet(Cell):
     def __init__(self, network, strategy2=None):
         super().__init__()
         self.network = network
@@ -42,8 +42,8 @@ class   EvalNet(Cell):
 
     def construct(self, x, b):
         out = self.network(x, b)
-        out = self.relu(out)
-        return out
+        out1 = self.relu(out)
+        return out, out1
 
 
 _x = Tensor(np.ones([64, 64]), dtype=ms.float32)

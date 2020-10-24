@@ -73,4 +73,5 @@ def test_linear():
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     bias = Tensor(np.ones([64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y, bias, label)

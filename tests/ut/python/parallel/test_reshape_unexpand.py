@@ -67,6 +67,7 @@ def test_reshape_unexpand():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 def test_reshape_unexpand_1():
@@ -89,6 +90,7 @@ def test_reshape_unexpand_1():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 def test_reshape_unexpand_2():
@@ -111,6 +113,7 @@ def test_reshape_unexpand_2():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 def test_reshape_unexpand_3():
@@ -134,6 +137,7 @@ def test_reshape_unexpand_3():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 def test_reshape_unexpand_4():
@@ -157,6 +161,7 @@ def test_reshape_unexpand_4():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 def test_reshape_unexpand_5():
@@ -180,6 +185,7 @@ def test_reshape_unexpand_5():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 def test_reshape_unexpand_6():
@@ -203,6 +209,7 @@ def test_reshape_unexpand_6():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 def test_reshape_unexpand_7():
@@ -235,6 +242,7 @@ def test_reshape_unexpand_7():
     x = Tensor(np.ones([32, 3, 224, 224]), dtype=ms.float32)
     net = GradWrap(NetWithLoss(Net()))
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 def test_reshape_unexpand_8():
@@ -257,4 +265,5 @@ def test_reshape_unexpand_8():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)

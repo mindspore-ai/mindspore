@@ -65,6 +65,7 @@ def test_dropout_semi_auto():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -77,6 +78,7 @@ def test_dropout_semi_auto2():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -89,6 +91,7 @@ def test_dropout_semi_auto3():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -99,4 +102,5 @@ def test_dropout_auto():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)

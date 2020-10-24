@@ -88,6 +88,7 @@ def test_star_strategy_consistency1():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     reset_op_id()
+    net.set_train()
     _executor.compile(net, x, phase='train')
 
 
@@ -102,6 +103,7 @@ def test_star_strategy_consistency2():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     reset_op_id()
+    net.set_train()
     _executor.compile(net, x, phase='train')
 
 
@@ -116,6 +118,7 @@ def test_star_strategy_consistency3():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     reset_op_id()
+    net.set_train()
     _executor.compile(net, x, phase='train')
 
 
@@ -131,4 +134,5 @@ def test_star_strategy_consistency4():
     net.set_auto_parallel()
     reset_op_id()
     with pytest.raises(RuntimeError):
+        net.set_train()
         _executor.compile(net, x, phase='train')

@@ -112,4 +112,5 @@ def test_dmnet_train_step():
     net = GradWrap(NetWithLoss(MultiTransformer()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, input_)

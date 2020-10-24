@@ -87,4 +87,5 @@ def test_two_matmul():
     b = Tensor(np.ones([32, 64]), dtype=ms.float32)
     z = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
+    net.set_train()
     _executor.compile(net, x, y, b, z)

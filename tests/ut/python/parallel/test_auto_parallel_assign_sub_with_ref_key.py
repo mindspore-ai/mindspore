@@ -61,6 +61,7 @@ def test_auto_parallel_assign_sub_with_ref_key():
     net.set_auto_parallel()
     reset_op_id()
 
+    net.set_train()
     _executor.compile(net, x, phase="train")
     strategies = _executor._get_shard_strategy(net)
     for (k, v) in strategies.items():

@@ -74,6 +74,7 @@ def test_matmul_prelu():
     net.set_auto_parallel()
     reset_op_id()
 
+    net.set_train()
     _executor.compile(net, x, y, b, phase='train')
     strategies = _executor._get_shard_strategy(net)
     for (k, v) in strategies.items():

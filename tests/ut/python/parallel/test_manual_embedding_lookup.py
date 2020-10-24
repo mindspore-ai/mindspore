@@ -67,6 +67,7 @@ def compile_net(net):
     optimizer.sparse_opt.add_prim_attr("primitive_target", "CPU")
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
+    train_net.set_train()
     _executor.compile(train_net, _x, _b, auto_parallel_mode=True)
     context.reset_auto_parallel_context()
 

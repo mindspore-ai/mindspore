@@ -66,4 +66,5 @@ def test_softmax_cross_entropy_loss_auto_parallel():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y, b)

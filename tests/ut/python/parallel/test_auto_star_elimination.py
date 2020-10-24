@@ -89,4 +89,5 @@ def test_marin_loss():
     net = GradWrap(NetWithLoss(MarginCE()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x, y)

@@ -51,4 +51,5 @@ def test_dmnet_train_step():
     label = Tensor(np.zeros([32, 768]).astype(np.float32))
     net = DenseMutMulNet()
     net = train_step_with_loss_warp(DenseMutMulNet())
+    net.set_train()
     _executor.compile(net, input_, label)
