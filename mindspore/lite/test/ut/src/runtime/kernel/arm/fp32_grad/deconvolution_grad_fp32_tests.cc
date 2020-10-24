@@ -67,7 +67,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   std::vector<int> dim_dy({2, 63, 63, 9});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
-  dy_tensor.SetData(dy_data);
+  dy_tensor.set_data(dy_data);
 
   // runtime part
   printf("Calculating runtime cost...\n");
@@ -80,12 +80,12 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_x({2, 32, 32, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
-  x_tensor.SetData(input_data);
+  x_tensor.set_data(input_data);
 
   auto dw_data = new float[output_data_size];
   std::vector<int> dim_dw({3, 3, 3, 9});
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
-  dw_tensor.SetData(dw_data);
+  dw_tensor.set_data(dw_data);
   std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
@@ -123,9 +123,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
   delete[] dw_data;
   delete kernel;
   // delete conv_param;
-  dw_tensor.SetData(nullptr);
-  x_tensor.SetData(nullptr);
-  dy_tensor.SetData(nullptr);
+  dw_tensor.set_data(nullptr);
+  x_tensor.set_data(nullptr);
+  dy_tensor.set_data(nullptr);
   mindspore::kernel::LiteKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestDeConvolutionGradFp32 Filter Grad passed";
 }
@@ -166,7 +166,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   std::vector<int> dim_dy({2, 65, 65, 9});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
-  dy_tensor.SetData(dy_data);
+  dy_tensor.set_data(dy_data);
 
   // runtime part
   printf("Calculating runtime cost...\n");
@@ -179,12 +179,12 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_x({2, 32, 32, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
-  x_tensor.SetData(input_data);
+  x_tensor.set_data(input_data);
 
   auto dw_data = new float[output_data_size];
   std::vector<int> dim_dw({9, 3, 3, 3});
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
-  dw_tensor.SetData(dw_data);
+  dw_tensor.set_data(dw_data);
   std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
@@ -222,9 +222,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   delete[] dw_data;
   delete kernel;
   // delete conv_param;
-  dw_tensor.SetData(nullptr);
-  x_tensor.SetData(nullptr);
-  dy_tensor.SetData(nullptr);
+  dw_tensor.set_data(nullptr);
+  x_tensor.set_data(nullptr);
+  dy_tensor.set_data(nullptr);
   mindspore::kernel::LiteKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestDeConvolutionGradFp32 Filter Grad passed";
 }
@@ -265,7 +265,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   std::vector<int> dim_dy({2, 65, 65, 9});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
-  dy_tensor.SetData(dy_data);
+  dy_tensor.set_data(dy_data);
 
   // runtime part
   printf("Calculating runtime cost...\n");
@@ -278,12 +278,12 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_x({2, 32, 32, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
-  x_tensor.SetData(input_data);
+  x_tensor.set_data(input_data);
 
   auto dw_data = new float[output_data_size];
   std::vector<int> dim_dw({3, 3, 3, 3});
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
-  dw_tensor.SetData(dw_data);
+  dw_tensor.set_data(dw_data);
   std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
@@ -321,9 +321,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   delete[] dw_data;
   delete kernel;
   // delete conv_param;
-  dw_tensor.SetData(nullptr);
-  x_tensor.SetData(nullptr);
-  dy_tensor.SetData(nullptr);
+  dw_tensor.set_data(nullptr);
+  x_tensor.set_data(nullptr);
+  dy_tensor.set_data(nullptr);
   mindspore::kernel::LiteKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestDeConvolutionGradFp32 Filter Grad passed";
 }
@@ -364,7 +364,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   std::vector<int> dim_dy({2, 34, 34, 9});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
-  dy_tensor.SetData(dy_data);
+  dy_tensor.set_data(dy_data);
 
   // runtime part
   printf("Calculating runtime cost...\n");
@@ -377,12 +377,12 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_x({2, 32, 32, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
-  x_tensor.SetData(input_data);
+  x_tensor.set_data(input_data);
 
   auto dw_data = new float[output_data_size];
   std::vector<int> dim_dw({3, 3, 3, 3});
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
-  dw_tensor.SetData(dw_data);
+  dw_tensor.set_data(dw_data);
   std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
@@ -420,9 +420,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
   delete[] dw_data;
   delete kernel;
   // delete conv_param;
-  dw_tensor.SetData(nullptr);
-  x_tensor.SetData(nullptr);
-  dy_tensor.SetData(nullptr);
+  dw_tensor.set_data(nullptr);
+  x_tensor.set_data(nullptr);
+  dy_tensor.set_data(nullptr);
   mindspore::kernel::LiteKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestDeConvolutionGradFp32 Filter Grad passed";
 }
@@ -463,7 +463,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   std::vector<int> dim_dy({2, 65, 65, 12});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
-  dy_tensor.SetData(dy_data);
+  dy_tensor.set_data(dy_data);
 
   // runtime part
   printf("Calculating runtime cost...\n");
@@ -476,12 +476,12 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_x({2, 32, 32, 4});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
-  x_tensor.SetData(input_data);
+  x_tensor.set_data(input_data);
 
   auto dw_data = new float[output_data_size];
   std::vector<int> dim_dw({6, 3, 3, 4});
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
-  dw_tensor.SetData(dw_data);
+  dw_tensor.set_data(dw_data);
   std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
@@ -519,9 +519,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
   delete[] dw_data;
   delete kernel;
   // delete conv_param;
-  dw_tensor.SetData(nullptr);
-  x_tensor.SetData(nullptr);
-  dy_tensor.SetData(nullptr);
+  dw_tensor.set_data(nullptr);
+  x_tensor.set_data(nullptr);
+  dy_tensor.set_data(nullptr);
   mindspore::kernel::LiteKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestDeConvolutionGradFp32 Filter Grad passed";
 }
@@ -562,7 +562,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   std::vector<int> dim_dy({2, 65, 65, 12});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
-  dy_tensor.SetData(dy_data);
+  dy_tensor.set_data(dy_data);
 
   // runtime part
   printf("Calculating runtime cost...\n");
@@ -575,12 +575,12 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_x({2, 32, 32, 12});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
-  x_tensor.SetData(input_data);
+  x_tensor.set_data(input_data);
 
   auto dw_data = new float[output_data_size];
   std::vector<int> dim_dw({1, 3, 3, 12});
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
-  dw_tensor.SetData(dw_data);
+  dw_tensor.set_data(dw_data);
   std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
   std::vector<lite::Tensor *> outputs = {&dw_tensor};
 
@@ -618,9 +618,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   delete[] dw_data;
   delete kernel;
   // delete conv_param;
-  dw_tensor.SetData(nullptr);
-  x_tensor.SetData(nullptr);
-  dy_tensor.SetData(nullptr);
+  dw_tensor.set_data(nullptr);
+  x_tensor.set_data(nullptr);
+  dy_tensor.set_data(nullptr);
   mindspore::kernel::LiteKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestDeConvolutionGradFp32 Filter Grad passed";
 }

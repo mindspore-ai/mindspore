@@ -52,7 +52,7 @@ TEST_F(TestSplitInt8, Split_quant0_thread2) {
 
   TypeId tid_int8 = kNumberTypeInt8;
   lite::Tensor *input_tensor1 = new lite::Tensor;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
@@ -60,12 +60,12 @@ TEST_F(TestSplitInt8, Split_quant0_thread2) {
   inputs_tensor[0] = input_tensor1;
 
   lite::Tensor *output1_tensor = new lite::Tensor;
-  output1_tensor->SetData(output1);
+  output1_tensor->set_data(output1);
   output1_tensor->set_shape(output1_shape);
   output1_tensor->AddQuantParam(output_quant_arg);
   output1_tensor->set_data_type(tid_int8);
   lite::Tensor *output2_tensor = new lite::Tensor;
-  output2_tensor->SetData(output2);
+  output2_tensor->set_data(output2);
   output2_tensor->set_shape(output2_shape);
   output2_tensor->AddQuantParam(output_quant_arg);
   output2_tensor->set_data_type(tid_int8);
@@ -103,9 +103,9 @@ TEST_F(TestSplitInt8, Split_quant0_thread2) {
   CompareOutputData(output1, except_result1.data(), output1_size, 0.000001);
   CompareOutputData(output2, except_result2.data(), output2_size, 0.000001);
 
-  input_tensor1->SetData(nullptr);
-  output1_tensor->SetData(nullptr);
-  output2_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  output1_tensor->set_data(nullptr);
+  output2_tensor->set_data(nullptr);
   delete input_tensor1;
   delete output1_tensor;
   delete output2_tensor;
@@ -137,7 +137,7 @@ TEST_F(TestSplitInt8, Split_quant0_thread2_num) {
 
   TypeId tid_int8 = kNumberTypeInt8;
   lite::Tensor *input_tensor1 = new lite::Tensor;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
@@ -145,17 +145,17 @@ TEST_F(TestSplitInt8, Split_quant0_thread2_num) {
   inputs_tensor[0] = input_tensor1;
 
   lite::Tensor *output1_tensor = new lite::Tensor;
-  output1_tensor->SetData(output1);
+  output1_tensor->set_data(output1);
   output1_tensor->set_shape(output1_shape);
   output1_tensor->AddQuantParam(output_quant_arg);
   output1_tensor->set_data_type(tid_int8);
   lite::Tensor *output2_tensor = new lite::Tensor;
-  output2_tensor->SetData(output2);
+  output2_tensor->set_data(output2);
   output2_tensor->set_shape(output2_shape);
   output2_tensor->AddQuantParam(output_quant_arg);
   output2_tensor->set_data_type(tid_int8);
   lite::Tensor *output3_tensor = new lite::Tensor;
-  output3_tensor->SetData(output3);
+  output3_tensor->set_data(output3);
   output3_tensor->set_shape(output3_shape);
   output3_tensor->AddQuantParam(output_quant_arg);
   output3_tensor->set_data_type(tid_int8);
@@ -198,10 +198,10 @@ TEST_F(TestSplitInt8, Split_quant0_thread2_num) {
   CompareOutputData(output2, except_result2.data(), output2_size, 0.000001);
   CompareOutputData(output3, except_result3.data(), output3_size, 0.000001);
 
-  input_tensor1->SetData(nullptr);
-  output1_tensor->SetData(nullptr);
-  output2_tensor->SetData(nullptr);
-  output3_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  output1_tensor->set_data(nullptr);
+  output2_tensor->set_data(nullptr);
+  output3_tensor->set_data(nullptr);
   delete input_tensor1;
   delete output1_tensor;
   delete output2_tensor;
@@ -234,7 +234,7 @@ TEST_F(TestSplitInt8, Split_quant1_thread2_num) {
 
   TypeId tid_int8 = kNumberTypeInt8;
   lite::Tensor *input_tensor1 = new lite::Tensor;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
@@ -242,17 +242,17 @@ TEST_F(TestSplitInt8, Split_quant1_thread2_num) {
   inputs_tensor[0] = input_tensor1;
 
   lite::Tensor *output1_tensor = new lite::Tensor;
-  output1_tensor->SetData(output1);
+  output1_tensor->set_data(output1);
   output1_tensor->set_shape(output1_shape);
   output1_tensor->AddQuantParam(output_quant_arg);
   output1_tensor->set_data_type(tid_int8);
   lite::Tensor *output2_tensor = new lite::Tensor;
-  output2_tensor->SetData(output2);
+  output2_tensor->set_data(output2);
   output2_tensor->set_shape(output2_shape);
   output2_tensor->AddQuantParam(output_quant_arg);
   output2_tensor->set_data_type(tid_int8);
   lite::Tensor *output3_tensor = new lite::Tensor;
-  output3_tensor->SetData(output3);
+  output3_tensor->set_data(output3);
   output3_tensor->set_shape(output3_shape);
   output3_tensor->AddQuantParam(output_quant_arg);
   output3_tensor->set_data_type(tid_int8);
@@ -295,10 +295,10 @@ TEST_F(TestSplitInt8, Split_quant1_thread2_num) {
   CompareOutputData(output2, except_result2.data(), output2_size, 0.000001);
   CompareOutputData(output3, except_result3.data(), output3_size, 0.000001);
 
-  input_tensor1->SetData(nullptr);
-  output1_tensor->SetData(nullptr);
-  output2_tensor->SetData(nullptr);
-  output3_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  output1_tensor->set_data(nullptr);
+  output2_tensor->set_data(nullptr);
+  output3_tensor->set_data(nullptr);
   delete input_tensor1;
   delete output1_tensor;
   delete output2_tensor;

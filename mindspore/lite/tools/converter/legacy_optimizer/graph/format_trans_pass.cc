@@ -18,7 +18,6 @@
 #include <memory>
 #include <utility>
 #include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
-#include "tools/common/converter_op_utils.h"
 #include "tools/common/node_util.h"
 #include "src/common/log_adapter.h"
 #include "src/common/common.h"

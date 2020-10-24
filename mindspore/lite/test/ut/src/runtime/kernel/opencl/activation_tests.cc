@@ -92,7 +92,7 @@ TEST_F(TestActivationOpenCL, ReluFp_dim4) {
   std::vector<int> input_shape = {1, 9};
   schema::Format format = schema::Format_NC;
   schema::Format op_format = schema::Format_NC4;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
@@ -199,7 +199,7 @@ TEST_F(TestActivationOpenCL, Relu6Fp_dim4) {
   std::vector<int> input_shape = {1, 9};
   schema::Format format = schema::Format_NC;
   schema::Format op_format = schema::Format_NC4;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
@@ -309,7 +309,7 @@ TEST_F(TestActivationOpenCL, SigmoidFp_dim4) {
   std::vector<int> input_shape = {1, 9};
   schema::Format format = schema::Format_NC;
   schema::Format op_format = schema::Format_NC4;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
@@ -417,7 +417,7 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
 
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 9};  // need modify
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   schema::Format format = schema::Format_NC;        // need modify
   schema::Format op_format = schema::Format_NHWC4;  // need modify
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
@@ -528,7 +528,7 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
   std::vector<int> input_shape = {1, 2, 3, 9};
   schema::Format format = schema::Format_NHWC;
   schema::Format op_format = schema::Format_NC4HW4;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto *input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
@@ -618,9 +618,9 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
     printf_tensor<float>("Tanh:FP32--output data---", outputs[0]);
     CompareRes<float>(output_tensor, out_file);
   }
-  input_tensor->SetData(nullptr);
+  input_tensor->set_data(nullptr);
   delete input_tensor;
-  output_tensor->SetData(nullptr);
+  output_tensor->set_data(nullptr);
   delete output_tensor;
   delete sub_graph;
 }

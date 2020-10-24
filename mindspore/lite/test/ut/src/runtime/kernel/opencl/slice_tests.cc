@@ -52,7 +52,7 @@ TEST_F(TestSliceOpenCLfp32, Slicefp32CI) {
   std::vector<int> begin = {0, 0, 0, 2};
   std::vector<int> size = {1, 2, 2, 5};
   auto data_type = kNumberTypeFloat32;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
 
   float input_data[] = {-0.45816937, 0.92391545,  -0.9135602, -1.4002057, 1.1080881,  0.40712625,  -0.28128958,
                         0.09470133,  0.19801073,  0.04927751, -1.2808367, 0.1470597,  0.03393711,  -0.33282498,
@@ -140,11 +140,11 @@ TEST_F(TestSliceOpenCLfp32, Slicefp32CI) {
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;
@@ -162,7 +162,7 @@ TEST_F(TestSliceOpenCLfp32, Slicefp32input_dim4) {
   std::vector<int> begin = {0, 2, 3, 4};
   std::vector<int> size = {1, 10, 10, 13};
   auto data_type = kNumberTypeFloat32;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
 
   // get the input from .bin
   size_t input_size, output_size;
@@ -248,11 +248,11 @@ TEST_F(TestSliceOpenCLfp32, Slicefp32input_dim4) {
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;
@@ -271,7 +271,7 @@ TEST_F(TestSliceOpenCLfp16, Slicefp16input_dim4) {
   std::vector<int> begin = {0, 1, 1, 7};
   std::vector<int> size = {1, 24, 24, 15};
   auto data_type = kNumberTypeFloat16;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
 
   // get the input from .bin
   size_t input_size, output_size;
@@ -357,11 +357,11 @@ TEST_F(TestSliceOpenCLfp16, Slicefp16input_dim4) {
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;

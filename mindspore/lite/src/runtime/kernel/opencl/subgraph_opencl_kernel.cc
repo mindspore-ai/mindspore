@@ -209,7 +209,7 @@ int SubGraphOpenCLKernel::MallocTensorWithReuse() {
         std::vector<size_t> img_size;
         op_kernel->GetImageSize(i, &img_size);
         auto data_ptr = allocator_->Malloc(output->Size(), img_size);
-        output->SetData(data_ptr);
+        output->set_data(data_ptr);
       } else {
         output->MallocData(allocator_);
       }

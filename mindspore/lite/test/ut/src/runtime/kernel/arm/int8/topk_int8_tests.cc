@@ -34,9 +34,9 @@ TEST_F(TestTopKInt8, TopK) {
   int8_t input_data[] = {1, 2, 3, 6, 5, 4, 9, 8, 7, 10, 12, 11};
   int8_t output_data0[8] = {0};
   int32_t output_data1[8] = {0};
-  in_tensor.SetData(input_data);
-  out_tensor0.SetData(output_data0);
-  out_tensor1.SetData(output_data1);
+  in_tensor.set_data(input_data);
+  out_tensor0.set_data(output_data0);
+  out_tensor1.set_data(output_data1);
   std::vector<lite::Tensor *> inputs = {&in_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1};
 
@@ -59,8 +59,8 @@ TEST_F(TestTopKInt8, TopK) {
     EXPECT_EQ(output_data1[i], expect1[i]);
   }
 
-  in_tensor.SetData(nullptr);
-  out_tensor0.SetData(nullptr);
-  out_tensor1.SetData(nullptr);
+  in_tensor.set_data(nullptr);
+  out_tensor0.set_data(nullptr);
+  out_tensor1.set_data(nullptr);
 }
 }  // namespace mindspore

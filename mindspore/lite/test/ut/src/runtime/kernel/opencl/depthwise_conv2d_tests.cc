@@ -92,8 +92,8 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
   std::vector<lite::Tensor *> outputs{&tensor_d};
 
   // freamework to do!!!
-  inputs[1]->SetData(packed_weight);
-  inputs[2]->SetData(bias_data);
+  inputs[1]->set_data(packed_weight);
+  inputs[2]->set_data(bias_data);
 
   OpParameter *parameter = reinterpret_cast<OpParameter *>(conv_param);
   auto pKernel = std::make_unique<kernel::DepthwiseConv2dOpenCLKernel>(parameter, inputs, outputs);
@@ -163,11 +163,11 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
     delete[] packed_correct_data;
   }
 
-  inputs[1]->SetData(nullptr);
-  inputs[2]->SetData(nullptr);
+  inputs[1]->set_data(nullptr);
+  inputs[2]->set_data(nullptr);
   delete[] packed_input;
-  inputs[0]->SetData(nullptr);
-  outputs[0]->SetData(nullptr);
+  inputs[0]->set_data(nullptr);
+  outputs[0]->set_data(nullptr);
   return;
 }
 

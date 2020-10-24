@@ -64,7 +64,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
     MS_LOG(ERROR) << "tensor_w create error.";
     return;
   }
-  tensor_w->SetData(weight_data);
+  tensor_w->set_data(weight_data);
 
   std::vector<int> bias_shape = {co};
   auto tensor_bias_ptr =
@@ -74,7 +74,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
     MS_LOG(ERROR) << "tensor_bias create error.";
     return;
   }
-  tensor_bias->SetData(bias_data);
+  tensor_bias->set_data(bias_data);
 
   std::vector<int> out_shape = {1, oh, ow, co};
   auto tensor_out_ptr =
@@ -129,10 +129,10 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
   }
 
   for (auto t : inputs) {
-    t->SetData(nullptr);
+    t->set_data(nullptr);
   }
   for (auto t : outputs) {
-    t->SetData(nullptr);
+    t->set_data(nullptr);
   }
 }
 

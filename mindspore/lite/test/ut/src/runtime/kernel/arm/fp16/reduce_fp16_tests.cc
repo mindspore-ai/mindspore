@@ -43,8 +43,8 @@ class TestReduceFp16 : public mindspore::CommonTest {
 };
 
 void TestReduceFp16::TearDown() {
-  in_tensor_.SetData(nullptr);
-  out_tensor_.SetData(nullptr);
+  in_tensor_.set_data(nullptr);
+  out_tensor_.set_data(nullptr);
 }
 
 void TestReduceFp16::Prepare(const std::vector<int> &input_shape, const std::vector<int> &output_shape,
@@ -54,8 +54,8 @@ void TestReduceFp16::Prepare(const std::vector<int> &input_shape, const std::vec
   in_tensor_.set_shape(input_shape);
   out_tensor_.set_data_type(kNumberTypeFloat32);
   out_tensor_.set_shape(output_shape);
-  in_tensor_.SetData(input_data);
-  out_tensor_.SetData(output_data);
+  in_tensor_.set_data(input_data);
+  out_tensor_.set_data(output_data);
 
   bool keep_axis = false;
 

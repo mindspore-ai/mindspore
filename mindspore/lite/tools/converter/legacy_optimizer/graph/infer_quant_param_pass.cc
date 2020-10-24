@@ -19,7 +19,6 @@
 #include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
 #include "tools/converter/quantizer/calc_quant_param.h"
 #include "tools/common/node_util.h"
-#include "tools/common/converter_op_utils.h"
 
 namespace mindspore::lite {
 STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {

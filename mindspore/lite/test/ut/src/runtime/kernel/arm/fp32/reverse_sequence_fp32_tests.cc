@@ -35,9 +35,9 @@ TEST_F(TestReverseSequenceFp32, BatchLessSeq) {
                          32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47};
   int input_data1[] = {2, 3, 4};
   float output_data[2 * 3 * 4 * 2] = {0};
-  in_tensor0.SetData(input_data0);
-  in_tensor1.SetData(input_data1);
-  out_tensor.SetData(output_data);
+  in_tensor0.set_data(input_data0);
+  in_tensor1.set_data(input_data1);
+  out_tensor.set_data(output_data);
   std::vector<lite::Tensor *> inputs = {&in_tensor0, &in_tensor1};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
@@ -65,9 +65,9 @@ TEST_F(TestReverseSequenceFp32, BatchLessSeq) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 
-  in_tensor0.SetData(nullptr);
-  in_tensor1.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor0.set_data(nullptr);
+  in_tensor1.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 
 TEST_F(TestReverseSequenceFp32, BatchGreaterSeq) {
@@ -79,9 +79,9 @@ TEST_F(TestReverseSequenceFp32, BatchGreaterSeq) {
                          32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47};
   int input_data1[] = {2, 3, 3, 2};
   float output_data[2 * 3 * 4 * 2] = {0};
-  in_tensor0.SetData(input_data0);
-  in_tensor1.SetData(input_data1);
-  out_tensor.SetData(output_data);
+  in_tensor0.set_data(input_data0);
+  in_tensor1.set_data(input_data1);
+  out_tensor.set_data(output_data);
   std::vector<lite::Tensor *> inputs = {&in_tensor0, &in_tensor1};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
@@ -109,9 +109,9 @@ TEST_F(TestReverseSequenceFp32, BatchGreaterSeq) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 
-  in_tensor0.SetData(nullptr);
-  in_tensor1.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor0.set_data(nullptr);
+  in_tensor1.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 
 TEST_F(TestReverseSequenceFp32, BatchSeqNotAdjacent) {
@@ -123,9 +123,9 @@ TEST_F(TestReverseSequenceFp32, BatchSeqNotAdjacent) {
                          32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47};
   int input_data1[] = {2, 4};
   float output_data[2 * 3 * 4 * 2] = {0};
-  in_tensor0.SetData(input_data0);
-  in_tensor1.SetData(input_data1);
-  out_tensor.SetData(output_data);
+  in_tensor0.set_data(input_data0);
+  in_tensor1.set_data(input_data1);
+  out_tensor.set_data(output_data);
   std::vector<lite::Tensor *> inputs = {&in_tensor0, &in_tensor1};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
@@ -153,8 +153,8 @@ TEST_F(TestReverseSequenceFp32, BatchSeqNotAdjacent) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 
-  in_tensor0.SetData(nullptr);
-  in_tensor1.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor0.set_data(nullptr);
+  in_tensor1.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 }  // namespace mindspore

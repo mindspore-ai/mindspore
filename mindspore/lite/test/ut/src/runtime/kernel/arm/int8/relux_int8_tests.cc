@@ -34,8 +34,8 @@ TEST_F(TestReluXInt8, Relu) {
 
   int8_t input_data[] = {-102, 25, -51, 89};  // -0.8 0.2 -0.4 0.7
   int8_t output_data[4] = {0};
-  in_tensor.SetData(input_data);
-  out_tensor.SetData(output_data);
+  in_tensor.set_data(input_data);
+  out_tensor.set_data(output_data);
 
   const lite::QuantArg quant_in = {0.00784314f, 0};  // -1.0--1.0 ->
   const lite::QuantArg quant_out = {0.00784314f, 0};
@@ -67,8 +67,8 @@ TEST_F(TestReluXInt8, Relu) {
     EXPECT_EQ(output_data[i], expect0[i]);
   }
 
-  in_tensor.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 
 TEST_F(TestReluXInt8, Relu6) {
@@ -78,8 +78,8 @@ TEST_F(TestReluXInt8, Relu6) {
   // -2.5f, -1.5f, 1.25f, 3.0f, 4.5f, 6.0f, 6.5f, 9.0f
   int8_t input_data[] = {-118, -98, -44, -10, 19, 49, 59, 108};
   int8_t output_data[8] = {0};
-  in_tensor.SetData(input_data);
-  out_tensor.SetData(output_data);
+  in_tensor.set_data(input_data);
+  out_tensor.set_data(output_data);
 
   const lite::QuantArg quant_in = {0.0509804f, -69};    // -3.0 -- 10.0
   const lite::QuantArg quant_out = {0.0392157f, -128};  // 0.0 -- 10.0
@@ -112,7 +112,7 @@ TEST_F(TestReluXInt8, Relu6) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 
-  in_tensor.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 }  // namespace mindspore

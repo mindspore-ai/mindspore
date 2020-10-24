@@ -39,14 +39,14 @@ void LiteKernel::FreeWorkspace() {
 
 void LiteKernel::InitOutTensorRefCount() {
   for (auto *tensor : this->out_tensors_) {
-    tensor->SetRefCount(this->out_kernels_.size());
+    tensor->set_ref_count(this->out_kernels_.size());
   }
 }
 
 int LiteKernel::DecOutTensorRefCount() {
   for (auto *tensor : this->out_tensors_) {
-    tensor->decRefCount();
-    if (0 >= tensor->RefCount()) {
+    tensor->DecRefCount();
+    if (0 >= tensor->ref_count()) {
       auto ret = tensor->FreeData();
       if (0 != ret) {
         MS_LOG(ERROR) << "Free tensor data failed";
@@ -190,8 +190,7 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphInputTensors(const std::vect
   for (const auto &kernel : input_kernels) {
     for (const auto &tensor : kernel->in_tensors()) {
       auto iter = std::find(all_output_tensors.begin(), all_output_tensors.end(), tensor);
-      if (iter == all_output_tensors.end() &&
-          !(tensor->category() == mindspore::lite::Tensor::CONST && tensor->data_c() != nullptr)) {
+      if (iter == all_output_tensors.end() && !tensor->IsConst()) {
         input_tensors.emplace_back(tensor);
       }
     }

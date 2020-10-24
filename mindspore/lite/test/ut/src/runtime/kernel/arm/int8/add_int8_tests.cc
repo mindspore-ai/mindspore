@@ -35,9 +35,9 @@ TEST_F(TestQuantizedAdd, Add) {
   int8_t input_data0[] = {-102, 25, -51, 89, -102, 25, -51, 89, -102, 25};  // -0.8 0.2 -0.4 0.7
   int8_t input_data1[] = {38, 51, 64, -102, 38, 51, 64, -102, 38, 51};      // 0.3 0.4 0.5 -0.8
   int8_t output_data[10] = {0};
-  in_tensor0.SetData(input_data0);
-  in_tensor1.SetData(input_data1);
-  out_tensor.SetData(output_data);
+  in_tensor0.set_data(input_data0);
+  in_tensor1.set_data(input_data1);
+  out_tensor.set_data(output_data);
 
   const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
   const lite::QuantArg quant_in1 = {0.00784314f, 0};
@@ -68,8 +68,8 @@ TEST_F(TestQuantizedAdd, Add) {
     EXPECT_EQ(output_data[i], expect0[i]);
   }
 
-  in_tensor0.SetData(nullptr);
-  in_tensor1.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor0.set_data(nullptr);
+  in_tensor1.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 }  // namespace mindspore

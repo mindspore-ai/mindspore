@@ -81,7 +81,7 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   std::vector<int> input_shape = {1, 9};   // need modify
   std::vector<int> output_shape = {1, 9};  // need modify
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   schema::Format type = schema::Format_NC;        // need modify
   schema::Format op_format = schema::Format_NC4;  // need modify
   int weight_shape = 0;

@@ -132,7 +132,7 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
       free(opParameter);
       return nullptr;
     }
-    weight_tensor->SetData(dequant_weight);
+    weight_tensor->set_data(dequant_weight);
   }
 
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
@@ -146,7 +146,7 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {
       weight_tensor->FreeData();
-      weight_tensor->SetData(restore_data);
+      weight_tensor->set_data(restore_data);
     }
     free(opParameter);
     return nullptr;
@@ -158,14 +158,14 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {
       weight_tensor->FreeData();
-      weight_tensor->SetData(restore_data);
+      weight_tensor->set_data(restore_data);
     }
     return nullptr;
   }
 
   if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {
     weight_tensor->FreeData();
-    weight_tensor->SetData(restore_data);
+    weight_tensor->set_data(restore_data);
   }
 
   return kernel;

@@ -78,7 +78,7 @@ void RunTestCaseFullConnection(const std::vector<int> &shape, void *input_data, 
     MS_LOG(ERROR) << "tensor_w create error.";
     return;
   }
-  tensor_w->SetData(weight_data);
+  tensor_w->set_data(weight_data);
 
   auto tensor_bias_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
                                                         bias_shape, schema::Format_NC);
@@ -87,7 +87,7 @@ void RunTestCaseFullConnection(const std::vector<int> &shape, void *input_data, 
     MS_LOG(ERROR) << "tensor_w create error.";
     return;
   }
-  tensor_bias->SetData(bias_data);
+  tensor_bias->set_data(bias_data);
 
   auto tensor_out_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
                                                        output_shape, schema::Format_NC);
@@ -128,10 +128,10 @@ void RunTestCaseFullConnection(const std::vector<int> &shape, void *input_data, 
   }
 
   for (auto t : inputs) {
-    t->SetData(nullptr);
+    t->set_data(nullptr);
   }
   for (auto t : outputs) {
-    t->SetData(nullptr);
+    t->set_data(nullptr);
   }
   MS_LOG(INFO) << "TestFullConnection passed";
 }

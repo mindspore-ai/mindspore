@@ -82,23 +82,23 @@ std::vector<lite::Tensor *> GenerateTensorsForTest(const char *test, int test_id
 
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(test, &input_size));
   lite::Tensor *dy_tensor = new lite::Tensor(TypeId::kNumberTypeFloat32, large_dim);
-  dy_tensor->SetData(dy_data);
+  dy_tensor->set_data(dy_data);
 
   auto x1_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dx1_file, &input_size));
   lite::Tensor *x1_tensor = new lite::Tensor(TypeId::kNumberTypeFloat32, large_dim);
-  x1_tensor->SetData(x1_data);
+  x1_tensor->set_data(x1_data);
 
   auto x2_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dx2_file, &input_size));
   lite::Tensor *x2_tensor = new lite::Tensor(TypeId::kNumberTypeFloat32, small_dim);
-  x2_tensor->SetData(x2_data);
+  x2_tensor->set_data(x2_data);
 
   auto dx1_data = new float[large_size];
   lite::Tensor *dx1_tensor = new lite::Tensor(TypeId::kNumberTypeFloat32, large_dim);
-  dx1_tensor->SetData(dx1_data);
+  dx1_tensor->set_data(dx1_data);
 
   auto dx2_data = new float[small_size];
   lite::Tensor *dx2_tensor = new lite::Tensor(TypeId::kNumberTypeFloat32, small_dim);
-  dx2_tensor->SetData(dx2_data);
+  dx2_tensor->set_data(dx2_data);
 
   std::vector<lite::Tensor *> ret_vector = {dy_tensor, x1_tensor, x2_tensor, dx1_tensor, dx2_tensor};
   return ret_vector;
@@ -135,7 +135,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGradFp32) {
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete kernel_obj;
@@ -173,7 +173,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad2Fp32) {
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   // for (int i = 0; i < 5; i++) delete all_tensors[i]; //TODO tensor data is unique pointer
@@ -214,7 +214,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad3Fp32) {
 
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   // for (int i = 0; i < 5; i++) delete all_tensors[i];
@@ -255,7 +255,7 @@ TEST_F(TestArithmeticGradFp32, TestSubGradFp32) {
 
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   // for (int i = 0; i < 5; i++) delete all_tensors[i];
@@ -296,7 +296,7 @@ TEST_F(TestArithmeticGradFp32, TestSubGrad2Fp32) {
 
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete kernel_obj;
@@ -344,7 +344,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGradFp32) {
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete kernel_obj;
@@ -383,7 +383,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad2Fp32) {
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   // for (int i = 0; i < 5; i++) delete all_tensors[i];
@@ -423,7 +423,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad3Fp32) {
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   // for (int i = 0; i < 5; i++) delete all_tensors[i];
@@ -463,7 +463,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad4Fp32) {
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   // for (int i = 0; i < 5; i++) delete all_tensors[i];
@@ -503,7 +503,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGradFp32) {
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   // for (int i = 0; i < 5; i++) delete all_tensors[i];
@@ -544,7 +544,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad2Fp32) {
 
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   // for (int i = 0; i < 5; i++) delete all_tensors[i];
@@ -584,7 +584,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad3Fp32) {
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, output_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   // for (int i = 0; i < 5; i++) delete all_tensors[i];
@@ -624,7 +624,7 @@ TEST_F(TestArithmeticGradFp32, Test3DDivGrad2Fp32) {
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, output_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete kernel_obj;

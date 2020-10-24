@@ -36,7 +36,7 @@ lite::Tensor *TestBNGradFp32::CreateInTensor(std::string file_name, std::vector<
   size_t input_size = 0;
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_name.c_str(), &input_size));
   auto tensor = new lite::Tensor(TypeId::kNumberTypeFloat32, dim);
-  tensor->SetData(input_data);
+  tensor->set_data(input_data);
   EXPECT_EQ(input_size, tensor->Size());
   return tensor;
 }
@@ -108,7 +108,7 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   EXPECT_EQ(res, 0);
   for (auto v : inputs) {
     delete[] reinterpret_cast<float *>(v->MutableData());
-    v->SetData(nullptr);
+    v->set_data(nullptr);
     delete v;
   }
   mindspore::kernel::LiteKernel::FreeWorkspace();
@@ -197,7 +197,7 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
   res = mindspore::lite::CompareRelativeOutput(save_var, "./test_data/bngrad/running_var_3.bin");
   EXPECT_EQ(res, 0);
 
-  x_tensor->SetData(nullptr);
+  x_tensor->set_data(nullptr);
   delete x_tensor;
   mindspore::kernel::LiteKernel::FreeWorkspace();
   delete kernel_obj;

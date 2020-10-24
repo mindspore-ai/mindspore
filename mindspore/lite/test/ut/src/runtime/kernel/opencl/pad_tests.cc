@@ -50,8 +50,8 @@ void TEST_MAIN(PadParameter *param, Format input_format, Format output_format, F
   auto allocator = ocl_runtime->GetAllocator();
 
   MS_LOG(DEBUG) << "create Tensors";
-  auto input = Tensor(kNumberTypeFloat32, input_shape, input_format, lite::TensorCategory(NodeType_ValueNode));
-  auto output = Tensor(kNumberTypeFloat32, output_shape, output_format, lite::TensorCategory(NodeType_ValueNode));
+  auto input = Tensor(kNumberTypeFloat32, input_shape, input_format, lite::Tensor::CONST_TENSOR);
+  auto output = Tensor(kNumberTypeFloat32, output_shape, output_format, lite::Tensor::CONST_TENSOR);
 
   MS_LOG(DEBUG) << "create OpenCL Kernel";
   std::vector<lite::Tensor *> inputs{&input};
@@ -77,8 +77,8 @@ void TEST_MAIN(PadParameter *param, Format input_format, Format output_format, F
   }
 
   MS_LOG(DEBUG) << "release resources";
-  input.SetData(nullptr);
-  output.SetData(nullptr);
+  input.set_data(nullptr);
+  output.set_data(nullptr);
   delete sub_graph;
 }
 

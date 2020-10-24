@@ -48,7 +48,7 @@ TEST_F(TestConcatOpenCLCI, ConcatFp32_2inputforCI) {
   std::array<std::vector<int>, INPUT_NUM> input_shapes = {std::vector<int>{1, 1, 1, 8}, std::vector<int>{1, 1, 1, 8}};
   std::vector<int> output_shape = {2, 1, 1, 8};
   auto data_type = kNumberTypeFloat32;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   float input_data1[] = {0.75f, 0.06f, 0.74f, 0.30f, 0.9f, 0.59f, 0.03f, 0.37f};
   float input_data2[] = {0.5f, 0.6f, 0.74f, 0.23f, 0.46f, 0.69f, 0.13f, 0.47f};
   float correctOutput[] = {0.75f, 0.06f, 0.74f, 0.30f, 0.9f,  0.59f, 0.03f, 0.37f,
@@ -126,11 +126,11 @@ TEST_F(TestConcatOpenCLCI, ConcatFp32_2inputforCI) {
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;
@@ -164,7 +164,7 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_4input_dim4_axis1) {
     std::vector<int>{1, 19, 19, 96}};
   std::vector<int> output_shape = {1, 76, 19, 96};
   auto data_type = kNumberTypeFloat16;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   std::vector<lite::Tensor *> inputs;
   for (auto &shape : input_shapes) {
     auto input_temp = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
@@ -254,11 +254,11 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_4input_dim4_axis1) {
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;
@@ -287,7 +287,7 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_3input_dim4_axis1) {
     std::vector<int>{1, 16, 256, 80}, std::vector<int>{1, 16, 256, 80}, std::vector<int>{1, 16, 256, 80}};
   std::vector<int> output_shape = {1, 48, 256, 80};
   auto data_type = kNumberTypeFloat32;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   std::vector<lite::Tensor *> inputs;
   for (auto &shape : input_shapes) {
     auto input_temp = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
@@ -373,11 +373,11 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_3input_dim4_axis1) {
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;
@@ -415,7 +415,7 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_6input_dim4_axis1) {
     std::vector<int>{1, 50, 3, 4},   std::vector<int>{1, 30, 3, 4},  std::vector<int>{1, 4, 3, 4}};
   std::vector<int> output_shape = {1, 2034, 3, 4};
   auto data_type = kNumberTypeFloat16;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
   std::vector<lite::Tensor *> inputs;
   for (auto &shape : input_shapes) {
     auto input_temp = new (std::nothrow) lite::Tensor(data_type, shape, schema::Format_NHWC, tensor_type);
@@ -512,11 +512,11 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_6input_dim4_axis1) {
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
   CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;

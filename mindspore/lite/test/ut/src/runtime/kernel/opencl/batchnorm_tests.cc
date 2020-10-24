@@ -46,7 +46,7 @@ TEST_F(TestBatchnormOpenCLCI, Batchnormfp32CI) {
   std::vector<int> input_shape = {1, 2, 2, 8};
   std::vector<int> output_shape = {1, 2, 2, 8};
   auto data_type = kNumberTypeFloat32;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
 
   float input_data[] = {2.471454,   -2.1379554,  -0.0904604, 1.2928944,  -0.19215967, -0.8677279, -0.12759617,
                         1.2242758,  -0.06398406, -0.4041858, 0.20352598, -2.067808,   0.52113044, -1.567617,
@@ -143,11 +143,11 @@ TEST_F(TestBatchnormOpenCLCI, Batchnormfp32CI) {
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;
@@ -164,7 +164,7 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   std::vector<int> input_shape = {1, 256, 256, 48};
   std::vector<int> output_shape = {1, 256, 256, 48};
   auto data_type = kNumberTypeFloat16;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
 
   // get the input from .bin
   size_t input_size, output_size;
@@ -262,11 +262,11 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.01);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;
@@ -282,7 +282,7 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   std::vector<int> input_shape = {1, 256, 256, 47};
   std::vector<int> output_shape = {1, 256, 256, 47};
   auto data_type = kNumberTypeFloat32;
-  auto tensor_type = lite::TensorCategory(schema::NodeType_ValueNode);
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
 
   // get the input from .bin
   size_t input_size, output_size;
@@ -380,11 +380,11 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
   for (auto tensor : inputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   for (auto tensor : outputs) {
-    tensor->SetData(nullptr);
+    tensor->set_data(nullptr);
     delete tensor;
   }
   delete sub_graph;

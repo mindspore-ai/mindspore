@@ -183,7 +183,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_test5) {
   }
 
   lite::Tensor input_tensor;
-  input_tensor.SetData(input.data());
+  input_tensor.set_data(input.data());
   input_tensor.set_shape(input_shape);
   input_tensor.SetFormat(schema::Format_NHWC);
   input_tensor.set_data_type(kNumberTypeFloat32);
@@ -191,7 +191,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_test5) {
   inputs_tensor.emplace_back(&input_tensor);
 
   lite::Tensor output_tensor;
-  output_tensor.SetData(output.data());
+  output_tensor.set_data(output.data());
   output_tensor.set_shape(output_shape);
   output_tensor.SetFormat(schema::Format_NHWC);
   output_tensor.set_data_type(kNumberTypeFloat32);
@@ -214,8 +214,8 @@ TEST_F(TestTransposeFp32, TransposeFp32_test5) {
   }
   std::cout << "\n";
   CompareOutputData(output.data(), correct, 24, 0.000001);
-  input_tensor.SetData(nullptr);
-  output_tensor.SetData(nullptr);
+  input_tensor.set_data(nullptr);
+  output_tensor.set_data(nullptr);
 }
 
 }  // namespace mindspore

@@ -52,7 +52,7 @@ TEST_F(TestPowerInt8, PowerInt8) {
   lite::Tensor input0_tensor;
   TypeId tid_int8 = kNumberTypeInt8;
   inputs_tensor.push_back(&input0_tensor);
-  input0_tensor.SetData(input.data());
+  input0_tensor.set_data(input.data());
   input0_tensor.set_shape(in_shape);
   input0_tensor.AddQuantParam(input_quant_arg);
   input0_tensor.set_data_type(tid_int8);
@@ -62,7 +62,7 @@ TEST_F(TestPowerInt8, PowerInt8) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.AddQuantParam(output_quant_arg);
   output0_tensor.set_data_type(tid_int8);
 
@@ -81,8 +81,8 @@ TEST_F(TestPowerInt8, PowerInt8) {
   std::vector<int8_t> except_result = {-112, -65, 15, 127};
   CompareOutputData(output.data(), except_result.data(), input.size(), 0.000001);
 
-  input0_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 TEST_F(TestPowerInt8, normal) {
@@ -116,12 +116,12 @@ TEST_F(TestPowerInt8, normal) {
   TypeId tid_int8 = kNumberTypeInt8;
   inputs_tensor.push_back(&input0_tensor);
   inputs_tensor.push_back(&input1_tensor);
-  input0_tensor.SetData(input.data());
+  input0_tensor.set_data(input.data());
   input0_tensor.set_shape(in_shape);
   input0_tensor.AddQuantParam(input_quant_arg);
   input0_tensor.set_data_type(tid_int8);
 
-  input1_tensor.SetData(input1.data());
+  input1_tensor.set_data(input1.data());
   input1_tensor.set_shape(in_shape1);
   input1_tensor.AddQuantParam(exp_quant_arg);
   input1_tensor.set_data_type(tid_int8);
@@ -131,7 +131,7 @@ TEST_F(TestPowerInt8, normal) {
 
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.AddQuantParam(output_quant_arg);
   output0_tensor.set_data_type(tid_int8);
 
@@ -150,7 +150,7 @@ TEST_F(TestPowerInt8, normal) {
   std::vector<int8_t> except_result = {-99, 95, 124, -14};
   CompareOutputData(output.data(), except_result.data(), input.size(), 0.000001);
 
-  input0_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 }  // namespace mindspore

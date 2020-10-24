@@ -19,7 +19,6 @@
 #include <vector>
 #include <utility>
 #include "tools/converter/legacy_optimizer/graph/trans_format_insert_pass.h"
-#include "tools/common/converter_op_utils.h"
 #include "tools/common/node_util.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"

@@ -315,7 +315,7 @@ void Scheduler::SetKernelTensorDataType(kernel::LiteKernel *kernel) {
     }
   } else if (kernel->desc().data_type == kNumberTypeFloat32) {
     for (auto tensor : kernel->in_tensors()) {
-      if (tensor->category() != Tensor::Category::CONST && tensor->data_type() == kNumberTypeFloat16) {
+      if (!tensor->IsConst() && tensor->data_type() == kNumberTypeFloat16) {
         tensor->set_data_type(kNumberTypeFloat32);
       }
     }

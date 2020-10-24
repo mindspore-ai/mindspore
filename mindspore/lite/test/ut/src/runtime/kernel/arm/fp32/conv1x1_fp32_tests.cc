@@ -172,8 +172,7 @@ TEST_F(TestConv1x1Fp32, Conv1x1WeightTest1) {
 
 int Conv1x1TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                      ConvParameter *conv_param, float **correct) {
-  lite::Tensor *in_t = new lite::Tensor(kNumberTypeFloat, {1, 2, 3, 4}, schema::Format_NHWC,
-                                        lite::TensorCategory(static_cast<schema::NodeType>(1)));
+  lite::Tensor *in_t = new lite::Tensor(kNumberTypeFloat, {1, 2, 3, 4}, schema::Format_NHWC, lite::Tensor::VAR);
   in_t->MallocData();
   float in[] = {12.216284, 3.3466918,  15.327419, 5.234958,  0.804376,   9.952188,  14.727955,  -8.080715,
                 13.71383,  8.055829,   6.5845337, -9.25232,  -4.24519,   11.550042, 9.262012,   1.2780352,
@@ -181,23 +180,21 @@ int Conv1x1TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Ten
   memcpy(in_t->MutableData(), in, sizeof(float) * 24);
   inputs_->push_back(in_t);
 
-  lite::Tensor *weight_t = new lite::Tensor(kNumberTypeFloat, {3, 1, 1, 4}, schema::Format_NHWC,
-                                            lite::TensorCategory(static_cast<schema::NodeType>(1)));
+  lite::Tensor *weight_t =
+    new lite::Tensor(kNumberTypeFloat, {3, 1, 1, 4}, schema::Format_NHWC, lite::Tensor::CONST_TENSOR);
   weight_t->MallocData();
   float weight[] = {-0.7308652, 0.5257509,  -0.87825793, -1.123181,   -1.2206168, 0.562695,
                     1.5382664,  -0.5020635, 0.8591602,   -0.26410004, 1.1262615,  0.073132955}; /* nhwc */
   memcpy(weight_t->MutableData(), weight, sizeof(float) * 12);
   inputs_->push_back(weight_t);
 
-  lite::Tensor *bias_t = new lite::Tensor(kNumberTypeFloat, {3}, schema::Format_NHWC,
-                                          lite::TensorCategory(static_cast<schema::NodeType>(1)));
+  lite::Tensor *bias_t = new lite::Tensor(kNumberTypeFloat, {3}, schema::Format_NHWC, lite::Tensor::CONST_TENSOR);
   bias_t->MallocData();
   float bias[] = {2, 2, 2};
   memcpy(bias_t->MutableData(), bias, sizeof(float) * 3);
   inputs_->push_back(bias_t);
 
-  lite::Tensor *out_t = new lite::Tensor(kNumberTypeFloat, {1, 2, 3, 3}, schema::Format_NHWC,
-                                         lite::TensorCategory(static_cast<schema::NodeType>(1)));
+  lite::Tensor *out_t = new lite::Tensor(kNumberTypeFloat, {1, 2, 3, 3}, schema::Format_NHWC, lite::Tensor::VAR);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -239,32 +236,29 @@ TEST_F(TestConv1x1Fp32, Conv1x1Test1) {
 int Conv1x1TestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                      ConvParameter *conv_param, float **correct) {
   size_t buffer_size;
-  lite::Tensor *in_t = new lite::Tensor(kNumberTypeFloat, {1, 300, 300, 24}, schema::Format_NHWC,
-                                        lite::TensorCategory(static_cast<schema::NodeType>(1)));
+  lite::Tensor *in_t = new lite::Tensor(kNumberTypeFloat, {1, 300, 300, 24}, schema::Format_NHWC, lite::Tensor::VAR);
   in_t->MallocData();
   std::string input_path = "./conv/conv1x1fp32_input1_nhwc.bin";
   auto in = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &buffer_size));
   memcpy(in_t->MutableData(), in, buffer_size);
   inputs_->push_back(in_t);
 
-  lite::Tensor *weight_t = new lite::Tensor(kNumberTypeFloat, {40, 1, 1, 24}, schema::Format_NHWC,
-                                            lite::TensorCategory(static_cast<schema::NodeType>(1)));
+  lite::Tensor *weight_t =
+    new lite::Tensor(kNumberTypeFloat, {40, 1, 1, 24}, schema::Format_NHWC, lite::Tensor::CONST_TENSOR);
   weight_t->MallocData();
   std::string weight_path = "./conv/conv1x1fp32_weight1_nhwc.bin";
   auto weight = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &buffer_size));
   memcpy(weight_t->MutableData(), weight, buffer_size);
   inputs_->push_back(weight_t);
 
-  lite::Tensor *bias_t = new lite::Tensor(kNumberTypeFloat, {40}, schema::Format_NHWC,
-                                          lite::TensorCategory(static_cast<schema::NodeType>(1)));
+  lite::Tensor *bias_t = new lite::Tensor(kNumberTypeFloat, {40}, schema::Format_NHWC, lite::Tensor::CONST_TENSOR);
   bias_t->MallocData();
   std::string bias_path = "./conv/conv1x1fp32_bias1_nhwc.bin";
   auto bias = mindspore::lite::ReadFile(bias_path.c_str(), &buffer_size);
   memcpy(bias_t->MutableData(), bias, buffer_size);
   inputs_->push_back(bias_t);
 
-  lite::Tensor *out_t = new lite::Tensor(kNumberTypeFloat, {1, 300, 300, 40}, schema::Format_NHWC,
-                                         lite::TensorCategory(static_cast<schema::NodeType>(1)));
+  lite::Tensor *out_t = new lite::Tensor(kNumberTypeFloat, {1, 300, 300, 40}, schema::Format_NHWC, lite::Tensor::VAR);
   out_t->MallocData();
   outputs_->push_back(out_t);
 

@@ -25,7 +25,6 @@
 #include "schema/inner/model_generated.h"
 #include "securec/include/securec.h"
 #include "src/common/utils.h"
-#include "tools/common/converter_op_utils.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/quantizer/calc_quant_param.h"

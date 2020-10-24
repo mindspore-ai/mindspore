@@ -55,8 +55,8 @@ TEST_F(TestGatherInt8, GatherTest) {
   inputs_tensor.push_back(&input0_tensor);
   inputs_tensor.push_back(&input1_tensor);
 
-  input0_tensor.SetData(in_data.data());
-  input1_tensor.SetData(in_data1.data());
+  input0_tensor.set_data(in_data.data());
+  input1_tensor.set_data(in_data1.data());
 
   input0_tensor.set_shape(shape);
   input1_tensor.set_shape({2});
@@ -69,7 +69,7 @@ TEST_F(TestGatherInt8, GatherTest) {
   std::vector<int8_t> corr_out = {-11, -41, -21, -51, -31, -61, 11, 41, 21, 51, 31, 61};
   lite::Tensor output0_tensor;
   outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   output0_tensor.set_shape(shape);
   output0_tensor.AddQuantParam(output_quant_arg);
 
@@ -92,9 +92,9 @@ TEST_F(TestGatherInt8, GatherTest) {
   std::cout << std::endl;
   CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
   MS_LOG(INFO) << "TestGather_int8 accuracy passed";
 }
 }  // namespace mindspore

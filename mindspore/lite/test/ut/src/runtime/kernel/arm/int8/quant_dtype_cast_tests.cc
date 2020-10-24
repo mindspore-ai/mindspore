@@ -40,7 +40,7 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
   std::vector<int8_t> input = {10, 14, 29, 33, 52, 99, 19, 43, 90, 52, 19, 24, 57, 127, 76, 123};
   std::vector<int> in_shape = {1, 4, 4, 1};
   lite::Tensor input_tensor;
-  input_tensor.SetData(input.data());
+  input_tensor.set_data(input.data());
   input_tensor.set_shape(in_shape);
   input_tensor.set_data_type(kNumberTypeInt8);
   input_tensor.SetFormat(schema::Format_NHWC);
@@ -55,7 +55,7 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
   std::vector<float> output(16);
   std::vector<int> out_shape = {1, 4, 4, 1};
   lite::Tensor output_tensor;
-  output_tensor.SetData(output.data());
+  output_tensor.set_data(output.data());
   output_tensor.set_shape(out_shape);
   output_tensor.set_data_type(kNumberTypeFloat32);
   // output_tensor.SetFormat(schema::Format_NHWC);
@@ -89,7 +89,7 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest2) {
   std::vector<float> input = {1, 2, 5, 6, 10, -20, 3, 8, 18, 10, 3, 4, 11, 16, 15, 25};
   std::vector<int> in_shape = {1, 4, 4, 1};
   lite::Tensor input_tensor;
-  input_tensor.SetData(input.data());
+  input_tensor.set_data(input.data());
   input_tensor.set_shape(in_shape);
   // input_tensor.SetFormat(schema::Format_NHWC);
   input_tensor.set_data_type(kNumberTypeFloat32);
@@ -102,7 +102,7 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest2) {
   std::vector<int8_t> output(16);
   std::vector<int> out_shape = {1, 4, 4, 1};
   lite::Tensor output_tensor;
-  output_tensor.SetData(output.data());
+  output_tensor.set_data(output.data());
   output_tensor.set_shape(out_shape);
   output_tensor.SetFormat(schema::Format_NHWC);
   output_tensor.set_data_type(kNumberTypeInt8);

@@ -34,8 +34,8 @@ TEST_F(TestSliceInt8, SliceInt8) {
 
   int8_t input_data[] = {105, 35, -27, 0, -63, 99, 16, 45, 67, -49, -115, 106, -98, 119, 103, 81, -114, 68};
   int8_t output_data[12];
-  in_tensor.SetData(input_data);
-  out_tensor.SetData(output_data);
+  in_tensor.set_data(input_data);
+  out_tensor.set_data(output_data);
 
   const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
   const lite::QuantArg quant_out = {0.00784314f, 0};
@@ -71,7 +71,7 @@ TEST_F(TestSliceInt8, SliceInt8) {
     EXPECT_EQ(output_data[i], expect0[i]);
   }
 
-  in_tensor.SetData(nullptr);
-  out_tensor.SetData(nullptr);
+  in_tensor.set_data(nullptr);
+  out_tensor.set_data(nullptr);
 }
 }  // namespace mindspore

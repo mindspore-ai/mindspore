@@ -15,19 +15,15 @@
  */
 
 #include "tools/converter/legacy_optimizer/graph/batchnorm_convert_scale_pass.h"
-#include <cfloat>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include "third_party/securec/include/securec.h"
 #include "src/common/log_adapter.h"
-#include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
-#include "src/common/op_utils.h"
 
 namespace mindspore {
 namespace lite {

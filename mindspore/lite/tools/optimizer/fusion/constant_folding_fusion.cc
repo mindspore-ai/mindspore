@@ -41,8 +41,9 @@ std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
   for (auto input_index : tmp_fb_node->inputIndex) {
     auto tensorT = tmp_meta_graph->allTensors.at(input_index).get();
     auto tensor_shape = tensorT->dims;
-    auto lite_tensor = new (std::nothrow)
-      Tensor(TypeId(tensorT->dataType), tensor_shape, tensorT->format, lite::TensorCategory(tensorT->nodeType));
+    auto lite_tensor = new (std::nothrow) Tensor(
+      TypeId(tensorT->dataType), tensor_shape, tensorT->format,
+      lite::TensorCategory(tensorT->nodeType, tensorT->dims.size(), TypeId(tensorT->dataType), tensorT->data.size()));
     if (lite_tensor == nullptr) {
       MS_LOG(ERROR) << "lite tensor is nullptr";
       return input_tensors;
@@ -67,7 +68,7 @@ std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
       return {};
     }
-    lite_tensor->SetData(tensor_data);
+    lite_tensor->set_data(tensor_data);
     input_tensors.emplace_back(lite_tensor);
   }
   return input_tensors;

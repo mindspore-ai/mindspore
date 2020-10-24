@@ -51,13 +51,13 @@ TEST_F(TestMulInt8, Mul_quant0) {
 
   lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
   lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->SetData(input2.data());
+  input_tensor2->set_data(input2.data());
   input_tensor2->set_shape(shape2);
   input_tensor2->AddQuantParam(input_quant_arg);
   input_tensor2->set_data_type(tid_int8);
@@ -68,7 +68,7 @@ TEST_F(TestMulInt8, Mul_quant0) {
 
   std::vector<lite::Tensor *> outputs_tensor(1);
   lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->SetData(output);
+  output0_tensor->set_data(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
@@ -92,9 +92,9 @@ TEST_F(TestMulInt8, Mul_quant0) {
   std::vector<int8_t> except_result = {1, 4, 3, 8, 5, 12, 21, 32, 27, 40, 33, 48};
   PrintData("output data", output, input1.size());
   CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
-  input_tensor1->SetData(nullptr);
-  input_tensor2->SetData(nullptr);
-  output0_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  input_tensor2->set_data(nullptr);
+  output0_tensor->set_data(nullptr);
   delete input_tensor1;
   delete input_tensor2;
   delete output0_tensor;
@@ -122,13 +122,13 @@ TEST_F(TestMulInt8, Mul_quant0_thread0) {
 
   lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
   lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->SetData(input2.data());
+  input_tensor2->set_data(input2.data());
   input_tensor2->set_shape(shape2);
   input_tensor2->AddQuantParam(input_quant_arg);
   input_tensor2->set_data_type(tid_int8);
@@ -139,7 +139,7 @@ TEST_F(TestMulInt8, Mul_quant0_thread0) {
 
   std::vector<lite::Tensor *> outputs_tensor(1);
   lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->SetData(output);
+  output0_tensor->set_data(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
@@ -163,9 +163,9 @@ TEST_F(TestMulInt8, Mul_quant0_thread0) {
   std::vector<int8_t> except_result = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
   PrintData("output data", output, input1.size());
   CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
-  input_tensor1->SetData(nullptr);
-  input_tensor2->SetData(nullptr);
-  output0_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  input_tensor2->set_data(nullptr);
+  output0_tensor->set_data(nullptr);
   delete input_tensor1;
   delete input_tensor2;
   delete output0_tensor;
@@ -193,13 +193,13 @@ TEST_F(TestMulInt8, Mul_quant1) {
 
   lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
   lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->SetData(input2.data());
+  input_tensor2->set_data(input2.data());
   input_tensor2->set_shape(shape2);
   input_tensor2->AddQuantParam(input_quant_arg);
   input_tensor2->set_data_type(tid_int8);
@@ -210,7 +210,7 @@ TEST_F(TestMulInt8, Mul_quant1) {
 
   std::vector<lite::Tensor *> outputs_tensor(1);
   lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->SetData(output);
+  output0_tensor->set_data(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
@@ -234,9 +234,9 @@ TEST_F(TestMulInt8, Mul_quant1) {
   std::vector<int8_t> except_result = {1, 2, 2, 4, 3, 6, 11, 16, 14, 20, 17, 24};
   PrintData("output data", output, input1.size());
   CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
-  input_tensor1->SetData(nullptr);
-  input_tensor2->SetData(nullptr);
-  output0_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  input_tensor2->set_data(nullptr);
+  output0_tensor->set_data(nullptr);
   delete input_tensor1;
   delete input_tensor2;
   delete output0_tensor;
@@ -264,13 +264,13 @@ TEST_F(TestMulInt8, Mul_quant1_thread1) {
 
   lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
   lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->SetData(input2.data());
+  input_tensor2->set_data(input2.data());
   input_tensor2->set_shape(shape2);
   input_tensor2->AddQuantParam(input_quant_arg);
   input_tensor2->set_data_type(tid_int8);
@@ -281,7 +281,7 @@ TEST_F(TestMulInt8, Mul_quant1_thread1) {
 
   std::vector<lite::Tensor *> outputs_tensor(1);
   lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->SetData(output);
+  output0_tensor->set_data(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
@@ -305,9 +305,9 @@ TEST_F(TestMulInt8, Mul_quant1_thread1) {
   std::vector<int8_t> except_result = {1, 2, 2, 4, 3, 6, 11, 16, 14, 20, 17, 24};
   PrintData("output data", output, input1.size());
   CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
-  input_tensor1->SetData(nullptr);
-  input_tensor2->SetData(nullptr);
-  output0_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  input_tensor2->set_data(nullptr);
+  output0_tensor->set_data(nullptr);
   delete input_tensor1;
   delete input_tensor2;
   delete output0_tensor;
@@ -335,13 +335,13 @@ TEST_F(TestMulInt8, test) {
 
   lite::Tensor *input_tensor1 = new lite::Tensor;
   TypeId tid_int8 = kNumberTypeInt8;
-  input_tensor1->SetData(input1.data());
+  input_tensor1->set_data(input1.data());
   input_tensor1->set_shape(shape1);
   input_tensor1->AddQuantParam(input_quant_arg);
   input_tensor1->set_data_type(tid_int8);
 
   lite::Tensor *input_tensor2 = new lite::Tensor;
-  input_tensor2->SetData(input2.data());
+  input_tensor2->set_data(input2.data());
   input_tensor2->set_shape(shape2);
   input_tensor2->AddQuantParam(input_quant_arg);
   input_tensor2->set_data_type(tid_int8);
@@ -352,7 +352,7 @@ TEST_F(TestMulInt8, test) {
 
   std::vector<lite::Tensor *> outputs_tensor(1);
   lite::Tensor *output0_tensor = new lite::Tensor;
-  output0_tensor->SetData(output);
+  output0_tensor->set_data(output);
   output0_tensor->set_shape(output_shape);
   output0_tensor->AddQuantParam(output_quant_arg);
   output0_tensor->set_data_type(tid_int8);
@@ -376,9 +376,9 @@ TEST_F(TestMulInt8, test) {
   std::vector<int8_t> except_result = {1, 4, 9, 16, 25, 36, 7, 16, 27, 40, 55, 72};
   PrintData("output data", output, input1.size());
   CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
-  input_tensor1->SetData(nullptr);
-  input_tensor2->SetData(nullptr);
-  output0_tensor->SetData(nullptr);
+  input_tensor1->set_data(nullptr);
+  input_tensor2->set_data(nullptr);
+  output0_tensor->set_data(nullptr);
   delete input_tensor1;
   delete input_tensor2;
   delete output0_tensor;

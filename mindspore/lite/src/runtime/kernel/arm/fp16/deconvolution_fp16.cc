@@ -226,7 +226,7 @@ kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *>
       return nullptr;
     }
     weight_tensor->set_data_type(kNumberTypeFloat32);
-    weight_tensor->SetData(dequant_weight);
+    weight_tensor->set_data(dequant_weight);
   }
 
   kernel::LiteKernel *kernel;
@@ -242,7 +242,7 @@ kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *>
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (dequant_flag) {
       weight_tensor->FreeData();
-      weight_tensor->SetData(restore_data);
+      weight_tensor->set_data(restore_data);
     }
     free(opParameter);
     return nullptr;
@@ -254,13 +254,13 @@ kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *>
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     if (dequant_flag) {
       weight_tensor->FreeData();
-      weight_tensor->SetData(restore_data);
+      weight_tensor->set_data(restore_data);
     }
     return nullptr;
   }
   if (dequant_flag) {
     weight_tensor->FreeData();
-    weight_tensor->SetData(restore_data);
+    weight_tensor->set_data(restore_data);
   }
   return kernel;
 }

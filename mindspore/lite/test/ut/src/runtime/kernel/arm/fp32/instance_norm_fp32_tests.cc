@@ -39,9 +39,9 @@ TEST_F(TestInstanceNormFp32, INTest1) {
   lite::Tensor input0_tensor(kNumberTypeFloat32, {1, 2, 2, 3});
   lite::Tensor input1_tensor(kNumberTypeFloat32, {3});
   lite::Tensor input2_tensor(kNumberTypeFloat32, {3});
-  input0_tensor.SetData(in_data.data());
-  input1_tensor.SetData(in_data1.data());
-  input2_tensor.SetData(in_data2.data());
+  input0_tensor.set_data(in_data.data());
+  input1_tensor.set_data(in_data1.data());
+  input2_tensor.set_data(in_data2.data());
   std::vector<lite::Tensor *> inputs_tensor = {&input0_tensor, &input1_tensor, &input2_tensor};
 
   std::vector<float> output(12);
@@ -49,7 +49,7 @@ TEST_F(TestInstanceNormFp32, INTest1) {
                                  -3.5422924, -14.005781, -2.3525476, -6.7113695, -16.396551, -1.4275324};
 
   lite::Tensor output0_tensor(kNumberTypeFloat32, {1, 2, 2, 3});
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   std::vector<lite::Tensor *> outputs_tensor = {&output0_tensor};
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_InstanceNorm};
@@ -71,10 +71,10 @@ TEST_F(TestInstanceNormFp32, INTest1) {
   std::cout << std::endl;
   CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  input2_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  input2_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 TEST_F(TestInstanceNormFp32, INTest2) {
@@ -92,9 +92,9 @@ TEST_F(TestInstanceNormFp32, INTest2) {
   lite::Tensor input0_tensor(kNumberTypeFloat32, {2, 2, 2, 3});
   lite::Tensor input1_tensor(kNumberTypeFloat32, {6});
   lite::Tensor input2_tensor(kNumberTypeFloat32, {6});
-  input0_tensor.SetData(in_data.data());
-  input1_tensor.SetData(in_data1.data());
-  input2_tensor.SetData(in_data2.data());
+  input0_tensor.set_data(in_data.data());
+  input1_tensor.set_data(in_data1.data());
+  input2_tensor.set_data(in_data2.data());
   std::vector<lite::Tensor *> inputs_tensor = {&input0_tensor, &input1_tensor, &input2_tensor};
 
   std::vector<float> output(24);
@@ -104,7 +104,7 @@ TEST_F(TestInstanceNormFp32, INTest2) {
                                  -3.5422924, -14.005781, -2.3525476, -6.7113695, -16.396551, -1.4275324};
 
   lite::Tensor output0_tensor(kNumberTypeFloat32, {2, 2, 2, 3});
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   std::vector<lite::Tensor *> outputs_tensor = {&output0_tensor};
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_InstanceNorm};
@@ -126,9 +126,9 @@ TEST_F(TestInstanceNormFp32, INTest2) {
   std::cout << std::endl;
   CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  input2_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  input2_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 }  // namespace mindspore

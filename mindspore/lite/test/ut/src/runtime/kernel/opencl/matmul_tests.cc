@@ -75,7 +75,7 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
     MS_LOG(ERROR) << "tensor_w create error.";
     return;
   }
-  tensor_w->SetData(weight_data);
+  tensor_w->set_data(weight_data);
 
   auto tensor_out_ptr =
     std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), output_shape,
@@ -117,10 +117,10 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
   }
 
   for (auto t : inputs) {
-    t->SetData(nullptr);
+    t->set_data(nullptr);
   }
   for (auto t : outputs) {
-    t->SetData(nullptr);
+    t->set_data(nullptr);
   }
   MS_LOG(INFO) << "TestMatMul passed";
 }

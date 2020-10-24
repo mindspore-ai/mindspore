@@ -55,10 +55,10 @@ class TestScaleInt8 : public mindspore::CommonTest {
 };
 
 void TestScaleInt8::TearDown() {
-  in_tensor_.SetData(nullptr);
-  scale_tensor_.SetData(nullptr);
-  bias_tensor_.SetData(nullptr);
-  out_tensor_.SetData(nullptr);
+  in_tensor_.set_data(nullptr);
+  scale_tensor_.set_data(nullptr);
+  bias_tensor_.set_data(nullptr);
+  out_tensor_.set_data(nullptr);
 }
 
 void TestScaleInt8::Prepare(const std::vector<int> &in_shape, int8_t *input_data, const std::vector<int> &scale_shape,
@@ -66,11 +66,11 @@ void TestScaleInt8::Prepare(const std::vector<int> &in_shape, int8_t *input_data
                             const std::vector<int> &out_shape, int8_t *output_data, int axis, bool has_bias) {
   in_tensor_.set_data_type(kNumberTypeInt8);
   in_tensor_.set_shape(in_shape);
-  in_tensor_.SetData(input_data);
+  in_tensor_.set_data(input_data);
   in_tensor_.AddQuantParam(quant_in_);
   scale_tensor_.set_data_type(kNumberTypeInt8);
   scale_tensor_.set_shape(scale_shape);
-  scale_tensor_.SetData(scale_data);
+  scale_tensor_.set_data(scale_data);
   scale_tensor_.AddQuantParam(quant_scale_);
 
   inputs.clear();
@@ -79,14 +79,14 @@ void TestScaleInt8::Prepare(const std::vector<int> &in_shape, int8_t *input_data
   if (has_bias) {
     bias_tensor_.set_data_type(kNumberTypeInt8);
     bias_tensor_.set_shape(bias_shape);
-    bias_tensor_.SetData(bias_data);
+    bias_tensor_.set_data(bias_data);
     bias_tensor_.AddQuantParam(quant_bias_);
     inputs.emplace_back(&bias_tensor_);
   }
 
   out_tensor_.set_data_type(kNumberTypeInt8);
   out_tensor_.set_shape(out_shape);
-  out_tensor_.SetData(output_data);
+  out_tensor_.set_data(output_data);
   out_tensor_.AddQuantParam(quant_out_);
 
   param_.axis_ = axis;

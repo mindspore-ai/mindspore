@@ -39,9 +39,9 @@ TEST_F(TestBatchnormFp32, BNTest) {
   lite::Tensor input0_tensor(kNumberTypeFloat32, {1, 2, 2, 3});
   lite::Tensor input1_tensor(kNumberTypeFloat32, {3});
   lite::Tensor input2_tensor(kNumberTypeFloat32, {3});
-  input0_tensor.SetData(in_data.data());
-  input1_tensor.SetData(in_data1.data());
-  input2_tensor.SetData(in_data2.data());
+  input0_tensor.set_data(in_data.data());
+  input1_tensor.set_data(in_data1.data());
+  input2_tensor.set_data(in_data2.data());
   std::vector<lite::Tensor *> inputs_tensor = {&input0_tensor, &input1_tensor, &input2_tensor};
 
   std::vector<float> output(12);
@@ -49,7 +49,7 @@ TEST_F(TestBatchnormFp32, BNTest) {
                                  -3.5422924, -14.005781, -2.3525476, -6.7113695, -16.396551, -1.4275324};
 
   lite::Tensor output0_tensor(kNumberTypeFloat32, {1, 2, 2, 3});
-  output0_tensor.SetData(output.data());
+  output0_tensor.set_data(output.data());
   std::vector<lite::Tensor *> outputs_tensor = {&output0_tensor};
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_BatchNorm};
@@ -71,10 +71,10 @@ TEST_F(TestBatchnormFp32, BNTest) {
   std::cout << std::endl;
   CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  input2_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
+  input0_tensor.set_data(nullptr);
+  input1_tensor.set_data(nullptr);
+  input2_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
 }
 
 TEST_F(TestBatchnormFp32, FusedBNTest) {
@@ -94,11 +94,11 @@ TEST_F(TestBatchnormFp32, FusedBNTest) {
   lite::Tensor input2(kNumberTypeFloat32, {3});
   lite::Tensor input3(kNumberTypeFloat32, {3});
   lite::Tensor input4(kNumberTypeFloat32, {3});
-  input0.SetData(in_data.data());
-  input1.SetData(scale.data());
-  input2.SetData(offset.data());
-  input3.SetData(mean.data());
-  input4.SetData(var.data());
+  input0.set_data(in_data.data());
+  input1.set_data(scale.data());
+  input2.set_data(offset.data());
+  input3.set_data(mean.data());
+  input4.set_data(var.data());
   std::vector<lite::Tensor *> inputs_tensor = {&input0, &input1, &input2, &input3, &input4};
 
   std::vector<float> output(12);
@@ -106,7 +106,7 @@ TEST_F(TestBatchnormFp32, FusedBNTest) {
                                  5.1857452, 56.60399, -77.215096, -181.18402, 49.81066, -59.204563};
 
   lite::Tensor output0(kNumberTypeFloat32, {1, 2, 2, 3});
-  output0.SetData(output.data());
+  output0.set_data(output.data());
   std::vector<lite::Tensor *> outputs_tensor = {&output0};
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_FusedBatchNorm};
@@ -127,12 +127,12 @@ TEST_F(TestBatchnormFp32, FusedBNTest) {
   std::cout << std::endl;
   CompareOutputData(output.data(), corr_out.data(), output0.ElementsNum(), 0.001);
 
-  input0.SetData(nullptr);
-  input1.SetData(nullptr);
-  input2.SetData(nullptr);
-  input3.SetData(nullptr);
-  input4.SetData(nullptr);
-  output0.SetData(nullptr);
+  input0.set_data(nullptr);
+  input1.set_data(nullptr);
+  input2.set_data(nullptr);
+  input3.set_data(nullptr);
+  input4.set_data(nullptr);
+  output0.set_data(nullptr);
 }
 
 TEST_F(TestBatchnormFp32, easyTest) {
@@ -147,9 +147,9 @@ TEST_F(TestBatchnormFp32, easyTest) {
   lite::Tensor input0(kNumberTypeFloat32, {1, 1, 6, 2});
   lite::Tensor input1(kNumberTypeFloat32, {2});
   lite::Tensor input2(kNumberTypeFloat32, {2});
-  input0.SetData(in_data.data());
-  input1.SetData(in_data1.data());
-  input2.SetData(in_data2.data());
+  input0.set_data(in_data.data());
+  input1.set_data(in_data1.data());
+  input2.set_data(in_data2.data());
   std::vector<lite::Tensor *> inputs_tensor = {&input0, &input1, &input2};
 
   std::vector<float> output(12);
@@ -157,7 +157,7 @@ TEST_F(TestBatchnormFp32, easyTest) {
                                  -0.63498, -2.29971, -1.21223, -2.79965, -1.78949, -3.29959};
 
   lite::Tensor output0(kNumberTypeFloat32, {1, 1, 6, 2});
-  output0.SetData(output.data());
+  output0.set_data(output.data());
   std::vector<lite::Tensor *> outputs_tensor = {&output0};
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_BatchNorm};
@@ -178,10 +178,10 @@ TEST_F(TestBatchnormFp32, easyTest) {
   std::cout << std::endl;
   CompareOutputData(output.data(), corr_out.data(), output0.ElementsNum(), 0.001);
 
-  input0.SetData(nullptr);
-  input1.SetData(nullptr);
-  input2.SetData(nullptr);
-  output0.SetData(nullptr);
+  input0.set_data(nullptr);
+  input1.set_data(nullptr);
+  input2.set_data(nullptr);
+  output0.set_data(nullptr);
 }
 
 }  // namespace mindspore
