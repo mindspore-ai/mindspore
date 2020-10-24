@@ -156,8 +156,8 @@ STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
 
   if (attr->group != 1) {
     if (!ParseGroupDeConvolution(attr, op)) {
-      MS_LOG(ERROR) << "Convert DeConvolution to DeDepthwise failed";
-      return RET_ERROR;
+      MS_LOG(ERROR) << "Convert DeConvolution to DeDepthwise failed, generalized group deconv hasn't support";
+      return RET_NOT_SUPPORT;
     }
   } else {
     op->primitive->value.type = schema::PrimitiveType_DeConv2D;

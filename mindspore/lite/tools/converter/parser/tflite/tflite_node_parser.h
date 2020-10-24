@@ -86,6 +86,10 @@ class TfliteNodeParser {
       return RET_NULL_PTR;
     }
     auto data_ptr = buf_data->data.data();
+    if (data_ptr == nullptr) {
+      MS_LOG(DEBUG) << "data is not a constant";
+      return RET_NO_CHANGE;
+    }
     switch (tflite_tensors[tensor_index]->type) {
       case tflite::TensorType_UINT8: {
         for (int i = 0; i < count; i++) {

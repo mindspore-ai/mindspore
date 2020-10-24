@@ -69,6 +69,8 @@ TypePtr TypeIdToType(TypeId id) {
       return kFloat32;
     case kNumberTypeFloat64:
       return kFloat64;
+    case kNumberTypeComplex64:
+      return kComplex64;
     case kNumberTypeInt8:
       return kInt8;
     case kNumberTypeInt16:

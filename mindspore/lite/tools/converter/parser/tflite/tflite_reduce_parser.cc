@@ -69,7 +69,7 @@ STATUS TfliteReduceParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   } else if (std::strcmp(node_name, "ReduceAny") == 0) {
     // attr->mode;
     MS_LOG(ERROR) << "ms-lite haven't supported REDUCE_ANY now";
-    return RET_NOT_FIND_OP;
+    return RET_NOT_SUPPORT;
   }
 
   if (GetTfliteData(tflite_op->inputs[1], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, attr->axes)) {

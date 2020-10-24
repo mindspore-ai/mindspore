@@ -18,6 +18,7 @@
 #include <utility>
 #include <memory>
 #include <vector>
+#include <set>
 #include "tools/common/graph_util.h"
 #include "tools/common/storage.h"
 #include "flatbuffers/flatbuffers.h"
@@ -102,11 +103,6 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
   for (const auto &tflite_op : tflite_subgraph->operators) {
     auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
     auto op_type = GetMSOpType(tflite_op_type);
-    if (op_type == "CUSTOM") {
-      auto custom_type = (tflite_model->operator_codes[tflite_op->opcode_index])->custom_code;
-      MS_LOG(ERROR) << "CUSTOM op is not supported, the type is " << custom_type;
-      return RET_ERROR;
-    }
 
     auto op = std::make_unique<schema::CNodeT>();
     op->name = op_type + "-" + std::to_string(idx++);
@@ -122,7 +118,9 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
     if (status == RET_OK) {
       status = node_parser->Parse(&tensorsInfo, tflite_op, tflite_model, op.get());
       if (status != RET_OK) {
-        if (status == RET_NOT_SUPPORT) {
+        if (status == RET_NOT_FIND_OP) {
+          op_type =
+            (op_type != "Custom" ? op_type : (tflite_model->operator_codes[tflite_op->opcode_index])->custom_code);
           NoSupportOp::GetInstance()->InsertOp(op_type);
         } else {
           MS_LOG(ERROR) << "node " << op_type.c_str() << " parser failed";
@@ -141,6 +139,16 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
 STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                                         schema::MetaGraphT *sub_graph) {
+  std::set<int> output_index;
+  for (const auto &tflite_op : tflite_subgraph->operators) {
+    for (size_t j = 0; j < tflite_op->outputs.size(); ++j) {
+      int idx = tflite_op->outputs[j];
+      if (idx < 0) {
+        idx += tflite_subgraph->tensors.size();
+      }
+      output_index.insert(idx);
+    }
+  }
   for (size_t i = 0; i < tensorsInfo.tensorsId.size(); i++) {
     auto idx = tensorsInfo.tensorsId[i];
     if (idx < 0) {
@@ -173,11 +181,16 @@ STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT>
         return status;
       }
     }
+
     // set tensor attr
     if (isInput || isConst) {
       tensor->nodeType = schema::NodeType::NodeType_ValueNode;
     } else {
-      tensor->nodeType = schema::NodeType_Parameter;
+      if (output_index.find(idx) == output_index.end() && tflite_tensor->shape[0] == 0) {
+        tensor->nodeType = schema::NodeType::NodeType_ValueNode;
+      } else {
+        tensor->nodeType = schema::NodeType_Parameter;
+      }
     }
 
     // quant param
@@ -246,7 +259,6 @@ STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph)
     if (op->primitive->value.type == schema::PrimitiveType_DepthwiseConv2D) {
       auto attr = op->primitive->value.AsDepthwiseConv2D();
       if (attr->channelMultiplier > 1) {
-        std::unique_ptr<schema::Conv2DT> conv_attr = std::make_unique<schema::Conv2DT>();
         // get channel attr
         if (op->inputIndex.empty()) {
           MS_LOG(ERROR) << "the input of DepthwiseConv2D is null";
@@ -263,7 +275,11 @@ STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph)
           return RET_NULL_PTR;
         }
         auto data_shape = data_tensor->dims;
-
+        if (data_shape.empty()) {
+          MS_LOG(DEBUG) << "the tensor's shape is dynamic, which obtain only when running";
+          return RET_NO_CHANGE;
+        }
+        std::unique_ptr<schema::Conv2DT> conv_attr = std::make_unique<schema::Conv2DT>();
         if (data_shape[3] == 1) {
           conv_attr->channelIn = data_shape[3];
           conv_attr->channelOut = conv_attr->channelIn * attr->channelMultiplier;
@@ -372,7 +388,7 @@ schema::MetaGraphT *TfliteModelParser::ParseToFb(const std::string &model_file, 
 
   // update for depthwiseConv
   status = ConvertGroupDepthwiseOp(meta_graph.get());
-  if (status != RET_OK) {
+  if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "convert group depthwise conv failed";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;

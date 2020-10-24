@@ -67,14 +67,15 @@ STATUS TfliteSplitParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniq
     return RET_ERROR;
   }
   attr->splitDim = axis;
-  if (tensor_shape[axis] % num_splits != 0) {
+  if (tensor_shape[axis] % num_splits != 0 && tensor_shape[axis] / num_splits != 0) {
     MS_LOG(ERROR) << "num_splits can't divide tensor's length at axis " << axis;
     return RET_ERROR;
   }
   attr->numberSplit = num_splits;
-
-  for (int i = 0; i < num_splits; i++) {
-    attr->sizeSplits.push_back(tensor_shape[axis] / num_splits);
+  if (tensor_shape[axis] / num_splits != 0) {
+    for (int i = 0; i < num_splits; i++) {
+      attr->sizeSplits.push_back(tensor_shape[axis] / num_splits);
+    }
   }
 
   op->primitive->value.type = schema::PrimitiveType_Split;
