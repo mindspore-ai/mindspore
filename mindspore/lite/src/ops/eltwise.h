@@ -21,20 +21,20 @@
 #include <set>
 #include <cmath>
 #include "src/ops/primitive_c.h"
+#include "src/ops/arithmetic.h"
 
 namespace mindspore {
 namespace lite {
-class Eltwise : public PrimitiveC {
+class Eltwise : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(Eltwise, PrimitiveC);
+  MS_DECLARE_PARENT(Eltwise, Arithmetic);
   Eltwise() = default;
-  explicit Eltwise(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  explicit Eltwise(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
   void SetMode(int mode);
 
 #else
   Eltwise() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetMode() const;
