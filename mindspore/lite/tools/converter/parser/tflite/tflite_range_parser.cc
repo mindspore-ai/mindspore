@@ -41,15 +41,31 @@ STATUS TfliteRangeParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniq
   }
 
   attr->dType = 0;
-  //  attr->start
-  //  attr->limit
-  //  attr->delta
-
+  std::vector<int> limit;
+  std::vector<int> delta;
+  int status = GetTfliteData(tflite_op->inputs[1], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, limit);
+  if (status != RET_OK && status != RET_NO_CHANGE) {
+    MS_LOG(ERROR) << "range -> limit get failed";
+    return RET_ERROR;
+  } else if (status == RET_OK) {
+    status = GetTfliteData(tflite_op->inputs[2], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, delta);
+    if (status != RET_OK && status != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "stridedSlice -> end get failed";
+      return RET_ERROR;
+    }
+  }
+  if (status == RET_OK) {
+    attr->limit = limit.front();
+    attr->delta = delta.front();
+  }
   op->primitive->value.type = schema::PrimitiveType_Range;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors.size(),
-             schema::Format::Format_NHWC);
+  int input_num = status == RET_OK ? 1 : 3;
+  for (int i = 0; i < input_num; ++i) {
+    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_model->subgraphs[0]->tensors.size(),
+               schema::Format::Format_NHWC);
+  }
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
               schema::Format::Format_NHWC);
   return RET_OK;

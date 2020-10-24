@@ -150,6 +150,28 @@ class Float : public Number {
   }
 };
 
+// Complex
+class Complex : public Number {
+ public:
+  Complex() : Number(kNumberTypeComplex64, 0) {}
+  explicit Complex(const int nbits);
+  ~Complex() override {}
+  MS_DECLARE_PARENT(Complex, Number)
+
+  TypeId generic_type_id() const override { return kNumberTypeComplex64; }
+  TypePtr DeepCopy() const override {
+    if (nbits() == 0) {
+      return std::make_shared<Complex>();
+    }
+    return std::make_shared<Complex>(nbits());
+  }
+  std::string ToString() const override { return GetTypeName("Complex64"); }
+  std::string ToReprString() const override { return nbits() == 0 ? "complex64_" : GetTypeName("complex64"); }
+  std::string DumpText() const override {
+    return nbits() == 0 ? std::string("Complex64") : std::string("C") + std::to_string(nbits());
+  }
+};
+
 extern const TypePtr kBool;
 extern const TypePtr kInt8;
 extern const TypePtr kInt16;
@@ -166,6 +188,7 @@ extern const TypePtr kInt;
 extern const TypePtr kUInt;
 extern const TypePtr kFloat;
 extern const TypePtr kNumber;
+extern const TypePtr kComplex64;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_NUMBER_H_

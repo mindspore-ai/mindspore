@@ -198,7 +198,10 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, schema::P
     MS_LOG(ERROR) << "the input tensor is null";
     return RET_ERROR;
   }
-
+  if (tensor->shape.empty()) {
+    MS_LOG(DEBUG) << "the tensor's shape is dynamic, which obtain nly when running.";
+    return RET_NO_CHANGE;
+  }
   int padUp = 0;
   int padDown = 0;
   int padLeft = 0;

@@ -71,11 +71,12 @@ STATUS TflitePoolingParser::Parse(TfliteTensorsInfo *tensors_info, const std::un
   auto data_index = tflite_op->inputs[0];
   const auto &data_tensor = tflite_model->subgraphs[0]->tensors[data_index];
   std::vector<int> params;
-  if (getPaddingParam(data_tensor, attr->padMode, attr->strideH, attr->strideW, attr->windowH, attr->windowW,
-                      &params) != RET_OK) {
+  int status =
+    getPaddingParam(data_tensor, attr->padMode, attr->strideH, attr->strideW, attr->windowH, attr->windowW, &params);
+  if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "get padding params failed";
     return RET_ERROR;
-  } else {
+  } else if (status == RET_OK) {
     attr->padUp = params.at(0);
     attr->padDown = params.at(1);
     attr->padLeft = params.at(2);

@@ -243,7 +243,7 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
       auto status_node = nodeParser->Parse(layer, layerP, op.get(), &weightVec);
       if (status_node != RET_OK) {
         interrupt = true;
-        if (status_node == RET_NOT_SUPPORT) {
+        if (status_node == RET_NOT_FIND_OP) {
           NoSupportOp::GetInstance()->InsertOp(layer.type());
         } else {
           MS_LOG(ERROR) << "Parse weight for " << layer.name() << " Failed!";

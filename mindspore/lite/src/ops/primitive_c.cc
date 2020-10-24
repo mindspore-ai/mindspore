@@ -137,6 +137,11 @@
 #include "src/ops/upsample.h"
 #include "src/ops/layer_norm.h"
 #include "src/ops/non_max_suppression.h"
+#include "src/ops/rfft.h"
+#include "src/ops/fft_real.h"
+#include "src/ops/fft_imag.h"
+#include "src/ops/audio_spectrogram.h"
+#include "src/ops/mfcc.h"
 #include "src/ops/identity.h"
 
 #ifdef SUPPORT_TRAIN
@@ -775,6 +780,16 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new NonMaxSuppression(primitive);
     case schema::PrimitiveType_Identity:
       return new Identity(primitive);
+    case schema::PrimitiveType_Rfft:
+      return new Rfft(primitive);
+    case schema::PrimitiveType_FftReal:
+      return new FftReal(primitive);
+    case schema::PrimitiveType_FftImag:
+      return new FftImag(primitive);
+    case schema::PrimitiveType_AudioSpectrogram:
+      return new AudioSpectrogram(primitive);
+    case schema::PrimitiveType_Mfcc:
+      return new Mfcc(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:

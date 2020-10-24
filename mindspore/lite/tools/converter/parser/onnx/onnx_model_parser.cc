@@ -522,6 +522,7 @@ STATUS OnnxModelParser::ParseSubgraph(schema::CNodeT *dst_op, const onnx::NodePr
   dst_op->primitive->value.value = attr.release();
   return RET_OK;
 }
+
 schema::MetaGraphT *OnnxModelParser::ParseGraph(const onnx::GraphProto &onnx_graph, const QuantType &quantType) {
   TensorCache tensor_cache;
   // dst_graph->name = onnx_graph.name();  // this is not used
@@ -593,6 +594,7 @@ schema::MetaGraphT *OnnxModelParser::ParseGraph(const onnx::GraphProto &onnx_gra
   SetAllTensors(tensor_cache, dst_graph.get());
   return dst_graph.release();
 }
+
 schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, const std::string &weightFile,
                                                const QuantType &quantType) {
   int status = ValidateFileStr(modelFile, ".onnx");

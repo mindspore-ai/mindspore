@@ -52,17 +52,24 @@ STATUS TfliteStridedSliceParser::Parse(TfliteTensorsInfo *tensors_info,
   attr->newAxisMask = tflite_attr->new_axis_mask;
   attr->shrinkAxisMask = tflite_attr->shrink_axis_mask;
 
-  if (GetTfliteData(tflite_op->inputs[1], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, attr->begin)) {
+  int status =
+    GetTfliteData(tflite_op->inputs[1], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, attr->begin);
+  if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "stridedSlice -> begin get failed";
     return RET_ERROR;
-  }
-  if (GetTfliteData(tflite_op->inputs[2], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, attr->end)) {
-    MS_LOG(ERROR) << "stridedSlice -> end get failed";
-    return RET_ERROR;
-  }
-  if (GetTfliteData(tflite_op->inputs[3], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, attr->stride)) {
-    MS_LOG(ERROR) << "stridedSlice -> stride get failed";
-    return RET_ERROR;
+  } else if (status == RET_OK) {
+    status = GetTfliteData(tflite_op->inputs[2], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, attr->end);
+    if (status != RET_OK && status != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "stridedSlice -> end get failed";
+      return RET_ERROR;
+    } else if (status == RET_OK) {
+      status =
+        GetTfliteData(tflite_op->inputs[3], tflite_model->subgraphs[0]->tensors, tflite_model->buffers, attr->stride);
+      if (status != RET_OK && status != RET_NO_CHANGE) {
+        MS_LOG(ERROR) << "stridedSlice -> stride get failed";
+        return RET_ERROR;
+      }
+    }
   }
   attr->isScale.assign(tflite_model->subgraphs[0]->tensors[tflite_op->inputs[0]]->shape.begin(),
                        tflite_model->subgraphs[0]->tensors[tflite_op->inputs[0]]->shape.end());
@@ -70,8 +77,11 @@ STATUS TfliteStridedSliceParser::Parse(TfliteTensorsInfo *tensors_info,
   op->primitive->value.type = schema::PrimitiveType_StridedSlice;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors.size(),
-             schema::Format::Format_NHWC);
+  int input_num = status == RET_OK ? 1 : 4;
+  for (int i = 0; i < input_num; ++i) {
+    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_model->subgraphs[0]->tensors.size(),
+               schema::Format::Format_NHWC);
+  }
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
               schema::Format::Format_NHWC);
   return RET_OK;
