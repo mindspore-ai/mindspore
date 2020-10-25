@@ -589,15 +589,15 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   }
 
   /// \brief Gets the dataset size
-  /// \return int64_t
+  /// \return dataset size. If failed, return -1
   int64_t GetDatasetSize();
 
   /// \brief Gets the output type
-  /// \return vector of DataType
+  /// \return a vector of DataType. If failed, return an empty vector
   std::vector<DataType> GetOutputTypes();
 
   /// \brief Gets the output shape
-  /// \return vector of TensorShapes
+  /// \return a vector of TensorShape. If failed, return am empty vector
   std::vector<TensorShape> GetOutputShapes();
 
   /// \brief Gets the batch size
@@ -607,6 +607,10 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \brief Gets the the repeat count
   /// \return int64_t
   int64_t GetRepeatCount();
+
+  /// \brief Gets the number of classes
+  /// \return number of classes. If failed, return -1
+  int64_t GetNumClasses();
 
   /// \brief Setter function for runtime number of workers
   /// \param[in] num_workers The number of threads in this operator

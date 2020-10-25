@@ -51,7 +51,8 @@ DatasetOp::DatasetOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler
       op_current_repeats_(0),
       op_current_epochs_(0),
       out_connector_(nullptr),
-      dataset_size_(-1) {
+      dataset_size_(-1),
+      num_classes_(-1) {
   // The operator starts out with an invalid operator id.  The only way to
   // get it out of invalid state is to assign the operator to an execution tree.
 }
@@ -300,6 +301,19 @@ Status DatasetOp::GetDatasetSize(int64_t *dataset_size) {
   CHECK_FAIL_RETURN_UNEXPECTED(child_.size() == 1, "Can't get the dataset size for the current tree.");
 
   return child_[0]->GetDatasetSize(dataset_size);
+}
+
+// Gets the number of classes
+Status DatasetOp::GetNumClasses(int64_t *num_classes) {
+  if (num_classes_ > 0) {
+    *num_classes = num_classes_;
+    return Status::OK();
+  }
+  if (!child_.empty()) {
+    return child_[0]->GetNumClasses(num_classes);
+  } else {
+    RETURN_STATUS_UNEXPECTED("Can't get the dataset size for the current tree.");
+  }
 }
 
 // Performs handling for when an eoe message is received.

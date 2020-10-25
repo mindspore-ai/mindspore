@@ -67,15 +67,22 @@ TEST_F(MindDataTestPipeline, TestManifestBasic) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestManifestGetDatasetSize) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestGetDatasetSize.";
+TEST_F(MindDataTestPipeline, TestManifestGetters) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestGetters.";
 
-  std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
+  std::string file_path1 = datasets_root_path_ + "/testManifestData/cpp.json";
+  std::string file_path2 = datasets_root_path_ + "/testManifestData/cpp2.json";
   // Create a Manifest Dataset
-  std::shared_ptr<Dataset> ds = Manifest(file_path);
-  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Dataset> ds1 = Manifest(file_path1);
+  std::shared_ptr<Dataset> ds2 = Manifest(file_path2);
 
-  EXPECT_EQ(ds->GetDatasetSize(), 2);
+  EXPECT_NE(ds1, nullptr);
+  EXPECT_EQ(ds1->GetDatasetSize(), 2);
+  EXPECT_EQ(ds1->GetNumClasses(), 2);
+
+  EXPECT_NE(ds2, nullptr);
+  EXPECT_EQ(ds2->GetDatasetSize(), 4);
+  EXPECT_EQ(ds2->GetNumClasses(), 3);
 }
 
 TEST_F(MindDataTestPipeline, TestManifestDecode) {
