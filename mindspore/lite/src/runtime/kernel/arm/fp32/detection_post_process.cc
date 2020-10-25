@@ -27,6 +27,17 @@ using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
 namespace mindspore::kernel {
 
+int DetectionPostProcessCPUKernel::GetInputData() {
+  if ((in_tensors_.at(0)->data_type() != kNumberTypeFloat32 && in_tensors_.at(0)->data_type() != kNumberTypeFloat) ||
+      (in_tensors_.at(1)->data_type() != kNumberTypeFloat32 && in_tensors_.at(1)->data_type() != kNumberTypeFloat)) {
+    MS_LOG(ERROR) << "Input data type error";
+    return RET_ERROR;
+  }
+  input_boxes = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  input_scores = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  return RET_OK;
+}
+
 kernel::LiteKernel *CpuDetectionPostProcessFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                              const std::vector<lite::Tensor *> &outputs,
                                                              OpParameter *opParameter, const lite::InnerContext *ctx,

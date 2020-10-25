@@ -41,7 +41,7 @@ class DetectionPostProcessBaseCPUKernel : public LiteKernel {
   float *input_boxes;
   float *input_scores;
 
-  int GetInputData();
+  virtual int GetInputData() = 0;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DETECTION_POST_PROCESS_BASE_H_
