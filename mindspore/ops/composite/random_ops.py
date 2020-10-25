@@ -205,7 +205,7 @@ def poisson(shape, mean, seed=None):
     value = random_poisson(shape, mean)
     return value
 
-def multinomial(inputs, num_sample, replacement=True, seed=0):
+def multinomial(inputs, num_sample, replacement=True, seed=None):
     r"""
     Returns a tensor sampled from the multinomial probability distribution located in the corresponding
     row of the input tensor.
@@ -232,18 +232,18 @@ def multinomial(inputs, num_sample, replacement=True, seed=0):
     """
     shape = P.Shape()
     reshape = P.Reshape()
-    if inputs.dim() != 1 and inputs.dim() != 2:
-        const_utils.raise_value_error("inputs dim must be 1d or 2d")
+    const_utils.check_valid_dim(len(shape(inputs)), "multinomial")
+    seed1, seed2 = _get_seed(seed, "multinomial")
     if not replacement:
         if shape(inputs)[-1] < num_sample:
             const_utils.raise_value_error("num_sample must be less than shape(input)[-1] without replacement")
         n_dist = 1
         if len(shape(inputs)) > 1:
             n_dist = shape(inputs)[-2]
-        random_uniform = P.UniformReal(seed=seed)((n_dist * shape(inputs)[-1],))
+        random_uniform = P.UniformReal(seed1, seed2)((n_dist * shape(inputs)[-1],))
         if n_dist != 1:
             random_uniform = reshape(random_uniform, (n_dist, shape(inputs)[-1]))
         vals = P.RealDiv()(P.Log()(random_uniform), inputs + 1e-6)
         _, indices = P.TopK()(vals, num_sample)
         return indices
-    return P.Multinomial(seed=seed)(inputs, num_sample)
+    return P.Multinomial(seed1, seed2)(inputs, num_sample)

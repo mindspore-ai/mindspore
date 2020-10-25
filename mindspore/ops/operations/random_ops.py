@@ -433,8 +433,8 @@ class Multinomial(PrimitiveWithInfer):
         The rows of input do not need to sum to one (in which case we use the values as weights),
         but must be non-negative, finite and have a non-zero sum.
     Args:
-        seed (int): Seed data is used as entropy source for Random number engines to generate pseudo-random numbers.
-          Must be non-negative. Default: 0.
+        seed (int): Random seed, must be non-negative. Default: 0.
+        seed2 (int): Random seed2, must be non-negative. Default: 0.
     Inputs:
         - **input** (Tensor[float32]) - the input tensor containing the cumsum of probabilities, must be 1 or 2
             dimensions.
@@ -450,10 +450,10 @@ class Multinomial(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, seed=0):
+    def __init__(self, seed=0, seed2=0):
         """init"""
-        Validator.check_value_type("seed", seed, [int], self.name)
         Validator.check_non_negative_int(seed, "seed", self.name)
+        Validator.check_non_negative_int(seed2, "seed2", self.name)
         self.init_prim_io_names(inputs=['input', 'num_sample'], outputs=['output'])
 
     def __infer__(self, inputs, num_samples):

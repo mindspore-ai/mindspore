@@ -17,9 +17,20 @@ import numpy as np
 import pytest
 from mindspore.ops import composite as C
 import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
 
-context.set_context(device_target='GPU')
+context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+
+class Net(nn.Cell):
+    def __init__(self, sample, replacement, seed=0):
+        super(Net, self).__init__()
+        self.sample = sample
+        self.replacement = replacement
+        self.seed = seed
+
+    def construct(self, x):
+        return C.multinomial(x, self.sample, self.replacement, self.seed)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -27,9 +38,12 @@ context.set_context(device_target='GPU')
 def test_multinomial():
     x0 = Tensor(np.array([0.9, 0.2]).astype(np.float32))
     x1 = Tensor(np.array([[0.9, 0.2], [0.9, 0.2]]).astype(np.float32))
-    out0 = C.multinomial(x0, 1, True)
-    out1 = C.multinomial(x0, 2, True)
-    out2 = C.multinomial(x1, 6, True)
+    net0 = Net(1, True, 20)
+    net1 = Net(2, True, 20)
+    net2 = Net(6, True, 20)
+    out0 = net0(x0)
+    out1 = net1(x0)
+    out2 = net2(x1)
     assert out0.asnumpy().shape == (1,)
     assert out1.asnumpy().shape == (2,)
     assert out2.asnumpy().shape == (2, 6)

@@ -102,13 +102,15 @@ __global__ void MultinomialKernel(int seed, T *input, int num_sample, curandStat
 }
 
 template <typename T>
-void Multinomial(int seed, T *input, int num_sample, curandState *globalState, int *output, size_t distributions,
-                 size_t categories, cudaStream_t cuda_stream) {
+void Multinomial(int seed, int seed2, T *input, int num_sample, curandState *globalState, int *output,
+                 size_t distributions, size_t categories, cudaStream_t cuda_stream) {
   int RNG_seed = 0;
-  if (seed != 0) {
+  std::random_device rd;
+  if (seed2 != 0) {
+    RNG_seed = seed2;
+  } else if (seed != 0) {
     RNG_seed = seed;
   } else {
-    std::random_device rd;
     RNG_seed = static_cast<int>(rd());
   }
   int count = distributions * num_sample;
@@ -117,8 +119,8 @@ void Multinomial(int seed, T *input, int num_sample, curandState *globalState, i
   return;
 }
 
-template void Multinomial<float>(int seed, float *input, int num_sample, curandState *globalState, int *output,
-                                 size_t distributions, size_t categories, cudaStream_t cuda_stream);
+template void Multinomial<float>(int seed, int seed2, float *input, int num_sample, curandState *globalState,
+                                 int *output, size_t distributions, size_t categories, cudaStream_t cuda_stream);
 template void CheckNonNeg<float>(const size_t size, const float *input, float *output, cudaStream_t cuda_stream);
 template void CheckZero<float>(const size_t distributions, const size_t categories, const float *input, float *output,
                                cudaStream_t cuda_stream);

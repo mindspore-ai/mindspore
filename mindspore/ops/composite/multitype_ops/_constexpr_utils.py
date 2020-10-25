@@ -109,6 +109,11 @@ def is_same_type(inst, type_):
     """
     return inst == type_
 
+@constexpr
+def check_valid_dim(dim, name):
+    if dim not in (1, 2):
+        raise ValueError(
+            f"For {name}, inputs dim must be 1d or 2d")
 
 @constexpr
 def check_valid_type(data_type, value_type, name):
