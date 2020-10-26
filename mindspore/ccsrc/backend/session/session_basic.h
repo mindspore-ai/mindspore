@@ -91,6 +91,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   // get graph id in child graphs by ME front anf node pointer
   virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const { return kInvalidGraphId; }
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
+  void CheckPSModeConsistence(const KernelGraphPtr &Kernel_graph);
   void AssignParamKey(const KernelGraphPtr &kernel_graph);
   void InitPSParamAndOptim(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &inputs_const);
   virtual bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
