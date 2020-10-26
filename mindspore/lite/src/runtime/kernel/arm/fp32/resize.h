@@ -41,7 +41,6 @@ class ResizeCPUKernel : public ResizeBaseCPUKernel {
   void FreeTmpBuffer();
 
  private:
-  int thread_num_;
   int *y_tops_ = nullptr;
   int *y_bottoms_ = nullptr;
   int *x_lefts_ = nullptr;
@@ -49,8 +48,6 @@ class ResizeCPUKernel : public ResizeBaseCPUKernel {
   float *y_bottom_weights_ = nullptr;
   float *x_left_weights_ = nullptr;
   float *line_buffer_ = nullptr;
-  float *line0_ = nullptr;
-  float *line1_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
