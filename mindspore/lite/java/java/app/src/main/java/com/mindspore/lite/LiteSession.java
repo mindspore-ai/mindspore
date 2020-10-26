@@ -66,14 +66,13 @@ public class LiteSession {
         return tensors;
     }
 
-    public List<MSTensor> getInputsByName(String nodeName) {
-        List<Long> ret = this.getInputsByName(this.sessionPtr, nodeName);
-        ArrayList<MSTensor> tensors = new ArrayList<>();
-        for (Long msTensorAddr : ret) {
-            MSTensor msTensor = new MSTensor(msTensorAddr);
-            tensors.add(msTensor);
+    public MSTensor getInputsByTensorName(String tensorName) {
+        Long tensor_addr = this.getInputsByTensorName(this.sessionPtr, tensorName);
+        if(tensor_addr == null){
+            return null;
         }
-        return tensors;
+        MSTensor msTensor = new MSTensor(tensor_addr);
+        return msTensor;
     }
 
     public List<MSTensor> getOutputsByNodeName(String nodeName) {
@@ -104,6 +103,9 @@ public class LiteSession {
 
     public MSTensor getOutputByTensorName(String tensorName) {
         Long tensor_addr = getOutputByTensorName(this.sessionPtr, tensorName);
+        if(tensor_addr == null){
+            return null;
+        }
         return new MSTensor(tensor_addr);
     }
 
@@ -130,7 +132,7 @@ public class LiteSession {
 
     private native List<Long> getInputs(long sessionPtr);
 
-    private native List<Long> getInputsByName(long sessionPtr, String nodeName);
+    private native Long getInputsByTensorName(long sessionPtr, String tensorName);
 
     private native List<Long> getOutputsByNodeName(long sessionPtr, String nodeName);
 
