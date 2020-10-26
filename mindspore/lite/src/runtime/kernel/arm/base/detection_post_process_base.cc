@@ -30,21 +30,18 @@ int DetectionPostProcessBaseCPUKernel::Init() {
   auto anchor_tensor = in_tensors_.at(2);
   DetectionPostProcessParameter *parameter = reinterpret_cast<DetectionPostProcessParameter *>(op_parameter_);
   parameter->anchors_ = nullptr;
-  if (anchor_tensor->data_type() == kNumberTypeUInt8) {
-    const auto quant_params = anchor_tensor->GetQuantParams();
-    const double scale = quant_params.at(0).scale;
-    const int32_t zp = quant_params.at(0).zeroPoint;
-    auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->MutableData());
+  if (anchor_tensor->data_type() == kNumberTypeInt8) {
+    auto quant_param = anchor_tensor->GetQuantParams().front();
+    auto anchor_int8 = reinterpret_cast<int8_t *>(anchor_tensor->MutableData());
     auto anchor_fp32 = new (std::nothrow) float[anchor_tensor->ElementsNum()];
     if (anchor_fp32 == nullptr) {
       MS_LOG(ERROR) << "Malloc anchor failed";
       return RET_ERROR;
     }
-    for (int i = 0; i < anchor_tensor->ElementsNum(); ++i) {
-      *(anchor_fp32 + i) = static_cast<float>((static_cast<int>(anchor_uint8[i]) - zp) * scale);
-    }
+    DoDequantizeInt8ToFp32(anchor_int8, anchor_fp32, quant_param.scale, quant_param.zeroPoint,
+                           anchor_tensor->ElementsNum());
     parameter->anchors_ = anchor_fp32;
-  } else if (anchor_tensor->data_type() == kNumberTypeFloat32) {
+  } else if (anchor_tensor->data_type() == kNumberTypeFloat32 || anchor_tensor->data_type() == kNumberTypeFloat) {
     parameter->anchors_ = new (std::nothrow) float[anchor_tensor->ElementsNum()];
     if (parameter->anchors_ == nullptr) {
       MS_LOG(ERROR) << "Malloc anchor failed";
@@ -64,17 +61,6 @@ DetectionPostProcessBaseCPUKernel::~DetectionPostProcessBaseCPUKernel() {
 }
 
 int DetectionPostProcessBaseCPUKernel::ReSize() { return RET_OK; }
-
-int DetectionPostProcessBaseCPUKernel::GetInputData() {
-  if ((in_tensors_.at(0)->data_type() != kNumberTypeFloat32 && in_tensors_.at(0)->data_type() != kNumberTypeFloat) ||
-      (in_tensors_.at(1)->data_type() != kNumberTypeFloat32 && in_tensors_.at(1)->data_type() != kNumberTypeFloat)) {
-    MS_LOG(ERROR) << "Input data type error";
-    return RET_ERROR;
-  }
-  input_boxes = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  input_scores = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  return RET_OK;
-}
 
 int DetectionPostProcessBaseCPUKernel::Run() {
   MS_ASSERT(context_->allocator != nullptr);

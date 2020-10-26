@@ -33,6 +33,9 @@ class DetectionPostProcessCPUKernel : public DetectionPostProcessBaseCPUKernel {
                                 const mindspore::lite::PrimitiveC *primitive)
       : DetectionPostProcessBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~DetectionPostProcessCPUKernel() = default;
+
+ private:
+  int GetInputData();
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DETECTION_POST_PROCESS_H_
