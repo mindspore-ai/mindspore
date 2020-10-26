@@ -5831,6 +5831,7 @@ class UniformSampler(PrimitiveWithInfer):
         unique (bool): Whether all sampled classes in a batch are unique.
         range_max (int): The number of possible classes.
         seed (int): Random seed, must be non-negative. Default: 0.
+        remove_accidental_hits (bool): Whether accidental hit is removed. Default: False.
 
     Inputs:
         true_classes (int): A tensor. The target classes with a tensor shape of (batch_size, num_true).
@@ -5850,13 +5851,14 @@ class UniformSampler(PrimitiveWithInfer):
         [1, 1, 3], [[0.75], [0.75], [0.75], [0.75], [0.75]], [0.75, 0.75, 0.75]
     """
     @prim_attr_register
-    def __init__(self, num_true, num_sampled, unique, range_max, seed=0):
+    def __init__(self, num_true, num_sampled, unique, range_max, seed=0, remove_accidental_hits=False):
         """Initialize UniformSampler"""
         validator.check_value_type("num_true", num_true, [int], self.name)
         validator.check_value_type("num_sampled", num_sampled, [int], self.name)
         validator.check_value_type("unique", unique, [bool], self.name)
         validator.check_value_type("range_max", range_max, [int], self.name)
         validator.check_value_type("seed", seed, [int], self.name)
+        validator.check_value_type("remove_accidental_hits", remove_accidental_hits, [bool], self.name)
         validator.check("value of num_sampled", num_sampled, '', 0, Rel.GT, self.name)
         if unique:
             validator.check('value of num_sampled', num_sampled, "value of range_max", range_max, Rel.LE, self.name)
