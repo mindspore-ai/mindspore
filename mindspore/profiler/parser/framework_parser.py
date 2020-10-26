@@ -473,19 +473,24 @@ class FrameworkParser:
         with open(self._save_path, 'w') as save_file:
             csv_writer = csv.writer(save_file)
             csv_writer.writerow(self._col_names)
+            pre_graph_info = None
             for path in self._framework_path['graph']:
+                first_row = True
                 with open(path, 'r') as graph_file:
                     for graph_info in graph_file:
-                        result = self._parse_one_row_graph_info(graph_info)
-                        task_info = task_cache.get(result[0])
-                        if task_info:
-                            task_info.extend(result)
-                            csv_writer.writerow(task_info)
-                            del task_cache[result[0]]
-                        else:
-                            save_info = [None, None, None]
-                            save_info.extend(result)
-                            csv_writer.writerow(save_info)
+                        if first_row is True:
+                            first_row = False
+                            # The last row of the previous file and the first row of the current file may need
+                            # to be combined to one row
+                            if graph_info.startswith("op_name:") is False:
+                                pre_graph_info = pre_graph_info + graph_info
+                                continue
+                        if pre_graph_info is not None:
+                            self._parse_graph_row_and_save(task_cache, csv_writer, pre_graph_info)
+                        pre_graph_info = graph_info
+
+            if pre_graph_info is not None:
+                self._parse_graph_row_and_save(task_cache, csv_writer, pre_graph_info)
 
             none_list = [None, None, None, None]
             for key, value in task_cache.items():
@@ -493,6 +498,26 @@ class FrameworkParser:
                 value.extend(none_list)
                 csv_writer.writerow(value)
         os.chmod(self._save_path, stat.S_IREAD | stat.S_IWRITE)
+
+    def _parse_graph_row_and_save(self, task_cache, csv_writer, graph_info):
+        """
+        Parse the framework graph row and save the framework information.
+
+        Args:
+            task_cache (dict): The task information cache.
+            csv_writer (csv): Csv writer.
+            graph_info (str): Row info of graph.
+        """
+        result = self._parse_one_row_graph_info(graph_info)
+        task_info = task_cache.get(result[0])
+        if task_info:
+            task_info.extend(result)
+            csv_writer.writerow(task_info)
+            del task_cache[result[0]]
+        else:
+            save_info = [None, None, None]
+            save_info.extend(result)
+            csv_writer.writerow(save_info)
 
     def _parse_one_row_graph_info(self, row_info):
         """
