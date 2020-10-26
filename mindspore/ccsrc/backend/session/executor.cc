@@ -109,11 +109,10 @@ void RunGraphTask::Run() {
   } catch (const std::exception &e) {
     MsException::GetInstance().SetException();
   }
-
-  NotifyOutputTensors(&outputs_);
   for (auto &tensor : input_need_lock_tensors_) {
     tensor->SetNeedWait(false);
   }
+  NotifyOutputTensors(&outputs_);
   ExecutorManager::Instance().OnRunGraphFinished();
 }
 
