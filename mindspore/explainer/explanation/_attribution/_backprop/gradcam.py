@@ -55,6 +55,11 @@ class GradCAM(IntermediateLayerAttribution):
         layer (str): The layer name to generate the explanation at. Default: ''.
             If default, the explantion will be generated at the input layer.
 
+    Notes:
+        The parsed `network` will be set to eval mode through `network.set_grad(False)` and `network.set_train(False)`.
+        If you want to train the `network` afterwards, please reset it back to training mode through the opposite
+        operations.
+
     Examples:
         >>> net = resnet50(10)
         >>> param_dict = load_checkpoint("resnet50.ckpt")

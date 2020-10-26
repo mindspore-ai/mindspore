@@ -32,6 +32,8 @@ class Attribution:
     def __init__(self, network):
         self._verify_model(network)
         self._model = network
+        self._model.set_train(False)
+        self._model.set_grad(False)
 
     @staticmethod
     def _verify_model(model):
