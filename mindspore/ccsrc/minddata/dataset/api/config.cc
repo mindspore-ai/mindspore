@@ -97,7 +97,7 @@ int32_t get_callback_timeout() { return _config->callback_timeout(); }
 bool load(std::string file) {
   Status rc = _config->LoadFile(file);
   if (rc.IsError()) {
-    MS_LOG(ERROR) << "Configuration file loads failed: " << file;
+    MS_LOG(ERROR) << rc << file;
     return false;
   }
   return true;
