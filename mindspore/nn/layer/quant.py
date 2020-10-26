@@ -99,9 +99,10 @@ class Conv2dBnAct(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> net = Conv2dBnAct(120, 240, 4, has_bn=True, activation='ReLU')
+        >>> net = nn.Conv2dBnAct(120, 240, 4, has_bn=True, activation='ReLU')
         >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
-        >>> net(input).shape
+        >>> result = net(input)
+        >>> result.shape
         (1, 240, 1024, 640)
     """
 
@@ -167,9 +168,9 @@ class DenseBnAct(Cell):
         in_channels (int): The number of channels in the input space.
         out_channels (int): The number of channels in the output space.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
-            is same as input x. The values of str refer to the function `initializer`. Default: 'normal'.
+            is same as input. The values of str refer to the function `initializer`. Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
-            same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
+            same as input. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (Cell): The regularization function applied to the output of the layer, eg. 'ReLU'. Default: None.
         has_bn (bool): Specifies to use batchnorm or not. Default: False.
@@ -187,7 +188,9 @@ class DenseBnAct(Cell):
     Examples:
         >>> net = nn.DenseBnAct(3, 4)
         >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
-        >>> net(input)
+        >>> result = net(input)
+        >>> result.shape
+        (2, 4)
     """
 
     def __init__(self,
@@ -248,7 +251,6 @@ class BatchNormFoldCell(Cell):
         - **batch_std** (Tensor) - Tensor of shape :math:`(C,)`.
         - **running_mean** (Tensor) - Tensor of shape :math:`(C,)`.
         - **running_std** (Tensor) - Tensor of shape :math:`(C,)`.
-
     """
 
     def __init__(self, momentum=0.9, epsilon=1e-5, freeze_bn=0):
@@ -405,15 +407,17 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
 
     Inputs:
-        - **x** (Tensor) - The input of FakeQuantWithMinMaxObserver.
+        - **input** (Tensor) - The input of FakeQuantWithMinMaxObserver.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input`.
 
     Examples:
-        >>> fake_quant = FakeQuantWithMinMaxObserver()
-        >>> input_x = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
-        >>> result = fake_quant(input_x)
+        >>> fake_quant = nn.FakeQuantWithMinMaxObserver()
+        >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
+        >>> result = fake_quant(input)
+        >>> result
+        [[0.9882355, 1.9764705, 0.9882355], [-1.9764705, 0. , -0.9882355]]
     """
 
     def __init__(self,
@@ -543,15 +547,17 @@ class Conv2dBnFoldQuant(Cell):
         freeze_bn (int): The quantization freeze BatchNormal op is according to the global step. Default: 100000.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> conv2d_bn = nn.Conv2dBnFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid")
-        >>> x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
-        >>> y = conv2d_bn(x)
+        >>> conv2d_bnfold = nn.Conv2dBnFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid")
+        >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
+        >>> result = conv2d_bnfold(input)
+        >>> result.shape
+        (2, 6, 2, 2)
     """
 
     def __init__(self,
@@ -723,15 +729,17 @@ class Conv2dBnWithoutFoldQuant(Cell):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> conv2d_quant = nn.Conv2dBnWithoutFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid")
-        >>> x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mstype.float32)
-        >>> y = conv2d_quant(x)
+        >>> conv2d_no_bnfold = nn.Conv2dBnWithoutFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid")
+        >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mstype.float32)
+        >>> result = conv2d_no_bnfold(input)
+        >>> result.shape
+        (2, 6, 2, 2)
     """
 
     def __init__(self,
@@ -842,15 +850,17 @@ class Conv2dQuant(Cell):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
         >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid")
-        >>> x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
-        >>> y = conv2d_quant(x)
+        >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
+        >>> result = conv2d_quant(input)
+        >>> result.shape
+        (2, 6, 2, 2)
     """
 
     def __init__(self,
@@ -931,9 +941,9 @@ class DenseQuant(Cell):
         in_channels (int): The dimension of the input space.
         out_channels (int): The dimension of the output space.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
-            is same as input x. The values of str refer to the function `initializer`. Default: 'normal'.
+            is same as input. The values of str refer to the function `initializer`. Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
-            same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
+            same as input. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (Union[str, Cell, Primitive]): The regularization function applied to the output of the layer,
             eg. 'relu'. Default: None.
@@ -941,15 +951,17 @@ class DenseQuant(Cell):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
         >>> dense_quant = nn.DenseQuant(3, 6)
-        >>> input_x = Tensor(np.random.randint(-2, 2, (2, 3)), mindspore.float32)
-        >>> result = dense_quant(input_x)
+        >>> input = Tensor(np.random.randint(-2, 2, (2, 3)), mindspore.float32)
+        >>> result = dense_quant(input)
+        >>> result.shape
+        (2, 6)
     """
 
     def __init__(self,
@@ -1040,15 +1052,17 @@ class ActQuant(_QuantActivation):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **x** (Tensor) - The input of ReLU6Quant.
+        - **input** (Tensor) - The input of ReLU6Quant.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input`.
 
     Examples:
         >>> act_quant = nn.ActQuant(nn.ReLU())
-        >>> input_x = Tensor(np.array([[1, 2, -1], [-2, 0, -1]]), mindspore.float32)
-        >>> result = act_quant(input_x)
+        >>> input = Tensor(np.array([[1, 2, -1], [-2, 0, -1]]), mindspore.float32)
+        >>> result = act_quant(input)
+        >>> result
+        [[0.9882355, 1.9764705, 0.], [0., 0., 0.]]
     """
 
     def __init__(self,
@@ -1086,15 +1100,17 @@ class LeakyReLUQuant(_QuantActivation):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **x** (Tensor) - The input of LeakyReLUQuant.
+        - **input** (Tensor) - The input of LeakyReLUQuant.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input`.
 
     Examples:
         >>> activation = nn.LeakyReLUQuant(nn.LeakyReLU())
         >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> result = activation(input)
+        >>> result
+        [[0.9882355, 1.9764705, -0.18823528], [-0.37647057, 0., -0.18823528]]
     """
 
     def __init__(self,
@@ -1141,15 +1157,17 @@ class HSwishQuant(_QuantActivation):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **x** (Tensor) - The input of HSwishQuant.
+        - **input** (Tensor) - The input of HSwishQuant.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input`.
 
     Examples:
         >>> activation = nn.HSwishQuant(nn.HSwish())
         >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> result = activation(input)
+        >>> result
+        [[0.65882355, 1.6470588, -0.32941177], [-0.32941177, 0., -0.32941177]]
     """
 
     def __init__(self,
@@ -1205,6 +1223,8 @@ class HSigmoidQuant(_QuantActivation):
         >>> activation = nn.HSigmoidQuant(nn.HSigmoid())
         >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> result = activation(input)
+        >>> result
+        [[0.65882355, 0.84705883, 0.32941177], [0.1882353, 0.5176471, 0.32941177]]
     """
 
     def __init__(self,
@@ -1250,16 +1270,19 @@ class TensorAddQuant(Cell):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **x** (Tensor) - The input of TensorAddQuant.
+        - **input_x1** (Tensor) - The first tensor of TensorAddQuant.
+        - **input_x2** (Tensor) - The second tensor of TensorAddQuant.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input_x1`.
 
     Examples:
         >>> add_quant = nn.TensorAddQuant()
-        >>> input_x = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
-        >>> input_y = Tensor(np.random.randint(-2, 2, (2, 3)), mindspore.float32)
-        >>> result = add_quant(input_x, input_y)
+        >>> input_x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
+        >>> input_x2 = Tensor(np.ones((2, 3)), mindspore.float32)
+        >>> result = add_quant(input_x1, input_x2)
+        >>> result
+        [[1.9764705, 3.011765, 1.9764705], [-0.9882355, 0.9882355, 0.]]
     """
 
     def __init__(self,
@@ -1292,16 +1315,19 @@ class MulQuant(Cell):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **x** (Tensor) - The input of MulQuant.
+        - **input_x1** (Tensor) - The first tensor of MulQuant.
+        - **input_x2** (Tensor) - The second tensor of MulQuant.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input_x1`.
 
     Examples:
         >>> mul_quant = nn.MulQuant()
-        >>> input_x = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
-        >>> input_y = Tensor(np.random.randint(-2, 2, (2, 3)), mindspore.float32)
-        >>> result = mul_quant(input_x, input_y)
+        >>> input_x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
+        >>> input_x2 = Tensor(np.ones((2, 3)) * 2, mindspore.float32)
+        >>> result = mul_quant(input_x1, input_x2)
+        >>> result
+        [[1.9764705, 4.0000005, 1.9764705], [-4., 0., -1.9764705]]
     """
 
     def __init__(self,
