@@ -227,7 +227,7 @@ class Tensor : public MetaTensor {
   // brief Get Tensor data byte-size for c++ type
   //
   // return byte size of Tensor data
-  size_t Size() const { return data().nbytes(); }
+  size_t Size() const { return static_cast<size_t>(data().nbytes()); }
 
   void *data_c() const { return data_->data(); }
 
