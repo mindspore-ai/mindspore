@@ -172,7 +172,7 @@ table Concat {
 }
 
 table SoftMax {
-    axis: int;
+    axis: int = -1;
 }
 
 table Activation {

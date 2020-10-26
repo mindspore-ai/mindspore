@@ -20,6 +20,8 @@
 
 namespace mindspore {
 namespace lite {
+int OnnxNodeParser::opset_version_ = 0;
+
 schema::PadMode OnnxNodeParser::GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr) {
   if (onnx_node_attr.s() == "NOTSET") {
     return schema::PadMode_NOTSET;

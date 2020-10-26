@@ -42,6 +42,7 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_DepthwiseConv2D,
   schema::PrimitiveType_DeDepthwiseConv2D,
   schema::PrimitiveType_Pooling,
+  schema::PrimitiveType_LocalResponseNormalization,
   schema::PrimitiveType_Resize,
   schema::PrimitiveType_BatchNorm,
   schema::PrimitiveType_FusedBatchNorm,

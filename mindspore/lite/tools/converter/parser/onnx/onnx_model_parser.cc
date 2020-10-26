@@ -608,6 +608,7 @@ schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, con
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
+  OnnxNodeParser::set_opset_version(onnx_model.opset_import().Get(0).version());
   const onnx::GraphProto &onnx_graph = onnx_model.graph();
   MS_LOG(INFO) << "model producer name: " << onnx_model.producer_name() << ", graph name: " << onnx_graph.name();
 

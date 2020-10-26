@@ -38,13 +38,21 @@ STATUS OnnxSoftMaxParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::
     return RET_NULL_PTR;
   }
 
+  bool axis_is_def = true;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {
       attr->axis = static_cast<int32_t>(onnx_node_attr.i());
+      axis_is_def = false;
     }
   }
-
+  if (axis_is_def) {
+    if (OnnxNodeParser::opset_version() >= 13) {
+      attr->axis = -1;
+    } else {
+      attr->axis = 1;
+    }
+  }
   op->primitive->value.type = schema::PrimitiveType_SoftMax;
   op->primitive->value.value = attr.release();
   return RET_OK;
