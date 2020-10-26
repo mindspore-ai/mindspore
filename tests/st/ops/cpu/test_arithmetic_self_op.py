@@ -36,9 +36,46 @@ class SquareNet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_square():
+    x = np.array([1, 2, 3]).astype(np.int16)
+    net = SquareNet()
+    output = net(Tensor(x))
+    expect_output = np.array([1, 4, 9]).astype(np.int16)
+    print(output)
+    assert np.all(output.asnumpy() == expect_output)
+
+    x = np.array([1, 2, 3]).astype(np.int32)
+    net = SquareNet()
+    output = net(Tensor(x))
+    expect_output = np.array([1, 4, 9]).astype(np.int32)
+    print(output)
+    assert np.all(output.asnumpy() == expect_output)
+
+    x = np.array([1, 2, 3]).astype(np.int64)
+    net = SquareNet()
+    output = net(Tensor(x))
+    expect_output = np.array([1, 4, 9]).astype(np.int64)
+    print(output)
+    assert np.all(output.asnumpy() == expect_output)
+
+    x = np.array([1, 2, 3]).astype(np.float16)
+    net = SquareNet()
+    output = net(Tensor(x))
+    expect_output = np.array([1, 4, 9]).astype(np.float16)
+    print(output)
+    assert np.all(output.asnumpy() == expect_output)
+
     x = np.array([1, 2, 3]).astype(np.float32)
     net = SquareNet()
     output = net(Tensor(x))
     expect_output = np.array([1, 4, 9]).astype(np.float32)
     print(output)
     assert np.all(output.asnumpy() == expect_output)
+
+    x = np.array([1, 2, 3]).astype(np.float64)
+    net = SquareNet()
+    output = net(Tensor(x))
+    expect_output = np.array([1, 4, 9]).astype(np.float64)
+    print(output)
+    assert np.all(output.asnumpy() == expect_output)
+
+test_square()

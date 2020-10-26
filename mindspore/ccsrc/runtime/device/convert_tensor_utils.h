@@ -27,6 +27,10 @@ void HalfToFloat(void *dst, const void *src, size_t elem_num);
 void FloatToHalf(void *dst, const void *src, size_t elem_num);
 void DoubleToFloat(void *dst, const void *src, size_t elem_num);
 void FloatToDouble(void *dst, const void *src, size_t elem_num);
+void ShortToInt(void *dst, const void *src, size_t elem_num);
+void IntToShort(void *dst, const void *src, size_t elem_num);
+void LongToInt(void *dst, const void *src, size_t elem_num);
+void IntToLong(void *dst, const void *src, size_t elem_num);
 }  // namespace device
 }  // namespace mindspore
 
