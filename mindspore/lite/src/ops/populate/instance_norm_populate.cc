@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateInstanceNorm(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateInstanceNormParameter(const mindspore::lite::PrimitiveC *primitive) {
   const auto param =
     reinterpret_cast<mindspore::lite::InstanceNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   InstanceNormParameter *instance_norm_param =
@@ -37,6 +37,6 @@ OpParameter *PopulateInstanceNorm(const mindspore::lite::PrimitiveC *primitive) 
   return reinterpret_cast<OpParameter *>(instance_norm_param);
 }
 
-Registry InstanceNormParameterRegistry(schema::PrimitiveType_L2Norm, PopulateInstanceNorm);
+Registry InstanceNormParameterRegistry(schema::PrimitiveType_InstanceNorm, PopulateInstanceNormParameter);
 }  // namespace lite
 }  // namespace mindspore

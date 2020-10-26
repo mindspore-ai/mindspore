@@ -16,6 +16,11 @@
 
 #include "src/ops/instance_norm.h"
 #include <memory>
+
+#ifndef PRIMITIVE_WRITEABLE
+#include "src/ops/ops_register.h"
+#endif
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -60,6 +65,10 @@ int InstanceNorm::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbu
 }
 float InstanceNorm::GetEpsilon() const { return this->primitive_->value_as_InstanceNorm()->epsilon(); }
 
+PrimitiveC *InstanceNormCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<InstanceNorm>(primitive);
+}
+Registry InstanceNormRegistry(schema::PrimitiveType_InstanceNorm, InstanceNormCreator);
 #endif
 }  // namespace lite
 }  // namespace mindspore
