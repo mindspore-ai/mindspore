@@ -92,6 +92,9 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
       return has_trans_count >= half_count;
     }
   }
+  if (GetCNodeTType(*node) == schema::PrimitiveType_Split) {
+    return has_trans_count >= half_count;
+  }
   can_fusion = has_trans_count > half_count;
   return can_fusion;
 }
