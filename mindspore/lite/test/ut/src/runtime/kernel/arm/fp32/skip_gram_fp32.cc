@@ -67,7 +67,7 @@ TEST_F(TestSkipGramFp32, ElTest) {
   el->Run();
 
   std::vector<StringPack> output = mindspore::lite::ParseTensorBuffer(outputs_[0]);
-  for (int i = 0; i < output.size(); i++) {
+  for (unsigned int i = 0; i < output.size(); i++) {
     for (int j = 0; j < output[i].len; j++) {
       printf("%c", output[i].data[j]);
     }

@@ -77,13 +77,12 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
   MS_LOG(INFO) << "BiasAdd Begin test:";
   auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
-  auto data_type = kNumberTypeFloat16;  // need modify
+  auto data_type = kNumberTypeFloat16;
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
-  std::vector<int> input_shape = {1, 9};   // need modify
-  std::vector<int> output_shape = {1, 9};  // need modify
+  std::vector<int> input_shape = {1, 9};
+  std::vector<int> output_shape = {1, 9};
   auto tensor_type = lite::Tensor::CONST_TENSOR;
-  schema::Format type = schema::Format_NC;        // need modify
-  schema::Format op_format = schema::Format_NC4;  // need modify
+  schema::Format type = schema::Format_NC;
   int weight_shape = 0;
   if (input_shape.size() == 4) {
     weight_shape = input_shape[3];

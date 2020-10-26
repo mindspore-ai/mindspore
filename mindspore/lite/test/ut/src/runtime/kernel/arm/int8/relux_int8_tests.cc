@@ -108,7 +108,7 @@ TEST_F(TestReluXInt8, Relu6) {
 
   // 0.0f, 0.0f, 1.25f, 3.0f, 4.5f, 6.0f, 6.0f, 6.0f
   int8_t expect[8] = {-128, -128, -96, -52, -14, 25, 25, 25};
-  for (int i = 0; i < sizeof(expect); ++i) {
+  for (unsigned int i = 0; i < sizeof(expect); ++i) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 

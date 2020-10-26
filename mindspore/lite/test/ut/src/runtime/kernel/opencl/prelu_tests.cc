@@ -86,7 +86,6 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   auto data_type = kNumberTypeFloat16;
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   schema::Format format = schema::Format_NHWC;
-  schema::Format op_format = schema::Format_NC4HW4;
   auto tensor_type = lite::Tensor::CONST_TENSOR;
   auto input_tensor = new (std::nothrow) lite::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {

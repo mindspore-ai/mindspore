@@ -276,10 +276,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
 
   kernel->Init();
 
-  auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
-  auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %lu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/avgpoolgradfp32_s2_dx_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);
@@ -340,10 +337,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
 
   kernel->Init();
 
-  auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
-  auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %lu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/avgpoolgradfp32_s3_dx_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);
@@ -461,10 +455,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
 
   kernel->Init();
 
-  auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
-  auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %lu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_1_xgrad_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);
@@ -535,10 +526,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
 
   kernel->Init();
 
-  auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
-  auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %lu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_s2_xgrad_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);
@@ -609,10 +597,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
 
   kernel->Init();
 
-  auto time_start = mindspore::lite::GetTimeUs();
   kernel->Run();
-  auto time_end = mindspore::lite::GetTimeUs();
-  printf("single thread running time : %lu ms\n", time_end - time_start);
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_s3_xgrad_3_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(out_data, output_path);

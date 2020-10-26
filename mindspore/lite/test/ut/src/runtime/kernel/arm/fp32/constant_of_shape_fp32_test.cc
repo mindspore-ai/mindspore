@@ -33,7 +33,7 @@ int ConstantOfShapeTestInit(std::vector<lite::Tensor *> *inputs_, std::vector<li
   inputs_->push_back(in_t);
 
   std::vector<int> c_shape(in_t->ElementsNum());
-  for (int i = 0; i < c_shape.size(); ++i) {
+  for (unsigned int i = 0; i < c_shape.size(); ++i) {
     c_shape[i] = a_ptr[i];
   }
   auto out_t = new lite::Tensor(kNumberTypeFloat, c_shape, schema::Format_NHWC, lite::Tensor::Category::CONST_TENSOR);

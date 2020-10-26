@@ -79,7 +79,6 @@ TEST_F(TestPowerFp32, Simple) {
   op->Init();
   op->Run();
   float correct[] = {1, 64, 2187, 65536};
-  float *output = reinterpret_cast<float *>(outputs_[0]->MutableData());
   CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
   delete op;
   for (auto t : inputs_) delete t;
