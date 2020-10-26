@@ -111,6 +111,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void LoadGraphOutputs();
 
+  void CheckDatasetSinkMode();
+
  private:
   // private constructor for singleton
   Debugger();
