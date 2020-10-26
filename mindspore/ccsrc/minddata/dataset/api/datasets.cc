@@ -649,6 +649,7 @@ std::shared_ptr<ZipNode> Dataset::Zip(const std::vector<std::shared_ptr<Dataset>
 }
 Status Dataset::AddCacheOp(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   if (cache_ != nullptr) {
+    RETURN_IF_NOT_OK(cache_->Build());
     std::shared_ptr<DatasetOp> cache_op;
     RETURN_IF_NOT_OK(cache_->CreateCacheOp(num_workers_, &cache_op));
     node_ops->push_back(cache_op);
