@@ -108,6 +108,26 @@ int Tanh(const float *src, int length, float *dst) {
   return NNACL_OK;
 }
 
+int Swish(const float *src, int length, float *dst) {
+  int ret = Sigmoid(src, length, dst);
+  if (ret != NNACL_OK) {
+    return NNACL_ERR;
+  }
+  int index = 0;
+#ifdef ENABLE_NEON
+  for (; index <= length - C4NUM; index += C4NUM) {
+    float32x4_t src_value = vld1q_f32(src + index);
+    float32x4_t sigmoid_value = vld1q_f32(dst + index);
+    float32x4_t result = vmulq_f32(src_value, sigmoid_value);
+    vst1q_f32(dst + index, result);
+  }
+#endif
+  for (; index < length; index++) {
+    dst[index] = src[index] * dst[index];
+  }
+  return NNACL_OK;
+}
+
 int HSwish(const float *src, int length, float *dst) {
   for (int i = 0; i < length; ++i) {
     float in = src[i];

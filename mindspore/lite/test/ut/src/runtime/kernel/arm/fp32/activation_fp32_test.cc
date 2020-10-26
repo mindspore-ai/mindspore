@@ -73,6 +73,17 @@ TEST_F(TestActivationFp32, SigmoidFp32) {
   MS_LOG(INFO) << "TestSigmoidFp32 passed";
 }
 
+TEST_F(TestActivationFp32, SwishFp32) {
+  float input[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+  float output[8] = {0};
+  Swish(input, 8, output);
+
+  float expect[8] = {0, 0.731059, 1.761594, 2.857722, 3.928056, 4.966535, 5.985162, 6.993623};
+  for (int i = 0; i < 8; ++i) {
+    EXPECT_NEAR(output[i], expect[i], 0.00001);
+  }
+}
+
 TEST_F(TestActivationFp32, TanhFp32) {
   float input[7] = {-3, -2, -1, 0, 1, 2, 3};
   float output[7] = {0};
