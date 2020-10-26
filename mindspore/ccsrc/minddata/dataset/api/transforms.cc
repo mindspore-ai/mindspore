@@ -63,9 +63,9 @@ std::shared_ptr<TypeCastOperation> TypeCast(std::string data_type) {
 OneHotOperation::OneHotOperation(int32_t num_classes) : num_classes_(num_classes) {}
 
 Status OneHotOperation::ValidateParams() {
-  if (num_classes_ < 0) {
+  if (num_classes_ <= 0) {
     std::string err_msg =
-      "OneHot: Number of classes cannot be negative. Number of classes: " + std::to_string(num_classes_);
+      "OneHot: Number of classes must be greater than 0. num_classes: " + std::to_string(num_classes_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }

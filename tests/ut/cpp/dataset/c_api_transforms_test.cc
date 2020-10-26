@@ -175,6 +175,18 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess2) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestOneHotFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOneHotFail with invalid params.";
+
+  // incorrect num_class
+  std::shared_ptr<TensorOperation> one_hot_op1 = transforms::OneHot(0);
+  EXPECT_EQ(one_hot_op1, nullptr);
+
+  // incorrect num_class
+  std::shared_ptr<TensorOperation> one_hot_op2 = transforms::OneHot(-5);
+  EXPECT_EQ(one_hot_op2, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTypeCastSuccess.";
 
