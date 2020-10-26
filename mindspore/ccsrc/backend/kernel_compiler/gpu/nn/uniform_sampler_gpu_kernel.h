@@ -30,7 +30,8 @@ namespace kernel {
 template <typename T, typename S>
 class UniformSamplerGpuKernel : public GpuKernel {
  public:
-  UniformSamplerGpuKernel() : num_true_(0), num_sampled_(0), unique_(false), range_max_(0), input_size_(0) {}
+  UniformSamplerGpuKernel()
+      : num_true_(0), num_sampled_(0), unique_(false), range_max_(0), input_size_(0), remove_accidental_hits_(false) {}
   ~UniformSamplerGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -43,6 +44,16 @@ class UniformSamplerGpuKernel : public GpuKernel {
     T *sampled_candidates = GetDeviceAddress<T>(outputs, 0);
     S *true_expected_count = GetDeviceAddress<S>(outputs, 1);
     S *sampled_expected_count = GetDeviceAddress<S>(outputs, 2);
+    if (remove_accidental_hits_) {
+      T *input = GetDeviceAddress<T>(inputs, 0);
+      array_input_ = std::vector<T>(input_size_, 0);
+      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(&array_input_[0], input, input_size_ * sizeof(T),
+                                                 cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 "cudaMemcpyAsync sampled_candidates failed");
+      for (const auto item : array_input_) {
+        set_input_.insert(item);
+      }
+    }
     int counter = Sampling();
     float prob = Probability();
     size_t sampled_candidates_size = num_sampled_ * sizeof(T);
@@ -72,6 +83,7 @@ class UniformSamplerGpuKernel : public GpuKernel {
     unique_ = GetAttr<bool>(kernel_node, "unique");
     range_max_ = GetAttr<int>(kernel_node, "range_max");
     int seed = GetAttr<int>(kernel_node, "seed");
+    remove_accidental_hits_ = GetAttr<bool>(kernel_node, "remove_accidental_hits");
     if (seed == 0) seed = time(NULL);
     generator_.seed(seed);
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -80,6 +92,9 @@ class UniformSamplerGpuKernel : public GpuKernel {
       return false;
     }
     input_size_ = input_shape[0] * input_shape[1];
+    if (num_sampled_ * num_true_ + static_cast<int>(input_size_) > range_max_ * num_true_) {
+      remove_accidental_hits_ = false;
+    }
     InitSizeLists();
     return true;
   }
@@ -105,7 +120,8 @@ class UniformSamplerGpuKernel : public GpuKernel {
       while (picked < num_sampled_) {
         tmp = distribution(generator_);
         counter++;
-        if (set_container.find(tmp) == set_container.end()) {
+        if ((set_container.find(tmp) == set_container.end()) &&
+            ((!remove_accidental_hits_) || set_input_.find(tmp) == set_input_.end())) {
           set_container.insert(tmp);
           sampled_candidates_.push_back(tmp);
           picked++;
@@ -133,6 +149,9 @@ class UniformSamplerGpuKernel : public GpuKernel {
   bool unique_;
   int range_max_;
   size_t input_size_;
+  bool remove_accidental_hits_;
+  std::vector<T> array_input_;
+  std::set<int> set_input_;
   std::default_random_engine generator_;
   std::vector<int> sampled_candidates_;
   std::vector<size_t> input_size_list_;

@@ -35,6 +35,25 @@ def uniform_sampler(x, num_true, num_sampled, unique, range_max):
     out1, out2, out3 = uniform_sampler_net(Tensor(x.astype(np.int32)))
     return out1.shape, out2.shape, out3.shape
 
+
+class UniformSamplerHitNet(nn.Cell):
+    def __init__(self, num_true, num_sampled, unique, range_max, seed, remove_accidental_hits):
+        super(UniformSamplerHitNet, self).__init__()
+        self.sampler = P.UniformSampler(num_true, num_sampled, unique, range_max, seed=seed,
+                                        remove_accidental_hits=remove_accidental_hits)
+
+    def construct(self, x):
+        return self.sampler(x)
+
+
+def uniform_sampler_hit(x, num_true, num_sampled, unique, range_max, seed,
+                        remove_accidental_hits):
+    uniform_sampler_net = UniformSamplerHitNet(num_true, num_sampled, unique, range_max,
+                                               seed, remove_accidental_hits)
+    out1, out2, out3 = uniform_sampler_net(Tensor(x.astype(np.int32)))
+    return out1, out2, out3
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -114,3 +133,23 @@ def test_uniform_sampler_large_random():
     np.testing.assert_array_equal(ms1, expected_1)
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_uniform_sampler_unique_1_true_hit():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    ms1, _, _ = uniform_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, False)
+    expected_1 = np.array([0, 3, 1])
+    np.testing.assert_array_equal(ms1.asnumpy(), expected_1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_uniform_sampler_unique_1_true_no_hit():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    ms1, _, _ = uniform_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, True)
+    expected_1 = np.array([0, 3, 2])
+    np.testing.assert_array_equal(ms1.asnumpy(), expected_1)
