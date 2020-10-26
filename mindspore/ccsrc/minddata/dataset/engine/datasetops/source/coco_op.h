@@ -28,7 +28,11 @@
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
+#else
+#include "minddata/dataset/kernels/image/lite_image_utils.h"
+#endif
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/queue.h"
 #include "minddata/dataset/util/status.h"

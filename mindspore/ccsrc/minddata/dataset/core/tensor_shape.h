@@ -22,7 +22,9 @@
 #include <string>
 #include <vector>
 
+#ifndef ENABLE_ANDROID
 #include <opencv2/core/mat.hpp>
+#endif
 
 #ifdef ENABLE_PYTHON
 #include "pybind11/pybind11.h"
@@ -105,10 +107,12 @@ class TensorShape {
   /// \return
   TensorShape AppendDim(dsize_t dim) const;
 
+#ifndef ENABLE_ANDROID
   /// \brief Create a shape based on OpenCV shape and type
   /// \param[in] cv_size
   /// \param[in] type int that represent the type in OpenCV, example CV_8U, CV_64S
   TensorShape(cv::MatSize cv_size, uint32_t type);
+#endif
 
   dsize_t Size() const { return raw_shape_.size(); }
 

@@ -16,17 +16,25 @@
 
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/vision.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
-
+#endif
 // Kernel image headers (in alphabetical order)
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/center_crop_op.h"
+#endif
 #include "minddata/dataset/kernels/image/crop_op.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/cutmix_batch_op.h"
 #include "minddata/dataset/kernels/image/cut_out_op.h"
+#endif
 #include "minddata/dataset/kernels/image/decode_op.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
 #include "minddata/dataset/kernels/image/mixup_batch_op.h"
+#endif
 #include "minddata/dataset/kernels/image/normalize_op.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/pad_op.h"
 #include "minddata/dataset/kernels/image/random_affine_op.h"
 #include "minddata/dataset/kernels/image/random_color_op.h"
@@ -41,11 +49,14 @@
 #include "minddata/dataset/kernels/image/random_solarize_op.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_op.h"
 #include "minddata/dataset/kernels/image/rescale_op.h"
+#endif
 #include "minddata/dataset/kernels/image/resize_op.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/rgba_to_bgr_op.h"
 #include "minddata/dataset/kernels/image/rgba_to_rgb_op.h"
 #include "minddata/dataset/kernels/image/swap_red_blue_op.h"
 #include "minddata/dataset/kernels/image/uniform_aug_op.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -53,7 +64,7 @@ namespace api {
 
 // Transform operations for computer vision.
 namespace vision {
-
+#ifndef ENABLE_ANDROID
 // FUNCTIONS TO CREATE VISION TRANSFORM OPERATIONS
 // (In alphabetical order)
 
@@ -66,6 +77,7 @@ std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size) {
   }
   return op;
 }
+#endif
 
 // Function to create CropOperation.
 std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size) {
@@ -76,7 +88,7 @@ std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vecto
   }
   return op;
 }
-
+#ifndef ENABLE_ANDROID
 // Function to create CutMixBatchOperation.
 std::shared_ptr<CutMixBatchOperation> CutMixBatch(ImageBatchFormat image_batch_format, float alpha, float prob) {
   auto op = std::make_shared<CutMixBatchOperation>(image_batch_format, alpha, prob);
@@ -301,6 +313,7 @@ std::shared_ptr<RescaleOperation> Rescale(float rescale, float shift) {
   return op;
 }
 
+#endif
 // Function to create ResizeOperation.
 std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size, InterpolationMode interpolation) {
   auto op = std::make_shared<ResizeOperation>(size, interpolation);
@@ -311,6 +324,7 @@ std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size, Interpolation
   return op;
 }
 
+#ifndef ENABLE_ANDROID
 // Function to create RgbaToBgrOperation.
 std::shared_ptr<RgbaToBgrOperation> RGBA2BGR() {
   auto op = std::make_shared<RgbaToBgrOperation>();
@@ -352,6 +366,7 @@ std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<
   return op;
 }
 
+#endif
 /* ####################################### Validator Functions ############################################ */
 Status ValidateVectorPositive(const std::string &dataset_name, const std::vector<int32_t> &size) {
   for (int32_t i = 0; i < size.size(); ++i) {
@@ -371,7 +386,7 @@ bool CmpFloat(const float &a, const float &b, float epsilon = 0.0000000001f) { r
 /* ####################################### Derived TensorOperation classes ################################# */
 
 // (In alphabetical order)
-
+#ifndef ENABLE_ANDROID
 // CenterCropOperation
 CenterCropOperation::CenterCropOperation(std::vector<int32_t> size) : size_(size) {}
 
@@ -410,6 +425,7 @@ std::shared_ptr<TensorOp> CenterCropOperation::Build() {
   return tensor_op;
 }
 
+#endif
 // CropOperation.
 CropOperation::CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size)
     : coordinates_(coordinates), size_(size) {}
@@ -467,6 +483,7 @@ std::shared_ptr<TensorOp> CropOperation::Build() {
   return tensor_op;
 }
 
+#ifndef ENABLE_ANDROID
 // CutMixBatchOperation
 CutMixBatchOperation::CutMixBatchOperation(ImageBatchFormat image_batch_format, float alpha, float prob)
     : image_batch_format_(image_batch_format), alpha_(alpha), prob_(prob) {}
@@ -1369,6 +1386,7 @@ std::shared_ptr<TensorOp> RescaleOperation::Build() {
   return tensor_op;
 }
 
+#endif
 // ResizeOperation
 ResizeOperation::ResizeOperation(std::vector<int32_t> size, InterpolationMode interpolation)
     : size_(size), interpolation_(interpolation) {}
@@ -1397,6 +1415,7 @@ std::shared_ptr<TensorOp> ResizeOperation::Build() {
   return std::make_shared<ResizeOp>(height, width, interpolation_);
 }
 
+#ifndef ENABLE_ANDROID
 // RgbaToBgrOperation.
 RgbaToBgrOperation::RgbaToBgrOperation() {}
 
@@ -1461,6 +1480,7 @@ std::shared_ptr<TensorOp> UniformAugOperation::Build() {
   std::shared_ptr<UniformAugOp> tensor_op = std::make_shared<UniformAugOp>(tensor_ops, num_ops_);
   return tensor_op;
 }
+#endif
 
 }  // namespace vision
 }  // namespace api

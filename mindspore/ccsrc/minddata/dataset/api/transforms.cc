@@ -15,7 +15,6 @@
  */
 
 #include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/kernels/image/image_utils.h"
 
 // Kernel data headers (in alphabetical order)
 #include "minddata/dataset/kernels/data/one_hot_op.h"

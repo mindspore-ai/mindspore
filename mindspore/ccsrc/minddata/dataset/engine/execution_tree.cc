@@ -26,9 +26,9 @@
 #include "minddata/dataset/engine/opt/pre/cache_transform_pass.h"
 #include "minddata/dataset/engine/opt/post/repeat_pass.h"
 #include "minddata/dataset/engine/opt/pre/cache_error_pass.h"
+#include "mindspore/ccsrc/minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 #endif
 #include "minddata/dataset/engine/opt/pre/epoch_injection_pass.h"
-#include "mindspore/ccsrc/minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 #include "minddata/dataset/engine/perf/profiling.h"
 #include "minddata/dataset/engine/perf/monitor.h"
 
@@ -222,7 +222,6 @@ Status ExecutionTree::Prepare(int32_t num_epochs) {
   if (optimize_) {
     RETURN_IF_NOT_OK(this->Optimize());
   }
-
   // Post optimization compulsory transformation
   RETURN_IF_NOT_OK(this->PrepareTreePostAction());
 
@@ -276,7 +275,9 @@ Status ExecutionTree::PrepareTreePostAction() {
 Status ExecutionTree::Optimize() {
   // Vector of optimizations, currently only 1, add more as necessary
   std::vector<std::unique_ptr<NodePass>> optimizations;
+#ifndef ENABLE_ANDROID
   optimizations.push_back(std::make_unique<TensorOpFusionPass>());
+#endif
   // vector of flags for each optimization
   std::vector<bool> modified(optimizations.size(), false);
   for (auto i = 0; i < optimizations.size(); i++) {

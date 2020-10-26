@@ -16,7 +16,9 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DATA_TYPE_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DATA_TYPE_H_
 
+#ifndef ENABLE_ANDROID
 #include <opencv2/core/hal/interface.h>
+#endif
 
 #include <string>
 #ifdef ENABLE_PYTHON
@@ -79,6 +81,7 @@ class DataType {
     {"string", 0, "bytes", "S", kCVInvalidType}                                          // DE_STRING
   };
 #else
+#ifndef ENABLE_ANDROID
   static inline const TypeInfo kTypeInfo[] = {
     // name, sizeInBytes, pybindTypem formatDescriptor, openCV
     {"unknown", 0, "object", "", kCVInvalidType},  // DE_UNKNOWN
@@ -96,8 +99,27 @@ class DataType {
     {"float64", 8, "double", "", CV_64F},          // DE_FLOAT64
     {"string", 0, "bytes", "", kCVInvalidType}     // DE_STRING
   };
+#else
+  // android and no python
+  static inline const TypeInfo kTypeInfo[] = {
+    // name, sizeInBytes, formatDescriptor
+    {"unknown", 0, "object", "", kCVInvalidType},  // DE_UNKNOWN
+    {"bool", 1, "bool", ""},                       // DE_BOOL
+    {"int8", 1, "int8", ""},                       // DE_INT8
+    {"uint8", 1, "uint8", ""},                     // DE_UINT8
+    {"int16", 2, "int16", ""},                     // DE_INT16
+    {"uint16", 2, "uint16", ""},                   // DE_UINT16
+    {"int32", 4, "int32", ""},                     // DE_INT32
+    {"uint32", 4, "uint32", "", kCVInvalidType},   // DE_UINT32
+    {"int64", 8, "int64", "", kCVInvalidType},     // DE_INT64
+    {"uint64", 8, "uint64", "", kCVInvalidType},   // DE_UINT64
+    {"float16", 2, "float16", ""},                 // DE_FLOAT16
+    {"float32", 4, "float32", ""},                 // DE_FLOAT32
+    {"float64", 8, "double", ""},                  // DE_FLOAT64
+    {"string", 0, "bytes", "", kCVInvalidType}     // DE_STRING
+  };
 #endif
-
+#endif
   // No arg constructor to create an unknown shape
   DataType() : type_(DE_UNKNOWN) {}
 
@@ -132,6 +154,7 @@ class DataType {
   /// \return
   uint8_t SizeInBytes() const;
 
+#ifndef ENABLE_ANDROID
   // Convert from DataType to OpenCV type
   /// \return
   uint8_t AsCVType() const;
@@ -140,6 +163,7 @@ class DataType {
   /// \param cv_type
   /// \return
   static DataType FromCVType(int cv_type);
+#endif
 
   // Returns a string representation of the type
   /// \return

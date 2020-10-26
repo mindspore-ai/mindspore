@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "lite_cv/lite_mat.h"
+#include "minddata/dataset/kernels/image/lite_cv/lite_mat.h"
 
 namespace mindspore {
 namespace dataset {

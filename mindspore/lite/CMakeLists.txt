@@ -193,10 +193,6 @@ endif ()
 if (BUILD_MINDDATA STREQUAL "lite" OR BUILD_MINDDATA STREQUAL "full")
     # add sentencepiece dependency
     # include(${TOP_DIR}/cmake/external_libs/sentencepiece.cmake)
-    # opencv
-    set(OpenCV_DIR ${TOP_DIR}/third_party/opencv/build)
-    find_package(OpenCV REQUIRED)
-    include_directories(${OpenCV_INCLUDE_DIRS})
     # json
     if (NOT ENABLE_CONVERTER)
         include(${TOP_DIR}/cmake/external_libs/json.cmake)

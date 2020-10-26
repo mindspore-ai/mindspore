@@ -18,6 +18,11 @@
 #include "minddata/dataset/include/de_tensor.h"
 #include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
+#ifndef ENABLE_ANDROID
+#include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 
 namespace mindspore {
 namespace dataset {

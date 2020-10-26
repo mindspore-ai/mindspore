@@ -26,7 +26,11 @@
 
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/constants.h"
+
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/core/cv_tensor.h"
+#endif
+
 #include "minddata/dataset/core/global_context.h"
 
 #ifdef ENABLE_PYTHON

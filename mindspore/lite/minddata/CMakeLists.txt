@@ -57,7 +57,7 @@ AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/ir/datasetops MINDDATA_ENGINE_IR_DAT
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/ir/datasetops/source MINDDATA_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES)
 
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/opt MINDDATA_ENGINE_OPT_SRC_FILES)
-AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/opt/optional MINDDATA_ENGINE_OPT_OPTIONAL_SRC_FILES)
+# AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/opt/optional MINDDATA_ENGINE_OPT_OPTIONAL_SRC_FILES)
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/opt/post MINDDATA_ENGINE_OPT_POST_SRC_FILES)
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/opt/pre MINDDATA_ENGINE_OPT_PRE_SRC_FILES)
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/engine/opt/util MINDDATA_ENGINE_OPT_UTIL_SRC_FILES)
@@ -81,14 +81,16 @@ AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/kernels/image/lite_cv  MINDDATA_KERNELS_IMA
 
 
 if (BUILD_MINDDATA STREQUAL "full")
-    list(REMOVE_ITEM MINDDATA_API_SRC_FILES
-        "${MINDDATA_DIR}/api/text.cc"
-        "${MINDDATA_DIR}/api/de_tensor.cc"
-        "${MINDDATA_DIR}/api/execute.cc"
+    list(REMOVE_ITEM MINDDATA_API_SRC_FILES 
+        "${MINDDATA_DIR}/api/text.cc" 
         )
 
-    list(REMOVE_ITEM MINDDATA_CALLBACK_SRC_FILES
-        "${MINDDATA_DIR}/callback/py_ds_callback.cc"
+    list(REMOVE_ITEM MINDDATA_CALLBACK_SRC_FILES 
+        "${MINDDATA_DIR}/callback/py_ds_callback.cc" 
+        )
+
+    list(REMOVE_ITEM MINDDATA_CORE_SRC_FILES
+        "${MINDDATA_DIR}/core/cv_tensor.cc"
         )
 
     list(REMOVE_ITEM MINDDATA_KERNELS_SRC_FILES "${MINDDATA_DIR}/kernels/py_func_op.cc")
@@ -136,6 +138,51 @@ if (BUILD_MINDDATA STREQUAL "full")
         "${MINDDATA_DIR}/engine/ir/datasetops/source/tf_record_node.cc"
         "${MINDDATA_DIR}/engine/ir/datasetops/source/voc_node.cc"
         )
+    list(REMOVE_ITEM MINDDATA_KERNELS_IMAGE_SRC_FILES
+        "${MINDDATA_DIR}/kernels/image/affine_op.cc"
+        "${MINDDATA_DIR}/kernels/image/auto_contrast_op.cc"
+        "${MINDDATA_DIR}/kernels/image/bounding_box_op.cc"
+        "${MINDDATA_DIR}/kernels/image/bounding_box_augment_op.cc"
+        "${MINDDATA_DIR}/kernels/image/center_crop_op.cc"
+        "${MINDDATA_DIR}/kernels/image/concatenate_op.cc"
+        "${MINDDATA_DIR}/kernels/image/cut_out_op.cc"
+        "${MINDDATA_DIR}/kernels/image/cutmix_batch_op.cc"
+        "${MINDDATA_DIR}/kernels/image/equalize_op.cc"
+	"${MINDDATA_DIR}/kernels/image/hwc_to_chw_op.cc"
+        "${MINDDATA_DIR}/kernels/image/image_utils.cc"
+        "${MINDDATA_DIR}/kernels/image/invert_op.cc"
+        "${MINDDATA_DIR}/kernels/image/math_utils.cc"
+        "${MINDDATA_DIR}/kernels/image/mixup_batch_op.cc"
+        "${MINDDATA_DIR}/kernels/image/pad_op.cc"
+        "${MINDDATA_DIR}/kernels/image/posterize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_affine_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_color_adjust_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_crop_and_resize_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_crop_decode_resize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_crop_and_resize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_crop_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_crop_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_horizontal_flip_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_horizontal_flip_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_posterize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_resize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_rotation_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_select_subpolicy_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_solarize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_vertical_flip_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_vertical_flip_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_sharpness_op.cc"
+        "${MINDDATA_DIR}/kernels/image/rescale_op.cc"
+        "${MINDDATA_DIR}/kernels/image/rgba_to_bgr_op.cc"
+        "${MINDDATA_DIR}/kernels/image/rgba_to_rgb_op.cc"
+        "${MINDDATA_DIR}/kernels/image/sharpness_op.cc"
+        "${MINDDATA_DIR}/kernels/image/solarize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/swap_red_blue_op.cc"
+        "${MINDDATA_DIR}/kernels/image/uniform_aug_op.cc"
+        "${MINDDATA_DIR}/kernels/image/resize_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_resize_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_color_op.cc"
+	)
 
     list(REMOVE_ITEM MINDDATA_ENGINE_IR_DATASETOPS_SRC_FILES
         "${MINDDATA_DIR}/engine/ir/datasetops/bucket_batch_by_length_node.cc"
@@ -172,6 +219,7 @@ if (BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_ENGINE_OPT_UTIL_SRC_FILES}
         ${MINDDATA_ENGINE_PERF_SRC_FILES}
         ${MINDDATA_KERNELS_SRC_FILES}
+	${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
         ${MINDDATA_KERNELS_IMAGE_SRC_FILES}
         ${MINDDATA_KERNELS_DATA_SRC_FILES}
         ${MINDDATA_UTIL_SRC_FILES}
@@ -184,9 +232,9 @@ if (BUILD_MINDDATA STREQUAL "full")
         securec
         jpeg-turbo
         jpeg
-        opencv_core
-        opencv_imgcodecs
-        opencv_imgproc
+	#opencv_core
+	#opencv_imgcodecs
+	#opencv_imgproc
         mindspore::json
         )
 
@@ -215,29 +263,77 @@ elseif (BUILD_MINDDATA STREQUAL "lite")
         ${MINDDATA_DIR}/api/de_tensor.cc
         ${MINDDATA_DIR}/api/execute.cc
         )
+    list(REMOVE_ITEM MINDDATA_CORE_SRC_FILES
+        "${MINDDATA_DIR}/core/cv_tensor.cc"
+        )
 
-   list(REMOVE_ITEM MINDDATA_KERNELS_IMAGE_SRC_FILES
+    list(REMOVE_ITEM MINDDATA_KERNELS_IMAGE_SRC_FILES
+        "${MINDDATA_DIR}/kernels/image/affine_op.cc"
+        "${MINDDATA_DIR}/kernels/image/auto_contrast_op.cc"
+        "${MINDDATA_DIR}/kernels/image/bounding_box_op.cc"
         "${MINDDATA_DIR}/kernels/image/bounding_box_augment_op.cc"
+        "${MINDDATA_DIR}/kernels/image/center_crop_op.cc"
+        "${MINDDATA_DIR}/kernels/image/concatenate_op.cc"
         "${MINDDATA_DIR}/kernels/image/cut_out_op.cc"
-	)
+        "${MINDDATA_DIR}/kernels/image/cutmix_batch_op.cc"
+        "${MINDDATA_DIR}/kernels/image/equalize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/hwc_to_chw_op.cc"
+        "${MINDDATA_DIR}/kernels/image/image_utils.cc"
+        "${MINDDATA_DIR}/kernels/image/invert_op.cc"
+        "${MINDDATA_DIR}/kernels/image/math_utils.cc"
+        "${MINDDATA_DIR}/kernels/image/mixup_batch_op.cc"
+        "${MINDDATA_DIR}/kernels/image/pad_op.cc"
+        "${MINDDATA_DIR}/kernels/image/posterize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_affine_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_color_adjust_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_crop_and_resize_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_crop_decode_resize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_crop_and_resize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_crop_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_crop_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_horizontal_flip_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_horizontal_flip_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_posterize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_resize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_rotation_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_select_subpolicy_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_solarize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_vertical_flip_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_vertical_flip_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_sharpness_op.cc"
+        "${MINDDATA_DIR}/kernels/image/rescale_op.cc"
+        "${MINDDATA_DIR}/kernels/image/rgba_to_bgr_op.cc"
+        "${MINDDATA_DIR}/kernels/image/rgba_to_rgb_op.cc"
+        "${MINDDATA_DIR}/kernels/image/sharpness_op.cc"
+        "${MINDDATA_DIR}/kernels/image/solarize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/swap_red_blue_op.cc"
+        "${MINDDATA_DIR}/kernels/image/uniform_aug_op.cc"
+        "${MINDDATA_DIR}/kernels/image/resize_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_resize_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_color_op.cc"
+        )
+
     add_library(minddata-lite SHARED
         ${MINDDATA_CORE_SRC_FILES}
         ${MINDDATA_KERNELS_SRC_FILES}
+	${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
         ${MINDDATA_KERNELS_IMAGE_SRC_FILES}
         ${MINDDATA_KERNELS_DATA_SRC_FILES}
         ${MINDDATA_DIR}/util/status.cc
         ${MINDDATA_DIR}/util/memory_pool.cc
         ${MINDDATA_DIR}/util/path.cc
         ${MINDDATA_DIR}/api/transforms.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log_adapter.cc
+        ${CORE_DIR}/utils/ms_utils.cc
         )
 
     target_link_libraries(minddata-lite
         securec
         jpeg-turbo
         jpeg
-        opencv_core
-        opencv_imgcodecs
-        opencv_imgproc
+	# opencv_core
+	# opencv_imgcodecs
+	# opencv_imgproc
         mindspore::json
         )
 

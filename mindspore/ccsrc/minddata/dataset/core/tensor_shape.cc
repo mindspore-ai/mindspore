@@ -96,6 +96,7 @@ TensorShape::TensorShape(py::list l)
 }
 #endif
 
+#ifndef ENABLE_ANDROID
 TensorShape::TensorShape(cv::MatSize cv_size, uint32_t type)
     : raw_shape_(*GlobalContext::Instance()->int_allocator()), strides_(*GlobalContext::Instance()->int_allocator()) {
   for (int i = 0; i < cv_size.dims(); i++) {
@@ -107,6 +108,7 @@ TensorShape::TensorShape(cv::MatSize cv_size, uint32_t type)
   }
   known_ = true;
 }
+#endif
 
 TensorShape TensorShape::CreateUnknownRankShape() {
   TensorShape s({});

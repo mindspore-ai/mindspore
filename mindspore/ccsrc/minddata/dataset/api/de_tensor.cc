@@ -21,6 +21,11 @@
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "mindspore/lite/internal/include/ms_tensor.h"
 #include "utils/hashing.h"
+#ifndef ENABLE_ANDROID
+#include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 
 namespace mindspore {
 namespace tensor {
@@ -43,7 +48,7 @@ MSTensor *DETensor::CreateFromMemory(TypeId data_type, const std::vector<int> &s
                  [](int s) -> dataset::dsize_t { return static_cast<dataset::dsize_t>(s); });
 
   (void)dataset::Tensor::CreateFromMemory(dataset::TensorShape(t_shape), dataset::MSTypeToDEType(data_type),
-                                          static_cast<uchar *>(data), &t);
+                                          static_cast<uint8_t *>(data), &t);
   return new DETensor(std::move(t));
 }
 

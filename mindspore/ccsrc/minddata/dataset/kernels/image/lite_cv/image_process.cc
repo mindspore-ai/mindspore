@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "lite_cv/image_process.h"
+#include "minddata/dataset/kernels/image/lite_cv/image_process.h"
 
 #include <string.h>
 #include <cmath>

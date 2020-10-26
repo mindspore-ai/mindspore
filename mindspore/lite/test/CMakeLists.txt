@@ -90,13 +90,19 @@ if (SUPPORT_GPU)
 endif()
 ### minddata lite
 if (BUILD_MINDDATA STREQUAL "lite")
-    include_directories(${CCSRC_DIR}/minddata)
-    set(DATASET_TEST_DIR ${TEST_DIR}/ut/src/dataset)
-    set(TEST_MINDDATA_SRC
-                ${DATASET_TEST_DIR}/de_tensor_test.cc
-                ${DATASET_TEST_DIR}/eager_test.cc
-            )
+#    include_directories(${CCSRC_DIR}/minddata)
+#    set(DATASET_TEST_DIR ${TEST_DIR}/ut/src/dataset)
+#    set(TEST_MINDDATA_SRC
+#                ${DATASET_TEST_DIR}/de_tensor_test.cc
+#                ${DATASET_TEST_DIR}/eager_test.cc
+#            )
 elseif (BUILD_MINDDATA STREQUAL "full")
+    #include_directories(${CCSRC_DIR}/minddata)
+    #set(DATASET_TEST_DIR ${TEST_DIR}/ut/src/dataset)
+    #set(TEST_MINDDATA_SRC
+    #            ${DATASET_TEST_DIR}/de_tensor_test.cc
+    #            ${DATASET_TEST_DIR}/eager_test.cc
+    #        )
 endif()
 ### runtime framework
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc ${LITE_DIR}/src/ops/populate/*.cc)
@@ -278,12 +284,12 @@ if (PLATFORM_ARM)
     target_link_libraries(lite-test log)
 endif()
 
-if (BUILD_MINDDATA STREQUAL "lite")
-    target_link_libraries(lite-test
-    	   minddata_eager_mid
-           minddata-lite
-           )
-endif()
+#if (BUILD_MINDDATA STREQUAL "lite")
+#    target_link_libraries(lite-test
+	    # minddata_eager_mid
+	    #minddata-lite
+	    #           )
+	    #endif()
 if (ENABLE_CONVERTER)
     target_link_libraries(lite-test
             anf_importer_mid
