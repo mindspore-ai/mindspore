@@ -339,6 +339,7 @@ class NaiveFaithfulness(_FaithfulnessHelper):
 
         perturbations = ms.Tensor(perturbations, dtype=ms.float32)
         predictions = model(perturbations).asnumpy()[:, targets]
+
         faithfulness = calc_correlation(feature_importance, predictions)
         normalized_faithfulness = (faithfulness + 1) / 2
         return np.array([normalized_faithfulness], np.float)
