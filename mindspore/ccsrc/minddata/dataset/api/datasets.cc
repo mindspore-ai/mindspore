@@ -655,6 +655,42 @@ Status Dataset::AddCacheOp(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   }
   return Status::OK();
 }
+int64_t Dataset::GetBatchSize() {
+  int64_t batch_size;
+  auto ds = shared_from_this();
+  Status rc;
+  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  rc = runtime_context->Init();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetBatchSize: Initializing RuntimeContext failed.";
+    return -1;
+  }
+  rc = tree_getters_->Init(ds);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetBatchSize: Initializing TreeGetters failed.";
+    return -1;
+  }
+  rc = tree_getters_->GetBatchSize(&batch_size);
+  return rc.IsError() ? -1 : batch_size;
+}
+int64_t Dataset::GetRepeatCount() {
+  int64_t repeat_count;
+  auto ds = shared_from_this();
+  Status rc;
+  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  rc = runtime_context->Init();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetRepeatCount: Initializing RuntimeContext failed.";
+    return -1;
+  }
+  rc = tree_getters_->Init(ds);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetRepeatCount: Initializing TreeGetters failed.";
+    return -1;
+  }
+  rc = tree_getters_->GetRepeatCount(&repeat_count);
+  return rc.IsError() ? 0 : repeat_count;
+}
 
 SchemaObj::SchemaObj(const std::string &schema_file) : schema_file_(schema_file), num_rows_(0), dataset_type_("") {}
 

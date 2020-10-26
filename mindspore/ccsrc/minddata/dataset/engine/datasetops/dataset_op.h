@@ -183,6 +183,14 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return Status - The status code return
   virtual Status GetDatasetSize(int64_t *dataset_size);
 
+  /// \brief Gets the batch size
+  /// \return Status - The status code return
+  virtual int64_t GetTreeBatchSize();
+
+  /// \brief Gets the repeat count
+  /// \return Status - The status code return
+  virtual int64_t GetTreeRepeatCount();
+
   /// \brief Performs handling for when an eoe message is received.
   /// The base class implementation simply flows the eoe message to output. Derived classes
   /// may override if they need to perform special eoe handling.

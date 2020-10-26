@@ -430,4 +430,18 @@ Status TreeGetters::GetOutputShapes(std::vector<TensorShape> *shapes) {
   }
   return Status::OK();
 }
+
+Status TreeGetters::GetBatchSize(int64_t *batch_size) {
+  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  *batch_size = root->GetTreeBatchSize();
+  CHECK_FAIL_RETURN_UNEXPECTED(*batch_size != -1, "Error in finding the batch size.");
+  return Status::OK();
+}
+Status TreeGetters::GetRepeatCount(int64_t *repeat_count) {
+  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  *repeat_count = root->GetTreeRepeatCount();
+  return Status::OK();
+}
 }  // namespace mindspore::dataset

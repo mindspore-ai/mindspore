@@ -125,6 +125,37 @@ TEST_F(MindDataTestPipeline, TestCelebADefault) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestGetRepeatCount) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetRepeatCount.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true);
+  EXPECT_NE(ds, nullptr);
+  EXPECT_EQ(ds->GetRepeatCount(), 1);
+  ds = ds->Repeat(4);
+  EXPECT_NE(ds, nullptr);
+  EXPECT_EQ(ds->GetRepeatCount(), 4);
+  ds = ds->Repeat(3);
+  EXPECT_NE(ds, nullptr);
+  EXPECT_EQ(ds->GetRepeatCount(), 3);
+}
+
+TEST_F(MindDataTestPipeline, TestGetBatchSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetRepeatCount.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true)->Project({"label"});
+  EXPECT_NE(ds, nullptr);
+  EXPECT_EQ(ds->GetBatchSize(), 1);
+  ds = ds->Batch(2);
+  EXPECT_NE(ds, nullptr);
+  EXPECT_EQ(ds->GetBatchSize(), 2);
+  ds = ds->Batch(3);
+  EXPECT_NE(ds, nullptr);
+  EXPECT_EQ(ds->GetBatchSize(), 3);
+}
 TEST_F(MindDataTestPipeline, TestCelebAGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebAGetDatasetSize.";
 

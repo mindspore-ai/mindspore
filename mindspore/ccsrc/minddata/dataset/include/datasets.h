@@ -588,16 +588,24 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   }
 
   /// \brief Gets the dataset size
-  /// \return status code
+  /// \return int64_t
   int64_t GetDatasetSize();
 
   /// \brief Gets the output type
-  /// \return status code
+  /// \return vector of DataType
   std::vector<DataType> GetOutputTypes();
 
   /// \brief Gets the output shape
-  /// \return status code
+  /// \return vector of TensorShapes
   std::vector<TensorShape> GetOutputShapes();
+
+  /// \brief Gets the batch size
+  /// \return int64_t
+  int64_t GetBatchSize();
+
+  /// \brief Gets the the repeat count
+  /// \return int64_t
+  int64_t GetRepeatCount();
 
   /// \brief Setter function for runtime number of workers
   /// \param[in] num_workers The number of threads in this operator
@@ -668,16 +676,18 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///    0<i<n, and one bucket for [bucket_boundaries[n-1], inf).
   /// \param[in] bucket_batch_sizes A list consisting of the batch sizes for each bucket.
   ///    Must contain elements equal to the size of bucket_boundaries + 1.
-  /// \param[in] element_length_function A function pointer that takes in TensorRow and outputs a TensorRow. The output
+  /// \param[in] element_length_function A function pointer that takes in TensorRow and outputs a TensorRow. The
+  /// output
   ///    must contain a single tensor containing a single int32_t. If no value is provided, then size of column_names
   ///    must be 1, and the size of the first dimension of that column will be taken as the length (default=nullptr)
   /// \param[in] pad_info Represents how to batch each column. The key corresponds to the column name, the value must
   ///    be a tuple of 2 elements.  The first element corresponds to the shape to pad to, and the second element
   ///    corresponds to the value to pad with. If a column is not specified, then that column will be padded to the
   ///    longest in the current batch, and 0 will be used as the padding value. Any unspecified dimensions will be
-  ///    padded to the longest in the current batch, unless if pad_to_bucket_boundary is true. If no padding is wanted,
-  ///    set pad_info to None (default=empty dictionary).
-  /// \param[in] pad_to_bucket_boundary If true, will pad each unspecified dimension in pad_info to the bucket_boundary
+  ///    padded to the longest in the current batch, unless if pad_to_bucket_boundary is true. If no padding is
+  ///    wanted, set pad_info to None (default=empty dictionary).
+  /// \param[in] pad_to_bucket_boundary If true, will pad each unspecified dimension in pad_info to the
+  /// bucket_boundary
   ///    minus 1. If there are any elements that fall into the last bucket, an error will occur (default=false).
   /// \param[in] drop_remainder If true, will drop the last batch for each bucket if it is not a full batch
   ///    (default=false).

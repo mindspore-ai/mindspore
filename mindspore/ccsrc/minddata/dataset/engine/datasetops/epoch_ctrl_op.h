@@ -76,6 +76,8 @@ class EpochCtrlOp : public RepeatOp {
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
   Status Accept(NodePass *p, bool *modified) override;
+
+  int64_t GetTreeRepeatCount() override;
 };
 }  // namespace dataset
 }  // namespace mindspore

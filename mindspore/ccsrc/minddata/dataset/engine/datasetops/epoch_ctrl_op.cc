@@ -119,5 +119,6 @@ Status EpochCtrlOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call the pre-visitation
   return p->RunOnNode(shared_from_base<EpochCtrlOp>(), modified);
 }
+int64_t EpochCtrlOp::GetTreeRepeatCount() { return child_[0]->GetTreeRepeatCount(); }
 }  // namespace dataset
 }  // namespace mindspore

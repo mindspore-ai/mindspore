@@ -555,6 +555,14 @@ Status BatchOp::GetDatasetSize(int64_t *dataset_size) {
   dataset_size_ = num_rows;
   return Status::OK();
 }
+int64_t BatchOp::GetTreeBatchSize() {
+#ifdef ENABLE_PYTHON
+  if (batch_size_func_) {
+    return -1;
+  }
+#endif
+  return start_batch_size_;
+}
 
 }  // namespace dataset
 }  // namespace mindspore

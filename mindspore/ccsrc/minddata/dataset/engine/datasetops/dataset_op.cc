@@ -455,5 +455,17 @@ void DatasetOp::UpdateRepeatAndEpochCounter() {
   if (op_current_repeats_ % op_num_repeats_per_epoch_ == 0) op_current_epochs_++;
   MS_LOG(DEBUG) << Name() << " current repeats: " << op_current_repeats_ << ", current epochs: " << op_current_epochs_;
 }
+int64_t DatasetOp::GetTreeBatchSize() {
+  if (!child_.empty()) {
+    return child_[0]->GetTreeBatchSize();
+  }
+  return 1;
+}
+int64_t DatasetOp::GetTreeRepeatCount() {
+  if (!child_.empty()) {
+    return child_[0]->GetTreeRepeatCount();
+  }
+  return 1;
+}
 }  // namespace dataset
 }  // namespace mindspore

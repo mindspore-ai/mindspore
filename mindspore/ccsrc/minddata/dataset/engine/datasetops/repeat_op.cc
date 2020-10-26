@@ -207,5 +207,6 @@ Status RepeatOp::GetDatasetSize(int64_t *dataset_size) {
   dataset_size_ = num_rows;
   return Status::OK();
 }
+int64_t RepeatOp::GetTreeRepeatCount() { return num_repeats_; }
 }  // namespace dataset
 }  // namespace mindspore
