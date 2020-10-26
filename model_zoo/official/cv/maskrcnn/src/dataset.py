@@ -301,10 +301,8 @@ def pad_to_max(img, img_shape, gt_bboxes, gt_label, gt_num, gt_mask, instance_co
     gt_label_new = np.pad(gt_label, ((0, pad_max_number - instance_count)), mode="constant", constant_values=-1)
     gt_iscrowd_new = np.pad(gt_num, ((0, pad_max_number - instance_count)), mode="constant", constant_values=1)
     gt_iscrowd_new_revert = ~(gt_iscrowd_new.astype(np.bool))
-    gt_mask_new = np.pad(gt_mask, ((0, pad_max_number - instance_count), (0, 0), (0, 0)), mode="constant",
-                         constant_values=0)
 
-    return img, img_shape, gt_box_new, gt_label_new, gt_iscrowd_new_revert, gt_mask_new
+    return img, img_shape, gt_box_new, gt_label_new, gt_iscrowd_new_revert, gt_mask
 
 def preprocess_fn(image, box, mask, mask_shape, is_training):
     """Preprocess function for dataset."""
@@ -518,7 +516,7 @@ def create_maskrcnn_dataset(mindrecord_file, batch_size=2, device_num=1, rank_id
                     column_order=["image", "image_shape", "box", "label", "valid_num", "mask"],
                     python_multiprocessing=False,
                     num_parallel_workers=num_parallel_workers)
-        ds = ds.batch(batch_size, drop_remainder=True)
+        ds = ds.batch(batch_size, drop_remainder=True, pad_info={"mask": ([config.max_instance_count, None, None], 0)})
 
     else:
         ds = ds.map(operations=compose_map_func,

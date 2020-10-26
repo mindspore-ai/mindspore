@@ -35,6 +35,9 @@ MaskRCNN is a two-stage target detection network. It extends FasterRCNN by addin
 [Paper](http://cn.arxiv.org/pdf/1703.06870v3): Kaiming He, Georgia Gkioxari, Piotr Dollar and Ross Girshick. "MaskRCNN"
 
 # [Dataset](#contents)
+
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
+
 - [COCO2017](https://cocodataset.org/) is a popular dataset with bounding-box and pixel-level stuff annotations. These annotations can be used for scene understanding tasks like semantic segmentation, object detection and image captioning. There are 118K/5K images for train/val. 
 
 - Dataset size: 19G
@@ -398,12 +401,12 @@ Accumulating evaluation results...
 
 ### Evaluation Performance
 
-| Parameters                 | MaskRCNN                                                  |
+| Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                          |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G              |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             |
 | uploaded Date              | 08/01/2020 (month/day/year)                                 |
-| MindSpore Version          | 0.6.0-alpha                                                 |
+| MindSpore Version          | 1.0.0                                                       |
 | Dataset                    | COCO2017                                                    |
 | Training Parameters        | epoch=12,  batch_size = 2                                   |
 | Optimizer                  | SGD                                                         |
@@ -414,18 +417,18 @@ Accumulating evaluation results...
 | Total time                 | 1pc: 46 hours;  8pcs: 5.38 hours                            |
 | Parameters (M)             | 84.8                                                        |
 | Checkpoint for Fine tuning | 85M(.ckpt file)                                             |
-| Model for inference        | 571M(.air file)                                                            |
+| Model for inference        | 571M(.air file)                                             |
 | Scripts                    | [maskrcnn script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/maskrcnn) |
 
 
 ### Inference Performance
 
-| Parameters          | MaskRCNN                    |
+| Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | V1                          |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 08/01/2020 (month/day/year) |
-| MindSpore Version   | 0.6.0-alpha                 |
+| MindSpore Version   | 1.0.0                       |
 | Dataset             | COCO2017                    |
 | batch_size          | 2                           |
 | outputs             | mAP                         |
