@@ -102,27 +102,17 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_lite_LiteSession_getInpu
   return ret;
 }
 
-extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_lite_LiteSession_getInputsByTensorName(JNIEnv *env,
-                                                                                               jobject thiz,
-                                                                                               jlong session_ptr,
-                                                                                               jstring tensor_name) {
-  jclass array_list = env->FindClass("java/util/ArrayList");
-  jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");
-  jobject ret = env->NewObject(array_list, array_list_construct);
-  jmethodID array_list_add = env->GetMethodID(array_list, "add", "(Ljava/lang/Object;)Z");
-
-  jclass long_object = env->FindClass("java/lang/Long");
-  jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_LiteSession_getInputsByTensorName(JNIEnv *env, jobject thiz,
+                                                                                             jlong session_ptr,
+                                                                                             jstring tensor_name) {
   auto *pointer = reinterpret_cast<void *>(session_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Session pointer from java is nullptr");
-    return ret;
+    return jlong(nullptr);
   }
   auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(pointer);
   auto input = lite_session_ptr->GetInputsByTensorName(JstringToChar(env, tensor_name));
-  jobject tensor_addr = env->NewObject(long_object, long_object_construct, jlong(input));
-  env->CallBooleanMethod(ret, array_list_add, tensor_addr);
-  return ret;
+  return jlong(input);
 }
 
 extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_lite_LiteSession_getOutputsByNodeName(JNIEnv *env, jobject thiz,
