@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 
 #include <iostream>
-#include "backend/kernel_compiler/gpu/cuda_impl/gather.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/gatherv2.cuh"
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T, typename S>
-__global__ void GatherKernel(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1,
+__global__ void GatherV2Kernel(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1,
                              size_t output_dim2, size_t input_dim1) {
   int num = output_dim0 * output_dim1 * output_dim2;
   int i, j, k;
@@ -39,16 +39,16 @@ __global__ void GatherKernel(T *input, S *indices, T *output, size_t output_dim0
   return;
 }
 template <typename T, typename S>
-void Gather(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1, size_t output_dim2,
+void GatherV2(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1, size_t output_dim2,
             size_t input_dim1, cudaStream_t stream) {
   int size = output_dim0 * output_dim1 * output_dim2;
-  GatherKernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, indices, output, output_dim0, output_dim1,
+  GatherV2Kernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, indices, output, output_dim0, output_dim1,
                                                              output_dim2, input_dim1);
   return;
 }
 
-template void Gather<float, int>(float *input, int *indices, float *output, size_t output_dim0, size_t output_dim1,
+template void GatherV2<float, int>(float *input, int *indices, float *output, size_t output_dim0, size_t output_dim1,
                                  size_t output_dim2, size_t input_dim1, cudaStream_t stream);
 
-template void Gather<half, int>(half *input, int *indices, half *output, size_t output_dim0, size_t output_dim1,
+template void GatherV2<half, int>(half *input, int *indices, half *output, size_t output_dim0, size_t output_dim1,
                                 size_t output_dim2, size_t input_dim1, cudaStream_t stream);

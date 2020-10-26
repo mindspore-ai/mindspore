@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_GATHER_GPU_CU_H
 #define MINDSPORE_GATHER_GPU_CU_H
 template <typename T, typename S>
-void Gather(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1, size_t output_dim2,
-            size_t input_dim1, cudaStream_t stream);
+void GatherV2(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1,
+              size_t output_dim2, size_t input_dim1, cudaStream_t stream);
 
 #endif

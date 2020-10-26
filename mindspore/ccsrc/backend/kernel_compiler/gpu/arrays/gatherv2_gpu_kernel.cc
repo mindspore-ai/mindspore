@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/arrays/gather_gpu_kernel.h"
+#include "backend/kernel_compiler/gpu/arrays/gatherv2_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
   GatherV2,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  GatherGpuFwdKernel, float, int)
+  GatherV2GpuFwdKernel, float, int)
 MS_REG_GPU_KERNEL_TWO(
   GatherV2,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  GatherGpuFwdKernel, half, int)
+  GatherV2GpuFwdKernel, half, int)
 }  // namespace kernel
 }  // namespace mindspore
