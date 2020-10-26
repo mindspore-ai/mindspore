@@ -136,6 +136,10 @@ int ArithmeticOpenCLKernel::Init() {
   if (arithmetic_parameter->broadcasting_) {
     element_flag_ = false;
     kernel_name = "BroadcastNHWC4";
+    if (out_tensors_[0]->shape()[0] > 1) {
+      MS_LOG(ERROR) << "Broadcasting don't support  N > 1";
+      return RET_ERROR;
+    }
   } else {
     kernel_name = "Element";
   }
