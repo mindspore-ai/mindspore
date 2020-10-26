@@ -283,7 +283,11 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
     MS_LOG(ERROR) << "quant_params empty";
     return RET_ERROR;
   }
-  primitive_c->SetInputQuantParam(WEIGHT_INDEX, quant_params);
+  if (quantType == QuantType_PostTraining) {
+    primitive_c->AddInputQuantParam(quant_params);
+  } else {
+    primitive_c->SetInputQuantParam(WEIGHT_INDEX, quant_params);
+  }
   return RET_OK;
 }
 
