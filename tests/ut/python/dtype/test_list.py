@@ -30,7 +30,6 @@ from tests.mindspore_test_framework.pipeline.forward.compile_forward \
 
 context.set_context(mode=context.GRAPH_MODE)
 
-
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -258,6 +257,34 @@ class AxisListDefaultNet(nn.Cell):
         return self.reduce_sum(x)
 
 
+class TensorInList(nn.Cell):
+    def __init__(self):
+        super(TensorInList, self).__init__()
+        self.t1 = Tensor(1, mstype.float32)
+        self.t2 = Tensor(2, mstype.float32)
+
+    def construct(self, x):
+        ret = x
+        list_ = [1, [2, 3], "str", self.t1, self.t2, x]
+        if x in list_:
+            ret = x + x
+        return ret
+
+
+class TensorNotInList(nn.Cell):
+    def __init__(self):
+        super(TensorNotInList, self).__init__()
+        self.t1 = Tensor(1, mstype.float32)
+        self.t2 = Tensor(2, mstype.float32)
+
+    def construct(self, x):
+        ret = x
+        list_ = [self.t2, x]
+        if self.t1 not in list_:
+            ret = x + x
+        return ret
+
+
 test_case_ops = [
     ('ListOperate', {
         'block': ListOperate(),
@@ -274,6 +301,12 @@ test_case_ops = [
         'desc_inputs': [Tensor(np.ones([6, 8, 10], np.int32))]}),
     ('InList', {
         'block': InListNet(),
+        'desc_inputs': [Tensor(np.ones([6, 8, 10], np.int32))]}),
+    ('TensorInList', {
+        'block': TensorInList(),
+        'desc_inputs': [Tensor(np.ones([6, 8, 10], np.int32))]}),
+    ('TensorNotInList', {
+        'block': TensorNotInList(),
         'desc_inputs': [Tensor(np.ones([6, 8, 10], np.int32))]}),
 ]
 
