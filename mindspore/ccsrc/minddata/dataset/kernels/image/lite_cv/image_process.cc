@@ -441,7 +441,7 @@ static void CropInternal(const LiteMat &src, LiteMat &dst, int x, int y, int w, 
 }
 
 bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
-  if (x <= 0 || y <= 0 || w <= 0 || h <= 0) {
+  if (x < 0 || y < 0 || w <= 0 || h <= 0) {
     return false;
   }
   if (y + h > src.height_ || x + w > src.width_) {
