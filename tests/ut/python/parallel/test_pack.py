@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore.common.api import _executor
 from mindspore.nn import TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
+from mindspore.nn import Dense, Flatten
 
 
 class Net(nn.Cell):
@@ -71,12 +72,67 @@ class Net2(nn.Cell):
         return out
 
 
+class PackConstantNet1(nn.Cell):
+    def __init__(self, dense_in_channel, dense_out_channel, axis=0, shape=None, strategy=None):
+        super().__init__()
+        weight_np = np.full((dense_out_channel, dense_in_channel), 0.01, dtype=np.float32)
+        bias_np = np.full((dense_out_channel), 0.01, dtype=np.float32)
+        self.pack_con = Tensor(np.full(shape, 0.01, dtype=np.float32))
+        self.flat = Flatten()
+        self.dense = Dense(in_channels=dense_in_channel,
+                           out_channels=dense_out_channel,
+                           weight_init=Tensor(weight_np),
+                           bias_init=Tensor(bias_np),
+                           has_bias=True)
+        self.mul = P.Mul()
+        self.pack = P.Pack(axis)
+        if strategy is not None:
+            self.pack.shard(strategy)
+
+    def construct(self, inputs):
+        x = self.pack([self.pack_con, self.pack_con, self.pack_con, self.pack_con,
+                       self.pack_con, self.pack_con, self.pack_con, self.pack_con])
+        x1 = self.flat(x)
+        x2 = self.flat(inputs)
+        x = self.mul(x1, x2)
+        x = self.dense(x)
+        return x
+
+
+class PackConstantNet2(nn.Cell):
+    def __init__(self, dense_in_channel, dense_out_channel, axis=0, shape=None, strategy=None):
+        super().__init__()
+        weight_np = np.full((dense_out_channel, dense_in_channel), 0.01, dtype=np.float32)
+        bias_np = np.full((dense_out_channel), 0.01, dtype=np.float32)
+        self.pack_con = Tensor(np.full(shape, 0.01, dtype=np.float32))
+        self.flat = Flatten()
+        self.dense = Dense(in_channels=dense_in_channel,
+                           out_channels=dense_out_channel,
+                           weight_init=Tensor(weight_np),
+                           bias_init=Tensor(bias_np),
+                           has_bias=True)
+        self.mul = P.Mul()
+        self.pack = P.Pack(axis)
+        if strategy is not None:
+            self.pack.shard(strategy)
+
+    def construct(self, inputs):
+        x = self.pack((self.pack_con, self.pack_con, self.pack_con, self.pack_con,
+                       self.pack_con, self.pack_con, self.pack_con, self.pack_con))
+        x1 = self.flat(x)
+        x2 = self.flat(inputs)
+        x = self.mul(x1, x2)
+        x = self.dense(x)
+        return x
+
+
 _w1 = Tensor(np.ones([48, 64]), dtype=ms.float32)
 _w2 = Tensor(np.ones([48, 64]), dtype=ms.float32)
 _w3 = Tensor(np.ones([48, 64]), dtype=ms.float32)
 _x = Tensor(np.ones([2, 48, 64]), dtype=ms.float32)
 _x1 = Tensor(np.ones([48, 64]), dtype=ms.float32)
 _x2 = Tensor(np.ones([3, 48, 64]), dtype=ms.float32)
+_x_c = Tensor(np.ones([8, 8, 8]), dtype=ms.float32)
 
 
 def compile_net(net):
@@ -103,6 +159,15 @@ def compile_net2(net):
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
     _executor.compile(train_net, _x2)
+    context.reset_auto_parallel_context()
+
+
+def compile_net_con(net):
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    train_net = TrainOneStepCell(net, optimizer)
+    train_net.set_auto_parallel()
+    _executor.compile(train_net, _x_c)
     context.reset_auto_parallel_context()
 
 
@@ -186,3 +251,24 @@ def test_pack_auto_parallel_3_tensor():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
     net = Net2(_w1, _w2, _w3)
     compile_net2(net)
+
+
+def test_pack_constant1():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    net = PackConstantNet1(dense_in_channel=64, dense_out_channel=4, axis=0, shape=(8, 8),
+                           strategy=((4, 1), (4, 1), (4, 1), (4, 1), (4, 1), (4, 1), (4, 1), (4, 1)))
+    compile_net_con(net)
+
+
+def test_pack_constant2():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    net = PackConstantNet2(dense_in_channel=64, dense_out_channel=4, axis=0, shape=(8, 8),
+                           strategy=((4, 1), (4, 1), (4, 1), (4, 1), (4, 1), (4, 1), (4, 1), (4, 1)))
+    compile_net_con(net)
+
+
+def test_pack_auto_constant():
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    net = PackConstantNet1(dense_in_channel=64, dense_out_channel=4, axis=0, shape=(8, 8),
+                           strategy=((8, 1), (8, 1), (8, 1), (8, 1), (8, 1), (8, 1), (8, 1), (8, 1)))
+    compile_net_con(net)

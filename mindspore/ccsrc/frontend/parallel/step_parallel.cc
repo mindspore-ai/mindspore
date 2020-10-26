@@ -533,6 +533,58 @@ void SplitTensor(const AnfNodePtr &node, const CNodePtr &next_node, int index) {
   }
 }
 
+void SplitTensorList(const AnfNodePtr &node, const CNodePtr &next_node, int index) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(next_node);
+  if (next_node->inputs().size() != 2 || index != 1) {
+    MS_LOG(INFO) << next_node->fullname_with_scope() << " Inputs must have only one input, get "
+                 << next_node->inputs().size() - 1 << " index should be 1, get " << index;
+    return;
+  }
+  OperatorInfoPtr op_info = next_node->user_data<OperatorInfo>();
+  MS_EXCEPTION_IF_NULL(op_info);
+
+  std::vector<ValuePtr> inputs_values;
+  if (IsValueNode<ValueList>(node)) {
+    inputs_values = node->cast<ValueNodePtr>()->value()->cast<ValueListPtr>()->value();
+  } else {
+    inputs_values = node->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>()->value();
+  }
+  if (inputs_values.size() != op_info->inputs_tensor_info().size()) {
+    MS_LOG(EXCEPTION) << "The inputs size " << inputs_values.size() << ", is not equal to inputs shape size "
+                      << op_info->inputs_tensor_info().size();
+  }
+  std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  FuncGraphPtr func_graph = next_node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  FuncGraphManagerPtr manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  ScopePtr scope = next_node->scope();
+  MS_EXCEPTION_IF_NULL(scope);
+  for (size_t i = 0; i < inputs_values.size(); ++i) {
+    auto value_ptr = inputs_values[i];
+    auto tensor = value_ptr->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    TensorInfo tensor_info = op_info->inputs_tensor_info()[i];
+    TensorLayout tensor_layout = tensor_info.tensor_layout();
+    auto value_node = NewValueNode(value_ptr)->cast<AnfNodePtr>();
+    Operator op = CreateGetTensorSliceOp(tensor_layout);
+    std::vector<AnfNodePtr> node_input = CreateInput(op, value_node, SPLIT_TENSOR);
+    CNodePtr new_node = func_graph->NewCNode(node_input);
+    new_node->set_in_forward_flag(true);
+    auto new_node_value = node_input[0]->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(new_node_value);
+    PrimitivePtr new_node_prim = new_node_value->value()->cast<PrimitivePtr>();
+    new_node_prim->set_instance_name(SPLIT_TENSOR);
+    new_node_prim->set_attr("keep_value_node_input", MakeValue(true));
+    new_node->set_scope(scope);
+    node_input[0]->set_scope(scope);
+    make_tuple_inputs.push_back(new_node);
+  }
+  CNodePtr make_tuple = func_graph->NewCNode(make_tuple_inputs);
+  manager->Replace(node, make_tuple);
+}
+
 void StepSplitTensor(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(manager);
@@ -550,7 +602,11 @@ void StepSplitTensor(const AnfNodePtr &node, const FuncGraphManagerPtr &manager)
       continue;
     }
     if (IsParallelCareNode(use_cnode)) {
-      SplitTensor(node, use_cnode, node_pair.second);
+      if (IsValueNode<ValueList>(node) || IsValueNode<ValueTuple>(node)) {
+        SplitTensorList(node, use_cnode, node_pair.second);
+      } else {
+        SplitTensor(node, use_cnode, node_pair.second);
+      }
     }
   }
 }
@@ -852,6 +908,11 @@ void InsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node) {
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
 
+  if ((node->inputs().size() == 2) && (IsValueNode<ValueSequeue>(node->input(1)))) {
+    MS_LOG(INFO) << "Input is ValueList, skip it.";
+    return;
+  }
+
   if ((node->inputs().size() == 2) &&
       (AnfNodeIsPrimitive(node->input(1), MAKE_TUPLE) || AnfNodeIsPrimitive(node->input(1), MAKE_LIST))) {
     MS_LOG(INFO) << "The mirror for " << GetPrimName(node) << " has handle by make_tuple node";
@@ -1049,9 +1110,34 @@ StrategyPtr ExtractStrategy(std::unordered_map<std::string, ValuePtr> attrs) {
   return strategyPtr;
 }
 
+Shapes GetValueListShape(const AnfNodePtr &node) {
+  Shapes shapes;
+  std::vector<ValuePtr> inputs_seq;
+  if (IsValueNode<ValueList>(node)) {
+    inputs_seq = node->cast<ValueNodePtr>()->value()->cast<ValueListPtr>()->value();
+  } else if (IsValueNode<ValueTuple>(node)) {
+    inputs_seq = node->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>()->value();
+  } else {
+    MS_LOG(EXCEPTION) << "node is eigther ValueList or ValueTuple";
+  }
+  for (auto &ele : inputs_seq) {
+    auto tensor = ele->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto one_shape = tensor->shape();
+    Shape shape_64;
+    (void)std::transform(one_shape.begin(), one_shape.end(), std::back_inserter(shape_64),
+                         [](const int &value) { return static_cast<int64_t>(value); });
+    shapes.push_back(shape_64);
+  }
+  return shapes;
+}
+
 Shapes GetNodeShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   Shapes shapes;
+  if (IsValueNode<ValueList>(node) || IsValueNode<ValueTuple>(node)) {
+    return GetValueListShape(node);
+  }
   BaseShapePtr base_shape_ptr = node->Shape();
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
@@ -1177,7 +1263,8 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       std::pair<AnfNodePtr, int> node_pair = std::make_pair(node, SizeToInt(i));
       g_RefMap[parameters[0]] = node_pair;
       input_shapes = GetRefKeyNodeShape(input, func_graph);
-    } else if (IsValueNode<Tensor>(input) || input->isa<CNode>() || input->isa<Parameter>()) {
+    } else if (IsValueNode<Tensor>(input) || input->isa<CNode>() || input->isa<Parameter>() ||
+               ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == 2))) {
       input_shapes = GetNodeShape(input);
     } else {
       continue;
@@ -2258,7 +2345,7 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
       }
 
       HandleSpecialNode(distribute_operator, cnode);
-    } else if (IsValueNode<Tensor>(node)) {
+    } else if (IsValueNode<Tensor>(node) || IsValueNode<ValueList>(node) || IsValueNode<ValueTuple>(node)) {
       StepSplitTensor(node, manager);
     }
   }
