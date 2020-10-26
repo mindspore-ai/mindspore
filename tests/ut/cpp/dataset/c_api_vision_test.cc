@@ -33,9 +33,11 @@
 #include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
 
 using namespace mindspore::dataset::api;
 using mindspore::dataset::BorderType;
+using mindspore::dataset::InterpolationMode;
 using mindspore::dataset::Tensor;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
@@ -43,6 +45,114 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 // Tests for vision ops (in alphabetical order)
+
+TEST_F(MindDataTestPipeline, TestAutoContrastSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAutoContrastSuccess1.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 5));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 3;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create auto contrast object with default values
+  std::shared_ptr<TensorOperation> auto_contrast = vision::AutoContrast();
+  EXPECT_NE(auto_contrast, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({auto_contrast});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 15);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestAutoContrastSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAutoContrastSuccess2.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 5));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 3;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create auto contrast object
+  std::shared_ptr<TensorOperation> auto_contrast = vision::AutoContrast(10, {10, 20});
+  EXPECT_NE(auto_contrast, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({auto_contrast});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 15);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestAutoContrastFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAutoContrastFail with invalid params.";
+  // Testing invalid cutoff < 0
+  std::shared_ptr<TensorOperation> auto_contrast1 = vision::AutoContrast(-1.0);
+  EXPECT_EQ(auto_contrast1, nullptr);
+  // Testing invalid cutoff > 100
+  std::shared_ptr<TensorOperation> auto_contrast2 = vision::AutoContrast(110.0, {10, 20});
+  EXPECT_EQ(auto_contrast2, nullptr);
+}
 
 TEST_F(MindDataTestPipeline, TestCenterCrop) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCenterCrop with single integer input.";
@@ -535,6 +645,44 @@ TEST_F(MindDataTestPipeline, TestHwcToChw) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestInvert) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestInvert.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 20));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> invert_op = vision::Invert();
+  EXPECT_NE(invert_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({invert_op});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestMixUpBatchFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMixUpBatchFail1 with negative alpha parameter.";
 
@@ -947,7 +1095,7 @@ TEST_F(MindDataTestPipeline, TestRandomColor) {
 
   // Failure case: Set invalid negative lower bound
   std::shared_ptr<TensorOperation> random_color_op_4 = vision::RandomColor(-0.5, 0.5);
-  EXPECT_EQ(random_color_op_2, nullptr);
+  EXPECT_EQ(random_color_op_4, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_color_op_1, random_color_op_3});
@@ -1050,6 +1198,182 @@ TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestRandomCropSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropSuccess.";
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  // Testing siez of size vector is 1
+  std::shared_ptr<TensorOperation> random_crop = vision::RandomCrop({20});
+  EXPECT_NE(random_crop, nullptr);
+
+  // Testing siez of size vector is 2
+  std::shared_ptr<TensorOperation> random_crop1 = vision::RandomCrop({20, 20});
+  EXPECT_NE(random_crop1, nullptr);
+
+  // Testing siez of paddiing vector is 1
+  std::shared_ptr<TensorOperation> random_crop2 = vision::RandomCrop({20, 20}, {10});
+  EXPECT_NE(random_crop2, nullptr);
+
+  // Testing siez of paddiing vector is 2
+  std::shared_ptr<TensorOperation> random_crop3 = vision::RandomCrop({20, 20}, {10, 20});
+  EXPECT_NE(random_crop3, nullptr);
+
+  // Testing siez of paddiing vector is 2
+  std::shared_ptr<TensorOperation> random_crop4 = vision::RandomCrop({20, 20}, {10, 10, 10, 10});
+  EXPECT_NE(random_crop4, nullptr);
+
+  // Testing siez of fill_value vector is 1
+  std::shared_ptr<TensorOperation> random_crop5 = vision::RandomCrop({20, 20}, {10, 10, 10, 10}, false, {5});
+  EXPECT_NE(random_crop5, nullptr);
+
+  // Testing siez of fill_value vector is 3
+  std::shared_ptr<TensorOperation> random_crop6 = vision::RandomCrop({20, 20}, {10, 10, 10, 10}, false, {4, 4, 4});
+  EXPECT_NE(random_crop6, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_crop, random_crop1, random_crop2, random_crop3, random_crop4, random_crop5, random_crop6});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 10);
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomCropFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropFail with invalid parameters.";
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  // Testing the size parameter is negative.
+  std::shared_ptr<TensorOperation> random_crop = vision::RandomCrop({-28, 28});
+  EXPECT_EQ(random_crop, nullptr);
+  // Testing the size parameter is None.
+  std::shared_ptr<TensorOperation> random_crop1 = vision::RandomCrop({});
+  EXPECT_EQ(random_crop1, nullptr);
+  // Testing the size of size vector is 3.
+  std::shared_ptr<TensorOperation> random_crop2 = vision::RandomCrop({28, 28, 28});
+  EXPECT_EQ(random_crop2, nullptr);
+  // Testing the padding parameter is negative.
+  std::shared_ptr<TensorOperation> random_crop3 = vision::RandomCrop({28, 28}, {-5});
+  EXPECT_EQ(random_crop3, nullptr);
+  // Testing the size of padding vector is empty.
+  std::shared_ptr<TensorOperation> random_crop4 = vision::RandomCrop({28, 28}, {});
+  EXPECT_EQ(random_crop4, nullptr);
+  // Testing the size of padding vector is 3.
+  std::shared_ptr<TensorOperation> random_crop5 = vision::RandomCrop({28, 28}, {5, 5, 5});
+  EXPECT_EQ(random_crop5, nullptr);
+  // Testing the size of padding vector is 5.
+  std::shared_ptr<TensorOperation> random_crop6 = vision::RandomCrop({28, 28}, {5, 5, 5, 5, 5});
+  EXPECT_EQ(random_crop6, nullptr);
+  // Testing the size of fill_value vector is empty.
+  std::shared_ptr<TensorOperation> random_crop7 = vision::RandomCrop({28, 28}, {0, 0, 0, 0}, false, {});
+  EXPECT_EQ(random_crop7, nullptr);
+  // Testing the size of fill_value vector is 2.
+  std::shared_ptr<TensorOperation> random_crop8 = vision::RandomCrop({28, 28}, {0, 0, 0, 0}, false, {0, 0});
+  EXPECT_EQ(random_crop8, nullptr);
+  // Testing the size of fill_value vector is 4.
+  std::shared_ptr<TensorOperation> random_crop9 = vision::RandomCrop({28, 28}, {0, 0, 0, 0}, false, {0, 0, 0, 0});
+  EXPECT_EQ(random_crop9, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomCropWithBboxSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropWithBboxSuccess.";
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_crop = mindspore::dataset::api::vision::RandomCropWithBBox({128, 128});
+  EXPECT_NE(random_crop, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_crop}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    EXPECT_EQ(image->shape()[0], 128);
+    EXPECT_EQ(image->shape()[1], 128);
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 3);
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropWithBboxFail with invalid parameters.";
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  // The size parameter is negative.
+  std::shared_ptr<TensorOperation> random_crop = vision::RandomCropWithBBox({-10});
+  EXPECT_EQ(random_crop, nullptr);
+  // The parameter in the padding vector is negative.
+  std::shared_ptr<TensorOperation> random_crop1 = vision::RandomCropWithBBox({10, 10}, {-2, 2, 2, 2});
+  EXPECT_EQ(random_crop1, nullptr);
+  // The size container is empty.
+  std::shared_ptr<TensorOperation> random_crop2 = vision::RandomCropWithBBox({});
+  EXPECT_EQ(random_crop2, nullptr);
+  // The size of the size container is too large.
+  std::shared_ptr<TensorOperation> random_crop3 = vision::RandomCropWithBBox({10, 10, 10});
+  EXPECT_EQ(random_crop3, nullptr);
+  // The padding container is empty.
+  std::shared_ptr<TensorOperation> random_crop4 = vision::RandomCropWithBBox({10, 10}, {});
+  EXPECT_EQ(random_crop4, nullptr);
+  // The size of the padding container is too large.
+  std::shared_ptr<TensorOperation> random_crop5 = vision::RandomCropWithBBox({10, 10}, {5, 5, 5, 5, 5});
+  EXPECT_EQ(random_crop5, nullptr);
+  // The fill_value container is empty.
+  std::shared_ptr<TensorOperation> random_crop6 = vision::RandomCropWithBBox({10, 10}, {5, 5, 5, 5}, false, {});
+  EXPECT_EQ(random_crop6, nullptr);
+  // The size of the fill_value container is too large.
+  std::shared_ptr<TensorOperation> random_crop7 =
+    vision::RandomCropWithBBox({10, 10}, {5, 5, 5, 5}, false, {3, 3, 3, 3});
+  EXPECT_EQ(random_crop7, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, DISABLED_TestRandomHorizontalFlipFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomHorizontalFlipFail with invalid parameters.";
 
@@ -1060,6 +1384,59 @@ TEST_F(MindDataTestPipeline, DISABLED_TestRandomHorizontalFlipFail) {
   // Invalid >1 input
   random_horizontal_flip_op = vision::RandomHorizontalFlip(2);
   EXPECT_EQ(random_horizontal_flip_op, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomHorizontalFlipWithBBoxSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomHorizontalFlipWithBBoxSuccess.";
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_horizontal_flip_op = vision::RandomHorizontalFlipWithBBox(0.5);
+  EXPECT_NE(random_horizontal_flip_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_horizontal_flip_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 3);
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomHorizontalFlipWithBBoxFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomHorizontalFlipWithBBoxFail with invalid parameters.";
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  // Incorrect prob parameter.
+  std::shared_ptr<TensorOperation> random_horizontal_flip_op = vision::RandomHorizontalFlipWithBBox(-1.0);
+  EXPECT_EQ(random_horizontal_flip_op, nullptr);
+  // Incorrect prob parameter.
+  std::shared_ptr<TensorOperation> random_horizontal_flip_op1 = vision::RandomHorizontalFlipWithBBox(2.0);
+  EXPECT_EQ(random_horizontal_flip_op1, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomHorizontalAndVerticalFlip) {
@@ -1371,11 +1748,23 @@ TEST_F(MindDataTestPipeline, TestRandomRotation) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> random_rotation_op = vision::RandomRotation({-180, 180});
+  // Testing the size of degrees is 1
+  std::shared_ptr<TensorOperation> random_rotation_op = vision::RandomRotation({180});
   EXPECT_NE(random_rotation_op, nullptr);
+  // Testing the size of degrees is 2
+  std::shared_ptr<TensorOperation> random_rotation_op1 = vision::RandomRotation({-180, 180});
+  EXPECT_NE(random_rotation_op1, nullptr);
+  // Testing the size of fill_value is 1
+  std::shared_ptr<TensorOperation> random_rotation_op2 =
+    vision::RandomRotation({180}, InterpolationMode::kNearestNeighbour, false, {-1, -1}, {2});
+  EXPECT_NE(random_rotation_op2, nullptr);
+  // Testing the size of fill_value is 3
+  std::shared_ptr<TensorOperation> random_rotation_op3 =
+    vision::RandomRotation({180}, InterpolationMode::kNearestNeighbour, false, {-1, -1}, {2, 2, 2});
+  EXPECT_NE(random_rotation_op3, nullptr);
 
   // Create a Map operation on ds
-  ds = ds->Map({random_rotation_op});
+  ds = ds->Map({random_rotation_op, random_rotation_op1, random_rotation_op2, random_rotation_op3});
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -1404,6 +1793,42 @@ TEST_F(MindDataTestPipeline, TestRandomRotation) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomRotationFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomRotationFail with invalid parameters.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  // Testing the size of degrees vector is 0
+  std::shared_ptr<TensorOperation> random_rotation_op = vision::RandomRotation({});
+  EXPECT_EQ(random_rotation_op, nullptr);
+  // Testing the size of degrees vector is 3
+  std::shared_ptr<TensorOperation> random_rotation_op1 = vision::RandomRotation({-50.0, 50.0, 100.0});
+  EXPECT_EQ(random_rotation_op1, nullptr);
+  // Test the case where the first column value of degrees is greater than the second column value
+  std::shared_ptr<TensorOperation> random_rotation_op2 = vision::RandomRotation({50.0, -50.0});
+  EXPECT_EQ(random_rotation_op2, nullptr);
+  // Testing the size of center vector is 1
+  std::shared_ptr<TensorOperation> random_rotation_op3 =
+    vision::RandomRotation({-50.0, 50.0}, InterpolationMode::kNearestNeighbour, false, {-1.0});
+  EXPECT_EQ(random_rotation_op3, nullptr);
+  // Testing the size of center vector is 3
+  std::shared_ptr<TensorOperation> random_rotation_op4 =
+    vision::RandomRotation({-50.0, 50.0}, InterpolationMode::kNearestNeighbour, false, {-1.0, -1.0, -1.0});
+  EXPECT_EQ(random_rotation_op4, nullptr);
+  // Testing the size of fill_value vector is 2
+  std::shared_ptr<TensorOperation> random_rotation_op5 =
+    vision::RandomRotation({-50.0, 50.0}, InterpolationMode::kNearestNeighbour, false, {-1.0, -1.0}, {2, 2});
+  EXPECT_EQ(random_rotation_op5, nullptr);
+  // Testing the size of fill_value vector is 4
+  std::shared_ptr<TensorOperation> random_rotation_op6 =
+    vision::RandomRotation({-50.0, 50.0}, InterpolationMode::kNearestNeighbour, false, {-1.0, -1.0}, {2, 2, 2, 2});
+  EXPECT_EQ(random_rotation_op6, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomSharpness) {
@@ -1592,6 +2017,59 @@ TEST_F(MindDataTestPipeline, TestResizeFail) {
   EXPECT_EQ(resize_op, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestRandomVerticalFlipWithBBoxSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomVerticalFlipWithBBoxSuccess.";
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_vertical_flip_op = vision::RandomVerticalFlipWithBBox(0.4);
+  EXPECT_NE(random_vertical_flip_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_vertical_flip_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 3);
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomVerticalFlipWithBBoxFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomVerticalFlipWithBBoxFail with invalid parameters.";
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  // Incorrect prob parameter.
+  std::shared_ptr<TensorOperation> random_vertical_flip_op = vision::RandomVerticalFlipWithBBox(-0.5);
+  EXPECT_EQ(random_vertical_flip_op, nullptr);
+  // Incorrect prob parameter.
+  std::shared_ptr<TensorOperation> random_vertical_flip_op1 = vision::RandomVerticalFlipWithBBox(3.0);
+  EXPECT_EQ(random_vertical_flip_op1, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestResize1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResize1 with single integer input.";
   // Create an ImageFolder Dataset
@@ -1638,6 +2116,96 @@ TEST_F(MindDataTestPipeline, TestResize1) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRescaleSucess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRescaleSucess1.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, SequentialSampler(0, 1));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  auto image = row["image"];
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> rescale = mindspore::dataset::api::vision::Rescale(1.0, 0.0);
+  EXPECT_NE(rescale, nullptr);
+
+  // Convert to the same type
+  std::shared_ptr<TensorOperation> type_cast = transforms::TypeCast("uint8");
+  EXPECT_NE(type_cast, nullptr);
+
+  ds = ds->Map({rescale, type_cast}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter1 = ds->CreateIterator();
+  EXPECT_NE(iter1, nullptr);
+
+  // Iterate the dataset and get each row1
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row1;
+  iter1->GetNextRow(&row1);
+
+  auto image1 = row1["image"];
+
+  EXPECT_EQ(*image, *image1);
+
+  // Manually terminate the pipeline
+  iter1->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRescaleSucess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRescaleSucess2 with different params.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 1));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> rescale = mindspore::dataset::api::vision::Rescale(1.0 / 255, 1.0);
+  EXPECT_NE(rescale, nullptr);
+
+  ds = ds->Map({rescale}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRescaleFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRescaleFail with invalid params.";
+  // incorrect negative rescale parameter
+  std::shared_ptr<TensorOperation> rescale = mindspore::dataset::api::vision::Rescale(-1.0, 0.0);
+  EXPECT_EQ(rescale, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, DISABLED_TestUniformAugmentFail1) {
