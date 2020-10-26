@@ -31,8 +31,9 @@ namespace api {
 // Constructor for AlbumNode
 AlbumNode::AlbumNode(const std::string &dataset_dir, const std::string &data_schema,
                      const std::vector<std::string> &column_names, bool decode,
-                     const std::shared_ptr<SamplerObj> &sampler)
-    : dataset_dir_(dataset_dir),
+                     const std::shared_ptr<SamplerObj> &sampler, const std::shared_ptr<DatasetCache> &cache)
+    : Dataset(std::move(cache)),
+      dataset_dir_(dataset_dir),
       schema_path_(data_schema),
       column_names_(column_names),
       decode_(decode),
@@ -62,6 +63,8 @@ std::vector<std::shared_ptr<DatasetOp>> AlbumNode::Build() {
 
   // Argument that is not exposed to user in the API.
   std::set<std::string> extensions = {};
+
+  RETURN_EMPTY_IF_ERROR(AddCacheOp(&node_ops));
 
   node_ops.push_back(std::make_shared<AlbumOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
                                                decode_, extensions, std::move(schema), std::move(sampler_->Build())));

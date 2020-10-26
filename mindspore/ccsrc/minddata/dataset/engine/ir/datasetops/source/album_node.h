@@ -31,7 +31,8 @@ class AlbumNode : public Dataset {
  public:
   /// \brief Constructor
   AlbumNode(const std::string &dataset_dir, const std::string &data_schema,
-            const std::vector<std::string> &column_names, bool decode, const std::shared_ptr<SamplerObj> &sampler);
+            const std::vector<std::string> &column_names, bool decode, const std::shared_ptr<SamplerObj> &sampler,
+            const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor
   ~AlbumNode() = default;
