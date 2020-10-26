@@ -1376,8 +1376,9 @@ class ArgMinWithValue(PrimitiveWithInfer):
         - output_x (Tensor) - The minimum value of input tensor, with the same shape as index.
 
     Examples:
-        >>> input_x = Tensor(np.random.rand(5))
+        >>> input_x = Tensor(np.random.rand(5), mindspore.float32)
         >>> index, output = P.ArgMinWithValue()(input_x)
+        0 0.0496291
     """
 
     @prim_attr_register

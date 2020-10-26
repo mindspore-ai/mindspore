@@ -5740,9 +5740,13 @@ class LRN(PrimitiveWithInfer):
         Tensor, with the same shape and data type as the input tensor.
 
     Examples:
-        >>> x = Tensor(np.random.rand(1, 10, 4, 4)), mindspore.float32)
+        >>> x = Tensor(np.random.rand(1, 2, 2, 2), mindspore.float32)
         >>> lrn = P.LRN()
         >>> lrn(x)
+        [[[[0.18990143 0.59475636]
+           [0.6291904  0.1371534 ]]
+          [[0.6258911  0.4964315 ]
+           [0.3141494  0.43636137]]]]
     """
     @prim_attr_register
     def __init__(self, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CHANNELS"):

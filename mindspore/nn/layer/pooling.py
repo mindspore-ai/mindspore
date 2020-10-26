@@ -334,7 +334,7 @@ class AvgPool1d(_PoolNd):
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
 
     Examples:
-        >>> pool = nn.AvgPool1d(kernel_size=6, strides=1)
+        >>> pool = nn.AvgPool1d(kernel_size=6, stride=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
         >>> output = pool(x)
         >>> output.shape
