@@ -43,6 +43,8 @@ class DatasetIteratorTracing : public Tracing {
 
   Status Init(const std::string &dir_path, const std::string &device_id) override;
 
+  Status ChangeFileMode() override;
+
  private:
   std::vector<std::string> value_;
 };

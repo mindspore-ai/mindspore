@@ -48,6 +48,7 @@ Status Monitor::operator()() {
 
   // Output all profiling data upon request.
   tree_->GetProfilingManager()->SaveProfilingData();
+  tree_->GetProfilingManager()->ChangeFileMode();
   return Status::OK();
 }
 

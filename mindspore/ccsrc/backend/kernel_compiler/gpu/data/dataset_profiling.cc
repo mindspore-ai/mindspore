@@ -53,6 +53,15 @@ void GetNextProfiling::SaveProfilingData() {
            << std::endl;
   }
   handle.close();
+
+  ChangeFileMode();
+}
+
+void GetNextProfiling::ChangeFileMode() {
+  if (chmod(common::SafeCStr(file_name_), S_IRUSR | S_IWUSR) == -1) {
+    MS_LOG(ERROR) << "Modify file:" << file_name_ << " to rw fail.";
+    return;
+  }
 }
 
 void GetNextProfiling::RecordData(uint32_t queue_size, uint64_t start_time_stamp, uint64_t end_time_stamp) {

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/perf/profiling.h"
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <cstdlib>
 #include <fstream>
@@ -159,6 +160,21 @@ Status ProfilingManager::SaveProfilingData() {
     RETURN_IF_NOT_OK(node.second->SaveToFile());
   }
   MS_LOG(INFO) << "Save profiling data end.";
+  return Status::OK();
+}
+
+Status ProfilingManager::ChangeFileMode() {
+  if (!IsProfilingEnable()) {
+    return Status::OK();
+  }
+  MS_LOG(INFO) << "Start to change file mode.";
+  for (auto node : tracing_nodes_) {
+    RETURN_IF_NOT_OK(node.second->ChangeFileMode());
+  }
+  for (auto node : sampling_nodes_) {
+    RETURN_IF_NOT_OK(node.second->ChangeFileMode());
+  }
+  MS_LOG(INFO) << "Change file mode end.";
   return Status::OK();
 }
 

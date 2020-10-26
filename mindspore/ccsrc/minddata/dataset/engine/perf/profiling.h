@@ -52,6 +52,8 @@ class Profiling : std::enable_shared_from_this<Profiling> {
   // Profiling name
   virtual std::string Name() const = 0;
 
+  virtual Status ChangeFileMode() = 0;
+
  protected:
   std::string file_path_;
 };
@@ -107,6 +109,8 @@ class ProfilingManager {
 
   // Launch monitoring thread.
   Status LaunchMonitor();
+
+  Status ChangeFileMode();
 
  private:
   std::unique_ptr<Monitor> perf_monitor_;
