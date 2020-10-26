@@ -26,7 +26,7 @@ usage()
   echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I arm64|arm32|x86_64] [-K] \\"
   echo "              [-B on|off] [-w on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off] \\"
-  echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] [-S on|off] \\"
+  echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] [-S on|off] [-k on|off] \\"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -64,6 +64,7 @@ usage()
   echo "    -C Enable mindspore lite converter compilation, enabled when -I is specified, default on"
   echo "    -o Enable mindspore lite tools compilation, enabled when -I is specified, default on"
   echo "    -S Enable enable download cmake compile dependency from gitee , default off"
+  echo "    -k Enable make clean, clean up compilation generated cache "
 }
 
 # check value of input is 'on' or 'off'
@@ -116,9 +117,10 @@ checkopts()
   LITE_LANGUAGE="cpp"
   ENABLE_GITEE="off"
   ANDROID_STL="c++_shared"
+  ENABLE_MAKE_CLEAN="off"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:swB:En:T:A:C:o:S:' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:swB:En:T:A:C:o:S:k:' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -206,6 +208,11 @@ checkopts()
         check_on_off $OPTARG S
         ENABLE_GITEE="$OPTARG"
         echo "enable download from gitee"
+        ;;
+      k)
+        check_on_off $OPTARG k
+        ENABLE_MAKE_CLEAN="$OPTARG"
+        echo "enable make clean"
         ;;
       e)
         if [[ "X$OPTARG" == "Xgpu" ]]; then
@@ -823,6 +830,13 @@ build_java() {
   exit 0
 }
 
+make_clean()
+{
+  echo "enbale make clean"
+  cd "${BUILD_PATH}/mindspore"
+  cmake --build . --target clean
+}
+
 if [[ "X$COMPILE_LITE" = "Xon" ]]; then
   if [[ "X$LITE_LANGUAGE" = "Xjava" ]]; then
     build_java
@@ -831,6 +845,10 @@ if [[ "X$COMPILE_LITE" = "Xon" ]]; then
   fi
 else
     build_mindspore
+fi
+
+if [[ "X$ENABLE_MAKE_CLEAN" = "Xon" ]]; then
+  make_clean
 fi
 
 cp -rf ${BUILD_PATH}/package/mindspore/lib ${BUILD_PATH}/../mindspore
