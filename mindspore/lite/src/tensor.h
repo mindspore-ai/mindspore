@@ -89,6 +89,8 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_allocator(mindspore::lite::Allocator *allocator) { allocator_ = allocator; }
 
+  mindspore::lite::Allocator *allocator() const { return this->allocator_; }
+
   int MallocData(mindspore::lite::Allocator *allocator = nullptr);
 
   int FreeData();

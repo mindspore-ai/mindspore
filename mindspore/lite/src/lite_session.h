@@ -110,7 +110,7 @@ class LiteSession : public session::LiteSession {
   std::vector<std::string> output_tensor_names_;
   // graph output tensor name -- output tensor
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> output_tensor_map_;
-  Executor *executor = nullptr;
+  Executor *executor_ = nullptr;
   std::atomic<bool> is_running_ = false;
 #if SUPPORT_GPU
   opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;

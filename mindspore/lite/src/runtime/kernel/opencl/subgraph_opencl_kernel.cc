@@ -285,6 +285,7 @@ int SubGraphOpenCLKernel::UnInit() {
   nodes_.clear();
   in_convert_ops_.clear();
   out_convert_ops_.clear();
+  delete this->executor_;
   return RET_OK;
 }
 
@@ -305,7 +306,11 @@ int SubGraphOpenCLKernel::Run() {
     allocator_->UnmapBuffer(tensor->data_c());
   }
 
-  executor_->Run(in_tensors_, out_tensors_, nodes_, allocator_);
+  auto ret = executor_->Run(in_tensors_, out_tensors_, nodes_, allocator_);
+  if (RET_OK != ret) {
+    MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
+    return ret;
+  }
   ocl_runtime_->SyncCommandQueue();
 
   return RET_OK;
