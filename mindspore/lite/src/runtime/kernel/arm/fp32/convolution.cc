@@ -211,7 +211,6 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
   filter_shape = {new_out_channel, kernel_h, kernel_w, new_in_channel};
   bias_shape = {new_out_channel};
   auto *origin_weight = reinterpret_cast<float *>(inputs.at(kWeightIndex)->data_c());
-  auto *origin_bias = reinterpret_cast<float *>(inputs.at(kBiasIndex)->data_c());
 
   for (int i = 0; i < group; ++i) {
     std::vector<lite::Tensor *> new_inputs;
@@ -234,6 +233,7 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
 
     // if has bias, set new bias
     if (has_bias) {
+      auto *origin_bias = reinterpret_cast<float *>(inputs.at(kBiasIndex)->data_c());
       auto bias_tensor = new (std::nothrow)
         lite::Tensor(inputs.at(kBiasIndex)->data_type(), bias_shape, Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
       bias_tensor->MallocData();

@@ -24,7 +24,7 @@
 
 namespace mindspore::kernel {
 class ArithmeticInt8CPUKernel : public LiteKernel {
-  typedef int (*ArithmeticRunInt8)(int8_t *input0, int8_t *input1, int8_t *output, int element_size,
+  typedef int (*ArithmeticRunInt8)(int8_t *input0, int8_t *input1, uint8_t *output, int element_size,
                                    ArithmeticQuantArg *quant_arg);
 
  public:

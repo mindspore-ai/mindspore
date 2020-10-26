@@ -64,17 +64,17 @@ int ElementOptMaximumFp16(float16_t *input0, float16_t *input1, float16_t *outpu
                           ArithmeticParameter *param);
 int ElementOptMinimumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param);
-int ElementOptNotEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptNotEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
                            ArithmeticParameter *param);
-int ElementOptEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
                         ArithmeticParameter *param);
-int ElementOptLessFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptLessFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
                        ArithmeticParameter *param);
-int ElementOptLessEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptLessEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
                             ArithmeticParameter *param);
-int ElementOptGreaterFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptGreaterFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
                           ArithmeticParameter *param);
-int ElementOptGreaterEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptGreaterEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
                                ArithmeticParameter *param);
 
 int ElementMulFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
@@ -104,12 +104,12 @@ int ElementSquaredDifferenceFp16(float16_t *input0, float16_t *input1, float16_t
 int ElementMaximumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
 int ElementMinimumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
 
-int ElementNotEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementLessFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementLessEqual(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementGreaterFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementGreaterEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementNotEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
+int ElementEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
+int ElementLessFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
+int ElementLessEqual(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
+int ElementGreaterFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
+int ElementGreaterEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
 
 void TileDimensionsFp16(float16_t *data0, float16_t *data1, float16_t *tile_data0, float16_t *tile_data1,
                         ArithmeticParameter *param);

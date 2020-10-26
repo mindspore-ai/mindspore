@@ -67,6 +67,12 @@ int CastFp16CPUKernel::DoCast(int thread_id) {
   auto offset = thread_id * stride_;
   auto output_data = out_tensors_.at(0)->MutableData();
   switch (input->data_type()) {
+    case kNumberTypeBool:
+      BoolToFloat16(reinterpret_cast<bool *>(input->MutableData()) + offset,
+                    reinterpret_cast<float16_t *>(output_data) + offset, data_num);
+    case kNumberTypeUInt8:
+      Uint8ToFloat16(reinterpret_cast<uint8_t *>(input->MutableData()) + offset,
+                     reinterpret_cast<float16_t *>(output_data) + offset, data_num);
     case kNumberTypeFloat32:
       Float32ToFloat16(reinterpret_cast<float *>(input->MutableData()) + offset,
                        reinterpret_cast<float16_t *>(output_data) + offset, data_num);

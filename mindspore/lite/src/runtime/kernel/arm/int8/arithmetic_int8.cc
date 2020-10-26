@@ -104,7 +104,7 @@ int ArithmeticInt8CPUKernel::ReSize() { return RET_OK; }
 int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
   auto input0_data = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
   auto input1_data1 = reinterpret_cast<int8_t *>(in_tensors_[1]->MutableData());
-  auto output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
+  auto output_data = reinterpret_cast<uint8_t *>(out_tensors_[0]->MutableData());
   auto element_num = out_tensors_[0]->ElementsNum();
   auto param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
   if (param->broadcasting_ && arithmetic_run_ != nullptr) {

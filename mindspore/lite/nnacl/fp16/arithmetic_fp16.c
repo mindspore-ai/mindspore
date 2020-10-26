@@ -985,319 +985,295 @@ int ElementOptMinimumFp16(float16_t *input0, float16_t *input1, float16_t *outpu
   return NNACL_OK;
 }
 
-int ElementNotEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementNotEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
-  float16x8_t vtrue = vdupq_n_f16(1);
-  float16x8_t vfalse = vdupq_n_f16(0);
   for (; index <= element_size - 8; index += C8NUM) {
     float16x8_t vin0 = vld1q_f16(input0 + index);
     float16x8_t vin1 = vld1q_f16(input1 + index);
-    float16x8_t vout = vbslq_f16(vceqq_f16(vin0, vin1), vfalse, vtrue);
-    vst1q_f16(output + index, vout);
+    uint8x8_t vout = vmovn_u16(vceqq_f16(vin0, vin1));
+    vst1_u8(output + index, vout);
   }
 #endif
   for (; index < element_size; index++) {
-    output[index] = (float16_t)(input0[index] != input1[index]);
+    output[index] = input0[index] != input1[index];
   }
   return NNACL_OK;
 }
 
-int ElementOptNotEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptNotEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
                            ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
-  float16x8_t vtrue = vdupq_n_f16(1);
-  float16x8_t vfalse = vdupq_n_f16(0);
 #endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin1 = vld1q_f16(input1 + index);
-      float16x8_t vout = vbslq_f16(vceqq_f16(vin0_opt, vin1), vfalse, vtrue);
-      vst1q_f16(output + index, vout);
+      uint8x8_t vout = vmovn_u16(vceqq_f16(vin0_opt, vin1));
+      vst1_u8(output + index, vout);
     }
 #endif
     for (; index < element_size; index++) {
-      output[index] = (float16_t)(input0[0] != input1[index]);
+      output[index] = input0[0] != input1[index];
     }
   } else {
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin0 = vld1q_f16(input0 + index);
-      float16x8_t vout = vbslq_f16(vceqq_f16(vin0, vin1_opt), vfalse, vtrue);
-      vst1q_f16(output + index, vout);
+      uint8x8_t vout = vmovn_u16(vceqq_f16(vin0, vin1_opt));
+      vst1_u8(output + index, vout);
     }
 #endif
     for (; index < element_size; index++) {
-      output[index] = (float16_t)(input0[index] != input1[0]);
+      output[index] = input0[index] != input1[0];
     }
   }
   return NNACL_OK;
 }
 
-int ElementEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
-  float16x8_t vtrue = vdupq_n_f16(1);
-  float16x8_t vfalse = vdupq_n_f16(0);
   for (; index <= element_size - 8; index += C8NUM) {
     float16x8_t vin0 = vld1q_f16(input0 + index);
     float16x8_t vin1 = vld1q_f16(input1 + index);
-    float16x8_t vout = vbslq_f16(vceqq_f16(vin0, vin1), vtrue, vfalse);
-    vst1q_f16(output + index, vout);
+    uint8x8_t vout = vmovn_u16(vceqq_f16(vin0, vin1));
+    vst1_u8(output + index, vout);
   }
 #endif
   for (; index < element_size; index++) {
-    output[index] = (float16_t)(input0[index] == input1[index]);
+    output[index] = input0[index] == input1[index];
   }
   return NNACL_OK;
 }
 
-int ElementOptEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
                         ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
-  float16x8_t vtrue = vdupq_n_f16(1);
-  float16x8_t vfalse = vdupq_n_f16(0);
 #endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin1 = vld1q_f16(input1 + index);
-      float16x8_t vout = vbslq_f16(vceqq_f16(vin0_opt, vin1), vtrue, vfalse);
-      vst1q_f16(output + index, vout);
+      uint8x8_t vout = vmovn_u16(vceqq_f16(vin0_opt, vin1));
+      vst1_u8(output + index, vout);
     }
 #endif
     for (; index < element_size; index++) {
-      output[index] = (float16_t)(input0[0] == input1[index]);
+      output[index] = input0[0] == input1[index];
     }
   } else {
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin0 = vld1q_f16(input0 + index);
-      float16x8_t vout = vbslq_f16(vceqq_f16(vin0, vin1_opt), vtrue, vfalse);
-      vst1q_f16(output + index, vout);
+      uint8x8_t vout = vmovn_u16(vceqq_f16(vin0, vin1_opt));
+      vst1_u8(output + index, vout);
     }
 #endif
     for (; index < element_size; index++) {
-      output[index] = (float16_t)(input0[index] == input1[0]);
+      output[index] = input0[index] == input1[0];
     }
   }
   return NNACL_OK;
 }
 
-int ElementLessFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementLessFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
-  float16x8_t vtrue = vdupq_n_f16(1);
-  float16x8_t vfalse = vdupq_n_f16(0);
   for (; index <= element_size - 8; index += C8NUM) {
     float16x8_t vin0 = vld1q_f16(input0 + index);
     float16x8_t vin1 = vld1q_f16(input1 + index);
-    float16x8_t vout = vbslq_f16(vcltq_f16(vin0, vin1), vtrue, vfalse);
-    vst1q_f16(output + index, vout);
+    uint8x8_t vout = vmovn_u16(vcltq_f16(vin0, vin1));
+    vst1_u8(output + index, vout);
   }
 #endif
   for (; index < element_size; index++) {
-    output[index] = (float16_t)(input0[index] < input1[index]);
+    output[index] = input0[index] < input1[index];
   }
   return NNACL_OK;
 }
 
-int ElementOptLessFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptLessFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
                        ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
-  float16x8_t vtrue = vdupq_n_f16(1);
-  float16x8_t vfalse = vdupq_n_f16(0);
 #endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin1 = vld1q_f16(input1 + index);
-      float16x8_t vout = vbslq_f16(vcltq_f16(vin0_opt, vin1), vtrue, vfalse);
-      vst1q_f16(output + index, vout);
+      uint8x8_t vout = vmovn_u16(vcltq_f16(vin0_opt, vin1));
+      vst1_u8(output + index, vout);
     }
 #endif
     for (; index < element_size; index++) {
-      output[index] = (float16_t)(input0[0] < input1[index]);
+      output[index] = input0[0] < input1[index];
     }
   } else {
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin0 = vld1q_f16(input0 + index);
-      float16x8_t vout = vbslq_f16(vcltq_f16(vin0, vin1_opt), vtrue, vfalse);
-      vst1q_f16(output + index, vout);
+      uint8x8_t vout = vmovn_u16(vcltq_f16(vin0, vin1_opt));
+      vst1_u8(output + index, vout);
     }
 #endif
     for (; index < element_size; index++) {
-      output[index] = (float16_t)(input0[index] < input1[0]);
+      output[index] = input0[index] < input1[0];
     }
   }
   return NNACL_OK;
 }
 
-int ElementLessEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementLessEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
-  float16x8_t vtrue = vdupq_n_f16(1);
-  float16x8_t vfalse = vdupq_n_f16(0);
   for (; index <= element_size - 8; index += C8NUM) {
     float16x8_t vin0 = vld1q_f16(input0 + index);
     float16x8_t vin1 = vld1q_f16(input1 + index);
-    float16x8_t vout = vbslq_f16(vcleq_f16(vin0, vin1), vtrue, vfalse);
-    vst1q_f16(output + index, vout);
+    uint8x8_t vout = vmovn_u16(vcleq_f16(vin0, vin1));
+    vst1_u8(output + index, vout);
   }
 #endif
   for (; index < element_size; index++) {
-    output[index] = (float16_t)(input0[index] <= input1[index]);
+    output[index] = input0[index] <= input1[index];
   }
   return NNACL_OK;
 }
 
-int ElementOptLessEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptLessEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
                             ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
-  float16x8_t vtrue = vdupq_n_f16(1);
-  float16x8_t vfalse = vdupq_n_f16(0);
 #endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin1 = vld1q_f16(input1 + index);
-      float16x8_t vout = vbslq_f16(vcleq_f16(vin0_opt, vin1), vtrue, vfalse);
-      vst1q_f16(output + index, vout);
+      uint8x8_t vout = vmovn_u16(vcleq_f16(vin0_opt, vin1));
+      vst1_u8(output + index, vout);
     }
 #endif
     for (; index < element_size; index++) {
-      output[index] = (float16_t)(input0[0] <= input1[index]);
+      output[index] = input0[0] <= input1[index];
     }
   } else {
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin0 = vld1q_f16(input0 + index);
-      float16x8_t vout = vbslq_f16(vcleq_f16(vin0, vin1_opt), vtrue, vfalse);
-      vst1q_f16(output + index, vout);
+      uint8x8_t vout = vmovn_u16(vcleq_f16(vin0, vin1_opt));
+      vst1_u8(output + index, vout);
     }
 #endif
     for (; index < element_size; index++) {
-      output[index] = (float16_t)(input0[index] <= input1[0]);
+      output[index] = input0[index] <= input1[0];
     }
   }
   return NNACL_OK;
 }
 
-int ElementGreaterFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementGreaterFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
-  float16x8_t vtrue = vdupq_n_f16(1);
-  float16x8_t vfalse = vdupq_n_f16(0);
   for (; index <= element_size - 8; index += C8NUM) {
     float16x8_t vin0 = vld1q_f16(input0 + index);
     float16x8_t vin1 = vld1q_f16(input1 + index);
-    float16x8_t vout = vbslq_f16(vcgtq_f16(vin0, vin1), vtrue, vfalse);
-    vst1q_f16(output + index, vout);
+    uint8x8_t vout = vmovn_u16(vcgtq_f16(vin0, vin1));
+    vst1_u8(output + index, vout);
   }
 #endif
   for (; index < element_size; index++) {
-    output[index] = (float16_t)(input0[index] > input1[index]);
+    output[index] = input0[index] > input1[index];
   }
   return NNACL_OK;
 }
 
-int ElementOptGreaterFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptGreaterFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
                           ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
-  float16x8_t vtrue = vdupq_n_f16(1);
-  float16x8_t vfalse = vdupq_n_f16(0);
 #endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin1 = vld1q_f16(input1 + index);
-      float16x8_t vout = vbslq_f16(vcgtq_f16(vin0_opt, vin1), vtrue, vfalse);
-      vst1q_f16(output + index, vout);
+      uint8x8_t vout = vmovn_u16(vcgtq_f16(vin0_opt, vin1));
+      vst1_u8(output + index, vout);
     }
 #endif
     for (; index < element_size; index++) {
-      output[index] = (float16_t)(input0[0] > input1[index]);
+      output[index] = input0[0] > input1[index];
     }
   } else {
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin0 = vld1q_f16(input0 + index);
-      float16x8_t vout = vbslq_f16(vcgtq_f16(vin0, vin1_opt), vtrue, vfalse);
-      vst1q_f16(output + index, vout);
+      uint8x8_t vout = vmovn_u16(vcgtq_f16(vin0, vin1_opt));
+      vst1_u8(output + index, vout);
     }
 #endif
     for (; index < element_size; index++) {
-      output[index] = (float16_t)(input0[index] > input1[0]);
+      output[index] = input0[index] > input1[0];
     }
   }
   return NNACL_OK;
 }
 
-int ElementGreaterEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementGreaterEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
-  float16x8_t vtrue = vdupq_n_f16(1);
-  float16x8_t vfalse = vdupq_n_f16(0);
   for (; index <= element_size - 8; index += C8NUM) {
     float16x8_t vin0 = vld1q_f16(input0 + index);
     float16x8_t vin1 = vld1q_f16(input1 + index);
-    float16x8_t vout = vbslq_f16(vcgeq_f16(vin0, vin1), vtrue, vfalse);
-    vst1q_f16(output + index, vout);
+    uint8x8_t vout = vmovn_u16(vcgeq_f16(vin0, vin1));
+    vst1_u8(output + index, vout);
   }
 #endif
   for (; index < element_size; index++) {
-    output[index] = (float16_t)(input0[index] >= input1[index]);
+    output[index] = input0[index] >= input1[index];
   }
   return NNACL_OK;
 }
 
-int ElementOptGreaterEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptGreaterEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
                                ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
-  float16x8_t vtrue = vdupq_n_f16(1);
-  float16x8_t vfalse = vdupq_n_f16(0);
 #endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin1 = vld1q_f16(input1 + index);
-      float16x8_t vout = vbslq_f16(vcgeq_f16(vin0_opt, vin1), vtrue, vfalse);
-      vst1q_f16(output + index, vout);
+      uint8x8_t vout = vmovn_u16(vcgeq_f16(vin0_opt, vin1));
+      vst1_u8(output + index, vout);
     }
 #endif
     for (; index < element_size; index++) {
-      output[index] = (float16_t)(input0[0] >= input1[index]);
+      output[index] = input0[0] >= input1[index];
     }
   } else {
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin0 = vld1q_f16(input0 + index);
-      float16x8_t vout = vbslq_f16(vcgeq_f16(vin0, vin1_opt), vtrue, vfalse);
-      vst1q_f16(output + index, vout);
+      uint8x8_t vout = vmovn_u16(vcgeq_f16(vin0, vin1_opt));
+      vst1_u8(output + index, vout);
     }
 #endif
     for (; index < element_size; index++) {
-      output[index] = (float16_t)(input0[index] >= input1[0]);
+      output[index] = input0[index] >= input1[0];
     }
   }
   return NNACL_OK;
