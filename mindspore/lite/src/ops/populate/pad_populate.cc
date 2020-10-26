@@ -32,23 +32,21 @@ OpParameter *PopulatePadParameter(const mindspore::lite::PrimitiveC *primitive) 
   pad_param->op_parameter_.type_ = primitive->Type();
   auto pad_node = reinterpret_cast<mindspore::lite::Pad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   pad_param->pad_mode_ = pad_node->GetPaddingMode();
-  if (pad_param->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
-    pad_param->constant_value_ = pad_node->GetConstantValue();
-    auto size = pad_node->GetPaddings().size();
-    if (size > MAX_PAD_SIZE) {
-      MS_LOG(ERROR) << "Invalid padding size: " << size;
-      free(pad_param);
-      return nullptr;
-    }
-
-    for (size_t i = 0; i < MAX_PAD_SIZE - size; ++i) {
-      pad_param->paddings_[i] = 0;
-    }
-    for (size_t i = 0; i < size; i++) {
-      pad_param->paddings_[MAX_PAD_SIZE - size + i] = pad_node->GetPaddings()[i];
-    }
-    pad_param->padding_length = MAX_PAD_SIZE;
+  pad_param->constant_value_ = pad_node->GetConstantValue();
+  auto size = pad_node->GetPaddings().size();
+  if (size > MAX_PAD_SIZE) {
+    MS_LOG(ERROR) << "Invalid padding size: " << size;
+    free(pad_param);
+    return nullptr;
   }
+
+  for (size_t i = 0; i < MAX_PAD_SIZE - size; ++i) {
+    pad_param->paddings_[i] = 0;
+  }
+  for (size_t i = 0; i < size; i++) {
+    pad_param->paddings_[MAX_PAD_SIZE - size + i] = pad_node->GetPaddings()[i];
+  }
+  pad_param->padding_length = MAX_PAD_SIZE;
 
   return reinterpret_cast<OpParameter *>(pad_param);
 }

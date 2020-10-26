@@ -87,11 +87,10 @@ int Pad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs)
   }
 
   std::vector<int> paddings;
-  if (GetPaddingMode() == static_cast<int>(schema::PaddingMode_CONSTANT)) {
+  if (inputs.size() == 1) {
     paddings = GetPaddings();
   } else {
     // mirror pad
-    MS_ASSERT(inputs.size() == 2);
     auto paddings_tensor = inputs.at(1);
     int rank = static_cast<int>(inputs.front()->shape().size());
     MS_ASSERT(paddings_tensor->ElementsNum() == 2 * rank);

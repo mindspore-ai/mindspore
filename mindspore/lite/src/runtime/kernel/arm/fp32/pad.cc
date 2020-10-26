@@ -213,11 +213,20 @@ void PadCPUKernel::CalculateStrides() {
 }
 
 int PadCPUKernel::HandleMirrorPad() {
-  auto ret = CopyPaddingFromInput();
-  if (ret != RET_OK) {
-    return ret;
+  if (in_tensors_.size() == 1) {
+    auto input_shape = in_tensors_.at(0)->shape();
+    int rank = static_cast<int>(input_shape.size());
+    auto ret = ExtendShape(in_, DEFAULT_PAD_NDIMS, input_shape.data(), rank);
+    if (ret != RET_OK) {
+      return ret;
+    }
+  } else {
+    auto ret = CopyPaddingFromInput();
+    if (ret != RET_OK) {
+      return ret;
+    }
   }
-  ret = CheckPaddings(pad_param_->paddings_, DEFAULT_PAD_NDIMS, in_, pad_param_->pad_mode_);
+  auto ret = CheckPaddings(pad_param_->paddings_, DEFAULT_PAD_NDIMS, in_, pad_param_->pad_mode_);
   if (ret != RET_OK) {
     return ret;
   }

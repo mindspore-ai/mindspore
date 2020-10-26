@@ -143,6 +143,7 @@
 #include "src/ops/audio_spectrogram.h"
 #include "src/ops/mfcc.h"
 #include "src/ops/identity.h"
+#include "src/ops/instance_norm.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -790,6 +791,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new AudioSpectrogram(primitive);
     case schema::PrimitiveType_Mfcc:
       return new Mfcc(primitive);
+    case schema::PrimitiveType_InstanceNorm:
+      return new InstanceNorm(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
