@@ -102,9 +102,9 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   if (!input_quant_params.empty()) {
     for (size_t i = 0; i < input_quant_params.size(); i++) {
       if (i >= dst_node->inputIndex.size()) {
-        MS_LOG(ERROR) << "node: " << dst_node->name << " input has " << input_quant_params.size()
-                      << " quant_params; but only " << dst_node->inputIndex.size() << " input";
-        return RET_PARAM_INVALID;
+        MS_LOG(INFO) << "node: " << dst_node->name << " input has " << input_quant_params.size()
+                     << " quant_params; but only " << dst_node->inputIndex.size() << " input";
+        break;
       }
       auto activate_index = dst_node->inputIndex[i];
       auto tensor_input = meta_graph->allTensors[activate_index].get();

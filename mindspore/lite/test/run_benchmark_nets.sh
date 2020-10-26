@@ -163,7 +163,7 @@ function Run_Converter() {
         fi
     done < ${models_fp16_config}
 
-    # Convert weightquant models:
+    # Convert tflite weightquant models:
     while read line; do
         model_name=${line}
         if [[ $model_name == \#* ]]; then
@@ -178,6 +178,22 @@ function Run_Converter() {
             converter_result='converter weight_quant '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
         fi
     done < ${models_tflite_weightquant_config}
+
+    # Convert mindir weightquant models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_converter_log_file}"
+        echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'--quantType=WeightQuant --bitNum=8 --quantWeightSize=500 --quantWeightChannel=16' >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=MINDIR --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_weightquant --quantType=WeightQuant --bitNum=8 --quantWeightSize=500 --quantWeightChannel=16
+        if [ $? = 0 ]; then
+            converter_result='converter weight_quant '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter weight_quant '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_mindspore_weightquant_config}
 
     # Convert models which do not need to be cared about the accuracy:
     while read line; do
@@ -377,6 +393,24 @@ function Run_x86() {
             run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_tflite_weightquant_config}
+
+    # Run mindir weight quantization converted models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_x86_log_file}"
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_x86_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.weightquant.ms.out >> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_mindspore_weightquant_config}
 
     # Run converted models which do not need to be cared about the accuracy:
     while read line; do
@@ -890,6 +924,7 @@ models_fp16_config=${basepath}/models_fp16.cfg
 models_mindspore_config=${basepath}/models_mindspore.cfg
 models_mindspore_train_config=${basepath}/models_mindspore_train.cfg
 models_tflite_gpu_config=${basepath}/models_fp32_gpu.cfg
+models_mindspore_weightquant_config=${basepath}/models_mindspore_weightquant.cfg
 models_fp16_gpu_config=${basepath}/models_fp16_gpu.cfg
 models_arm32_config=${basepath}/models_arm32.cfg
 models_compatibility_config=${basepath}/models_compatibility.cfg
