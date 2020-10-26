@@ -103,7 +103,7 @@ Status SubsetRandomSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffe
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
 
-      int64_t sampled_id = indices_[sample_id_];
+      int64_t sampled_id = ((indices_[sample_id_] % num_rows_) + num_rows_) % num_rows_;
       if (HasChildSampler()) {
         RETURN_IF_NOT_OK(GetAssociatedChildId(&sampled_id, sampled_id));
       }
