@@ -64,9 +64,9 @@ class Grad(nn.Cell):
         return self.grad(self.network)(input_, output_grad)
 
 class Net(nn.Cell):
-    def __init__(self):
+    def __init__(self, pads, mode_):
         super(Net, self).__init__()
-        self.pad = nn.Pad(mode="REFLECT", paddings=((0, 0), (0, 0), (1, 0), (0, 2)))
+        self.pad = nn.Pad(mode=mode_, paddings=pads)
     def construct(self, x):
         return self.pad(x)
 
@@ -82,7 +82,88 @@ def test_mirror_pad_backprop():
     expected_dx = np.array([[[[0.2, 0.2, 0.1],
                               [0.4, 0.4, 0.2],
                               [0.2, 0.2, 0.1]]]])
-    net = Grad(Net())
+    net = Grad(Net(((0, 0), (0, 0), (1, 0), (0, 2)), "REFLECT"))
     dx = net(test_arr_in, Tensor(dy))
     dx = dx[0].asnumpy()
     np.testing.assert_array_almost_equal(dx, expected_dx)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_mirror_pad_fwd_back_4d_int32_reflect():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    # set constants
+    shape = (2, 3, 3, 5)
+    pads = ((1, 0), (2, 0), (1, 2), (3, 4))
+    total_val = np.prod(shape)
+    test_arr_np = np.arange(total_val).reshape(shape) + 1
+    test_arr_ms = Tensor(test_arr_np, dtype=mindspore.int32)
+    # fwd_pass_check
+    op = nn.Pad(mode="REFLECT", paddings=pads)
+    expected_np_result = np.pad(test_arr_np, pads, 'reflect')
+    obtained_ms_res = op(test_arr_ms).asnumpy()
+    np.testing.assert_array_equal(expected_np_result, obtained_ms_res)
+    # backwards pass check
+    GradNet = Grad(Net(pads, "REFLECT"))
+    dy_value = Tensor(np.ones(obtained_ms_res.shape), dtype=mindspore.int32)
+    dx_value_obtained = GradNet(test_arr_ms, dy_value)[0].asnumpy()
+    dx_value_expected = np.array([[[[4, 6, 6, 6, 2],
+                                    [6, 9, 9, 9, 3],
+                                    [2, 3, 3, 3, 1]],
+                                   [[8, 12, 12, 12, 4],
+                                    [12, 18, 18, 18, 6],
+                                    [4, 6, 6, 6, 2]],
+                                   [[8, 12, 12, 12, 4],
+                                    [12, 18, 18, 18, 6],
+                                    [4, 6, 6, 6, 2]]],
+                                  [[[8, 12, 12, 12, 4],
+                                    [12, 18, 18, 18, 6],
+                                    [4, 6, 6, 6, 2]],
+                                   [[16, 24, 24, 24, 8],
+                                    [24, 36, 36, 36, 12],
+                                    [8, 12, 12, 12, 4]],
+                                   [[16, 24, 24, 24, 8],
+                                    [24, 36, 36, 36, 12],
+                                    [8, 12, 12, 12, 4]]]], dtype=np.int32)
+    np.testing.assert_array_equal(dx_value_expected, dx_value_obtained)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_mirror_pad_fwd_back_4d_int32_symm():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    # set constants
+    shape = (2, 3, 3, 5)
+    pads = ((1, 0), (2, 0), (1, 2), (3, 4))
+    total_val = np.prod(shape)
+    test_arr_np = np.arange(total_val).reshape(shape) + 1
+    test_arr_ms = Tensor(test_arr_np, dtype=mindspore.int32)
+    # fwd_pass_check
+    op = nn.Pad(mode="SYMMETRIC", paddings=pads)
+    expected_np_result = np.pad(test_arr_np, pads, 'symmetric')
+    obtained_ms_res = op(test_arr_ms).asnumpy()
+    np.testing.assert_array_equal(expected_np_result, obtained_ms_res)
+    # backwards pass check
+    GradNet = Grad(Net(pads, "SYMMETRIC"))
+    dy_value = Tensor(np.ones(obtained_ms_res.shape), dtype=mindspore.int32)
+    dx_value_obtained = GradNet(test_arr_ms, dy_value)[0].asnumpy()
+    dx_value_expected = np.array([[[[16, 24, 24, 16, 16],
+                                    [16, 24, 24, 16, 16],
+                                    [16, 24, 24, 16, 16]],
+                                   [[16, 24, 24, 16, 16],
+                                    [16, 24, 24, 16, 16],
+                                    [16, 24, 24, 16, 16]],
+                                   [[8, 12, 12, 8, 8],
+                                    [8, 12, 12, 8, 8],
+                                    [8, 12, 12, 8, 8]]],
+                                  [[[8, 12, 12, 8, 8],
+                                    [8, 12, 12, 8, 8],
+                                    [8, 12, 12, 8, 8]],
+                                   [[8, 12, 12, 8, 8],
+                                    [8, 12, 12, 8, 8],
+                                    [8, 12, 12, 8, 8]],
+                                   [[4, 6, 6, 4, 4],
+                                    [4, 6, 6, 4, 4],
+                                    [4, 6, 6, 4, 4]]]], dtype=np.int32)
+    np.testing.assert_array_equal(dx_value_expected, dx_value_obtained)

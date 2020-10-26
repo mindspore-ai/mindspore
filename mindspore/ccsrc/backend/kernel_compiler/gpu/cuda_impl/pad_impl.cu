@@ -206,3 +206,8 @@ template void CalPadGeneral<half>(const size_t size, const half *input, const in
                                   const int old_width, const int padded_height, const int padded_width,
                                   const int pad_top, const int pad_left, float pad_value, half *output,
                                   cudaStream_t cuda_stream);
+template void CalPadGeneral<int>(const size_t size, const int *input, const int num, const int channels_orig,
+                                  const int pad_channel_before, const int pad_channel_after, const int old_height,
+                                  const int old_width, const int padded_height, const int padded_width,
+                                  const int pad_top, const int pad_left, float pad_value, int *output,
+                                  cudaStream_t cuda_stream);

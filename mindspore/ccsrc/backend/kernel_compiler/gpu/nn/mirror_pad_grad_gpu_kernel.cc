@@ -26,5 +26,9 @@ MS_REG_GPU_KERNEL_ONE(
   MirrorPadGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
   MirrorPadGpuBackKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  MirrorPadGrad,
+  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+  MirrorPadGpuBackKernel, int)
 }  // namespace kernel
 }  // namespace mindspore
