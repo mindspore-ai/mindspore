@@ -292,6 +292,10 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   bool ret = InitFromPixel(input->GetBuffer(), LPixelType::RGB, LDataType::UINT8, input->shape()[1], input->shape()[0],
                            lite_mat_rgb);
   CHECK_FAIL_RETURN_UNEXPECTED(ret, "Creation of lite cv failed");
+  LiteMat lite_mat_float;
+  // change input to float
+  ret = ConvertTo(lite_mat_rgb, lite_mat_float, 1.0);
+  CHECK_FAIL_RETURN_UNEXPECTED(ret, "Conversion of lite cv to float failed");
 
   mean->Squeeze();
   if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != 1 || mean->shape()[0] != 3) {
@@ -315,7 +319,7 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
       vec_std.push_back(std_c);
     }
     LiteMat lite_mat_norm;
-    ret = SubStractMeanNormalize(lite_mat_rgb, lite_mat_norm, vec_mean, vec_std);
+    ret = SubStractMeanNormalize(lite_mat_float, lite_mat_norm, vec_mean, vec_std);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Normalize in lite cv failed");
     // create output Tensor based off of lite_mat_cut
     std::shared_ptr<Tensor> output_tensor;
