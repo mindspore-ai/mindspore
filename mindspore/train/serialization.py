@@ -341,6 +341,11 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 
     Raises:
         TypeError: Argument is not a Cell, or parameter_dict is not a Parameter dictionary.
+
+    Examples:
+        >>> net = LeNet5()
+        >>> param_dict = load_checkpoint("LeNet5-2_1875.ckpt")
+        >>> load_param_into_net(net, param_dict)
     """
     if not isinstance(net, nn.Cell):
         logger.error("Failed to combine the net and the parameters.")
