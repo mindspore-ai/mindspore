@@ -125,6 +125,7 @@ int OpenCLRuntime::Init() {
   }
   *device_ = devices[0];
   max_work_item_sizes_ = device_->getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>();
+  max_work_group_size_ = max_work_item_sizes_[0];
   const std::string device_name = device_->getInfo<CL_DEVICE_NAME>();
   const std::string device_version = device_->getInfo<CL_DEVICE_VERSION>();
   const std::string opencl_version = device_->getInfo<CL_DEVICE_OPENCL_C_VERSION>();
@@ -250,7 +251,7 @@ cl::Device *OpenCLRuntime::Device() { return device_; }
 
 uint64_t OpenCLRuntime::DeviceGlobalMemoryCacheSize() const { return global_memery_cachesize_; }
 
-int OpenCLRuntime::DeviceMaxWorkGroupSize() const { return max_work_group_size; }
+int OpenCLRuntime::DeviceMaxWorkGroupSize() const { return max_work_group_size_; }
 
 uint32_t OpenCLRuntime::DeviceComputeUnits() const { return compute_units_; }
 

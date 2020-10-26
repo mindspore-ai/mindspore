@@ -62,6 +62,8 @@ int DepthwiseConv2dOpenCLKernel::Init() {
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   InitBuffer();
+  GetGlobalSize(0, &global_size_);
+  GetLocalSize(0, global_size_, &local_size_);
   MS_LOG(DEBUG) << kernel_name << " Init Done! mem type=" << static_cast<int>(out_mem_type_);
   return mindspore::lite::RET_OK;
 }
@@ -133,7 +135,7 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
 }
 
 int DepthwiseConv2dOpenCLKernel::GetGlobalSize(size_t idx, std::vector<size_t> *global_size) {
-  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM * 2);
   std::vector<size_t> global = {(size_t)out_tensors_[0]->Width(), (size_t)out_tensors_[0]->Height(), CO4};
   *global_size = std::move(global);
   return mindspore::lite::RET_OK;
@@ -141,9 +143,12 @@ int DepthwiseConv2dOpenCLKernel::GetGlobalSize(size_t idx, std::vector<size_t> *
 
 int DepthwiseConv2dOpenCLKernel::GetLocalSize(size_t idx, const std::vector<size_t> &global_size,
                                               std::vector<size_t> *local_size) {
-  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  std::vector<size_t> local = {1, 1, CO4};
-  *local_size = std::move(local);
+  const int max_group_size = ocl_runtime_->DeviceMaxWorkGroupSize();
+  int z = global_size[2];
+  int y = static_cast<size_t>(std::min(max_group_size / z, GetMaxDivisorStrategy0(global_size[1], 8)));
+  int x = std::max(1, std::min(static_cast<int>(global_size[0]), max_group_size / (y * z)));
+  local_size->clear();
+  *local_size = std::vector<size_t>({static_cast<size_t>(x), static_cast<size_t>(y), static_cast<size_t>(z)});
   return mindspore::lite::RET_OK;
 }
 
@@ -152,9 +157,6 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t CI4 = UP_DIV(in_tensors_[0]->Channel(), C4NUM);
-  std::vector<size_t> global = {(size_t)out_tensors_[0]->Width(), (size_t)out_tensors_[0]->Height(), CO4};
-  std::vector<size_t> local;
-  GetLocalSize(0, global, &local);
 
   std::map<ActType, std::pair<float, float>> relu_clips{
     {ActType_No, {-FLT_MAX, FLT_MAX}}, {ActType_Relu, {0.0, FLT_MAX}}, {ActType_Relu6, {0, 6.0}}};
@@ -179,7 +181,7 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].first);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].second);
-  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
   return mindspore::lite::RET_OK;
 }
 

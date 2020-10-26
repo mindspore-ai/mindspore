@@ -156,7 +156,7 @@ class OpenCLRuntime {
   std::map<std::string, cl::Program> program_map_;
   cl::Program binary_program_{0};
   uint64_t global_memery_cachesize_{0};
-  int max_work_group_size;
+  int max_work_group_size_{1};
   uint32_t compute_units_{0};
   uint32_t max_freq_{0};
   std::string default_build_opts_{""};
